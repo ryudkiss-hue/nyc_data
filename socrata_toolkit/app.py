@@ -11,6 +11,7 @@ from socrata_toolkit.analysis import profile_dataframe, quality_report
 from socrata_toolkit.text_analytics import generate_text_insights
 from socrata_toolkit.dot_sidewalk import compute_sidewalk_kpis, python_templates, sql_templates
 from socrata_toolkit.llm_duck_bridge import LLMAugmentConfig, augment_dataframe_with_llm
+from socrata_toolkit.spatial import spatial_intersects_join
 from socrata_toolkit.client import SocrataClient, SocrataConfig
 from socrata_toolkit.exporters import MongoExporter, PostgresExporter, XLSXExporter
 
@@ -167,6 +168,18 @@ elif mode == "DOT Sidewalk Dashboard":
         c4.metric("First-Pass Yield", round(kpi.first_pass_yield, 4))
         c5.metric("Rework Factor", round(kpi.rework_factor, 4))
         st.dataframe(df.head(500), use_container_width=True)
+
+        st.markdown("#### Spatial Conflict Analysis")
+        st.caption("Upload a second geospatial layer to compute intersection conflict rate.")
+        upl = st.file_uploader("Upload right-side layer JSON", type=["json"], key="dot_right_layer")
+        left_geom = st.text_input("Left geometry column", value="geometry")
+        right_geom = st.text_input("Right geometry column", value="geometry")
+        if upl is not None and st.button("Run Spatial Intersects Join"):
+            right_df = pd.read_json(upl)
+            sj = spatial_intersects_join(df, right_df, left_geom_col=left_geom, right_geom_col=right_geom)
+            st.metric("Conflict Rate", round(sj.conflict_rate, 4))
+            st.metric("Overlap Count", sj.overlap_count)
+            st.dataframe(sj.joined.head(300), use_container_width=True)
 
 elif mode == "Code Export Studio":
     st.subheader("Exportable SQL/Python Methods")

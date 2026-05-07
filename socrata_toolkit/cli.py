@@ -10,6 +10,7 @@ from .config import get_default, load_local_config
 from .text_analytics import generate_text_insights
 from .logging_utils import get_logger, write_run_report
 from .llm_duck_bridge import LLMAugmentConfig, augment_dataframe_with_llm
+from .spatial import spatial_intersects_join
 from .client import SocrataClient, SocrataConfig
 from .exporters import MongoExporter, PostgresExporter, XLSXExporter
 
@@ -265,6 +266,22 @@ def llm_augment_cmd(domain, fourfour, text_column, endpoint, model, temperature,
     tagged = augment_dataframe_with_llm(df, text_column=text_column, cfg=cfg)
     tagged.to_json(out, orient="records")
     click.echo(f"LLM-augmented rows written to {out}")
+
+
+@main.command("spatial-join")
+@click.option("--left-json", type=click.Path(exists=True), required=True)
+@click.option("--right-json", type=click.Path(exists=True), required=True)
+@click.option("--left-geom-col", required=True)
+@click.option("--right-geom-col", required=True)
+@click.option("--out", type=click.Path(), required=True)
+def spatial_join_cmd(left_json, right_json, left_geom_col, right_geom_col, out):
+    import pandas as pd
+
+    left = pd.read_json(left_json)
+    right = pd.read_json(right_json)
+    result = spatial_intersects_join(left, right, left_geom_col=left_geom_col, right_geom_col=right_geom_col)
+    result.joined.to_json(out, orient="records")
+    click.echo(json.dumps({"conflict_rate": result.conflict_rate, "overlap_count": result.overlap_count, "out": out}, indent=2))
 
 
 if __name__ == "__main__":

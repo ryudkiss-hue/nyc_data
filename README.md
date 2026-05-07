@@ -500,3 +500,22 @@ socrata llm-augment data.cityofnewyork.us h9gi-nx95 \
 ```
 
 This is ideal for Sidewalk Program workflows such as complaint triage, conflict-risk tagging, and root-cause categorization.
+
+## Geoinformatic Analysis Coverage
+
+Supported geospatial methods now include:
+- **Spatial intersects join** between two layers (WKT/GeoJSON geometry fields)
+- **Conflict rate estimation** from intersect counts
+- **DOT dashboard spatial conflict workflow** in Streamlit
+
+CLI example:
+```bash
+socrata spatial-join \
+  --left-json sidewalk_layer.json \
+  --right-json dining_out_layer.json \
+  --left-geom-col geometry \
+  --right-geom-col geometry \
+  --out spatial_join_output.json
+```
+
+This supports contract scope conflict analysis and geospatial planning screening.
