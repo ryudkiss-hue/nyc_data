@@ -482,3 +482,21 @@ streamlit run socrata_toolkit/app.py
 - **Audit**: first-pass yield and rework factor quality indicators.
 - **Text & qualitative**: NLP/regex tagging for correspondence or complaint-type text.
 
+
+## llm_duck Integration (Local LLM + DuckDB-style Workflow)
+
+The toolkit now includes `llm_duck`-style augmentation support:
+- CLI command: `socrata llm-augment`
+- Streamlit mode: **LLM Augmentation**
+- Output columns: `llm_label`, `llm_confidence`, `llm_rationale`
+
+Example:
+```bash
+socrata llm-augment data.cityofnewyork.us h9gi-nx95 \
+  --text-column description \
+  --endpoint http://localhost:1234/v1/chat/completions \
+  --model local-model \
+  --out llm_augmented.json
+```
+
+This is ideal for Sidewalk Program workflows such as complaint triage, conflict-risk tagging, and root-cause categorization.

@@ -10,6 +10,7 @@ import streamlit as st
 from socrata_toolkit.analysis import profile_dataframe, quality_report
 from socrata_toolkit.text_analytics import generate_text_insights
 from socrata_toolkit.dot_sidewalk import compute_sidewalk_kpis, python_templates, sql_templates
+from socrata_toolkit.llm_duck_bridge import LLMAugmentConfig, augment_dataframe_with_llm
 from socrata_toolkit.client import SocrataClient, SocrataConfig
 from socrata_toolkit.exporters import MongoExporter, PostgresExporter, XLSXExporter
 
@@ -38,7 +39,7 @@ with st.sidebar:
     token = st.text_input("Socrata App Token", type="password", help="Optional but recommended.")
     domain = st.text_input("Domain", value="data.cityofnewyork.us")
     dataset_id = st.text_input("Dataset ID (4x4)", value="h9gi-nx95")
-    mode = st.radio("Workflow", ["Search", "Metadata", "Fetch & Export", "Analysis Studio", "DOT Sidewalk Dashboard", "Code Export Studio", "Automated Upsert"])
+    mode = st.radio("Workflow", ["Search", "Metadata", "Fetch & Export", "Analysis Studio", "DOT Sidewalk Dashboard", "Code Export Studio", "LLM Augmentation", "Automated Upsert"])
 
 client = get_client(token)
 
@@ -178,6 +179,27 @@ elif mode == "Code Export Studio":
     py_payload = python_templates()
     st.json(py_payload)
     st.download_button("Download Python templates", data="\n\n".join(py_payload.values()), file_name="dot_sidewalk_templates.py")
+
+
+elif mode == "LLM Augmentation":
+    st.subheader("LLM Augmentation (llm_duck-style)")
+    endpoint = st.text_input("LLM endpoint", value="http://localhost:1234/v1/chat/completions")
+    model = st.text_input("Model", value="local-model")
+    text_column = st.text_input("Text column to classify", value="description")
+    max_rows = st.number_input("Rows", min_value=10, value=1000)
+    out_name = st.text_input("Output filename", value="llm_augmented.json")
+    if st.button("Run LLM Augmentation", type="primary"):
+        rows = []
+        for batch in client.fetch_json(domain, dataset_id, max_rows=int(max_rows)):
+            rows.extend(batch)
+        df = pd.DataFrame(rows)
+        if text_column not in df.columns:
+            st.error(f"Column '{text_column}' not found")
+        else:
+            cfg = LLMAugmentConfig(endpoint=endpoint, model=model)
+            out_df = augment_dataframe_with_llm(df, text_column=text_column, cfg=cfg)
+            st.dataframe(out_df.head(200), use_container_width=True)
+            st.download_button("Download LLM-augmented JSON", data=out_df.to_json(orient="records"), file_name=out_name)
 
 else:
     st.subheader("Automated Upsert / Pipeline")

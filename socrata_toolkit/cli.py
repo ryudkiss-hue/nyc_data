@@ -9,6 +9,7 @@ from .analysis import profile_dataframe, quality_report
 from .config import get_default, load_local_config
 from .text_analytics import generate_text_insights
 from .logging_utils import get_logger, write_run_report
+from .llm_duck_bridge import LLMAugmentConfig, augment_dataframe_with_llm
 from .client import SocrataClient, SocrataConfig
 from .exporters import MongoExporter, PostgresExporter, XLSXExporter
 
@@ -241,6 +242,29 @@ def text_insights_cmd(domain, fourfour, text_column, geo_column, max_rows, out):
     if out:
         tagged.to_json(out, orient="records")
     click.echo(json.dumps(payload, indent=2))
+
+
+@main.command("llm-augment")
+@click.argument("domain")
+@click.argument("fourfour")
+@click.option("--text-column", required=True)
+@click.option("--endpoint", default="http://localhost:1234/v1/chat/completions")
+@click.option("--model", default="local-model")
+@click.option("--temperature", type=float, default=0.1)
+@click.option("--max-rows", type=int, default=get_default(CFG, "preferences", "default_max_rows", default=10000))
+@click.option("--out", type=click.Path(), required=True)
+def llm_augment_cmd(domain, fourfour, text_column, endpoint, model, temperature, max_rows, out):
+    c = _client()
+    rows = []
+    for batch in c.fetch_json(domain, fourfour, max_rows=max_rows):
+        rows.extend(batch)
+    import pandas as pd
+
+    df = pd.DataFrame(rows)
+    cfg = LLMAugmentConfig(endpoint=endpoint, model=model, temperature=temperature)
+    tagged = augment_dataframe_with_llm(df, text_column=text_column, cfg=cfg)
+    tagged.to_json(out, orient="records")
+    click.echo(f"LLM-augmented rows written to {out}")
 
 
 if __name__ == "__main__":

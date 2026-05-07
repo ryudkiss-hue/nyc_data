@@ -1,3 +1,4 @@
+from .llm_duck_bridge import LLMAugmentConfig, augment_dataframe_with_llm
 from .dot_sidewalk import compute_sidewalk_kpis, sql_templates, python_templates
 from .text_analytics import generate_text_insights
 from .analysis import DataProfile, profile_dataframe, quality_report
@@ -16,4 +17,6 @@ __all__ = [
     "compute_sidewalk_kpis",
     "sql_templates",
     "python_templates",
+    "LLMAugmentConfig",
+    "augment_dataframe_with_llm",
 ]
