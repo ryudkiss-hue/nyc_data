@@ -12,9 +12,13 @@ from socrata_toolkit.text_analytics import generate_text_insights
 from socrata_toolkit.dot_sidewalk import compute_sidewalk_kpis, python_templates, sql_templates
 from socrata_toolkit.llm_duck_bridge import LLMAugmentConfig, augment_dataframe_with_llm
 from socrata_toolkit.spatial import spatial_intersects_join
+from socrata_toolkit.conflict import ConflictResolver
 from socrata_toolkit.nlp_advanced import analyze_text, translate_text
 from socrata_toolkit.client import SocrataClient, SocrataConfig
 from socrata_toolkit.exporters import MongoExporter, PostgresExporter, XLSXExporter
+from socrata_toolkit.pipeline import run_from_rows
+from socrata_toolkit.persistence import save_pipeline, load_pipelines, delete_pipeline
+from socrata_toolkit.streaming_pipeline import stream_pipeline
 
 
 st.set_page_config(page_title="Socrata Toolkit", page_icon="🗂", layout="wide")
@@ -41,7 +45,7 @@ with st.sidebar:
     token = st.text_input("Socrata App Token", type="password", help="Optional but recommended.")
     domain = st.text_input("Domain", value="data.cityofnewyork.us")
     dataset_id = st.text_input("Dataset ID (4x4)", value="h9gi-nx95")
-    mode = st.radio("Workflow", ["Search", "Metadata", "Fetch & Export", "Analysis Studio", "DOT Sidewalk Dashboard", "Code Export Studio", "LLM Augmentation", "NLP Studio", "Automated Upsert"])
+    mode = st.radio("Workflow", ["Search", "Metadata", "Fetch & Export", "Analysis Studio", "DOT Sidewalk Dashboard", "Conflict & Reporting", "Code Export Studio", "LLM Augmentation", "NLP Studio", "Automated Upsert"])
 
 client = get_client(token)
 
@@ -182,6 +186,77 @@ elif mode == "DOT Sidewalk Dashboard":
             st.metric("Overlap Count", sj.overlap_count)
             st.dataframe(sj.joined.head(300), use_container_width=True)
 
+elif mode == "Conflict & Reporting":
+    st.subheader("Conflict & Reporting")
+    st.caption("Upload a proposed workset or fetch from Socrata and compare against a reference layer.")
+    col1, col2 = st.columns(2)
+    source_type = col1.radio("Proposed source", ["Upload file", "Fetch from Socrata"])
+    proposed_df = None
+    if source_type == "Upload file":
+        upl = col1.file_uploader("Upload proposed features (GeoJSON or JSON or CSV)", type=["json", "geojson", "csv"])
+        if upl is not None:
+            p = save_uploaded(upl)
+            if p.suffix.lower() == ".csv":
+                proposed_df = pd.read_csv(p)
+            else:
+                payload = json.loads(p.read_text())
+                if isinstance(payload, dict) and payload.get("type") == "FeatureCollection":
+                    proposed_df = pd.DataFrame([f.get("properties", {}) | {"geometry": f.get("geometry")} for f in payload.get("features", [])])
+                elif isinstance(payload, list):
+                    proposed_df = pd.DataFrame(payload)
+    else:
+        p_domain = col1.text_input("Proposed domain", value=domain)
+        p_ds = col1.text_input("Proposed dataset id", value=dataset_id)
+        p_max = col1.number_input("Max rows", min_value=10, value=5000)
+        if col1.button("Load proposed from Socrata"):
+            rows = []
+            with st.spinner("Fetching proposed rows..."):
+                for batch in client.fetch_json(p_domain, p_ds, max_rows=int(p_max)):
+                    rows.extend(batch)
+            proposed_df = pd.DataFrame(rows)
+
+    st.markdown("---")
+    st.markdown("### Reference layer")
+    r_domain = st.text_input("Reference domain", value=domain)
+    r_ds = st.text_input("Reference dataset id", value="")
+    r_upload = st.file_uploader("Or upload reference layer", type=["json", "geojson", "csv"], key="ref_upload")
+    reference_df = None
+    if r_upload is not None:
+        p = save_uploaded(r_upload)
+        if p.suffix.lower() == ".csv":
+            reference_df = pd.read_csv(p)
+        else:
+            payload = json.loads(p.read_text())
+            if isinstance(payload, dict) and payload.get("type") == "FeatureCollection":
+                reference_df = pd.DataFrame([f.get("properties", {}) | {"geometry": f.get("geometry")} for f in payload.get("features", [])])
+            elif isinstance(payload, list):
+                reference_df = pd.DataFrame(payload)
+    elif r_ds:
+        r_max = st.number_input("Reference max rows", min_value=10, value=5000)
+        if st.button("Load reference from Socrata"):
+            rows = []
+            with st.spinner("Fetching reference rows..."):
+                for batch in client.fetch_json(r_domain, r_ds, max_rows=int(r_max)):
+                    rows.extend(batch)
+            reference_df = pd.DataFrame(rows)
+
+    buf_m = st.number_input("Buffer (meters)", min_value=1.0, value=20.0)
+
+    if proposed_df is not None and reference_df is not None and st.button("Run Conflict Analysis"):
+        resolver = ConflictResolver()
+        annotated, summary = resolver.resolve_conflicts(proposed_df, reference_df, proposed_geom_col="geometry", reference_geom_col="geometry", buffer_m=buf_m)
+        st.metric("Conflict Rate", round(summary.conflict_rate, 4))
+        st.metric("Total Proposed", summary.total_proposed)
+        st.metric("Total Conflicts", summary.total_conflicts)
+        st.dataframe(annotated.head(200), use_container_width=True)
+
+        gj = resolver.export_geojson(annotated)
+        st.download_button("Download Conflicts GeoJSON", data=json.dumps(gj), file_name="conflicts.geojson", mime="application/geo+json")
+        clist = resolver.generate_construction_list(annotated)
+        tmp = Path(tempfile.gettempdir()) / "construction_list.xlsx"
+        XLSXExporter().write(clist, str(tmp))
+        st.download_button("Download Construction List XLSX", data=tmp.read_bytes(), file_name="construction_list.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
 elif mode == "Code Export Studio":
     st.subheader("Exportable SQL/Python Methods")
     st.markdown("Generate reusable SQL and Python templates driven by current analytical framework.")
@@ -241,12 +316,20 @@ else:
     rows: list[dict] = []
     geojson_payload: dict | None = None
 
+    # Source controls
     if source == "Fetch from Socrata":
-        where = st.text_input("WHERE filter")
+        where = st.text_input("WHERE filter", value="")
         max_rows = st.number_input("Max rows", min_value=1, value=10000)
-        if st.button("Load Source Data", type="primary"):
-            for batch in client.fetch_json(domain, dataset_id, where=where or None, max_rows=int(max_rows)):
-                rows.extend(batch)
+        load_btn = st.button("Load Source Data", type="primary")
+        if load_btn:
+            fetched = 0
+            placeholder = st.empty()
+            with st.spinner("Fetching rows from Socrata..."):
+                for batch in client.fetch_json(domain, dataset_id, where=where or None, max_rows=int(max_rows)):
+                    rows.extend(batch)
+                    fetched += len(batch)
+                    placeholder.text(f"Rows fetched: {fetched}")
+            placeholder.empty()
             st.success(f"Loaded {len(rows)} records from Socrata")
     else:
         uploaded = st.file_uploader("Upload JSON or GeoJSON", type=["json", "geojson"])
@@ -261,54 +344,111 @@ else:
             st.success(f"Loaded {len(rows)} records from file")
 
     if rows:
-        st.dataframe(pd.DataFrame(rows).head(500), use_container_width=True)
+        st.markdown("**Preview of source rows (first 200)**")
+        st.dataframe(pd.DataFrame(rows).head(200), use_container_width=True)
 
-    st.markdown("### Targets")
-    t1, t2, t3 = st.columns(3)
+    st.markdown("### Targets & Options")
+    t1, t2, t3 = st.columns([1, 1, 1])
     do_pg = t1.checkbox("PostgreSQL")
     do_mongo = t2.checkbox("MongoDB")
     do_xlsx = t3.checkbox("XLSX backup")
 
-    pg_dsn = pg_table = pg_conflict = ""
+    pg_cfg = {}
     if do_pg:
-        pg_dsn = st.text_input("Postgres DSN", type="password")
-        pg_table = st.text_input("Postgres table", value="socrata_data")
-        pg_conflict = st.text_input("Postgres conflict column", value="id")
+        pg_cfg["dsn"] = st.text_input("Postgres DSN", type="password")
+        pg_cfg["table"] = st.text_input("Postgres table", value="socrata_data")
+        pg_cfg["conflict_column"] = st.text_input("Postgres conflict column", value="id")
 
-    m_uri = m_db = m_col = m_conflict = ""
+    mongo_cfg = {}
     if do_mongo:
-        m_uri = st.text_input("Mongo URI", type="password")
-        m_db = st.text_input("Mongo DB", value="socrata")
-        m_col = st.text_input("Mongo collection", value="socrata_data")
-        m_conflict = st.text_input("Mongo conflict field", value="id")
+        mongo_cfg["uri"] = st.text_input("Mongo URI", type="password")
+        mongo_cfg["db"] = st.text_input("Mongo DB", value="socrata")
+        mongo_cfg["collection"] = st.text_input("Mongo collection", value="socrata_data")
+        mongo_cfg["conflict_field"] = st.text_input("Mongo conflict field", value="id")
 
+    xlsx_cfg = {}
     if do_xlsx:
-        xlsx_name = st.text_input("XLSX filename", value=f"{dataset_id}_backup.xlsx")
-    else:
-        xlsx_name = ""
+        xlsx_cfg["filename"] = st.text_input("XLSX filename", value=f"{dataset_id}_backup.xlsx")
 
-    if st.button("Run Automated Upsert Pipeline", type="primary", disabled=not rows):
-        report = []
-        if do_pg and pg_dsn and pg_table and pg_conflict:
-            with PostgresExporter(pg_dsn) as pg:
-                total = pg.upsert_batches([rows], table=pg_table, conflict_column=pg_conflict)
-            report.append(f"PostgreSQL upserted: {total}")
+    st.markdown("### Saved Pipelines")
+    saved = load_pipelines()
+    saved_names = [""] + list(saved.keys())
+    sel = st.selectbox("Load saved pipeline", options=saved_names)
+    if sel:
+        cfg = saved.get(sel, {})
+        st.info(f"Loaded pipeline '{sel}': {cfg.get('description', '')}")
+        st.write(cfg)
 
-        if do_mongo and m_uri and m_db and m_col and m_conflict:
-            with MongoExporter(m_uri, m_db) as mg:
-                if geojson_payload:
-                    total = mg.upsert_geojson(geojson_payload, collection=m_col, conflict_field=m_conflict)
-                else:
-                    total = mg.upsert_batches([rows], collection=m_col, conflict_field=m_conflict)
-            report.append(f"MongoDB upserted: {total}")
+    st.markdown("### Run Options")
+    dry_run = st.checkbox("Dry run / Preview (no writes)", value=True)
+    confirm_write = st.checkbox("I confirm I want to perform writes (enable only when ready)")
+    streaming_mode = st.checkbox("Use streaming mode (low memory)", value=True)
+    chunk_size = st.number_input("Streaming chunk size (rows per request)", min_value=10, value=client.config.page_size)
 
-        if do_xlsx and xlsx_name:
-            out = Path(tempfile.gettempdir()) / xlsx_name
-            XLSXExporter().write(rows, str(out))
-            st.download_button("Download XLSX backup", data=out.read_bytes(), file_name=xlsx_name)
-            report.append(f"XLSX created: {xlsx_name}")
+    # Save pipeline
+    save_name = st.text_input("Save current pipeline as... (optional)")
+    if st.button("Save pipeline") and save_name:
+        config = {
+            "domain": domain,
+            "dataset_id": dataset_id,
+            "where": where if source == "Fetch from Socrata" else "",
+            "targets": {"postgres": pg_cfg if do_pg else {}, "mongo": mongo_cfg if do_mongo else {}, "xlsx": xlsx_cfg if do_xlsx else {}},
+        }
+        save_pipeline(save_name, {"description": f"Saved from UI: {save_name}", "config": config})
+        st.success(f"Saved pipeline '{save_name}'")
 
-        if not report:
-            st.warning("No targets configured.")
+    st.markdown("### Preview / Run")
+    if st.button("Preview Pipeline"):
+        targets = {
+            "postgres": {**pg_cfg, "enabled": do_pg} if do_pg else {"enabled": False},
+            "mongo": {**mongo_cfg, "enabled": do_mongo} if do_mongo else {"enabled": False},
+            "xlsx": {"enabled": do_xlsx, "path": str(Path(tempfile.gettempdir()) / xlsx_cfg.get("filename", f"{dataset_id}_backup.xlsx"))} if do_xlsx else {"enabled": False},
+        }
+        if streaming_mode and source == "Fetch from Socrata":
+            report = stream_pipeline(client, domain, dataset_id, targets, dry_run=True, chunk_size=int(chunk_size))
         else:
-            st.success(" | ".join(report))
+            report = run_from_rows(rows, targets, dry_run=True)
+        st.markdown("**Preview Report**")
+        st.json(report)
+        if report.get("targets", {}).get("postgres"):
+            st.markdown("**Postgres Preview SQL**")
+            st.code(report["targets"]["postgres"]["preview"]["create_table"])
+            if report["targets"]["postgres"]["preview"].get("index"):
+                st.code(report["targets"]["postgres"]["preview"]["index"])
+            st.code(report["targets"]["postgres"]["preview"]["insert_example"])
+
+    if st.button("Run Pipeline"):
+        if dry_run:
+            st.warning("Pipeline configured for dry-run. Uncheck 'Dry run / Preview' to perform writes.")
+        elif not confirm_write:
+            st.error("Please confirm writes by checking 'I confirm I want to perform writes' before running the pipeline.")
+        else:
+            targets = {
+                "postgres": {**pg_cfg, "enabled": do_pg} if do_pg else {"enabled": False},
+                "mongo": {**mongo_cfg, "enabled": do_mongo} if do_mongo else {"enabled": False},
+                "xlsx": {"enabled": do_xlsx, "path": str(Path(tempfile.gettempdir()) / xlsx_cfg.get("filename", f"{dataset_id}_backup.xlsx"))} if do_xlsx else {"enabled": False},
+            }
+            if streaming_mode and source == "Fetch from Socrata":
+                progress = st.progress(0)
+                status = st.empty()
+
+                def cb(fetched, total):
+                    try:
+                        if total:
+                            pct = int(min(100, (fetched / total) * 100))
+                        else:
+                            pct = 0
+                        progress.progress(pct)
+                        status.text(f"Fetched {fetched} rows (total est: {total})")
+                    except Exception:
+                        pass
+
+                with st.spinner("Running streaming pipeline..."):
+                    report = stream_pipeline(client, domain, dataset_id, targets, dry_run=False, chunk_size=int(chunk_size), max_rows=int(max_rows) if max_rows else None, progress_callback=cb)
+                st.success("Pipeline run complete")
+                st.json(report)
+            else:
+                with st.spinner("Running pipeline..."):
+                    report = run_from_rows(rows, targets, dry_run=False)
+                st.success("Pipeline run complete")
+                st.json(report)

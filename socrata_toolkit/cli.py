@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
 import json
+import logging
 
 import click
 
@@ -16,6 +17,11 @@ from .state import load_state, save_state
 from .validation import validate_required_columns
 from .client import SocrataClient, SocrataConfig
 from .exporters import MongoExporter, PostgresExporter, XLSXExporter
+from .streaming_pipeline import stream_pipeline
+from .conflict import ConflictResolver
+from .query_builder import in_clause
+from .alerts import AlertManager, CLINotifier, EmailNotifier, DBNotifier, Alert
+from .conflict import PostGISConflictResolver
 
 
 def _client() -> SocrataClient:
@@ -26,9 +32,26 @@ CFG = load_local_config()
 LOGGER = get_logger()
 
 
-@click.group()
-def main() -> None:
+@click.group(context_settings={"help_option_names": ["-h", "--help"]})
+@click.option("-v", "--verbose", count=True, help="Increase verbosity (-v for INFO, -vv for DEBUG)")
+@click.option("--log-level", type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]), default=None, help="Explicit log level")
+@click.pass_context
+def main(ctx, verbose: int, log_level: str | None) -> None:
     """Socrata toolkit CLI."""
+    # Configure logging level based on flags (default INFO)
+    level = logging.INFO
+    if log_level:
+        level = getattr(logging, log_level, logging.INFO)
+    else:
+        if verbose >= 2:
+            level = logging.DEBUG
+        elif verbose == 1:
+            level = logging.INFO
+        else:
+            level = logging.INFO
+    LOGGER.setLevel(level)
+    ctx.ensure_object(dict)
+    ctx.obj["log_level"] = level
 
 
 @main.command()
@@ -148,9 +171,38 @@ def upsert_mongo(domain, fourfour, uri, db_name, collection, conflict_field, geo
 @click.option("--report-path", type=click.Path(), default="outputs/pipeline_run_report.json")
 @click.option("--state-path", type=click.Path(), default="outputs/pipeline_state.json")
 @click.option("--required-col", multiple=True)
-def pipeline(domain, fourfour, where, select, order, q, max_rows, pg_dsn, pg_table, pg_conflict_col, mongo_uri, mongo_db, mongo_collection, mongo_conflict_field, xlsx_out, json_out, geojson_out, report_path, state_path, required_col):
+@click.option("--dry-run", is_flag=True, default=False, help="Preview the pipeline without performing writes")
+@click.option("--stream", "use_stream", is_flag=True, default=False, help="Use streaming (low-memory) mode")
+@click.option("--chunk-size", type=int, default=None, help="Chunk size (overrides client page_size) for streaming mode")
+def pipeline(domain, fourfour, where, select, order, q, max_rows, pg_dsn, pg_table, pg_conflict_col, mongo_uri, mongo_db, mongo_collection, mongo_conflict_field, xlsx_out, json_out, geojson_out, report_path, state_path, required_col, dry_run, use_stream, chunk_size):
     c = _client()
     LOGGER.info("Starting analysis for %s/%s", domain, fourfour)
+    # If user requested required-column checks in streaming mode, validate via metadata (no full fetch)
+    if use_stream and required_col:
+        try:
+            meta = c.get_metadata(domain, fourfour)
+            meta_cols = [col.get("name") for col in (meta.columns or [])]
+            missing = [rc for rc in required_col if rc not in meta_cols]
+            if missing:
+                raise click.ClickException(f"Required columns not found in metadata: {missing}")
+        except Exception as exc:
+            raise click.ClickException(f"Failed to validate required columns: {exc}")
+    # If streaming mode requested, delegate to streaming pipeline
+    if use_stream:
+        targets = {
+            "postgres": {"enabled": bool(pg_dsn and pg_table and pg_conflict_col), "dsn": pg_dsn, "table": pg_table, "conflict_column": pg_conflict_col},
+            "mongo": {"enabled": bool(mongo_uri and mongo_db and mongo_collection and mongo_conflict_field), "uri": mongo_uri, "db": mongo_db, "collection": mongo_collection, "conflict_field": mongo_conflict_field},
+            "xlsx": {"enabled": bool(xlsx_out), "path": xlsx_out},
+        }
+        report = stream_pipeline(c, domain, fourfour, targets, dry_run=dry_run, chunk_size=chunk_size, max_rows=max_rows)
+        # write report and state
+        prev_state = load_state(state_path)
+        run_payload = {"domain": domain, "fourfour": fourfour, "rows": report.get("rows", 0), "outputs": {"postgres": bool(pg_dsn and pg_table and pg_conflict_col), "mongo": bool(mongo_uri and mongo_db and mongo_collection and mongo_conflict_field), "xlsx": bool(xlsx_out)}, "prev_state": prev_state, "report": report}
+        write_run_report(report_path, run_payload)
+        save_state(state_path, {"domain": domain, "fourfour": fourfour, "last_rows": report.get("rows", 0)})
+        click.echo(json.dumps(report, indent=2))
+        return
+
     rows = []
     for batch in c.fetch_json(domain, fourfour, where=where, select=select, order=order, q=q, max_rows=max_rows):
         rows.extend(batch)
@@ -190,8 +242,21 @@ def pipeline(domain, fourfour, where, select, order, q, max_rows, pg_dsn, pg_tab
         futures = [ex.submit(fn) for fn in (_write_json, _write_xlsx, _write_geojson, _upsert_pg, _upsert_mongo)]
         for fut in futures:
             fut.result()
-
-    run_payload = {"domain": domain, "fourfour": fourfour, "rows": len(rows), "outputs": {"json": bool(json_out), "xlsx": bool(xlsx_out), "geojson": bool(geojson_out), "postgres": bool(pg_dsn and pg_table and pg_conflict_col), "mongo": bool(mongo_uri and mongo_db and mongo_collection and mongo_conflict_field)}, "prev_state": prev_state}
+    # load previous state (if any) and write a run report
+    prev_state = load_state(state_path)
+    run_payload = {
+        "domain": domain,
+        "fourfour": fourfour,
+        "rows": len(rows),
+        "outputs": {
+            "json": bool(json_out),
+            "xlsx": bool(xlsx_out),
+            "geojson": bool(geojson_out),
+            "postgres": bool(pg_dsn and pg_table and pg_conflict_col),
+            "mongo": bool(mongo_uri and mongo_db and mongo_collection and mongo_conflict_field),
+        },
+        "prev_state": prev_state,
+    }
     write_run_report(report_path, run_payload)
     save_state(state_path, {"domain": domain, "fourfour": fourfour, "last_rows": len(rows)})
     LOGGER.info("Pipeline complete for %s rows. Report: %s", len(rows), report_path)
@@ -207,10 +272,15 @@ def pipeline(domain, fourfour, where, select, order, q, max_rows, pg_dsn, pg_tab
 @click.option("--q")
 @click.option("--max-rows", type=int, default=get_default(CFG, "preferences", "default_max_rows", default=10000))
 @click.option("--key-column", multiple=True)
-def analyze_cmd(domain, fourfour, where, select, order, q, max_rows, key_column):
+@click.option("--state-path", type=click.Path(), default="outputs/pipeline_state.json")
+def analyze_cmd(domain, fourfour, where, select, order, q, max_rows, key_column, state_path):
     c = _client()
     LOGGER.info("Starting pipeline for %s/%s", domain, fourfour)
-    prev_state = load_state(state_path)
+    # deprecated: previous state can be used to resume/compare runs; provided via --state-path
+    try:
+        prev_state = load_state(state_path)
+    except Exception:
+        prev_state = None
     rows = []
     for batch in c.fetch_json(domain, fourfour, where=where, select=select, order=order, q=q, max_rows=max_rows):
         rows.extend(batch)
@@ -239,10 +309,14 @@ def analyze_cmd(domain, fourfour, where, select, order, q, max_rows, key_column)
 @click.option("--geo-column")
 @click.option("--max-rows", type=int, default=get_default(CFG, "preferences", "default_max_rows", default=10000))
 @click.option("--out", type=click.Path())
-def text_insights_cmd(domain, fourfour, text_column, geo_column, max_rows, out):
+@click.option("--state-path", type=click.Path(), default="outputs/pipeline_state.json")
+def text_insights_cmd(domain, fourfour, text_column, geo_column, max_rows, out, state_path):
     c = _client()
     LOGGER.info("Starting pipeline for %s/%s", domain, fourfour)
-    prev_state = load_state(state_path)
+    try:
+        prev_state = load_state(state_path)
+    except Exception:
+        prev_state = None
     rows = []
     for batch in c.fetch_json(domain, fourfour, max_rows=max_rows):
         rows.extend(batch)
@@ -318,6 +392,115 @@ def nlp_analyze_cmd(text, translate_lang):
     click.echo(json.dumps(payload, indent=2))
 
 
+@main.command("conflict")
+@click.option("--proposed-domain", help="Domain for proposed features (overrides file)")
+@click.option("--proposed-fourfour", help="4x4 dataset id for proposed features (overrides file)")
+@click.option("--proposed-file", type=click.Path(), help="Local JSON/CSV file with proposed features")
+@click.option("--proposed-geom", default="geometry", help="Geometry column name for proposed features")
+@click.option("--ref-domain", help="Domain for reference features")
+@click.option("--ref-fourfour", help="4x4 dataset id for reference features")
+@click.option("--ref-file", type=click.Path(), help="Local JSON/CSV file for reference features")
+@click.option("--ref-geom", default="geometry", help="Geometry column name for reference features")
+@click.option("--buffer-meters", type=float, default=20.0, help="Buffer distance in meters for conflict detection")
+@click.option("--out-geojson", type=click.Path(), help="Write conflict GeoJSON to this file")
+@click.option("--out-xlsx", type=click.Path(), help="Write construction list to XLSX")
+@click.option("--dry-run", is_flag=True, help="Preview without writing outputs")
+def conflict_cmd(proposed_domain, proposed_fourfour, proposed_file, proposed_geom, ref_domain, ref_fourfour, ref_file, ref_geom, buffer_meters, out_geojson, out_xlsx, dry_run):
+    """Detect spatial conflicts between a proposed dataset and a reference dataset.
+
+    Provide either domain+fourfour pairs or local files for proposed and reference.
+    """
+    c = _client()
+    # load proposed
+    if proposed_file:
+        import pandas as pd
+
+        if proposed_file.lower().endswith(".csv"):
+            proposed_df = pd.read_csv(proposed_file)
+        else:
+            proposed_df = pd.read_json(proposed_file)
+    elif proposed_domain and proposed_fourfour:
+        rows = []
+        for batch in c.fetch_json(proposed_domain, proposed_fourfour):
+            rows.extend(batch)
+        import pandas as pd
+
+        proposed_df = pd.DataFrame(rows)
+    else:
+        raise click.ClickException("Provide either --proposed-file or --proposed-domain and --proposed-fourfour")
+
+    # load reference
+    if ref_file:
+        import pandas as pd
+
+        if ref_file.lower().endswith(".csv"):
+            ref_df = pd.read_csv(ref_file)
+        else:
+            ref_df = pd.read_json(ref_file)
+    elif ref_domain and ref_fourfour:
+        rows = []
+        for batch in c.fetch_json(ref_domain, ref_fourfour):
+            rows.extend(batch)
+        import pandas as pd
+
+        ref_df = pd.DataFrame(rows)
+    else:
+        raise click.ClickException("Provide either --ref-file or --ref-domain and --ref-fourfour")
+
+    resolver = ConflictResolver()
+    annotated, summary = resolver.resolve_conflicts(proposed_df, ref_df, proposed_geom_col=proposed_geom, reference_geom_col=ref_geom, buffer_m=buffer_meters)
+    click.echo(json.dumps({"summary": summary.__dict__}, indent=2))
+
+    if dry_run:
+        click.echo("Dry-run: no outputs written")
+        return
+
+    if out_geojson:
+        gj = resolver.export_geojson(annotated, geom_col=proposed_geom)
+        with open(out_geojson, "w", encoding="utf-8") as f:
+            json.dump(gj, f)
+        click.echo(f"Wrote GeoJSON to {out_geojson}")
+
+    if out_xlsx:
+        try:
+            from .exporters import XLSXExporter
+        except Exception:
+            raise click.ClickException("XLSX export requires openpyxl; install extras '.[dev]' or openpyxl")
+        clist = resolver.generate_construction_list(annotated)
+        XLSXExporter().write(clist, out_xlsx)
+        click.echo(f"Wrote XLSX to {out_xlsx}")
+
+
+@main.command("batch-search")
+@click.argument("domain")
+@click.argument("fourfour")
+@click.option("--field", required=True, help="Field name to match against the values in the file")
+@click.option("--file", "file_path", required=True, type=click.Path(), help="File with one value per line (IDs or keys)")
+@click.option("--out", type=click.Path(), help="Write results to JSON file")
+def batch_search_cmd(domain, fourfour, field, file_path, out):
+    """Run a batch search against a dataset field using a newline-separated file of values."""
+    values: list[str] = []
+    with open(file_path, "r", encoding="utf-8") as f:
+        for ln in f:
+            v = ln.strip()
+            if v:
+                values.append(v)
+    if not values:
+        raise click.ClickException("No values found in file")
+
+    clause = in_clause(field, values)
+    c = _client()
+    rows = []
+    for batch in c.fetch_json(domain, fourfour, where=clause):
+        rows.extend(batch)
+    if out:
+        with open(out, "w", encoding="utf-8") as f:
+            json.dump(rows, f)
+        click.echo(f"Wrote {len(rows)} results to {out}")
+    else:
+        click.echo(json.dumps(rows, indent=2))
+
+
 @main.command("doctor")
 @click.option("--check-db", is_flag=True)
 def doctor_cmd(check_db):
@@ -363,6 +546,105 @@ def doctor_cmd(check_db):
                 db_status["mongo"] = f"fail: {exc}"
 
     click.echo(json.dumps({"core": checks, "optional": optional_status, "db": db_status}, indent=2))
+
+
+@main.command("migrate")
+@click.option("--dsn", envvar="PG_DSN", help="Postgres DSN to apply migrations to")
+@click.option("--migrations-dir", default="sql/migrations")
+def migrate_cmd(dsn, migrations_dir):
+    """Apply SQL migrations from `sql/migrations` to a Postgres database."""
+    if not dsn:
+        raise click.ClickException("Provide a Postgres DSN via --dsn or PG_DSN env var")
+    try:
+        import psycopg
+    except Exception as exc:
+        raise click.ClickException("Install postgres extras: pip install '.[postgres]'") from exc
+    import glob, os
+    files = sorted(glob.glob(os.path.join(migrations_dir, "*.sql")))
+    if not files:
+        click.echo("No migration files found")
+        return
+    conn = psycopg.connect(dsn)
+    cur = conn.cursor()
+    for f in files:
+        click.echo(f"Applying {f}")
+        with open(f, "r", encoding="utf-8") as fh:
+            cur.execute(fh.read())
+    conn.commit()
+    cur.close()
+    conn.close()
+    click.echo("Migrations applied")
+
+
+@main.command("alerts")
+@click.option("--preview", is_flag=True, help="Preview alerts without sending or persisting")
+@click.option("--send", is_flag=True, help="Send email notifications for alerts")
+@click.option("--persist", is_flag=True, help="Persist alerts to DB")
+@click.option("--pg-dsn", envvar="PG_DSN", help="Postgres DSN to query for conflicts and optionally persist alerts")
+@click.option("--table", default="sidewalk_complaints", help="Table to scan for high-priority conditions")
+@click.option("--corridor-table", default="smart_spine", help="Corridor table to check intersections against")
+@click.option("--buffer-m", type=float, default=0.0, help="Buffer in meters for ST_DWithin checks")
+@click.option("--recipients", help="Comma-separated list of email recipients for --send")
+@click.option("--smtp-host", help="SMTP host for sending emails")
+@click.option("--smtp-port", type=int, default=25, help="SMTP port")
+@click.option("--smtp-username", help="SMTP username (also used as from address if provided)")
+@click.option("--smtp-password", help="SMTP password")
+def alerts_cmd(preview, send, persist, pg_dsn, table, corridor_table, buffer_m, recipients, smtp_host, smtp_port, smtp_username, smtp_password):
+    """Generate operational alerts by running spatial checks and dispatching them via registered notifiers."""
+    mgr = AlertManager(batch_mode=False)
+    cli_notifier = CLINotifier()
+    mgr.register(cli_notifier)
+
+    if send:
+        if not recipients:
+            raise click.ClickException("--recipients required when --send is used")
+        smtp_cfg = {"host": smtp_host or "localhost", "port": smtp_port, "username": smtp_username, "password": smtp_password, "from_addr": smtp_username or "alerts@localhost", "recipients": [r.strip() for r in recipients.split(",") if r.strip()]}
+        mgr.register(EmailNotifier(smtp_cfg))
+
+    db_notifier = None
+    if persist:
+        if not pg_dsn:
+            raise click.ClickException("--pg-dsn is required to persist alerts")
+        db_notifier = DBNotifier(pg_dsn)
+        mgr.register(db_notifier)
+
+    alerts_created = []
+    # If we have a Postgres DSN, prefer running a DB-based spatial join for scale
+    if pg_dsn:
+        try:
+            resolver = PostGISConflictResolver(pg_dsn)
+            df, summary = resolver.resolve_conflicts(proposed_table=table, reference_table=corridor_table, proposed_id_col="id", proposed_geom_col="geom", reference_id_col="id", reference_geom_col="geom", buffer_m=buffer_m)
+            # create Alert objects for rows which have conflicts
+            if not df.empty:
+                for _, row in df.iterrows():
+                    if int(row.get("_conflict_count", 0)) > 0:
+                        a = Alert(severity="critical", message=f"Spatial conflict for id={row.get('id')}", payload={"id": row.get("id"), "conflict_count": int(row.get("_conflict_count")), "conflict_ids": row.get("_conflict_ids")})
+                        alerts_created.append(a)
+            resolver.close()
+        except Exception as exc:
+            mgr.emit(Alert(severity="warning", message="Alerts generation failed", payload={"error": str(exc)}))
+
+    # If no PG connection or no alerts found, create a sample alert for preview/demo
+    if not alerts_created and preview:
+        alerts_created.append(Alert(severity="info", message="Preview alert: no DB alerts found or running in demo mode", payload={}))
+
+    # Dispatch alerts according to options
+    for a in alerts_created:
+        if preview:
+            # just print
+            cli_notifier.notify(a)
+        else:
+            mgr.emit(a)
+
+    # shutdown manager and close DB notifier if used
+    mgr.shutdown()
+    if db_notifier:
+        try:
+            db_notifier.close()
+        except Exception:
+            pass
+
+    click.echo(json.dumps({"alerts": len(alerts_created)}))
 
 
 if __name__ == "__main__":
