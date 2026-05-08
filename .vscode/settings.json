@@ -1,5 +1,4 @@
 {
-    "python-envs.defaultEnvManager": "ms-python.python:venv",
-    "chat.permissions.default": "autoApprove",
-    "python.terminal.useEnvFile": true
+    "python-envs.defaultEnvManager": "ms-python.python:poetry",
+    "python-envs.defaultPackageManager": "ms-python.python:poetry"
 }

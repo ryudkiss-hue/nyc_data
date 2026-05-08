@@ -6,6 +6,7 @@ bootstrap_windows.ps1
 docker-compose.test.yml
 pyproject.toml
 requirements-dev.txt
+socrata_toolkit.config.json
 .github/workflows/ci.yml
 .github/workflows/python-app.yml
 .vscode/settings.json
