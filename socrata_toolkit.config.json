@@ -21,7 +21,9 @@
     "default_max_rows": 1000000000,
     "default_export_formats": [
       "json",
-      "xlsx"
+      "xlsx",
+      "csv",
+      "pdf"
     ],
     "launch_streamlit_after_setup": true
   }
