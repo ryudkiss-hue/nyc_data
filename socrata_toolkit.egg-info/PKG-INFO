@@ -1,3 +1,38 @@
+Metadata-Version: 2.4
+Name: socrata_toolkit
+Version: 0.2.0
+Summary: Socrata toolkit for NYC data
+Author-email: Your Name <you@example.com>
+License: MIT
+Keywords: socrata,nyc,data
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: requests>=2.28
+Requires-Dist: pandas>=1.5
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: typer>=0.7
+Requires-Dist: click>=8.0
+Requires-Dist: streamlit>=1.10
+Requires-Dist: pytest>=7.0
+Provides-Extra: postgres
+Requires-Dist: psycopg[binary]>=2.9; extra == "postgres"
+Provides-Extra: mongo
+Requires-Dist: pymongo>=4.0; extra == "mongo"
+Provides-Extra: xlsx
+Requires-Dist: openpyxl>=3.0; extra == "xlsx"
+Provides-Extra: nlp
+Requires-Dist: spacy>=3.5; extra == "nlp"
+Provides-Extra: dev
+Requires-Dist: black; extra == "dev"
+Requires-Dist: ruff; extra == "dev"
+Requires-Dist: isort; extra == "dev"
+Requires-Dist: pre-commit; extra == "dev"
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: tox; extra == "dev"
+
 # 🗂 Socrata Toolkit
 
 A batteries-included Python toolkit for the [Socrata Open Data API (SODA3)](https://dev.socrata.com/).  
