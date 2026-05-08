@@ -1,7 +1,55 @@
+"""Lightweight local spatial helpers using Shapely.
+
+This module provides a tiny in-memory spatial index and proximity utilities
+useful for development and unit tests where PostGIS is not available. For
+production-scale spatial joins prefer the PostGISConflictResolver in
+`conflict.py` which delegates heavy lifting to the database.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Iterable, Any
+
+try:
+    from shapely.geometry import shape
+    from shapely.ops import unary_union
+except Exception:  # pragma: no cover - optional dependency
+    shape = None
+    unary_union = None
+
+
+@dataclass
+class SpatialIndex:
+    """A minimal in-memory spatial index backed by a list of GeoJSON-like features.
+
+    Notes:
+    - This is intentionally simple and not optimized. It's suitable for test
+      scenarios and small datasets only.
+    - Each feature is expected to have a `geometry` key compatible with
+      Shapely's `shape()` constructor.
+    """
+    features: list
+
+    def index(self, features: Iterable[dict]):
+        self.features = list(features)
+
+    def query_point(self, pt):
+        """Return features that contain the given Shapely point.
+
+        Args:
+            pt: a Shapely Point to test
+
+        Returns:
+            list of feature dicts that contain the point
+        """
+        hits = []
+        if shape is None:
+            raise ImportError("Install shapely to use SpatialIndex: pip install shapely")
+        for f in self.features:
+            if shape(f["geometry"]).contains(pt):
+                hits.append(f)
+        return hits
 
 import pandas as pd
 

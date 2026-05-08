@@ -37,6 +37,24 @@ pip install ".[mongo]"
 pip install ".[all]"
 ```
 
+## Developer Quickstart
+
+If you are developing or contributing, use an editable install and run tests locally:
+
+```bash
+# Create an editable install (recommended for iterative development)
+python -m pip install -e .
+
+# Install development/test dependencies
+python -m pip install -r requirements-dev.txt
+
+# Run the test suite
+pytest -q
+
+# Run the CLI directly from the repository
+python -m socrata_toolkit.cli --help
+```
+
 Set your Socrata app token (removes rate-limiting):
 ```bash
 export SOCRATA_APP_TOKEN="your_token_here"
@@ -129,6 +147,31 @@ socrata pipeline data.cityofnewyork.us h9gi-nx95 \\
   --where "crash_date >= '2024-01-01'"
 ```
 
+### Pipeline previews & saved configs (UI)
+
+The Streamlit Workbench adds interactive pipeline preview and saved pipeline configs:
+
+- Use the **Automated Upsert / Pipeline** workflow to preview what will be written (Postgres SQL, Mongo sample, XLSX filename) using **Dry run / Preview**.
+- Save pipeline configurations from the UI and reload them later from the **Saved Pipelines** selector.
+- Runs require explicit confirmation to perform writes, helping avoid accidental data changes.
+
+### Streaming (low-memory) pipeline
+
+- The Workbench and CLI now support a streaming, low-memory pipeline mode that processes Socrata pages in chunks and broadcasts them to Postgres, MongoDB, or a JSONL backup without loading the entire dataset into RAM.
+- In the Streamlit UI: enable "Use streaming mode (low memory)" in the **Automated Upsert / Pipeline** workflow and choose the targets. A dry-run preview shows example Postgres SQL and a small sample before you run writes.
+- In the CLI: use `--stream` and `--dry-run` to preview or `--stream` to run. Example:
+
+```bash
+# Preview streaming pipeline (no writes)
+socrata pipeline data.cityofnewyork.us h9gi-nx95 --stream --dry-run --pg-table crashes --pg-conflict-col collision_id --pg-dsn "$PG_DSN"
+
+# Run streaming pipeline
+socrata pipeline data.cityofnewyork.us h9gi-nx95 --stream --pg-table crashes --pg-conflict-col collision_id --pg-dsn "$PG_DSN"
+```
+
+The streaming mode writes a JSONL backup by default and performs batched upserts to Postgres and MongoDB.
+
+
 ---
 
 ## Python API
@@ -218,6 +261,61 @@ with PostgresExporter("postgresql://user:pass@localhost/mydb") as pg:
     )
     pg.upsert_metadata(meta)   # saves to _socrata_metadata
     print(f"Upserted {total} rows")
+
+  ### PostGIS Conflict Detection (scale)
+
+  If you have a PostGIS-enabled database, the toolkit provides a PostGIS-backed conflict resolver that performs spatial joins in the database (recommended for large datasets):
+
+  ```python
+  from socrata_toolkit import PostGISConflictResolver
+
+  resolver = PostGISConflictResolver(dsn="postgresql://user:pass@host/db")
+  df, summary = resolver.resolve_conflicts(
+    proposed_table="public.proposed_work",
+    reference_table="public.active_projects",
+    proposed_id_col="id",
+    proposed_geom_col="geom",
+    reference_id_col="id",
+    reference_geom_col="geom",
+    buffer_m=20.0,
+  )
+  print(summary)
+  resolver.close()
+  ```
+
+  This runs an efficient `ST_DWithin` query and returns per-row conflict counts and arrays of matching reference IDs.
+
+  ### Full-Text Search (FTS) helpers
+
+  Create a GIN expression index over one or more text columns using `to_tsvector`:
+
+  ```python
+  from socrata_toolkit.db_helpers import ensure_fts_index
+
+  ensure_fts_index(
+    dsn=PG_DSN,
+    table="public.crashes",
+    columns=["address", "descriptor", "comments"],
+  )
+  ```
+
+  This helper issues a `CREATE INDEX IF NOT EXISTS ... USING GIN (to_tsvector(...))` SQL statement to accelerate textual queries.
+
+  ### COPY-based bulk upserts (speed)
+
+  When writing large datasets into Postgres, the `PostgresExporter.copy_upsert_batches` method uses a temporary staging table and `COPY` to accelerate loading before performing a single `INSERT ... ON CONFLICT` upsert into the target table. The method falls back to the safe `upsert_batches` path if COPY is not supported in your environment.
+
+  ```python
+  from socrata_toolkit.exporters import PostgresExporter
+
+  with PostgresExporter(PG_DSN) as pg:
+    total = pg.copy_upsert_batches(
+      client.fetch_json("data.cityofnewyork.us", "h9gi-nx95"),
+      table="crashes",
+      conflict_column="collision_id",
+    )
+    print(f"Loaded {total} rows via COPY+upsert")
+  ```
 ```
 
 ### MongoDB
@@ -294,6 +392,18 @@ The app supports:
 - JSON/GeoJSON file upload via file explorer widget
 - one-click export to JSON / GeoJSON / XLSX
 - automated upsertion to PostgreSQL and MongoDB
+
+---
+
+## Operations Playbook & SOP
+
+We maintain a set of operational docs, SOPs, and integration notes to support DOT workflows. See:
+
+- [SOP & FAQ](docs/sop_faq.md)
+- [Operations Management Guide](docs/operations_management.md)
+- [Advanced Integrations](docs/advanced_integrations.md)
+
+These files include sample SQL, trigger templates, and recommended nightly job outlines.
 
 ---
 

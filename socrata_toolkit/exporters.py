@@ -1,8 +1,22 @@
+"""Data exporters for Postgres, MongoDB and simple XLSX backup.
+
+This module centralizes the logic that writes data to downstream systems.
+Implementations are intentionally pragmatic: they create tables/indexes
+automatically for convenience in early development, and provide faster
+paths (COPY into a temp table) when possible.
+
+Classes:
+ - `XLSXExporter`: simple Excel writer (pandas/openpyxl)
+ - `PostgresExporter`: psycopg-backed upsert utilities (`upsert_batches` and `copy_upsert_batches`)
+ - `MongoExporter`: pymongo-backed upsert utilities using bulk_write
+"""
+
 from __future__ import annotations
 
 from typing import Any, Iterable
 
 import pandas as pd
+import uuid
 
 
 class XLSXExporter:
@@ -68,6 +82,64 @@ class PostgresExporter:
             values = [tuple(row.get(c) for c in cols) for row in batch]
             cur.executemany(sql, values)
             total += len(values)
+        self.conn.commit()
+        return total
+
+    def copy_upsert_batches(self, batches: Iterable[list[dict[str, Any]]], table: str, conflict_column: str) -> int:
+        """Bulk-load batches using COPY into a temp table and upsert into the target.
+
+        This method attempts to use Postgres COPY for speed. If COPY is not
+        available or an error occurs, it falls back to `upsert_batches` per-batch.
+        """
+        total = 0
+        cur = self.conn.cursor()
+        initialized = False
+        for batch in batches:
+            if not batch:
+                continue
+            cols = list(batch[0].keys())
+            if not initialized:
+                defs = ", ".join(f'"{c}" {self._sql_type(batch[0].get(c))}' for c in cols)
+                cur.execute(f'CREATE TABLE IF NOT EXISTS "{table}" ({defs})')
+                if conflict_column in cols:
+                    cur.execute(f'CREATE UNIQUE INDEX IF NOT EXISTS "{table}_{conflict_column}_idx" ON "{table}" ("{conflict_column}")')
+                initialized = True
+
+            # Create a temp staging table with the same columns
+            tmp = f"tmp_{uuid.uuid4().hex[:8]}"
+            cur.execute(f'CREATE TEMP TABLE "{tmp}" ({defs}) ON COMMIT DROP')
+
+            # Write CSV into the temp table using COPY
+            try:
+                # Build an in-memory CSV representation and feed it into COPY.
+                # The psycopg cursor `copy` method may accept a file-like object.
+                import io, csv
+
+                s = io.StringIO()
+                writer = csv.writer(s)
+                for row in batch:
+                    writer.writerow([row.get(c) for c in cols])
+                s.seek(0)
+                cols_quoted = ", ".join(f'"{c}"' for c in cols)
+                copy_sql = f'COPY "{tmp}" ({cols_quoted}) FROM STDIN WITH CSV'
+                # psycopg cursor copy may accept a file-like; if it doesn't this
+                # block will raise and we fall back to the safe executemany path.
+                cur.copy(copy_sql, s)
+
+                # Use a single INSERT ... SELECT from the staging table into the
+                # target table with ON CONFLICT to perform the upsert in SQL.
+                col_list = ", ".join(f'"{c}"' for c in cols)
+                updates = ", ".join(f'"{c}" = EXCLUDED."{c}"' for c in cols if c != conflict_column)
+                if updates:
+                    sql = f'INSERT INTO "{table}" ({col_list}) SELECT {col_list} FROM "{tmp}" ON CONFLICT ("{conflict_column}") DO UPDATE SET {updates}'
+                else:
+                    sql = f'INSERT INTO "{table}" ({col_list}) SELECT {col_list} FROM "{tmp}" ON CONFLICT ("{conflict_column}") DO NOTHING'
+                cur.execute(sql)
+                total += len(batch)
+            except Exception:
+                # Fallback to safe path
+                self.conn.rollback()
+                total += self.upsert_batches([batch], table, conflict_column)
         self.conn.commit()
         return total
 
