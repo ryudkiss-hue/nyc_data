@@ -42,6 +42,9 @@ def profile_dataframe(df: pd.DataFrame) -> DataProfile:
 
 def quality_report(df: pd.DataFrame, key_columns: list[str] | None = None) -> dict[str, Any]:
     key_columns = key_columns or []
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
     # Count duplicate rows, but if key columns are provided exclude rows
     # that are duplicates on the key columns (those are reported in
     # `duplicate_keys` instead).
@@ -51,6 +54,15 @@ def quality_report(df: pd.DataFrame, key_columns: list[str] | None = None) -> di
         duplicate_rows = int(df_no_key_dups.duplicated().sum())
     else:
         duplicate_rows = int(df.duplicated().sum())
+=======
+    duplicate_rows = int(df.duplicated().sum())
+>>>>>>> theirs
+=======
+    duplicate_rows = int(df.duplicated().sum())
+>>>>>>> theirs
+=======
+    duplicate_rows = int(df.duplicated().sum())
+>>>>>>> theirs
     duplicate_keys = {}
     for key in key_columns:
         if key in df.columns:
