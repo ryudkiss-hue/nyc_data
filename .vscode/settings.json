@@ -1,3 +1,5 @@
 {
-    "python-envs.defaultEnvManager": "ms-python.python:venv"
+    "python-envs.defaultEnvManager": "ms-python.python:venv",
+    "chat.permissions.default": "autoApprove",
+    "python.terminal.useEnvFile": true
 }
