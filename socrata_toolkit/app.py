@@ -8,6 +8,11 @@ import pandas as pd
 import streamlit as st
 
 from socrata_toolkit.analysis import profile_dataframe, quality_report
+from socrata_toolkit.text_analytics import generate_text_insights
+from socrata_toolkit.dot_sidewalk import compute_sidewalk_kpis, python_templates, sql_templates
+from socrata_toolkit.llm_duck_bridge import LLMAugmentConfig, augment_dataframe_with_llm
+from socrata_toolkit.spatial import spatial_intersects_join
+from socrata_toolkit.nlp_advanced import analyze_text, translate_text
 from socrata_toolkit.client import SocrataClient, SocrataConfig
 from socrata_toolkit.exporters import MongoExporter, PostgresExporter, XLSXExporter
 
@@ -36,7 +41,7 @@ with st.sidebar:
     token = st.text_input("Socrata App Token", type="password", help="Optional but recommended.")
     domain = st.text_input("Domain", value="data.cityofnewyork.us")
     dataset_id = st.text_input("Dataset ID (4x4)", value="h9gi-nx95")
-    mode = st.radio("Workflow", ["Search", "Metadata", "Fetch & Export", "Analysis Studio", "Automated Upsert"])
+    mode = st.radio("Workflow", ["Search", "Metadata", "Fetch & Export", "Analysis Studio", "DOT Sidewalk Dashboard", "Code Export Studio", "LLM Augmentation", "NLP Studio", "Automated Upsert"])
 
 client = get_client(token)
 
@@ -134,6 +139,99 @@ elif mode == "Analysis Studio":
         st.markdown("#### Quality Report")
         st.json(quality)
 
+        st.markdown("#### NLP / FTS / Regex Insights")
+        text_cols = st.multiselect("Text columns for NLP", options=list(df.columns))
+        geo_col = st.selectbox("Geo column (optional)", options=[""] + list(df.columns))
+        if st.button("Generate Text Insights") and text_cols:
+            tagged_df, t_ins = generate_text_insights(df, text_cols, geo_column=geo_col or None)
+            st.write("Top terms", t_ins.top_terms[:20])
+            st.write("Regex hits", t_ins.regex_hits)
+            st.write("Tag vocabulary", t_ins.tags[:100])
+            st.dataframe(tagged_df.head(200), use_container_width=True)
+
+
+
+elif mode == "DOT Sidewalk Dashboard":
+    st.subheader("DOT Sidewalk Program Dashboard")
+    st.caption("KPI dashboard aligned to contract planning, progress, budget, and quality responsibilities.")
+    where = st.text_input("WHERE filter for DOT dataset")
+    max_rows = st.number_input("Rows", min_value=100, value=5000)
+    if st.button("Load DOT Data", type="primary"):
+        rows = []
+        for batch in client.fetch_json(domain, dataset_id, where=where or None, max_rows=int(max_rows)):
+            rows.extend(batch)
+        df = pd.DataFrame(rows)
+        kpi = compute_sidewalk_kpis(df)
+        c1, c2, c3, c4, c5 = st.columns(5)
+        c1.metric("Defect Density", round(kpi.defect_density, 4))
+        c2.metric("Throughput Velocity", round(kpi.throughput_velocity, 2))
+        c3.metric("Burn Variance", round(kpi.burn_variance, 2))
+        c4.metric("First-Pass Yield", round(kpi.first_pass_yield, 4))
+        c5.metric("Rework Factor", round(kpi.rework_factor, 4))
+        st.dataframe(df.head(500), use_container_width=True)
+
+        st.markdown("#### Spatial Conflict Analysis")
+        st.caption("Upload a second geospatial layer to compute intersection conflict rate.")
+        upl = st.file_uploader("Upload right-side layer JSON", type=["json"], key="dot_right_layer")
+        left_geom = st.text_input("Left geometry column", value="geometry")
+        right_geom = st.text_input("Right geometry column", value="geometry")
+        if upl is not None and st.button("Run Spatial Intersects Join"):
+            right_df = pd.read_json(upl)
+            sj = spatial_intersects_join(df, right_df, left_geom_col=left_geom, right_geom_col=right_geom)
+            st.metric("Conflict Rate", round(sj.conflict_rate, 4))
+            st.metric("Overlap Count", sj.overlap_count)
+            st.dataframe(sj.joined.head(300), use_container_width=True)
+
+elif mode == "Code Export Studio":
+    st.subheader("Exportable SQL/Python Methods")
+    st.markdown("Generate reusable SQL and Python templates driven by current analytical framework.")
+    st.markdown("#### SQL Templates")
+    st.json(sql_templates())
+    st.download_button("Download SQL templates", data="\n".join(sql_templates().values()), file_name="dot_sidewalk_templates.sql")
+
+    st.markdown("#### Python Templates")
+    py_payload = python_templates()
+    st.json(py_payload)
+    st.download_button("Download Python templates", data="\n\n".join(py_payload.values()), file_name="dot_sidewalk_templates.py")
+
+
+elif mode == "LLM Augmentation":
+    st.subheader("LLM Augmentation (llm_duck-style)")
+    endpoint = st.text_input("LLM endpoint", value="http://localhost:1234/v1/chat/completions")
+    model = st.text_input("Model", value="local-model")
+    text_column = st.text_input("Text column to classify", value="description")
+    max_rows = st.number_input("Rows", min_value=10, value=1000)
+    out_name = st.text_input("Output filename", value="llm_augmented.json")
+    if st.button("Run LLM Augmentation", type="primary"):
+        rows = []
+        for batch in client.fetch_json(domain, dataset_id, max_rows=int(max_rows)):
+            rows.extend(batch)
+        df = pd.DataFrame(rows)
+        if text_column not in df.columns:
+            st.error(f"Column '{text_column}' not found")
+        else:
+            cfg = LLMAugmentConfig(endpoint=endpoint, model=model)
+            out_df = augment_dataframe_with_llm(df, text_column=text_column, cfg=cfg)
+            st.dataframe(out_df.head(200), use_container_width=True)
+            st.download_button("Download LLM-augmented JSON", data=out_df.to_json(orient="records"), file_name=out_name)
+
+
+elif mode == "NLP Studio":
+    st.subheader("NLP Studio")
+    txt = st.text_area("Input text", height=160)
+    tgt = st.text_input("Translate to language code (optional)", value="")
+    if st.button("Run NLP", type="primary") and txt.strip():
+        out = analyze_text(txt)
+        st.json({
+            "tokens": out.tokens,
+            "lemmas": out.lemmas,
+            "entities": out.entities,
+            "pos_tags": out.pos_tags,
+            "sentiment": out.sentiment,
+            "summary": out.summary,
+        })
+        if tgt.strip():
+            st.write("Translation", translate_text(txt, target_lang=tgt.strip()))
 
 else:
     st.subheader("Automated Upsert / Pipeline")

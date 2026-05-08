@@ -8,6 +8,7 @@ import pandas as pd
 import requests
 
 from .models import DatasetMetadata, SearchResult
+from .utils import with_retries
 
 
 @dataclass
@@ -47,8 +48,7 @@ class SocrataClient:
             params["tags"] = tags
         if order:
             params["order"] = order
-        resp = requests.get("https://api.us.socrata.com/api/catalog/v1", params=params, headers=self._headers(), timeout=self.config.timeout)
-        resp.raise_for_status()
+        resp = with_retries(lambda: requests.get("https://api.us.socrata.com/api/catalog/v1", params=params, headers=self._headers(), timeout=self.config.timeout))
         results = []
         for item in resp.json().get("results", []):
             resource = item.get("resource", {})
@@ -67,15 +67,14 @@ class SocrataClient:
 
     def get_metadata(self, domain: str, fourfour: str) -> DatasetMetadata:
         url = f"https://{domain}/api/views/{fourfour}.json"
-        resp = requests.get(url, headers=self._headers(), timeout=self.config.timeout)
-        resp.raise_for_status()
+        resp = with_retries(lambda: requests.get(url, headers=self._headers(), timeout=self.config.timeout))
         payload = resp.json()
         return DatasetMetadata(
             domain=domain,
             fourfour=fourfour,
             name=payload.get("name", ""),
             description=payload.get("description", ""),
-            row_count=payload.get("rowsUpdatedAt"),
+            row_count=payload.get("rowsCount") or payload.get("viewCount"),
             license=(payload.get("license") or {}).get("name") if isinstance(payload.get("license"), dict) else None,
             columns=payload.get("columns", []),
         )
@@ -95,8 +94,7 @@ class SocrataClient:
             if q:
                 params["$q"] = q
             url = f"https://{domain}/resource/{fourfour}.json"
-            resp = requests.get(url, params=params, headers=self._headers(), timeout=self.config.timeout)
-            resp.raise_for_status()
+            resp = with_retries(lambda: requests.get(url, params=params, headers=self._headers(), timeout=self.config.timeout))
             batch = resp.json()
             if not batch:
                 break
@@ -124,8 +122,7 @@ class SocrataClient:
             if where:
                 params["$where"] = where
             url = f"https://{domain}/resource/{fourfour}.geojson"
-            resp = requests.get(url, params=params, headers=self._headers(), timeout=self.config.timeout)
-            resp.raise_for_status()
+            resp = with_retries(lambda: requests.get(url, params=params, headers=self._headers(), timeout=self.config.timeout))
             fc = resp.json()
             batch = fc.get("features", [])
             if not batch:
