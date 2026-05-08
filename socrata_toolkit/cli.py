@@ -150,8 +150,7 @@ def upsert_mongo(domain, fourfour, uri, db_name, collection, conflict_field, geo
 @click.option("--required-col", multiple=True)
 def pipeline(domain, fourfour, where, select, order, q, max_rows, pg_dsn, pg_table, pg_conflict_col, mongo_uri, mongo_db, mongo_collection, mongo_conflict_field, xlsx_out, json_out, geojson_out, report_path, state_path, required_col):
     c = _client()
-    LOGGER.info("Starting pipeline for %s/%s", domain, fourfour)
-    prev_state = load_state(state_path)
+    LOGGER.info("Starting analysis for %s/%s", domain, fourfour)
     rows = []
     for batch in c.fetch_json(domain, fourfour, where=where, select=select, order=order, q=q, max_rows=max_rows):
         rows.extend(batch)
@@ -317,6 +316,53 @@ def nlp_analyze_cmd(text, translate_lang):
     if translate_lang:
         payload["translation"] = translate_text(text, target_lang=translate_lang)
     click.echo(json.dumps(payload, indent=2))
+
+
+@main.command("doctor")
+@click.option("--check-db", is_flag=True)
+def doctor_cmd(check_db):
+    import importlib
+    checks = {}
+    for mod in ["requests", "click", "pandas", "openpyxl", "streamlit"]:
+        try:
+            importlib.import_module(mod)
+            checks[mod] = "ok"
+        except Exception as exc:
+            checks[mod] = f"missing: {exc}"
+
+    optional = ["psycopg", "pymongo", "shapely", "spacy", "transformers", "textblob", "gensim", "nltk"]
+    optional_status = {}
+    for mod in optional:
+        try:
+            importlib.import_module(mod)
+            optional_status[mod] = "ok"
+        except Exception as exc:
+            optional_status[mod] = f"missing: {exc}"
+
+    db_status = {}
+    if check_db:
+        import os
+        pg_dsn = os.getenv("PG_DSN")
+        mongo_uri = os.getenv("MONGO_URI")
+        if pg_dsn:
+            try:
+                import psycopg
+                with psycopg.connect(pg_dsn) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("SELECT 1")
+                        db_status["postgres"] = "ok"
+            except Exception as exc:
+                db_status["postgres"] = f"fail: {exc}"
+        if mongo_uri:
+            try:
+                from pymongo import MongoClient
+                c = MongoClient(mongo_uri)
+                c.admin.command("ping")
+                db_status["mongo"] = "ok"
+            except Exception as exc:
+                db_status["mongo"] = f"fail: {exc}"
+
+    click.echo(json.dumps({"core": checks, "optional": optional_status, "db": db_status}, indent=2))
 
 
 if __name__ == "__main__":
