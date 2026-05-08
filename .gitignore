@@ -9,3 +9,4 @@ analysis/*.html
 analysis/*.pdf
 analysis/*.geojson
 analysis/*.csv
+.venv/
