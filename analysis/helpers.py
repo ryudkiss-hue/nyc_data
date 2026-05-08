@@ -16,10 +16,14 @@ def load_env(env_path: str = ".env") -> dict:
         load_dotenv(env_path)
     except Exception:
         pass
-    return {
+        return {
         "PG_DSN": os.getenv("PG_DSN"),
         "EXPORT_DIR": os.getenv("EXPORT_DIR", "analysis"),
-        "MAPBOX_TOKEN": os.getenv("MAPBOX_TOKEN"),
+        # Map the specific names from your .env file
+        "SOCRATA_APP_TOKEN": os.getenv("SOCRATA_APP_TOKEN"),
+        "SOCRATA_SECRET_TOKEN": os.getenv("SOCRATA_SECRET_TOKEN"),
+        "MAPBOX_TOKEN": os.getenv("MAPBOX_TOKEN_PUBLIC"), # Use public for general map loading
+        "MAPBOX_TOKEN_SECRET": os.getenv("MAPBOX_TOKEN_SECRET"),
     }
 
 
