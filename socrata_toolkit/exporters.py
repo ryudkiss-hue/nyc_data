@@ -61,7 +61,10 @@ class PostgresExporter:
             placeholders = ", ".join(["%s"] * len(cols))
             col_list = ", ".join(f'"{c}"' for c in cols)
             updates = ", ".join(f'"{c}" = EXCLUDED."{c}"' for c in cols if c != conflict_column)
-            sql = f'INSERT INTO "{table}" ({col_list}) VALUES ({placeholders}) ON CONFLICT ("{conflict_column}") DO UPDATE SET {updates}'
+            if updates:
+                sql = f'INSERT INTO "{table}" ({col_list}) VALUES ({placeholders}) ON CONFLICT ("{conflict_column}") DO UPDATE SET {updates}'
+            else:
+                sql = f'INSERT INTO "{table}" ({col_list}) VALUES ({placeholders}) ON CONFLICT ("{conflict_column}") DO NOTHING'
             values = [tuple(row.get(c) for c in cols) for row in batch]
             cur.executemany(sql, values)
             total += len(values)
