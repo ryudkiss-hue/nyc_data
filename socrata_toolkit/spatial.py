@@ -1,3 +1,6 @@
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
 """Lightweight local spatial helpers using Shapely.
 
 This module provides a tiny in-memory spatial index and proximity utilities
@@ -50,6 +53,22 @@ class SpatialIndex:
             if shape(f["geometry"]).contains(pt):
                 hits.append(f)
         return hits
+=======
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any
+<<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
 
 import pandas as pd
 

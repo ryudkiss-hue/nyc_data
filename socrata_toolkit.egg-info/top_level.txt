@@ -1,0 +1,3 @@
+scripts
+socrata_toolkit
+sql
