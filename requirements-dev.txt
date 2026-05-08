@@ -1,0 +1,7 @@
+-e .[dev,all]
+spacy
+textblob
+transformers
+gensim
+nltk
+shapely

@@ -558,3 +558,21 @@ socrata pipeline ... \
 
 - Current version: `0.2.0`
 - See `CHANGELOG.md` for release details.
+
+## Zero-Issue Setup (Recommended)
+
+```bash
+./scripts/bootstrap.sh
+source .venv/bin/activate
+socrata doctor --check-db
+```
+
+The `doctor` command validates core dependencies, optional NLP/geo/LLM stacks, and (optionally) DB connectivity.
+
+## Troubleshooting Matrix
+
+- **Missing pandas/openpyxl/streamlit** → run `pip install -r requirements-dev.txt`
+- **spaCy model missing** → `python -m spacy download en_core_web_sm`
+- **TextBlob corpora missing** → `python -m textblob.download_corpora`
+- **Shapely unavailable** → `pip install shapely`
+- **DB failures in doctor** → verify `PG_DSN` / `MONGO_URI` and network reachability
