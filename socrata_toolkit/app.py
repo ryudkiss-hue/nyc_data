@@ -12,6 +12,9 @@ from socrata_toolkit.text_analytics import generate_text_insights
 from socrata_toolkit.dot_sidewalk import compute_sidewalk_kpis, python_templates, sql_templates
 from socrata_toolkit.llm_duck_bridge import LLMAugmentConfig, augment_dataframe_with_llm
 from socrata_toolkit.spatial import spatial_intersects_join
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
 from socrata_toolkit.conflict import ConflictResolver
 from socrata_toolkit.nlp_advanced import analyze_text, translate_text
 from socrata_toolkit.client import SocrataClient, SocrataConfig
@@ -19,6 +22,21 @@ from socrata_toolkit.exporters import MongoExporter, PostgresExporter, XLSXExpor
 from socrata_toolkit.pipeline import run_from_rows
 from socrata_toolkit.persistence import save_pipeline, load_pipelines, delete_pipeline
 from socrata_toolkit.streaming_pipeline import stream_pipeline
+=======
+from socrata_toolkit.nlp_advanced import analyze_text, translate_text
+from socrata_toolkit.client import SocrataClient, SocrataConfig
+from socrata_toolkit.exporters import MongoExporter, PostgresExporter, XLSXExporter
+>>>>>>> theirs
+=======
+from socrata_toolkit.nlp_advanced import analyze_text, translate_text
+from socrata_toolkit.client import SocrataClient, SocrataConfig
+from socrata_toolkit.exporters import MongoExporter, PostgresExporter, XLSXExporter
+>>>>>>> theirs
+=======
+from socrata_toolkit.nlp_advanced import analyze_text, translate_text
+from socrata_toolkit.client import SocrataClient, SocrataConfig
+from socrata_toolkit.exporters import MongoExporter, PostgresExporter, XLSXExporter
+>>>>>>> theirs
 
 
 st.set_page_config(page_title="Socrata Toolkit", page_icon="🗂", layout="wide")
@@ -45,7 +63,19 @@ with st.sidebar:
     token = st.text_input("Socrata App Token", type="password", help="Optional but recommended.")
     domain = st.text_input("Domain", value="data.cityofnewyork.us")
     dataset_id = st.text_input("Dataset ID (4x4)", value="h9gi-nx95")
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
     mode = st.radio("Workflow", ["Search", "Metadata", "Fetch & Export", "Analysis Studio", "DOT Sidewalk Dashboard", "Conflict & Reporting", "Code Export Studio", "LLM Augmentation", "NLP Studio", "Automated Upsert"])
+=======
+    mode = st.radio("Workflow", ["Search", "Metadata", "Fetch & Export", "Analysis Studio", "DOT Sidewalk Dashboard", "Code Export Studio", "LLM Augmentation", "NLP Studio", "Automated Upsert"])
+>>>>>>> theirs
+=======
+    mode = st.radio("Workflow", ["Search", "Metadata", "Fetch & Export", "Analysis Studio", "DOT Sidewalk Dashboard", "Code Export Studio", "LLM Augmentation", "NLP Studio", "Automated Upsert"])
+>>>>>>> theirs
+=======
+    mode = st.radio("Workflow", ["Search", "Metadata", "Fetch & Export", "Analysis Studio", "DOT Sidewalk Dashboard", "Code Export Studio", "LLM Augmentation", "NLP Studio", "Automated Upsert"])
+>>>>>>> theirs
 
 client = get_client(token)
 
@@ -186,6 +216,9 @@ elif mode == "DOT Sidewalk Dashboard":
             st.metric("Overlap Count", sj.overlap_count)
             st.dataframe(sj.joined.head(300), use_container_width=True)
 
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
 elif mode == "Conflict & Reporting":
     st.subheader("Conflict & Reporting")
     st.caption("Upload a proposed workset or fetch from Socrata and compare against a reference layer.")
@@ -257,6 +290,12 @@ elif mode == "Conflict & Reporting":
         XLSXExporter().write(clist, str(tmp))
         st.download_button("Download Construction List XLSX", data=tmp.read_bytes(), file_name="construction_list.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
 elif mode == "Code Export Studio":
     st.subheader("Exportable SQL/Python Methods")
     st.markdown("Generate reusable SQL and Python templates driven by current analytical framework.")
@@ -316,6 +355,9 @@ else:
     rows: list[dict] = []
     geojson_payload: dict | None = None
 
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
     # Source controls
     if source == "Fetch from Socrata":
         where = st.text_input("WHERE filter", value="")
@@ -330,6 +372,24 @@ else:
                     fetched += len(batch)
                     placeholder.text(f"Rows fetched: {fetched}")
             placeholder.empty()
+=======
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+    if source == "Fetch from Socrata":
+        where = st.text_input("WHERE filter")
+        max_rows = st.number_input("Max rows", min_value=1, value=10000)
+        if st.button("Load Source Data", type="primary"):
+            for batch in client.fetch_json(domain, dataset_id, where=where or None, max_rows=int(max_rows)):
+                rows.extend(batch)
+<<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
             st.success(f"Loaded {len(rows)} records from Socrata")
     else:
         uploaded = st.file_uploader("Upload JSON or GeoJSON", type=["json", "geojson"])
@@ -344,15 +404,37 @@ else:
             st.success(f"Loaded {len(rows)} records from file")
 
     if rows:
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
         st.markdown("**Preview of source rows (first 200)**")
         st.dataframe(pd.DataFrame(rows).head(200), use_container_width=True)
 
     st.markdown("### Targets & Options")
     t1, t2, t3 = st.columns([1, 1, 1])
+=======
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+        st.dataframe(pd.DataFrame(rows).head(500), use_container_width=True)
+
+    st.markdown("### Targets")
+    t1, t2, t3 = st.columns(3)
+<<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
     do_pg = t1.checkbox("PostgreSQL")
     do_mongo = t2.checkbox("MongoDB")
     do_xlsx = t3.checkbox("XLSX backup")
 
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
     pg_cfg = {}
     if do_pg:
         pg_cfg["dsn"] = st.text_input("Postgres DSN", type="password")
@@ -452,3 +534,58 @@ else:
                     report = run_from_rows(rows, targets, dry_run=False)
                 st.success("Pipeline run complete")
                 st.json(report)
+=======
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+    pg_dsn = pg_table = pg_conflict = ""
+    if do_pg:
+        pg_dsn = st.text_input("Postgres DSN", type="password")
+        pg_table = st.text_input("Postgres table", value="socrata_data")
+        pg_conflict = st.text_input("Postgres conflict column", value="id")
+
+    m_uri = m_db = m_col = m_conflict = ""
+    if do_mongo:
+        m_uri = st.text_input("Mongo URI", type="password")
+        m_db = st.text_input("Mongo DB", value="socrata")
+        m_col = st.text_input("Mongo collection", value="socrata_data")
+        m_conflict = st.text_input("Mongo conflict field", value="id")
+
+    if do_xlsx:
+        xlsx_name = st.text_input("XLSX filename", value=f"{dataset_id}_backup.xlsx")
+    else:
+        xlsx_name = ""
+
+    if st.button("Run Automated Upsert Pipeline", type="primary", disabled=not rows):
+        report = []
+        if do_pg and pg_dsn and pg_table and pg_conflict:
+            with PostgresExporter(pg_dsn) as pg:
+                total = pg.upsert_batches([rows], table=pg_table, conflict_column=pg_conflict)
+            report.append(f"PostgreSQL upserted: {total}")
+
+        if do_mongo and m_uri and m_db and m_col and m_conflict:
+            with MongoExporter(m_uri, m_db) as mg:
+                if geojson_payload:
+                    total = mg.upsert_geojson(geojson_payload, collection=m_col, conflict_field=m_conflict)
+                else:
+                    total = mg.upsert_batches([rows], collection=m_col, conflict_field=m_conflict)
+            report.append(f"MongoDB upserted: {total}")
+
+        if do_xlsx and xlsx_name:
+            out = Path(tempfile.gettempdir()) / xlsx_name
+            XLSXExporter().write(rows, str(out))
+            st.download_button("Download XLSX backup", data=out.read_bytes(), file_name=xlsx_name)
+            report.append(f"XLSX created: {xlsx_name}")
+
+        if not report:
+            st.warning("No targets configured.")
+        else:
+            st.success(" | ".join(report))
+<<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs

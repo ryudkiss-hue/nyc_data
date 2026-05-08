@@ -37,6 +37,9 @@ pip install ".[mongo]"
 pip install ".[all]"
 ```
 
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
 ## Developer Quickstart
 
 If you are developing or contributing, use an editable install and run tests locally:
@@ -55,6 +58,12 @@ pytest -q
 python -m socrata_toolkit.cli --help
 ```
 
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
 Set your Socrata app token (removes rate-limiting):
 ```bash
 export SOCRATA_APP_TOKEN="your_token_here"
@@ -147,6 +156,9 @@ socrata pipeline data.cityofnewyork.us h9gi-nx95 \\
   --where "crash_date >= '2024-01-01'"
 ```
 
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
 ### Pipeline previews & saved configs (UI)
 
 The Streamlit Workbench adds interactive pipeline preview and saved pipeline configs:
@@ -172,6 +184,12 @@ socrata pipeline data.cityofnewyork.us h9gi-nx95 --stream --pg-table crashes --p
 The streaming mode writes a JSONL backup by default and performs batched upserts to Postgres and MongoDB.
 
 
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
 ---
 
 ## Python API
@@ -261,6 +279,9 @@ with PostgresExporter("postgresql://user:pass@localhost/mydb") as pg:
     )
     pg.upsert_metadata(meta)   # saves to _socrata_metadata
     print(f"Upserted {total} rows")
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
 
   ### PostGIS Conflict Detection (scale)
 
@@ -316,6 +337,12 @@ with PostgresExporter("postgresql://user:pass@localhost/mydb") as pg:
     )
     print(f"Loaded {total} rows via COPY+upsert")
   ```
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
 ```
 
 ### MongoDB
@@ -395,6 +422,9 @@ The app supports:
 
 ---
 
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
 ## Operations Playbook & SOP
 
 We maintain a set of operational docs, SOPs, and integration notes to support DOT workflows. See:
@@ -407,6 +437,12 @@ These files include sample SQL, trigger templates, and recommended nightly job o
 
 ---
 
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
 ## License
 
 MIT

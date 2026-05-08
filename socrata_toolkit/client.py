@@ -1,3 +1,6 @@
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
 """Socrata API client utilities.
 
 This module provides a small, resilient HTTP client for the Socrata SODA API
@@ -12,6 +15,12 @@ Usage patterns:
     - Incremental delta fetch: `fetch_since(domain, fourfour, updated_col, since)`
 """
 
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -94,9 +103,18 @@ class SocrataClient:
         )
 
     def fetch_json(self, domain: str, fourfour: str, where: str | None = None, select: str | None = None, order: str | None = None, q: str | None = None, max_rows: int | None = None) -> Generator[list[dict[str, Any]], None, None]:
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
         # Stream JSON pages from the Socrata resource endpoint. The method
         # yields lists of dicts (a page) so callers can process data in chunks
         # without requiring large amounts of RAM.
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
         offset = 0
         remaining = max_rows
         while True:
@@ -110,14 +128,32 @@ class SocrataClient:
                 params["$order"] = order
             if q:
                 params["$q"] = q
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
 
             # Use a retriable requests wrapper to handle transient HTTP errors
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
             url = f"https://{domain}/resource/{fourfour}.json"
             resp = with_retries(lambda: requests.get(url, params=params, headers=self._headers(), timeout=self.config.timeout))
             batch = resp.json()
             if not batch:
                 break
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
             # Yield the page to the caller
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
             yield batch
             got = len(batch)
             offset += got
@@ -133,7 +169,16 @@ class SocrataClient:
         return pd.DataFrame(rows)
 
     def fetch_geojson(self, domain: str, fourfour: str, where: str | None = None, max_rows: int | None = None) -> dict[str, Any]:
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
         # Fetch GeoJSON in pages and merge into a single FeatureCollection.
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
         features: list[dict[str, Any]] = []
         offset = 0
         remaining = max_rows
@@ -155,6 +200,9 @@ class SocrataClient:
                 remaining -= got
                 if remaining <= 0:
                     break
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
         # Return a merged FeatureCollection for downstream exporters
         return {"type": "FeatureCollection", "features": features}
 
@@ -171,3 +219,12 @@ class SocrataClient:
         else:
             where = clause
         yield from self.fetch_json(domain, fourfour, where=where, **kwargs)
+=======
+        return {"type": "FeatureCollection", "features": features}
+>>>>>>> theirs
+=======
+        return {"type": "FeatureCollection", "features": features}
+>>>>>>> theirs
+=======
+        return {"type": "FeatureCollection", "features": features}
+>>>>>>> theirs

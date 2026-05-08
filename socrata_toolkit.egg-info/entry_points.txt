@@ -1,3 +1,2 @@
 [console_scripts]
-socrata = socrata_toolkit.cli:main
-socrata-setup = socrata_toolkit.install_wizard:main
+socrata = socrata_toolkit.cli:app

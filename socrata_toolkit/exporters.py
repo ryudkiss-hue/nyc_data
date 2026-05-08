@@ -1,3 +1,6 @@
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
 """Data exporters for Postgres, MongoDB and simple XLSX backup.
 
 This module centralizes the logic that writes data to downstream systems.
@@ -11,12 +14,27 @@ Classes:
  - `MongoExporter`: pymongo-backed upsert utilities using bulk_write
 """
 
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
 from __future__ import annotations
 
 from typing import Any, Iterable
 
 import pandas as pd
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
 import uuid
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
 
 
 class XLSXExporter:
@@ -85,6 +103,9 @@ class PostgresExporter:
         self.conn.commit()
         return total
 
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
     def copy_upsert_batches(self, batches: Iterable[list[dict[str, Any]]], table: str, conflict_column: str) -> int:
         """Bulk-load batches using COPY into a temp table and upsert into the target.
 
@@ -143,6 +164,12 @@ class PostgresExporter:
         self.conn.commit()
         return total
 
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
     def upsert_metadata(self, meta: Any) -> None:
         cur = self.conn.cursor()
         cur.execute('CREATE TABLE IF NOT EXISTS _socrata_metadata (fourfour TEXT PRIMARY KEY, payload JSONB NOT NULL)')
