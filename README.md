@@ -576,3 +576,7 @@ The `doctor` command validates core dependencies, optional NLP/geo/LLM stacks, a
 - **TextBlob corpora missing** → `python -m textblob.download_corpora`
 - **Shapely unavailable** → `pip install shapely`
 - **DB failures in doctor** → verify `PG_DSN` / `MONGO_URI` and network reachability
+
+## Documentation Hub
+
+Comprehensive project docs are available in [`docs/`](docs/README.md), including architecture, CLI reference, Streamlit workflows, geospatial/NLP/LLM guidance, testing/CI, security, and a dedicated **new repository bootstrap guide**.
