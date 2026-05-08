@@ -452,11 +452,6 @@ Write-Host "Verifying shapely installation..."
 python -c "from shapely.geometry import Point; print(Point(1,1))"
 
 Write-Host ""
-
-# ---------------------------------------------------------
-# COMPLETE
-# ---------------------------------------------------------
-
 Write-Host "==============================================="
 Write-Host " SETUP COMPLETE"
 Write-Host "==============================================="
