@@ -1,6 +1,7 @@
 .gitignore
 CHANGELOG.md
 README.md
+_current_requirements.txt
 bootstrap_windows.ps1
 docker-compose.test.yml
 pyproject.toml
