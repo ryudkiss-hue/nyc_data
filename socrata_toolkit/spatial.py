@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Iterable
 import pandas as pd
 
 """Lightweight local spatial helpers using Shapely.

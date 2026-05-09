@@ -18,25 +18,14 @@ from .validation import validate_required_columns
 from .client import SocrataClient, SocrataConfig
 from .exporters import MongoExporter, PostgresExporter, XLSXExporter
 from .streaming_pipeline import stream_pipeline
-from .conflict import ConflictResolver
+from .conflict import ConflictResolver, PostGISConflictResolver
 from .query_builder import in_clause
 from .alerts import AlertManager, CLINotifier, EmailNotifier, DBNotifier, Alert
-from .conflict import PostGISConflictResolver
 
 
 def _client() -> SocrataClient:
     return SocrataClient(SocrataConfig())
-    
-import click
-from scripts.build_streamlit_app import main as build_ui
 
-from nyc_data.scripts.build_streamlit_app import main as build_ui
-
-@cli.command("build-streamlit")
-def build_streamlit():
-    """Generate Streamlit UI automatically from toolkit modules."""
-    build_ui()
-    click.echo("✅ Streamlit UI generated successfully.")
 
 CFG = load_local_config()
 LOGGER = get_logger()
@@ -62,15 +51,6 @@ def main(ctx, verbose: int, log_level: str | None) -> None:
     LOGGER.setLevel(level)
     ctx.ensure_object(dict)
     ctx.obj["log_level"] = level
-@click.group()
-def main() -> None:
-    """Socrata toolkit CLI."""
-@click.group()
-def main() -> None:
-    """Socrata toolkit CLI."""
-@click.group()
-def main() -> None:
-    """Socrata toolkit CLI."""
 
 
 @main.command()
@@ -204,6 +184,8 @@ def pipeline(domain, fourfour, where, select, order, q, max_rows, pg_dsn, pg_tab
             missing = [rc for rc in required_col if rc not in meta_cols]
             if missing:
                 raise click.ClickException(f"Required columns not found in metadata: {missing}")
+        except click.ClickException:
+            raise
         except Exception as exc:
             raise click.ClickException(f"Failed to validate required columns: {exc}")
     # If streaming mode requested, delegate to streaming pipeline
@@ -222,15 +204,7 @@ def pipeline(domain, fourfour, where, select, order, q, max_rows, pg_dsn, pg_tab
         click.echo(json.dumps(report, indent=2))
         return
 
-def pipeline(domain, fourfour, where, select, order, q, max_rows, pg_dsn, pg_table, pg_conflict_col, mongo_uri, mongo_db, mongo_collection, mongo_conflict_field, xlsx_out, json_out, geojson_out, report_path, state_path, required_col):
-    c = _client()
-    LOGGER.info("Starting analysis for %s/%s", domain, fourfour)
-def pipeline(domain, fourfour, where, select, order, q, max_rows, pg_dsn, pg_table, pg_conflict_col, mongo_uri, mongo_db, mongo_collection, mongo_conflict_field, xlsx_out, json_out, geojson_out, report_path, state_path, required_col):
-    c = _client()
-    LOGGER.info("Starting analysis for %s/%s", domain, fourfour)
-def pipeline(domain, fourfour, where, select, order, q, max_rows, pg_dsn, pg_table, pg_conflict_col, mongo_uri, mongo_db, mongo_collection, mongo_conflict_field, xlsx_out, json_out, geojson_out, report_path, state_path, required_col):
-    c = _client()
-    LOGGER.info("Starting analysis for %s/%s", domain, fourfour)
+    # Standard (non-streaming) pipeline
     rows = []
     for batch in c.fetch_json(domain, fourfour, where=where, select=select, order=order, q=q, max_rows=max_rows):
         rows.extend(batch)
@@ -285,12 +259,6 @@ def pipeline(domain, fourfour, where, select, order, q, max_rows, pg_dsn, pg_tab
         },
         "prev_state": prev_state,
     }
-
-    run_payload = {"domain": domain, "fourfour": fourfour, "rows": len(rows), "outputs": {"json": bool(json_out), "xlsx": bool(xlsx_out), "geojson": bool(geojson_out), "postgres": bool(pg_dsn and pg_table and pg_conflict_col), "mongo": bool(mongo_uri and mongo_db and mongo_collection and mongo_conflict_field)}, "prev_state": prev_state}
-
-    run_payload = {"domain": domain, "fourfour": fourfour, "rows": len(rows), "outputs": {"json": bool(json_out), "xlsx": bool(xlsx_out), "geojson": bool(geojson_out), "postgres": bool(pg_dsn and pg_table and pg_conflict_col), "mongo": bool(mongo_uri and mongo_db and mongo_collection and mongo_conflict_field)}, "prev_state": prev_state}
-
-    run_payload = {"domain": domain, "fourfour": fourfour, "rows": len(rows), "outputs": {"json": bool(json_out), "xlsx": bool(xlsx_out), "geojson": bool(geojson_out), "postgres": bool(pg_dsn and pg_table and pg_conflict_col), "mongo": bool(mongo_uri and mongo_db and mongo_collection and mongo_conflict_field)}, "prev_state": prev_state}
     write_run_report(report_path, run_payload)
     save_state(state_path, {"domain": domain, "fourfour": fourfour, "last_rows": len(rows)})
     LOGGER.info("Pipeline complete for %s rows. Report: %s", len(rows), report_path)
@@ -310,15 +278,10 @@ def pipeline(domain, fourfour, where, select, order, q, max_rows, pg_dsn, pg_tab
 def analyze_cmd(domain, fourfour, where, select, order, q, max_rows, key_column, state_path):
     c = _client()
     LOGGER.info("Starting pipeline for %s/%s", domain, fourfour)
-    # deprecated: previous state can be used to resume/compare runs; provided via --state-path
     try:
         prev_state = load_state(state_path)
     except Exception:
         prev_state = None
-def analyze_cmd(domain, fourfour, where, select, order, q, max_rows, key_column):
-    c = _client()
-    LOGGER.info("Starting pipeline for %s/%s", domain, fourfour)
-    prev_state = load_state(state_path)
     rows = []
     for batch in c.fetch_json(domain, fourfour, where=where, select=select, order=order, q=q, max_rows=max_rows):
         rows.extend(batch)
@@ -355,10 +318,6 @@ def text_insights_cmd(domain, fourfour, text_column, geo_column, max_rows, out, 
         prev_state = load_state(state_path)
     except Exception:
         prev_state = None
-def text_insights_cmd(domain, fourfour, text_column, geo_column, max_rows, out):
-    c = _client()
-    LOGGER.info("Starting pipeline for %s/%s", domain, fourfour)
-    prev_state = load_state(state_path)
     rows = []
     for batch in c.fetch_json(domain, fourfour, max_rows=max_rows):
         rows.extend(batch)
@@ -453,10 +412,10 @@ def conflict_cmd(proposed_domain, proposed_fourfour, proposed_file, proposed_geo
     Provide either domain+fourfour pairs or local files for proposed and reference.
     """
     c = _client()
+    import pandas as pd
+
     # load proposed
     if proposed_file:
-        import pandas as pd
-
         if proposed_file.lower().endswith(".csv"):
             proposed_df = pd.read_csv(proposed_file)
         else:
@@ -465,16 +424,12 @@ def conflict_cmd(proposed_domain, proposed_fourfour, proposed_file, proposed_geo
         rows = []
         for batch in c.fetch_json(proposed_domain, proposed_fourfour):
             rows.extend(batch)
-        import pandas as pd
-
         proposed_df = pd.DataFrame(rows)
     else:
         raise click.ClickException("Provide either --proposed-file or --proposed-domain and --proposed-fourfour")
 
     # load reference
     if ref_file:
-        import pandas as pd
-
         if ref_file.lower().endswith(".csv"):
             ref_df = pd.read_csv(ref_file)
         else:
@@ -483,8 +438,6 @@ def conflict_cmd(proposed_domain, proposed_fourfour, proposed_file, proposed_geo
         rows = []
         for batch in c.fetch_json(ref_domain, ref_fourfour):
             rows.extend(batch)
-        import pandas as pd
-
         ref_df = pd.DataFrame(rows)
     else:
         raise click.ClickException("Provide either --ref-file or --ref-domain and --ref-fourfour")
@@ -504,10 +457,6 @@ def conflict_cmd(proposed_domain, proposed_fourfour, proposed_file, proposed_geo
         click.echo(f"Wrote GeoJSON to {out_geojson}")
 
     if out_xlsx:
-        try:
-            from .exporters import XLSXExporter
-        except Exception:
-            raise click.ClickException("XLSX export requires openpyxl; install extras '.[dev]' or openpyxl")
         clist = resolver.generate_construction_list(annotated)
         XLSXExporter().write(clist, out_xlsx)
         click.echo(f"Wrote XLSX to {out_xlsx}")
@@ -566,19 +515,6 @@ def doctor_cmd(check_db):
 
     db_status = {}
     if check_db:
-        import psycopg
-        from psycopg import sql
-
-        # Using context managers satisfies Pylint E1101 (no-member)
-        # dsn is cast to string to satisfy Pylance
-        try:
-            with psycopg.connect(str(dsn)) as conn:
-                with conn.cursor() as cur:
-                    # Wrap in sql.SQL to satisfy the 'Template' requirement
-                    cur.execute(sql.SQL("SELECT 1"))
-        except Exception as e: # pylint: disable=broad-exception-caught
-            LOGGER.error("Database connection failed: %s", e)
-
         import os
         pg_dsn = os.getenv("PG_DSN")
         mongo_uri = os.getenv("MONGO_URI")

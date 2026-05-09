@@ -2,7 +2,12 @@ from types import SimpleNamespace
 import pandas as pd
 
 
-def profile_dataframe(df: pd.DataFrame):
+# DataProfile is an alias for SimpleNamespace returned by profile_dataframe.
+# Exposed in __init__.py for type-checking convenience.
+DataProfile = SimpleNamespace
+
+
+def profile_dataframe(df: pd.DataFrame) -> DataProfile:
     """
     Produce a simple profile of the dataframe used by the test suite.
     """
@@ -14,7 +19,15 @@ def profile_dataframe(df: pd.DataFrame):
     # REQUIRED BY TEST SUITE
     profile["null_counts"] = df.isna().sum().to_dict()
 
-    # Column-level stats
+    # Column-level stats (dtypes summary and numeric summary for CLI)
+    profile["dtypes"] = df.dtypes.astype(str).to_dict()
+
+    numeric_df = df.select_dtypes(include="number")
+    if not numeric_df.empty:
+        profile["numeric_summary"] = numeric_df.describe().to_dict()
+    else:
+        profile["numeric_summary"] = {}
+
     profile["columns"] = {
         col: {
             "dtype": str(df[col].dtype),

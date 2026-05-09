@@ -8,11 +8,11 @@ functions are intentionally lightweight wrappers so teams can plug in external
 APIs (DCWP, Parks) or local caches as needed.
 """
 
-from typing import Dict, Iterable, List
+from typing import Any, Dict, List
 import requests
 
 
-def check_dcwp_license(license_number: str, api_base: str | None = None) -> Dict[str, any]:
+def check_dcwp_license(license_number: str, api_base: str | None = None) -> Dict[str, Any]:
     """Verify basic contractor license metadata.
 
     This is a placeholder that demonstrates a simple HTTP call to a REST API.
@@ -32,7 +32,7 @@ def check_dcwp_license(license_number: str, api_base: str | None = None) -> Dict
         return {"valid": False, "details": str(exc)}
 
 
-def check_parks_permit(permit_number: str, api_base: str | None = None) -> Dict[str, any]:
+def check_parks_permit(permit_number: str, api_base: str | None = None) -> Dict[str, Any]:
     """Check Parks permit metadata.
 
     Placeholder behavior similar to `check_dcwp_license`.
@@ -49,7 +49,7 @@ def check_parks_permit(permit_number: str, api_base: str | None = None) -> Dict[
         return {"valid": False, "details": str(exc)}
 
 
-def validate_contractor_for_list(contractor_id: str, license_number: str, dcwp_api: str | None = None, parks_api: str | None = None, parks_permit: str | None = None) -> Dict[str, any]:
+def validate_contractor_for_list(contractor_id: str, license_number: str, dcwp_api: str | None = None, parks_api: str | None = None, parks_permit: str | None = None) -> Dict[str, Any]:
     """Return a combined validation for contractor license and optional parks permit.
 
     Returns a small summary dict including `ok` boolean and `reasons` if any.
