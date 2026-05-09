@@ -25,6 +25,8 @@ dependencies = [
   "click>=8.0",
   "streamlit>=1.10",
   "pytest>=7.0",
+  "weasel<0.4.0"
+  "spacey>=3.14"
 ]
 
 [project.optional-dependencies]
