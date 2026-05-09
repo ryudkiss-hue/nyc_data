@@ -1,2 +1,0 @@
-[console_scripts]
-socrata = socrata_toolkit.cli:app

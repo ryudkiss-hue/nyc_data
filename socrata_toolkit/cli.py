@@ -2,16 +2,7 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
 import json
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
 import logging
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
 
 import click
 
@@ -26,20 +17,11 @@ from .state import load_state, save_state
 from .validation import validate_required_columns
 from .client import SocrataClient, SocrataConfig
 from .exporters import MongoExporter, PostgresExporter, XLSXExporter
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
 from .streaming_pipeline import stream_pipeline
 from .conflict import ConflictResolver
 from .query_builder import in_clause
 from .alerts import AlertManager, CLINotifier, EmailNotifier, DBNotifier, Alert
 from .conflict import PostGISConflictResolver
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
 
 
 def _client() -> SocrataClient:
@@ -50,9 +32,6 @@ CFG = load_local_config()
 LOGGER = get_logger()
 
 
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.option("-v", "--verbose", count=True, help="Increase verbosity (-v for INFO, -vv for DEBUG)")
 @click.option("--log-level", type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]), default=None, help="Explicit log level")
@@ -73,21 +52,15 @@ def main(ctx, verbose: int, log_level: str | None) -> None:
     LOGGER.setLevel(level)
     ctx.ensure_object(dict)
     ctx.obj["log_level"] = level
-=======
 @click.group()
 def main() -> None:
     """Socrata toolkit CLI."""
->>>>>>> theirs
-=======
 @click.group()
 def main() -> None:
     """Socrata toolkit CLI."""
->>>>>>> theirs
-=======
 @click.group()
 def main() -> None:
     """Socrata toolkit CLI."""
->>>>>>> theirs
 
 
 @main.command()
@@ -207,9 +180,6 @@ def upsert_mongo(domain, fourfour, uri, db_name, collection, conflict_field, geo
 @click.option("--report-path", type=click.Path(), default="outputs/pipeline_run_report.json")
 @click.option("--state-path", type=click.Path(), default="outputs/pipeline_state.json")
 @click.option("--required-col", multiple=True)
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
 @click.option("--dry-run", is_flag=True, default=False, help="Preview the pipeline without performing writes")
 @click.option("--stream", "use_stream", is_flag=True, default=False, help="Use streaming (low-memory) mode")
 @click.option("--chunk-size", type=int, default=None, help="Chunk size (overrides client page_size) for streaming mode")
@@ -242,21 +212,15 @@ def pipeline(domain, fourfour, where, select, order, q, max_rows, pg_dsn, pg_tab
         click.echo(json.dumps(report, indent=2))
         return
 
-=======
 def pipeline(domain, fourfour, where, select, order, q, max_rows, pg_dsn, pg_table, pg_conflict_col, mongo_uri, mongo_db, mongo_collection, mongo_conflict_field, xlsx_out, json_out, geojson_out, report_path, state_path, required_col):
     c = _client()
     LOGGER.info("Starting analysis for %s/%s", domain, fourfour)
->>>>>>> theirs
-=======
 def pipeline(domain, fourfour, where, select, order, q, max_rows, pg_dsn, pg_table, pg_conflict_col, mongo_uri, mongo_db, mongo_collection, mongo_conflict_field, xlsx_out, json_out, geojson_out, report_path, state_path, required_col):
     c = _client()
     LOGGER.info("Starting analysis for %s/%s", domain, fourfour)
->>>>>>> theirs
-=======
 def pipeline(domain, fourfour, where, select, order, q, max_rows, pg_dsn, pg_table, pg_conflict_col, mongo_uri, mongo_db, mongo_collection, mongo_conflict_field, xlsx_out, json_out, geojson_out, report_path, state_path, required_col):
     c = _client()
     LOGGER.info("Starting analysis for %s/%s", domain, fourfour)
->>>>>>> theirs
     rows = []
     for batch in c.fetch_json(domain, fourfour, where=where, select=select, order=order, q=q, max_rows=max_rows):
         rows.extend(batch)
@@ -296,9 +260,6 @@ def pipeline(domain, fourfour, where, select, order, q, max_rows, pg_dsn, pg_tab
         futures = [ex.submit(fn) for fn in (_write_json, _write_xlsx, _write_geojson, _upsert_pg, _upsert_mongo)]
         for fut in futures:
             fut.result()
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
     # load previous state (if any) and write a run report
     prev_state = load_state(state_path)
     run_payload = {
@@ -314,18 +275,12 @@ def pipeline(domain, fourfour, where, select, order, q, max_rows, pg_dsn, pg_tab
         },
         "prev_state": prev_state,
     }
-=======
 
     run_payload = {"domain": domain, "fourfour": fourfour, "rows": len(rows), "outputs": {"json": bool(json_out), "xlsx": bool(xlsx_out), "geojson": bool(geojson_out), "postgres": bool(pg_dsn and pg_table and pg_conflict_col), "mongo": bool(mongo_uri and mongo_db and mongo_collection and mongo_conflict_field)}, "prev_state": prev_state}
->>>>>>> theirs
-=======
 
     run_payload = {"domain": domain, "fourfour": fourfour, "rows": len(rows), "outputs": {"json": bool(json_out), "xlsx": bool(xlsx_out), "geojson": bool(geojson_out), "postgres": bool(pg_dsn and pg_table and pg_conflict_col), "mongo": bool(mongo_uri and mongo_db and mongo_collection and mongo_conflict_field)}, "prev_state": prev_state}
->>>>>>> theirs
-=======
 
     run_payload = {"domain": domain, "fourfour": fourfour, "rows": len(rows), "outputs": {"json": bool(json_out), "xlsx": bool(xlsx_out), "geojson": bool(geojson_out), "postgres": bool(pg_dsn and pg_table and pg_conflict_col), "mongo": bool(mongo_uri and mongo_db and mongo_collection and mongo_conflict_field)}, "prev_state": prev_state}
->>>>>>> theirs
     write_run_report(report_path, run_payload)
     save_state(state_path, {"domain": domain, "fourfour": fourfour, "last_rows": len(rows)})
     LOGGER.info("Pipeline complete for %s rows. Report: %s", len(rows), report_path)
@@ -341,9 +296,6 @@ def pipeline(domain, fourfour, where, select, order, q, max_rows, pg_dsn, pg_tab
 @click.option("--q")
 @click.option("--max-rows", type=int, default=get_default(CFG, "preferences", "default_max_rows", default=10000))
 @click.option("--key-column", multiple=True)
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
 @click.option("--state-path", type=click.Path(), default="outputs/pipeline_state.json")
 def analyze_cmd(domain, fourfour, where, select, order, q, max_rows, key_column, state_path):
     c = _client()
@@ -353,22 +305,10 @@ def analyze_cmd(domain, fourfour, where, select, order, q, max_rows, key_column,
         prev_state = load_state(state_path)
     except Exception:
         prev_state = None
-=======
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
 def analyze_cmd(domain, fourfour, where, select, order, q, max_rows, key_column):
     c = _client()
     LOGGER.info("Starting pipeline for %s/%s", domain, fourfour)
     prev_state = load_state(state_path)
-<<<<<<< ours
-<<<<<<< ours
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
     rows = []
     for batch in c.fetch_json(domain, fourfour, where=where, select=select, order=order, q=q, max_rows=max_rows):
         rows.extend(batch)
@@ -397,9 +337,6 @@ def analyze_cmd(domain, fourfour, where, select, order, q, max_rows, key_column)
 @click.option("--geo-column")
 @click.option("--max-rows", type=int, default=get_default(CFG, "preferences", "default_max_rows", default=10000))
 @click.option("--out", type=click.Path())
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
 @click.option("--state-path", type=click.Path(), default="outputs/pipeline_state.json")
 def text_insights_cmd(domain, fourfour, text_column, geo_column, max_rows, out, state_path):
     c = _client()
@@ -408,22 +345,10 @@ def text_insights_cmd(domain, fourfour, text_column, geo_column, max_rows, out, 
         prev_state = load_state(state_path)
     except Exception:
         prev_state = None
-=======
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
 def text_insights_cmd(domain, fourfour, text_column, geo_column, max_rows, out):
     c = _client()
     LOGGER.info("Starting pipeline for %s/%s", domain, fourfour)
     prev_state = load_state(state_path)
-<<<<<<< ours
-<<<<<<< ours
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
     rows = []
     for batch in c.fetch_json(domain, fourfour, max_rows=max_rows):
         rows.extend(batch)
@@ -499,9 +424,6 @@ def nlp_analyze_cmd(text, translate_lang):
     click.echo(json.dumps(payload, indent=2))
 
 
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
 @main.command("conflict")
 @click.option("--proposed-domain", help="Domain for proposed features (overrides file)")
 @click.option("--proposed-fourfour", help="4x4 dataset id for proposed features (overrides file)")
@@ -611,12 +533,6 @@ def batch_search_cmd(domain, fourfour, field, file_path, out):
         click.echo(json.dumps(rows, indent=2))
 
 
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
 @main.command("doctor")
 @click.option("--check-db", is_flag=True)
 def doctor_cmd(check_db):
@@ -640,9 +556,6 @@ def doctor_cmd(check_db):
 
     db_status = {}
     if check_db:
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
         import psycopg
         from psycopg import sql
 
@@ -656,11 +569,6 @@ def doctor_cmd(check_db):
         except Exception as e: # pylint: disable=broad-exception-caught
             LOGGER.error("Database connection failed: %s", e)
 
-=======
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
         import os
         pg_dsn = os.getenv("PG_DSN")
         mongo_uri = os.getenv("MONGO_URI")
@@ -673,13 +581,6 @@ def doctor_cmd(check_db):
                         db_status["postgres"] = "ok"
             except Exception as exc:
                 db_status["postgres"] = f"fail: {exc}"
-<<<<<<< ours
-<<<<<<< ours
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
         if mongo_uri:
             try:
                 from pymongo import MongoClient
@@ -692,9 +593,6 @@ def doctor_cmd(check_db):
     click.echo(json.dumps({"core": checks, "optional": optional_status, "db": db_status}, indent=2))
 
 
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
 @main.command("migrate")
 @click.option("--dsn", envvar="PG_DSN", help="Postgres DSN to apply migrations to")
 @click.option("--migrations-dir", default="sql/migrations")
@@ -794,11 +692,5 @@ def alerts_cmd(preview, send, persist, pg_dsn, table, corridor_table, buffer_m, 
     click.echo(json.dumps({"alerts": len(alerts_created)}))
 
 
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
 if __name__ == "__main__":
     main()
