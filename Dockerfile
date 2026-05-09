@@ -10,17 +10,27 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Install Python dependencies
+# Install Python dependencies first (for layer caching)
 COPY pyproject.toml README.md ./
+RUN pip install --no-cache-dir poetry-core && \
+    pip install --no-cache-dir requests pandas numpy click pyyaml && \
+    pip install --no-cache-dir matplotlib openpyxl shapely plotly flask gunicorn streamlit folium
+
+# Copy project files
 COPY socrata_toolkit/ socrata_toolkit/
 COPY scripts/ scripts/
 COPY sql/ sql/
 COPY tests/ tests/
 COPY docs/ docs/
+COPY data/ data/
 COPY Makefile .
+COPY .streamlit/ .streamlit/
 
-RUN pip install --no-cache-dir -e ".[all]" && \
-    pip install --no-cache-dir flask plotly gunicorn
+# Install the toolkit itself
+RUN pip install --no-cache-dir -e .
+
+# Create output directories
+RUN mkdir -p outputs/reports outputs/charts outputs/workflows
 
 # Default ports: 8501 (Streamlit), 5000 (Flask API)
 EXPOSE 8501 5000
@@ -30,4 +40,6 @@ HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
     CMD python -c "import socrata_toolkit; print('ok')" || exit 1
 
 # Default: launch Streamlit dashboard
-CMD ["streamlit", "run", "socrata_toolkit/dashboard.py", "--server.port=8501", "--server.address=0.0.0.0"]
+CMD ["streamlit", "run", "socrata_toolkit/dashboard.py", \
+     "--server.port=8501", "--server.address=0.0.0.0", \
+     "--server.headless=true", "--browser.gatherUsageStats=false"]

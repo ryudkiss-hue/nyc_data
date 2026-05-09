@@ -1,0 +1,11 @@
+location_id,borough,community_board,address,description,severity_rating,pedestrian_volume,issued_date,ada_flag,smart_spine,complaint_count,estimated_sqft,status,contract_id,latitude,longitude,violations
+L001,MANHATTAN,101,123 Broadway,Cracked sidewalk near subway entrance with trip hazard,8,9500,2024-01-15,False,True,5,200,Pending Repair,C-2024-001,40.7128,-74.0060,3
+L002,MANHATTAN,103,456 5th Ave,ADA ramp missing tactile warning surface,7,12000,2024-02-20,True,True,2,80,Pending Repair,C-2024-001,40.7549,-73.9840,2
+L003,BROOKLYN,301,789 Atlantic Ave,Tree root damage lifting concrete flags,5,3500,2024-03-10,False,False,1,150,In Progress,C-2024-002,40.6862,-73.9776,4
+L004,BROOKLYN,305,321 Flatbush Ave,Sidewalk collapse near school zone,9,6000,2023-11-05,False,True,8,350,Pending Repair,C-2024-002,40.6577,-73.9615,6
+L005,QUEENS,401,555 Queens Blvd,Curb replacement needed at intersection,4,4200,2024-04-01,False,False,0,120,Complete,C-2024-003,40.7282,-73.7949,1
+L006,QUEENS,407,888 Jamaica Ave,Pedestrian ramp does not meet ADA grade,6,5100,2024-05-15,True,False,3,90,Pending Repair,C-2024-003,40.7029,-73.7995,2
+L007,BRONX,201,100 Grand Concourse,Driveway apron cracked and uneven,3,2800,2024-06-20,False,False,0,100,Complete,C-2024-004,40.8265,-73.9232,1
+L008,BRONX,204,200 Fordham Rd,Dangerous hole in sidewalk elderly person fell,9,7500,2023-09-01,False,True,12,400,Pending Repair,C-2024-004,40.8615,-73.8980,8
+L009,STATEN ISLAND,501,50 Victory Blvd,Minor crack in sidewalk flag,2,1200,2024-07-10,False,False,0,50,Complete,C-2024-005,40.6432,-74.0833,0
+L010,STATEN ISLAND,503,75 Hylan Blvd,Tree pit needs repair root damage visible,4,1800,2024-08-05,False,False,1,80,Pending Repair,C-2024-005,40.5880,-74.0902,2
