@@ -1,6 +1,14 @@
 import inspect
 import importlib
 from pathlib import Path
+from socrata_toolkit.app import load_env
+from sqlalchemy import create_engine
+
+# Load environment variables from .env
+env = load_env(".env")
+
+# Create SQLAlchemy engine using PG_DSN
+engine = create_engine(env["PG_DSN"])
 
 def generate_streamlit_ui(module_name: str, output_path: str):
     module = importlib.import_module(module_name)
