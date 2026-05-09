@@ -4,8 +4,8 @@ from __future__ import annotations
 import os
 import json
 from pathlib import Path
-from datetime import datetime
-from typing import Dict, Any, cast # Added 'cast' for strict typing
+from datetime import datetime, timezone
+from typing import Dict, Any, cast
 
 from socrata_toolkit.client import SocrataClient, SocrataConfig
 from socrata_toolkit.exporters import PostgresExporter
@@ -28,7 +28,6 @@ def run_nightly(config_path: str | None = None) -> None:
     """Runs the nightly ingest and conflict resolution sequence."""
     cfg = load_config(Path(config_path) if config_path else None)
     
-    # Force types to string to satisfy Pylance reportArgumentType
     pg_dsn = str(cfg.get("pg_dsn") or "")
     domain = str(cfg.get("domain") or "")
     fourfour = str(cfg.get("fourfour") or "")
@@ -36,12 +35,10 @@ def run_nightly(config_path: str | None = None) -> None:
     mgr = AlertManager(batch_mode=False)
     mgr.register(CLINotifier())
     
-    # Handle SMTP specifically to avoid "str | Any" mapping errors
     smtp_cfg = cfg.get("smtp")
     if isinstance(smtp_cfg, dict):
         mgr.register(EmailNotifier(cast(Dict[str, Any], smtp_cfg)))
 
-    # Guard clause: stop if we don't have what we need
     if not domain or not fourfour:
         mgr.emit(Alert(severity="critical", message="Missing Socrata config"))
         return
@@ -51,7 +48,6 @@ def run_nightly(config_path: str | None = None) -> None:
 
     client = SocrataClient(SocrataConfig())
     
-    # Logic for fetch - Pylance now knows these are valid strings
     if last_ts:
         gen = client.fetch_since(domain, fourfour, updated_col="updated_at", since=last_ts)
     else:
@@ -84,60 +80,12 @@ def run_nightly(config_path: str | None = None) -> None:
                     payload=summary.__dict__
                 ))
             resolver.close()
-    except Exception as exc: # pylint: disable=broad-exception-caught
+    except Exception as exc:  # pylint: disable=broad-exception-caught
         mgr.emit(Alert(severity="warning", message="Conflict check failed", payload={"error": str(exc)}))
 
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     hwm_file.write_text(now, encoding="utf-8")
     mgr.emit(Alert(severity="info", message="Job complete", payload={"rows": len(rows)}))
-
-if __name__ == "__main__":
-    run_nightly(None)
-
-
-    rows = []
-    for batch in gen:
-        rows.extend(batch)
-
-    if pg_dsn and rows:
-        with PostgresExporter(pg_dsn) as pg:
-            pg.copy_upsert_batches([rows], table="socrata_ingest", conflict_column="id")
-
-    try:
-        if pg_dsn:
-            resolver = PostGISConflictResolver(pg_dsn)
-            # Fix: Use 'summary' directly (df was unused) to clear W0612
-            _, summary = resolver.resolve_conflicts(
-                proposed_table="socrata_ingest",
-                reference_table="permits",
-                proposed_id_col="id",
-                proposed_geom_col="geom",
-                reference_id_col="permit_id",
-                reference_geom_col="geom",
-                buffer_m=20.0
-            )
-            if summary.total_conflicts:
-                mgr.emit(Alert(
-                    severity="critical",
-                    message=f"{summary.total_conflicts} permit conflicts detected",
-                    payload={"conflict_summary": summary.__dict__}
-                ))
-            resolver.close()
-    except Exception as exc: # pylint: disable=broad-exception-caught
-        mgr.emit(Alert(
-            severity="warning",
-            message="Permit lookahead failed",
-            payload={"error": str(exc)}
-        ))
-
-    now = datetime.utcnow().isoformat()
-    # Fix: Added encoding to clear W1514
-    hwm_file.write_text(now, encoding="utf-8")
-    mgr.emit(Alert(
-        severity="info",
-        message="Nightly job complete",
-        payload={"rows": len(rows)}
-    ))
 
 
 if __name__ == "__main__":

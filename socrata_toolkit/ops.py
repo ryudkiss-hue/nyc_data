@@ -39,9 +39,15 @@ def apply_grace_period_updates(
         if pd.isna(v):
             return None
         if isinstance(v, datetime):
+            # Ensure timezone-aware for consistent subtraction with `now`
+            if v.tzinfo is None:
+                return v.replace(tzinfo=timezone.utc)
             return v
         try:
-            return pd.to_datetime(v).to_pydatetime()
+            dt = pd.to_datetime(v).to_pydatetime()
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return dt
         except Exception:
             return None
 
