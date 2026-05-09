@@ -10,3 +10,4 @@ analysis/*.pdf
 analysis/*.geojson
 analysis/*.csv
 .venv/
+outputs/
