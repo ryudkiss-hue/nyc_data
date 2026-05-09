@@ -26,7 +26,17 @@ from .conflict import PostGISConflictResolver
 
 def _client() -> SocrataClient:
     return SocrataClient(SocrataConfig())
+    
+import click
+from scripts.build_streamlit_app import main as build_ui
 
+from nyc_data.scripts.build_streamlit_app import main as build_ui
+
+@cli.command("build-streamlit")
+def build_streamlit():
+    """Generate Streamlit UI automatically from toolkit modules."""
+    build_ui()
+    click.echo("✅ Streamlit UI generated successfully.")
 
 CFG = load_local_config()
 LOGGER = get_logger()
