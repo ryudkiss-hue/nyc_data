@@ -30,7 +30,9 @@ def _client() -> SocrataClient:
 import click
 from scripts.build_streamlit_app import main as build_ui
 
-@click.command()
+from nyc_data.scripts.build_streamlit_app import main as build_ui
+
+@cli.command("build-streamlit")
 def build_streamlit():
     """Generate Streamlit UI automatically from toolkit modules."""
     build_ui()
