@@ -26,8 +26,10 @@ jobs:
           pip install -e .
           pip install pytest matplotlib shapely openpyxl plotly flask
 
-      - name: Run tests
-        run: python -m pytest tests/ -v --tb=short
+      - name: Run tests with coverage
+        run: |
+          pip install pytest-cov
+          python -m pytest tests/ -v --tb=short --cov=socrata_toolkit --cov-report=term-missing --cov-fail-under=70
 
       - name: Verify all modules import
         run: |
