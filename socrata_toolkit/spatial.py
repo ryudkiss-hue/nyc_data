@@ -1,6 +1,8 @@
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
+from __future__ import annotations
+from dataclasses import dataclass
+from typing import Any
+import pandas as pd
+
 """Lightweight local spatial helpers using Shapely.
 
 This module provides a tiny in-memory spatial index and proximity utilities
@@ -8,11 +10,6 @@ useful for development and unit tests where PostGIS is not available. For
 production-scale spatial joins prefer the PostGISConflictResolver in
 `conflict.py` which delegates heavy lifting to the database.
 """
-
-from __future__ import annotations
-
-from dataclasses import dataclass
-from typing import Iterable, Any
 
 try:
     from shapely.geometry import shape
@@ -53,26 +50,7 @@ class SpatialIndex:
             if shape(f["geometry"]).contains(pt):
                 hits.append(f)
         return hits
-=======
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-from __future__ import annotations
-
-from dataclasses import dataclass
-from typing import Any
-<<<<<<< ours
-<<<<<<< ours
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-
-import pandas as pd
-
-
+    
 @dataclass
 class SpatialJoinResult:
     joined: pd.DataFrame
