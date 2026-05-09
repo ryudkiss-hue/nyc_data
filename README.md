@@ -35,6 +35,26 @@ socrata doctor
 | **SQL Integration** | DDL/DML generation, query builder, analytics views, cross-DB portability |
 | **BI Integration** | Tableau, Power BI, and PowerPoint exports |
 | **Work Management** | Monday.com, MS Project, Microsoft 365, Google Workspace adapters |
+| **Task Board** | Kanban board with color-coded cards, milestones, activity logging |
+| **Workflow Engine** | Multi-step pipeline orchestration with triggers and scheduling |
+| **Insights Engine** | AI-powered auto-analysis with recommendations and anomaly narratives |
+| **NLP Integration** | Construction list enrichment, complaint triage, location extraction |
+| **Cost Estimator** | Scope-based cost estimation with borough rates and ADA surcharges |
+| **311 Ingestion** | Auto-fetch and triage sidewalk complaints from NYC Open Data |
+| **Map View** | Interactive maps with folium (markers, clusters, color-coding) |
+| **Change Detection** | Compare data snapshots to surface additions, removals, and modifications |
+| **Contractor Scorecards** | Performance profiles with letter grades (A-F) by contractor |
+| **Budget Forecasting** | Spend projection, completion dates, workload backlog modeling |
+| **SLA Tracking** | Cycle time metrics, SLA violation flagging by borough |
+| **Notification Rules** | Configurable alert rules with Teams, Slack, and email delivery |
+| **Data Dictionary** | Auto-generated column documentation with types, nulls, and samples |
+| **Quantum Optimization** | Crew assignment and route optimization (Qiskit, Cirq, classical) |
+| **Quantum Search** | Grover's algorithm function template for database search |
+| **PDF Reports** | PDF export via weasyprint with styled tables |
+| **QGIS Integration** | Generate .qgs project files with PostGIS layers |
+| **DBeaver Profiles** | Connection profiles for DBeaver, pgAdmin, DataGrip |
+| **Flask API** | 10-endpoint REST API for programmatic access |
+| **Docker** | Full stack with PostGIS, MongoDB, Streamlit, and API |
 
 ## Installation
 
@@ -315,6 +335,76 @@ query = (SQLQueryBuilder("inspections")
     .build())
 ```
 
+### Quantum Computing
+
+```python
+from socrata_toolkit.quantum_search import quantum_search, SearchCriteria, analyze_grover_circuit
+from socrata_toolkit.quantum_optimization import optimize_crew_assignment, optimize_repair_route
+
+# Grover's quantum search (classical fallback when Qiskit not installed)
+criteria = SearchCriteria(borough="MANHATTAN", min_severity=7, ada_required=True)
+result = quantum_search(df, criteria)
+print(f"Found {result.match_count} matches via {result.method}")
+
+# Analyze quantum resource requirements
+info = analyze_grover_circuit(n_records=10000, n_solutions=50)
+print(f"Qubits: {info.num_qubits}, Iterations: {info.num_grover_iterations}")
+
+# Crew assignment optimization
+assignment = optimize_crew_assignment(locations_df, n_crews=5)
+
+# Route optimization (TSP with 2-opt)
+route = optimize_repair_route(locations_df)
+print(f"Route: {route.route}, Distance: {route.total_distance} km")
+```
+
+### Cost Estimation
+
+```python
+from socrata_toolkit.cost_estimator import estimate_costs, summarize_costs
+
+estimated = estimate_costs(construction_df)
+summary = summarize_costs(estimated)
+print(f"Total estimated: ${summary.total_estimated:,.2f}")
+```
+
+### 311 Complaint Ingestion
+
+```python
+from socrata_toolkit.complaint_ingestion import ingest_311_complaints
+
+result = ingest_311_complaints(max_rows=500, borough="MANHATTAN", create_tasks=True)
+print(f"Ingested {result.total}, {result.critical_count} critical")
+```
+
+### SLA Tracking
+
+```python
+from socrata_toolkit.sla_tracking import compute_sla_metrics, flag_sla_violations
+
+metrics = compute_sla_metrics(df)
+print(f"Avg cycle: {metrics.avg_total_cycle_days} days, Compliance: {metrics.sla_compliance_rate}%")
+```
+
+### Change Detection
+
+```python
+from socrata_toolkit.change_detection import detect_changes
+
+changes = detect_changes(yesterday_df, today_df, key_col="id")
+print(f"Added: {changes.added_count}, Modified: {changes.modified_count}")
+```
+
+### Messaging Bot
+
+```python
+from socrata_toolkit.messaging import BotAdapter
+
+bot = BotAdapter(default_data=df)
+response = bot.handle("manhattan backlog")
+print(response.text)  # "MANHATTAN: 245 total, 180 pending repairs"
+```
+
 ## Project Structure
 
 ```
@@ -323,19 +413,43 @@ socrata_toolkit/
   client.py                # Socrata API client
   models.py                # Data models (DatasetMetadata, SearchResult)
   cli.py                   # Click-based CLI (20+ commands)
+  dashboard.py             # Streamlit dashboard (7 pages)
+  api.py                   # Flask REST API (10 endpoints)
   analysis.py              # Basic profiling and quality reports
   analysis_advanced.py     # Outliers, correlations, time series, distributions
   visualization.py         # Chart generation (matplotlib)
+  plotly_charts.py         # Interactive Plotly charts
   governance.py            # Lineage, audit, quality scoring, schema drift, retention
   construction_list.py     # Construction list management
   contract_analytics.py    # Contract progress, budget, productivity
   borough_analysis.py      # Five-borough analysis and equity scoring
   program_metrics.py       # KPI tracking and dashboards
   reporting.py             # Automated report generation
+  pdf_reports.py           # PDF export
   excel_integration.py     # Excel workbook builder, pivot tables, VLOOKUP
   sql_integration.py       # SQL generation and query builder
   bi_integration.py        # Tableau, Power BI, PowerPoint exports
   work_management.py       # Monday.com, MS Project, M365, Google Workspace
+  task_board.py            # Kanban task board with color-coded cards
+  workflow_engine.py       # Pipeline orchestration and automation
+  insights_engine.py       # AI-powered analysis and recommendations
+  nlp_integration.py       # NLP for construction lists and complaints
+  complaint_ingestion.py   # 311 auto-ingestion pipeline
+  cost_estimator.py        # Scope-based cost estimation
+  change_detection.py      # Data snapshot comparison
+  contractor_scorecards.py # Contractor performance profiles
+  budget_forecast.py       # Spend and completion forecasting
+  sla_tracking.py          # SLA cycle time tracking
+  notification_rules.py    # Configurable alert rules
+  alert_delivery.py        # Teams, Slack, email delivery
+  data_dictionary.py       # Auto-generated column documentation
+  map_view.py              # Interactive maps (folium)
+  messaging.py             # Chat bot adapter
+  quantum_optimization.py  # Crew/route optimization (Qiskit, Cirq)
+  quantum_search.py        # Grover's algorithm function template
+  nyc_datasets.py          # Pre-configured NYC dataset registry
+  qgis_integration.py      # QGIS project file generator
+  dbeaver_profiles.py      # Database tool connection profiles
   alerts.py                # Alert management and notification
   compliance.py            # DCWP license and Parks permit checks
   conflict.py              # Spatial conflict resolution

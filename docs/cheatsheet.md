@@ -128,6 +128,75 @@ MSProjectExporter().from_contracts(contracts_df)
 | ADA Compliance | 100% | ADA-passing ramps / total ramps |
 | On-Time Rate | > 90% | On-time contracts / total contracts |
 
+## Cost Estimation
+
+```python
+from socrata_toolkit.cost_estimator import estimate_costs, summarize_costs
+estimated = estimate_costs(construction_df)
+summary = summarize_costs(estimated)
+```
+
+## Change Detection
+
+```python
+from socrata_toolkit.change_detection import detect_changes
+changes = detect_changes(yesterday_df, today_df, key_col="id")
+```
+
+## SLA Tracking
+
+```python
+from socrata_toolkit.sla_tracking import compute_sla_metrics
+metrics = compute_sla_metrics(df)
+```
+
+## 311 Complaint Ingestion
+
+```python
+from socrata_toolkit.complaint_ingestion import ingest_311_complaints
+result = ingest_311_complaints(max_rows=500, create_tasks=True)
+```
+
+## Notification Rules
+
+```python
+from socrata_toolkit.notification_rules import RulesEngine, Rule
+engine = RulesEngine()
+engine.add_rule(Rule("backlog", field="pending_count", operator=">", threshold=200))
+alerts = engine.evaluate({"pending_count": 250})
+```
+
+## Quantum Search
+
+```python
+from socrata_toolkit.quantum_search import quantum_search, SearchCriteria
+result = quantum_search(df, SearchCriteria(borough="MANHATTAN", min_severity=7))
+```
+
+## Crew/Route Optimization
+
+```python
+from socrata_toolkit.quantum_optimization import optimize_crew_assignment, optimize_repair_route
+assignment = optimize_crew_assignment(df, n_crews=5)
+route = optimize_repair_route(df)
+```
+
+## Chat Bot
+
+```python
+from socrata_toolkit.messaging import BotAdapter
+bot = BotAdapter(default_data=df)
+response = bot.handle("manhattan backlog")
+```
+
+## Docker
+
+```bash
+docker compose up -d              # Full stack
+docker compose up dashboard       # Streamlit only
+docker compose -f docker-compose.test.yml up tests  # Run tests
+```
+
 ## Borough Codes
 
 | Borough | Code |
