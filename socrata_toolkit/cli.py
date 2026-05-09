@@ -638,5 +638,129 @@ def alerts_cmd(preview, send, persist, pg_dsn, table, corridor_table, buffer_m, 
     click.echo(json.dumps({"alerts": len(alerts_created)}))
 
 
+@main.command("outliers")
+@click.argument("domain")
+@click.argument("fourfour")
+@click.option("--method", type=click.Choice(["iqr", "zscore"]), default="iqr")
+@click.option("--max-rows", type=int, default=get_default(CFG, "preferences", "default_max_rows", default=10000))
+@click.option("--out", type=click.Path())
+def outliers_cmd(domain, fourfour, method, max_rows, out):
+    """Detect outliers in numeric columns of a dataset."""
+    from .analysis_advanced import detect_all_outliers
+    c = _client()
+    df = c.fetch_dataframe(domain, fourfour, max_rows=max_rows)
+    reports = detect_all_outliers(df, method=method)
+    payload = [
+        {"column": r.column, "method": r.method, "outlier_count": r.outlier_count,
+         "outlier_pct": r.outlier_pct, "lower_bound": r.lower_bound, "upper_bound": r.upper_bound}
+        for r in reports
+    ]
+    if out:
+        with open(out, "w", encoding="utf-8") as f:
+            json.dump(payload, f, indent=2)
+    click.echo(json.dumps(payload, indent=2))
+
+
+@main.command("correlations")
+@click.argument("domain")
+@click.argument("fourfour")
+@click.option("--method", type=click.Choice(["pearson", "spearman", "kendall"]), default="pearson")
+@click.option("--threshold", type=float, default=0.5)
+@click.option("--max-rows", type=int, default=get_default(CFG, "preferences", "default_max_rows", default=10000))
+@click.option("--out", type=click.Path())
+def correlations_cmd(domain, fourfour, method, threshold, max_rows, out):
+    """Compute pairwise correlations above a threshold."""
+    from .analysis_advanced import correlation_analysis
+    c = _client()
+    df = c.fetch_dataframe(domain, fourfour, max_rows=max_rows)
+    result = correlation_analysis(df, method=method, threshold=threshold)
+    payload = {"method": result.method, "threshold": result.threshold, "pairs": result.pairs}
+    if out:
+        with open(out, "w", encoding="utf-8") as f:
+            json.dump(payload, f, indent=2)
+    click.echo(json.dumps(payload, indent=2))
+
+
+@main.command("quality-score")
+@click.argument("domain")
+@click.argument("fourfour")
+@click.option("--key-column", multiple=True)
+@click.option("--date-column")
+@click.option("--freshness-days", type=int, default=30)
+@click.option("--max-rows", type=int, default=get_default(CFG, "preferences", "default_max_rows", default=10000))
+def quality_score_cmd(domain, fourfour, key_column, date_column, freshness_days, max_rows):
+    """Compute a composite data quality score for a dataset."""
+    from .governance import compute_quality_score
+    c = _client()
+    df = c.fetch_dataframe(domain, fourfour, max_rows=max_rows)
+    score = compute_quality_score(
+        df,
+        key_columns=list(key_column) if key_column else None,
+        date_column=date_column,
+        freshness_days_threshold=freshness_days,
+    )
+    payload = {
+        "overall": score.overall,
+        "completeness": score.completeness,
+        "validity": score.validity,
+        "consistency": score.consistency,
+        "freshness": score.freshness,
+        "details": score.details,
+    }
+    click.echo(json.dumps(payload, indent=2))
+
+
+@main.command("schema-drift")
+@click.argument("domain")
+@click.argument("fourfour")
+@click.option("--baseline", type=click.Path(exists=True), required=True, help="Path to baseline schema JSON")
+@click.option("--save-snapshot", type=click.Path(), help="Save current schema snapshot to this path")
+@click.option("--max-rows", type=int, default=100)
+def schema_drift_cmd(domain, fourfour, baseline, save_snapshot, max_rows):
+    """Detect schema drift between a dataset and a baseline schema."""
+    from .governance import detect_schema_drift, load_schema_snapshot, save_schema_snapshot
+    c = _client()
+    df = c.fetch_dataframe(domain, fourfour, max_rows=max_rows)
+    baseline_schema = load_schema_snapshot(baseline)
+    diff = detect_schema_drift(df, baseline_schema)
+    payload = {
+        "is_compatible": diff.is_compatible,
+        "added_columns": diff.added_columns,
+        "removed_columns": diff.removed_columns,
+        "type_changes": diff.type_changes,
+    }
+    click.echo(json.dumps(payload, indent=2))
+    if save_snapshot:
+        save_schema_snapshot(df, save_snapshot)
+        click.echo(f"Schema snapshot saved to {save_snapshot}")
+
+
+@main.command("visualize")
+@click.argument("domain")
+@click.argument("fourfour")
+@click.option("--chart", type=click.Choice(["histogram", "bar", "heatmap", "quality"]), required=True)
+@click.option("--column", help="Column to visualize (for histogram/bar)")
+@click.option("--out", type=click.Path(), required=True, help="Output image path")
+@click.option("--max-rows", type=int, default=get_default(CFG, "preferences", "default_max_rows", default=10000))
+def visualize_cmd(domain, fourfour, chart, column, out, max_rows):
+    """Generate a chart from a dataset and save to a file."""
+    from . import visualization as viz
+    c = _client()
+    df = c.fetch_dataframe(domain, fourfour, max_rows=max_rows)
+    if chart == "histogram":
+        if not column:
+            raise click.ClickException("--column is required for histogram")
+        viz.histogram(df, column, path=out)
+    elif chart == "bar":
+        if not column:
+            raise click.ClickException("--column is required for bar chart")
+        viz.bar_chart(df, column, path=out)
+    elif chart == "heatmap":
+        viz.correlation_heatmap(df, path=out)
+    elif chart == "quality":
+        viz.quality_dashboard(df, path_prefix=out.replace(".png", ""))
+    click.echo(f"Chart saved to {out}")
+
+
 if __name__ == "__main__":
     main()

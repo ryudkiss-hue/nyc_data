@@ -54,6 +54,29 @@ _lazy_map: Dict[str, str] = {
     "PostGISConflictResolver": "conflict:PostGISConflictResolver",
     "ensure_fts_index": "db_helpers:ensure_fts_index",
     "build_fts_index_sql": "db_helpers:build_fts_index_sql",
+    # advanced analysis
+    "detect_outliers_iqr": "analysis_advanced:detect_outliers_iqr",
+    "detect_outliers_zscore": "analysis_advanced:detect_outliers_zscore",
+    "detect_all_outliers": "analysis_advanced:detect_all_outliers",
+    "correlation_analysis": "analysis_advanced:correlation_analysis",
+    "time_series_summary": "analysis_advanced:time_series_summary",
+    "classify_distribution": "analysis_advanced:classify_distribution",
+    "classify_all_distributions": "analysis_advanced:classify_all_distributions",
+    "flag_anomalies": "analysis_advanced:flag_anomalies",
+    # visualization
+    "histogram": "visualization:histogram",
+    "bar_chart": "visualization:bar_chart",
+    "correlation_heatmap": "visualization:correlation_heatmap",
+    "time_series_chart": "visualization:time_series_chart",
+    "box_plot": "visualization:box_plot",
+    "quality_dashboard": "visualization:quality_dashboard",
+    # governance
+    "create_lineage": "governance:create_lineage",
+    "AuditLogger": "governance:AuditLogger",
+    "compute_quality_score": "governance:compute_quality_score",
+    "detect_schema_drift": "governance:detect_schema_drift",
+    "snapshot_schema": "governance:snapshot_schema",
+    "apply_retention_policy": "governance:apply_retention_policy",
 }
 
 # Public API list for "from socrata_toolkit import *"
@@ -94,6 +117,29 @@ __all__ = [
     "PostGISConflictResolver",
     "ensure_fts_index",
     "build_fts_index_sql",
+    # advanced analysis
+    "detect_outliers_iqr",
+    "detect_outliers_zscore",
+    "detect_all_outliers",
+    "correlation_analysis",
+    "time_series_summary",
+    "classify_distribution",
+    "classify_all_distributions",
+    "flag_anomalies",
+    # visualization
+    "histogram",
+    "bar_chart",
+    "correlation_heatmap",
+    "time_series_chart",
+    "box_plot",
+    "quality_dashboard",
+    # governance
+    "create_lineage",
+    "AuditLogger",
+    "compute_quality_score",
+    "detect_schema_drift",
+    "snapshot_schema",
+    "apply_retention_policy",
 ]
 
 

@@ -1,0 +1,9 @@
+unique_key,created_date,complaint_type,descriptor,borough,incident_address,latitude,longitude,status
+SR001,2024-08-01,Sidewalk Condition,Broken sidewalk trip hazard someone fell and was injured,MANHATTAN,123 Broadway,40.7128,-74.0060,Open
+SR002,2024-08-02,Sidewalk Condition,ADA ramp wheelchair user cannot access curb cut missing tactile warning,MANHATTAN,456 5th Ave,40.7549,-73.9840,Open
+SR003,2024-08-03,Sidewalk Condition,Tree root pushing up concrete slab dangerous for elderly,BROOKLYN,789 Atlantic Ave,40.6862,-73.9776,In Progress
+SR004,2024-08-04,Sidewalk Condition,Con Edison vault open near sidewalk utility conflict unsafe,BROOKLYN,321 Flatbush Ave,40.6577,-73.9615,Open
+SR005,2024-08-05,Sidewalk Condition,Minor crack in sidewalk cosmetic only,QUEENS,555 Queens Blvd,40.7282,-73.7949,Closed
+SR006,2024-08-06,Curb Condition,Curb damaged by vehicle needs replacement,BRONX,100 Grand Concourse,40.8265,-73.9232,Open
+SR007,2024-08-07,Sidewalk Condition,Collapsed sidewalk near school children at risk very dangerous,BRONX,200 Fordham Rd,40.8615,-73.8980,Open
+SR008,2024-08-08,Sidewalk Condition,Small uneven flag stone near bus stop,STATEN ISLAND,50 Victory Blvd,40.6432,-74.0833,Closed

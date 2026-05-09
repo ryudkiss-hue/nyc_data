@@ -1,43 +1,41 @@
 [tool.poetry]
 name = "socrata_toolkit"
-version = "0.2.0"
-description = "Socrata toolkit for NYC data"
+version = "0.3.0"
+description = "NYC DOT Sidewalk Inspection & Management Toolkit"
 authors = ["Richard Yudkiss ryudkiss@gmail.com"]
 readme = "README.md"
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.13"
+python = ">=3.9,<3.13"
 
 requests = ">=2.28"
 pandas = ">=2.0,<3.0"
 pyyaml = ">=6.0"
-typer = ">=0.7"
 click = ">=8.0"
-streamlit = ">=1.10"
-pytest = ">=7.0"
+numpy = ">=1.24,<3.0"
 
-numpy = "<2.0.0"
-
-spacy = "3.7.2"
-shapely = "^2.0"
-weasel = "<0.4.0"
-smart-open = "6.4.0"
-pathy = "0.10.3"
-
-psycopg-binary = { version = ">=2.9", optional = true }
-pymongo = { version = ">=4.0", optional = true }
-openpyxl = { version = ">=3.0", optional = true }
+# Optional heavy dependencies
+streamlit = {version = ">=1.10", optional = true}
+spacy = {version = ">=3.5", optional = true}
+shapely = {version = "^2.0", optional = true}
+matplotlib = {version = ">=3.5", optional = true}
+openpyxl = {version = ">=3.0", optional = true}
+psycopg-binary = {version = ">=2.9", optional = true}
+pymongo = {version = ">=4.0", optional = true}
 
 [tool.poetry.extras]
 postgres = ["psycopg-binary"]
 mongo = ["pymongo"]
 xlsx = ["openpyxl"]
 nlp = ["spacy"]
-dev = ["black", "ruff", "isort", "pre-commit", "pytest", "tox"]
+viz = ["matplotlib"]
+geo = ["shapely"]
+ui = ["streamlit"]
+all = ["psycopg-binary", "pymongo", "openpyxl", "spacy", "shapely", "matplotlib", "streamlit"]
 
 [tool.poetry.scripts]
-socrata = "socrata_toolkit.cli:app"
+socrata = "socrata_toolkit.cli:main"
 
 [build-system]
 requires = ["poetry-core"]
@@ -45,5 +43,12 @@ build-backend = "poetry.core.masonry.api"
 
 [dependency-groups]
 dev = [
-    "pytest (>=9.0.3,<10.0.0)"
+    "pytest (>=7.0)",
+    "black (>=23.0)",
+    "ruff (>=0.1.0)",
+    "isort (>=5.0)",
+    "coverage (>=7.0)",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
