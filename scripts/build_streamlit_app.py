@@ -1,14 +1,8 @@
+"""Auto-generate Streamlit UI pages from toolkit modules."""
 import inspect
 import importlib
 from pathlib import Path
-from socrata_toolkit.app import load_env
-from sqlalchemy import create_engine
 
-# Load environment variables from .env
-env = load_env(".env")
-
-# Create SQLAlchemy engine using PG_DSN
-engine = create_engine(env["PG_DSN"])
 
 def generate_streamlit_ui(module_name: str, output_path: str):
     module = importlib.import_module(module_name)
@@ -29,6 +23,7 @@ def generate_streamlit_ui(module_name: str, output_path: str):
             args = ", ".join(sig.parameters.keys())
             f.write(f"    st.write({module_name}.{name}({args}))\n\n")
 
+
 def main():
     modules = [
         "socrata_toolkit.client",
@@ -39,7 +34,8 @@ def main():
     for m in modules:
         output = f"streamlit_app/auto_{m.split('.')[-1]}_ui.py"
         generate_streamlit_ui(m, output)
-        print(f"✅ Generated {output}")
+        print(f"Generated {output}")
+
 
 if __name__ == "__main__":
     main()

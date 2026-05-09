@@ -1,743 +1,485 @@
-# 🗂 Socrata Toolkit
+# NYC DOT Sidewalk Toolkit
 
-A batteries-included Python toolkit for the [Socrata Open Data API (SODA3)](https://dev.socrata.com/).  
-Search any Socrata portal, pull data by **4x4 dataset ID**, and pipe it to **PostgreSQL**, **MongoDB**, or **XLSX** — with full metadata / column-dictionary support.
+A comprehensive Python toolkit for the NYC Department of Transportation's Sidewalk Inspection & Management unit. Built for project analysts and managers who need to collect, analyze, and report on sidewalk repair data across the five boroughs.
 
----
+## Quick Start
 
-## Features
+```bash
+# Install core dependencies
+pip install -e .
 
-| Capability | Details |
-|---|---|
-| **Catalog Search** | Full-text, domain, category, tags, sort order |
-| **Metadata / Dict** | Name, description, column types, row count, license |
-| **JSON Fetch** | Paginated streaming with SoQL WHERE / SELECT / ORDER |
-| **GeoJSON Fetch** | Paginated, auto-merged FeatureCollection |
-| **XLSX Export** | Styled workbook: Data + Summary + Column Dictionary sheets |
-| **Postgres Upsert** | Auto-DDL, `ON CONFLICT … DO UPDATE`, batch streaming |
-| **MongoDB Upsert** | `bulk_write` with `upsert=True`, GeoJSON geometry field |
-| **CLI** | `socrata search / meta / fetch / upsert-pg / upsert-mongo / pipeline` |
-| **Pipeline** | Fetch once, dispatch to all outputs simultaneously |
+# Install with all optional extras
+pip install -e ".[postgres,mongo,xlsx,nlp,dev]"
 
----
+# Run the interactive setup wizard
+python -m socrata_toolkit.install_wizard
+
+# Verify your installation
+socrata doctor
+```
+
+## What This Toolkit Does
+
+| Module | Purpose |
+|--------|---------|
+| **Core Client** | Fetch data from NYC Open Data (Socrata API) with pagination, retries, and GeoJSON support |
+| **Construction Lists** | Build, prioritize, and export construction lists with conflict detection |
+| **Contract Analytics** | Track contract progress, budget (EVM), and productivity metrics |
+| **Borough Analysis** | Five-borough comparisons, hotspot identification, and equity analysis |
+| **Program Metrics** | KPI tracking with red/yellow/green dashboards and budget code management |
+| **Reporting** | Generate Markdown, HTML, and JSON reports for contracts, KPIs, and inquiries |
+| **Analysis** | Outlier detection, correlation analysis, time series, distributions |
+| **Visualization** | Histograms, heatmaps, time series charts, quality dashboards |
+| **Governance** | Data lineage, audit logging, quality scoring, schema drift, retention |
+| **Excel Integration** | Pivot tables, VLOOKUP, formulas, multi-sheet workbook builder |
+| **SQL Integration** | DDL/DML generation, query builder, analytics views, cross-DB portability |
+| **BI Integration** | Tableau, Power BI, and PowerPoint exports |
+| **Work Management** | Monday.com, MS Project, Microsoft 365, Google Workspace adapters |
+| **Task Board** | Kanban board with color-coded cards, milestones, activity logging |
+| **Workflow Engine** | Multi-step pipeline orchestration with triggers and scheduling |
+| **Insights Engine** | AI-powered auto-analysis with recommendations and anomaly narratives |
+| **NLP Integration** | Construction list enrichment, complaint triage, location extraction |
+| **Cost Estimator** | Scope-based cost estimation with borough rates and ADA surcharges |
+| **311 Ingestion** | Auto-fetch and triage sidewalk complaints from NYC Open Data |
+| **Map View** | Interactive maps with folium (markers, clusters, color-coding) |
+| **Change Detection** | Compare data snapshots to surface additions, removals, and modifications |
+| **Contractor Scorecards** | Performance profiles with letter grades (A-F) by contractor |
+| **Budget Forecasting** | Spend projection, completion dates, workload backlog modeling |
+| **SLA Tracking** | Cycle time metrics, SLA violation flagging by borough |
+| **Notification Rules** | Configurable alert rules with Teams, Slack, and email delivery |
+| **Data Dictionary** | Auto-generated column documentation with types, nulls, and samples |
+| **Quantum Optimization** | Crew assignment and route optimization (Qiskit, Cirq, classical) |
+| **Quantum Search** | Grover's algorithm function template for database search |
+| **PDF Reports** | PDF export via weasyprint with styled tables |
+| **QGIS Integration** | Generate .qgs project files with PostGIS layers |
+| **DBeaver Profiles** | Connection profiles for DBeaver, pgAdmin, DataGrip |
+| **Flask API** | 10-endpoint REST API for programmatic access |
+| **Docker** | Full stack with PostGIS, MongoDB, Streamlit, and API |
 
 ## Installation
 
+### Prerequisites
+
+- Python 3.9 or later
+- pip or poetry
+
+### Basic Install
+
 ```bash
-# Core (search, fetch, XLSX)
-pip install .
+pip install -e .
+```
 
-# With PostgreSQL support
-pip install ".[postgres]"
+### Install Extras
 
-# With MongoDB support
-pip install ".[mongo]"
+```bash
+# PostgreSQL support
+pip install -e ".[postgres]"
+
+# MongoDB support
+pip install -e ".[mongo]"
+
+# Excel export (openpyxl)
+pip install -e ".[xlsx]"
+
+# NLP features (spacy)
+pip install -e ".[nlp]"
 
 # Everything
-pip install ".[all]"
+pip install -e ".[postgres,mongo,xlsx,nlp,dev]"
 ```
 
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-## Developer Quickstart
-
-If you are developing or contributing, use an editable install and run tests locally:
-
-```bash
-# Create an editable install (recommended for iterative development)
-python -m pip install -e .
-
-# Install development/test dependencies
-python -m pip install -r requirements-dev.txt
-
-# Run the test suite
-pytest -q
-
-# Run the CLI directly from the repository
-python -m socrata_toolkit.cli --help
-```
-
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-Set your Socrata app token (removes rate-limiting):
-```bash
-export SOCRATA_APP_TOKEN="your_token_here"
-```
-
----
-
-## CLI Quick Reference
-
-### Search the catalog
-```bash
-socrata search "restaurant inspections" --domain data.cityofnewyork.us --limit 10
-socrata search --category Health --order page_views_last_month
-socrata search "traffic" --domain data.cityofchicago.org --json-out > results.json
-```
-
-### Get metadata / column dictionary
-```bash
-socrata meta data.cityofnewyork.us h9gi-nx95
-socrata meta data.cityofnewyork.us h9gi-nx95 --columns-only
-socrata meta data.cityofnewyork.us h9gi-nx95 --json-out > meta.json
-```
-
-### Fetch data to file
-```bash
-# JSON (stdout or file)
-socrata fetch data.cityofnewyork.us h9gi-nx95 --format json --out crashes.json --max-rows 5000
-
-# GeoJSON
-socrata fetch data.cityofnewyork.us abc1-2def --format geojson --out parcels.geojson
-
-# Excel (with Summary + Column Dictionary sheets)
-socrata fetch data.cityofnewyork.us h9gi-nx95 \\
-  --format xlsx --out crashes.xlsx \\
-  --include-meta \\
-  --where "crash_date >= '2023-01-01'" \\
-  --max-rows 100000
-```
-
-### SoQL filtering (works on all commands)
-```bash
-# Date range
---where "date > '2022-01-01T00:00:00' AND date < '2023-01-01T00:00:00'"
-
-# Select specific columns
---select "id, inspection_date, score, grade"
-
-# Full-text search within dataset
---q "salmonella"
-
-# Sort
---order "inspection_date DESC"
-```
-
-### Upsert to PostgreSQL
-```bash
-socrata upsert-pg data.cityofnewyork.us h9gi-nx95 \\
-  --dsn "postgresql://user:pass@localhost:5432/mydb" \\
-  --table crashes \\
-  --conflict-col collision_id \\
-  --save-meta
-
-# Env-var DSN
-export PG_DSN="postgresql://user:pass@localhost/mydb"
-socrata upsert-pg data.cityofnewyork.us h9gi-nx95 --table crashes --conflict-col collision_id
-```
-
-### Upsert to MongoDB
-```bash
-socrata upsert-mongo data.cityofnewyork.us h9gi-nx95 \\
-  --uri "mongodb://localhost:27017" \\
-  --db socrata \\
-  --collection crashes \\
-  --conflict-field collision_id
-
-# GeoJSON mode (stores geometry field — compatible with 2dsphere index)
-socrata upsert-mongo data.cityofnewyork.us abc1-2def \\
-  --uri $MONGO_URI --db socrata --collection parcels \\
-  --geojson --conflict-field parcel_id
-```
-
-### Full pipeline (one command → all outputs)
-```bash
-socrata pipeline data.cityofnewyork.us h9gi-nx95 \\
-  --pg-dsn $PG_DSN --pg-table crashes --pg-conflict-col collision_id \\
-  --mongo-uri $MONGO_URI --mongo-db socrata --mongo-collection crashes \\
-  --xlsx-out crashes.xlsx \\
-  --json-out crashes.json \\
-  --geojson-out crashes.geojson \\
-  --where "crash_date >= '2024-01-01'"
-```
-
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-### Pipeline previews & saved configs (UI)
-
-The Streamlit Workbench adds interactive pipeline preview and saved pipeline configs:
-
-- Use the **Automated Upsert / Pipeline** workflow to preview what will be written (Postgres SQL, Mongo sample, XLSX filename) using **Dry run / Preview**.
-- Save pipeline configurations from the UI and reload them later from the **Saved Pipelines** selector.
-- Runs require explicit confirmation to perform writes, helping avoid accidental data changes.
-
-### Streaming (low-memory) pipeline
-
-- The Workbench and CLI now support a streaming, low-memory pipeline mode that processes Socrata pages in chunks and broadcasts them to Postgres, MongoDB, or a JSONL backup without loading the entire dataset into RAM.
-- In the Streamlit UI: enable "Use streaming mode (low memory)" in the **Automated Upsert / Pipeline** workflow and choose the targets. A dry-run preview shows example Postgres SQL and a small sample before you run writes.
-- In the CLI: use `--stream` and `--dry-run` to preview or `--stream` to run. Example:
-
-```bash
-# Preview streaming pipeline (no writes)
-socrata pipeline data.cityofnewyork.us h9gi-nx95 --stream --dry-run --pg-table crashes --pg-conflict-col collision_id --pg-dsn "$PG_DSN"
-
-# Run streaming pipeline
-socrata pipeline data.cityofnewyork.us h9gi-nx95 --stream --pg-table crashes --pg-conflict-col collision_id --pg-dsn "$PG_DSN"
-```
-
-The streaming mode writes a JSONL backup by default and performs batched upserts to Postgres and MongoDB.
-
-
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
----
-
-## Python API
-
-### Search
-```python
-from socrata_toolkit import SocrataClient, SocrataConfig
-
-client = SocrataClient(SocrataConfig(app_token="MY_TOKEN"))
-
-results = client.search(
-    query="restaurant inspections",
-    domain="data.cityofnewyork.us",
-    limit=20,
-    order="page_views_last_month",
-)
-for r in results:
-    print(r.fourfour, r.name, r.domain)
-```
-
-### Metadata
-```python
-meta = client.get_metadata("data.cityofnewyork.us", "43nn-pn8j")
-print(meta.summary())
-print(meta.column_dict())      # list of dicts for export
-print(meta.is_geo)             # True if GeoJSON-capable
-```
-
-### Paginated streaming
-```python
-# Yields List[dict] per page — memory-efficient for huge datasets
-for batch in client.fetch_json(
-    "data.cityofnewyork.us", "h9gi-nx95",
-    where="crash_date >= '2023-01-01'",
-    select="collision_id, crash_date, borough, number_of_persons_injured",
-    order="crash_date DESC",
-    max_rows=500_000,
-):
-    process(batch)   # your processing function
-```
-
-### DataFrame (convenience)
-```python
-df = client.fetch_dataframe(
-    "data.cityofnewyork.us", "h9gi-nx95",
-    where="crash_date >= '2024-01-01'",
-    max_rows=10_000,
-)
-print(df.shape)
-```
-
-### GeoJSON
-```python
-geojson = client.fetch_geojson(
-    "data.cityofnewyork.us", "abc1-2def",
-    where="year = '2023'",
-)
-# {"type": "FeatureCollection", "features": [...]} 
-```
-
-### XLSX Export
-```python
-from socrata_toolkit.exporters import XLSXExporter
-
-xl = XLSXExporter()
-xl.write(
-    df,                          # DataFrame or list of dicts
-    path="output/inspections.xlsx",
-    sheet="Inspections",
-    meta=meta,                   # adds Summary + Column Dictionary sheets
-    freeze_panes=True,
-    auto_filter=True,
-)
-```
-
-### PostgreSQL
-```python
-from socrata_toolkit.exporters import PostgresExporter
-
-with PostgresExporter("postgresql://user:pass@localhost/mydb") as pg:
-    # Auto-creates table, streams batches directly
-    total = pg.upsert_batches(
-        client.fetch_json("data.cityofnewyork.us", "h9gi-nx95",
-                          where="crash_date >= '2024-01-01'"),
-        table="crashes",
-        conflict_column="collision_id",
-    )
-    pg.upsert_metadata(meta)   # saves to _socrata_metadata
-    print(f"Upserted {total} rows")
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-
-  ### PostGIS Conflict Detection (scale)
-
-  If you have a PostGIS-enabled database, the toolkit provides a PostGIS-backed conflict resolver that performs spatial joins in the database (recommended for large datasets):
-
-  ```python
-  from socrata_toolkit import PostGISConflictResolver
-
-  resolver = PostGISConflictResolver(dsn="postgresql://user:pass@host/db")
-  df, summary = resolver.resolve_conflicts(
-    proposed_table="public.proposed_work",
-    reference_table="public.active_projects",
-    proposed_id_col="id",
-    proposed_geom_col="geom",
-    reference_id_col="id",
-    reference_geom_col="geom",
-    buffer_m=20.0,
-  )
-  print(summary)
-  resolver.close()
-  ```
-
-  This runs an efficient `ST_DWithin` query and returns per-row conflict counts and arrays of matching reference IDs.
-
-  ### Full-Text Search (FTS) helpers
-
-  Create a GIN expression index over one or more text columns using `to_tsvector`:
-
-  ```python
-  from socrata_toolkit.db_helpers import ensure_fts_index
-
-  ensure_fts_index(
-    dsn=PG_DSN,
-    table="public.crashes",
-    columns=["address", "descriptor", "comments"],
-  )
-  ```
-
-  This helper issues a `CREATE INDEX IF NOT EXISTS ... USING GIN (to_tsvector(...))` SQL statement to accelerate textual queries.
-
-  ### COPY-based bulk upserts (speed)
-
-  When writing large datasets into Postgres, the `PostgresExporter.copy_upsert_batches` method uses a temporary staging table and `COPY` to accelerate loading before performing a single `INSERT ... ON CONFLICT` upsert into the target table. The method falls back to the safe `upsert_batches` path if COPY is not supported in your environment.
-
-  ```python
-  from socrata_toolkit.exporters import PostgresExporter
-
-  with PostgresExporter(PG_DSN) as pg:
-    total = pg.copy_upsert_batches(
-      client.fetch_json("data.cityofnewyork.us", "h9gi-nx95"),
-      table="crashes",
-      conflict_column="collision_id",
-    )
-    print(f"Loaded {total} rows via COPY+upsert")
-  ```
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-```
-
-### MongoDB
-```python
-from socrata_toolkit.exporters import MongoExporter
-
-with MongoExporter("mongodb://localhost:27017", "socrata") as mongo:
-    total = mongo.upsert_batches(
-        client.fetch_json("data.cityofnewyork.us", "h9gi-nx95"),
-        collection="crashes",
-        conflict_field="collision_id",
-    )
-    # GeoJSON with geometry field
-    gj = client.fetch_geojson("data.cityofnewyork.us", "abc1-2def")
-    mongo.upsert_geojson(gj, collection="parcels", conflict_field="bbl")
-```
-
----
-
-## SoQL Reference
-
-Socrata supports a SQL-like query language called SoQL. Useful clauses:
-
-| Clause | SoQL syntax | `--where` / `where=` example |
-|---|---|---|
-| Date range | `$where=col >= 'YYYY-MM-DDTHH:MM:SS'` | `"crash_date >= '2023-01-01T00:00:00'"` |
-| Numeric filter | `$where=score > 80` | `"score > 80"` |
-| String match | `$where=grade = 'A'` | `"grade = 'A'"` |
-| IS NULL | `$where=borough IS NOT NULL` | `"borough IS NOT NULL"` |
-| LIKE | `$where=name LIKE '%pizza%'` | `"name LIKE '%pizza%'"` |
-| Geo within box | `$within_box=...` | use `extra_params` in Python |
-
-Full SoQL docs: https://dev.socrata.com/docs/queries/
-
----
-
-## Environment Variables
+### Environment Variables
 
 | Variable | Purpose |
-|---|---|
-| `SOCRATA_APP_TOKEN` | Socrata app token (removes throttling) |
+|----------|---------|
+| `SOCRATA_APP_TOKEN` | Socrata API app token (optional, increases rate limits) |
 | `PG_DSN` | PostgreSQL connection string |
 | `MONGO_URI` | MongoDB connection URI |
 
----
+## CLI Reference
 
-## Project Layout
+All commands are available via `socrata <command>`. Run `socrata --help` for the full list.
+
+### Data Fetching
+
+```bash
+# Search NYC Open Data
+socrata search "sidewalk" --domain data.cityofnewyork.us --limit 10
+
+# Fetch dataset metadata
+socrata meta data.cityofnewyork.us h9gi-nx95
+
+# Download data as JSON, GeoJSON, or XLSX
+socrata fetch data.cityofnewyork.us h9gi-nx95 --format json --out data.json
+socrata fetch data.cityofnewyork.us h9gi-nx95 --format xlsx --out data.xlsx --include-meta
+```
+
+### Analysis
+
+```bash
+# Profile a dataset (column stats, null counts, types)
+socrata analyze data.cityofnewyork.us h9gi-nx95 --key-column id
+
+# Detect outliers
+socrata outliers data.cityofnewyork.us h9gi-nx95 --method iqr
+
+# Find correlations
+socrata correlations data.cityofnewyork.us h9gi-nx95 --threshold 0.5
+
+# Text insights (term frequency, regex patterns, tags)
+socrata text-insights data.cityofnewyork.us h9gi-nx95 --text-column description
+```
+
+### Quality & Governance
+
+```bash
+# Compute data quality score
+socrata quality-score data.cityofnewyork.us h9gi-nx95 --key-column id --date-column updated_at
+
+# Check for schema drift
+socrata schema-drift data.cityofnewyork.us h9gi-nx95 --baseline schema.json --save-snapshot current.json
+```
+
+### Visualization
+
+```bash
+# Generate charts
+socrata visualize data.cityofnewyork.us h9gi-nx95 --chart histogram --column violations --out hist.png
+socrata visualize data.cityofnewyork.us h9gi-nx95 --chart heatmap --out corr.png
+socrata visualize data.cityofnewyork.us h9gi-nx95 --chart quality --out quality.png
+```
+
+### Pipeline & Export
+
+```bash
+# Full pipeline: fetch, analyze, export to multiple targets
+socrata pipeline data.cityofnewyork.us h9gi-nx95 \
+  --json-out data.json \
+  --xlsx-out data.xlsx \
+  --pg-dsn "$PG_DSN" --pg-table inspections --pg-conflict-col id
+
+# Streaming mode (low memory)
+socrata pipeline data.cityofnewyork.us h9gi-nx95 --stream --pg-dsn "$PG_DSN" --pg-table data --pg-conflict-col id
+
+# Batch search with a file of IDs
+socrata batch-search data.cityofnewyork.us h9gi-nx95 --field id --file ids.txt --out results.json
+```
+
+### Operations
+
+```bash
+# Detect spatial conflicts
+socrata conflict --proposed-file proposed.json --ref-file permits.json --buffer-meters 20
+
+# Run health checks
+socrata doctor --check-db
+
+# Apply database migrations
+socrata migrate --dsn "$PG_DSN"
+
+# Generate and dispatch alerts
+socrata alerts --pg-dsn "$PG_DSN" --preview
+```
+
+## Python API Examples
+
+### Construction List Management
+
+```python
+from socrata_toolkit.construction_list import (
+    prioritize_construction_list,
+    detect_construction_conflicts,
+    classify_scope,
+    flag_ada_locations,
+    export_construction_list,
+)
+
+# Load and prioritize inspection data
+inspections = pd.read_csv("inspections.csv")
+prioritized = prioritize_construction_list(inspections)
+prioritized = classify_scope(prioritized)
+prioritized = flag_ada_locations(prioritized)
+
+# Check for conflicts with active permits
+permits = pd.read_csv("permits.csv")
+result = detect_construction_conflicts(prioritized, permits)
+print(f"{result.conflict_count} conflicts found ({result.conflict_rate}%)")
+
+# Export the clean list
+export_construction_list(result.clean, "construction_list.xlsx")
+```
+
+### Contract Analytics
+
+```python
+from socrata_toolkit.contract_analytics import (
+    analyze_contract_progress,
+    budget_analysis,
+    productivity_metrics,
+)
+
+progress = analyze_contract_progress(contracts_df)
+for p in progress:
+    print(f"{p.contract_id}: {p.pct_complete}% complete, {p.status}")
+
+budget = budget_analysis(contracts_df)
+print(f"CPI: {budget.cost_performance_index}, Forecast: ${budget.forecast_at_completion:,.0f}")
+
+prod = productivity_metrics(contracts_df)
+print(f"Throughput: {prod.sqft_per_day} sqft/day, Efficiency: {prod.crew_efficiency}")
+```
+
+### Program KPI Dashboard
+
+```python
+from socrata_toolkit.program_metrics import MetricsTracker, compute_program_dashboard
+
+# Quick dashboard from raw data
+dashboard = compute_program_dashboard(df)
+print(f"Program health: {dashboard.overall_health}")
+
+# Or build a custom tracker
+tracker = MetricsTracker()
+tracker.load_standard_kpis()
+tracker.record("defect_density", 1.8)
+tracker.record("throughput_velocity", 220)
+tracker.add_budget_code("PS-001", description="Personnel", allocated=100000, spent=60000)
+dashboard = tracker.dashboard()
+tracker.save("metrics_state.json")
+```
+
+### Report Generation
+
+```python
+from socrata_toolkit.reporting import generate_contract_report, generate_inquiry_response
+
+report = generate_contract_report(contracts_df)
+report.save("reports/contract_status.md")
+report.save("reports/contract_status.html")
+
+# Respond to an inquiry
+response = generate_inquiry_response("borough_overview", df, borough="MANHATTAN")
+print(response.to_markdown())
+```
+
+### Excel Integration
+
+```python
+from socrata_toolkit.excel_integration import ExcelWorkbookBuilder, vlookup, create_pivot_table
+
+# Build a multi-sheet workbook
+builder = ExcelWorkbookBuilder()
+builder.add_data_sheet("Inspections", inspections_df)
+builder.add_pivot_sheet("Borough Summary", inspections_df, rows="borough", values="violations")
+builder.add_vlookup_sheet("Enriched", inspections_df, contracts_df, "contract_id", "contract_id", ["contractor_name"])
+builder.add_formula_column("Inspections", "severity_class", '=IF(B{row}>7,"HIGH","LOW")')
+builder.save("report.xlsx")
+```
+
+### BI Platform Exports
+
+```python
+from socrata_toolkit.bi_integration import export_for_tableau, export_for_powerbi, create_presentation
+from socrata_toolkit.bi_integration import SlideContent
+
+# Tableau
+export_for_tableau(df, "exports/tableau", geo_columns={"borough": "State/Province"})
+
+# Power BI
+export_for_powerbi(df, "exports/powerbi", date_columns=["inspection_date"])
+
+# PowerPoint / Google Slides
+slides = [
+    SlideContent(title="Program Overview", body="Q1 2025 results", data={"Contracts": 12, "Completion": "78%"}),
+    SlideContent(title="Borough Breakdown", body="Performance by borough"),
+]
+create_presentation(slides, "exports/report.pptx", title="DOT Sidewalk Program")
+```
+
+### Work Management Integration
+
+```python
+from socrata_toolkit.work_management import MondayAdapter, MSProjectExporter, M365Adapter
+
+# Monday.com
+monday = MondayAdapter()
+items = monday.construction_list_to_items(construction_df)
+monday.export_items("monday_import.json", items)
+
+# Microsoft Project
+exporter = MSProjectExporter()
+exporter.from_contracts(contracts_df)
+exporter.save("schedule.xml")
+
+# Teams notification
+msg = M365Adapter.teams_notification("5 new conflicts detected", "Construction conflicts found in Manhattan",
+    facts={"Borough": "Manhattan", "Conflicts": 5})
+M365Adapter().export_payloads("teams_alert.json", msg)
+```
+
+### SQL Generation
+
+```python
+from socrata_toolkit.sql_integration import SQLQueryBuilder, dataframe_to_create_table, export_as_sql_file
+
+# Generate DDL + DML
+export_as_sql_file(df, "inspections", "setup.sql", dialect="postgres", primary_key="id")
+
+# Fluent query builder
+query = (SQLQueryBuilder("inspections")
+    .select("borough", "COUNT(*) as cnt", "AVG(severity) as avg_sev")
+    .where("status = 'Pending Repair'")
+    .group_by("borough")
+    .order_by("cnt DESC")
+    .limit(10)
+    .build())
+```
+
+### Quantum Computing
+
+```python
+from socrata_toolkit.quantum_search import quantum_search, SearchCriteria, analyze_grover_circuit
+from socrata_toolkit.quantum_optimization import optimize_crew_assignment, optimize_repair_route
+
+# Grover's quantum search (classical fallback when Qiskit not installed)
+criteria = SearchCriteria(borough="MANHATTAN", min_severity=7, ada_required=True)
+result = quantum_search(df, criteria)
+print(f"Found {result.match_count} matches via {result.method}")
+
+# Analyze quantum resource requirements
+info = analyze_grover_circuit(n_records=10000, n_solutions=50)
+print(f"Qubits: {info.num_qubits}, Iterations: {info.num_grover_iterations}")
+
+# Crew assignment optimization
+assignment = optimize_crew_assignment(locations_df, n_crews=5)
+
+# Route optimization (TSP with 2-opt)
+route = optimize_repair_route(locations_df)
+print(f"Route: {route.route}, Distance: {route.total_distance} km")
+```
+
+### Cost Estimation
+
+```python
+from socrata_toolkit.cost_estimator import estimate_costs, summarize_costs
+
+estimated = estimate_costs(construction_df)
+summary = summarize_costs(estimated)
+print(f"Total estimated: ${summary.total_estimated:,.2f}")
+```
+
+### 311 Complaint Ingestion
+
+```python
+from socrata_toolkit.complaint_ingestion import ingest_311_complaints
+
+result = ingest_311_complaints(max_rows=500, borough="MANHATTAN", create_tasks=True)
+print(f"Ingested {result.total}, {result.critical_count} critical")
+```
+
+### SLA Tracking
+
+```python
+from socrata_toolkit.sla_tracking import compute_sla_metrics, flag_sla_violations
+
+metrics = compute_sla_metrics(df)
+print(f"Avg cycle: {metrics.avg_total_cycle_days} days, Compliance: {metrics.sla_compliance_rate}%")
+```
+
+### Change Detection
+
+```python
+from socrata_toolkit.change_detection import detect_changes
+
+changes = detect_changes(yesterday_df, today_df, key_col="id")
+print(f"Added: {changes.added_count}, Modified: {changes.modified_count}")
+```
+
+### Messaging Bot
+
+```python
+from socrata_toolkit.messaging import BotAdapter
+
+bot = BotAdapter(default_data=df)
+response = bot.handle("manhattan backlog")
+print(response.text)  # "MANHATTAN: 245 total, 180 pending repairs"
+```
+
+## Project Structure
 
 ```
 socrata_toolkit/
-├── __init__.py        # Public API surface
-├── client.py          # SocrataClient — search, metadata, fetch
-├── exporters.py       # PostgresExporter, MongoExporter, XLSXExporter
-└── cli.py             # Click CLI (socrata command)
+  __init__.py              # Lazy-loading public API
+  client.py                # Socrata API client
+  models.py                # Data models (DatasetMetadata, SearchResult)
+  cli.py                   # Click-based CLI (20+ commands)
+  dashboard.py             # Streamlit dashboard (7 pages)
+  api.py                   # Flask REST API (10 endpoints)
+  analysis.py              # Basic profiling and quality reports
+  analysis_advanced.py     # Outliers, correlations, time series, distributions
+  visualization.py         # Chart generation (matplotlib)
+  plotly_charts.py         # Interactive Plotly charts
+  governance.py            # Lineage, audit, quality scoring, schema drift, retention
+  construction_list.py     # Construction list management
+  contract_analytics.py    # Contract progress, budget, productivity
+  borough_analysis.py      # Five-borough analysis and equity scoring
+  program_metrics.py       # KPI tracking and dashboards
+  reporting.py             # Automated report generation
+  pdf_reports.py           # PDF export
+  excel_integration.py     # Excel workbook builder, pivot tables, VLOOKUP
+  sql_integration.py       # SQL generation and query builder
+  bi_integration.py        # Tableau, Power BI, PowerPoint exports
+  work_management.py       # Monday.com, MS Project, M365, Google Workspace
+  task_board.py            # Kanban task board with color-coded cards
+  workflow_engine.py       # Pipeline orchestration and automation
+  insights_engine.py       # AI-powered analysis and recommendations
+  nlp_integration.py       # NLP for construction lists and complaints
+  complaint_ingestion.py   # 311 auto-ingestion pipeline
+  cost_estimator.py        # Scope-based cost estimation
+  change_detection.py      # Data snapshot comparison
+  contractor_scorecards.py # Contractor performance profiles
+  budget_forecast.py       # Spend and completion forecasting
+  sla_tracking.py          # SLA cycle time tracking
+  notification_rules.py    # Configurable alert rules
+  alert_delivery.py        # Teams, Slack, email delivery
+  data_dictionary.py       # Auto-generated column documentation
+  map_view.py              # Interactive maps (folium)
+  messaging.py             # Chat bot adapter
+  quantum_optimization.py  # Crew/route optimization (Qiskit, Cirq)
+  quantum_search.py        # Grover's algorithm function template
+  nyc_datasets.py          # Pre-configured NYC dataset registry
+  qgis_integration.py      # QGIS project file generator
+  dbeaver_profiles.py      # Database tool connection profiles
+  alerts.py                # Alert management and notification
+  compliance.py            # DCWP license and Parks permit checks
+  conflict.py              # Spatial conflict resolution
+  dot_sidewalk.py          # Sidewalk-specific KPIs and SQL templates
+  exporters.py             # Postgres, MongoDB, XLSX exporters
+  ops.py                   # Grace period, permit lookahead, burndown
+  spatial.py               # Shapely-based spatial operations
+  text_analytics.py        # Text insights and tagging
+  nlp_advanced.py          # NLP (spacy, textblob, transformers)
+  llm_duck_bridge.py       # LLM classification bridge
 
-requirements.txt
-pyproject.toml
-README.md
+tests/                     # 163 tests covering all modules
+scripts/                   # Nightly jobs, migrations, build helpers
+sql/migrations/            # Database migration files
+docs/                      # Extended documentation
 ```
 
----
-
-
-## Streamlit Workbench
-
-Run the full UX/UI app for search, metadata review, fetch/export, file uploads, and automated upsert pipelines:
+## Running Tests
 
 ```bash
-streamlit run socrata_toolkit/app.py
+# Run all tests
+python -m pytest tests/ -v
+
+# Run a specific module's tests
+python -m pytest tests/test_construction_list.py -v
+
+# With coverage
+python -m pytest tests/ --cov=socrata_toolkit
 ```
 
-The app supports:
-- text inputs for SoQL filters and connection settings
-- JSON/GeoJSON file upload via file explorer widget
-- one-click export to JSON / GeoJSON / XLSX
-- automated upsertion to PostgreSQL and MongoDB
-
----
-
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-## Operations Playbook & SOP
-
-We maintain a set of operational docs, SOPs, and integration notes to support DOT workflows. See:
-
-- [SOP & FAQ](docs/sop_faq.md)
-- [Operations Management Guide](docs/operations_management.md)
-- [Advanced Integrations](docs/advanced_integrations.md)
-
-These files include sample SQL, trigger templates, and recommended nightly job outlines.
-
----
-
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
 ## License
 
 MIT
-
----
-
-## Detailed How-To Guide
-
-### 1) Start the toolkit
-
-```bash
-pip install .
-streamlit run socrata_toolkit/app.py
-```
-
-### 2) Search for datasets
-1. Open **Search** workflow.
-2. Enter query/domain/category/tags.
-3. Click **Run Search**.
-4. Download `search_results.json` for reproducibility.
-
-### 3) Inspect metadata and columns
-1. Open **Metadata** workflow.
-2. Enter dataset domain + 4x4 ID.
-3. Click **Load Metadata**.
-4. Review summary + column dictionary and download metadata JSON.
-
-### 4) Fetch and export data
-1. Open **Fetch & Export**.
-2. Add optional SoQL (`WHERE`, `SELECT`, `ORDER`, `q`) and max rows.
-3. Click **Fetch Data** for preview.
-4. Export as JSON / GeoJSON / XLSX in one click.
-
-### 5) Analyze data quality
-1. Open **Analysis Studio**.
-2. Choose optional filter and row limit.
-3. Add key columns for duplicate checks (comma-separated).
-4. Click **Run Analysis** to get:
-   - row/column stats,
-   - missingness chart,
-   - type map,
-   - numeric summary,
-   - duplicate quality report.
-
-CLI equivalent:
-```bash
-socrata analyze data.cityofnewyork.us h9gi-nx95 --max-rows 10000 --key-column collision_id
-```
-
-### 6) Run automated upsertion pipeline
-1. Open **Automated Upsert**.
-2. Pick source:
-   - direct Socrata fetch, or
-   - uploaded JSON/GeoJSON file.
-3. Select targets (PostgreSQL, MongoDB, XLSX backup).
-4. Provide conflict keys and connection strings.
-5. Click **Run Automated Upsert Pipeline**.
-
-### 7) Production tips
-- Always set `SOCRATA_APP_TOKEN` to reduce throttling.
-- Start with narrower `WHERE` filters and lower `max_rows` for fast validation.
-- Use stable business keys for upsert conflict columns/fields.
-- Save XLSX + metadata JSON snapshots for auditability.
-
-
-### Installation Wizard (interactive)
-
-Run the guided setup wizard to configure root directory, app token, PostgreSQL/MongoDB credentials, and default preferences:
-
-```bash
-python -m socrata_toolkit.install_wizard
-# or after install:
-socrata-setup
-```
-
-The wizard writes:
-- `socrata_toolkit.config.json` (preferences and defaults)
-- `.env.socrata` (environment values like `SOCRATA_APP_TOKEN`, `PG_DSN`, `MONGO_URI`)
-
-
-
-## FAQ
-
-**Q: Do I need a Socrata app token?**  
-A: No, but it is strongly recommended to avoid throttling.
-
-**Q: Can I use this without a database?**  
-A: Yes. Use JSON/GeoJSON/XLSX exports only.
-
-**Q: What GUI is available?**  
-A: Streamlit workbench (`streamlit run socrata_toolkit/app.py`) plus interactive install wizard (`socrata-setup`).
-
-**Q: How do I troubleshoot failed upserts?**  
-A: Validate your conflict key exists in the dataset, test with low `max_rows`, and verify DB credentials in `.env.socrata`.
-
----
-
-
-## Advanced Text Query + NLP/FTS Toolkit
-
-Capabilities now include:
-- lightweight NLP tokenization and frequency extraction
-- full-text style term surfacing for text columns
-- regex scanning for patterns (emails, phones, URLs, IDs)
-- automatic descriptive tag attachment per row
-- optional geo-aware tagging (`has_geo`)
-
-CLI:
-```bash
-socrata text-insights data.cityofnewyork.us h9gi-nx95 \
-  --text-column borough --text-column contributing_factor_vehicle_1 \
-  --geo-column location \
-  --max-rows 50000 \
-  --out tagged_rows.json
-```
-
-This command prints aggregate qualitative/quantitative text insights and can export rows enriched with `descriptive_tags`.
-
-
-## Configuration Auto-Loading
-
-The CLI now auto-loads `socrata_toolkit.config.json` from your current directory (or `~/.socrata_toolkit.config.json`) and uses defaults like `preferences.default_max_rows` for commands such as `analyze` and `text-insights`.
-
-
-## CI / Developer Workflow
-
-Install dev tooling:
-```bash
-pip install -e ".[dev]"
-```
-
-Run checks:
-```bash
-ruff check socrata_toolkit tests
-mypy socrata_toolkit
-pytest -q
-```
-
-GitHub Actions CI runs lint + type-check + tests across Python 3.10/3.11/3.12.
-
-## Integration Test Scaffold
-
-A `docker-compose.test.yml` is included for PostgreSQL and MongoDB.
-
-```bash
-docker compose -f docker-compose.test.yml up -d
-export RUN_INTEGRATION=1
-export PG_DSN="postgresql://postgres:postgres@localhost:54329/socrata"
-export MONGO_URI="mongodb://localhost:27028"
-pytest -q tests/test_integration_scaffold.py
-```
-
-## Pipeline Run Reports
-
-`pipeline` now writes a JSON run report by default to:
-- `outputs/pipeline_run_report.json`
-
-Override path:
-```bash
-socrata pipeline ... --report-path outputs/my_run_report.json
-```
-
-## DOT Sidewalk Program Dashboards
-
-Two dedicated dashboards are available in Streamlit:
-1. **DOT Sidewalk Dashboard** — computes program KPIs from pulled tabular data:
-   - Defect Density
-   - Throughput Velocity
-   - Burn Variance
-   - First-Pass Yield
-   - Rework Factor
-2. **Code Export Studio** — exports reusable SQL + Python method templates aligned to planning/execution/audit responsibilities.
-
-Run:
-```bash
-streamlit run socrata_toolkit/app.py
-```
-
-## DOT Analytical Method Mapping Implemented
-
-- **Planning**: defect density and conflict-oriented templates.
-- **Execution**: throughput and budget variance KPI computation.
-- **Audit**: first-pass yield and rework factor quality indicators.
-- **Text & qualitative**: NLP/regex tagging for correspondence or complaint-type text.
-
-
-## llm_duck Integration (Local LLM + DuckDB-style Workflow)
-
-The toolkit now includes `llm_duck`-style augmentation support:
-- CLI command: `socrata llm-augment`
-- Streamlit mode: **LLM Augmentation**
-- Output columns: `llm_label`, `llm_confidence`, `llm_rationale`
-
-Example:
-```bash
-socrata llm-augment data.cityofnewyork.us h9gi-nx95 \
-  --text-column description \
-  --endpoint http://localhost:1234/v1/chat/completions \
-  --model local-model \
-  --out llm_augmented.json
-```
-
-This is ideal for Sidewalk Program workflows such as complaint triage, conflict-risk tagging, and root-cause categorization.
-
-## Geoinformatic Analysis Coverage
-
-Supported geospatial methods now include:
-- **Spatial intersects join** between two layers (WKT/GeoJSON geometry fields)
-- **Conflict rate estimation** from intersect counts
-- **DOT dashboard spatial conflict workflow** in Streamlit
-
-CLI example:
-```bash
-socrata spatial-join \
-  --left-json sidewalk_layer.json \
-  --right-json dining_out_layer.json \
-  --left-geom-col geometry \
-  --right-geom-col geometry \
-  --out spatial_join_output.json
-```
-
-This supports contract scope conflict analysis and geospatial planning screening.
-
-## Advanced NLP Coverage
-
-The toolkit now supports advanced NLP workflows through `NLP Studio` and `socrata nlp-analyze`:
-- Text preprocessing: tokenization, stop-word removal, lightweight lemmatization/stemming fallback
-- Information extraction: NER + POS tagging (spaCy-backed when available, rule-based fallback)
-- Semantic analysis: sentiment scoring (TextBlob-backed when available, heuristic fallback)
-- Output generation: summarization + optional translation (Transformers pipeline when available)
-
-CLI:
-```bash
-socrata nlp-analyze --text "Sidewalk access is poor near transit hubs." --translate es
-```
-
-Library compatibility notes:
-- NLTK / spaCy / Hugging Face Transformers / Gensim / TextBlob are optional integration targets.
-- The system gracefully degrades to lightweight fallbacks if those libraries/models are unavailable.
-
-## Security and Secret Handling
-
-- Use `.env.socrata` for local secrets and avoid committing it.
-- Prefer environment variables for tokens/DSNs (`SOCRATA_APP_TOKEN`, `PG_DSN`, `MONGO_URI`).
-- Logging includes secret-key redaction helpers in `logging_utils`.
-
-## Validation and Run-State Recovery
-
-`pipeline` supports strict required-column validation and run-state persistence:
-
-```bash
-socrata pipeline ... \
-  --required-col collision_id \
-  --state-path outputs/pipeline_state.json \
-  --report-path outputs/pipeline_run_report.json
-```
-
-## Versioning
-
-- Current version: `0.2.0`
-- See `CHANGELOG.md` for release details.
-
-## Zero-Issue Setup (Recommended)
-
-```bash
-./scripts/bootstrap.sh
-source .venv/bin/activate
-socrata doctor --check-db
-```
-
-The `doctor` command validates core dependencies, optional NLP/geo/LLM stacks, and (optionally) DB connectivity.
-
-## Troubleshooting Matrix
-
-- **Missing pandas/openpyxl/streamlit** → run `pip install -r requirements-dev.txt`
-- **spaCy model missing** → `python -m spacy download en_core_web_sm`
-- **TextBlob corpora missing** → `python -m textblob.download_corpora`
-- **Shapely unavailable** → `pip install shapely`
-- **DB failures in doctor** → verify `PG_DSN` / `MONGO_URI` and network reachability
-
-## Documentation Hub
-
-Comprehensive project docs are available in [`docs/`](docs/README.md), including architecture, CLI reference, Streamlit workflows, geospatial/NLP/LLM guidance, testing/CI, security, and a dedicated **new repository bootstrap guide**.
-
-
-## Windows Desktop Copy Helper
-
-If you are on Windows and need to copy everything to your Desktop reliably, run:
-
-```bat
-scripts\copy_to_windows_desktop.bat
-```
-
-Default paths inside the script:
-- Source: `C:\Users\ryudk\Downloads\nyc_data`
-- Destination: `C:\Users\ryudk\Desktop\nyc_data_updated_2026-05-08`
-
-You can edit the `.bat` file if your paths differ.
