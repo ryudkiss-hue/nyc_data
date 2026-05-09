@@ -171,6 +171,3 @@ class SocrataClient:
         else:
             where = clause
         yield from self.fetch_json(domain, fourfour, where=where, **kwargs)
-        return {"type": "FeatureCollection", "features": features}
-        return {"type": "FeatureCollection", "features": features}
-        return {"type": "FeatureCollection", "features": features}
