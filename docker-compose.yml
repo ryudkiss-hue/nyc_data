@@ -1,70 +1,176 @@
 version: '3.9'
 
 services:
-  # PostgreSQL with PostGIS for spatial queries
+  # PostgreSQL 14 with PostGIS for spatial queries and full schema
   postgres:
     image: postgis/postgis:16-3.4
+    container_name: nyc_data_postgres
     environment:
-      POSTGRES_USER: dot_user
-      POSTGRES_PASSWORD: dot_pass
-      POSTGRES_DB: sidewalk_db
+      POSTGRES_USER: ${POSTGRES_USER:-dot_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dot_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-sidewalk_db}
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./sql/migrations:/docker-entrypoint-initdb.d
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/00-init.sql
+      - ./sql/003_schema_registry_tables.sql:/docker-entrypoint-initdb.d/003-schema_registry.sql
+      - ./sql/004_lineage_tables.sql:/docker-entrypoint-initdb.d/004-lineage.sql
+      - ./sql/005_observability_tables.sql:/docker-entrypoint-initdb.d/005-observability.sql
+      - ./sql/006_cdc_audit_tables.sql:/docker-entrypoint-initdb.d/006-cdc_audit.sql
+      - ./sql/007_quality_tables.sql:/docker-entrypoint-initdb.d/007-quality.sql
+      - ./sql/008_entity_resolution_tables.sql:/docker-entrypoint-initdb.d/008-entity_resolution.sql
+      - ./sql/009_api_governance_tables.sql:/docker-entrypoint-initdb.d/009-api_governance.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dot_user -d sidewalk_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-dot_user} -d ${POSTGRES_DB:-sidewalk_db}"]
       interval: 5s
-      timeout: 3s
-      retries: 5
+      timeout: 5s
+      retries: 10
+    networks:
+      - nyc_data
 
-  # MongoDB for document storage
-  mongo:
-    image: mongo:7
+  # Redis 7 for caching and rate limiting
+  redis:
+    image: redis:7-alpine
+    container_name: nyc_data_redis
     ports:
-      - "27017:27017"
+      - "6379:6379"
     volumes:
-      - mongodata:/data/db
+      - redisdata:/data
+    command: redis-server --appendonly yes
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
-      retries: 5
+      retries: 10
+    networks:
+      - nyc_data
 
-  # Streamlit Dashboard
-  dashboard:
-    build: .
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: nyc_data_prometheus
     ports:
-      - "8501:8501"
-    environment:
-      PG_DSN: postgresql://dot_user:dot_pass@postgres:5432/sidewalk_db
-      MONGO_URI: mongodb://mongo:27017
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
     depends_on:
-      postgres:
-        condition: service_healthy
-      mongo:
-        condition: service_healthy
-    volumes:
-      - ./outputs:/app/outputs
-      - ./socrata_toolkit:/app/socrata_toolkit
+      - postgres
+      - redis
+    networks:
+      - nyc_data
 
-  # Flask REST API
+  # Grafana for dashboards
+  grafana:
+    image: grafana/grafana:latest
+    container_name: nyc_data_grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_INSTALL_PLUGINS: "grafana-piechart-panel"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/grafana/provisioned:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nyc_data
+
+  # Jaeger for distributed tracing
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: nyc_data_jaeger
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "6831:6831/udp"  # Jaeger agent
+    environment:
+      COLLECTOR_ZIPKIN_HOST_PORT: ":9411"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:16686/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nyc_data
+
+  # FastAPI service with all endpoints
   api:
-    build: .
-    command: ["gunicorn", "--bind", "0.0.0.0:5000", "socrata_toolkit.api:create_app()"]
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: nyc_data_api
+    command: uvicorn socrata_toolkit.api.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
-      - "5000:5000"
+      - "8000:8000"
     environment:
-      PG_DSN: postgresql://dot_user:dot_pass@postgres:5432/sidewalk_db
-      MONGO_URI: mongodb://mongo:27017
-      FLASK_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-dot_user}:${POSTGRES_PASSWORD:-dot_pass}@postgres:5432/${POSTGRES_DB:-sidewalk_db}
+      REDIS_URL: redis://redis:6379
+      POSTGRES_USER: ${POSTGRES_USER:-dot_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dot_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-sidewalk_db}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-key-change-in-production}
+      JAEGER_AGENT_HOST: jaeger
+      JAEGER_AGENT_PORT: 6831
+      ENVIRONMENT: development
+    volumes:
+      - ./socrata_toolkit:/app/socrata_toolkit
+      - ./docs:/app/docs
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+      prometheus:
+        condition: service_started
+      jaeger:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nyc_data
+
+  # MinIO for S3-compatible storage (optional)
+  minio:
+    image: minio/minio:latest
+    container_name: nyc_data_minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
     volumes:
-      - ./outputs:/app/outputs
+      - miniodata:/data
+    command: minio server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nyc_data
+
+networks:
+  nyc_data:
+    driver: bridge
 
 volumes:
   pgdata:
-  mongodata:
+  redisdata:
+  prometheus_data:
+  grafana_data:
+  miniodata:
