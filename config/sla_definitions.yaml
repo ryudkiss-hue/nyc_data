@@ -1,0 +1,178 @@
+# SLA Definitions for NYC Data Engineering Pipeline
+# Define Service Level Agreements for critical metrics
+
+slas:
+  # ============================================================
+  # Ingestion SLAs
+  # ============================================================
+  - metric_name: ingestion_latency_p99
+    target: 5000  # milliseconds
+    window: 5m
+    severity: CRITICAL
+    channels:
+      - pagerduty
+      - slack
+    description: |
+      Ingestion P99 latency must be less than 5 seconds.
+      Critical for real-time data requirements.
+
+  - metric_name: ingestion_success_rate
+    target: 0.99  # 99%
+    window: 1h
+    severity: HIGH
+    channels:
+      - slack
+      - email
+    description: |
+      Ingestion success rate must exceed 99%.
+      Data completeness is critical.
+
+  - metric_name: ingestion_throughput_min
+    target: 100  # records per second
+    window: 5m
+    severity: MEDIUM
+    channels:
+      - slack
+    description: |
+      Minimum ingestion throughput threshold.
+      Alert if processing drops below 100 records/sec.
+
+  # ============================================================
+  # Transformation SLAs
+  # ============================================================
+  - metric_name: transformation_latency_p95
+    target: 30000  # milliseconds
+    window: 5m
+    severity: HIGH
+    channels:
+      - slack
+    description: |
+      Transformation P95 latency must be less than 30 seconds.
+      Ensures timely data processing.
+
+  - metric_name: transformation_error_rate
+    target: 0.001  # < 0.1%
+    window: 1h
+    severity: MEDIUM
+    channels:
+      - slack
+      - email
+    description: |
+      Transformation error rate must be less than 0.1%.
+      Data quality gate.
+
+  # ============================================================
+  # Data Quality SLAs
+  # ============================================================
+  - metric_name: schema_compliance_rate
+    target: 0.95  # 95%
+    window: 1h
+    severity: MEDIUM
+    channels:
+      - slack
+      - email
+    description: |
+      Schema compliance must exceed 95%.
+      Validates data structure consistency.
+
+  - metric_name: ada_compliance_rate
+    target: 0.90  # 90%
+    window: 1d
+    severity: MEDIUM
+    channels:
+      - email
+    description: |
+      ADA compliance must exceed 90%.
+      Ensures sidewalk data quality and accessibility standards.
+
+  - metric_name: data_quality_score
+    target: 0.92  # 92%
+    window: 1h
+    severity: LOW
+    channels:
+      - slack
+    description: |
+      Overall data quality score must exceed 92%.
+      Combines multiple quality metrics.
+
+  # ============================================================
+  # API SLAs
+  # ============================================================
+  - metric_name: api_response_time_p95
+    target: 500  # milliseconds
+    window: 5m
+    severity: MEDIUM
+    channels:
+      - slack
+    description: |
+      API P95 response time must be less than 500ms.
+      User-facing performance requirement.
+
+  - metric_name: api_uptime
+    target: 0.995  # 99.5%
+    window: 1d
+    severity: CRITICAL
+    channels:
+      - pagerduty
+      - slack
+    description: |
+      API uptime must exceed 99.5%.
+      Enterprise SLA requirement.
+
+  # ============================================================
+  # Lineage SLAs
+  # ============================================================
+  - metric_name: lineage_execution_time_p95
+    target: 10000  # milliseconds
+    window: 1h
+    severity: LOW
+    channels:
+      - slack
+    description: |
+      Lineage tracking execution time P95 < 10 seconds.
+      Performance optimization target.
+
+  - metric_name: lineage_completeness
+    target: 0.99  # 99%
+    window: 1d
+    severity: HIGH
+    channels:
+      - email
+    description: |
+      Lineage tracking completeness must exceed 99%.
+      Ensures full audit trail availability.
+
+  # ============================================================
+  # System Resource SLAs
+  # ============================================================
+  - metric_name: database_connection_pool_available
+    target: 5  # Minimum available connections
+    window: 5m
+    severity: HIGH
+    channels:
+      - pagerduty
+      - slack
+    description: |
+      Database connection pool must have at least 5 available connections.
+      Prevents connection exhaustion.
+
+  - metric_name: memory_available_percent
+    target: 10  # Minimum 10% available
+    window: 5m
+    severity: MEDIUM
+    channels:
+      - slack
+    description: |
+      System must maintain at least 10% available memory.
+      Prevents OOM conditions.
+
+  - metric_name: disk_space_available_gb
+    target: 10  # Minimum 10 GB
+    window: 1h
+    severity: HIGH
+    channels:
+      - pagerduty
+      - email
+    description: |
+      System must maintain at least 10 GB disk space.
+      Prevents disk full conditions.

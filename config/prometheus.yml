@@ -1,0 +1,121 @@
+# Prometheus Configuration for NYC Data Pipeline Observability
+# Scrapes metrics from the application and evaluates alert rules
+
+global:
+  scrape_interval: 15s          # Default scrape interval
+  evaluation_interval: 15s      # Default rule evaluation interval
+  external_labels:
+    cluster: 'nyc-data'         # Cluster identifier
+    environment: 'production'   # Environment label
+    service: 'data-pipeline'    # Service identifier
+
+# AlertManager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['localhost:9093']
+      scheme: http
+      timeout: 10s
+
+# Load alert rules
+rule_files:
+  - '/etc/prometheus/observability.rules.yml'
+  - '/etc/prometheus/custom.rules.yml'
+
+# Scrape configurations
+scrape_configs:
+  # NYC Data Pipeline Application Metrics
+  - job_name: 'nyc-data-pipeline'
+    description: 'NYC Data Pipeline main metrics endpoint'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    metrics_path: '/metrics'
+    scheme: http
+    static_configs:
+      - targets: ['localhost:8000']
+        labels:
+          instance: 'nyc-data-1'
+          pod: 'pipeline-main'
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+      - source_labels: [__scheme__]
+        target_label: scheme
+    metric_relabel_configs:
+      # Keep only relevant metrics
+      - source_labels: [__name__]
+        regex: '(ingestion|transformation|validation|lineage|quality|api|health|sla).*'
+        action: keep
+
+  # Detailed metrics (high cardinality)
+  - job_name: 'nyc-data-pipeline-detailed'
+    description: 'Detailed metrics with high cardinality labels'
+    scrape_interval: 30s
+    scrape_timeout: 15s
+    metrics_path: '/metrics/detailed'
+    scheme: http
+    static_configs:
+      - targets: ['localhost:8000']
+    metric_relabel_configs:
+      # Sample high-cardinality metrics to reduce storage
+      - source_labels: [__name__]
+        regex: '.*_by_dataset.*'
+        action: keep
+
+  # Node Exporter (system metrics)
+  - job_name: 'node'
+    description: 'Node exporter for system metrics'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    metrics_path: '/metrics'
+    scheme: http
+    static_configs:
+      - targets: ['localhost:9100']
+    metric_relabel_configs:
+      # Keep CPU, memory, disk metrics
+      - source_labels: [__name__]
+        regex: 'node_(cpu|memory|filesystem|disk).*'
+        action: keep
+
+  # Database Exporter (PostgreSQL metrics)
+  - job_name: 'postgres'
+    description: 'PostgreSQL database metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: '/metrics'
+    scheme: http
+    static_configs:
+      - targets: ['localhost:9187']
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'pg_(stat|statio).*'
+        action: keep
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    description: 'Prometheus self-metrics'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Service discovery (if using Kubernetes)
+  # - job_name: 'kubernetes-pods'
+  #   kubernetes_sd_configs:
+  #     - role: pod
+  #   relabel_configs:
+  #     - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+  #       action: keep
+  #       regex: true
+
+# Remote storage configuration (optional)
+# Uncomment to send metrics to remote storage (e.g., Thanos, Cortex)
+# remote_write:
+#   - url: "http://thanos-receive:9009/api/v1/receive"
+#     write_relabel_configs:
+#       - source_labels: [__name__]
+#         regex: 'nyc_.*'
+#         action: keep
+#   - url: "http://cortex:9009/api/prom/push"
+
+# Service discovery backends (optional)
+# Use consul_sd_configs, file_sd_configs, etc. for dynamic service discovery

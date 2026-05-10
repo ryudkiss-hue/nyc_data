@@ -1,0 +1,13 @@
+# Local envs and analysis outputs
+.env
+.env.*
+.venv/
+venv/
+__pycache__/
+.ipynb_checkpoints/
+analysis/*.html
+analysis/*.pdf
+analysis/*.geojson
+analysis/*.csv
+.venv/
+outputs/
