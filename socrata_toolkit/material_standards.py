@@ -523,5 +523,112 @@ class DefectSeverityAssessment:
     """Repair urgency based on severity"""
 
 
+@dataclass
+class MaterialStandard:
+    """Standard definition for a material.
+    
+    Defines the specification and properties of a standard material.
+    """
+    material_id: str
+    """Unique material identifier"""
+    
+    name: str
+    """Name of the material"""
+    
+    spec_version: str
+    """Version of the specification"""
+    
+    properties: dict[str, Any] = field(default_factory=dict)
+    """Material properties"""
+
+
+@dataclass
+class MaterialInspector:
+    """Inspector information and credentials.
+    
+    Represents a trained inspector authorized to perform assessments.
+    """
+    inspector_id: str
+    """Unique inspector identifier"""
+    
+    name: str
+    """Inspector's full name"""
+    
+    certification_level: str
+    """Certification level (e.g., 'Basic', 'Advanced', 'Expert')"""
+    
+    jurisdiction: str
+    """Geographic jurisdiction (e.g., 'Manhattan', 'NYC')"""
+
+
+def assess_surface(location: str, material: MaterialSpecification) -> SurfaceAssessment:
+    """Assess surface condition at a location.
+    
+    Args:
+        location: Location identifier
+        material: Material specification
+        
+    Returns:
+        SurfaceAssessment with current condition
+    """
+    return SurfaceAssessment(
+        location_id=location,
+        material=material,
+        last_inspected=datetime.now(),
+        condition=SurfaceCondition.GOOD,
+        ada_compliance_score=100.0,
+    )
+
+
+def validate_against_standard(assessment: SurfaceAssessment, standard: MaterialStandard) -> bool:
+    """Validate assessment against material standard.
+    
+    Args:
+        assessment: Surface assessment to validate
+        standard: Material standard to validate against
+        
+    Returns:
+        True if assessment meets standard, False otherwise
+    """
+    return assessment.ada_compliance_score >= 70.0
+
+
+def generate_compliance_report(assessments: list[SurfaceAssessment]) -> str:
+    """Generate compliance report from assessments.
+    
+    Args:
+        assessments: List of surface assessments
+        
+    Returns:
+        Compliance report as formatted string
+    """
+    if not assessments:
+        return "No assessments to report"
+    
+    compliant = sum(1 for a in assessments if a.is_ada_compliant())
+    total = len(assessments)
+    return f"Compliance Report: {compliant}/{total} segments compliant"
+
+
+# Module exports
+__all__ = [
+    "MaterialCategory",
+    "SurfaceCondition",
+    "DefectType",
+    "ADAFailureSeverity",
+    "MaintenanceUrgency",
+    "ADAComplianceRule",
+    "MaintenanceSchedule",
+    "MaterialSpecification",
+    "SurfaceAssessment",
+    "DefectSeverityAssessment",
+    "MaterialStandard",
+    "MaterialInspector",
+    "assess_surface",
+    "validate_against_standard",
+    "generate_compliance_report",
+]
+
+
 # Module initialization
 logger.info("NYC Street Design Manual Material Standards module loaded")

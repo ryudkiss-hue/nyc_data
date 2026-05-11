@@ -16,8 +16,8 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
 try:
-    import psycopg
-    from psycopg import sql, Connection
+    import psycopg  # type: ignore[import]
+    from psycopg import sql, Connection  # type: ignore[import]
 except ImportError:
     psycopg = None  # type: ignore
     Connection = Any  # type: ignore

@@ -19,8 +19,8 @@ from pathlib import Path
 from typing import Any, Optional
 
 try:
-    import folium
-    from folium import plugins
+    import folium  # type: ignore[import]
+    from folium import plugins  # type: ignore[import]
     HAS_FOLIUM = True
 except ImportError:
     HAS_FOLIUM = False

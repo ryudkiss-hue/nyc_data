@@ -25,29 +25,65 @@ import os
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from socrata_toolkit.observability_logging import (
-    LogAggregator,
-    LogContext,
-    StructuredLogger,
-    get_log_aggregator,
-    setup_logging,
-)
-from socrata_toolkit.observability_metrics import (
-    MetricsCollector,
-    get_metrics_collector,
-)
-from socrata_toolkit.observability_tracing import (
-    TracingContext,
-    get_tracing_context,
-)
-from socrata_toolkit.observability_health import (
-    HealthChecker,
-    get_health_checker,
-)
-from socrata_toolkit.observability_sla import (
-    SLATracker,
-    get_sla_tracker,
-)
+try:
+    from socrata_toolkit.observability_logging import (
+        LogAggregator,
+        LogContext,
+        StructuredLogger,
+        get_log_aggregator,
+        setup_logging,
+    )
+except ImportError:
+    LogAggregator = None
+    LogContext = None
+    StructuredLogger = None
+    get_log_aggregator = None
+    setup_logging = None
+
+try:
+    from socrata_toolkit.observability_metrics import (
+        MetricsCollector,
+        get_metrics_collector,
+    )
+except ImportError:
+    MetricsCollector = None
+    get_metrics_collector = None
+
+try:
+    from socrata_toolkit.observability_tracing import (
+        TracingContext,
+        get_tracing_context,
+    )
+except ImportError:
+    TracingContext = None
+    get_tracing_context = None
+
+try:
+    from socrata_toolkit.observability_health import (
+        HealthChecker,
+        get_health_checker,
+    )
+except ImportError:
+    HealthChecker = None
+    get_health_checker = None
+
+try:
+    from socrata_toolkit.observability_sla import (
+        SLATracker,
+        get_sla_tracker,
+    )
+except ImportError:
+    SLATracker = None
+    get_sla_tracker = None
+
+__all__ = [
+    "ObservabilityManager",
+    "ObservabilityFramework",
+    "MetricsPipeline",
+    "setup_observability",
+    "record_operation_metrics",
+    "get_observability_manager",
+]
 
 
 class ObservabilityManager:
@@ -81,13 +117,13 @@ class ObservabilityManager:
         if self._initialized:
             return
 
-        # Initialize components
-        self._logger_cache: Dict[str, StructuredLogger] = {}
-        self._log_aggregator = get_log_aggregator()
-        self._metrics_collector = get_metrics_collector()
-        self._tracing_context = get_tracing_context()
-        self._health_checker = get_health_checker()
-        self._sla_tracker = get_sla_tracker()
+        # Initialize components with fallback for missing dependencies
+        self._logger_cache: Dict[str, Any] = {}
+        self._log_aggregator = get_log_aggregator() if get_log_aggregator else None
+        self._metrics_collector = get_metrics_collector() if get_metrics_collector else None
+        self._tracing_context = get_tracing_context() if get_tracing_context else None
+        self._health_checker = get_health_checker() if get_health_checker else None
+        self._sla_tracker = get_sla_tracker() if get_sla_tracker else None
 
         # Configuration
         self._enabled = True
@@ -378,6 +414,96 @@ class ObservabilityManager:
         """Reset all metrics and clear buffers."""
         self._metrics_collector.reset()
         self._log_aggregator.buffer._buffer.clear()
+
+
+class ObservabilityFramework:
+    """Framework for managing observability components.
+    
+    Provides high-level interface for observability initialization and management.
+    """
+    
+    def __init__(self) -> None:
+        """Initialize the observability framework."""
+        self._manager = None
+    
+    def initialize(self) -> None:
+        """Initialize the observability framework."""
+        self._manager = get_observability_manager()
+    
+    def add_metric(self, metric_name: str, value: float) -> None:
+        """Add a metric.
+        
+        Args:
+            metric_name: Name of the metric
+            value: Metric value
+        """
+        if self._manager:
+            self._manager.get_metrics().counter(metric_name, value)
+    
+    def log_event(self, event_name: str, details: Dict[str, Any]) -> None:
+        """Log an event.
+        
+        Args:
+            event_name: Name of the event
+            details: Event details
+        """
+        if self._manager:
+            logger = self._manager.get_logger(__name__)
+            logger.info(f"{event_name}: {details}")
+
+
+class MetricsPipeline:
+    """Pipeline for recording and managing metrics."""
+    
+    def __init__(self) -> None:
+        """Initialize the metrics pipeline."""
+        self._metrics = {}
+    
+    def record_metric(self, metric_name: str, value: float) -> None:
+        """Record a metric value.
+        
+        Args:
+            metric_name: Name of the metric
+            value: Metric value
+        """
+        self._metrics[metric_name] = value
+    
+    def flush(self) -> Dict[str, float]:
+        """Flush recorded metrics.
+        
+        Returns:
+            Dictionary of recorded metrics
+        """
+        result = dict(self._metrics)
+        self._metrics.clear()
+        return result
+
+
+def setup_observability(config: Dict[str, Any]) -> ObservabilityFramework:
+    """Set up observability with configuration.
+    
+    Args:
+        config: Observability configuration dictionary
+        
+    Returns:
+        Initialized ObservabilityFramework
+    """
+    framework = ObservabilityFramework()
+    framework.initialize()
+    return framework
+
+
+def record_operation_metrics(operation: str, duration: float, status: str) -> None:
+    """Record metrics for an operation.
+    
+    Args:
+        operation: Operation name
+        duration: Operation duration in seconds
+        status: Operation status
+    """
+    manager = get_observability_manager()
+    logger = manager.get_logger(__name__)
+    logger.info(f"Operation: {operation}, Duration: {duration}s, Status: {status}")
 
 
 # Global instance

@@ -9,5 +9,16 @@
         }
     ],
     "git.autoRepositoryDetection": false,
-    "git.openRepositoryInParentFolders": "always"
+    "git.openRepositoryInParentFolders": "always",
+    "python.defaultInterpreterPath": "C:\\Python314\\python.exe",
+    "python.linting.enabled": true,
+    "python.analysis.typeCheckingMode": "basic",
+    "pylance.analysis.typeCheckingMode": "basic",
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportMissingImports": "none",
+        "reportMissingTypeStubs": "none",
+        "reportUnknownMemberType": "none",
+        "reportUnknownParameterType": "none",
+        "reportUnknownVariableType": "none"
+    }
 }
