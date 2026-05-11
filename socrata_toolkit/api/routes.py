@@ -345,11 +345,78 @@ async def assign_repair_to_incident(
             "scheduled_date": "2026-05-15"
         }
     """
-    # TODO: Verify current_user has ANALYST+ role
-    # TODO: Create repair record in fact_repair_schedule
-    # TODO: Log to audit_log
-    # TODO: Invalidate related caches
-    raise NotImplementedError()
+    from socrata_toolkit.api.authorization import requires_role
+    from socrata_toolkit.api.models import IncidentReport, RepairSchedule
+    from sqlalchemy.orm import Session
+    import uuid
+    
+    # Verify authorization
+    if not requires_role(current_user, ["ANALYST", "ADMIN"]):
+        from socrata_toolkit.api.exceptions import AuthorizationError
+        raise AuthorizationError(
+            action="create_repair",
+            required_role="ANALYST",
+            user_role=current_user.role
+        )
+    
+    try:
+        from socrata_toolkit.api.main import db
+        session: Session = db.SessionLocal()
+        
+        # Verify incident exists
+        incident = session.query(IncidentReport).filter(
+            IncidentReport.incident_id == incident_id
+        ).first()
+        
+        if not incident:
+            raise ResourceNotFound(
+                resource_type="incident",
+                resource_id=incident_id
+            )
+        
+        # Create repair record
+        repair_id = f"rep_{uuid.uuid4().hex[:12]}"
+        repair = RepairSchedule(
+            repair_id=repair_id,
+            segment_id=incident.segment_id,
+            incident_id=incident_id,
+            contractor_id=repair_data.get("contractor_id"),
+            status="scheduled",
+            estimated_cost=repair_data.get("estimated_cost", 0.0),
+            scheduled_date=repair_data.get("scheduled_date"),
+            created_by=current_user.user_id,
+            created_at=datetime.utcnow()
+        )
+        
+        session.add(repair)
+        session.commit()
+        
+        # Log audit event
+        from socrata_toolkit.observability import AuditLogger
+        audit = AuditLogger()
+        audit.log_action(
+            actor=current_user.user_id,
+            action="CREATE_REPAIR",
+            target_id=repair_id,
+            target_type="repair",
+            context={"incident_id": incident_id, "contractor_id": repair_data.get("contractor_id")}
+        )
+        
+        # Invalidate related caches
+        cache_manager.invalidate(CacheKeys.REPAIRS_LIST)
+        cache_manager.invalidate(CacheKeys.KPI_SUMMARY)
+        
+        return RepairResponse(
+            repair_id=repair_id,
+            segment_id=incident.segment_id,
+            status="scheduled",
+            estimated_cost=repair_data.get("estimated_cost", 0.0),
+            scheduled_date=repair_data.get("scheduled_date"),
+            created_at=datetime.utcnow()
+        )
+        
+    finally:
+        session.close()
 
 
 # C. REPAIRS ENDPOINTS
