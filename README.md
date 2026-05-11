@@ -2,7 +2,33 @@
 
 A comprehensive Python toolkit for the NYC Department of Transportation's Sidewalk Inspection & Management unit. Built for project analysts and managers who need to collect, analyze, and report on sidewalk repair data across the five boroughs.
 
-## Quick Start
+## Quick Start - Choose Your Method
+
+### 🚀 Fastest Path (5 minutes) - All Platforms
+
+```bash
+git clone <repo-url>
+cd nyc_data
+
+# Option 1: Python Launcher (all platforms)
+python launcher.py setup all
+python launcher.py docker up
+python launcher.py web
+
+# Option 2: Windows PowerShell
+.\deploy.ps1 setup
+.\deploy.ps1 start
+
+# Option 3: Linux/MacOS Bash
+./deploy.sh setup
+./deploy.sh start
+
+# Option 4: Make Commands
+make setup-all
+make deploy
+```
+
+### 📚 Traditional Install (if you prefer local Python)
 
 ```bash
 # Install core dependencies
@@ -17,6 +43,19 @@ python -m socrata_toolkit.install_wizard
 # Verify your installation
 socrata doctor
 ```
+
+## Execution Methods
+
+| Method | Platform | Best For | Command |
+|--------|----------|----------|---------|
+| **Python Launcher** | All | Unified interface, automation | `python launcher.py ...` |
+| **PowerShell Script** | Windows | Native integration | `.\deploy.ps1 ...` |
+| **Bash Script** | Linux/MacOS | Unix operations | `./deploy.sh ...` |
+| **Make** | All | Development workflow | `make ...` |
+| **Docker Compose** | All | Container management | `docker-compose ...` |
+| **CLI Tool** | All | Command-line interface | `socrata ...` or `python launcher.py cli ...` |
+
+See [QUICKSTART.md](QUICKSTART.md) for 5-minute setup or [docs/EXECUTABLE_PACKAGE.md](docs/EXECUTABLE_PACKAGE.md) for complete package reference.
 
 ## What This Toolkit Does
 
