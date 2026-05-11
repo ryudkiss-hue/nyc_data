@@ -1,13 +1,30 @@
-"""Streaming pipeline utilities."""
+"""Streaming pipeline utilities with integrated data governance.
+
+Streaming pipeline with optional governance processor integration for:
+- Schema validation and versioning
+- Change data capture (CDC) and audit logging
+- Data lineage tracking
+- Design rule compliance checking
+"""
 
 from __future__ import annotations
 
 import json
+import logging
 import tempfile
+import uuid
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 
 from .pipeline import generate_postgres_preview
+
+logger = logging.getLogger(__name__)
+
+try:
+    from .cdc_engine import CDCEvent
+except ImportError:
+    CDCEvent = None  # type: ignore
 
 
 def stream_pipeline(
@@ -18,7 +35,8 @@ def stream_pipeline(
     dry_run: bool = True, 
     chunk_size: int | None = None, 
     max_rows: int | None = None, 
-    progress_callback: Callable[[int, int | None], None] | None = None
+    progress_callback: Callable[[int, int | None], None] | None = None,
+    governance_processor: Optional[Any] = None,
 ) -> dict[str, Any]:
     
     if chunk_size is not None:
@@ -95,6 +113,25 @@ def stream_pipeline(
             if not batch:
                 continue
             fetched += len(batch)
+
+            # Emit CDC events for governance processing (schema, lineage, compliance)
+            if governance_processor and CDCEvent:
+                for row in batch:
+                    try:
+                        # Create CDC event for governance validation
+                        cdc_event = CDCEvent(
+                            event_id=str(uuid.uuid4()),
+                            source_dataset=fourfour,
+                            operation="INSERT",  # Streaming pipeline is ingestion
+                            record_id=str(row.get("id", row.get("@id", uuid.uuid4()))),
+                            timestamp_ms=int(datetime.utcnow().timestamp() * 1000),
+                            after=row,
+                            metadata={"source_domain": domain},
+                        )
+                        # Process through governance (validates schema, enriches lineage, checks compliance)
+                        governance_processor.process_event(cdc_event)
+                    except Exception as e:
+                        logger.warning(f"Governance event processing skipped: {e}")
 
             # Postgres incremental upsert using simple executemany
             if pg_writer is not None:
