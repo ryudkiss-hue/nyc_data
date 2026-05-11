@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from socrata_toolkit.analysis_advanced import (
+from socrata_toolkit.analysis.advanced import (
     classify_all_distributions,
     classify_distribution,
     correlation_analysis,

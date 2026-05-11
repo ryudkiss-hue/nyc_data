@@ -1,5 +1,5 @@
 """
-Tests for Domain-Aware Validation Framework (socrata_toolkit.validation)
+Tests for Domain-Aware Validation Framework (socrata_toolkit.quality.validation)
 
 Tests material classification, defect applicability, ADA compliance, marking standards,
 and geospatial validation rules.
@@ -8,7 +8,7 @@ and geospatial validation rules.
 import pandas as pd
 import pytest
 
-from socrata_toolkit.validation import (
+from socrata_toolkit.quality.validation import (
     validate_material_coverage,
     validate_defect_applicability,
     validate_ada_compliance_gates,

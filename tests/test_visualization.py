@@ -8,7 +8,7 @@ try:
 except ImportError:
     HAS_MPL = False
 
-from socrata_toolkit.visualization import (
+from socrata_toolkit.viz.core import (
     bar_chart,
     box_plot,
     correlation_heatmap,

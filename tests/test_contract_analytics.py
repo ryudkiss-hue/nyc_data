@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from socrata_toolkit.contract_analytics import (
+from socrata_toolkit.engineering.contract_analytics import (
     analyze_contract_progress,
     budget_analysis,
     compare_contracts,

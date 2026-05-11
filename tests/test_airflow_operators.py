@@ -56,7 +56,7 @@ def test_context():
 class TestSocrataFetchOperator:
     """Test Socrata API fetch operator with checkpoint"""
 
-    @patch('socrata_toolkit.client.SocrataClient')
+    @patch('socrata_toolkit.core.client.SocrataClient')
     def test_fetch_incidents_success(self, mock_client_class, test_context):
         """Fetch operator should retrieve incidents from API"""
         mock_client = MagicMock()
@@ -89,7 +89,7 @@ class TestSocrataFetchOperator:
         assert result[0]['incident_id'] == 1
         mock_client.query.assert_called_once()
 
-    @patch('socrata_toolkit.freshness.FreshnessTracker')
+    @patch('socrata_toolkit.quality.freshness.FreshnessTracker')
     def test_fetch_uses_checkpoint(self, mock_tracker_class):
         """Fetch should use checkpoint for incremental processing"""
         mock_tracker = MagicMock()
@@ -100,7 +100,7 @@ class TestSocrataFetchOperator:
         assert mock_tracker.get_last_update() == datetime(2026, 5, 9)
         mock_tracker.get_last_update.assert_called_once()
 
-    @patch('socrata_toolkit.client.SocrataClient')
+    @patch('socrata_toolkit.core.client.SocrataClient')
     def test_fetch_error_handling(self, mock_client_class):
         """Fetch should handle API errors gracefully"""
         mock_client = MagicMock()
@@ -122,7 +122,7 @@ class TestSocrataFetchOperator:
 class TestDataQualityCheckOperator:
     """Test data quality validation operator"""
 
-    @patch('socrata_toolkit.validation.ValidationRuleSet')
+    @patch('socrata_toolkit.quality.validation.ValidationRuleSet')
     def test_quality_check_passes(self, mock_validator_class):
         """Quality check should pass valid data"""
         mock_validator = MagicMock()
@@ -144,7 +144,7 @@ class TestDataQualityCheckOperator:
         assert result.is_valid is True
         assert result.valid_count == 100
 
-    @patch('socrata_toolkit.validation.ValidationRuleSet')
+    @patch('socrata_toolkit.quality.validation.ValidationRuleSet')
     def test_quality_check_fails(self, mock_validator_class):
         """Quality check should fail invalid data"""
         mock_validator = MagicMock()
@@ -196,7 +196,7 @@ class TestDataQualityCheckOperator:
 class TestSchemaComplianceOperator:
     """Test schema compliance checking operator"""
 
-    @patch('socrata_toolkit.schema_registry.SchemaRegistry')
+    @patch('socrata_toolkit.discovery.schema.SchemaRegistry')
     def test_schema_compliance_check_passes(self, mock_registry_class):
         """Schema compliance should pass matching data"""
         mock_registry = MagicMock()
@@ -220,7 +220,7 @@ class TestSchemaComplianceOperator:
         assert result is True
         assert schema.version == '1.0.0'
 
-    @patch('socrata_toolkit.schema_registry.SchemaRegistry')
+    @patch('socrata_toolkit.discovery.schema.SchemaRegistry')
     def test_schema_compliance_check_fails(self, mock_registry_class):
         """Schema compliance should fail non-matching data"""
         mock_registry = MagicMock()
@@ -247,7 +247,7 @@ class TestSchemaComplianceOperator:
 class TestPostgresUpsertOperator:
     """Test PostgreSQL UPSERT operator"""
 
-    @patch('socrata_toolkit.db_helpers.PostgresHelper')
+    @patch('socrata_toolkit.core.db_helpers.PostgresHelper')
     def test_upsert_new_records(self, mock_db_class):
         """UPSERT should insert new records"""
         mock_db = MagicMock()
@@ -266,7 +266,7 @@ class TestPostgresUpsertOperator:
         assert result == 3
         mock_db.upsert.assert_called_once()
 
-    @patch('socrata_toolkit.db_helpers.PostgresHelper')
+    @patch('socrata_toolkit.core.db_helpers.PostgresHelper')
     def test_upsert_idempotency(self, mock_db_class):
         """UPSERT should be idempotent (safe to re-run)"""
         mock_db = MagicMock()
@@ -288,7 +288,7 @@ class TestPostgresUpsertOperator:
         # Should be called twice
         assert mock_db.upsert.call_count == 2
 
-    @patch('socrata_toolkit.db_helpers.PostgresHelper')
+    @patch('socrata_toolkit.core.db_helpers.PostgresHelper')
     def test_upsert_error_handling(self, mock_db_class):
         """UPSERT should handle database errors"""
         mock_db = MagicMock()
@@ -308,7 +308,7 @@ class TestPostgresUpsertOperator:
 class TestFreshnessUpdateOperator:
     """Test freshness tracking operator"""
 
-    @patch('socrata_toolkit.freshness.FreshnessTracker')
+    @patch('socrata_toolkit.quality.freshness.FreshnessTracker')
     def test_freshness_update_success(self, mock_tracker_class):
         """Freshness update should record last processed time"""
         mock_tracker = MagicMock()
@@ -324,7 +324,7 @@ class TestFreshnessUpdateOperator:
         tracker.update_freshness.assert_called_once()
         assert tracker.update_freshness.call_count == 1
 
-    @patch('socrata_toolkit.freshness.FreshnessTracker')
+    @patch('socrata_toolkit.quality.freshness.FreshnessTracker')
     def test_freshness_check(self, mock_tracker_class):
         """Freshness check should verify data is current"""
         mock_tracker = MagicMock()
@@ -348,7 +348,7 @@ class TestFreshnessUpdateOperator:
 class TestMetricsEmitterOperator:
     """Test Prometheus metrics emission operator"""
 
-    @patch('socrata_toolkit.metrics.MetricsEmitter')
+    @patch('socrata_toolkit.analysis.metrics.MetricsEmitter')
     def test_counter_metric(self, mock_emitter_class):
         """Metrics emitter should emit counter metrics"""
         mock_emitter = MagicMock()
@@ -359,7 +359,7 @@ class TestMetricsEmitterOperator:
         
         mock_emitter.counter.assert_called_once_with('incidents_processed', 5000)
 
-    @patch('socrata_toolkit.metrics.MetricsEmitter')
+    @patch('socrata_toolkit.analysis.metrics.MetricsEmitter')
     def test_histogram_metric(self, mock_emitter_class):
         """Metrics emitter should emit histogram metrics"""
         mock_emitter = MagicMock()
@@ -370,7 +370,7 @@ class TestMetricsEmitterOperator:
         
         mock_emitter.histogram.assert_called_once_with('fetch_duration_seconds', 45)
 
-    @patch('socrata_toolkit.metrics.MetricsEmitter')
+    @patch('socrata_toolkit.analysis.metrics.MetricsEmitter')
     def test_gauge_metric(self, mock_emitter_class):
         """Metrics emitter should emit gauge metrics"""
         mock_emitter = MagicMock()
@@ -509,7 +509,7 @@ class TestPhase1Phase2Integration:
         """Operators should integrate with Phase 1 validation rules"""
         # Verify imports work
         try:
-            from socrata_toolkit.validation import ValidationRuleSet
+            from socrata_toolkit.quality.validation import ValidationRuleSet
             assert ValidationRuleSet is not None
         except ImportError:
             pytest.fail("Phase 1 validation module should be importable")
@@ -517,7 +517,7 @@ class TestPhase1Phase2Integration:
     def test_freshness_tracking_integration(self):
         """Operators should integrate with Phase 2 freshness tracking"""
         try:
-            from socrata_toolkit.freshness import FreshnessTracker
+            from socrata_toolkit.quality.freshness import FreshnessTracker
             assert FreshnessTracker is not None
         except ImportError:
             pytest.fail("Phase 2 freshness module should be importable")
@@ -525,7 +525,7 @@ class TestPhase1Phase2Integration:
     def test_metrics_emission_integration(self):
         """Operators should integrate with Phase 2 metrics emission"""
         try:
-            from socrata_toolkit.metrics import MetricsEmitter
+            from socrata_toolkit.analysis.metrics import MetricsEmitter
             assert MetricsEmitter is not None
         except ImportError:
             pytest.fail("Phase 2 metrics module should be importable")
@@ -533,7 +533,7 @@ class TestPhase1Phase2Integration:
     def test_observability_logging_integration(self):
         """Operators should integrate with Phase 2 observability logging"""
         try:
-            from socrata_toolkit.observability import OperationalLogger
+            from socrata_toolkit.observability.manager import OperationalLogger
             assert OperationalLogger is not None
         except ImportError:
             pytest.fail("Phase 2 observability module should be importable")

@@ -1,4 +1,4 @@
-from socrata_toolkit.query_builder import (
+from socrata_toolkit.sql.builder import (
     in_clause,
     like_clause,
     equals_clause,

@@ -13,20 +13,20 @@ from __future__ import annotations
 import os
 import logging
 from typing import Any, Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
 from pydantic import BaseModel, Field
 import psycopg
 
-from socrata_toolkit.llm_chatbot import (
+from socrata_toolkit.llm.chatbot import (
     SocrataLLMChatbot,
     DataQualityAssistant,
     AnalyticsAdvisor,
     DatasetContext,
 )
-from socrata_toolkit.llm_sql_engine import (
+from socrata_toolkit.llm.sql_engine import (
     SQLQueryEngine,
     InteractiveQuerySession,
 )
@@ -44,7 +44,7 @@ class ChatMessage(BaseModel):
     """Chat message model."""
     role: str = Field(..., description="'user' or 'assistant'")
     content: str = Field(..., description="Message content")
-    timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    timestamp: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
 class ChatRequest(BaseModel):
@@ -60,7 +60,7 @@ class ChatResponse(BaseModel):
     response: str = Field(..., description="Assistant response")
     message_id: str = Field(..., description="Unique message ID")
     history_length: int = Field(..., description="Total conversation messages")
-    timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    timestamp: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
 class QueryRequest(BaseModel):
@@ -79,7 +79,7 @@ class QueryResult(BaseModel):
     row_count: int = Field(..., description="Number of rows returned")
     interpretation: Optional[str] = Field(None, description="Result explanation")
     execution_time_ms: float = Field(..., description="Execution time")
-    timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    timestamp: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
 class QualityIssue(BaseModel):
@@ -121,7 +121,7 @@ class HealthCheck(BaseModel):
     chatbot: bool = Field(..., description="Chatbot available")
     query_engine: bool = Field(..., description="Query engine available")
     database: bool = Field(..., description="Database connection ok")
-    timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    timestamp: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
 # ============================================================================
@@ -245,7 +245,7 @@ async def chat(request: ChatRequest) -> ChatResponse:
         
         return ChatResponse(
             response=response,
-            message_id=f"msg_{datetime.utcnow().timestamp()}",
+            message_id=f"msg_{datetime.now(timezone.utc).timestamp()}",
             history_length=len(chatbot.get_conversation_history()),
         )
     except Exception as e:
@@ -385,7 +385,7 @@ async def assess_quality_issue(issue: QualityIssue) -> QualityAssessment:
     """Assess a data quality issue."""
     try:
         # Create quality assistant
-        from socrata_toolkit.llm_chatbot import DataQualityAssistant
+        from socrata_toolkit.llm.chatbot import DataQualityAssistant
         assistant = DataQualityAssistant(
             llm_provider="ollama",
             model_name="mistral",
@@ -422,7 +422,7 @@ async def suggest_metrics(dataset_id: str = Query(...)):
     """Get suggested metrics for dataset."""
     try:
         # Create analytics advisor
-        from socrata_toolkit.llm_chatbot import AnalyticsAdvisor
+        from socrata_toolkit.llm.chatbot import AnalyticsAdvisor
         advisor = AnalyticsAdvisor(
             llm_provider="ollama",
             model_name="mistral",

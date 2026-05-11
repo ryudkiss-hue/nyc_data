@@ -11,7 +11,7 @@ Tests validate:
 """
 
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from airflow.models import DAG, DagBag
 from airflow.exceptions import AirflowException
 from airflow.sensors.external_task import ExternalTaskSensor
@@ -76,7 +76,7 @@ class TestDAGStructure:
 
     def test_dag_has_valid_start_date(self, dagbag, required_dags):
         """DAGs should have start_date in past"""
-        current_date = datetime.utcnow()
+        current_date = datetime.now(timezone.utc)
         for dag_id in required_dags:
             dag = dagbag.get_dag(dag_id)
             start_date = dag.start_date
@@ -460,8 +460,8 @@ class TestPhase3IntegrationReadiness:
         """DAGs should be able to import Phase 1 modules without error"""
         import_successful = True
         try:
-            from socrata_toolkit.validation import ValidationRuleSet
-            from socrata_toolkit.dot_sidewalk import MaterialAwareSidewalkKPI
+            from socrata_toolkit.quality.validation import ValidationRuleSet
+            from socrata_toolkit.engineering.dot_sidewalk import MaterialAwareSidewalkKPI
         except ImportError as e:
             import_successful = False
         
@@ -471,9 +471,9 @@ class TestPhase3IntegrationReadiness:
         """DAGs should be able to import Phase 2 modules without error"""
         import_successful = True
         try:
-            from socrata_toolkit.freshness import FreshnessTracker
-            from socrata_toolkit.metrics import MetricsEmitter
-            from socrata_toolkit.observability import OperationalLogger
+            from socrata_toolkit.quality.freshness import FreshnessTracker
+            from socrata_toolkit.analysis.metrics import MetricsEmitter
+            from socrata_toolkit.observability.manager import OperationalLogger
         except ImportError as e:
             import_successful = False
         

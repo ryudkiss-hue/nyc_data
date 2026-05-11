@@ -8,7 +8,7 @@ import pytest
 
 # -- Cost Estimator -----------------------------------------------------------
 
-from socrata_toolkit.cost_estimator import estimate_single, estimate_costs, summarize_costs
+from socrata_toolkit.engineering.cost_estimator import estimate_single, estimate_costs, summarize_costs
 
 def test_estimate_single():
     est = estimate_single(100, scope="sidewalk_repair", borough="MANHATTAN", ada_required=True)
@@ -43,7 +43,7 @@ def test_summarize_costs():
 
 # -- Change Detection ---------------------------------------------------------
 
-from socrata_toolkit.change_detection import detect_changes, detect_status_changes
+from socrata_toolkit.pipeline.cdc import detect_changes, detect_status_changes
 
 def test_detect_changes_added_removed():
     old = pd.DataFrame({"id": [1, 2, 3], "val": ["a", "b", "c"]})
@@ -71,7 +71,7 @@ def test_detect_status_changes():
 
 # -- Contractor Scorecards ----------------------------------------------------
 
-from socrata_toolkit.contractor_scorecards import generate_scorecards, scorecards_to_dataframe
+from socrata_toolkit.engineering.contractor_scorecards import generate_scorecards, scorecards_to_dataframe
 
 def test_generate_scorecards():
     df = pd.DataFrame({
@@ -98,7 +98,7 @@ def test_scorecards_to_dataframe():
 
 # -- Budget Forecast ----------------------------------------------------------
 
-from socrata_toolkit.budget_forecast import forecast_spend, forecast_completion, forecast_workload
+from socrata_toolkit.engineering.budget_forecast import forecast_spend, forecast_completion, forecast_workload
 
 def test_forecast_spend():
     dates = pd.date_range("2024-01-01", periods=6, freq="ME")
@@ -122,7 +122,7 @@ def test_forecast_workload():
 
 # -- Map View -----------------------------------------------------------------
 
-from socrata_toolkit.map_view import create_map, save_map
+from socrata_toolkit.viz.map import create_map, save_map
 
 def test_create_map_fallback():
     df = pd.DataFrame({"latitude": [40.75], "longitude": [-73.99], "status": ["Pending"]})
@@ -137,7 +137,7 @@ def test_save_map(tmp_path):
 
 # -- QGIS Integration --------------------------------------------------------
 
-from socrata_toolkit.qgis_integration import generate_qgis_project
+from socrata_toolkit.qgis.integration import generate_qgis_project
 
 def test_generate_qgis_project(tmp_path):
     path = generate_qgis_project(
@@ -153,7 +153,7 @@ def test_generate_qgis_project(tmp_path):
 
 # -- PDF Reports --------------------------------------------------------------
 
-from socrata_toolkit.pdf_reports import dataframe_to_pdf
+from socrata_toolkit.reports.pdf import dataframe_to_pdf
 
 def test_dataframe_to_pdf_fallback(tmp_path):
     df = pd.DataFrame({"a": [1, 2], "b": ["x", "y"]})
@@ -166,7 +166,7 @@ def test_dataframe_to_pdf_fallback(tmp_path):
 
 # -- Messaging Bot -------------------------------------------------------------
 
-from socrata_toolkit.messaging import BotAdapter
+from socrata_toolkit.alerts.messaging import BotAdapter
 
 def test_bot_greeting():
     bot = BotAdapter()
@@ -210,7 +210,7 @@ def test_bot_unknown():
 
 # -- 311 Complaint Ingestion (unit test only, no API call) --------------------
 
-from socrata_toolkit.complaint_ingestion import IngestionResult
+from socrata_toolkit.pipeline.complaints import IngestionResult
 
 def test_ingestion_result_struct():
     result = IngestionResult(total=50, sidewalk_related=50, critical_count=5,

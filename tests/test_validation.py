@@ -1,6 +1,6 @@
 import pandas as pd
 
-from socrata_toolkit.validation import validate_required_columns, validate_schema_types
+from socrata_toolkit.quality.validation import validate_required_columns, validate_schema_types
 
 
 def test_validate_required_columns_pass():

@@ -19,7 +19,7 @@ from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock, MagicMock, patch, call
 from urllib.parse import parse_qs, urlparse
 
-from socrata_toolkit.microsoft_graph import (
+from socrata_toolkit.integrations.graph import (
     GraphAPIClient,
     GraphAPIConfig,
     GraphAPIError,
@@ -63,7 +63,7 @@ def mock_session():
 @pytest.fixture
 def client(config, mock_session):
     """Create GraphAPIClient with mocked session."""
-    with patch("socrata_toolkit.microsoft_graph.requests.Session", return_value=mock_session):
+    with patch("socrata_toolkit.integrations.graph.requests.Session", return_value=mock_session):
         return GraphAPIClient(config, enable_metrics=False)
 
 
@@ -185,7 +185,7 @@ class TestGraphAPIClientInit:
 
     def test_client_initialization(self, config):
         """Test client initialization."""
-        with patch("socrata_toolkit.microsoft_graph.requests.Session"):
+        with patch("socrata_toolkit.integrations.graph.requests.Session"):
             client = GraphAPIClient(config, enable_metrics=False)
             assert client.config == config
             assert client._token_cache is not None
@@ -193,13 +193,13 @@ class TestGraphAPIClientInit:
 
     def test_client_with_metrics_disabled(self, config):
         """Test client initialization with metrics disabled."""
-        with patch("socrata_toolkit.microsoft_graph.requests.Session"):
+        with patch("socrata_toolkit.integrations.graph.requests.Session"):
             client = GraphAPIClient(config, enable_metrics=False)
             assert client.metrics is None
 
     def test_client_context_manager(self, config):
         """Test client as context manager."""
-        with patch("socrata_toolkit.microsoft_graph.requests.Session") as mock_session_class:
+        with patch("socrata_toolkit.integrations.graph.requests.Session") as mock_session_class:
             mock_session = MagicMock()
             mock_session_class.return_value = mock_session
 

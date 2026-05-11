@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from socrata_toolkit.sql_integration import (
+from socrata_toolkit.integrations.sql import (
     SQLQueryBuilder,
     dataframe_to_create_table,
     dataframe_to_insert_sql,

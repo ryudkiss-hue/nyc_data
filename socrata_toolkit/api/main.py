@@ -31,7 +31,7 @@ Example:
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from contextlib import asynccontextmanager
 from typing import Optional, AsyncGenerator, Callable
 import uuid
@@ -48,8 +48,8 @@ except ImportError:
     HAS_FASTAPI = False
 
 # Phase 2 observability integration
-from socrata_toolkit.observability import OperationalLogger, OperationalContext
-from socrata_toolkit.metrics import MetricsRegistry
+from socrata_toolkit.observability.manager import OperationalLogger, OperationalContext
+from socrata_toolkit.analysis.metrics import MetricsRegistry
 
 # API modules
 from socrata_toolkit.api.config import APIConfig
@@ -323,7 +323,7 @@ def create_app(config: Optional[APIConfig] = None) -> FastAPI:
             status_code=exc.status_code,
             request_id=request_id,
             details=exc.details,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
 
         return JSONResponse(
@@ -370,7 +370,7 @@ def create_app(config: Optional[APIConfig] = None) -> FastAPI:
             message="Internal server error",
             status_code=500,
             request_id=request_id,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
 
         return JSONResponse(
@@ -399,7 +399,7 @@ def create_app(config: Optional[APIConfig] = None) -> FastAPI:
 
         return HealthResponse(
             status=overall_status,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             database=database_status,
             cache=cache_status,
             version=config.api_version,

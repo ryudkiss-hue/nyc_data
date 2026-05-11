@@ -1,6 +1,6 @@
 import pandas as pd
 
-from socrata_toolkit.ops import (
+from socrata_toolkit.ops.core import (
     apply_grace_period_updates,
     generate_burndown,
     permit_lookahead_sql,

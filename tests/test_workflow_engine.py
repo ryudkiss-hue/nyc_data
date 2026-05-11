@@ -1,6 +1,6 @@
 import pytest
 
-from socrata_toolkit.workflow_engine import (
+from socrata_toolkit.ops.workflow import (
     EventTrigger,
     Schedule,
     Step,

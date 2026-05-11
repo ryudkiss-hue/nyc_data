@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import pytest
 from datetime import datetime, date, timedelta
-from socrata_toolkit.material_standards import (
+from socrata_toolkit.material.standards import (
     MaterialCategory,
     SurfaceCondition,
     DefectType,
@@ -23,7 +23,7 @@ from socrata_toolkit.material_standards import (
     SurfaceAssessment,
     DefectSeverityAssessment,
 )
-from socrata_toolkit.material_definitions import (
+from socrata_toolkit.material.definitions import (
     MATERIAL_DEFINITIONS,
     ASPH_STANDARD,
     CONC_STANDARD,
@@ -32,7 +32,7 @@ from socrata_toolkit.material_definitions import (
     get_material_by_category,
     get_materials_by_lifecycle_cost_range,
 )
-from socrata_toolkit.design_rules import (
+from socrata_toolkit.standards.design import (
     ADA_COMPLIANCE_RULES,
     get_rule,
     get_rules_for_material,
@@ -40,7 +40,7 @@ from socrata_toolkit.design_rules import (
     get_rules_by_severity,
     MATERIAL_APPLICABLE_RULES,
 )
-from socrata_toolkit.material_compliance import (
+from socrata_toolkit.material.compliance import (
     MaterialCompliance,
     ComplianceStatus,
     ADAComplianceCheckResult,

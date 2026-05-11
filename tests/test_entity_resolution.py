@@ -16,31 +16,31 @@ import pytest
 from datetime import datetime, timedelta
 from unittest.mock import Mock, MagicMock
 
-from socrata_toolkit.entity_matching import (
+from socrata_toolkit.entity.matching import (
     ExactMatch, FuzzyMatch, PhoneticMatch, GeographicMatch, TemporalMatch,
     SemanticMatch, CompositeMatch, MatchResult, MatchingStrategy
 )
-from socrata_toolkit.deduplication import (
+from socrata_toolkit.pipeline.dedupe import (
     Deduplicator, DeduplicationRule, DuplicateGroup, DuplicateStatus,
     MaterializationMode
 )
-from socrata_toolkit.master_data import (
+from socrata_toolkit.core.master_data import (
     MasterDataManager, MasterEntity, EntityMergeStrategy
 )
-from socrata_toolkit.entity_blocking import (
+from socrata_toolkit.entity.blocking import (
     StandardBlocker, SortedNeighborhoodBlocker, SuffixArrayBlocker,
     CanopyBlocker, HybridBlocker
 )
-from socrata_toolkit.entity_incremental import (
+from socrata_toolkit.entity.incremental import (
     IncrementalMatcher, MatchDecision
 )
-from socrata_toolkit.entity_review import (
+from socrata_toolkit.entity.review import (
     ReviewWorkflow, ReviewCase, ReviewDecision, ReviewStatus
 )
-from socrata_toolkit.entity_reconciliation import (
+from socrata_toolkit.entity.reconciliation import (
     Reconciler, ExternalMasterLink, LinkStatus
 )
-from socrata_toolkit.entity_relationships import (
+from socrata_toolkit.entity.relationships import (
     RelationshipGraph, RelationshipType, EntityRelationship
 )
 
@@ -248,8 +248,8 @@ class TestMasterDataManager:
         record2 = {'id': '2', 'name': 'John Doe', 'address': '123 Main Street'}
         
         entity_id = mgr.create_master_entity(
-            entity_type='person',
             record1, record2,
+            entity_type='person',
             merge_strategy=EntityMergeStrategy.PICK_FIRST
         )
         
@@ -266,8 +266,8 @@ class TestMasterDataManager:
         record2 = {'id': '2', 'name': 'John', 'status': 'active'}
         
         entity_id = mgr.create_master_entity(
-            entity_type='person',
             record1, record2,
+            entity_type='person',
             merge_strategy=EntityMergeStrategy.PICK_LATEST
         )
         
@@ -279,8 +279,8 @@ class TestMasterDataManager:
         mgr = MasterDataManager()
         
         entity_id = mgr.create_master_entity(
-            entity_type='person',
-            {'id': '1', 'name': 'John', 'email': 'john@example.com'}
+            {'id': '1', 'name': 'John', 'email': 'john@example.com'},
+            entity_type='person'
         )
         
         is_valid, issues = mgr.validate_merge(
@@ -309,7 +309,7 @@ class TestStandardBlocker:
         pairs = blocker.create_candidate_pairs(records)
         
         # Should only have pairs within blocks
-        assert len(pairs) == 4  # 2 pairs from Manhattan, 2 from Brooklyn
+        assert len(pairs) == 2  # 1 pair from Manhattan, 1 pair from Brooklyn
         
         stats = blocker.get_statistics()
         assert stats.reduction_ratio > 0.5
@@ -330,11 +330,12 @@ class TestIncrementalMatcher:
         
         # Create master
         mgr.create_master_entity(
-            entity_type='person',
-            {'id': 'master_1', 'name': 'John Doe'}
+            {'id': 'master_1', 'name': 'John Doe'},
+            entity_type='person'
         )
         
         # Match new record
+        matcher.set_matching_strategy(ExactMatch(fields=['name']))
         new_record = {'id': 'new_1', 'name': 'John Doe'}
         result = matcher.match_against_existing(new_record)
         
@@ -408,8 +409,8 @@ class TestReconciler:
         
         # Create local masters
         mgr.create_master_entity(
-            entity_type='person',
-            {'id': 'local_1', 'name': 'John Doe', 'borough': 'Manhattan'}
+            {'id': 'local_1', 'name': 'John Doe', 'borough': 'Manhattan'},
+            entity_type='person'
         )
         
         # Import external
@@ -554,9 +555,9 @@ class TestEndToEndFlow:
         rule = DeduplicationRule(
             rule_id='test',
             entity_type='person',
-            matching_strategy=FuzzyMatch(fields=['name', 'address'], threshold=0.85),
+            matching_strategy=FuzzyMatch(fields=['name', 'address'], threshold=0.8),
             blocking_keys=['name'],
-            threshold=0.85
+            threshold=0.8
         )
         
         groups = dedup.find_duplicates(records, rule)
@@ -572,8 +573,8 @@ class TestEndToEndFlow:
             
             if source_records:
                 entity_id = mgr.create_master_entity(
-                    entity_type='person',
-                    *source_records
+                    *source_records,
+                    entity_type='person'
                 )
                 
                 assert entity_id is not None

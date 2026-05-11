@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from socrata_toolkit.config import get_default, load_local_config
+from socrata_toolkit.core.config import get_default, load_local_config
 
 
 def test_get_default_nested():
@@ -10,7 +10,7 @@ def test_get_default_nested():
 
 
 def test_load_local_config(tmp_path: Path):
-    p = tmp_path / "socrata_toolkit.config.json"
+    p = tmp_path / "socrata_toolkit.core.config.json"
     p.write_text('{"preferences": {"default_max_rows": 12}}', encoding="utf-8")
     cfg = load_local_config(str(p))
     assert cfg["preferences"]["default_max_rows"] == 12

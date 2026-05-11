@@ -498,6 +498,8 @@ class RateLimiter:
             
             return True
             
+        except RateLimitExceeded:
+            raise
         except Exception as e:
             logger.error(f"Rate limit check failed: {e}")
             # Fail open: allow request if check fails

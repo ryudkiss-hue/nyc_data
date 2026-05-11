@@ -10,10 +10,10 @@ Standards: pytest, comprehensive coverage, fixture-based setup
 import json
 import pytest
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from socrata_toolkit.quality_expectations import (
+from socrata_toolkit.quality.expectations import (
     Expectation,
     ExpectationType,
     SeverityLevel,
@@ -22,14 +22,14 @@ from socrata_toolkit.quality_expectations import (
     create_sidewalk_inspections_suite,
     create_311_complaints_suite,
 )
-from socrata_toolkit.quality_profiler import (
+from socrata_toolkit.quality.profiler import (
     DataType,
     ColumnProfile,
     TableProfile,
     ProfileGenerator,
     DriftReport,
 )
-from socrata_toolkit.quality_sla import (
+from socrata_toolkit.quality.sla import (
     MetricType,
     Severity,
     TrendDirection,
@@ -37,19 +37,19 @@ from socrata_toolkit.quality_sla import (
     DataQualityTracker,
     create_standard_slas,
 )
-from socrata_toolkit.quality_validator import (
+from socrata_toolkit.quality.validator import (
     QualityValidator,
     ValidationStatus,
     ValidationResult,
     ValidationResultsAggregator,
 )
-from socrata_toolkit.quality_anomalies import (
+from socrata_toolkit.quality.anomalies import (
     AnomalySeverity,
     Anomaly,
     AnomalyReport,
     AnomalyDetector,
 )
-from socrata_toolkit.quality_rules import (
+from socrata_toolkit.quality.rules import (
     RuleSeverity,
     RuleMode,
     RuleViolation,
@@ -59,8 +59,8 @@ from socrata_toolkit.quality_rules import (
     create_sidewalk_rules,
     create_311_complaints_rules,
 )
-from socrata_toolkit.quality_reports import QualityReportGenerator
-from socrata_toolkit.quality_catalog import (
+from socrata_toolkit.quality.reports import QualityReportGenerator
+from socrata_toolkit.quality.catalog import (
     QualityTrend,
     DatasetQualityScore,
     DatasetQualityProfile,
@@ -259,7 +259,7 @@ def test_compare_profiles():
     """Test comparing two profiles for drift."""
     profiler = ProfileGenerator()
     df1 = pd.DataFrame({"col1": [1, 2, 3], "col2": ["A", "B", "C"]})
-    df2 = pd.DataFrame({"col1": [1, 2, 3, 4, 5], "col2": ["A", "B"]})
+    df2 = pd.DataFrame({"col1": [1, 2, 3, 4, 5], "col2": ["A", "B", "C", "D", "E"]})
     
     profile1 = profiler.profile_dataset(df1, "dataset")
     profile2 = profiler.profile_dataset(df2, "dataset")
@@ -484,10 +484,10 @@ def test_anomaly_detector_outliers():
     """Test detecting outliers."""
     detector = AnomalyDetector()
     history = [
-        (datetime.utcnow() - timedelta(hours=i), 100.0 - i)
+        (datetime.now(timezone.utc) - timedelta(hours=i), 100.0 - i)
         for i in range(10)
     ]
-    history.append((datetime.utcnow(), 500.0))  # Outlier
+    history.append((datetime.now(timezone.utc), 500.0))  # Outlier
     
     report = detector.detect_outliers("test_metric", history)
     assert isinstance(report, AnomalyReport)
@@ -496,7 +496,7 @@ def test_anomaly_detector_outliers():
 def test_anomaly_detector_drift():
     """Test detecting drift."""
     detector = AnomalyDetector()
-    history = [(datetime.utcnow() - timedelta(hours=i), 100.0 + (i * 5)) for i in range(20)]
+    history = [(datetime.now(timezone.utc) - timedelta(hours=i), 100.0 + (i * 5)) for i in range(20)]
     
     report = detector.detect_drift("test_metric", history)
     assert isinstance(report, AnomalyReport)
@@ -505,8 +505,8 @@ def test_anomaly_detector_drift():
 def test_anomaly_detector_seasonality():
     """Test detecting seasonality violations."""
     detector = AnomalyDetector()
-    history = [(datetime.utcnow() - timedelta(hours=i), 100.0) for i in range(50)]
-    history[-1] = (datetime.utcnow(), 500.0)  # Violation
+    history = [(datetime.now(timezone.utc) - timedelta(hours=i), 100.0) for i in range(50)]
+    history[-1] = (datetime.now(timezone.utc), 500.0)  # Violation
     
     report = detector.detect_seasonality_violation("test_metric", history)
     assert isinstance(report, AnomalyReport)
@@ -515,7 +515,7 @@ def test_anomaly_detector_seasonality():
 def test_anomaly_report_properties():
     """Test anomaly report properties."""
     anomaly = Anomaly(
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(timezone.utc),
         metric_name="test",
         anomaly_type="z_score",
         value=100.0,
@@ -523,7 +523,7 @@ def test_anomaly_report_properties():
         severity=AnomalySeverity.HIGH,
     )
     
-    report = AnomalyReport(detected_at=datetime.utcnow())
+    report = AnomalyReport(detected_at=datetime.now(timezone.utc))
     report.anomalies.append(anomaly)
     
     assert report.has_critical_anomalies == False
@@ -533,8 +533,8 @@ def test_multi_metric_anomaly_detection():
     """Test detecting anomalies across multiple metrics."""
     detector = AnomalyDetector()
     metrics = {
-        "metric1": [(datetime.utcnow() - timedelta(hours=i), 100.0) for i in range(10)],
-        "metric2": [(datetime.utcnow() - timedelta(hours=i), 200.0) for i in range(10)],
+        "metric1": [(datetime.now(timezone.utc) - timedelta(hours=i), 100.0) for i in range(10)],
+        "metric2": [(datetime.now(timezone.utc) - timedelta(hours=i), 200.0) for i in range(10)],
     }
     
     report = detector.detect_multi_metric_anomaly(metrics)
@@ -544,7 +544,7 @@ def test_multi_metric_anomaly_detection():
 def test_anomaly_to_dict():
     """Test anomaly serialization."""
     anomaly = Anomaly(
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(timezone.utc),
         metric_name="test",
         anomaly_type="z_score",
         value=100.0,
@@ -819,7 +819,7 @@ def test_anomaly_detection_integration(tracker):
     
     # Simulate metric history
     history = [
-        (datetime.utcnow() - timedelta(hours=i), 100.0 - i)
+        (datetime.now(timezone.utc) - timedelta(hours=i), 100.0 - i)
         for i in range(20)
     ]
     

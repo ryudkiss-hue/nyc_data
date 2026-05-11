@@ -8,14 +8,14 @@ Tests the complete governance flow:
 """
 
 import pytest
-from datetime import datetime
+from datetime import datetime, timezone
 
 try:
-    from socrata_toolkit.governance_processor import (
+    from socrata_toolkit.governance.processor import (
         GovernanceProcessor,
         GovernanceEvent,
     )
-    from socrata_toolkit.cdc_engine import CDCEvent
+    from socrata_toolkit.cdc.engine import CDCEvent
 except ImportError:
     pytest.skip("Governance modules not available", allow_module_level=True)
 
@@ -32,7 +32,7 @@ class TestGovernanceProcessor:
             record_id="repair-123",
             before_values={"budget": 50000},
             after_values={"budget": 55000},
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             is_compliant=True,
         )
         
@@ -65,7 +65,7 @@ class TestGovernanceProcessor:
             source_dataset="contracts",
             operation="INSERT",
             record_id="contr-456",
-            timestamp_ms=int(datetime.utcnow().timestamp() * 1000),
+            timestamp_ms=int(datetime.now(timezone.utc).timestamp() * 1000),
             after={"contract_id": "contr-456", "budget": 100000},
         )
         
@@ -76,7 +76,7 @@ class TestGovernanceProcessor:
             operation=cdc_event.operation,
             record_id=cdc_event.record_id,
             after_values=cdc_event.after,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
         
         assert enriched.event_id == "cdc-001"
@@ -89,8 +89,8 @@ class TestProjectAnalystReports:
     
     def test_budget_audit_structure(self):
         """Test that budget audit reports have expected structure."""
-        from socrata_toolkit.project_analyst_reports import ProjectAnalystReports
-        from socrata_toolkit.governance_processor import GovernanceProcessor
+        from socrata_toolkit.reports.analyst import ProjectAnalystReports
+        from socrata_toolkit.governance.processor import GovernanceProcessor
         
         # Initialize with mock processor
         processor = GovernanceProcessor(dsn="postgresql://invalid")
@@ -104,8 +104,8 @@ class TestProjectAnalystReports:
     
     def test_compliance_report_structure(self):
         """Test that compliance reports have expected structure."""
-        from socrata_toolkit.project_analyst_reports import ProjectAnalystReports
-        from socrata_toolkit.governance_processor import GovernanceProcessor
+        from socrata_toolkit.reports.analyst import ProjectAnalystReports
+        from socrata_toolkit.governance.processor import GovernanceProcessor
         
         processor = GovernanceProcessor(dsn="postgresql://invalid")
         reports = ProjectAnalystReports(processor)
@@ -129,7 +129,7 @@ class TestGovernanceIntegration:
             source_dataset="test_dataset",
             operation="INSERT",
             record_id="test-record",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
         
         # Verify event is valid and serializable

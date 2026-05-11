@@ -12,7 +12,7 @@ Tests validate:
 """
 
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from unittest.mock import Mock, patch, MagicMock
 import pandas as pd
 from airflow.models import DAG, DagRun
@@ -66,10 +66,10 @@ def mock_repair_data():
 class TestIncidentIngestionFullRun:
     """Test incident_ingestion DAG end-to-end"""
 
-    @patch('socrata_toolkit.client.SocrataClient')
-    @patch('socrata_toolkit.validation.ValidationRuleSet')
-    @patch('socrata_toolkit.db_helpers.PostgresHelper')
-    @patch('socrata_toolkit.freshness.FreshnessTracker')
+    @patch('socrata_toolkit.core.client.SocrataClient')
+    @patch('socrata_toolkit.quality.validation.ValidationRuleSet')
+    @patch('socrata_toolkit.core.db_helpers.PostgresHelper')
+    @patch('socrata_toolkit.quality.freshness.FreshnessTracker')
     def test_incident_ingestion_full_pipeline(
         self,
         mock_tracker_class,
@@ -119,7 +119,7 @@ class TestIncidentIngestionFullRun:
         # Step 4: Update freshness
         tracker = mock_tracker_class()
         tracker.update_freshness(
-            last_updated=datetime.utcnow(),
+            last_updated=datetime.now(timezone.utc),
             record_count=5,
             metadata={'source': 'socrata'}
         )
@@ -130,7 +130,7 @@ class TestIncidentIngestionFullRun:
         mock_db.upsert.assert_called_once()
         mock_tracker.update_freshness.assert_called_once()
 
-    @patch('socrata_toolkit.client.SocrataClient')
+    @patch('socrata_toolkit.core.client.SocrataClient')
     def test_incident_ingestion_with_api_error(self, mock_client_class):
         """Incident ingestion should handle API errors"""
         mock_client = MagicMock()
@@ -142,8 +142,8 @@ class TestIncidentIngestionFullRun:
         with pytest.raises(Exception, match="API rate limit exceeded"):
             client.query(dataset_id='a2nx-4u46')
 
-    @patch('socrata_toolkit.db_helpers.PostgresHelper')
-    @patch('socrata_toolkit.validation.ValidationRuleSet')
+    @patch('socrata_toolkit.core.db_helpers.PostgresHelper')
+    @patch('socrata_toolkit.quality.validation.ValidationRuleSet')
     def test_incident_ingestion_with_data_quality_failure(
         self, mock_validator_class, mock_db_class, mock_incident_data
     ):
@@ -172,10 +172,10 @@ class TestIncidentIngestionFullRun:
 class TestRepairSchedulingEndToEnd:
     """Test repair_scheduling DAG end-to-end"""
 
-    @patch('socrata_toolkit.db_helpers.PostgresHelper')
+    @patch('socrata_toolkit.core.db_helpers.PostgresHelper')
     @patch('socrata_toolkit.spatial.GeoProcessor')
     @patch('socrata_toolkit.analysis.SchedulingOptimizer')
-    @patch('socrata_toolkit.metrics.MetricsEmitter')
+    @patch('socrata_toolkit.analysis.metrics.MetricsEmitter')
     def test_repair_scheduling_optimization(
         self,
         mock_emitter_class,
@@ -254,10 +254,10 @@ class TestRepairSchedulingEndToEnd:
 class TestKPIMaterializationEndToEnd:
     """Test kpi_materialization DAG end-to-end"""
 
-    @patch('socrata_toolkit.db_helpers.PostgresHelper')
-    @patch('socrata_toolkit.dot_sidewalk.MaterialAwareSidewalkKPI')
+    @patch('socrata_toolkit.core.db_helpers.PostgresHelper')
+    @patch('socrata_toolkit.engineering.dot_sidewalk.MaterialAwareSidewalkKPI')
     @patch('socrata_toolkit.lineage.LineageTracker')
-    @patch('socrata_toolkit.metrics.MetricsEmitter')
+    @patch('socrata_toolkit.analysis.metrics.MetricsEmitter')
     def test_kpi_computation_accuracy(
         self,
         mock_emitter_class,
@@ -329,9 +329,9 @@ class TestKPIMaterializationEndToEnd:
 class TestPhase1Integration:
     """Test Phase 3 integration with Phase 1 modules"""
 
-    @patch('socrata_toolkit.validation.ValidationRuleSet')
-    @patch('socrata_toolkit.schema_registry.SchemaRegistry')
-    @patch('socrata_toolkit.dot_sidewalk.MaterialAwareSidewalkKPI')
+    @patch('socrata_toolkit.quality.validation.ValidationRuleSet')
+    @patch('socrata_toolkit.discovery.schema.SchemaRegistry')
+    @patch('socrata_toolkit.engineering.dot_sidewalk.MaterialAwareSidewalkKPI')
     def test_validation_and_kpi_pipeline(
         self,
         mock_kpi_class,
@@ -384,8 +384,8 @@ class TestPhase1Integration:
 class TestPhase2Integration:
     """Test Phase 3 integration with Phase 2 modules"""
 
-    @patch('socrata_toolkit.freshness.FreshnessTracker')
-    @patch('socrata_toolkit.metrics.MetricsEmitter')
+    @patch('socrata_toolkit.quality.freshness.FreshnessTracker')
+    @patch('socrata_toolkit.analysis.metrics.MetricsEmitter')
     @patch('socrata_toolkit.lineage.LineageTracker')
     @patch('socrata_toolkit.observability.OperationalLogger')
     def test_observability_pipeline(
@@ -403,7 +403,7 @@ class TestPhase2Integration:
         
         tracker = mock_tracker_class(data_source='socrata_incidents')
         tracker.update_freshness(
-            last_updated=datetime.utcnow(),
+            last_updated=datetime.now(timezone.utc),
             record_count=5000,
         )
         tracker.update_freshness.assert_called_once()
@@ -460,9 +460,9 @@ class TestPhase2Integration:
 class TestIdempotency:
     """Test that DAGs are idempotent (re-runs produce same results)"""
 
-    @patch('socrata_toolkit.freshness.FreshnessTracker')
-    @patch('socrata_toolkit.db_helpers.PostgresHelper')
-    @patch('socrata_toolkit.client.SocrataClient')
+    @patch('socrata_toolkit.quality.freshness.FreshnessTracker')
+    @patch('socrata_toolkit.core.db_helpers.PostgresHelper')
+    @patch('socrata_toolkit.core.client.SocrataClient')
     def test_incident_ingestion_idempotent(
         self,
         mock_client_class,
@@ -513,7 +513,7 @@ class TestIdempotency:
 class TestErrorRecovery:
     """Test DAG recovery from failures"""
 
-    @patch('socrata_toolkit.db_helpers.PostgresHelper')
+    @patch('socrata_toolkit.core.db_helpers.PostgresHelper')
     def test_recovery_after_task_failure(self, mock_db_class):
         """DAG should continue after task failure with proper recovery"""
         
@@ -535,7 +535,7 @@ class TestErrorRecovery:
         result = db.upsert('incident', [], key_columns=['incident_id'])
         assert result == 5
 
-    @patch('socrata_toolkit.client.SocrataClient')
+    @patch('socrata_toolkit.core.client.SocrataClient')
     def test_incremental_loading_on_retry(self, mock_client_class):
         """On retry, should load only new data since checkpoint"""
         
@@ -574,7 +574,7 @@ class TestErrorRecovery:
 class TestDatabaseConnectivity:
     """Test database connections"""
 
-    @patch('socrata_toolkit.db_helpers.PostgresHelper')
+    @patch('socrata_toolkit.core.db_helpers.PostgresHelper')
     def test_postgres_connection_success(self, mock_db_class):
         """Should successfully connect to PostgreSQL"""
         
@@ -587,7 +587,7 @@ class TestDatabaseConnectivity:
         
         assert len(result) == 1
 
-    @patch('socrata_toolkit.db_helpers.PostgresHelper')
+    @patch('socrata_toolkit.core.db_helpers.PostgresHelper')
     def test_postgres_connection_failure(self, mock_db_class):
         """Should handle PostgreSQL connection errors"""
         
@@ -600,7 +600,7 @@ class TestDatabaseConnectivity:
         with pytest.raises(Exception, match="Connection refused"):
             db.query("SELECT 1")
 
-    @patch('socrata_toolkit.db_helpers.PostgresHelper')
+    @patch('socrata_toolkit.core.db_helpers.PostgresHelper')
     def test_checkpoint_table_existence(self, mock_db_class):
         """Checkpoint tables should exist"""
         
@@ -649,7 +649,7 @@ class TestAlertGeneration:
         slack.execute(context)
         assert mock_slack.execute.called
 
-    @patch('socrata_toolkit.freshness.FreshnessTracker')
+    @patch('socrata_toolkit.quality.freshness.FreshnessTracker')
     def test_freshness_sla_violation(self, mock_tracker_class):
         """Should detect freshness SLA violations"""
         
@@ -686,7 +686,7 @@ class TestPerformance:
         assert len(large_data) == 10000
         assert large_data['incident_id'].nunique() > 1
 
-    @patch('socrata_toolkit.db_helpers.PostgresHelper')
+    @patch('socrata_toolkit.core.db_helpers.PostgresHelper')
     def test_batch_upsert_performance(self, mock_db_class):
         """UPSERT should handle large batches"""
         

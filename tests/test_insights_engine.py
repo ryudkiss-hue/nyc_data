@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from socrata_toolkit.insights_engine import (
+from socrata_toolkit.analysis.insights import (
     InsightsReport,
     generate_insights,
     smart_recommendations,

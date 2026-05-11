@@ -12,7 +12,7 @@ except ImportError:
 class TestFlaskAPI:
     @pytest.fixture
     def client(self):
-        from socrata_toolkit.api import create_app
+        from socrata_toolkit.core.api import create_app
         app = create_app()
         app.config["TESTING"] = True
         with app.test_client() as client:

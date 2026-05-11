@@ -3,7 +3,7 @@ import json
 import pandas as pd
 import pytest
 
-from socrata_toolkit.bi_integration import (
+from socrata_toolkit.integrations.bi import (
     SlideContent,
     create_presentation,
     export_bi_package,

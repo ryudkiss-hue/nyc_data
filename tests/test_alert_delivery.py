@@ -1,8 +1,8 @@
 """Tests for alert delivery glue module."""
 from unittest.mock import patch, MagicMock
 
-from socrata_toolkit.alert_delivery import deliver_alerts, _detect_channels
-from socrata_toolkit.notification_rules import RuleAlert
+from socrata_toolkit.alerts.delivery import deliver_alerts, _detect_channels
+from socrata_toolkit.alerts.rules import RuleAlert
 
 
 def _sample_alert():
@@ -41,7 +41,7 @@ def test_detect_channels_slack():
     assert "slack" in channels
 
 
-@patch("socrata_toolkit.alert_delivery._requests.post")
+@patch("socrata_toolkit.alerts.delivery._requests.post")
 @patch.dict("os.environ", {"TEAMS_WEBHOOK_URL": "https://fake.webhook"})
 def test_deliver_to_teams(mock_post):
     mock_post.return_value = MagicMock(status_code=200)
@@ -52,7 +52,7 @@ def test_deliver_to_teams(mock_post):
     assert payload["@type"] == "MessageCard"
 
 
-@patch("socrata_toolkit.alert_delivery._requests.post")
+@patch("socrata_toolkit.alerts.delivery._requests.post")
 @patch.dict("os.environ", {"SLACK_WEBHOOK_URL": "https://fake.slack"})
 def test_deliver_to_slack(mock_post):
     mock_post.return_value = MagicMock(status_code=200)

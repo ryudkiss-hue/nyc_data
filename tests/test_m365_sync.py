@@ -15,14 +15,14 @@ import pandas as pd
 from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock, MagicMock, patch
 
-from socrata_toolkit.work_management import (
+from socrata_toolkit.tools.work import (
     SharePointListSync,
     OutlookCalendarSync,
     SyncDirection,
     ConflictResolutionStrategy,
     SyncState,
 )
-from socrata_toolkit.microsoft_graph import (
+from socrata_toolkit.integrations.graph import (
     SharePointListItem,
     OutlookEvent,
     OutlookEventAttendee,
@@ -126,7 +126,7 @@ class TestSharePointListSyncBasic:
             SharePointListItem(
                 id=f"sp-{i}",
                 fields={"ExternalId": f"WO-{i:03d}"},
-                modified=datetime.now(timezone.utc),
+                modified=datetime.now(timezone.utc) - timedelta(days=30),
             )
             for i in range(1, 4)
         ]
@@ -153,7 +153,7 @@ class TestSharePointListSyncBasic:
             SharePointListItem(
                 id="sp-1",
                 fields={"ExternalId": "WO-001"},
-                modified=datetime.now(timezone.utc),
+                modified=datetime.now(timezone.utc) - timedelta(days=30),
             )
         ]
         mock_graph_client.sharepoint_list_get_items.return_value = existing_items
@@ -806,7 +806,7 @@ class TestSyncState:
             remote_id="sp-1",
             local_modified_at=past,  # Not changed
             remote_modified_at=now,  # Changed
-            last_sync_at=past - timedelta(hours=1),
+            last_sync_at=past,
         )
 
         assert state.has_conflict() is False

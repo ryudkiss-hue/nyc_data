@@ -9,7 +9,7 @@ import os
 import json
 import pytest
 import requests
-import psycopg2
+import psycopg as psycopg2
 from datetime import datetime, timedelta
 
 # Configuration

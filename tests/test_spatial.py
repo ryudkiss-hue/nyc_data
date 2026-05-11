@@ -16,7 +16,7 @@ Minimum 40 test cases covering all spatial modules.
 import json
 import logging
 import tempfile
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -24,7 +24,7 @@ import pytest
 from shapely.geometry import Point, LineString, Polygon, MultiPolygon
 
 # Import spatial modules
-from socrata_toolkit.spatial_database import (
+from socrata_toolkit.spatial.database import (
     SpatialGeometry,
     SpatialSegment,
     SpatialBlock,
@@ -32,17 +32,17 @@ from socrata_toolkit.spatial_database import (
     SpatialMaterialZone,
     SRID_WGS84,
 )
-from socrata_toolkit.spatial_queries import SpatialQuery, ProximityResult
-from socrata_toolkit.arcgis_integration import ArcGISConnector, ArcGISCredential
-from socrata_toolkit.qgis_compatibility import QGISCompatibilityManager
-from socrata_toolkit.spatial_analytics import (
+from socrata_toolkit.spatial.queries import SpatialQuery, ProximityResult
+from socrata_toolkit.geo.arcgis import ArcGISConnector, ArcGISCredential
+from socrata_toolkit.qgis.compatibility import QGISCompatibilityManager
+from socrata_toolkit.spatial.analytics import (
     NetworkAnalysis,
     HotspotAnalysis,
     InterpolationAnalysis,
 )
-from socrata_toolkit.spatial_visualization import SpatialVisualization
-from socrata_toolkit.mobile_gis import FieldPackageBuilder, FieldSession
-from socrata_toolkit.spatial_metrics import SpatialMetricsCollector, SpatialQualityScorer
+from socrata_toolkit.spatial.visualization import SpatialVisualization
+from socrata_toolkit.geo.mobile_gis import FieldPackageBuilder, FieldSession
+from socrata_toolkit.spatial.metrics import SpatialMetricsCollector, SpatialQualityScorer
 
 logger = logging.getLogger(__name__)
 
@@ -197,7 +197,7 @@ class TestSpatialInspection:
             geometry=geom,
             segment_id="seg001",
             inspector_id="insp_john",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             defect_type="pothole",
             severity="high",
         )
@@ -215,7 +215,7 @@ class TestSpatialInspection:
                 geometry=geom,
                 segment_id="seg001",
                 inspector_id="insp_john",
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 defect_type="pothole",
                 severity="invalid_severity",
             )

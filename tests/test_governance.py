@@ -3,7 +3,7 @@ import json
 import pandas as pd
 import pytest
 
-from socrata_toolkit.governance import (
+from socrata_toolkit.governance.core import (
     AuditLogger,
     LineageRecord,
     QualityScore,

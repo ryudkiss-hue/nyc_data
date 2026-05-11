@@ -1,5 +1,5 @@
 """
-Tests for Material-Aware KPI Computation (socrata_toolkit.dot_sidewalk)
+Tests for Material-Aware KPI Computation (socrata_toolkit.engineering.dot_sidewalk)
 
 Tests material-specific KPI calculation, ADA compliance rates, contractor quality scoring,
 and KPI lineage tracking.
@@ -7,9 +7,9 @@ and KPI lineage tracking.
 
 import pandas as pd
 import pytest
-from datetime import datetime
+from datetime import datetime, timezone
 
-from socrata_toolkit.dot_sidewalk import (
+from socrata_toolkit.engineering.dot_sidewalk import (
     SidewalkKPI,
     MaterialAwareSidewalkKPI,
     compute_sidewalk_kpis,
@@ -87,7 +87,7 @@ class TestMaterialAwareSidewalkKPI:
     def test_material_aware_kpi_creation(self):
         """Test creating a MaterialAwareSidewalkKPI object."""
         kpi = MaterialAwareSidewalkKPI(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             period_label="2024-Q1",
             defect_density=5.2,
             defect_rate_asphalt=6.1,
@@ -105,7 +105,7 @@ class TestMaterialAwareSidewalkKPI:
     def test_material_aware_kpi_to_dict(self):
         """Test serializing MaterialAwareSidewalkKPI to dictionary."""
         kpi = MaterialAwareSidewalkKPI(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             period_label="2024-Q1",
             defect_density=5.2,
         )
@@ -118,7 +118,7 @@ class TestMaterialAwareSidewalkKPI:
     def test_material_aware_kpi_hazardous_defect_coverage(self):
         """Test KPI includes hazardous defect coverage by material."""
         kpi = MaterialAwareSidewalkKPI(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             period_label="2024-Q1",
             defect_density=5.2,
             hazardous_defect_coverage={
@@ -134,7 +134,7 @@ class TestMaterialAwareSidewalkKPI:
     def test_material_aware_kpi_contractor_quality(self):
         """Test KPI includes contractor quality scores by material."""
         kpi = MaterialAwareSidewalkKPI(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             period_label="2024-Q1",
             defect_density=5.2,
             contractor_quality_by_material={
@@ -152,7 +152,7 @@ class TestMaterialAwareSidewalkKPI:
     def test_material_aware_kpi_material_longevity(self):
         """Test KPI includes material lifecycle data."""
         kpi = MaterialAwareSidewalkKPI(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             period_label="2024-Q1",
             defect_density=5.2,
             material_longevity={

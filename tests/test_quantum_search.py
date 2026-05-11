@@ -2,7 +2,7 @@
 import pandas as pd
 import pytest
 
-from socrata_toolkit.quantum_search import (
+from socrata_toolkit.quantum.search import (
     GroverCircuitInfo,
     SearchCriteria,
     SearchResult,

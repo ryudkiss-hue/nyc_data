@@ -3,7 +3,7 @@ import json
 import pandas as pd
 import pytest
 
-from socrata_toolkit.work_management import (
+from socrata_toolkit.tools.work import (
     GoogleWorkspaceAdapter,
     M365Adapter,
     MSProjectExporter,

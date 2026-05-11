@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from socrata_toolkit.nlp_integration import (
+from socrata_toolkit.nlp.integration import (
     analyze_text_column,
     enrich_construction_list,
     extract_locations,

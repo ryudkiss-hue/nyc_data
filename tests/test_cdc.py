@@ -18,13 +18,13 @@ from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 
 # Import modules to test
-from socrata_toolkit.scd_type2 import SCDRecord, SCDType2Manager, DMLType
-from socrata_toolkit.audit_trail import AuditTrail, AuditEvent, ActionType, ChangeType
-from socrata_toolkit.cdc_engine import CDCEvent, CDCProcessor, CDCStorage, Operation
-from socrata_toolkit.temporal_queries import TemporalQuery, ChangeSummary, ChangePattern
-from socrata_toolkit.soft_delete import SoftDeleteManager, RetentionPolicy
-from socrata_toolkit.cdc_export import CDCExporter, ExportFormat, ExportResult
-from socrata_toolkit.cdc_compliance import CDCReconciler, ComplianceCheckResult, ComplianceReport
+from socrata_toolkit.pipeline.scd import SCDRecord, SCDType2Manager, DMLType
+from socrata_toolkit.governance.audit import AuditTrail, AuditEvent, ActionType, ChangeType
+from socrata_toolkit.cdc.engine import CDCEvent, CDCProcessor, CDCStorage, Operation
+from socrata_toolkit.sql.temporal import TemporalQuery, ChangeSummary, ChangePattern
+from socrata_toolkit.pipeline.soft_delete import SoftDeleteManager, RetentionPolicy
+from socrata_toolkit.cdc.export import CDCExporter, ExportFormat, ExportResult
+from socrata_toolkit.cdc.compliance import CDCReconciler, ComplianceCheckResult, ComplianceReport
 
 
 class TestSCDRecord:
@@ -103,7 +103,7 @@ class TestSCDType2Manager:
         hash2 = SCDType2Manager._calculate_hash(data)
         assert hash1 == hash2
 
-    @patch("socrata_toolkit.scd_type2.psycopg")
+    @patch("socrata_toolkit.pipeline.scd.psycopg")
     def test_manage_record_new_insert(self, mock_psycopg):
         """Test managing a new record (INSERT)."""
         # This would require database mocking

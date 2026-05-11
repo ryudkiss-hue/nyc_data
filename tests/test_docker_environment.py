@@ -8,7 +8,7 @@ Run with: pytest tests/test_docker_environment.py -v
 import os
 import pytest
 import requests
-import psycopg2
+import psycopg as psycopg2
 from datetime import datetime
 
 # Configuration

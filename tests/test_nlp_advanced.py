@@ -1,4 +1,4 @@
-from socrata_toolkit.nlp_advanced import analyze_text, preprocess_text
+from socrata_toolkit.nlp.advanced import analyze_text, preprocess_text
 
 
 def test_preprocess_text():
