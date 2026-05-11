@@ -49,6 +49,55 @@ The GeoPackage contains:
 - **field_metadata table**: Help text for each field
 - **symbology**: Pre-configured styling rules for visualization
 
+### Advanced: Direct GeoPackageBuilder API
+
+For custom GeoPackage creation, you can use the lower-level `GeoPackageBuilder` API directly. This provides fine-grained control over layers and metadata.
+
+```python
+from socrata_toolkit.qgis_compatibility import GeoPackageBuilder
+
+# Initialize builder
+builder = GeoPackageBuilder("custom_inspection.gpkg")
+builder.create_empty_geopackage()
+
+# Add custom layers with specific properties and styling
+builder.add_layer(
+    layer_name="segments",
+    features=segment_features,
+    geometry_type="LineString",
+    properties={
+        "segment_id": "string",
+        "material_type": "string",
+        "condition_score": "number",
+        "defects": "integer",
+        "last_inspection": "datetime"
+    },
+    styles={
+        "type": "simple",
+        "symbols": [{
+            "type": "line",
+            "color": [0, 0, 0, 255],
+            "width": 1.5
+        }]
+    }
+)
+
+# Add field help text for inspectors
+builder.add_field_metadata(
+    "segments",
+    {
+        "condition_score": "Rate overall condition 0-100",
+        "material_type": "Predominant surface material",
+        "defects": "Number of defects observed"
+    }
+)
+
+# Finalize the GeoPackage
+builder.finalize()
+```
+
+For complete API documentation, see [`docs/geospatial.md#geopackage-builder-api`](geospatial.md#geopackage-builder-api).
+
 ## Opening in QGIS
 
 ### Step 1: Launch QGIS
