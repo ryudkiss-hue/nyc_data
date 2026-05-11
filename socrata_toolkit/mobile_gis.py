@@ -46,7 +46,7 @@ class FieldLocation:
     longitude: float
     gps_accuracy_meters: float
     timestamp: datetime
-    defects: list[str] = None
+    defects: Optional[list[str]] = None
     notes: str = ""
 
 

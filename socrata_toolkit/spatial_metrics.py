@@ -28,7 +28,7 @@ class SpatialCoverageMetric:
     unit: str  # "percent", "count", "density", "km2"
     borough: Optional[str] = None
     district: Optional[str] = None
-    timestamp: datetime = None
+    timestamp: Optional[datetime] = None
     
     def __post_init__(self) -> None:
         if self.timestamp is None:

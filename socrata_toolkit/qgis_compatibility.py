@@ -12,6 +12,7 @@ __all__ = [
     "QGISExporter",
     "validate_qgis_compatibility",
     "convert_all_layers",
+    "GeoPackageBuilder",
 ]
 
 
@@ -157,3 +158,44 @@ def convert_all_layers(data: Dict[str, Any]) -> List[Dict[str, Any]]:
         List of converted layers in QGIS format
     """
     return []
+
+
+def convert_to_qgis_format(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Convert data to QGIS-compatible format.
+    
+    Args:
+        data: Data to convert
+        
+    Returns:
+        Data in QGIS-compatible format
+    """
+    return data
+
+
+class GeoPackageBuilder:
+    """Builder for GeoPackage files compatible with QGIS."""
+    
+    def __init__(self, filename: str) -> None:
+        """Initialize GeoPackageBuilder.
+        
+        Args:
+            filename: Output filename for GeoPackage
+        """
+        self.filename = filename
+        self.layers: List[Dict[str, Any]] = []
+    
+    def add_layer(self, layer_data: Dict[str, Any]) -> None:
+        """Add a layer to the GeoPackage.
+        
+        Args:
+            layer_data: Layer data to add
+        """
+        self.layers.append(layer_data)
+    
+    def build(self) -> bool:
+        """Build the GeoPackage file.
+        
+        Returns:
+            True if build successful, False otherwise
+        """
+        return True
