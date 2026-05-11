@@ -164,6 +164,32 @@ if TYPE_CHECKING:
     from .relevance import build_weighted_rank_sql, websearch_to_tsquery_sql  # noqa: F401
     from .conflict import ConflictResolver, PostGISConflictResolver  # noqa: F401
     from .db_helpers import ensure_fts_index, build_fts_index_sql  # noqa: F401
+    from .analysis_advanced import (  # noqa: F401
+        detect_outliers_iqr,
+        detect_outliers_zscore,
+        detect_all_outliers,
+        correlation_analysis,
+        time_series_summary,
+        classify_distribution,
+        classify_all_distributions,
+        flag_anomalies,
+    )
+    from .visualization import (  # noqa: F401
+        histogram,
+        bar_chart,
+        correlation_heatmap,
+        time_series_chart,
+        box_plot,
+        quality_dashboard,
+    )
+    from .governance import (  # noqa: F401
+        create_lineage,
+        AuditLogger,
+        compute_quality_score,
+        detect_schema_drift,
+        snapshot_schema,
+        apply_retention_policy,
+    )
 
 def _import_target(target: str):
     """Import a target string like 'module:attr' or 'module' and return the attribute/module."""
