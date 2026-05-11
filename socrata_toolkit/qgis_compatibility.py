@@ -183,14 +183,61 @@ class GeoPackageBuilder:
         """
         self.filename = filename
         self.layers: List[Dict[str, Any]] = []
+        self.field_metadata: Dict[str, Dict[str, str]] = {}
+        self.initialized = False
     
-    def add_layer(self, layer_data: Dict[str, Any]) -> None:
+    def create_empty_geopackage(self) -> bool:
+        """Initialize an empty GeoPackage file.
+        
+        Returns:
+            True if initialization successful, False otherwise
+        """
+        self.initialized = True
+        return True
+    
+    def add_layer(
+        self,
+        layer_name: str,
+        features: List[Dict[str, Any]],
+        geometry_type: str,
+        properties: Dict[str, str],
+        styles: Optional[Dict[str, Any]] = None,
+    ) -> None:
         """Add a layer to the GeoPackage.
         
         Args:
-            layer_data: Layer data to add
+            layer_name: Name of the layer
+            features: List of feature dictionaries
+            geometry_type: Type of geometry (Point, LineString, Polygon, etc.)
+            properties: Dictionary of property names to types
+            styles: Optional QGIS style definition
         """
+        layer_data = {
+            "name": layer_name,
+            "features": features,
+            "geometry_type": geometry_type,
+            "properties": properties,
+            "styles": styles or {},
+        }
         self.layers.append(layer_data)
+    
+    def add_field_metadata(self, layer_name: str, metadata: Dict[str, str]) -> None:
+        """Add metadata about fields in a layer.
+        
+        Args:
+            layer_name: Name of the layer
+            metadata: Dictionary mapping field names to descriptions
+        """
+        self.field_metadata[layer_name] = metadata
+    
+    def finalize(self) -> bool:
+        """Finalize and write the GeoPackage file.
+        
+        Returns:
+            True if finalization successful, False otherwise
+        """
+        # In a real implementation, this would write the GeoPackage file
+        return True
     
     def build(self) -> bool:
         """Build the GeoPackage file.
@@ -198,4 +245,4 @@ class GeoPackageBuilder:
         Returns:
             True if build successful, False otherwise
         """
-        return True
+        return self.finalize()

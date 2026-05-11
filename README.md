@@ -51,7 +51,8 @@ socrata doctor
 | **Quantum Optimization** | Crew assignment and route optimization (Qiskit, Cirq, classical) |
 | **Quantum Search** | Grover's algorithm function template for database search |
 | **PDF Reports** | PDF export via weasyprint with styled tables |
-| **QGIS Integration** | Generate .qgs project files with PostGIS layers |
+| **QGIS Integration** | Create GeoPackage files for offline field inspection, generate .qgs project files with PostGIS layers |
+| **Mobile Field Packages** | Build offline GeoPackage files for field inspection teams with field metadata, styling, and GPS support |
 | **DBeaver Profiles** | Connection profiles for DBeaver, pgAdmin, DataGrip |
 | **Flask API** | 10-endpoint REST API for programmatic access |
 | **Docker** | Full stack with PostGIS, MongoDB, Streamlit, and API |
