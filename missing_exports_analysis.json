@@ -1,0 +1,273 @@
+{
+  "summary": {
+    "total_missing": 28,
+    "stub_modules_affected": 6,
+    "unique_missing_symbols": 18
+  },
+  "stub_modules": {
+    "socrata_toolkit.qgis_compatibility": {
+      "missing_count": 1,
+      "symbols": [
+        "QGISCompatibilityManager"
+      ],
+      "imports": [
+        {
+          "symbol": "QGISCompatibilityManager",
+          "from_file": "\\tests\\test_spatial.py",
+          "line": 37
+        }
+      ]
+    },
+    "socrata_toolkit.quality_expectations": {
+      "missing_count": 1,
+      "symbols": [
+        "ExpectationSuite"
+      ],
+      "imports": [
+        {
+          "symbol": "ExpectationSuite",
+          "from_file": "\\socrata_toolkit\\quality_integration.py",
+          "line": 18
+        }
+      ]
+    },
+    "socrata_toolkit.quality_validator": {
+      "missing_count": 1,
+      "symbols": [
+        "ValidationResult"
+      ],
+      "imports": [
+        {
+          "symbol": "ValidationResult",
+          "from_file": "\\socrata_toolkit\\quality_integration.py",
+          "line": 19
+        }
+      ]
+    },
+    "socrata_toolkit.scd_type2": {
+      "missing_count": 3,
+      "symbols": [
+        "SCDRecord",
+        "DMLType",
+        "SCDType2Manager"
+      ],
+      "imports": [
+        {
+          "symbol": "SCDRecord",
+          "from_file": "\\tests\\test_cdc.py",
+          "line": 21
+        },
+        {
+          "symbol": "SCDType2Manager",
+          "from_file": "\\tests\\test_cdc.py",
+          "line": 21
+        },
+        {
+          "symbol": "DMLType",
+          "from_file": "\\tests\\test_cdc.py",
+          "line": 21
+        }
+      ]
+    },
+    "socrata_toolkit.soft_delete": {
+      "missing_count": 2,
+      "symbols": [
+        "SoftDeleteManager",
+        "RetentionPolicy"
+      ],
+      "imports": [
+        {
+          "symbol": "SoftDeleteManager",
+          "from_file": "\\tests\\test_cdc.py",
+          "line": 25
+        },
+        {
+          "symbol": "RetentionPolicy",
+          "from_file": "\\tests\\test_cdc.py",
+          "line": 25
+        }
+      ]
+    },
+    "socrata_toolkit.temporal_queries": {
+      "missing_count": 3,
+      "symbols": [
+        "ChangeSummary",
+        "TemporalQuery",
+        "ChangePattern"
+      ],
+      "imports": [
+        {
+          "symbol": "TemporalQuery",
+          "from_file": "\\tests\\test_cdc.py",
+          "line": 24
+        },
+        {
+          "symbol": "ChangeSummary",
+          "from_file": "\\tests\\test_cdc.py",
+          "line": 24
+        },
+        {
+          "symbol": "ChangePattern",
+          "from_file": "\\tests\\test_cdc.py",
+          "line": 24
+        }
+      ]
+    }
+  },
+  "all_missing_by_frequency": [
+    {
+      "symbol": "LineageRecorder",
+      "module": "socrata_toolkit.lineage",
+      "count": 3,
+      "locations": [
+        "\\nyc_data\\airflow\\plugins\\custom_operators.py",
+        "\\nyc_data-1\\airflow\\plugins\\custom_operators.py",
+        "\\airflow\\plugins\\custom_operators.py"
+      ]
+    },
+    {
+      "symbol": "AlertManager",
+      "module": "socrata_toolkit.observability",
+      "count": 3,
+      "locations": [
+        "\\nyc_data\\airflow\\plugins\\custom_operators.py",
+        "\\nyc_data-1\\airflow\\plugins\\custom_operators.py",
+        "\\airflow\\plugins\\custom_operators.py"
+      ]
+    },
+    {
+      "symbol": "DATASETS",
+      "module": "socrata_toolkit.nyc_datasets",
+      "count": 3,
+      "locations": [
+        "\\nyc_data\\tests\\test_final_modules.py",
+        "\\nyc_data-1\\tests\\test_final_modules.py",
+        "\\tests\\test_final_modules.py"
+      ]
+    },
+    {
+      "symbol": "PRIORITY_COLORS",
+      "module": "socrata_toolkit.task_board",
+      "count": 3,
+      "locations": [
+        "\\tests\\test_task_board.py",
+        "\\nyc_data\\tests\\test_task_board.py",
+        "\\nyc_data-1\\tests\\test_task_board.py"
+      ]
+    },
+    {
+      "symbol": "CATEGORY_COLORS",
+      "module": "socrata_toolkit.task_board",
+      "count": 3,
+      "locations": [
+        "\\tests\\test_task_board.py",
+        "\\nyc_data\\tests\\test_task_board.py",
+        "\\nyc_data-1\\tests\\test_task_board.py"
+      ]
+    },
+    {
+      "symbol": "ASPH_STANDARD",
+      "module": "socrata_toolkit.material_definitions",
+      "count": 1,
+      "locations": [
+        "\\test_integration.py"
+      ]
+    },
+    {
+      "symbol": "CONC_STANDARD",
+      "module": "socrata_toolkit.material_definitions",
+      "count": 1,
+      "locations": [
+        "\\test_integration.py"
+      ]
+    },
+    {
+      "symbol": "ExpectationSuite",
+      "module": "socrata_toolkit.quality_expectations",
+      "count": 1,
+      "locations": [
+        "\\socrata_toolkit\\quality_integration.py"
+      ]
+    },
+    {
+      "symbol": "ValidationResult",
+      "module": "socrata_toolkit.quality_validator",
+      "count": 1,
+      "locations": [
+        "\\socrata_toolkit\\quality_integration.py"
+      ]
+    },
+    {
+      "symbol": "SCDRecord",
+      "module": "socrata_toolkit.scd_type2",
+      "count": 1,
+      "locations": [
+        "\\tests\\test_cdc.py"
+      ]
+    },
+    {
+      "symbol": "SCDType2Manager",
+      "module": "socrata_toolkit.scd_type2",
+      "count": 1,
+      "locations": [
+        "\\tests\\test_cdc.py"
+      ]
+    },
+    {
+      "symbol": "DMLType",
+      "module": "socrata_toolkit.scd_type2",
+      "count": 1,
+      "locations": [
+        "\\tests\\test_cdc.py"
+      ]
+    },
+    {
+      "symbol": "TemporalQuery",
+      "module": "socrata_toolkit.temporal_queries",
+      "count": 1,
+      "locations": [
+        "\\tests\\test_cdc.py"
+      ]
+    },
+    {
+      "symbol": "ChangeSummary",
+      "module": "socrata_toolkit.temporal_queries",
+      "count": 1,
+      "locations": [
+        "\\tests\\test_cdc.py"
+      ]
+    },
+    {
+      "symbol": "ChangePattern",
+      "module": "socrata_toolkit.temporal_queries",
+      "count": 1,
+      "locations": [
+        "\\tests\\test_cdc.py"
+      ]
+    },
+    {
+      "symbol": "SoftDeleteManager",
+      "module": "socrata_toolkit.soft_delete",
+      "count": 1,
+      "locations": [
+        "\\tests\\test_cdc.py"
+      ]
+    },
+    {
+      "symbol": "RetentionPolicy",
+      "module": "socrata_toolkit.soft_delete",
+      "count": 1,
+      "locations": [
+        "\\tests\\test_cdc.py"
+      ]
+    },
+    {
+      "symbol": "QGISCompatibilityManager",
+      "module": "socrata_toolkit.qgis_compatibility",
+      "count": 1,
+      "locations": [
+        "\\tests\\test_spatial.py"
+      ]
+    }
+  ]
+}

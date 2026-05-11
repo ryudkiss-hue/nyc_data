@@ -16,11 +16,11 @@ import logging
 from dataclasses import dataclass
 from typing import Any, Optional
 
-import numpy as np
-from scipy.spatial.distance import cdist
-from scipy.stats import gaussian_kde
-from sklearn.cluster import DBSCAN, KMeans
-from sklearn.preprocessing import StandardScaler
+import numpy as np  # type: ignore[import]
+from scipy.spatial.distance import cdist  # type: ignore[import]
+from scipy.stats import gaussian_kde  # type: ignore[import]
+from sklearn.cluster import DBSCAN, KMeans  # type: ignore[import]
+from sklearn.preprocessing import StandardScaler  # type: ignore[import]
 
 logger = logging.getLogger(__name__)
 

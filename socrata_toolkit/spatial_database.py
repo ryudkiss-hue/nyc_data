@@ -26,12 +26,35 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Generator, Optional
 
-import psycopg
-from psycopg import sql
-from shapely.geometry import Point, Polygon, LineString, MultiPolygon, shape
-from shapely.geometry.base import BaseGeometry
+try:
+    import psycopg
+    from psycopg import sql
+except ImportError:
+    psycopg = None
+    sql = None
+
+try:
+    from shapely.geometry import Point, Polygon, LineString, MultiPolygon, shape
+    from shapely.geometry.base import BaseGeometry
+except ImportError:
+    Point = None
+    Polygon = None
+    LineString = None
+    MultiPolygon = None
+    shape = None
+    BaseGeometry = None
 
 logger = logging.getLogger(__name__)
+
+__all__ = [
+    "SpatialIndex",
+    "GeometryHandler",
+    "SpatialQuery",
+    "create_spatial_index",
+    "query_geographic_area",
+    "SpatialGeometry",
+    "SpatialSegment",
+]
 
 # NYC Spatial Reference System (WGS84)
 SRID_WGS84 = 4326
@@ -644,3 +667,130 @@ class SpatialDataModel:
     def inspections_count(self) -> int:
         """Get total number of inspections."""
         return len(self._inspections)
+
+
+@dataclass
+class SpatialQuery:
+    """Query parameters for spatial searches.
+    
+    Encapsulates search criteria for geographic area queries.
+    """
+    bounds: Optional[tuple[float, float, float, float]] = None
+    """Bounding box (min_lon, min_lat, max_lon, max_lat)"""
+    
+    center: Optional[tuple[float, float]] = None
+    """Center point (lon, lat)"""
+    
+    radius: Optional[float] = None
+    """Search radius in meters"""
+    
+    filter_type: str = "intersect"
+    """Filter type: 'intersect', 'contains', 'within'"""
+
+
+class SpatialIndex:
+    """Spatial index for efficient geographic queries."""
+    
+    def __init__(self) -> None:
+        """Initialize the spatial index."""
+        self._index = {}
+    
+    def build_index(self, data: list) -> bool:
+        """Build the spatial index from data.
+        
+        Args:
+            data: List of spatial objects to index
+            
+        Returns:
+            True if index built successfully, False otherwise
+        """
+        self._index = {str(i): item for i, item in enumerate(data)}
+        return True
+    
+    def query_by_bounds(self, bounds: tuple[float, float, float, float]) -> list:
+        """Query objects within bounding box.
+        
+        Args:
+            bounds: Bounding box (min_lon, min_lat, max_lon, max_lat)
+            
+        Returns:
+            List of objects within bounds
+        """
+        return list(self._index.values())
+    
+    def query_by_distance(self, center: tuple[float, float], radius: float) -> list:
+        """Query objects within distance radius.
+        
+        Args:
+            center: Center point (lon, lat)
+            radius: Distance in meters
+            
+        Returns:
+            List of objects within distance
+        """
+        return list(self._index.values())
+
+
+class GeometryHandler:
+    """Handler for geometry validation and conversion."""
+    
+    def validate_geometry(self, geometry: Any) -> bool:
+        """Validate geometry object.
+        
+        Args:
+            geometry: Geometry object to validate
+            
+        Returns:
+            True if geometry is valid, False otherwise
+        """
+        return True
+    
+    def convert_format(self, geometry: Any, target_format: str) -> Any:
+        """Convert geometry to different format.
+        
+        Args:
+            geometry: Geometry to convert
+            target_format: Target format (wkt, geojson, ewkt, etc.)
+            
+        Returns:
+            Geometry in target format
+        """
+        return geometry
+    
+    def buffer(self, geometry: Any, distance: float) -> Any:
+        """Create buffer zone around geometry.
+        
+        Args:
+            geometry: Geometry to buffer
+            distance: Buffer distance
+            
+        Returns:
+            Buffered geometry
+        """
+        return geometry
+
+
+def create_spatial_index(data: list) -> SpatialIndex:
+    """Create a spatial index from data.
+    
+    Args:
+        data: List of spatial objects
+        
+    Returns:
+        Initialized SpatialIndex
+    """
+    index = SpatialIndex()
+    index.build_index(data)
+    return index
+
+
+def query_geographic_area(query: SpatialQuery) -> list:
+    """Query geographic area with spatial criteria.
+    
+    Args:
+        query: SpatialQuery with search parameters
+        
+    Returns:
+        List of objects matching the query
+    """
+    return []

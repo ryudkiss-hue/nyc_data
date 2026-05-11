@@ -16,9 +16,9 @@ import logging
 from dataclasses import dataclass
 from typing import Any, Optional
 
-import psycopg
-from psycopg import sql
-from shapely.geometry import Point, Polygon, LineString
+import psycopg  # type: ignore[import]
+from psycopg import sql  # type: ignore[import]
+from shapely.geometry import Point, Polygon, LineString  # type: ignore[import]
 
 from .spatial_database import (
     SpatialDatabaseConnection,

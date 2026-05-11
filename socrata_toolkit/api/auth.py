@@ -159,40 +159,22 @@ AUTH_ERROR_INSUFFICIENT_SCOPE = "Insufficient permissions"
 # ====================================================================
 
 @dataclass
-class Permission:
-    """Individual permission definition."""
-
-    resource: str
-    action: str
-
-    def __str__(self) -> str:
-        return f"{self.resource}:{self.action}"
-
-    def matches(self, required: str) -> bool:
-        """Check if permission matches required pattern (supports wildcards)."""
-        if required == "*":
-            return True
-        if required == f"{self.resource}:*":
-            return True
-        if required == f"{self.resource}:{self.action}":
-            return True
-        return False
-
-
-@dataclass
-class Role:
-    """Role with permissions."""
-
-    role_id: str
-    name: str
-    permissions: Set[str] = field(default_factory=set)
-    description: str = ""
-
-    def has_permission(self, permission: str) -> bool:
-        """Check if role has permission."""
-        if "*" in self.permissions:
-            return True
-        return permission in self.permissions or f"{permission.split(':')[0]}:*" in self.permissions
+class JWTConfig:
+    """JWT configuration for token generation and validation.
+    
+    Attributes:
+        secret_key: Secret key for HMAC signing or private key for RSA
+        algorithm: Algorithm for signing (HS256, HS512, RS256, etc.)
+        expiry_minutes: Token expiration time in minutes (default: 60)
+        issuer: Token issuer claim (optional)
+        audience: Token audience claim (optional)
+    """
+    
+    secret_key: str
+    algorithm: str = "HS256"
+    expiry_minutes: int = 60
+    issuer: Optional[str] = None
+    audience: Optional[str] = None
 
 
 @dataclass
@@ -212,7 +194,6 @@ class User:
         """Compute permissions from roles."""
         self.permissions = set()
         for role_name in self.roles:
-            role = Role(role_id=role_name, name=role_name)
             try:
                 role_enum = Role[role_name.upper()]
                 self.permissions.update(ROLE_PERMISSIONS.get(role_enum, set()))
@@ -900,6 +881,10 @@ def get_api_key_prefix(api_key: str) -> str:
     """
     return api_key[:8] + "****" + api_key[-4:] if len(api_key) >= 16 else "****"
 
+
+def create_access_token(
+    user: User,
+    config: JWTConfig,
     expires_delta: Optional[timedelta] = None,
     request_id: Optional[str] = None,
 ) -> str:
