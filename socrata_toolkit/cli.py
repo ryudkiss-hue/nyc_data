@@ -5,6 +5,7 @@ import json
 import logging
 
 import click
+import pandas as pd
 
 from .analysis import profile_dataframe, quality_report
 from .config import get_default, load_local_config
@@ -214,7 +215,6 @@ def pipeline(domain, fourfour, where, select, order, q, max_rows, pg_dsn, pg_tab
     for batch in c.fetch_json(domain, fourfour, where=where, select=select, order=order, q=q, max_rows=max_rows):
         rows.extend(batch)
 
-    import pandas as pd
     df = pd.DataFrame(rows)
     if required_col:
         vr = validate_required_columns(df, list(required_col))
