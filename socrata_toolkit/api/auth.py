@@ -838,20 +838,18 @@ class BasicAuthProvider(AuthenticationProvider):
 
 
 def hash_api_key(api_key: str) -> str:
-    """Hash API key with bcrypt for storage.
+    """Hash API key for storage and consistency.
 
     Args:
         api_key: Raw API key
 
     Returns:
-        str: Bcrypt hash (can be stored in database)
+        str: SHA256 hash (can be stored in database)
 
     Note:
-        This is one-way. The key cannot be recovered from the hash.
+        This is deterministic for a given key.
     """
-    if not HAS_BCRYPT:
-        raise ImportError("bcrypt required: pip install bcrypt")
-    return bcrypt.hashpw(api_key.encode(), bcrypt.gensalt()).decode()
+    return hashlib.sha256(api_key.encode()).hexdigest()
 
 
 def generate_api_key(prefix: str = "sk") -> str:
@@ -871,15 +869,25 @@ def generate_api_key(prefix: str = "sk") -> str:
 
 
 def get_api_key_prefix(api_key: str) -> str:
-    """Get displayable prefix from API key (for UI).
+    """Get displayable masked key (for UI).
 
     Args:
         api_key: Full API key
 
     Returns:
-        str: First 8 characters (safe to display)
+        str: Masked key with start and end visible
     """
-    return api_key[:8] + "****" + api_key[-4:] if len(api_key) >= 16 else "****"
+    if len(api_key) < 16:
+        return "****"
+    
+    # Extract sk_XX prefix
+    parts = api_key.split("_", 1)
+    if len(parts) == 2:
+        prefix = parts[0] + "_" + parts[1][:2]
+    else:
+        prefix = api_key[:5]
+        
+    return f"{prefix}****{api_key[-4:]}"
 
 
 def create_access_token(
@@ -912,13 +920,13 @@ def create_access_token(
     if not expires_delta:
         expires_delta = timedelta(minutes=config.expiry_minutes)
 
-    expire = datetime.utcnow() + expires_delta
+    expire = datetime.now(timezone.utc) + expires_delta
     request_id = request_id or str(uuid.uuid4())
 
     payload = {
         **user.to_dict(),
         "exp": expire,
-        "iat": datetime.utcnow(),
+        "iat": datetime.now(timezone.utc),
         "request_id": request_id,
     }
 

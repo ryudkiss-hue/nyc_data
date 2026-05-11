@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from socrata_toolkit.task_board import TaskBoard, Task, PRIORITY_COLORS, CATEGORY_COLORS
+from socrata_toolkit.tools.tasks import TaskBoard, Task, PRIORITY_COLORS, CATEGORY_COLORS
 
 
 def test_task_creation():

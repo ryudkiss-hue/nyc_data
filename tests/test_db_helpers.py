@@ -1,6 +1,6 @@
 import pytest
 
-from socrata_toolkit.db_helpers import build_fts_index_sql
+from socrata_toolkit.core.db_helpers import build_fts_index_sql
 
 
 def test_build_fts_index_sql_single_column():

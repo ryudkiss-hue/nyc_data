@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from socrata_toolkit.construction_list import (
+from socrata_toolkit.engineering.construction_list import (
     classify_scope,
     compute_priority_score,
     detect_construction_conflicts,

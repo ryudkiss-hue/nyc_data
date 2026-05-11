@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from socrata_toolkit.borough_analysis import (
+from socrata_toolkit.engineering.borough_analysis import (
     borough_comparison_table,
     borough_summary,
     equity_analysis,

@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from socrata_toolkit.program_metrics import (
+from socrata_toolkit.analysis.program import (
     MetricsTracker,
     compute_program_dashboard,
 )

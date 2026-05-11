@@ -1,6 +1,6 @@
 import pandas as pd
 
-from socrata_toolkit.dot_sidewalk import compute_sidewalk_kpis
+from socrata_toolkit.engineering.dot_sidewalk import compute_sidewalk_kpis
 
 
 def test_compute_sidewalk_kpis():

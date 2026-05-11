@@ -20,21 +20,21 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from socrata_toolkit.observability_logging import (
+from socrata_toolkit.observability.logging import (
     CircularLogBuffer,
     LogAggregator,
     LogContext,
     LogRecord,
     StructuredLogger,
 )
-from socrata_toolkit.observability_metrics import (
+from socrata_toolkit.observability.metrics import (
     Counter,
     Gauge,
     Histogram,
     MetricsCollector,
     Summary,
 )
-from socrata_toolkit.observability_tracing import (
+from socrata_toolkit.observability.tracing import (
     ContextPropagator,
     Span,
     SpanEvent,
@@ -44,20 +44,20 @@ from socrata_toolkit.observability_tracing import (
     inject_traceparent,
     traced_operation,
 )
-from socrata_toolkit.observability_health import (
+from socrata_toolkit.observability.health import (
     ComponentHealth,
     HealthChecker,
     HealthReport,
     HealthStatus,
 )
-from socrata_toolkit.observability_sla import (
+from socrata_toolkit.observability.sla import (
     SLADefinition,
     SLAReport,
     SLATracker,
     SLAViolation,
     Severity,
 )
-from socrata_toolkit.observability_integration import ObservabilityManager
+from socrata_toolkit.observability.integration import ObservabilityManager
 
 
 class TestStructuredLogging:

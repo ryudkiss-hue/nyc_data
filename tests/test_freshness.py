@@ -4,8 +4,8 @@ Tests cover freshness tracking, SLA computation, and alert generation.
 """
 
 import pytest
-from datetime import datetime, timedelta
-from socrata_toolkit.freshness import (
+from datetime import datetime, timezone, timedelta
+from socrata_toolkit.quality.freshness import (
     FreshnessTracker,
     DatasetFreshness,
     FreshnessAlert,
@@ -21,7 +21,7 @@ class TestDatasetFreshness:
         df = DatasetFreshness(
             dataset_id="nyc-311",
             dataset_name="NYC 311 Service Requests",
-            last_updated_utc=datetime.utcnow() - timedelta(hours=12),
+            last_updated_utc=datetime.now(timezone.utc) - timedelta(hours=12),
             expected_update_frequency_hours=24,
             sla_threshold_hours=48,
         )
@@ -32,7 +32,7 @@ class TestDatasetFreshness:
         df = DatasetFreshness(
             dataset_id="nyc-311",
             dataset_name="NYC 311 Service Requests",
-            last_updated_utc=datetime.utcnow() - timedelta(hours=72),
+            last_updated_utc=datetime.now(timezone.utc) - timedelta(hours=72),
             expected_update_frequency_hours=24,
             sla_threshold_hours=48,
         )
@@ -43,7 +43,7 @@ class TestDatasetFreshness:
         df = DatasetFreshness(
             dataset_id="nyc-311",
             dataset_name="NYC 311 Service Requests",
-            last_updated_utc=datetime.utcnow() - timedelta(days=5),
+            last_updated_utc=datetime.now(timezone.utc) - timedelta(days=5),
             expected_update_frequency_hours=24,
             sla_threshold_hours=48,
         )
@@ -55,7 +55,7 @@ class TestDatasetFreshness:
         df = DatasetFreshness(
             dataset_id="nyc-311",
             dataset_name="NYC 311 Service Requests",
-            last_updated_utc=datetime.utcnow() - timedelta(hours=72),
+            last_updated_utc=datetime.now(timezone.utc) - timedelta(hours=72),
             expected_update_frequency_hours=24,
             sla_threshold_hours=48,
         )
@@ -66,7 +66,7 @@ class TestDatasetFreshness:
         df = DatasetFreshness(
             dataset_id="nyc-311",
             dataset_name="NYC 311 Service Requests",
-            last_updated_utc=datetime.utcnow() - timedelta(hours=30),
+            last_updated_utc=datetime.now(timezone.utc) - timedelta(hours=30),
             expected_update_frequency_hours=24,
             sla_threshold_hours=48,
         )
@@ -82,7 +82,7 @@ class TestFreshnessAlert:
         df = DatasetFreshness(
             dataset_id="nyc-311",
             dataset_name="NYC 311 Service Requests",
-            last_updated_utc=datetime.utcnow() - timedelta(hours=72),
+            last_updated_utc=datetime.now(timezone.utc) - timedelta(hours=72),
             expected_update_frequency_hours=24,
             sla_threshold_hours=48,
         )
@@ -96,7 +96,7 @@ class TestFreshnessAlert:
         df = DatasetFreshness(
             dataset_id="nyc-311",
             dataset_name="NYC 311 Service Requests",
-            last_updated_utc=datetime.utcnow() - timedelta(hours=50),
+            last_updated_utc=datetime.now(timezone.utc) - timedelta(hours=50),
             expected_update_frequency_hours=24,
             sla_threshold_hours=48,
         )
@@ -109,7 +109,7 @@ class TestFreshnessAlert:
             alert_id="alert-123",
             dataset_id="nyc-311",
             dataset_name="NYC 311 Service Requests",
-            alert_time=datetime.utcnow(),
+            alert_time=datetime.now(timezone.utc),
             stale_hours=72,
             sla_threshold_hours=48,
             severity=AlertSeverity.CRITICAL,
@@ -125,7 +125,7 @@ class TestFreshnessAlert:
             alert_id="alert-123",
             dataset_id="nyc-311",
             dataset_name="NYC 311 Service Requests",
-            alert_time=datetime.utcnow(),
+            alert_time=datetime.now(timezone.utc),
             stale_hours=72,
             sla_threshold_hours=48,
             severity=AlertSeverity.CRITICAL,
@@ -141,7 +141,7 @@ class TestFreshnessAlert:
             alert_id="alert-123",
             dataset_id="nyc-311",
             dataset_name="NYC 311 Service Requests",
-            alert_time=datetime.utcnow(),
+            alert_time=datetime.now(timezone.utc),
             stale_hours=72,
             sla_threshold_hours=48,
             severity=AlertSeverity.CRITICAL,
@@ -156,7 +156,7 @@ class TestFreshnessAlert:
             alert_id="alert-123",
             dataset_id="nyc-311",
             dataset_name="NYC 311 Service Requests",
-            alert_time=datetime.utcnow(),
+            alert_time=datetime.now(timezone.utc),
             stale_hours=72,
             sla_threshold_hours=48,
             severity=AlertSeverity.CRITICAL,
@@ -180,7 +180,7 @@ class TestFreshnessTracker:
         tracker = FreshnessTracker()
         tracker.track_ingestion(
             dataset_id="nyc-311",
-            last_updated_utc=datetime.utcnow(),
+            last_updated_utc=datetime.now(timezone.utc),
             expected_frequency_hours=24,
             dataset_name="NYC 311 Service Requests",
         )
@@ -192,7 +192,7 @@ class TestFreshnessTracker:
         with pytest.raises(ValueError):
             tracker.track_ingestion(
                 dataset_id="nyc-311",
-                last_updated_utc=datetime.utcnow(),
+                last_updated_utc=datetime.now(timezone.utc),
                 expected_frequency_hours=-1,
             )
 
@@ -201,7 +201,7 @@ class TestFreshnessTracker:
         tracker = FreshnessTracker()
         tracker.track_ingestion(
             dataset_id="nyc-311",
-            last_updated_utc=datetime.utcnow(),
+            last_updated_utc=datetime.now(timezone.utc),
             expected_frequency_hours=24,
         )
         status = tracker.get_freshness_status("nyc-311")
@@ -225,8 +225,8 @@ class TestFreshnessTracker:
     def test_compute_freshness_sla_pct_all_fresh(self):
         """Test SLA computation when all datasets are fresh."""
         tracker = FreshnessTracker()
-        tracker.track_ingestion("nyc-311", datetime.utcnow(), 24)
-        tracker.track_ingestion("nyc-parking", datetime.utcnow(), 24)
+        tracker.track_ingestion("nyc-311", datetime.now(timezone.utc), 24)
+        tracker.track_ingestion("nyc-parking", datetime.now(timezone.utc), 24)
         sla_report = tracker.compute_freshness_sla_pct()
         assert sla_report["compliance_pct"] == 100.0
         assert sla_report["datasets_tracked"] == 2
@@ -234,8 +234,8 @@ class TestFreshnessTracker:
     def test_compute_freshness_sla_pct_with_violations(self):
         """Test SLA computation with some violations."""
         tracker = FreshnessTracker()
-        tracker.track_ingestion("fresh-dataset", datetime.utcnow(), 24)
-        tracker.track_ingestion("stale-dataset", datetime.utcnow() - timedelta(hours=72), 24)
+        tracker.track_ingestion("fresh-dataset", datetime.now(timezone.utc), 24)
+        tracker.track_ingestion("stale-dataset", datetime.now(timezone.utc) - timedelta(hours=72), 24)
         sla_report = tracker.compute_freshness_sla_pct()
         assert sla_report["datasets_tracked"] == 2
         assert sla_report["datasets_violated"] == 1
@@ -244,8 +244,8 @@ class TestFreshnessTracker:
     def test_get_stale_datasets(self):
         """Test getting list of stale datasets."""
         tracker = FreshnessTracker()
-        tracker.track_ingestion("fresh-dataset", datetime.utcnow(), 24)
-        tracker.track_ingestion("stale-dataset", datetime.utcnow() - timedelta(hours=72), 24)
+        tracker.track_ingestion("fresh-dataset", datetime.now(timezone.utc), 24)
+        tracker.track_ingestion("stale-dataset", datetime.now(timezone.utc) - timedelta(hours=72), 24)
         alerts = tracker.get_stale_datasets()
         assert len(alerts) == 1
         assert alerts[0].dataset_id == "stale-dataset"
@@ -253,7 +253,7 @@ class TestFreshnessTracker:
     def test_export_metrics(self):
         """Test exporting metrics in Prometheus format."""
         tracker = FreshnessTracker()
-        tracker.track_ingestion("nyc-311", datetime.utcnow(), 24)
+        tracker.track_ingestion("nyc-311", datetime.now(timezone.utc), 24)
         metrics = tracker.export_metrics()
         assert "dataset_freshness_sla_compliance_pct" in metrics
         assert "dataset_hours_since_update" in metrics
@@ -264,7 +264,7 @@ class TestFreshnessTracker:
         tracker = FreshnessTracker()
         datasets = ["nyc-311", "nyc-parking", "nyc-buildings"]
         for dataset_id in datasets:
-            tracker.track_ingestion(dataset_id, datetime.utcnow(), 24)
+            tracker.track_ingestion(dataset_id, datetime.now(timezone.utc), 24)
 
         for dataset_id in datasets:
             status = tracker.get_freshness_status(dataset_id)
@@ -275,7 +275,7 @@ class TestFreshnessTracker:
         tracker = FreshnessTracker()
         tracker.track_ingestion(
             dataset_id="nyc-311",
-            last_updated_utc=datetime.utcnow() - timedelta(hours=36),
+            last_updated_utc=datetime.now(timezone.utc) - timedelta(hours=36),
             expected_frequency_hours=24,
             sla_threshold_hours=48,
         )
@@ -288,7 +288,7 @@ class TestFreshnessTracker:
         tracker = FreshnessTracker()
         tracker.track_ingestion(
             dataset_id="nyc-311",
-            last_updated_utc=datetime.utcnow() - timedelta(hours=36),
+            last_updated_utc=datetime.now(timezone.utc) - timedelta(hours=36),
             expected_frequency_hours=24,
             # No explicit sla_threshold_hours, should default to 48
         )

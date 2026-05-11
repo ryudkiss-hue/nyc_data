@@ -4,7 +4,7 @@ Tests cover metric registration, recording, and export formats.
 """
 
 import pytest
-from socrata_toolkit.metrics import (
+from socrata_toolkit.analysis.metrics import (
     MetricsRegistry,
     PipelineMetrics,
     DataQualityMetrics,

@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from socrata_toolkit.excel_integration import (
+from socrata_toolkit.integrations.excel import (
     ExcelWorkbookBuilder,
     averageif,
     countif,

@@ -6,7 +6,7 @@ import pytest
 
 # -- SLA Tracking -------------------------------------------------------------
 
-from socrata_toolkit.sla_tracking import compute_sla_metrics, flag_sla_violations, compute_cycle_times, SLATarget
+from socrata_toolkit.quality.sla_tracking import compute_sla_metrics, flag_sla_violations, compute_cycle_times, SLATarget
 
 def test_compute_cycle_times():
     df = pd.DataFrame({
@@ -42,7 +42,7 @@ def test_flag_sla_violations():
 
 # -- Notification Rules -------------------------------------------------------
 
-from socrata_toolkit.notification_rules import RulesEngine, Rule
+from socrata_toolkit.alerts.rules import RulesEngine, Rule
 
 def test_rules_engine_evaluate():
     engine = RulesEngine()
@@ -83,7 +83,7 @@ def test_rules_engine_evaluate_dataframe():
 
 # -- Data Dictionary ----------------------------------------------------------
 
-from socrata_toolkit.data_dictionary import generate_data_dictionary
+from socrata_toolkit.discovery.dictionary import generate_data_dictionary
 
 def test_generate_data_dictionary():
     df = pd.DataFrame({"id": [1, 2, 3], "name": ["a", None, "c"], "score": [10.5, 20.3, None]})
@@ -112,7 +112,7 @@ def test_data_dictionary_save(tmp_path):
 
 # -- NYC Datasets Registry ----------------------------------------------------
 
-from socrata_toolkit.nyc_datasets import DATASETS, list_available_datasets
+from socrata_toolkit.discovery.nyc import DATASETS, list_available_datasets
 
 def test_datasets_registry():
     assert "311_service_requests" in DATASETS

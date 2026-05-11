@@ -28,7 +28,7 @@ Example:
 
 from __future__ import annotations
 
-from datetime import datetime, date
+from datetime import datetime, timezone, date
 from typing import Optional, List, Any
 import logging
 
@@ -106,7 +106,7 @@ async def list_segments(
             segment_id="seg_123",
             material_type="asphalt",
             length_feet=250.5,
-            last_updated=datetime.utcnow(),
+            last_updated=datetime.now(timezone.utc),
         )
     ]
 
@@ -115,7 +115,7 @@ async def list_segments(
         total=1,
         limit=limit,
         offset=offset,
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(timezone.utc),
         data_freshness_seconds=3600,
     )
 
@@ -152,7 +152,7 @@ async def get_segment(
             segment_id=segment_id,
             material_type="asphalt",
             length_feet=250.5,
-            last_updated=datetime.utcnow(),
+            last_updated=datetime.now(timezone.utc),
         )
 
         # Cache result
@@ -200,7 +200,7 @@ async def get_segment_incidents(
         total=0,
         limit=limit,
         offset=offset,
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(timezone.utc),
         data_freshness_seconds=3600,
     )
 
@@ -230,7 +230,7 @@ async def get_segment_repairs(
         total=0,
         limit=limit,
         offset=offset,
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(timezone.utc),
         data_freshness_seconds=3600,
     )
 
@@ -276,7 +276,7 @@ async def list_incidents(
         total=0,
         limit=limit,
         offset=offset,
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(timezone.utc),
         data_freshness_seconds=3600,
     )
 
@@ -385,14 +385,14 @@ async def assign_repair_to_incident(
             estimated_cost=repair_data.get("estimated_cost", 0.0),
             scheduled_date=repair_data.get("scheduled_date"),
             created_by=current_user.user_id,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         session.add(repair)
         session.commit()
         
         # Log audit event
-        from socrata_toolkit.observability import AuditLogger
+        from socrata_toolkit.observability.manager import AuditLogger
         audit = AuditLogger()
         audit.log_action(
             actor=current_user.user_id,
@@ -412,7 +412,7 @@ async def assign_repair_to_incident(
             status="scheduled",
             estimated_cost=repair_data.get("estimated_cost", 0.0),
             scheduled_date=repair_data.get("scheduled_date"),
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
     finally:
@@ -458,7 +458,7 @@ async def list_repairs(
         total=0,
         limit=limit,
         offset=offset,
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(timezone.utc),
         data_freshness_seconds=3600,
     )
 
@@ -586,7 +586,7 @@ async def get_kpi_by_material(
         total=0,
         limit=limit,
         offset=offset,
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(timezone.utc),
         data_freshness_seconds=3600,
     )
 
@@ -615,7 +615,7 @@ async def get_ada_compliance_metrics(
         total=0,
         limit=limit,
         offset=offset,
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(timezone.utc),
         data_freshness_seconds=3600,
     )
 
@@ -668,7 +668,7 @@ async def get_cost_analytics(
         total=0,
         limit=0,
         offset=0,
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(timezone.utc),
         data_freshness_seconds=3600,
     )
 
@@ -706,7 +706,7 @@ async def list_contractors(
         total=0,
         limit=limit,
         offset=offset,
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(timezone.utc),
         data_freshness_seconds=3600,
     )
 
@@ -775,7 +775,7 @@ async def get_audit_log(
         total=0,
         limit=limit,
         offset=offset,
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(timezone.utc),
         data_freshness_seconds=0,  # Always fresh
     )
 

@@ -1,4 +1,4 @@
-from socrata_toolkit.state import save_state, load_state
+from socrata_toolkit.core.state import save_state, load_state
 
 
 def test_save_and_load_state(tmp_path):

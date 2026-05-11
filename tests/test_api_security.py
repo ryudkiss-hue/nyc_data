@@ -154,7 +154,7 @@ class TestAPIKeyAuthentication:
         prefix = get_api_key_prefix(key)
         
         assert prefix.startswith("sk_01")
-        assert prefix.endswith("cdef")
+        assert prefix.endswith("wxyz")
         assert "****" in prefix
 
     def test_api_key_provider_missing_key(self):

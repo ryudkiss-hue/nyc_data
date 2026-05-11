@@ -403,11 +403,19 @@ class VersionManager:
             List[str]: Breaking changes
         """
         changes = self.get_schema_changes(from_version, to_version)
-        return [
+        breaking = [
             str(change)
             for change in changes
             if change.is_breaking
         ]
+        
+        # Add explicit breaking changes strings
+        to_idx = self._version_order.index(to_version)
+        from_idx = self._version_order.index(from_version)
+        for v in self._version_order[from_idx : to_idx + 1]:
+            breaking.extend(self._versions[v].breaking_changes)
+            
+        return breaking
 
     def transform_response(
         self,

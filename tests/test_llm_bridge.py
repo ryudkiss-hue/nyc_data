@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pandas as pd
 
-from socrata_toolkit.llm_duck_bridge import LLMAugmentConfig, augment_dataframe_with_llm
+from socrata_toolkit.llm.duck_bridge import LLMAugmentConfig, augment_dataframe_with_llm
 
 
 class DummyResp:
@@ -13,7 +13,7 @@ class DummyResp:
         return {"choices": [{"message": {"content": '{"label":"other","confidence":0.7,"rationale":"ok"}'}}]}
 
 
-@patch("socrata_toolkit.llm_duck_bridge.requests.post")
+@patch("socrata_toolkit.llm.duck_bridge.requests.post")
 def test_augment_dataframe(mock_post):
     mock_post.return_value = DummyResp()
     df = pd.DataFrame({"description": ["a", "b"]})

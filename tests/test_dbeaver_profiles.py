@@ -1,7 +1,7 @@
 import json
 import pytest
 
-from socrata_toolkit.dbeaver_profiles import (
+from socrata_toolkit.tools.dbeaver import (
     ConnectionInfo,
     generate_connection_guide,
     generate_dbeaver_profile,

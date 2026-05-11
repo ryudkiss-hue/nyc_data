@@ -476,7 +476,7 @@ class RBACEnforcer:
         if principal_id not in self._delegated_permissions:
             return False
 
-        required = f"{resource}:{action}"
+        required = f"{self._normalize_resource(resource)}:{action}"
         for perm in self._delegated_permissions[principal_id]:
             if not perm.is_valid():
                 continue

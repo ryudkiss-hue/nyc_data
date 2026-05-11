@@ -27,7 +27,7 @@ Example:
 from __future__ import annotations
 
 from dataclasses import dataclass, asdict
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Optional
 import uuid
@@ -91,7 +91,7 @@ class ErrorDetail:
         if not self.request_id:
             self.request_id = str(uuid.uuid4())
         if not self.timestamp:
-            self.timestamp = datetime.utcnow().isoformat()
+            self.timestamp = datetime.now(timezone.utc).isoformat()
 
     def to_dict(self) -> dict:
         """Convert to dictionary for JSON response.

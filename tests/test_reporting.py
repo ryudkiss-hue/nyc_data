@@ -3,7 +3,7 @@ import json
 import pandas as pd
 import pytest
 
-from socrata_toolkit.reporting import (
+from socrata_toolkit.reports.reporting import (
     Report,
     generate_contract_report,
     generate_inquiry_response,
@@ -77,7 +77,7 @@ def test_generate_contract_report():
 
 
 def test_generate_program_report():
-    from socrata_toolkit.program_metrics import MetricsTracker
+    from socrata_toolkit.analysis.program import MetricsTracker
     tracker = MetricsTracker()
     tracker.load_standard_kpis()
     tracker.record("defect_density", 1.5)

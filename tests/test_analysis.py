@@ -1,6 +1,6 @@
 import pandas as pd
 
-from socrata_toolkit.analysis import profile_dataframe, quality_report
+from socrata_toolkit.analysis.core import profile_dataframe, quality_report
 
 
 def test_profile_dataframe_basic():

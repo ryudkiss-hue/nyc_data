@@ -7,7 +7,7 @@ try:
 except ImportError:
     HAS_PLOTLY = False
 
-from socrata_toolkit.plotly_charts import (
+from socrata_toolkit.viz.plotly import (
     borough_bar_chart,
     contract_gantt,
     kpi_gauge,

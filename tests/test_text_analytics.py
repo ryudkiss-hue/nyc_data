@@ -1,6 +1,6 @@
 import pandas as pd
 
-from socrata_toolkit.text_analytics import generate_text_insights
+from socrata_toolkit.analysis.text import generate_text_insights
 
 
 def test_generate_text_insights_tags_and_regex():

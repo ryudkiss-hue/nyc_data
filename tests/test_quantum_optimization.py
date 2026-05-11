@@ -3,7 +3,7 @@
 import pandas as pd
 import pytest
 
-from socrata_toolkit.quantum_optimization import (
+from socrata_toolkit.quantum.optimization import (
     CrewAssignment,
     QuantumConfig,
     RouteResult,

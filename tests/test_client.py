@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from socrata_toolkit.client import SocrataClient, SocrataConfig
+from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
 
 class DummyResp:
@@ -14,7 +14,7 @@ class DummyResp:
         return self.payload
 
 
-@patch("socrata_toolkit.client.requests.get")
+@patch("socrata_toolkit.core.client.requests.get")
 def test_search_maps_results(mock_get):
     mock_get.return_value = DummyResp({
         "results": [

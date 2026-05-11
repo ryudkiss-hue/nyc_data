@@ -1,9 +1,0 @@
-2026-05-09 18:55:26.493 [info] StorageMainService: creating application shared storage
-2026-05-09 18:55:26.495 [info] StorageMainService: creating application shared storage with local application storage fallback
-2026-05-09 18:55:26.497 [info] CrossAppIPCService: connecting to peer
-2026-05-09 18:55:26.693 [info] [shared storage] Creating shared storage database at 'c:\Users\ryudk\.vscode-shared\sharedStorage\state.vscdb' (wasCreated: false)
-2026-05-09 18:55:26.694 [info] [shared storage] Initializing fallback application storage (type: local, path: c:\Users\ryudk\AppData\Roaming\Code\User\globalStorage\state.vscdb)
-2026-05-09 18:55:26.757 [info] [shared storage] Fallback application storage initialized with 219 items
-2026-05-09 18:55:26.760 [info] update#setState idle
-2026-05-09 18:55:56.807 [info] update#setState checking for updates
-2026-05-09 18:55:56.901 [info] update#setState idle

@@ -13,10 +13,10 @@ Tests cover:
 
 import json
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from unittest.mock import Mock, patch, MagicMock
 
-from socrata_toolkit.lineage_core import (
+from socrata_toolkit.lineage.core import (
     DAG,
     TransformationNode,
     ExecutionRecord,
@@ -25,9 +25,9 @@ from socrata_toolkit.lineage_core import (
     EdgeType,
     ExecutionStatus,
 )
-from socrata_toolkit.lineage_query import LineageQuery, FreshnessInfo
-from socrata_toolkit.lineage_visualization import LineageVisualizer
-from socrata_toolkit.lineage_impact import ImpactAnalysis, ImpactReport, BreakingChange
+from socrata_toolkit.lineage.query import LineageQuery, FreshnessInfo
+from socrata_toolkit.lineage.visualization import LineageVisualizer
+from socrata_toolkit.lineage.impact import ImpactAnalysis, ImpactReport, BreakingChange
 
 
 class TestTransformationNode:
@@ -67,8 +67,8 @@ class TestTransformationNode:
             "name": "Test",
             "node_type": "transformation",
             "owner": "owner@example.com",
-            "created_at": datetime.utcnow().isoformat(),
-            "last_modified": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "last_modified": datetime.now(timezone.utc).isoformat(),
             "input_datasets": ["input1"],
             "output_datasets": ["output1"],
             "configuration": {"key": "value"},
@@ -145,8 +145,8 @@ class TestExecutionRecord:
         d = {
             "execution_id": "exec-123",
             "node_id": "test",
-            "started_at": datetime.utcnow().isoformat(),
-            "completed_at": datetime.utcnow().isoformat(),
+            "started_at": datetime.now(timezone.utc).isoformat(),
+            "completed_at": datetime.now(timezone.utc).isoformat(),
             "duration_seconds": 5.0,
             "status": "success",
             "input_row_count": 100,
@@ -443,7 +443,7 @@ class TestLineageQuery:
         """Test freshness check for stale data."""
         node = self.dag.get_node("ingest_construction")
         # Record execution 48 hours ago
-        old_time = datetime.utcnow() - timedelta(hours=48)
+        old_time = datetime.now(timezone.utc) - timedelta(hours=48)
         exec_record = ExecutionRecord(
             node_id="ingest_construction",
             status=ExecutionStatus.SUCCESS,

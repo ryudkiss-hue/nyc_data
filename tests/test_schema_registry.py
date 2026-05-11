@@ -1,18 +1,18 @@
 """
-Tests for Schema Registry module (socrata_toolkit.schema_registry)
+Tests for Schema Registry module (socrata_toolkit.discovery.schema)
 
 Tests schema registration, drift detection, breaking change alerts, and audit trail.
 """
 
 import json
 import tempfile
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
 import pytest
 
-from socrata_toolkit.schema_registry import (
+from socrata_toolkit.discovery.schema import (
     BreakingChangeAlert,
     ChangeType,
     ColumnSchema,
@@ -56,7 +56,7 @@ class TestDatasetSchema:
             dataset_id="test-dataset",
             version=1,
             columns=cols,
-            captured_at=datetime.utcnow(),
+            captured_at=datetime.now(timezone.utc),
             row_count=100,
         )
         assert schema.dataset_id == "test-dataset"
@@ -71,7 +71,7 @@ class TestDatasetSchema:
             dataset_id="test-dataset",
             version=1,
             columns=cols,
-            captured_at=datetime.utcnow(),
+            captured_at=datetime.now(timezone.utc),
             row_count=50,
         )
 
@@ -150,7 +150,7 @@ class TestBreakingChangeAlert:
             from_version=1,
             to_version=2,
             breaking_changes=changes,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             recommendation="Update downstream pipelines",
         )
         assert alert.dataset_id == "test-dataset"
@@ -175,7 +175,7 @@ class TestBreakingChangeAlert:
             from_version=1,
             to_version=2,
             breaking_changes=changes,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
         # Should be raisable as exception
         with pytest.raises(BreakingChangeAlert):
@@ -198,7 +198,7 @@ class TestBreakingChangeAlert:
             from_version=1,
             to_version=2,
             breaking_changes=changes,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             recommendation="Rerun type validation",
         )
         alert_str = str(alert)
@@ -469,7 +469,7 @@ class TestSchemaValidator:
             dataset_id="test-data",
             version=1,
             columns=cols,
-            captured_at=datetime.utcnow(),
+            captured_at=datetime.now(timezone.utc),
             row_count=100,
         )
 
@@ -556,7 +556,7 @@ class TestBackwardCompatibilityChecker:
             dataset_id="test-data",
             version=1,
             columns=cols,
-            captured_at=datetime.utcnow(),
+            captured_at=datetime.now(timezone.utc),
             row_count=100,
         )
 
@@ -578,7 +578,7 @@ class TestBackwardCompatibilityChecker:
             dataset_id="test-data",
             version=2,
             columns=new_cols,
-            captured_at=datetime.utcnow(),
+            captured_at=datetime.now(timezone.utc),
             row_count=100,
         )
 
@@ -594,7 +594,7 @@ class TestBackwardCompatibilityChecker:
             dataset_id="test-data",
             version=2,
             columns=new_cols,
-            captured_at=datetime.utcnow(),
+            captured_at=datetime.now(timezone.utc),
             row_count=100,
         )
 
@@ -611,7 +611,7 @@ class TestBackwardCompatibilityChecker:
             dataset_id="test-data",
             version=2,
             columns=new_cols,
-            captured_at=datetime.utcnow(),
+            captured_at=datetime.now(timezone.utc),
             row_count=100,
         )
 
@@ -628,7 +628,7 @@ class TestBackwardCompatibilityChecker:
             dataset_id="test-data",
             version=2,
             columns=new_cols,
-            captured_at=datetime.utcnow(),
+            captured_at=datetime.now(timezone.utc),
             row_count=100,
         )
 
@@ -648,7 +648,7 @@ class TestBackwardCompatibilityChecker:
             dataset_id="test-data",
             version=1,
             columns=old_cols,
-            captured_at=datetime.utcnow(),
+            captured_at=datetime.now(timezone.utc),
             row_count=100,
         )
 
@@ -658,7 +658,7 @@ class TestBackwardCompatibilityChecker:
             dataset_id="test-data",
             version=2,
             columns=new_cols,
-            captured_at=datetime.utcnow(),
+            captured_at=datetime.now(timezone.utc),
             row_count=100,
         )
 
@@ -676,7 +676,7 @@ class TestBackwardCompatibilityChecker:
             dataset_id="test-data",
             version=2,
             columns=new_cols,
-            captured_at=datetime.utcnow(),
+            captured_at=datetime.now(timezone.utc),
             row_count=100,
         )
 
