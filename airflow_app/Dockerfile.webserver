@@ -1,4 +1,4 @@
-FROM apache/airflow:2.7-python3.11
+FROM apache/airflow:2.7.3-python3.11
 
 # Set Airflow home directory
 ENV AIRFLOW_HOME=/opt/airflow
@@ -18,13 +18,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 USER airflow
 
 # Copy requirements.txt from project root
-COPY --chown=airflow:airflow ./airflow/requirements.txt /tmp/requirements.txt
+COPY --chown=airflow:airflow ./airflow_app/requirements.txt /tmp/requirements.txt
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 # Copy airflow directory (DAGs, plugins, config)
-COPY --chown=airflow:airflow ./airflow /opt/airflow
+COPY --chown=airflow:airflow ./airflow_app /opt/airflow
 
 # Create necessary directories
 RUN mkdir -p /opt/airflow/logs && \
@@ -42,6 +42,5 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=10s --retries=5 \
     CMD curl -f http://localhost:8080/api/v1/pools || exit 1
 
-# Default entrypoint: webserver
-ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-CMD ["airflow", "webserver"]
+# The base image already has a correct ENTRYPOINT and handles 'webserver' command
+

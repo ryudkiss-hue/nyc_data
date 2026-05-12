@@ -1,8 +1,9 @@
+
 services:
   # PostgreSQL 14 with PostGIS for spatial queries and full schema
   postgres:
     image: postgis/postgis:16-3.4
-    container_name: nyc_data_postgres
+    container_name: nyc_data_postgres_prod
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-dot_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dot_pass}
@@ -31,7 +32,7 @@ services:
   # Redis 7 for caching and rate limiting
   redis:
     image: redis:7-alpine
-    container_name: nyc_data_redis
+    container_name: nyc_data_redis_prod
     ports:
       - "6379:6379"
     volumes:
@@ -48,7 +49,7 @@ services:
   # Prometheus for metrics collection
   prometheus:
     image: prom/prometheus:v2.45.0
-    container_name: nyc_data_prometheus
+    container_name: nyc_data_prometheus_prod
     ports:
       - "9090:9090"
     volumes:
@@ -66,7 +67,7 @@ services:
   # Grafana for dashboards
   grafana:
     image: grafana/grafana:10.2.2
-    container_name: nyc_data_grafana
+    container_name: nyc_data_grafana_prod
     ports:
       - "3000:3000"
     environment:
@@ -89,19 +90,17 @@ services:
   # Jaeger for distributed tracing
   jaeger:
     image: jaegertracing/all-in-one:1.50
-    container_name: nyc_data_jaeger
+    container_name: nyc_data_jaeger_prod
     ports:
       - "16686:16686"  # Jaeger UI
       - "6831:6831/udp"  # Jaeger agent
-      - "14250:14250"  # Jaeger collector gRPC
     environment:
       COLLECTOR_ZIPKIN_HOST_PORT: ":9411"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:16686/api/health"]
       interval: 10s
-      timeout: 10s
-      retries: 30
-      start_period: 20s
+      timeout: 5s
+      retries: 5
     networks:
       - nyc_data
 
@@ -110,8 +109,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.api
-    container_name: nyc_data_api
-    command: uvicorn socrata_toolkit.api.main:app --host 0.0.0.0 --port 8000 --reload
+    container_name: nyc_data_api_prod
     ports:
       - "8000:8000"
     environment:
@@ -120,13 +118,10 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-dot_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dot_pass}
       POSTGRES_DB: ${POSTGRES_DB:-sidewalk_db}
-      JWT_SECRET: ${JWT_SECRET:-dev-secret-key-change-in-production}
+      JWT_SECRET: ${JWT_SECRET:-please_provide_a_secure_jwt_secret_in_prod}
       JAEGER_AGENT_HOST: jaeger
       JAEGER_AGENT_PORT: 6831
-      ENVIRONMENT: development
-    volumes:
-      - ./socrata_toolkit:/app/socrata_toolkit
-      - ./docs:/app/docs
+      ENVIRONMENT: production
     depends_on:
       postgres:
         condition: service_healthy
@@ -134,29 +129,10 @@ services:
         condition: service_healthy
       prometheus:
         condition: service_started
+      jaeger:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - nyc_data
-
-  # MinIO for S3-compatible storage (optional)
-  minio:
-    image: minio/minio:RELEASE.2023-10-16T04-13-43Z
-    container_name: nyc_data_minio
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
-    volumes:
-      - miniodata:/data
-    command: minio server /data --console-address ":9001"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -168,7 +144,7 @@ services:
     build:
       context: .
       dockerfile: airflow_app/Dockerfile.scheduler
-    container_name: airflow-scheduler
+    container_name: airflow-scheduler-prod
     environment:
       AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
       AIRFLOW__CORE__LOAD_EXAMPLES: 'False'
@@ -186,13 +162,7 @@ services:
       POSTGRES_WAREHOUSE_USER: ${POSTGRES_USER:-dot_user}
       POSTGRES_WAREHOUSE_PASSWORD: ${POSTGRES_PASSWORD:-dot_pass}
       POSTGRES_WAREHOUSE_DB: ${POSTGRES_DB:-sidewalk_db}
-      SOCRATA_APP_TOKEN: ${SOCRATA_APP_TOKEN:-demo_token}
-    volumes:
-      - ./airflow_app/dags:/opt/airflow/dags
-      - ./airflow_app/plugins:/opt/airflow/plugins
-      - ./airflow_app/logs:/opt/airflow/logs
-      - ./airflow_app/config:/opt/airflow/config
-      - .:/opt/airflow/project
+      SOCRATA_APP_TOKEN: ${SOCRATA_APP_TOKEN}
     depends_on:
       postgres:
         condition: service_healthy
@@ -212,7 +182,7 @@ services:
     build:
       context: .
       dockerfile: airflow_app/Dockerfile.webserver
-    container_name: airflow-webserver
+    container_name: airflow-webserver-prod
     environment:
       AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
       AIRFLOW__CORE__LOAD_EXAMPLES: 'False'
@@ -227,13 +197,7 @@ services:
       POSTGRES_WAREHOUSE_USER: ${POSTGRES_USER:-dot_user}
       POSTGRES_WAREHOUSE_PASSWORD: ${POSTGRES_PASSWORD:-dot_pass}
       POSTGRES_WAREHOUSE_DB: ${POSTGRES_DB:-sidewalk_db}
-      SOCRATA_APP_TOKEN: ${SOCRATA_APP_TOKEN:-demo_token}
-    volumes:
-      - ./airflow_app/dags:/opt/airflow/dags
-      - ./airflow_app/plugins:/opt/airflow/plugins
-      - ./airflow_app/logs:/opt/airflow/logs
-      - ./airflow_app/config:/opt/airflow/config
-      - .:/opt/airflow/project
+      SOCRATA_APP_TOKEN: ${SOCRATA_APP_TOKEN}
     depends_on:
       postgres:
         condition: service_healthy
@@ -247,29 +211,24 @@ services:
     networks:
       - nyc_data
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/api/v1/pools || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
 
-  # React Frontend (Vite Dev Server)
+  # React Frontend (Nginx Server)
   frontend:
-    image: node:18-alpine
-    container_name: nyc_data_frontend
-    working_dir: /app
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules  # Isolate node_modules inside the container
-    environment:
-      - VITE_API_URL=http://localhost:8000/api/v1/llm
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: nyc_data_frontend_prod
     ports:
-      - "5173:5173"
-    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+      - "80:80"
     networks:
       - nyc_data
     depends_on:
       api:
-        condition: service_started
+        condition: service_healthy
 
 networks:
   nyc_data:
@@ -280,4 +239,3 @@ volumes:
   redisdata:
   prometheus_data:
   grafana_data:
-  miniodata:

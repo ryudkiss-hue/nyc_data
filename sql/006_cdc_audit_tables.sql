@@ -35,7 +35,7 @@ CREATE INDEX IF NOT EXISTS idx_audit_trail_old_values ON public.audit_trail USIN
 CREATE INDEX IF NOT EXISTS idx_audit_trail_new_values ON public.audit_trail USING GIN(new_values);
 
 -- Partitioning strategy for large tables (monthly)
-CREATE TABLE IF NOT EXISTS public.audit_trail_partition_template () PARTITION OF public.audit_trail DEFAULT;
+CREATE TABLE IF NOT EXISTS public.audit_trail_partition_template () INHERITS (public.audit_trail);
 
 -- Make audit_trail immutable (prevent updates/deletes)
 CREATE OR REPLACE RULE audit_trail_no_update AS ON UPDATE TO public.audit_trail
@@ -145,13 +145,13 @@ CREATE INDEX IF NOT EXISTS idx_change_detection_dataset ON public.change_detecti
 -- View: Current records (not soft-deleted, is_current = true)
 CREATE OR REPLACE VIEW public.v_current_records AS
 SELECT 
-    table_name,
+    source_dataset,
     record_id,
     COUNT(*) as count
 FROM public.cdc_events
 WHERE operation IN ('INSERT', 'UPDATE')
-GROUP BY table_name, record_id
-ORDER BY table_name, record_id;
+GROUP BY source_dataset, record_id
+ORDER BY source_dataset, record_id;
 
 -- View: Deleted records (soft deleted)
 CREATE OR REPLACE VIEW public.v_deleted_records AS
@@ -301,6 +301,5 @@ $$ LANGUAGE plpgsql STABLE;
 
 -- 9. Grants
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO PUBLIC;
-GRANT SELECT ON ALL VIEWS IN SCHEMA public TO PUBLIC;
 
 -- End of Migration 006

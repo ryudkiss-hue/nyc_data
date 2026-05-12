@@ -18,7 +18,7 @@ Usage:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 from typing import Optional, Dict, Any
 import threading
@@ -103,6 +103,7 @@ class MetricsRegistry:
         self.use_prometheus = use_prometheus and HAS_PROMETHEUS
         self.registry = CollectorRegistry() if self.use_prometheus else None
         self.in_memory_metrics: Dict[str, MetricPoint] = {}
+        self._metrics: Dict[str, Any] = {}
         self._lock = threading.Lock()
 
     def register_counter(self, name: str, help_text: str) -> Counter | MockCounter:
@@ -122,10 +123,17 @@ class MetricsRegistry:
             >>> counter = reg.register_counter('http_requests_total', 'Total HTTP requests')
             >>> counter.labels(method='GET', status='200').inc()
         """
-        if self.use_prometheus:
-            return Counter(name, help_text, registry=self.registry)
-        else:
-            return MockCounter(name, help_text, self.in_memory_metrics, self._lock)
+        with self._lock:
+            if name in self._metrics:
+                return self._metrics[name]
+            
+            if self.use_prometheus:
+                metric = Counter(name, help_text, registry=self.registry)
+            else:
+                metric = MockCounter(name, help_text, self.in_memory_metrics, self._lock)
+            
+            self._metrics[name] = metric
+            return metric
 
     def register_gauge(self, name: str, help_text: str) -> Gauge | MockGauge:
         """Register a gauge metric.
@@ -144,10 +152,17 @@ class MetricsRegistry:
             >>> gauge = reg.register_gauge('queue_size', 'Current queue size')
             >>> gauge.set(42)
         """
-        if self.use_prometheus:
-            return Gauge(name, help_text, registry=self.registry)
-        else:
-            return MockGauge(name, help_text, self.in_memory_metrics, self._lock)
+        with self._lock:
+            if name in self._metrics:
+                return self._metrics[name]
+                
+            if self.use_prometheus:
+                metric = Gauge(name, help_text, registry=self.registry)
+            else:
+                metric = MockGauge(name, help_text, self.in_memory_metrics, self._lock)
+                
+            self._metrics[name] = metric
+            return metric
 
     def register_histogram(
         self, name: str, help_text: str, buckets: Optional[tuple] = None
@@ -173,13 +188,71 @@ class MetricsRegistry:
             ... )
             >>> hist.observe(0.25)
         """
-        if self.use_prometheus:
-            kwargs = {"registry": self.registry}
-            if buckets:
-                kwargs["buckets"] = buckets
-            return Histogram(name, help_text, **kwargs)
+        with self._lock:
+            if name in self._metrics:
+                return self._metrics[name]
+                
+            if self.use_prometheus:
+                kwargs = {"registry": self.registry}
+                if buckets:
+                    kwargs["buckets"] = buckets
+                metric = Histogram(name, help_text, **kwargs)
+            else:
+                metric = MockHistogram(name, help_text, self.in_memory_metrics, self._lock, buckets or ())
+                
+            self._metrics[name] = metric
+            return metric
+
+    def emit_counter(
+        self, name: str, amount: float = 1.0, help_text: str = "", labels: Optional[Dict[str, str]] = None
+    ) -> None:
+        """Emit a counter value. Registers if doesn't exist.
+        
+        Args:
+            name: Metric name
+            amount: Amount to increment by
+            help_text: Optional help text
+            labels: Optional labels
+        """
+        metric = self.register_counter(name, help_text or name)
+        if labels:
+            metric.labels(**labels).inc(amount)
         else:
-            return MockHistogram(name, help_text, self.in_memory_metrics, self._lock, buckets or ())
+            metric.inc(amount)
+
+    def emit_gauge(
+        self, name: str, value: float, help_text: str = "", labels: Optional[Dict[str, str]] = None
+    ) -> None:
+        """Emit a gauge value. Registers if doesn't exist.
+        
+        Args:
+            name: Metric name
+            value: Value to set
+            help_text: Optional help text
+            labels: Optional labels
+        """
+        metric = self.register_gauge(name, help_text or name)
+        if labels:
+            metric.labels(**labels).set(value)
+        else:
+            metric.set(value)
+
+    def emit_histogram(
+        self, name: str, value: float, help_text: str = "", labels: Optional[Dict[str, str]] = None
+    ) -> None:
+        """Emit a histogram observation. Registers if doesn't exist.
+        
+        Args:
+            name: Metric name
+            value: Value to observe
+            help_text: Optional help text
+            labels: Optional labels
+        """
+        metric = self.register_histogram(name, help_text or name)
+        if labels:
+            metric.labels(**labels).observe(value)
+        else:
+            metric.observe(value)
 
     def export_prometheus(self) -> str:
         """Export all metrics in Prometheus text format.

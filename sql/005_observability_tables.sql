@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS observability_sla_violations (
     target NUMERIC NOT NULL,
     actual NUMERIC NOT NULL,
     violation_time TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    window VARCHAR(50) NOT NULL,  -- 5m, 1h, 1d
+    time_window VARCHAR(50) NOT NULL,  -- 5m, 1h, 1d
     severity VARCHAR(50) NOT NULL,  -- CRITICAL, HIGH, MEDIUM, LOW
     resolved_at TIMESTAMP WITH TIME ZONE,
     resolution_notes TEXT,
@@ -126,7 +126,7 @@ CREATE TABLE IF NOT EXISTS observability_sla_config (
     id BIGSERIAL PRIMARY KEY,
     metric_name VARCHAR(255) NOT NULL UNIQUE,
     target NUMERIC NOT NULL,
-    window VARCHAR(50) NOT NULL,  -- 5m, 1h, 1d
+    time_window VARCHAR(50) NOT NULL,  -- 5m, 1h, 1d
     severity VARCHAR(50) NOT NULL,
     channels JSONB,  -- ["email", "slack", "pagerduty"]
     description TEXT,
@@ -229,8 +229,8 @@ SELECT
     hour,
     metric_name,
     value_avg as avg_value,
-    value_p95 as p95_value,
-    value_p99 as p99_value,
+    p95 as p95_value,
+    p99 as p99_value,
     value_count as observation_count
 FROM observability_metrics_hourly
 WHERE metric_type IN ('histogram', 'summary')

@@ -556,9 +556,9 @@ COMMENT ON TABLE hotspots IS 'Problem areas detected through spatial analysis';
 -- REFRESH MATERIALIZED VIEWS
 -- ============================================================================
 
-REFRESH MATERIALIZED VIEW CONCURRENTLY mv_segments_by_borough;
-REFRESH MATERIALIZED VIEW CONCURRENTLY mv_segments_by_material;
-REFRESH MATERIALIZED VIEW CONCURRENTLY mv_block_coverage;
+REFRESH MATERIALIZED VIEW mv_segments_by_borough;
+REFRESH MATERIALIZED VIEW mv_segments_by_material;
+REFRESH MATERIALIZED VIEW mv_block_coverage;
 
 -- ============================================================================
 -- VERIFICATION

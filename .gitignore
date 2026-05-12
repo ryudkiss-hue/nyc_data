@@ -11,3 +11,7 @@ analysis/*.geojson
 analysis/*.csv
 .venv/
 outputs/
+**/__pycache__/
+**/*.pyc
+**/logs/
+*.log

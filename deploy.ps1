@@ -27,25 +27,25 @@ function Write-Header {
 
 function Write-Success {
     param([string]$Text)
-    Write-Host "✓ " -ForegroundColor Green -NoNewline
+    Write-Host "[+] " -ForegroundColor Green -NoNewline
     Write-Host $Text
 }
 
 function Write-Error {
     param([string]$Text)
-    Write-Host "✗ " -ForegroundColor Red -NoNewline
+    Write-Host "[-] " -ForegroundColor Red -NoNewline
     Write-Host $Text
 }
 
 function Write-Warning {
     param([string]$Text)
-    Write-Host "⚠ " -ForegroundColor Yellow -NoNewline
+    Write-Host "[!] " -ForegroundColor Yellow -NoNewline
     Write-Host $Text
 }
 
 function Write-Info {
     param([string]$Text)
-    Write-Host "ℹ " -ForegroundColor Cyan -NoNewline
+    Write-Host "[i] " -ForegroundColor Cyan -NoNewline
     Write-Host $Text
 }
 

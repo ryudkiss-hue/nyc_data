@@ -1,4 +1,3 @@
-version: '3.9'
 
 # Development and testing compose -- lighter services, test runner included
 services:

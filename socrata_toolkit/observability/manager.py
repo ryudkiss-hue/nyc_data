@@ -243,6 +243,7 @@ class OperationalLogger:
         duration_seconds: Optional[float] = None,
         error: Optional[str] = None,
         context: Optional[dict] = None,
+        **kwargs: Any,
     ) -> None:
         """Internal logging method with structured fields.
 
@@ -261,6 +262,10 @@ class OperationalLogger:
         caller_frame = frame.f_back.f_back if frame and frame.f_back else None
         lineno = caller_frame.f_lineno if caller_frame else 0
 
+        # Merge context and kwargs
+        final_context = (context or {}).copy()
+        final_context.update(kwargs)
+
         # Create extra dict for logging
         extra = {
             "request_id": self.request_id,
@@ -268,7 +273,7 @@ class OperationalLogger:
             "operation_type": operation_type,
             "record_count": record_count,
             "duration_seconds": duration_seconds,
-            "context": context or {},
+            "context": final_context,
         }
 
         # Use getattr to avoid passing undefined attributes
@@ -281,6 +286,7 @@ class OperationalLogger:
         dataset_id: Optional[str] = None,
         operation_type: Optional[str] = None,
         context: Optional[dict] = None,
+        **kwargs: Any,
     ) -> None:
         """Log debug message.
 
@@ -289,12 +295,9 @@ class OperationalLogger:
             dataset_id: Optional dataset ID
             operation_type: Optional operation type
             context: Optional context dictionary
-
-        Examples:
-            >>> logger = OperationalLogger('test')
-            >>> logger.debug('Debug message', dataset_id='nyc-311')
+            **kwargs: Additional fields to log
         """
-        self._log("DEBUG", message, dataset_id, operation_type, context=context)
+        self._log("DEBUG", message, dataset_id, operation_type, context=context, **kwargs)
 
     def info(
         self,
@@ -304,6 +307,7 @@ class OperationalLogger:
         record_count: Optional[int] = None,
         duration_seconds: Optional[float] = None,
         context: Optional[dict] = None,
+        **kwargs: Any,
     ) -> None:
         """Log info message.
 
@@ -314,10 +318,7 @@ class OperationalLogger:
             record_count: Optional record count
             duration_seconds: Optional duration
             context: Optional context dictionary
-
-        Examples:
-            >>> logger = OperationalLogger('test')
-            >>> logger.info('Ingestion complete', dataset_id='nyc-311', record_count=1500)
+            **kwargs: Additional fields to log
         """
         self._log(
             "INFO",
@@ -327,6 +328,7 @@ class OperationalLogger:
             record_count,
             duration_seconds,
             context=context,
+            **kwargs,
         )
 
     def warning(
@@ -336,6 +338,7 @@ class OperationalLogger:
         operation_type: Optional[str] = None,
         error: Optional[str] = None,
         context: Optional[dict] = None,
+        **kwargs: Any,
     ) -> None:
         """Log warning message.
 
@@ -345,12 +348,9 @@ class OperationalLogger:
             operation_type: Optional operation type
             error: Optional error details
             context: Optional context dictionary
-
-        Examples:
-            >>> logger = OperationalLogger('test')
-            >>> logger.warning('SLA violation detected', dataset_id='nyc-311')
+            **kwargs: Additional fields to log
         """
-        self._log("WARNING", message, dataset_id, operation_type, error=error, context=context)
+        self._log("WARNING", message, dataset_id, operation_type, error=error, context=context, **kwargs)
 
     def error(
         self,
@@ -359,6 +359,7 @@ class OperationalLogger:
         operation_type: Optional[str] = None,
         error: Optional[str] = None,
         context: Optional[dict] = None,
+        **kwargs: Any,
     ) -> None:
         """Log error message.
 
@@ -368,12 +369,9 @@ class OperationalLogger:
             operation_type: Optional operation type
             error: Error details
             context: Optional context dictionary
-
-        Examples:
-            >>> logger = OperationalLogger('test')
-            >>> logger.error('Ingestion failed', dataset_id='nyc-311', error='Network timeout')
+            **kwargs: Additional fields to log
         """
-        self._log("ERROR", message, dataset_id, operation_type, error=error, context=context)
+        self._log("ERROR", message, dataset_id, operation_type, error=error, context=context, **kwargs)
 
     def critical(
         self,
@@ -382,6 +380,7 @@ class OperationalLogger:
         operation_type: Optional[str] = None,
         error: Optional[str] = None,
         context: Optional[dict] = None,
+        **kwargs: Any,
     ) -> None:
         """Log critical message.
 
@@ -391,12 +390,9 @@ class OperationalLogger:
             operation_type: Optional operation type
             error: Error details
             context: Optional context dictionary
-
-        Examples:
-            >>> logger = OperationalLogger('test')
-            >>> logger.critical('System failure', error='Database connection lost')
+            **kwargs: Additional fields to log
         """
-        self._log("CRITICAL", message, dataset_id, operation_type, error=error, context=context)
+        self._log("CRITICAL", message, dataset_id, operation_type, error=error, context=context, **kwargs)
 
 
 @dataclass

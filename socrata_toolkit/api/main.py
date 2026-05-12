@@ -484,12 +484,14 @@ def create_app(config: Optional[APIConfig] = None) -> FastAPI:
     return app
 
 
+# Create app instance for uvicorn
+app = create_app()
+
 if __name__ == "__main__":
     # Development server
     import uvicorn
 
     config = APIConfig()
-    app = create_app(config)
 
     uvicorn.run(
         app,

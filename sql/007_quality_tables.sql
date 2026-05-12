@@ -12,10 +12,11 @@ CREATE TABLE IF NOT EXISTS quality_expectations (
     config JSONB NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    created_by VARCHAR(255),
-    INDEX idx_suite_name (suite_name),
-    INDEX idx_expectation_type (expectation_type)
+    created_by VARCHAR(255)
 );
+
+CREATE INDEX IF NOT EXISTS idx_quality_expectations_suite_name ON quality_expectations(suite_name);
+CREATE INDEX IF NOT EXISTS idx_quality_expectations_type ON quality_expectations(expectation_type);
 
 -- quality_profiles: Store column-level and table-level statistics
 CREATE TABLE IF NOT EXISTS quality_profiles (
@@ -38,11 +39,12 @@ CREATE TABLE IF NOT EXISTS quality_profiles (
     std_dev_value FLOAT,
     outlier_count INT,
     profile_data JSONB,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_dataset (dataset_id),
-    INDEX idx_column (dataset_id, column_name),
-    INDEX idx_created (created_at DESC)
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE INDEX IF NOT EXISTS idx_quality_profiles_dataset ON quality_profiles(dataset_id);
+CREATE INDEX IF NOT EXISTS idx_quality_profiles_column ON quality_profiles(dataset_id, column_name);
+CREATE INDEX IF NOT EXISTS idx_quality_profiles_created ON quality_profiles(created_at DESC);
 
 -- quality_validations: Validation results and history
 CREATE TABLE IF NOT EXISTS quality_validations (
@@ -59,12 +61,13 @@ CREATE TABLE IF NOT EXISTS quality_validations (
     validation_details JSONB,
     failed_rows_sample JSONB,
     validation_timestamp TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_dataset (dataset_id),
-    INDEX idx_status (validation_status),
-    INDEX idx_timestamp (validation_timestamp DESC),
-    INDEX idx_created (created_at DESC)
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE INDEX IF NOT EXISTS idx_quality_validations_dataset ON quality_validations(dataset_id);
+CREATE INDEX IF NOT EXISTS idx_quality_validations_status ON quality_validations(validation_status);
+CREATE INDEX IF NOT EXISTS idx_quality_validations_timestamp ON quality_validations(validation_timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_quality_validations_created ON quality_validations(created_at DESC);
 
 -- quality_sla_config: SLA definitions and configuration
 CREATE TABLE IF NOT EXISTS quality_sla_config (
@@ -72,7 +75,7 @@ CREATE TABLE IF NOT EXISTS quality_sla_config (
     metric_name VARCHAR(255) NOT NULL UNIQUE,
     metric_type VARCHAR(100) NOT NULL,
     target_value FLOAT NOT NULL,
-    window VARCHAR(50) NOT NULL,
+    time_window VARCHAR(50) NOT NULL,
     dataset_id VARCHAR(255) NOT NULL,
     severity VARCHAR(50) NOT NULL DEFAULT 'HIGH',
     materialization_mode VARCHAR(50) DEFAULT 'SOFT',
@@ -80,28 +83,31 @@ CREATE TABLE IF NOT EXISTS quality_sla_config (
     grace_period_minutes INT DEFAULT 5,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    active BOOLEAN DEFAULT true,
-    INDEX idx_metric_name (metric_name),
-    INDEX idx_dataset (dataset_id),
-    INDEX idx_active (active)
+    active BOOLEAN DEFAULT true
 );
+
+CREATE INDEX IF NOT EXISTS idx_quality_sla_config_metric_name ON quality_sla_config(metric_name);
+CREATE INDEX IF NOT EXISTS idx_quality_sla_config_dataset ON quality_sla_config(dataset_id);
+CREATE INDEX IF NOT EXISTS idx_quality_sla_config_active ON quality_sla_config(active);
 
 -- quality_metrics: Time-series quality metrics for SLA tracking
 CREATE TABLE IF NOT EXISTS quality_metrics (
-    metric_id BIGSERIAL PRIMARY KEY,
+    metric_id BIGSERIAL,
     metric_name VARCHAR(255) NOT NULL,
     metric_value FLOAT NOT NULL,
     metric_type VARCHAR(100),
     dataset_id VARCHAR(255),
-    window VARCHAR(50),
+    time_window VARCHAR(50),
     measured_at TIMESTAMP WITH TIME ZONE NOT NULL,
     recorded_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     tags JSONB,
-    INDEX idx_metric_name (metric_name),
-    INDEX idx_dataset (dataset_id),
-    INDEX idx_measured (measured_at DESC),
-    INDEX idx_metric_date (measured_at DESC, metric_name)
+    PRIMARY KEY (metric_id, measured_at)
 ) PARTITION BY RANGE (measured_at);
+
+CREATE INDEX IF NOT EXISTS idx_quality_metrics_name ON quality_metrics(metric_name);
+CREATE INDEX IF NOT EXISTS idx_quality_metrics_dataset ON quality_metrics(dataset_id);
+CREATE INDEX IF NOT EXISTS idx_quality_metrics_measured ON quality_metrics(measured_at DESC);
+CREATE INDEX IF NOT EXISTS idx_quality_metrics_date ON quality_metrics(measured_at DESC, metric_name);
 
 -- Create partitions for quality_metrics (monthly)
 CREATE TABLE quality_metrics_2026_01 PARTITION OF quality_metrics
@@ -132,13 +138,14 @@ CREATE TABLE IF NOT EXISTS quality_anomalies (
     detected_at TIMESTAMP WITH TIME ZONE NOT NULL,
     resolved_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    status VARCHAR(50) DEFAULT 'ACTIVE',
-    INDEX idx_metric (metric_name),
-    INDEX idx_dataset (dataset_id),
-    INDEX idx_severity (severity),
-    INDEX idx_detected (detected_at DESC),
-    INDEX idx_status (status)
+    status VARCHAR(50) DEFAULT 'ACTIVE'
 );
+
+CREATE INDEX IF NOT EXISTS idx_quality_anomalies_metric ON quality_anomalies(metric_name);
+CREATE INDEX IF NOT EXISTS idx_quality_anomalies_dataset ON quality_anomalies(dataset_id);
+CREATE INDEX IF NOT EXISTS idx_quality_anomalies_severity ON quality_anomalies(severity);
+CREATE INDEX IF NOT EXISTS idx_quality_anomalies_detected ON quality_anomalies(detected_at DESC);
+CREATE INDEX IF NOT EXISTS idx_quality_anomalies_status ON quality_anomalies(status);
 
 -- quality_catalog: Dataset quality profiles in data catalog
 CREATE TABLE IF NOT EXISTS quality_catalog (
@@ -159,12 +166,13 @@ CREATE TABLE IF NOT EXISTS quality_catalog (
     sla_compliance JSONB,
     catalog_metadata JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_dataset (dataset_id),
-    INDEX idx_quality_score (quality_score_overall DESC),
-    INDEX idx_trend (trend),
-    INDEX idx_updated (updated_at DESC)
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE INDEX IF NOT EXISTS idx_quality_catalog_dataset ON quality_catalog(dataset_id);
+CREATE INDEX IF NOT EXISTS idx_quality_catalog_score ON quality_catalog(quality_score_overall DESC);
+CREATE INDEX IF NOT EXISTS idx_quality_trend ON quality_catalog(trend);
+CREATE INDEX IF NOT EXISTS idx_quality_catalog_updated ON quality_catalog(updated_at DESC);
 
 -- quality_sla_breaches: Track SLA breaches over time
 CREATE TABLE IF NOT EXISTS quality_sla_breaches (
@@ -178,12 +186,13 @@ CREATE TABLE IF NOT EXISTS quality_sla_breaches (
     breach_duration INTERVAL,
     status VARCHAR(50) DEFAULT 'ACTIVE',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (sla_id) REFERENCES quality_sla_config(sla_id),
-    INDEX idx_sla (sla_id),
-    INDEX idx_metric (metric_name),
-    INDEX idx_status (status),
-    INDEX idx_start (breach_start DESC)
+    FOREIGN KEY (sla_id) REFERENCES quality_sla_config(sla_id)
 );
+
+CREATE INDEX IF NOT EXISTS idx_quality_sla_breaches_sla ON quality_sla_breaches(sla_id);
+CREATE INDEX IF NOT EXISTS idx_quality_sla_breaches_metric ON quality_sla_breaches(metric_name);
+CREATE INDEX IF NOT EXISTS idx_quality_sla_breaches_status ON quality_sla_breaches(status);
+CREATE INDEX IF NOT EXISTS idx_quality_sla_breaches_start ON quality_sla_breaches(breach_start DESC);
 
 -- quality_rules_violations: Track business rule violations
 CREATE TABLE IF NOT EXISTS quality_rules_violations (
@@ -198,13 +207,14 @@ CREATE TABLE IF NOT EXISTS quality_rules_violations (
     detected_at TIMESTAMP WITH TIME ZONE NOT NULL,
     resolved_at TIMESTAMP WITH TIME ZONE,
     status VARCHAR(50) DEFAULT 'OPEN',
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_dataset (dataset_id),
-    INDEX idx_rule (rule_id),
-    INDEX idx_severity (severity),
-    INDEX idx_status (status),
-    INDEX idx_detected (detected_at DESC)
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE INDEX IF NOT EXISTS idx_quality_rules_violations_dataset ON quality_rules_violations(dataset_id);
+CREATE INDEX IF NOT EXISTS idx_quality_rules_violations_rule ON quality_rules_violations(rule_id);
+CREATE INDEX IF NOT EXISTS idx_quality_rules_violations_severity ON quality_rules_violations(severity);
+CREATE INDEX IF NOT EXISTS idx_quality_rules_violations_status ON quality_rules_violations(status);
+CREATE INDEX IF NOT EXISTS idx_quality_rules_violations_detected ON quality_rules_violations(detected_at DESC);
 
 -- quality_audit_trail: Audit trail for quality system operations
 CREATE TABLE IF NOT EXISTS quality_audit_trail (
@@ -217,26 +227,26 @@ CREATE TABLE IF NOT EXISTS quality_audit_trail (
     details JSONB,
     status VARCHAR(50),
     error_message TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_action (action),
-    INDEX idx_dataset (dataset_id),
-    INDEX idx_actor (actor),
-    INDEX idx_created (created_at DESC)
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE INDEX IF NOT EXISTS idx_quality_audit_trail_action ON quality_audit_trail(action);
+CREATE INDEX IF NOT EXISTS idx_quality_audit_trail_dataset ON quality_audit_trail(dataset_id);
+CREATE INDEX IF NOT EXISTS idx_quality_audit_trail_actor ON quality_audit_trail(actor);
+CREATE INDEX IF NOT EXISTS idx_quality_audit_trail_created ON quality_audit_trail(created_at DESC);
+
 -- Create indexes for common queries
-CREATE INDEX idx_quality_metrics_rolling ON quality_metrics(measured_at DESC, metric_name)
-    WHERE measured_at > CURRENT_TIMESTAMP - INTERVAL '30 days';
+CREATE INDEX idx_quality_metrics_rolling ON quality_metrics(measured_at DESC, metric_name);
 
 CREATE INDEX idx_quality_validations_recent ON quality_validations(created_at DESC)
-    WHERE created_at > CURRENT_TIMESTAMP - INTERVAL '7 days';
+    WHERE created_at > '2026-01-01'::TIMESTAMP WITH TIME ZONE;
 
 CREATE INDEX idx_quality_anomalies_active ON quality_anomalies(dataset_id, status)
     WHERE status = 'ACTIVE' AND resolved_at IS NULL;
 
 -- Grant permissions (adjust as needed)
-GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA public TO data_quality_service;
-GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO data_quality_service;
+-- GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA public TO data_quality_service;
+-- GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO data_quality_service;
 
 -- Comments for documentation
 COMMENT ON TABLE quality_expectations IS 'Stores expectation suites and individual expectations for data quality validation';
