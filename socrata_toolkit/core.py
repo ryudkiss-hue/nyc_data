@@ -248,6 +248,7 @@ class SocrataClient:
         all_rows = []
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_to_offset = {executor.submit(fetch_batch, offset): offset for offset in offsets}
+
             for future in concurrent.futures.as_completed(future_to_offset):
                 try:
                     data = future.result()
@@ -255,8 +256,20 @@ class SocrataClient:
                         all_rows.extend(data)
                 except Exception as exc:
                     logger.error(f"Batch fetch failed: {exc}")
-        
         return pd.DataFrame(all_rows)
+
+    def get_odata_url(self, domain: str, fourfour: str) -> str:
+        """Generate the OData v4 endpoint for a dataset."""
+        return f"https://{domain}/api/odata/v4/{fourfour}"
+
+    def fetch_odata(self, domain: str, fourfour: str, top: int = 100) -> pd.DataFrame:
+        """Fetch data using the OData v4 protocol."""
+        url = f"{self.get_odata_url(domain, fourfour)}?$top={top}"
+        headers = self._headers()
+        resp = requests.get(url, headers=headers, timeout=self.config.timeout)
+        resp.raise_for_status()
+        data = resp.json().get('value', [])
+        return pd.DataFrame(data)
 
     def fetch_geojson(self, domain: str, fourfour: str, where: str | None = None, max_rows: int | None = None) -> dict[str, Any]:
         features: list[dict[str, Any]] = []
@@ -334,6 +347,22 @@ class SoQLBuilder:
     def where(self, *clauses: str) -> SoQLBuilder:
         """Add filtering conditions ($where)."""
         self._where.extend(clauses)
+        return self
+
+    def date_trunc(self, column: str, precision: str = "month", alias: str | None = None) -> SoQLBuilder:
+        """Add a date_trunc expression to the select clause."""
+        expr = f"date_trunc_{precision}({column})"
+        if alias:
+            expr = f"{expr} AS {alias}"
+        self._select.append(expr)
+        return self
+
+    def aggregate(self, func: str, column: str = "*", alias: str | None = None) -> SoQLBuilder:
+        """Add an aggregation expression to the select clause."""
+        expr = f"{func}({column})"
+        if alias:
+            expr = f"{expr} AS {alias}"
+        self._select.append(expr)
         return self
 
     def order(self, column: str, desc: bool = False) -> SoQLBuilder:
