@@ -30,17 +30,18 @@ from typing import List
 
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from airflow.operators.postgres_operator import PostgresOperator
-from airflow.sensors.http_sensor import HttpSensor
+from airflow.providers.postgres.operators.postgres import PostgresOperator
+from airflow.providers.http.sensors.http import HttpSensor
 from airflow.utils.task_group import TaskGroup
 
 # Import custom operators
 import sys
 import os
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-from airflow.plugins.custom_operators import (
+from custom_operators import (
     SocrataFetchOperator,
     DataQualityCheckOperator,
     SchemaComplianceOperator,
@@ -48,7 +49,7 @@ from airflow.plugins.custom_operators import (
     FreshnessUpdateOperator,
     MetricsEmitterOperator,
 )
-from airflow.config import get_dag_defaults, SLA_CONFIG
+from config import get_dag_defaults, SLA_CONFIG
 
 # ============================================================================
 # DAG CONFIGURATION
@@ -64,6 +65,8 @@ sla_config = SLA_CONFIG.get(DAG_ID, {})
 # DAG DEFINITION
 # ============================================================================
 
+dag_defaults["sla"] = timedelta(seconds=sla_config.get("sla_seconds", 3600))
+
 dag = DAG(
     dag_id=DAG_ID,
     description=DAG_DESCRIPTION,
@@ -72,7 +75,6 @@ dag = DAG(
     tags=["ingestion", "311", "sidewalk", "daily"],
     catchup=False,
     max_active_runs=2,
-    sla=timedelta(seconds=sla_config.get("sla_seconds", 3600)),
     doc_md=__doc__,
 )
 
@@ -90,11 +92,20 @@ start_dag = PythonOperator(
 # TASK: Check Socrata API health
 # ============================================================================
 
+# Pull Socrata App Token from Airflow Variables
+try:
+    socrata_token = Variable.get("SOCRATA_APP_TOKEN")
+except:
+    socrata_token = None
+
 check_socrata_health = HttpSensor(
     task_id="check_socrata_api_health",
     http_conn_id="socrata_api",
     endpoint="/api/views/a2nx-4u46.json",  # 311 Service Requests dataset
-    request_headers={"Accept": "application/json"},
+    headers={
+        "Accept": "application/json",
+        "X-App-Token": socrata_token
+    } if socrata_token else {"Accept": "application/json"},
     response_check=lambda response: response.status_code == 200,
     timeout=30,
     retries=2,
@@ -180,7 +191,7 @@ update_freshness = FreshnessUpdateOperator(
 
 def emit_lineage_records(**context):
     """Record lineage for incident ingestion pipeline."""
-    from socrata_toolkit.lineage import LineageRecorder
+    from custom_operators import LineageRecorder
 
     lineage = LineageRecorder()
 

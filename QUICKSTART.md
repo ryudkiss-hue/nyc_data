@@ -42,6 +42,7 @@ After setup completes, you have:
 
 | Service | URL | Username | Password |
 |---------|-----|----------|----------|
+| **Airflow Orchestrator** | http://localhost:8080 | airflow | airflow |
 | **Streamlit Dashboard** | http://localhost:8501 | - | - |
 | **PostgreSQL Database** | localhost:5432 | dot_user | (see .env.socrata) |
 | **Grafana Monitoring** | http://localhost:3000 | admin | (see .env.socrata) |
@@ -54,9 +55,15 @@ After setup completes, you have:
 
 ```bash
 # Edit .env.socrata with your Socrata API token
-nano .env.socrata        # Linux/MacOS
-# or
+# This token will be automatically synced to Airflow on startup
 notepad .env.socrata     # Windows
+```
+
+### 2. Verify Airflow Variables
+
+Ensure the `SOCRATA_APP_TOKEN` is set in the Airflow UI (Admin -> Variables) or via CLI:
+```bash
+docker exec airflow-scheduler airflow variables set SOCRATA_APP_TOKEN your_token_here
 ```
 
 ### 2. Run CLI Command

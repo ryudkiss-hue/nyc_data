@@ -53,22 +53,22 @@ def print_header(text: str) -> None:
 
 def print_success(text: str) -> None:
     """Print success message."""
-    print(f"{Colors.GREEN}✓ {text}{Colors.ENDC}")
+    print(f"{Colors.GREEN}[OK] {text}{Colors.ENDC}")
 
 
 def print_error(text: str) -> None:
     """Print error message."""
-    print(f"{Colors.RED}✗ {text}{Colors.ENDC}")
+    print(f"{Colors.RED}[ERR] {text}{Colors.ENDC}")
 
 
 def print_warning(text: str) -> None:
     """Print warning message."""
-    print(f"{Colors.YELLOW}⚠ {text}{Colors.ENDC}")
+    print(f"{Colors.YELLOW}[WARN] {text}{Colors.ENDC}")
 
 
 def print_info(text: str) -> None:
     """Print info message."""
-    print(f"{Colors.CYAN}ℹ {text}{Colors.ENDC}")
+    print(f"{Colors.CYAN}[INFO] {text}{Colors.ENDC}")
 
 
 def check_requirements() -> bool:
@@ -465,7 +465,7 @@ def main():
     
     # CLI subcommand
     cli_parser = subparsers.add_parser("cli", help="Run CLI commands")
-    cli_parser.add_argument("cli_args", nargs="*", help="CLI arguments")
+    cli_parser.add_argument("cli_args", nargs=argparse.REMAINDER, help="CLI arguments")
     
     # Web subcommand
     web_parser = subparsers.add_parser("web", help="Launch web dashboard")

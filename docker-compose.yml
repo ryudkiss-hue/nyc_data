@@ -175,9 +175,9 @@ services:
       AIRFLOW__CORE__PLUGINS_FOLDER: /opt/airflow/plugins
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql://${POSTGRES_USER:-dot_user}:${POSTGRES_PASSWORD:-dot_pass}@postgres:5432/airflow
-      AIRFLOW__CORE__PARALLELISM: 4
-      AIRFLOW__CORE__DAG_CONCURRENCY: 2
-      AIRFLOW__CORE__MAX_ACTIVE_RUNS_PER_DAG: 2
+      AIRFLOW__CORE__PARALLELISM: 32
+      AIRFLOW__CORE__DAG_CONCURRENCY: 16
+      AIRFLOW__CORE__MAX_ACTIVE_RUNS_PER_DAG: 8
       AIRFLOW__SCHEDULER__SCHEDULER_HEARTBEAT_SEC: 5
       AIRFLOW__CORE__ENABLE_XCOM_PICKLING: 'True'
       AIRFLOW_HOME: /opt/airflow
@@ -187,6 +187,7 @@ services:
       POSTGRES_WAREHOUSE_PASSWORD: ${POSTGRES_PASSWORD:-dot_pass}
       POSTGRES_WAREHOUSE_DB: ${POSTGRES_DB:-sidewalk_db}
       SOCRATA_APP_TOKEN: ${SOCRATA_APP_TOKEN:-demo_token}
+      PYTHONPATH: /opt/airflow/project:/opt/airflow/plugins:/opt/airflow/dags:/opt/airflow/config
     volumes:
       - ./airflow_app/dags:/opt/airflow/dags
       - ./airflow_app/plugins:/opt/airflow/plugins
@@ -228,6 +229,7 @@ services:
       POSTGRES_WAREHOUSE_PASSWORD: ${POSTGRES_PASSWORD:-dot_pass}
       POSTGRES_WAREHOUSE_DB: ${POSTGRES_DB:-sidewalk_db}
       SOCRATA_APP_TOKEN: ${SOCRATA_APP_TOKEN:-demo_token}
+      PYTHONPATH: /opt/airflow/project:/opt/airflow/plugins:/opt/airflow/dags:/opt/airflow/config
     volumes:
       - ./airflow_app/dags:/opt/airflow/dags
       - ./airflow_app/plugins:/opt/airflow/plugins
