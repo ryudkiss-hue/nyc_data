@@ -39,6 +39,10 @@ section[data-testid="stSidebar"]{background:#141824;border-right:1px solid #1e2d
 .status-red{border-left:4px solid #ef4444;background:#450a0a;padding:8px 12px;border-radius:4px;margin:4px 0;}
 .kanban-col{background:#141824;border-radius:10px;padding:10px;min-height:180px;}
 .task-card{border:1px solid #1e2d45;border-radius:8px;padding:10px;margin:6px 0;background:#1a2235;}
+.card:hover{border-color:#3b82f6;box-shadow:0 0 15px rgba(59,130,246,0.3);transform:translateY(-2px);transition:all 0.3s ease;}
+.vibrant-blue{background:linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);}
+.vibrant-green{background:linear-gradient(135deg, #064e3b 0%, #10b981 100%);}
+.vibrant-purple{background:linear-gradient(135deg, #4c1d95 0%, #8b5cf6 100%);}
 </style>""", unsafe_allow_html=True)
 
 # ── Toolkit imports (all graceful) ────────────────────────────────────────────
@@ -230,6 +234,21 @@ def parallel_fetch(ds_id, limit, token="", domain="data.cityofnewyork.us"):
         from socrata_toolkit.core import SocrataConfig
         config = SocrataConfig(app_token=token)
         client = SocrataClient(config=config)
+        def get_odata_url(self, domain: str, fourfour: str) -> str:
+            """Generate the OData v4 endpoint for a dataset."""
+            return f"https://{domain}/api/odata/v4/{fourfour}"
+
+        def fetch_odata(self, domain: str, fourfour: str, top: int = 100) -> pd.DataFrame:
+            """Fetch data using the OData v4 protocol."""
+            url = f"{self.get_odata_url(domain, fourfour)}?$top={top}"
+            headers = self._get_headers()
+            resp = requests.get(url, headers=headers)
+            resp.raise_for_status()
+            data = resp.json().get('value', [])
+            return pd.DataFrame(data)
+
+        def get_metadata(self, domain: str, fourfour: str) -> DatasetMetadata:
+            pass
         df = client.parallel_fetch(domain, ds_id, limit)
         return df
     except Exception as e:
@@ -237,16 +256,23 @@ def parallel_fetch(ds_id, limit, token="", domain="data.cityofnewyork.us"):
         return pd.DataFrame()
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
-PAGES = [
-    "🏠 Program Dashboard", "📊 Analytics", "🗺️ Spatial & Maps",
-    "🏗️ Engineering", "🔍 Data Explorer", "🛡️ Governance & Quality",
-    "📋 Reports", "📤 Export", "⚡ Quantum", "🤖 AI Assistant",
-    "✅ Task Board", "⚙️ Data Engineering", "⚙️ Settings", "🛠️ Developer Tools",
-]
+CATEGORIES = {
+    "🏠 Overview": ["🏠 Program Dashboard", "ℹ️ About"],
+    "📊 Analytics & AI": ["📊 Analytics", "🤖 AI Assistant", "🪄 SoQL Maestro", "⚡ Quantum"],
+    "🏗️ Operations": ["🏗️ Engineering", "⚙️ Data Engineering", "✅ Task Board", "📋 Reports"],
+    "🗺️ Geo-Spatial": ["🗺️ Spatial & Maps"],
+    "🔍 Data Management": ["🔍 Data Explorer", "🛡️ Governance & Quality", "📤 Export"],
+    "⚙️ System": ["⚙️ Settings", "🛠️ Developer Tools"]
+}
+
 with st.sidebar:
     st.markdown("### 🏙️ NYC DOT Data Assistant")
     st.markdown("---")
-    page = st.radio("Navigation", PAGES, label_visibility="collapsed")
+    
+    # Category selection
+    cat = st.selectbox("Category", list(CATEGORIES.keys()))
+    page = st.radio("Navigation", CATEGORIES[cat], label_visibility="collapsed")
+    
     st.markdown("---")
     token = st.text_input("Socrata Token", value=os.getenv("SOCRATA_APP_TOKEN",""),
                           type="password", key="tok")
@@ -258,6 +284,61 @@ with st.sidebar:
 # ═══════════════════════════════════════════════════════════════════════════════
 if page == "🏠 Program Dashboard":
     st.title("🏠 Program Dashboard")
+    
+    # ── Quick Start Section ───────────────────────────────────────────────────
+    st.markdown("### ⚡ Quick Start")
+    st.write("Launch an analysis pipeline with one click using pre-configured NYC datasets.")
+    
+    q1, q2, q3 = st.columns(3)
+    
+    with q1:
+        st.markdown("""<div class="card">
+            <h4>🚧 Sidewalk Violations</h4>
+            <p>Analyze 311 sidewalk defects and repair lists.</p>
+        </div>""", unsafe_allow_html=True)
+        if st.button("🚀 Load Violations", use_container_width=True):
+            with st.spinner("Fetching violations..."):
+                df = parallel_fetch("h9gi-nx95", 5000, token=token)
+                set_df(df, "Sidewalk Violations")
+                st.session_state["current_fourfour"] = "h9gi-nx95"
+                st.rerun()
+
+    with q2:
+        st.markdown("""<div class="card">
+            <h4>🚲 Bike Route Projects</h4>
+            <p>Explore planned and completed bicycle infrastructure.</p>
+        </div>""", unsafe_allow_html=True)
+        if st.button("🚀 Load Bike Data", use_container_width=True):
+            with st.spinner("Fetching bike projects..."):
+                df = parallel_fetch("7vsa-c9r2", 2000, token=token)
+                set_df(df, "Bike Projects")
+                st.session_state["current_fourfour"] = "7vsa-c9r2"
+                st.rerun()
+
+    with q3:
+        st.markdown("""<div class="card">
+            <h4>📊 Traffic Volume</h4>
+            <p>Review daily traffic counts across the 5 boroughs.</p>
+        </div>""", unsafe_allow_html=True)
+        if st.button("🚀 Load Traffic", use_container_width=True):
+            with st.spinner("Fetching traffic data..."):
+                df = parallel_fetch("7ym2-wayt", 5000, token=token)
+                set_df(df, "Traffic Volume")
+                st.session_state["current_fourfour"] = "7ym2-wayt"
+                st.rerun()
+    
+    st.markdown("---")
+    
+    # ── System Health Summary ─────────────────────────────────────────────────
+    h1, h2, h3 = st.columns(3)
+    db_status = "✅ Connected" if duckdb else "❌ Offline"
+    api_status = "✅ Active" if requests.get("https://data.cityofnewyork.us/resource/h9gi-nx95.json?$limit=1").status_code == 200 else "⚠️ Degraded"
+    
+    h1.metric("DuckDB Engine", db_status)
+    h2.metric("Socrata API", api_status)
+    h3.metric("Pillars Loaded", f"{sum(HAS.values())}/{len(HAS)}")
+    
+    st.markdown("---")
     df = upload_widget("Upload program/inspection data", "dash_up")
     if df is None:
         st.info("Upload data or use Data Explorer to ingest from Socrata.")
@@ -677,6 +758,8 @@ elif page == "🔍 Data Explorer":
                     df = parallel_fetch(sel_res.fourfour, int(ingest_lim), token or "", domain=sel_res.domain)
                 if not df.empty:
                     set_df(df, sel_res.name)
+                    st.session_state["current_fourfour"] = sel_res.fourfour
+                    st.session_state["current_domain"] = sel_res.domain
                     st.success(f"Ingested {len(df):,} rows.")
                     st.dataframe(df.head(20), use_container_width=True)
                     
@@ -709,6 +792,8 @@ elif page == "🔍 Data Explorer":
                 df = parallel_fetch(direct_id, int(direct_lim), token or "", domain=direct_dom)
             if not df.empty:
                 set_df(df, direct_id)
+                st.session_state["current_fourfour"] = direct_id
+                st.session_state["current_domain"] = direct_dom
                 st.success(f"{len(df):,} rows fetched")
                 st.dataframe(df.head(20), use_container_width=True)
             else:
@@ -1082,35 +1167,35 @@ elif page == "📋 Reports":
             st.info("Load data and ensure reports module is available.")
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# PAGE: Export
-# ═══════════════════════════════════════════════════════════════════════════════
 elif page == "📤 Export":
     st.title("📤 Export & Integrations")
     df = active_df_selector("exp_sel")
-    t1,t2,t3,t4 = st.tabs(["Excel","BI Platforms","SQL Generation","Graph"])
+    t1,t2,t3,t4,t5 = st.tabs(["Excel/CSV","BI Platforms","SQL Generation","OData Integration","Graph"])
 
     with t1:
-        st.subheader("Excel Workbook Builder")
-        if df is not None and HAS["excel"]:
-            st.write("Build a multi-sheet workbook with pivot tables and VLOOKUP.")
-            out_path = st.text_input("Output path", "outputs/export.xlsx", key="xl_path")
-            pivot_rows = st.selectbox("Pivot rows", ["None"]+df.columns.tolist(), key="pv_rows")
-            pivot_vals = st.selectbox("Pivot values", ["None"]+df.select_dtypes("number").columns.tolist(), key="pv_vals")
-            if st.button("Build & Download Excel"):
-                try:
-                    Path("outputs").mkdir(exist_ok=True)
-                    builder = ExcelWorkbookBuilder()
-                    builder.add_data_sheet("Data", df)
-                    if pivot_rows != "None" and pivot_vals != "None":
-                        builder.add_pivot_sheet("Pivot", df, rows=pivot_rows, values=pivot_vals)
-                    saved = builder.save(out_path)
-                    with open(saved, "rb") as f:
-                        st.download_button("Download Excel", f.read(),
-                                           Path(saved).name, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-                    st.success(f"Workbook built: {saved}")
-                except Exception as e:
-                    st.error(str(e))
-        elif df is not None:
+        st.subheader("Excel & Flat File Export")
+        if df is not None:
+            if HAS["excel"]:
+                st.write("Build a multi-sheet workbook with pivot tables.")
+                out_path = st.text_input("Output path", "outputs/export.xlsx", key="xl_path")
+                pivot_rows = st.selectbox("Pivot rows", ["None"]+df.columns.tolist(), key="pv_rows")
+                pivot_vals = st.selectbox("Pivot values", ["None"]+df.select_dtypes("number").columns.tolist(), key="pv_vals")
+                if st.button("Build & Download Excel"):
+                    try:
+                        Path("outputs").mkdir(exist_ok=True)
+                        builder = ExcelWorkbookBuilder()
+                        builder.add_data_sheet("Data", df)
+                        if pivot_rows != "None" and pivot_vals != "None":
+                            builder.add_pivot_sheet("Pivot", df, rows=pivot_rows, values=pivot_vals)
+                        saved = builder.save(out_path)
+                        with open(saved, "rb") as f:
+                            st.download_button("Download Excel", f.read(),
+                                               Path(saved).name, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                        st.success(f"Workbook built: {saved}")
+                    except Exception as e:
+                        st.error(str(e))
+            
+            st.markdown("---")
             c1, c2 = st.columns(2)
             csv = df.to_csv(index=False)
             c1.download_button("Download as CSV", csv, "export.csv", "text/csv")
@@ -1122,8 +1207,6 @@ elif page == "📤 Export":
                 c2.download_button("Download as Parquet", parquet_buffer.getvalue(), "export.parquet", "application/octet-stream")
             except Exception as e:
                 c2.info("Parquet export requires `pyarrow` or `fastparquet`.")
-            
-            st.info("Install openpyxl for full Excel workbook support.")
         else:
             st.info("Load data first.")
 
@@ -1158,49 +1241,142 @@ elif page == "📤 Export":
         if df is not None:
             table_name = st.text_input("Table name", "sidewalk_data", key="sql_tbl")
             dialect = st.selectbox("Dialect", ["postgres","sqlite","duckdb"], key="sql_dial")
-            pk = st.selectbox("Primary key", ["None"] + df.columns.tolist(), key="sql_pk")
-            if st.button("Generate SQL"):
-                if HAS["sql_int"]:
-                    try:
-                        sql_out = io.StringIO()
-                        export_as_sql_file(df, table_name, sql_out,
-                                           dialect=dialect,
-                                           primary_key=pk if pk != "None" else None)
-                        sql_str = sql_out.getvalue()
-                        st.code(sql_str[:3000], language="sql")
-                        st.download_button("Download SQL", sql_str, f"{table_name}.sql", "text/plain")
-                    except Exception as e:
-                        st.warning(str(e))
-                else:
-                    # Fallback DDL
-                    type_map = {"int64":"INTEGER","float64":"REAL","object":"TEXT","bool":"BOOLEAN"}
-                    cols_sql = []
-                    for col in df.columns:
-                        dt = type_map.get(str(df[col].dtype), "TEXT")
-                        cols_sql.append(f'  "{col}" {dt}')
-                    ddl = f'CREATE TABLE "{table_name}" (\n' + ",\n".join(cols_sql) + "\n);"
-                    st.code(ddl, language="sql")
-                    st.download_button("Download DDL", ddl, f"{table_name}.sql", "text/plain")
+            if st.button("📜 Generate SQL"):
+                type_map = {"int64":"INTEGER","float64":"REAL","object":"TEXT","bool":"BOOLEAN"}
+                cols_sql = []
+                for col in df.columns:
+                    dt = type_map.get(str(df[col].dtype), "TEXT")
+                    cols_sql.append(f'  "{col}" {dt}')
+                ddl = f'CREATE TABLE "{table_name}" (\n' + ",\n".join(cols_sql) + "\n);"
+                st.code(ddl, language="sql")
+                st.download_button("Download DDL", ddl, f"{table_name}.sql", "text/plain")
         else:
             st.info("Load data first.")
 
     with t4:
-        st.subheader("Graph / Network Export")
-        if df is not None and HAS["graph"]:
-            id_col = st.selectbox("Node ID column", df.columns.tolist(), key="g_id")
-            rel_col = st.selectbox("Related-to column", ["None"]+df.columns.tolist(), key="g_rel")
-            if st.button("Export Graph"):
-                try:
-                    out = "outputs/graph.json"
-                    Path("outputs").mkdir(exist_ok=True)
-                    export_graph(df, id_col=id_col,
-                                 relation_col=rel_col if rel_col != "None" else None,
-                                 output_path=out)
-                    st.success(f"Graph exported: {out}")
-                except Exception as e:
-                    st.error(str(e))
+        st.subheader("🌐 OData v4 Integration")
+        st.write("Socrata datasets are accessible via the OData v4 protocol, ideal for Excel, Power BI, and Tableau.")
+        domain = st.session_state.get("current_domain", "data.cityofnewyork.us")
+        fourfour = st.session_state.get("current_fourfour")
+        
+        if fourfour:
+            odata_url = f"https://{domain}/api/odata/v4/{fourfour}"
+            st.info("Use the following URL to connect your BI tool via OData:")
+            st.code(odata_url, language="text")
+            st.markdown("""
+            **How to use:**
+            1. **Power BI**: Get Data -> OData Feed -> Paste URL.
+            2. **Excel**: Data -> Get Data -> From Other Sources -> From OData Feed.
+            3. **Tableau**: Connect -> To a Server -> OData.
+            """)
         else:
-            st.info("Load data or install graph module.")
+            st.warning("Please load a Socrata dataset first to generate OData links.")
+
+    with t5:
+        st.subheader("Graph / Network Export")
+        if df is not None:
+            if HAS["graph"]:
+                id_col = st.selectbox("Node ID column", df.columns.tolist(), key="g_id")
+                rel_col = st.selectbox("Related-to column", ["None"]+df.columns.tolist(), key="g_rel")
+                if st.button("Export Graph"):
+                    try:
+                        out = "outputs/graph.json"
+                        Path("outputs").mkdir(exist_ok=True)
+                        from socrata_toolkit.integrations.graph import export_graph
+                        export_graph(df, id_col=id_col,
+                                     relation_col=rel_col if rel_col != "None" else None,
+                                     output_path=out)
+                        st.success(f"Graph exported: {out}")
+                    except Exception as e:
+                        st.error(str(e))
+            else:
+                st.info("Graph module not available.")
+        else:
+            st.info("Load data first.")
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PAGE: SoQL Maestro
+# ═══════════════════════════════════════════════════════════════════════════════
+elif page == "🪄 SoQL Maestro":
+    st.title("🪄 SoQL Maestro")
+    st.write("Advanced Socrata Query Builder with Time-Series & Aggregation Flow.")
+    
+    domain = st.session_state.get("current_domain", "data.cityofnewyork.us")
+    fourfour = st.session_state.get("current_fourfour")
+    
+    if not fourfour:
+        st.warning("Please load a dataset first (Home or Data Explorer).")
+    else:
+        st.markdown(f"**Target Dataset:** `{fourfour}` on `{domain}`")
+        
+        with st.expander("🛠️ Query Configuration", expanded=True):
+            builder = SoQLBuilder()
+            
+            # Select Columns
+            df_cols = st.session_state.get("current_df").columns.tolist() if st.session_state.get("current_df") is not None else []
+            sel_cols = st.multiselect("Select Base Columns", df_cols, key="sm_sel")
+            if sel_cols: builder.select(*sel_cols)
+            
+            # Time Series Aggregation
+            st.markdown("---")
+            st.subheader("📅 Historical Analysis (Flow)")
+            use_ts = st.checkbox("Enable Time-Series Aggregation")
+            if use_ts:
+                ts_col = st.selectbox("Timestamp Column", [c for c in df_cols if "date" in c.lower() or "time" in c.lower()], key="sm_ts_col")
+                ts_prec = st.selectbox("Precision", ["year", "quarter", "month", "week", "day"], index=2, key="sm_ts_prec")
+                builder.date_trunc(ts_col, ts_prec, alias="period")
+                
+                agg_func = st.selectbox("Aggregation Function", ["count", "sum", "avg", "min", "max"], key="sm_agg_func")
+                agg_col = st.selectbox("Value Column", ["*"] + df_cols, key="sm_agg_col")
+                builder.aggregate(agg_func, agg_col, alias="metric")
+                
+                builder.group("period")
+                builder.order("period", desc=True)
+            
+            # Filters
+            st.markdown("---")
+            st.subheader("🔍 Filters")
+            filter_col = st.selectbox("Filter Column", ["None"] + df_cols, key="sm_filt_col")
+            filter_val = st.text_input("Filter Value (e.g. > 100 or = 'BRONX')", key="sm_filt_val")
+            if filter_col != "None" and filter_val:
+                builder.where(f"{filter_col} {filter_val}")
+
+        # Preview & Execution
+        st.markdown("---")
+        col1, col2 = st.columns([2, 1])
+        
+        with col1:
+            st.subheader("📜 Generated SoQL")
+            query_str = builder.build_query_string()
+            st.code(query_str, language="sql")
+        
+        with col2:
+            st.subheader("🚀 Execution")
+            limit = st.number_input("Limit", 10, 10000, 1000, key="sm_lim")
+            if st.button("Run Master Flow"):
+                try:
+                    with st.spinner("Executing complex query..."):
+                        client = SocrataClient(SocrataConfig(app_token=token))
+                        # Use fetch_dataframe with raw params from builder
+                        params = builder.build()
+                        params["limit"] = limit
+                        # SocrataClient uses parallel_fetch for limit, but for complex queries we use direct
+                        url = f"https://{domain}/resource/{fourfour}.json"
+                        headers = client._headers()
+                        resp = requests.get(url, params={f"${k}":v for k,v in params.items()}, headers=headers)
+                        resp.raise_for_status()
+                        res_df = pd.DataFrame(resp.json())
+                        
+                        if not res_df.empty:
+                            st.success(f"Fetched {len(res_df)} rows.")
+                            st.dataframe(res_df, use_container_width=True)
+                            
+                            if use_ts and "period" in res_df.columns:
+                                st.line_chart(res_df.set_index("period")["metric"])
+                        else:
+                            st.info("No results found for this query.")
+                except Exception as e:
+                    st.error(f"Query failed: {e}")
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # PAGE: Quantum
