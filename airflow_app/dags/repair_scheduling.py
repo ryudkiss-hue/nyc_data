@@ -32,20 +32,21 @@ from typing import Dict, List
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.sensors.external_task_sensor import ExternalTaskSensor
-from airflow.operators.slack_operator import SlackOperator
+from airflow.providers.slack.operators.slack import SlackAPIPostOperator as SlackOperator
 
 import sys
 import os
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-from airflow.plugins.custom_operators import (
+from custom_operators import (
     SocrataFetchOperator,
     DataQualityCheckOperator,
     PostgresUpsertOperator,
     MetricsEmitterOperator,
 )
-from airflow.config import get_dag_defaults, SLA_CONFIG
+from config import get_dag_defaults, SLA_CONFIG
 
 # ============================================================================
 # DAG CONFIGURATION
@@ -61,6 +62,8 @@ sla_config = SLA_CONFIG.get(DAG_ID, {})
 # DAG DEFINITION
 # ============================================================================
 
+dag_defaults["sla"] = timedelta(seconds=sla_config.get("sla_seconds", 7200))
+
 dag = DAG(
     dag_id=DAG_ID,
     description=DAG_DESCRIPTION,
@@ -69,7 +72,6 @@ dag = DAG(
     tags=["optimization", "scheduling", "repair", "weekly"],
     catchup=False,
     max_active_runs=1,
-    sla=timedelta(seconds=sla_config.get("sla_seconds", 7200)),
     doc_md=__doc__,
 )
 

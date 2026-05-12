@@ -573,66 +573,48 @@ response = bot.handle("manhattan backlog")
 print(response.text)  # "MANHATTAN: 245 total, 180 pending repairs"
 ```
 
+## Airflow Pipeline Stabilization (May 2026)
+
+The orchestrator has been modernized to Airflow 2.x. Key updates include:
+- **Provider-based Operators**: Migrated to `apache-airflow-providers` for Postgres, Slack, and HTTP integrations.
+- **Improved Discovery**: All Airflow services now use a unified `PYTHONPATH` that correctly resolves the `socrata_toolkit` and local project modules.
+- **Enhanced Reliability**: Resolved bitshift operator conflicts and modernized sensor base classes.
+
 ## Project Structure
+
+The `socrata_toolkit` has been reorganized into functional submodules for better maintainability:
 
 ```
 socrata_toolkit/
-  __init__.py              # Lazy-loading public API
-  client.py                # Socrata API client
-  models.py                # Data models (DatasetMetadata, SearchResult)
-  cli.py                   # Click-based CLI (20+ commands)
-  dashboard.py             # Streamlit dashboard (7 pages)
-  api.py                   # Flask REST API (10 endpoints)
-  analysis.py              # Basic profiling and quality reports
-  analysis_advanced.py     # Outliers, correlations, time series, distributions
-  visualization.py         # Chart generation (matplotlib)
-  plotly_charts.py         # Interactive Plotly charts
-  governance.py            # Lineage, audit, quality scoring, schema drift, retention
-  construction_list.py     # Construction list management
-  contract_analytics.py    # Contract progress, budget, productivity
-  borough_analysis.py      # Five-borough analysis and equity scoring
-  program_metrics.py       # KPI tracking and dashboards
-  reporting.py             # Automated report generation
-  pdf_reports.py           # PDF export
-  excel_integration.py     # Excel workbook builder, pivot tables, VLOOKUP
-  sql_integration.py       # SQL generation and query builder
-  bi_integration.py        # Tableau, Power BI, PowerPoint exports
-  work_management.py       # Monday.com, MS Project, M365, Google Workspace
-  task_board.py            # Kanban task board with color-coded cards
-  workflow_engine.py       # Pipeline orchestration and automation
-  insights_engine.py       # AI-powered analysis and recommendations
-  nlp_integration.py       # NLP for construction lists and complaints
-  complaint_ingestion.py   # 311 auto-ingestion pipeline
-  cost_estimator.py        # Scope-based cost estimation
-  change_detection.py      # Data snapshot comparison
-  contractor_scorecards.py # Contractor performance profiles
-  budget_forecast.py       # Spend and completion forecasting
-  sla_tracking.py          # SLA cycle time tracking
-  notification_rules.py    # Configurable alert rules
-  alert_delivery.py        # Teams, Slack, email delivery
-  data_dictionary.py       # Auto-generated column documentation
-  map_view.py              # Interactive maps (folium)
-  messaging.py             # Chat bot adapter
-  quantum_optimization.py  # Crew/route optimization (Qiskit, Cirq)
-  quantum_search.py        # Grover's algorithm function template
-  nyc_datasets.py          # Pre-configured NYC dataset registry
-  qgis_integration.py      # QGIS project file generator
-  dbeaver_profiles.py      # Database tool connection profiles
-  alerts.py                # Alert management and notification
-  compliance.py            # DCWP license and Parks permit checks
-  conflict.py              # Spatial conflict resolution
-  dot_sidewalk.py          # Sidewalk-specific KPIs and SQL templates
-  exporters.py             # Postgres, MongoDB, XLSX exporters
-  ops.py                   # Grace period, permit lookahead, burndown
-  spatial.py               # Shapely-based spatial operations
-  text_analytics.py        # Text insights and tagging
-  nlp_advanced.py          # NLP (spacy, textblob, transformers)
-  llm_duck_bridge.py       # LLM classification bridge
+  core/                # Socrata API client, models, and base classes
+  discovery/           # Schema registry, dataset search, and metadata discovery
+  analysis/            # Data profiling, metrics, and text analytics
+  quality/             # Data validation, freshness tracking, and SLA monitoring
+  lineage/             # Data provenance and transformation tracking
+  integrations/        # SQL, Excel, BI (Tableau/PowerBI), and Graph adapters
+  pipeline/            # Ingestion pipelines (311, complaints, CDC/SCD)
+  observability/       # Unified logging, health checks, and tracing
+  alerts/              # Alert manager and notification delivery (Slack/Teams)
+  reports/             # Automated PDF and Markdown report generation
+  viz/                 # Visualization engine (Map, Plotly, Dashboards)
+  llm/                 # LLM bridges, chatbots, and SQL-to-NL engines
+  spatial/             # Geo-spatial analytics and PostGIS integration
+  ops/                 # Workflow orchestration and operation management
+  quantum/             # Quantum optimization and search algorithms (Classical fallback)
+  tools/               # CLI runner, installation wizard, and dev tools
+```
 
-tests/                     # 163 tests covering all modules
-scripts/                   # Nightly jobs, migrations, build helpers
-sql/migrations/            # Database migration files
-docs/                      # Extended documentation
+## Running Tests
+
+```bash
+# Run all tests
+python -m pytest tests/ -v
+
+# Run Airflow-specific integration tests
+docker exec airflow-scheduler pytest /opt/airflow/project/tests/test_airflow_operators.py
+
+# With coverage
+python -m pytest tests/ --cov=socrata_toolkit
 ```
 
 ## Running Tests

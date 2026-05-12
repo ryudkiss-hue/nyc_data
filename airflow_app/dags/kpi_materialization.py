@@ -32,19 +32,20 @@ from typing import Dict, List
 
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from airflow.operators.postgres_operator import PostgresOperator
+from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.sensors.external_task_sensor import ExternalTaskSensor
 
 import sys
 import os
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-from airflow.plugins.custom_operators import (
+from custom_operators import (
     DataQualityCheckOperator,
     MetricsEmitterOperator,
 )
-from airflow.config import get_dag_defaults, SLA_CONFIG
+from config import get_dag_defaults, SLA_CONFIG
 
 # ============================================================================
 # DAG CONFIGURATION
@@ -60,6 +61,8 @@ sla_config = SLA_CONFIG.get(DAG_ID, {})
 # DAG DEFINITION
 # ============================================================================
 
+dag_defaults["sla"] = timedelta(seconds=sla_config.get("sla_seconds", 3600))
+
 dag = DAG(
     dag_id=DAG_ID,
     description=DAG_DESCRIPTION,
@@ -68,7 +71,6 @@ dag = DAG(
     tags=["kpi", "materialization", "daily", "dashboard"],
     catchup=False,
     max_active_runs=1,
-    sla=timedelta(seconds=sla_config.get("sla_seconds", 3600)),
     doc_md=__doc__,
 )
 
@@ -565,20 +567,19 @@ end_dag = PythonOperator(
 # ============================================================================
 
 start_dag >> [wait_for_incidents, wait_for_repairs]
-[wait_for_incidents, wait_for_repairs] >> [
+
+compute_tasks = [
     compute_material_kpis,
     compute_ada_kpis,
     compute_hazard_metrics,
     compute_contractor_quality,
     compute_cost_analytics,
 ]
-[
-    compute_material_kpis,
-    compute_ada_kpis,
-    compute_hazard_metrics,
-    compute_contractor_quality,
-    compute_cost_analytics,
-] >> validate_kpi_completeness
+
+wait_for_incidents >> compute_tasks
+wait_for_repairs >> compute_tasks
+
+compute_tasks >> validate_kpi_completeness
 validate_kpi_completeness >> refresh_views
 refresh_views >> emit_kpi_metrics >> cache_invalidation >> end_dag
 

@@ -12,7 +12,7 @@ Custom operators and sensors:
 - DataQualitySensor: Wait for upstream quality gates
 """
 
-from .custom_operators import (
+from custom_operators import (
     SocrataFetchOperator,
     DataQualityCheckOperator,
     SchemaComplianceOperator,

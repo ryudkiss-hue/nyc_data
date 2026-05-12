@@ -1,17 +1,8 @@
-# Local envs and analysis outputs
-.env
-.env.*
-.venv/
-venv/
+.streamlit/secrets.toml
+*.db
+*.db.wal
 __pycache__/
-.ipynb_checkpoints/
-analysis/*.html
-analysis/*.pdf
-analysis/*.geojson
-analysis/*.csv
-.venv/
-outputs/
-**/__pycache__/
-**/*.pyc
-**/logs/
-*.log
+*.pyc
+.env
+airflow_app/logs/
+airflow_app/config/*.cfg

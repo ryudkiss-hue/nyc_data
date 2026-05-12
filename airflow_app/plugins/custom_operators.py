@@ -20,22 +20,40 @@ import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
-from airflow.models import BaseOperator, BaseSensorOperator
+from airflow.models import BaseOperator
+from airflow.sensors.base import BaseSensorOperator
 from airflow.utils.decorators import apply_defaults
 from airflow.exceptions import AirflowException
 from airflow.models import Variable
 
-# Add parent directories to path for imports
-project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-sys.path.insert(0, project_root)
+# Add project root to path for imports
+project_root = os.getenv("PYTHONPATH", "/opt/airflow/project")
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-from socrata_toolkit.client import SocrataClient
-from socrata_toolkit.schema_registry import SchemaRegistry
-from socrata_toolkit.validation import validate_material_coverage, validate_defect_applicability
-from socrata_toolkit.freshness import FreshnessTracker
-from socrata_toolkit.lineage import LineageRecorder
-from socrata_toolkit.metrics import MetricsRegistry
-from socrata_toolkit.observability import AlertManager
+from socrata_toolkit.core.client import SocrataClient
+from socrata_toolkit.discovery.schema import SchemaRegistry
+from socrata_toolkit.quality.validation import validate_material_coverage, validate_defect_applicability
+from socrata_toolkit.quality.freshness import FreshnessTracker
+from socrata_toolkit.lineage.manager import LineageRegistry, TransformationType
+from socrata_toolkit.analysis.metrics import MetricsRegistry
+from socrata_toolkit.alerts.manager import AlertManager
+
+# Compatibility wrapper for legacy LineageRecorder
+class LineageRecorder:
+    def __init__(self, db_dsn=None):
+        self.registry = LineageRegistry(db_dsn=db_dsn)
+    
+    def record_transformation(self, source_tables, target_table, operation, metadata=None):
+        for source in source_tables:
+            self.registry.add_edge(
+                source_dataset_id=source,
+                target_dataset_id=target_table,
+                source_columns=[], # Column-level lineage not supported in legacy call
+                target_columns=[],
+                transformation_type=TransformationType.INGESTION if operation == "ingestion" else TransformationType.CUSTOM_SQL,
+                transformation_sql=json.dumps(metadata) if metadata else None
+            )
 
 logger = logging.getLogger(__name__)
 
