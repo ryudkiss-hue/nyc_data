@@ -12,12 +12,12 @@ CREATE TABLE IF NOT EXISTS master_entities (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     metadata JSONB DEFAULT '{}',
-    created_by VARCHAR(255) DEFAULT 'system',
-    
-    INDEX idx_entity_type (entity_type),
-    INDEX idx_created_at (created_at),
-    INDEX idx_entity_type_updated (entity_type, last_updated)
+    created_by VARCHAR(255) DEFAULT 'system'
 );
+
+CREATE INDEX IF NOT EXISTS idx_master_entities_type ON master_entities(entity_type);
+CREATE INDEX IF NOT EXISTS idx_master_entities_created_at ON master_entities(created_at);
+CREATE INDEX IF NOT EXISTS idx_master_entities_type_updated ON master_entities(entity_type, last_updated);
 
 -- Mapping of source records to master entities
 CREATE TABLE IF NOT EXISTS entity_record_mapping (
@@ -28,12 +28,12 @@ CREATE TABLE IF NOT EXISTS entity_record_mapping (
     confidence FLOAT DEFAULT 1.0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
-    FOREIGN KEY (entity_id) REFERENCES master_entities(entity_id) ON DELETE CASCADE,
-    UNIQUE(source_record_id, entity_id),
-    INDEX idx_entity_id (entity_id),
-    INDEX idx_source_record_id (source_record_id),
-    INDEX idx_source_dataset (source_dataset)
+    UNIQUE(source_record_id, entity_id)
 );
+
+CREATE INDEX IF NOT EXISTS idx_entity_record_mapping_entity_id ON entity_record_mapping(entity_id);
+CREATE INDEX IF NOT EXISTS idx_entity_record_mapping_source_record_id ON entity_record_mapping(source_record_id);
+CREATE INDEX IF NOT EXISTS idx_entity_record_mapping_source_dataset ON entity_record_mapping(source_dataset);
 
 -- Duplicate groups (sets of records identified as duplicates)
 CREATE TABLE IF NOT EXISTS duplicate_groups (
@@ -45,12 +45,12 @@ CREATE TABLE IF NOT EXISTS duplicate_groups (
     potential_canonical_id VARCHAR(255),
     user_decision VARCHAR(255),
     notes TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    INDEX idx_status (status),
-    INDEX idx_matching_strategy (matching_strategy),
-    INDEX idx_created_at (created_at)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE INDEX IF NOT EXISTS idx_duplicate_groups_status ON duplicate_groups(status);
+CREATE INDEX IF NOT EXISTS idx_duplicate_groups_strategy ON duplicate_groups(matching_strategy);
+CREATE INDEX IF NOT EXISTS idx_duplicate_groups_created_at ON duplicate_groups(created_at);
 
 -- Entity review cases (for manual validation)
 CREATE TABLE IF NOT EXISTS entity_review_cases (
@@ -71,12 +71,12 @@ CREATE TABLE IF NOT EXISTS entity_review_cases (
     notes TEXT,
     
     -- Metadata
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    INDEX idx_status (status),
-    INDEX idx_reviewer (reviewer),
-    INDEX idx_created_at (created_at)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE INDEX IF NOT EXISTS idx_entity_review_cases_status ON entity_review_cases(status);
+CREATE INDEX IF NOT EXISTS idx_entity_review_cases_reviewer ON entity_review_cases(reviewer);
+CREATE INDEX IF NOT EXISTS idx_entity_review_cases_created_at ON entity_review_cases(created_at);
 
 -- Entity merge history (audit trail)
 CREATE TABLE IF NOT EXISTS entity_merge_log (
@@ -89,11 +89,12 @@ CREATE TABLE IF NOT EXISTS entity_merge_log (
     merged_by VARCHAR(255) DEFAULT 'system',
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
-    FOREIGN KEY (entity_id) REFERENCES master_entities(entity_id) ON DELETE CASCADE,
-    INDEX idx_entity_id (entity_id),
-    INDEX idx_timestamp (timestamp),
-    INDEX idx_action (action)
+    FOREIGN KEY (entity_id) REFERENCES master_entities(entity_id) ON DELETE CASCADE
 );
+
+CREATE INDEX IF NOT EXISTS idx_entity_merge_log_entity_id ON entity_merge_log(entity_id);
+CREATE INDEX IF NOT EXISTS idx_entity_merge_log_timestamp ON entity_merge_log(timestamp);
+CREATE INDEX IF NOT EXISTS idx_entity_merge_log_action ON entity_merge_log(action);
 
 -- Field-level conflicts discovered during merging
 CREATE TABLE IF NOT EXISTS entity_conflicts (
@@ -106,12 +107,12 @@ CREATE TABLE IF NOT EXISTS entity_conflicts (
     resolved_at TIMESTAMP,
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    FOREIGN KEY (entity_id) REFERENCES master_entities(entity_id) ON DELETE CASCADE,
-    INDEX idx_entity_id (entity_id),
-    INDEX idx_field_name (field_name),
-    INDEX idx_created_at (created_at)
+    FOREIGN KEY (entity_id) REFERENCES master_entities(entity_id) ON DELETE CASCADE
 );
+
+CREATE INDEX IF NOT EXISTS idx_entity_conflicts_entity_id ON entity_conflicts(entity_id);
+CREATE INDEX IF NOT EXISTS idx_entity_conflicts_field_name ON entity_conflicts(field_name);
+CREATE INDEX IF NOT EXISTS idx_entity_conflicts_created_at ON entity_conflicts(created_at);
 
 -- Entity relationships (contains, belongs_to, adjacent_to, etc.)
 CREATE TABLE IF NOT EXISTS entity_relationships (
@@ -123,14 +124,14 @@ CREATE TABLE IF NOT EXISTS entity_relationships (
     attributes JSONB DEFAULT '{}',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by VARCHAR(255) DEFAULT 'system',
-    notes TEXT,
-    
-    INDEX idx_source_entity (source_entity_id),
-    INDEX idx_target_entity (target_entity_id),
-    INDEX idx_relationship_type (relationship_type),
-    INDEX idx_source_target (source_entity_id, target_entity_id),
-    INDEX idx_created_at (created_at)
+    notes TEXT
 );
+
+CREATE INDEX IF NOT EXISTS idx_entity_relationships_source ON entity_relationships(source_entity_id);
+CREATE INDEX IF NOT EXISTS idx_entity_relationships_target ON entity_relationships(target_entity_id);
+CREATE INDEX IF NOT EXISTS idx_entity_relationships_type ON entity_relationships(relationship_type);
+CREATE INDEX IF NOT EXISTS idx_entity_relationships_source_target ON entity_relationships(source_entity_id, target_entity_id);
+CREATE INDEX IF NOT EXISTS idx_entity_relationships_created_at ON entity_relationships(created_at);
 
 -- Links to external master data sources
 CREATE TABLE IF NOT EXISTS external_master_links (
@@ -146,13 +147,14 @@ CREATE TABLE IF NOT EXISTS external_master_links (
     notes TEXT,
     
     FOREIGN KEY (local_entity_id) REFERENCES master_entities(entity_id) ON DELETE CASCADE,
-    UNIQUE(local_entity_id, external_source),
-    INDEX idx_local_entity_id (local_entity_id),
-    INDEX idx_external_source (external_source),
-    INDEX idx_external_entity_id (external_entity_id),
-    INDEX idx_status (status),
-    INDEX idx_last_verified (last_verified)
+    UNIQUE(local_entity_id, external_source)
 );
+
+CREATE INDEX IF NOT EXISTS idx_external_master_links_local_id ON external_master_links(local_entity_id);
+CREATE INDEX IF NOT EXISTS idx_external_master_links_source ON external_master_links(external_source);
+CREATE INDEX IF NOT EXISTS idx_external_master_links_external_id ON external_master_links(external_entity_id);
+CREATE INDEX IF NOT EXISTS idx_external_master_links_status ON external_master_links(status);
+CREATE INDEX IF NOT EXISTS idx_external_master_links_verified ON external_master_links(last_verified);
 
 -- External master data cache (for reconciliation)
 CREATE TABLE IF NOT EXISTS external_master_data (
@@ -161,10 +163,11 @@ CREATE TABLE IF NOT EXISTS external_master_data (
     external_data JSONB NOT NULL,
     imported_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
-    PRIMARY KEY (external_source, external_record_id),
-    INDEX idx_external_source (external_source),
-    INDEX idx_imported_at (imported_at)
+    PRIMARY KEY (external_source, external_record_id)
 );
+
+CREATE INDEX IF NOT EXISTS idx_external_master_data_source ON external_master_data(external_source);
+CREATE INDEX IF NOT EXISTS idx_external_master_data_imported_at ON external_master_data(imported_at);
 
 -- Reconciliation reports
 CREATE TABLE IF NOT EXISTS reconciliation_reports (
@@ -187,11 +190,11 @@ CREATE TABLE IF NOT EXISTS reconciliation_reports (
     recommendations JSONB DEFAULT '[]',
     
     -- Metadata
-    created_by VARCHAR(255) DEFAULT 'system',
-    
-    INDEX idx_external_source (external_source),
-    INDEX idx_timestamp (timestamp)
+    created_by VARCHAR(255) DEFAULT 'system'
 );
+
+CREATE INDEX IF NOT EXISTS idx_reconciliation_reports_source ON reconciliation_reports(external_source);
+CREATE INDEX IF NOT EXISTS idx_reconciliation_reports_timestamp ON reconciliation_reports(timestamp);
 
 -- Review workflow statistics (for monitoring reviewer performance)
 CREATE TABLE IF NOT EXISTS review_statistics (
@@ -207,10 +210,11 @@ CREATE TABLE IF NOT EXISTS review_statistics (
     avg_review_time_seconds FLOAT,
     accuracy_vs_auto FLOAT,
     
-    UNIQUE(reviewer, date),
-    INDEX idx_reviewer (reviewer),
-    INDEX idx_date (date)
+    UNIQUE(reviewer, date)
 );
+
+CREATE INDEX IF NOT EXISTS idx_review_statistics_reviewer ON review_statistics(reviewer);
+CREATE INDEX IF NOT EXISTS idx_review_statistics_date ON review_statistics(date);
 
 -- Matching decision log (track all decisions for audit)
 CREATE TABLE IF NOT EXISTS matching_decisions (
@@ -222,13 +226,13 @@ CREATE TABLE IF NOT EXISTS matching_decisions (
     user_decision VARCHAR(255),
     user VARCHAR(255),
     notes TEXT,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    INDEX idx_record_id (record_id),
-    INDEX idx_entity_id (entity_id),
-    INDEX idx_user (user),
-    INDEX idx_timestamp (timestamp)
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE INDEX IF NOT EXISTS idx_matching_decisions_record_id ON matching_decisions(record_id);
+CREATE INDEX IF NOT EXISTS idx_matching_decisions_entity_id ON matching_decisions(entity_id);
+CREATE INDEX IF NOT EXISTS idx_matching_decisions_user ON matching_decisions("user");
+CREATE INDEX IF NOT EXISTS idx_matching_decisions_timestamp ON matching_decisions(timestamp);
 
 -- Incremental matching queue
 CREATE TABLE IF NOT EXISTS incremental_matching_queue (
@@ -242,10 +246,11 @@ CREATE TABLE IF NOT EXISTS incremental_matching_queue (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     processed_at TIMESTAMP,
     
-    UNIQUE(record_id),
-    INDEX idx_status (status),
-    INDEX idx_created_at (created_at)
+    UNIQUE(record_id)
 );
+
+CREATE INDEX IF NOT EXISTS idx_incremental_matching_queue_status ON incremental_matching_queue(status);
+CREATE INDEX IF NOT EXISTS idx_incremental_matching_queue_created ON incremental_matching_queue(created_at);
 
 -- Entity merge history audit trail (detailed tracking)
 CREATE TABLE IF NOT EXISTS entity_merge_audit (
@@ -259,11 +264,12 @@ CREATE TABLE IF NOT EXISTS entity_merge_audit (
     changed_by VARCHAR(255),
     changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
-    FOREIGN KEY (entity_id) REFERENCES master_entities(entity_id) ON DELETE CASCADE,
-    INDEX idx_entity_id (entity_id),
-    INDEX idx_changed_at (changed_at),
-    INDEX idx_merge_id (merge_id)
+    FOREIGN KEY (entity_id) REFERENCES master_entities(entity_id) ON DELETE CASCADE
 );
+
+CREATE INDEX IF NOT EXISTS idx_entity_merge_audit_entity_id ON entity_merge_audit(entity_id);
+CREATE INDEX IF NOT EXISTS idx_entity_merge_audit_changed_at ON entity_merge_audit(changed_at);
+CREATE INDEX IF NOT EXISTS idx_entity_merge_audit_merge_id ON entity_merge_audit(merge_id);
 
 -- Blocking statistics (for performance monitoring)
 CREATE TABLE IF NOT EXISTS blocking_statistics (
@@ -274,11 +280,11 @@ CREATE TABLE IF NOT EXISTS blocking_statistics (
     candidate_pairs INT,
     reduction_ratio FLOAT,
     execution_time_seconds FLOAT,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    INDEX idx_algorithm (algorithm),
-    INDEX idx_timestamp (timestamp)
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE INDEX IF NOT EXISTS idx_blocking_statistics_algorithm ON blocking_statistics(algorithm);
+CREATE INDEX IF NOT EXISTS idx_blocking_statistics_timestamp ON blocking_statistics(timestamp);
 
 -- Create indexes for common queries
 CREATE INDEX IF NOT EXISTS idx_master_entities_type_timestamp 
