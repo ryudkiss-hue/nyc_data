@@ -812,6 +812,60 @@ def hotspot_density_mapbox(df: pd.DataFrame, lat_col: str = COL_LAT, lon_col: st
     fig.update_layout(margin=dict(t=80 if title else 0, b=0, l=0, r=0))
     return _apply_modern_layout(fig, title or "Operational Density Hotspots")
 
+def material_breakdown_pie_chart(df: pd.DataFrame, material_col: str, title: str | None = None) -> Any:
+    """Create an interactive Donut chart mapping SDM materials to their exact hex colors."""
+    import plotly.express as px
+    from .engineering import SIDEWALK_MATERIALS
+    
+    counts = df[material_col].value_counts().reset_index()
+    counts.columns = [material_col, 'Count']
+    
+    fig = px.pie(
+        counts, 
+        names=material_col, 
+        values='Count',
+        hole=0.45,  # Creates the Donut effect
+        color=material_col,
+        color_discrete_map=SIDEWALK_MATERIALS # Maps to your official engineering standards!
+    )
+    
+    fig.update_traces(
+        textposition='inside', 
+        textinfo='percent+label',
+        hovertemplate="<b>%{label}</b><br>Count: %{value:,.0f}<br>Share: %{percent}<extra></extra>"
+    )
+    
+    return _apply_modern_layout(fig, title or "Material Composition Breakdown")
+
+def material_borough_subplots(df: pd.DataFrame, material_col: str, borough_col: str = "borough", title: str | None = None) -> Any:
+    """Create a 1xN matrix of Donut chart subplots breaking down materials by Borough."""
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+    from .engineering import SIDEWALK_MATERIALS
+    
+    # Get top boroughs (up to 5) to avoid squishing the charts
+    boroughs = df[borough_col].dropna().value_counts().head(5).index.tolist()
+    if not boroughs:
+        return material_breakdown_pie_chart(df, material_col, title)
+        
+    fig = make_subplots(rows=1, cols=len(boroughs), specs=[[{'type': 'domain'}] * len(boroughs)], subplot_titles=boroughs)
+    
+    for i, boro in enumerate(boroughs):
+        boro_df = df[df[borough_col] == boro]
+        counts = boro_df[material_col].value_counts().reset_index()
+        counts.columns = [material_col, 'Count']
+        
+        colors = [SIDEWALK_MATERIALS.get(mat, "#9ca3af") for mat in counts[material_col]]
+        
+        fig.add_trace(go.Pie(
+            labels=counts[material_col], values=counts['Count'],
+            hole=0.45, marker=dict(colors=colors),
+            name=str(boro), textinfo='percent', textposition='inside',
+            hovertemplate="<b>%{label}</b><br>Count: %{value:,.0f}<br>Share: %{percent}<extra></extra>"
+        ), 1, i + 1)
+        
+    return _apply_modern_layout(fig, title or f"Material Breakdown by {borough_col.title()}")
+
 def operations_gantt_chart(df: pd.DataFrame, task_col: str, start_col: str, end_col: str, color_col: str | None = None, title: str | None = None) -> Any:
     """Create a timeline/Gantt chart for tracking contract lifecycles, SLA durations, or permit windows."""
     import plotly.express as px
