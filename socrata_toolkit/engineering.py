@@ -15,6 +15,195 @@ from .core import (
 
 logger = logging.getLogger(__name__)
 
+# ── Sidewalk Anatomy & Vector Sandbox ─────────────────────────────────────────
+
+@dataclass
+class MaterialSpec:
+    """Comprehensive NYC Street Design Manual Sidewalk Specification."""
+    name: str
+    description: str
+    hex_color: str
+    is_historic: bool = False
+    is_permeable: bool = False
+
+NYC_SDM_MATERIALS: Dict[str, MaterialSpec] = {
+    "Unpigmented Concrete": MaterialSpec("Unpigmented Concrete", "Mixture of cement, aggregate, water forming a solid sidewalk surface.", "#e5e7eb"),
+    "Pigmented Concrete (Dark)": MaterialSpec("Pigmented Concrete (Dark)", "Used in high-density commercial districts.", "#4b5563"),
+    "Pigmented Concrete (Historic)": MaterialSpec("Pigmented Concrete (Historic)", "Simulates granite slabs or bluestone flags in historic districts.", "#78716c", is_historic=True),
+    "Detectable Warning Surface": MaterialSpec("Detectable Warning Surface", "Continuous detectable edge (tactile domes) for blind/low vision persons.", "#ef4444"),
+    "Concrete with Exposed Aggregate": MaterialSpec("Concrete with Exposed Aggregate", "Pebble-sized stone added for texture.", "#d6d3d1"),
+    "Concrete with Custom Scoring": MaterialSpec("Concrete with Custom Scoring", "Scored with a pattern to achieve a distinctive look.", "#d4d4d8"),
+    "Hexagonal Asphalt Paver": MaterialSpec("Hexagonal Asphalt Paver", "Precast into hexagon shapes. Primarily used adjacent to parks.", "#3f3f46"),
+    "Bluestone Flag": MaterialSpec("Bluestone Flag", "Historic stone unit paver. Preserved in historic districts.", "#64748b", is_historic=True),
+    "Granite Slab": MaterialSpec("Granite Slab", "Historic stone paver covering underground vaults.", "#94a3b8", is_historic=True),
+    "Granite Block": MaterialSpec("Granite Block", "19th century smooth-finish cobblestones used in furnishing zones.", "#cbd5e1", is_historic=True),
+    "PICP": MaterialSpec("Permeable Interlocking Concrete Paver (PICP)", "Voids at joints allow water to pass through to reservoir.", "#a1a1aa", is_permeable=True),
+    "Pervious Concrete": MaterialSpec("Precast Porous Concrete Panels (PPCP)", "Substantial void content allows water passage.", "#a8a29e", is_permeable=True),
+    "Asphaltic Concrete": MaterialSpec("Asphaltic Concrete (Flexible Pavement)", "Mixture of asphalt bitumen and stone aggregate.", "#27272a")
+}
+
+# Backward compatibility mapping for Plotly and GUI color rendering
+SIDEWALK_MATERIALS: Dict[str, str] = {k: v.hex_color for k, v in NYC_SDM_MATERIALS.items()}
+
+@dataclass
+class SidewalkZone:
+    """Represents a distinct modular zone within the sidewalk right-of-way."""
+    name: str
+    width_ft: float
+    material: str
+    cross_slope_pct: float = 1.5
+    has_obstructions: bool = False
+
+@dataclass
+class SidewalkAnatomy:
+    """
+    A vectorized, quantitatively precise schematic of a sidewalk segment.
+    Modeled after the NYC Street Design Manual's 'Sidewalk Room' concept.
+    Allows for rapid prototyping, live parameterization, and ADA testing.
+    """
+    segment_id: str
+    length_ft: float
+    frontage_zone: SidewalkZone
+    pedestrian_zone: SidewalkZone
+    furniture_zone: SidewalkZone
+    curb_zone: SidewalkZone
+    running_slope_pct: float = 2.0
+    
+    @property
+    def total_width_ft(self) -> float:
+        return sum(z.width_ft for z in [self.frontage_zone, self.pedestrian_zone, self.furniture_zone, self.curb_zone])
+        
+    @property
+    def total_area_sqft(self) -> float:
+        return self.total_width_ft * self.length_ft
+
+    def evaluate_ada_compliance(self) -> Dict[str, Any]:
+        """
+        Evaluates live parameters against strict ADA and NYC SDM accessibility metrics.
+        Runs dynamically whenever a zone dimension is modified.
+        """
+        issues = []
+        
+        # Rule ADA-1.2.1: Pedestrian Clear Path Width
+        if self.pedestrian_zone.width_ft < 4.0:
+            issues.append(f"CRITICAL: Pedestrian zone width ({self.pedestrian_zone.width_ft}ft) is below ADA 4.0ft minimum.")
+        elif self.pedestrian_zone.width_ft < 5.0:
+            issues.append(f"WARNING: Pedestrian zone width ({self.pedestrian_zone.width_ft}ft) requires 5x5ft passing spaces every 200ft.")
+            
+        if self.pedestrian_zone.has_obstructions:
+            issues.append("CRITICAL: Pedestrian clear path contains obstructions.")
+            
+        # Rule ADA-1.2.2 & ADA-1.2.3: Slopes
+        if self.running_slope_pct > 5.0:
+            issues.append(f"CRITICAL: Running slope ({self.running_slope_pct}%) exceeds 5.0% maximum.")
+            
+        for zone in [self.frontage_zone, self.pedestrian_zone, self.furniture_zone, self.curb_zone]:
+            if zone.cross_slope_pct > 2.0:
+                issues.append(f"CRITICAL: {zone.name} cross slope ({zone.cross_slope_pct}%) exceeds 2.0% maximum.")
+
+        is_compliant = len([i for i in issues if "CRITICAL" in i]) == 0
+        
+        return {
+            "is_compliant": is_compliant,
+            "pedestrian_walkshed_sqft": self.pedestrian_zone.width_ft * self.length_ft,
+            "compliance_issues": issues
+        }
+
+    def generate_corner_curb_ramp(self, start_x: float, start_y: float, radius: float = 5.0) -> Dict[str, Any]:
+        """
+        Generates a 2D vector GeoJSON polygon for a corner curb ramp using a 
+        cubic Bezier curve approximation for a smooth, radius-adjusted curb line.
+        """
+        # Cubic Bezier constant for a 90 degree circular arc
+        kappa = 0.5522847498
+        
+        # P0 to P3 forming a curved corner
+        P0 = (start_x + radius, start_y)
+        P1 = (start_x + radius, start_y + radius * kappa)
+        P2 = (start_x + radius * kappa, start_y + radius)
+        P3 = (start_x, start_y + radius)
+        
+        points = []
+        steps = 20
+        for i in range(steps + 1):
+            t = i / steps
+            mt = 1 - t
+            # Bezier interpolation
+            x = (mt**3)*P0[0] + 3*(mt**2)*t*P1[0] + 3*mt*(t**2)*P2[0] + (t**3)*P3[0]
+            y = (mt**3)*P0[1] + 3*(mt**2)*t*P1[1] + 3*mt*(t**2)*P2[1] + (t**3)*P3[1]
+            points.append([x, y])
+            
+        # Complete the wedge by connecting back to the vertex origin
+        points.append([start_x + radius, start_y + radius])
+        points.append([start_x + radius, start_y]) # Close polygon
+        
+        return {
+            "type": "Feature",
+            "properties": {
+                "zone_name": "Corner Curb Ramp (ADA)",
+                "material": "Detectable Warning Surface",
+                "width_ft": radius,
+                "cross_slope_pct": 8.3,
+                "fill_color": SIDEWALK_MATERIALS.get("Detectable Warning Surface", "#ef4444")
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [points]
+            }
+        }
+
+    def to_vector_geojson(self, start_x: float = 0.0, start_y: float = 0.0, include_corner_ramp: bool = False) -> Dict[str, Any]:
+        """
+        Generates modular, 2D vector polygons (GeoJSON format) for rendering in an 
+        interactive geometry sandbox (e.g., Plotly, Leaflet, or custom UI).
+        """
+        features = []
+        current_y = start_y
+        
+        zones = [
+            self.frontage_zone, self.pedestrian_zone, 
+            self.furniture_zone, self.curb_zone
+        ]
+        
+        for zone in zones:
+            if zone.width_ft <= 0:
+                continue
+                
+            # Create a precise rectangular vector polygon for this modular piece
+            polygon = [
+                [start_x, current_y],
+                [start_x + self.length_ft, current_y],
+                [start_x + self.length_ft, current_y + zone.width_ft],
+                [start_x, current_y + zone.width_ft],
+                [start_x, current_y] # Close the polygon loop
+            ]
+            
+            # Cross-reference with our official taxonomy dictionary
+            color = SIDEWALK_MATERIALS.get(zone.material, "#9ca3af") # Fallback gray
+            
+            features.append({
+                "type": "Feature",
+                "properties": {
+                    "zone_name": zone.name,
+                    "material": zone.material,
+                    "width_ft": zone.width_ft,
+                    "cross_slope_pct": zone.cross_slope_pct,
+                    "fill_color": color
+                },
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [polygon]
+                }
+            })
+            current_y += zone.width_ft
+            
+        if include_corner_ramp:
+            # Generate a 5-foot ADA radius ramp at the end of the segment
+            ramp_feature = self.generate_corner_curb_ramp(start_x + self.length_ft, start_y, radius=5.0)
+            features.append(ramp_feature)
+            
+        return {"type": "FeatureCollection", "features": features}
+
 # ── Cost Estimation ───────────────────────────────────────────────────────────
 
 SCOPE_RATES: Dict[str, float] = {
@@ -130,6 +319,52 @@ def prioritize_construction_list(df: pd.DataFrame) -> pd.DataFrame:
     out["_priority_score"] = out.get("severity_rating", 0).fillna(0) / 10.0
     return out.sort_values("_priority_score", ascending=False)
 
+def equity_weighted_prioritization(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Prioritizes repairs by severity, equity, and accessibility impact.
+    Combats 311 'squeaky wheel' bias by artificially boosting ADA issues and severe hazards.
+    """
+    out = df.copy()
+    # Base score from existing severity (0.0 to 1.0)
+    out["_base_severity"] = pd.to_numeric(out.get("severity_rating", 0), errors="coerce").fillna(0) / 10.0
+    
+    # Boost for ADA compliance necessity (Pedestrian Ramps, crosswalks)
+    ada_keywords = "ada|ramp|crosswalk|wheelchair|accessible"
+    out["_ada_boost"] = out.get("description", "").astype(str).str.contains(ada_keywords, case=False, na=False).astype(float) * 0.4
+    
+    # Boost for Hazardous safety issues (Protruding metal, deep potholes)
+    hazard_keywords = "protruding|metal|rebar|deep|trip|fall"
+    out["_hazard_boost"] = out.get("description", "").astype(str).str.contains(hazard_keywords, case=False, na=False).astype(float) * 0.4
+    
+    out["_equity_priority_score"] = out["_base_severity"] + out["_ada_boost"] + out["_hazard_boost"]
+    
+    # Normalize to 0-1 scale
+    max_score = out["_equity_priority_score"].max()
+    if max_score > 0:
+        out["_equity_priority_score"] = out["_equity_priority_score"] / max_score
+        
+    return out.sort_values("_equity_priority_score", ascending=False)
+
+def generate_make_safe_runsheet(df: pd.DataFrame, daily_capacity: int = 50) -> pd.DataFrame:
+    """
+    Auto-generates the daily emergency runsheet for the in-house 'Make Safe' 
+    and 'Curb Metal Protruding' programs.
+    """
+    if df.empty: return df
+    
+    # Isolate severe hazards and protruding metal
+    is_hazard = df.get("severity", "").astype(str).str.lower().isin(["hazardous", "critical", "severe"])
+    is_protruding = df.get("description", "").astype(str).str.lower().str.contains("protruding|metal|rebar|hardware")
+    
+    emergency_df = df[is_hazard | is_protruding].copy()
+    
+    # Sort by oldest complaints first to ensure nothing falls through the cracks
+    if "complaint_date" in emergency_df.columns:
+        emergency_df["complaint_date"] = pd.to_datetime(emergency_df["complaint_date"], errors="coerce")
+        emergency_df = emergency_df.sort_values("complaint_date", ascending=True)
+        
+    return emergency_df.head(daily_capacity).reset_index(drop=True)
+
 def classify_scope(df: pd.DataFrame) -> pd.DataFrame:
     """Classify work items based on keywords."""
     out = df.copy()
@@ -238,4 +473,3 @@ class TaskBoard:
             "by_status": {s: len(self.filter_tasks(s)) for s in self.columns},
             "completion_rate": (len(self.filter_tasks(STATUS_DONE)) / max(len(self.tasks), 1)) * 100
         }
-

@@ -46,15 +46,12 @@ jobs:
       
       - name: Lint with ruff
         run: ruff check socrata_toolkit/ tests/
-        continue-on-error: true
       
       - name: Format check with black
         run: black socrata_toolkit/ tests/ --check
-        continue-on-error: true
       
       - name: Type check with mypy
         run: mypy socrata_toolkit/ --ignore-missing-imports
-        continue-on-error: true
       
       - name: Run pytest
         run: pytest tests/ -v --cov=socrata_toolkit --cov-report=xml
@@ -94,7 +91,6 @@ jobs:
       - name: Lint
         working-directory: frontend
         run: npm run lint
-        continue-on-error: true
       
       - name: Build
         working-directory: frontend
@@ -103,7 +99,6 @@ jobs:
       - name: Run tests
         working-directory: frontend
         run: npm test
-        continue-on-error: true
 
   security-check:
     name: Security Check
@@ -124,11 +119,9 @@ jobs:
       
       - name: Run bandit security check
         run: bandit -r socrata_toolkit/ -f json -o bandit-report.json
-        continue-on-error: true
       
       - name: Check dependencies for vulnerabilities
         run: safety check
-        continue-on-error: true
 
   code-quality:
     name: Code Quality
@@ -149,11 +142,9 @@ jobs:
       
       - name: Analyze code with pylint
         run: pylint socrata_toolkit/ --disable=all --enable=E,F --fail-under=9.0
-        continue-on-error: true
       
       - name: Check cyclomatic complexity
         run: radon cc socrata_toolkit/ -a -n B
-        continue-on-error: true
 
   docker-build:
     name: Docker Build Test
