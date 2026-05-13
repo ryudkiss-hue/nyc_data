@@ -137,23 +137,23 @@ def render_map(tab, store, k, theme):
     if not store or not store.get("records"):
         return dbc.Alert("Configure and click 'Render Map' above.", color="secondary")
 
+    import socrata_toolkit.spatial as st_spatial
+    import socrata_toolkit.analysis as st_analysis
+    
     df      = pd.DataFrame(store["records"])
     lat_col = store["lat"]
     lon_col = store["lon"]
     color   = store.get("color") or None
-    tmpl    = {"dark": "plotly_dark", "light": "simple_white", "sepia": "ggplot2"}.get(theme or "dark", "plotly_dark")
-    mstyle  = MAPBOX_STYLES.get(theme or "dark", "carto-darkmatter")
-    center  = {"lat": df[lat_col].median(), "lon": df[lon_col].median()}
 
+    # ── Point Map ───────────────────────────────────────────────────────
     if tab == "points":
-        fig = px.scatter_mapbox(df.head(5000), lat=lat_col, lon=lon_col,
-                                color=color if color else None,
-                                mapbox_style=mstyle, zoom=10, height=560,
-                                title=f"Point Map — {store['rows']:,} records",
-                                template=tmpl, opacity=0.7)
-        fig.update_layout(margin=dict(l=0, r=0, t=40, b=0))
-        return dcc.Graph(figure=fig)
+        viz = st_spatial.SpatialVisualization(df)
+        fig = viz.plot_scatter_map(lat_col, lon_col, color_col=color)
+        return html.Div([
+            dcc.Graph(figure=fig, style={"height": "750px"}),
+        ], className="nyc-animate-fade-up")
 
+    # ── Clusters ────────────────────────────────────────────────────────
     if tab == "clusters":
         try:
             from sklearn.cluster import KMeans
@@ -161,37 +161,33 @@ def render_map(tab, store, k, theme):
             km     = KMeans(n_clusters=int(k), random_state=42, n_init=10).fit(coords)
             df     = df.copy()
             df["cluster"] = km.labels_.astype(str)
-            fig = px.scatter_mapbox(df.head(5000), lat=lat_col, lon=lon_col,
-                                    color="cluster", mapbox_style=mstyle,
-                                    zoom=10, height=560, title=f"K-Means Clusters (k={k})")
-            fig.update_layout(margin=dict(l=0, r=0, t=40, b=0))
-            # Cluster summary
+            
+            viz = st_spatial.SpatialVisualization(df)
+            fig = viz.plot_scatter_map(lat_col, lon_col, color_col="cluster", title=f"K-Means Clusters (k={k})")
+            
             summary = df.groupby("cluster").size().reset_index(name="points")
             grid = dag.AgGrid(rowData=summary.to_dict("records"),
                               columnDefs=[{"field": c} for c in summary.columns],
                               dashGridOptions={"domLayout": "autoHeight"},
                               className="ag-theme-alpine-dark", style={"marginTop": "12px"})
-            return html.Div([dcc.Graph(figure=fig), grid])
+            return html.Div([dcc.Graph(figure=fig, style={"height": "650px"}), grid], className="nyc-animate-fade-up")
         except ImportError:
-            return dbc.Alert("Install scikit-learn for clustering: pip install scikit-learn", color="warning")
+            return dbc.Alert("Install scikit-learn for clustering.", color="warning")
 
+    # ── Density ─────────────────────────────────────────────────────────
     if tab == "density":
-        fig = px.density_mapbox(df.head(10000), lat=lat_col, lon=lon_col,
-                                radius=12, mapbox_style=mstyle, zoom=10, height=560,
-                                title="Density Heatmap", color_continuous_scale="Inferno")
-        fig.update_layout(margin=dict(l=0, r=0, t=40, b=0))
-        return dcc.Graph(figure=fig)
+        viz = st_spatial.SpatialVisualization(df)
+        fig = viz.plot_heatmap(lat_col, lon_col)
+        return html.Div([
+            dcc.Graph(figure=fig, style={"height": "750px"}),
+        ], className="nyc-animate-fade-up")
 
-    if tab == "borough":
-        cat_cols = df.select_dtypes("object").columns.tolist()
-        boro_col = next((c for c in cat_cols if "borough" in c.lower() or "boro" in c.lower()), cat_cols[0] if cat_cols else None)
-        if not boro_col:
-            return dbc.Alert("No categorical column detected for grouping.", color="warning")
-        counts = df[boro_col].value_counts().reset_index()
-        counts.columns = [boro_col, "count"]
-        fig = px.bar(counts, x=boro_col, y="count", template=tmpl, height=400,
-                     title=f"Count by {boro_col}", color="count", color_continuous_scale="Blues")
-        fig.update_layout(margin=dict(l=0, r=0, t=40, b=60), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
-        return dcc.Graph(figure=fig)
+    # ── ADA Compliance Map ──────────────────────────────────────────────
+    if tab == "borough": # Re-purposing tab for ADA
+        fig = st_analysis.plot_ada_compliance_map(df, lat_col, lon_col)
+        return html.Div([
+            dbc.Alert("NYC SDM Accessibility Audit: Identifies compliant (green) and non-compliant (red) infrastructure segments.", color="info", className="mb-2"),
+            dcc.Graph(figure=fig, style={"height": "750px"}),
+        ], className="nyc-animate-fade-up")
 
     return html.Div()

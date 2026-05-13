@@ -320,3 +320,42 @@ def export_for_powerbi(df: pd.DataFrame, output_dir: str, filename: str = "data"
     csv_path = out / f"{filename}.csv"
     df.to_csv(csv_path, index=False)
     return str(csv_path)
+
+# ── Workflow Engine (Reconciled) ──────────────────────────────────────────────
+
+class WorkflowStep:
+    """Represents a single step in a processing workflow."""
+    def __init__(self, name: str, action: Callable[[pd.DataFrame], pd.DataFrame], 
+                 trigger: Callable[[pd.DataFrame], bool] = None):
+        self.name = name
+        self.action = action
+        self.trigger = trigger if trigger is not None else lambda df: True
+
+    def execute(self, df: pd.DataFrame) -> pd.DataFrame:
+        if self.trigger(df):
+            logger.info(f"Executing workflow step: {self.name}")
+            return self.action(df)
+        return df
+
+class Workflow:
+    """A collection of workflow steps to be executed in sequence."""
+    def __init__(self, steps: List[WorkflowStep]):
+        self.steps = steps
+
+    def run(self, df: pd.DataFrame) -> pd.DataFrame:
+        for step in self.steps:
+            df = step.execute(df)
+        return df
+
+    def export_to_airflow(self) -> str:
+        """Export the workflow definition to a Python Airflow DAG snippet."""
+        lines = [
+            "from airflow import DAG",
+            "from airflow.operators.python import PythonOperator",
+            "from datetime import datetime",
+            "",
+            "with DAG('nyc_data_workflow', start_date=datetime(2024, 1, 1), schedule_interval='@daily') as dag:"
+        ]
+        for step in self.steps:
+            lines.append(f"    {step.name}_task = PythonOperator(task_id='{step.name}', python_callable={step.action.__name__})")
+        return "\n".join(lines)

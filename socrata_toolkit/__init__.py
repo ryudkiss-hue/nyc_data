@@ -31,6 +31,14 @@ _lazy_map: Dict[str, str] = {
     "histogram": "analysis:histogram",
     "bar_chart": "analysis:bar_chart",
     "correlation_heatmap": "analysis:correlation_heatmap",
+    "compute_borough_metrics": "analysis:compute_borough_metrics",
+    "compute_sla_trends": "analysis:compute_sla_trends",
+    "time_series_chart": "analysis:time_series_chart",
+    "sunburst_chart": "analysis:sunburst_chart",
+    "treemap_chart": "analysis:treemap_chart",
+    "gauge_chart": "analysis:gauge_chart",
+    "animated_scatter_chart": "analysis:animated_scatter_chart",
+    "generate_analysis_results": "analysis:generate_analysis_results",
 
     # engineering (Pillar: engineering)
     "compute_sidewalk_kpis": "engineering:compute_sidewalk_kpis",
@@ -41,17 +49,25 @@ _lazy_map: Dict[str, str] = {
     "analyze_contract_progress": "engineering:analyze_contract_progress",
     "budget_analysis": "engineering:budget_analysis",
     "productivity_metrics": "engineering:productivity_metrics",
+    "project_spending": "engineering:project_spending",
+    "calculate_completion_dates": "engineering:calculate_completion_dates",
+    "burndown_calculation": "engineering:burndown_calculation",
 
     # spatial (Pillar: spatial)
     "spatial_intersects_join": "spatial:spatial_intersects_join",
     "cluster_locations": "spatial:cluster_locations",
     "detect_construction_conflicts": "spatial:detect_construction_conflicts",
+    "create_geopackage": "spatial:create_geopackage",
+    "load_geopackage": "spatial:load_geopackage",
+    "generate_qgs_project": "spatial:generate_qgs_project",
 
     # pipeline (Pillar: pipeline)
     "stream_pipeline": "pipeline:stream_pipeline",
     "ingest_311_complaints": "pipeline:ingest_311_complaints",
     "deduplicate_dataframe": "pipeline:deduplicate_dataframe",
     "generate_program_report": "pipeline:generate_program_report",
+    "Workflow": "pipeline:Workflow",
+    "WorkflowStep": "pipeline:WorkflowStep",
 
     # governance (Pillar: governance)
     "compute_quality_score": "governance:compute_quality_score",
@@ -63,6 +79,7 @@ _lazy_map: Dict[str, str] = {
     "SocrataLLMChatbot": "ai:SocrataLLMChatbot",
     "SQLQueryEngine": "ai:SQLQueryEngine",
     "quantum_search": "ai:quantum_search",
+    "api": "api",
 }
 
 # Public API list for "from socrata_toolkit import *"

@@ -60,6 +60,19 @@ Rank contractors by performance score.
 
 ---
 
+## Budget Forecasting (Reconciled)
+
+### `project_spending(df, months) → pd.DataFrame`
+Projects future spending based on historical `repair_cost`. Returns `{month, projected_spending, cumulative_spending}`.
+
+### `calculate_completion_dates(df, days_to_complete) → pd.DataFrame`
+Adds `completion_date` to DataFrame based on `inspection_date`.
+
+### `burndown_calculation(df) → pd.DataFrame`
+Returns `{total_workload, completed_workload, remaining_workload}` summary.
+
+---
+
 ## Sidewalk KPIs
 
 ### `MaterialAwareSidewalkKPI` (dataclass)

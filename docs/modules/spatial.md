@@ -116,6 +116,19 @@ Executes: `UPDATE {table} SET geom = ST_Point(lon, lat) WHERE geom IS NULL`
 
 ---
 
+## QGIS & GeoPackage (Reconciled)
+
+### `create_geopackage(df, path, layer)`
+Creates a GeoPackage file. If `latitude`/`longitude` are present, it creates a spatial layer using `geopandas`.
+
+### `load_geopackage(path, layer) → gpd.GeoDataFrame`
+Loads a GeoPackage layer.
+
+### `generate_qgs_project(postgis_conn, path)`
+Generates a `.qgs` XML project file for QGIS with a PostGIS layer connection.
+
+---
+
 ## `SpatialVisualization`
 Placeholder class for future Folium/Plotly Express mapping helpers.
 

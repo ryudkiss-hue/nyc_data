@@ -143,7 +143,7 @@ def run_web(host: str = "localhost", port: int = 8501, dev: bool = False) -> int
     
     cmd = [
         sys.executable, "-m", "streamlit", "run",
-        str(SOCRATA_TOOLKIT / "app.py"),
+        str(PROJECT_ROOT / "app.py"),
         "--logger.level=info",
     ]
     

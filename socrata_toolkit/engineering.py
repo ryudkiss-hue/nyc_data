@@ -74,6 +74,42 @@ def score_contractors(df: pd.DataFrame) -> pd.DataFrame:
     """Rank contractors based on performance metrics."""
     return pd.DataFrame({"contractor": ["ABC Construction", "XYZ Paving"], "score": [92.5, 88.0]})
 
+# ── Budget Forecasting (Reconciled) ───────────────────────────────────────────
+
+def project_spending(data: pd.DataFrame, future_months: int) -> pd.DataFrame:
+    """Projects future spending based on historical data."""
+    if data.empty or 'repair_cost' not in data.columns:
+        return pd.DataFrame()
+    monthly_avg_cost = data['repair_cost'].mean()
+    future_dates = pd.date_range(start=pd.Timestamp.now(), periods=future_months, freq='ME')
+    projections = pd.DataFrame({
+        'month': future_dates,
+        'projected_spending': monthly_avg_cost
+    })
+    projections['cumulative_spending'] = projections['projected_spending'].cumsum()
+    return projections
+
+def calculate_completion_dates(data: pd.DataFrame, days_to_complete: int) -> pd.DataFrame:
+    """Calculates expected completion dates based on the inspection_date."""
+    if data.empty or 'inspection_date' not in data.columns:
+        return data
+    out = data.copy()
+    out['inspection_date'] = pd.to_datetime(out['inspection_date'], errors='coerce')
+    out['completion_date'] = out['inspection_date'] + pd.to_timedelta(days_to_complete, unit='d')
+    return out
+
+def burndown_calculation(data: pd.DataFrame) -> pd.DataFrame:
+    """Calculates the burndown of workload over time."""
+    if data.empty:
+        return pd.DataFrame({'total_workload': [0], 'completed_workload': [0], 'remaining_workload': [0]})
+    total_workload = data.shape[0]
+    completed_workload = data[data['status'].str.lower() == 'completed'].shape[0] if 'status' in data.columns else 0
+    return pd.DataFrame({
+        'total_workload': [total_workload],
+        'completed_workload': [completed_workload],
+        'remaining_workload': [total_workload - completed_workload]
+    })
+
 # ── Sidewalk KPIs ─────────────────────────────────────────────────────────────
 
 @dataclass

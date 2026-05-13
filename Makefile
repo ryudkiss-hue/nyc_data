@@ -60,14 +60,14 @@ doctor: ## 🏥 Check installation health and dependencies
 	$(LAUNCH_CMD) doctor
 
 # ============================================================================
-# WEB & CLI INTERFACES
+# DASH & CLI INTERFACES
 # ============================================================================
 
 cli: ## ⚙️ Run CLI tool (pass args with ARGS=...)
 	$(LAUNCH_CMD) cli $(ARGS)
 
 web: ## 🌐 Launch Streamlit web dashboard
-	$(LAUNCH_CMD) web
+	$(LAUNCH_CMD) python dash_app/app.py
 
 web-dev: ## 🌐 Launch Streamlit in development mode
 	$(LAUNCH_CMD) web --dev
