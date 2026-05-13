@@ -64,23 +64,44 @@ def grover_cols(t):
 def grover(_, table, col, val, theme):
     if not all([table, col, val]): return dbc.Alert("Fill all fields.", color="warning")
     tmpl = {"dark":"plotly_dark","light":"simple_white","sepia":"ggplot2"}.get(theme or "dark","plotly_dark")
+    import socrata_toolkit.ai as st_ai
     df   = db.query_df(f'SELECT * FROM "{table}"')
     n    = len(df); hits = df[df[col].astype(str).str.contains(str(val), case=False, na=False)]; k = max(len(hits),1)
-    iters = max(1, int(math.pi/4 * math.sqrt(n/k)))
+    
+    # Use real toolkit quantum analysis
+    analysis = st_ai.analyze_grover_circuit(n, k)
+    eff = st_ai.analyze_quantum_efficiency(n)
+    
+    iters = analysis.num_grover_iterations
     theta = math.asin(math.sqrt(k/n)) if n > 0 else 0
     steps = list(range(1, iters+1)); probs = [math.sin((2*i-1)*theta)**2 for i in steps]
-    fig = px.line(x=steps, y=probs, template=tmpl, title="Grover Amplitude Amplification",
-                  labels={"x":"Iteration","y":"P(marked)"}, height=280, markers=True)
-    fig.update_layout(margin=dict(l=0,r=0,t=36,b=0), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+    
+    fig = px.line(x=steps, y=probs, template=tmpl, title="Quantum Amplitude Amplification (Theoretical)",
+                  labels={"x":"Grover Iteration","y":"Probability of Success"}, height=320, markers=True)
+    fig.update_layout(margin=dict(l=0,r=0,t=40,b=0), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+    
     return html.Div([
         dbc.Row([
-            dbc.Col(html.Div([html.Div(str(n),      className="nyc-metric-value"), html.Div("Search Space", className="nyc-metric-label")], className="nyc-metric"), md=3),
-            dbc.Col(html.Div([html.Div(str(len(hits)),className="nyc-metric-value"), html.Div("Matches",    className="nyc-metric-label")], className="nyc-metric"), md=3),
-            dbc.Col(html.Div([html.Div(str(iters),  className="nyc-metric-value"), html.Div("Iterations",  className="nyc-metric-label")], className="nyc-metric"), md=3),
-        ], className="mb-3"),
-        dcc.Graph(figure=fig, config={"displayModeBar": False}),
+            dbc.Col(html.Div([html.Div(str(n), className="nyc-metric-value"), html.Div("Records (N)", className="nyc-metric-label")], className="nyc-metric"), md=3),
+            dbc.Col(html.Div([html.Div(analysis.theoretical_speedup, className="nyc-metric-value"), html.Div("Quantum Speedup", className="nyc-metric-label")], className="nyc-metric"), md=3),
+            dbc.Col(html.Div([html.Div(str(iters), className="nyc-metric-value"), html.Div("Optimal Iters", className="nyc-metric-label")], className="nyc-metric"), md=3),
+            dbc.Col(html.Div([html.Div(f"{analysis.num_qubits}", className="nyc-metric-value"), html.Div("Required Qubits", className="nyc-metric-label")], className="nyc-metric"), md=3),
+        ], className="mb-4 nyc-animate-fade-up"),
+        
+        dbc.Row([
+            dbc.Col(dcc.Graph(figure=fig), md=8),
+            dbc.Col(html.Div([
+                html.H6("Quantum Advantage Audit", className="text-accent"),
+                html.P(f"Classical: {eff['classical_complexity']} ops", className="small mb-1"),
+                html.P(f"Quantum: {eff['quantum_complexity']} ops", className="small mb-1"),
+                html.P(f"Gain: {eff['estimated_efficiency_gain_pct']}%", className="small text-success"),
+                html.Div(className="divider-nyc"),
+                html.P("Grover's algorithm provides a quadratic speedup for unstructured searching.", className="small text-muted")
+            ], className="nyc-card"), md=4)
+        ], className="nyc-animate-fade-up stagger-1"),
+        
         dbc.Alert(f"No matches for '{val}'", color="info") if hits.empty else
-        dcc.Markdown(hits.head(5).to_markdown(index=False), style={"fontSize":"0.78rem"}),
+        dcc.Markdown(hits.head(5).to_markdown(index=False), style={"fontSize":"0.78rem"}, className="nyc-animate-fade-up stagger-2"),
     ])
 
 @callback(Output("qr-lat","options"), Output("qr-lon","options"), Input("qr-table","value"), prevent_initial_call=True)
@@ -93,22 +114,44 @@ def route_cols(t):
           State("qr-table","value"), State("qr-lat","value"), State("qr-lon","value"), State("qr-stops","value"), State("theme-store","data"), prevent_initial_call=True)
 def route(_, table, lat, lon, stops, theme):
     if not all([table, lat, lon]): return dbc.Alert("Fill all fields.", color="warning")
+    import socrata_toolkit.ai as st_ai
+    
     mstyle = {"dark":"carto-darkmatter","light":"carto-positron","sepia":"stamen-terrain"}.get(theme or "dark","carto-darkmatter")
     df = db.query_df(f'SELECT * FROM "{table}" LIMIT {int(stops or 20)}')
     df[lat] = pd.to_numeric(df[lat], errors="coerce"); df[lon] = pd.to_numeric(df[lon], errors="coerce")
     df = df.dropna(subset=[lat, lon]).head(int(stops or 20))
+    
     if len(df) < 2: return dbc.Alert("Need ≥2 locations.", color="warning")
-    coords = df[[lat,lon]].values; visited = [0]; unvisited = list(range(1, len(coords)))
-    while unvisited:
-        last = visited[-1]; dists = [math.dist(coords[last], coords[u]) for u in unvisited]
-        nxt  = unvisited[dists.index(min(dists))]; visited.append(nxt); unvisited.remove(nxt)
-    route = df.iloc[visited].copy(); route["stop"] = range(len(route))
-    total = sum(math.dist(coords[visited[i]], coords[visited[i+1]])*111 for i in range(len(visited)-1))
-    fig = px.line_mapbox(route, lat=lat, lon=lon, mapbox_style=mstyle, zoom=10,
-                         title=f"Optimized Route — {len(route)} stops, ~{total:.1f} km", text="stop", height=460)
-    fig.update_traces(mode="lines+markers+text", marker=dict(size=10))
-    fig.update_layout(margin=dict(l=0,r=0,t=40,b=0))
-    return dcc.Graph(figure=fig)
+    
+    # Use toolkit QISA (Quantum-Inspired Simulated Annealing)
+    optimization = st_ai.optimize_repair_route(df, lat_col=lat, lon_col=lon)
+    
+    route = df.iloc[optimization.route].copy(); route["stop"] = range(len(route))
+    
+    fig_map = px.line_mapbox(route, lat=lat, lon=lon, mapbox_style=mstyle, zoom=11,
+                             title=f"QISA Optimized Route — {len(route)} stops", height=460)
+    fig_map.update_traces(mode="lines+markers+text", marker=dict(size=12, color="var(--success)"))
+    fig_map.update_layout(margin=dict(l=0,r=0,t=40,b=0))
+    
+    fig_energy = px.line(y=optimization.energy_history, title="Annealing Energy Decay (Convergence)",
+                         labels={"index":"Step","y":"Energy"}, height=200)
+    fig_energy.update_layout(margin=dict(l=0,r=0,t=40,b=0), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+    
+    return html.Div([
+        dbc.Row([
+            dbc.Col(html.Div([html.Div(f"{optimization.total_distance_miles}", className="nyc-metric-value"), html.Div("Distance (mi)", className="nyc-metric-label")], className="nyc-metric"), md=4),
+            dbc.Col(html.Div([html.Div(f"{optimization.estimated_time_hours}", className="nyc-metric-value"), html.Div("Est. Time (hr)", className="nyc-metric-label")], className="nyc-metric"), md=4),
+            dbc.Col(html.Div([html.Div(f"{optimization.convergence_score}", className="nyc-metric-value"), html.Div("Convergence", className="nyc-metric-label")], className="nyc-metric"), md=4),
+        ], className="mb-4 nyc-animate-fade-up"),
+        
+        dbc.Row([
+            dbc.Col(dcc.Graph(figure=fig_map), md=8),
+            dbc.Col([
+                dcc.Graph(figure=fig_energy, config={"displayModeBar":False}),
+                html.P(f"Method: {optimization.method}", className="small text-muted mt-2")
+            ], md=4)
+        ], className="nyc-animate-fade-up stagger-1")
+    ])
 
 @callback(Output("qc-result","children"), Input("qc-btn","n_clicks"),
           State("qc-crew","value"), State("qc-tasks","value"), State("qc-seed","value"), State("theme-store","data"), prevent_initial_call=True)

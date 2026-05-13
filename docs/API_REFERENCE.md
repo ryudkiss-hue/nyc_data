@@ -18,6 +18,7 @@ The `socrata_toolkit` is a modular, Pillar-Architecture Python library for inges
 | [`spatial`](./modules/spatial.md) | `socrata_toolkit/spatial.py` | Spatial | Clustering, spatial joins, conflict detection, hotspot analysis |
 | [`ai`](./modules/ai.md) | `socrata_toolkit/ai.py` | AI | NL→SQL, sentiment, quantum search, route/crew optimization |
 | [`cleaning`](./modules/cleaning.md) | `socrata_toolkit/cleaning.py` | Cleaning | Borough normalization, BBL, column standardization, outlier removal |
+| [`api`](./modules/api.md) | `socrata_toolkit/api.py` | API | REST interface (FastAPI) for programmatic access |
 
 ---
 

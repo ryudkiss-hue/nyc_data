@@ -59,12 +59,56 @@ def cluster_locations(df: pd.DataFrame, lat_col: str, lon_col: str, n_clusters: 
         return df
 
 class SpatialVisualization:
-    """Visualization helpers for spatial data."""
+    """Visualization helpers for spatial data using high-performance Mapbox traces."""
     def __init__(self, df: pd.DataFrame):
         self.df = df
-    def plot_heatmap(self, lat_col: str, lon_col: str):
-        # Implementation placeholder
-        pass
+
+    def _apply_map_layout(self, fig: Any, title: str) -> Any:
+        from .analysis import _apply_modern_layout
+        fig = _apply_modern_layout(fig, title)
+        fig.update_layout(
+            mapbox=dict(
+                style="carto-darkmatter", # Open source alternative to Mapbox styles
+                zoom=10,
+                center=dict(lat=40.7128, lon=-74.0060),
+            ),
+            margin=dict(t=80, l=0, r=0, b=0),
+        )
+        return fig
+
+    def plot_heatmap(self, lat_col: str = COL_LAT, lon_col: str = COL_LON, title: str = "Spatial Density Hotspots"):
+        """Create a density heatmap (Plotly Reference: Densitymapbox)."""
+        import plotly.graph_objects as go
+        
+        fig = go.Figure(go.Densitymapbox(
+            lat=self.df[lat_col],
+            lon=self.df[lon_col],
+            z=[1]*len(self.df),
+            radius=12,
+            colorscale="Viridis",
+            hovertemplate="<b>Location</b><br>Lat: %{lat:.4f}<br>Lon: %{lon:.4f}<extra></extra>"
+        ))
+        return self._apply_map_layout(fig, title)
+
+    def plot_scatter_map(self, lat_col: str = COL_LAT, lon_col: str = COL_LON, color_col: str | None = None, title: str = "Geospatial Point Map"):
+        """Create a scatter map with optimized markers (Plotly Reference: Scattermapbox)."""
+        import plotly.express as px
+        
+        fig = px.scatter_mapbox(
+            self.df, 
+            lat=lat_col, 
+            lon=lon_col, 
+            color=color_col,
+            size_max=15,
+            zoom=10,
+        )
+        
+        fig.update_traces(
+            marker=dict(size=8, opacity=0.8),
+            unselected=dict(marker=dict(opacity=0.2)),
+            hovertemplate="<b>Segment ID: %{customdata[0]}</b><br>Lat: %{lat:.4f}<br>Lon: %{lon:.4f}<extra></extra>"
+        )
+        return self._apply_map_layout(fig, title)
 
 def spatial_intersects_join(left: pd.DataFrame, right: pd.DataFrame, left_geom: str, right_geom: str, buffer_meters: float = 0.0) -> pd.DataFrame:
     """Perform a spatial intersection join between two DataFrames."""
@@ -107,3 +151,49 @@ def detect_construction_conflicts(projects_df: pd.DataFrame, complaints_df: pd.D
         conflict_rate=0.0,
         conflicts=conflicts
     )
+
+# ── QGIS & GeoPackage (Reconciled) ────────────────────────────────────────────
+
+def create_geopackage(df: pd.DataFrame, path: str, layer: str = 'sidewalk_inspections'):
+    """Create a GeoPackage file from a DataFrame."""
+    try:
+        import geopandas as gpd
+        from shapely.geometry import Point
+    except ImportError:
+        raise ImportError("Install geopandas and shapely for GeoPackage support.")
+    
+    out = df.copy()
+    if 'latitude' in out.columns and 'longitude' in out.columns:
+        out['geometry'] = out.apply(lambda x: Point((x['longitude'], x['latitude'])), axis=1)
+        gdf = gpd.GeoDataFrame(out, geometry='geometry', crs="EPSG:4326")
+        gdf.to_file(path, layer=layer, driver='GPKG')
+    else:
+        # If no geo columns, save as non-spatial table in GPKG
+        out.to_excel(path.replace('.gpkg', '.xlsx')) # Fallback or error
+
+def load_geopackage(path: str, layer: str = 'sidewalk_inspections'):
+    """Load a GeoPackage layer into a GeoDataFrame."""
+    try:
+        import geopandas as gpd
+    except ImportError:
+        raise ImportError("Install geopandas for GeoPackage support.")
+    return gpd.read_file(path, layer=layer)
+
+def generate_qgs_project(postgis_conn: str, path: str):
+    """Generate a QGIS project file (.qgs) connecting to PostGIS."""
+    project_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<qgis projectName="NYC Sidewalk Inspections" version="3.16">
+    <layertrees>
+        <layergroup>
+            <layers>
+                <layer>
+                    <provider>PostGIS</provider>
+                    <datasource>{postgis_conn}</datasource>
+                    <name>Sidewalk Inspections</name>
+                </layer>
+            </layers>
+        </layergroup>
+    </layertrees>
+</qgis>"""
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(project_xml)

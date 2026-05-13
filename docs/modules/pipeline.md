@@ -182,4 +182,31 @@ Simple query builder from a DataFrame schema.
 ```python
 builder = SQLQueryBuilder(df, "sidewalks")
 sql = builder.build()  # → "SELECT * FROM sidewalks"
+
+---
+
+## Workflow Engine (Reconciled)
+
+### `WorkflowStep(name, action, trigger)`
+A single step in a processing pipeline. `action` is a function `df -> df`.
+
+### `Workflow(steps)`
+A collection of steps executed in sequence.
+
+```python
+from socrata_toolkit import Workflow, WorkflowStep
+
+steps = [
+    WorkflowStep("clean", clean_df),
+    WorkflowStep("analyze", analyze_df, trigger=lambda df: not df.empty)
+]
+flow = Workflow(steps)
+result = flow.run(df)
+dag = flow.export_to_airflow()
+```
+
+| Method | Description |
+|--------|-------------|
+| `run(df)` | Execute all steps in order |
+| `export_to_airflow()` | Generate Airflow DAG code |
 ```

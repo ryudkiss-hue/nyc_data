@@ -88,14 +88,7 @@ def load_analytics_data(table, _, session, max_rows):
                 df  = ddf.compute()  # back to pandas after Dask processing
             summary = db.df_summary(df)
             return {"records": df.head(2000).to_dict("records"), "summary": summary}, \
-                   dbc.Alert(f"Loaded `{table}` — {len(df):,} rows", color="success", dismissable=True, duration=4000)
-        except Exception as e:
-            return dash.no_update, dbc.Alert(f"❌ {e}", color="danger", dismissable=True)
-
-    return dash.no_update, dash.no_update
-
-
-# ── Render active tab ─────────────────────────────────────────────────────────
+                   dbc.Alert(f"Loaded `{table}` — {len(df):,} rows", color="success",# ── Render active tab ─────────────────────────────────────────────────────────
 @callback(
     Output("analytics-tab-content", "children"),
     Input("analytics-tabs",         "active_tab"),
@@ -103,12 +96,11 @@ def load_analytics_data(table, _, session, max_rows):
     State("theme-store",            "data"),
 )
 def render_tab(active_tab, store, theme):
-    tmpl = {"dark": "plotly_dark", "light": "simple_white", "sepia": "ggplot2"}.get(theme or "dark", "plotly_dark")
-
     if not store or not store.get("records"):
         return dbc.Alert("Load a dataset above to begin.", color="secondary")
 
-    df      = pd.DataFrame(store["records"])
+    import socrata_toolkit.analysis as st_analysis
+    df = pd.DataFrame(store["records"])
     summary = store.get("summary", {})
     num_cols = summary.get("numeric", [])
     cat_cols = summary.get("text", [])
@@ -117,53 +109,41 @@ def render_tab(active_tab, store, theme):
     # ── KPI Dashboard ─────────────────────────────────────────────────────
     if active_tab == "kpi-dashboard":
         metrics = []
-        for c in num_cols[:6]:
-            v = df[c].mean()
-            metrics.append(dbc.Col(html.Div([
-                html.Div(f"{v:,.2f}", className="nyc-metric-value"),
-                html.Div(f"Avg {c}", className="nyc-metric-label"),
-            ], className="nyc-metric"), md=2, sm=4, xs=6, className="mb-3"))
+        for c in num_cols[:4]:
+            val = df[c].mean()
+            metrics.append(dbc.Col(dcc.Graph(
+                figure=st_analysis.gauge_chart(val, title=f"Avg {c.title()}"),
+                config={"displayModeBar": False}
+            ), md=3, className="mb-3"))
 
+        # Completeness gauge
         completeness = round((1 - df.isnull().mean().mean()) * 100, 1)
-        null_df = pd.DataFrame({
-            "column": df.columns,
-            "null_pct": (df.isnull().mean() * 100).round(1),
-        }).sort_values("null_pct", ascending=False)
-        fig_null = px.bar(null_df, x="column", y="null_pct",
-                          title="Null % per Column", template=tmpl, height=280,
-                          color="null_pct", color_continuous_scale="Reds")
-        fig_null.update_layout(margin=dict(l=0, r=0, t=36, b=60),
-                               paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+        metrics.append(dbc.Col(dcc.Graph(
+            figure=st_analysis.gauge_chart(completeness, target=95.0, title="Data Completeness %"),
+            config={"displayModeBar": False}
+        ), md=3, className="mb-3"))
 
         return html.Div([
+            dbc.Row(metrics),
+            html.Div(className="divider-nyc"),
             dbc.Row([
-                dbc.Col(html.Div([html.Div(f"{len(df):,}", className="nyc-metric-value"), html.Div("Rows", className="nyc-metric-label")], className="nyc-metric"), md=2, sm=4, xs=6, className="mb-3"),
-                dbc.Col(html.Div([html.Div(str(len(df.columns)), className="nyc-metric-value"), html.Div("Columns", className="nyc-metric-label")], className="nyc-metric"), md=2, sm=4, xs=6, className="mb-3"),
-                dbc.Col(html.Div([html.Div(f"{completeness}%", className="nyc-metric-value"), html.Div("Completeness", className="nyc-metric-label")], className="nyc-metric"), md=2, sm=4, xs=6, className="mb-3"),
-                dbc.Col(html.Div([html.Div(str(len(num_cols)), className="nyc-metric-value"), html.Div("Numeric Cols", className="nyc-metric-label")], className="nyc-metric"), md=2, sm=4, xs=6, className="mb-3"),
-            ] + metrics),
-            dcc.Graph(figure=fig_null, config={"displayModeBar": False}),
+                dbc.Col(dcc.Graph(figure=st_analysis.bar_chart(df, cat_cols[0], title="Top Categories")), md=6) if cat_cols else None,
+                dbc.Col(dcc.Graph(figure=st_analysis.histogram(df, num_cols[0], title="Value Distribution")), md=6) if num_cols else None,
+            ])
         ])
 
     # ── Time Series ───────────────────────────────────────────────────────
     if active_tab == "time-series":
         if not date_cols:
             return dbc.Alert("No date/time columns detected.", color="warning")
+        
+        # Use high-performance Scattergl time series from toolkit
+        val_col = num_cols[0] if num_cols else None
+        if not val_col: return dbc.Alert("No numeric columns for Y-axis.", color="warning")
+        
+        fig = st_analysis.time_series_chart(df, date_cols[0], val_col)
         return html.Div([
-            dbc.Row([
-                dbc.Col(dcc.Dropdown(id="ts-date-col", options=[{"label": c, "value": c} for c in date_cols],
-                                     value=date_cols[0], clearable=False,
-                                     style={"background": "var(--bg-secondary)"}), md=4),
-                dbc.Col(dcc.Dropdown(id="ts-val-col",
-                                     options=[{"label": c, "value": c} for c in num_cols],
-                                     value=num_cols[0] if num_cols else None,
-                                     placeholder="Value column", style={"background": "var(--bg-secondary)"}), md=4),
-                dbc.Col(dcc.Dropdown(id="ts-freq",
-                                     options=[{"label": f, "value": f} for f in ["D","W","ME","QE","YE"]],
-                                     value="ME", clearable=False, style={"background": "var(--bg-secondary)"}), md=4),
-            ], className="mb-3"),
-            dcc.Loading(dcc.Graph(id="ts-chart", style={"height": "420px"}), type="dot"),
-            dcc.Store(id="ts-df-store", data={"records": df.to_dict("records"), "tmpl": tmpl}),
+            dcc.Graph(figure=fig, style={"height": "600px"}),
         ])
 
     # ── Distribution ──────────────────────────────────────────────────────
@@ -171,56 +151,17 @@ def render_tab(active_tab, store, theme):
         if not num_cols:
             return dbc.Alert("No numeric columns.", color="warning")
         figs = []
-        for c in num_cols[:6]:
-            fig = px.histogram(df, x=c, marginal="box", template=tmpl,
-                               title=c, height=280, nbins=40)
-            fig.update_layout(margin=dict(l=0, r=0, t=36, b=0),
-                              paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                              showlegend=False)
+        for c in num_cols[:4]:
+            fig = st_analysis.histogram(df, c)
             figs.append(dbc.Col(dcc.Graph(figure=fig, config={"displayModeBar": False}), md=6, className="mb-3"))
         return dbc.Row(figs)
 
     # ── Correlation ───────────────────────────────────────────────────────
     if active_tab == "correlation":
-        if len(num_cols) < 2:
-            return dbc.Alert("Need ≥2 numeric columns for correlation.", color="warning")
-        corr = df[num_cols].corr()
-        fig  = px.imshow(corr, text_auto=".2f", color_continuous_scale="RdBu_r",
-                         zmin=-1, zmax=1, title="Correlation Heatmap",
-                         template=tmpl, aspect="auto", height=500)
-        fig.update_layout(margin=dict(l=0, r=0, t=40, b=0), paper_bgcolor="rgba(0,0,0,0)")
-        return dcc.Graph(figure=fig)
+        return dcc.Graph(figure=st_analysis.correlation_heatmap(df))
 
-    # ── Text Analysis ─────────────────────────────────────────────────────
-    if active_tab == "text-analysis":
-        if not cat_cols:
-            return dbc.Alert("No text columns.", color="warning")
-        import re
-        from collections import Counter
-        col  = cat_cols[0]
-        text = " ".join(df[col].dropna().astype(str).str.lower())
-        freq = Counter(re.findall(r"\b[a-z]{4,}\b", text)).most_common(20)
-        wdf  = pd.DataFrame(freq, columns=["word", "count"])
-        fig  = px.bar(wdf, x="count", y="word", orientation="h",
-                      title=f"Top words in '{col}'", template=tmpl, height=400)
-        fig.update_layout(yaxis={"categoryorder": "total ascending"},
-                          margin=dict(l=0, r=0, t=40, b=0), paper_bgcolor="rgba(0,0,0,0)")
-        return dcc.Graph(figure=fig)
-
-    # ── Anomalies ─────────────────────────────────────────────────────────
-    if active_tab == "anomalies":
-        if not num_cols:
-            return dbc.Alert("No numeric columns for anomaly detection.", color="warning")
-        # Z-score method via Dask for parallelism
-        ddf       = dd.from_pandas(df[num_cols].fillna(0), npartitions=4)
-        means     = ddf.mean().compute()
-        stds      = ddf.std().compute()
-        z_scores  = ((df[num_cols] - means) / stds.replace(0, 1)).abs()
-        is_anom   = (z_scores > 3).any(axis=1)
-        anom_df   = df[is_anom].head(200)
-
-        count_fig = go.Figure(go.Indicator(
-            mode="number+delta",
+    return dbc.Alert("Select a tab.", color="secondary")
+="number+delta",
             value=int(is_anom.sum()),
             delta={"reference": 0},
             title={"text": "Anomalous Rows (Z > 3)"},
