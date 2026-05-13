@@ -19,7 +19,7 @@ _lazy_map: Dict[str, str] = {
     "ensure_fts_index": "core:ensure_fts_index",
     "SchemaRegistry": "core:SchemaRegistry",
     "SchemaValidator": "core:SchemaValidator",
-    "search_nyc_datasets": "core:search_datasets",
+    "search_nyc_datasets": "core:search_nyc_datasets",
     "generate_data_dictionary": "core:generate_data_dictionary",
     "SoQLBuilder": "core:SoQLBuilder",
 
@@ -74,7 +74,7 @@ _loaded_cache: Dict[str, object] = {}
 if TYPE_CHECKING:
     from .core import SocrataClient, SocrataConfig, DatasetMetadata, SearchResult  # noqa: F401
     from .analysis import DataProfile, profile_dataframe, quality_report  # noqa: F401
-    from .engineering import compute_sidewalk_kpis, compute_material_aware_kpis, estimate_costs  # noqa: F401
+    from .engineering import compute_material_aware_kpis, estimate_costs  # noqa: F401
     from .spatial import spatial_intersects_join, SpatialIndex  # noqa: F401
     from .pipeline import stream_pipeline, CDCEvent, ExcelWorkbookBuilder  # noqa: F401
     from .governance import GovernanceProcessor, compute_quality_score  # noqa: F401

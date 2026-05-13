@@ -4,9 +4,10 @@ import json
 import logging
 import os
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Generator, Iterable, Optional
+from typing import Any, Callable, Generator, Iterable, Optional, List, Dict
 
 import concurrent.futures
 import duckdb
@@ -25,6 +26,55 @@ class SocrataToolkitError(Exception):
 def get_logger():
     """Get the standard toolkit logger."""
     return logger
+
+# ── Constants ─────────────────────────────────────────────────────────────────
+
+CATALOG_URL = "https://api.us.socrata.com/api/catalog/v1"
+EXT_JSON = ".json"
+EXT_GEOJSON = ".geojson"
+UTF8 = "utf-8"
+LANG_EN = "english"
+HDR_TOKEN = "X-App-Token"
+ENV_TOKEN = "SOCRATA_APP_TOKEN"
+COMPRESSION_SNAPPY = "snappy"
+ENGINE_XL = "openpyxl"
+XL_FREEZE = "A2"
+DEFAULT_DOMAIN = "data.cityofnewyork.us"
+
+# Column names
+COL_LAT = "latitude"
+COL_LON = "longitude"
+COL_BORO = "borough"
+COL_ID = "id"
+COL_AT_ID = "@id"
+COL_COMPLAINT = "complaint_date"
+COL_REPAIR = "repair_date"
+COL_CREATED = "created_date"
+COL_CLOSED = "closed_date"
+
+# Types & Colors
+DTYPE_NUM = "number"
+COLOR_GREEN = "green"
+COLOR_YELLOW = "yellow"
+COLOR_RED = "red"
+
+# Operational Status
+STATUS_TODO = "todo"
+STATUS_PROGRESS = "in_progress"
+STATUS_DONE = "done"
+
+# Priorities
+PRIORITY_CRITICAL = "critical"
+PRIORITY_HIGH = "high"
+PRIORITY_MEDIUM = "medium"
+PRIORITY_LOW = "low"
+PRIORITY_INFO = "info"
+
+# Labels
+LBL_SYSTEM = "system"
+
+# Models
+MODEL_DEFAULT = "gpt-3.5-turbo"
 
 # ── Models ───────────────────────────────────────────────────────────────────
 
@@ -99,7 +149,7 @@ def load_local_config(path: str | None = None) -> dict[str, Any]:
     candidates = [Path(path)] if path else [Path.cwd() / "socrata_toolkit.core.config.json", Path.home() / ".socrata_toolkit.core.config.json"]
     for c in candidates:
         if c and c.exists():
-            return json.loads(c.read_text(encoding="utf-8"))
+            return json.loads(c.read_text(encoding=UTF8))
     return {}
 
 def get_default(config: dict[str, Any], *keys: str, default: Any = None) -> Any:
@@ -118,7 +168,7 @@ def with_retries(fn: Callable[[], requests.Response], retries: int = 3) -> reque
     @retry(
         stop=stop_after_attempt(retries),
         wait=wait_exponential(multiplier=1, min=2, max=10),
-        retry=retry_if_exception_type((requests.exceptions.RequestException, Exception)),
+        retry=retry_if_exception_type(requests.exceptions.RequestException),
         reraise=True
     )
     def _do_call():
@@ -140,12 +190,12 @@ def normalize_formats(values: list[str]) -> list[str]:
 class SocrataClient:
     """Main client for interacting with Socrata SODA APIs."""
     def __init__(self, config: SocrataConfig | None = None) -> None:
-        self.config = config or SocrataConfig(app_token=os.getenv("SOCRATA_APP_TOKEN"))
+        self.config = config or SocrataConfig(app_token=os.getenv(ENV_TOKEN))
 
     def _headers(self) -> dict[str, str]:
         h: dict[str, str] = {}
         if self.config.app_token:
-            h["X-App-Token"] = self.config.app_token
+            h[HDR_TOKEN] = self.config.app_token
         return h
 
     def search(
@@ -186,7 +236,7 @@ class SocrataClient:
         return results
 
     def get_metadata(self, domain: str, fourfour: str) -> DatasetMetadata:
-        url = f"https://{domain}/api/views/{fourfour}.json"
+        url = f"https://{domain}/api/views/{fourfour}{EXT_JSON}"
         resp = with_retries(lambda: requests.get(url, headers=self._headers(), timeout=self.config.timeout))
         payload = resp.json()
         return DatasetMetadata(
@@ -214,7 +264,7 @@ class SocrataClient:
             if q:
                 params["$q"] = q
 
-            url = f"https://{domain}/resource/{fourfour}.json"
+            url = f"https://{domain}/resource/{fourfour}{EXT_JSON}"
             resp = with_retries(lambda: requests.get(url, params=params, headers=self._headers(), timeout=self.config.timeout))
             batch = resp.json()
             if not batch:
@@ -280,7 +330,7 @@ class SocrataClient:
             params: dict[str, Any] = {"$limit": limit, "$offset": offset}
             if where:
                 params["$where"] = where
-            url = f"https://{domain}/resource/{fourfour}.geojson"
+            url = f"https://{domain}/resource/{fourfour}{EXT_GEOJSON}"
             resp = with_retries(lambda: requests.get(url, params=params, headers=self._headers(), timeout=self.config.timeout))
             fc = resp.json()
             batch = fc.get("features", [])
@@ -296,12 +346,15 @@ class SocrataClient:
         return {"type": "FeatureCollection", "features": features}
 
     def fetch_since(self, domain: str, fourfour: str, updated_col: str, since: str, **kwargs: Any):
+        """Fetch records updated after a given timestamp."""
         where = kwargs.pop("where", None)
         clause = f"{updated_col} > '{since}'"
         if where:
             where = f"({where}) AND ({clause})"
         else:
             where = clause
+        return self.fetch_json(domain, fourfour, where=where, **kwargs)
+
     def search_datasets(self, query: str, limit: int = 10, offset: int = 0) -> pd.DataFrame:
         """Search the Socrata catalog using keyword search."""
         params = {"q": query, "limit": limit, "offset": offset}
@@ -338,6 +391,13 @@ class SoQLBuilder:
         self._limit: int | None = None
         self._offset: int | None = None
         self._q: str | None = None
+        self._having: list[str] = []
+        self._variables: dict[str, Any] = {}
+
+    def set_variable(self, name: str, value: Any) -> SoQLBuilder:
+        """Set a variable for substitution."""
+        self._variables[name] = value
+        return self
 
     def select(self, *columns: str) -> SoQLBuilder:
         """Specify columns to return ($select)."""
@@ -390,25 +450,39 @@ class SoQLBuilder:
         self._q = query
         return self
 
+    def having(self, *clauses: str) -> SoQLBuilder:
+        """Add grouped filtering conditions ($having)."""
+        self._having.extend(clauses)
+        return self
+
+    def _apply_variables(self, text: str) -> str:
+        """Substitute {{var}} with values."""
+        import re
+        for k, v in self._variables.items():
+            text = text.replace(f"{{{{{k}}}}}", str(v))
+        return text
+
     def build(self) -> dict[str, str]:
         """Build the parameters dictionary for SocrataClient."""
         params: dict[str, str] = {}
-        if self._select: params["select"] = ", ".join(self._select)
-        if self._where: params["where"] = " AND ".join(f"({c})" for c in self._where)
-        if self._order: params["order"] = ", ".join(self._order)
-        if self._group: params["group"] = ", ".join(self._group)
-        if self._limit: params["max_rows"] = self._limit  # SocrataClient uses max_rows for limit
-        if self._offset: params["offset"] = self._offset
-        if self._q: params["q"] = self._q
+        if self._select: params["select"] = self._apply_variables(", ".join(self._select))
+        if self._where: params["where"] = self._apply_variables(" AND ".join(f"({c})" for c in self._where))
+        if self._order: params["order"] = self._apply_variables(", ".join(self._order))
+        if self._group: params["group"] = self._apply_variables(", ".join(self._group))
+        if self._having: params["having"] = self._apply_variables(" AND ".join(f"({c})" for c in self._having))
+        if self._limit: params["limit"] = str(self._limit)
+        if self._offset is not None: params["offset"] = str(self._offset)
+        if self._q: params["q"] = self._apply_variables(self._q)
         return params
 
     def build_query_string(self) -> str:
         """Build a raw SoQL query string ($query)."""
         parts = []
-        if self._select: parts.append(f"SELECT {', '.join(self._select)}")
-        if self._where: parts.append(f"WHERE {' AND '.join(f'({c})' for c in self._where)}")
-        if self._group: parts.append(f"GROUP BY {', '.join(self._group)}")
-        if self._order: parts.append(f"ORDER BY {', '.join(self._order)}")
+        if self._select: parts.append(f"SELECT {self._apply_variables(', '.join(self._select))}")
+        if self._where: parts.append(f"WHERE {self._apply_variables(' AND '.join(f'({c})' for c in self._where))}")
+        if self._group: parts.append(f"GROUP BY {self._apply_variables(', '.join(self._group))}")
+        if self._having: parts.append(f"HAVING {self._apply_variables(' AND '.join(f'({c})' for c in self._having))}")
+        if self._order: parts.append(f"ORDER BY {self._apply_variables(', '.join(self._order))}")
         if self._limit: parts.append(f"LIMIT {self._limit}")
         if self._offset: parts.append(f"OFFSET {self._offset}")
         return " ".join(parts)
@@ -451,8 +525,24 @@ class SchemaRegistry:
         self.storage_dir.mkdir(parents=True, exist_ok=True)
 
     def register_schema(self, schema: DatasetSchema):
-        path = self.storage_dir / f"{schema.dataset_id}_v{schema.version}.json"
+        path = self.storage_dir / f"{schema.dataset_id}_v{schema.version}{EXT_JSON}"
         path.write_text(json.dumps(asdict(schema), default=str))
+
+class SchemaValidator:
+    """Validates dataframes against a defined schema."""
+    def __init__(self, schema: dict[str, str]):
+        self.schema = schema
+    def validate(self, df: pd.DataFrame) -> list[str]:
+        errors = []
+        for col, dtype in self.schema.items():
+            if col not in df.columns: errors.append(f"Missing: {col}")
+        return errors
+
+def search_nyc_datasets(query: str, domain: str = DEFAULT_DOMAIN, limit: int = 10) -> pd.DataFrame:
+    """Convenience function for searching NYC datasets."""
+    client = SocrataClient()
+    results = client.search(query=query, domain=domain, limit=limit)
+    return pd.DataFrame([asdict(r) for r in results])
 
 def generate_data_dictionary(df: pd.DataFrame) -> List[Dict[str, Any]]:
     """Generate a data dictionary from a DataFrame."""
@@ -505,7 +595,8 @@ class DuckDBManager:
             logger.info(f"Connecting to DuckDB at {self.db_path}")
             self._conn = duckdb.connect(self.db_path)
             try:
-                self._conn.execute("INSTALL spatial; LOAD spatial;")
+                self._conn.execute("INSTALL spatial;")
+                self._conn.execute("LOAD spatial;")
                 logger.info("DuckDB 'spatial' extension loaded.")
             except Exception as e:
                 logger.warning(f"Could not load DuckDB spatial extension: {e}")
@@ -559,11 +650,11 @@ class XLSXExporter:
     """Simple Excel writer for data distribution."""
     def write(self, data: pd.DataFrame | list[dict[str, Any]], path: str, sheet: str = "Data", meta: Any = None, freeze_panes: bool = True, auto_filter: bool = True) -> None:
         df = data if isinstance(data, pd.DataFrame) else pd.DataFrame(data)
-        with pd.ExcelWriter(path, engine="openpyxl") as writer:
+        with pd.ExcelWriter(path, engine=ENGINE_XL) as writer:
             df.to_excel(writer, sheet_name=sheet, index=False)
             ws = writer.book[sheet]
             if freeze_panes:
-                ws.freeze_panes = "A2"
+                ws.freeze_panes = XL_FREEZE
             if auto_filter:
                 ws.auto_filter.ref = ws.dimensions
             if meta is not None:
@@ -572,7 +663,7 @@ class XLSXExporter:
 
 class ParquetExporter:
     """High-performance Parquet writer."""
-    def write(self, data: pd.DataFrame | list[dict[str, Any]], path: str, compression: str = "snappy") -> None:
+    def write(self, data: pd.DataFrame | list[dict[str, Any]], path: str, compression: str = COMPRESSION_SNAPPY) -> None:
         df = data if isinstance(data, pd.DataFrame) else pd.DataFrame(data)
         df.to_parquet(path, compression=compression, index=False)
 

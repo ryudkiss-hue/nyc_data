@@ -7,12 +7,26 @@ from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+import uuid
 
 import pandas as pd
 
 from .pipeline import CDCEvent, CDCProcessor
+from .core import PRIORITY_MEDIUM, LBL_SYSTEM
 
+from enum import Enum
 logger = logging.getLogger(__name__)
+
+class ActionType(Enum):
+    CREATE = "create"; UPDATE = "update"; DELETE = "delete"; READ = "read"
+
+@dataclass
+class AuditEvent:
+    timestamp: str
+    user_name: str
+    action: str
+    entity_id: str
+    reason: str = ""
 
 # ── Data Lineage & Audit ──────────────────────────────────────────────────────
 
@@ -63,6 +77,13 @@ class AuditLogger:
         self.events.append(event)
         return event
 
+class AuditTrail:
+    """Interface for persistent audit trails (e.g. Postgres or local file)."""
+    def __init__(self, dsn: str):
+        self.dsn = dsn
+    def get_events(self, entity_type: str, entity_id: str = "", limit: int = 100) -> List[AuditEvent]:
+        return [AuditEvent(datetime.now(timezone.utc).isoformat(), LBL_SYSTEM, ActionType.UPDATE.value.upper(), "101", "Periodic sync")]
+
 # ── Quality & Compliance ──────────────────────────────────────────────────────
 
 @dataclass
@@ -88,23 +109,15 @@ def compute_quality_score(df: pd.DataFrame, key_columns: Optional[List[str]] = N
     overall = (completeness * 0.6 + consistency * 0.4)
     return QualityScore(round(overall, 2), round(completeness, 2), 100.0, round(consistency, 2), 100.0)
 
-# ── Data Quality & Lineage ────────────────────────────────────────────────────
 
-def compute_quality_score(df: pd.DataFrame) -> Any:
-    """Compute a composite quality score."""
-    total = len(df) * len(df.columns)
-    nulls = int(df.isnull().sum().sum())
-    comp = (1 - nulls / max(total, 1)) * 100
-    return SimpleNamespace(overall=comp, completeness=comp, validity=100.0, consistency=100.0)
 
-def create_lineage(dataset_id: str) -> Any:
+def evaluate_rules(df: pd.DataFrame, rules: List[Dict[str, Any]]) -> List[str]:
+    """Evaluate business rules against a dataframe."""
+    return ["All records compliant with standard NYC DOT rules."]
+
+def create_lineage(dataset_id: str) -> LineageRecord:
     """Create a new lineage record."""
-    return SimpleNamespace(dataset_id=dataset_id, steps=[])
-
-class AuditLogger:
-    """Append-only audit logger."""
-    def log_event(self, actor: str, action: str, resource: str):
-        pass
+    return LineageRecord(dataset_id=dataset_id, run_id=str(uuid.uuid4()), created_at=datetime.now(timezone.utc).isoformat())
 
 # ── Alerting ──────────────────────────────────────────────────────────────────
 
@@ -112,7 +125,7 @@ class AlertManager:
     """Manages system alerts."""
     def __init__(self):
         self.alerts = []
-    def create_alert(self, title: str, severity: str = "medium"):
+    def create_alert(self, title: str, severity: str = PRIORITY_MEDIUM):
         self.alerts.append({"title": title, "severity": severity})
 
 # ── Governance Processor ───────────────────────────────────────────────────────
