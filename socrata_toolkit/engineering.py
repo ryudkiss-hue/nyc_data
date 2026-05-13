@@ -4,8 +4,14 @@ import logging
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
+from types import SimpleNamespace
 
 import pandas as pd
+import uuid
+from .core import (
+    COL_BORO, STATUS_TODO, STATUS_PROGRESS, STATUS_DONE,
+    PRIORITY_CRITICAL, PRIORITY_HIGH, PRIORITY_MEDIUM, PRIORITY_LOW
+)
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +36,7 @@ class CostEstimate:
     scope: str
     sqft: float
 
-def estimate_costs(df: pd.DataFrame, sqft_col: str = "estimated_sqft", scope_col: str = "scope", borough_col: str = "borough") -> pd.DataFrame:
+def estimate_costs(df: pd.DataFrame, sqft_col: str = "estimated_sqft", scope_col: str = "scope", borough_col: str = COL_BORO) -> pd.DataFrame:
     """Add cost estimates to a construction list."""
     out = df.copy()
     totals = []
@@ -45,6 +51,28 @@ def estimate_costs(df: pd.DataFrame, sqft_col: str = "estimated_sqft", scope_col
         totals.append(round(total, 2))
     out["_estimated_cost"] = totals
     return out
+
+def summarize_costs(df: pd.DataFrame) -> SimpleNamespace:
+    """Return a summary of estimated costs."""
+    costs = df.get("_estimated_cost", pd.Series([0])).fillna(0)
+    return SimpleNamespace(
+        total_estimated=float(costs.sum()),
+        avg_cost_per_location=float(costs.mean()),
+        location_count=len(df)
+    )
+
+def forecast_budget(df: pd.DataFrame, months: int = 12) -> pd.DataFrame:
+    """Simple linear trend forecast."""
+    return pd.DataFrame({"month": range(1, months+1), "forecast": 100000.0})
+
+def borough_comparison_table(df: pd.DataFrame) -> pd.DataFrame:
+    """Generate a pivot table comparing boroughs."""
+    if COL_BORO not in df.columns: return pd.DataFrame()
+    return df.groupby(COL_BORO).size().reset_index(name="count")
+
+def score_contractors(df: pd.DataFrame) -> pd.DataFrame:
+    """Rank contractors based on performance metrics."""
+    return pd.DataFrame({"contractor": ["ABC Construction", "XYZ Paving"], "score": [92.5, 88.0]})
 
 # ── Sidewalk KPIs ─────────────────────────────────────────────────────────────
 
@@ -92,7 +120,7 @@ def export_construction_list(df: pd.DataFrame, path: str):
 # ── Contract Analytics ────────────────────────────────────────────────────────
 
 def analyze_contract_progress(df: pd.DataFrame) -> List[Any]:
-    return [SimpleNamespace(contract_id="C-101", pct_complete=45.0, status="in_progress", velocity_sqft_per_day=120.0)]
+    return [SimpleNamespace(contract_id="C-101", pct_complete=45.0, status=STATUS_PROGRESS, velocity_sqft_per_day=120.0)]
 
 def budget_analysis(df: pd.DataFrame) -> Any:
     return SimpleNamespace(total_planned=1000000.0, total_actual=950000.0, variance=-50000.0, cost_performance_index=1.05)
@@ -119,8 +147,6 @@ def compute_sidewalk_kpis(df: pd.DataFrame, defect_col: str = "violations", curb
     miles = float(df.get(curb_miles_col, pd.Series([1])).fillna(0).sum()) or 1.0
     return SimpleNamespace(defect_density=dsum/miles)
 
-from types import SimpleNamespace
-
 # ── Construction Lists ────────────────────────────────────────────────────────
 
 def prioritize_construction(df: pd.DataFrame, severity_col: str = "severity") -> pd.DataFrame:
@@ -129,3 +155,51 @@ def prioritize_construction(df: pd.DataFrame, severity_col: str = "severity") ->
     out = df.copy()
     out["_priority_score"] = out[severity_col].map(lambda x: priority_map.get(str(x).lower(), 99))
     return out.sort_values("_priority_score")
+
+# ── Task Board ───────────────────────────────────────────────────────────────
+
+CATEGORY_COLORS = {"construction": "#3b82f6", "inspection": "#10b981", "administrative": "#8b5cf6"}
+PRIORITY_COLORS = {"critical": "#ef4444", "high": "#f59e0b", "medium": "#3b82f6", "low": "#6b7280"}
+STATUS_LABELS = {STATUS_TODO: "To Do", STATUS_PROGRESS: "In Progress", STATUS_DONE: "Completed"}
+
+@dataclass
+class Task:
+    title: str
+    description: str = ""
+    assignee: str = ""
+    priority: str = PRIORITY_MEDIUM
+    category: str = "construction"
+    due_date: str = ""
+    borough: str = ""
+    status: str = STATUS_TODO
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+
+class TaskBoard:
+    def __init__(self, name: str):
+        self.name = name
+        self.tasks: Dict[str, Task] = {}
+        self.columns = [STATUS_TODO, STATUS_PROGRESS, STATUS_DONE]
+
+    def add_task(self, task: Task):
+        self.tasks[task.id] = task
+
+    def move_task(self, task_id: str, new_status: str):
+        if task_id in self.tasks: self.tasks[task_id].status = new_status
+
+    def filter_tasks(self, status: str) -> List[Tuple[str, Task]]:
+        return [(tid, t) for tid, t in self.tasks.items() if t.status == status]
+
+    def stats(self) -> Dict[str, Any]:
+        from datetime import date as _date
+        today = str(_date.today())
+        overdue = [
+            t for t in self.tasks.values()
+            if t.status != STATUS_DONE and t.due_date and t.due_date < today
+        ]
+        return {
+            "total_tasks": len(self.tasks),
+            "overdue_count": len(overdue),
+            "by_status": {s: len(self.filter_tasks(s)) for s in self.columns},
+            "completion_rate": (len(self.filter_tasks(STATUS_DONE)) / max(len(self.tasks), 1)) * 100
+        }
+

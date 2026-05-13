@@ -3,17 +3,21 @@ from __future__ import annotations
 import csv
 import json
 import logging
-import os
 import tempfile
 import uuid
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, asdict
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple, Iterable
+from typing import Any, Callable, Dict, List, Optional, Tuple
+from types import SimpleNamespace
 
 import pandas as pd
 
-from .core import SocrataClient, DuckDBExporter, DuckDBManager
+from .core import (
+    SocrataClient, DuckDBExporter, DuckDBManager, 
+    DEFAULT_DOMAIN, UTF8, COL_ID, COL_AT_ID, COL_LAT, COL_LON, COL_BORO,
+    ENGINE_XL, XL_FREEZE
+)
 
 logger = logging.getLogger(__name__)
 
@@ -38,20 +42,20 @@ class CDCProcessor:
     """Processes and stores CDC events."""
     def __init__(self, dsn: str | None = None):
         self.dsn = dsn
-    
+
     def process_event(self, event: CDCEvent):
         logger.debug(f"Processing CDC event: {event.event_id} ({event.operation})")
-        # In-memory or DuckDB storage could go here if DSN is not Postgres
-        pass
 
 # ── 311 Ingestion ─────────────────────────────────────────────────────────────
 
-def ingest_311_complaints(max_rows: int = 1000) -> Any:
-    """Fetch and triage 311 complaints."""
+def ingest_311_complaints(max_rows: int = 1000, borough: str | None = None) -> Any:
+    """Fetch and triage 311 complaints, optionally filtered by borough."""
     from .core import SocrataClient
     client = SocrataClient()
-    df = client.fetch_dataframe("data.cityofnewyork.us", "erm2-nwe9", max_rows=max_rows)
-    return SimpleNamespace(total=len(df), critical_count=0, data=df)
+    df = client.fetch_dataframe(DEFAULT_DOMAIN, "erm2-nwe9", max_rows=max_rows)
+    if borough and COL_BORO in df.columns:
+        df = df[df[COL_BORO].str.upper() == borough.upper()]
+    return SimpleNamespace(total=len(df), critical_count=0, data=df, df=df)
 
 # ── Data Engineering ──────────────────────────────────────────────────────────
 
@@ -59,21 +63,42 @@ def deduplicate_dataframe(df: pd.DataFrame, subset: List[str] | None = None) -> 
     """Remove duplicate rows."""
     return df.drop_duplicates(subset=subset)
 
-def detect_changes(old_df: pd.DataFrame, new_df: pd.DataFrame, key: str) -> Any:
-    """Detect added, deleted, or modified rows."""
-    return SimpleNamespace(added=pd.DataFrame(), deleted=pd.DataFrame(), modified=pd.DataFrame())
+def detect_changes(old_df: pd.DataFrame, new_df: pd.DataFrame, key: str | List[str]) -> Any:
+    """Detect added, deleted, or modified rows between two dataframes."""
+    merged = old_df.merge(new_df, on=key, how="outer", indicator="_merge", suffixes=("_old", "_new"))
 
-# ── Reporting ─────────────────────────────────────────────────────────────────
+    added = merged[merged["_merge"] == "right_only"].drop(columns=["_merge"])
+    deleted = merged[merged["_merge"] == "left_only"].drop(columns=["_merge"])
 
-def generate_program_report(df: pd.DataFrame, path: str):
-    """Generate a high-level program report."""
-    df.to_csv(path, index=False)
+    # For modified rows, compare paired _old/_new columns value-by-value
+    both = merged[merged["_merge"] == "both"].drop(columns=["_merge"])
+    old_cols = [c for c in both.columns if c.endswith("_old")]
+    new_cols = [c.replace("_old", "_new") for c in old_cols if c.replace("_old", "_new") in both.columns]
+    if old_cols and new_cols:
+        # Compare element-wise; treat NaN == NaN as equal
+        old_vals = both[old_cols].fillna("__NA__").values
+        new_vals = both[new_cols].fillna("__NA__").values
+        diff_mask = (old_vals != new_vals).any(axis=1)
+        modified = both[diff_mask]
+    else:
+        modified = pd.DataFrame()
+
+    return SimpleNamespace(
+        added=added,
+        deleted=deleted,
+        modified=modified,
+        added_count=len(added),
+        removed_count=len(deleted),
+        modified_count=len(modified)
+    )
+
+# Reporting logic moved to analysis.py
 
 # ── Data Integration ──────────────────────────────────────────────────────────
 
 def join_datasets(left_df: pd.DataFrame, right_df: pd.DataFrame, on: str | List[str], how: str = 'inner', suffixes: Tuple[str, str] = ('_left', '_right')) -> pd.DataFrame:
     """Join two datasets using pandas merge."""
-    return pd.merge(left_df, right_df, on=on, how=how, suffixes=suffixes)
+    return pd.merge(left_df, right_df, on=on, how=how, suffixes=suffixes, validate=None)
 
 def sync_dataset(domain: str, fourfour: str, db_path: str, table_name: str, updated_col: str, token: str = "") -> int:
     """
@@ -90,26 +115,26 @@ def sync_dataset(domain: str, fourfour: str, db_path: str, table_name: str, upda
         res = manager.query(f'SELECT max("{updated_col}") FROM "{table_name}"').fetchone()
         if res and res[0]:
             last_updated = res[0]
-            if isinstance(last_updated, datetime):
+            # Convert to string if it's a datetime object
+            if hasattr(last_updated, "isoformat"):
                 last_updated = last_updated.isoformat()
     except Exception as e:
-        logger.warning(f"Could not get last update time for {table_name}: {e}")
+        logger.info(f"Initializing table {table_name} for first-time sync.")
 
-    # 2. Fetch new rows
-    where = None
-    if last_updated:
-        where = f"{updated_col} > '{last_updated}'"
+    # 2. Fetch rows (incremental if possible)
+    where = f"{updated_col} > '{last_updated}'" if last_updated else None
     
-    df = client.parallel_fetch(domain, fourfour, limit=50000) # Default limit for sync
-    if where:
-        # Re-fetch with filter if possible, or filter locally if parallel_fetch doesn't support where yet
-        # For now, let's assume we want to re-implement a filtered fetch
-        params = {"$where": where}
-        rows = []
+    # Fetch using JSON stream for efficiency with potential where clause
+    rows = []
+    try:
         for batch in client.fetch_json(domain, fourfour, where=where):
             rows.extend(batch)
-        df = pd.DataFrame(rows)
+    except Exception as e:
+        logger.exception(f"Sync fetch failed: {e}")
+        manager.close()
+        return 0
 
+    df = pd.DataFrame(rows)
     if df.empty:
         manager.close()
         return 0
@@ -117,19 +142,69 @@ def sync_dataset(domain: str, fourfour: str, db_path: str, table_name: str, upda
     # 3. Upsert to DuckDB
     from .core import DuckDBRepository
     repo = DuckDBRepository(manager, table_name)
-    # We need a primary key/conflict column. If not specified, we'll try to find one or just append.
-    # For now, let's assume 'id' or '@id' is the conflict column.
-    pk = "id" if "id" in df.columns else ("@id" if "@id" in df.columns else None)
+    
+    # Identify primary key for upsert
+    pk = COL_ID if COL_ID in df.columns else (COL_AT_ID if COL_AT_ID in df.columns else None)
     
     if pk:
         count = repo.upsert_dataframe(df, pk)
     else:
+        # Fallback: create or append without a PK
+        existing_tables = manager.conn.execute("SHOW TABLES").fetchall()
+        table_exists = any(t[0] == table_name for t in existing_tables)
         manager.conn.register("temp_df", df)
-        manager.query(f'INSERT INTO "{table_name}" SELECT * FROM temp_df')
+        if table_exists:
+            manager.query(f'INSERT INTO "{table_name}" SELECT * FROM temp_df')
+        else:
+            manager.conn.execute(f'CREATE TABLE "{table_name}" AS SELECT * FROM temp_df')
         count = len(df)
-    
+
     manager.close()
     return count
+
+def create_pivot_table(df: pd.DataFrame, index: str, columns: str, values: str, aggfunc: str = "mean") -> pd.DataFrame:
+    """Create a pivot table using pandas."""
+    return df.pivot_table(index=index, columns=columns, values=values, aggfunc=aggfunc)
+
+def vlookup(df: pd.DataFrame, other_df: pd.DataFrame, left_on: str, right_on: str, col: str) -> pd.DataFrame:
+    """Simulate Excel VLOOKUP by merging and extracting a single column."""
+    merged = df.merge(other_df[[right_on, col]], left_on=left_on, right_on=right_on, how="left")
+    return merged
+
+def create_presentation(df: pd.DataFrame, title: str):
+    """Simulate PowerPoint generation by saving an info file."""
+    Path("outputs/reports").mkdir(parents=True, exist_ok=True)
+    (Path("outputs/reports") / "presentation_info.txt").write_text(f"Presentation: {title}\nRows: {len(df)}")
+
+class SQLQueryBuilder:
+    """Builder for generating SQL queries from dataframes."""
+    def __init__(self, df: pd.DataFrame, table_name: str):
+        self.df = df
+        self.table_name = table_name
+    def build(self) -> str: return f"SELECT * FROM {self.table_name}"
+
+def dataframe_to_create_table(df: pd.DataFrame, table_name: str) -> str:
+    """Generate a SQL CREATE TABLE statement."""
+    cols = [f"{c} TEXT" for c in df.columns]
+    return f"CREATE TABLE {table_name} ({', '.join(cols)});"
+
+def postgis_add_geom(manager: DuckDBManager, table_name: str, lat_col: str, lon_col: str):
+    manager.conn.execute(f"UPDATE {table_name} SET geom = ST_Point({lon_col}, {lat_col}) WHERE geom IS NULL;")
+
+def compute_hotspots(df: pd.DataFrame, lat_col: str = COL_LAT, lon_col: str = COL_LON, borough: str | None = None) -> pd.DataFrame:
+    """Return a dataframe of density hotspots."""
+    out = df.copy()
+    if borough and COL_BORO in out.columns:
+        out = out[out[COL_BORO].str.upper() == borough.upper()]
+    return out
+
+def export_as_sql_file(sql: str, path: str):
+    """Save SQL string to a file."""
+    Path(path).write_text(sql)
+
+def export_graph(df: pd.DataFrame, path: str):
+    """Simulate graph export (e.g. for Gephi or NetworkX)."""
+    df.to_csv(path, index=False)
 
 # ── Streaming Pipeline ────────────────────────────────────────────────────────
 
@@ -169,7 +244,7 @@ def stream_pipeline(
 
         if targets.get("xlsx", {}).get("enabled"):
             jsonl_path = Path(tempfile.gettempdir()) / f"{fourfour}_backup.jsonl"
-            jsonl_f = open(jsonl_path, "w", encoding="utf-8")
+            jsonl_f = open(jsonl_path, "w", encoding=UTF8)
 
         for batch in client.fetch_json(domain, fourfour, max_rows=max_rows):
             if not batch: continue
@@ -181,7 +256,7 @@ def stream_pipeline(
                         event_id=str(uuid.uuid4()),
                         source_dataset=fourfour,
                         operation="INSERT",
-                        record_id=str(row.get("id", row.get("@id", uuid.uuid4()))),
+                        record_id=str(row.get(COL_ID, row.get(COL_AT_ID, uuid.uuid4()))),
                         timestamp_ms=int(datetime.now(timezone.utc).timestamp() * 1000),
                         after=row,
                         metadata={"source_domain": domain},
@@ -210,12 +285,18 @@ class ExcelWorkbookBuilder:
     def __init__(self):
         self.sheets: List[Tuple[str, pd.DataFrame, Dict[str, Any]]] = []
 
-    def add_data_sheet(self, name: str, df: pd.DataFrame, freeze_panes: str = "A2") -> ExcelWorkbookBuilder:
+    def add_data_sheet(self, name: str, df: pd.DataFrame, freeze_panes: str = XL_FREEZE) -> ExcelWorkbookBuilder:
         self.sheets.append((name, df, {"freeze_panes": freeze_panes}))
         return self
 
+    def add_pivot_sheet(self, name: str, df: pd.DataFrame, index: str | None = None, columns: str | None = None, values: str | None = None, rows: str | None = None) -> ExcelWorkbookBuilder:
+        idx = index or rows
+        pivot = df.pivot_table(index=idx, columns=columns, values=values)
+        self.sheets.append((name, pivot.reset_index(), {}))
+        return self
+
     def save(self, path: str):
-        with pd.ExcelWriter(path, engine="openpyxl") as writer:
+        with pd.ExcelWriter(path, engine=ENGINE_XL) as writer:
             for name, df, opts in self.sheets:
                 df.to_excel(writer, sheet_name=name, index=False)
                 ws = writer.book[name]
