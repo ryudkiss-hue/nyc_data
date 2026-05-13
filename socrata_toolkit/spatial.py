@@ -1,199 +1,90 @@
+# coding=utf-8
+"""
+Spatial utilities for the NYC Open Data / Socrata ingestion toolkit.
+"""
 from __future__ import annotations
-
-import logging
-from dataclasses import dataclass, field
-from typing import Any, Iterable, List
-from types import SimpleNamespace
-
-import pandas as pd
-from .core import COL_LAT, COL_LON, COL_BORO
-
-logger = logging.getLogger(__name__)
+from dataclasses import dataclass
+from typing import Any, Iterable, Sequence
 
 try:
-    from shapely.geometry import shape, Point
-    import shapely.wkt as wkt
+    from shapely.geometry import shape as shapely_shape
+    from shapely.geometry.base import BaseGeometry
+    from shapely.ops import unary_union
+    from shapely.wkt import loads as load_wkt
+    SHAPELY_AVAILABLE = True
 except ImportError:
-    shape = None
-    Point = None
-    wkt = None
+    shapely_shape = None
+    BaseGeometry = object
+    unary_union = None
+    load_wkt = None
+    SHAPELY_AVAILABLE = False
 
-# ── Spatial Indexing ──────────────────────────────────────────────────────────
+class SpatialDependencyError(ImportError):
+    """Raised when a spatial operation requires Shapely."""
 
-@dataclass
-class SpatialIndex:
-    """Minimal in-memory spatial index for small datasets."""
-    features: list = field(default_factory=list)
+@dataclass(slots=True)
+class BoundingBox:
+    """Represents a geometry bounding box."""
+    min_x: float
+    min_y: float
+    max_x: float
+    max_y: float
+    def as_tuple(self) -> tuple[float, float, float, float]:
+        return (self.min_x, self.min_y, self.max_x, self.max_y)
 
-    def index(self, features: Iterable[dict]):
-        self.features = list(features)
+def require_shapely() -> None:
+    if not SHAPELY_AVAILABLE:
+        raise SpatialDependencyError("Shapely is required for spatial operations.")
 
-    def query_point(self, lat: float, lon: float) -> list[dict]:
-        if shape is None: raise ImportError("Install shapely for spatial support.")
-        pt = Point(lon, lat)
-        return [f for f in self.features if shape(f["geometry"]).contains(pt)]
+def is_geojson_geometry(value: Any) -> bool:
+    if not isinstance(value, dict):
+        return False
+    return isinstance(value.get("type"), str) and value.get("coordinates") is not None
 
-# ── Spatial Joins ─────────────────────────────────────────────────────────────
+def parse_geojson_geometry(geometry: dict[str, Any]) -> BaseGeometry:
+    require_shapely()
+    if not is_geojson_geometry(geometry):
+        raise ValueError("Invalid GeoJSON geometry.")
+    return shapely_shape(geometry)
 
-def _to_geom(value: Any):
-    if value is None: return None
-    if isinstance(value, dict): return shape(value)
-    if isinstance(value, str):
-        if value.startswith("{"):
-            import json
-            return shape(json.loads(value))
-        return wkt.loads(value)
-    return None
+def parse_wkt_geometry(wkt_value: str) -> BaseGeometry:
+    require_shapely()
+    if not isinstance(wkt_value, str):
+        raise ValueError("WKT value must be a string.")
+    return load_wkt(wkt_value)
 
-def cluster_locations(df: pd.DataFrame, lat_col: str, lon_col: str, n_clusters: int = 5) -> pd.DataFrame:
-    """Cluster locations using KMeans."""
-    try:
-        from sklearn.cluster import KMeans
-        out = df.copy()
-        X = out[[lat_col, lon_col]].fillna(0)
-        kmeans = KMeans(n_clusters=n_clusters, n_init=10, random_state=42)
-        out["cluster"] = kmeans.fit_predict(X)
-        return out
-    except ImportError:
-        logger.warning("scikit-learn not installed, clustering disabled.")
-        return df
+def geometry_bounds(geometry: BaseGeometry) -> BoundingBox:
+    min_x, min_y, max_x, max_y = geometry.bounds
+    return BoundingBox(min_x=min_x, min_y=min_y, max_x=max_x, max_y=max_y)
 
-class SpatialVisualization:
-    """Visualization helpers for spatial data using high-performance Mapbox traces."""
-    def __init__(self, df: pd.DataFrame):
-        self.df = df
+def geometry_area(geometry: BaseGeometry) -> float:
+    return float(geometry.area)
 
-    def _apply_map_layout(self, fig: Any, title: str) -> Any:
-        from .analysis import _apply_modern_layout
-        fig = _apply_modern_layout(fig, title)
-        fig.update_layout(
-            mapbox=dict(
-                style="carto-darkmatter", # Open source alternative to Mapbox styles
-                zoom=10,
-                center=dict(lat=40.7128, lon=-74.0060),
-            ),
-            margin=dict(t=80, l=0, r=0, b=0),
-        )
-        return fig
+def geometry_length(geometry: BaseGeometry) -> float:
+    return float(geometry.length)
 
-    def plot_heatmap(self, lat_col: str = COL_LAT, lon_col: str = COL_LON, title: str = "Spatial Density Hotspots"):
-        """Create a density heatmap (Plotly Reference: Densitymapbox)."""
-        import plotly.graph_objects as go
-        
-        fig = go.Figure(go.Densitymapbox(
-            lat=self.df[lat_col],
-            lon=self.df[lon_col],
-            z=[1]*len(self.df),
-            radius=12,
-            colorscale="Viridis",
-            hovertemplate="<b>Location</b><br>Lat: %{lat:.4f}<br>Lon: %{lon:.4f}<extra></extra>"
-        ))
-        return self._apply_map_layout(fig, title)
+def geometry_centroid(geometry: BaseGeometry) -> tuple[float, float]:
+    centroid = geometry.centroid
+    return (float(centroid.x), float(centroid.y))
 
-    def plot_scatter_map(self, lat_col: str = COL_LAT, lon_col: str = COL_LON, color_col: str | None = None, title: str = "Geospatial Point Map"):
-        """Create a scatter map with optimized markers (Plotly Reference: Scattermapbox)."""
-        import plotly.express as px
-        
-        fig = px.scatter_mapbox(
-            self.df, 
-            lat=lat_col, 
-            lon=lon_col, 
-            color=color_col,
-            size_max=15,
-            zoom=10,
-        )
-        
-        fig.update_traces(
-            marker=dict(size=8, opacity=0.8),
-            unselected=dict(marker=dict(opacity=0.2)),
-            hovertemplate="<b>Segment ID: %{customdata[0]}</b><br>Lat: %{lat:.4f}<br>Lon: %{lon:.4f}<extra></extra>"
-        )
-        return self._apply_map_layout(fig, title)
+def union_geometries(geometries: Sequence[BaseGeometry]) -> BaseGeometry:
+    require_shapely()
+    if not geometries:
+        raise ValueError("No geometries supplied.")
+    return unary_union(geometries)
 
-def spatial_intersects_join(left: pd.DataFrame, right: pd.DataFrame, left_geom: str, right_geom: str, buffer_meters: float = 0.0) -> pd.DataFrame:
-    """Perform a spatial intersection join between two DataFrames."""
-    if shape is None:
-        raise ImportError("Install shapely for spatial support.")
-    left_geoms = left[left_geom].map(_to_geom)
-    right_geoms = right[right_geom].map(_to_geom)
-    rows = []
-    for li, lg in left_geoms.items():
-        if lg is None:
-            continue
-        # Apply buffer if requested (in degrees, approximate)
-        search_geom = lg.buffer(buffer_meters / 111_000) if buffer_meters > 0 else lg
-        for ri, rg in right_geoms.items():
-            if rg is None:
-                continue
-            if search_geom.intersects(rg):
-                rows.append({**left.iloc[li].to_dict(), **right.iloc[ri].to_dict()})
-    return pd.DataFrame(rows)
+def validate_geometry(geometry: BaseGeometry) -> bool:
+    return bool(geometry.is_valid and not geometry.is_empty)
 
-# ── DuckDB Spatial Helpers ───────────────────────────────────────────────────
-
-def postgis_add_geom(manager: Any, table_name: str, lat_col: str, lon_col: str):
-    """Add a PostGIS-style geometry column to a DuckDB table."""
-    manager.conn.execute(f"UPDATE {table_name} SET geom = ST_Point({lon_col}, {lat_col}) WHERE geom IS NULL;")
-
-def compute_hotspots(df: pd.DataFrame, lat_col: str = COL_LAT, lon_col: str = COL_LON, borough: str | None = None) -> pd.DataFrame:
-    """Return a dataframe of density hotspots."""
-    out = df.copy()
-    if borough and COL_BORO in out.columns:
-        out = out[out[COL_BORO].str.upper() == borough.upper()]
-    return out
-
-def detect_construction_conflicts(projects_df: pd.DataFrame, complaints_df: pd.DataFrame, buffer_meters: float = 20.0) -> Any:
-    """Find overlapping projects and complaints (returns SimpleNamespace)."""
-    import pandas as _pd
-    conflicts = _pd.DataFrame(columns=["project_id", "complaint_id", "type"])
-    return SimpleNamespace(
-        conflict_count=0,
-        conflict_rate=0.0,
-        conflicts=conflicts
-    )
-
-# ── QGIS & GeoPackage (Reconciled) ────────────────────────────────────────────
-
-def create_geopackage(df: pd.DataFrame, path: str, layer: str = 'sidewalk_inspections'):
-    """Create a GeoPackage file from a DataFrame."""
-    try:
-        import geopandas as gpd
-        from shapely.geometry import Point
-    except ImportError:
-        raise ImportError("Install geopandas and shapely for GeoPackage support.")
-    
-    out = df.copy()
-    if 'latitude' in out.columns and 'longitude' in out.columns:
-        out['geometry'] = out.apply(lambda x: Point((x['longitude'], x['latitude'])), axis=1)
-        gdf = gpd.GeoDataFrame(out, geometry='geometry', crs="EPSG:4326")
-        gdf.to_file(path, layer=layer, driver='GPKG')
-    else:
-        # If no geo columns, save as non-spatial table in GPKG
-        out.to_excel(path.replace('.gpkg', '.xlsx')) # Fallback or error
-
-def load_geopackage(path: str, layer: str = 'sidewalk_inspections'):
-    """Load a GeoPackage layer into a GeoDataFrame."""
-    try:
-        import geopandas as gpd
-    except ImportError:
-        raise ImportError("Install geopandas for GeoPackage support.")
-    return gpd.read_file(path, layer=layer)
-
-def generate_qgs_project(postgis_conn: str, path: str):
-    """Generate a QGIS project file (.qgs) connecting to PostGIS."""
-    project_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
-<qgis projectName="NYC Sidewalk Inspections" version="3.16">
-    <layertrees>
-        <layergroup>
-            <layers>
-                <layer>
-                    <provider>PostGIS</provider>
-                    <datasource>{postgis_conn}</datasource>
-                    <name>Sidewalk Inspections</name>
-                </layer>
-            </layers>
-        </layergroup>
-    </layertrees>
-</qgis>"""
-    with open(path, 'w', encoding='utf-8') as f:
-        f.write(project_xml)
+def spatial_join_candidates(
+    left_geometries: Iterable[BaseGeometry],
+    right_geometries: Iterable[BaseGeometry],
+) -> list[tuple[int, int]]:
+    matches: list[tuple[int, int]] = []
+    left_list = list(left_geometries)
+    right_list = list(right_geometries)
+    for left_index, left_geometry in enumerate(left_list):
+        for right_index, right_geometry in enumerate(right_list):
+            if left_geometry.intersects(right_geometry):
+                matches.append((left_index, right_index))
+    return matches

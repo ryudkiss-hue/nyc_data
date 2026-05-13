@@ -16,3 +16,11 @@ airflow_app/logs
 airflow_app/config/__pycache__
 .idea
 .vscode
+
+# Local Databases & State
+*.db
+*.duckdb
+*.sqlite
+*.sqlite3
+*.wal
+material_costs_cache.json

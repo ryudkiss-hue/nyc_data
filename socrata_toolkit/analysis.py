@@ -513,6 +513,8 @@ _FONT_FAMILY = "Inter, sans-serif"
 
 def _apply_modern_layout(fig: Any, title: str | None = None) -> Any:
     """Standardize the look and feel of all Plotly charts with reference-grade defaults."""
+    import plotly.express as px
+    
     fig.update_layout(
         title={
             "text": title,
@@ -522,6 +524,8 @@ def _apply_modern_layout(fig: Any, title: str | None = None) -> Any:
         } if title else None,
         font_family=_FONT_FAMILY,
         template=_PLOTLY_THEME,
+        # Accessibility: Use a colorblind-safe color sequence by default
+        colorway=px.colors.qualitative.Safe,
         hoverlabel=dict(
             bgcolor="rgba(0,0,0,0.8)",
             font_size=13,
@@ -561,6 +565,36 @@ def _apply_modern_layout(fig: Any, title: str | None = None) -> Any:
         font=dict(size=10, color="gray")
     )
     return fig
+
+def export_plotly_figure(fig: Any, base_filepath: str, formats: List[str] = ["html"]) -> List[str]:
+    """Export a Plotly figure to multiple formats for portability and presentations.
+    Formats supported: 'html' (interactive), 'json' (live-update state), 'png', 'pdf' (requires kaleido).
+    """
+    saved_paths = []
+    base_path = Path(base_filepath)
+    base_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    if "html" in formats:
+        out_path = f"{base_path.with_suffix('')}.html"
+        # cdn allows the HTML to be fully self-contained and interactive offline if cached, or small size online
+        fig.write_html(out_path, include_plotlyjs="cdn", full_html=True)
+        saved_paths.append(out_path)
+        
+    if "json" in formats:
+        out_path = f"{base_path.with_suffix('')}.json"
+        fig.write_json(out_path)
+        saved_paths.append(out_path)
+        
+    if any(ext in formats for ext in ["png", "pdf", "svg"]):
+        try:
+            for ext in [f for f in formats if f in ["png", "pdf", "svg"]]:
+                out_path = f"{base_path.with_suffix('')}.{ext}"
+                fig.write_image(out_path)
+                saved_paths.append(out_path)
+        except ValueError:
+            logger.warning("Static image export requires the 'kaleido' package (pip install -U kaleido).")
+            
+    return saved_paths
 
 def histogram(df: pd.DataFrame, column: str, title: str | None = None) -> Any:
     """Return a refined interactive Plotly histogram."""
@@ -758,6 +792,104 @@ def animated_scatter_chart(df: pd.DataFrame, x: str, y: str, animation_frame: st
     fig.layout.updatemenus[0].buttons[0].args[1]['transition']['duration'] = 400
     
     return _apply_modern_layout(fig, title or f"Animated Trends: {y.title()} vs {x.title()}")
+
+def hotspot_density_mapbox(df: pd.DataFrame, lat_col: str = COL_LAT, lon_col: str = COL_LON, z_col: str | None = None, title: str | None = None) -> Any:
+    """Create a high-performance density mapbox (Heatmap) for operational hotspots (e.g. 311 complaints, defect clusters)."""
+    import plotly.express as px
+    
+    # Drop missing coords for mapping
+    plot_df = df.dropna(subset=[lat_col, lon_col])
+    
+    fig = px.density_mapbox(
+        plot_df, lat=lat_col, lon=lon_col, z=z_col,
+        radius=12,
+        center=dict(lat=40.7128, lon=-74.0060),
+        zoom=10,
+        mapbox_style="carto-darkmatter",
+        color_continuous_scale="Inferno"
+    )
+    
+    fig.update_layout(margin=dict(t=80 if title else 0, b=0, l=0, r=0))
+    return _apply_modern_layout(fig, title or "Operational Density Hotspots")
+
+def operations_gantt_chart(df: pd.DataFrame, task_col: str, start_col: str, end_col: str, color_col: str | None = None, title: str | None = None) -> Any:
+    """Create a timeline/Gantt chart for tracking contract lifecycles, SLA durations, or permit windows."""
+    import plotly.express as px
+    
+    plot_df = df.dropna(subset=[task_col, start_col, end_col]).copy()
+    plot_df[start_col] = pd.to_datetime(plot_df[start_col])
+    plot_df[end_col] = pd.to_datetime(plot_df[end_col])
+    
+    fig = px.timeline(
+        plot_df, 
+        x_start=start_col, 
+        x_end=end_col, 
+        y=task_col, 
+        color=color_col,
+        hover_name=task_col
+    )
+    
+    # Tasks top-to-bottom
+    fig.update_yaxes(autorange="reversed")
+    return _apply_modern_layout(fig, title or "Operations Schedule & Timelines")
+
+def triage_funnel_chart(df: pd.DataFrame, stage_col: str, title: str | None = None) -> Any:
+    """Create a funnel chart to visualize operational throughput (e.g., Reported -> Inspected -> Assigned -> Completed)."""
+    import plotly.express as px
+    
+    # Calculate counts per stage
+    counts = df[stage_col].value_counts().reset_index()
+    counts.columns = ['Stage', 'Count']
+    
+    # Optional: if you have a predefined order for stages, you can enforce it here
+    # counts['Stage'] = pd.Categorical(counts['Stage'], categories=["Reported", "Inspected", "Assigned", "Completed"], ordered=True)
+    # counts = counts.sort_values('Stage')
+
+    fig = px.funnel(
+        counts, 
+        x='Count', 
+        y='Stage',
+        color='Stage'
+    )
+    return _apply_modern_layout(fig, title or "Pipeline Conversion & Triage Funnel")
+
+def plot_sidewalk_anatomy(geojson_data: Dict[str, Any], title: str | None = None) -> Any:
+    """Render a vectorized 2D sandbox schematic of sidewalk infrastructure."""
+    import plotly.graph_objects as go
+    
+    fig = go.Figure()
+    
+    for feature in geojson_data.get("features", []):
+        geom_type = feature.get("geometry", {}).get("type")
+        coords = feature.get("geometry", {}).get("coordinates", [])
+        props = feature.get("properties", {})
+        
+        if geom_type == "Polygon" and coords:
+            # Extract x and y from the exterior polygon ring
+            x = [pt[0] for pt in coords[0]]
+            y = [pt[1] for pt in coords[0]]
+            
+            hover_text = (
+                f"<b>Zone:</b> {props.get('zone_name', 'N/A')}<br>"
+                f"<b>Material:</b> {props.get('material', 'N/A')}<br>"
+                f"<b>Width:</b> {props.get('width_ft', 'N/A')} ft<br>"
+                f"<b>Cross-Slope:</b> {props.get('cross_slope_pct', 'N/A')}%"
+            )
+            
+            fig.add_trace(go.Scatter(
+                x=x, y=y,
+                fill="toself",
+                fillcolor=props.get("fill_color", "#cccccc"),
+                line=dict(color="rgba(255, 255, 255, 0.4)", width=1.5),
+                mode="lines",
+                name=props.get("zone_name", "Zone"),
+                text=hover_text,
+                hoverinfo="text"
+            ))
+            
+    # Create proportional CAD/Blueprint axes
+    fig.update_layout(xaxis=dict(scaleanchor="y", scaleratio=1, showgrid=True, title="Length (ft)"), yaxis=dict(showgrid=True, title="Width (ft)"))
+    return _apply_modern_layout(fig, title or "Vectorized Sidewalk Anatomy Sandbox")
 
 def generate_analysis_results(df: pd.DataFrame, analysis_type: str) -> Dict[str, Any]:
     """Orchestrator to return the correct data structure for a given analysis type.

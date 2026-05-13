@@ -132,24 +132,52 @@ def analyze_quantum_efficiency(n_records: int) -> Any:
         "status": "Quantum Ready"
     }
 
+def _haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Calculate the great circle distance in miles between two points on the earth."""
+    # Convert decimal degrees to radians
+    lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
+    # Haversine formula
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+    a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+    c = 2 * math.asin(math.sqrt(a))
+    r = 3956 # Radius of earth in miles
+    return c * r
+
 def optimize_repair_route(df: pd.DataFrame, lat_col: str = "latitude", lon_col: str = "longitude") -> Any:
-    """Return an optimized TSP route using Quantum-Inspired Simulated Annealing.
-    
-    This simulates a Quantum Annealer (like D-Wave) by performing thermal 
-    fluctuations to find the global minimum for repair truck routing.
+    """Return an optimized route using a Nearest Neighbor TSP heuristic.
+    Orders a dataframe of locations to minimize travel time for in-house crews.
     """
-    # Placeholder for actual simulated annealing logic
-    import numpy as np
-    n = len(df)
-    energy_history = np.exp(-np.linspace(0, 5, 20)) * 100 # Simulated energy decay
-    
+    if df.empty or lat_col not in df.columns or lon_col not in df.columns:
+        return SimpleNamespace(total_distance_miles=0, route=[], ordered_df=df)
+        
+    # Drop rows with missing coordinates for routing
+    valid_df = df.dropna(subset=[lat_col, lon_col]).copy()
+    if valid_df.empty:
+        return SimpleNamespace(total_distance_miles=0, route=[], ordered_df=df)
+
+    unvisited = valid_df.index.tolist()
+    current_node = unvisited.pop(0) # Start at the first location in the list
+    route = [current_node]
+    total_distance = 0.0
+
+    while unvisited:
+        current_lat, current_lon = float(valid_df.loc[current_node, lat_col]), float(valid_df.loc[current_node, lon_col])
+        # Find the nearest neighbor
+        distances = [(node, _haversine_distance(current_lat, current_lon, float(valid_df.loc[node, lat_col]), float(valid_df.loc[node, lon_col]))) for node in unvisited]
+        nearest_node, min_dist = min(distances, key=lambda x: x[1])
+        
+        route.append(nearest_node)
+        total_distance += min_dist
+        unvisited.remove(nearest_node)
+        current_node = nearest_node
+
     return SimpleNamespace(
-        total_distance_miles=round(42.5 + (n * 0.1), 2),
-        estimated_time_hours=round(3.5 + (n * 0.05), 1),
-        method="Quantum-Inspired Simulated Annealing (QISA)",
-        convergence_score=0.985,
-        energy_history=energy_history.tolist(),
-        route=df.index.tolist()
+        total_distance_miles=round(total_distance, 2),
+        estimated_time_hours=round(total_distance / 10.0 + (len(route) * 0.5), 1), # Assume 10mph in NYC + 30 mins per stop
+        method="Nearest Neighbor TSP",
+        route=route,
+        ordered_df=valid_df.loc[route].reset_index(drop=True)
     )
 
 def optimize_crew_assignment(df: pd.DataFrame, n_crews: int = 5, config: Any = None) -> Any:
