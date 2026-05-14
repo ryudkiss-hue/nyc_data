@@ -53,6 +53,8 @@ _lazy_map: Dict[str, str] = {
     "flag_anomalies": "analysis:flag_anomalies",
     "detect_anomalies": "analysis:detect_anomalies",
     "detect_data_drift": "analysis:detect_data_drift",
+    "quality_report": "analysis:quality_report",
+    "DashboardSummary": "analysis:DashboardSummary",
 
     # engineering (Pillar: engineering)
     "compute_sidewalk_kpis": "engineering:compute_sidewalk_kpis",
@@ -69,6 +71,9 @@ _lazy_map: Dict[str, str] = {
     "enforce_smart_contract_slas": "engineering:enforce_smart_contract_slas",
     "simulate_contractor_bids": "engineering:simulate_contractor_bids",
     "burndown_calculation": "engineering:burndown_calculation",
+    "estimate_costs": "engineering:estimate_costs",
+    "summarize_costs": "engineering:summarize_costs",
+    "CostSummary": "engineering:CostSummary",
 
     # spatial (Pillar: spatial)
     "spatial_intersects_join": "spatial:spatial_intersects_join",
@@ -119,12 +124,14 @@ __all__ = [
     "correlation_analysis", "time_series_summary", "classify_distribution",
     "classify_all_distributions", "flag_anomalies", "detect_anomalies",
     "detect_data_drift",
+    "quality_report", "DashboardSummary",
     # engineering
     "compute_sidewalk_kpis", "prioritize_construction_list", "classify_scope",
     "flag_ada_locations", "summarize_construction_list", "analyze_contract_progress",
     "budget_analysis", "productivity_metrics", "project_spending",
     "calculate_completion_dates", "burndown_calculation",
     "calculate_roi_spot_vs_block", "enforce_smart_contract_slas", "simulate_contractor_bids",
+    "estimate_costs", "summarize_costs", "CostSummary",
     # spatial
     "spatial_intersects_join", "cluster_locations", "detect_construction_conflicts",
     "create_geopackage", "load_geopackage", "generate_qgs_project",
@@ -188,3 +195,5 @@ def __getattr__(name: str):
 def available_exports() -> List[str]:
     """Return the list of public symbols that are defined in __all__."""
     return list(__all__)
+"""Visualization and charting components for the NYC DOT Toolkit."""
+from .charts import *
