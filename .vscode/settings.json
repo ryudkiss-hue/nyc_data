@@ -20,5 +20,6 @@
         "reportUnknownMemberType": "none",
         "reportUnknownParameterType": "none",
         "reportUnknownVariableType": "none"
-    }
+    },
+    "python.terminal.useEnvFile": true
 }
