@@ -175,6 +175,77 @@ def extract_patterns(df: pd.DataFrame, column: str, pattern_type: str = "emails"
     matches = df[column].dropna().astype(str).apply(lambda x: len(pat.findall(x))).sum()
     return {pattern_type: int(matches)}
 
+def parse_sim_complaints(df: pd.DataFrame, text_col: str = "description") -> pd.DataFrame:
+    """
+    Quantitatively parse Sidewalk Inspection and Management (SIM) complaints using 
+    statistical and heuristic methods (no LLMs). Uses term frequencies, Zipf's Law 
+    deviations, and domain-specific taxonomies to extract insights and calculate severity.
+    """
+    out = df.copy()
+    if text_col not in out.columns:
+        return out
+        
+    # Define SIM Taxonomies
+    taxonomies = {
+        "ada_accessibility": r"\b(ada|wheelchair|ramp|curb cut|disabled|mobility|blind|walker)\b",
+        "root_damage": r"\b(root|tree|heave|uplift|trunk)\b",
+        "surface_damage": r"\b(crack|hole|pothole|spall|spalling|sunken|settlement|depression|loose|missing|cave)\b",
+        "trip_hazard": r"\b(trip|fall|hazard|danger|protruding|rebar|metal|edge|uneven|step)\b",
+        "water_pooling": r"\b(water|puddle|drain|drainage|flood|pond)\b"
+    }
+    
+    compiled_taxonomies = {k: re.compile(v, re.IGNORECASE) for k, v in taxonomies.items()}
+    
+    # Pre-compute corpus frequencies for Zipfian analysis
+    all_words = []
+    for text in out[text_col].dropna().astype(str):
+        all_words.extend(WORD_RE.findall(text.lower()))
+    
+    corpus_freq = Counter(all_words)
+    total_words = max(sum(corpus_freq.values()), 1)
+    word_probs = {word: count / total_words for word, count in corpus_freq.items()}
+    
+    results = []
+    
+    for _, row in out.iterrows():
+        text = str(row.get(text_col, ""))
+        if not text.strip():
+            results.append({"_sim_category": "unknown", "_sim_severity_score": 0.0, "_sim_flags": [], "_sim_unique_keywords": []})
+            continue
+            
+        lower_text = text.lower()
+        words = WORD_RE.findall(lower_text)
+        
+        # 1. Taxonomy Matching
+        flags = []
+        severity_score = 0.0
+        for cat, pattern in compiled_taxonomies.items():
+            if pattern.search(lower_text):
+                flags.append(cat)
+                severity_score += {"trip_hazard": 0.4, "ada_accessibility": 0.35, "root_damage": 0.2}.get(cat, 0.15)
+                    
+        # 2. Zipfian Anomaly Detection
+        word_counts = Counter(words)
+        doc_length = max(len(words), 1)
+        unique_terms = []
+        
+        for word, count in word_counts.items():
+            if len(word) < 4: continue
+            tf = count / doc_length
+            corpus_p = word_probs.get(word, 0.0001)
+            # If a word is highly frequent in THIS complaint but rare in the corpus, flag it!
+            if tf > corpus_p * 5 and corpus_freq.get(word, 0) < total_words * 0.01:
+                unique_terms.append(word)
+                    
+        unique_terms = sorted(unique_terms, key=lambda w: corpus_freq.get(w, 0))[:3]
+        
+        # 3. Categorization
+        primary_cat = "critical_accessibility_hazard" if "trip_hazard" in flags and "ada_accessibility" in flags else (flags[0] if flags else "general_maintenance")
+        results.append({"_sim_category": primary_cat, "_sim_severity_score": round(min(1.0, severity_score), 2), "_sim_flags": flags, "_sim_unique_keywords": unique_terms})
+        
+    res_df = pd.DataFrame(results, index=out.index)
+    return pd.concat([out, res_df], axis=1)
+
 # ── NYC SDM & ADA Validation ──────────────────────────────────────────────────
 
 @dataclass

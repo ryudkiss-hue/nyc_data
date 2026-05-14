@@ -194,8 +194,53 @@ def optimize_crew_assignment(df: pd.DataFrame, n_crews: int = 5, config: Any = N
         assignments=assignments
     )
 
-def triage_complaints(df: pd.DataFrame) -> pd.DataFrame:
-    """Classify 311 complaints using basic NLP."""
+def triage_complaints(df: pd.DataFrame, text_col: str = "description", api_url: str = "http://localhost:8000/v1/chat/completions") -> pd.DataFrame:
+    """
+    Classify 311 complaints by sending them to your local LLM API.
+    Requires the local model to be running and exposing a standard REST endpoint.
+    """
+    import requests
     out = df.copy()
-    out["_priority"] = PRIORITY_MEDIUM
+    priorities = []
+    
+    for _, row in out.iterrows():
+        text = str(row.get(text_col, ""))
+        if not text.strip():
+            priorities.append(PRIORITY_MEDIUM)
+            continue
+            
+        try:
+            # Prompt your local model to act as a triage agent
+            payload = {
+                "messages": [
+                    {"role": "system", "content": "You are an NYC DOT triage agent. Read the complaint and output ONLY: CRITICAL, HIGH, MEDIUM, or LOW."},
+                    {"role": "user", "content": text}
+                ],
+                "temperature": 0.1
+            }
+            res = requests.post(api_url, json=payload, timeout=5).json()
+            reply = res.get("choices", [{}])[0].get("message", {}).get("content", "").strip().upper()
+            priorities.append(reply if reply in [PRIORITY_CRITICAL, PRIORITY_HIGH, PRIORITY_MEDIUM, PRIORITY_LOW] else PRIORITY_MEDIUM)
+        except Exception as e:
+            logger.warning(f"Local LLM parsing failed: {e}")
+            priorities.append(PRIORITY_MEDIUM)
+            
+    out["_priority"] = priorities
     return out
+
+def export_training_data_for_local_llm(df: pd.DataFrame, output_path: str, text_col: str = "description", label_col: str = "severity"):
+    """
+    Exports historical Socrata datasets into a standard JSONL format to fine-tune 
+    your local models so they learn how to parse NYC DOT terminology.
+    """
+    import json
+    with open(output_path, 'w', encoding='utf-8') as f:
+        for _, row in df.dropna(subset=[text_col, label_col]).iterrows():
+            example = {
+                "messages": [
+                    {"role": "system", "content": "You are an NYC DOT triage agent. Categorize the severity of the following 311 complaint."},
+                    {"role": "user", "content": str(row[text_col])},
+                    {"role": "assistant", "content": str(row[label_col])}
+                ]
+            }
+            f.write(json.dumps(example) + "\n")

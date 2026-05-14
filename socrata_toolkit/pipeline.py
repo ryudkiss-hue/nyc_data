@@ -13,6 +13,11 @@ from types import SimpleNamespace
 
 import pandas as pd
 
+try:
+    from tqdm import tqdm
+except ImportError:
+    tqdm = None
+
 from .core import (
     SocrataClient, DuckDBExporter, DuckDBManager, 
     DEFAULT_DOMAIN, UTF8, COL_ID, COL_AT_ID, COL_LAT, COL_LON, COL_BORO,
@@ -218,6 +223,7 @@ def stream_pipeline(
     max_rows: int | None = None,
     progress_callback: Callable[[int, int | None], None] | None = None,
     governance_processor: Optional[Any] = None,
+    show_progress: bool = True,
 ) -> dict[str, Any]:
     """Orchestrates high-performance data ingestion from Socrata to multiple targets."""
     if chunk_size: client.config.page_size = chunk_size
@@ -237,6 +243,10 @@ def stream_pipeline(
     duckdb_exporter = None
     jsonl_f = None
     jsonl_path = None
+    
+    pbar = None
+    if show_progress and tqdm:
+        pbar = tqdm(total=total, desc=f"Downloading {fourfour}", unit="rows", unit_scale=True)
 
     try:
         if targets.get("duckdb", {}).get("enabled"):
@@ -271,12 +281,14 @@ def stream_pipeline(
                 for r in batch: jsonl_f.write(json.dumps(r, default=str) + "\n")
 
             if progress_callback: progress_callback(fetched, total)
+            if pbar: pbar.update(len(batch))
 
         return {"rows_processed": fetched, "jsonl_backup": str(jsonl_path) if jsonl_path else None}
 
     finally:
         if duckdb_exporter: duckdb_exporter.manager.close()
         if jsonl_f: jsonl_f.close()
+        if pbar: pbar.close()
 
 # ── BI & Excel Integrations ───────────────────────────────────────────────────
 

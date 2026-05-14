@@ -178,6 +178,13 @@ def run_docker(action: str, service: Optional[str] = None, **kwargs) -> int:
     compose_file = PROJECT_ROOT / "docker-compose.yml"
     
     if action == "up":
+        print_info("Validating environment variables...")
+        try:
+            subprocess.run([sys.executable, str(PROJECT_ROOT / "scripts" / "validate_env.py")], check=True)
+        except subprocess.CalledProcessError:
+            print_error("Environment validation failed. Please check your .env file.")
+            return 1
+            
         print_info("Starting all services...")
         service_part = service if service else ""
         cmd = [docker_cmd, "-f", str(compose_file), "up", "-d", service_part]

@@ -39,6 +39,15 @@ _lazy_map: Dict[str, str] = {
     "gauge_chart": "analysis:gauge_chart",
     "animated_scatter_chart": "analysis:animated_scatter_chart",
     "generate_analysis_results": "analysis:generate_analysis_results",
+    "detect_outliers_iqr": "analysis:detect_outliers_iqr",
+    "detect_outliers_zscore": "analysis:detect_outliers_zscore",
+    "detect_all_outliers": "analysis:detect_all_outliers",
+    "correlation_analysis": "analysis:correlation_analysis",
+    "time_series_summary": "analysis:time_series_summary",
+    "classify_distribution": "analysis:classify_distribution",
+    "classify_all_distributions": "analysis:classify_all_distributions",
+    "flag_anomalies": "analysis:flag_anomalies",
+    "detect_anomalies": "analysis:detect_anomalies",
 
     # engineering (Pillar: engineering)
     "compute_sidewalk_kpis": "engineering:compute_sidewalk_kpis",
@@ -83,7 +92,39 @@ _lazy_map: Dict[str, str] = {
 }
 
 # Public API list for "from socrata_toolkit import *"
-__all__ = list(_lazy_map.keys())
+__all__ = [
+    # core
+    "SocrataClient", "SocrataConfig", "DatasetMetadata", "SearchResult",
+    "DuckDBExporter", "DuckDBManager", "DuckDBRepository", "ensure_fts_index",
+    "SchemaRegistry", "SchemaValidator", "search_nyc_datasets",
+    "generate_data_dictionary", "SoQLBuilder",
+    # analysis
+    "DataProfile", "profile_dataframe", "MetricsTracker", "compute_program_dashboard",
+    "histogram", "bar_chart", "correlation_heatmap", "compute_borough_metrics",
+    "compute_sla_trends", "time_series_chart", "sunburst_chart", "treemap_chart",
+    "gauge_chart", "animated_scatter_chart", "generate_analysis_results",
+    "detect_outliers_iqr", "detect_outliers_zscore", "detect_all_outliers",
+    "correlation_analysis", "time_series_summary", "classify_distribution",
+    "classify_all_distributions", "flag_anomalies", "detect_anomalies",
+    # engineering
+    "compute_sidewalk_kpis", "prioritize_construction_list", "classify_scope",
+    "flag_ada_locations", "summarize_construction_list", "analyze_contract_progress",
+    "budget_analysis", "productivity_metrics", "project_spending",
+    "calculate_completion_dates", "burndown_calculation",
+    # spatial
+    "spatial_intersects_join", "cluster_locations", "detect_construction_conflicts",
+    "create_geopackage", "load_geopackage", "generate_qgs_project",
+    # pipeline
+    "stream_pipeline", "ingest_311_complaints", "deduplicate_dataframe",
+    "generate_program_report", "Workflow", "WorkflowStep",
+    # governance
+    "compute_quality_score", "AlertManager",
+    # ai
+    "sentiment_score", "enrich_construction_list", "SocrataLLMChatbot",
+    "SQLQueryEngine", "quantum_search",
+    # api
+    "api"
+]
 
 # Cache for loaded attributes
 _loaded_cache: Dict[str, object] = {}
