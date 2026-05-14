@@ -46,9 +46,9 @@ class Colors:
 
 def print_header(text: str) -> None:
     """Print a formatted header."""
-    print(f"\n{Colors.BOLD}{Colors.BLUE}{'='*60}{Colors.ENDC}")
-    print(f"{Colors.BOLD}{Colors.BLUE}{text:^60}{Colors.ENDC}")
-    print(f"{Colors.BOLD}{Colors.BLUE}{'='*60}{Colors.ENDC}\n")
+    print(f"\n{Colors.BOLD}{Colors.CYAN}╔{'═'*60}╗{Colors.ENDC}")
+    print(f"{Colors.BOLD}{Colors.CYAN}║{text:^60}║{Colors.ENDC}")
+    print(f"{Colors.BOLD}{Colors.CYAN}╚{'═'*60}╝{Colors.ENDC}\n")
 
 
 def print_success(text: str) -> None:
@@ -456,6 +456,20 @@ def check_config() -> bool:
 
 def main():
     """Main entry point."""
+    try:
+        from dotenv import load_dotenv
+        # Prioritize the shared network drive path if the batch file provided it
+        shared_env = os.getenv('SHARED_ENV_PATH')
+        if shared_env and os.path.exists(shared_env):
+            load_dotenv(shared_env)
+        else:
+            # Fallback to local .env
+            env_path = PROJECT_ROOT / ".env"
+            if os.path.exists(env_path):
+                load_dotenv(env_path)
+    except ImportError:
+        pass
+
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,

@@ -427,6 +427,62 @@ def prioritize_construction(df: pd.DataFrame, severity_col: str = "severity") ->
     out["_priority_score"] = out[severity_col].map(lambda x: priority_map.get(str(x).lower(), 99))
     return out.sort_values("_priority_score")
 
+# ── Smart Contracts & Financial Algorithms ────────────────────────────────────
+
+def calculate_roi_spot_vs_block(spot_repair_count: int, total_spot_sqft: float, block_sqft: float, cost_per_sqft: float = 25.0, mobilization_cost: float = 2500.0, years: int = 10) -> Dict[str, Any]:
+    """
+    Cost-Benefit ROI Optimizer. 
+    Calculates whether it is cheaper for the city to do spot repairs or full block reconstruction over 10 years.
+    """
+    # Spot repairs typically degrade and need to be redone every ~3 years
+    spot_cost_per_cycle = (total_spot_sqft * cost_per_sqft) + (spot_repair_count * mobilization_cost)
+    cycles = max(1, years // 3)
+    total_spot_cost = spot_cost_per_cycle * cycles
+
+    # Block reconstruction lasts the full 10+ years with one mobilization
+    block_cost = (block_sqft * cost_per_sqft) + mobilization_cost
+    total_block_cost = block_cost
+
+    roi = total_spot_cost - total_block_cost
+    recommendation = "Full Block Reconstruction" if roi > 0 else "Spot Repairs"
+
+    return {
+        "recommendation": recommendation,
+        "spot_10yr_cost": total_spot_cost,
+        "block_10yr_cost": total_block_cost,
+        "savings": abs(roi)
+    }
+
+def enforce_smart_contract_slas(df: pd.DataFrame, sla_days: int = 30, penalty_per_day: float = 500.0, start_col: str = "assigned_date", end_col: str = "completed_date") -> pd.DataFrame:
+    """Smart-Contract SLA Enforcement. Flags missed SLAs and calculates financial penalties to withhold from contractors."""
+    out = df.copy()
+    if start_col not in out.columns or end_col not in out.columns:
+        return out
+
+    out["_cycle_days"] = (pd.to_datetime(out[end_col], errors="coerce") - pd.to_datetime(out[start_col], errors="coerce")).dt.days
+    out["_sla_breached"] = out["_cycle_days"] > sla_days
+    out["_days_late"] = out["_cycle_days"].apply(lambda x: max(0, x - sla_days) if pd.notna(x) else 0)
+    out["_financial_penalty"] = out["_days_late"] * penalty_per_day
+    out["_action_required"] = out["_sla_breached"].apply(lambda x: "WITHHOLD PAYMENT" if x else "NONE")
+    return out
+
+def simulate_contractor_bids(df: pd.DataFrame, sqft_col: str = "estimated_sqft", num_simulations: int = 1000) -> Dict[str, Any]:
+    """Automated Contractor Bidding Simulator using Monte Carlo estimation to predict contract winning bids."""
+    import numpy as np
+    if sqft_col not in df.columns or df.empty: return {}
+
+    base_cost = df[sqft_col].sum() * 25.0
+    
+    # Simulate 3 contractor archetypes bidding against each other
+    simulations = [min(
+        base_cost * np.random.normal(0.95, 0.05) + 50000, # Large firm: low margin, high mobilization
+        base_cost * np.random.normal(1.0, 0.1) + 25000,   # Medium firm: average
+        base_cost * np.random.normal(1.1, 0.15) + 5000    # Small firm: high margin, low mobilization
+    ) for _ in range(num_simulations)]
+
+    avg_winning_bid = float(np.mean(simulations))
+    return {"estimated_base_cost": float(base_cost), "monte_carlo_avg_winning_bid": avg_winning_bid, "expected_savings_vs_base": float(base_cost - avg_winning_bid)}
+
 # ── Task Board ───────────────────────────────────────────────────────────────
 
 CATEGORY_COLORS = {"construction": "#3b82f6", "inspection": "#10b981", "administrative": "#8b5cf6"}

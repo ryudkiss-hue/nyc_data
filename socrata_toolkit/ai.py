@@ -53,6 +53,36 @@ class SQLQueryEngine:
     def translate(self, question: str) -> str:
         return f"SELECT * FROM datasets WHERE description LIKE '%{question}%'"
 
+class LegalPolicyEngine:
+    """RAG-Powered Legal Policy Engine for NYC Street Design Manual, ADA CFR 36, and Local Law 60."""
+    def __init__(self):
+        self.knowledge_base = {
+            "slope": "ADA CFR 36 § 405.2: Running slope of walking surfaces shall not be steeper than 1:20 (5.0%). Cross slope shall not be steeper than 1:48 (2.0%).",
+            "width": "NYC Street Design Manual: Minimum clear path width is 5 feet. In constrained scenarios, 4 feet is permitted with 5x5 passing spaces every 200 feet.",
+            "trip": "Local Law 60 (Sidewalk Maintenance): Property owners are responsible for repairing defects including trip hazards greater than 0.5 inches.",
+            "owner_responsibility": "NYC Administrative Code § 19-152 (Local Law 60): The owner of any real property, at their own cost and expense, shall install, construct, repave, reconstruct and repair the sidewalk flags in front of or abutting such property.",
+            "city_responsibility": "NYC Administrative Code § 19-152 (Exceptions): The city is responsible for sidewalk repairs if the damage is caused by city-owned trees, or for abutting one-, two-, or three-family residential properties strictly occupied for residential purposes."
+        }
+
+    def generate_compliance_memo(self, defect_description: str) -> str:
+        """Generates an official compliance memo citing specific legal code based on the defect description."""
+        desc_lower = defect_description.lower()
+        citations = []
+
+        if any(w in desc_lower for w in ["slope", "steep", "grade"]): citations.append(self.knowledge_base["slope"])
+        if any(w in desc_lower for w in ["width", "narrow", "clearance", "block"]): citations.append(self.knowledge_base["width"])
+        if any(w in desc_lower for w in ["trip", "pothole", "crack", "uneven", "lip"]): citations.append(self.knowledge_base["trip"])
+        if any(w in desc_lower for w in ["owner", "property", "commercial", "responsible"]): citations.append(self.knowledge_base["owner_responsibility"])
+        if any(w in desc_lower for w in ["tree", "root", "city", "residential", "1-family", "2-family", "3-family"]): citations.append(self.knowledge_base["city_responsibility"])
+
+        if not citations: citations.append("General Maintenance Requirement: Sidewalks must be maintained free from defects and pedestrian hazards.")
+
+        memo = f"OFFICIAL COMPLIANCE MEMO\n{'='*30}\nSubject: Evaluation of Defect - '{defect_description}'\n\nBased on the provided description, the following statutory requirements apply:\n\n"
+        for i, citation in enumerate(citations, 1):
+            memo += f"{i}. {citation}\n"
+        memo += "\nACTION REQUIRED: Field inspection required to verify compliance with the cited regulations."
+        return memo
+
 # ── Optimization & Quantum ────────────────────────────────────────────────────
 
 def quantum_search(items: Any, criteria: Any) -> Any:

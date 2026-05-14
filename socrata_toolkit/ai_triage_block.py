@@ -4,7 +4,7 @@ import pandas as pd
 from nicegui import ui
 
 from socrata_toolkit.analysis import parse_sim_complaints
-from socrata_toolkit.ai import triage_complaints, triage_complaints_gemini
+from socrata_toolkit.ai import triage_complaints, triage_complaints_gemini, LegalPolicyEngine
 
 class AITriageBlock:
     """
@@ -32,7 +32,8 @@ class AITriageBlock:
                         options={
                             'stat': 'Quantitative Stats (No LLM)',
                             'local': 'Local LLM (OpenClaw/Ollama)', 
-                            'gemini': 'Google Gemini API'
+                            'gemini': 'Google Gemini API',
+                            'legal': 'Legal Policy Engine'
                         },
                         value='local'
                     ).classes('w-full text-xs')
@@ -100,6 +101,12 @@ class AITriageBlock:
                     self.results_container.clear()
                     return
                 result_df = await asyncio.to_thread(triage_complaints_gemini, process_df, self.text_col_select.value, 'gemini-1.5-flash', api_key)
+            elif self.model_toggle.value == 'legal':
+                engine = LegalPolicyEngine()
+                memos = [engine.generate_compliance_memo(str(text)) for text in process_df[self.text_col_select.value]]
+                result_df = process_df.copy()
+                result_df['_priority'] = 'POLICY CHECKED'
+                result_df['_compliance_memo'] = memos
             
             # 2. Update UI with the triaged results
             self.results_container.clear()
@@ -123,6 +130,11 @@ class AITriageBlock:
                     cols_to_show.extend(['_sim_severity', '_sim_keywords'])
                     col_defs.append({'field': '_sim_severity', 'headerName': 'Stat Score', 'width': 120})
                     col_defs.append({'field': '_sim_keywords', 'headerName': 'Anomalous Terms', 'width': 180})
+                    
+                # If we used the Legal Policy Engine, show the memo column!
+                if '_compliance_memo' in result_df.columns:
+                    cols_to_show.append('_compliance_memo')
+                    col_defs.append({'field': '_compliance_memo', 'headerName': 'Legal Compliance Memo', 'flex': 2, 'wrapText': True, 'autoHeight': True})
 
                 display_data = result_df[cols_to_show].to_dict('records')
                 ui.aggrid({'columnDefs': col_defs, 'rowData': display_data}).classes('w-full h-96')
