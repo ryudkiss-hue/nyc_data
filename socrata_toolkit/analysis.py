@@ -516,6 +516,19 @@ def flag_anomalies(df: pd.DataFrame) -> pd.DataFrame:
     out.loc[anoms.index, "_is_anomaly"] = True
     return out
 
+def detect_data_drift(old_df: pd.DataFrame, new_df: pd.DataFrame, num_col: str) -> Dict[str, Any]:
+    """Basic statistical drift detection to see if new data distributions have shifted from historical baselines."""
+    if num_col not in old_df.columns or num_col not in new_df.columns:
+        return {"drift_detected": False, "reason": "Column missing"}
+    
+    old_mean, old_std = float(old_df[num_col].mean()), float(old_df[num_col].std())
+    new_mean = float(new_df[num_col].mean())
+    
+    # Heuristic: If the new mean shifts by more than 1 standard deviation, flag as drift.
+    is_drift = abs(new_mean - old_mean) > old_std if old_std > 0 else False
+    
+    return {"drift_detected": is_drift, "historical_mean": old_mean, "new_mean": new_mean, "shift": abs(new_mean - old_mean)}
+
 # ── Program Metrics & Dashboards ──────────────────────────────────────────────
 
 @dataclass
@@ -572,6 +585,23 @@ def generate_program_report(dash: Any) -> Report:
     for m in dash.metrics:
         content += f"- {m.name.title()}: {m.value:.2f} (Target: {m.target:.2f})\n"
     return Report("Program KPI Report", content)
+
+def generate_executive_briefing_automated(df: pd.DataFrame) -> Report:
+    """Headless Automated Executive Briefing. Synthesizes a full textual KPI summary for management."""
+    prof = profile_dataframe(df)
+    sla = compute_sla_metrics(df)
+
+    content = "## NYC DOT Sidewalk & 311 Executive Briefing\n\n"
+    content += f"**Date:** {datetime.now(timezone.utc).strftime('%Y-%m-%d')}\n"
+    content += f"**Total Records Processed:** {prof.total_rows:,}\n"
+    content += f"**Data Quality Score:** {prof.quality_score}/100\n\n"
+    
+    content += "### ⚡ SLA & Operational Performance\n"
+    content += f"- **SLA Compliance Rate:** {sla.sla_compliance_rate}%\n"
+    content += f"- **Avg Cycle Time:** {sla.avg_total_cycle_days} days\n"
+    content += f"- **Total SLA Violations:** {sla.violation_count:,}\n\n"
+    
+    return Report("Automated Executive Briefing", content)
 
 def generate_pdf_report(report: Report, path: str = "outputs/reports/latest_report.pdf"):
     """Simulate PDF generation by saving markdown."""
@@ -1015,6 +1045,120 @@ def plot_sidewalk_anatomy(geojson_data: Dict[str, Any], title: str | None = None
     # Create proportional CAD/Blueprint axes
     fig.update_layout(xaxis=dict(scaleanchor="y", scaleratio=1, showgrid=True, title="Length (ft)"), yaxis=dict(showgrid=True, title="Width (ft)"))
     return _apply_modern_layout(fig, title or "Vectorized Sidewalk Anatomy Sandbox")
+
+def violin_plot(df: pd.DataFrame, x_col: str, y_col: str, title: str | None = None) -> Any:
+    """Create a Violin plot to visualize distributions and probability density (e.g. Repair Cost by Borough)."""
+    import plotly.express as px
+    fig = px.violin(df, x=x_col, y=y_col, box=True, points="all",
+                    color=x_col, color_discrete_sequence=px.colors.qualitative.Safe)
+    fig.update_traces(hovertemplate="<b>%{x}</b><br>Value: %{y}<extra></extra>")
+    return _apply_modern_layout(fig, title or f"Distribution: {y_col.title()} by {x_col.title()}")
+
+def quality_radar_chart(score_dict: Dict[str, float], title: str | None = None) -> Any:
+    """Create a Radar chart visualizing the multiple dimensions of data quality."""
+    import plotly.graph_objects as go
+    
+    categories = ['Completeness', 'Validity', 'Consistency', 'Freshness']
+    values = [score_dict.get(c.lower(), 100.0) for c in categories]
+    
+    fig = go.Figure(data=go.Scatterpolar(
+        r=values + [values[0]],
+        theta=categories + [categories[0]],
+        fill='toself',
+        line_color='#3b82f6'
+    ))
+    fig.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0, 100])), showlegend=False)
+    return _apply_modern_layout(fig, title or "Data Quality Radar")
+
+def generate_semantic_network_map(title: str | None = None) -> Any:
+    """Generates an interactive Semantic Network Map (Knowledge Graph) of the entire toolkit."""
+    import plotly.graph_objects as go
+    try:
+        import networkx as nx
+    except ImportError:
+        fig = go.Figure()
+        fig.add_annotation(text="Please run 'pip install networkx' to view the Semantic Map.", showarrow=False, font=dict(size=20))
+        return _apply_modern_layout(fig, title)
+
+    G = nx.Graph()
+
+    # Define Nodes and their Categories
+    nodes = {
+        # Core Data
+        "311 Complaints": "Data", "Sidewalk Inspections": "Data", "Active Permits": "Data", "SDM Materials": "Data",
+        # Engines & Modules
+        "AI Triage Engine": "Module", "Spatial Conflict Resolver": "Module", "Legal Policy RAG": "Module", "Financial ROI Optimizer": "Module", "Smart Contract SLA": "Module",
+        # Functions & Actions
+        "Zipf's Law Taxonomy": "Function", "ST_Intersects Join": "Function", "Monte Carlo Simulator": "Function", "ADA Slope Evaluator": "Function",
+        # KPIs & Metrics
+        "Defect Density": "KPI", "ADA Compliance Rate": "KPI", "SLA Violation Count": "KPI", "Spot vs Block Savings": "KPI", "Predicted Bid Cost": "KPI"
+    }
+
+    for node, category in nodes.items():
+        G.add_node(node, category=category)
+
+    # Define Semantic Relationships (Edges)
+    edges = [
+        ("311 Complaints", "AI Triage Engine"), ("311 Complaints", "Zipf's Law Taxonomy"),
+        ("Sidewalk Inspections", "ADA Slope Evaluator"), ("SDM Materials", "Financial ROI Optimizer"),
+        ("Active Permits", "Spatial Conflict Resolver"), ("AI Triage Engine", "Legal Policy RAG"),
+        ("Legal Policy RAG", "ADA Compliance Rate"), ("Spatial Conflict Resolver", "ST_Intersects Join"),
+        ("Financial ROI Optimizer", "Monte Carlo Simulator"), ("Financial ROI Optimizer", "Spot vs Block Savings"),
+        ("Monte Carlo Simulator", "Predicted Bid Cost"), ("Smart Contract SLA", "SLA Violation Count"),
+        ("Sidewalk Inspections", "Smart Contract SLA"), ("311 Complaints", "Defect Density"),
+        ("Spatial Conflict Resolver", "Defect Density"), ("AI Triage Engine", "SLA Violation Count")
+    ]
+    G.add_edges_from(edges)
+
+    # Calculate Physics Layout
+    pos = nx.spring_layout(G, k=0.5, iterations=50, seed=42)
+
+    # Prepare Plotly Traces
+    edge_x = []
+    edge_y = []
+    for edge in G.edges():
+        x0, y0 = pos[edge[0]]
+        x1, y1 = pos[edge[1]]
+        edge_x.extend([x0, x1, None])
+        edge_y.extend([y0, y1, None])
+
+    edge_trace = go.Scatter(
+        x=edge_x, y=edge_y, line=dict(width=1.5, color='#4b5563'),
+        hoverinfo='none', mode='lines'
+    )
+
+    node_x, node_y, node_text, node_color = [], [], [], []
+    color_map = {"Data": "#10b981", "Module": "#8b5cf6", "Function": "#3b82f6", "KPI": "#f59e0b"}
+
+    for node in G.nodes():
+        x, y = pos[node]
+        node_x.append(x)
+        node_y.append(y)
+        cat = G.nodes[node]['category']
+        adj_count = len(list(G.neighbors(node)))
+        node_text.append(f"<b>{node}</b><br>Type: {cat}<br>Connections: {adj_count}")
+        node_color.append(color_map.get(cat, "#cccccc"))
+
+    node_trace = go.Scatter(
+        x=node_x, y=node_y, mode='markers+text',
+        text=[n for n in G.nodes()], textposition="top center",
+        hoverinfo='text', hovertext=node_text,
+        marker=dict(
+            showscale=False, color=node_color, size=30,
+            line=dict(width=2, color='white')
+        ),
+        textfont=dict(color='white', size=11, family="Inter, sans-serif")
+    )
+
+    fig = go.Figure(data=[edge_trace, node_trace])
+    fig.update_layout(
+        showlegend=False, hovermode='closest',
+        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        margin=dict(b=0, l=0, r=0, t=60)
+    )
+    
+    return _apply_modern_layout(fig, title or "NYC DOT Toolkit: Semantic Knowledge Graph")
 
 def generate_analysis_results(df: pd.DataFrame, analysis_type: str) -> Dict[str, Any]:
     """Orchestrator to return the correct data structure for a given analysis type.

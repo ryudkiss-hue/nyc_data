@@ -38,7 +38,11 @@ _lazy_map: Dict[str, str] = {
     "treemap_chart": "analysis:treemap_chart",
     "gauge_chart": "analysis:gauge_chart",
     "animated_scatter_chart": "analysis:animated_scatter_chart",
+    "violin_plot": "analysis:violin_plot",
+    "quality_radar_chart": "analysis:quality_radar_chart",
     "generate_analysis_results": "analysis:generate_analysis_results",
+    "generate_executive_briefing_automated": "analysis:generate_executive_briefing_automated",
+    "generate_semantic_network_map": "analysis:generate_semantic_network_map",
     "detect_outliers_iqr": "analysis:detect_outliers_iqr",
     "detect_outliers_zscore": "analysis:detect_outliers_zscore",
     "detect_all_outliers": "analysis:detect_all_outliers",
@@ -48,6 +52,7 @@ _lazy_map: Dict[str, str] = {
     "classify_all_distributions": "analysis:classify_all_distributions",
     "flag_anomalies": "analysis:flag_anomalies",
     "detect_anomalies": "analysis:detect_anomalies",
+    "detect_data_drift": "analysis:detect_data_drift",
 
     # engineering (Pillar: engineering)
     "compute_sidewalk_kpis": "engineering:compute_sidewalk_kpis",
@@ -60,6 +65,9 @@ _lazy_map: Dict[str, str] = {
     "productivity_metrics": "engineering:productivity_metrics",
     "project_spending": "engineering:project_spending",
     "calculate_completion_dates": "engineering:calculate_completion_dates",
+    "calculate_roi_spot_vs_block": "engineering:calculate_roi_spot_vs_block",
+    "enforce_smart_contract_slas": "engineering:enforce_smart_contract_slas",
+    "simulate_contractor_bids": "engineering:simulate_contractor_bids",
     "burndown_calculation": "engineering:burndown_calculation",
 
     # spatial (Pillar: spatial)
@@ -87,6 +95,7 @@ _lazy_map: Dict[str, str] = {
     "enrich_construction_list": "ai:enrich_construction_list",
     "SocrataLLMChatbot": "ai:SocrataLLMChatbot",
     "SQLQueryEngine": "ai:SQLQueryEngine",
+    "LegalPolicyEngine": "ai:LegalPolicyEngine",
     "quantum_search": "ai:quantum_search",
     "api": "api",
 }
@@ -103,14 +112,19 @@ __all__ = [
     "histogram", "bar_chart", "correlation_heatmap", "compute_borough_metrics",
     "compute_sla_trends", "time_series_chart", "sunburst_chart", "treemap_chart",
     "gauge_chart", "animated_scatter_chart", "generate_analysis_results",
+    "violin_plot", "quality_radar_chart",
+    "generate_executive_briefing_automated",
+    "generate_semantic_network_map",
     "detect_outliers_iqr", "detect_outliers_zscore", "detect_all_outliers",
     "correlation_analysis", "time_series_summary", "classify_distribution",
     "classify_all_distributions", "flag_anomalies", "detect_anomalies",
+    "detect_data_drift",
     # engineering
     "compute_sidewalk_kpis", "prioritize_construction_list", "classify_scope",
     "flag_ada_locations", "summarize_construction_list", "analyze_contract_progress",
     "budget_analysis", "productivity_metrics", "project_spending",
     "calculate_completion_dates", "burndown_calculation",
+    "calculate_roi_spot_vs_block", "enforce_smart_contract_slas", "simulate_contractor_bids",
     # spatial
     "spatial_intersects_join", "cluster_locations", "detect_construction_conflicts",
     "create_geopackage", "load_geopackage", "generate_qgs_project",
@@ -121,7 +135,7 @@ __all__ = [
     "compute_quality_score", "AlertManager",
     # ai
     "sentiment_score", "enrich_construction_list", "SocrataLLMChatbot",
-    "SQLQueryEngine", "quantum_search",
+    "SQLQueryEngine", "LegalPolicyEngine", "quantum_search",
     # api
     "api"
 ]

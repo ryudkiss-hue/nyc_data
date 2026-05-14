@@ -129,40 +129,78 @@ def sync_dataset(domain: str, fourfour: str, db_path: str, table_name: str, upda
     # 2. Fetch rows (incremental if possible)
     where = f"{updated_col} > '{last_updated}'" if last_updated else None
     
-    # Fetch using JSON stream for efficiency with potential where clause
-    rows = []
-    try:
-        for batch in client.fetch_json(domain, fourfour, where=where):
-            rows.extend(batch)
-    except Exception as e:
-        logger.exception(f"Sync fetch failed: {e}")
-        manager.close()
-        return 0
+    # Force chronological streaming so that mid-download crashes can perfectly resume
+    order = f"{updated_col} ASC"
+    
+    # Pre-flight query to get total count for the progress bar percentage & ETA
+    total_to_fetch = None
+    if tqdm:
+        try:
+            import requests
+            count_params = {"$select": "count(*)"}
+            if where: count_params["$where"] = where
+            url = f"https://{domain}/resource/{fourfour}.json"
+            # Socrata returns count as [{"count": "1234"}]
+            resp = requests.get(url, params=count_params, headers=client._headers(), timeout=10)
+            if resp.status_code == 200:
+                total_to_fetch = int(resp.json()[0]["count"])
+        except Exception:
+            pass
 
-    df = pd.DataFrame(rows)
-    if df.empty:
-        manager.close()
-        return 0
+    pbar = None
+    if tqdm and (total_to_fetch is None or total_to_fetch > 0):
+        bar_fmt = "{desc} {percentage:3.0f}% │{bar}│ {n_fmt}/{total_fmt} rows [ETA: {remaining}, {rate_fmt}]" if total_to_fetch else "{desc}: {n_fmt} rows [{elapsed}, {rate_fmt}]"
+        pbar = tqdm(total=total_to_fetch, desc=f"📡 Streaming {fourfour}", unit="rows", bar_format=bar_fmt)
 
-    # 3. Upsert to DuckDB
     from .core import DuckDBRepository
     repo = DuckDBRepository(manager, table_name)
-    
-    # Identify primary key for upsert
-    pk = COL_ID if COL_ID in df.columns else (COL_AT_ID if COL_AT_ID in df.columns else None)
-    
-    if pk:
-        count = repo.upsert_dataframe(df, pk)
-    else:
-        # Fallback: create or append without a PK
-        existing_tables = manager.conn.execute("SHOW TABLES").fetchall()
-        table_exists = any(t[0] == table_name for t in existing_tables)
-        manager.conn.register("temp_df", df)
-        if table_exists:
-            manager.query(f'INSERT INTO "{table_name}" SELECT * FROM temp_df')
-        else:
-            manager.conn.execute(f'CREATE TABLE "{table_name}" AS SELECT * FROM temp_df')
-        count = len(df)
+    pk = None
+    table_initialized = False
+    count = 0
+
+    # Fetch using JSON stream for efficiency with potential where clause
+    try:
+        for batch in client.fetch_json(domain, fourfour, where=where, order=order):
+            if not batch: continue
+            df_batch = pd.DataFrame(batch)
+            
+            if not table_initialized:
+                pk = COL_ID if COL_ID in df_batch.columns else (COL_AT_ID if COL_AT_ID in df_batch.columns else None)
+                table_initialized = True
+                
+            # Safely commit to disk every batch. Closing the window won't lose data!
+            if pk:
+                repo.upsert_dataframe(df_batch, pk)
+            else:
+                existing_tables = manager.conn.execute("SHOW TABLES").fetchall()
+                table_exists = any(t[0] == table_name for t in existing_tables)
+                manager.conn.register("temp_df", df_batch)
+                if table_exists:
+                    manager.query(f'INSERT INTO "{table_name}" SELECT * FROM temp_df')
+                else:
+                    manager.conn.execute(f'CREATE TABLE "{table_name}" AS SELECT * FROM temp_df')
+                    
+            count += len(batch)
+            
+            if pbar:
+                pbar.update(len(batch))
+                # Alternating colors based on download speed (rows per second)
+                rate = pbar.format_dict.get("rate")
+                if rate:
+                    if rate > 2000:
+                        pbar.colour = "#10b981" # Fast: Emerald Green
+                    elif rate > 500:
+                        pbar.colour = "#f59e0b" # Medium: Amber
+                    else:
+                        pbar.colour = "#ef4444" # Slow: Red
+                        
+    except (Exception, KeyboardInterrupt) as e:
+        logger.exception(f"Sync fetch failed: {e}")
+        if pbar: pbar.close()
+        manager.close()
+        return count
+        
+    if pbar: pbar.close()
 
     manager.close()
     return count
