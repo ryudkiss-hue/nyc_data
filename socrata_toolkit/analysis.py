@@ -25,7 +25,14 @@ class InsightsEngine:
 
 # ── Basic Profiling (Legacy & Core) ───────────────────────────────────────────
 
-DataProfile = SimpleNamespace
+@dataclass
+class DataProfile:
+    total_rows: int
+    total_columns: int
+    columns: List[Dict[str, Any]]
+    quality_score: int
+    warnings: List[str]
+    numeric_summary: Dict[str, Any]
 
 def profile_dataframe(df: pd.DataFrame) -> DataProfile:
     """Produce a comprehensive profile of the dataframe for CLI and Dash frontend."""
@@ -71,15 +78,14 @@ def profile_dataframe(df: pd.DataFrame) -> DataProfile:
     
     quality_score = int(completeness * 0.7 + consistency * 0.3)
     
-    profile = {
-        "total_rows": len(df),
-        "total_columns": df.shape[1],
-        "columns": cols,
-        "quality_score": quality_score,
-        "warnings": warnings,
-        "numeric_summary": df.select_dtypes(include=DTYPE_NUM).describe().to_dict() if not df.select_dtypes(include=DTYPE_NUM).empty else {}
-    }
-    return SimpleNamespace(**profile)
+    return DataProfile(
+        total_rows=len(df),
+        total_columns=df.shape[1],
+        columns=cols,
+        quality_score=quality_score,
+        warnings=warnings,
+        numeric_summary=df.select_dtypes(include=DTYPE_NUM).describe().to_dict() if not df.select_dtypes(include=DTYPE_NUM).empty else {}
+    )
 
 def quality_report(df: pd.DataFrame, key_columns: list[str]) -> dict[str, Any]:
     """Produce a simple quality report covering missing values and duplicates."""
@@ -481,9 +487,14 @@ def detect_outliers_zscore(df: pd.DataFrame, column: str, threshold: float = 3.0
     if std == 0: return pd.Series([False] * len(df))
     return ((df[column] - mean).abs() / std) > threshold
 
-def detect_all_outliers(df: pd.DataFrame) -> list[SimpleNamespace]:
+@dataclass
+class OutlierResult:
+    column: str
+    outlier_count: int
+
+def detect_all_outliers(df: pd.DataFrame) -> list[OutlierResult]:
     num_cols = df.select_dtypes(include=DTYPE_NUM).columns
-    return [SimpleNamespace(column=col, outlier_count=int(detect_outliers_iqr(df, col).sum())) for col in num_cols]
+    return [OutlierResult(column=col, outlier_count=int(detect_outliers_iqr(df, col).sum())) for col in num_cols]
 
 def correlation_analysis(df: pd.DataFrame) -> pd.DataFrame:
     return df.select_dtypes(include=DTYPE_NUM).corr()
@@ -497,8 +508,13 @@ def classify_distribution(series: pd.Series) -> str:
     if series.nunique() < 10: return "categorical"
     return "numeric"
 
-def classify_all_distributions(df: pd.DataFrame) -> list[SimpleNamespace]:
-    return [SimpleNamespace(column=col, best_fit=classify_distribution(df[col])) for col in df.columns]
+@dataclass
+class DistributionResult:
+    column: str
+    best_fit: str
+
+def classify_all_distributions(df: pd.DataFrame) -> list[DistributionResult]:
+    return [DistributionResult(column=col, best_fit=classify_distribution(df[col])) for col in df.columns]
 
 def detect_anomalies(df: pd.DataFrame) -> pd.DataFrame:
     """Statistical anomaly detection using Z-score."""
@@ -551,11 +567,25 @@ class MetricsTracker:
         self.history[name].append(snap)
         return snap
 
-def compute_program_dashboard(df: pd.DataFrame) -> Any:
+@dataclass
+class DashboardSummary:
+    metrics: List[MetricSnapshot]
+    overall_health: str
+    green_count: int
+    yellow_count: int
+    red_count: int
+
+def compute_program_dashboard(df: pd.DataFrame) -> DashboardSummary:
     tracker = MetricsTracker()
     if "violations" in df.columns:
         tracker.record("defect_density", df["violations"].mean(), target=2.0)
-    return SimpleNamespace(metrics=[s[-1] for s in tracker.history.values()], overall_health=COLOR_GREEN, green_count=len(tracker.history), yellow_count=0, red_count=0)
+    return DashboardSummary(
+        metrics=[s[-1] for s in tracker.history.values()], 
+        overall_health=COLOR_GREEN, 
+        green_count=len(tracker.history), 
+        yellow_count=0, 
+        red_count=0
+    )
 
 class Report:
     """Simple report object with markdown/HTML rendering."""
@@ -577,7 +607,7 @@ def generate_inquiry_response(inquiry_type: str, df: pd.DataFrame, **kwargs) -> 
     details = ", ".join(f"{k}={v}" for k, v in kwargs.items()) if kwargs else "general"
     return Report("Inquiry Response", f"Thank you for your inquiry regarding NYC DOT data.\nType: {inquiry_type} | Filter: {details}\nTotal records reviewed: {len(df)}")
 
-def generate_program_report(dash: Any) -> Report:
+def generate_program_report(dash: DashboardSummary) -> Report:
     """Generate a report from the program dashboard snapshot."""
     content = f"Overall Health: {dash.overall_health.upper()}\n\n"
     content += f"Summary: 🟢 {dash.green_count} | 🟡 {dash.yellow_count} | 🔴 {dash.red_count}\n\n"

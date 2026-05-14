@@ -15,6 +15,7 @@ except ImportError:
 
 from socrata_toolkit.engineering import SidewalkAnatomy, SidewalkZone, SIDEWALK_MATERIALS
 from socrata_toolkit.analysis import plot_sidewalk_anatomy, export_plotly_figure
+from socrata_toolkit.viz.charts import plot_sidewalk_anatomy, export_plotly_figure
 
 CACHE_FILE = Path("material_costs_cache.json")
 

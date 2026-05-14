@@ -241,10 +241,16 @@ def estimate_costs(df: pd.DataFrame, sqft_col: str = "estimated_sqft", scope_col
     out["_estimated_cost"] = totals
     return out
 
-def summarize_costs(df: pd.DataFrame) -> SimpleNamespace:
+@dataclass
+class CostSummary:
+    total_estimated: float
+    avg_cost_per_location: float
+    location_count: int
+
+def summarize_costs(df: pd.DataFrame) -> CostSummary:
     """Return a summary of estimated costs."""
     costs = df.get("_estimated_cost", pd.Series([0])).fillna(0)
-    return SimpleNamespace(
+    return CostSummary(
         total_estimated=float(costs.sum()),
         avg_cost_per_location=float(costs.mean()),
         location_count=len(df)
@@ -264,6 +270,38 @@ def score_contractors(df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame({"contractor": ["ABC Construction", "XYZ Paving"], "score": [92.5, 88.0]})
 
 # ── Budget Forecasting (Reconciled) ───────────────────────────────────────────
+
+@dataclass
+class ContractProgress:
+    contract_id: str
+    pct_complete: float
+    status: str
+    velocity_sqft_per_day: float
+
+@dataclass
+class BudgetAnalysisResult:
+    total_planned: float
+    total_actual: float
+    variance: float
+    cost_performance_index: float
+
+@dataclass
+class ProductivityMetricsResult:
+    sqft_per_day: float
+    linear_feet_per_day: float
+    cost_per_sqft: float
+    crew_efficiency: float
+
+@dataclass
+class SidewalkKPISummary:
+    defect_density: float
+    
+@dataclass
+class ConstructionListSummary:
+    total_locations: int
+    ada_count: int
+    high_priority_count: int
+    avg_priority_score: float
 
 def project_spending(data: pd.DataFrame, future_months: int) -> pd.DataFrame:
     """Projects future spending based on historical data."""
@@ -377,8 +415,8 @@ def flag_ada_locations(df: pd.DataFrame) -> pd.DataFrame:
     out["_ada_required"] = out.get("description", "").str.contains("ada|ramp", case=False, na=False)
     return out
 
-def summarize_construction_list(df: pd.DataFrame) -> Any:
-    return SimpleNamespace(
+def summarize_construction_list(df: pd.DataFrame) -> ConstructionListSummary:
+    return ConstructionListSummary(
         total_locations=len(df),
         ada_count=int(df.get("_ada_required", 0).sum()),
         high_priority_count=int((df.get("_priority_score", 0) >= 0.7).sum()),
@@ -390,14 +428,14 @@ def export_construction_list(df: pd.DataFrame, path: str):
 
 # ── Contract Analytics ────────────────────────────────────────────────────────
 
-def analyze_contract_progress(df: pd.DataFrame) -> List[Any]:
-    return [SimpleNamespace(contract_id="C-101", pct_complete=45.0, status=STATUS_PROGRESS, velocity_sqft_per_day=120.0)]
+def analyze_contract_progress(df: pd.DataFrame) -> List[ContractProgress]:
+    return [ContractProgress(contract_id="C-101", pct_complete=45.0, status=STATUS_PROGRESS, velocity_sqft_per_day=120.0)]
 
-def budget_analysis(df: pd.DataFrame) -> Any:
-    return SimpleNamespace(total_planned=1000000.0, total_actual=950000.0, variance=-50000.0, cost_performance_index=1.05)
+def budget_analysis(df: pd.DataFrame) -> BudgetAnalysisResult:
+    return BudgetAnalysisResult(total_planned=1000000.0, total_actual=950000.0, variance=-50000.0, cost_performance_index=1.05)
 
-def productivity_metrics(df: pd.DataFrame) -> Any:
-    return SimpleNamespace(sqft_per_day=150.0, linear_feet_per_day=30.0, cost_per_sqft=12.50, crew_efficiency=0.95)
+def productivity_metrics(df: pd.DataFrame) -> ProductivityMetricsResult:
+    return ProductivityMetricsResult(sqft_per_day=150.0, linear_feet_per_day=30.0, cost_per_sqft=12.50, crew_efficiency=0.95)
 
 def compute_material_aware_kpis(df: pd.DataFrame, period: str = "all-time") -> MaterialAwareSidewalkKPI:
     """Compute high-level KPIs for sidewalk operations."""
@@ -412,11 +450,11 @@ def compute_material_aware_kpis(df: pd.DataFrame, period: str = "all-time") -> M
         hazardous_defect_count=0
     )
 
-def compute_sidewalk_kpis(df: pd.DataFrame, defect_col: str = "violations", curb_miles_col: str = "curb_miles") -> Any:
+def compute_sidewalk_kpis(df: pd.DataFrame, defect_col: str = "violations", curb_miles_col: str = "curb_miles") -> SidewalkKPISummary:
     """Legacy sidewalk KPI computation (backward compatible)."""
     dsum = float(df.get(defect_col, pd.Series([0])).fillna(0).sum())
     miles = float(df.get(curb_miles_col, pd.Series([1])).fillna(0).sum()) or 1.0
-    return SimpleNamespace(defect_density=dsum/miles)
+    return SidewalkKPISummary(defect_density=dsum/miles)
 
 # ── Construction Lists ────────────────────────────────────────────────────────
 

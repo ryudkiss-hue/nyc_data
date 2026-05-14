@@ -85,10 +85,19 @@ class LegalPolicyEngine:
 
 # ── Optimization & Quantum ────────────────────────────────────────────────────
 
-def quantum_search(items: Any, criteria: Any) -> Any:
+@dataclass
+class QuantumSearchResult:
+    match_count: int
+    method: str
+    num_qubits: int
+    grover_iterations: int
+    circuit_depth: int
+    matches: List[Any]
+
+def quantum_search(items: Any, criteria: Any) -> QuantumSearchResult:
     """Simulated quantum search algorithm."""
     count = 1 if items is not None else 0
-    return SimpleNamespace(
+    return QuantumSearchResult(
         match_count=count,
         method="Grover search",
         num_qubits=8,
@@ -202,7 +211,7 @@ def optimize_repair_route(df: pd.DataFrame, lat_col: str = "latitude", lon_col: 
         unvisited.remove(nearest_node)
         current_node = nearest_node
 
-    return SimpleNamespace(
+    return RouteOptResult(
         total_distance_miles=round(total_distance, 2),
         estimated_time_hours=round(total_distance / 10.0 + (len(route) * 0.5), 1), # Assume 10mph in NYC + 30 mins per stop
         method="Nearest Neighbor TSP",
@@ -210,14 +219,21 @@ def optimize_repair_route(df: pd.DataFrame, lat_col: str = "latitude", lon_col: 
         ordered_df=valid_df.loc[route].reset_index(drop=True)
     )
 
-def optimize_crew_assignment(df: pd.DataFrame, n_crews: int = 5, config: Any = None) -> Any:
+@dataclass
+class CrewAssignResult:
+    method: str
+    total_cost: float
+    balance_score: float
+    assignments: Dict[str, List[str]]
+
+def optimize_crew_assignment(df: pd.DataFrame, n_crews: int = 5, config: Any = None) -> CrewAssignResult:
     """Simulate crew assignment optimization."""
     import uuid
     assignments = {f"crew_{i+1}": [] for i in range(n_crews)}
     for idx in df.index:
         crew = f"crew_{(idx % n_crews) + 1}"
         assignments[crew].append(str(idx))
-    return SimpleNamespace(
+    return CrewAssignResult(
         method=(config.backend if config and hasattr(config, "backend") else "classical") + " solver",
         total_cost=float(len(df) * 12.5),
         balance_score=0.92,
