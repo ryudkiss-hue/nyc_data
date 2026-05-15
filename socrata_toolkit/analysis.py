@@ -228,11 +228,22 @@ def extract_patterns(df: pd.DataFrame, column: str, pattern_type: str = "emails"
 def parse_sim_complaints(df: pd.DataFrame, text_col: str = "description") -> pd.DataFrame:
     """
     Quantitatively parse Sidewalk Inspection and Management (SIM) complaints using
-    statistical and heuristic methods (no LLMs). Uses term frequencies, Zipf's Law
-    deviations, and domain-specific taxonomies to extract insights and calculate severity.
+    statistical methods. Uses TF-IDF for keyword extraction and domain-specific
+    taxonomies to extract insights and calculate severity.
     """
+    try:
+        import numpy as np
+        from sklearn.feature_extraction.text import TfidfVectorizer
+    except ImportError:
+        logger.error(
+            "scikit-learn is not installed. Cannot perform TF-IDF keyword extraction. "
+            "Please run 'pip install scikit-learn' to enable this functionality."
+        )
+        return df
+
     out = df.copy()
     if text_col not in out.columns:
+        logger.warning(f"Column '{text_col}' not found in DataFrame. Skipping SIM parsing.")
         return out
 
     # Define SIM Taxonomies
@@ -243,81 +254,72 @@ def parse_sim_complaints(df: pd.DataFrame, text_col: str = "description") -> pd.
         "trip_hazard": r"\b(trip|fall|hazard|danger|protruding|rebar|metal|edge|uneven|step)\b",
         "water_pooling": r"\b(water|puddle|drain|drainage|flood|pond)\b",
     }
-
     compiled_taxonomies = {k: re.compile(v, re.IGNORECASE) for k, v in taxonomies.items()}
 
-    # Pre-compute corpus frequencies for Zipfian analysis
-    all_words = []
-    for text in out[text_col].dropna().astype(str):
-        all_words.extend(WORD_RE.findall(text.lower()))
+    # --- Vectorized Operations ---
+    texts = out[text_col].astype(str).fillna("")
 
-    corpus_freq = Counter(all_words)
-    total_words = max(sum(corpus_freq.values()), 1)
-    word_probs = {word: count / total_words for word, count in corpus_freq.items()}
+    # 1. Taxonomy Matching and Severity Scoring
+    flags_series = texts.str.lower().apply(
+        lambda text: [cat for cat, pattern in compiled_taxonomies.items() if pattern.search(text)]
+    )
+    out["_sim_flags"] = flags_series
 
-    results = []
+    severity_map = {"trip_hazard": 0.4, "ada_accessibility": 0.35, "root_damage": 0.2}
 
-    for _, row in out.iterrows():
-        text = str(row.get(text_col, ""))
-        if not text.strip():
-            results.append(
-                {
-                    "_sim_category": "unknown",
-                    "_sim_severity_score": 0.0,
-                    "_sim_flags": [],
-                    "_sim_unique_keywords": [],
-                }
-            )
-            continue
+    def calculate_severity(flags: list[str]) -> float:
+        score = sum(severity_map.get(flag, 0.15) for flag in flags)
+        return round(min(1.0, score), 2)
 
-        lower_text = text.lower()
-        words = WORD_RE.findall(lower_text)
+    out["_sim_severity_score"] = out["_sim_flags"].apply(calculate_severity)
 
-        # 1. Taxonomy Matching
-        flags = []
-        severity_score = 0.0
-        for cat, pattern in compiled_taxonomies.items():
-            if pattern.search(lower_text):
-                flags.append(cat)
-                severity_score += {
-                    "trip_hazard": 0.4,
-                    "ada_accessibility": 0.35,
-                    "root_damage": 0.2,
-                }.get(cat, 0.15)
+    # 2. Unique Keyword Extraction using TF-IDF
+    corpus = texts[texts.str.strip() != ""]
+    out["_sim_unique_keywords"] = [[] for _ in range(len(out))]  # Initialize column
 
-        # 2. Zipfian Anomaly Detection
-        word_counts = Counter(words)
-        doc_length = max(len(words), 1)
-        unique_terms = []
+    if not corpus.empty:
 
-        for word, count in word_counts.items():
-            if len(word) < 4:
-                continue
-            tf = count / doc_length
-            corpus_p = word_probs.get(word, 0.0001)
-            # If a word is highly frequent in THIS complaint but rare in the corpus, flag it!
-            if tf > corpus_p * 5 and corpus_freq.get(word, 0) < total_words * 0.01:
-                unique_terms.append(word)
+        def custom_tokenizer(text: str) -> list[str]:
+            tokens = WORD_RE.findall(text.lower())
+            return [t for t in tokens if len(t) >= 3]
 
-        unique_terms = sorted(unique_terms, key=lambda w: corpus_freq.get(w, 0))[:3]
-
-        # 3. Categorization
-        primary_cat = (
-            "critical_accessibility_hazard"
-            if "trip_hazard" in flags and "ada_accessibility" in flags
-            else (flags[0] if flags else "general_maintenance")
+        vectorizer = TfidfVectorizer(
+            tokenizer=custom_tokenizer,
+            stop_words="english",
+            ngram_range=(1, 2),
+            max_df=0.85,
+            min_df=2,
         )
-        results.append(
-            {
-                "_sim_category": primary_cat,
-                "_sim_severity_score": round(min(1.0, severity_score), 2),
-                "_sim_flags": flags,
-                "_sim_unique_keywords": unique_terms,
-            }
+        tfidf_matrix = vectorizer.fit_transform(corpus)
+        feature_names = np.array(vectorizer.get_feature_names_out())
+
+        top_n = 3
+        keywords_for_corpus = []
+        for i in range(tfidf_matrix.shape[0]):
+            doc_scores = tfidf_matrix[i].toarray().flatten()
+            # Get top N indices with scores > 0, in descending order of score
+            relevant_indices = [idx for idx in doc_scores.argsort() if doc_scores[idx] > 0]
+            keywords = feature_names[relevant_indices[-top_n:][::-1]].tolist()
+            keywords_for_corpus.append(keywords)
+
+        out.loc[corpus.index, "_sim_unique_keywords"] = pd.Series(
+            keywords_for_corpus, index=corpus.index
         )
 
-    res_df = pd.DataFrame(results, index=out.index)
-    return pd.concat([out, res_df], axis=1)
+    # 3. Categorization
+    def get_primary_cat(flags: list[str]) -> str:
+        if "trip_hazard" in flags and "ada_accessibility" in flags:
+            return "critical_accessibility_hazard"
+        return flags[0] if flags else "general_maintenance"
+
+    out["_sim_category"] = out["_sim_flags"].apply(get_primary_cat)
+
+    # Handle rows that were originally empty/NaN
+    mask = texts.str.strip() == ""
+    out.loc[mask, "_sim_category"] = "unknown"
+    out.loc[mask, "_sim_severity_score"] = 0.0
+
+    return out
 
 
 # ── NYC SDM & ADA Validation ──────────────────────────────────────────────────
@@ -489,6 +491,7 @@ def validate_schema_types(df: pd.DataFrame, schema: dict[str, str]) -> Validatio
 
 # ── Statistical Anomaly & Drift Detection ─────────────────────────────────────
 
+<<<<<<< HEAD
 
 class AnomalySeverity(Enum):
     CRITICAL = "critical"
@@ -497,6 +500,8 @@ class AnomalySeverity(Enum):
     LOW = "low"
     INFO = "info"
 
+=======
+>>>>>>> 23218b7 (refactor: 🎨 format and lint all python files)
 
 @dataclass
 class Anomaly:
@@ -854,7 +859,7 @@ class DashboardSummary:
 def compute_program_dashboard(df: pd.DataFrame) -> DashboardSummary:
     tracker = MetricsTracker()
     if "violations" in df.columns:
-        tracker.record("defect_density", df["violations"].mean(), target=2.0)
+        tracker.record("defect_density", float(df["violations"].mean()), target=2.0)
     return DashboardSummary(
         metrics=[s[-1] for s in tracker.history.values()],
         overall_health=COLOR_GREEN,
@@ -913,7 +918,7 @@ def generate_executive_briefing_automated(df: pd.DataFrame) -> Report:
 
     content = "## NYC DOT Sidewalk & 311 Executive Briefing\n\n"
     content += f"**Date:** {datetime.now(timezone.utc).strftime('%Y-%m-%d')}\n"
-    content += f"**Total Records Processed:** {prof.total_rows:,}\n"
+    content += f"**Total Records Processed:** {prof.row_count:,}\n"
     content += f"**Data Quality Score:** {prof.quality_score}/100\n\n"
 
     content += "### ⚡ SLA & Operational Performance\n"
@@ -1511,159 +1516,6 @@ def generate_analysis_results(df: pd.DataFrame, analysis_type: str) -> dict[str,
     return {"message": f"Unknown analysis type: {analysis_type}"}
 
 
-def box_plot(df: pd.DataFrame, columns: list[str], title: str | None = None) -> Any:
-    """Create an interactive Plotly box plot for comparing distributions."""
-    import plotly.express as px
-
-    fig = px.box(df, y=columns, points="all", notched=True)
-    return _apply_modern_layout(fig, title or "Distribution Comparison (Box Plot)")
-
-
-def quality_dashboard(df: pd.DataFrame) -> Any:
-    """Generate a high-level data quality summary dashboard."""
-    from .governance import compute_quality_score
-
-    score = compute_quality_score(df)
-    return gauge_chart(score, target=90, title="Global Data Quality Score")
-
-
-def plot_ada_compliance_map(
-    df: pd.DataFrame, lat_col: str = COL_LAT, lon_col: str = COL_LON
-) -> Any:
-    """Specialized map for visualizing ADA compliance across the city."""
-    import plotly.express as px
-
-    plot_df = df.dropna(subset=[lat_col, lon_col]).copy()
-    if "ada_compliant" not in plot_df.columns:
-        plot_df["ada_compliant"] = "Unknown"
-
-    fig = px.scatter_mapbox(
-        plot_df,
-        lat=lat_col,
-        lon=lon_col,
-        color="ada_compliant",
-        color_discrete_map={True: "#10b981", False: "#ef4444", "Unknown": "#6b7280"},
-        zoom=10,
-        center=dict(lat=40.7128, lon=-74.0060),
-        mapbox_style="carto-darkmatter",
-    )
-    return _apply_modern_layout(fig, "NYC ADA Compliance Audit")
-
-
-def generate_semantic_network_map(df: pd.DataFrame | None = None) -> Any:
-    """Stub for semantic network map."""
-    import plotly.graph_objects as go
-
-    return go.Figure()
-
-
-def build_weighted_rank_sql(table: str, search_query: str) -> str:
-    """Stub for weighted rank SQL generation."""
-    return f"SELECT *, 1.0 as rank FROM {table}"
-
-
-def websearch_to_tsquery_sql(query: str) -> str:
-    """Stub for websearch to tsquery conversion."""
-    return query
-
-
-class MetricsCollector:
-    """Stub for metrics collection."""
-
-    def __init__(self):
-        self.metrics = {}
-
-    def collect(self, df: pd.DataFrame):
-        pass
-
-
-class CorrelationAnalysis:
-    """Stub for correlation analysis."""
-
-    @staticmethod
-    def compute(df: pd.DataFrame):
-        return df.corr(numeric_only=True)
-
-
-def borough_bar_chart(df: pd.DataFrame, target_col: str) -> Any:
-    import plotly.express as px
-
-    return px.bar(df, x="borough", y=target_col)
-
-
-@dataclass
-class AnomalyReport:
-    anomalies: pd.DataFrame
-    summary: str
-    total_count: int
-
-
-def contract_gantt(df: pd.DataFrame) -> Any:
-    import plotly.express as px
-
-    return px.timeline(df, x_start="start", x_end="end", y="task")
-
-
-class DataQualityCatalog:
-    """Stub for data quality catalog."""
-
-    def __init__(self):
-        self.rules = []
-
-
-def kpi_gauge(value: float, target: float, title: str) -> Any:
-    import plotly.graph_objects as go
-
-    return go.Figure(go.Indicator(mode="gauge+number", value=value, title={"text": title}))
-
-
-@dataclass
-class DatasetQualityScore:
-    score: float
-    grade: str
-    metrics: dict[str, float]
-
-
-def priority_heatmap(df: pd.DataFrame) -> Any:
-    import plotly.express as px
-
-    return px.density_heatmap(df, x="borough", y="priority")
-
-
-@dataclass
-class Expectation:
-    column: str
-    rule_type: str
-    params: dict[str, Any] = field(default_factory=dict)
-
-
-def correlation_heatmap(df: pd.DataFrame) -> Any:
-    import plotly.express as px
-
-    return px.imshow(df.corr(numeric_only=True), text_auto=True, title="Correlation Heatmap")
-
-
-def gauge_chart(value: float, target: float | None = None, title: str = "") -> Any:
-    import plotly.graph_objects as go
-
-    fig = go.Figure(
-        go.Indicator(
-            mode="gauge+number",
-            value=value,
-            title={"text": title},
-            gauge={
-                "axis": {"range": [0, 100]},
-                "threshold": (
-                    {"line": {"color": "red", "width": 4}, "thickness": 0.75, "value": target}
-                    if target
-                    else {}
-                ),
-            },
-        )
-    )
-    return fig
-
-
 # ── Enums & Types ─────────────────────────────────────────────────────────────
 
 
@@ -1673,459 +1525,3 @@ class DataType(Enum):
     DATE = "date"
     BOOLEAN = "boolean"
     GEOSPATIAL = "geospatial"
-
-
-class Severity(Enum):
-    CRITICAL = "critical"
-    HIGH = "high"
-    MEDIUM = "medium"
-    LOW = "low"
-
-
-class SeverityLevel(Enum):
-    CRITICAL = "critical"
-    HIGH = "high"
-    MEDIUM = "medium"
-    LOW = "low"
-
-
-class AnomalySeverity(Enum):
-    CRITICAL = "critical"
-    HIGH = "high"
-    MEDIUM = "medium"
-    LOW = "low"
-
-
-class RuleSeverity(Enum):
-    CRITICAL = "critical"
-    HIGH = "high"
-    MEDIUM = "medium"
-    LOW = "low"
-
-
-class RuleMode(Enum):
-    HARD = "hard"
-    SOFT = "soft"
-
-
-class MetricType(Enum):
-    COMPLETENESS = "completeness"
-    VALIDITY = "validity"
-    CONSISTENCY = "consistency"
-    FRESHNESS = "freshness"
-    ACCURACY = "accuracy"
-
-
-class TrendDirection(Enum):
-    IMPROVING = "improving"
-    DEGRADING = "degrading"
-    STABLE = "stable"
-
-
-class ExpectationType(Enum):
-    COLUMN_EXISTS = "column_exists"
-    COLUMN_NOT_NULL = "column_not_null"
-    COLUMN_VALUES_IN_SET = "column_values_in_set"
-    COLUMN_VALUES_BETWEEN = "column_values_between"
-    COLUMN_UNIQUE = "column_unique"
-
-
-# ── SLA & Cycle Time Analysis ────────────────────────────────────────────────
-
-
-@dataclass
-class SLATarget:
-    complaint_to_inspection_days: int = 30
-    inspection_to_repair_days: int = 90
-    total_cycle_days: int = 120
-
-
-@dataclass
-class SLADefinition:
-    metric_name: str
-    metric_type: MetricType
-    target: float
-    window: str = "daily"
-    dataset: str = ""
-    severity: Severity = Severity.MEDIUM
-    owner: str = ""
-
-
-@dataclass
-class SLAMetrics:
-    avg_complaint_to_inspection: float
-    avg_inspection_to_repair: float
-    avg_total_cycle_days: float
-    sla_compliance_rate: float
-    violation_count: int = 0
-
-
-def compute_cycle_times(df: pd.DataFrame, start_col: str | None = None, end_col: str | None = None) -> pd.DataFrame:
-    """Calculate days between different stages of a record's lifecycle."""
-    out = df.copy()
-    
-    # If custom columns provided, compute that specific diff
-    if start_col and end_col and start_col in out.columns and end_col in out.columns:
-        s = pd.to_datetime(out[start_col], errors="coerce")
-        e = pd.to_datetime(out[end_col], errors="coerce")
-        out["_custom_cycle"] = (e - s).dt.days
-        return out
-
-    date_cols = {
-        "complaint": COL_COMPLAINT,
-        "inspection": "inspection_date",
-        "repair": COL_REPAIR,
-    }
-    
-    for key, col in date_cols.items():
-        if col in out.columns:
-            out[col] = pd.to_datetime(out[col], errors="coerce")
-            
-    if date_cols["complaint"] in out.columns and date_cols["inspection"] in out.columns:
-        out["_days_complaint_to_inspection"] = (out[date_cols["inspection"]] - out[date_cols["complaint"]]).dt.days
-        
-    if date_cols["inspection"] in out.columns and date_cols["repair"] in out.columns:
-        out["_days_inspection_to_repair"] = (out[date_cols["repair"]] - out[date_cols["inspection"]]).dt.days
-        
-    if date_cols["complaint"] in out.columns and date_cols["repair"] in out.columns:
-        out["_days_total_cycle"] = (out[date_cols["repair"]] - out[date_cols["complaint"]]).dt.days
-        
-    return out
-
-
-def compute_sla_metrics(df: pd.DataFrame, start_col: str | None = None, end_col: str | None = None) -> SLAMetrics:
-    """Aggregate SLA performance across a dataset."""
-    df_cycle = compute_cycle_times(df, start_col, end_col)
-    
-    if "_custom_cycle" in df_cycle.columns:
-        avg = df_cycle["_custom_cycle"].mean()
-        # Mocking other fields
-        return SLAMetrics(0, 0, float(avg or 0), 95.0, 0)
-
-    c_to_i = df_cycle.get("_days_complaint_to_inspection", pd.Series([0])).mean()
-    i_to_r = df_cycle.get("_days_inspection_to_repair", pd.Series([0])).mean()
-    total = df_cycle.get("_days_total_cycle", pd.Series([0])).mean()
-    
-    # Simplified compliance rate
-    comp = 95.0 # Mock
-    
-    return SLAMetrics(
-        avg_complaint_to_inspection=float(c_to_i or 0),
-        avg_inspection_to_repair=float(i_to_r or 0),
-        avg_total_cycle_days=float(total or 0),
-        sla_compliance_rate=comp,
-        violation_count=int(len(df_cycle) * 0.05)
-    )
-
-
-class InsightsEngine:
-    """Mock InsightsEngine for UI."""
-    def __init__(self, df: pd.DataFrame):
-        self.df = df
-    def generate(self) -> list[str]:
-        return ["Strong performance in Manhattan", "Repair backlog decreasing in Brooklyn"]
-
-
-def generate_executive_briefing_automated(df: pd.DataFrame) -> Any:
-    """Mock briefing generator."""
-    from types import SimpleNamespace
-    return SimpleNamespace(save=lambda path: None)
-
-
-def flag_sla_violations(df: pd.DataFrame, target: SLATarget | None = None) -> pd.DataFrame:
-    """Identify records that exceed defined SLA thresholds."""
-    if target is None:
-        target = SLATarget()
-    
-    out = compute_cycle_times(df)
-    out["_sla_violation"] = False
-    
-    if "_days_complaint_to_inspection" in out.columns:
-        out["_sla_violation"] |= out["_days_complaint_to_inspection"] > target.complaint_to_inspection_days
-        
-    return out
-
-
-def create_standard_slas() -> list[SLADefinition]:
-    """Generate the baseline set of SLAs for NYC DOT infrastructure data."""
-    return [
-        SLADefinition("sidewalk_inspections_completeness", MetricType.COMPLETENESS, 0.98, dataset="sidewalk_inspections"),
-        SLADefinition("311_complaints_freshness", MetricType.FRESHNESS, 0.95, dataset="311_complaints"),
-    ]
-@dataclass
-class Expectation:
-    expectation_type: ExpectationType
-    kwargs: dict[str, Any]
-    meta: dict[str, Any] = field(default_factory=dict)
-    severity: SeverityLevel = SeverityLevel.MEDIUM
-
-
-@dataclass
-class ValidationResult:
-    status: str
-    passed_count: int
-    failed_count: int
-    failed_expectations: list[dict[str, Any]]
-    row_count: int = 0
-    column_count: int = 0
-    is_critical_failure: bool = False
-    pass_rate: float = 0.0
-
-    def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
-
-
-class ExpectationSuite:
-    def __init__(self, name: str, description: str = "", version: str = "1.0.0"):
-        self.name = name
-        self.description = description
-        self.version = version
-        self.expectations: list[Expectation] = []
-
-    def add_column_exists(self, column: str, severity: SeverityLevel = SeverityLevel.MEDIUM):
-        self.expectations.append(Expectation(ExpectationType.COLUMN_EXISTS, {"column": column}, severity=severity))
-
-    def add_column_not_null(self, column: str, severity: SeverityLevel = SeverityLevel.MEDIUM):
-        self.expectations.append(Expectation(ExpectationType.COLUMN_NOT_NULL, {"column": column}, severity=severity))
-
-    def add_column_values_in_set(self, column: str, value_set: set[Any], severity: SeverityLevel = SeverityLevel.MEDIUM):
-        self.expectations.append(Expectation(ExpectationType.COLUMN_VALUES_IN_SET, {"column": column, "value_set": list(value_set)}, severity=severity))
-
-    def validate(self, df: pd.DataFrame) -> ValidationResult:
-        passed = 0
-        failed = []
-        for exp in self.expectations:
-            # Mock validation logic
-            passed += 1
-        
-        rate = passed / max(len(self.expectations), 1)
-        return ValidationResult(
-            status="PASS" if rate > 0.8 else "FAIL",
-            passed_count=passed,
-            failed_count=len(failed),
-            failed_expectations=failed,
-            row_count=len(df),
-            column_count=len(df.columns),
-            pass_rate=rate
-        )
-
-    def to_dict(self) -> dict[str, Any]:
-        return {"name": self.name, "description": self.description, "version": self.version, "expectations": [asdict(e) for e in self.expectations]}
-
-
-class QualityValidator:
-    def __init__(self, fail_fast: bool = False):
-        self.fail_fast = fail_fast
-
-    def validate(self, df: pd.DataFrame, suite: ExpectationSuite, dataset_name: str = "") -> ValidationResult:
-        return suite.validate(df)
-
-
-class ValidationResultsAggregator:
-    def __init__(self):
-        self.results = []
-
-    def add_result(self, result: ValidationResult):
-        self.results.append(result)
-
-    def get_statistics(self) -> dict[str, Any]:
-        return {"total_validations": len(self.results)}
-
-    def get_recent_failures(self, limit: int = 10) -> list[ValidationResult]:
-        return [r for r in self.results if r.status == "FAIL"][:limit]
-
-
-@dataclass
-class ColumnProfile:
-    name: str
-    data_type: DataType
-    null_count: int = 0
-    unique_count: int = 0
-    min_value: Any = None
-    max_value: Any = None
-    cardinality: int = 0
-
-
-@dataclass
-class DriftReport:
-    drift_detected: bool = False
-
-
-@dataclass
-class DatasetProfile:
-    table_name: str
-    row_count: int
-    column_count: int
-    column_profiles: list[ColumnProfile]
-
-    def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
-
-
-class ProfileGenerator:
-    def __init__(self, sample_size: int = 1000):
-        self.sample_size = sample_size
-
-    def profile_dataset(self, df: pd.DataFrame, table_name: str = "dataset") -> DatasetProfile:
-        cols = [self._profile_column(df[c], str(c)) for c in df.columns]
-        return DatasetProfile(table_name, len(df), len(df.columns), cols)
-
-    def _profile_column(self, series: pd.Series, name: str) -> ColumnProfile:
-        dtype = DataType.STRING
-        if pd.api.types.is_numeric_dtype(series):
-            dtype = DataType.NUMERIC
-        return ColumnProfile(
-            name=name,
-            data_type=dtype,
-            null_count=int(series.isna().sum()),
-            unique_count=int(series.nunique()),
-            min_value=series.min() if dtype == DataType.NUMERIC else None,
-            max_value=series.max() if dtype == DataType.NUMERIC else None,
-            cardinality=int(series.nunique())
-        )
-
-    def suggest_expectations(self, profile: DatasetProfile) -> list[dict[str, Any]]:
-        return [{"expectation_type": "column_exists", "kwargs": {"column": profile.column_profiles[0].name}}]
-
-    def compare_profiles(self, p1: DatasetProfile, p2: DatasetProfile) -> DriftReport:
-        return DriftReport()
-
-    def detect_schema_drift(self, p1: DatasetProfile, p2: DatasetProfile) -> dict[str, list[str]]:
-        return {"columns_added": [], "columns_removed": []}
-
-    def generate_summary(self, profile: DatasetProfile) -> dict[str, Any]:
-        return {"row_count": profile.row_count, "column_count": profile.column_count}
-
-
-@dataclass
-class QualityRule:
-    rule_id: str
-    rule_name: str
-    rule_func: Any
-    severity: RuleSeverity = RuleSeverity.MEDIUM
-    mode: RuleMode = RuleMode.SOFT
-
-
-@dataclass
-class RuleViolations:
-    total_violations: int = 0
-    violations_by_rule: dict[str, list[str]] = field(default_factory=dict)
-
-
-class BusinessRulesEngine:
-    def __init__(self):
-        self.rules: dict[str, QualityRule] = {}
-
-    def register_rule(self, rule: QualityRule):
-        self.rules[rule.rule_id] = rule
-
-    def apply_rules(self, df: pd.DataFrame) -> RuleViolations:
-        total = 0
-        for rule in self.rules.values():
-            # Mock application
-            pass
-        return RuleViolations(total_violations=total)
-
-    def apply_hard_rules(self, df: pd.DataFrame) -> RuleViolations:
-        return RuleViolations()
-
-    def get_violations_by_severity(self, violations: RuleViolations) -> dict[str, int]:
-        return {"critical": 0, "high": 0, "medium": 0, "low": 0}
-
-
-@dataclass
-class DatasetQualityScore:
-    overall: float
-    completeness: float = 100.0
-    validity: float = 100.0
-    consistency: float = 100.0
-    freshness: float = 100.0
-
-
-@dataclass
-class DatasetHealthProfile:
-    name: str
-    display_name: str
-    quality_score: DatasetQualityScore = field(default_factory=lambda: DatasetQualityScore(100.0))
-
-
-class DataQualityCatalog:
-    def __init__(self):
-        self.profiles: dict[str, DatasetHealthProfile] = {}
-
-    def register_dataset(self, name: str, display_name: str):
-        self.profiles[name] = DatasetHealthProfile(name, display_name)
-
-    def update_quality_score(self, name: str, score: DatasetQualityScore):
-        if name in self.profiles:
-            self.profiles[name].quality_score = score
-
-    def get_profile(self, name: str) -> DatasetHealthProfile:
-        return self.profiles.get(name, DatasetHealthProfile(name, name))
-
-    def list_by_quality(self, min_score: float = 0.0) -> list[str]:
-        return [n for n, p in self.profiles.items() if p.quality_score.overall >= min_score]
-
-    def get_health_summary(self) -> dict[str, Any]:
-        return {"total_datasets": len(self.profiles)}
-
-
-class DataQualityTracker:
-    def __init__(self):
-        self._slas: dict[str, SLADefinition] = {}
-        self._metric_history: list[dict[str, Any]] = []
-
-    def register_sla(self, sla: SLADefinition):
-        self._slas[sla.metric_name] = sla
-
-    def record_metric(self, name: str, value: float, dataset: str, mtype: MetricType):
-        self._metric_history.append({"name": name, "value": value, "dataset": dataset, "type": mtype, "timestamp": datetime.now(timezone.utc)})
-
-    def evaluate_sla(self, name: str) -> tuple[bool, float]:
-        return True, 1.0
-
-    def get_trend(self, name: str) -> Any:
-        from types import SimpleNamespace
-        return SimpleNamespace(direction=TrendDirection.STABLE)
-
-    def get_breach_summary(self) -> dict[str, Any]:
-        return {"active_breaches": []}
-
-    def get_sla_compliance_report(self) -> dict[str, Any]:
-        return {"overall_compliance": 1.0, "sla_results": []}
-
-
-class QualityReportGenerator:
-    def __init__(self, output_dir: Path | str | None = None):
-        self.output_dir = Path(output_dir) if output_dir else None
-
-    def generate_daily_report(self, datasets: dict, sla_results: dict, anomalies: list) -> dict:
-        return {"title": "Daily Quality Report", "summary": "All systems nominal."}
-
-    def generate_dataset_report(self, name: str, profile: dict, validation_results: list) -> dict:
-        return {"dataset_name": name, "profile": profile, "validation_results": validation_results}
-
-    def export_to_json(self, report: dict, filename: str) -> Path:
-        p = (self.output_dir or Path(".")) / filename
-        p.write_text(json.dumps(report))
-        return p
-
-
-def create_sidewalk_inspections_suite() -> ExpectationSuite:
-    suite = ExpectationSuite("sidewalk_inspections")
-    suite.add_column_exists("inspection_id")
-    suite.add_column_not_null("inspection_id")
-    suite.add_column_values_in_set("material_type", {"asphalt", "concrete", "permeable"})
-    return suite
-
-
-def create_311_complaints_suite() -> ExpectationSuite:
-    return ExpectationSuite("311_complaints")
-
-
-def create_sidewalk_rules() -> BusinessRulesEngine:
-    return BusinessRulesEngine()
-
-
-def create_311_complaints_rules() -> BusinessRulesEngine:
-    return BusinessRulesEngine()
