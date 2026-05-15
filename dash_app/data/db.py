@@ -20,22 +20,24 @@ import os
 import threading
 from typing import Any
 
+import dask
 import duckdb
 import pandas as pd
 from dask import delayed
-import dask
 
 # ── Environment ───────────────────────────────────────────────────────────────
 _MOTHERDUCK_TOKEN = os.getenv("MOTHERDUCK_TOKEN", "")
-_DB_NAME          = os.getenv("DUCKDB_DATABASE", "nyc_dash")
-_DB_PATH          = os.getenv("DUCKDB_PATH", os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-    "nyc_dash.db"
-))
-_SOCRATA_TOKEN    = os.getenv("SOCRATA_APP_TOKEN", "")
+_DB_NAME = os.getenv("DUCKDB_DATABASE", "nyc_dash")
+_DB_PATH = os.getenv(
+    "DUCKDB_PATH",
+    os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "nyc_dash.db"
+    ),
+)
+_SOCRATA_TOKEN = os.getenv("SOCRATA_APP_TOKEN", "")
 
 # ── Connection management ─────────────────────────────────────────────────────
-_local      = threading.local()
+_local = threading.local()
 _write_lock = threading.Lock()
 
 
@@ -56,10 +58,12 @@ def get_conn() -> duckdb.DuckDBPyConnection:
         except Exception as e:
             if "being used by another process" in str(e) or "Cannot open file" in str(e):
                 import warnings
+
                 warnings.warn(
                     f"[DuckDB] File '{path}' is locked — starting in :memory: mode. "
                     "Stop all other Python processes and restart for file persistence.",
-                    RuntimeWarning, stacklevel=2,
+                    RuntimeWarning,
+                    stacklevel=2,
                 )
                 _local.conn = duckdb.connect(":memory:")
             else:
@@ -72,6 +76,7 @@ def is_motherduck() -> bool:
 
 
 # ── Query helpers ─────────────────────────────────────────────────────────────
+
 
 def query_df(sql: str, params: list[Any] | None = None) -> pd.DataFrame:
     """Execute *sql* and return the result as a pandas DataFrame."""
@@ -140,7 +145,7 @@ def upsert_df(df: pd.DataFrame, table: str, pk: str | None = None) -> int:
         elif pk and pk in df.columns:
             conn.execute(
                 f'INSERT INTO "{table}" SELECT * FROM _upsert_tmp '
-                f'ON CONFLICT ({pk}) DO UPDATE SET *'
+                f"ON CONFLICT ({pk}) DO UPDATE SET *"
             )
         else:
             conn.execute(f'INSERT INTO "{table}" SELECT * FROM _upsert_tmp')
@@ -148,6 +153,7 @@ def upsert_df(df: pd.DataFrame, table: str, pk: str | None = None) -> int:
 
 
 # ── Dask parallel fetch helpers ───────────────────────────────────────────────
+
 
 @delayed
 def _fetch_socrata_page(
@@ -191,10 +197,7 @@ def parallel_socrata_fetch(
     params = extra_params or {}
 
     offsets = list(range(0, max_rows, page_size))
-    tasks = [
-        _fetch_socrata_page(base_url, page_size, off, params, tok)
-        for off in offsets
-    ]
+    tasks = [_fetch_socrata_page(base_url, page_size, off, params, tok) for off in offsets]
     results: tuple[pd.DataFrame, ...] = dask.compute(*tasks, scheduler="threads")
     frames = [df for df in results if not df.empty]
     if not frames:
@@ -206,11 +209,11 @@ def parallel_socrata_fetch(
 def df_summary(df: pd.DataFrame) -> dict[str, Any]:
     """Return a lightweight summary dict for a DataFrame."""
     return {
-        "rows":     len(df),
-        "columns":  list(df.columns),
-        "dtypes":   {c: str(df[c].dtype) for c in df.columns},
+        "rows": len(df),
+        "columns": list(df.columns),
+        "dtypes": {c: str(df[c].dtype) for c in df.columns},
         "null_pct": {c: round(df[c].isnull().mean() * 100, 1) for c in df.columns},
-        "numeric":  df.select_dtypes("number").columns.tolist(),
-        "text":     df.select_dtypes("object").columns.tolist(),
-        "date":     [c for c in df.columns if "date" in c.lower() or "time" in c.lower()],
+        "numeric": df.select_dtypes("number").columns.tolist(),
+        "text": df.select_dtypes("object").columns.tolist(),
+        "date": [c for c in df.columns if "date" in c.lower() or "time" in c.lower()],
     }

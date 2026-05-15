@@ -1,27 +1,51 @@
 repos:
-  - repo: https://github.com/psf/black
-    rev: '24.4.2'
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
     hooks:
-      - id: black
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: check-yaml
+    -   id: check-added-large-files
+
+-   repo: https://github.com/PyCQA/autoflake
+    rev: v2.3.1
+    hooks:
+    -   id: autoflake
+        args: ['--in-place', '--remove-all-unused-imports', '--remove-unused-variables']
+
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.3.5
+    hooks:
+    -   id: ruff
+        args: [ --fix ]
+
+-   repo: https://github.com/psf/black
+    rev: 23.9.1
+    hooks:
+    -   id: black
         language_version: python3
+        args: ['--line-length=100']
 
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 'v0.4.4'
+-   repo: https://github.com/PyCQA/isort
+    rev: 5.12.0
     hooks:
-      - id: ruff
-        args: [--fix, --exit-non-zero-on-fix]
+    -   id: isort
+        args: ["--profile", "black"]
 
-  - repo: https://github.com/pycqa/isort
-    rev: '5.13.2'
+-   repo: https://github.com/PyCQA/flake8
+    rev: 6.1.0
     hooks:
-      - id: isort
+    -   id: flake8
+        # Ignore rules that conflict with Black's formatting:
+        # E203 (whitespace before :), E501 (line too long), W503 (line break before binary op)
+        # F401 is unused imports (we use autoflake for this, but flake8 will still warn if any slip by)
+        args: ['--max-line-length=100', '--ignore=E203,E266,E501,W503,F403']
 
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+-   repo: local
     hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
-      - id: check-yaml
-      - id: check-json
-      - id: check-merge-conflict
-      - id: debug-statements
+    -   id: test-type-exports
+        name: Run Type Exports Anti-Regression Test
+        entry: pytest tests/test_type_exports.py -v
+        language: system
+        pass_filenames: false
+        always_run: true

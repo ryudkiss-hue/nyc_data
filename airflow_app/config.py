@@ -11,7 +11,7 @@ Handles:
 
 import os
 from datetime import timedelta
-from typing import Dict, Any
+from typing import Any
 
 # ============================================================================
 # ENVIRONMENT & DEPLOYMENT CONFIGURATION
@@ -109,7 +109,8 @@ SOCRATA_API_CONN = {
     "extra": {
         "dataset_id": os.getenv("SOCRATA_311_DATASET_ID", "a2nx-4u46"),
         "app_token": os.getenv("SOCRATA_APP_TOKEN", ""),
-        "verify_ssl": not IS_PRODUCTION or os.getenv("SOCRATA_VERIFY_SSL", "true").lower() == "true",
+        "verify_ssl": not IS_PRODUCTION
+        or os.getenv("SOCRATA_VERIFY_SSL", "true").lower() == "true",
     },
 }
 
@@ -137,9 +138,7 @@ REDIS_CONN = {
 # CELERY CONFIGURATION (for production CeleryExecutor)
 # ============================================================================
 
-CELERY_BROKER_URL = (
-    f"redis://{REDIS_CONN['host']}:{REDIS_CONN['port']}/{REDIS_CONN['db']}"
-)
+CELERY_BROKER_URL = f"redis://{REDIS_CONN['host']}:{REDIS_CONN['port']}/{REDIS_CONN['db']}"
 CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 CELERY_WORKER_MAX_TASKS_PER_CHILD = 1000
@@ -246,7 +245,7 @@ FEATURES = {
 # ============================================================================
 
 
-def get_dag_defaults(dag_id: str) -> Dict[str, Any]:
+def get_dag_defaults(dag_id: str) -> dict[str, Any]:
     """
     Get DAG-specific defaults including SLA settings.
 
@@ -269,7 +268,7 @@ def get_dag_defaults(dag_id: str) -> Dict[str, Any]:
 # ============================================================================
 
 
-def get_connection(conn_id: str) -> Dict[str, Any]:
+def get_connection(conn_id: str) -> dict[str, Any]:
     """
     Get connection configuration by ID.
 
@@ -310,6 +309,4 @@ if IS_PRODUCTION:
 
     missing_vars = [var for var in required_vars if not os.getenv(var)]
     if missing_vars:
-        raise EnvironmentError(
-            f"Missing required environment variables for production: {missing_vars}"
-        )
+        raise OSError(f"Missing required environment variables for production: {missing_vars}")

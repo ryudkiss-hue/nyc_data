@@ -2,7 +2,9 @@
 Locust load testing script for the NYC DOT Toolkit.
 Tests both the NiceGUI frontend responsiveness and the FastAPI backend endpoints.
 """
-from locust import HttpUser, task, between
+
+from locust import HttpUser, between, task
+
 
 class MissionControlUser(HttpUser):
     # Simulate users clicking around every 1 to 3 seconds
@@ -29,15 +31,15 @@ class MissionControlUser(HttpUser):
         payload = [
             {"estimated_sqft": 150.5, "scope": "sidewalk_repair", "borough": "MANHATTAN"},
             {"estimated_sqft": 300.0, "scope": "pedestrian_ramp", "borough": "BROOKLYN"},
-            {"estimated_sqft": 45.2, "scope": "curb_replacement", "borough": "QUEENS"}
+            {"estimated_sqft": 45.2, "scope": "curb_replacement", "borough": "QUEENS"},
         ]
         self.client.post("/analyze/costs", json=payload)
-        
+
     @task(1)
     def simulate_quality_analysis(self):
         """Test the data quality scoring endpoint."""
         payload = [
             {"id": 1, "borough": "MANHATTAN", "status": "open"},
-            {"id": 2, "borough": "BROOKLYN", "status": "closed"}
+            {"id": 2, "borough": "BROOKLYN", "status": "closed"},
         ]
         self.client.post("/analyze/quality", json=payload)

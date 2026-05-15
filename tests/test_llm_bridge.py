@@ -1,7 +1,6 @@
 from unittest.mock import patch
 
 import pandas as pd
-
 from socrata_toolkit.llm.duck_bridge import LLMAugmentConfig, augment_dataframe_with_llm
 
 
@@ -10,7 +9,11 @@ class DummyResp:
         return None
 
     def json(self):
-        return {"choices": [{"message": {"content": '{"label":"other","confidence":0.7,"rationale":"ok"}'}}]}
+        return {
+            "choices": [
+                {"message": {"content": '{"label":"other","confidence":0.7,"rationale":"ok"}'}}
+            ]
+        }
 
 
 @patch("socrata_toolkit.llm.duck_bridge.requests.post")

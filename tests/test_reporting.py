@@ -1,9 +1,8 @@
 import json
 
 import pandas as pd
-import pytest
 
-from socrata_toolkit.reports.reporting import (
+from socrata_toolkit.analysis import (
     Report,
     generate_contract_report,
     generate_inquiry_response,
@@ -12,16 +11,18 @@ from socrata_toolkit.reports.reporting import (
 
 
 def _sample_contracts():
-    return pd.DataFrame({
-        "contract_id": ["C1", "C2", "C3"],
-        "borough": ["MANHATTAN", "BROOKLYN", "QUEENS"],
-        "planned_sqft": [1000, 2000, 500],
-        "actual_sqft": [800, 1500, 500],
-        "planned_spend": [50000, 100000, 25000],
-        "actual_spend": [45000, 110000, 24000],
-        "status": ["in_progress", "in_progress", "complete"],
-        "address": ["123 Main St", "456 Oak Ave", "789 Elm Blvd"],
-    })
+    return pd.DataFrame(
+        {
+            "contract_id": ["C1", "C2", "C3"],
+            "borough": ["MANHATTAN", "BROOKLYN", "QUEENS"],
+            "planned_sqft": [1000, 2000, 500],
+            "actual_sqft": [800, 1500, 500],
+            "planned_spend": [50000, 100000, 25000],
+            "actual_spend": [45000, 110000, 24000],
+            "status": ["in_progress", "in_progress", "complete"],
+            "address": ["123 Main St", "456 Oak Ave", "789 Elm Blvd"],
+        }
+    )
 
 
 def test_report_to_markdown():
@@ -77,7 +78,8 @@ def test_generate_contract_report():
 
 
 def test_generate_program_report():
-    from socrata_toolkit.analysis.program import MetricsTracker
+    from socrata_toolkit.analysis import MetricsTracker
+
     tracker = MetricsTracker()
     tracker.load_standard_kpis()
     tracker.record("defect_density", 1.5)

@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
 """Extract and categorize Pyright import errors from scan results."""
 
-import json
-import re
-from collections import defaultdict
-
 # Based on the Pyright output already captured
 print("=" * 100)
 print("PYLANCE/PYRIGHT IMPORT ERROR ANALYSIS - NYC DATA PROJECT")
@@ -31,20 +27,20 @@ missing_modules = [
         "file": "socrata_toolkit/arcgis_integration.py",
         "line": 22,
         "module": "shapely.geometry",
-        "symbol": "mapping"
+        "symbol": "mapping",
     },
     {
         "file": "socrata_toolkit/conflict.py",
         "line": 40,
         "module": "shapely.geometry",
-        "symbol": "mapping"
+        "symbol": "mapping",
     },
     {
         "file": "socrata_toolkit/conflict.py",
         "line": 114,
         "module": "shapely.geometry",
-        "symbol": "mapping"
-    }
+        "symbol": "mapping",
+    },
 ]
 
 for i, error in enumerate(missing_modules, 1):
@@ -69,26 +65,26 @@ unknown_symbols = [
         "file": "socrata_toolkit/api/main.py",
         "line": 56,
         "symbol": "JWTConfig",
-        "source": "socrata_toolkit.api.auth"
+        "source": "socrata_toolkit.api.auth",
     },
     {
         "file": "socrata_toolkit/api/main.py",
         "line": 452,
         "symbol": "extract_bearer_token",
-        "source": "socrata_toolkit.api.auth"
+        "source": "socrata_toolkit.api.auth",
     },
     {
         "file": "socrata_toolkit/api/main.py",
         "line": 452,
         "symbol": "verify_token",
-        "source": "socrata_toolkit.api.auth"
+        "source": "socrata_toolkit.api.auth",
     },
     {
         "file": "socrata_toolkit/api/main.py",
         "line": 452,
         "symbol": "token_from_payload",
-        "source": "socrata_toolkit.api.auth"
-    }
+        "source": "socrata_toolkit.api.auth",
+    },
 ]
 
 for i, error in enumerate(unknown_symbols, 1):
@@ -113,26 +109,26 @@ print("Issue: Items declared in __all__ but not present in module")
 print()
 
 missing_exports = [
-    'detect_outliers_iqr',
-    'detect_outliers_zscore',
-    'detect_all_outliers',
-    'correlation_analysis',
-    'time_series_summary',
-    'classify_distribution',
-    'classify_all_distributions',
-    'flag_anomalies',
-    'histogram',
-    'bar_chart',
-    'correlation_heatmap',
-    'time_series_chart',
-    'box_plot',
-    'quality_dashboard',
-    'create_lineage',
-    'AuditLogger',
-    'compute_quality_score',
-    'detect_schema_drift',
-    'snapshot_schema',
-    'apply_retention_policy'
+    "detect_outliers_iqr",
+    "detect_outliers_zscore",
+    "detect_all_outliers",
+    "correlation_analysis",
+    "time_series_summary",
+    "classify_distribution",
+    "classify_all_distributions",
+    "flag_anomalies",
+    "histogram",
+    "bar_chart",
+    "correlation_heatmap",
+    "time_series_chart",
+    "box_plot",
+    "quality_dashboard",
+    "create_lineage",
+    "AuditLogger",
+    "compute_quality_score",
+    "detect_schema_drift",
+    "snapshot_schema",
+    "apply_retention_policy",
 ]
 
 print("Missing implementations (19 total):")
@@ -182,20 +178,20 @@ syntax_errors = [
         "file": "socrata_toolkit/api/auth.py",
         "issue": "Class redeclaration - 'Role' and 'Permission' classes declared twice",
         "lines": "82, 92",
-        "severity": "ERROR"
+        "severity": "ERROR",
     },
     {
         "file": "socrata_toolkit/api/auth.py",
         "issue": "Expected expression - line 904 has orphaned code",
         "lines": "904-942",
-        "severity": "ERROR"
+        "severity": "ERROR",
     },
     {
         "file": "socrata_toolkit/api/auth.py",
         "issue": "Undefined variables: expires_delta, config, request_id, uuid, user",
         "lines": "926-933",
-        "severity": "ERROR"
-    }
+        "severity": "ERROR",
+    },
 ]
 
 for i, error in enumerate(syntax_errors, 1):
@@ -219,36 +215,36 @@ priority = [
         "issue": "socrata_toolkit/__init__.py - 19 missing __all__ exports",
         "files": 1,
         "errors": 19,
-        "action": "Add missing functions/classes or remove from __all__"
+        "action": "Add missing functions/classes or remove from __all__",
     },
     {
         "rank": "HIGH",
         "issue": "socrata_toolkit/api/main.py - 4 unknown import symbols",
         "files": 1,
         "errors": 4,
-        "action": "Add missing exports to socrata_toolkit/api/auth.py"
+        "action": "Add missing exports to socrata_toolkit/api/auth.py",
     },
     {
         "rank": "HIGH",
         "issue": "socrata_toolkit/api/auth.py - Syntax errors and redeclarations",
         "files": 1,
         "errors": 10,
-        "action": "Fix class redeclarations and undefined variables"
+        "action": "Fix class redeclarations and undefined variables",
     },
     {
         "rank": "MEDIUM",
         "issue": "Missing module: shapely.geometry",
         "files": 2,
         "errors": 3,
-        "action": "Install shapely package or fix import paths"
+        "action": "Install shapely package or fix import paths",
     },
     {
         "rank": "LOW",
         "issue": "Unused imports across project",
         "files": "Multiple",
         "errors": 432,
-        "action": "Remove unused imports (code cleanup)"
-    }
+        "action": "Remove unused imports (code cleanup)",
+    },
 ]
 
 for i, item in enumerate(priority, 1):

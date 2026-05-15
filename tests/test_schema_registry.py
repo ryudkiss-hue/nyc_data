@@ -1,5 +1,5 @@
 """
-Tests for Schema Registry module (socrata_toolkit.discovery.schema)
+Tests for Schema Registry module (socrata_toolkit.core)
 
 Tests schema registration, drift detection, breaking change alerts, and audit trail.
 """
@@ -7,12 +7,12 @@ Tests schema registration, drift detection, breaking change alerts, and audit tr
 import json
 import tempfile
 from datetime import datetime, timezone
-from pathlib import Path
 
 import pandas as pd
 import pytest
 
-from socrata_toolkit.discovery.schema import (
+from socrata_toolkit.core import (
+    BackwardCompatibilityChecker,
     BreakingChangeAlert,
     ChangeType,
     ColumnSchema,
@@ -20,7 +20,6 @@ from socrata_toolkit.discovery.schema import (
     SchemaChange,
     SchemaRegistry,
     SchemaValidator,
-    BackwardCompatibilityChecker,
 )
 
 
@@ -221,12 +220,14 @@ class TestSchemaRegistry:
     @pytest.fixture
     def sample_dataframe(self):
         """Create a sample DataFrame for testing."""
-        return pd.DataFrame({
-            "id": [1, 2, 3],
-            "name": ["Alice", "Bob", "Charlie"],
-            "age": [25, 30, 35],
-            "salary": [50000.0, 60000.0, 70000.0],
-        })
+        return pd.DataFrame(
+            {
+                "id": [1, 2, 3],
+                "name": ["Alice", "Bob", "Charlie"],
+                "age": [25, 30, 35],
+                "salary": [50000.0, 60000.0, 70000.0],
+            }
+        )
 
     def test_schema_registry_initialization(self, temp_registry):
         """Test registry initializes with storage directory."""
@@ -235,9 +236,7 @@ class TestSchemaRegistry:
 
     def test_extract_schema_from_dataframe(self, sample_dataframe):
         """Test extracting schema from DataFrame."""
-        schema = SchemaRegistry.extract_schema_from_dataframe(
-            sample_dataframe, "test-data"
-        )
+        schema = SchemaRegistry.extract_schema_from_dataframe(sample_dataframe, "test-data")
         assert schema.dataset_id == "test-data"
         assert len(schema.columns) == 4
         assert "id" in schema.columns
@@ -256,19 +255,19 @@ class TestSchemaRegistry:
 
     def test_extract_schema_nullability_detection(self):
         """Test that schema detects nullable columns."""
-        df = pd.DataFrame({
-            "required_col": [1, 2, 3],
-            "nullable_col": [1, None, 3],
-        })
+        df = pd.DataFrame(
+            {
+                "required_col": [1, 2, 3],
+                "nullable_col": [1, None, 3],
+            }
+        )
         schema = SchemaRegistry.extract_schema_from_dataframe(df, "test")
         assert schema.columns["required_col"].nullable is False
         assert schema.columns["nullable_col"].nullable is True
 
     def test_register_schema(self, temp_registry, sample_dataframe):
         """Test registering a schema."""
-        schema = SchemaRegistry.extract_schema_from_dataframe(
-            sample_dataframe, "test-data"
-        )
+        schema = SchemaRegistry.extract_schema_from_dataframe(sample_dataframe, "test-data")
         temp_registry.register_schema(schema)
 
         # Verify schema was stored
@@ -283,9 +282,7 @@ class TestSchemaRegistry:
 
     def test_register_schema_version_increment(self, temp_registry, sample_dataframe):
         """Test that schema version is incremented on registration."""
-        schema1 = SchemaRegistry.extract_schema_from_dataframe(
-            sample_dataframe, "test-data"
-        )
+        schema1 = SchemaRegistry.extract_schema_from_dataframe(sample_dataframe, "test-data")
         schema1.version = 1
         temp_registry.register_schema(schema1)
 
@@ -301,9 +298,7 @@ class TestSchemaRegistry:
 
     def test_get_schema_version_latest(self, temp_registry, sample_dataframe):
         """Test retrieving the latest schema version."""
-        schema = SchemaRegistry.extract_schema_from_dataframe(
-            sample_dataframe, "test-data"
-        )
+        schema = SchemaRegistry.extract_schema_from_dataframe(sample_dataframe, "test-data")
         schema.version = 1
         temp_registry.register_schema(schema)
 
@@ -312,9 +307,7 @@ class TestSchemaRegistry:
 
     def test_get_schema_version_specific(self, temp_registry, sample_dataframe):
         """Test retrieving a specific schema version."""
-        schema = SchemaRegistry.extract_schema_from_dataframe(
-            sample_dataframe, "test-data"
-        )
+        schema = SchemaRegistry.extract_schema_from_dataframe(sample_dataframe, "test-data")
         schema.version = 1
         temp_registry.register_schema(schema)
 
@@ -413,15 +406,11 @@ class TestSchemaRegistry:
 
         # Should raise when enforce_breaking=True
         with pytest.raises(BreakingChangeAlert):
-            temp_registry.check_schema_compliance(
-                "test-data", schema2, enforce_breaking=True
-            )
+            temp_registry.check_schema_compliance("test-data", schema2, enforce_breaking=True)
 
     def test_audit_log_written(self, temp_registry, sample_dataframe):
         """Test that all operations are logged to audit trail."""
-        schema = SchemaRegistry.extract_schema_from_dataframe(
-            sample_dataframe, "test-data"
-        )
+        schema = SchemaRegistry.extract_schema_from_dataframe(sample_dataframe, "test-data")
         temp_registry.register_schema(schema)
 
         # Check audit log
@@ -430,7 +419,7 @@ class TestSchemaRegistry:
 
         with open(audit_log_path) as f:
             logs = [json.loads(line) for line in f if line.strip()]
-        
+
         assert len(logs) > 0
         assert any(log["operation"] == "register_schema" for log in logs)
 

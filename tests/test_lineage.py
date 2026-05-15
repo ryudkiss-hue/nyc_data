@@ -12,22 +12,22 @@ Tests cover:
 """
 
 import json
-import pytest
-from datetime import datetime, timezone, timedelta
-from unittest.mock import Mock, patch, MagicMock
+from datetime import datetime, timedelta, timezone
 
-from socrata_toolkit.lineage.core import (
+import pytest
+
+from socrata_toolkit.governance import (
     DAG,
-    TransformationNode,
-    ExecutionRecord,
-    LineageEdge,
-    NodeType,
     EdgeType,
+    ExecutionRecord,
     ExecutionStatus,
+    ImpactAnalysis,
+    LineageEdge,
+    LineageQuery,
+    LineageVisualizer,
+    NodeType,
+    TransformationNode,
 )
-from socrata_toolkit.lineage.query import LineageQuery, FreshnessInfo
-from socrata_toolkit.lineage.visualization import LineageVisualizer
-from socrata_toolkit.lineage.impact import ImpactAnalysis, ImpactReport, BreakingChange
 
 
 class TestTransformationNode:
@@ -250,10 +250,10 @@ class TestDAG:
         dag.add_node(TransformationNode(node_id="n1", name="N1"))
         dag.add_node(TransformationNode(node_id="n2", name="N2"))
         dag.add_node(TransformationNode(node_id="n3", name="N3"))
-        
+
         dag.add_edge("n1", "n2")
         dag.add_edge("n2", "n3")
-        
+
         # Creating a cycle should raise error
         with pytest.raises(ValueError):
             dag.add_edge("n3", "n1")
@@ -277,10 +277,10 @@ class TestDAG:
         dag.add_node(TransformationNode(node_id="n1", name="N1"))
         dag.add_node(TransformationNode(node_id="n2", name="N2"))
         dag.add_node(TransformationNode(node_id="n3", name="N3"))
-        
+
         dag.add_edge("n1", "n2")
         dag.add_edge("n2", "n3")
-        
+
         upstream = dag.get_upstream_dependencies("n3")
         assert "n1" in upstream
         assert "n2" in upstream
@@ -291,10 +291,10 @@ class TestDAG:
         dag.add_node(TransformationNode(node_id="n1", name="N1"))
         dag.add_node(TransformationNode(node_id="n2", name="N2"))
         dag.add_node(TransformationNode(node_id="n3", name="N3"))
-        
+
         dag.add_edge("n1", "n2")
         dag.add_edge("n2", "n3")
-        
+
         downstream = dag.get_downstream_consumers("n1")
         assert "n2" in downstream
         assert "n3" in downstream
@@ -305,7 +305,7 @@ class TestDAG:
         dag.add_node(TransformationNode(node_id="n1", name="N1", node_type=NodeType.INGESTION))
         dag.add_node(TransformationNode(node_id="n2", name="N2", node_type=NodeType.TRANSFORMATION))
         dag.add_edge("n1", "n2")
-        
+
         validation = dag.validate()
         assert validation["is_valid"]
         assert len(validation["errors"]) == 0
@@ -316,11 +316,11 @@ class TestDAG:
         dag.add_node(TransformationNode(node_id="n1", name="N1"))
         dag.add_node(TransformationNode(node_id="n2", name="N2"))
         dag.add_edge("n1", "n2")
-        
+
         d = dag.to_dict()
         assert d["metadata"]["node_count"] == 2
         assert d["metadata"]["edge_count"] == 1
-        
+
         # Reconstruct
         dag2 = DAG.from_dict(d)
         assert len(dag2.nodes) == 2
@@ -332,7 +332,7 @@ class TestDAG:
         dag.add_node(TransformationNode(node_id="n1", name="N1", owner="user1"))
         dag.add_node(TransformationNode(node_id="n2", name="N2", owner="user2"))
         dag.add_edge("n1", "n2")
-        
+
         impact = dag.get_impact_scope("n1")
         assert "n2" in impact["all_affected_nodes"]
         assert "user2" in impact["affected_users"]
@@ -344,25 +344,31 @@ class TestLineageQuery:
     def setup_method(self):
         """Setup test DAG."""
         self.dag = DAG()
-        self.dag.add_node(TransformationNode(
-            node_id="ingest_construction",
-            name="Construction List Ingestion",
-            node_type=NodeType.INGESTION,
-            owner="data-eng@example.com",
-            tags=["daily"],
-        ))
-        self.dag.add_node(TransformationNode(
-            node_id="transform_clean",
-            name="Clean Construction Data",
-            node_type=NodeType.TRANSFORMATION,
-            owner="data-eng@example.com",
-        ))
-        self.dag.add_node(TransformationNode(
-            node_id="sink_warehouse",
-            name="Warehouse Sink",
-            node_type=NodeType.SINK,
-            owner="analytics@example.com",
-        ))
+        self.dag.add_node(
+            TransformationNode(
+                node_id="ingest_construction",
+                name="Construction List Ingestion",
+                node_type=NodeType.INGESTION,
+                owner="data-eng@example.com",
+                tags=["daily"],
+            )
+        )
+        self.dag.add_node(
+            TransformationNode(
+                node_id="transform_clean",
+                name="Clean Construction Data",
+                node_type=NodeType.TRANSFORMATION,
+                owner="data-eng@example.com",
+            )
+        )
+        self.dag.add_node(
+            TransformationNode(
+                node_id="sink_warehouse",
+                name="Warehouse Sink",
+                node_type=NodeType.SINK,
+                owner="analytics@example.com",
+            )
+        )
         self.dag.add_edge("ingest_construction", "transform_clean")
         self.dag.add_edge("transform_clean", "sink_warehouse")
         self.query = LineageQuery(self.dag)
@@ -434,7 +440,7 @@ class TestLineageQuery:
         """Test freshness check for current data."""
         node = self.dag.get_node("ingest_construction")
         node.record_execution(ExecutionStatus.SUCCESS)
-        
+
         freshness = self.query.get_freshness("ingest_construction")
         assert not freshness.is_stale
         assert freshness.last_execution_time is not None
@@ -451,7 +457,7 @@ class TestLineageQuery:
             completed_at=old_time,
         )
         node.execution_history.append(exec_record)
-        
+
         freshness = self.query.get_freshness("ingest_construction", stale_threshold_hours=24)
         assert freshness.is_stale
 
@@ -476,12 +482,14 @@ class TestImpactAnalysis:
         self.dag.add_node(TransformationNode(node_id="n1", name="N1", owner="user1"))
         self.dag.add_node(TransformationNode(node_id="n2", name="N2", owner="user2"))
         self.dag.add_node(TransformationNode(node_id="n3", name="N3", owner="user2"))
-        self.dag.add_node(TransformationNode(node_id="n4", name="N4", node_type=NodeType.SINK, owner="user3"))
-        
+        self.dag.add_node(
+            TransformationNode(node_id="n4", name="N4", node_type=NodeType.SINK, owner="user3")
+        )
+
         self.dag.add_edge("n1", "n2")
         self.dag.add_edge("n2", "n3")
         self.dag.add_edge("n3", "n4")
-        
+
         self.analyzer = ImpactAnalysis(self.dag)
 
     def test_analyze_change(self):
@@ -499,7 +507,7 @@ class TestImpactAnalysis:
                 "age": {"type": "int", "nullable": True},
             }
         }
-        
+
         new_schema = {
             "columns": {
                 "id": {"type": "bigint", "nullable": False},  # type change
@@ -507,14 +515,14 @@ class TestImpactAnalysis:
                 # age column deleted
             }
         }
-        
+
         changes = self.analyzer.find_breaking_changes(old_schema, new_schema, "n1")
         assert len(changes) > 0
-        
+
         # Check for type change
         type_changes = [c for c in changes if c.change_type == "type_change"]
         assert len(type_changes) > 0
-        
+
         # Check for deletion
         deletions = [c for c in changes if c.change_type == "column_deletion"]
         assert len(deletions) > 0
@@ -583,7 +591,7 @@ class TestLineageVisualizer:
         node = self.dag.get_node("n1")
         node.record_execution(ExecutionStatus.SUCCESS)
         node.record_execution(ExecutionStatus.FAILED)
-        
+
         summary = self.viz.get_execution_summary()
         assert summary["total_executions"] == 2
         assert summary["successful"] == 1
@@ -597,7 +605,7 @@ class TestIntegration:
         """Test complete lineage tracking workflow."""
         # Create DAG
         dag = DAG()
-        
+
         # Add nodes representing complete pipeline
         ingestion_node = TransformationNode(
             node_id="ingest.socrata",
@@ -606,7 +614,7 @@ class TestIntegration:
             owner="data-eng@example.com",
         )
         dag.add_node(ingestion_node)
-        
+
         transform_node = TransformationNode(
             node_id="transform.clean",
             name="Data Cleaning",
@@ -614,7 +622,7 @@ class TestIntegration:
             owner="data-eng@example.com",
         )
         dag.add_node(transform_node)
-        
+
         sink_node = TransformationNode(
             node_id="sink.postgres",
             name="PostgreSQL Warehouse",
@@ -622,11 +630,11 @@ class TestIntegration:
             owner="analytics@example.com",
         )
         dag.add_node(sink_node)
-        
+
         # Add edges
         dag.add_edge("ingest.socrata", "transform.clean")
         dag.add_edge("transform.clean", "sink.postgres")
-        
+
         # Record executions
         ingestion_node.record_execution(
             status=ExecutionStatus.SUCCESS,
@@ -634,34 +642,34 @@ class TestIntegration:
             output_rows=1000,
             duration_secs=10,
         )
-        
+
         transform_node.record_execution(
             status=ExecutionStatus.SUCCESS,
             input_rows=1000,
             output_rows=950,
             duration_secs=5,
         )
-        
+
         # Query the lineage
         query = LineageQuery(dag)
-        
+
         # Test basic queries
         sources = query.find_sources("sink.postgres")
         assert len(sources) == 2
-        
+
         consumers = query.find_consumers("ingest.socrata")
         assert len(consumers) == 2
-        
+
         # Test impact analysis
         analyzer = ImpactAnalysis(dag)
         impact = analyzer.analyze_change("ingest.socrata")
         assert impact.affected_count == 2
-        
+
         # Test visualization
         viz = LineageVisualizer(dag)
         json_export = viz.to_json()
         assert json.loads(json_export)["metadata"]["node_count"] == 3
-        
+
         # Validate DAG
         validation = query.validate_lineage()
         assert validation["is_valid"]

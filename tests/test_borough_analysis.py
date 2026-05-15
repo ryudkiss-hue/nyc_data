@@ -1,7 +1,6 @@
 import pandas as pd
-import pytest
 
-from socrata_toolkit.engineering.borough_analysis import (
+from socrata_toolkit.engineering import (
     borough_comparison_table,
     borough_summary,
     equity_analysis,
@@ -10,20 +9,40 @@ from socrata_toolkit.engineering.borough_analysis import (
 
 
 def _sample_data():
-    return pd.DataFrame({
-        "location_id": ["L1", "L1", "L2", "L3", "L3", "L3", "L4", "L5"],
-        "borough": ["MANHATTAN", "MANHATTAN", "BROOKLYN", "QUEENS", "QUEENS", "QUEENS", "BRONX", "STATEN ISLAND"],
-        "violations": [3, 2, 5, 1, 2, 3, 4, 1],
-        "complaint_count": [2, 1, 3, 0, 1, 2, 5, 0],
-        "severity_rating": [7, 6, 8, 3, 4, 5, 9, 2],
-        "ada_flag": [True, False, True, False, False, True, True, False],
-        "estimated_sqft": [100, 50, 200, 30, 40, 50, 300, 20],
-        "contract_id": ["C1", "C1", "C2", "C3", "C3", "C3", "C4", "C5"],
-        "status": ["Pending Repair", "Pending Repair", "Complete", "Pending Repair", "Pending Repair", "Pending Repair", "Pending Repair", "Complete"],
-        "actual_spend": [5000, 3000, 10000, 1000, 2000, 3000, 15000, 500],
-        "latitude": [40.75, 40.75, 40.68, 40.72, 40.72, 40.72, 40.85, 40.58],
-        "longitude": [-73.99, -73.99, -73.96, -73.79, -73.79, -73.79, -73.87, -74.15],
-    })
+    return pd.DataFrame(
+        {
+            "location_id": ["L1", "L1", "L2", "L3", "L3", "L3", "L4", "L5"],
+            "borough": [
+                "MANHATTAN",
+                "MANHATTAN",
+                "BROOKLYN",
+                "QUEENS",
+                "QUEENS",
+                "QUEENS",
+                "BRONX",
+                "STATEN ISLAND",
+            ],
+            "violations": [3, 2, 5, 1, 2, 3, 4, 1],
+            "complaint_count": [2, 1, 3, 0, 1, 2, 5, 0],
+            "severity_rating": [7, 6, 8, 3, 4, 5, 9, 2],
+            "ada_flag": [True, False, True, False, False, True, True, False],
+            "estimated_sqft": [100, 50, 200, 30, 40, 50, 300, 20],
+            "contract_id": ["C1", "C1", "C2", "C3", "C3", "C3", "C4", "C5"],
+            "status": [
+                "Pending Repair",
+                "Pending Repair",
+                "Complete",
+                "Pending Repair",
+                "Pending Repair",
+                "Pending Repair",
+                "Pending Repair",
+                "Complete",
+            ],
+            "actual_spend": [5000, 3000, 10000, 1000, 2000, 3000, 15000, 500],
+            "latitude": [40.75, 40.75, 40.68, 40.72, 40.72, 40.72, 40.85, 40.58],
+            "longitude": [-73.99, -73.99, -73.96, -73.79, -73.79, -73.79, -73.87, -74.15],
+        }
+    )
 
 
 def test_borough_summary():

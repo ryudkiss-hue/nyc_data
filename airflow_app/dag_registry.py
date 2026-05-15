@@ -8,11 +8,10 @@ Provides:
 - Metadata queries
 """
 
+import logging
 import os
 import sys
-from typing import Dict, List, Optional, Tuple
-from datetime import datetime, timedelta
-import logging
+from datetime import datetime
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
@@ -23,7 +22,7 @@ logger = logging.getLogger(__name__)
 # DAG REGISTRY
 # ============================================================================
 
-DAG_REGISTRY: Dict[str, Dict] = {
+DAG_REGISTRY: dict[str, dict] = {
     "sidewalk_incident_ingestion": {
         "description": "Daily ingestion of 311 sidewalk complaints and incidents from Socrata",
         "schedule_interval": "0 2 * * *",  # 02:00 UTC daily
@@ -73,7 +72,7 @@ DAG_REGISTRY: Dict[str, Dict] = {
 # ============================================================================
 
 
-def get_dag_metadata(dag_id: str) -> Optional[Dict]:
+def get_dag_metadata(dag_id: str) -> dict | None:
     """
     Get metadata for a DAG.
 
@@ -96,7 +95,7 @@ def get_dag_metadata(dag_id: str) -> Optional[Dict]:
 # ============================================================================
 
 
-def list_all_dags() -> List[str]:
+def list_all_dags() -> list[str]:
     """
     Get list of all registered DAG IDs.
 
@@ -116,7 +115,7 @@ def list_all_dags() -> List[str]:
 # ============================================================================
 
 
-def validate_dag_dependencies() -> Tuple[bool, List[str]]:
+def validate_dag_dependencies() -> tuple[bool, list[str]]:
     """
     Validate that DAG dependencies form a valid DAG (no cycles, valid references).
 
@@ -129,7 +128,7 @@ def validate_dag_dependencies() -> Tuple[bool, List[str]]:
         ...     for error in errors:
         ...         print(error)
     """
-    errors: List[str] = []
+    errors: list[str] = []
     all_dag_ids = set(DAG_REGISTRY.keys())
 
     for dag_id, metadata in DAG_REGISTRY.items():
@@ -141,9 +140,7 @@ def validate_dag_dependencies() -> Tuple[bool, List[str]]:
         # Check that all downstream tasks exist
         for downstream_id in metadata.get("downstream_tasks", []):
             if downstream_id not in all_dag_ids:
-                errors.append(
-                    f"DAG '{dag_id}' has non-existent downstream task '{downstream_id}'"
-                )
+                errors.append(f"DAG '{dag_id}' has non-existent downstream task '{downstream_id}'")
 
     # Check for cycles using depth-first search
     def has_cycle(dag_id: str, visited: set, rec_stack: set) -> bool:
@@ -175,7 +172,7 @@ def validate_dag_dependencies() -> Tuple[bool, List[str]]:
 # ============================================================================
 
 
-def get_dag_execution_order() -> List[str]:
+def get_dag_execution_order() -> list[str]:
     """
     Get DAGs in topological order for execution (dependencies first).
 
@@ -218,7 +215,7 @@ def get_dag_execution_order() -> List[str]:
 # ============================================================================
 
 
-def get_dag_dependencies(dag_id: str) -> List[str]:
+def get_dag_dependencies(dag_id: str) -> list[str]:
     """
     Get all DAGs that must complete before given DAG can run.
 
@@ -261,7 +258,7 @@ def get_dag_dependencies(dag_id: str) -> List[str]:
 # ============================================================================
 
 
-def get_dag_dependents(dag_id: str) -> List[str]:
+def get_dag_dependents(dag_id: str) -> list[str]:
     """
     Get all DAGs that depend on the given DAG.
 
@@ -292,7 +289,7 @@ def get_dag_dependents(dag_id: str) -> List[str]:
 # ============================================================================
 
 
-def health_check() -> Tuple[bool, Dict]:
+def health_check() -> tuple[bool, dict]:
     """
     Perform comprehensive DAG registry health checks.
 

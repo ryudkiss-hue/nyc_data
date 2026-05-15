@@ -63,3 +63,18 @@ dev = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+# Select rules to enable: Pyflakes (F), pycodestyle (E, W), isort (I), pyupgrade (UP), flake8-bugbear (B)
+select = ["E", "F", "W", "I", "UP", "B"]
+# Ignore rules that conflict with Black formatting (like line length enforcing)
+ignore = ["E501"]
+# Customize exactly which rules Ruff should automatically fix
+# E.g., fix imports (I), pyupgrade (UP), and specific Pyflakes rules like unused imports (F401)
+fixable = ["I", "UP", "F401"]
+# Ensure certain risky rules are NEVER auto-fixed (like unused variables F841 or Bugbear B)
+unfixable = ["F841", "B"]

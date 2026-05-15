@@ -3,13 +3,15 @@
 Tests cover freshness tracking, SLA computation, and alert generation.
 """
 
+from datetime import datetime, timedelta, timezone
+
 import pytest
-from datetime import datetime, timezone, timedelta
-from socrata_toolkit.quality.freshness import (
-    FreshnessTracker,
+
+from socrata_toolkit.analysis import (
+    AlertSeverity,
     DatasetFreshness,
     FreshnessAlert,
-    AlertSeverity,
+    FreshnessTracker,
 )
 
 
@@ -235,7 +237,9 @@ class TestFreshnessTracker:
         """Test SLA computation with some violations."""
         tracker = FreshnessTracker()
         tracker.track_ingestion("fresh-dataset", datetime.now(timezone.utc), 24)
-        tracker.track_ingestion("stale-dataset", datetime.now(timezone.utc) - timedelta(hours=72), 24)
+        tracker.track_ingestion(
+            "stale-dataset", datetime.now(timezone.utc) - timedelta(hours=72), 24
+        )
         sla_report = tracker.compute_freshness_sla_pct()
         assert sla_report["datasets_tracked"] == 2
         assert sla_report["datasets_violated"] == 1
@@ -245,7 +249,9 @@ class TestFreshnessTracker:
         """Test getting list of stale datasets."""
         tracker = FreshnessTracker()
         tracker.track_ingestion("fresh-dataset", datetime.now(timezone.utc), 24)
-        tracker.track_ingestion("stale-dataset", datetime.now(timezone.utc) - timedelta(hours=72), 24)
+        tracker.track_ingestion(
+            "stale-dataset", datetime.now(timezone.utc) - timedelta(hours=72), 24
+        )
         alerts = tracker.get_stale_datasets()
         assert len(alerts) == 1
         assert alerts[0].dataset_id == "stale-dataset"

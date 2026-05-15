@@ -27,16 +27,14 @@ Key Features:
     - Full Phase 2 observability with metrics and lineage
 """
 
-from datetime import datetime, timedelta
-from typing import Dict, List
+import os
+import sys
+from datetime import timedelta
 
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.sensors.external_task_sensor import ExternalTaskSensor
-
-import sys
-import os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
@@ -45,7 +43,8 @@ from custom_operators import (
     DataQualityCheckOperator,
     MetricsEmitterOperator,
 )
-from config import get_dag_defaults, SLA_CONFIG
+
+from config import SLA_CONFIG, get_dag_defaults
 
 # ============================================================================
 # DAG CONFIGURATION
@@ -118,6 +117,7 @@ wait_for_repairs = ExternalTaskSensor(
 # TASK: Compute material-aware KPIs
 # ============================================================================
 
+
 def compute_material_kpis(**context):
     """
     Compute material-specific defect rates and lifecycle KPIs using Phase 1.
@@ -127,14 +127,15 @@ def compute_material_kpis(**context):
     - avg_age_by_material
     - lifecycle_stage_distribution
     """
-    from socrata_toolkit.dot_sidewalk import MaterialAwareSidewalkKPI
     from datetime import datetime
+
+    from socrata_toolkit.dot_sidewalk import MaterialAwareSidewalkKPI
 
     print("Computing material-aware KPIs...")
 
     try:
-        from sqlalchemy import create_engine, text
         from airflow.config import conf
+        from sqlalchemy import create_engine, text
 
         db_conn_str = conf.get("core", "sql_alchemy_conn")
         engine = create_engine(db_conn_str)
@@ -202,6 +203,7 @@ compute_material_kpis = PythonOperator(
 # TASK: Compute ADA compliance KPIs
 # ============================================================================
 
+
 def compute_ada_compliance_kpis(**context):
     """
     Compute ADA compliance rates and non-compliant segment tracking.
@@ -214,8 +216,8 @@ def compute_ada_compliance_kpis(**context):
     print("Computing ADA compliance KPIs...")
 
     try:
-        from sqlalchemy import create_engine, text
         from airflow.config import conf
+        from sqlalchemy import create_engine, text
 
         db_conn_str = conf.get("core", "sql_alchemy_conn")
         engine = create_engine(db_conn_str)
@@ -268,6 +270,7 @@ compute_ada_kpis = PythonOperator(
 # TASK: Compute hazard metrics
 # ============================================================================
 
+
 def compute_hazard_metrics(**context):
     """
     Compute hazardous defect tracking and clearance metrics.
@@ -280,8 +283,8 @@ def compute_hazard_metrics(**context):
     print("Computing hazard coverage metrics...")
 
     try:
-        from sqlalchemy import create_engine, text
         from airflow.config import conf
+        from sqlalchemy import create_engine, text
 
         db_conn_str = conf.get("core", "sql_alchemy_conn")
         engine = create_engine(db_conn_str)
@@ -315,7 +318,9 @@ def compute_hazard_metrics(**context):
                 "avg_clearance_days": result[2] or 0,
             }
 
-            print(f"✅ Hazard coverage: {hazard_segments} segments, {clearance_rate:.1f}% SLA compliance")
+            print(
+                f"✅ Hazard coverage: {hazard_segments} segments, {clearance_rate:.1f}% SLA compliance"
+            )
 
             # Refresh materialized view
             refresh_query = "REFRESH MATERIALIZED VIEW materialized_view_hazard_metrics"
@@ -341,6 +346,7 @@ compute_hazard_metrics = PythonOperator(
 # TASK: Compute contractor quality metrics
 # ============================================================================
 
+
 def compute_contractor_quality(**context):
     """
     Compute contractor performance scores from repair outcomes.
@@ -353,8 +359,8 @@ def compute_contractor_quality(**context):
     print("Computing contractor quality metrics...")
 
     try:
-        from sqlalchemy import create_engine, text
         from airflow.config import conf
+        from sqlalchemy import create_engine, text
 
         db_conn_str = conf.get("core", "sql_alchemy_conn")
         engine = create_engine(db_conn_str)
@@ -413,6 +419,7 @@ compute_contractor_quality = PythonOperator(
 # TASK: Compute cost analytics
 # ============================================================================
 
+
 def compute_cost_analytics(**context):
     """
     Compute cost per linear foot and cost trends using Phase 1 material costs.
@@ -422,13 +429,12 @@ def compute_cost_analytics(**context):
     - cost_trend_yoy (year-over-year cost comparison)
     - total_remediation_budget
     """
-    from socrata_toolkit.dot_sidewalk import MaterialAwareSidewalkKPI
 
     print("Computing cost analytics using Phase 1 material costs...")
 
     try:
-        from sqlalchemy import create_engine, text
         from airflow.config import conf
+        from sqlalchemy import create_engine, text
 
         db_conn_str = conf.get("core", "sql_alchemy_conn")
         engine = create_engine(db_conn_str)
@@ -462,7 +468,9 @@ def compute_cost_analytics(**context):
 
             cost_kpis["total_remediation_budget"] = total_cost
 
-            print(f"✅ Cost analytics: ${total_cost:,.2f} total budget for {len(cost_kpis)} material types")
+            print(
+                f"✅ Cost analytics: ${total_cost:,.2f} total budget for {len(cost_kpis)} material types"
+            )
 
             # Refresh materialized view
             refresh_query = "REFRESH MATERIALIZED VIEW materialized_view_cost_metrics"
@@ -531,6 +539,7 @@ emit_kpi_metrics = MetricsEmitterOperator(
 # ============================================================================
 # TASK: Cache invalidation (Phase 4 API layer prep)
 # ============================================================================
+
 
 def invalidate_dashboard_cache(**context):
     """Clear dashboard cache for Phase 4 API layer."""

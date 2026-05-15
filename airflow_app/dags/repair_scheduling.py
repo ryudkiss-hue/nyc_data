@@ -26,34 +26,34 @@ Key Features:
     - Full Phase 2 observability integration
 """
 
+import os
+import sys
 from datetime import datetime, timedelta
-from typing import Dict, List
 
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.sensors.external_task_sensor import ExternalTaskSensor
-from airflow.providers.slack.operators.slack import SlackAPIPostOperator as SlackOperator
-
-import sys
-import os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 from custom_operators import (
-    SocrataFetchOperator,
     DataQualityCheckOperator,
-    PostgresUpsertOperator,
     MetricsEmitterOperator,
+    PostgresUpsertOperator,
+    SocrataFetchOperator,
 )
-from config import get_dag_defaults, SLA_CONFIG
+
+from config import SLA_CONFIG, get_dag_defaults
 
 # ============================================================================
 # DAG CONFIGURATION
 # ============================================================================
 
 DAG_ID = "repair_scheduling"
-DAG_DESCRIPTION = "Weekly optimization of repair schedules based on incidents and contractor availability"
+DAG_DESCRIPTION = (
+    "Weekly optimization of repair schedules based on incidents and contractor availability"
+)
 
 dag_defaults = get_dag_defaults(DAG_ID)
 sla_config = SLA_CONFIG.get(DAG_ID, {})
@@ -118,6 +118,7 @@ fetch_contractor_availability = SocrataFetchOperator(
 # TASK: Compute repair priority scores
 # ============================================================================
 
+
 def compute_repair_priority(**context):
     """
     Compute priority scores for incidents using Phase 1 material-aware KPIs.
@@ -132,7 +133,6 @@ def compute_repair_priority(**context):
         List of incidents with priority scores
     """
     from socrata_toolkit.dot_sidewalk import MaterialAwareSidewalkKPI
-    from socrata_toolkit.validation import validate_ada_compliance
 
     print("Computing repair priorities using Phase 1 KPIs...")
 
@@ -141,8 +141,8 @@ def compute_repair_priority(**context):
         kpi_calc = MaterialAwareSidewalkKPI()
 
         # Get incident data from warehouse
-        from sqlalchemy import create_engine, text
         from airflow.config import conf
+        from sqlalchemy import create_engine, text
 
         db_conn_str = conf.get("core", "sql_alchemy_conn")
         engine = create_engine(db_conn_str)
@@ -185,16 +185,18 @@ def compute_repair_priority(**context):
                     days_old = (datetime.utcnow() - incident.created_date).days
                     priority_score = min(50, days_old * 5)
 
-                priorities.append({
-                    "complaint_id": incident.complaint_id,
-                    "location_id": incident.location_id,
-                    "material_type": incident.material_type,
-                    "defect_type": incident.defect_type,
-                    "cost_per_sqft": cost_per_sqft,
-                    "priority_score": priority_score,
-                    "is_hazardous": incident.is_hazardous,
-                    "hazard_sla_days": 7 if incident.is_hazardous else None,
-                })
+                priorities.append(
+                    {
+                        "complaint_id": incident.complaint_id,
+                        "location_id": incident.location_id,
+                        "material_type": incident.material_type,
+                        "defect_type": incident.defect_type,
+                        "cost_per_sqft": cost_per_sqft,
+                        "priority_score": priority_score,
+                        "is_hazardous": incident.is_hazardous,
+                        "hazard_sla_days": 7 if incident.is_hazardous else None,
+                    }
+                )
 
             print(f"✅ Computed priorities for {len(priorities)} incidents")
 
@@ -218,6 +220,7 @@ compute_priority = PythonOperator(
 # ============================================================================
 # TASK: Generate optimized repair schedule
 # ============================================================================
+
 
 def generate_repair_schedule(**context):
     """
@@ -274,18 +277,22 @@ def generate_repair_schedule(**context):
                     "material_breakdown": {},
                 }
 
-            schedule[contractor_id]["segments"].append({
-                "complaint_id": incident["complaint_id"],
-                "location_id": incident["location_id"],
-                "material_type": incident["material_type"],
-                "cost_per_sqft": incident["cost_per_sqft"],
-            })
+            schedule[contractor_id]["segments"].append(
+                {
+                    "complaint_id": incident["complaint_id"],
+                    "location_id": incident["location_id"],
+                    "material_type": incident["material_type"],
+                    "cost_per_sqft": incident["cost_per_sqft"],
+                }
+            )
 
             schedule[contractor_id]["total_cost"] += incident["cost_per_sqft"]
             total_cost += incident["cost_per_sqft"]
             total_segments += 1
 
-        print(f"✅ Generated schedule for {total_segments} segments across {len(schedule)} contractors")
+        print(
+            f"✅ Generated schedule for {total_segments} segments across {len(schedule)} contractors"
+        )
         print(f"   Total estimated cost: ${total_cost:,.2f}")
 
         context["task_instance"].xcom_push(key="repair_schedule", value=schedule)
@@ -347,6 +354,7 @@ emit_schedule_metrics = MetricsEmitterOperator(
 # TASK: Notify contractors via Slack
 # ============================================================================
 
+
 def notify_contractors_slack(**context):
     """Send contractor assignments to Slack."""
     task_instance = context["task_instance"]
@@ -355,7 +363,6 @@ def notify_contractors_slack(**context):
         key="repair_schedule",
     )
 
-    from airflow.models import Variable
     from socrata_toolkit.alerts import AlertManager
 
     alert_manager = AlertManager()
@@ -365,9 +372,9 @@ def notify_contractors_slack(**context):
 🔧 Weekly Repair Assignment for {contractor_id}
 
 📊 Summary:
-- Segments: {len(assignment['segments'])}
-- Estimated Cost: ${assignment['total_cost']:,.2f}
-- Materials: {assignment['material_breakdown']}
+- Segments: {len(assignment["segments"])}
+- Estimated Cost: ${assignment["total_cost"]:,.2f}
+- Materials: {assignment["material_breakdown"]}
 
 🗓️ SLA: Hazardous defects cleared within 7 days
 

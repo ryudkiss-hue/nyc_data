@@ -13,14 +13,14 @@ Custom operators and sensors:
 """
 
 from custom_operators import (
-    SocrataFetchOperator,
     DataQualityCheckOperator,
-    SchemaComplianceOperator,
-    PostgresUpsertOperator,
+    DataQualitySensor,
+    FreshnessCheckSensor,
     FreshnessUpdateOperator,
     MetricsEmitterOperator,
-    FreshnessCheckSensor,
-    DataQualitySensor,
+    PostgresUpsertOperator,
+    SchemaComplianceOperator,
+    SocrataFetchOperator,
 )
 
 __all__ = [

@@ -10,21 +10,25 @@ Tests cover:
 - Compliance and reconciliation
 """
 
+from datetime import date, datetime, timezone
+from unittest.mock import patch
+
 import pytest
-import json
-import tempfile
-from datetime import datetime, date, timezone, timedelta
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+
+from socrata_toolkit.core import ChangePattern, ChangeSummary
+from socrata_toolkit.governance import ActionType, AuditEvent, AuditTrail, ChangeType
 
 # Import modules to test
-from socrata_toolkit.pipeline.scd import SCDRecord, SCDType2Manager, DMLType
-from socrata_toolkit.governance.audit import AuditTrail, AuditEvent, ActionType, ChangeType
-from socrata_toolkit.cdc.engine import CDCEvent, CDCProcessor, CDCStorage, Operation
-from socrata_toolkit.sql.temporal import TemporalQuery, ChangeSummary, ChangePattern
-from socrata_toolkit.pipeline.soft_delete import SoftDeleteManager, RetentionPolicy
-from socrata_toolkit.cdc.export import CDCExporter, ExportFormat, ExportResult
-from socrata_toolkit.cdc.compliance import CDCReconciler, ComplianceCheckResult, ComplianceReport
+from socrata_toolkit.pipeline import (
+    CDCEvent,
+    CDCProcessor,
+    ComplianceCheckResult,
+    ExportFormat,
+    ExportResult,
+    RetentionPolicy,
+    SCDRecord,
+    SCDType2Manager,
+)
 
 
 class TestSCDRecord:
@@ -87,11 +91,11 @@ class TestSCDType2Manager:
         data1 = {"condition": "excellent", "material": "concrete"}
         data2 = {"condition": "excellent", "material": "concrete"}
         data3 = {"condition": "fair", "material": "concrete"}
-        
+
         hash1 = SCDType2Manager._calculate_hash(data1)
         hash2 = SCDType2Manager._calculate_hash(data2)
         hash3 = SCDType2Manager._calculate_hash(data3)
-        
+
         assert hash1 == hash2  # Same data = same hash
         assert hash1 != hash3  # Different data = different hash
         assert len(hash1) == 32  # MD5 is 32 chars
@@ -103,12 +107,11 @@ class TestSCDType2Manager:
         hash2 = SCDType2Manager._calculate_hash(data)
         assert hash1 == hash2
 
-    @patch("socrata_toolkit.pipeline.scd.psycopg")
+    @patch("socrata_toolkit.pipeline")
     def test_manage_record_new_insert(self, mock_psycopg):
         """Test managing a new record (INSERT)."""
         # This would require database mocking
         # Skipped for now as it requires full DB setup
-        pass
 
 
 class TestAuditEvent:
@@ -383,27 +386,22 @@ class TestIntegration:
         """Test complete SCD record lifecycle."""
         # This would test INSERT -> UPDATE -> DELETE sequence
         # Would require database setup
-        pass
 
     def test_audit_trail_logging_sequence(self):
         """Test audit trail captures all operations."""
         # Would test that each operation is properly logged
-        pass
 
     def test_cdc_to_scd_integration(self):
         """Test CDC events flow to SCD Type 2."""
         # Would test CDC processing updates SCD
-        pass
 
     def test_temporal_query_as_of(self):
         """Test as-of temporal queries work correctly."""
         # Would test historical state retrieval
-        pass
 
     def test_soft_delete_with_audit_trail(self):
         """Test soft delete is properly audited."""
         # Would test deletion is logged to audit trail
-        pass
 
 
 class TestEdgeCases:
@@ -531,7 +529,7 @@ class TestErrorHandling:
         old = {"val": float("inf"), "nan": float("nan")}
         new = {"val": float("inf"), "nan": float("nan")}
         # Should handle special float values
-        diff = AuditTrail._calculate_diff(old, new)
+        AuditTrail._calculate_diff(old, new)
 
     def test_cdc_processor_empty_events_list(self):
         """Test deduplication with empty list."""
@@ -550,13 +548,14 @@ class TestPerformance:
     def test_scd_hash_calculation_performance(self):
         """Test hash calculation performance."""
         import time
+
         data = {f"field_{i}": f"value_{i}" for i in range(100)}
-        
+
         start = time.time()
         for _ in range(1000):
             SCDType2Manager._calculate_hash(data)
         duration = time.time() - start
-        
+
         # Should complete 1000 hashes in reasonable time
         assert duration < 5.0
 
@@ -565,23 +564,27 @@ class TestPerformance:
         old = {f"field_{i}": f"value_{i}" for i in range(1000)}
         new = {f"field_{i}": f"value_{i}" for i in range(1000)}
         new["field_500"] = "changed"
-        
+
         import time
+
         start = time.time()
         for _ in range(100):
             AuditTrail._calculate_diff(old, new)
         duration = time.time() - start
-        
+
         # Should complete 100 diffs in reasonable time
         assert duration < 1.0
 
 
 # Parametrized tests for multiple scenarios
-@pytest.mark.parametrize("operation,before,after", [
-    ("INSERT", None, {"field": "value"}),
-    ("UPDATE", {"field": "old"}, {"field": "new"}),
-    ("DELETE", {"field": "value"}, None),
-])
+@pytest.mark.parametrize(
+    "operation,before,after",
+    [
+        ("INSERT", None, {"field": "value"}),
+        ("UPDATE", {"field": "old"}, {"field": "new"}),
+        ("DELETE", {"field": "value"}, None),
+    ],
+)
 def test_cdc_event_operations(operation, before, after):
     """Test CDC events for different operations."""
     event = CDCEvent(

@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import { useAppStore } from '@/store/store'
-import { apiClient } from '@/api/client'
+import { useHealth } from '@/hooks/useHealth'
 import { ChatInterface } from '@/components/ChatInterface'
 import { QueryBuilder } from '@/components/QueryBuilder'
 import { Menu, X, Moon, Sun, AlertCircle } from 'lucide-react'
@@ -19,27 +19,7 @@ export const App: React.FC = () => {
     setModel,
   } = useAppStore()
 
-  const [health, setHealth] = useState<any>(null)
-  const [healthLoading, setHealthLoading] = useState(true)
-
-  useEffect(() => {
-    const checkHealth = async () => {
-      try {
-        const healthData = await apiClient.getHealth()
-        setHealth(healthData)
-      } catch (err) {
-        console.error('Health check failed:', err)
-        setHealth(null)
-      } finally {
-        setHealthLoading(false)
-      }
-    }
-
-    checkHealth()
-    const interval = setInterval(checkHealth, 30000) // Check every 30 seconds
-
-    return () => clearInterval(interval)
-  }, [])
+  const { data: health } = useHealth()
 
   const tabClasses = (tab: string) =>
     `px-4 py-2 font-medium transition ${
@@ -57,7 +37,7 @@ export const App: React.FC = () => {
         } transition-all duration-300 bg-nycblue-900 text-white overflow-hidden flex flex-col`}
       >
         {/* Logo */}
-        <div className="px-6 py-4 border-b border-nycblue-800">
+        <div className="px-6 py-4 border-b border-nycblue-700/50">
           <h1 className="text-xl font-bold">NYC Data</h1>
           <p className="text-xs text-nycblue-200">Assistant Suite</p>
         </div>
@@ -70,8 +50,9 @@ export const App: React.FC = () => {
             </label>
             <select
               value={selectedProvider}
-              onChange={(e) => setProvider(e.target.value as any)}
+              onChange={(e) => setProvider(e.target.value as 'ollama' | 'openai' | 'huggingface')}
               className="w-full px-3 py-2 rounded bg-nycblue-800 text-white text-sm focus:outline-none focus:ring-2 focus:ring-nycblue-500"
+              aria-label="Select LLM provider"
             >
               <option value="ollama">Ollama (Local)</option>
               <option value="openai">OpenAI (API)</option>
@@ -87,6 +68,7 @@ export const App: React.FC = () => {
               onChange={(e) => setModel(e.target.value)}
               placeholder="e.g., mistral"
               className="w-full px-3 py-2 rounded bg-nycblue-800 text-white text-sm focus:outline-none focus:ring-2 focus:ring-nycblue-500"
+              aria-label="Model name"
             />
           </div>
 
@@ -125,28 +107,29 @@ export const App: React.FC = () => {
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-nycblue-800 text-xs text-nycblue-300">
+        <div className="px-6 py-4 border-t border-nycblue-700/50 text-xs text-nycblue-300">
           <p>NYC Sidewalk Data Toolkit</p>
-          <p>v1.0.0</p>
+          <p>v1.1.0</p>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
         <div
           className={`${
             darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-          } border-b shadow-sm`}
+          } border-b shadow-sm flex-shrink-0`}
         >
           <div className="flex items-center justify-between px-6 py-4">
             {/* Left: Menu + Title */}
             <div className="flex items-center gap-4">
               <button
                 onClick={toggleSidebar}
-                className={`p-2 hover:bg-gray-100 rounded-lg transition ${
-                  darkMode ? 'hover:bg-gray-700' : ''
+                className={`p-2 rounded-lg transition ${
+                  darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
                 }`}
+                aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
               >
                 {sidebarOpen ? (
                   <X className="w-5 h-5" />
@@ -166,9 +149,10 @@ export const App: React.FC = () => {
             {/* Right: Theme Toggle */}
             <button
               onClick={toggleDarkMode}
-              className={`p-2 hover:bg-gray-100 rounded-lg transition ${
-                darkMode ? 'hover:bg-gray-700' : ''
+              className={`p-2 rounded-lg transition ${
+                darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
               }`}
+              aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               {darkMode ? (
                 <Sun className="w-5 h-5 text-yellow-400" />

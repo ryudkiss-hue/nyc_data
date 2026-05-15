@@ -7,10 +7,10 @@ Run with:
 """
 
 from socrata_toolkit.llm_chatbot import (
-    SocrataLLMChatbot,
-    DataQualityAssistant,
     AnalyticsAdvisor,
+    DataQualityAssistant,
     DatasetContext,
+    SocrataLLMChatbot,
 )
 
 
