@@ -59,7 +59,7 @@ jobs:
           DATABASE_URL: postgresql://postgres:password@localhost:5432/nyc_data_test
       
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v6
         with:
           files: ./coverage.xml
           flags: unittests
