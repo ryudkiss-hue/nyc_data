@@ -36,7 +36,7 @@ jobs:
         pre-commit run --all-files
 
     - name: Auto-commit formatting fixes
-      uses: stefanzweifel/git-auto-commit-action@v5
+      uses: stefanzweifel/git-auto-commit-action@v7
       with:
         commit_message: "style: auto-fix formatting and linting by pre-commit hooks"
 
