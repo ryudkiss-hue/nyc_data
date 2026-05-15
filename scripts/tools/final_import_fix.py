@@ -1,10 +1,14 @@
-import os
 import re
 from pathlib import Path
 
 # Subpackages and their 'main' module names (that caused double replacements)
 MAINS = {
-    "quality": ["core", "validation", "freshness", "sla_tracking"], # wait, quality.core was analysis.core
+    "quality": [
+        "core",
+        "validation",
+        "freshness",
+        "sla_tracking",
+    ],  # wait, quality.core was analysis.core
     "observability": ["manager"],
     "lineage": ["manager"],
     "spatial": ["core"],
@@ -12,8 +16,23 @@ MAINS = {
     "ops": ["core"],
     "analysis": ["core"],
     "viz": ["core"],
-    "core": ["api", "app", "cli", "client", "config", "db_helpers", "logging_utils", "models", "persistence", "pipeline", "state", "utils", "master_data", "exporters"],
-    "api": ["core"], # formerly socrata_toolkit.api (module) -> socrata_toolkit.core.api
+    "core": [
+        "api",
+        "app",
+        "cli",
+        "client",
+        "config",
+        "db_helpers",
+        "logging_utils",
+        "models",
+        "persistence",
+        "pipeline",
+        "state",
+        "utils",
+        "master_data",
+        "exporters",
+    ],
+    "api": ["core"],  # formerly socrata_toolkit.api (module) -> socrata_toolkit.core.api
 }
 
 # Specific doubled patterns to fix
@@ -35,7 +54,10 @@ DOUBLES = [
     (r"socrata_toolkit\.core\.api\.governance", r"socrata_toolkit.api.governance"),
     (r"socrata_toolkit\.core\.api\.llm_routes", r"socrata_toolkit.api.llm_routes"),
     (r"socrata_toolkit\.core\.api\.main", r"socrata_toolkit.api.main"),
-    (r"socrata_toolkit\.core\.api\.models", r"socrata_toolkit.core.api.models"), # wait, models.py is in api/
+    (
+        r"socrata_toolkit\.core\.api\.models",
+        r"socrata_toolkit.core.api.models",
+    ),  # wait, models.py is in api/
     (r"socrata_toolkit\.core\.api\.rate_limiting", r"socrata_toolkit.api.rate_limiting"),
     (r"socrata_toolkit\.core\.api\.request_pipeline", r"socrata_toolkit.api.request_pipeline"),
     (r"socrata_toolkit\.core\.api\.routes", r"socrata_toolkit.api.routes"),
@@ -48,6 +70,7 @@ DOUBLES = [
     (r"socrata_toolkit\.spatial\.core\.visualization", r"socrata_toolkit.spatial.visualization"),
     (r"socrata_toolkit\.ops\.core\.workflow", r"socrata_toolkit.ops.workflow"),
 ]
+
 
 def fix_file(file_path: Path):
     content = file_path.read_text(encoding="utf-8")
@@ -69,6 +92,7 @@ def fix_file(file_path: Path):
         return True
     return False
 
+
 def main():
     root = Path(".")
     count = 0
@@ -81,6 +105,7 @@ def main():
             count += 1
             print(f"Fixed: {py_file}")
     print(f"Total files fixed: {count}")
+
 
 if __name__ == "__main__":
     main()

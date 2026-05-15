@@ -1,19 +1,20 @@
 """
-Tests for Material-Aware KPI Computation (socrata_toolkit.engineering.dot_sidewalk)
+Tests for Material-Aware KPI Computation (socrata_toolkit.engineering)
 
 Tests material-specific KPI calculation, ADA compliance rates, contractor quality scoring,
 and KPI lineage tracking.
 """
 
-import pandas as pd
-import pytest
 from datetime import datetime, timezone
 
-from socrata_toolkit.engineering.dot_sidewalk import (
-    SidewalkKPI,
+import pandas as pd
+import pytest
+
+from socrata_toolkit.engineering import (
     MaterialAwareSidewalkKPI,
-    compute_sidewalk_kpis,
+    SidewalkKPI,
     compute_material_aware_kpis,
+    compute_sidewalk_kpis,
 )
 
 
@@ -37,17 +38,19 @@ class TestLegacySidewalkKPI:
 
     def test_compute_sidewalk_kpis_basic(self):
         """Test computing legacy sidewalk KPIs."""
-        df = pd.DataFrame({
-            "violations": [10, 15],
-            "curb_miles": [2, 3],
-            "built_linear_feet": [1000, 500],
-            "days": [10, 5],
-            "actual_spend": [100, 200],
-            "planned_spend": [90, 210],
-            "first_pass": [8, 10],
-            "total_inspections": [10, 15],
-            "rework_spend": [5, 10],
-        })
+        df = pd.DataFrame(
+            {
+                "violations": [10, 15],
+                "curb_miles": [2, 3],
+                "built_linear_feet": [1000, 500],
+                "days": [10, 5],
+                "actual_spend": [100, 200],
+                "planned_spend": [90, 210],
+                "first_pass": [8, 10],
+                "total_inspections": [10, 15],
+                "rework_spend": [5, 10],
+            }
+        )
         kpi = compute_sidewalk_kpis(df)
 
         # Verify structure
@@ -58,17 +61,19 @@ class TestLegacySidewalkKPI:
 
     def test_compute_sidewalk_kpis_zero_handling(self):
         """Test KPI computation with zero values (avoiding division errors)."""
-        df = pd.DataFrame({
-            "violations": [0, 0],
-            "curb_miles": [0, 0],
-            "built_linear_feet": [0, 0],
-            "days": [0, 0],
-            "actual_spend": [0, 0],
-            "planned_spend": [0, 0],
-            "first_pass": [0, 0],
-            "total_inspections": [0, 0],
-            "rework_spend": [0, 0],
-        })
+        df = pd.DataFrame(
+            {
+                "violations": [0, 0],
+                "curb_miles": [0, 0],
+                "built_linear_feet": [0, 0],
+                "days": [0, 0],
+                "actual_spend": [0, 0],
+                "planned_spend": [0, 0],
+                "first_pass": [0, 0],
+                "total_inspections": [0, 0],
+                "rework_spend": [0, 0],
+            }
+        )
         # Should not raise ZeroDivisionError
         kpi = compute_sidewalk_kpis(df)
         assert kpi is not None
@@ -175,22 +180,24 @@ class TestMaterialAwareKPIComputation:
     @pytest.fixture
     def sample_sidewalk_data(self):
         """Create sample sidewalk segment data for testing."""
-        return pd.DataFrame({
-            "segment_id": [1, 2, 3, 4, 5, 6],
-            "material_type": [
-                "HMA",
-                "HMA",
-                "PCC",
-                "PCC",
-                "Permeable Pavers",
-                "Granite Block",
-            ],
-            "defect_count": [2, 3, 1, 2, 0, 1],
-            "linear_feet": [200, 150, 300, 250, 100, 50],
-            "ada_compliant": [True, False, True, True, False, True],
-            "severity": ["minor", "moderate", "minor", "severe", "minor", "hazardous"],
-            "repair_cost": [500, 800, 400, 2000, 300, 1500],
-        })
+        return pd.DataFrame(
+            {
+                "segment_id": [1, 2, 3, 4, 5, 6],
+                "material_type": [
+                    "HMA",
+                    "HMA",
+                    "PCC",
+                    "PCC",
+                    "Permeable Pavers",
+                    "Granite Block",
+                ],
+                "defect_count": [2, 3, 1, 2, 0, 1],
+                "linear_feet": [200, 150, 300, 250, 100, 50],
+                "ada_compliant": [True, False, True, True, False, True],
+                "severity": ["minor", "moderate", "minor", "severe", "minor", "hazardous"],
+                "repair_cost": [500, 800, 400, 2000, 300, 1500],
+            }
+        )
 
     def test_compute_material_aware_kpis_basic(self, sample_sidewalk_data):
         """Test basic material-aware KPI computation."""
@@ -306,12 +313,14 @@ class TestMaterialAwareKPIComputation:
 
     def test_compute_material_aware_kpis_custom_column_names(self):
         """Test KPI computation with custom column names."""
-        df = pd.DataFrame({
-            "seg_id": [1, 2, 3],
-            "mat": ["HMA", "PCC", "HMA"],
-            "defs": [2, 1, 3],
-            "length": [200, 300, 150],
-        })
+        df = pd.DataFrame(
+            {
+                "seg_id": [1, 2, 3],
+                "mat": ["HMA", "PCC", "HMA"],
+                "defs": [2, 1, 3],
+                "length": [200, 300, 150],
+            }
+        )
 
         kpi = compute_material_aware_kpis(
             df,
@@ -326,11 +335,13 @@ class TestMaterialAwareKPIComputation:
 
     def test_compute_material_aware_kpis_empty_dataframe(self):
         """Test KPI computation with empty DataFrame."""
-        df = pd.DataFrame({
-            "material_type": [],
-            "defect_count": [],
-            "linear_feet": [],
-        })
+        df = pd.DataFrame(
+            {
+                "material_type": [],
+                "defect_count": [],
+                "linear_feet": [],
+            }
+        )
 
         # Should not raise error
         kpi = compute_material_aware_kpis(
@@ -345,11 +356,13 @@ class TestMaterialAwareKPIComputation:
 
     def test_compute_material_aware_kpis_null_handling(self):
         """Test KPI computation gracefully handles null values."""
-        df = pd.DataFrame({
-            "material_type": ["HMA", None, "PCC"],
-            "defect_count": [2, 3, None],
-            "linear_feet": [200, 150, 300],
-        })
+        df = pd.DataFrame(
+            {
+                "material_type": ["HMA", None, "PCC"],
+                "defect_count": [2, 3, None],
+                "linear_feet": [200, 150, 300],
+            }
+        )
 
         # Should not raise error
         kpi = compute_material_aware_kpis(
@@ -367,21 +380,23 @@ class TestKPIIntegration:
 
     def test_legacy_and_material_aware_consistency(self):
         """Test that legacy and material-aware KPIs are consistent."""
-        df = pd.DataFrame({
-            "violations": [10, 15],
-            "curb_miles": [2, 3],
-            "built_linear_feet": [1000, 500],
-            "days": [10, 5],
-            "actual_spend": [100, 200],
-            "planned_spend": [90, 210],
-            "first_pass": [8, 10],
-            "total_inspections": [10, 15],
-            "rework_spend": [5, 10],
-            # Material-aware columns
-            "material_type": ["HMA", "PCC"],
-            "defect_count": [25, 15],
-            "linear_feet": [5280 * 5, 5280 * 5],  # 5 miles each
-        })
+        df = pd.DataFrame(
+            {
+                "violations": [10, 15],
+                "curb_miles": [2, 3],
+                "built_linear_feet": [1000, 500],
+                "days": [10, 5],
+                "actual_spend": [100, 200],
+                "planned_spend": [90, 210],
+                "first_pass": [8, 10],
+                "total_inspections": [10, 15],
+                "rework_spend": [5, 10],
+                # Material-aware columns
+                "material_type": ["HMA", "PCC"],
+                "defect_count": [25, 15],
+                "linear_feet": [5280 * 5, 5280 * 5],  # 5 miles each
+            }
+        )
 
         # Compute both
         legacy_kpi = compute_sidewalk_kpis(df)

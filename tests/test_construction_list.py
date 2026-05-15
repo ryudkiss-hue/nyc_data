@@ -1,7 +1,6 @@
 import pandas as pd
-import pytest
 
-from socrata_toolkit.engineering.construction_list import (
+from socrata_toolkit.engineering import (
     classify_scope,
     compute_priority_score,
     detect_construction_conflicts,
@@ -13,31 +12,40 @@ from socrata_toolkit.engineering.construction_list import (
 
 
 def _sample_inspections():
-    return pd.DataFrame({
-        "location_id": ["L1", "L2", "L3", "L4"],
-        "borough": ["MANHATTAN", "BROOKLYN", "QUEENS", "BRONX"],
-        "address": ["123 Main St", "456 Oak Ave", "789 Elm Blvd", "321 Pine Rd"],
-        "description": ["Sidewalk cracked", "ADA ramp needed", "Tree pit repair", "Curb replacement"],
-        "severity_rating": [8, 5, 3, 9],
-        "pedestrian_volume": [8000, 2000, 500, 6000],
-        "issued_date": ["2020-01-01", "2023-06-15", "2024-11-01", "2019-03-20"],
-        "ada_flag": [False, True, False, False],
-        "smart_spine": [True, False, False, True],
-        "complaint_count": [5, 1, 0, 8],
-        "estimated_sqft": [200, 50, 100, 300],
-        "status": ["Pending Repair", "Pending Repair", "Complete", "Pending Repair"],
-    })
+    return pd.DataFrame(
+        {
+            "location_id": ["L1", "L2", "L3", "L4"],
+            "borough": ["MANHATTAN", "BROOKLYN", "QUEENS", "BRONX"],
+            "address": ["123 Main St", "456 Oak Ave", "789 Elm Blvd", "321 Pine Rd"],
+            "description": [
+                "Sidewalk cracked",
+                "ADA ramp needed",
+                "Tree pit repair",
+                "Curb replacement",
+            ],
+            "severity_rating": [8, 5, 3, 9],
+            "pedestrian_volume": [8000, 2000, 500, 6000],
+            "issued_date": ["2020-01-01", "2023-06-15", "2024-11-01", "2019-03-20"],
+            "ada_flag": [False, True, False, False],
+            "smart_spine": [True, False, False, True],
+            "complaint_count": [5, 1, 0, 8],
+            "estimated_sqft": [200, 50, 100, 300],
+            "status": ["Pending Repair", "Pending Repair", "Complete", "Pending Repair"],
+        }
+    )
 
 
 def test_compute_priority_score():
-    row = pd.Series({
-        "severity_rating": 8,
-        "pedestrian_volume": 5000,
-        "issued_date": "2020-01-01",
-        "ada_flag": True,
-        "smart_spine": True,
-        "complaint_count": 5,
-    })
+    row = pd.Series(
+        {
+            "severity_rating": 8,
+            "pedestrian_volume": 5000,
+            "issued_date": "2020-01-01",
+            "ada_flag": True,
+            "smart_spine": True,
+            "complaint_count": 5,
+        }
+    )
     score = compute_priority_score(row)
     assert 0 <= score <= 1
     assert score > 0.3  # high severity + old + ADA + spine

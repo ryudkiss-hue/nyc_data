@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from socrata_toolkit.analysis.program import (
+from socrata_toolkit.analysis import (
     MetricsTracker,
     compute_program_dashboard,
 )
@@ -9,7 +9,13 @@ from socrata_toolkit.analysis.program import (
 
 def test_metrics_tracker_define_and_record():
     tracker = MetricsTracker()
-    tracker.define("test_metric", target=10.0, warning_threshold=15.0, critical_threshold=20.0, direction="lower_is_better")
+    tracker.define(
+        "test_metric",
+        target=10.0,
+        warning_threshold=15.0,
+        critical_threshold=20.0,
+        direction="lower_is_better",
+    )
     snap = tracker.record("test_metric", 8.0)
     assert snap.status == "green"
     assert snap.value == 8.0
@@ -17,21 +23,39 @@ def test_metrics_tracker_define_and_record():
 
 def test_metrics_tracker_yellow_status():
     tracker = MetricsTracker()
-    tracker.define("m", target=10.0, warning_threshold=15.0, critical_threshold=20.0, direction="lower_is_better")
+    tracker.define(
+        "m",
+        target=10.0,
+        warning_threshold=15.0,
+        critical_threshold=20.0,
+        direction="lower_is_better",
+    )
     snap = tracker.record("m", 17.0)
     assert snap.status == "yellow"
 
 
 def test_metrics_tracker_red_status():
     tracker = MetricsTracker()
-    tracker.define("m", target=10.0, warning_threshold=15.0, critical_threshold=20.0, direction="lower_is_better")
+    tracker.define(
+        "m",
+        target=10.0,
+        warning_threshold=15.0,
+        critical_threshold=20.0,
+        direction="lower_is_better",
+    )
     snap = tracker.record("m", 25.0)
     assert snap.status == "red"
 
 
 def test_metrics_tracker_higher_is_better():
     tracker = MetricsTracker()
-    tracker.define("m", target=90.0, warning_threshold=80.0, critical_threshold=70.0, direction="higher_is_better")
+    tracker.define(
+        "m",
+        target=90.0,
+        warning_threshold=80.0,
+        critical_threshold=70.0,
+        direction="higher_is_better",
+    )
     assert tracker.record("m", 95.0).status == "green"
     assert tracker.record("m", 85.0).status == "yellow"
     assert tracker.record("m", 60.0).status == "red"
@@ -58,7 +82,9 @@ def test_metrics_tracker_dashboard():
 
 def test_metrics_tracker_budget_code():
     tracker = MetricsTracker()
-    bc = tracker.add_budget_code("PS-001", description="Personnel", category="personnel", allocated=100000, spent=60000)
+    bc = tracker.add_budget_code(
+        "PS-001", description="Personnel", category="personnel", allocated=100000, spent=60000
+    )
     assert bc.remaining == 40000
     assert bc.pct_used == 60.0
 
@@ -95,17 +121,19 @@ def test_metrics_tracker_record_undefined_raises():
 
 
 def test_compute_program_dashboard():
-    df = pd.DataFrame({
-        "violations": [10, 15],
-        "curb_miles": [2, 3],
-        "built_linear_feet": [1000, 500],
-        "days": [10, 5],
-        "actual_spend": [100, 200],
-        "planned_spend": [90, 210],
-        "first_pass": [8, 10],
-        "total_inspections": [10, 15],
-        "rework_spend": [5, 10],
-    })
+    df = pd.DataFrame(
+        {
+            "violations": [10, 15],
+            "curb_miles": [2, 3],
+            "built_linear_feet": [1000, 500],
+            "days": [10, 5],
+            "actual_spend": [100, 200],
+            "planned_spend": [90, 210],
+            "first_pass": [8, 10],
+            "total_inspections": [10, 15],
+            "rework_spend": [5, 10],
+        }
+    )
     dashboard = compute_program_dashboard(df)
     assert dashboard.overall_health in ("green", "yellow", "red")
     assert len(dashboard.metrics) >= 3

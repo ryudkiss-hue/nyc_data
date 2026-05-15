@@ -14,11 +14,13 @@ Run with:
 """
 
 import os
+
 from langchain_community.llms import Ollama
+
 from socrata_toolkit.llm_sql_engine import (
-    SQLQueryEngine,
     InteractiveQuerySession,
     QueryOptimizer,
+    SQLQueryEngine,
 )
 
 
@@ -32,10 +34,7 @@ def example_basic_query():
     llm = Ollama(model="mistral")
 
     # Get database connection
-    dsn = os.getenv(
-        "DATABASE_URL",
-        "postgresql://postgres:postgres@localhost/nyc_data"
-    )
+    dsn = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost/nyc_data")
 
     # Initialize query engine
     engine = SQLQueryEngine(
@@ -61,7 +60,6 @@ def example_basic_query():
 
         if execution.results:
             print("Sample Results (first 3):")
-            import json
             for i, result in enumerate(execution.results[:3], 1):
                 print(f"  {i}. {result}")
 
@@ -83,10 +81,7 @@ def example_follow_up_questions():
     print("=" * 70)
 
     llm = Ollama(model="mistral")
-    dsn = os.getenv(
-        "DATABASE_URL",
-        "postgresql://postgres:postgres@localhost/nyc_data"
-    )
+    dsn = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost/nyc_data")
 
     engine = SQLQueryEngine(dsn=dsn, llm=llm)
     session = InteractiveQuerySession(engine)
@@ -103,13 +98,13 @@ def example_follow_up_questions():
     try:
         for i, question in enumerate(questions, 1):
             print(f"\nQuestion {i}: {question}")
-            
+
             result = session.ask(question)
-            
+
             print(f"SQL: {result['sql']}")
             print(f"Results: {len(result['results'])} rows")
-            
-            if result['interpretation']:
+
+            if result["interpretation"]:
                 print(f"Interpretation: {result['interpretation']}")
 
         # Show conversation
@@ -117,7 +112,11 @@ def example_follow_up_questions():
         print("Full Conversation History:")
         for item in session.get_conversation():
             print(f"  Q: {item['question']}")
-            print(f"  A: {item['interpretation'][:100]}..." if item['interpretation'] else "  A: [No interpretation]")
+            print(
+                f"  A: {item['interpretation'][:100]}..."
+                if item["interpretation"]
+                else "  A: [No interpretation]"
+            )
 
     except Exception as e:
         print(f"[Example: Demonstrates multi-turn conversation with context]")
@@ -131,10 +130,7 @@ def example_schema_exploration():
     print("=" * 70)
 
     llm = Ollama(model="mistral")
-    dsn = os.getenv(
-        "DATABASE_URL",
-        "postgresql://postgres:postgres@localhost/nyc_data"
-    )
+    dsn = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost/nyc_data")
 
     engine = SQLQueryEngine(dsn=dsn, llm=llm)
 
@@ -185,10 +181,7 @@ def example_query_validation():
     print("=" * 70)
 
     llm = Ollama(model="mistral")
-    dsn = os.getenv(
-        "DATABASE_URL",
-        "postgresql://postgres:postgres@localhost/nyc_data"
-    )
+    dsn = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost/nyc_data")
 
     engine = SQLQueryEngine(dsn=dsn, llm=llm)
 
@@ -216,10 +209,7 @@ def example_query_optimization():
     print("=" * 70)
 
     llm = Ollama(model="mistral")
-    dsn = os.getenv(
-        "DATABASE_URL",
-        "postgresql://postgres:postgres@localhost/nyc_data"
-    )
+    dsn = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost/nyc_data")
 
     engine = SQLQueryEngine(dsn=dsn, llm=llm)
     optimizer = QueryOptimizer(engine, llm)
@@ -242,7 +232,7 @@ def example_query_optimization():
         # Get optimizations
         print("\nOptimization Suggestions:")
         optimizations = optimizer.suggest_optimizations(sample_query)
-        
+
         for i, opt in enumerate(optimizations[:3], 1):
             print(f"\n{i}. {opt.get('optimization', 'Unknown optimization')}")
             print(f"   Benefit: {opt.get('benefit', 'Unknown benefit')}")
@@ -251,7 +241,7 @@ def example_query_optimization():
         print("\n" + "-" * 70)
         print("\nAlternative Formulations:")
         alternatives = optimizer.suggest_alternatives(sample_query)
-        
+
         for i, alt in enumerate(alternatives[:2], 1):
             print(f"\n{i}. {alt[:100]}...")
 
@@ -271,10 +261,7 @@ def example_complex_analysis():
     print("=" * 70)
 
     llm = Ollama(model="mistral")
-    dsn = os.getenv(
-        "DATABASE_URL",
-        "postgresql://postgres:postgres@localhost/nyc_data"
-    )
+    dsn = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost/nyc_data")
 
     engine = SQLQueryEngine(dsn=dsn, llm=llm)
     session = InteractiveQuerySession(engine)
@@ -290,12 +277,12 @@ def example_complex_analysis():
 
     for i, question in enumerate(analysis_questions, 1):
         print(f"\nStep {i}: {question}")
-        
+
         try:
             result = session.ask(question)
             print(f"  SQL: {result['sql'][:80]}...")
             print(f"  Results: {len(result['results'])} rows")
-            if result['interpretation']:
+            if result["interpretation"]:
                 print(f"  Insight: {result['interpretation'][:100]}...")
         except Exception as e:
             print(f"  [Would execute with real database]")
@@ -308,10 +295,7 @@ def example_error_handling():
     print("=" * 70)
 
     llm = Ollama(model="mistral")
-    dsn = os.getenv(
-        "DATABASE_URL",
-        "postgresql://postgres:postgres@localhost/nyc_data"
-    )
+    dsn = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost/nyc_data")
 
     engine = SQLQueryEngine(dsn=dsn, llm=llm)
 
@@ -326,17 +310,17 @@ def example_error_handling():
 
     for i, question in enumerate(problematic_questions, 1):
         print(f"\n{i}. Question: {question}")
-        
+
         try:
             execution = engine.execute(question)
-            
+
             if execution.error:
                 print(f"   Error: {execution.error}")
             elif execution.row_count == 0:
                 print(f"   No results found (query executed successfully)")
             else:
                 print(f"   Returned {execution.row_count} results")
-                
+
         except Exception as e:
             print(f"   Exception: {str(e)[:100]}...")
 
@@ -348,10 +332,7 @@ def example_execution_history():
     print("=" * 70)
 
     llm = Ollama(model="mistral")
-    dsn = os.getenv(
-        "DATABASE_URL",
-        "postgresql://postgres:postgres@localhost/nyc_data"
-    )
+    dsn = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost/nyc_data")
 
     engine = SQLQueryEngine(dsn=dsn, llm=llm)
 

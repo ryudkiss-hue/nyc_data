@@ -1,8 +1,8 @@
-import json
-
-import pytest
-
-from socrata_toolkit.governance.compliance import check_dcwp_license, check_parks_permit, validate_contractor_for_list
+from socrata_toolkit.governance import (
+    check_dcwp_license,
+    check_parks_permit,
+    validate_contractor_for_list,
+)
 
 
 def test_check_dcwp_license_no_api():
@@ -37,7 +37,13 @@ def test_validate_contractor_for_list(monkeypatch):
             return DummyResp({"status": "APPROVED"})
         return DummyResp({})
 
-    monkeypatch.setattr("socrata_toolkit.governance.compliance.requests.get", fake_get)
-    res = validate_contractor_for_list("contractor-1", "LIC-1", dcwp_api="http://fake.dcwp", parks_api="http://fake.parks", parks_permit="P-1")
+    monkeypatch.setattr("socrata_toolkit.governance.get", fake_get)
+    res = validate_contractor_for_list(
+        "contractor-1",
+        "LIC-1",
+        dcwp_api="http://fake.dcwp",
+        parks_api="http://fake.parks",
+        parks_permit="P-1",
+    )
     assert res["ok"] is True
     assert res["reasons"] == []

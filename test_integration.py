@@ -1,8 +1,10 @@
 """Quick integration test for material standards system"""
-from datetime import datetime, date
-from socrata_toolkit.material_standards import SurfaceAssessment, SurfaceCondition
-from socrata_toolkit.material_definitions import ASPH_STANDARD, CONC_STANDARD
+
+from datetime import date, datetime
+
 from socrata_toolkit.material_compliance import MaterialCompliance
+from socrata_toolkit.material_definitions import ASPH_STANDARD, CONC_STANDARD
+from socrata_toolkit.material_standards import SurfaceAssessment, SurfaceCondition
 
 # Test 1: Create assessments
 assessment1 = SurfaceAssessment(
@@ -36,14 +38,10 @@ print(f"  Concrete compliance score: {result2.compliance_score:.1f}/100")
 
 # Test 3: Generate full compliance reports
 report1 = checker.generate_compliance_report(
-    assessment1,
-    location_description="123 Main St (Asphalt)",
-    last_maintenance=date.today()
+    assessment1, location_description="123 Main St (Asphalt)", last_maintenance=date.today()
 )
 report2 = checker.generate_compliance_report(
-    assessment2,
-    location_description="456 Park Ave (Concrete)",
-    last_maintenance=date.today()
+    assessment2, location_description="456 Park Ave (Concrete)", last_maintenance=date.today()
 )
 
 print("\nTest 3 - Full Compliance Reports Generated: PASSED")
@@ -53,24 +51,27 @@ print(f"  Report 2 status: {report2.overall_status.value}")
 print(f"  Report 2 score: {report2.overall_score:.1f}/100")
 
 # Test 4: Material-aware KPI integration
-from socrata_toolkit.dot_sidewalk import compute_material_lifecycle_cost_kpi
 import pandas as pd
 
-df = pd.DataFrame({
-    'material_type': ['asphalt', 'asphalt', 'concrete', 'concrete'],
-    'defect_count': [2, 3, 1, 0],
-    'linear_feet': [500, 600, 400, 450],
-})
+from socrata_toolkit.dot_sidewalk import compute_material_lifecycle_cost_kpi
 
-kpis = compute_material_lifecycle_cost_kpi(df, material_col='material_type')
+df = pd.DataFrame(
+    {
+        "material_type": ["asphalt", "asphalt", "concrete", "concrete"],
+        "defect_count": [2, 3, 1, 0],
+        "linear_feet": [500, 600, 400, 450],
+    }
+)
+
+kpis = compute_material_lifecycle_cost_kpi(df, material_col="material_type")
 print("\nTest 4 - Material-aware KPIs: PASSED")
 print(f"  Materials with KPIs: {len(kpis)}")
 for mat, kpi in kpis.items():
     print(f"    {mat}: {kpi['segment_count']} segments, {kpi['total_linear_feet']:.0f} feet")
 
-print("\n" + "="*60)
+print("\n" + "=" * 60)
 print("ALL INTEGRATION TESTS PASSED")
-print("="*60)
+print("=" * 60)
 print("Summary:")
 print("  - Material definitions loaded: 9 materials")
 print("  - Design rules loaded: 11 ADA rules")

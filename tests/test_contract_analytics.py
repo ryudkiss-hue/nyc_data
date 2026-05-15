@@ -1,7 +1,6 @@
 import pandas as pd
-import pytest
 
-from socrata_toolkit.engineering.contract_analytics import (
+from socrata_toolkit.engineering import (
     analyze_contract_progress,
     budget_analysis,
     compare_contracts,
@@ -11,19 +10,21 @@ from socrata_toolkit.engineering.contract_analytics import (
 
 
 def _sample_contracts():
-    return pd.DataFrame({
-        "contract_id": ["C1", "C1", "C2", "C2"],
-        "planned_sqft": [1000, 1000, 500, 500],
-        "actual_sqft": [800, 200, 500, 0],
-        "start_date": ["2024-01-01", "2024-01-01", "2024-06-01", "2024-06-01"],
-        "end_date": ["2025-12-31", "2025-12-31", "2025-06-30", "2025-06-30"],
-        "status": ["in_progress", "in_progress", "complete", "complete"],
-        "planned_spend": [50000, 50000, 25000, 25000],
-        "actual_spend": [45000, 15000, 25000, 5000],
-        "earned_value": [40000, 10000, 25000, 5000],
-        "linear_feet": [400, 100, 250, 0],
-        "days_worked": [50, 20, 30, 10],
-    })
+    return pd.DataFrame(
+        {
+            "contract_id": ["C1", "C1", "C2", "C2"],
+            "planned_sqft": [1000, 1000, 500, 500],
+            "actual_sqft": [800, 200, 500, 0],
+            "start_date": ["2024-01-01", "2024-01-01", "2024-06-01", "2024-06-01"],
+            "end_date": ["2025-12-31", "2025-12-31", "2025-06-30", "2025-06-30"],
+            "status": ["in_progress", "in_progress", "complete", "complete"],
+            "planned_spend": [50000, 50000, 25000, 25000],
+            "actual_spend": [45000, 15000, 25000, 5000],
+            "earned_value": [40000, 10000, 25000, 5000],
+            "linear_feet": [400, 100, 250, 0],
+            "days_worked": [50, 20, 30, 10],
+        }
+    )
 
 
 def test_analyze_contract_progress():
@@ -64,11 +65,13 @@ def test_compare_contracts():
 
 
 def test_schedule_variance():
-    df = pd.DataFrame({
-        "contract_id": ["C1", "C2"],
-        "planned_end_date": ["2025-06-01", "2025-03-01"],
-        "actual_end_date": ["2025-07-15", "2025-02-15"],
-    })
+    df = pd.DataFrame(
+        {
+            "contract_id": ["C1", "C2"],
+            "planned_end_date": ["2025-06-01", "2025-03-01"],
+            "actual_end_date": ["2025-07-15", "2025-02-15"],
+        }
+    )
     result = schedule_variance(df)
     assert "_schedule_variance_days" in result.columns
     assert result.loc[0, "_schedule_variance_days"] == 44  # 44 days late

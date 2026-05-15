@@ -1,86 +1,52 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, useCallback } from 'react'
 import { useAppStore } from '@/store/store'
-import { apiClient } from '@/api/client'
+import { useChatMutation } from '@/hooks/useChatMutation'
 import { Send, Loader, AlertCircle, Trash2 } from 'lucide-react'
 
 export const ChatInterface: React.FC = () => {
-  const {
-    messages,
-    isLoading,
-    error,
-    addMessage,
-    setLoading,
-    setError,
-    clearMessages,
-    selectedProvider,
-    selectedModel,
-  } = useAppStore()
+  const messages = useAppStore((s) => s.messages)
+  const clearMessages = useAppStore((s) => s.clearMessages)
+  const selectedProvider = useAppStore((s) => s.selectedProvider)
+  const selectedModel = useAppStore((s) => s.selectedModel)
+
+  const chatMutation = useChatMutation()
 
   const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
+  }, [])
 
   useEffect(() => {
     scrollToBottom()
-  }, [messages])
+  }, [messages, scrollToBottom])
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!input.trim()) return
+  const handleSendMessage = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault()
+      if (!input.trim() || chatMutation.isPending) return
 
-    // Add user message
-    const userMessage = {
-      id: `msg_${Date.now()}_user`,
-      role: 'user' as const,
-      content: input,
-      timestamp: new Date().toISOString(),
-    }
-
-    addMessage(userMessage)
-    setInput('')
-    setError(null)
-    setLoading(true)
-
-    try {
-      const response = await apiClient.sendChatMessage({
+      chatMutation.mutate({
         message: input,
         provider: selectedProvider,
         model: selectedModel,
       })
+      setInput('')
+    },
+    [input, chatMutation, selectedProvider, selectedModel]
+  )
 
-      const assistantMessage = {
-        id: response.message_id,
-        role: 'assistant' as const,
-        content: response.response,
-        timestamp: response.timestamp,
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === 'Enter' && e.ctrlKey) {
+        e.preventDefault()
+        handleSendMessage(e)
       }
-
-      addMessage(assistantMessage)
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to send message'
-      setError(errorMessage)
-
-      const errorMsg = {
-        id: `msg_${Date.now()}_error`,
-        role: 'assistant' as const,
-        content: `Error: ${errorMessage}`,
-        timestamp: new Date().toISOString(),
-      }
-      addMessage(errorMsg)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && e.ctrlKey) {
-      handleSendMessage(e as any)
-    }
-  }
+    },
+    [handleSendMessage]
+  )
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -95,9 +61,10 @@ export const ChatInterface: React.FC = () => {
           </div>
           {messages.length > 0 && (
             <button
-              onClick={() => clearMessages()}
+              onClick={clearMessages}
               className="p-2 hover:bg-gray-100 rounded-lg transition"
               title="Clear conversation"
+              aria-label="Clear conversation"
             >
               <Trash2 className="w-5 h-5 text-gray-400" />
             </button>
@@ -115,9 +82,9 @@ export const ChatInterface: React.FC = () => {
                 Ask questions about NYC sidewalk data or use natural language queries to explore the database.
               </p>
               <div className="text-xs space-y-2">
-                <p>💬 Example: "What are the most common sidewalk defects?"</p>
-                <p>📊 Example: "Show me potholes in Manhattan"</p>
-                <p>📈 Example: "Compare maintenance costs by borough"</p>
+                <p>💬 Example: &ldquo;What are the most common sidewalk defects?&rdquo;</p>
+                <p>📊 Example: &ldquo;Show me potholes in Manhattan&rdquo;</p>
+                <p>📈 Example: &ldquo;Compare maintenance costs by borough&rdquo;</p>
               </div>
             </div>
           </div>
@@ -126,7 +93,7 @@ export const ChatInterface: React.FC = () => {
         {messages.map((message) => (
           <div
             key={message.id}
-            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} animate-slideUp`}
           >
             <div
               className={`max-w-xs lg:max-w-md xl:max-w-lg px-4 py-2 rounded-lg ${
@@ -143,20 +110,24 @@ export const ChatInterface: React.FC = () => {
           </div>
         ))}
 
-        {isLoading && (
+        {chatMutation.isPending && (
           <div className="flex justify-start">
             <div className="bg-gray-100 text-gray-900 px-4 py-2 rounded-lg rounded-bl-none">
-              <Loader className="w-5 h-5 animate-spin" />
+              <Loader className="w-5 h-5 animate-spin" aria-label="Loading response" />
             </div>
           </div>
         )}
 
-        {error && (
+        {chatMutation.isError && (
           <div className="flex justify-start">
             <div className="bg-red-50 text-red-700 px-4 py-2 rounded-lg rounded-bl-none max-w-xs">
               <div className="flex items-start gap-2">
                 <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
-                <p className="text-sm">{error}</p>
+                <p className="text-sm">
+                  {chatMutation.error instanceof Error
+                    ? chatMutation.error.message
+                    : 'Failed to send message'}
+                </p>
               </div>
             </div>
           </div>
@@ -176,21 +147,22 @@ export const ChatInterface: React.FC = () => {
             placeholder="Ask a question or describe what you want to analyze... (Ctrl+Enter to send)"
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-nycblue-500 resize-none"
             rows={3}
-            disabled={isLoading}
+            disabled={chatMutation.isPending}
+            aria-label="Chat message input"
           />
           <div className="flex justify-end gap-2">
             <button
               type="button"
               onClick={() => setInput('')}
               className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition"
-              disabled={isLoading}
+              disabled={chatMutation.isPending}
             >
               Clear
             </button>
             <button
               type="submit"
               className="px-4 py-2 bg-nycblue-500 text-white hover:bg-nycblue-600 rounded-lg transition flex items-center gap-2 disabled:opacity-50"
-              disabled={isLoading || !input.trim()}
+              disabled={chatMutation.isPending || !input.trim()}
             >
               <Send className="w-4 h-4" />
               Send

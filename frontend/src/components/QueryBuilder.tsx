@@ -1,47 +1,38 @@
-import React, { useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import { useAppStore } from '@/store/store'
-import { apiClient } from '@/api/client'
+import { useQueryMutation } from '@/hooks/useQueryMutation'
 import { Loader, AlertCircle, Database, Copy, CheckCircle } from 'lucide-react'
 
 export const QueryBuilder: React.FC = () => {
-  const { selectedProvider, selectedModel, setLoading, setError } = useAppStore()
+  const selectedProvider = useAppStore((s) => s.selectedProvider)
+  const selectedModel = useAppStore((s) => s.selectedModel)
+
+  const queryMutation = useQueryMutation()
+
   const [question, setQuestion] = useState('')
-  const [result, setResult] = useState<any>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setErrorLocal] = useState<string | null>(null)
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
-  const handleExecuteQuery = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!question.trim()) return
+  const handleExecuteQuery = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault()
+      if (!question.trim() || queryMutation.isPending) return
 
-    setIsLoading(true)
-    setErrorLocal(null)
-    setResult(null)
-
-    try {
-      const response = await apiClient.executeQuery({
+      queryMutation.mutate({
         question,
-        max_results: 100,
-        explain: true,
         provider: selectedProvider,
         model: selectedModel,
       })
+    },
+    [question, queryMutation, selectedProvider, selectedModel]
+  )
 
-      setResult(response)
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to execute query'
-      setErrorLocal(errorMessage)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const copyToClipboard = (text: string, id: string) => {
+  const copyToClipboard = useCallback((text: string, id: string) => {
     navigator.clipboard.writeText(text)
     setCopiedId(id)
     setTimeout(() => setCopiedId(null), 2000)
-  }
+  }, [])
+
+  const result = queryMutation.data
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -64,26 +55,31 @@ export const QueryBuilder: React.FC = () => {
               placeholder="Ask a question in natural language... e.g., 'How many potholes in Manhattan?'"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-nycblue-500 resize-none"
               rows={3}
-              disabled={isLoading}
+              disabled={queryMutation.isPending}
+              aria-label="Natural language query input"
             />
             <button
               type="submit"
               className="px-4 py-2 bg-nycblue-500 text-white hover:bg-nycblue-600 rounded-lg transition disabled:opacity-50 flex items-center gap-2"
-              disabled={isLoading || !question.trim()}
+              disabled={queryMutation.isPending || !question.trim()}
             >
-              {isLoading && <Loader className="w-4 h-4 animate-spin" />}
+              {queryMutation.isPending && <Loader className="w-4 h-4 animate-spin" />}
               Execute Query
             </button>
           </form>
 
           {/* Error Message */}
-          {error && (
+          {queryMutation.isError && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
               <div className="flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
                 <div>
                   <h4 className="font-medium text-red-900">Error</h4>
-                  <p className="text-sm text-red-700">{error}</p>
+                  <p className="text-sm text-red-700">
+                    {queryMutation.error instanceof Error
+                      ? queryMutation.error.message
+                      : 'Failed to execute query'}
+                  </p>
                 </div>
               </div>
             </div>
@@ -91,7 +87,7 @@ export const QueryBuilder: React.FC = () => {
 
           {/* Results */}
           {result && (
-            <div className="space-y-4">
+            <div className="space-y-4 animate-fadeIn">
               {/* SQL Query */}
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
@@ -102,6 +98,7 @@ export const QueryBuilder: React.FC = () => {
                   <button
                     onClick={() => copyToClipboard(result.sql_query, 'sql')}
                     className="p-1 hover:bg-gray-200 rounded transition"
+                    aria-label="Copy SQL to clipboard"
                   >
                     {copiedId === 'sql' ? (
                       <CheckCircle className="w-4 h-4 text-green-600" />
@@ -142,7 +139,7 @@ export const QueryBuilder: React.FC = () => {
                 <div className="border border-gray-200 rounded-lg overflow-hidden">
                   <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
                     <h4 className="font-medium text-gray-900">
-                      Results (showing {result.results.slice(0, 10).length} of {result.row_count})
+                      Results (showing {Math.min(result.results.length, 10)} of {result.row_count})
                     </h4>
                   </div>
                   <div className="overflow-x-auto">
@@ -160,9 +157,9 @@ export const QueryBuilder: React.FC = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {result.results.slice(0, 10).map((row: any, idx: number) => (
+                        {result.results.slice(0, 10).map((row, idx) => (
                           <tr key={idx} className="border-b border-gray-200 hover:bg-gray-50">
-                            {Object.values(row).map((value: any, colIdx: number) => (
+                            {Object.values(row).map((value, colIdx) => (
                               <td key={colIdx} className="px-4 py-2 text-gray-700">
                                 {value !== null && value !== undefined ? String(value) : '—'}
                               </td>
@@ -178,7 +175,7 @@ export const QueryBuilder: React.FC = () => {
           )}
 
           {/* Loading State */}
-          {isLoading && (
+          {queryMutation.isPending && (
             <div className="flex justify-center items-center py-12">
               <div className="text-center">
                 <Loader className="w-8 h-8 animate-spin text-nycblue-500 mx-auto mb-3" />
@@ -188,7 +185,7 @@ export const QueryBuilder: React.FC = () => {
           )}
 
           {/* Empty State */}
-          {!isLoading && !result && !error && (
+          {!queryMutation.isPending && !result && !queryMutation.isError && (
             <div className="flex flex-col items-center justify-center py-12 text-gray-500">
               <Database className="w-12 h-12 mb-3 opacity-50" />
               <p className="text-center">Ask a question to get started</p>

@@ -1,7 +1,6 @@
 import pandas as pd
-import pytest
 
-from socrata_toolkit.analysis.advanced import (
+from socrata_toolkit.analysis import (
     classify_all_distributions,
     classify_distribution,
     correlation_analysis,
@@ -12,8 +11,8 @@ from socrata_toolkit.analysis.advanced import (
     time_series_summary,
 )
 
-
 # -- Outlier Detection -------------------------------------------------------
+
 
 def test_detect_outliers_iqr_basic():
     df = pd.DataFrame({"val": [1, 2, 3, 4, 5, 100]})
@@ -47,6 +46,7 @@ def test_detect_all_outliers():
 
 # -- Correlation Analysis ----------------------------------------------------
 
+
 def test_correlation_analysis_basic():
     df = pd.DataFrame({"x": range(20), "y": range(20), "z": [i * -1 for i in range(20)]})
     result = correlation_analysis(df, threshold=0.5)
@@ -64,6 +64,7 @@ def test_correlation_analysis_no_numeric():
 
 
 # -- Time Series Summary -----------------------------------------------------
+
 
 def test_time_series_summary_increasing():
     dates = pd.date_range("2024-01-01", periods=50, freq="D")
@@ -83,6 +84,7 @@ def test_time_series_summary_empty():
 
 # -- Distribution Classification ---------------------------------------------
 
+
 def test_classify_distribution_normal():
     rng = pd.array([float(x) for x in range(-50, 51)])
     df = pd.DataFrame({"v": rng})
@@ -98,12 +100,13 @@ def test_classify_distribution_sparse():
 
 
 def test_classify_all_distributions():
-    df = pd.DataFrame({"a": range(20), "b": [x ** 2 for x in range(20)], "c": ["t"] * 20})
+    df = pd.DataFrame({"a": range(20), "b": [x**2 for x in range(20)], "c": ["t"] * 20})
     results = classify_all_distributions(df)
     assert len(results) == 2  # only numeric columns
 
 
 # -- Anomaly Flagging --------------------------------------------------------
+
 
 def test_flag_anomalies():
     df = pd.DataFrame({"val": [1, 2, 3, 4, 5, 500]})

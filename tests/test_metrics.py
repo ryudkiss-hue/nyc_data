@@ -3,12 +3,11 @@
 Tests cover metric registration, recording, and export formats.
 """
 
-import pytest
-from socrata_toolkit.analysis.metrics import (
-    MetricsRegistry,
-    PipelineMetrics,
+from socrata_toolkit.analysis import (
     DataQualityMetrics,
     MetricPoint,
+    MetricsRegistry,
+    PipelineMetrics,
     get_global_registry,
     reset_global_registry,
 )
@@ -42,7 +41,7 @@ class TestMetricPoint:
         )
         line = point.to_prometheus_line()
         assert "test_metric{" in line
-        assert "dataset_id=\"nyc-311\"" in line
+        assert 'dataset_id="nyc-311"' in line
 
 
 class TestMetricsRegistry:

@@ -1,4 +1,3 @@
-import os
 import re
 from pathlib import Path
 
@@ -9,7 +8,10 @@ from pathlib import Path
 REVERSIONS = [
     (r"socrata_toolkit\.pipeline\.cdc\.", r"socrata_toolkit.cdc."),
     (r"socrata_toolkit\.core\.api\.", r"socrata_toolkit.api."),
-    (r"socrata_toolkit\.governance\.governance\.", r"socrata_toolkit.governance."), # wait, governance module moved to governance/core.py
+    (
+        r"socrata_toolkit\.governance\.governance\.",
+        r"socrata_toolkit.governance.",
+    ),  # wait, governance module moved to governance/core.py
     (r"socrata_toolkit\.analysis\.analysis\.", r"socrata_toolkit.analysis."),
     (r"socrata_toolkit\.spatial\.spatial\.", r"socrata_toolkit.spatial."),
     (r"socrata_toolkit\.ops\.ops\.", r"socrata_toolkit.ops."),
@@ -30,6 +32,7 @@ DOUBLED_MAINS = {
     "observability": "manager",
 }
 
+
 def fix_file(file_path: Path):
     content = file_path.read_text(encoding="utf-8")
     original_content = content
@@ -44,18 +47,19 @@ def fix_file(file_path: Path):
     for sub, main in DOUBLED_MAINS.items():
         # socrata_toolkit.sub.main.something -> socrata_toolkit.sub.something
         # UNLESS something is 'main' itself (which shouldn't happen with this regex)
-        pattern = fr"socrata_toolkit\.{sub}\.{main}\.([a-zA-Z0-9_]+)"
-        replacement = fr"socrata_toolkit.{sub}.\1"
+        pattern = rf"socrata_toolkit\.{sub}\.{main}\.([a-zA-Z0-9_]+)"
+        replacement = rf"socrata_toolkit.{sub}.\1"
         content = re.sub(pattern, replacement, content)
-        
-        rel_pattern = fr"\.\.{sub}\.{main}\.([a-zA-Z0-9_]+)"
-        rel_replacement = fr"..{sub}.\1"
+
+        rel_pattern = rf"\.\.{sub}\.{main}\.([a-zA-Z0-9_]+)"
+        rel_replacement = rf"..{sub}.\1"
         content = re.sub(rel_pattern, rel_replacement, content)
 
     if content != original_content:
         file_path.write_text(content, encoding="utf-8")
         return True
     return False
+
 
 def main():
     root = Path(".")
@@ -69,6 +73,7 @@ def main():
             count += 1
             print(f"Fixed: {py_file}")
     print(f"Total files fixed: {count}")
+
 
 if __name__ == "__main__":
     main()

@@ -1,10 +1,10 @@
-from socrata_toolkit.sql.builder import (
+from socrata_toolkit.core import (
+    _quote_value,
+    and_join,
+    equals_clause,
     in_clause,
     like_clause,
-    equals_clause,
-    and_join,
     or_join,
-    _quote_value,
 )
 
 

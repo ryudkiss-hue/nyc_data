@@ -1,7 +1,6 @@
 import pandas as pd
-import pytest
 
-from socrata_toolkit.analysis.insights import (
+from socrata_toolkit.analysis import (
     InsightsReport,
     generate_insights,
     smart_recommendations,
@@ -9,15 +8,29 @@ from socrata_toolkit.analysis.insights import (
 
 
 def _sample_data():
-    return pd.DataFrame({
-        "borough": ["MANHATTAN", "MANHATTAN", "BROOKLYN", "QUEENS", "BRONX"],
-        "status": ["Pending Repair", "Complete", "Pending Repair", "Pending Repair", "Complete"],
-        "severity_rating": [8, 3, 9, 2, 5],
-        "violations": [5, 1, 10, 0, 3],
-        "complaint_count": [3, 0, 7, 1, 2],
-        "estimated_sqft": [200, 50, 500, 30, 100],
-        "inspection_date": ["2024-01-15", "2024-03-20", "2024-02-10", "2024-06-01", "2024-04-15"],
-    })
+    return pd.DataFrame(
+        {
+            "borough": ["MANHATTAN", "MANHATTAN", "BROOKLYN", "QUEENS", "BRONX"],
+            "status": [
+                "Pending Repair",
+                "Complete",
+                "Pending Repair",
+                "Pending Repair",
+                "Complete",
+            ],
+            "severity_rating": [8, 3, 9, 2, 5],
+            "violations": [5, 1, 10, 0, 3],
+            "complaint_count": [3, 0, 7, 1, 2],
+            "estimated_sqft": [200, 50, 500, 30, 100],
+            "inspection_date": [
+                "2024-01-15",
+                "2024-03-20",
+                "2024-02-10",
+                "2024-06-01",
+                "2024-04-15",
+            ],
+        }
+    )
 
 
 def test_generate_insights_basic():
@@ -44,11 +57,13 @@ def test_generate_insights_borough_analysis():
 
 
 def test_generate_insights_with_missing_data():
-    df = pd.DataFrame({
-        "id": [1, 2, 3],
-        "name": ["a", None, None],
-        "value": [10, None, 30],
-    })
+    df = pd.DataFrame(
+        {
+            "id": [1, 2, 3],
+            "name": ["a", None, None],
+            "value": [10, None, 30],
+        }
+    )
     report = generate_insights(df)
     # Should detect missing data
     quality_insights = [i for i in report.insights if i.category == "quality"]
@@ -96,11 +111,13 @@ def test_insights_to_markdown():
 
 
 def test_high_severity_borough_recommendation():
-    df = pd.DataFrame({
-        "borough": ["BRONX"] * 10,
-        "severity_rating": [9] * 10,
-        "status": ["Pending Repair"] * 10,
-    })
+    df = pd.DataFrame(
+        {
+            "borough": ["BRONX"] * 10,
+            "severity_rating": [9] * 10,
+            "status": ["Pending Repair"] * 10,
+        }
+    )
     report = generate_insights(df, borough_col="borough", severity_col="severity_rating")
     high_recs = [r for r in report.recommendations if r.priority in ("critical", "high")]
     assert len(high_recs) >= 1

@@ -14,46 +14,53 @@ Sensors:
 - DataQualitySensor: Wait for upstream tables to pass quality gates
 """
 
+import logging
 import os
 import sys
-import logging
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
 
-from airflow.models import BaseOperator
+from airflow.exceptions import AirflowException
+from airflow.models import BaseOperator, Variable
 from airflow.sensors.base import BaseSensorOperator
 from airflow.utils.decorators import apply_defaults
-from airflow.exceptions import AirflowException
-from airflow.models import Variable
 
 # Add project root to path for imports
 project_root = os.getenv("PYTHONPATH", "/opt/airflow/project")
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
+from socrata_toolkit.alerts.manager import AlertManager
+from socrata_toolkit.analysis.metrics import MetricsRegistry
 from socrata_toolkit.core.client import SocrataClient
 from socrata_toolkit.discovery.schema import SchemaRegistry
-from socrata_toolkit.quality.validation import validate_material_coverage, validate_defect_applicability
-from socrata_toolkit.quality.freshness import FreshnessTracker
 from socrata_toolkit.lineage.manager import LineageRegistry, TransformationType
-from socrata_toolkit.analysis.metrics import MetricsRegistry
-from socrata_toolkit.alerts.manager import AlertManager
+from socrata_toolkit.quality.freshness import FreshnessTracker
+from socrata_toolkit.quality.validation import (
+    validate_defect_applicability,
+    validate_material_coverage,
+)
+
 
 # Compatibility wrapper for legacy LineageRecorder
 class LineageRecorder:
     def __init__(self, db_dsn=None):
         self.registry = LineageRegistry(db_dsn=db_dsn)
-    
+
     def record_transformation(self, source_tables, target_table, operation, metadata=None):
         for source in source_tables:
             self.registry.add_edge(
                 source_dataset_id=source,
                 target_dataset_id=target_table,
-                source_columns=[], # Column-level lineage not supported in legacy call
+                source_columns=[],  # Column-level lineage not supported in legacy call
                 target_columns=[],
-                transformation_type=TransformationType.INGESTION if operation == "ingestion" else TransformationType.CUSTOM_SQL,
-                transformation_sql=json.dumps(metadata) if metadata else None
+                transformation_type=(
+                    TransformationType.INGESTION
+                    if operation == "ingestion"
+                    else TransformationType.CUSTOM_SQL
+                ),
+                transformation_sql=json.dumps(metadata) if metadata else None,
             )
+
 
 logger = logging.getLogger(__name__)
 
@@ -94,7 +101,7 @@ class SocrataFetchOperator(BaseOperator):
         checkpoint_column: str = "max_update_timestamp",
         lookback_hours: int = 24,
         incremental: bool = True,
-        socrata_app_token: Optional[str] = None,
+        socrata_app_token: str | None = None,
         *args,
         **kwargs,
     ):
@@ -190,10 +197,14 @@ class SocrataFetchOperator(BaseOperator):
             metrics_registry.record_ingestion(
                 dataset_id=self.dataset_id,
                 record_count=row_count,
-                duration_seconds=(datetime.utcnow() - context["task_instance"].start_date).total_seconds(),
+                duration_seconds=(
+                    datetime.utcnow() - context["task_instance"].start_date
+                ).total_seconds(),
             )
 
-            logger.info(f"✅ Successfully fetched and staged {row_count} records from {self.dataset_id}")
+            logger.info(
+                f"✅ Successfully fetched and staged {row_count} records from {self.dataset_id}"
+            )
             return records
 
         except Exception as e:
@@ -210,13 +221,12 @@ class SocrataFetchOperator(BaseOperator):
 
             raise AirflowException(f"Socrata fetch failed: {str(e)}")
 
-    def _get_checkpoint(self, context) -> Optional[str]:
+    def _get_checkpoint(self, context) -> str | None:
         """Get last checkpoint timestamp from database."""
         try:
-            from sqlalchemy import create_engine, text
-
             # Get database connection from Airflow config
             from airflow.config import conf
+            from sqlalchemy import create_engine, text
 
             db_conn_str = conf.get("core", "sql_alchemy_conn")
             engine = create_engine(db_conn_str)
@@ -231,7 +241,9 @@ class SocrataFetchOperator(BaseOperator):
                     logger.info(f"Retrieved checkpoint: {checkpoint}")
                     return checkpoint
                 else:
-                    logger.info(f"No checkpoint found in {self.checkpoint_table}, using lookback window")
+                    logger.info(
+                        f"No checkpoint found in {self.checkpoint_table}, using lookback window"
+                    )
                     lookback_time = datetime.utcnow() - timedelta(hours=self.lookback_hours)
                     return lookback_time.isoformat()
 
@@ -263,7 +275,7 @@ class DataQualityCheckOperator(BaseOperator):
     def __init__(
         self,
         table_name: str,
-        validation_rules: Optional[List[str]] = None,
+        validation_rules: list[str] | None = None,
         allow_failures: bool = False,
         *args,
         **kwargs,
@@ -280,8 +292,8 @@ class DataQualityCheckOperator(BaseOperator):
         """Run data quality validations."""
         logger.info(f"Starting data quality checks on {self.table_name}")
 
-        from sqlalchemy import create_engine, text
         from airflow.config import conf
+        from sqlalchemy import create_engine
 
         db_conn_str = conf.get("core", "sql_alchemy_conn")
         engine = create_engine(db_conn_str)
@@ -367,9 +379,7 @@ class SchemaComplianceOperator(BaseOperator):
     """
 
     @apply_defaults
-    def __init__(
-        self, table_name: str, schema_version: str = "latest", *args, **kwargs
-    ):
+    def __init__(self, table_name: str, schema_version: str = "latest", *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.table_name = table_name
         self.schema_version = schema_version
@@ -379,8 +389,8 @@ class SchemaComplianceOperator(BaseOperator):
         logger.info(f"Checking schema compliance for {self.table_name}")
 
         try:
-            from sqlalchemy import create_engine, inspect
             from airflow.config import conf
+            from sqlalchemy import create_engine, inspect
 
             db_conn_str = conf.get("core", "sql_alchemy_conn")
             engine = create_engine(db_conn_str)
@@ -468,7 +478,7 @@ class PostgresUpsertOperator(BaseOperator):
         self,
         table_name: str,
         checkpoint_table: str,
-        primary_keys: List[str],
+        primary_keys: list[str],
         data_from_xcom: bool = False,
         *args,
         **kwargs,
@@ -484,22 +494,36 @@ class PostgresUpsertOperator(BaseOperator):
         logger.info(f"Starting UPSERT to {self.table_name}")
 
         try:
-            from sqlalchemy import create_engine, text
             from airflow.config import conf
+            from sqlalchemy import create_engine, text
 
             db_conn_str = conf.get("core", "sql_alchemy_conn")
             engine = create_engine(db_conn_str)
 
             # Get row count and max timestamp from previous task
             task_instance = context["task_instance"]
-            row_count = task_instance.xcom_pull(
-                task_ids=context["task"].upstream_list[0].task_id if context["task"].upstream_list else None,
-                key="row_count",
-            ) or 0
-            max_timestamp = task_instance.xcom_pull(
-                task_ids=context["task"].upstream_list[0].task_id if context["task"].upstream_list else None,
-                key="max_update_timestamp",
-            ) or datetime.utcnow().isoformat()
+            row_count = (
+                task_instance.xcom_pull(
+                    task_ids=(
+                        context["task"].upstream_list[0].task_id
+                        if context["task"].upstream_list
+                        else None
+                    ),
+                    key="row_count",
+                )
+                or 0
+            )
+            max_timestamp = (
+                task_instance.xcom_pull(
+                    task_ids=(
+                        context["task"].upstream_list[0].task_id
+                        if context["task"].upstream_list
+                        else None
+                    ),
+                    key="max_update_timestamp",
+                )
+                or datetime.utcnow().isoformat()
+            )
 
             logger.info(f"UPSERT parameters: row_count={row_count}, max_timestamp={max_timestamp}")
 
@@ -509,7 +533,7 @@ class PostgresUpsertOperator(BaseOperator):
                 upsert_query = f"""
                 INSERT INTO {self.table_name} 
                 SELECT * FROM staging_{self.table_name}
-                ON CONFLICT ({', '.join(self.primary_keys)})
+                ON CONFLICT ({", ".join(self.primary_keys)})
                 DO UPDATE SET updated_at = NOW()
                 """
 
@@ -519,7 +543,7 @@ class PostgresUpsertOperator(BaseOperator):
                 # Update checkpoint table
                 checkpoint_query = f"""
                 INSERT INTO {self.checkpoint_table} 
-                ({self.primary_keys[0] if self.primary_keys else 'id'}, max_update_timestamp, record_count, created_at)
+                ({self.primary_keys[0] if self.primary_keys else "id"}, max_update_timestamp, record_count, created_at)
                 VALUES ('{max_timestamp}', {row_count}, NOW())
                 """
 
@@ -590,7 +614,11 @@ class FreshnessUpdateOperator(BaseOperator):
             # Get max timestamp from upstream task
             task_instance = context["task_instance"]
             max_timestamp = task_instance.xcom_pull(
-                task_ids=context["task"].upstream_list[0].task_id if context["task"].upstream_list else None,
+                task_ids=(
+                    context["task"].upstream_list[0].task_id
+                    if context["task"].upstream_list
+                    else None
+                ),
                 key="max_update_timestamp",
             )
 
@@ -648,7 +676,7 @@ class MetricsEmitterOperator(BaseOperator):
         self,
         metric_name: str,
         value: float = 1.0,
-        labels: Optional[Dict[str, str]] = None,
+        labels: dict[str, str] | None = None,
         *args,
         **kwargs,
     ):
@@ -777,8 +805,8 @@ class DataQualitySensor(BaseSensorOperator):
     def poke(self, context):
         """Check if table meets quality gates."""
         try:
-            from sqlalchemy import create_engine, text
             from airflow.config import conf
+            from sqlalchemy import create_engine, text
 
             db_conn_str = conf.get("core", "sql_alchemy_conn")
             engine = create_engine(db_conn_str)

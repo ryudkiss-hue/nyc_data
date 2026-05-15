@@ -1,20 +1,20 @@
 import json
 from collections import defaultdict
 
-data = json.load(open('final_comprehensive_scan.json'))
-errors = data['generalDiagnostics']
+data = json.load(open("final_comprehensive_scan.json"))
+errors = data["generalDiagnostics"]
 
 # Categorize by rule type and severity
 error_types = defaultdict(int)
 warning_types = defaultdict(int)
 
 for err in errors:
-    rule = err.get('rule', 'unknown')
-    severity = err.get('severity', 'unknown')
-    
-    if severity == 'error':
+    rule = err.get("rule", "unknown")
+    severity = err.get("severity", "unknown")
+
+    if severity == "error":
         error_types[rule] += 1
-    elif severity == 'warning':
+    elif severity == "warning":
         warning_types[rule] += 1
 
 # Sort by count
@@ -38,9 +38,17 @@ print(f"Total Warnings: {sum(ct for _, ct in warning_types.items())}")
 print(f"All Diagnostics: {len(errors)}")
 
 # Key error categories
-report_attr = sum(count for rule, count in error_types.items() if 'Attribute' in rule or 'attribute' in rule)
-report_undefined = sum(count for rule, count in error_types.items() if 'Undefined' in rule or 'undefined' in rule)
-report_arg = sum(count for rule, count in error_types.items() if 'Argument' in rule or 'argument' in rule or 'Call' in rule or 'call' in rule)
+report_attr = sum(
+    count for rule, count in error_types.items() if "Attribute" in rule or "attribute" in rule
+)
+report_undefined = sum(
+    count for rule, count in error_types.items() if "Undefined" in rule or "undefined" in rule
+)
+report_arg = sum(
+    count
+    for rule, count in error_types.items()
+    if "Argument" in rule or "argument" in rule or "Call" in rule or "call" in rule
+)
 
 print(f"\nKEY METRICS:")
 print("=" * 70)

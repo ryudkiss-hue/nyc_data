@@ -1,78 +1,78 @@
-from nicegui import ui
-import pandas as pd
-from typing import Any
+"""
+socrata_toolkit/material_breakdown_block.py - NiceGUI component for material analysis.
+"""
 
-from socrata_toolkit.analysis import material_breakdown_pie_chart, material_borough_subplots
+from nicegui import ui
+
+from .analysis import material_borough_subplots, material_breakdown_pie_chart
+
 
 class MaterialBreakdownBlock:
     """
-    Interactive GUI block for visualizing the breakdown of Sidewalk materials
-    across fetched datasets using Plotly Donut charts and subplots.
+    NiceGUI block for visualizing material breakdown across boroughs.
+    Used in the main NiceGUI app (app.py).
     """
+
     def __init__(self, workspace_state):
         self.state = workspace_state
+        self.material_col = "material"
+        self.borough_col = "borough"
 
     def render(self):
-        """Renders the Material Breakdown block and controls."""
-        with ui.card().classes('w-full border border-gray-200 shadow-sm'):
-            with ui.row().classes('w-full items-center justify-between mb-2'):
-                ui.label('📊 SDM Material Breakdown').classes('text-xl font-bold text-gray-800 dark:text-gray-200')
-                
-            with ui.row().classes('w-full items-end gap-4 mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded'):
-                dataset_options = list(self.state.datasets.keys()) if self.state.datasets else []
-                
-                self.ds_select = ui.select(
-                    dataset_options, 
-                    label='1. Select Dataset', 
-                    on_change=self.update_column_options
-                ).classes('w-48')
-                
-                self.mat_select = ui.select([], label='2. Material Column').classes('w-40')
-                self.boro_select = ui.select([], label='3. Borough Column (Opt)').classes('w-40')
-                
-                self.split_toggle = ui.switch('Split by Borough').classes('mt-4')
-                
-                ui.button('Generate Breakdown', on_click=self.plot_chart, icon='donut_large').classes('bg-purple-600 text-white ml-auto')
+        self.container = ui.column().classes("w-full p-4")
+        self.build()
 
-            self.chart_container = ui.column().classes('w-full items-center')
+    def build(self):
+        with self.container:
+            ui.label("Material Composition Analysis").classes("text-2xl font-bold mb-4")
 
-    def update_column_options(self):
-        """Auto-populate and guess the relevant columns when a dataset is chosen."""
-        if not self.ds_select.value:
+            with ui.row().classes("w-full items-start gap-4"):
+                # Left side: Global breakdown
+                with ui.card().classes("p-4 flex-grow"):
+                    ui.label("Global Distribution").classes("text-lg font-semibold mb-2")
+                    self.global_chart_container = ui.column().classes("w-full")
+
+                # Right side: Borough breakdown
+                with ui.card().classes("p-4 flex-grow"):
+                    ui.label("By Borough").classes("text-lg font-semibold mb-2")
+                    self.borough_chart_container = ui.column().classes("w-full")
+
+            self.update_charts()
+
+    def update_charts(self):
+        # Assume we run analysis on 'defects' dataset if present
+        target_ds_name = (
+            "defects"
+            if "defects" in self.state.datasets
+            else list(self.state.datasets.keys())[0] if self.state.datasets else None
+        )
+
+        if not target_ds_name:
+            with self.global_chart_container:
+                ui.label("No datasets loaded. Please fetch data first.").classes(
+                    "text-gray-500 italic"
+                )
             return
-            
-        df = self.state.datasets[self.ds_select.value]
-        columns = df.columns.tolist()
-        
-        self.mat_select.options = columns
-        self.boro_select.options = columns
-        
-        # Auto-guess columns to save the user time
-        guess_mat = next((c for c in columns if c.lower() in ['material', 'material_type', 'surface', 'surface_type']), None)
-        guess_boro = next((c for c in columns if c.lower() in ['borough', 'boro', 'county']), None)
-        
-        if guess_mat: self.mat_select.value = guess_mat
-        if guess_boro: self.boro_select.value = guess_boro
-        
-        self.mat_select.update()
-        self.boro_select.update()
 
-    def plot_chart(self):
-        """Renders the Plotly chart into the NiceGUI container."""
-        if not self.ds_select.value or not self.mat_select.value:
-            ui.notify('Please select a dataset and a material column.', type='warning')
+        df = self.state.datasets[target_ds_name]
+
+        if df.empty:
+            with self.global_chart_container:
+                ui.label("No data available in selected dataset").classes("text-gray-500 italic")
             return
-            
-        df = self.state.datasets[self.ds_select.value]
-        mat_col = self.mat_select.value
-        boro_col = self.boro_select.value
-        
-        self.chart_container.clear()
-        with self.chart_container:
-            # Display Subplots if toggled and Borough column is available
-            if self.split_toggle.value and boro_col and boro_col in df.columns:
-                fig = material_borough_subplots(df, material_col=mat_col, borough_col=boro_col, title=f"Materials by Borough ({self.ds_select.value})")
-            else:
-                fig = material_breakdown_pie_chart(df, material_col=mat_col, title=f"Overall Material Composition ({self.ds_select.value})")
-                
-            ui.plotly(fig).classes('w-full h-[500px]')
+
+        # Global Pie Chart
+        fig_global = material_breakdown_pie_chart(df, self.material_col)
+        with self.global_chart_container:
+            self.global_chart_container.clear()
+            ui.plotly(fig_global).classes("w-full h-96")
+
+        # Borough Subplots
+        fig_boro = material_borough_subplots(df, self.material_col, self.borough_col)
+        with self.borough_chart_container:
+            self.borough_chart_container.clear()
+            ui.plotly(fig_boro).classes("w-full h-96")
+
+    async def refresh_data(self):
+        """Update the block based on the current state."""
+        self.update_charts()

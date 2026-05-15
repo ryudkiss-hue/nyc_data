@@ -25,31 +25,29 @@ Key Features:
     - Slack notifications on failure
 """
 
-from datetime import datetime, timedelta
-from typing import List
-
-from airflow import DAG
-from airflow.operators.python import PythonOperator
-from airflow.providers.postgres.operators.postgres import PostgresOperator
-from airflow.providers.http.sensors.http import HttpSensor
-from airflow.utils.task_group import TaskGroup
+import os
 
 # Import custom operators
 import sys
-import os
+from datetime import timedelta
+
+from airflow import DAG
+from airflow.operators.python import PythonOperator
+from airflow.providers.http.sensors.http import HttpSensor
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 from custom_operators import (
-    SocrataFetchOperator,
     DataQualityCheckOperator,
-    SchemaComplianceOperator,
-    PostgresUpsertOperator,
     FreshnessUpdateOperator,
     MetricsEmitterOperator,
+    PostgresUpsertOperator,
+    SchemaComplianceOperator,
+    SocrataFetchOperator,
 )
-from config import get_dag_defaults, SLA_CONFIG
+
+from config import SLA_CONFIG, get_dag_defaults
 
 # ============================================================================
 # DAG CONFIGURATION
@@ -102,10 +100,11 @@ check_socrata_health = HttpSensor(
     task_id="check_socrata_api_health",
     http_conn_id="socrata_api",
     endpoint="/api/views/a2nx-4u46.json",  # 311 Service Requests dataset
-    headers={
-        "Accept": "application/json",
-        "X-App-Token": socrata_token
-    } if socrata_token else {"Accept": "application/json"},
+    headers=(
+        {"Accept": "application/json", "X-App-Token": socrata_token}
+        if socrata_token
+        else {"Accept": "application/json"}
+    ),
     response_check=lambda response: response.status_code == 200,
     timeout=30,
     retries=2,
@@ -188,6 +187,7 @@ update_freshness = FreshnessUpdateOperator(
 # ============================================================================
 # TASK: Emit lineage tracking (Phase 2)
 # ============================================================================
+
 
 def emit_lineage_records(**context):
     """Record lineage for incident ingestion pipeline."""

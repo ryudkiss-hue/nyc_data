@@ -3,12 +3,13 @@ import pytest
 
 try:
     import matplotlib
+
     matplotlib.use("Agg")
     HAS_MPL = True
 except ImportError:
     HAS_MPL = False
 
-from socrata_toolkit.viz.core import (
+from socrata_toolkit.analysis import (
     bar_chart,
     box_plot,
     correlation_heatmap,
@@ -58,7 +59,7 @@ class TestVisualization:
         assert result.base64_png is not None
 
     def test_box_plot(self):
-        df = pd.DataFrame({"a": range(30), "b": [x ** 2 for x in range(30)]})
+        df = pd.DataFrame({"a": range(30), "b": [x**2 for x in range(30)]})
         result = box_plot(df, ["a", "b"])
         assert result.chart_type == "box_plot"
         assert result.base64_png is not None

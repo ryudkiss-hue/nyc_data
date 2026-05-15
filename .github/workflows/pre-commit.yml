@@ -1,0 +1,46 @@
+name: Pre-commit Pipeline
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    
+    # Grant the GITHUB_TOKEN permission to push commits back to the branch
+    permissions:
+      contents: write
+    
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v3
+      
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pre-commit pytest pandas
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        
+    - name: Run pre-commit hooks
+      id: pre-commit
+      continue-on-error: true
+      run: |
+        pre-commit run --all-files
+
+    - name: Auto-commit formatting fixes
+      uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        commit_message: "style: auto-fix formatting and linting by pre-commit hooks"
+
+    - name: Fail if pre-commit failed
+      # This ensures the PR still shows a red 'X' if Flake8 caught syntax errors that couldn't be auto-fixed
+      if: steps.pre-commit.outcome == 'failure'
+      run: exit 1

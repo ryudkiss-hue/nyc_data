@@ -1,21 +1,23 @@
 {
+  "include": [
+    "socrata_toolkit",
+    "tests",
+    "dash_app",
+    "app.py"
+  ],
+  "extraPaths": [
+    "."
+  ],
   "typeCheckingMode": "basic",
-  "pythonVersion": "3.9",
-  "pythonPlatform": "Windows",
-  "reportMissingImports": false,
-  "reportMissingTypeStubs": false,
-  "reportOptionalMemberAccess": false,
-  "reportOptionalSubscript": false,
-  "reportOptionalIterable": false,
-  "reportOptionalContextManager": false,
-  "reportOptionalOperand": false,
-  "reportUnusedImport": "warning",
-  "exclude": [
-    "**/node_modules",
-    "**/__pycache__",
-    ".git",
-    ".pytest_cache",
-    "build",
-    "dist"
-  ]
+  "useLibraryCodeForTypes": true,
+  "reportMissingTypeStubs": "none",
+  "reportUnknownMemberType": "none",
+  "reportUnknownVariableType": "none",
+  "reportUnknownArgumentType": "none",
+  "reportUnknownParameterType": "none",
+  "reportMissingParameterType": "none",
+  "reportMissingTypeArgument": "none",
+  "reportUntypedFunctionDecorator": "none",
+  "reportPrivateImportUsage": "none",
+  "reportUnusedImport": "information"
 }

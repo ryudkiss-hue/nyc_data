@@ -1,8 +1,6 @@
-import json
 import pytest
 
 try:
-    from flask import Flask
     HAS_FLASK = True
 except ImportError:
     HAS_FLASK = False
@@ -12,7 +10,8 @@ except ImportError:
 class TestFlaskAPI:
     @pytest.fixture
     def client(self):
-        from socrata_toolkit.core.api import create_app
+        from socrata_toolkit.core import create_app
+
         app = create_app()
         app.config["TESTING"] = True
         with app.test_client() as client:
@@ -57,8 +56,12 @@ class TestFlaskAPI:
     def test_prioritize_endpoint(self, client):
         payload = {
             "rows": [
-                {"address": "123 Main", "borough": "MANHATTAN", "severity_rating": 8,
-                 "description": "Cracked sidewalk"},
+                {
+                    "address": "123 Main",
+                    "borough": "MANHATTAN",
+                    "severity_rating": 8,
+                    "description": "Cracked sidewalk",
+                },
             ]
         }
         resp = client.post("/api/prioritize", json=payload)

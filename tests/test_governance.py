@@ -1,14 +1,10 @@
 import json
 
 import pandas as pd
-import pytest
 
-from socrata_toolkit.governance.core import (
+from socrata_toolkit.governance import (
     AuditLogger,
     LineageRecord,
-    QualityScore,
-    RetentionReport,
-    SchemaDiff,
     apply_retention_policy,
     compute_quality_score,
     create_lineage,
@@ -18,8 +14,8 @@ from socrata_toolkit.governance.core import (
     snapshot_schema,
 )
 
-
 # -- Lineage -----------------------------------------------------------------
+
 
 def test_create_lineage():
     lr = create_lineage("abcd-1234")
@@ -59,6 +55,7 @@ def test_lineage_to_dict():
 
 # -- Audit Logger ------------------------------------------------------------
 
+
 def test_audit_logger_log_and_query():
     logger = AuditLogger()
     logger.log_event("user-a", "read", "dataset-1")
@@ -92,6 +89,7 @@ def test_audit_logger_flush(tmp_path):
 
 # -- Quality Scoring ---------------------------------------------------------
 
+
 def test_compute_quality_score_full():
     df = pd.DataFrame({"id": [1, 2, 3], "name": ["a", "b", "c"], "val": [10, 20, 30]})
     score = compute_quality_score(df, key_columns=["id"])
@@ -123,6 +121,7 @@ def test_compute_quality_score_with_type_rules():
 
 
 # -- Schema Drift Detection --------------------------------------------------
+
 
 def test_detect_schema_drift_no_changes():
     df = pd.DataFrame({"a": [1], "b": ["x"]})
@@ -169,11 +168,14 @@ def test_save_and_load_schema_snapshot(tmp_path):
 
 # -- Retention Policy --------------------------------------------------------
 
+
 def test_apply_retention_policy():
-    df = pd.DataFrame({
-        "created": ["2020-01-01", "2024-01-01", "2025-12-01"],
-        "val": [1, 2, 3],
-    })
+    df = pd.DataFrame(
+        {
+            "created": ["2020-01-01", "2024-01-01", "2025-12-01"],
+            "val": [1, 2, 3],
+        }
+    )
     retained, report = apply_retention_policy(df, "created", retention_days=365)
     assert report.total_rows == 3
     assert report.expired_rows >= 1
@@ -181,10 +183,12 @@ def test_apply_retention_policy():
 
 
 def test_apply_retention_policy_keeps_unparseable():
-    df = pd.DataFrame({
-        "created": ["not-a-date", "2025-01-01"],
-        "val": [1, 2],
-    })
+    df = pd.DataFrame(
+        {
+            "created": ["not-a-date", "2025-01-01"],
+            "val": [1, 2],
+        }
+    )
     retained, report = apply_retention_policy(df, "created", retention_days=365)
     # "not-a-date" should be kept (NaT)
     assert len(retained) >= 1

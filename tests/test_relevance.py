@@ -1,6 +1,6 @@
 import pytest
 
-from socrata_toolkit.analysis.relevance import build_weighted_rank_sql, websearch_to_tsquery_sql
+from socrata_toolkit.analysis import build_weighted_rank_sql, websearch_to_tsquery_sql
 
 
 def test_build_weighted_rank_sql_basic():

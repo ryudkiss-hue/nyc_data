@@ -5,11 +5,12 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from socrata_toolkit.core import SocrataClient
 
+
 def test_tokens():
     print("--- 1. Testing Environment Variables ---")
     app_token = os.getenv("SOCRATA_APP_TOKEN")
     app_secret = os.getenv("SOCRATA_APP_SECRET")
-    
+
     if not app_token:
         print("❌ SOCRATA_APP_TOKEN is missing!")
     else:
@@ -27,13 +28,14 @@ def test_tokens():
             client = SocrataClient()
             print("Attempting to fetch 1 record from NYC 311 Dataset (erm2-nwe9)...")
             df = client.fetch_dataframe("data.cityofnewyork.us", "erm2-nwe9", max_rows=1)
-            
+
             if not df.empty:
                 print("✅ Success! Authenticated and retrieved data.")
         except Exception as e:
             print(f"❌ Failed to connect using SocrataClient: {e}")
     else:
         print("⚠️ Skipping API test since tokens are missing.")
+
 
 if __name__ == "__main__":
     test_tokens()
