@@ -5,7 +5,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from socrata_toolkit.analysis import parse_sim_complaints
+from socrata_toolkit.analysis import (
+    generate_text_insights,
+    profile_dataframe,
+    list_available_visualizations,
+    parse_sim_complaints,
+)
 
 
 @pytest.fixture
@@ -86,7 +91,7 @@ class TestParseSimComplaints:
         assert result_df.loc[1, "_sim_severity_score"] == pytest.approx(0.2)
 
         # Row 5 (None): Should be 0.0
-        assert result_df.loc[5, "_sim_severity_score"] == 0.0
+        assert result_df.loc[5, "_sim_severity_score"] == float(0)
 
     def test_categorization(self, sample_df):
         """Test the primary categorization logic based on flag combinations."""
@@ -150,3 +155,150 @@ class TestParseSimComplaints:
         pd.testing.assert_frame_equal(result_df, sample_df)
         # And it should be a copy, not the same object
         assert result_df is not sample_df
+
+
+class TestListAvailableVisualizations:
+    """Test suite for the list_available_visualizations function."""
+
+    def test_list_available_visualizations(self):
+        """Tests that the function correctly lists all public visualization functions."""
+        # 1. Execution
+        viz_df = list_available_visualizations()
+
+        # 2. Assertions
+        assert isinstance(viz_df, pd.DataFrame)
+        assert all(col in viz_df.columns for col in ["name", "description", "parameters"])
+        assert not viz_df.empty
+
+        # Check that some known public charts are present
+        known_charts = {
+            "histogram",
+            "bar_chart",
+            "correlation_heatmap",
+            "metric_status_pie_chart",
+            "data_completeness_chart",
+        }
+        listed_charts = set(viz_df["name"])
+        assert known_charts.issubset(listed_charts)
+
+        # Check that private/helper functions are excluded
+        assert "_apply_modern_layout" not in listed_charts
+        assert "export_plotly_figure" not in listed_charts
+
+        # Check a specific entry for correctness
+        pie_chart_entry = viz_df[viz_df["name"] == "metric_status_pie_chart"].iloc[0]
+        assert "summary" in pie_chart_entry["parameters"]
+        assert "title" in pie_chart_entry["parameters"]
+        assert "distribution of metric statuses" in pie_chart_entry["description"]
+
+
+class TestProfileDataFrame:
+    """Test suite for the profile_dataframe function."""
+
+    @pytest.fixture
+    def profile_df(self):
+        """Provides a diverse DataFrame for profiling tests."""
+        data = {
+            "id": [1, 2, 3, 4, 5],
+            "category": ["A", "B", "A", "C", "B"],
+            "value": [10.1, 20.2, 30.3, 40.4, 50.5],
+            "mostly_null": [None, None, None, None, "value"],
+            "constant_col": ["same", "same", "same", "same", "same"],
+            "date_as_object": ["2023-01-01", "2023-01-02", None, None, None],
+        }
+        df = pd.DataFrame(data)
+        # Add a duplicate row
+        return pd.concat([df, df.head(1)], ignore_index=True)
+
+    def test_profile_counts(self, profile_df):
+        """Test that row and column counts are correct."""
+        profile = profile_dataframe(profile_df)
+        assert profile.row_count == 6
+        assert profile.column_count == 6
+
+    def test_null_counts_and_warnings(self, profile_df):
+        """Test null count calculation and high-null-value warnings."""
+        profile = profile_dataframe(profile_df)
+
+        assert profile.null_counts["mostly_null"] == 5  # 4 from original + 1 from dupe
+        assert profile.null_counts["date_as_object"] == 3
+
+        assert any("mostly_null' has high missing values (83.33%)" in w for w in profile.warnings)
+
+    def test_constant_column_warning(self, profile_df):
+        """Test that a warning is generated for constant columns."""
+        profile = profile_dataframe(profile_df)
+        assert any("constant_col' is constant" in w for w in profile.warnings)
+
+    def test_date_as_object_warning(self, profile_df):
+        """Test that a warning is generated for potential date columns stored as objects."""
+        profile = profile_dataframe(profile_df)
+        assert any("date_as_object' might be a date" in w for w in profile.warnings)
+
+    def test_quality_score_calculation(self, profile_df):
+        """Test that the quality score is calculated and penalized by warnings."""
+        # Expected: 3 warnings -> 15 point penalty
+        # Completeness: (36 total cells - 9 nulls) / 36 = 75%
+        # Uniqueness: (6 total rows - 1 dupe) / 6 = 83.3%
+        # Score = (75 * 0.6) + (83.3 * 0.4) - 15 = 45 + 33.32 - 15 = 63.32
+        profile = profile_dataframe(profile_df)
+        assert profile.quality_score == pytest.approx(63, abs=1)
+
+    def test_empty_dataframe(self):
+        """Test that profiling an empty DataFrame returns a valid, empty profile."""
+        profile = profile_dataframe(pd.DataFrame())
+        assert profile.row_count == 0
+        assert profile.quality_score == 0
+        assert "Input DataFrame is empty" in profile.warnings
+
+
+class TestGenerateTextInsights:
+    """Test suite for the generate_text_insights function."""
+
+    @pytest.fixture
+    def text_df(self):
+        data = {
+            "id": [1, 2, 3, 4],
+            "details": [
+                "The big brown fox jumps over the lazy dog.",
+                "Another complaint about a big pothole.",
+                "This is a test with no special terms.",
+                "A big lazy cat.",
+            ],
+            "location": ["POINT(1 1)", None, "POINT(2 2)", None],
+        }
+        return pd.DataFrame(data)
+
+    def test_vectorized_tag_generation(self, text_df):
+        """Test that descriptive tags are generated correctly by the vectorized logic."""
+        # "big" appears 3 times, so it should be a high-value term (3/4 > 2% of 4)
+        tagged_df, insights = generate_text_insights(
+            text_df, text_columns=["details"], geo_column="location"
+        )
+
+        assert "descriptive_tags" in tagged_df.columns
+
+        # Row 0: has "big" and a geo point
+        assert "big" in tagged_df.loc[0, "descriptive_tags"]
+        assert "has_geo" in tagged_df.loc[0, "descriptive_tags"]
+
+        # Row 1: has "big" but no geo point
+        assert tagged_df.loc[1, "descriptive_tags"] == ["big"]
+
+        # Row 2: has no high-value terms but has a geo point
+        assert "untagged" not in tagged_df.loc[2, "descriptive_tags"]
+        assert "has_geo" in tagged_df.loc[2, "descriptive_tags"]
+
+        # Row 3: has "big" but no geo point
+        assert tagged_df.loc[3, "descriptive_tags"] == ["big", "lazy"]
+
+    def test_insights_object(self, text_df):
+        """Test that the returned TextInsights object is correctly populated."""
+        _, insights = generate_text_insights(text_df, text_columns=["details"])
+
+        assert insights.row_count == 4
+        assert ("big", 3) in insights.top_terms
+        assert ("lazy", 2) in insights.top_terms
+        # Check that the global tag list is correct
+        assert "big" in insights.tags
+        assert "untagged" not in insights.tags # Because every row gets at least one tag

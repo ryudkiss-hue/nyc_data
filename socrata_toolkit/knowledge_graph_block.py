@@ -1,6 +1,6 @@
 from nicegui import ui
 
-from .viz.charts import generate_semantic_network_map
+from .viz import generate_semantic_network_map
 
 
 class KnowledgeGraphBlock:

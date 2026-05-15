@@ -9,7 +9,7 @@ from socrata_toolkit.analysis import (
     compute_sla_metrics,
     generate_executive_briefing_automated,
 )
-from socrata_toolkit.viz.charts import gauge_chart
+from socrata_toolkit.viz import gauge_chart
 
 
 class DailyBriefingBlock:
