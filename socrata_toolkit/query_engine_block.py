@@ -3,7 +3,7 @@ from typing import Any
 from nicegui import ui
 
 from socrata_toolkit.nlq_parser import parse_query
-from socrata_toolkit.viz.charts import (
+from socrata_toolkit.viz import (
     gauge_chart,
     hotspot_density_mapbox,
     material_breakdown_pie_chart,

@@ -201,7 +201,7 @@ def map_toolkit(output):
         import os
         import webbrowser
 
-        from socrata_toolkit.viz.charts import generate_semantic_network_map
+        from socrata_toolkit.viz import generate_semantic_network_map
 
         click.echo("🕸️ Weaving the Semantic Knowledge Graph...")
         fig = generate_semantic_network_map()

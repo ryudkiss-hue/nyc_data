@@ -8,7 +8,7 @@ from typing import Any
 
 import pandas as pd
 
-from typing import Any, Iterable
+from typing import Any
 
 from .core import COL_BORO, PRIORITY_MEDIUM, STATUS_DONE, STATUS_PROGRESS, STATUS_TODO, COL_ID
 

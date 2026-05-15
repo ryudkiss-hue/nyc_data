@@ -15,7 +15,7 @@ try:
 except ImportError:
     DOCX_AVAILABLE = False
 
-from socrata_toolkit.viz.charts import export_plotly_figure, plot_sidewalk_anatomy
+from socrata_toolkit.viz import export_plotly_figure, plot_sidewalk_anatomy
 
 from .engineering import SIDEWALK_MATERIALS, SidewalkAnatomy, SidewalkZone
 

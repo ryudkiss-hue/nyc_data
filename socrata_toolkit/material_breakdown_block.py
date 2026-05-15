@@ -3,8 +3,7 @@ socrata_toolkit/material_breakdown_block.py - NiceGUI component for material ana
 """
 
 from nicegui import ui
-
-from .analysis import material_borough_subplots, material_breakdown_pie_chart
+from .viz import material_borough_subplots, material_breakdown_pie_chart
 
 
 class MaterialBreakdownBlock:

@@ -3,7 +3,7 @@ import os
 
 from nicegui import ui
 
-from .ai import LegalPolicyEngine, triage_complaints, triage_complaints_gemini
+from .ai import LegalPolicyEngine, triage_complaints, triage_complaints_gemini  # type: ignore
 from .analysis import parse_sim_complaints
 
 
@@ -25,7 +25,7 @@ class AITriageBlock:
 
     def render(self):
         with ui.card().classes("w-full border border-gray-200 shadow-sm"):
-            _ = ui.label("🤖 AI Data Triage & Classification").classes(
+            ui.label("🤖 AI Data Triage & Classification").classes(
                 "text-xl font-bold text-gray-800 dark:text-gray-200 mb-4"
             )
 
@@ -33,7 +33,7 @@ class AITriageBlock:
                 # Left column: Controls
                 with ui.column().classes(
                     "w-1/3 bg-gray-50 dark:bg-gray-800 p-4 rounded shadow-inner"  # noqa: F841
-                ):
+                ):  # noqa: F841
                     dataset_options = (
                         list(self.state.datasets.keys()) if self.state.datasets else []
                     )
@@ -79,15 +79,15 @@ class AITriageBlock:
                         self.model_toggle, "value", backward=lambda v: v == "gemini"
                     )
 
-                    _ = ui.button(
+                    ui.button(
                         "Run AI Triage", on_click=self.run_triage, icon="auto_awesome"
                     ).classes("w-full bg-purple-600 text-white mt-4")
 
                 # Right column: Results
                 with ui.column().classes("w-3/5 flex-grow"):
                     self.results_container = ui.column().classes("w-full")
-                    with self.results_container:  # noqa: F841
-                        _ = ui.label(
+                    with self.results_container:
+                        ui.label(
                             "Select a dataset and run triage to view AI classifications."
                         ).classes("italic text-gray-500")
 
@@ -121,6 +121,101 @@ class AITriageBlock:
                 self.text_col_select.value = guess
             self.text_col_select.update()
 
+    # --- Model Runner Methods ---
+
+    async def _run_stat_model(self, df: pd.DataFrame, text_col: str) -> pd.DataFrame:
+        """Run the fast quantitative statistical parsing model."""
+        parsed_df = await asyncio.to_thread(parse_sim_complaints, df, text_col)
+        priority_map = {
+            "critical_accessibility_hazard": "CRITICAL",
+            "trip_hazard": "HIGH",
+            "ada_accessibility": "HIGH",
+            "root_damage": "MEDIUM",
+            "surface_damage": "MEDIUM",
+            "water_pooling": "LOW",
+            "general_maintenance": "LOW",
+            "unknown": "INFO",
+        }
+        result_df = df.copy()
+        result_df["_priority"] = parsed_df["_sim_category"].map(priority_map).fillna("INFO")
+        result_df["_sim_keywords"] = parsed_df["_sim_unique_keywords"].apply(
+            lambda x: ", ".join(x) if isinstance(x, list) else ""
+        )
+        result_df["_sim_severity"] = parsed_df["_sim_severity_score"]
+        return result_df
+
+    async def _run_local_model(self, df: pd.DataFrame, text_col: str) -> pd.DataFrame:
+        """Run the local LLM triage model."""
+        url = str(self.local_url_input.value) if self.local_url_input else ""
+        return await asyncio.to_thread(triage_complaints, df, text_col, url)
+
+    async def _run_gemini_model(self, df: pd.DataFrame, text_col: str) -> pd.DataFrame:
+        """Run the Google Gemini triage model."""
+        api_key = str(self.gemini_key_input.value) if self.gemini_key_input else ""
+        if not api_key:
+            ui.notify("Please provide a Gemini API Key.", type="negative")
+            raise ValueError("Missing Gemini API Key")
+
+        return await asyncio.to_thread(
+            triage_complaints_gemini,
+            df,
+            text_col,
+            "gemini-1.5-flash",
+            api_key,
+        )
+
+    async def _run_legal_model(self, df: pd.DataFrame, text_col: str) -> pd.DataFrame:
+        """Run the Legal Policy Engine model."""
+        engine = LegalPolicyEngine()
+
+        # This can be slow, so run it in a thread to avoid blocking the UI
+        def _generate_memos():
+            return [engine.generate_compliance_memo(str(text)) for text in df[text_col]]
+
+        memos = await asyncio.to_thread(_generate_memos)
+
+        result_df = df.copy()
+        result_df["_priority"] = "POLICY CHECKED"
+        result_df["_compliance_memo"] = memos
+        return result_df
+
+    # --- UI Rendering Methods ---
+
+    def _render_results_grid(self, result_df: pd.DataFrame, text_col: str) -> None:
+        """Render the final AG-Grid with triaged data."""
+        cols_to_show = [text_col, "_priority"]
+        col_defs = [
+            {"field": text_col, "headerName": "Original Text", "flex": 1},
+            {"field": "_priority", "headerName": "Category / Severity", "width": 200},
+        ]
+
+        # Dynamically add columns based on which model was run
+        if "_sim_keywords" in result_df.columns:
+            cols_to_show.extend(["_sim_severity", "_sim_keywords"])
+            col_defs.extend(
+                [
+                    {"field": "_sim_severity", "headerName": "Stat Score", "width": 120},
+                    {"field": "_sim_keywords", "headerName": "Anomalous Terms", "width": 180},
+                ]
+            )
+
+        if "_compliance_memo" in result_df.columns:
+            cols_to_show.append("_compliance_memo")
+            col_defs.append(
+                {
+                    "field": "_compliance_memo",
+                    "headerName": "Legal Compliance Memo",
+                    "flex": 2,
+                    "wrapText": True,
+                    "autoHeight": True,
+                }
+            )
+
+        display_data = result_df[cols_to_show].to_dict("records")
+        ui.aggrid({"columnDefs": col_defs, "rowData": display_data}).classes("w-full h-96")
+
+    # --- Main Event Handler ---
+
     async def run_triage(self) -> None:
         if (
             not self.ds_select
@@ -139,12 +234,11 @@ class AITriageBlock:
         text_col = str(self.text_col_select.value)
         model_type = str(self.model_toggle.value)
 
-        df = self.state.datasets[ds_name]  # noqa: F841
         row_count = int(self.row_count_input.value)
         process_df = self.state.datasets[ds_name].head(row_count).copy()
 
         self.results_container.clear()
-        with self.results_container:
+        with self.results_container:  # noqa: F841
             with ui.row().classes("items-center gap-2"):
                 ui.spinner("dots", size="lg", color="purple")
                 ui.label(
@@ -152,55 +246,21 @@ class AITriageBlock:
                 ).classes("italic text-gray-500")
 
         try:
-            result_df = process_df.copy()
-            # 1. Run the heavy AI network call in a background thread to prevent UI freezing
-            if model_type == "stat":
-                # Fast quantitative statistical parsing
-                parsed_df = await asyncio.to_thread(parse_sim_complaints, process_df, text_col)
-                # Map SIM categories to standard priorities for consistent badge coloring
-                priority_map = {
-                    "critical_accessibility_hazard": "CRITICAL",
-                    "trip_hazard": "HIGH",
-                    "ada_accessibility": "HIGH",
-                    "root_damage": "MEDIUM",
-                    "surface_damage": "MEDIUM",
-                    "water_pooling": "LOW",
-                    "general_maintenance": "LOW",
-                    "unknown": "INFO",
-                }
-                result_df["_priority"] = parsed_df["_sim_category"].map(priority_map).fillna("INFO")
-                result_df["_sim_keywords"] = parsed_df["_sim_unique_keywords"].apply(
-                    lambda x: ", ".join(x) if isinstance(x, list) else ""
-                )
-                result_df["_sim_severity"] = parsed_df["_sim_severity_score"]
+            model_runners = {
+                "stat": self._run_stat_model,
+                "local": self._run_local_model,
+                "gemini": self._run_gemini_model,
+                "legal": self._run_legal_model,
+            }
+            runner = model_runners.get(model_type)
+            if not runner:
+                raise ValueError(f"Unknown model type: {model_type}")
 
-            elif model_type == "local":
-                url = str(self.local_url_input.value) if self.local_url_input else ""
-                result_df = await asyncio.to_thread(triage_complaints, process_df, text_col, url)
-            elif model_type == "gemini":
-                api_key = str(self.gemini_key_input.value) if self.gemini_key_input else ""
-                if not api_key:
-                    _ = ui.notify("Please provide a Gemini API Key.", type="negative")
-                    self.results_container.clear()
-                    return
-                result_df = await asyncio.to_thread(
-                    triage_complaints_gemini,
-                    process_df,
-                    text_col,
-                    "gemini-1.5-flash",
-                    api_key,
-                )
-            elif model_type == "legal":
-                engine = LegalPolicyEngine()
-                memos = [
-                    engine.generate_compliance_memo(str(text)) for text in process_df[text_col]
-                ]
-                result_df["_priority"] = "POLICY CHECKED"
-                result_df["_compliance_memo"] = memos
+            result_df = await runner(process_df, text_col)
 
             # 2. Update UI with the triaged results
             self.results_container.clear()
-            with self.results_container:
+            with self.results_container:  # noqa: F841
                 ui.label("✅ Triage Complete!").classes("text-green-600 font-bold text-lg")
 
                 if "_priority" in result_df.columns:
@@ -218,40 +278,12 @@ class AITriageBlock:
                             )
                             ui.badge(f"{priority}: {count}", color=color).classes("text-sm")
 
-                cols_to_show = [text_col, "_priority"]
-                col_defs = [
-                    {"field": text_col, "headerName": "Original Text", "flex": 1},
-                    {"field": "_priority", "headerName": "Category / Severity", "width": 200},
-                ]
-
-                # If we used the statistical parser, inject our extra data columns into the UI table!
-                if "_sim_keywords" in result_df.columns:
-                    cols_to_show.extend(["_sim_severity", "_sim_keywords"])
-                    col_defs.append(
-                        {"field": "_sim_severity", "headerName": "Stat Score", "width": 120}
-                    )
-                    col_defs.append(
-                        {"field": "_sim_keywords", "headerName": "Anomalous Terms", "width": 180}
-                    )
-
-                # If we used the Legal Policy Engine, show the memo column!
-                if "_compliance_memo" in result_df.columns:
-                    cols_to_show.append("_compliance_memo")
-                    col_defs.append(
-                        {
-                            "field": "_compliance_memo",
-                            "headerName": "Legal Compliance Memo",
-                            "flex": 2,
-                            "wrapText": True,
-                            "autoHeight": True,
-                        }
-                    )
-
-                display_data = result_df[cols_to_show].to_dict("records")
-                _ = ui.aggrid({"columnDefs": col_defs, "rowData": display_data}).classes("w-full h-96")
+                self._render_results_grid(result_df, text_col)
 
         except Exception as e:
             if self.results_container:
                 self.results_container.clear()
                 with self.results_container:
-                    _ = ui.label(f"❌ Triage Failed: {str(e)}").classes("text-red-600 font-bold")
+                    ui.label(f"❌ Triage Failed: {str(e)}").classes(
+                        "text-red-600 font-bold"
+                    )

@@ -6,7 +6,7 @@ import logging
 import os
 import sys
 from collections.abc import Callable, Generator, Iterable
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, Field
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -695,11 +695,76 @@ def search_nyc_datasets(query: str, domain: str = DEFAULT_DOMAIN, limit: int = 1
     return pd.DataFrame([asdict(r) for r in results])
 
 
-def generate_data_dictionary(df: pd.DataFrame) -> list[dict[str, Any]]:
+@dataclass
+class ColumnDefinition:
+    name: str
+    dtype: str
+    null_count: int
+    null_pct: float
+
+
+@dataclass
+class DataDictionary:
+    dataset_name: str
+    row_count: int
+    column_count: int
+    columns: list[ColumnDefinition]
+
+    def to_markdown(self) -> str:
+        md = f"# Data Dictionary: {self.dataset_name}\n\n"
+        md += f"**Rows:** {self.row_count} | **Columns:** {self.column_count}\n\n"
+        md += "| Column | Data Type | Null Count | Null Pct |\n"
+        md += "|--------|-----------|------------|----------|\n"
+        for col in self.columns:
+            md += f"| `{col.name}` | `{col.dtype}` | {col.null_count} | {col.null_pct:.1f}% |\n"
+        return md
+
+    def save(self, path: str) -> str:
+        Path(path).write_text(self.to_markdown(), encoding="utf-8")
+        return path
+
+
+def generate_data_dictionary(df: pd.DataFrame, dataset_name: str = "Untitled") -> DataDictionary:
     """Generate a data dictionary from a DataFrame."""
+    cols = []
+    for c in df.columns:
+        null_count = int(df[c].isna().sum())
+        null_pct = df[c].isna().mean() * 100
+        cols.append(ColumnDefinition(
+            name=c,
+            dtype=str(df[c].dtype),
+            null_count=null_count,
+            null_pct=null_pct
+        ))
+    return DataDictionary(
+        dataset_name=dataset_name,
+        row_count=len(df),
+        column_count=len(df.columns),
+        columns=cols
+    )
+
+
+@dataclass
+class DatasetInfo:
+    name: str
+    fourfour: str
+    description: str
+
+
+DATASETS = {
+    "311_service_requests": DatasetInfo("311 Service Requests", "erm2-nwe9", "All 311 service requests from 2010 to present."),
+    "sidewalk_violations": DatasetInfo("Sidewalk Violations", "cuc7-tcpr", "Notices of sidewalk violation."),
+    "street_construction_permits": DatasetInfo("Street Construction Permits", "3rfa-3xs2", "Permits for construction on streets."),
+    "citywide_payroll_data": DatasetInfo("Citywide Payroll Data", "k397-673e", "Payroll data for all city employees."),
+    "vehicle_crashes": DatasetInfo("Motor Vehicle Collisions - Crashes", "h9gi-nx95", "Data on motor vehicle collisions."),
+}
+
+
+def list_available_datasets() -> list[dict[str, str]]:
+    """Lists some sample available datasets."""
     return [
-        {"column": c, "dtype": str(df[c].dtype), "null_pct": f"{df[c].isna().mean() * 100:.1f}%"}
-        for c in df.columns
+        {"key": key, "fourfour": info.fourfour, "name": info.name}
+        for key, info in DATASETS.items()
     ]
 
 

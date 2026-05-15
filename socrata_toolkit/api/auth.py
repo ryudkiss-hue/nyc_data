@@ -9,7 +9,6 @@ import jwt
 
 class AuthenticationError(Exception):
     """Exception raised for authentication failures."""
-    pass
 
 
 @dataclass
