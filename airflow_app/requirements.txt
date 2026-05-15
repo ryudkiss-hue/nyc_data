@@ -1,5 +1,5 @@
 # Core Airflow and providers are already in the base image. Only add extra dependencies here.
-psycopg2-binary==2.9.9
+psycopg2-binary==2.9.12
 redis==5.0.1
 sqlalchemy<2.0,>=1.4.28
 pandas==2.1.3
