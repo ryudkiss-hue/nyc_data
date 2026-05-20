@@ -1,10 +1,8 @@
 name: Tests
 
+# Legacy — disabled on push; use nyc-toolkit-ci.yml
 on:
-  push:
-    branches: [main, fix/*, feat/*]
-  pull_request:
-    branches: [main]
+  workflow_dispatch:
 
 jobs:
   test:

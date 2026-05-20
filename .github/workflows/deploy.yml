@@ -1,15 +1,11 @@
 name: CD - Deploy to Production
 
+# Manual / tag deploy only — avoids failing checks on every main push.
 on:
+  workflow_dispatch:
   push:
-    branches: [ main ]
     tags:
       - 'v*'
-  workflow_run:
-    workflows: ["CI - Tests & Linting"]
-    types:
-      - completed
-    branches: [ main ]
 
 jobs:
   deploy-docker:
