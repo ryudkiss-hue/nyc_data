@@ -1,10 +1,12 @@
 name: CI - Tests & Linting
 
+# Legacy workflow — disabled on push; use nyc-toolkit-ci.yml instead.
 on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
+  workflow_dispatch:
+  # push:
+  #   branches: [ main, develop ]
+  # pull_request:
+  #   branches: [ main, develop ]
 
 jobs:
   backend-tests:

@@ -1,10 +1,8 @@
 name: Toolkit Automated Tests
 
+# Legacy — disabled on push; use nyc-toolkit-ci.yml
 on:
-  push:
-    branches: [ "main", "master" ]
-  pull_request:
-    branches: [ "main", "master" ]
+  workflow_dispatch:
 
 jobs:
   test:

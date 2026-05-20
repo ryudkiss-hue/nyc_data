@@ -1,10 +1,8 @@
 name: Pre-commit Pipeline
 
+# Run locally: pre-commit run --all-files
 on:
-  push:
-    branches: [ "main", "master" ]
-  pull_request:
-    branches: [ "main", "master" ]
+  workflow_dispatch:
 
 jobs:
   pre-commit:
