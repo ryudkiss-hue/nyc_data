@@ -109,6 +109,8 @@ layout = dbc.Container(
                                 className="mb-2",
                             ),
                             html.Div(id="pub-destination-tips", className="mb-2"),
+                            html.H3("Preflight", style={"fontSize": "0.95rem", "marginTop": "8px"}),
+                            html.Div(id="pub-preflight", role="status", **{"aria-live": "polite"}),
                             dbc.Checklist(
                                 options=[{"label": "Dry-run (preview only)", "value": "dry"}],
                                 value=["dry"],
@@ -175,6 +177,46 @@ _DEST_TIPS = {
     "email": "Sends manifest summary and links via SMTP.",
     "pptx": "Builds an optional executive slide deck from pack HTML.",
 }
+
+
+@callback(
+    Output("pub-preflight", "children"),
+    Input("pub-pack-dir", "value"),
+    Input("pub-profile-path", "value"),
+    Input("pub-destinations", "value"),
+)
+def publish_preflight(pack_dir: str, profile_path: str, dests):
+    checks = []
+    pack_path = Path(pack_dir) if pack_dir else None
+    checks.append(("Pack folder exists", bool(pack_path and pack_path.is_dir())))
+    prof = Path(profile_path) if profile_path else None
+    checks.append(("Publish profile exists", bool(prof and prof.is_file())))
+    checks.append(("At least one destination", bool(dests)))
+    manifest_path = (pack_path / "manifest.json") if pack_path else None
+    checks.append(("manifest.json present", bool(manifest_path and manifest_path.is_file())))
+    rows = [
+        html.Li(
+            [
+                html.I(
+                    className=f"bi {'bi-check-circle-fill text-success' if ok else 'bi-x-circle-fill text-danger'} me-2",
+                    **{"aria-hidden": "true"},
+                ),
+                label,
+            ],
+            **{"aria-label": f"{label}: {'pass' if ok else 'fail'}"},
+        )
+        for label, ok in checks
+    ]
+    all_ok = all(ok for _, ok in checks)
+    return html.Div(
+        [
+            dbc.Alert(
+                "Ready to publish" if all_ok else "Fix preflight items before publishing.",
+                color="success" if all_ok else "warning",
+            ),
+            html.Ul(rows, **{"aria-label": "Publish preflight checklist"}),
+        ]
+    )
 
 
 @callback(

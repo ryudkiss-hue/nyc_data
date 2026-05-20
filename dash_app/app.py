@@ -21,6 +21,7 @@ import dash_bootstrap_components as dbc
 import plotly.io as pio
 from dash import Dash, Input, Output, State, callback, dcc, html, no_update
 
+from dash_app.components.onboarding import onboarding_modal
 from dash_app.data.pack_loader import manifest_summary, resolve_pack_dir
 from dash_app.data.ui_prefs import get_ui_pref, load_ui_prefs, save_ui_prefs
 from socrata_toolkit.core.profiles import active_profile_name, list_profiles
@@ -55,18 +56,40 @@ server = app.server
 
 pio.templates.default = "plotly_dark" if _theme == "dark" else "plotly_white"
 
-NAV = [
-    {"label": "Home", "icon": "bi bi-house", "path": "/", "key": "home"},
-    {"label": "Explore", "icon": "bi bi-sliders", "path": "/explore", "key": "explore"},
-    {"label": "Construction", "icon": "bi bi-cone-striped", "path": "/construction", "key": "construction"},
-    {"label": "Contracts", "icon": "bi bi-file-earmark-text", "path": "/contracts", "key": "contracts"},
-    {"label": "Metrics", "icon": "bi bi-speedometer2", "path": "/metrics", "key": "metrics"},
-    {"label": "Inquiries", "icon": "bi bi-chat-left-text", "path": "/inquiries", "key": "inquiries"},
-    {"label": "Review", "icon": "bi bi-check2-square", "path": "/review", "key": "review"},
-    {"label": "Data Trust", "icon": "bi bi-shield-check", "path": "/data-trust", "key": "data-trust"},
-    {"label": "Publish", "icon": "bi bi-send", "path": "/publish", "key": "publish"},
-    {"label": "Settings", "icon": "bi bi-gear", "path": "/settings", "key": "settings"},
+NAV_SECTIONS = [
+    {
+        "title": "Work",
+        "items": [
+            {"label": "Home", "icon": "bi bi-house", "path": "/", "key": "home"},
+            {"label": "Construction", "icon": "bi bi-cone-striped", "path": "/construction", "key": "construction"},
+            {"label": "Contracts", "icon": "bi bi-file-earmark-text", "path": "/contracts", "key": "contracts"},
+            {"label": "Metrics", "icon": "bi bi-speedometer2", "path": "/metrics", "key": "metrics"},
+        ],
+    },
+    {
+        "title": "Decide",
+        "items": [
+            {"label": "Review", "icon": "bi bi-check2-square", "path": "/review", "key": "review"},
+            {"label": "Inquiries", "icon": "bi bi-chat-left-text", "path": "/inquiries", "key": "inquiries"},
+        ],
+    },
+    {
+        "title": "Share",
+        "items": [
+            {"label": "Publish", "icon": "bi bi-send", "path": "/publish", "key": "publish"},
+        ],
+    },
+    {
+        "title": "Advanced",
+        "items": [
+            {"label": "Explore", "icon": "bi bi-sliders", "path": "/explore", "key": "explore"},
+            {"label": "Data Trust", "icon": "bi bi-shield-check", "path": "/data-trust", "key": "data-trust"},
+            {"label": "Settings", "icon": "bi bi-gear", "path": "/settings", "key": "settings"},
+        ],
+    },
 ]
+
+NAV = [item for section in NAV_SECTIONS for item in section["items"]]
 
 _PAGE_PATHS = {
     "home": "/",
@@ -91,19 +114,34 @@ if _DEBUG:
 
 
 def build_sidebar(collapsed: bool = False) -> html.Div:
-    nav_items = []
-    for item in NAV:
-        content = [
-            html.I(className=f"{item['icon']} nyc-nav-icon", **{"aria-hidden": "true"}),
-            html.Span(item["label"], className="nyc-nav-label") if not collapsed else None,
-        ]
-        nav_items.append(
-            dcc.Link(
-                content,
-                href=item["path"],
-                className="nyc-nav-link",
-                id={"type": "nav-link", "href": item["path"]},
-                title=item["label"],
+    nav_sections = []
+    for section in NAV_SECTIONS:
+        nav_items = []
+        for item in section["items"]:
+            content = [
+                html.I(className=f"{item['icon']} nyc-nav-icon", **{"aria-hidden": "true"}),
+                html.Span(item["label"], className="nyc-nav-label") if not collapsed else None,
+            ]
+            nav_items.append(
+                dcc.Link(
+                    content,
+                    href=item["path"],
+                    className="nyc-nav-link",
+                    id={"type": "nav-link", "href": item["path"]},
+                    title=item["label"],
+                )
+            )
+        nav_sections.append(
+            html.Div(
+                [
+                    (
+                        html.Div(section["title"], className="nyc-nav-section-title")
+                        if not collapsed
+                        else None
+                    ),
+                    *nav_items,
+                ],
+                className="nyc-nav-section",
             )
         )
 
@@ -131,7 +169,7 @@ def build_sidebar(collapsed: bool = False) -> html.Div:
                 ],
                 className="nyc-logo-section",
             ),
-            html.Nav(nav_items, className="nyc-nav-container", **{"aria-label": "Main navigation"}),
+            html.Nav(nav_sections, className="nyc-nav-container", **{"aria-label": "Main navigation"}),
             html.Div(
                 [
                     html.Button(
@@ -202,6 +240,8 @@ app.layout = html.Div(
         dcc.Store(id="ui-prefs-store", data=_ui),
         dcc.Store(id="pack-route-store", data=""),
         dcc.Store(id="offline-banner-store", data=False),
+        dcc.Store(id="onboarding-store", data=not bool(get_ui_pref("onboarding_complete", False))),
+        onboarding_modal(),
         dcc.Location(id="url"),
         html.Div(id="offline-banner", className="nyc-offline-banner-wrap", role="status"),
         html.Div(
@@ -355,6 +395,54 @@ def show_offline_banner(force_offline, prefs):
     Input("header-profile", "value"),
     prevent_initial_call=True,
 )
+@callback(
+    Output("onboarding-modal", "is_open"),
+    Input("onboarding-store", "data"),
+    prevent_initial_call=False,
+)
+def toggle_onboarding(show: bool):
+    return bool(show)
+
+
+@callback(
+    Output("onboarding-store", "data", allow_duplicate=True),
+    Input("onboarding-dismiss", "n_clicks"),
+    prevent_initial_call=True,
+)
+def dismiss_onboarding(_n):
+    prefs = load_ui_prefs()
+    prefs["onboarding_complete"] = True
+    save_ui_prefs(prefs)
+    return False
+
+
+@callback(
+    Output("onboarding-store", "data"),
+    Output("pack-route-store", "data", allow_duplicate=True),
+    Input("url", "pathname"),
+    prevent_initial_call="initial_duplicate",
+)
+def first_visit_bootstrap(_pathname):
+    prefs = load_ui_prefs()
+    if prefs.get("onboarding_complete"):
+        return False, no_update
+    pack = resolve_pack_dir()
+    if not pack:
+        try:
+            from dash_app.data.demo_pack import ensure_demo_pack
+            from dash_app.data.pack_loader import invalidate_pack_cache
+
+            demo = ensure_demo_pack()
+            if demo:
+                invalidate_pack_cache()
+                prefs["first_run_demo"] = True
+                save_ui_prefs(prefs)
+                return True, str(demo)
+        except Exception:
+            pass
+    return not prefs.get("onboarding_complete", False), no_update
+
+
 def switch_profile(profile_name):
     if profile_name:
         os.environ["TOOLKIT_PROFILE"] = str(profile_name)

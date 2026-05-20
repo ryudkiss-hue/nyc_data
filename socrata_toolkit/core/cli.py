@@ -506,14 +506,24 @@ def batch_search_cmd(domain, fourfour, field, file_path, out):
         click.echo(json.dumps(rows, indent=2))
 
 
+@main.command("readiness")
+@click.option("--pytest", "run_pytest", is_flag=True, help="Run full test suite (slower).")
+def readiness_cmd(run_pytest: bool):
+    """Automated quality-axis readiness report (JSON)."""
+    from .readiness import readiness_json
+
+    click.echo(readiness_json(run_pytest=run_pytest))
+
+
 @main.command("doctor")
 @click.option("--check-db", is_flag=True)
-def doctor_cmd(check_db):
+@click.option("--checklist", is_flag=True, help="Include automated readiness axis scores.")
+def doctor_cmd(check_db, checklist):
     import importlib
     from pathlib import Path
 
     checks = {}
-    for mod in ["requests", "click", "pandas", "openpyxl", "streamlit"]:
+    for mod in ["requests", "click", "pandas", "openpyxl", "dash", "plotly"]:
         try:
             importlib.import_module(mod)
             checks[mod] = "ok"
@@ -580,16 +590,21 @@ def doctor_cmd(check_db):
         "analyst_module": "ok" if __import__("importlib").util.find_spec("socrata_toolkit.analyst") else "missing",
         "dash_app": "ok" if (Path(__file__).resolve().parents[2] / "dash_app" / "app.py").exists() else "missing",
     }
+    payload = {
+        "core": checks,
+        "optional": optional_status,
+        "db": db_status,
+        "import_shims": import_checks,
+        "checklist": checklist,
+        "fix_it": fixes,
+    }
+    if checklist:
+        from .readiness import run_readiness_checks
+
+        payload["readiness"] = run_readiness_checks()
     click.echo(
         json.dumps(
-            {
-                "core": checks,
-                "optional": optional_status,
-                "db": db_status,
-                "import_shims": import_checks,
-                "checklist": checklist,
-                "fix_it": fixes,
-            },
+            payload,
             indent=2,
         )
     )
