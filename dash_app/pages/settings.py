@@ -94,6 +94,58 @@ def _role_kpi_panel() -> html.Div:
     return html.Div([html.Ul(items), hint])
 
 
+def _readiness_card() -> dbc.Card:
+    from socrata_toolkit.core.readiness import run_readiness_checks
+
+    report = run_readiness_checks()
+    rows = []
+    for axis, score in sorted(report.get("axis_scores", {}).items()):
+        pct = min(100.0, float(score))
+        rows.append(
+            html.Div(
+                [
+                    html.Div(
+                        [
+                            html.Span(axis.replace("_", " ").title(), style={"fontWeight": 600}),
+                            html.Span(f"{pct:.0f}%", style={"float": "right"}),
+                        ],
+                        style={"fontSize": "0.82rem", "marginBottom": "4px"},
+                    ),
+                    html.Div(
+                        html.Div(className="nyc-readiness-fill", style={"width": f"{pct}%"}),
+                        className="nyc-readiness-bar",
+                        **{"aria-label": f"{axis} readiness {pct:.0f} percent"},
+                    ),
+                ],
+                className="mb-3",
+            )
+        )
+    overall = report.get("overall_score", 0)
+    return dbc.Card(
+        [
+            dbc.CardHeader("Quality readiness"),
+            dbc.CardBody(
+                [
+                    html.P(
+                        f"Overall automated score: {overall:.0f}% — run `socrata readiness` for full JSON.",
+                        style={"fontSize": "0.85rem"},
+                    ),
+                    *rows,
+                    html.P(
+                        report.get("note", ""),
+                        style={"fontSize": "0.75rem", "color": "var(--text-muted)", "marginTop": "8px"},
+                    ),
+                ]
+            ),
+        ],
+        style={
+            "background": "var(--bg-secondary)",
+            "border": "1px solid var(--border-color)",
+            "marginBottom": "16px",
+        },
+    )
+
+
 def _ui_prefs_card() -> dbc.Card:
     return dbc.Card(
         [
@@ -175,6 +227,7 @@ layout = dbc.Container(
                     [
                         dbc.Col(
                             [
+                                _readiness_card(),
                                 _ui_prefs_card(),
                                 dbc.Card(
                                     [

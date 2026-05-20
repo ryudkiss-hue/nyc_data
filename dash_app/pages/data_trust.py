@@ -39,7 +39,7 @@ def _sources_table(manifest: dict) -> html.Div:
             html.Tr(
                 [
                     html.Td(html.Code(name)),
-                    html.Td(str(s.get("type", "—"))),
+                    html.Td(str(s.get("authority") or s.get("path") or s.get("type", "—"))),
                     html.Td(str(s.get("status", "—"))),
                     html.Td(str(s.get("rows", "—"))),
                 ]

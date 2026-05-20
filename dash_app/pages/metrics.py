@@ -2,7 +2,8 @@
 
 import dash
 import dash_bootstrap_components as dbc
-from dash import Input, Output, callback, dcc, html
+from dash import Input, Output, callback, dcc, html, no_update
+from dash.exceptions import PreventUpdate
 
 from dash_app.components.explainers import default_kpi_description, kpi_metric_explainer
 from dash_app.components.shell import empty_state, page_shell
@@ -154,6 +155,27 @@ layout = dbc.Container(
     ],
     fluid=True,
 )
+
+
+@callback(
+    Output("metrics-program-store", "data"),
+    Output("metrics-role-store", "data"),
+    Input("pack-route-store", "data"),
+    Input("url", "pathname"),
+)
+def refresh_metrics_stores(pack_override, pathname):
+    if pathname != "/metrics":
+        raise PreventUpdate
+    pack = latest_pack_dir()
+    if pack_override:
+        from pathlib import Path
+
+        candidate = Path(pack_override)
+        if candidate.is_dir():
+            pack = candidate
+    kpi = load_program_kpi(pack)
+    role_kpi = load_role_kpi_dashboard(pack)
+    return kpi.get("metrics", []), role_kpi.get("metrics", [])
 
 
 @callback(
