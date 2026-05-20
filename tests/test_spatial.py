@@ -29,6 +29,7 @@ from socrata_toolkit.spatial import (
     ArcGISCredential,
     FieldPackageBuilder,
     FieldSession,
+    GeoPackageBuilder,
     HotspotAnalysis,
     InterpolationAnalysis,
     NetworkAnalysis,
@@ -82,9 +83,10 @@ class TestSpatialGeometry:
 
     def test_invalid_geometry_type(self):
         """Test that invalid geometry types raise error."""
+        invalid_geom = type("BadGeometry", (), {"geom_type": "Invalid"})()
+
         with pytest.raises(ValueError):
-            SpatialGeometry(Point(0, 0), SRID_WGS84)
-            # After init, modify to invalid type would need direct manipulation
+            SpatialGeometry(invalid_geom, SRID_WGS84)
 
     def test_geometry_buffer(self):
         """Test geometry buffering."""

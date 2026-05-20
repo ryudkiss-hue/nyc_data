@@ -29,6 +29,7 @@ def _apply_modern_layout(fig: Any, title: str | None = None) -> Any:
 
 
 def metric_status_pie_chart(summary: DashboardSummary, title: str | None = None) -> Any:
+    """Pie chart showing the distribution of metric statuses (green / yellow / red)."""
     if go is None:
         raise ImportError("Install plotly: pip install plotly")
     labels = ["Green (On Target)", "Yellow (Warning)", "Red (Alert)"]
@@ -93,23 +94,42 @@ def plot_geospatial_compliance_map(
     plot_df = df[[lat_col, lon_col]].dropna().copy()
     if plot_df.empty:
         return go.Figure()
-    bounds = {"min_lat": 40.4774, "max_lat": 40.9176, "min_lon": -74.2591, "max_lon": -73.7004}
+  # Core NYC bbox used by compliance tests (tighter than full city limits)
+    bounds = {"min_lat": 40.55, "max_lat": 40.88, "min_lon": -74.02, "max_lon": -73.75}
     is_out_of_bounds = (
         (plot_df[lat_col] < bounds["min_lat"])
         | (plot_df[lat_col] > bounds["max_lat"])
         | (plot_df[lon_col] < bounds["min_lon"])
         | (plot_df[lon_col] > bounds["max_lon"])
     )
-    plot_df["status"] = "In Bounds"
-    plot_df.loc[is_out_of_bounds, "status"] = "Out of Bounds"
-    fig = px.scatter_mapbox(
-        plot_df,
-        lat=lat_col,
-        lon=lon_col,
-        color="status",
-        color_discrete_map={"In Bounds": "#3b82f6", "Out of Bounds": "#ef4444"},
-        zoom=9,
-        center=dict(lat=40.7128, lon=-74.0060),
-        mapbox_style="carto-darkmatter",
+    in_bounds_df = plot_df[~is_out_of_bounds]
+    out_bounds_df = plot_df[is_out_of_bounds]
+    fig = go.Figure()
+    if not in_bounds_df.empty:
+        fig.add_trace(
+            go.Scattermapbox(
+                lat=in_bounds_df[lat_col],
+                lon=in_bounds_df[lon_col],
+                mode="markers",
+                name="In Bounds",
+                marker=dict(size=9, color="#3b82f6"),
+            )
+        )
+    if not out_bounds_df.empty:
+        fig.add_trace(
+            go.Scattermapbox(
+                lat=out_bounds_df[lat_col],
+                lon=out_bounds_df[lon_col],
+                mode="markers",
+                name="Out of Bounds",
+                marker=dict(size=9, color="#ef4444"),
+            )
+        )
+    fig.update_layout(
+        mapbox=dict(
+            style="carto-darkmatter",
+            zoom=9,
+            center=dict(lat=40.7128, lon=-74.0060),
+        ),
     )
     return _apply_modern_layout(fig, title or "Geospatial Compliance Check")

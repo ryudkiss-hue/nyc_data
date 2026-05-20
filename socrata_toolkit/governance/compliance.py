@@ -9,7 +9,15 @@ APIs (DCWP, Parks) or local caches as needed.
 """
 
 from typing import Any, Dict, List
+
 import requests
+
+
+def _http_get(*args, **kwargs):
+    """HTTP GET via governance.get so tests can monkeypatch the client."""
+    from socrata_toolkit.governance import get
+
+    return get(*args, **kwargs)
 
 
 def check_dcwp_license(license_number: str, api_base: str | None = None) -> Dict[str, Any]:
@@ -24,7 +32,7 @@ def check_dcwp_license(license_number: str, api_base: str | None = None) -> Dict
         return {"valid": False, "details": "No DCWP API configured"}
     url = f"{api_base}/licenses/{license_number}"
     try:
-        r = requests.get(url, timeout=10)
+        r = _http_get(url, timeout=10)
         r.raise_for_status()
         data = r.json()
         return {"valid": data.get("active", False), "details": data}
@@ -41,7 +49,7 @@ def check_parks_permit(permit_number: str, api_base: str | None = None) -> Dict[
         return {"valid": False, "details": "No Parks API configured"}
     url = f"{api_base}/permits/{permit_number}"
     try:
-        r = requests.get(url, timeout=10)
+        r = _http_get(url, timeout=10)
         r.raise_for_status()
         data = r.json()
         return {"valid": data.get("status") == "APPROVED", "details": data}

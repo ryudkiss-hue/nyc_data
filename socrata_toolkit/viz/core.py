@@ -275,3 +275,33 @@ def quality_dashboard(
         total_cells=total_cells,
         missing_cells=missing_cells,
     )
+
+
+def dataframe_to_pdf(
+    df: pd.DataFrame,
+    path: str,
+    title: str = "Data Report",
+) -> str:
+    """Export a DataFrame to PDF, falling back to HTML when PDF libs are unavailable."""
+    from pathlib import Path
+
+    out = Path(path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+
+    def _html() -> str:
+        table = df.to_html(index=False, escape=True)
+        return (
+            f"<!DOCTYPE html><html><head><meta charset='utf-8'>"
+            f"<title>{title}</title></head><body><h1>{title}</h1>{table}</body></html>"
+        )
+
+    try:
+        from weasyprint import HTML  # type: ignore
+
+        pdf_path = out if out.suffix.lower() == ".pdf" else out.with_suffix(".pdf")
+        HTML(string=_html()).write_pdf(str(pdf_path))
+        return str(pdf_path)
+    except Exception:
+        html_path = out if out.suffix.lower() == ".html" else out.with_suffix(".html")
+        html_path.write_text(_html(), encoding="utf-8")
+        return str(html_path)

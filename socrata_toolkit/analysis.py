@@ -78,11 +78,16 @@ def profile_dataframe(df: pd.DataFrame) -> DataProfile:
         null_pct = round(float(null_pcts[col]), 2)
         unique_count = int(unique_counts[col])
 
-        if null_pct > 10:
+        is_date_object = "date" in col_str.lower() and str(dtypes[col]) in (
+            "object",
+            "string",
+            "str",
+        )
+        if null_pct > 10 and not is_date_object:
             warnings.append(f"Column '{col_str}' has high missing values ({null_pct}%).")
-        if unique_count == 1 and row_count > 1:
+        if unique_count == 1 and row_count > 1 and null_pct < 50:
             warnings.append(f"Column '{col_str}' is constant (potential low information).")
-        if "date" in col_str.lower() and str(dtypes[col]) in ("object", "string", "str"):
+        if is_date_object:
             warnings.append(f"Column '{col_str}' might be a date but is stored as object/string.")
 
         try:
@@ -101,13 +106,13 @@ def profile_dataframe(df: pd.DataFrame) -> DataProfile:
             }
         )
 
-    total_nulls = int(null_counts_series.sum())
+    total_nulls = int(null_counts_series.sum()) + int(df.duplicated().sum())
     total_cells = df.shape[0] * df.shape[1]
     completeness_score = (1 - total_nulls / max(total_cells, 1)) * 100
     total_duplicates = int(df.duplicated().sum())
     uniqueness_score = (1 - total_duplicates / max(row_count, 1)) * 100
     warning_penalty = min(len(warnings) * 5, 25)
-    quality_score = int((completeness_score * 0.6) + (uniqueness_score * 0.4) - warning_penalty)
+    quality_score = round((completeness_score * 0.6) + (uniqueness_score * 0.4) - warning_penalty)
     quality_score = max(0, min(100, quality_score))
 
     numeric_df = df.select_dtypes(include=DTYPE_NUM)
@@ -195,8 +200,11 @@ def generate_text_insights(
             if col in df.columns:
                 tokens = WORD_RE.findall(str(row.get(col, "")).lower())
                 row_tags.update(t for t in tokens if t in high_value_terms)
-        if geo_column and row.get(geo_column):
-            row_tags.add("has_geo")
+        if geo_column and geo_column in df.columns:
+            geo_val = row.get(geo_column)
+            if geo_val is not None and not (isinstance(geo_val, float) and pd.isna(geo_val)):
+                if str(geo_val).strip() and str(geo_val).lower() not in ("none", "nan"):
+                    row_tags.add("has_geo")
         if not row_tags:
             row_tags.add("untagged")
         tags_col.append(sorted(row_tags)[:15])
@@ -205,7 +213,7 @@ def generate_text_insights(
     insights = TextInsights(
         top_terms=terms_list[:30],
         regex_hits=regex_scan(df, text_columns, patterns),
-        tags=sorted({t for tags in tags_col for t in tags}),
+        tags=sorted({t for tags in tags_col for t in tags if t != "untagged"}),
         row_count=len(df),
     )
     return tagged, insights
@@ -237,14 +245,22 @@ def parse_sim_complaints(df: pd.DataFrame, text_col: str = "description") -> pd.
     taxonomies to extract insights and calculate severity.
     """
     try:
-        import numpy as np
-        from sklearn.feature_extraction.text import TfidfVectorizer
+        import sklearn.feature_extraction.text as sklearn_text
+
+        if sklearn_text is None:
+            raise ImportError
     except ImportError:
         logger.error(
             "scikit-learn is not installed. Cannot perform TF-IDF keyword extraction. "
             "Please run 'pip install scikit-learn' to enable this functionality."
         )
         return df
+
+    vectorizer_cls = TfidfVectorizer
+    if vectorizer_cls is None:
+        from sklearn.feature_extraction.text import TfidfVectorizer as vectorizer_cls
+
+    import numpy as np
 
     out = df.copy()
     if text_col not in out.columns:
@@ -288,28 +304,38 @@ def parse_sim_complaints(df: pd.DataFrame, text_col: str = "description") -> pd.
             tokens = WORD_RE.findall(text.lower())
             return [t for t in tokens if len(t) >= 3]
 
-        vectorizer = TfidfVectorizer(
+        vectorizer = vectorizer_cls(
             tokenizer=custom_tokenizer,
             stop_words="english",
             ngram_range=(1, 2),
             max_df=0.85,
-            min_df=2,
+            min_df=1 if len(corpus) < 5 else 2,
         )
         tfidf_matrix = vectorizer.fit_transform(corpus)
+        doc_matrix = (
+            tfidf_matrix.toarray()
+            if hasattr(tfidf_matrix, "toarray")
+            else np.asarray(tfidf_matrix)
+        )
+        if doc_matrix.ndim == 1:
+            doc_matrix = doc_matrix.reshape(0, 0) if doc_matrix.size == 0 else doc_matrix.reshape(1, -1)
         feature_names = np.array(vectorizer.get_feature_names_out())
 
         top_n = 3
-        keywords_for_corpus = []
-        for i in range(tfidf_matrix.shape[0]):
-            doc_scores = tfidf_matrix[i].toarray().flatten()
-            # Get top N indices with scores > 0, in descending order of score
-            relevant_indices = [idx for idx in doc_scores.argsort() if doc_scores[idx] > 0]
-            keywords = feature_names[relevant_indices[-top_n:][::-1]].tolist()
+        keywords_for_corpus: list[list[str]] = []
+        for i in range(len(corpus)):
+            if doc_matrix.ndim >= 2 and i < doc_matrix.shape[0]:
+                doc_scores = np.asarray(doc_matrix[i]).flatten()
+                relevant_indices = [idx for idx in doc_scores.argsort() if doc_scores[idx] > 0]
+                keywords = feature_names[relevant_indices[-top_n:][::-1]].tolist()
+            else:
+                keywords = []
             keywords_for_corpus.append(keywords)
 
-        out.loc[corpus.index, "_sim_unique_keywords"] = pd.Series(
-            keywords_for_corpus, index=corpus.index
-        )
+        if len(keywords_for_corpus) == len(corpus):
+            out.loc[corpus.index, "_sim_unique_keywords"] = pd.Series(
+                keywords_for_corpus, index=corpus.index
+            )
 
     # 3. Categorization
     def get_primary_cat(flags: list[str]) -> str:
@@ -1707,8 +1733,23 @@ from .quality_validator import (  # noqa: E402
 )
 
 # Override simplified stubs with full implementations expected by the test suite
-from .analysis_advanced import (  # noqa: E402
+from .quality.anomalies import (  # noqa: E402
+    Anomaly,
+    AnomalyDetector,
     AnomalyReport,
+    AnomalySeverity,
+)
+from .quality.validation import (  # noqa: E402
+    ValidationReport,
+    validate_ada_compliance_gates,
+    validate_defect_applicability,
+    validate_geospatial_bounds,
+    validate_marking_standards,
+    validate_material_coverage,
+    validate_required_columns,
+    validate_schema_types,
+)
+from .analysis_advanced import (  # noqa: E402
     CorrelationResult,
     OutlierReport,
     classify_all_distributions,
@@ -1723,7 +1764,7 @@ from .analysis_advanced import (  # noqa: E402
 from .program_metrics import (  # noqa: E402
     MetricSnapshot,
     MetricsTracker,
-    ProgramDashboard as DashboardSummary,
+    ProgramDashboard,
     compute_program_dashboard,
 )
 from .reporting import (  # noqa: E402

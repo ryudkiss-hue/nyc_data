@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field, asdict
 from typing import Any, Optional
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from enum import Enum
 import logging
 

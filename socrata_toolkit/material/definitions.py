@@ -198,7 +198,7 @@ ASPH_STANDARD = MaterialSpecification(
 # POROUS/PERMEABLE ASPHALT
 ASPH_POROUS = MaterialSpecification(
     material_id="ASPH-NYC-002",
-    category=MaterialCategory.PERMEABLE,
+    category=MaterialCategory.ASPHALT,
     name="Porous Asphalt (Open-Graded Friction Course)",
     description=(
         "Open-graded asphalt mix with high permeability (15-20% infiltration). "
@@ -329,7 +329,7 @@ CONC_STANDARD = MaterialSpecification(
 # PERVIOUS CONCRETE
 CONC_POROUS = MaterialSpecification(
     material_id="CONC-NYC-002",
-    category=MaterialCategory.PERMEABLE,
+    category=MaterialCategory.CONCRETE,
     name="Pervious Concrete, High-Permeability Mix",
     description=(
         "Concrete mix with high water permeability (10-50 gal/min/sf). "
@@ -668,7 +668,7 @@ RUBBER_MATS = MaterialSpecification(
     cost_per_sqft=6.00,
     lifecycle_cost_per_sqft=18.00,
     sustainability_score=88,  # High - 100% recycled content
-    carbon_footprint_kg_per_sqft=-0.10,  # Net positive - diverts waste
+    carbon_footprint_kg_per_sqft=0.0,  # Recycled content; net carbon benefit tracked separately
     applicable_ada_rules=[
         "ADA-1.3.1",  # Slip resistance
         "ADA-1.5.1",  # Surface properties

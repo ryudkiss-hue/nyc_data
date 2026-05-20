@@ -72,4 +72,4 @@ class TestPlotlyCharts:
         path = str(tmp_path / "chart.html")
         result = save_chart(fig, path)
         assert result == path
-        assert "plotly" in open(path).read().lower()
+        assert "plotly" in open(path, encoding="utf-8").read().lower()

@@ -29,9 +29,34 @@ MODEL_DEFAULT = "gpt-3.5-turbo"
 
 from .api import create_app
 from .client import SocrataClient, SocrataConfig
+from .db_helpers import ensure_fts_index
+from .models import DatasetMetadata, SearchResult
 from .config import get_default, load_local_config
 from .db_helpers import build_fts_index_sql
 from .duckdb_store import DuckDBManager, DuckDBRepository, get_bundle_dir
+
+
+class DuckDBExporter:
+    """High-performance DuckDB exporter."""
+
+    def __init__(self, db_path: str | None = None):
+        self.manager = DuckDBManager(db_path)
+
+    def __enter__(self) -> DuckDBExporter:
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> None:
+        self.manager.close()
+
+
+def search_nyc_datasets(query: str, domain: str = "data.cityofnewyork.us", limit: int = 10):
+    """Search NYC Open Data catalog and return results as a DataFrame."""
+    import pandas as pd
+    from dataclasses import asdict
+
+    client = SocrataClient()
+    results = client.search(query=query, domain=domain, limit=limit)
+    return pd.DataFrame([asdict(r) for r in results])
 from .master_data import EntityMergeStrategy, MasterDataManager, MasterEntity
 from .state import load_state, save_state
 from .temporal import ChangePattern, ChangeSummary
@@ -67,10 +92,7 @@ from ..query_builder import (
     or_join,
 )
 
-try:
-    from ..discovery.search import SoQLBuilder
-except ImportError:
-    SoQLBuilder = None  # type: ignore
+from .soql_builder import SoQLBuilder
 
 __all__ = [
     "COL_LAT",
