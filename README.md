@@ -7,7 +7,7 @@ A comprehensive Python toolkit for the NYC Department of Transportation's Sidewa
 ### 🚀 Fastest Path (5 minutes) - All Platforms
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/ryudkiss-hue/nyc_data.git
 cd nyc_data
 
 # Option 1: Python Launcher (all platforms)
@@ -612,19 +612,6 @@ python -m pytest tests/ -v
 
 # Run Airflow-specific integration tests
 docker exec airflow-scheduler pytest /opt/airflow/project/tests/test_airflow_operators.py
-
-# With coverage
-python -m pytest tests/ --cov=socrata_toolkit
-```
-
-## Running Tests
-
-```bash
-# Run all tests
-python -m pytest tests/ -v
-
-# Run a specific module's tests
-python -m pytest tests/test_construction_list.py -v
 
 # With coverage
 python -m pytest tests/ --cov=socrata_toolkit
