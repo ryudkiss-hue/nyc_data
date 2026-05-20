@@ -14,7 +14,7 @@ class DummyResp:
         return self.payload
 
 
-@patch("socrata_toolkit.core")
+@patch("socrata_toolkit.core.client.requests.get")
 def test_search_maps_results(mock_get):
     mock_get.return_value = DummyResp(
         {

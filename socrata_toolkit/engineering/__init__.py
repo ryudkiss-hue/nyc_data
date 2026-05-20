@@ -10,6 +10,7 @@ from .contractor_scorecards import *
 from .cost_estimator import *
 from .dot_sidewalk import (
     MaterialAwareSidewalkKPI,
+    SidewalkKPI,
     compute_material_aware_kpis,
     compute_sidewalk_kpis,
 )
@@ -38,5 +39,3 @@ from ..material.definitions import (
 )
 from ..material.standards import MaterialCategory
 
-# Alias for tests expecting SidewalkKPI (legacy name)
-SidewalkKPI = MaterialAwareSidewalkKPI

@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
-from .compliance import *
+import requests
+
+from .compliance import *  # noqa: F403
+
+get = requests.get  # tests monkeypatch socrata_toolkit.governance.get
 from .processor import *
 from .core import *
 # CDC audit trail types must win over access-log AuditEvent in core
