@@ -1,0 +1,97 @@
+# SW - PROJECT ANALYST (Sidewalk Program Management & Budget Unit)
+# NYC City Jobs: jid-42159 / Job ID 771645
+# Civil service: Staff Analyst (12626), Job level 02
+
+role_id: sw_project_analyst
+display_name: "SW - Project Analyst"
+job_reference:
+  url: https://cityjobs.nyc.gov/job/sw-project-analyst-in-manhattan-jid-42159
+  jid: "42159"
+  job_id: "771645"
+  business_title: "SW - PROJECT ANALYST"
+  civil_service_title: "STAFF ANALYST"
+  department: "DOT — Sidewalk/Inspection Management (Management & Budget Unit)"
+  compared_to_role: project_analyst_sw
+
+unit_focus: >
+  Analyst for in-house pedestrian ramp upgrade crews; IFA justifications,
+  high-priority/GIS analysis, conflict review, and ramp make-safe / curb metal programs.
+
+duties:
+  - id: ifa_justifications
+    text: Create justifications, recommendations, and reports to assist the IFA program
+    workflow_steps: [executive_summary, contract_report]
+    pack_outputs: [executive_summary.html, executive_summary.md, contract_status.md]
+    cli_hint: "socrata analyst run --profile config/analyst_profile.yaml"
+  - id: project_conflict_analysis
+    text: Perform project conflict analysis
+    workflow_steps: [prioritize, conflicts]
+    pack_outputs: [conflicts_summary.md, conflicts_review.xlsx, construction_list.xlsx]
+  - id: analytical_studies
+    text: Perform moderate to complex analytical studies, reviews, and assignments
+    workflow_steps: [program_kpi, construction_diff]
+    pack_outputs: [program_kpi.json, construction_list_diff.md, contract_analytics.json]
+  - id: review_progress_reports
+    text: Review analytical reports and administrative progress; recommend to supervisor
+    workflow_steps: [executive_summary, contract_report, program_kpi]
+    pack_outputs: [executive_summary.md, contract_status.md, program_kpi.json]
+  - id: high_priority_inquiries
+    text: Respond to construction and high priority inquiries
+    workflow_steps: [inquiry_templates, prioritize]
+    pack_outputs: [inquiry_drafts/, construction_list.xlsx]
+    inquiry_templates:
+      - high_priority_construction.md
+      - ifa_program_justification.md
+  - id: ramp_make_safe_programs
+    text: Assist pedestrian ramp make-safe and curb metal protruding programs
+    workflow_steps: [prioritize, conflicts]
+    pack_outputs: [construction_list.xlsx, conflicts_review.xlsx]
+
+kpis:
+  - name: high_priority_backlog
+    description: Open high-severity inspection locations (severity >= 4) pending construction
+    formula: "count(inspections where severity >= 4) minus locations on construction_list"
+    data_source:
+      table: inspections
+      columns: [severity, location_id]
+    direction: lower_is_better
+    target: 0
+    warning_threshold: 5
+    critical_threshold: 15
+  - name: conflict_rate_pct
+    description: Share of prioritized construction items with permit/GIS conflicts
+    formula: "conflict_count / total_items * 100 from conflict check"
+    data_source:
+      artifact: conflicts_summary
+    direction: lower_is_better
+    target: 5
+    warning_threshold: 12
+    critical_threshold: 20
+  - name: ifa_report_ready
+    description: Executive + contract narrative artifacts produced this run (1=yes, 0=no)
+    formula: "1 if executive_summary and contract_status exist else 0"
+    data_source:
+      artifacts: [executive_summary.html, contract_status.md]
+    direction: higher_is_better
+    target: 1
+    warning_threshold: 0.5
+    critical_threshold: 0
+  - name: ramp_make_safe_queue
+    description: ADA-flagged or severity-5 locations on prioritized construction list
+    formula: "count(construction_list where ada_flag=1 or severity>=5)"
+    data_source:
+      table: construction_list
+      columns: [ada_flag, severity]
+    direction: lower_is_better
+    target: 10
+    warning_threshold: 25
+    critical_threshold: 50
+  - name: administrative_review_coverage
+    description: Share of role task checklist items with pack outputs present
+    formula: "completed_tasks / total_tasks from role_task_status"
+    data_source:
+      artifact: role_task_status.md
+    direction: higher_is_better
+    target: 100
+    warning_threshold: 75
+    critical_threshold: 50

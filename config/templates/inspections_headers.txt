@@ -1,0 +1,2 @@
+# Golden profile — inspections Excel header row (copy as first row)
+location_id,borough,severity,pedestrian_volume,age_days,ada_flag,complaint_count,description

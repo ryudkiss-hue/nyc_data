@@ -1,0 +1,7 @@
+# Optional budget code allowlist for analyst manifest warnings
+require_code: false
+allowed_codes:
+  - SW-001
+  - SW-002
+  - RAMPS-100
+  - CURB-200

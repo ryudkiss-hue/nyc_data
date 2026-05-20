@@ -1,0 +1,2 @@
+# Golden profile — contracts Excel header row
+contract_id,borough,planned_sqft,actual_sqft,planned_spend,actual_spend,status,budget_code,contract_type

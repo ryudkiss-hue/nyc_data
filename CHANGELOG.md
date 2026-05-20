@@ -164,24 +164,49 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
-## Unreleased
+## [Unreleased]
+
+### Added
+
+- **Analyst Autopilot** (`socrata_toolkit/analyst/`) — YAML-driven weekly analyst pack: construction list prioritization, permit conflict summary, contract report, program KPI JSON, inquiry drafts, and `manifest.json` under `outputs/analyst_pack/`.
+- **Analyst pack artifacts** — `construction_list_diff.md`, `conflicts_review.xlsx`, `executive_summary.html`/`.md`, enhanced manifest (sources, row counts, version, partial failures), inquiry template library (`config/inquiry_templates/`), golden Excel headers (`config/templates/`), optional `config/budget_codes.yaml`.
+- **Offline mode** — profile flag `offline: true` skips Socrata sources.
+- **Dash analyst GUI** — streamlined sidebar (Home, Construction, Contracts, Metrics, Inquiries, Settings); accessible KPI indicators; Run Analyst Pack on Home.
+- **Example analyst profile** — `config/analyst_profile.example.yaml` with Excel, Postgres, and Socrata source templates.
+- **Pipeline incremental sync** — `socrata_toolkit/pipeline/sync.py` and `socrata sync` CLI command for incremental Socrata → DuckDB loads with optional VACUUM/ANALYZE and Parquet export.
+- **End-user documentation** — `docs/USER_MANUAL.md`, `docs/GETTING_STARTED.md`, `docs/FAQ.md`, `docs/TROUBLESHOOTING.md`, `docs/COMMAND_REFERENCE.md`.
+
+### Changed
+
+- **Dependencies** — LangChain, OpenAI, Ollama, and Hugging Face moved to optional `[llm]` extra (not installed by default).
+- **Primary GUI** — Dash (`dash_app/app.py`) is the analyst-facing app; devtools/quantum/geospatial pages register only when `NYC_DOT_DEBUG=1`.
+- **CLI surfaces documented** — Installed `socrata` entry point (`socrata_toolkit.cli`) exposes search/fetch/analyze/sync/status/map-toolkit; extended commands remain on `python -m socrata_toolkit.core.cli` until entry-point merge is complete.
+- **Modular package layout** — Quality and spatial packages restored; tests aligned with modular APIs (see git history `8fd6508`, `f405358`, `b4412d3`).
+
+### Documentation
+
+- README Documentation section links to new analyst-facing guides.
+- User manual documents Dash as the primary analyst GUI; NiceGUI/Streamlit launcher paths deprecated for new workflows.
 
 ### In Development
+
+- `socrata analyst-pack` CLI subcommand wiring to `run_analyst_pack()`
+- Unified `socrata` entry point delegating to `core.cli` for pipeline/conflict/schema commands
 - GraphQL API endpoints
-- Advanced vector search capabilities
 - ML-based anomaly detection
-- Real-time streaming analytics
-- Mobile app for field inspections
 - ArcGIS Pro integration
-- Kubernetes multi-cluster support
 
 ### Planned
+
 - Predictive maintenance models
-- Advanced geospatial analysis
-- Business intelligence dashboards
-- Workflow automation engine
-- Advanced caching strategies
-- Multi-language support
+- Mobile app for field inspections
+- Kubernetes multi-cluster support
+
+---
+
+## [0.4.0] - TBD
+
+Planned release tag bundling Analyst Autopilot, pipeline sync, and documentation above once CLI merge and integration tests are complete.
 
 ---
 

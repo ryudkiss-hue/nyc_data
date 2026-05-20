@@ -39,6 +39,9 @@ install-minimal: ## 📦 Install toolkit with core only
 setup: ## 🔧 Run interactive setup wizard
 	python -m socrata_toolkit.install_wizard
 
+build-exe: ## 📦 Build Windows standalone executable (PyInstaller)
+	python scripts/build_exe.py
+
 test: ## 🧪 Run full test suite with verbose output
 	python -m pytest tests/ -v
 

@@ -273,6 +273,87 @@ services:
       api:
         condition: service_started
 
+  # One-shot setup / install wizard (profile: analyst)
+  setup:
+    profiles: ["analyst"]
+    build:
+      context: .
+      dockerfile: Dockerfile.analyst
+    container_name: nyc_toolkit_setup
+    env_file:
+      - .env
+    environment:
+      WIZARD_NONINTERACTIVE: ${WIZARD_NONINTERACTIVE:-0}
+      SOCRATA_APP_TOKEN: ${SOCRATA_APP_TOKEN:-}
+      SOCRATA_DOMAIN: ${SOCRATA_DOMAIN:-data.cityofnewyork.us}
+      PG_DSN: ${PG_DSN:-postgresql://${POSTGRES_USER:-dot_user}:${POSTGRES_PASSWORD:-dot_pass}@postgres:5432/${POSTGRES_DB:-sidewalk_db}}
+      DATA_DIR: /app/data
+      OUTPUT_DIR: /app/outputs
+      ANALYST_PROFILE: /app/config/analyst_profile.yaml
+      DUCKDB_PATH: /app/nyc_mission_control.duckdb
+    volumes:
+      - ./config:/app/config
+      - ./data:/app/data
+      - ./outputs:/app/outputs
+    working_dir: /app
+    command: ["python", "-m", "socrata_toolkit.install_wizard"]
+    networks:
+      - nyc_data
+
+  # Analyst Autopilot scheduled runner (profile: analyst)
+  analyst-runner:
+    profiles: ["analyst"]
+    build:
+      context: .
+      dockerfile: Dockerfile.analyst
+    container_name: nyc_analyst_runner
+    env_file:
+      - .env
+    environment:
+      PG_DSN: ${PG_DSN:-postgresql://${POSTGRES_USER:-dot_user}:${POSTGRES_PASSWORD:-dot_pass}@postgres:5432/${POSTGRES_DB:-sidewalk_db}}
+      SOCRATA_APP_TOKEN: ${SOCRATA_APP_TOKEN:-}
+      ANALYST_PROFILE: ${ANALYST_PROFILE:-config/analyst_profile.yaml}
+      ANALYST_CRON: ${ANALYST_CRON:-0 6 * * 1}
+      DUCKDB_PATH: ${DUCKDB_PATH:-/app/nyc_mission_control.duckdb}
+    volumes:
+      - ./data:/app/data
+      - ./outputs:/app/outputs
+      - ./config:/app/config
+    working_dir: /app
+    entrypoint: ["/usr/local/bin/setup-entrypoint.sh"]
+    command: ["sh", "-c", "python scripts/analyst_scheduler.py"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - nyc_data
+
+  # Dash web UI (profile: analyst) — optional local dashboard
+  dash-web:
+    profiles: ["analyst"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nyc_dash_web
+    env_file:
+      - .env
+    environment:
+      DUCKDB_PATH: ${DUCKDB_PATH:-/app/nyc_mission_control.duckdb}
+    ports:
+      - "${DASH_PORT:-8050}:8050"
+    volumes:
+      - ./config:/app/config
+      - ./data:/app/data
+      - ./outputs:/app/outputs
+      - ./dash_app:/app/dash_app
+    working_dir: /app
+    command: ["python", "dash_app/app.py"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - nyc_data
+
 networks:
   nyc_data:
     driver: bridge

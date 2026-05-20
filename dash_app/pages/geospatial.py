@@ -13,7 +13,9 @@ from dash import Input, Output, State, callback, dcc, html
 
 from dash_app.data import db
 
-dash.register_page(__name__, path="/geospatial", name="Geospatial", order=6)
+_DEBUG = os.getenv("NYC_DOT_DEBUG", "").lower() in ("1", "true", "yes")
+if _DEBUG:
+    dash.register_page(__name__, path="/geospatial", name="Geospatial", order=6)
 
 _LAT_HINTS = ["lat", "latitude", "y_coord", "y_coordinate", "geo_lat"]
 _LON_HINTS = ["lon", "lng", "long", "longitude", "x_coord", "x_coordinate", "geo_lon"]

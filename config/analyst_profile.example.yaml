@@ -1,0 +1,124 @@
+# NYC DOT Sidewalk Toolkit — Analyst Autopilot profile (example)
+
+# Copy to config/analyst_profile.yaml and adjust paths for your environment.
+
+#
+
+# CLI: socrata analyst init-config && socrata analyst run --profile config/analyst_profile.yaml
+
+# GUI: python dash_app/app.py → Home → Run Analyst Pack
+
+
+
+profile_name: sidewalk_program_analyst
+
+# Optional: role-specific duties/KPIs (see config/role_profiles/)
+# role: sw_project_analyst
+# role_profile: config/role_profiles/sw_project_analyst.yaml
+
+duckdb_path: nyc_mission_control.duckdb
+
+
+
+# Skip Socrata/network sources; use Excel/Postgres only
+
+offline: false
+
+
+
+# Optional: warn on budget codes not in allowlist
+
+budget_codes: config/budget_codes.yaml
+
+
+
+inquiry_templates_dir: config/inquiry_templates
+
+
+
+outputs:
+
+  dir: outputs/analyst_pack
+
+  formats:
+
+    - xlsx
+
+    - md
+
+    - html
+
+    - json
+
+
+
+contract_ids: []
+
+
+
+sources:
+
+  # Demo: 311 complaints (requires SOCRATA_APP_TOKEN unless offline: true)
+
+  inspections:
+
+    type: socrata
+
+    domain: data.cityofnewyork.us
+
+    fourfour: erm2-nwe9
+
+    max_rows: 2000
+
+  # Production Excel (see config/templates/*_headers.txt for golden columns):
+
+  # inspections:
+
+  #   type: excel
+
+  #   path: "Z:/Sidewalk/Inspections/*.xlsx"
+
+  #   sheet: 0
+
+  #   column_map:
+
+  #     loc_id: location_id
+
+  #     severity_rating: severity
+
+  contracts:
+
+    type: excel
+
+    path: tests/fixtures/analyst/contracts.xlsx
+
+    sheet: 0
+
+  permits:
+
+    type: excel
+
+    path: tests/fixtures/analyst/permits.xlsx
+
+    sheet: 0
+
+
+
+steps:
+
+  prioritize: true
+
+  construction_diff: true
+
+  contract_report: true
+
+  program_kpi: true
+
+  inquiry_templates: true
+
+  executive_summary: true
+
+  conflicts:
+
+    buffer_m: 20
+

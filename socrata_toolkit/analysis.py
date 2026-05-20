@@ -850,50 +850,16 @@ def detect_data_drift(old_df: pd.DataFrame, new_df: pd.DataFrame, num_col: str) 
 
 
 @dataclass
-class MetricSnapshot:
-    name: str
-    value: float
-    timestamp: str
-    status: str
-    target: float
-    delta_from_target: float
-
-
-class MetricsTracker:
-    def __init__(self):
-        self.history: dict[str, list[MetricSnapshot]] = {}
-
-    def record(self, name: str, value: float, target: float = 0.0) -> MetricSnapshot:
-        status = COLOR_GREEN if value >= target else COLOR_RED
-        snap = MetricSnapshot(
-            name, value, datetime.now(timezone.utc).isoformat(), status, target, value - target
-        )
-        if name not in self.history:
-            self.history[name] = []
-        self.history[name].append(snap)
-        return snap
-
-
-@dataclass
 class DashboardSummary:
-    metrics: list[MetricSnapshot]
+    """Backward-compatible dashboard snapshot (see ProgramDashboard in program_metrics)."""
+
+    metrics: list
     overall_health: str
     green_count: int
     yellow_count: int
     red_count: int
-
-
-def compute_program_dashboard(df: pd.DataFrame) -> DashboardSummary:
-    tracker = MetricsTracker()
-    if "violations" in df.columns:
-        tracker.record("defect_density", float(df["violations"].mean()), target=2.0)
-    return DashboardSummary(
-        metrics=[s[-1] for s in tracker.history.values()],
-        overall_health=COLOR_GREEN,
-        green_count=len(tracker.history),
-        yellow_count=0,
-        red_count=0,
-    )
+    timestamp: str = ""
+    budget_codes: list = field(default_factory=list)
 
 
 class Report:

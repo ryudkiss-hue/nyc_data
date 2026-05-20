@@ -1,0 +1,96 @@
+# Project Analyst - SW (capital contracts & program metrics)
+# NYC City Jobs: jid-35715 / Job ID 725068
+# Civil service: Staff Analyst (12626), Job level 01
+
+role_id: project_analyst_sw
+display_name: "Project Analyst - SW"
+job_reference:
+  url: https://cityjobs.nyc.gov/job/project-analyst-sw-in-manhattan-jid-35715
+  jid: "35715"
+  job_id: "725068"
+  business_title: "Project Analyst - SW"
+  civil_service_title: "STAFF ANALYST"
+  department: "DOT — Sidewalk/Inspection Management"
+  compared_to_role: sw_project_analyst
+
+unit_focus: >
+  Capital sidewalk and pedestrian ramp contracts — construction lists, GIS conflict
+  analysis, contract progress/budget/productivity reporting, and program metrics.
+
+duties:
+  - id: repair_location_analysis
+    text: Provides analysis on locations where sidewalk repairs are needed
+    workflow_steps: [prioritize]
+    pack_outputs: [construction_list.xlsx]
+  - id: construction_lists_conflicts
+    text: Creates construction lists; identifies conflicts via GIS and contract scope
+    workflow_steps: [prioritize, conflicts, construction_diff]
+    pack_outputs: [construction_list.xlsx, conflicts_summary.md, construction_list_diff.md]
+  - id: contract_progress_reporting
+    text: Analytical reports on contract progress, budget dollars, and productivity
+    workflow_steps: [contract_report, program_kpi]
+    pack_outputs: [contract_status.md, contract_analytics.json, program_kpi.json]
+  - id: efficiency_studies
+    text: Routine analytical studies for contract efficiency and work productivity
+    workflow_steps: [program_kpi]
+    pack_outputs: [program_kpi.json, contract_analytics.json]
+  - id: contract_planning_inquiries
+    text: Responds to contract planning related inquiries
+    workflow_steps: [inquiry_templates]
+    pack_outputs: [inquiry_drafts/]
+    inquiry_templates:
+      - contract_delay.md
+      - budget_variance.md
+  - id: program_metrics_tracking
+    text: Tracks program metrics — construction data, contract performance, budget codes
+    workflow_steps: [program_kpi]
+    pack_outputs: [program_kpi.json]
+
+kpis:
+  - name: contract_completion_pct
+    description: Average percent complete across active contracts
+    formula: "mean(actual_sqft / planned_sqft * 100)"
+    data_source:
+      table: contracts
+      columns: [actual_sqft, planned_sqft]
+    direction: higher_is_better
+    target: 85
+    warning_threshold: 70
+    critical_threshold: 55
+  - name: budget_burn_variance_pct
+    description: Aggregate (actual - planned) spend as percent of planned
+    formula: "(sum(actual_spend) - sum(planned_spend)) / sum(planned_spend) * 100"
+    data_source:
+      table: contracts
+      columns: [actual_spend, planned_spend]
+    direction: lower_is_better
+    target: 0
+    warning_threshold: 10
+    critical_threshold: 20
+  - name: construction_list_delta
+    description: Net new locations added vs previous pack construction list
+    formula: "added count from construction_list_diff"
+    data_source:
+      artifact: construction_list_diff.md
+    direction: lower_is_better
+    target: 5
+    warning_threshold: 15
+    critical_threshold: 30
+  - name: conflict_rate_pct
+    description: Permit/GIS conflict rate on prioritized list
+    formula: "conflict_count / total_items * 100"
+    data_source:
+      artifact: conflicts_summary
+    direction: lower_is_better
+    target: 5
+    warning_threshold: 12
+    critical_threshold: 20
+  - name: program_health_score
+    description: Green KPI count as percent of standard program_kpi metrics
+    formula: "green_count / metric_count * 100 from program_kpi.json"
+    data_source:
+      artifact: program_kpi.json
+    direction: higher_is_better
+    target: 80
+    warning_threshold: 60
+    critical_threshold: 40

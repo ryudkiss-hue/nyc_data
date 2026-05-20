@@ -6,6 +6,8 @@ Honest assessment of what's implemented, what's missing, and what's needed to de
 
 The toolkit is **80% ready for production** with enterprise-grade architecture and comprehensive documentation. The remaining 20% is **operational readiness** (procedures, testing, monitoring) rather than code.
 
+**Primary local automation (2026):** **Analyst Autopilot** — `socrata analyst run` produces a weekly pack under `outputs/analyst_pack/{date}/`. Use Docker profile `analyst` for scheduling. Airflow DAGs remain an **enterprise add-on** when a Postgres warehouse and ops team are available; they are not required for day-to-day analyst work.
+
 ### Quick Reference
 
 | Category | Status | Gap | Effort |

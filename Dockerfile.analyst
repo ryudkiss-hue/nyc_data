@@ -1,0 +1,27 @@
+FROM python:3.11-slim
+
+LABEL maintainer="NYC DOT Sidewalk Toolkit"
+LABEL description="Analyst autopilot runner and setup wizard"
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY pyproject.toml README.md ./
+COPY socrata_toolkit/ socrata_toolkit/
+COPY config/ config/
+COPY scripts/ scripts/
+COPY docker/setup-entrypoint.sh /usr/local/bin/setup-entrypoint.sh
+
+RUN chmod +x /usr/local/bin/setup-entrypoint.sh && \
+    pip install --no-cache-dir -e ".[postgres,xlsx,geo]" -q
+
+RUN mkdir -p data outputs outputs/analyst_pack
+
+ENV PYTHONUNBUFFERED=1
+ENV ANALYST_PROFILE=config/analyst_profile.yaml
+
+ENTRYPOINT ["/usr/local/bin/setup-entrypoint.sh"]
+CMD ["python", "-m", "socrata_toolkit.install_wizard", "--skip-checks"]
