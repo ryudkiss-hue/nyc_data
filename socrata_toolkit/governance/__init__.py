@@ -2,10 +2,16 @@
 
 from __future__ import annotations
 
-from .audit import *
 from .compliance import *
-from .core import *
 from .processor import *
+from .core import *
+# CDC audit trail types must win over access-log AuditEvent in core
+from .audit import (  # noqa: F401
+    ActionType,
+    AuditEvent,
+    AuditTrail,
+    ChangeType,
+)
 
 # Lineage DAG (tests import from governance)
 from ..lineage.core import (

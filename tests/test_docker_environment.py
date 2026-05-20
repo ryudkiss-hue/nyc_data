@@ -19,6 +19,26 @@ API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 API_KEY = os.getenv("API_KEY", "sk_test_demo_admin_abc123")
 
 
+def _integration_services_available() -> bool:
+    """Return True when Postgres and the API are reachable (Docker stack up)."""
+    try:
+        conn = psycopg2.connect(DATABASE_URL, connect_timeout=2)
+        conn.close()
+    except Exception:
+        return False
+    try:
+        resp = requests.get(f"{API_BASE_URL}/health", timeout=2)
+        return resp.status_code < 500
+    except Exception:
+        return False
+
+
+pytestmark = pytest.mark.skipif(
+    not _integration_services_available(),
+    reason="Docker integration services not available on localhost",
+)
+
+
 class TestDatabaseConnectivity:
     """PostgreSQL connectivity and health checks"""
 

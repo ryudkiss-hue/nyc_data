@@ -88,17 +88,22 @@ def create_app():
     @app.route("/api/analyze", methods=["POST"])
     def analyze():
         import pandas as pd
-        from ..analysis.core import profile_dataframe
+        from ..analysis import profile_dataframe
         data = request.get_json()
         if not data or "rows" not in data:
             return jsonify({"error": "POST JSON with 'rows' array"}), 400
         df = pd.DataFrame(data["rows"])
         profile = profile_dataframe(df)
+        dtypes = {
+            col["name"]: col["type"]
+            for col in getattr(profile, "columns", [])
+            if isinstance(col, dict) and "name" in col and "type" in col
+        }
         return jsonify({
             "row_count": profile.row_count,
             "column_count": profile.column_count,
             "null_counts": profile.null_counts,
-            "dtypes": profile.dtypes,
+            "dtypes": dtypes,
         })
 
     @app.route("/api/quality-score", methods=["POST"])
@@ -153,7 +158,7 @@ def create_app():
     @app.route("/api/triage", methods=["POST"])
     def triage():
         import pandas as pd
-        from ..nlp.integration import triage_complaints
+        from ..ai import triage_complaints
         data = request.get_json()
         if not data or "rows" not in data:
             return jsonify({"error": "POST JSON with 'rows' array"}), 400
@@ -168,7 +173,7 @@ def create_app():
 
     @app.route("/api/board")
     def board_state():
-        from ..tools.tasks import TaskBoard
+        from ..task_board import TaskBoard
         from pathlib import Path
         board_path = Path("outputs/board.json")
         if board_path.exists():
@@ -183,7 +188,7 @@ def create_app():
 
     @app.route("/api/board/task", methods=["POST"])
     def create_task():
-        from ..tools.tasks import TaskBoard, Task
+        from ..task_board import TaskBoard, Task
         from pathlib import Path
         board_path = Path("outputs/board.json")
         if board_path.exists():
@@ -209,7 +214,7 @@ def create_app():
 
     @app.route("/api/kpis")
     def kpis():
-        from ..analysis.program import MetricsTracker
+        from ..program_metrics import MetricsTracker
         from pathlib import Path
         metrics_path = Path("outputs/metrics.json")
         if metrics_path.exists():

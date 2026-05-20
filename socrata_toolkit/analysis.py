@@ -62,64 +62,63 @@ class DataProfile:
 
 def profile_dataframe(df: pd.DataFrame) -> DataProfile:
     """Produce a comprehensive profile of the dataframe for CLI and Dash frontend."""
-    # Column-level profiling
+    if df.empty:
+        return DataProfile(0, 0, [], {}, 0, ["Input DataFrame is empty"], {})
+
+    row_count = len(df)
+    null_counts_series = df.isna().sum()
+    null_pcts = (null_counts_series / max(row_count, 1)) * 100
+    unique_counts = df.nunique()
+    dtypes = df.dtypes.astype(str)
+
     cols = []
-    null_counts = {}
     warnings = []
     for col in df.columns:
-        dtype = str(df[col].dtype)
-        null_count = int(df[col].isna().sum())  # type: ignore
-        null_pct = round((null_count / max(len(df), 1)) * 100, 2)
-        unique_count = int(df[col].nunique())  # type: ignore
+        col_str = str(col)
+        null_pct = round(float(null_pcts[col]), 2)
+        unique_count = int(unique_counts[col])
 
-        # Get a sample value
+        if null_pct > 10:
+            warnings.append(f"Column '{col_str}' has high missing values ({null_pct}%).")
+        if unique_count == 1 and row_count > 1:
+            warnings.append(f"Column '{col_str}' is constant (potential low information).")
+        if "date" in col_str.lower() and str(dtypes[col]) in ("object", "string", "str"):
+            warnings.append(f"Column '{col_str}' might be a date but is stored as object/string.")
+
         try:
-            sample_val = df[col].dropna().iloc[0] if not df[col].dropna().empty else ""
+            sample_val = df[col_str].dropna().iloc[0] if not df[col_str].dropna().empty else ""
             sample = str(sample_val)[:50]
         except Exception:
             sample = ""
 
-        null_counts[str(col)] = null_count
         cols.append(
             {
-                "name": col,
-                "type": dtype,
+                "name": col_str,
+                "type": dtypes[col],
                 "null_pct": null_pct,
                 "unique": unique_count,
                 "sample": sample,
             }
         )
 
-        if null_pct > 10:
-            warnings.append(f"Column '{col}' has high missing values ({null_pct}%).")
-        if unique_count == 1:
-            warnings.append(f"Column '{col}' is constant (potential low information).")
-        if "date" in col.lower() and dtype == "object":
-            warnings.append(f"Column '{col}' might be a date but is stored as object/string.")
-
-    # Quality score (simple composite)
-    nulls_total = int(df.isnull().sum().sum())
+    total_nulls = int(null_counts_series.sum())
     total_cells = df.shape[0] * df.shape[1]
-    completeness = (1 - nulls_total / max(total_cells, 1)) * 100
+    completeness_score = (1 - total_nulls / max(total_cells, 1)) * 100
+    total_duplicates = int(df.duplicated().sum())
+    uniqueness_score = (1 - total_duplicates / max(row_count, 1)) * 100
+    warning_penalty = min(len(warnings) * 5, 25)
+    quality_score = int((completeness_score * 0.6) + (uniqueness_score * 0.4) - warning_penalty)
+    quality_score = max(0, min(100, quality_score))
 
-    # Basic consistency (duplicates)
-    dupes = int(df.duplicated().sum())
-    consistency = (1 - dupes / max(len(df), 1)) * 100
-
-    quality_score = int(completeness * 0.7 + consistency * 0.3)
-
+    numeric_df = df.select_dtypes(include=DTYPE_NUM)
     return DataProfile(
-        row_count=len(df),
+        row_count=row_count,
         column_count=df.shape[1],
         columns=cols,
-        null_counts=null_counts,
+        null_counts=null_counts_series.to_dict(),
         quality_score=quality_score,
         warnings=warnings,
-        numeric_summary=(
-            df.select_dtypes(include=DTYPE_NUM).describe().to_dict()
-            if not df.select_dtypes(include=DTYPE_NUM).empty
-            else {}
-        ),
+        numeric_summary=numeric_df.describe().to_dict() if not numeric_df.empty else {},
     )
 
 
@@ -1706,3 +1705,46 @@ from .quality_validator import (  # noqa: E402
     ValidationResult,
     ValidationResultsAggregator,
 )
+
+# Override simplified stubs with full implementations expected by the test suite
+from .analysis_advanced import (  # noqa: E402
+    AnomalyReport,
+    CorrelationResult,
+    OutlierReport,
+    classify_all_distributions,
+    classify_distribution,
+    correlation_analysis,
+    detect_all_outliers,
+    detect_outliers_iqr,
+    detect_outliers_zscore,
+    flag_anomalies,
+    time_series_summary,
+)
+from .program_metrics import (  # noqa: E402
+    MetricSnapshot,
+    MetricsTracker,
+    ProgramDashboard as DashboardSummary,
+    compute_program_dashboard,
+)
+from .reporting import (  # noqa: E402
+    Report,
+    ReportSection,
+    generate_contract_report,
+    generate_inquiry_response,
+    generate_program_report,
+)
+from .sla_tracking import compute_sla_metrics, flag_sla_violations  # noqa: E402
+from .visualization import (  # noqa: E402
+    ChartResult,
+    bar_chart,
+    box_plot,
+    correlation_heatmap,
+    histogram,
+    quality_dashboard,
+    time_series_chart,
+)
+
+try:
+    from .reports.analyst import ProjectAnalystReports  # noqa: E402
+except ImportError:
+    ProjectAnalystReports = None  # type: ignore

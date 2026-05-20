@@ -11,7 +11,7 @@ Key Classes:
 
 Usage:
     tracker = FreshnessTracker(db_dsn='postgresql://...')
-    tracker.track_ingestion('dataset-123', datetime.utcnow(), expected_frequency_hours=24)
+    tracker.track_ingestion('dataset-123', _utc_now(), expected_frequency_hours=24)
     status = tracker.get_freshness_status('dataset-123')
     sla_pct = tracker.compute_freshness_sla_pct(period_days=30)
 """
@@ -19,7 +19,7 @@ Usage:
 from __future__ import annotations
 
 from dataclasses import dataclass, asdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 import json
 import logging
@@ -34,6 +34,16 @@ except ImportError:
 
 # Logging setup
 logger = logging.getLogger(__name__)
+
+
+def _utc_now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _to_utc(dt: datetime) -> datetime:
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
 
 
 class AlertSeverity(Enum):
@@ -70,14 +80,14 @@ class DatasetFreshness:
             >>> df = DatasetFreshness(
             ...     dataset_id='nyc-311',
             ...     dataset_name='NYC 311 Service Requests',
-            ...     last_updated_utc=datetime.utcnow(),
+            ...     last_updated_utc=_utc_now(),
             ...     expected_update_frequency_hours=24,
             ...     sla_threshold_hours=48
             ... )
             >>> df.is_fresh()
             True
         """
-        age = datetime.utcnow() - self.last_updated_utc
+        age = _utc_now() - _to_utc(self.last_updated_utc)
         return age.total_seconds() / 3600 < self.sla_threshold_hours
 
     def days_since_update(self) -> float:
@@ -90,14 +100,14 @@ class DatasetFreshness:
             >>> df = DatasetFreshness(
             ...     dataset_id='nyc-311',
             ...     dataset_name='NYC 311 Service Requests',
-            ...     last_updated_utc=datetime.utcnow() - timedelta(days=5),
+            ...     last_updated_utc=_utc_now() - timedelta(days=5),
             ...     expected_update_frequency_hours=24,
             ...     sla_threshold_hours=48
             ... )
             >>> df.days_since_update()
             5.0
         """
-        age = datetime.utcnow() - self.last_updated_utc
+        age = _utc_now() - _to_utc(self.last_updated_utc)
         return age.total_seconds() / (24 * 3600)
 
     def sla_violated(self) -> bool:
@@ -110,7 +120,7 @@ class DatasetFreshness:
             >>> df = DatasetFreshness(
             ...     dataset_id='nyc-311',
             ...     dataset_name='NYC 311 Service Requests',
-            ...     last_updated_utc=datetime.utcnow() - timedelta(hours=72),
+            ...     last_updated_utc=_utc_now() - timedelta(hours=72),
             ...     expected_update_frequency_hours=24,
             ...     sla_threshold_hours=48
             ... )
@@ -129,14 +139,14 @@ class DatasetFreshness:
             >>> df = DatasetFreshness(
             ...     dataset_id='nyc-311',
             ...     dataset_name='NYC 311 Service Requests',
-            ...     last_updated_utc=datetime.utcnow() - timedelta(hours=30),
+            ...     last_updated_utc=_utc_now() - timedelta(hours=30),
             ...     expected_update_frequency_hours=24,
             ...     sla_threshold_hours=48
             ... )
             >>> df.hours_until_sla_violation()
             18.0
         """
-        age_hours = (datetime.utcnow() - self.last_updated_utc).total_seconds() / 3600
+        age_hours = (_utc_now() - _to_utc(self.last_updated_utc)).total_seconds() / 3600
         return self.sla_threshold_hours - age_hours
 
 
@@ -176,7 +186,7 @@ class FreshnessAlert:
             >>> df = DatasetFreshness(
             ...     dataset_id='nyc-311',
             ...     dataset_name='NYC 311 Service Requests',
-            ...     last_updated_utc=datetime.utcnow() - timedelta(hours=72),
+            ...     last_updated_utc=_utc_now() - timedelta(hours=72),
             ...     expected_update_frequency_hours=24,
             ...     sla_threshold_hours=48
             ... )
@@ -184,7 +194,7 @@ class FreshnessAlert:
             >>> alert.severity == AlertSeverity.CRITICAL
             True
         """
-        stale_hours = (datetime.utcnow() - df.last_updated_utc).total_seconds() / 3600
+        stale_hours = (_utc_now() - _to_utc(df.last_updated_utc)).total_seconds() / 3600
         hours_over = stale_hours - df.sla_threshold_hours
 
         # Determine severity: critical if >24 hours over SLA, else warning
@@ -194,7 +204,7 @@ class FreshnessAlert:
             alert_id=str(uuid.uuid4()),
             dataset_id=df.dataset_id,
             dataset_name=df.dataset_name,
-            alert_time=datetime.utcnow(),
+            alert_time=_utc_now(),
             stale_hours=stale_hours,
             sla_threshold_hours=df.sla_threshold_hours,
             severity=severity,
@@ -211,7 +221,7 @@ class FreshnessAlert:
             ...     alert_id='alert-123',
             ...     dataset_id='nyc-311',
             ...     dataset_name='NYC 311 Service Requests',
-            ...     alert_time=datetime.utcnow(),
+            ...     alert_time=_utc_now(),
             ...     stale_hours=72,
             ...     sla_threshold_hours=48,
             ...     severity=AlertSeverity.CRITICAL
@@ -236,7 +246,7 @@ class FreshnessAlert:
             ...     alert_id='alert-123',
             ...     dataset_id='nyc-311',
             ...     dataset_name='NYC 311 Service Requests',
-            ...     alert_time=datetime.utcnow(),
+            ...     alert_time=_utc_now(),
             ...     stale_hours=72,
             ...     sla_threshold_hours=48,
             ...     severity=AlertSeverity.CRITICAL
@@ -263,7 +273,7 @@ class FreshnessAlert:
             ...     alert_id='alert-123',
             ...     dataset_id='nyc-311',
             ...     dataset_name='NYC 311 Service Requests',
-            ...     alert_time=datetime.utcnow(),
+            ...     alert_time=_utc_now(),
             ...     stale_hours=72,
             ...     sla_threshold_hours=48,
             ...     severity=AlertSeverity.CRITICAL
@@ -318,7 +328,7 @@ class FreshnessAlert:
             ...     alert_id='alert-123',
             ...     dataset_id='nyc-311',
             ...     dataset_name='NYC 311 Service Requests',
-            ...     alert_time=datetime.utcnow(),
+            ...     alert_time=_utc_now(),
             ...     stale_hours=72,
             ...     sla_threshold_hours=48,
             ...     severity=AlertSeverity.CRITICAL
@@ -357,7 +367,7 @@ class FreshnessTracker:
 
     Examples:
         >>> tracker = FreshnessTracker()  # In-memory mode
-        >>> tracker.track_ingestion('nyc-311', datetime.utcnow(), 24)
+        >>> tracker.track_ingestion('nyc-311', _utc_now(), 24)
         >>> status = tracker.get_freshness_status('nyc-311')
         >>> print(f"Fresh: {status['is_fresh']}, SLA Violated: {status['sla_violated']}")
     """
@@ -454,7 +464,7 @@ class FreshnessTracker:
             >>> tracker = FreshnessTracker()
             >>> tracker.track_ingestion(
             ...     dataset_id='nyc-311',
-            ...     last_updated_utc=datetime.utcnow(),
+            ...     last_updated_utc=_utc_now(),
             ...     expected_frequency_hours=24,
             ...     dataset_name='NYC 311 Service Requests'
             ... )
@@ -550,7 +560,7 @@ class FreshnessTracker:
 
         Examples:
             >>> tracker = FreshnessTracker()
-            >>> tracker.track_ingestion('nyc-311', datetime.utcnow(), 24)
+            >>> tracker.track_ingestion('nyc-311', _utc_now(), 24)
             >>> status = tracker.get_freshness_status('nyc-311')
             >>> print(f"Fresh: {status['is_fresh']}")
             Fresh: True
@@ -560,7 +570,7 @@ class FreshnessTracker:
 
         df = self._in_memory_store[dataset_id]
 
-        hours_stale = (datetime.utcnow() - df.last_updated_utc).total_seconds() / 3600
+        hours_stale = (_utc_now() - _to_utc(df.last_updated_utc)).total_seconds() / 3600
 
         return {
             "dataset_id": dataset_id,
@@ -593,7 +603,7 @@ class FreshnessTracker:
 
         Examples:
             >>> tracker = FreshnessTracker()
-            >>> tracker.track_ingestion('nyc-311', datetime.utcnow(), 24)
+            >>> tracker.track_ingestion('nyc-311', _utc_now(), 24)
             >>> sla_report = tracker.compute_freshness_sla_pct(period_days=30)
             >>> print(f"SLA Compliance: {sla_report['compliance_pct']:.1f}%")
             SLA Compliance: 100.0%
@@ -627,7 +637,7 @@ class FreshnessTracker:
             >>> tracker = FreshnessTracker()
             >>> tracker.track_ingestion(
             ...     'stale-dataset',
-            ...     datetime.utcnow() - timedelta(hours=72),
+            ...     _utc_now() - timedelta(hours=72),
             ...     24
             ... )
             >>> alerts = tracker.get_stale_datasets()
@@ -648,7 +658,7 @@ class FreshnessTracker:
 
         Examples:
             >>> tracker = FreshnessTracker()
-            >>> tracker.track_ingestion('nyc-311', datetime.utcnow(), 24)
+            >>> tracker.track_ingestion('nyc-311', _utc_now(), 24)
             >>> metrics = tracker.export_metrics()
             >>> 'dataset_freshness_sla_compliance_pct' in metrics
             True
@@ -669,7 +679,7 @@ class FreshnessTracker:
         )
 
         for df in self._in_memory_store.values():
-            hours_stale = (datetime.utcnow() - df.last_updated_utc).total_seconds() / 3600
+            hours_stale = (_utc_now() - _to_utc(df.last_updated_utc)).total_seconds() / 3600
             lines.append(
                 f'dataset_hours_since_update{{dataset_id="{df.dataset_id}"}} {hours_stale:.2f}'
             )
