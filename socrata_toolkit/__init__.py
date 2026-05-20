@@ -94,7 +94,6 @@ _lazy_map: dict[str, str] = {
     "SocrataLLMChatbot": "ai:SocrataLLMChatbot",
     "SQLQueryEngine": "ai:SQLQueryEngine",
     "LegalPolicyEngine": "ai:LegalPolicyEngine",
-    "quantum_search": "ai:quantum_search",
     "api": "api",
     # alerts (Pillar: alerts)
     "Rule": "alerts.rules:Rule",
@@ -189,7 +188,6 @@ __all__ = [
     "SocrataLLMChatbot",
     "SQLQueryEngine",
     "LegalPolicyEngine",
-    "quantum_search",
     # alerts
     "Rule",
     "RulesEngine",
@@ -207,7 +205,6 @@ if TYPE_CHECKING:
         SocrataLLMChatbot,
         SQLQueryEngine,
         enrich_construction_list,
-        quantum_search,
         sentiment_score,
     )
     from .analysis import (  # noqa: F401

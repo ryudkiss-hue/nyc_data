@@ -1,307 +1,153 @@
-"""dash_app/pages/home.py — Program Dashboard"""
+"""Analyst home — run pack, workflow, latest outputs."""
 
 import os
+import subprocess
 import sys
+from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 import dash
-import dash_ag_grid as dag
 import dash_bootstrap_components as dbc
-import pandas as pd
-import plotly.express as px
 from dash import Input, Output, State, callback, dcc, html
 
-from dash_app.data import db
+from dash_app.data.analyst_pack import artifact_links, latest_pack_dir, load_manifest
 
-dash.register_page(__name__, path="/", name="Dashboard", order=0)
+dash.register_page(__name__, path="/", name="Home", order=0)
 
-QUICK_DATASETS = [
-    {
-        "icon": "🚧",
-        "title": "Sidewalk Violations",
-        "desc": "311 sidewalk defect complaints",
-        "domain": "data.cityofnewyork.us",
-        "id": "erm2-nwe9",
-        "label": "complaints_311",
-    },
-    {
-        "icon": "🚲",
-        "title": "Bike Route Projects",
-        "desc": "Planned & completed bike lanes",
-        "domain": "data.cityofnewyork.us",
-        "id": "s5uu-3ajy",
-        "label": "bike_routes",
-    },
-    {
-        "icon": "🚗",
-        "title": "Traffic Volume",
-        "desc": "Daily traffic counts by borough",
-        "domain": "data.cityofnewyork.us",
-        "id": "btm5-ppia",
-        "label": "traffic_volume",
-    },
-    {
-        "icon": "🌉",
-        "title": "Bridge Inspections",
-        "desc": "NYC bridge condition ratings",
-        "domain": "data.cityofnewyork.us",
-        "id": "bhad-7uzz",
-        "label": "bridge_inspections",
-    },
-]
+ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_PROFILE = ROOT / "config" / "analyst_profile.yaml"
+EXAMPLE_PROFILE = ROOT / "config" / "analyst_profile.example.yaml"
+
+_pack = latest_pack_dir()
+_manifest = load_manifest(_pack)
+_warnings = _manifest.get("warnings", [])
+_partial = _manifest.get("partial_failures", [])
+
+
+def _status_text() -> str:
+    if not _pack:
+        return "No Analyst Pack yet. Complete setup, then run your first pack."
+    run_date = _manifest.get("run_date", "unknown")
+    n = len(_manifest.get("artifacts", {}))
+    health = "with warnings" if _warnings or _partial else "OK"
+    return f"Last run: {run_date} — {n} artifacts ({health})"
+
 
 layout = dbc.Container(
     [
+        html.H1("Analyst Home", className="nyc-page-title"),
+        html.P(_status_text(), className="nyc-page-sub", id="home-status-text"),
         html.Div(
-            [
-                html.H1("🏠 Program Dashboard", className="nyc-page-title"),
-                html.P(
-                    "Launch an analysis pipeline with one click, or upload your own dataset.",
-                    className="nyc-page-sub",
-                ),
+            className="nyc-workflow-steps",
+            children=[
+                html.Div("1. Setup", className="nyc-workflow-step", **{"aria-current": "step"}),
+                html.Div("2. Configure profile", className="nyc-workflow-step"),
+                html.Div("3. Run pack", className="nyc-workflow-step"),
+                html.Div("4. Review outputs", className="nyc-workflow-step"),
             ],
-            className="nyc-page-header",
+            role="list",
         ),
-        html.H5(
-            "⚡ Quick Start",
-            style={"fontWeight": 700, "color": "var(--text-heading)", "marginBottom": "12px"},
-        ),
-        dbc.Row(
-            [
-                dbc.Col(
-                    html.Div(
-                        [
-                            html.Div(ds["icon"], className="qs-icon"),
-                            html.Div(ds["title"], className="qs-title"),
-                            html.Div(ds["desc"], className="qs-desc"),
-                            html.Div(style={"height": "12px"}),
-                            dbc.Button(
-                                "Load Dataset",
-                                id={"type": "qs-btn", "index": i},
-                                size="sm",
-                                color="primary",
-                                outline=True,
-                                className="w-100",
-                            ),
-                        ],
-                        className="qs-card",
-                    ),
-                    md=3,
-                    sm=6,
-                    xs=12,
-                    className="mb-3",
-                )
-                for i, ds in enumerate(QUICK_DATASETS)
-            ]
-        ),
-        dcc.Loading(html.Div(id="home-status"), type="circle", color="var(--accent)"),
-        html.Div(className="divider-nyc"),
-        html.H5(
-            "📁 Upload Dataset",
-            style={"fontWeight": 700, "marginBottom": "12px", "color": "var(--text-heading)"},
-        ),
-        dcc.Upload(
-            id="home-upload",
-            children=html.Div(
+        dbc.Card(
+            dbc.CardBody(
                 [
-                    html.Div("⬆️", style={"fontSize": "2rem"}),
-                    html.Div(
-                        "Drag & drop CSV or Parquet, or click to browse",
-                        style={
-                            "color": "var(--text-muted)",
-                            "fontSize": "0.85rem",
-                            "marginTop": "8px",
-                        },
+                    html.H2("Run Analyst Pack", style={"fontSize": "1.25rem"}),
+                    html.P(
+                        "Runs `socrata analyst run` using your profile YAML. "
+                        "Prefer CLI in production; this button is for local convenience.",
+                        className="text-muted",
                     ),
-                ],
-                style={"textAlign": "center", "padding": "28px"},
+                    dbc.Input(
+                        id="home-profile-path",
+                        value=str(
+                            DEFAULT_PROFILE if DEFAULT_PROFILE.exists() else EXAMPLE_PROFILE
+                        ),
+                        className="mb-2",
+                        **{"aria-label": "Analyst profile path"},
+                    ),
+                    html.Button(
+                        "Run Analyst Pack",
+                        id="home-run-pack",
+                        className="nyc-btn-primary",
+                        **{"aria-label": "Run analyst pack"},
+                    ),
+                    html.Div(id="home-run-feedback", className="mt-3"),
+                ]
             ),
-            style={
-                "border": "2px dashed var(--border-color)",
-                "borderRadius": "12px",
-                "background": "var(--bg-secondary)",
-                "cursor": "pointer",
-                "marginBottom": "20px",
-            },
-            multiple=False,
+            className="mb-4",
+            style={"background": "var(--bg-secondary)", "border": "1px solid var(--border-color)"},
         ),
-        html.Div(className="divider-nyc"),
-        html.H5(
-            "🦆 DuckDB Tables",
-            style={"fontWeight": 700, "marginBottom": "12px", "color": "var(--text-heading)"},
+        html.H2("Latest outputs", style={"fontSize": "1.1rem"}),
+        html.Ul(
+            [
+                html.Li(
+                    [
+                        html.A(
+                            item["label"],
+                            href=f"file:///{item['path'].replace(chr(92), '/')}",
+                            target="_blank",
+                        )
+                    ]
+                )
+                for item in artifact_links(_manifest)
+            ]
+            or [html.Li("No artifacts — run the analyst pack.")],
+            id="home-artifact-list",
         ),
-        html.Div(id="home-tables"),
-        html.Div(className="divider-nyc"),
-        html.Div(id="home-preview"),
+        html.Div(id="home-warnings"),
     ],
     fluid=True,
 )
 
 
 @callback(
-    Output("home-status", "children"),
-    Output("session-store", "data"),
-    Input({"type": "qs-btn", "index": dash.ALL}, "n_clicks"),
-    Input("home-upload", "contents"),
-    State("home-upload", "filename"),
-    State("token-store", "data"),
+    Output("home-run-feedback", "children"),
+    Input("home-run-pack", "n_clicks"),
+    State("home-profile-path", "value"),
     prevent_initial_call=True,
 )
-def load_data(qs_clicks, upload_contents, upload_name, token):
-    ctx = dash.callback_context
-    if not ctx.triggered:
-        return dash.no_update, dash.no_update
-    tid = ctx.triggered_id
-
-    if isinstance(tid, dict) and tid.get("type") == "qs-btn":
-        ds = QUICK_DATASETS[tid["index"]]
-        try:
-            df = db.parallel_socrata_fetch(ds["domain"], ds["id"], max_rows=2000, token=token)
-            if df.empty:
-                return (
-                    dbc.Alert("No data returned.", color="warning", dismissable=True),
-                    dash.no_update,
-                )
-            db.upsert_df(df, ds["label"])
-            store = {
-                "label": ds["label"],
-                "table_name": ds["label"],
-                "records": df.head(500).to_dict("records"),
-                "columns": list(df.columns),
-                "row_count": len(df),
-            }
-            return (
-                dbc.Alert(
-                    f"✅ {ds['title']} — {len(df):,} rows loaded to `{ds['label']}`",
-                    color="success",
-                    dismissable=True,
-                    duration=6000,
-                ),
-                store,
+def run_pack(n, profile_path):
+    if not profile_path or not Path(profile_path).exists():
+        return html.Div(
+            f"Profile not found: {profile_path}. Run: socrata analyst init-config",
+            className="nyc-error-banner",
+            role="alert",
+        )
+    try:
+        proc = subprocess.run(
+            [sys.executable, "-m", "socrata_toolkit.core.cli", "analyst", "run", "--profile", profile_path],
+            capture_output=True,
+            text=True,
+            timeout=300,
+            cwd=str(ROOT),
+        )
+        if proc.returncode != 0:
+            return html.Div(
+                [html.Strong("Run failed"), html.Pre(proc.stderr or proc.stdout)],
+                className="nyc-error-banner",
+                role="alert",
             )
-        except Exception as e:
-            return dbc.Alert(f"❌ {e}", color="danger", dismissable=True), dash.no_update
-
-    if tid == "home-upload" and upload_contents:
-        import base64
-        import io
-
-        _, content_string = upload_contents.split(",")
-        decoded = base64.b64decode(content_string)
-        fname = upload_name or "upload.csv"
-        try:
-            df = (
-                pd.read_parquet(io.BytesIO(decoded))
-                if fname.endswith(".parquet")
-                else pd.read_csv(io.BytesIO(decoded))
-            )
-            label = fname.rsplit(".", 1)[0]
-            db.upsert_df(df, label)
-            store = {
-                "label": label,
-                "table_name": label,
-                "records": df.head(500).to_dict("records"),
-                "columns": list(df.columns),
-                "row_count": len(df),
-            }
-            return (
-                dbc.Alert(
-                    f"✅ {fname} — {len(df):,} rows",
-                    color="success",
-                    dismissable=True,
-                    duration=6000,
-                ),
-                store,
-            )
-        except Exception as e:
-            return dbc.Alert(f"❌ {e}", color="danger", dismissable=True), dash.no_update
-
-    return dash.no_update, dash.no_update
+        return dbc.Alert(
+            f"Pack complete. {proc.stdout[-500:] if proc.stdout else 'See outputs/analyst_pack/'}",
+            color="success",
+        )
+    except subprocess.TimeoutExpired:
+        return html.Div("Run timed out after 5 minutes.", className="nyc-error-banner", role="alert")
+    except Exception as exc:
+        return html.Div(str(exc), className="nyc-error-banner", role="alert")
 
 
-@callback(Output("home-tables", "children"), Input("session-store", "data"))
-def refresh_tables(_):
-    tables = db.list_tables()
-    if not tables:
-        return html.P("No tables yet.", style={"color": "var(--text-muted)"})
-    rows = [{"Table": t, "Rows": f"{db.table_row_count(t):,}"} for t in tables]
-    return dag.AgGrid(
-        rowData=rows,
-        columnDefs=[{"field": "Table", "flex": 2}, {"field": "Rows", "flex": 1}],
-        dashGridOptions={"domLayout": "autoHeight"},
-        className="ag-theme-alpine-dark",
-        style={"width": "100%"},
-    )
-
-
-@callback(Output("home-preview", "children"), Input("session-store", "data"))
-def show_preview(store):
-    if not store or not store.get("records"):
+@callback(Output("home-warnings", "children"), Input("home-run-pack", "n_clicks"))
+def show_warnings(_):
+    manifest = load_manifest(latest_pack_dir())
+    items = []
+    for w in manifest.get("warnings", []):
+        items.append(html.Li(w))
+    for pf in manifest.get("partial_failures", []):
+        items.append(html.Li(f"FAILED {pf.get('source')}: {pf.get('error')}", style={"color": "var(--danger)"}))
+    if not items:
         return html.Div()
-    df = pd.DataFrame(store["records"])
-    if df.empty:
-        return html.Div()
-    num_cols = df.select_dtypes("number").columns.tolist()
-    cat_cols = df.select_dtypes("object").columns.tolist()
-    metrics = (
-        dbc.Row(
-            [
-                dbc.Col(
-                    html.Div(
-                        [
-                            html.Div(f"{df[c].mean():,.1f}", className="nyc-metric-value"),
-                            html.Div(f"Avg {c}", className="nyc-metric-label"),
-                        ],
-                        className="nyc-metric",
-                    ),
-                    md=3,
-                    sm=6,
-                )
-                for c in num_cols[:4]
-            ],
-            className="mb-3",
-        )
-        if num_cols
-        else html.Div()
-    )
-    chart = html.Div()
-    if cat_cols:
-        vc = df[cat_cols[0]].value_counts().head(10).reset_index()
-        vc.columns = [cat_cols[0], "count"]
-        fig = px.bar(
-            vc,
-            x=cat_cols[0],
-            y="count",
-            title=f"Top 10: {cat_cols[0]}",
-            template="plotly_dark",
-            height=260,
-        )
-        fig.update_layout(
-            margin=dict(l=0, r=0, t=36, b=0),
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-        )
-        chart = dcc.Graph(figure=fig, config={"displayModeBar": False})
     return html.Div(
-        [
-            html.H5(
-                f"📋 {store['label']} — {store['row_count']:,} rows",
-                style={"fontWeight": 700, "color": "var(--text-heading)", "marginBottom": "12px"},
-            ),
-            metrics,
-            chart,
-            html.Div(style={"height": "12px"}),
-            dag.AgGrid(
-                rowData=store["records"],
-                columnDefs=[
-                    {"field": c, "sortable": True, "filter": True, "resizable": True}
-                    for c in store["columns"]
-                ],
-                defaultColDef={"minWidth": 80},
-                dashGridOptions={"pagination": True, "paginationPageSize": 25},
-                className="ag-theme-alpine-dark",
-                style={"height": "360px", "width": "100%"},
-            ),
-        ]
+        [html.H3("Manifest warnings", style={"fontSize": "1rem"}), html.Ul(items)],
+        role="status",
     )

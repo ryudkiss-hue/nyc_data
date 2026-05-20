@@ -1,0 +1,115 @@
+/* NYC DOT Sidewalk Toolkit — analyst-focused design system */
+
+:root {
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --radius: 8px;
+  --focus-ring: 0 0 0 3px var(--accent-glow);
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 9999;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--accent);
+  color: #fff;
+  text-decoration: none;
+  border-radius: var(--radius);
+}
+
+.skip-link:focus {
+  left: var(--space-md);
+  top: var(--space-md);
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.nyc-btn-primary {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: var(--radius);
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.nyc-btn-primary:hover {
+  background: var(--accent-hover);
+}
+
+.nyc-btn-primary:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.nyc-kpi-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: var(--space-lg);
+  min-height: 120px;
+}
+
+.nyc-kpi-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-weight: 600;
+  margin-top: var(--space-sm);
+}
+
+.nyc-badge-new {
+  background: var(--pill-blue-bg);
+  color: var(--pill-blue-fg);
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+}
+
+.nyc-workflow-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  margin: var(--space-lg) 0;
+}
+
+.nyc-workflow-step {
+  flex: 1;
+  min-width: 140px;
+  padding: var(--space-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  background: var(--bg-secondary);
+}
+
+.nyc-workflow-step[aria-current="step"] {
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+.nyc-error-banner {
+  background: var(--status-err-bg);
+  border: 1px solid var(--status-err-border);
+  color: var(--text-primary);
+  padding: var(--space-md);
+  border-radius: var(--radius);
+  margin-bottom: var(--space-md);
+}
+
+.nyc-loading-inline {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}

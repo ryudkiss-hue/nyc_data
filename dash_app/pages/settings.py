@@ -13,8 +13,9 @@ import dash_bootstrap_components as dbc
 from dash import Input, Output, callback, html
 
 from dash_app.data import db
+from dash_app.data.analyst_pack import list_configured_roles, load_role_kpi_dashboard
 
-dash.register_page(__name__, path="/settings", name="Settings", order=99)
+dash.register_page(__name__, path="/settings", name="Settings", order=5)
 
 CORE_DEPS = ["dash", "plotly", "duckdb", "pandas", "dask", "requests", "tenacity", "pydantic"]
 OPT_DEPS = [
@@ -23,7 +24,6 @@ OPT_DEPS = [
     "sklearn",
     "psycopg",
     "langchain_core",
-    "qiskit",
     "openpyxl",
     "scipy",
     "numpy",
@@ -49,6 +49,32 @@ def _check(mod: str) -> bool:
         return True
     except Exception:
         return False
+
+
+def _role_kpi_panel() -> html.Div:
+    roles = list_configured_roles()
+    pack_role = load_role_kpi_dashboard()
+    items = []
+    for r in roles:
+        jid = r.get("jid") or "—"
+        active = pack_role.get("role_id") == r.get("role_id")
+        badge = html.Span(" active pack", className="nyc-pill nyc-pill-green ms-1") if active else None
+        items.append(
+            html.Li(
+                [html.Strong(r["display_name"]), f" (jid-{jid})", badge],
+                style={"fontSize": "0.82rem", "marginBottom": "4px"},
+            )
+        )
+    if not items:
+        return html.P(
+            "No config/role_profiles/*.yaml found.",
+            style={"fontSize": "0.82rem", "color": "var(--text-muted)"},
+        )
+    hint = html.P(
+        "Set role: sw_project_analyst in config/analyst_profile.yaml for jid-42159 duties.",
+        style={"fontSize": "0.75rem", "color": "var(--text-muted)", "marginTop": "8px"},
+    )
+    return html.Div([html.Ul(items), hint])
 
 
 def _badge(ok: bool) -> html.Span:
@@ -153,6 +179,53 @@ layout = dbc.Container(
                             style={
                                 "background": "var(--bg-secondary)",
                                 "border": "1px solid var(--border-color)",
+                            },
+                        ),
+                        dbc.Card(
+                            [
+                                dbc.CardHeader("Team / role KPIs"),
+                                dbc.CardBody(
+                                    id="cfg-role-kpis",
+                                    children=_role_kpi_panel(),
+                                ),
+                            ],
+                            style={
+                                "background": "var(--bg-secondary)",
+                                "border": "1px solid var(--border-color)",
+                                "marginTop": "16px",
+                            },
+                        ),
+                        dbc.Card(
+                            [
+                                dbc.CardHeader("Setup wizard"),
+                                dbc.CardBody(
+                                    [
+                                        html.P(
+                                            "First-time local setup: paths, .env, and analyst profile.",
+                                            style={"fontSize": "0.85rem"},
+                                        ),
+                                        html.Code(
+                                            "socrata setup-wizard",
+                                            style={"display": "block", "marginBottom": "8px"},
+                                        ),
+                                        html.P(
+                                            "Profile path:",
+                                            style={"fontSize": "0.8rem", "fontWeight": 600},
+                                        ),
+                                        html.Code(
+                                            os.getenv(
+                                                "ANALYST_PROFILE",
+                                                "config/analyst_profile.yaml",
+                                            ),
+                                            id="cfg-profile-path",
+                                        ),
+                                    ]
+                                ),
+                            ],
+                            style={
+                                "background": "var(--bg-secondary)",
+                                "border": "1px solid var(--border-color)",
+                                "marginTop": "16px",
                             },
                         ),
                     ],

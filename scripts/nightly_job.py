@@ -9,9 +9,9 @@ from pathlib import Path
 from typing import Any, cast
 
 from socrata_toolkit.alerts import Alert, AlertManager, CLINotifier, EmailNotifier
-from socrata_toolkit.client import SocrataClient, SocrataConfig
-from socrata_toolkit.conflict import PostGISConflictResolver
-from socrata_toolkit.exporters import PostgresExporter
+from socrata_toolkit.core.client import SocrataClient, SocrataConfig
+from socrata_toolkit.core.exporters import PostgresExporter
+from socrata_toolkit.sql.conflict import PostGISConflictResolver
 
 
 def load_config(path: Path | None = None) -> dict[str, Any]:
@@ -79,21 +79,21 @@ def run_nightly(config_path: str | None = None) -> None:
             if summary.total_conflicts:
                 mgr.emit(
                     Alert(
-                        severity="critical",
-                        message=f"{summary.total_conflicts} permit conflicts detected",
-                        payload=summary.__dict__,
+                        severity="warning",
+                        message=f"Spatial conflicts detected: {summary.total_conflicts}",
                     )
                 )
-            resolver.close()
-    except Exception as exc:  # pylint: disable=broad-exception-caught
-        mgr.emit(
-            Alert(severity="warning", message="Conflict check failed", payload={"error": str(exc)})
-        )
+    except Exception as exc:
+        mgr.emit(Alert(severity="warning", message=f"Conflict resolution skipped: {exc}"))
 
-    now = datetime.now(timezone.utc).isoformat()
-    hwm_file.write_text(now, encoding="utf-8")
-    mgr.emit(Alert(severity="info", message="Job complete", payload={"rows": len(rows)}))
+    hwm_file.write_text(datetime.now(timezone.utc).isoformat(), encoding="utf-8")
+    mgr.emit(
+        Alert(
+            severity="info",
+            message=f"Nightly ingest complete ({len(rows)} rows)",
+        )
+    )
 
 
 if __name__ == "__main__":
-    run_nightly(None)
+    run_nightly()

@@ -111,7 +111,7 @@ def run_cli(args: list) -> int:
     print_header("NYC DOT Toolkit - CLI Mode")
 
     try:
-        from socrata_toolkit.cli import main as cli_main
+        from socrata_toolkit.core.cli import main as cli_main
 
         # Set up sys.argv for Click
         sys.argv = ["socrata"] + args
@@ -245,19 +245,83 @@ def run_docker(action: str, service: str | None = None, **kwargs) -> int:
         return 1
 
 
+def run_setup_wizard() -> int:
+    """Run interactive install wizard."""
+    print_header("NYC DOT Toolkit - Install Wizard")
+    try:
+        from socrata_toolkit.install_wizard import _print_summary, run_wizard
+
+        summary = run_wizard()
+        _print_summary(summary)
+        print_success("Configuration written. Next: socrata analyst run --profile config/analyst_profile.yaml")
+        return 0
+    except SystemExit as exc:
+        return int(exc.code) if exc.code else 1
+    except Exception as e:
+        print_error(f"Wizard failed: {e}")
+        return 1
+
+
+def run_setup_docker() -> int:
+    """Prepare .env and start Docker analyst stack."""
+    print_header("NYC DOT Toolkit - Docker Setup")
+    root_env = PROJECT_ROOT / ".env"
+    example = PROJECT_ROOT / "config" / ".env.example"
+    if not root_env.exists():
+        if example.exists():
+            shutil.copy(example, root_env)
+            print_success(f"Created {root_env} from config/.env.example")
+        elif (PROJECT_ROOT / ".env.example").exists():
+            shutil.copy(PROJECT_ROOT / ".env.example", root_env)
+            print_success("Created .env from .env.example")
+        else:
+            print_warning(".env missing — run: python launcher.py setup wizard")
+    else:
+        print_success(".env already exists")
+
+    docker_cmd = "docker-compose" if shutil.which("docker-compose") else "docker compose"
+    compose_file = PROJECT_ROOT / "docker-compose.yml"
+    cmd = [
+        *docker_cmd.split(),
+        "-f",
+        str(compose_file),
+        "--profile",
+        "analyst",
+        "up",
+        "-d",
+        "postgres",
+    ]
+    try:
+        subprocess.run(cmd, check=True, cwd=PROJECT_ROOT)
+        print_success("Postgres started (profile: analyst)")
+        print_info("Run wizard in container: docker compose --profile analyst run --rm setup")
+        print_info("Start analyst runner: docker compose --profile analyst up -d analyst-runner")
+        return 0
+    except subprocess.CalledProcessError as e:
+        print_error(f"Docker setup failed: {e}")
+        return 1
+
+
 def run_setup(component: str | None = None) -> int:
     """Initialize system components."""
     print_header("NYC DOT Toolkit - Setup & Initialization")
 
-    components = ["database", "schema", "config", "all"]
+    components = ["database", "schema", "config", "wizard", "docker", "all"]
 
     if component and component not in components:
         print_error(f"Unknown component: {component}")
         print_info(f"Available: {', '.join(components)}")
         return 1
 
+    if component == "wizard":
+        return run_setup_wizard()
+    if component == "docker":
+        return run_setup_docker()
+
     if not component or component == "all":
-        return run_setup_all()
+        wizard_rc = run_setup_wizard()
+        legacy_rc = run_setup_all()
+        return 0 if wizard_rc == 0 and legacy_rc == 0 else 1
     elif component == "database":
         return setup_database()
     elif component == "schema":
@@ -355,6 +419,59 @@ def run_setup_all() -> int:
     return 0
 
 
+def check_analyst_profile() -> bool:
+    """Verify analyst profile paths and DuckDB writability."""
+    ok = True
+    profile = PROJECT_ROOT / "config" / "analyst_profile.yaml"
+    example = PROJECT_ROOT / "config" / "analyst_profile.example.yaml"
+    if profile.exists():
+        print_success(f"Analyst profile: {profile}")
+    elif example.exists():
+        print_warning("config/analyst_profile.yaml missing — run: socrata analyst init-config")
+        ok = False
+    else:
+        print_warning("No analyst profile found")
+        ok = False
+
+    outputs = PROJECT_ROOT / "outputs" / "analyst_pack"
+    try:
+        outputs.mkdir(parents=True, exist_ok=True)
+        test_file = outputs / ".write_test"
+        test_file.write_text("ok", encoding="utf-8")
+        test_file.unlink()
+        print_success(f"Analyst outputs writable: {outputs}")
+    except OSError as exc:
+        print_warning(f"Cannot write analyst outputs: {exc}")
+        ok = False
+
+    duckdb_path = PROJECT_ROOT / "nyc_mission_control.duckdb"
+    try:
+        from socrata_toolkit.core import DuckDBManager
+
+        mgr = DuckDBManager(str(duckdb_path))
+        mgr.query("SELECT 1")
+        mgr.close()
+        print_success(f"DuckDB writable: {duckdb_path.name}")
+    except Exception as exc:
+        print_warning(f"DuckDB check failed: {exc}")
+
+    pg_dsn = os.getenv("PG_DSN")
+    if pg_dsn:
+        try:
+            import psycopg
+
+            with psycopg.connect(pg_dsn, connect_timeout=3) as conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT 1")
+            print_success("PG_DSN connection OK")
+        except Exception as exc:
+            print_warning(f"PG_DSN configured but unreachable: {exc}")
+    else:
+        print_info("PG_DSN not set (optional for PostGIS conflicts)")
+
+    return ok
+
+
 def run_doctor() -> int:
     """Health check and diagnostics."""
     print_header("NYC DOT Toolkit - Health Check")
@@ -365,6 +482,7 @@ def run_doctor() -> int:
         "Docker": check_docker,
         "Database": check_database,
         "Configuration": check_config,
+        "Analyst Autopilot": check_analyst_profile,
     }
 
     results = {}
@@ -448,20 +566,32 @@ def check_database() -> bool:
 
 def check_config() -> bool:
     """Check configuration files."""
+    ok = True
     config_file = PROJECT_ROOT / "socrata_toolkit.config.json"
-    env_file = PROJECT_ROOT / ".env.socrata"
+    env_file = PROJECT_ROOT / ".env"
+    legacy_env = PROJECT_ROOT / ".env.socrata"
 
     if config_file.exists():
         print_success("socrata_toolkit.config.json found")
     else:
-        print_warning("socrata_toolkit.config.json missing")
+        print_info("socrata_toolkit.config.json optional (not required)")
 
     if env_file.exists():
-        print_success(".env.socrata found")
+        print_success(".env found")
+    elif legacy_env.exists():
+        print_success(".env.socrata found (legacy)")
     else:
-        print_warning(".env.socrata missing")
+        print_warning(".env missing — run: python launcher.py setup wizard")
+        ok = False
 
-    return config_file.exists() and env_file.exists()
+    profile = PROJECT_ROOT / "config" / "analyst_profile.yaml"
+    if profile.exists():
+        print_success(f"Analyst profile: {profile.name}")
+    else:
+        print_warning("config/analyst_profile.yaml missing")
+        ok = False
+
+    return ok
 
 
 def main():
@@ -514,7 +644,7 @@ def main():
     setup_parser.add_argument(
         "component",
         nargs="?",
-        choices=["database", "schema", "config", "all"],
+        choices=["database", "schema", "config", "wizard", "docker", "all"],
         default="all",
         help="Component to set up",
     )

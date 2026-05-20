@@ -1812,5 +1812,126 @@ def observability_trace(trace_id, json_format):
         raise click.ClickException(f"Error retrieving trace: {e}")
 
 
+# ── Analyst Autopilot ─────────────────────────────────────────────────────────
+
+
+@click.group("analyst")
+def analyst_group() -> None:
+    """Analyst Autopilot — weekly pack workflow."""
+
+
+@analyst_group.command("init-config")
+@click.option(
+    "--out",
+    "out_path",
+    type=click.Path(),
+    default="config/analyst_profile.yaml",
+    show_default=True,
+    help="Destination path for example profile",
+)
+def analyst_init_config(out_path: str) -> None:
+    """Write an example analyst profile YAML."""
+    from pathlib import Path
+
+    src = Path(__file__).resolve().parents[2] / "config" / "analyst_profile.example.yaml"
+    dest = Path(out_path)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if src.exists():
+        dest.write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
+    else:
+        dest.write_text(
+            "profile_name: sidewalk_default\nsources: {}\noutputs:\n  dir: outputs/analyst_pack\n",
+            encoding="utf-8",
+        )
+    click.echo(f"Wrote analyst profile template to {dest}")
+
+
+@analyst_group.command("run")
+@click.option("--profile", required=True, type=click.Path(exists=True), help="YAML analyst profile")
+@click.option("--dry-run", is_flag=True, help="Validate sources only; do not write pack")
+def analyst_run(profile: str, dry_run: bool) -> None:
+    """Run Analyst Autopilot pack workflow."""
+    from ..analyst import run_analyst_pack
+
+    result = run_analyst_pack(profile, dry_run=dry_run)
+    click.echo(json.dumps({"pack_dir": str(result.pack_dir), "artifacts": result.artifacts, "warnings": result.warnings}, indent=2))
+
+
+main.add_command(analyst_group)
+
+
+@main.command("setup")
+@click.option("--non-interactive", is_flag=True, help="Use environment variables (WIZARD_NONINTERACTIVE=1)")
+@click.option("--skip-checks", is_flag=True, help="Skip connectivity validation")
+@click.option("--force-profile", is_flag=True, help="Overwrite analyst profile YAML")
+def setup_cmd(non_interactive: bool, skip_checks: bool, force_profile: bool) -> None:
+    """Interactive local deployment configuration (writes .env and analyst profile)."""
+    from ..install_wizard import _print_summary, run_wizard
+
+    summary = run_wizard(
+        non_interactive=non_interactive,
+        skip_checks=skip_checks,
+        force_profile=force_profile,
+    )
+    _print_summary(summary)
+
+
+@main.command("wizard")
+@click.option("--non-interactive", is_flag=True, help="Use environment variables")
+@click.option("--skip-checks", is_flag=True, help="Skip connectivity validation")
+def wizard_cmd(non_interactive: bool, skip_checks: bool) -> None:
+    """Alias for `socrata setup` — installation wizard."""
+    from ..install_wizard import _print_summary, run_wizard
+
+    summary = run_wizard(non_interactive=non_interactive, skip_checks=skip_checks)
+    _print_summary(summary)
+
+
+# ── Thin CLI commands (search/fetch/sync/status retained for nightly ops) ───
+
+
+@main.command()
+@click.option("--query", "-q", required=True, help="Search query")
+@click.option("--domain", "-d", default="data.cityofnewyork.us")
+@click.option("--limit", "-l", default=10, type=int)
+def toolkit_search(query: str, domain: str, limit: int) -> None:
+    """Search NYC Open Data catalog (alias)."""
+    c = _client()
+    results = c.search(query=query, domain=domain, limit=limit)
+    for r in results:
+        click.echo(f"{r.name} [{r.fourfour}] — {r.domain}")
+
+
+@main.command("sync")
+@click.option("--dataset", "-i", required=True)
+@click.option("--domain", "-d", default="data.cityofnewyork.us")
+@click.option("--db-path", default="nyc_mission_control.duckdb")
+@click.option("--table", required=True)
+@click.option("--updated-col", default="created_date")
+def sync_cmd(dataset: str, domain: str, db_path: str, table: str, updated_col: str) -> None:
+    """Incremental Socrata → DuckDB sync."""
+    from ..pipeline import sync_dataset
+
+    count = sync_dataset(domain, dataset, db_path, table, updated_col)
+    click.echo(f"Sync complete: {count} rows processed into {table}")
+
+
+@main.command("db-status")
+@click.option("--db-path", default="nyc_mission_control.duckdb")
+def db_status(db_path: str) -> None:
+    """Show DuckDB table row counts."""
+    from .duckdb_store import DuckDBManager
+
+    mgr = DuckDBManager(db_path)
+    try:
+        tables = mgr.query("SHOW TABLES").fetchall()
+        for t in tables:
+            name = t[0]
+            count = mgr.query(f'SELECT count(*) FROM "{name}"').fetchone()[0]
+            click.echo(f"{name}: {count:,} rows")
+    finally:
+        mgr.close()
+
+
 if __name__ == "__main__":
     main()

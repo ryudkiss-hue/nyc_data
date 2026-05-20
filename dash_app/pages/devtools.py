@@ -14,7 +14,9 @@ from dash import Input, Output, State, callback, dcc, html
 
 from dash_app.data import db
 
-dash.register_page(__name__, path="/devtools", name="Dev Tools", order=12)
+_DEBUG = os.getenv("NYC_DOT_DEBUG", "").lower() in ("1", "true", "yes")
+if _DEBUG:
+    dash.register_page(__name__, path="/devtools", name="Dev Tools", order=12)
 
 layout = dbc.Container(
     [

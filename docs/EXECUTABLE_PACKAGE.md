@@ -29,6 +29,42 @@ python launcher.py --help
 
 ---
 
+### 1b. **Standalone Windows executable** (`dist/nyc-dot-toolkit.exe`)
+
+Build with PyInstaller (on Windows for a native `.exe`):
+
+```bash
+pip install -e .
+python scripts/build_exe.py
+# or: make build-exe
+```
+
+**Output:** `dist/nyc-dot-toolkit.exe` (typically **80–200 MB** depending on optional deps).
+
+**Usage:**
+
+```text
+dist\nyc-dot-toolkit.exe wizard
+dist\nyc-dot-toolkit.exe analyst run --profile config\analyst_profile.yaml
+dist\nyc-dot-toolkit.exe doctor
+dist\nyc-dot-toolkit.exe search --query sidewalk
+```
+
+**Task Scheduler (weekly analyst pack):**
+
+1. Program: `C:\path\to\nyc_data\dist\nyc-dot-toolkit.exe`
+2. Arguments: `analyst run --profile config\analyst_profile.yaml`
+3. Start in: `C:\path\to\nyc_data`
+4. Run whether user is logged on or not; use a service account with read/write on `data/` and `outputs/`.
+
+**Notes:**
+
+- Spec file: `scripts/nyc-dot-toolkit.spec` (hidden imports for pandas, duckdb, click, analyst subpackages).
+- CI: set `PYINSTALLER_BUILD=1` only when you intend a full compile (slow).
+- Install wizard is also available as `nyc-dot-toolkit.exe wizard` (same as `socrata setup`).
+
+---
+
 ### 2. **Platform-Specific Deployment Scripts**
 
 #### Windows: `deploy.ps1`

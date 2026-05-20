@@ -2,46 +2,34 @@
 
 A comprehensive Python toolkit for the NYC Department of Transportation's Sidewalk Inspection & Management unit. Built for project analysts and managers who need to collect, analyze, and report on sidewalk repair data across the five boroughs.
 
-## Quick Start - Choose Your Method
-
-### 🚀 Fastest Path (5 minutes) - All Platforms
+## Quick Start (wizard-first)
 
 ```bash
 git clone https://github.com/ryudkiss-hue/nyc_data.git
 cd nyc_data
+pip install -e ".[xlsx,postgres]"
 
-# Option 1: Python Launcher (all platforms)
-python launcher.py setup all
-python launcher.py docker up
-python launcher.py web
-
-# Option 2: Windows PowerShell
-.\deploy.ps1 setup
-.\deploy.ps1 start
-
-# Option 3: Linux/MacOS Bash
-./deploy.sh setup
-./deploy.sh start
-
-# Option 4: Make Commands
-make setup-all
-make deploy
-```
-
-### 📚 Traditional Install (if you prefer local Python)
-
-```bash
-# Install core dependencies
-pip install -e .
-
-# Install with all optional extras
-pip install -e ".[postgres,mongo,xlsx,nlp,dev]"
-
-# Run the interactive setup wizard
+# 1. Interactive configuration (.env + analyst profile)
 python -m socrata_toolkit.install_wizard
 
-# Verify your installation
-socrata doctor
+# 2. Choose one runtime:
+#    Python:  socrata analyst run --profile config/analyst_profile.yaml
+#    Docker:  docker compose --profile analyst up -d postgres analyst-runner
+#    Windows: python scripts/build_exe.py  →  dist\nyc-dot-toolkit.exe wizard
+
+python launcher.py doctor
+python dash_app/app.py   # Primary analyst GUI — Home, Construction, Contracts, Metrics, Inquiries, Settings
+```
+
+Local deployment guide: [docs/USER_MANUAL.md](docs/USER_MANUAL.md) · Docker: [docs/DOCKER_LOCAL.md](docs/DOCKER_LOCAL.md) · EXE: [docs/EXECUTABLE_PACKAGE.md](docs/EXECUTABLE_PACKAGE.md)
+
+See [docs/ANALYST_WORKFLOW.md](docs/ANALYST_WORKFLOW.md) for duty-to-output mapping.
+
+### Optional extras
+
+```bash
+pip install -e ".[postgres,geo,xlsx,reports,llm,nlp,viz,ui]"
+socrata doctor --check-db
 ```
 
 ## Execution Methods
@@ -56,6 +44,21 @@ socrata doctor
 | **CLI Tool** | All | Command-line interface | `socrata ...` or `python launcher.py cli ...` |
 
 See [QUICKSTART.md](QUICKSTART.md) for 5-minute setup or [docs/EXECUTABLE_PACKAGE.md](docs/EXECUTABLE_PACKAGE.md) for complete package reference.
+
+## Documentation
+
+End-user guides for NYC DOT Project Analysts (Sidewalk):
+
+| Guide | Description |
+|-------|-------------|
+| [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) | 15-minute onboarding |
+| [docs/USER_MANUAL.md](docs/USER_MANUAL.md) | Full manual: install, workflows, CLI, Docker, UI |
+| [docs/FAQ.md](docs/FAQ.md) | Frequently asked questions |
+| [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Errors, logs, fixes |
+| [docs/COMMAND_REFERENCE.md](docs/COMMAND_REFERENCE.md) | CLI cheat sheet |
+| [config/analyst_profile.example.yaml](config/analyst_profile.example.yaml) | Analyst Autopilot profile template |
+
+Operational SOPs: [docs/sop_faq.md](docs/sop_faq.md). Docker (analyst stack): [docs/DOCKER_LOCAL.md](docs/DOCKER_LOCAL.md).
 
 ## What This Toolkit Does
 
@@ -138,7 +141,12 @@ pip install -e ".[postgres,mongo,xlsx,nlp,dev]"
 
 ## CLI Reference
 
-All commands are available via `socrata <command>`. Run `socrata --help` for the full list.
+Two CLI entry points are in use:
+
+- **`socrata`** (installed via `pip install -e .`) — `search`, `fetch`, `analyze`, `sync`, `status`, `map-toolkit`
+- **`python -m socrata_toolkit.core.cli`** — extended commands: `pipeline`, `conflict`, `schema`, `alerts`, `migrate`, and more
+
+See [docs/COMMAND_REFERENCE.md](docs/COMMAND_REFERENCE.md) for a full cheat sheet. Run `socrata --help` for the toolkit CLI list.
 
 ### Data Fetching
 
