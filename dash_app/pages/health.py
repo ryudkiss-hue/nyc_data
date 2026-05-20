@@ -7,7 +7,10 @@ from dash import Input, Output, callback, dcc, html
 
 import socrata_toolkit.analysis as st_analysis
 
-dash.register_page(__name__, path="/health", name="System Health", order=9)
+from dash_app.pages._env import legacy_pages_enabled
+
+if legacy_pages_enabled():
+    dash.register_page(__name__, path="/health", name="System Health", order=53)
 
 layout = dbc.Container(
     [

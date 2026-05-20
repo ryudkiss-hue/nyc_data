@@ -32,7 +32,7 @@ The toolkit is **80% ready for production** with enterprise-grade architecture a
 - Complete governance system (Schema Registry, CDC, Lineage, Compliance)
 - REST API endpoints
 - CLI tools
-- Streamlit dashboard
+- Dash analyst dashboard (`dash_app/app.py`)
 - All core features working
 
 ### ✅ Executable Package

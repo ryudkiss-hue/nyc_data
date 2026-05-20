@@ -13,7 +13,10 @@ from dash import Input, Output, State, callback, dcc, html
 
 from dash_app.data import db
 
-dash.register_page(__name__, path="/engineering", name="Engineering", order=11)
+from dash_app.pages._env import legacy_pages_enabled
+
+if legacy_pages_enabled():
+    dash.register_page(__name__, path="/engineering", name="Engineering", order=56)
 
 layout = dbc.Container(
     [

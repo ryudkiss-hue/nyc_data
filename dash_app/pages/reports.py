@@ -14,7 +14,10 @@ from dash import Input, Output, State, callback, dcc, html
 
 from dash_app.data import db
 
-dash.register_page(__name__, path="/reports", name="Reports", order=9)
+from dash_app.pages._env import legacy_pages_enabled
+
+if legacy_pages_enabled():
+    dash.register_page(__name__, path="/reports", name="Reports", order=51)
 
 REPORT_TYPES = [
     {"label": "📋 Executive Summary", "value": "executive"},

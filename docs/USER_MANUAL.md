@@ -14,7 +14,8 @@ python -m socrata_toolkit.install_wizard
 This writes:
 
 - `.env` — `SOCRATA_APP_TOKEN`, `PG_DSN`, data/output paths, DuckDB path
-- `config/analyst_profile.yaml` — from `config/analyst_profile.example.yaml`
+- `TOOLKIT_PROFILE` — active profile name (for multi-profile installs)
+- `config/profiles/<name>/analyst_profile.yaml` — from `config/analyst_profile.example.yaml`
 
 Aliases: `socrata setup`, `socrata wizard`, `python launcher.py setup wizard`.
 
@@ -69,6 +70,50 @@ python dash_app/app.py
 
 Open http://localhost:8050. The sidebar guides the happy path: **Setup** → edit `config/analyst_profile.yaml` → **Run Analyst Pack** on Home → review pages.
 
+### Theme, offline mode, and preferences
+
+| Control | Where | Effect |
+|---------|-------|--------|
+| **Theme** (dark / light) | Settings → Appearance | Sets `data-theme` on the app root; Plotly uses dark or white template |
+| **Font scale** (normal / large) | Settings | `data-font-scale=large` increases base typography |
+| **Offline mode** | Settings or Home run card | Skips Socrata on pack run (`socrata analyst run --offline`); banner when enabled |
+| **Export / import JSON** | Settings | Backs up `ui_prefs.json` and `explore_prefs.json` under `outputs/.state/` |
+
+Preferences persist per toolkit profile (`TOOLKIT_PROFILE`, default `default`).
+
+### Deep links and demo pack
+
+Open a specific page and pack without clicking through the UI:
+
+```
+http://localhost:8050/?page=explore&pack=2026-05-01
+http://localhost:8050/?page=construction&pack=2026-05-01
+```
+
+Supported `page` values: `home`, `explore`, `construction`, `contracts`, `metrics`, `inquiries`, `review`, `data-trust`, `publish`, `settings`.
+
+When no Analyst Pack exists, **Explore** and **Construction** offer **Load demo data** (copies `tests/fixtures/analyst/` into `outputs/analyst_pack/demo_pack/`).
+
+See [DASH_UX_AUDIT.md](DASH_UX_AUDIT.md) for the full before/after checklist and performance budget.
+
+## Interactive exploration
+
+The Dash GUI includes Brilliant/Wolfram-style controls for learning and what-if analysis **without replacing** deterministic Analyst Pack runs.
+
+| Page | What you can do |
+|------|-----------------|
+| **Explore** | Adjust priority weights, borough filter, top-N preview, conflict/ADA toggles; save prefs to `outputs/.state/.../explore_prefs.json`; copy a YAML snippet (does not write your profile). |
+| **Construction** | Live re-rank preview + borough chart from latest `construction_list.xlsx`. |
+| **Contracts** | Reporting window slider, CPI vs productivity toggle, EVM explainer. |
+| **Metrics** | Category checkboxes filter traffic-light KPI cards; expanders explain each metric. |
+| **Data Trust** | Source lineage diagram; show/hide warnings and partial failures. |
+| **Review** | Status dropdown with instant save feedback toast. |
+| **Publish** | Per-destination checkboxes with inline “what gets sent” tips. |
+
+Accessibility: focus rings, ARIA labels on sliders/checkboxes, text + icon status (not color-only), keyboard-friendly `<details>` tip cards.
+
+**Canonical data** still comes from `socrata analyst run`. Use **Explore** or Construction sliders to test parameters; apply changes to production only by updating `config/analyst_profile.yaml` and re-running the pack (or pasting the snippet from Explore).
+
 <!-- Screenshot placeholder: docs/images/analyst-home.png -->
 
 Golden column headers for Excel sources: `config/templates/*_headers.txt`.
@@ -87,10 +132,51 @@ Each run writes `outputs/analyst_pack/{YYYY-MM-DD}/`:
 | `executive_summary.html` | One-pager for managers |
 | `inquiry_drafts/*.md` | Template-based inquiry letters |
 | `manifest.json` | Sources, row counts, warnings, partial failures, version |
+| `data_dictionary.md` / `data_dictionary.json` | Column stats per source (trust / QA) |
+| `decisions_export.xlsx` / `decisions_summary.md` | Review decisions exported into the pack (optional) |
 | `role_kpi_dashboard.json` | Role-specific KPIs when `role:` is set in profile |
 | `role_task_status.md` | Job-duty checklist vs pack artifacts |
 
 Profile flags: `offline: true` skips Socrata; `budget_codes: config/budget_codes.yaml` adds validation warnings.
+
+## Publish (after a run)
+
+After a pack is generated, you can publish it to your organization’s destinations (share drive, BI staging folder, Teams webhook, email, optional PPTX).
+
+- Setup: copy `config/publish_profile.example.yaml` to `config/publish_profile.yaml`
+- Docs: [PUBLISHING.md](PUBLISHING.md)
+
+CLI:
+
+```bash
+socrata analyst publish --profile config/publish_profile.yaml --pack outputs/analyst_pack/YYYY-MM-DD --dry-run
+socrata analyst publish --profile config/publish_profile.yaml --pack outputs/analyst_pack/YYYY-MM-DD
+```
+
+Automation: enable publish after pack generation by adding:
+
+```yaml
+steps:
+  publish: true
+  publish_profile: config/publish_profile.yaml
+```
+
+## Review workflow (conflicts + approvals)
+
+Decisions are stored locally in a DuckDB file under your per-profile state directory:
+
+- `outputs/.state/profiles/<name>/decisions.duckdb`
+
+CLI:
+
+```bash
+socrata review list --pack-date YYYY-MM-DD
+socrata review set --pack-date YYYY-MM-DD --kind conflict --key-type location_id --key L123 --status resolved --assigned-to "you" --notes "checked permits"
+socrata review set --pack-date YYYY-MM-DD --kind approval --key-type location_id --key L123 --status hold --reason "needs photo" --notes "missing context"
+socrata review export --pack outputs/analyst_pack/YYYY-MM-DD
+```
+
+Dash includes a **Review** page that calls the same commands behind the scenes.
 
 ### SW Project Analyst role (jid-42159)
 
@@ -107,8 +193,23 @@ socrata doctor --check-db
 
 Verifies Python deps, `.env`, analyst profile, DuckDB writability, optional Postgres.
 
+## Completeness checklist (analysts)
+
+Before your first production week, walk through the one-page readiness list:
+
+- [docs/COMPLETENESS.md](COMPLETENESS.md) — sign-off table for install, Analyst Pack, publish, Dash UX, tests, and docs
+
+Quick self-check:
+
+1. Wizard completed (`.env` + `config/analyst_profile.yaml` or profile under `config/profiles/<name>/`).
+2. `socrata analyst run` produces `outputs/analyst_pack/YYYY-MM-DD/` with construction list, contracts, KPIs, and inquiries.
+3. Dash opens all sidebar pages without errors; Settings theme/offline persist after reload.
+4. Optional: `socrata analyst publish --dry-run` and `socrata review list --pack-date YYYY-MM-DD`.
+
 ## Further reading
 
+- [COMPLETENESS.md](COMPLETENESS.md) — “Is it ready?” release checklist
 - [EXECUTABLE_PACKAGE.md](EXECUTABLE_PACKAGE.md) — PyInstaller build and packaging
 - [DOCKER_LOCAL.md](DOCKER_LOCAL.md) — Compose analyst profile
 - [GETTING_STARTED.md](GETTING_STARTED.md) — Full platform setup
+- [DASH_UX_AUDIT.md](DASH_UX_AUDIT.md) — Accessibility and performance checklist

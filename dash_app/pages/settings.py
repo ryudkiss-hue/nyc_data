@@ -1,7 +1,11 @@
-"""dash_app/pages/settings.py — System health, credentials, module status"""
+"""Settings — UI preferences, credentials, module health."""
 
+from __future__ import annotations
+
+import json
 import os
 import sys
+from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
@@ -10,10 +14,12 @@ import platform
 
 import dash
 import dash_bootstrap_components as dbc
-from dash import Input, Output, callback, html
+from dash import Input, Output, State, callback, dcc, html, no_update
 
+from dash_app.components.shell import page_shell
 from dash_app.data import db
 from dash_app.data.analyst_pack import list_configured_roles, load_role_kpi_dashboard
+from dash_app.data.ui_prefs import export_all_prefs, import_all_prefs, load_ui_prefs, save_ui_prefs
 
 dash.register_page(__name__, path="/settings", name="Settings", order=5)
 
@@ -42,6 +48,11 @@ TOOLKIT_MODULES = [
     ("socrata_toolkit.cli", "cli"),
 ]
 
+_prefs = load_ui_prefs()
+_theme = _prefs.get("theme", "dark")
+_font_scale = _prefs.get("font_scale", "normal")
+_offline = bool(_prefs.get("offline_mode", False))
+
 
 def _check(mod: str) -> bool:
     try:
@@ -49,6 +60,12 @@ def _check(mod: str) -> bool:
         return True
     except Exception:
         return False
+
+
+def _badge(ok: bool) -> html.Span:
+    if ok:
+        return html.Span("OK", className="nyc-pill nyc-pill-green ms-2")
+    return html.Span("missing", className="nyc-pill nyc-pill-red ms-2")
 
 
 def _role_kpi_panel() -> html.Div:
@@ -77,238 +94,313 @@ def _role_kpi_panel() -> html.Div:
     return html.Div([html.Ul(items), hint])
 
 
-def _badge(ok: bool) -> html.Span:
-    if ok:
-        return html.Span("✅ OK", className="nyc-pill nyc-pill-green ms-2")
-    return html.Span("❌ missing", className="nyc-pill nyc-pill-red ms-2")
+def _ui_prefs_card() -> dbc.Card:
+    return dbc.Card(
+        [
+            dbc.CardHeader("Appearance & offline"),
+            dbc.CardBody(
+                [
+                    dbc.Label("Theme", style={"fontSize": "0.8rem", "fontWeight": 600}),
+                    dbc.RadioItems(
+                        id="set-theme",
+                        options=[
+                            {"label": "Dark", "value": "dark"},
+                            {"label": "Light", "value": "light"},
+                        ],
+                        value=_theme if _theme in ("dark", "light") else "dark",
+                        inline=True,
+                        className="mb-3",
+                    ),
+                    dbc.Label("Font scale", style={"fontSize": "0.8rem", "fontWeight": 600}),
+                    dbc.RadioItems(
+                        id="set-font-scale",
+                        options=[
+                            {"label": "Normal", "value": "normal"},
+                            {"label": "Large", "value": "large"},
+                        ],
+                        value=_font_scale,
+                        inline=True,
+                        className="mb-3 nyc-scale-radios",
+                    ),
+                    dbc.Checklist(
+                        id="set-offline-mode",
+                        options=[{"label": "Offline mode (skip live Socrata on pack run)", "value": "on"}],
+                        value=["on"] if _offline else [],
+                        switch=True,
+                        className="mb-3",
+                    ),
+                    html.Hr(style={"borderColor": "var(--border-color)"}),
+                    dbc.Label("Export / import preferences", style={"fontSize": "0.8rem", "fontWeight": 600}),
+                    html.Div(
+                        [
+                            html.Button("Export JSON", id="set-export-prefs", className="nyc-btn-secondary me-2"),
+                            dcc.Upload(
+                                id="set-import-upload",
+                                children=html.Button("Import JSON", className="nyc-btn-secondary"),
+                                multiple=False,
+                            ),
+                        ],
+                        className="mb-2",
+                    ),
+                    dcc.Download(id="set-download-prefs"),
+                    html.Pre(id="set-prefs-msg", className="nyc-explore-snippet"),
+                    html.Hr(style={"borderColor": "var(--border-color)"}),
+                    html.P("First-time setup:", style={"fontSize": "0.85rem"}),
+                    html.Code("socrata setup-wizard", style={"display": "block", "marginBottom": "8px"}),
+                    html.A(
+                        "WINDOWS_INSTALLER.md",
+                        href=f"file:///{str(Path(__file__).resolve().parents[2] / 'docs' / 'WINDOWS_INSTALLER.md').replace(chr(92), '/')}",
+                        target="_blank",
+                        className="nyc-nav-link",
+                    ),
+                ]
+            ),
+        ],
+        style={
+            "background": "var(--bg-secondary)",
+            "border": "1px solid var(--border-color)",
+            "marginBottom": "16px",
+        },
+    )
 
 
 layout = dbc.Container(
     [
-        html.Div(
-            [
-                html.H1("⚙️ Settings", className="nyc-page-title"),
-                html.P(
-                    "Manage credentials, inspect module health, and monitor the DuckDB connection.",
-                    className="nyc-page-sub",
-                ),
-            ],
-            className="nyc-page-header",
-        ),
-        dbc.Row(
-            [
-                # Left column
-                dbc.Col(
+        *page_shell(
+            "Settings",
+            "Theme, offline mode, credentials, and system health.",
+            page_key="settings",
+            children=[
+                dbc.Row(
                     [
-                        # API Credentials
-                        dbc.Card(
+                        dbc.Col(
                             [
-                                dbc.CardHeader("🔑 API Credentials"),
-                                dbc.CardBody(
+                                _ui_prefs_card(),
+                                dbc.Card(
                                     [
-                                        dbc.Label(
-                                            "Socrata App Token",
-                                            style={"fontSize": "0.8rem", "fontWeight": 600},
-                                        ),
-                                        dbc.Input(
-                                            id="cfg-socrata-token",
-                                            type="password",
-                                            value=os.getenv("SOCRATA_APP_TOKEN", ""),
-                                            placeholder="Increases Socrata rate limits",
-                                            className="mb-3",
-                                        ),
-                                        dbc.Label(
-                                            "OpenAI API Key",
-                                            style={"fontSize": "0.8rem", "fontWeight": 600},
-                                        ),
-                                        dbc.Input(
-                                            id="cfg-openai-key",
-                                            type="password",
-                                            value=os.getenv("OPENAI_API_KEY", ""),
-                                            placeholder="Required for NL→SQL",
-                                            className="mb-3",
-                                        ),
-                                        dbc.Label(
-                                            "MotherDuck Token",
-                                            style={"fontSize": "0.8rem", "fontWeight": 600},
-                                        ),
-                                        dbc.Input(
-                                            id="cfg-motherduck",
-                                            type="password",
-                                            value=os.getenv("MOTHERDUCK_TOKEN", ""),
-                                            placeholder="Enables cloud DuckDB",
-                                        ),
-                                    ]
-                                ),
-                            ],
-                            style={
-                                "background": "var(--bg-secondary)",
-                                "border": "1px solid var(--border-color)",
-                                "marginBottom": "16px",
-                            },
-                        ),
-                        # Database info
-                        dbc.Card(
-                            [
-                                dbc.CardHeader("🦆 Database"),
-                                dbc.CardBody(
-                                    [
-                                        html.P(
+                                        dbc.CardHeader("API Credentials"),
+                                        dbc.CardBody(
                                             [
-                                                html.Strong("Backend: "),
-                                                (
-                                                    "☁️ MotherDuck"
-                                                    if db.is_motherduck()
-                                                    else "💾 Local DuckDB"
+                                                dbc.Label("Socrata App Token", style={"fontSize": "0.8rem", "fontWeight": 600}),
+                                                dbc.Input(
+                                                    id="cfg-socrata-token",
+                                                    type="password",
+                                                    value=os.getenv("SOCRATA_APP_TOKEN", ""),
+                                                    placeholder="Increases Socrata rate limits",
+                                                    className="mb-3",
                                                 ),
-                                            ],
-                                            style={"fontSize": "0.85rem"},
+                                                dbc.Label("OpenAI API Key", style={"fontSize": "0.8rem", "fontWeight": 600}),
+                                                dbc.Input(
+                                                    id="cfg-openai-key",
+                                                    type="password",
+                                                    value=os.getenv("OPENAI_API_KEY", ""),
+                                                    placeholder="Required for NL→SQL",
+                                                    className="mb-3",
+                                                ),
+                                                dbc.Label("MotherDuck Token", style={"fontSize": "0.8rem", "fontWeight": 600}),
+                                                dbc.Input(
+                                                    id="cfg-motherduck",
+                                                    type="password",
+                                                    value=os.getenv("MOTHERDUCK_TOKEN", ""),
+                                                    placeholder="Enables cloud DuckDB",
+                                                ),
+                                            ]
                                         ),
-                                        html.Div(id="cfg-db-info"),
-                                        dbc.Button(
-                                            "🔄 Refresh",
-                                            id="cfg-refresh-db",
-                                            color="secondary",
-                                            outline=True,
-                                            size="sm",
-                                            className="mt-2",
-                                        ),
-                                    ]
+                                    ],
+                                    style={
+                                        "background": "var(--bg-secondary)",
+                                        "border": "1px solid var(--border-color)",
+                                        "marginBottom": "16px",
+                                    },
                                 ),
-                            ],
-                            style={
-                                "background": "var(--bg-secondary)",
-                                "border": "1px solid var(--border-color)",
-                            },
-                        ),
-                        dbc.Card(
-                            [
-                                dbc.CardHeader("Team / role KPIs"),
-                                dbc.CardBody(
-                                    id="cfg-role-kpis",
-                                    children=_role_kpi_panel(),
-                                ),
-                            ],
-                            style={
-                                "background": "var(--bg-secondary)",
-                                "border": "1px solid var(--border-color)",
-                                "marginTop": "16px",
-                            },
-                        ),
-                        dbc.Card(
-                            [
-                                dbc.CardHeader("Setup wizard"),
-                                dbc.CardBody(
+                                dbc.Card(
                                     [
-                                        html.P(
-                                            "First-time local setup: paths, .env, and analyst profile.",
-                                            style={"fontSize": "0.85rem"},
+                                        dbc.CardHeader("Database"),
+                                        dbc.CardBody(
+                                            [
+                                                html.P(
+                                                    [
+                                                        html.Strong("Backend: "),
+                                                        "MotherDuck" if db.is_motherduck() else "Local DuckDB",
+                                                    ],
+                                                    style={"fontSize": "0.85rem"},
+                                                ),
+                                                html.Div(id="cfg-db-info"),
+                                                dbc.Button(
+                                                    "Refresh",
+                                                    id="cfg-refresh-db",
+                                                    color="secondary",
+                                                    outline=True,
+                                                    size="sm",
+                                                    className="mt-2",
+                                                ),
+                                            ]
                                         ),
-                                        html.Code(
-                                            "socrata setup-wizard",
-                                            style={"display": "block", "marginBottom": "8px"},
-                                        ),
-                                        html.P(
-                                            "Profile path:",
-                                            style={"fontSize": "0.8rem", "fontWeight": 600},
-                                        ),
-                                        html.Code(
-                                            os.getenv(
-                                                "ANALYST_PROFILE",
-                                                "config/analyst_profile.yaml",
-                                            ),
-                                            id="cfg-profile-path",
-                                        ),
-                                    ]
+                                    ],
+                                    style={
+                                        "background": "var(--bg-secondary)",
+                                        "border": "1px solid var(--border-color)",
+                                    },
+                                ),
+                                dbc.Card(
+                                    [
+                                        dbc.CardHeader("Team / role KPIs"),
+                                        dbc.CardBody(id="cfg-role-kpis", children=_role_kpi_panel()),
+                                    ],
+                                    style={
+                                        "background": "var(--bg-secondary)",
+                                        "border": "1px solid var(--border-color)",
+                                        "marginTop": "16px",
+                                    },
                                 ),
                             ],
-                            style={
-                                "background": "var(--bg-secondary)",
-                                "border": "1px solid var(--border-color)",
-                                "marginTop": "16px",
-                            },
+                            md=5,
                         ),
-                    ],
-                    md=5,
+                        dbc.Col(
+                            [
+                                dbc.Card(
+                                    [
+                                        dbc.CardHeader(
+                                            [
+                                                "System Health ",
+                                                dbc.Button(
+                                                    "Run Doctor",
+                                                    id="cfg-run-doctor",
+                                                    color="primary",
+                                                    size="sm",
+                                                    className="ms-2",
+                                                ),
+                                            ]
+                                        ),
+                                        dbc.CardBody(
+                                            html.Div(
+                                                id="cfg-doctor-results",
+                                                children=html.P(
+                                                    "Click 'Run Doctor' to check all dependencies.",
+                                                    style={"color": "var(--text-muted)", "fontSize": "0.82rem"},
+                                                ),
+                                            )
+                                        ),
+                                    ],
+                                    style={
+                                        "background": "var(--bg-secondary)",
+                                        "border": "1px solid var(--border-color)",
+                                        "marginBottom": "16px",
+                                    },
+                                ),
+                                dbc.Card(
+                                    [
+                                        dbc.CardHeader("Toolkit Modules"),
+                                        dbc.CardBody(
+                                            html.Div(
+                                                id="cfg-toolkit-status",
+                                                children=html.P(
+                                                    "Click 'Run Doctor' above.",
+                                                    style={"color": "var(--text-muted)", "fontSize": "0.82rem"},
+                                                ),
+                                            )
+                                        ),
+                                    ],
+                                    style={
+                                        "background": "var(--bg-secondary)",
+                                        "border": "1px solid var(--border-color)",
+                                    },
+                                ),
+                            ],
+                            md=7,
+                        ),
+                    ]
                 ),
-                # Right column — health check
-                dbc.Col(
+                dbc.Card(
                     [
-                        dbc.Card(
-                            [
-                                dbc.CardHeader(
-                                    [
-                                        "🩺 System Health ",
-                                        dbc.Button(
-                                            "Run Doctor",
-                                            id="cfg-run-doctor",
-                                            color="primary",
-                                            size="sm",
-                                            className="ms-2",
-                                        ),
-                                    ]
-                                ),
-                                dbc.CardBody(
-                                    html.Div(
-                                        id="cfg-doctor-results",
-                                        children=html.P(
-                                            "Click 'Run Doctor' to check all dependencies.",
-                                            style={
-                                                "color": "var(--text-muted)",
-                                                "fontSize": "0.82rem",
-                                            },
-                                        ),
-                                    )
-                                ),
-                            ],
-                            style={
-                                "background": "var(--bg-secondary)",
-                                "border": "1px solid var(--border-color)",
-                                "marginBottom": "16px",
-                            },
-                        ),
-                        dbc.Card(
-                            [
-                                dbc.CardHeader("📦 Toolkit Modules"),
-                                dbc.CardBody(
-                                    html.Div(
-                                        id="cfg-toolkit-status",
-                                        children=html.P(
-                                            "Click 'Run Doctor' above.",
-                                            style={
-                                                "color": "var(--text-muted)",
-                                                "fontSize": "0.82rem",
-                                            },
-                                        ),
-                                    )
-                                ),
-                            ],
-                            style={
-                                "background": "var(--bg-secondary)",
-                                "border": "1px solid var(--border-color)",
-                            },
+                        dbc.CardHeader("Interactive exploration"),
+                        dbc.CardBody(
+                            html.Ul(
+                                [
+                                    html.Li(dcc.Link("Explore (what-if sandbox)", href="/explore")),
+                                    html.Li(
+                                        html.A(
+                                            "USER_MANUAL — Interactive exploration",
+                                            href=f"file:///{str(Path(__file__).resolve().parents[2] / 'docs' / 'USER_MANUAL.md').replace(chr(92), '/')}",
+                                            target="_blank",
+                                        )
+                                    ),
+                                ],
+                                style={"fontSize": "0.82rem"},
+                            )
                         ),
                     ],
-                    md=7,
+                    style={
+                        "background": "var(--bg-secondary)",
+                        "border": "1px solid var(--border-color)",
+                        "marginTop": "16px",
+                    },
                 ),
-            ]
-        ),
-        html.Div(className="divider-nyc"),
-        html.P(
-            [
-                html.Strong("Platform: "),
-                platform.system(),
-                " ",
-                platform.release(),
-                " | ",
-                html.Strong("Python: "),
-                platform.python_version(),
+                html.Div(className="divider-nyc"),
+                html.P(
+                    [
+                        html.Strong("Platform: "),
+                        platform.system(),
+                        " ",
+                        platform.release(),
+                        " | ",
+                        html.Strong("Python: "),
+                        platform.python_version(),
+                    ],
+                    style={"fontSize": "0.75rem", "color": "var(--text-muted)"},
+                ),
             ],
-            style={"fontSize": "0.75rem", "color": "var(--text-muted)"},
         ),
     ],
     fluid=True,
 )
+
+
+@callback(
+    Output("ui-prefs-store", "data"),
+    Output("offline-banner-store", "data"),
+    Input("set-theme", "value"),
+    Input("set-font-scale", "value"),
+    Input("set-offline-mode", "value"),
+)
+def persist_ui_prefs(theme, font_scale, offline_vals):
+    prefs = load_ui_prefs()
+    prefs["theme"] = theme or "dark"
+    prefs["font_scale"] = font_scale or "normal"
+    prefs["offline_mode"] = bool(offline_vals and "on" in offline_vals)
+    save_ui_prefs(prefs)
+    return prefs, prefs["offline_mode"]
+
+
+@callback(
+    Output("set-download-prefs", "data"),
+    Input("set-export-prefs", "n_clicks"),
+    prevent_initial_call=True,
+)
+def export_prefs(_):
+    return dict(content=json.dumps(export_all_prefs(), indent=2), filename="nyc_dot_ui_prefs.json")
+
+
+@callback(
+    Output("set-prefs-msg", "children"),
+    Output("ui-prefs-store", "data", allow_duplicate=True),
+    Input("set-import-upload", "contents"),
+    State("set-import-upload", "filename"),
+    prevent_initial_call=True,
+)
+def import_prefs(contents, filename):
+    if not contents:
+        return "No file uploaded.", no_update
+    import base64
+
+    try:
+        _, b64 = contents.split(",", 1)
+        data = json.loads(base64.b64decode(b64).decode("utf-8"))
+        import_all_prefs(data)
+        prefs = load_ui_prefs()
+        return f"Imported {filename or 'preferences'}. Reload may apply theme to charts.", prefs
+    except Exception as exc:
+        return f"Import failed: {exc}", no_update
 
 
 @callback(Output("cfg-db-info", "children"), Input("cfg-refresh-db", "n_clicks"))
@@ -337,43 +429,20 @@ def refresh_db(_):
 def run_doctor(_):
     def _row(name, ok):
         return html.Div(
-            [
-                html.Code(name, style={"fontSize": "0.78rem"}),
-                _badge(ok),
-            ],
+            [html.Code(name, style={"fontSize": "0.78rem"}), _badge(ok)],
             style={"marginBottom": "4px"},
         )
 
     core_rows = [_row(m, _check(m)) for m in CORE_DEPS]
     opt_rows = [_row(m, _check(m)) for m in OPT_DEPS]
-
     doctor = html.Div(
         [
-            html.P(
-                "Core",
-                style={
-                    "fontWeight": 700,
-                    "fontSize": "0.8rem",
-                    "color": "var(--text-muted)",
-                    "marginBottom": "4px",
-                },
-            ),
+            html.P("Core", style={"fontWeight": 700, "fontSize": "0.8rem", "color": "var(--text-muted)"}),
             *core_rows,
             html.Hr(style={"borderColor": "var(--border-color)", "margin": "8px 0"}),
-            html.P(
-                "Optional",
-                style={
-                    "fontWeight": 700,
-                    "fontSize": "0.8rem",
-                    "color": "var(--text-muted)",
-                    "marginBottom": "4px",
-                },
-            ),
+            html.P("Optional", style={"fontWeight": 700, "fontSize": "0.8rem", "color": "var(--text-muted)"}),
             *opt_rows,
         ]
     )
-
     toolkit_rows = [_row(label, _check(mod)) for mod, label in TOOLKIT_MODULES]
-    toolkit = html.Div(toolkit_rows)
-
-    return doctor, toolkit
+    return doctor, html.Div(toolkit_rows)

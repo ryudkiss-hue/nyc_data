@@ -6,3 +6,28 @@ __pycache__/
 .env
 airflow_app/logs/
 airflow_app/config/*.cfg
+
+# --- Python tooling ---
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# --- Local editor settings ---
+.vscode/
+
+# --- Generated outputs/state ---
+outputs/
+*.log
+nyc_toolkit.log
+
+# --- Local tooling / editor ---
+.kombai/
+.mypy_cache/
+
+# --- Build artifacts ---
+build/
+dist/
+installer/output/*.exe
+!installer/output/.gitkeep

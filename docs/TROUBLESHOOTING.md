@@ -21,6 +21,11 @@ python launcher.py doctor
 python -m socrata_toolkit.core.cli doctor --check-db
 ```
 
+If you’re using multi-profile mode, confirm:
+
+- `TOOLKIT_PROFILE` is set (in `.env` or your shell)
+- Your per-profile state exists under `outputs/.state/profiles/<profile>/`
+
 ---
 
 ## Log locations
@@ -89,6 +94,14 @@ python -m socrata_toolkit.core.cli -vv pipeline data.cityofnewyork.us DATASET --
 | Empty construction list | No inspections source | Add `inspections` source with rows |
 | Excel engine error | `openpyxl` | Install xlsx extra |
 | geopandas ImportError | Geo source | `pip install geopandas` or use GeoJSON fallback |
+
+### Review decisions
+
+| Symptom | Likely cause | Fix |
+|---------|--------------|-----|
+| Review page shows no decisions | No decisions saved for this pack date | Use `socrata review set ...` then refresh |
+| Decisions not exporting into pack | Store empty for that pack date | Run `socrata review export --pack outputs/analyst_pack/YYYY-MM-DD` |
+| Wrong profile’s decisions showing | `TOOLKIT_PROFILE` mismatch | Set `TOOLKIT_PROFILE=<name>` and restart Dash/terminal |
 
 ### Docker
 

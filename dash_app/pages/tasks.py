@@ -15,7 +15,10 @@ from dash import ALL, Input, Output, State, callback, dcc, html
 
 from dash_app.data import db
 
-dash.register_page(__name__, path="/tasks", name="Task Board", order=8)
+from dash_app.pages._env import legacy_pages_enabled
+
+if legacy_pages_enabled():
+    dash.register_page(__name__, path="/tasks", name="Task Board", order=54)
 
 # ── Ensure DuckDB table exists ────────────────────────────────────────────────
 db.execute("""

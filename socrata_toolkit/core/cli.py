@@ -7,20 +7,29 @@ import logging
 import click
 import pandas as pd
 
-from ..analysis.core import profile_dataframe, quality_report
+from ..analysis import profile_dataframe, quality_report
 from .config import get_default, load_local_config
-from ..analysis.text import generate_text_insights
+from ..analysis import generate_text_insights
 from .logging_utils import get_logger, write_run_report
 from ..llm.duck_bridge import LLMAugmentConfig, augment_dataframe_with_llm
 from ..spatial.core import spatial_intersects_join
-from ..nlp.advanced import analyze_text, translate_text
+try:
+    from ..nlp.advanced import analyze_text, translate_text  # type: ignore
+except Exception:  # pragma: no cover
+    analyze_text = None  # type: ignore
+    translate_text = None  # type: ignore
 from .state import load_state, save_state
 from ..quality.validation import validate_required_columns
 from .client import SocrataClient, SocrataConfig
 from .exporters import MongoExporter, PostgresExporter, XLSXExporter
 from ..pipeline.streaming import stream_pipeline
-from ..sql.conflict import ConflictResolver, PostGISConflictResolver
-from ..sql.builder import in_clause
+try:
+    from ..sql.conflict import ConflictResolver, PostGISConflictResolver  # type: ignore
+    from ..sql.builder import in_clause  # type: ignore
+except Exception:  # pragma: no cover
+    ConflictResolver = None  # type: ignore
+    PostGISConflictResolver = None  # type: ignore
+    in_clause = None  # type: ignore
 from ..alerts.manager import AlertManager, CLINotifier, EmailNotifier, DBNotifier, Alert
 from ..discovery.schema import SchemaRegistry, SchemaValidator, BackwardCompatibilityChecker
 from ..lineage.core import DAG, TransformationNode, NodeType
@@ -501,6 +510,8 @@ def batch_search_cmd(domain, fourfour, field, file_path, out):
 @click.option("--check-db", is_flag=True)
 def doctor_cmd(check_db):
     import importlib
+    from pathlib import Path
+
     checks = {}
     for mod in ["requests", "click", "pandas", "openpyxl", "streamlit"]:
         try:
@@ -541,7 +552,154 @@ def doctor_cmd(check_db):
             except Exception as exc:
                 db_status["mongo"] = f"fail: {exc}"
 
-    click.echo(json.dumps({"core": checks, "optional": optional_status, "db": db_status}, indent=2))
+    # Actionable "fix-it" hints (best-effort, platform-agnostic).
+    fixes: list[str] = []
+    missing_core = [k for k, v in checks.items() if isinstance(v, str) and v.startswith("missing:")]
+    missing_opt = [k for k, v in optional_status.items() if isinstance(v, str) and v.startswith("missing:")]
+    if missing_core:
+        fixes.append("Install core deps: `pip install -e .` (or `pip install .`) then rerun `socrata doctor`.")
+    if missing_opt:
+        fixes.append("Install optional extras (examples): `pip install '.[postgres]'`, `pip install '.[pptx]'`, `pip install '.[spatial]'`.")
+    fixes.append("If Dash pages look empty, run an Analyst Pack: `socrata analyst run --profile <path>`.")
+    fixes.append("Open the dashboard: `python dash_app/app.py` or `python launcher.py web`.")
+
+    import_checks: dict[str, str] = {}
+    for label, modpath in [
+        ("analysis.advanced", "socrata_toolkit.analysis.advanced"),
+        ("analysis.program", "socrata_toolkit.analysis.program"),
+        ("nlp.advanced", "socrata_toolkit.nlp.advanced"),
+    ]:
+        try:
+            importlib.import_module(modpath)
+            import_checks[label] = "ok"
+        except Exception as exc:
+            import_checks[label] = f"fail: {exc}"
+
+    checklist = {
+        "wizard_module": "ok" if __import__("importlib").util.find_spec("socrata_toolkit.install_wizard") else "missing",
+        "analyst_module": "ok" if __import__("importlib").util.find_spec("socrata_toolkit.analyst") else "missing",
+        "dash_app": "ok" if (Path(__file__).resolve().parents[2] / "dash_app" / "app.py").exists() else "missing",
+    }
+    click.echo(
+        json.dumps(
+            {
+                "core": checks,
+                "optional": optional_status,
+                "db": db_status,
+                "import_shims": import_checks,
+                "checklist": checklist,
+                "fix_it": fixes,
+            },
+            indent=2,
+        )
+    )
+
+
+# ── Review / decisions store ─────────────────────────────────────────────────
+
+
+@main.group(name="review")
+def review_group() -> None:
+    """Review & decision tracking for conflicts and approvals."""
+
+
+def _default_pack_date() -> str:
+    try:
+        from ..core.profiles import ensure_profile_exists
+        from ..core.state import load_state
+
+        prof = ensure_profile_exists()
+        st = load_state(str(prof.state_dir / "last_pack.json"))
+        return str(st.get("last_run_date") or st.get("run_date") or "")
+    except Exception:
+        return ""
+
+
+@review_group.command("list")
+@click.option("--pack-date", default="", help="Pack date (YYYY-MM-DD). Defaults to last run.")
+@click.option("--kind", type=click.Choice(["conflict", "approval"]), default="", help="Filter by kind")
+@click.option("--status", default="", help="Filter by status")
+@click.option("--q", default="", help="Search key/notes/assignee")
+@click.option("--limit", type=int, default=2000)
+@click.option("--json-out", type=click.Path(), default="")
+def review_list(pack_date: str, kind: str, status: str, q: str, limit: int, json_out: str) -> None:
+    """List decisions from the local review store."""
+    from pathlib import Path
+
+    from ..review.store import ReviewStore
+
+    pd = pack_date or _default_pack_date()
+    with ReviewStore() as store:
+        df = store.list(
+            pack_date=pd or None,
+            kind=kind or None,
+            status=status or None,
+            q=q or None,
+            limit=limit,
+        )
+    if json_out:
+        Path(json_out).write_text(df.to_json(orient="records"), encoding="utf-8")
+        click.echo(f"Wrote {len(df)} decisions to {json_out}")
+        return
+    click.echo(df.to_string(index=False) if not df.empty else "(no decisions)")
+
+
+@review_group.command("set")
+@click.option("--pack-date", default="", help="Pack date (YYYY-MM-DD). Defaults to last run.")
+@click.option("--kind", type=click.Choice(["conflict", "approval"]), required=True)
+@click.option("--key-type", required=True, help="Key type (e.g. location_id, contract_id)")
+@click.option("--key", "key_value", required=True, help="Key value")
+@click.option("--status", required=True, help="Decision status (resolved/defer/needs_coordination or approved/hold)")
+@click.option("--assigned-to", default="", help="Owner/assignee")
+@click.option("--reason", default="", help="Reason (approvals)")
+@click.option("--notes", default="", help="Freeform notes")
+def review_set(pack_date: str, kind: str, key_type: str, key_value: str, status: str, assigned_to: str, reason: str, notes: str) -> None:
+    """Set a decision (upsert) in the local store."""
+    from ..review.store import ReviewStore
+
+    pd = pack_date or _default_pack_date()
+    if not pd:
+        raise click.ClickException("Provide --pack-date (YYYY-MM-DD) or run an Analyst Pack first.")
+    with ReviewStore() as store:
+        if kind == "conflict":
+            store.set_conflict(
+                pack_date=pd,
+                key_type=key_type,
+                key_value=key_value,
+                status=status,  # validated loosely to avoid tight coupling
+                assigned_to=assigned_to,
+                notes=notes,
+            )
+        else:
+            store.set_approval(
+                pack_date=pd,
+                key_type=key_type,
+                key_value=key_value,
+                status=status,
+                reason=reason,
+                assigned_to=assigned_to,
+                notes=notes,
+            )
+    click.echo("OK")
+
+
+@review_group.command("export")
+@click.option("--pack", "pack_dir", required=True, type=click.Path(exists=True, file_okay=False))
+@click.option("--pack-date", default="", help="Pack date (YYYY-MM-DD). Defaults to pack folder name.")
+def review_export(pack_dir: str, pack_date: str) -> None:
+    """Export decisions into a pack directory (xlsx + md)."""
+    from pathlib import Path
+
+    from ..review.store import ReviewStore
+
+    p = Path(pack_dir)
+    pd = pack_date or p.name
+    with ReviewStore() as store:
+        arts = store.export_for_pack(pack_dir=p, pack_date=pd)
+    if not arts:
+        click.echo("No decisions found to export.")
+        return
+    click.echo(json.dumps(arts, indent=2))
 
 
 @main.command("migrate")
@@ -1849,12 +2007,37 @@ def analyst_init_config(out_path: str) -> None:
 @analyst_group.command("run")
 @click.option("--profile", required=True, type=click.Path(exists=True), help="YAML analyst profile")
 @click.option("--dry-run", is_flag=True, help="Validate sources only; do not write pack")
-def analyst_run(profile: str, dry_run: bool) -> None:
+@click.option("--offline", is_flag=True, help="Skip Socrata sources (same as offline: true in profile)")
+def analyst_run(profile: str, dry_run: bool, offline: bool) -> None:
     """Run Analyst Autopilot pack workflow."""
     from ..analyst import run_analyst_pack
 
-    result = run_analyst_pack(profile, dry_run=dry_run)
+    result = run_analyst_pack(profile, dry_run=dry_run, offline=offline)
     click.echo(json.dumps({"pack_dir": str(result.pack_dir), "artifacts": result.artifacts, "warnings": result.warnings}, indent=2))
+
+
+@analyst_group.command("publish")
+@click.option("--profile", "publish_profile", required=True, type=click.Path(exists=True), help="YAML publish profile")
+@click.option("--pack", "pack_dir", required=True, type=click.Path(exists=True, file_okay=False), help="Analyst pack directory (outputs/analyst_pack/YYYY-MM-DD)")
+@click.option("--dry-run", is_flag=True, help="Preview publish actions without side effects")
+def analyst_publish(publish_profile: str, pack_dir: str, dry_run: bool) -> None:
+    """Publish an existing Analyst Pack to configured destinations."""
+    from ..analyst.publish import publish_pack
+
+    report = publish_pack(pack_dir=pack_dir, profile_path=publish_profile, dry_run=dry_run)
+    click.echo(json.dumps(report.to_dict(), indent=2, default=str))
+
+
+@main.command("publish")
+@click.option("--profile", "publish_profile", required=True, type=click.Path(exists=True), help="YAML publish profile")
+@click.option("--pack", "pack_dir", required=True, type=click.Path(exists=True, file_okay=False), help="Analyst pack directory (outputs/analyst_pack/YYYY-MM-DD)")
+@click.option("--dry-run", is_flag=True, help="Preview publish actions without side effects")
+def publish_alias(publish_profile: str, pack_dir: str, dry_run: bool) -> None:
+    """Alias for `socrata analyst publish`."""
+    from ..analyst.publish import publish_pack
+
+    report = publish_pack(pack_dir=pack_dir, profile_path=publish_profile, dry_run=dry_run)
+    click.echo(json.dumps(report.to_dict(), indent=2, default=str))
 
 
 main.add_command(analyst_group)

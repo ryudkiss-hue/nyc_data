@@ -256,7 +256,27 @@ def test_bot_unknown():
 
 # -- 311 Complaint Ingestion (unit test only, no API call) --------------------
 
+import pandas as pd
+
+from socrata_toolkit.nlp.integration import triage_complaints
 from socrata_toolkit.pipeline import IngestionResult
+
+
+def test_triage_complaints_sets_priority_column():
+    df = pd.DataFrame(
+        {"descriptor": ["unsafe sidewalk collapse", "cracked sidewalk panel", ""]},
+    )
+    out = triage_complaints(df, text_col="descriptor")
+    assert "_triage_priority" in out.columns
+    assert out.loc[0, "_triage_priority"] == "critical"
+    assert out.loc[1, "_triage_priority"] == "high"
+    assert out.loc[2, "_triage_priority"] == "medium"
+
+
+def test_nlp_integration_shim_import():
+    from socrata_toolkit.nlp_integration import triage_complaints as shim_triage
+
+    assert shim_triage is triage_complaints
 
 
 def test_ingestion_result_struct():

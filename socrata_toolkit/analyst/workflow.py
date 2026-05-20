@@ -63,6 +63,7 @@ from .executive import build_executive_summary
 from .inquiries import render_inquiry_drafts
 
 from .pack import AnalystPackResult, assemble_pack
+from .publish import publish_pack
 
 from .roles import (
     build_role_task_status_md,
@@ -224,6 +225,8 @@ def run_analyst_pack(
 
     dry_run: bool = False,
 
+    offline: bool | None = None,
+
 ) -> AnalystPackResult:
 
     """Run the full analyst workflow from a YAML profile."""
@@ -231,6 +234,10 @@ def run_analyst_pack(
     started_at = datetime.now(timezone.utc).isoformat()
 
     profile = load_profile(config_path)
+
+    if offline is not None:
+
+        profile.offline = bool(offline)
 
 
 
@@ -500,6 +507,16 @@ def run_analyst_pack(
 
     )
 
+    # Data dictionary (trust diagnostics) — written per pack for transparency
+    try:
+        from .data_dictionary import write_data_dictionary
+
+        arts = write_data_dictionary(result.pack_dir, frames)
+        result.artifacts.update(arts)
+        result.write_manifest()
+    except Exception:
+        pass
+
 
 
     if not construction.empty:
@@ -636,7 +653,50 @@ def run_analyst_pack(
 
             result.write_manifest()
 
+    # Persist run state for UX ("Resume" in Dash, publish defaults, last role)
+    try:
+        from ..core.state import save_state
+        from ..core.profiles import ensure_profile_exists, profile_paths
 
+        pp = ensure_profile_exists(result.profile_name)
+        payload = {
+            "last_pack_dir": str(result.pack_dir),
+            "last_profile_name": str(result.profile_name),
+            "last_role": str(profile.role or ""),
+            "last_run_date": str(result.run_date),
+        }
+        # New: per-profile state
+        save_state(str(pp.state_dir / "last_pack.json"), payload)
+        # Backward-compatible: global state remains updated
+        save_state("outputs/.state/last_pack.json", payload)
+    except Exception:
+        pass
+
+    # Export any saved review decisions into this pack (optional)
+    try:
+        from ..review.store import ReviewStore
+
+        with ReviewStore(profile=result.profile_name) as store:
+            arts = store.export_for_pack(pack_dir=result.pack_dir, pack_date=result.run_date)
+            if arts:
+                result.artifacts.update(arts)
+                result.write_manifest()
+    except Exception:
+        pass
+
+    # Optional publish step (post-pack automation)
+    if profile.publish and profile.publish_profile_path:
+        try:
+            publish_pack(
+                pack_dir=result.pack_dir,
+                profile_path=profile.publish_profile_path,
+                dry_run=False,
+            )
+        except Exception as exc:
+            warnings = list(result.warnings or [])
+            warnings.append(f"publish: FAILED — {exc}")
+            result.warnings = warnings
+            result.write_manifest()
 
     return result
 

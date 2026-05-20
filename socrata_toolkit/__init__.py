@@ -27,7 +27,7 @@ _lazy_map: dict[str, str] = {
     # analysis (Pillar: analysis)
     "DataProfile": "analysis:DataProfile",
     "profile_dataframe": "analysis:profile_dataframe",
-    "MetricsTracker": "analysis:MetricsTracker",
+    "MetricsTracker": "program_metrics:MetricsTracker",
     "compute_program_dashboard": "analysis:compute_program_dashboard",
     "SLATarget": "analysis:SLATarget",
     "compute_cycle_times": "analysis:compute_cycle_times",
@@ -88,12 +88,6 @@ _lazy_map: dict[str, str] = {
     "GovernanceProcessor": "governance:GovernanceProcessor",
     "AuditLogger": "governance:AuditLogger",
     "create_lineage": "governance:create_lineage",
-    # ai (Pillar: ai)
-    "sentiment_score": "ai:sentiment_score",
-    "enrich_construction_list": "ai:enrich_construction_list",
-    "SocrataLLMChatbot": "ai:SocrataLLMChatbot",
-    "SQLQueryEngine": "ai:SQLQueryEngine",
-    "LegalPolicyEngine": "ai:LegalPolicyEngine",
     "api": "api",
     # alerts (Pillar: alerts)
     "Rule": "alerts.rules:Rule",
@@ -182,12 +176,6 @@ __all__ = [
     "GovernanceProcessor",
     "AuditLogger",
     "create_lineage",
-    # ai
-    "sentiment_score",
-    "enrich_construction_list",
-    "SocrataLLMChatbot",
-    "SQLQueryEngine",
-    "LegalPolicyEngine",
     # alerts
     "Rule",
     "RulesEngine",
@@ -200,13 +188,6 @@ _loaded_cache: dict[str, object] = {}
 
 if TYPE_CHECKING:
     from . import api  # noqa: F401
-    from .ai import (  # noqa: F401
-        LegalPolicyEngine,
-        SocrataLLMChatbot,
-        SQLQueryEngine,
-        enrich_construction_list,
-        sentiment_score,
-    )
     from .analysis import (  # noqa: F401
         DashboardSummary,
         DataProfile,

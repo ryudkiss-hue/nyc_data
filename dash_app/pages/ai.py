@@ -11,8 +11,10 @@ import dash_bootstrap_components as dbc
 from dash import Input, Output, State, callback, dcc, html
 
 from dash_app.data import db
+from dash_app.pages._env import legacy_pages_enabled
 
-dash.register_page(__name__, path="/ai", name="AI Assistant", order=2)
+if legacy_pages_enabled():
+    dash.register_page(__name__, path="/ai", name="AI Assistant", order=99)
 
 # ── LangChain detection ───────────────────────────────────────────────────────
 _HAS_LC = False

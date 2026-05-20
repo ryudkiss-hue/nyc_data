@@ -34,6 +34,7 @@ from .models import DatasetMetadata, SearchResult
 from .config import get_default, load_local_config
 from .db_helpers import build_fts_index_sql
 from .duckdb_store import DuckDBManager, DuckDBRepository, get_bundle_dir
+from .profiles import ProfilePaths, active_profile_name, ensure_profile_exists, list_profiles, profile_paths
 
 
 class DuckDBExporter:
@@ -120,6 +121,11 @@ __all__ = [
     "MasterEntity",
     "load_state",
     "save_state",
+    "ProfilePaths",
+    "active_profile_name",
+    "profile_paths",
+    "ensure_profile_exists",
+    "list_profiles",
     "ChangePattern",
     "ChangeSummary",
     "SchemaRegistry",

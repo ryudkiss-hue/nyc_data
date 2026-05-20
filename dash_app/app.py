@@ -7,17 +7,31 @@ NYC DOT Sidewalk Toolkit — primary analyst GUI (Dash)
   gunicorn "dash_app.app:server"
 """
 
+from __future__ import annotations
+
 import os
 import sys
+from pathlib import Path
+from urllib.parse import parse_qs
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import dash
 import dash_bootstrap_components as dbc
 import plotly.io as pio
-from dash import Dash, Input, Output, State, callback, dcc, html
+from dash import Dash, Input, Output, State, callback, dcc, html, no_update
+
+from dash_app.data.pack_loader import manifest_summary, resolve_pack_dir
+from dash_app.data.ui_prefs import get_ui_pref, load_ui_prefs, save_ui_prefs
+from socrata_toolkit.core.profiles import active_profile_name, list_profiles
 
 _DEBUG = os.getenv("NYC_DOT_DEBUG", "").lower() in ("1", "true", "yes")
+_ROOT = Path(__file__).resolve().parents[1]
+
+_ui = load_ui_prefs()
+_theme = get_ui_pref("theme", "dark")
+_font_scale = get_ui_pref("font_scale", "normal")
+_sidebar_collapsed = bool(get_ui_pref("sidebar_collapsed", False))
 
 app = Dash(
     __name__,
@@ -39,22 +53,39 @@ app = Dash(
 )
 server = app.server
 
-pio.templates.default = "plotly_dark"
+pio.templates.default = "plotly_dark" if _theme == "dark" else "plotly_white"
 
 NAV = [
-    {"label": "Home", "icon": "bi bi-house", "path": "/"},
-    {"label": "Construction", "icon": "bi bi-cone-striped", "path": "/construction"},
-    {"label": "Contracts", "icon": "bi bi-file-earmark-text", "path": "/contracts"},
-    {"label": "Metrics", "icon": "bi bi-speedometer2", "path": "/metrics"},
-    {"label": "Inquiries", "icon": "bi bi-chat-left-text", "path": "/inquiries"},
-    {"label": "Settings", "icon": "bi bi-gear", "path": "/settings"},
+    {"label": "Home", "icon": "bi bi-house", "path": "/", "key": "home"},
+    {"label": "Explore", "icon": "bi bi-sliders", "path": "/explore", "key": "explore"},
+    {"label": "Construction", "icon": "bi bi-cone-striped", "path": "/construction", "key": "construction"},
+    {"label": "Contracts", "icon": "bi bi-file-earmark-text", "path": "/contracts", "key": "contracts"},
+    {"label": "Metrics", "icon": "bi bi-speedometer2", "path": "/metrics", "key": "metrics"},
+    {"label": "Inquiries", "icon": "bi bi-chat-left-text", "path": "/inquiries", "key": "inquiries"},
+    {"label": "Review", "icon": "bi bi-check2-square", "path": "/review", "key": "review"},
+    {"label": "Data Trust", "icon": "bi bi-shield-check", "path": "/data-trust", "key": "data-trust"},
+    {"label": "Publish", "icon": "bi bi-send", "path": "/publish", "key": "publish"},
+    {"label": "Settings", "icon": "bi bi-gear", "path": "/settings", "key": "settings"},
 ]
+
+_PAGE_PATHS = {
+    "home": "/",
+    "explore": "/explore",
+    "construction": "/construction",
+    "contracts": "/contracts",
+    "metrics": "/metrics",
+    "inquiries": "/inquiries",
+    "review": "/review",
+    "data-trust": "/data-trust",
+    "publish": "/publish",
+    "settings": "/settings",
+}
 
 if _DEBUG:
     NAV.extend(
         [
-            {"label": "Map View", "icon": "bi bi-map", "path": "/geospatial"},
-            {"label": "Dev tools", "icon": "bi bi-grid", "path": "/devtools"},
+            {"label": "Map View", "icon": "bi bi-map", "path": "/geospatial", "key": "geospatial"},
+            {"label": "Dev tools", "icon": "bi bi-grid", "path": "/devtools", "key": "devtools"},
         ]
     )
 
@@ -72,7 +103,7 @@ def build_sidebar(collapsed: bool = False) -> html.Div:
                 href=item["path"],
                 className="nyc-nav-link",
                 id={"type": "nav-link", "href": item["path"]},
-                **{"aria-label": item["label"]},
+                title=item["label"],
             )
         )
 
@@ -100,7 +131,7 @@ def build_sidebar(collapsed: bool = False) -> html.Div:
                 ],
                 className="nyc-logo-section",
             ),
-            html.Nav(nav_items, className="nyc-nav-container", **{"aria-label": "Main"}),
+            html.Nav(nav_items, className="nyc-nav-container", **{"aria-label": "Main navigation"}),
             html.Div(
                 [
                     html.Button(
@@ -111,11 +142,11 @@ def build_sidebar(collapsed: bool = False) -> html.Div:
                                 ),
                                 **{"aria-hidden": "true"},
                             ),
-                            html.Span("Collapse") if not collapsed else None,
+                            html.Span("Collapse", className="nyc-nav-label") if not collapsed else None,
                         ],
                         id="sidebar-toggle",
                         className="nyc-collapse-btn",
-                        **{"aria-label": "Toggle sidebar"},
+                        title="Toggle sidebar",
                     )
                 ],
                 className="nyc-sidebar-footer",
@@ -125,15 +156,35 @@ def build_sidebar(collapsed: bool = False) -> html.Div:
 
 
 def build_header() -> html.Header:
+    profiles = list_profiles(root=_ROOT) or ["default"]
+    current = active_profile_name()
+    if current not in profiles:
+        profiles = sorted(set(profiles + [current]))
+
     return html.Header(
         id="nyc-header",
         children=[
             html.Div(
-                html.Div(
-                    "NYC DOT — Sidewalk Inspection & Management",
-                    className="nyc-header-title",
-                ),
+                [
+                    html.Div(
+                        "NYC DOT — Sidewalk Inspection & Management",
+                        className="nyc-header-title",
+                    ),
+                    html.Div(id="nyc-header-pack-badge", className="nyc-header-badge-wrap"),
+                ],
                 className="nyc-header-left",
+            ),
+            html.Div(
+                className="nyc-header-right",
+                children=[
+                    dcc.Dropdown(
+                        id="header-profile",
+                        options=[{"label": p, "value": p} for p in profiles],
+                        value=current,
+                        clearable=False,
+                        className="nyc-profile-dropdown",
+                    ),
+                ],
             ),
         ],
     )
@@ -141,17 +192,29 @@ def build_header() -> html.Header:
 
 app.layout = html.Div(
     id="app-root",
-    **{"data-theme": "dark"},
+    **{
+        "data-theme": _theme,
+        "data-font-scale": _font_scale,
+    },
     children=[
         html.A("Skip to main content", href="#nyc-content", className="skip-link"),
-        dcc.Store(id="sidebar-store", data=False, storage_type="local"),
-        dcc.Store(id="app-ready-store", data=True),
+        dcc.Store(id="sidebar-store", data=_sidebar_collapsed, storage_type="local"),
+        dcc.Store(id="ui-prefs-store", data=_ui),
+        dcc.Store(id="pack-route-store", data=""),
+        dcc.Store(id="offline-banner-store", data=False),
         dcc.Location(id="url"),
+        html.Div(id="offline-banner", className="nyc-offline-banner-wrap", role="status"),
+        html.Div(
+            id="global-toast",
+            className="nyc-feedback-toast",
+            role="status",
+            **{"aria-live": "polite", "aria-atomic": "true"},
+        ),
         html.Div(
             id="layout-container",
             style={"display": "flex"},
             children=[
-                html.Div(id="sidebar-container", children=build_sidebar()),
+                html.Div(id="sidebar-container", children=build_sidebar(_sidebar_collapsed)),
                 html.Div(
                     id="main-container",
                     children=[
@@ -173,7 +236,11 @@ app.layout = html.Div(
     prevent_initial_call=True,
 )
 def toggle_sidebar(n, is_collapsed):
-    return build_sidebar(not is_collapsed), not is_collapsed
+    collapsed = not bool(is_collapsed)
+    prefs = load_ui_prefs()
+    prefs["sidebar_collapsed"] = collapsed
+    save_ui_prefs(prefs)
+    return build_sidebar(collapsed), collapsed
 
 
 @callback(
@@ -182,8 +249,130 @@ def toggle_sidebar(n, is_collapsed):
     prevent_initial_call=True,
 )
 def init_sidebar(is_collapsed):
-    return build_sidebar(is_collapsed)
+    return build_sidebar(bool(is_collapsed))
+
+
+@callback(
+    Output("app-root", "data-theme"),
+    Output("app-root", "data-font-scale"),
+    Input("ui-prefs-store", "data"),
+)
+def apply_theme_from_store(prefs):
+    if not prefs:
+        return no_update, no_update
+    theme = prefs.get("theme", "dark")
+    pio.templates.default = "plotly_dark" if theme == "dark" else "plotly_white"
+    return theme, prefs.get("font_scale", "normal")
+
+
+@callback(
+    Output("nyc-header-pack-badge", "children"),
+    Input("pack-route-store", "data"),
+    Input("url", "pathname"),
+)
+def update_header_badge(pack_override, _pathname):
+    pack = resolve_pack_dir(pack_override) if pack_override else resolve_pack_dir()
+    if not pack:
+        return html.Span(
+            [html.I(className="bi bi-circle me-1", **{"aria-hidden": "true"}), "No pack"],
+            className="nyc-status-pill nyc-status-muted",
+            **{"aria-label": "No analyst pack loaded"},
+        )
+    summary = manifest_summary(pack)
+    health = summary.get("health", "ok")
+    icon = "bi-check-circle-fill" if health == "ok" else "bi-exclamation-triangle-fill"
+    label = f"Pack {summary.get('run_date', '')}"
+    if health != "ok":
+        label += f" ({summary.get('warning_count', 0)} warnings)"
+    return html.Span(
+        [html.I(className=f"bi {icon} me-1", **{"aria-hidden": "true"}), label],
+        className=f"nyc-status-pill nyc-status-{health}",
+        **{"aria-label": label},
+    )
+
+
+@callback(
+    Output("url", "pathname", allow_duplicate=True),
+    Output("pack-route-store", "data"),
+    Input("url", "search"),
+    State("url", "pathname"),
+    prevent_initial_call=True,
+)
+def deep_link_routing(search, pathname):
+    if not search:
+        return no_update, no_update
+    params = parse_qs(search.lstrip("?"))
+    page = (params.get("page") or [""])[0].lower().replace("_", "-")
+    pack = (params.get("pack") or [""])[0]
+    pack_path = ""
+    if pack:
+        candidate = _ROOT / "outputs" / "analyst_pack" / pack
+        if candidate.is_dir():
+            pack_path = str(candidate)
+    target = _PAGE_PATHS.get(page)
+    if target and target != pathname:
+        return target, pack_path or no_update
+    if pack_path:
+        return no_update, pack_path
+    return no_update, no_update
+
+
+@callback(
+    Output("offline-banner", "children"),
+    Input("offline-banner-store", "data"),
+    Input("ui-prefs-store", "data"),
+)
+def show_offline_banner(force_offline, prefs):
+    offline = bool(force_offline) or bool((prefs or {}).get("offline_mode"))
+    pack = resolve_pack_dir()
+    if pack:
+        summary = manifest_summary(pack)
+        if summary.get("health") == "warn" and not offline:
+            return dbc.Alert(
+                [
+                    html.I(className="bi bi-wifi-off me-2", **{"aria-hidden": "true"}),
+                    "Latest pack has source warnings — you can still view cached artifacts. ",
+                    dcc.Link("Data Trust", href="/data-trust"),
+                ],
+                color="warning",
+                className="mb-0 nyc-offline-alert",
+                dismissable=True,
+            )
+    if offline:
+        return dbc.Alert(
+            [
+                html.I(className="bi bi-wifi-off me-2", **{"aria-hidden": "true"}),
+                "Offline mode — Socrata sources skipped; pack-only viewing and Explore on cached data.",
+            ],
+            color="info",
+            className="mb-0 nyc-offline-alert",
+        )
+    return html.Div()
+
+
+@callback(
+    Output("ui-prefs-store", "data", allow_duplicate=True),
+    Input("header-profile", "value"),
+    prevent_initial_call=True,
+)
+def switch_profile(profile_name):
+    if profile_name:
+        os.environ["TOOLKIT_PROFILE"] = str(profile_name)
+    try:
+        from dash_app.data.pack_loader import invalidate_pack_cache
+
+        invalidate_pack_cache()
+    except Exception:
+        pass
+    return load_ui_prefs()
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=8050)
+    port = int(os.getenv("NYC_DOT_DASH_PORT", "8050"))
+    host = os.getenv("NYC_DOT_DASH_HOST", "127.0.0.1")
+    app.run(
+        debug=_DEBUG,
+        host=host,
+        port=port,
+        use_reloader=False,
+    )

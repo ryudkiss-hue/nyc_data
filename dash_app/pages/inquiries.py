@@ -4,6 +4,7 @@ import dash
 import dash_bootstrap_components as dbc
 from dash import Input, Output, callback, dcc, html
 
+from dash_app.components.shell import empty_state, page_shell
 from dash_app.data.analyst_pack import latest_pack_dir, load_manifest
 
 dash.register_page(__name__, path="/inquiries", name="Inquiries", order=4)
@@ -38,15 +39,21 @@ for i, path in enumerate(drafts):
 
 layout = dbc.Container(
     [
-        html.H1("Inquiries", className="nyc-page-title"),
-        html.P(
-            f"Pack: {manifest.get('run_date', 'n/a')} — templates from config/inquiry_templates/",
-            className="nyc-page-sub",
+        *page_shell(
+            "Inquiries",
+            f"Draft inquiry letters from pack {manifest.get('run_date', 'n/a')} — copy to clipboard.",
+            page_key="inquiries",
+            pack_dir=pack,
+            children=[
+                dbc.Accordion(sections, start_collapsed=True, flush=True)
+                if sections
+                else empty_state(
+                    "No inquiry drafts — enable inquiry_templates in analyst profile.",
+                    show_demo=False,
+                ),
+                dcc.Store(id="inquiry-copy-store"),
+            ],
         ),
-        dbc.Accordion(sections, start_collapsed=True, flush=True)
-        if sections
-        else html.P("No inquiry drafts — enable inquiry_templates in analyst profile."),
-        dcc.Store(id="inquiry-copy-store"),
     ],
     fluid=True,
 )

@@ -14,8 +14,10 @@ import plotly.express as px
 from dash import Input, Output, State, callback, dcc, html
 
 from dash_app.data import db
+from dash_app.pages._env import legacy_pages_enabled
 
-dash.register_page(__name__, path="/governance", name="Governance", order=5)
+if legacy_pages_enabled():
+    dash.register_page(__name__, path="/governance", name="Governance", order=50)
 
 layout = dbc.Container(
     [
