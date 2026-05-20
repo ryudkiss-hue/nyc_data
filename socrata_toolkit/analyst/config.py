@@ -124,6 +124,16 @@ class AnalystProfile:
 
         return bool(self.steps.get("executive_summary", True))
 
+    @property
+    def publish(self) -> bool:
+        """Whether to run a post-pack publish step (requires publish_profile path)."""
+        return bool(self.steps.get("publish", False))
+
+    @property
+    def publish_profile_path(self) -> str | None:
+        v = self.steps.get("publish_profile") or self.steps.get("publish_profile_path")
+        return str(v) if v else None
+
 
 
     @property

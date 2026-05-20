@@ -29,7 +29,11 @@ It checks `.env.socrata`, lists SQL migration files under `sql/`, and verifies o
 
 ### Q5. Where is the interactive install wizard?
 
-The README references `python -m socrata_toolkit.install_wizard`. If that module is missing in your checkout, use `pip install -e ".[all]"` and `launcher.py setup` instead.
+```bash
+python -m socrata_toolkit.install_wizard
+# or: socrata setup
+# or: python launcher.py setup wizard
+```
 
 ---
 
@@ -215,9 +219,14 @@ Or sync from `.env.socrata` per [QUICKSTART.md](../QUICKSTART.md).
 
 **Dash** (`python dash_app/app.py`) is the primary multi-page Data Assistant. **NiceGUI** Mission Control (`python app.py`) focuses on 311 fetch, triage, and maps.
 
-### Q36. Why does `launcher.py web` fail or look wrong?
+### Q36. How do I open the dashboard?
 
-The launcher starts **Streamlit** against `app.py`, but `app.py` is implemented with **NiceGUI**. Use `python app.py` or `python dash_app/app.py` directly.
+```bash
+python dash_app/app.py
+# or: python launcher.py web
+```
+
+Then open http://127.0.0.1:8050/. Legacy NiceGUI: `set NYC_DOT_LEGACY_NICEGUI=1` then `python app.py`.
 
 ### Q37. What port does Dash use?
 

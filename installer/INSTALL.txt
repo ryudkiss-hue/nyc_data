@@ -1,0 +1,30 @@
+NYC DOT Sidewalk Toolkit — Installation
+========================================
+
+Thank you for installing the NYC DOT Sidewalk Toolkit.
+
+Install location
+----------------
+Program Files\NYC DOT Sidewalk Toolkit
+
+First steps
+-----------
+1. Open "Simple Start" from the Start Menu (or docs\SIMPLE_START.md).
+2. Run "NYC DOT Toolkit Setup Wizard" to create .env and config\analyst_profile.yaml.
+3. Run "Run Analyst Pack" for a weekly autopilot report (outputs\analyst_pack).
+
+Dashboard (optional)
+--------------------
+The Dash analyst GUI needs Python with dash/plotly OR Docker Desktop.
+Use Start Menu → "Open Dashboard" for launch instructions, or see docs\GETTING_STARTED.md.
+
+Scheduled task
+--------------
+If you enabled it during setup, Windows Task Scheduler runs the Analyst Pack weekly
+(Sunday 11:00 PM by default). Re-register with:
+  powershell -File register_scheduled_task.ps1 -AppDir "<install path>"
+
+Support
+-------
+User Manual: docs\USER_MANUAL.md
+Online repo: https://github.com/ryudkiss-hue/nyc_data

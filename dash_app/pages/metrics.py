@@ -1,11 +1,11 @@
-"""Program KPI traffic lights — accessible status indicators."""
-
-import json
+"""Program KPI traffic lights — accessible status indicators with filters."""
 
 import dash
 import dash_bootstrap_components as dbc
-from dash import html
+from dash import Input, Output, callback, dcc, html
 
+from dash_app.components.explainers import default_kpi_description, kpi_metric_explainer
+from dash_app.components.shell import empty_state, page_shell
 from dash_app.data.analyst_pack import (
     latest_pack_dir,
     list_configured_roles,
@@ -13,13 +13,14 @@ from dash_app.data.analyst_pack import (
     load_program_kpi,
     load_role_kpi_dashboard,
 )
+from socrata_toolkit.analyst.explore import filter_kpi_metrics
 
-dash.register_page(__name__, path="/metrics", name="Metrics", order=3)
+dash.register_page(__name__, path="/metrics", name="Metrics", order=4)
 
 pack = latest_pack_dir()
 manifest = load_manifest(pack)
-kpi = load_program_kpi(pack)
-role_kpi = load_role_kpi_dashboard(pack)
+_kpi = load_program_kpi(pack)
+_role_kpi = load_role_kpi_dashboard(pack)
 configured_roles = list_configured_roles()
 
 STATUS_ICON = {
@@ -35,6 +36,7 @@ def kpi_card(metric: dict, *, prefix: str = "") -> dbc.Col:
     name = metric.get("name", "")
     if prefix:
         name = f"{prefix}: {name}"
+    mid = name.lower().replace(" ", "-")[:40]
     return dbc.Col(
         html.Div(
             className="nyc-kpi-card",
@@ -53,18 +55,13 @@ def kpi_card(metric: dict, *, prefix: str = "") -> dbc.Col:
                     ],
                     **{"aria-label": f"{name}: {label}"},
                 ),
+                kpi_metric_explainer(name, default_kpi_description(name), mid),
             ],
         ),
         md=4,
         className="mb-3",
     )
 
-
-program_cards = [kpi_card(m) for m in kpi.get("metrics", [])]
-role_cards = [kpi_card(m) for m in role_kpi.get("metrics", [])]
-overall = kpi.get("overall_health", "unknown")
-role_overall = role_kpi.get("overall_health", "unknown")
-active_role = role_kpi.get("display_name") or "—"
 
 role_compare_rows = []
 for r in configured_roles:
@@ -76,28 +73,40 @@ for r in configured_roles:
         )
     )
 
-layout = dbc.Container(
+_kpi_body = (
     [
-        html.H1("Program Metrics", className="nyc-page-title"),
-        html.P(
-            f"Program health: {overall.upper()} — pack {manifest.get('run_date', '')}",
-            className="nyc-page-sub",
+        html.H2("Filter KPI categories", style={"fontSize": "1rem"}),
+        dbc.Checklist(
+            id="metrics-categories",
+            options=[
+                {"label": "All", "value": "all"},
+                {"label": "Backlog", "value": "backlog"},
+                {"label": "Completion", "value": "completion"},
+                {"label": "Conflicts", "value": "conflict"},
+                {"label": "ADA", "value": "ada"},
+                {"label": "Budget", "value": "budget"},
+                {"label": "Productivity", "value": "productivity"},
+            ],
+            value=["all"],
+            inline=True,
+            className="mb-3",
+            inputClassName="me-1",
         ),
+        dcc.Store(id="metrics-program-store", data=_kpi.get("metrics", [])),
+        dcc.Store(id="metrics-role-store", data=_role_kpi.get("metrics", [])),
         html.H2("Standard program KPIs", style={"fontSize": "1.1rem"}),
-        dbc.Row(program_cards if program_cards else [dbc.Col(html.P("No program KPI data."))]),
+        html.Div(id="metrics-program-row"),
         html.Hr(),
         html.H2("Role KPIs", style={"fontSize": "1.1rem"}),
         html.P(
             [
                 "Active role from latest pack: ",
-                html.Strong(active_role),
-                f" — health {role_overall.upper()}" if role_kpi else "",
+                html.Strong(_role_kpi.get("display_name") or "—"),
+                f" — health {_role_kpi.get('overall_health', '').upper()}" if _role_kpi else "",
             ],
             className="nyc-page-sub",
         ),
-        dbc.Row(role_cards if role_cards else [dbc.Col(html.P(
-            "Set role: sw_project_analyst or project_analyst_sw in analyst_profile.yaml, then re-run the pack."
-        ))]),
+        html.Div(id="metrics-role-row"),
         html.Hr(),
         html.H2("Team roles (profiles)", style={"fontSize": "1.1rem"}),
         html.Ul(role_compare_rows)
@@ -128,6 +137,48 @@ layout = dbc.Container(
         )
         if pack and (pack / "role_task_status.md").exists()
         else None,
+    ]
+    if _kpi.get("metrics") or _role_kpi.get("metrics")
+    else [empty_state("No program KPIs in pack — run Analyst Pack with program_kpi enabled.", show_demo=False)]
+)
+
+layout = dbc.Container(
+    [
+        *page_shell(
+            "Program Metrics",
+            f"Program health: {_kpi.get('overall_health', 'unknown').upper()} — traffic-light KPIs with filters.",
+            page_key="metrics",
+            pack_dir=pack,
+            children=_kpi_body,
+        ),
     ],
     fluid=True,
 )
+
+
+@callback(
+    Output("metrics-program-row", "children"),
+    Input("metrics-program-store", "data"),
+    Input("metrics-categories", "value"),
+)
+def filter_program_kpis(metrics, categories):
+    metrics = metrics or []
+    filtered = filter_kpi_metrics(metrics, categories=categories or ["all"])
+    if not filtered:
+        return dbc.Row([dbc.Col(html.P("No program KPI data matching filters."))])
+    return dbc.Row([kpi_card(m) for m in filtered])
+
+
+@callback(
+    Output("metrics-role-row", "children"),
+    Input("metrics-role-store", "data"),
+    Input("metrics-categories", "value"),
+)
+def filter_role_kpis(metrics, categories):
+    metrics = metrics or []
+    filtered = filter_kpi_metrics(metrics, categories=categories or ["all"])
+    if not filtered:
+        return dbc.Row(
+            [dbc.Col(html.P("Set role in analyst_profile.yaml and re-run the pack."))]
+        )
+    return dbc.Row([kpi_card(m, prefix="Role") for m in filtered])

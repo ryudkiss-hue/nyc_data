@@ -9,7 +9,7 @@ Quick cheat sheet for CLI and launcher commands. For narrative examples and job-
 | `socrata …` | **Toolkit CLI** (`socrata_toolkit.cli`) — search, fetch, analyze, sync, status, map-toolkit |
 | `python -m socrata_toolkit.core.cli …` | **Extended CLI** — pipeline, conflict, schema, lineage, alerts, quality, etc. |
 | `python launcher.py cli …` | Forwards to **Toolkit CLI** (same as `socrata`) |
-| `python launcher.py web` | Streamlit wrapper (see [GETTING_STARTED](GETTING_STARTED.md) for UI notes) |
+| `python launcher.py web` | Dash dashboard at http://127.0.0.1:8050 |
 | `python launcher.py docker up\|down\|logs\|status` | Docker Compose stack |
 | `python launcher.py doctor` | Host health checks |
 | `python launcher.py setup all` | Config / schema / DB setup hints |
@@ -125,6 +125,19 @@ python launcher.py cli search -q "311 sidewalk"
 ```bash
 python -c "from socrata_toolkit.analyst import run_analyst_pack; print(run_analyst_pack('config/analyst_profile.yaml'))"
 python -c "from socrata_toolkit.analyst import run_analyst_pack; print(run_analyst_pack('config/analyst_profile.yaml', dry_run=True))"
+```
+
+## Publishing Analyst Packs
+
+```bash
+# Publish (dry-run preview)
+socrata analyst publish --profile config/publish_profile.yaml --pack outputs/analyst_pack/YYYY-MM-DD --dry-run
+
+# Publish (apply)
+socrata analyst publish --profile config/publish_profile.yaml --pack outputs/analyst_pack/YYYY-MM-DD
+
+# Alias
+socrata publish --profile config/publish_profile.yaml --pack outputs/analyst_pack/YYYY-MM-DD
 ```
 
 ## Web applications

@@ -64,6 +64,8 @@ python dash_app/app.py
 
 Workflow in the UI: **Setup** → configure `config/analyst_profile.yaml` → **Run Analyst Pack** (Home) → review Construction / Contracts / Metrics / Inquiries.
 
+**Explore page (what-if only):** Use **Explore** in the sidebar to adjust priority weights, filters, and preview charts from the latest pack. This does **not** replace `socrata analyst run` — pack output remains canonical until you update the profile YAML and re-run. See [USER_MANUAL.md](USER_MANUAL.md#interactive-exploration).
+
 Set `offline: true` in the profile to skip Socrata sources. Set `NYC_DOT_DEBUG=1` only if you need legacy devtools/quantum pages.
 
 ## Commands

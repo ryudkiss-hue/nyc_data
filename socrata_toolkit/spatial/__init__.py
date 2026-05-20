@@ -365,4 +365,9 @@ class QGISCompatibilityManager:
         self.wfs_service = None
 
 
-from ..qgis_integration import generate_qgis_project
+try:
+    from ..qgis_integration import generate_qgis_project
+except Exception:
+
+    def generate_qgis_project(*_args: Any, **_kwargs: Any) -> str:
+        raise ImportError("Install qgis integration dependencies to use generate_qgis_project")

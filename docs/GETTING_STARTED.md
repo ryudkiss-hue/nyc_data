@@ -40,6 +40,22 @@ cp .env.example .env
 
 Many teams use `.env.socrata` for Docker and shared drives (see [User Manual — Configuration](USER_MANUAL.md#configuration)).
 
+## 2b. Multi-profile setup (recommended)
+
+If multiple teams or workflows share one install, use **profiles**. The install wizard now supports this directly and writes files under:
+
+- `config/profiles/<name>/analyst_profile.yaml`
+- `config/profiles/<name>/publish_profile.yaml` (optional)
+- `outputs/.state/profiles/<name>/...` (per-profile state + decisions store)
+
+Run:
+
+```bash
+socrata setup
+```
+
+Then pick a profile name when prompted. The wizard writes `TOOLKIT_PROFILE=<name>` into `.env` so Dash, CLI, and scheduled tasks stay aligned.
+
 ## 3. Verify installation
 
 ```bash
@@ -88,6 +104,18 @@ cp config/analyst_profile.example.yaml config/analyst_profile.yaml
 # Edit paths in the YAML, then:
 python -c "from socrata_toolkit.analyst import run_analyst_pack; r=run_analyst_pack('config/analyst_profile.yaml'); print(r.pack_dir)"
 ```
+
+## 6. Review decisions (conflicts + approvals)
+
+After a pack run, you can record decisions locally and export them into the pack:
+
+```bash
+socrata review set --pack-date YYYY-MM-DD --kind conflict --key-type location_id --key L123 --status resolved --notes "Checked permit"
+socrata review list --pack-date YYYY-MM-DD --kind conflict
+socrata review export --pack outputs/analyst_pack/YYYY-MM-DD
+```
+
+Dash also includes a **Review** page to edit these decisions.
 
 ## Documentation map
 

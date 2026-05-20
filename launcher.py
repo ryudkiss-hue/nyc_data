@@ -5,7 +5,7 @@ NYC DOT Sidewalk Data Governance Toolkit - Universal Launcher
 
 This script provides a unified entry point for:
 - CLI commands: Socrata data ingestion, transformations, governance
-- Web UI: Interactive Streamlit dashboard
+- Web UI: Dash analyst dashboard (dash_app/app.py)
 - Docker: Container orchestration (PostgreSQL, API, monitoring)
 - Setup: Database initialization and configuration
 
@@ -122,46 +122,32 @@ def run_cli(args: list) -> int:
         return 1
 
 
-def run_web(host: str = "localhost", port: int = 8501, dev: bool = False) -> int:
-    """Launch Streamlit web interface."""
-    print_header("NYC DOT Toolkit - Web Dashboard")
-    print_info(f"Starting Streamlit dashboard on {host}:{port}")
+def run_web(host: str = "127.0.0.1", port: int = 8050, dev: bool = False) -> int:
+    """Launch primary Dash analyst dashboard."""
+    print_header("NYC DOT Toolkit - Dash Dashboard")
+    print_info(f"Starting Dash on http://{host}:{port}/")
 
-    try:
-        # Check if Streamlit is installed
-        import streamlit
-
-        print_success("Streamlit is installed")
-    except ImportError:
-        print_error("Streamlit not installed. Install with: pip install streamlit")
+    dash_script = PROJECT_ROOT / "dash_app" / "app.py"
+    if not dash_script.exists():
+        print_error(f"Dash app not found: {dash_script}")
         return 1
 
-    # Set environment variables for Streamlit
     env = os.environ.copy()
-    env["STREAMLIT_SERVER_HEADLESS"] = "false" if dev else "true"
-    env["STREAMLIT_SERVER_PORT"] = str(port)
-    env["STREAMLIT_SERVER_ADDRESS"] = host
-
-    cmd = [
-        sys.executable,
-        "-m",
-        "streamlit",
-        "run",
-        str(PROJECT_ROOT / "app.py"),
-        "--logger.level=info",
-    ]
-
     if dev:
-        cmd.append("--logger.level=debug")
+        env["NYC_DOT_DEBUG"] = "1"
+    env["NYC_DOT_DASH_HOST"] = host
+    env["NYC_DOT_DASH_PORT"] = str(port)
+
+    cmd = [sys.executable, str(dash_script)]
 
     try:
         subprocess.run(cmd, env=env, check=True)
         return 0
     except KeyboardInterrupt:
-        print_info("Streamlit dashboard stopped")
+        print_info("Dash dashboard stopped")
         return 0
     except Exception as e:
-        print_error(f"Failed to start Streamlit: {e}")
+        print_error(f"Failed to start Dash: {e}")
         return 1
 
 

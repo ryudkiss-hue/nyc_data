@@ -14,7 +14,10 @@ from dash import Input, Output, State, callback, dcc, html
 
 from dash_app.data import db
 
-dash.register_page(__name__, path="/soql", name="SoQL Maestro", order=4)
+from dash_app.pages._env import legacy_pages_enabled
+
+if legacy_pages_enabled():
+    dash.register_page(__name__, path="/soql", name="SoQL Maestro", order=57)
 
 EXAMPLE_QUERIES = {
     "Select all": "SELECT * FROM {table} LIMIT 100",

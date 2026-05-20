@@ -15,9 +15,11 @@ import plotly.express as px
 import plotly.graph_objects as go
 from dash import Input, Output, State, callback, dcc, html
 
-from nyc_data.dash_app.data import db
+from dash_app.data import db
 
-dash.register_page(__name__, path="/analytics", name="Analytics", order=1)
+_DEBUG = os.getenv("NYC_DOT_DEBUG", "").lower() in ("1", "true", "yes")
+if _DEBUG:
+    dash.register_page(__name__, path="/analytics", name="Analytics", order=1)
 
 TABS: Final[list[str]] = [
     "KPI Dashboard",
@@ -191,7 +193,7 @@ def render_tab(active_tab: str, store: dict[str, Any] | None, theme: Any) -> Any
     if not store or not store.get("records"):
         return dbc.Alert("Load a dataset above to begin.", color="secondary")
 
-    from nyc_data.socrata_toolkit import analysis as st_analysis
+    from socrata_toolkit import analysis as st_analysis
 
     df = pd.DataFrame(store["records"])
     summary = store.get("summary", {})
