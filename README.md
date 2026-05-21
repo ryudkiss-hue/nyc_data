@@ -21,6 +21,8 @@ Step-by-step (no jargon): **[docs/SIMPLE_START.md](docs/SIMPLE_START.md)**
 
 Developers: `powershell -File scripts\setup_precommit.ps1` installs ruff hooks (matches CI).
 
+**Agency operations:** [docs/AGENCY_RUNBOOK.md](docs/AGENCY_RUNBOOK.md) · target readiness **≥ 95** via `socrata readiness`.
+
 ## Documentation
 
 | Doc | Use when |

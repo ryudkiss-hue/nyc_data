@@ -1,21 +1,23 @@
 # NYC DOT Sidewalk Toolkit — Docs
 
-Start with **[SIMPLE_START.md](SIMPLE_START.md)** (one page: install → wizard → pack → Dash → publish).
+Start with **[SIMPLE_START.md](SIMPLE_START.md)** or the **[AGENCY_RUNBOOK.md](AGENCY_RUNBOOK.md)** (Mission Control daily ops).
 
 ## Guided workflow
 
+- **Agency ops**: [AGENCY_RUNBOOK.md](AGENCY_RUNBOOK.md) · `python main.py`
 - **Quick path**: [SIMPLE_START.md](SIMPLE_START.md)
+- **Mission Control**: [MISSION_CONTROL.md](MISSION_CONTROL.md)
 - **Setup**: [GETTING_STARTED.md](GETTING_STARTED.md) · [USER_MANUAL.md](USER_MANUAL.md)
-- **Run**: `socrata analyst run --profile config/analyst_profile.yaml`
-- **Review**: Analyst Pack outputs under `outputs/analyst_pack/YYYY-MM-DD/`
-- **Publish**: [PUBLISHING.md](PUBLISHING.md)
-- **Automation**: Task Scheduler / Docker: [EXECUTABLE_PACKAGE.md](EXECUTABLE_PACKAGE.md) · [DOCKER_LOCAL.md](DOCKER_LOCAL.md)
+- **Run pack**: `socrata analyst run` or in-app **Publish & Pack**
+- **Publish**: [PUBLISHING.md](PUBLISHING.md) (dry-run first)
+- **Quality**: `socrata readiness` (target ≥ 95) · [QUALITY_SCORECARD.md](QUALITY_SCORECARD.md)
 
 ## Reference
 
 - **Commands**: [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md)
 - **Troubleshooting**: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 - **FAQ**: [FAQ.md](FAQ.md)
-- **Readiness**: [COMPLETENESS.md](COMPLETENESS.md) · [DASH_UX_AUDIT.md](DASH_UX_AUDIT.md)
+- **Sign-off**: [COMPLETENESS.md](COMPLETENESS.md)
+- **Legacy Dash** (optional): `legacy_archive/dash_app/`
 - **Windows installer**: [WINDOWS_INSTALLER.md](WINDOWS_INSTALLER.md)
 
