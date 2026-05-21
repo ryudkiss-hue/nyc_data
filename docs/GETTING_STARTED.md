@@ -73,12 +73,13 @@ python -m socrata_toolkit.core.cli doctor --check-db
 
 | Goal | Command | URL / output |
 |------|---------|----------------|
-| **Mission Control (Streamlit)** | `streamlit run app/app.py` or `python launcher.py` | http://localhost:8501 |
+| **Mission Control (Streamlit)** | `python main.py` or `mission` | http://localhost:8501 |
 | **Legacy Dash analyst UI** | `python legacy_archive/dash_app/app.py` | http://localhost:8050 |
-| **CLI — daily sync** | `socrata sync -i erm2-nwe9 --table complaints_311` | `data/local_db/nyc_mission_control.duckdb` |
+| **CLI — daily sync** | `socrata sync -i erm2-nwe9 --table complaints_311` | `data/local_db/` |
 | **CLI — full pipeline** | See [Command Reference](COMMAND_REFERENCE.md) | `outputs/` |
-| **Analyst weekly pack** | Python API — see [User Manual — Analyst Autopilot](USER_MANUAL.md#analyst-autopilot-weekly-pack) | `outputs/analyst_pack/` |
-| **Docker stack** | `python launcher.py docker up` | Postgres :5432, Airflow :8080, API :8000 |
+| **Analyst weekly pack** | `socrata analyst run --profile config/analyst_profile.yaml` | `outputs/analyst_pack/` |
+| **Nightly (Task Scheduler)** | `scripts\nightly_analyst_sync.ps1` | Same pack output |
+| **Docker (Mission Control)** | `docker build -f Dockerfile.mission -t nyc-mission .` | Port 8501 |
 
 > **Layout:** Python package lives in `src/socrata_toolkit/`; Streamlit UI in `app/`; archived Dash in `legacy_archive/dash_app/`.
 
@@ -94,8 +95,9 @@ socrata status
 2. **Open Mission Control** (Streamlit) or legacy Dash:
 
 ```bash
-streamlit run app/app.py
-# or: python legacy_archive/dash_app/app.py
+python main.py
+# Demo/offline (no token): MISSION_DEMO=1 python main.py
+# Legacy Dash: python legacy_archive/dash_app/app.py
 ```
 
 3. **Optional — run Analyst Autopilot** with the example profile:
