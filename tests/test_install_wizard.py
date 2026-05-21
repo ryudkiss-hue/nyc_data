@@ -23,7 +23,7 @@ def mini_project(tmp_path: Path) -> Path:
     example = tmp_path / "config" / "analyst_profile.example.yaml"
     example.write_text(
         "profile_name: test\n"
-        "duckdb_path: nyc_mission_control.duckdb\n"
+        "duckdb_path: data/local_db/nyc_mission_control.duckdb\n"
         "outputs:\n  dir: outputs/analyst_pack\n"
         "sources: {}\n",
         encoding="utf-8",

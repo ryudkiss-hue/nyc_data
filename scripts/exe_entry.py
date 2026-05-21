@@ -29,35 +29,29 @@ def _parse_option(args: list[str], flag: str) -> str | None:
 
 
 def _run_dash() -> None:
-    """Start Dash analyst GUI when possible; otherwise open Getting Started."""
+    """Start Streamlit Mission Control, legacy Dash, or open Getting Started."""
     root = _app_root()
     getting_started = root / "docs" / "GETTING_STARTED.md"
-    dash_script = root / "dash_app" / "app.py"
+    streamlit_script = root / "app" / "app.py"
+    dash_script = root / "legacy_archive" / "dash_app" / "app.py"
+    py = shutil.which("python") or shutil.which("py")
+    env = {**os.environ, "PYTHONPATH": str(root / "src") + os.pathsep + str(root)}
 
-    if dash_script.exists():
-        py = shutil.which("python") or shutil.which("py")
-        if py:
-            print(f"Starting dashboard via {py} …")
-            env = {**os.environ, "PYTHONPATH": str(root)}
-            raise SystemExit(
-                subprocess.call([py, str(dash_script)], cwd=root, env=env)
-            )
+    if py and streamlit_script.exists():
+        print("Starting Mission Control (Streamlit)…")
+        raise SystemExit(
+            subprocess.call([py, "-m", "streamlit", "run", str(streamlit_script)], cwd=root, env=env)
+        )
 
-    try:
-        os.chdir(root)
-        if str(root) not in sys.path:
-            sys.path.insert(0, str(root))
-        from dash_app.app import app  # type: ignore[import-not-found]
-
-        app.run(host=os.getenv("NYC_DOT_DASH_HOST", "127.0.0.1"), port=int(os.getenv("NYC_DOT_DASH_PORT", "8050")))
-        return
-    except ImportError:
-        pass
+    if py and dash_script.exists():
+        print(f"Starting legacy Dash via {py} …")
+        raise SystemExit(subprocess.call([py, str(dash_script)], cwd=root, env=env))
 
     msg = (
-        "Dash dashboard is not bundled in the standalone executable.\n"
+        "GUI is not bundled in the standalone executable.\n"
         "Options:\n"
-        "  • Install Python + pip install -e \".[ui]\" and run: python dash_app/app.py\n"
+        "  • pip install -e \".[mission]\" && streamlit run app/app.py\n"
+        "  • Legacy Dash: python legacy_archive/dash_app/app.py\n"
         "  • Use Docker: docker compose --profile analyst up -d\n"
         f"  • Read: {getting_started}\n"
     )

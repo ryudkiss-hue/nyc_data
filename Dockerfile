@@ -17,7 +17,8 @@ RUN pip install --no-cache-dir poetry-core && \
     pip install --no-cache-dir matplotlib openpyxl shapely plotly flask gunicorn streamlit folium
 
 # Copy project files
-COPY socrata_toolkit/ socrata_toolkit/
+COPY src/socrata_toolkit/ src/socrata_toolkit/
+COPY app/ app/
 COPY scripts/ scripts/
 COPY sql/ sql/
 COPY tests/ tests/
@@ -40,6 +41,6 @@ HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
     CMD python -c "import socrata_toolkit; print('ok')" || exit 1
 
 # Default: launch Streamlit dashboard
-CMD ["streamlit", "run", "socrata_toolkit/dashboard.py", \
+CMD ["streamlit", "run", "app/app.py", \
      "--server.port=8501", "--server.address=0.0.0.0", \
      "--server.headless=true", "--browser.gatherUsageStats=false"]

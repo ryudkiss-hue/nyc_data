@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 COPY pyproject.toml README.md ./
-COPY socrata_toolkit/ socrata_toolkit/
+COPY src/socrata_toolkit/ src/socrata_toolkit/
 COPY config/ config/
 COPY scripts/ scripts/
 COPY docker/setup-entrypoint.sh /usr/local/bin/setup-entrypoint.sh

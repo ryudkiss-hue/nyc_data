@@ -5,9 +5,10 @@ description = "NYC DOT Sidewalk Inspection & Management Toolkit"
 authors = ["Richard Yudkiss ryudkiss@gmail.com"]
 readme = "README.md"
 license = "MIT"
+packages = [{ include = "socrata_toolkit", from = "src" }]
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.13"
+python = ">=3.9,<3.15"
 python-dotenv = ">=1.0.0"
 
 requests = ">=2.28"
@@ -51,6 +52,7 @@ viz = ["matplotlib", "plotly"]
 geo = ["shapely", "geopandas"]
 reports = ["plotly", "weasyprint"]
 ui = ["streamlit"]
+mission = ["streamlit", "sodapy", "geopandas", "shapely", "plotly"]
 pptx = ["python-pptx"]
 exe = ["pyinstaller"]
 all = ["openpyxl", "spacy", "shapely", "geopandas", "matplotlib", "plotly", "weasyprint", "streamlit", "psycopg", "python-pptx", "langchain", "langchain-community", "langchain-openai", "ollama", "openai", "huggingface-hub", "pyinstaller"]

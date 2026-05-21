@@ -35,10 +35,13 @@ Outputs land in `outputs/analyst_pack/YYYY-MM-DD/` (Excel, Markdown, HTML, JSON)
 ## 3. Open the dashboard
 
 ```bash
-python dash_app/app.py
+pip install -e ".[mission]"
+streamlit run app/app.py
 ```
 
-Browser: **http://127.0.0.1:8050**
+Browser: **http://localhost:8501** (Streamlit Mission Control)
+
+Legacy Analyst Pack UI (Dash): `python legacy_archive/dash_app/app.py` → http://127.0.0.1:8050
 
 | Page | What to do |
 |------|------------|
