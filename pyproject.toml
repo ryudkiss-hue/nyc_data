@@ -88,7 +88,7 @@ source = ["app", "src/socrata_toolkit/analyst", "src/socrata_toolkit/core"]
 omit = ["*/tests/*", "legacy_archive/*"]
 
 [tool.coverage.report]
-fail_under = 30
+fail_under = 40
 show_missing = true
 
 [tool.ruff]

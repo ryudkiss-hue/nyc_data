@@ -2,14 +2,16 @@
 
 This toolkit targets **100 on every axis** that can be verified locally. Some axes also need agency data, SMTP/Teams paths, and manual sign-off (see COMPLETENESS.md).
 
-## Verify locally
+## Verify locally (agency target ≥ 95)
 
 ```powershell
 socrata doctor --checklist
-socrata readiness
+socrata readiness          # overall_score >= 95, grade agency_ready
 python -m pytest tests/ -q -m "not legacy"
-python main.py
+python main.py             # Home → Settings → Readiness
 ```
+
+See [AGENCY_RUNBOOK.md](AGENCY_RUNBOOK.md) for daily operations.
 
 ## Axes
 

@@ -6,9 +6,20 @@ SIM Project Analyst workspace: 15 Socrata datasets, four workflow views, and Pro
 
 | Path | Role |
 |------|------|
-| `app/` | Streamlit frontend (`app.py`, `data_loader.py`, `analytics.py`) |
-| `src/socrata_toolkit/` | Python backend package (CLI, analyst, pipelines) |
-| `legacy_archive/dash_app/` | Archived Dash Analyst Pack UI |
+| `app/` | Streamlit app (`app.py`, `views/`, `ui/`, `services/`) |
+| `app/views/` | Home, workflows, publish, settings pages |
+| `config/datasets.yaml` | Socrata registry (single source of truth) |
+| `src/socrata_toolkit/` | CLI, analyst pack, publish, readiness |
+| `legacy_archive/dash_app/` | Archived Dash UI (optional) |
+
+## Navigation (in-app)
+
+| Page | Purpose |
+|------|---------|
+| **Home** | Onboarding, quick status |
+| **Analyst Workflows** | QA, Spatial, Contract, Productivity |
+| **Publish & Pack** | Run pack + publish (dry-run default) |
+| **Settings & Quality** | Readiness, completeness, health, ingest log |
 
 ## Run
 
