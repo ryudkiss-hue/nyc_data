@@ -18,7 +18,7 @@ $env:SOCRATA_APP_TOKEN = "your-token"
 streamlit run app/app.py
 ```
 
-Or: `python launcher.py`
+Or: `python main.py` (or `.\run_app.ps1` on Windows)
 
 ## CLI (unchanged entry point)
 

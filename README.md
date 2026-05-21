@@ -15,7 +15,7 @@ Build the Windows installer: `powershell -File scripts\build_installer.ps1` — 
 
 1. **Setup** — wizard + `config/analyst_profile.yaml`
 2. **Run** — `socrata analyst run --profile config/analyst_profile.yaml`
-3. **Review & publish** — `streamlit run app/app.py` (legacy Dash: `legacy_archive/dash_app/app.py`)
+3. **Review & publish** — `python main.py` or `streamlit run app/app.py` (legacy Dash: `legacy_archive/dash_app/app.py`)
 
 Step-by-step (no jargon): **[docs/SIMPLE_START.md](docs/SIMPLE_START.md)**
 
