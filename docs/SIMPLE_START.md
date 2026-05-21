@@ -36,8 +36,10 @@ Outputs land in `outputs/analyst_pack/YYYY-MM-DD/` (Excel, Markdown, HTML, JSON)
 
 ```bash
 pip install -e ".[mission]"
-streamlit run app/app.py
+python main.py
 ```
+
+No Socrata token? Demo mode loads automatically (or set `MISSION_DEMO=1`).
 
 Browser: **http://localhost:8501** (Streamlit Mission Control)
 

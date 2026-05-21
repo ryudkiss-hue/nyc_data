@@ -14,11 +14,14 @@ SIM Project Analyst workspace: 15 Socrata datasets, four workflow views, and Pro
 
 ```powershell
 pip install -e ".[mission]"
-$env:SOCRATA_APP_TOKEN = "your-token"
-streamlit run app/app.py
+$env:SOCRATA_APP_TOKEN = "your-token"   # omit for demo/offline mode
+python main.py
+# or: mission
+# or: .\run_app.ps1
 ```
 
-Or: `python main.py` (or `.\run_app.ps1` on Windows)
+Dataset registry: `config/datasets.yaml` (loaded by `app/data_loader.py`).  
+Local parquet cache: `data/local_db/socrata_cache/` (24h TTL).
 
 ## CLI (unchanged entry point)
 

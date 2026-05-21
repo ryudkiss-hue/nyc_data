@@ -9,6 +9,8 @@ from pathlib import Path
 
 import pytest
 
+pytestmark = pytest.mark.legacy
+
 ROOT = Path(__file__).resolve().parents[1]
 LEGACY_DASH = ROOT / "legacy_archive"
 if str(LEGACY_DASH) not in sys.path:
