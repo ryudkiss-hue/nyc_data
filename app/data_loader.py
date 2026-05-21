@@ -1,20 +1,22 @@
 """
 Centralized Socrata ingestion for Manhattan Mission Control.
 
-Uses sodapy with Streamlit caching (24h TTL). Normalizes BBL keys and builds
-GeoDataFrames in EPSG:2263 (NYC State Plane, US feet) when geometry is available.
+Registry: config/datasets.yaml. Optional parquet cache under data/local_db/socrata_cache/.
+Demo/offline: MISSION_DEMO=1 or no Socrata credentials.
 """
 
 from __future__ import annotations
 
 import logging
 import os
-import re
+import time
 import warnings
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import yaml
 
 warnings.filterwarnings("ignore", message=".*app_token.*", module="sodapy")
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="sodapy")
@@ -43,10 +45,11 @@ except ImportError:
     Point = None  # type: ignore
 
 _REPO_ROOT = Path(__file__).resolve().parents[1]
+_DATASETS_YAML = _REPO_ROOT / "config" / "datasets.yaml"
+_PARQUET_CACHE_DIR = _REPO_ROOT / "data" / "local_db" / "socrata_cache"
 
 
 def _bootstrap_env() -> None:
-    """Load .env and .env.socrata from repo root when python-dotenv is available."""
     if load_dotenv is None:
         return
     load_dotenv(_REPO_ROOT / ".env")
@@ -56,46 +59,9 @@ def _bootstrap_env() -> None:
 _bootstrap_env()
 
 DOMAIN = os.getenv("SOCRATA_DOMAIN", "data.cityofnewyork.us")
-CACHE_TTL_SECONDS = 86_400  # 24 hours
+CACHE_TTL_SECONDS = 86_400
 NYC_CRS = "EPSG:2263"
 WGS84 = "EPSG:4326"
-
-# Map layers: Manhattan-filtered Socrata pulls (fourfour → registry key)
-MANHATTAN_MAP_KEYS = ("inspection", "street_permits")
-
-# 15 mandatory endpoints (fourfour → logical key)
-DATASET_REGISTRY: dict[str, dict[str, str]] = {
-    # Core SMD
-    "inspection": {
-        "fourfour": "dntt-gqwq",
-        "group": "core_smd",
-        "label": "SMD Inspection",
-        "manhattan_where": "upper(borough) = 'MANHATTAN'",
-    },
-    "violations": {"fourfour": "6kbp-uz6m", "group": "core_smd", "label": "SMD Violations"},
-    "built": {"fourfour": "ugc8-s3f6", "group": "core_smd", "label": "SMD Built"},
-    "lot_info": {"fourfour": "i642-2fxq", "group": "core_smd", "label": "SMD Lot Info"},
-    "reinspection": {"fourfour": "gx72-kirf", "group": "core_smd", "label": "SMD ReInspection"},
-    "tree_damage": {"fourfour": "j6v2-6uxq", "group": "core_smd", "label": "All Tree Damage"},
-    # Accessibility
-    "ramp_locations": {"fourfour": "ufzp-rrqu", "group": "accessibility", "label": "Pedestrian Ramp Locations"},
-    "ramp_complaints": {"fourfour": "jagj-gttd", "group": "accessibility", "label": "Ramp Complaints"},
-    "ramp_progress": {"fourfour": "e7gc-ub6z", "group": "accessibility", "label": "Ramp Program Progress"},
-    # Coordination
-    "street_permits": {
-        "fourfour": "tqtj-sjs8",
-        "group": "coordination",
-        "label": "Street Construction Permits",
-        "manhattan_where": "upper(borough) = 'MANHATTAN' OR upper(permittee_s_borough) = 'MANHATTAN'",
-    },
-    "weekly_construction": {"fourfour": "r528-jcks", "group": "coordination", "label": "Weekly Construction Schedule"},
-    "capital_blocks": {"fourfour": "jvk9-k4re", "group": "coordination", "label": "Capital Reconstruction Blocks"},
-    # Overlays
-    "sidewalk_planimetric": {"fourfour": "vfx9-tbb6", "group": "overlays", "label": "Planimetric Sidewalks"},
-    "pedestrian_demand": {"fourfour": "fwpa-qxaf", "group": "overlays", "label": "Pedestrian Demand"},
-    "mappluto": {"fourfour": "6fi9-q3ta", "group": "overlays", "label": "MapPLUTO"},
-    "complaints_311": {"fourfour": "erm2-nwe9", "group": "overlays", "label": "311 Sidewalk/Curb"},
-}
 
 BBL_CANDIDATES = ("bbl", "lot_bbl", "tax_lot", "taxblock", "boro_block_lot")
 LAT_CANDIDATES = ("latitude", "lat", "y", "ycoord")
@@ -105,20 +71,36 @@ OWNER_CANDIDATES = ("owner", "owner_type", "ownership", "lot_owner", "agency")
 GRACE_CANDIDATES = ("grace_pd", "grace_period", "grace_date", "graceperiod")
 
 
+def _load_registry_from_yaml() -> tuple[dict[str, dict[str, str]], tuple[str, ...], dict[str, tuple[str, ...]]]:
+    if not _DATASETS_YAML.exists():
+        raise FileNotFoundError(f"Missing dataset registry: {_DATASETS_YAML}")
+    raw = yaml.safe_load(_DATASETS_YAML.read_text(encoding="utf-8"))
+    registry = {k: dict(v) for k, v in raw["datasets"].items()}
+    map_keys = tuple(raw.get("manhattan_map_keys", ()))
+    workflow = {k: tuple(v) for k, v in raw.get("workflow_datasets", {}).items()}
+    return registry, map_keys, workflow
+
+
+DATASET_REGISTRY, MANHATTAN_MAP_KEYS, WORKFLOW_DATASETS = _load_registry_from_yaml()
+
+
 def _require_sodapy() -> None:
     if Socrata is None:
         raise ImportError(
-            "sodapy is required for Mission Control. Install with: "
-            "pip install -e \".[mission]\""
+            'sodapy is required for live Socrata pulls. Install with: pip install -e ".[mission]"'
         )
 
 
+def demo_mode_enabled() -> bool:
+    if os.getenv("MISSION_DEMO", "").strip().lower() in ("1", "true", "yes"):
+        return True
+    token = (os.getenv("SOCRATA_APP_TOKEN") or "").strip()
+    key_id = (os.getenv("SOCRATA_KEY_ID") or "").strip()
+    key_secret = (os.getenv("SOCRATA_KEY_SECRET") or "").strip()
+    return not token and not (key_id and key_secret)
+
+
 def get_socrata_client() -> Any:
-    """
-    Build sodapy client using env auth:
-      SOCRATA_APP_TOKEN, SOCRATA_KEY_ID, SOCRATA_KEY_SECRET
-    (key id/secret map to sodapy username/password).
-    """
     _require_sodapy()
     token = (os.getenv("SOCRATA_APP_TOKEN") or "").strip() or None
     username = (os.getenv("SOCRATA_KEY_ID") or os.getenv("SOCRATA_USERNAME") or "").strip() or None
@@ -127,7 +109,6 @@ def get_socrata_client() -> Any:
 
 
 def normalize_bbl(series: pd.Series) -> pd.Series:
-    """Strip non-digits and zero-pad to 10-digit BBL when possible."""
     s = series.astype(str).str.replace(r"\D", "", regex=True)
     s = s.where(s.str.len() >= 6, other=pd.NA)
     return s.str.zfill(10)
@@ -147,7 +128,58 @@ def pick_column(df: pd.DataFrame, candidates: tuple[str, ...]) -> str | None:
 def _cache_decorator():
     if st is not None:
         return st.cache_data(ttl=CACHE_TTL_SECONDS, show_spinner="Fetching from Socrata…")
-    return lambda f: f  # no-op when not in Streamlit
+    return lambda f: f
+
+
+def _parquet_path(dataset_key: str) -> Path:
+    _PARQUET_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    return _PARQUET_CACHE_DIR / f"{dataset_key}.parquet"
+
+
+def _parquet_fresh(path: Path) -> bool:
+    if not path.exists():
+        return False
+    return (time.time() - path.stat().st_mtime) < CACHE_TTL_SECONDS
+
+
+def _read_parquet_cache(dataset_key: str) -> pd.DataFrame | None:
+    path = _parquet_path(dataset_key)
+    if not _parquet_fresh(path):
+        return None
+    try:
+        return pd.read_parquet(path)
+    except Exception:
+        return None
+
+
+def _write_parquet_cache(dataset_key: str, df: pd.DataFrame) -> None:
+    if df.empty or "_error" in df.columns:
+        return
+    try:
+        df.to_parquet(_parquet_path(dataset_key), index=False)
+    except Exception:
+        pass
+
+
+def _demo_frame(dataset_key: str) -> pd.DataFrame:
+    """Minimal synthetic rows so workflows run offline."""
+    bbl = "1000010001"
+    templates: dict[str, dict[str, list]] = {
+        "lot_info": {"bbl": [bbl], "owner": ["City"]},
+        "mappluto": {"bbl": [bbl], "ownername": ["Private"]},
+        "complaints_311": {"created_date": ["2020-01-01"], "bbl": [bbl]},
+        "violations": {"bbl": [bbl], "grace_pd": ["2020-01-01"]},
+        "tree_damage": {"bbl": [bbl], "agency": ["Parks"]},
+        "built": {"length": [100.0]},
+        "ramp_progress": {"latitude": [40.75], "longitude": [-73.99]},
+        "pedestrian_demand": {"latitude": [40.76], "longitude": [-73.98]},
+        "weekly_construction": {"latitude": [40.75], "longitude": [-73.99]},
+        "street_permits": {"latitude": [40.75], "longitude": [-73.99], "borough": ["MANHATTAN"]},
+        "capital_blocks": {"latitude": [40.75], "longitude": [-73.99]},
+        "inspection": {"latitude": [40.75], "longitude": [-73.99], "borough": ["MANHATTAN"]},
+    }
+    data = templates.get(dataset_key, {"note": ["demo row"]})
+    return _postprocess_dataset(dataset_key, pd.DataFrame(data))
 
 
 def _postprocess_dataset(dataset_key: str, df: pd.DataFrame) -> pd.DataFrame:
@@ -163,11 +195,7 @@ def _postprocess_dataset(dataset_key: str, df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-@_cache_decorator()
-def fetch_dataset(dataset_key: str, *, limit: int = 50_000, where: str | None = None) -> pd.DataFrame:
-    """Fetch one registry dataset; returns normalized DataFrame with `_bbl` when possible."""
-    if dataset_key not in DATASET_REGISTRY:
-        raise KeyError(f"Unknown dataset_key: {dataset_key}")
+def _fetch_live(dataset_key: str, *, limit: int, where: str | None) -> pd.DataFrame:
     meta = DATASET_REGISTRY[dataset_key]
     client = get_socrata_client()
     kwargs: dict[str, Any] = {"limit": limit}
@@ -178,11 +206,20 @@ def fetch_dataset(dataset_key: str, *, limit: int = 50_000, where: str | None = 
 
 
 @_cache_decorator()
+def fetch_dataset(dataset_key: str, *, limit: int = 50_000, where: str | None = None) -> pd.DataFrame:
+    if dataset_key not in DATASET_REGISTRY:
+        raise KeyError(f"Unknown dataset_key: {dataset_key}")
+    if demo_mode_enabled():
+        return _demo_frame(dataset_key)
+    cached = _read_parquet_cache(dataset_key)
+    if cached is not None:
+        return _postprocess_dataset(dataset_key, cached)
+    df = _fetch_live(dataset_key, limit=limit, where=where)
+    _write_parquet_cache(dataset_key, df)
+    return df
+
+
 def fetch_manhattan_map_layer(dataset_key: str, *, limit: int = 25_000) -> pd.DataFrame:
-    """
-    Manhattan-filtered pull for map layers (dntt-gqwq inspection, tqtj-sjs8 permits).
-    Falls back to unfiltered fetch if the borough predicate is rejected by Socrata.
-    """
     if dataset_key not in MANHATTAN_MAP_KEYS:
         raise KeyError(f"Not a Manhattan map layer: {dataset_key}")
     where = DATASET_REGISTRY[dataset_key].get("manhattan_where")
@@ -194,19 +231,46 @@ def fetch_manhattan_map_layer(dataset_key: str, *, limit: int = 25_000) -> pd.Da
         return fetch_dataset(dataset_key, limit=limit)
 
 
-def fetch_all_datasets(*, limit: int = 50_000) -> dict[str, pd.DataFrame]:
-    """Load full ingestion matrix (cached per dataset)."""
+def keys_for_workflow(workflow_key: str) -> tuple[str, ...]:
+    if workflow_key == "ingest":
+        return tuple(DATASET_REGISTRY.keys())
+    return WORKFLOW_DATASETS.get(workflow_key, ())
+
+
+def fetch_datasets_for_keys(
+    keys: tuple[str, ...] | list[str],
+    *,
+    limit: int = 10_000,
+    max_workers: int = 4,
+) -> dict[str, pd.DataFrame]:
+    """Load only requested datasets (parallel when live)."""
+    key_list = list(keys)
+    if not key_list:
+        return {}
+    if demo_mode_enabled() or len(key_list) == 1:
+        return {k: fetch_dataset(k, limit=limit) for k in key_list}
+
     out: dict[str, pd.DataFrame] = {}
-    for key in DATASET_REGISTRY:
+
+    def _one(k: str) -> tuple[str, pd.DataFrame]:
         try:
-            out[key] = fetch_dataset(key, limit=limit)
+            return k, fetch_dataset(k, limit=limit)
         except Exception as exc:
-            out[key] = pd.DataFrame({"_error": [str(exc)]})
+            return k, pd.DataFrame({"_error": [str(exc)]})
+
+    with ThreadPoolExecutor(max_workers=min(max_workers, len(key_list))) as pool:
+        futures = {pool.submit(_one, k): k for k in key_list}
+        for fut in as_completed(futures):
+            key, df = fut.result()
+            out[key] = df
     return out
 
 
+def fetch_all_datasets(*, limit: int = 50_000) -> dict[str, pd.DataFrame]:
+    return fetch_datasets_for_keys(tuple(DATASET_REGISTRY.keys()), limit=limit)
+
+
 def df_to_gdf(df: pd.DataFrame) -> Any:
-    """Best-effort GeoDataFrame in EPSG:2263."""
     if gpd is None or df.empty:
         return None
     if "the_geom" in df.columns:
@@ -234,26 +298,18 @@ def df_to_gdf(df: pd.DataFrame) -> Any:
 
 
 def gdf_to_map_df(gdf: Any, *, layer: str) -> pd.DataFrame:
-    """EPSG:4326 points for Streamlit st.map."""
     if gdf is None or getattr(gdf, "empty", True):
         return pd.DataFrame(columns=["lat", "lon", "layer"])
     try:
         wgs = gdf.to_crs(WGS84)
         centroids = wgs.geometry.centroid
-        out = pd.DataFrame(
-            {
-                "lat": centroids.y,
-                "lon": centroids.x,
-                "layer": layer,
-            }
-        )
+        out = pd.DataFrame({"lat": centroids.y, "lon": centroids.x, "layer": layer})
         return out.dropna(subset=["lat", "lon"])
     except Exception:
         return pd.DataFrame(columns=["lat", "lon", "layer"])
 
 
 def dataframe_to_map_df(df: pd.DataFrame, *, layer: str) -> pd.DataFrame:
-    """Lat/lon table for st.map from a plain DataFrame."""
     if df.empty:
         return pd.DataFrame(columns=["lat", "lon", "layer"])
     lat_col = pick_column(df, LAT_CANDIDATES)
@@ -273,7 +329,6 @@ def dataframe_to_map_df(df: pd.DataFrame, *, layer: str) -> pd.DataFrame:
 
 @_cache_decorator()
 def fetch_geodataframe(dataset_key: str, *, limit: int = 50_000, manhattan_only: bool = False) -> Any:
-    """Cached spatial layer for overlap analysis and maps."""
     if manhattan_only and dataset_key in MANHATTAN_MAP_KEYS:
         df = fetch_manhattan_map_layer(dataset_key, limit=limit)
     else:
@@ -283,7 +338,6 @@ def fetch_geodataframe(dataset_key: str, *, limit: int = 50_000, manhattan_only:
 
 @_cache_decorator()
 def load_manhattan_map_layers(*, limit: int = 25_000) -> dict[str, pd.DataFrame]:
-    """Cached map-ready lat/lon frames for inspection + street permits."""
     layers: dict[str, pd.DataFrame] = {}
     for key in MANHATTAN_MAP_KEYS:
         df = fetch_manhattan_map_layer(key, limit=limit)
@@ -293,7 +347,6 @@ def load_manhattan_map_layers(*, limit: int = 25_000) -> dict[str, pd.DataFrame]
 
 
 def token_status() -> dict[str, Any]:
-    """Auth health for UI header."""
     token = os.getenv("SOCRATA_APP_TOKEN", "").strip()
     key_id = os.getenv("SOCRATA_KEY_ID", "").strip()
     key_secret = os.getenv("SOCRATA_KEY_SECRET", "").strip()
@@ -303,11 +356,11 @@ def token_status() -> dict[str, Any]:
         "masked": f"{token[:4]}…{token[-4:]}" if len(token) > 8 else ("(set)" if token else "(missing)"),
         "domain": DOMAIN,
         "datasets": len(DATASET_REGISTRY),
+        "demo_mode": demo_mode_enabled(),
     }
 
 
 def ingestion_summary(frames: dict[str, pd.DataFrame]) -> pd.DataFrame:
-    """Row counts and BBL coverage for utilities panel."""
     rows = []
     for key, meta in DATASET_REGISTRY.items():
         df = frames.get(key, pd.DataFrame())

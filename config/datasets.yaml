@@ -1,0 +1,91 @@
+# Socrata ingestion matrix — single source of truth for Mission Control + CLI.
+# Keys map to app/data_loader.DATASET_REGISTRY at runtime.
+
+manhattan_map_keys:
+  - inspection
+  - street_permits
+
+workflow_datasets:
+  qa:
+    - lot_info
+    - mappluto
+    - complaints_311
+  spatial:
+    - weekly_construction
+    - street_permits
+    - capital_blocks
+  contract:
+    - violations
+    - tree_damage
+  productivity:
+    - built
+    - ramp_progress
+    - pedestrian_demand
+
+datasets:
+  inspection:
+    fourfour: dntt-gqwq
+    group: core_smd
+    label: SMD Inspection
+    manhattan_where: "upper(borough) = 'MANHATTAN'"
+  violations:
+    fourfour: 6kbp-uz6m
+    group: core_smd
+    label: SMD Violations
+  built:
+    fourfour: ugc8-s3f6
+    group: core_smd
+    label: SMD Built
+  lot_info:
+    fourfour: i642-2fxq
+    group: core_smd
+    label: SMD Lot Info
+  reinspection:
+    fourfour: gx72-kirf
+    group: core_smd
+    label: SMD ReInspection
+  tree_damage:
+    fourfour: j6v2-6uxq
+    group: core_smd
+    label: All Tree Damage
+  ramp_locations:
+    fourfour: ufzp-rrqu
+    group: accessibility
+    label: Pedestrian Ramp Locations
+  ramp_complaints:
+    fourfour: jagj-gttd
+    group: accessibility
+    label: Ramp Complaints
+  ramp_progress:
+    fourfour: e7gc-ub6z
+    group: accessibility
+    label: Ramp Program Progress
+  street_permits:
+    fourfour: tqtj-sjs8
+    group: coordination
+    label: Street Construction Permits
+    manhattan_where: "upper(borough) = 'MANHATTAN' OR upper(permittee_s_borough) = 'MANHATTAN'"
+  weekly_construction:
+    fourfour: r528-jcks
+    group: coordination
+    label: Weekly Construction Schedule
+  capital_blocks:
+    fourfour: jvk9-k4re
+    group: coordination
+    label: Capital Reconstruction Blocks
+  sidewalk_planimetric:
+    fourfour: vfx9-tbb6
+    group: overlays
+    label: Planimetric Sidewalks
+  pedestrian_demand:
+    fourfour: fwpa-qxaf
+    group: overlays
+    label: Pedestrian Demand
+  mappluto:
+    fourfour: 6fi9-q3ta
+    group: overlays
+    label: MapPLUTO
+  complaints_311:
+    fourfour: erm2-nwe9
+    group: overlays
+    label: 311 Sidewalk/Curb

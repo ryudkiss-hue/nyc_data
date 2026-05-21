@@ -13,15 +13,11 @@ COPY pyproject.toml README.md ./
 COPY src/socrata_toolkit/ src/socrata_toolkit/
 COPY config/ config/
 COPY scripts/ scripts/
-COPY docker/setup-entrypoint.sh /usr/local/bin/setup-entrypoint.sh
+RUN pip install --no-cache-dir -e ".[postgres,xlsx,geo]" -q
 
-RUN chmod +x /usr/local/bin/setup-entrypoint.sh && \
-    pip install --no-cache-dir -e ".[postgres,xlsx,geo]" -q
-
-RUN mkdir -p data outputs outputs/analyst_pack
+RUN mkdir -p data outputs outputs/analyst_pack data/local_db
 
 ENV PYTHONUNBUFFERED=1
 ENV ANALYST_PROFILE=config/analyst_profile.yaml
 
-ENTRYPOINT ["/usr/local/bin/setup-entrypoint.sh"]
-CMD ["python", "-m", "socrata_toolkit.install_wizard", "--skip-checks"]
+CMD ["python", "-m", "socrata_toolkit.core.cli", "analyst", "run", "--profile", "config/analyst_profile.example.yaml"]

@@ -1,23 +1,22 @@
-# app/app.py
-import sys
-import os
+"""Manhattan Mission Control — Streamlit entry."""
 
-# FORCE the 'app' directory into the path so Python finds the files directly
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from __future__ import annotations
 
-import streamlit as st
 import pandas as pd
+import streamlit as st
 
-# These imports are now clean and will look in the local folder
-from analytics import ProductivityROI, run_all_workflows
-from data_loader import (
+from app.analytics import ProductivityROI, run_all_workflows
+from app.data_loader import (
     CACHE_TTL_SECONDS,
     DATASET_REGISTRY,
     NYC_CRS,
+    WORKFLOW_DATASETS,
     dataframe_to_map_df,
-    fetch_dataset,
+    demo_mode_enabled,
+    fetch_datasets_for_keys,
     gdf_to_map_df,
     ingestion_summary,
+    keys_for_workflow,
     load_manhattan_map_layers,
     token_status,
 )
@@ -37,9 +36,15 @@ WORKFLOW_VIEWS = {
 }
 
 
-@st.cache_data(ttl=CACHE_TTL_SECONDS, show_spinner="Loading Socrata ingestion matrix…")
-def _load_frames(limit: int) -> dict[str, pd.DataFrame]:
-    return {k: fetch_dataset(k, limit=limit) for k in DATASET_REGISTRY}
+@st.cache_data(ttl=CACHE_TTL_SECONDS, show_spinner="Loading workflow datasets…")
+def _load_workflow_frames(workflow_key: str, limit: int) -> dict[str, pd.DataFrame]:
+    keys = keys_for_workflow(workflow_key)
+    return fetch_datasets_for_keys(keys, limit=limit)
+
+
+@st.cache_data(ttl=CACHE_TTL_SECONDS, show_spinner="Loading full ingestion matrix…")
+def _load_all_frames(limit: int) -> dict[str, pd.DataFrame]:
+    return fetch_datasets_for_keys(tuple(DATASET_REGISTRY.keys()), limit=limit)
 
 
 @st.cache_data(ttl=CACHE_TTL_SECONDS, show_spinner="Loading Manhattan map layers…")
@@ -54,6 +59,8 @@ def _run_workflows(frames: dict[str, pd.DataFrame]) -> dict:
 
 def _render_productivity_header(roi: ProductivityROI | None, token: dict) -> None:
     st.markdown("### Productivity ROI")
+    if token.get("demo_mode"):
+        st.caption("Demo mode — synthetic data (set SOCRATA_APP_TOKEN for live Socrata).")
     if roi is None:
         st.info("Load datasets to compute live productivity ROI from analyst workflows.")
         c1, c2, c3, c4, c5 = st.columns(5)
@@ -81,7 +88,7 @@ def _render_productivity_header(roi: ProductivityROI | None, token: dict) -> Non
         auth_bits.append("app token")
     if token.get("key_pair"):
         auth_bits.append("API key pair")
-    auth = ", ".join(auth_bits) if auth_bits else "public tier (throttled)"
+    auth = ", ".join(auth_bits) if auth_bits else "demo / public tier"
     st.caption(
         f"Socrata: {auth} ({token['masked']}) · {token['datasets']} datasets · CRS {NYC_CRS}"
     )
@@ -159,12 +166,19 @@ def _view_spatial(results: dict, map_layers: dict[str, pd.DataFrame]) -> None:
         st.map(combined, latitude="lat", longitude="lon", color="layer", size=20)
         st.caption(f"{len(combined):,} mapped points across {combined['layer'].nunique()} layers")
     else:
-        st.info("No lat/lon or geometry available for map layers. Load inspection and permit datasets with coordinates.")
+        st.info("No lat/lon or geometry available for map layers.")
 
     if not conflicts.empty and "note" not in conflicts.columns:
         display_cols = [c for c in ("conflict_id", "conflict_type", "_bbl") if c in conflicts.columns]
         extra = [c for c in conflicts.columns if c not in display_cols][:8]
-        st.dataframe(conflicts[display_cols + extra].head(300), use_container_width=True, hide_index=True)
+        table = conflicts[display_cols + extra].head(300)
+        st.dataframe(table, use_container_width=True, hide_index=True)
+        st.download_button(
+            label="Download Active Conflicts Report (CSV)",
+            data=table.to_csv(index=False).encode("utf-8"),
+            file_name="spatial_conflicts_report.csv",
+            mime="text/csv",
+        )
 
 
 def _view_contract(results: dict) -> None:
@@ -172,48 +186,24 @@ def _view_contract(results: dict) -> None:
     st.caption("Violations (`6kbp-uz6m`) grace period elapsed; Parks routing via tree damage (`j6v2-6uxq`).")
     cleared = results["cleared"]
     parks = results["parks_routing"]
-    
     c1, c2 = st.columns(2)
     c1.metric("Contracts cleared (post-grace)", len(cleared))
     c2.metric("Parks coordination tags", len(parks))
-    
     if not cleared.empty:
         st.dataframe(cleared.head(300), use_container_width=True, hide_index=True)
-        # --- NEW: Export for Contractors ---
-        csv_cleared = cleared.to_csv(index=False).encode('utf-8')
         st.download_button(
-            label="📥 Download DOT Dispatch List (CSV)",
-            data=csv_cleared,
+            label="Download DOT Dispatch List (CSV)",
+            data=cleared.to_csv(index=False).encode("utf-8"),
             file_name="sim_cleared_dispatch.csv",
             mime="text/csv",
         )
-        
     if not parks.empty:
         st.markdown("**Parks Department routing**")
         st.dataframe(parks.head(200), use_container_width=True, hide_index=True)
-        # --- NEW: Export for Parks Dept ---
-        csv_parks = parks.to_csv(index=False).encode('utf-8')
         st.download_button(
-            label="🌳 Download Parks Coordination List (CSV)",
-            data=csv_parks,
+            label="Download Parks Coordination List (CSV)",
+            data=parks.to_csv(index=False).encode("utf-8"),
             file_name="parks_tree_damage_routing.csv",
-            mime="text/csv",
-        )
-
-def _view_spatial(results: dict, map_layers: dict[str, pd.DataFrame]) -> None:
-    # ... (keep your existing map and metric rendering code) ...
-    
-    if not conflicts.empty and "note" not in conflicts.columns:
-        display_cols = [c for c in ("conflict_id", "conflict_type", "_bbl") if c in conflicts.columns]
-        extra = [c for c in conflicts.columns if c not in display_cols][:8]
-        st.dataframe(conflicts[display_cols + extra].head(300), use_container_width=True, hide_index=True)
-        
-        # --- NEW: Export for Inter-Agency Review ---
-        csv_conflicts = conflicts[display_cols + extra].to_csv(index=False).encode('utf-8')
-        st.download_button(
-            label="🚨 Download Active Conflicts Report (CSV)",
-            data=csv_conflicts,
-            file_name="spatial_conflicts_report.csv",
             mime="text/csv",
         )
 
@@ -255,13 +245,16 @@ def main() -> None:
     with st.sidebar:
         st.header("Workflows")
         view_label = st.radio("Analyst view", list(WORKFLOW_VIEWS.keys()), index=0)
+        view_key = WORKFLOW_VIEWS[view_label]
         st.divider()
         st.header("Data load")
         row_limit = st.slider("Max rows per dataset", 1_000, 50_000, 10_000, step=1_000)
+        if demo_mode_enabled():
+            st.info("Demo mode active — no live API calls. Set SOCRATA_APP_TOKEN to go live.")
         refresh = st.button("Refresh cache", type="primary")
         if refresh:
             st.cache_data.clear()
-        st.caption("Datasets refresh at most once every 24 hours per layer.")
+        st.caption(f"Loads {len(WORKFLOW_DATASETS.get(view_key, ()))} datasets for this view (not all 16).")
         with st.expander("Ingestion matrix", expanded=False):
             show_ingest = st.button("Open ingestion utilities")
 
@@ -272,8 +265,11 @@ def main() -> None:
     map_layers: dict[str, pd.DataFrame] = {}
 
     try:
-        frames = _load_frames(row_limit)
-        if WORKFLOW_VIEWS[view_label] == "spatial":
+        if show_ingest:
+            frames = _load_all_frames(row_limit)
+        else:
+            frames = _load_workflow_frames(view_key, row_limit)
+        if view_key == "spatial":
             map_layers = _load_map_layers(min(row_limit, 25_000))
         results = _run_workflows(frames)
         roi = results["roi"]
@@ -282,13 +278,12 @@ def main() -> None:
         st.stop()
     except Exception as exc:
         st.error(f"Socrata ingestion failed: {exc}")
-        st.info("Set SOCRATA_APP_TOKEN (and optional SOCRATA_KEY_ID / SOCRATA_KEY_SECRET) in .env.")
+        st.info("Set SOCRATA_APP_TOKEN in .env, enable demo mode, or run: pip install -e \".[mission]\"")
         st.stop()
 
     with st.container():
         _render_productivity_header(roi, token)
 
-    view_key = WORKFLOW_VIEWS[view_label]
     if show_ingest:
         _view_ingest(frames)
     elif view_key == "qa":
