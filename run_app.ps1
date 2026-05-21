@@ -1,2 +1,2 @@
-# Execute the app as a module to handle imports correctly
-python -m streamlit run app/app.py
+# Launch Mission Control (sets PYTHONPATH for src/socrata_toolkit)
+python main.py
