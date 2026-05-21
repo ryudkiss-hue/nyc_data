@@ -1,15 +1,22 @@
-"""Import all Dash pages to catch syntax and registration errors."""
+"""Import legacy Dash pages (archived under legacy_archive/dash_app)."""
 
 from __future__ import annotations
 
 import importlib
 import os
+import sys
+from pathlib import Path
 
 import pytest
 
-# Dash pages call register_page at import time; app must exist first.
-import dash_app.app  # noqa: F401
+ROOT = Path(__file__).resolve().parents[1]
+LEGACY_DASH = ROOT / "legacy_archive"
+if str(LEGACY_DASH) not in sys.path:
+    sys.path.insert(0, str(LEGACY_DASH))
 
+pytest.importorskip("dash")
+
+import dash_app.app  # noqa: F401
 from dash import page_registry
 
 CORE_PAGE_MODULES = [
@@ -50,7 +57,6 @@ def test_core_pages_registered():
 
 
 def test_dash_debug_pages_not_registered_by_default():
-    """Debug/lab pages register only when NYC_DOT_DEBUG=1."""
     assert os.getenv("NYC_DOT_DEBUG", "") not in ("1", "true", "yes")
     registered = {p["module"] for p in page_registry.values()}
     for module_name in DEBUG_PAGE_MODULES:

@@ -33,12 +33,12 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install -U pip
-          pip install -e ".[xlsx,postgres]"
+          pip install -e ".[xlsx,postgres,mission]"
           pip install -r requirements-dev.txt
-          pip install dash dash-bootstrap-components plotly
+          pip install dash dash-bootstrap-components plotly sodapy
 
       - name: Ruff
-        run: ruff check socrata_toolkit tests dash_app
+        run: ruff check src/socrata_toolkit tests app
 
       - name: Run tests
         run: python -m pytest tests/ -q --tb=short
@@ -58,6 +58,9 @@ jobs:
               importlib.import_module(m)
           print('import smoke ok')
           "
+
+      - name: Streamlit app import
+        run: python -c "from app import analytics, data_loader; print('streamlit app ok')"
 
   readiness:
     name: Readiness report

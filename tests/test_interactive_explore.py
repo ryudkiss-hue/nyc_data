@@ -1,9 +1,20 @@
 """Tests for interactive exploration components and explore helpers."""
 
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
 import pandas as pd
+import pytest
 from dash import html
 
-from dash_app.components.interactive import param_slider, tip_card
+ROOT = Path(__file__).resolve().parents[1]
+LEGACY_DASH = ROOT / "legacy_archive"
+for p in (str(ROOT / "src"), str(ROOT), str(LEGACY_DASH)):
+    if p not in sys.path:
+        sys.path.insert(0, p)
+
 from socrata_toolkit.analyst.explore import (
     borough_bar_counts,
     filter_kpi_metrics,
@@ -12,6 +23,9 @@ from socrata_toolkit.analyst.explore import (
     profile_weight_snippet,
 )
 from socrata_toolkit.engineering.construction_list import DEFAULT_PRIORITY_WEIGHTS
+
+pytest.importorskip("dash")
+from dash_app.components.interactive import param_slider, tip_card  # noqa: E402
 
 
 def test_interactive_components_import():

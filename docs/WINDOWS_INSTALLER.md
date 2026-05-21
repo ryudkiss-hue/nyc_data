@@ -127,7 +127,7 @@ nyc-dot-toolkit.exe dash
 nyc-dot-toolkit.exe doctor
 ```
 
-The Dash GUI is not fully embedded in the PyInstaller binary; `dash` tries a local Python `dash_app/app.py` if present, otherwise opens Getting Started. For full GUI, use a dev install or Docker (see [GETTING_STARTED.md](GETTING_STARTED.md)).
+The Streamlit Mission Control UI is not fully embedded in the PyInstaller binary; `dash` tries `streamlit run app/app.py`, then legacy `legacy_archive/dash_app/app.py`, otherwise opens Getting Started. For full GUI, use a dev install or Docker (see [GETTING_STARTED.md](GETTING_STARTED.md)).
 
 ## CI / tests
 

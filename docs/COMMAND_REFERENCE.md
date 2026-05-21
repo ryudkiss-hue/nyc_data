@@ -28,13 +28,13 @@ socrata analyze --file data/samples/sidewalk_inspections_full.csv
 
 # Incremental DuckDB sync (nightly)
 socrata sync -i erm2-nwe9 --table complaints_311 --updated-col created_date \
-  --db-path nyc_mission_control.duckdb --optimize
+  --db-path data/local_db/nyc_mission_control.duckdb --optimize
 
 # Optional Parquet backup after sync
 socrata sync -i erm2-nwe9 --table complaints_311 --export-parquet backups/parquet
 
 # DuckDB table row counts
-socrata status --db-path nyc_mission_control.duckdb
+socrata status --db-path data/local_db/nyc_mission_control.duckdb
 
 # Capability map (HTML)
 socrata map-toolkit --output toolkit_map.html
@@ -143,9 +143,10 @@ socrata publish --profile config/publish_profile.yaml --pack outputs/analyst_pac
 ## Web applications
 
 ```bash
-python dash_app/app.py          # Dash — NYC DOT Data Assistant
-python app.py                   # NiceGUI — Mission Control
-cd frontend && npm run dev      # React LLM UI (with API on :8000)
+streamlit run app/app.py        # Mission Control (Streamlit)
+python launcher.py              # Same as streamlit run app/app.py
+python legacy_archive/dash_app/app.py   # Legacy Dash analyst pack UI
+cd legacy_archive/frontend && npm run dev   # Archived React LLM UI (with API on :8000)
 ```
 
 ## Docker Compose (from repo root)

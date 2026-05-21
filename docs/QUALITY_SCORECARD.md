@@ -8,7 +8,7 @@ This toolkit targets **100 on every axis** that can be verified locally. Some ax
 socrata doctor --checklist
 socrata readiness
 python -m pytest tests/test_readiness.py tests/test_dash_pages_import.py -q
-python dash_app/app.py
+streamlit run app/app.py
 ```
 
 ## Axes
@@ -17,8 +17,8 @@ python dash_app/app.py
 |------|------------------|----------------|
 | **Accessibility** | WCAG-minded: skip link, focus rings, KPI text+icon (not color-only), reduced motion, table captions, `aria-live` toasts | `socrata readiness` + manual keyboard pass |
 | **Functionality** | Analyst pack, publish, review, import shims, profiles, demo pack | Doctor + pytest |
-| **Presentation / UX** | Grouped nav, onboarding tour, empty states, theme/font prefs, CLI hints | Dash smoke + docs/preview |
-| **Packaging** | Wizard, installer script, launcher→Dash | `scripts/build_installer.ps1`, INSTALL.txt |
+| **Presentation / UX** | Socrata ingestion matrix, ROI header, four workflow views | Streamlit smoke + docs/preview |
+| **Packaging** | Wizard, installer script, launcher→Streamlit | `scripts/build_installer.ps1`, INSTALL.txt |
 | **Reliability** | Background jobs (non-blocking UI), pytest green | `socrata readiness --pytest` |
 | **Documentation** | SIMPLE_START, USER_MANUAL, FAQ, ANALYST_WORKFLOW | File presence in readiness |
 | **Security** | Secrets in env only, no tokens in logs | Manual + publish dry-run |
