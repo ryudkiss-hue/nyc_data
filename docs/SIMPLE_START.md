@@ -51,7 +51,17 @@ Legacy Analyst Pack UI (Dash): `python legacy_archive/dash_app/app.py` → http:
 | **Review** | Approve conflicts and sign-offs |
 | **Publish** | Send pack to share folder, email, Teams, or BI |
 
-## 4. Publish (optional)
+## 4. Nightly pack (optional)
+
+Schedule the weekly analyst pack on Windows Task Scheduler:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\nightly_analyst_sync.ps1
+```
+
+Then review in Mission Control: `python main.py`.
+
+## 5. Publish (optional)
 
 ```bash
 socrata analyst publish --profile config/publish_profile.yaml

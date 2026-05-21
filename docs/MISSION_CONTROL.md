@@ -21,7 +21,8 @@ python main.py
 ```
 
 Dataset registry: `config/datasets.yaml` (loaded by `app/data_loader.py`).  
-Local parquet cache: `data/local_db/socrata_cache/` (24h TTL).
+Local parquet cache: `data/local_db/socrata_cache/` (24h TTL).  
+Ingestion telemetry: `outputs/logs/ingest.jsonl` (local only, gitignored).
 
 ## CLI (unchanged entry point)
 

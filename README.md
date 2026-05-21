@@ -19,6 +19,8 @@ Build the Windows installer: `powershell -File scripts\build_installer.ps1` — 
 
 Step-by-step (no jargon): **[docs/SIMPLE_START.md](docs/SIMPLE_START.md)**
 
+Developers: `powershell -File scripts\setup_precommit.ps1` installs ruff hooks (matches CI).
+
 ## Documentation
 
 | Doc | Use when |

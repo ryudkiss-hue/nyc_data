@@ -34,7 +34,10 @@ jobs:
         run: ruff check src/socrata_toolkit tests app
 
       - name: Run tests (core)
-        run: python -m pytest tests/ -q --tb=short -m "not legacy"
+        run: |
+          python -m pytest tests/ -q --tb=short -m "not legacy" \
+            --cov=app --cov=src/socrata_toolkit/analyst --cov=src/socrata_toolkit/core \
+            --cov-report=term-missing
 
       - name: Import smoke (analyst + shims)
         run: |

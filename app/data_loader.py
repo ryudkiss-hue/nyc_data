@@ -18,6 +18,8 @@ from typing import Any
 import pandas as pd
 import yaml
 
+from app.ingest_log import log_event
+
 warnings.filterwarnings("ignore", message=".*app_token.*", module="sodapy")
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="sodapy")
 logging.getLogger("sodapy").setLevel(logging.ERROR)
@@ -210,13 +212,27 @@ def fetch_dataset(dataset_key: str, *, limit: int = 50_000, where: str | None = 
     if dataset_key not in DATASET_REGISTRY:
         raise KeyError(f"Unknown dataset_key: {dataset_key}")
     if demo_mode_enabled():
+        log_event("fetch_demo", dataset=dataset_key, rows=1)
         return _demo_frame(dataset_key)
     cached = _read_parquet_cache(dataset_key)
     if cached is not None:
+        log_event("fetch_parquet", dataset=dataset_key, rows=len(cached))
         return _postprocess_dataset(dataset_key, cached)
-    df = _fetch_live(dataset_key, limit=limit, where=where)
-    _write_parquet_cache(dataset_key, df)
-    return df
+    try:
+        t0 = time.perf_counter()
+        df = _fetch_live(dataset_key, limit=limit, where=where)
+        _write_parquet_cache(dataset_key, df)
+        log_event(
+            "fetch_live",
+            dataset=dataset_key,
+            rows=len(df),
+            seconds=round(time.perf_counter() - t0, 2),
+            where=where or "",
+        )
+        return df
+    except Exception as exc:
+        log_event("fetch_error", dataset=dataset_key, error=str(exc))
+        raise
 
 
 def fetch_manhattan_map_layer(dataset_key: str, *, limit: int = 25_000) -> pd.DataFrame:
