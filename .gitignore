@@ -27,6 +27,8 @@ data/local_db/socrata_cache/
 legacy_archive/*
 !legacy_archive/dash_app/
 !legacy_archive/dash_app/**
+legacy_archive/**/__pycache__/
+legacy_archive/**/*.pyc
 outputs/
 *.log
 nyc_toolkit.log
