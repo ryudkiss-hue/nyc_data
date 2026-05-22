@@ -11,6 +11,7 @@ Start with **[SIMPLE_START.md](SIMPLE_START.md)** or the **[AGENCY_RUNBOOK.md](A
 - **Run pack**: `socrata analyst run` or in-app **Publish & Pack**
 - **Publish**: [PUBLISHING.md](PUBLISHING.md) (dry-run first)
 - **Quality**: `socrata readiness` (target ≥ 95) · [QUALITY_SCORECARD.md](QUALITY_SCORECARD.md)
+- **Cloud deploy**: [DEPLOY_CLOUD.md](DEPLOY_CLOUD.md) · `docker compose up -d mission-control`
 
 ## Reference
 

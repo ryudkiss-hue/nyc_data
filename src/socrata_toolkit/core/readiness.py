@@ -86,6 +86,13 @@ def run_readiness_checks(*, run_pytest: bool = False) -> dict[str, Any]:
     axes["presentation"].append(_check("settings_readiness_bars", (app_root / "views" / "settings.py").exists()))
     axes["presentation"].append(_check("mission_control_doc", (root / "docs" / "MISSION_CONTROL.md").exists()))
     axes["presentation"].append(_check("agency_runbook", (root / "docs" / "AGENCY_RUNBOOK.md").exists()))
+    axes["presentation"].append(_check("i18n_module", (app_root / "utils" / "i18n.py").exists()))
+    axes["presentation"].append(_check("empty_states", (app_root / "ui" / "empty_states.py").exists()))
+    axes["packaging"].append(_check("docker_compose", (root / "docker-compose.yml").exists()))
+    axes["packaging"].append(_check("build_unix_script", (root / "scripts" / "build_unix.sh").exists()))
+    axes["packaging"].append(_check("cloud_app_json", (root / "app.json").exists()))
+    axes["packaging"].append(_check("render_blueprint", (root / "render.yaml").exists()))
+    axes["packaging"].append(_check("procfile", (root / "Procfile").exists()))
 
     axes["packaging"].append(_check("install_wizard", importlib.util.find_spec("socrata_toolkit.install_wizard") is not None))
     axes["packaging"].append(_check("installer_script", (root / "scripts" / "build_installer.ps1").exists()))

@@ -1,0 +1,38 @@
+{
+  "name": "NYC DOT Mission Control",
+  "description": "Streamlit application for NYC DOT Sidewalk Inspection and Management (SIM).",
+  "repository": "https://github.com/ryudkiss-hue/nyc_data",
+  "logo": "https://streamlit.io/images/brand/streamlit-mark-color.png",
+  "keywords": ["streamlit", "python", "nyc", "socrata", "analyst"],
+  "stack": "heroku-22",
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  },
+  "buildpacks": [
+    { "url": "heroku/python" }
+  ],
+  "env": {
+    "MISSION_DEMO": {
+      "description": "Set to 1 for demo data without Socrata token",
+      "value": "1",
+      "required": false
+    },
+    "SOCRATA_APP_TOKEN": {
+      "description": "NYC Open Data application token",
+      "required": false
+    }
+  },
+  "scripts": {
+    "postdeploy": "echo Mission Control deployed"
+  },
+  "environments": {
+    "test": {
+      "scripts": {
+        "test": "python -m pytest tests/ -m 'not legacy' -q"
+      }
+    }
+  }
+}

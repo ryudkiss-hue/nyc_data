@@ -1,6 +1,11 @@
 # NYC DOT Sidewalk Toolkit
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/ryudkiss-hue/nyc_data)
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/ryudkiss-hue/nyc_data)
+
 Python toolkit for NYC DOT Sidewalk Inspection & Management: collect data, run the weekly **Analyst Pack**, review in the dashboard, and publish outputs.
+
+**Cloud deploy:** [docs/DEPLOY_CLOUD.md](docs/DEPLOY_CLOUD.md) · **macOS/Linux build:** `scripts/build_unix.sh`
 
 ## Install (pick one)
 
