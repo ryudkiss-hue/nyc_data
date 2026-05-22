@@ -22,7 +22,14 @@ def render_empty_state(*, on_load_demo: Callable[[], None] | None = None) -> Non
             st.rerun()
         st.caption(t("upload_prompt"))
     with col2:
-        st.file_uploader(t("upload_csv"), type=["csv"], key="empty_csv_upload")
+        uploaded = st.file_uploader(t("upload_csv"), type=["csv"], key="empty_csv_upload")
+        if uploaded is not None:
+            import pandas as pd
+
+            df = pd.read_csv(uploaded)
+            st.session_state["uploaded_csv"] = df
+            st.session_state["workflow_data_loaded"] = True
+            st.success(f"Loaded {len(df):,} rows from {uploaded.name}")
     st.markdown("---")
     st.markdown(t("new_here"))
 

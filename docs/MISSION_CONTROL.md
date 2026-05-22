@@ -35,6 +35,10 @@ Dataset registry: `config/datasets.yaml` (loaded by `app/data_loader.py`).
 Local parquet cache: `data/local_db/socrata_cache/` (24h TTL).  
 Ingestion telemetry: `outputs/logs/ingest.jsonl` (local only, gitignored).
 
+## User-friendly extras
+
+See [USER_FRIENDLY_FEATURES.md](USER_FRIENDLY_FEATURES.md) — i18n (EN/ES), empty states, `docker compose`, `scripts/build_unix.sh`, Render/Heroku deploy.
+
 ## CLI (unchanged entry point)
 
 ```powershell

@@ -7,11 +7,12 @@ from pathlib import Path
 import streamlit as st
 
 from app.services import agency
+from app.utils.i18n import t
 
 
 def render_publish_page() -> None:
-    st.subheader("Publish & Analyst Pack")
-    st.caption("Run the weekly pack, then publish to share paths, email, or BI (dry-run first).")
+    st.subheader(t("publish_title"))
+    st.caption(t("publish_caption"))
 
     root = agency.repo_root()
     analyst_prof = root / "config" / "analyst_profile.yaml"
@@ -26,8 +27,8 @@ def render_publish_page() -> None:
     with col1:
         st.markdown("**Analyst profile**")
         st.code(str(analyst_prof), language=None)
-        offline = st.checkbox("Offline pack run", value=False)
-        if st.button("Run Analyst Pack", type="primary", key="run_pack"):
+        offline = st.checkbox(t("offline_pack"), value=False)
+        if st.button(t("run_pack"), type="primary", key="run_pack"):
             with st.spinner("Running analyst pack…"):
                 try:
                     out = agency.run_analyst_pack(profile_path=analyst_prof, offline=offline)
@@ -46,8 +47,8 @@ def render_publish_page() -> None:
         pack_labels = [p.name for p in packs] or ["(no packs yet)"]
         selected = st.selectbox("Pack folder", pack_labels, index=0 if packs else 0)
         pack_dir = packs[pack_labels.index(selected)] if packs and selected in pack_labels else None
-        dry_run = st.checkbox("Dry run (recommended)", value=True)
-        if st.button("Publish pack", key="publish_pack") and pack_dir:
+        dry_run = st.checkbox(t("dry_run"), value=True)
+        if st.button(t("publish_pack_btn"), key="publish_pack") and pack_dir:
             with st.spinner("Publishing…"):
                 try:
                     report = agency.publish_pack_ui(

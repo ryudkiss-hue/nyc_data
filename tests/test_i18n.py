@@ -6,7 +6,7 @@ from app.utils.i18n import TRANSLATIONS, t
 
 
 def test_translations_cover_nav_keys():
-    for key in ("nav_home", "nav_workflows", "welcome", "empty_title"):
+    for key in ("nav_home", "nav_workflows", "welcome", "empty_title", "publish_title", "settings_title"):
         assert key in TRANSLATIONS["en"]
         assert key in TRANSLATIONS["es"]
 

@@ -6,14 +6,15 @@ import streamlit as st
 
 from app.services import agency
 from app.ui.theme import render_readiness_bars
+from app.utils.i18n import t
 from socrata_toolkit.core.readiness import run_readiness_checks
 
 
 def render_settings_page() -> None:
-    st.subheader("Settings & Quality")
+    st.subheader(t("settings_title"))
 
     tab_ready, tab_complete, tab_health, tab_logs = st.tabs(
-        ["Readiness", "Completeness", "System health", "Ingestion log"]
+        [t("tab_readiness"), t("tab_completeness"), t("tab_health"), t("tab_logs")]
     )
 
     with tab_ready:
