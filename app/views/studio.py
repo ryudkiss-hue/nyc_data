@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict
 import html
 import json
 import os
 import re
+from dataclasses import asdict
 from typing import Any
 
 import pandas as pd
@@ -14,7 +14,6 @@ import streamlit as st
 
 from socrata_toolkit.core import SocrataClient, SocrataConfig
 from socrata_toolkit.core.models import DatasetMetadata, SearchResult
-
 
 CITY_DOMAINS = {
     "NYC Open Data": "data.cityofnewyork.us",
@@ -231,16 +230,22 @@ def _pg_type(socrata_type: str) -> str:
 def _build_pandas_pipeline(cart: dict[str, dict[str, Any]], relationships: list[dict[str, str]]) -> str:
     lines = [
         "import pandas as pd",
+        "import requests",
         "",
         "# Fetch each Socrata resource into a dataframe.",
         "APP_TOKEN = None  # Optional: set to your Socrata app token",
-        "HEADERS = {'X-App-Token': APP_TOKEN} if APP_TOKEN else None",
+        "HEADERS = {'X-App-Token': APP_TOKEN} if APP_TOKEN else {}",
+        "",
+        "def read_socrata(url):",
+        "    response = requests.get(url, headers=HEADERS, timeout=60)",
+        "    response.raise_for_status()",
+        "    return pd.DataFrame(response.json())",
         "",
     ]
     for dataset_id, item in cart.items():
         var = f"df_{_normalise_identifier(dataset_id).replace('_', '')[:8]}"
         url = f"https://{item['domain']}/resource/{dataset_id}.json?$limit=50000"
-        lines.append(f"{var} = pd.read_json({url!r}, storage_options=HEADERS)")
+        lines.append(f"{var} = read_socrata({url!r})")
     if relationships:
         lines.extend(["", "# Suggested joins inferred from shared civic keys."])
         for idx, rel in enumerate(relationships, start=1):
@@ -484,7 +489,11 @@ def _render_search_panel(token: str) -> None:
         if st.button("Search Socrata", type="primary", use_container_width=True):
             results = _search_catalog(query, domain, category, order, limit, token)
             if use_regex and query:
-                rx = re.compile(query, re.IGNORECASE)
+                try:
+                    rx = re.compile(query, re.IGNORECASE)
+                except re.error as exc:
+                    st.error(f"Invalid regular expression: {exc}")
+                    return
                 results = [
                     r
                     for r in results
