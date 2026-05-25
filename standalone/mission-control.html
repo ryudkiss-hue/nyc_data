@@ -3,7 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Mission Control" />
   <title>Manhattan Mission Control</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.svg" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = { darkMode: "class" };
@@ -45,6 +53,40 @@
     .dark .msg-ai { background: #1e293b; color: #e2e8f0; }
     .toast-animate { transition: opacity 0.3s ease, transform 0.3s ease; }
     .tab-btn.active, .viz-btn.active { color: #2563eb; border-color: #2563eb; font-weight: 700; }
+    #pwa-install-button { display: none; }
+    @media (display-mode: browser) {
+      #pwa-install-button.is-ready { display: inline-flex; }
+    }
+    @media (max-width: 768px) {
+      html, body { height: auto !important; min-height: 100%; overflow: auto !important; }
+      body { display: block !important; }
+      header { position: sticky; top: 0; flex-wrap: wrap; gap: 0.65rem; padding: 0.75rem !important; }
+      header > div:first-child { width: 100%; }
+      header h1 { font-size: 1rem !important; }
+      header .tracking-widest { letter-spacing: 0.06em; }
+      header > div:last-child { width: 100%; justify-content: space-between; overflow-x: auto; padding-bottom: 2px; }
+      body > div.flex { flex-direction: column !important; height: auto !important; min-height: calc(100vh - 96px); overflow: visible !important; }
+      aside { width: 100% !important; max-height: none !important; border-right: 0 !important; border-bottom: 1px solid #e2e8f0; }
+      aside > div:nth-child(2) { max-height: 260px; min-height: 180px; }
+      main { min-height: 760px; overflow: visible !important; }
+      main > div:first-child { padding-left: 0.75rem !important; padding-right: 0.75rem !important; gap: 1rem !important; }
+      main section { padding: 0.75rem !important; min-height: 720px; }
+      #view-results .mb-4 { align-items: flex-start; gap: 0.75rem; flex-direction: column; }
+      table { min-width: 760px; }
+      #view-diagram { min-height: 720px; }
+      #mermaid-container { min-height: 640px; }
+      #view-scripts .grid { grid-template-columns: 1fr !important; height: auto !important; }
+      #view-scripts pre { min-height: 320px; }
+      #view-llm { min-height: 720px; }
+      #map-modal { padding: 0 !important; }
+      #map-modal > div { border-radius: 0 !important; width: 100vw !important; height: 100dvh !important; }
+      #map-modal .flex-1.relative.flex { flex-direction: column !important; }
+      #map-container { min-height: 62dvh; }
+      #map-legend { width: 100% !important; max-height: 30dvh; border-left: 0 !important; border-top: 1px solid #334155; }
+      #preview-modal { padding: 0 !important; }
+      #preview-modal > div { border-radius: 0 !important; width: 100vw !important; height: 100dvh !important; }
+      .fixed.inset-0 > .max-w-md { width: calc(100vw - 1rem) !important; margin: 0.5rem; }
+    }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-200 font-sans h-screen flex flex-col overflow-hidden transition-colors">
@@ -68,6 +110,9 @@
     <div class="flex gap-2">
       <button onclick="toggleDarkMode()" class="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 flex items-center justify-center transition-colors" aria-label="Toggle dark mode">
         <i id="theme-icon" class="fa-solid fa-moon text-slate-300"></i>
+      </button>
+      <button id="pwa-install-button" onclick="installPwa()" class="items-center gap-2 bg-blue-700 hover:bg-blue-600 px-3 py-1.5 rounded text-xs transition-colors font-medium border border-blue-600">
+        <i class="fa-solid fa-mobile-screen-button text-blue-200"></i> Install
       </button>
       <button onclick="toggleModal('workspace-modal')" class="flex items-center gap-2 bg-emerald-700 hover:bg-emerald-600 px-3 py-1.5 rounded text-xs transition-colors font-medium border border-emerald-600">
         <i class="fa-solid fa-floppy-disk text-emerald-300"></i> Workspaces
@@ -376,6 +421,7 @@
       panZoom: null,
       vizMode: "erd"
     };
+    let deferredInstallPrompt = null;
 
     document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("api-token-input").value = AppState.socrataToken;
@@ -388,7 +434,35 @@
       document.getElementById("llm-input").addEventListener("keydown", event => {
         if (event.key === "Enter") sendLLMQuery();
       });
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("./service-worker.js").catch(() => {
+          console.warn("Service worker registration failed.");
+        });
+      }
     });
+
+    window.addEventListener("beforeinstallprompt", event => {
+      event.preventDefault();
+      deferredInstallPrompt = event;
+      document.getElementById("pwa-install-button").classList.add("is-ready");
+    });
+
+    window.addEventListener("appinstalled", () => {
+      deferredInstallPrompt = null;
+      document.getElementById("pwa-install-button").classList.remove("is-ready");
+      showToast("Installed on this device.", "success");
+    });
+
+    async function installPwa() {
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        await deferredInstallPrompt.userChoice;
+        deferredInstallPrompt = null;
+        document.getElementById("pwa-install-button").classList.remove("is-ready");
+        return;
+      }
+      showToast("On iPhone/iPad: Share -> Add to Home Screen. On Android: browser menu -> Install app.", "info");
+    }
 
     function escapeHtml(value) {
       return String(value ?? "").replace(/[&<>"']/g, char => ({
