@@ -19,7 +19,7 @@ from app.data_loader import (
 from app.ui.empty_states import frames_are_empty, render_empty_state
 from app.ui.theme import inject_theme, render_agency_header, render_skip_link
 from app.utils.i18n import render_language_selector, t
-from app.views import home, publish, settings, workflows
+from app.views import home, publish, settings, studio, workflows
 
 st.set_page_config(
     page_title="Manhattan Mission Control | NYC DOT SIM",
@@ -35,7 +35,7 @@ WORKFLOW_KEYS = {
     "productivity": "Productivity & ADA Progress",
 }
 
-NAV_KEYS = ["nav_home", "nav_workflows", "nav_publish", "nav_settings"]
+NAV_KEYS = ["nav_home", "nav_studio", "nav_workflows", "nav_publish", "nav_settings"]
 
 
 @st.cache_data(ttl=CACHE_TTL_SECONDS, show_spinner="Loading workflow datasets…")
@@ -63,6 +63,8 @@ def _run_workflows(frames: dict) -> dict:
 def _nav_page_from_key(key: str) -> str:
     if key == "nav_home":
         return "Home"
+    if key == "nav_studio":
+        return "Studio"
     if key == "nav_workflows":
         return "Workflows"
     if key == "nav_publish":
@@ -113,6 +115,10 @@ def main() -> None:
 
     if page == "Home":
         home.render_home_page()
+        return
+
+    if page == "Studio":
+        studio.render_studio_page()
         return
 
     if page == "Publish":
