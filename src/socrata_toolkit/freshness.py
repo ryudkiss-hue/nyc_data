@@ -18,13 +18,11 @@ Usage:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, asdict
-from datetime import datetime, timedelta, timezone
-from enum import Enum
-import json
 import logging
-from typing import Optional
 import uuid
+from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
+from enum import Enum
 
 try:
     import psycopg
@@ -372,7 +370,7 @@ class FreshnessTracker:
         >>> print(f"Fresh: {status['is_fresh']}, SLA Violated: {status['sla_violated']}")
     """
 
-    def __init__(self, db_dsn: Optional[str] = None, table_name: str = "data_freshness_log"):
+    def __init__(self, db_dsn: str | None = None, table_name: str = "data_freshness_log"):
         """Initialize FreshnessTracker.
 
         Args:
@@ -442,8 +440,8 @@ class FreshnessTracker:
         dataset_id: str,
         last_updated_utc: datetime,
         expected_frequency_hours: float,
-        dataset_name: Optional[str] = None,
-        sla_threshold_hours: Optional[float] = None,
+        dataset_name: str | None = None,
+        sla_threshold_hours: float | None = None,
     ) -> None:
         """Track dataset ingestion and freshness status.
 

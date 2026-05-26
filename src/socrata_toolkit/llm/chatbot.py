@@ -18,16 +18,15 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Any, Optional, List, Dict, Tuple
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
+from typing import Any
 
-from langchain_core.language_model import BaseLanguageModel
-from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser, JsonOutputParser
+from langchain_community.embeddings import HuggingFaceEmbeddings, OllamaEmbeddings
 from langchain_community.llms import Ollama
-from langchain_community.embeddings import OllamaEmbeddings, HuggingFaceEmbeddings
+from langchain_core.language_model import BaseLanguageModel
+from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate
 
 
 @dataclass
@@ -36,7 +35,7 @@ class ChatMessage:
     role: str  # "user" or "assistant"
     content: str
     timestamp: str
-    metadata: Dict[str, Any] | None = None
+    metadata: dict[str, Any] | None = None
 
 
 @dataclass
@@ -45,8 +44,8 @@ class DatasetContext:
     fourfour: str
     title: str
     description: str
-    columns: List[Dict[str, str]]
-    sample_values: Dict[str, List[Any]] | None = None
+    columns: list[dict[str, str]]
+    sample_values: dict[str, list[Any]] | None = None
     quality_score: float | None = None
     row_count: int | None = None
 
@@ -78,7 +77,7 @@ class SocrataLLMChatbot:
         self.llm_provider = llm_provider
         self.model_name = model_name
         self.embedding_provider = embedding_provider
-        self.conversation_history: List[ChatMessage] = []
+        self.conversation_history: list[ChatMessage] = []
         self.max_history = conversation_history_size
         self.dataset_context: DatasetContext | None = None
 
@@ -218,7 +217,7 @@ Columns:
         
         return "\n".join(history_lines)
 
-    def get_conversation_history(self) -> List[Dict[str, Any]]:
+    def get_conversation_history(self) -> list[dict[str, Any]]:
         """Get conversation history as list of dicts."""
         return [asdict(msg) for msg in self.conversation_history]
 
@@ -226,7 +225,7 @@ Columns:
         """Clear conversation history."""
         self.conversation_history.clear()
 
-    def suggest_analyses(self, max_suggestions: int = 5) -> List[str]:
+    def suggest_analyses(self, max_suggestions: int = 5) -> list[str]:
         """
         Generate suggested analyses for current dataset.
 
@@ -294,7 +293,7 @@ Provide a 2-3 sentence explanation suitable for analysts and non-technical users
         chain = prompt | self.llm | StrOutputParser()
         return chain.invoke({})
 
-    def validate_query(self, query_description: str) -> Dict[str, Any]:
+    def validate_query(self, query_description: str) -> dict[str, Any]:
         """
         Validate if a user's query is feasible with current dataset.
 
@@ -333,7 +332,7 @@ class DataQualityAssistant(SocrataLLMChatbot):
     Specialized chatbot for data quality assessment and monitoring.
     """
 
-    def assess_quality_issue(self, issue_description: str) -> Dict[str, Any]:
+    def assess_quality_issue(self, issue_description: str) -> dict[str, Any]:
         """
         Provide analysis and recommendations for a data quality issue.
 
@@ -361,7 +360,7 @@ Provide analysis in JSON format with:
         chain = prompt | self.llm | JsonOutputParser()
         return chain.invoke({})
 
-    def recommend_validations(self, column_name: str) -> List[str]:
+    def recommend_validations(self, column_name: str) -> list[str]:
         """
         Recommend data validations for a column.
 
@@ -404,7 +403,7 @@ class AnalyticsAdvisor(SocrataLLMChatbot):
     Specialized chatbot for advanced analytics and insights.
     """
 
-    def suggest_metrics(self) -> List[Dict[str, str]]:
+    def suggest_metrics(self) -> list[dict[str, str]]:
         """
         Suggest relevant metrics for the dataset.
 
@@ -430,7 +429,7 @@ Return JSON:
         result = chain.invoke({})
         return result.get("metrics", [])
 
-    def identify_patterns(self, findings: str) -> List[str]:
+    def identify_patterns(self, findings: str) -> list[str]:
         """
         Analyze findings to identify patterns and insights.
 

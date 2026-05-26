@@ -23,11 +23,11 @@ Standards: Python 3.9+, full type hints, comprehensive docstrings, logging
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, asdict
-from enum import Enum
-from typing import Any, Optional
-from datetime import datetime, date
 import logging
+from dataclasses import asdict, dataclass, field
+from datetime import date, datetime
+from enum import Enum
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -312,7 +312,6 @@ class MaterialSpecification:
         Returns:
             Date when next maintenance is due
         """
-        from datetime import timedelta
         years_to_add = self.maintenance_schedule.routine_interval_years
         return date(
             last_maintenance.year + years_to_add,
@@ -329,7 +328,6 @@ class MaterialSpecification:
         Returns:
             Recommended replacement date
         """
-        from datetime import timedelta
         years_to_add = self.lifecycle_years
         return date(
             installation_date.year + years_to_add,
@@ -406,10 +404,10 @@ class SurfaceAssessment:
     notes: str = ""
     """Inspector notes and observations"""
     
-    geometry: Optional[dict[str, Any]] = None
+    geometry: dict[str, Any] | None = None
     """Geospatial geometry (GeoJSON feature)"""
     
-    inspector_id: Optional[str] = None
+    inspector_id: str | None = None
     """ID of inspector who performed assessment"""
     
     inspection_equipment: list[str] = field(default_factory=list)
@@ -492,13 +490,13 @@ class DefectSeverityAssessment:
     area_sqft: float
     """Affected surface area"""
     
-    depth_inches: Optional[float] = None
+    depth_inches: float | None = None
     """Depth of defect (for potholes, spalling)"""
     
-    width_inches: Optional[float] = None
+    width_inches: float | None = None
     """Width of defect (for cracks)"""
     
-    length_feet: Optional[float] = None
+    length_feet: float | None = None
     """Length of linear defect (for cracks, rutting)"""
     
     safety_hazard: bool = False

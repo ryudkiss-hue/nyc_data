@@ -40,6 +40,7 @@ def test_readiness_import_shims_pass():
 
 def test_doctor_checklist_includes_readiness():
     from click.testing import CliRunner
+
     from socrata_toolkit.core.cli import main
 
     runner = CliRunner()

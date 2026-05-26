@@ -23,9 +23,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
-
-from .matching import MatchingStrategy
+from typing import Any
 
 
 class ReviewDecision(str, Enum):
@@ -63,19 +61,19 @@ class ReviewCase:
     if they should be considered duplicates.
     """
     case_id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    record1: Dict[str, Any] = field(default_factory=dict)
-    record2: Dict[str, Any] = field(default_factory=dict)
+    record1: dict[str, Any] = field(default_factory=dict)
+    record2: dict[str, Any] = field(default_factory=dict)
     matching_score: float = 0.0
     strategy_name: str = ""
     
     # Field-level details
-    fields_compared: Dict[str, FieldComparison] = field(default_factory=dict)
+    fields_compared: dict[str, FieldComparison] = field(default_factory=dict)
     
     # Review metadata
     status: ReviewStatus = ReviewStatus.PENDING
-    decision: Optional[ReviewDecision] = None
-    reviewer: Optional[str] = None
-    review_timestamp: Optional[datetime] = None
+    decision: ReviewDecision | None = None
+    reviewer: str | None = None
+    review_timestamp: datetime | None = None
     notes: str = ""
     time_to_review_seconds: float = 0.0
     
@@ -95,7 +93,7 @@ class ReviewStatistics:
     completed_cases: int
     match_rate: float  # Percentage reviewed as matches
     avg_review_time_seconds: float
-    reviewers: List[str]
+    reviewers: list[str]
     agreement_with_auto: float  # Agreement rate with automated decisions
 
 
@@ -109,10 +107,10 @@ class ReviewWorkflow:
     
     def __init__(self):
         """Initialize review workflow."""
-        self._cases: Dict[str, ReviewCase] = {}
-        self._case_order: List[str] = []  # Insertion order
-        self._reviewer_assignments: Dict[str, List[str]] = {}  # reviewer -> case_ids
-        self._decision_history: List[Dict[str, Any]] = []
+        self._cases: dict[str, ReviewCase] = {}
+        self._case_order: list[str] = []  # Insertion order
+        self._reviewer_assignments: dict[str, list[str]] = {}  # reviewer -> case_ids
+        self._decision_history: list[dict[str, Any]] = []
     
     def add_case(self, case: ReviewCase) -> str:
         """
@@ -128,18 +126,18 @@ class ReviewWorkflow:
         self._case_order.append(case.case_id)
         return case.case_id
     
-    def add_cases_batch(self, cases: List[ReviewCase]) -> List[str]:
+    def add_cases_batch(self, cases: list[ReviewCase]) -> list[str]:
         """Add multiple cases for review."""
         case_ids = []
         for case in cases:
             case_ids.append(self.add_case(case))
         return case_ids
     
-    def get_case(self, case_id: str) -> Optional[ReviewCase]:
+    def get_case(self, case_id: str) -> ReviewCase | None:
         """Get a review case by ID."""
         return self._cases.get(case_id)
     
-    def get_unreviewed_cases(self) -> List[ReviewCase]:
+    def get_unreviewed_cases(self) -> list[ReviewCase]:
         """Get all unreviewed cases."""
         return [
             self._cases[cid]
@@ -147,7 +145,7 @@ class ReviewWorkflow:
             if self._cases[cid].status == ReviewStatus.PENDING
         ]
     
-    def get_pending_cases_for_reviewer(self, reviewer: str) -> List[ReviewCase]:
+    def get_pending_cases_for_reviewer(self, reviewer: str) -> list[ReviewCase]:
         """Get pending cases assigned to reviewer."""
         case_ids = self._reviewer_assignments.get(reviewer, [])
         return [
@@ -156,7 +154,7 @@ class ReviewWorkflow:
             if self._cases[cid].status in [ReviewStatus.PENDING, ReviewStatus.IN_PROGRESS]
         ]
     
-    def get_completed_cases_for_reviewer(self, reviewer: str) -> List[ReviewCase]:
+    def get_completed_cases_for_reviewer(self, reviewer: str) -> list[ReviewCase]:
         """Get completed cases reviewed by reviewer."""
         case_ids = self._reviewer_assignments.get(reviewer, [])
         return [
@@ -192,7 +190,7 @@ class ReviewWorkflow:
     
     def assign_cases_batch(
         self,
-        case_ids: List[str],
+        case_ids: list[str],
         reviewer: str
     ) -> int:
         """Assign multiple cases to reviewer."""
@@ -370,7 +368,7 @@ class ReviewWorkflow:
         
         return (agreements / len(reviewed) * 100) if reviewed else 0.0
     
-    def export_review_log(self) -> List[Dict[str, Any]]:
+    def export_review_log(self) -> list[dict[str, Any]]:
         """
         Export review log as list of dicts.
         
@@ -398,7 +396,7 @@ class ReviewWorkflow:
         
         return exported
     
-    def import_decisions(self, decisions: List[Dict[str, Any]]) -> int:
+    def import_decisions(self, decisions: list[dict[str, Any]]) -> int:
         """
         Import review decisions from external source.
         
@@ -431,7 +429,7 @@ class ReviewWorkflow:
         
         return imported
     
-    def get_reviewer_metrics(self, reviewer: str) -> Dict[str, Any]:
+    def get_reviewer_metrics(self, reviewer: str) -> dict[str, Any]:
         """Get metrics for a specific reviewer."""
         case_ids = self._reviewer_assignments.get(reviewer, [])
         cases = [self._cases[cid] for cid in case_ids if cid in self._cases]
@@ -473,7 +471,7 @@ class ReviewWorkflow:
             'accuracy_vs_auto': accuracy
         }
     
-    def get_disputed_cases(self) -> List[ReviewCase]:
+    def get_disputed_cases(self) -> list[ReviewCase]:
         """Get all disputed review cases."""
         return [
             self._cases[cid]

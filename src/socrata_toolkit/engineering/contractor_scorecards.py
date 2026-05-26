@@ -14,9 +14,7 @@ Example::
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
 
-import numpy as np  # type: ignore[import]
 import pandas as pd  # type: ignore[import]
 
 
@@ -49,7 +47,7 @@ def generate_scorecards(
     first_pass_col: str = "first_pass",
     inspections_col: str = "total_inspections",
     rework_col: str = "rework_spend",
-) -> List[ContractorScorecard]:
+) -> list[ContractorScorecard]:
     """Generate performance scorecards for all contractors."""
     if contractor_col not in df.columns:
         return []
@@ -117,6 +115,6 @@ def generate_scorecards(
     return sorted(scorecards, key=lambda s: s.overall_score, reverse=True)
 
 
-def scorecards_to_dataframe(scorecards: List[ContractorScorecard]) -> pd.DataFrame:
+def scorecards_to_dataframe(scorecards: list[ContractorScorecard]) -> pd.DataFrame:
     """Convert scorecards to a DataFrame for display or export."""
     return pd.DataFrame([s.__dict__ for s in scorecards])

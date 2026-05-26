@@ -16,10 +16,8 @@ Example::
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
 
 import pandas as pd
-
 
 NYC_311_DOMAIN = "data.cityofnewyork.us"
 NYC_311_FOURFOUR = "erm2-nwe9"
@@ -40,16 +38,16 @@ class IngestionResult:
     sidewalk_related: int
     critical_count: int
     high_count: int
-    boroughs: Dict[str, int]
+    boroughs: dict[str, int]
     task_board_items_created: int
-    data: Optional[pd.DataFrame] = field(default=None, repr=False)
+    data: pd.DataFrame | None = field(default=None, repr=False)
 
 
 def fetch_311_complaints(
     max_rows: int = 1000,
-    complaint_types: Optional[List[str]] = None,
-    since: Optional[str] = None,
-    borough: Optional[str] = None,
+    complaint_types: list[str] | None = None,
+    since: str | None = None,
+    borough: str | None = None,
 ) -> pd.DataFrame:
     """Fetch 311 complaints from NYC Open Data.
 
@@ -78,10 +76,10 @@ def fetch_311_complaints(
 
 def ingest_311_complaints(
     max_rows: int = 1000,
-    since: Optional[str] = None,
-    borough: Optional[str] = None,
+    since: str | None = None,
+    borough: str | None = None,
     create_tasks: bool = False,
-    board_path: Optional[str] = None,
+    board_path: str | None = None,
 ) -> IngestionResult:
     """Full ingestion pipeline: fetch, triage, and optionally create board tasks.
 
@@ -125,9 +123,10 @@ def ingest_311_complaints(
     )
 
 
-def _create_board_tasks(df: pd.DataFrame, board_path: Optional[str]) -> int:
-    from ..tools.tasks import TaskBoard, Task
+def _create_board_tasks(df: pd.DataFrame, board_path: str | None) -> int:
     from pathlib import Path
+
+    from ..tools.tasks import Task, TaskBoard
 
     bp = board_path or "outputs/board.json"
     if Path(bp).exists():

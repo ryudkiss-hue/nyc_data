@@ -12,15 +12,14 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Any, Optional, List, Dict, Tuple
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from typing import Any
 
-from langchain_core.language_model import BaseLanguageModel
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
 import psycopg
-
+from langchain_core.language_model import BaseLanguageModel
+from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate
 
 logger = logging.getLogger(__name__)
 
@@ -32,10 +31,10 @@ class QueryExecution:
     sql_query: str
     execution_time_ms: float
     row_count: int
-    results: List[Dict[str, Any]]
+    results: list[dict[str, Any]]
     interpretation: str
     timestamp: str
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class SQLQueryEngine:
@@ -70,10 +69,10 @@ class SQLQueryEngine:
         self.llm = llm
         self.max_results = max_results
         self.enable_explain = enable_explain
-        self.execution_history: List[QueryExecution] = []
+        self.execution_history: list[QueryExecution] = []
         
         # Cache schema information
-        self.schema: Dict[str, Any] = {}
+        self.schema: dict[str, Any] = {}
         self._refresh_schema()
 
     def _refresh_schema(self) -> None:
@@ -91,7 +90,7 @@ class SQLQueryEngine:
 
                     # Get columns for each table
                     for table_name in tables:
-                        cur.execute(f"""
+                        cur.execute("""
                             SELECT column_name, data_type
                             FROM information_schema.columns
                             WHERE table_name = %s
@@ -160,7 +159,7 @@ Generate a PostgreSQL query. Return only the SQL, no markdown or explanation."""
         
         return sql.strip()
 
-    def validate_query(self, sql: str) -> Tuple[bool, str]:
+    def validate_query(self, sql: str) -> tuple[bool, str]:
         """
         Validate SQL query for safety.
 
@@ -267,7 +266,7 @@ Generate a PostgreSQL query. Return only the SQL, no markdown or explanation."""
         self.execution_history.append(execution_record)
         return execution_record
 
-    def _interpret_results(self, question: str, results: List[Dict[str, Any]]) -> str:
+    def _interpret_results(self, question: str, results: list[dict[str, Any]]) -> str:
         """
         Generate interpretation of query results.
 
@@ -295,7 +294,7 @@ Provide a 2-3 sentence interpretation of what these results show.""")
         chain = prompt | self.llm | StrOutputParser()
         return chain.invoke({})
 
-    def get_execution_history(self, limit: int = 10) -> List[QueryExecution]:
+    def get_execution_history(self, limit: int = 10) -> list[QueryExecution]:
         """Get recent query executions."""
         return self.execution_history[-limit:]
 
@@ -343,9 +342,9 @@ class InteractiveQuerySession:
     def __init__(self, engine: SQLQueryEngine):
         """Initialize interactive session."""
         self.engine = engine
-        self.conversation: List[Dict[str, Any]] = []
+        self.conversation: list[dict[str, Any]] = []
 
-    def ask(self, question: str) -> Dict[str, Any]:
+    def ask(self, question: str) -> dict[str, Any]:
         """
         Ask a question in context of conversation history.
 
@@ -397,7 +396,7 @@ class InteractiveQuerySession:
         question_lower = question.lower()
         return any(keyword in question_lower for keyword in followup_keywords)
 
-    def get_conversation(self) -> List[Dict[str, Any]]:
+    def get_conversation(self) -> list[dict[str, Any]]:
         """Get full conversation history."""
         return self.conversation
 
@@ -416,7 +415,7 @@ class QueryOptimizer:
         self.engine = engine
         self.llm = llm
 
-    def suggest_optimizations(self, sql: str) -> List[Dict[str, str]]:
+    def suggest_optimizations(self, sql: str) -> list[dict[str, str]]:
         """
         Suggest optimizations for a query.
 
@@ -442,7 +441,7 @@ Return JSON format:
         result = chain.invoke({})
         return result.get("suggestions", [])
 
-    def suggest_alternatives(self, sql: str) -> List[str]:
+    def suggest_alternatives(self, sql: str) -> list[str]:
         """
         Suggest alternative query formulations.
 

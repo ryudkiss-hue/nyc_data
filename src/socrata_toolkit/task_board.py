@@ -30,17 +30,16 @@ import json
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import pandas as pd
-
 
 # ---------------------------------------------------------------------------
 # Color Coding
 # ---------------------------------------------------------------------------
 
 #: Color mapping for priority levels (CSS hex colors).
-PRIORITY_COLORS: Dict[str, str] = {
+PRIORITY_COLORS: dict[str, str] = {
     "critical": "#DC3545",  # red
     "high": "#FD7E14",      # orange
     "medium": "#FFC107",    # yellow
@@ -49,7 +48,7 @@ PRIORITY_COLORS: Dict[str, str] = {
 }
 
 #: Color mapping for task categories.
-CATEGORY_COLORS: Dict[str, str] = {
+CATEGORY_COLORS: dict[str, str] = {
     "construction": "#0D6EFD",    # blue
     "budget": "#198754",          # green
     "inspection": "#6610F2",      # purple
@@ -64,7 +63,7 @@ CATEGORY_COLORS: Dict[str, str] = {
 DEFAULT_COLUMNS = ["backlog", "todo", "in_progress", "review", "done"]
 
 #: Status display labels.
-STATUS_LABELS: Dict[str, str] = {
+STATUS_LABELS: dict[str, str] = {
     "backlog": "Backlog",
     "todo": "To Do",
     "in_progress": "In Progress",
@@ -87,12 +86,12 @@ class Task:
     priority: str = "medium"  # critical, high, medium, low, none
     category: str = "general"
     status: str = "todo"
-    due_date: Optional[str] = None
+    due_date: str | None = None
     created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    tags: List[str] = field(default_factory=list)
-    dependencies: List[int] = field(default_factory=list)  # task IDs this depends on
-    attachments: List[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
+    dependencies: list[int] = field(default_factory=list)  # task IDs this depends on
+    attachments: list[str] = field(default_factory=list)
     borough: str = ""
     contract_id: str = ""
     estimated_hours: float = 0.0
@@ -117,7 +116,7 @@ class Task:
         except Exception:
             return False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "title": self.title,
             "description": self.description,
@@ -139,7 +138,7 @@ class Task:
         }
 
     @classmethod
-    def from_dict(cls, d: Dict[str, Any]) -> Task:
+    def from_dict(cls, d: dict[str, Any]) -> Task:
         return cls(**{k: v for k, v in d.items() if k in cls.__dataclass_fields__})
 
 
@@ -149,7 +148,7 @@ class ActivityEntry:
     timestamp: str
     actor: str
     action: str
-    task_id: Optional[int]
+    task_id: int | None
     details: str
 
 
@@ -157,9 +156,9 @@ class ActivityEntry:
 class Milestone:
     """A milestone grouping tasks."""
     name: str
-    due_date: Optional[str] = None
+    due_date: str | None = None
     description: str = ""
-    task_ids: List[int] = field(default_factory=list)
+    task_ids: list[int] = field(default_factory=list)
 
     @property
     def is_complete(self) -> bool:
@@ -177,13 +176,13 @@ class TaskBoard:
     and persistence. Designed to power both CLI and Streamlit interfaces.
     """
 
-    def __init__(self, name: str = "DOT Sidewalk Board", columns: Optional[List[str]] = None) -> None:
+    def __init__(self, name: str = "DOT Sidewalk Board", columns: list[str] | None = None) -> None:
         self.name = name
         self.columns = columns or list(DEFAULT_COLUMNS)
-        self.tasks: List[Task] = []
-        self.activity_log: List[ActivityEntry] = []
-        self.milestones: List[Milestone] = []
-        self.team_members: List[str] = []
+        self.tasks: list[Task] = []
+        self.activity_log: list[ActivityEntry] = []
+        self.milestones: list[Milestone] = []
+        self.team_members: list[str] = []
 
     # -- Task CRUD -----------------------------------------------------------
 
@@ -231,19 +230,19 @@ class TaskBoard:
 
     # -- Filtering and Querying -----------------------------------------------
 
-    def get_column(self, status: str) -> List[tuple]:
+    def get_column(self, status: str) -> list[tuple]:
         """Return (task_id, task) pairs for a given status column."""
         return [(i, t) for i, t in enumerate(self.tasks) if t.status == status]
 
     def filter_tasks(
         self,
-        status: Optional[str] = None,
-        assignee: Optional[str] = None,
-        priority: Optional[str] = None,
-        category: Optional[str] = None,
-        borough: Optional[str] = None,
+        status: str | None = None,
+        assignee: str | None = None,
+        priority: str | None = None,
+        category: str | None = None,
+        borough: str | None = None,
         overdue_only: bool = False,
-    ) -> List[tuple]:
+    ) -> list[tuple]:
         """Filter tasks by criteria. Returns (task_id, task) pairs."""
         results = []
         for i, t in enumerate(self.tasks):
@@ -264,7 +263,7 @@ class TaskBoard:
             results.append((i, t))
         return results
 
-    def search_tasks(self, query: str) -> List[tuple]:
+    def search_tasks(self, query: str) -> list[tuple]:
         """Search tasks by title and description text."""
         q = query.lower()
         return [(i, t) for i, t in enumerate(self.tasks)
@@ -272,7 +271,7 @@ class TaskBoard:
 
     # -- Board Statistics -----------------------------------------------------
 
-    def stats(self) -> Dict[str, Any]:
+    def stats(self) -> dict[str, Any]:
         """Compute board-level statistics."""
         active = [t for t in self.tasks if t.status != "deleted"]
         by_status = {}
@@ -305,13 +304,13 @@ class TaskBoard:
 
     # -- Milestones -----------------------------------------------------------
 
-    def add_milestone(self, name: str, due_date: Optional[str] = None, task_ids: Optional[List[int]] = None) -> int:
+    def add_milestone(self, name: str, due_date: str | None = None, task_ids: list[int] | None = None) -> int:
         """Add a milestone. Returns its index."""
         ms = Milestone(name=name, due_date=due_date, task_ids=task_ids or [])
         self.milestones.append(ms)
         return len(self.milestones) - 1
 
-    def milestone_progress(self, milestone_idx: int) -> Dict[str, Any]:
+    def milestone_progress(self, milestone_idx: int) -> dict[str, Any]:
         """Compute progress for a milestone."""
         ms = self.milestones[milestone_idx]
         tasks = [self.tasks[i] for i in ms.task_ids if i < len(self.tasks)]
@@ -415,7 +414,7 @@ class TaskBoard:
 
     # -- Internal -------------------------------------------------------------
 
-    def _log(self, actor: str, action: str, task_id: Optional[int], details: str) -> None:
+    def _log(self, actor: str, action: str, task_id: int | None, details: str) -> None:
         self.activity_log.append(ActivityEntry(
             timestamp=datetime.now(timezone.utc).isoformat(),
             actor=actor,

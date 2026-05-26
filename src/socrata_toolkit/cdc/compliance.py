@@ -25,12 +25,11 @@ Example:
 
 from __future__ import annotations
 
-import json
 import logging
-from dataclasses import dataclass, field
-from datetime import datetime, date, timezone, timedelta
-from typing import Any, Dict, List, Optional, Tuple
 from contextlib import contextmanager
+from dataclasses import dataclass, field
+from datetime import date, datetime, timezone
+from typing import Any
 
 try:
     import psycopg
@@ -55,7 +54,7 @@ class ComplianceCheckResult:
     """
     check_name: str
     passed: bool
-    issues: List[str] = field(default_factory=list)
+    issues: list[str] = field(default_factory=list)
     severity: str = "info"
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -77,7 +76,7 @@ class ComplianceReport:
     total_checks: int
     passed_checks: int
     failed_checks: int
-    checks: List[ComplianceCheckResult]
+    checks: list[ComplianceCheckResult]
     overall_status: str
     summary: str
 
@@ -98,9 +97,9 @@ class ReconciliationResult:
     source_system: str
     cdc_record_count: int
     source_record_count: int
-    missing_events: List[str] = field(default_factory=list)
-    extra_events: List[str] = field(default_factory=list)
-    timestamp_mismatches: List[Tuple[str, int, int]] = field(default_factory=list)
+    missing_events: list[str] = field(default_factory=list)
+    extra_events: list[str] = field(default_factory=list)
+    timestamp_mismatches: list[tuple[str, int, int]] = field(default_factory=list)
     reconciled: bool = False
 
 
@@ -514,7 +513,7 @@ class CDCReconciler:
 
     def detect_missing_changes(
         self, start_date: date, end_date: date
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Detect potentially missing changes in date range.
         
         Identifies suspicious gaps or patterns that might indicate

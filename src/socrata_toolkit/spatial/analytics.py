@@ -11,10 +11,9 @@ This module provides advanced spatial analysis capabilities:
 
 from __future__ import annotations
 
-import json
 import logging
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np  # type: ignore[import]
 from scipy.spatial.distance import cdist  # type: ignore[import]

@@ -21,10 +21,11 @@ Features:
 from __future__ import annotations
 
 import logging
+from collections.abc import Generator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Generator, Optional
+from typing import Any
 
 try:
     import psycopg
@@ -34,7 +35,7 @@ except ImportError:
     sql = None
 
 try:
-    from shapely.geometry import Point, Polygon, LineString, MultiPolygon, shape
+    from shapely.geometry import LineString, MultiPolygon, Point, Polygon, shape
     from shapely.geometry.base import BaseGeometry
 except ImportError:
     Point = None
@@ -115,11 +116,11 @@ class SpatialSegment:
     material_type: str
     condition_score: float
     borough: str
-    block_id: Optional[str] = None
-    district: Optional[str] = None
-    council_district: Optional[str] = None
-    length_meters: Optional[float] = None
-    last_inspection: Optional[datetime] = None
+    block_id: str | None = None
+    district: str | None = None
+    council_district: str | None = None
+    length_meters: float | None = None
+    last_inspection: datetime | None = None
     defects: int = 0
     
     def __post_init__(self) -> None:
@@ -144,9 +145,9 @@ class SpatialBlock:
     block_id: str
     geometry: SpatialGeometry
     borough: str
-    district: Optional[str] = None
-    council_district: Optional[str] = None
-    area_square_meters: Optional[float] = None
+    district: str | None = None
+    council_district: str | None = None
+    area_square_meters: float | None = None
     segments_count: int = 0
     
     def __post_init__(self) -> None:
@@ -168,7 +169,7 @@ class SpatialInspection:
     timestamp: datetime
     defect_type: str
     severity: str  # "low", "medium", "high", "critical"
-    photo_url: Optional[str] = None
+    photo_url: str | None = None
     gps_accuracy_meters: float = 5.0
     
     def __post_init__(self) -> None:
@@ -190,7 +191,7 @@ class SpatialMaterialZone:
     zone_id: str
     geometry: SpatialGeometry
     material_type: str
-    area_square_meters: Optional[float] = None
+    area_square_meters: float | None = None
     segment_count: int = 0
     average_condition: float = 0.0
     
@@ -551,7 +552,7 @@ class SpatialDatabaseConnection:
             logger.error(f"Error inserting material zone {zone.zone_id}: {e}")
             return False
     
-    def get_segment(self, segment_id: str) -> Optional[SpatialSegment]:
+    def get_segment(self, segment_id: str) -> SpatialSegment | None:
         """
         Retrieve a segment by ID.
         
@@ -650,7 +651,7 @@ class SpatialDataModel:
         self._zones[zone.zone_id] = zone
         return self.db.insert_material_zone(zone)
     
-    def get_segment(self, segment_id: str) -> Optional[SpatialSegment]:
+    def get_segment(self, segment_id: str) -> SpatialSegment | None:
         """Retrieve segment from cache or database."""
         if segment_id in self._segments:
             return self._segments[segment_id]
@@ -675,13 +676,13 @@ class SpatialQuery:
     
     Encapsulates search criteria for geographic area queries.
     """
-    bounds: Optional[tuple[float, float, float, float]] = None
+    bounds: tuple[float, float, float, float] | None = None
     """Bounding box (min_lon, min_lat, max_lon, max_lat)"""
     
-    center: Optional[tuple[float, float]] = None
+    center: tuple[float, float] | None = None
     """Center point (lon, lat)"""
     
-    radius: Optional[float] = None
+    radius: float | None = None
     """Search radius in meters"""
     
     filter_type: str = "intersect"

@@ -13,9 +13,10 @@ import json
 import logging
 import tempfile
 import uuid
+from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any
 
 from ..core.pipeline import generate_postgres_preview
 
@@ -36,7 +37,7 @@ def stream_pipeline(
     chunk_size: int | None = None, 
     max_rows: int | None = None, 
     progress_callback: Callable[[int, int | None], None] | None = None,
-    governance_processor: Optional[Any] = None,
+    governance_processor: Any | None = None,
 ) -> dict[str, Any]:
     
     if chunk_size is not None:

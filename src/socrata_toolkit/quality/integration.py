@@ -9,17 +9,18 @@ Standards: Python 3.9+, full type hints, comprehensive docstrings, logging
 
 from __future__ import annotations
 
-import logging
 import functools
-from typing import Any, Callable, Dict, Optional
+import logging
+from collections.abc import Callable
+from typing import Any
 
 import pandas as pd
 
-from socrata_toolkit.quality.expectations import ExpectationSuite
-from socrata_toolkit.quality.validator import QualityValidator, ValidationResult
-from socrata_toolkit.quality.sla import DataQualityTracker, MetricType
 from socrata_toolkit.quality.anomalies import AnomalyDetector
+from socrata_toolkit.quality.expectations import ExpectationSuite
 from socrata_toolkit.quality.rules import BusinessRulesEngine
+from socrata_toolkit.quality.sla import DataQualityTracker, MetricType
+from socrata_toolkit.quality.validator import QualityValidator, ValidationResult
 
 logger = logging.getLogger(__name__)
 
@@ -42,10 +43,10 @@ class QualityIntegration:
 
     def __init__(
         self,
-        default_suite: Optional[ExpectationSuite] = None,
-        tracker: Optional[DataQualityTracker] = None,
-        anomaly_detector: Optional[AnomalyDetector] = None,
-        rules_engine: Optional[BusinessRulesEngine] = None,
+        default_suite: ExpectationSuite | None = None,
+        tracker: DataQualityTracker | None = None,
+        anomaly_detector: AnomalyDetector | None = None,
+        rules_engine: BusinessRulesEngine | None = None,
     ):
         """Initialize integration.
         
@@ -65,7 +66,7 @@ class QualityIntegration:
         self,
         df: pd.DataFrame,
         dataset_name: str,
-        suite: Optional[ExpectationSuite] = None,
+        suite: ExpectationSuite | None = None,
     ) -> ValidationResult:
         """Validate data at ingestion point.
         
@@ -102,7 +103,7 @@ class QualityIntegration:
         self,
         df: pd.DataFrame,
         transformation_name: str,
-        suite: Optional[ExpectationSuite] = None,
+        suite: ExpectationSuite | None = None,
     ) -> ValidationResult:
         """Validate data after transformation.
         
@@ -126,7 +127,7 @@ class QualityIntegration:
         self,
         df: pd.DataFrame,
         api_name: str,
-        suite: Optional[ExpectationSuite] = None,
+        suite: ExpectationSuite | None = None,
     ) -> ValidationResult:
         """Validate data before serving via API.
         
@@ -175,7 +176,7 @@ class QualityIntegration:
 
 
 def validate_data(
-    suite: Optional[ExpectationSuite] = None,
+    suite: ExpectationSuite | None = None,
     fail_on_error: bool = False,
 ) -> Callable:
     """Decorator to validate data in a function.
@@ -221,7 +222,7 @@ def validate_data(
 
 def check_sla(
     metric_name: str,
-    tracker: Optional[DataQualityTracker] = None,
+    tracker: DataQualityTracker | None = None,
 ) -> Callable:
     """Decorator to check SLA compliance.
     
@@ -258,7 +259,7 @@ def check_sla(
 
 
 def detect_anomalies(
-    detector: Optional[AnomalyDetector] = None,
+    detector: AnomalyDetector | None = None,
 ) -> Callable:
     """Decorator to detect anomalies in operation results.
     
@@ -285,7 +286,7 @@ def detect_anomalies(
 
 
 def apply_business_rules(
-    rules_engine: Optional[BusinessRulesEngine] = None,
+    rules_engine: BusinessRulesEngine | None = None,
     key_column: str = "id",
 ) -> Callable:
     """Decorator to apply business rules.
@@ -324,7 +325,7 @@ class QualityValidator:
 
 
 # Global integration instance
-_global_integration: Optional[QualityIntegration] = None
+_global_integration: QualityIntegration | None = None
 
 
 class QualityFramework:

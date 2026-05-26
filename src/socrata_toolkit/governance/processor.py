@@ -33,16 +33,15 @@ Example:
 
 from __future__ import annotations
 
-import json
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 try:
     from socrata_toolkit.cdc.engine import CDCEvent, CDCProcessor
-    from socrata_toolkit.discovery.schema import SchemaRegistry, SchemaChange
-    from socrata_toolkit.lineage.core import DAG, TransformationNode, NodeType
+    from socrata_toolkit.discovery.schema import SchemaChange, SchemaRegistry  # noqa: F401
+    from socrata_toolkit.lineage.core import DAG, NodeType, TransformationNode
     from socrata_toolkit.material.compliance import MaterialCompliance
 except ImportError:
     CDCEvent = None  # type: ignore
@@ -82,19 +81,19 @@ class GovernanceEvent:
     source_dataset: str
     operation: str
     record_id: str
-    before_values: Optional[Dict[str, Any]] = None
-    after_values: Optional[Dict[str, Any]] = None
-    timestamp: Optional[datetime] = None
-    schema_version: Optional[str] = None
+    before_values: dict[str, Any] | None = None
+    after_values: dict[str, Any] | None = None
+    timestamp: datetime | None = None
+    schema_version: str | None = None
     schema_valid: bool = True
-    schema_errors: List[str] = field(default_factory=list)
-    lineage_metadata: Dict[str, Any] = field(default_factory=dict)
-    design_rule_violations: List[str] = field(default_factory=list)
+    schema_errors: list[str] = field(default_factory=list)
+    lineage_metadata: dict[str, Any] = field(default_factory=dict)
+    design_rule_violations: list[str] = field(default_factory=list)
     is_compliant: bool = True
     user_id: str = "system"
-    change_reason: Optional[str] = None
+    change_reason: str | None = None
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for audit logging."""
         return {
             "event_id": self.event_id,
@@ -132,7 +131,7 @@ class GovernanceProcessor:
     def __init__(
         self,
         dsn: str,
-        registry_path: Optional[str] = None,
+        registry_path: str | None = None,
         enable_lineage: bool = True,
         enable_compliance: bool = True,
     ):
@@ -329,8 +328,8 @@ class GovernanceProcessor:
             if cdc_event.after:
                 # Mock a surface assessment for quick rule check
                 # In production, we'd fetch the full assessment object
-                from socrata_toolkit.material.standards import SurfaceAssessment, SurfaceCondition
                 from socrata_toolkit.material.definitions import MATERIAL_DEFINITIONS
+                from socrata_toolkit.material.standards import SurfaceAssessment, SurfaceCondition
                 
                 mat_type = cdc_event.after.get("material_type", "asphalt")
                 spec = MATERIAL_DEFINITIONS.get(mat_type, MATERIAL_DEFINITIONS["asphalt"])
@@ -402,7 +401,7 @@ class GovernanceProcessor:
         dataset: str,
         record_id: str,
         limit: int = 100,
-    ) -> List[GovernanceEvent]:
+    ) -> list[GovernanceEvent]:
         """Retrieve audit trail for a specific record.
         
         Args:
@@ -426,9 +425,9 @@ class GovernanceProcessor:
     def get_compliance_violations(
         self,
         dataset: str,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
-    ) -> List[Dict[str, Any]]:
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+    ) -> list[dict[str, Any]]:
         """Retrieve compliance violations for a dataset.
         
         Args:

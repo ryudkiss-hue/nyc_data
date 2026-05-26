@@ -63,9 +63,12 @@ class GovernanceEnforcer:
 
     def auto_detect_pii(self, dataset_id: str, records: list[dict[str, Any]]) -> dict[str, PIIType]:
         detected = {}
-        if not records: return {}
+        if not records:
+            return {}
         first = records[0]
         for k in first.keys():
-            if "email" in k.lower(): detected[k] = PIIType.EMAIL
-            elif "phone" in k.lower(): detected[k] = PIIType.PHONE
+            if "email" in k.lower():
+                detected[k] = PIIType.EMAIL
+            elif "phone" in k.lower():
+                detected[k] = PIIType.PHONE
         return detected

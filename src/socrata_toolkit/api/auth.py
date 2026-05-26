@@ -92,5 +92,6 @@ def hash_api_key(key: str) -> str:
 
 
 def get_api_key_prefix(key: str) -> str:
-    if len(key) < 10: return "****"
+    if len(key) < 10:
+        return "****"
     return f"{key[:5]}****{key[-4:]}"

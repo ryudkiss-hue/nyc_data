@@ -17,18 +17,17 @@ Usage:
 
 from __future__ import annotations
 
+import logging
+import threading
 from dataclasses import dataclass, field
 from datetime import datetime
-import logging
-from typing import Optional, Dict, Any
-import threading
 
 # Logging setup
 logger = logging.getLogger(__name__)
 
 # Try to import prometheus_client; graceful fallback if not available
 try:
-    from prometheus_client import Counter, Gauge, Histogram, CollectorRegistry
+    from prometheus_client import CollectorRegistry, Counter, Gauge, Histogram
     HAS_PROMETHEUS = True
 except ImportError:
     HAS_PROMETHEUS = False
@@ -48,7 +47,7 @@ class MetricPoint:
 
     name: str
     value: float
-    labels: Dict[str, str] = field(default_factory=dict)
+    labels: dict[str, str] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=datetime.utcnow)
 
     def to_prometheus_line(self) -> str:
@@ -102,7 +101,7 @@ class MetricsRegistry:
         """
         self.use_prometheus = use_prometheus and HAS_PROMETHEUS
         self.registry = CollectorRegistry() if self.use_prometheus else None
-        self.in_memory_metrics: Dict[str, MetricPoint] = {}
+        self.in_memory_metrics: dict[str, MetricPoint] = {}
         self._lock = threading.Lock()
 
     def register_counter(self, name: str, help_text: str) -> Counter | MockCounter:
@@ -150,7 +149,7 @@ class MetricsRegistry:
             return MockGauge(name, help_text, self.in_memory_metrics, self._lock)
 
     def register_histogram(
-        self, name: str, help_text: str, buckets: Optional[tuple] = None
+        self, name: str, help_text: str, buckets: tuple | None = None
     ) -> Histogram | MockHistogram:
         """Register a histogram metric.
 
@@ -240,15 +239,15 @@ class MetricsRegistry:
 class MockCounter:
     """Mock counter for when prometheus_client is not available."""
 
-    def __init__(self, name: str, help_text: str, storage: Dict, lock: threading.Lock):
+    def __init__(self, name: str, help_text: str, storage: dict, lock: threading.Lock):
         """Initialize mock counter."""
         self.name = name
         self.help_text = help_text
         self.storage = storage
         self.lock = lock
-        self._labeled_instances: Dict[str, "MockCounter"] = {}
+        self._labeled_instances: dict[str, MockCounter] = {}
 
-    def labels(self, **kwargs) -> "MockCounter":
+    def labels(self, **kwargs) -> MockCounter:
         """Create labeled instance.
 
         Args:
@@ -286,15 +285,15 @@ class MockCounter:
 class MockGauge:
     """Mock gauge for when prometheus_client is not available."""
 
-    def __init__(self, name: str, help_text: str, storage: Dict, lock: threading.Lock):
+    def __init__(self, name: str, help_text: str, storage: dict, lock: threading.Lock):
         """Initialize mock gauge."""
         self.name = name
         self.help_text = help_text
         self.storage = storage
         self.lock = lock
-        self._labeled_instances: Dict[str, "MockGauge"] = {}
+        self._labeled_instances: dict[str, MockGauge] = {}
 
-    def labels(self, **kwargs) -> "MockGauge":
+    def labels(self, **kwargs) -> MockGauge:
         """Create labeled instance.
 
         Args:
@@ -331,7 +330,7 @@ class MockHistogram:
     """Mock histogram for when prometheus_client is not available."""
 
     def __init__(
-        self, name: str, help_text: str, storage: Dict, lock: threading.Lock, buckets: tuple
+        self, name: str, help_text: str, storage: dict, lock: threading.Lock, buckets: tuple
     ):
         """Initialize mock histogram."""
         self.name = name
@@ -340,9 +339,9 @@ class MockHistogram:
         self.lock = lock
         self.buckets = buckets
         self.observations: list[float] = []
-        self._labeled_instances: Dict[str, "MockHistogram"] = {}
+        self._labeled_instances: dict[str, MockHistogram] = {}
 
-    def labels(self, **kwargs) -> "MockHistogram":
+    def labels(self, **kwargs) -> MockHistogram:
         """Create labeled instance.
 
         Args:
@@ -585,7 +584,7 @@ class DataQualityMetrics:
 
 
 # Global metrics registry singleton
-_global_registry: Optional[MetricsRegistry] = None
+_global_registry: MetricsRegistry | None = None
 _registry_lock = threading.Lock()
 
 

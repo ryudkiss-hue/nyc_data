@@ -173,7 +173,7 @@ def _show_demo_dashboard(st) -> None:
 def _page_task_board(st) -> None:
     st.title("Task Board")
 
-    from ..tools.tasks import TaskBoard, Task, STATUS_LABELS, PRIORITY_COLORS, CATEGORY_COLORS
+    from ..tools.tasks import CATEGORY_COLORS, STATUS_LABELS, Task, TaskBoard
 
     # Load or create board
     if "board" not in st.session_state:
@@ -255,7 +255,7 @@ def _page_task_board(st) -> None:
     for kcol, status in zip(kanban_cols, board.columns):
         with kcol:
             count = stats["by_status"].get(status, 0)
-            st.markdown(f'<div class="kanban-col">', unsafe_allow_html=True)
+            st.markdown('<div class="kanban-col">', unsafe_allow_html=True)
             st.markdown(f"**{STATUS_LABELS.get(status, status)}** ({count})")
             st.markdown("---")
 
@@ -315,7 +315,13 @@ def _page_construction(st) -> None:
     df = st.session_state["cl_data"]
     st.dataframe(df.head(20), use_container_width=True)
 
-    from ..engineering.construction_list import prioritize_construction_list, classify_scope, flag_ada_locations, summarize_construction_list, export_construction_list
+    from ..engineering.construction_list import (
+        classify_scope,
+        export_construction_list,
+        flag_ada_locations,
+        prioritize_construction_list,
+        summarize_construction_list,
+    )
 
     col1, col2 = st.columns(2)
     with col1:
@@ -363,7 +369,11 @@ def _page_contracts(st) -> None:
         return
 
     df = st.session_state["ca_data"]
-    from ..engineering.contract_analytics import analyze_contract_progress, budget_analysis, productivity_metrics
+    from ..engineering.contract_analytics import (
+        analyze_contract_progress,
+        budget_analysis,
+        productivity_metrics,
+    )
 
     tab1, tab2, tab3 = st.tabs(["Progress", "Budget", "Productivity"])
 

@@ -13,6 +13,10 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
+pytestmark = pytest.mark.legacy  # requires fastapi — skipped in standard CI
+
+pytest.importorskip("fastapi", reason="fastapi not installed; install with pip install fastapi")
+
 # Import authentication
 from socrata_toolkit.api.auth import (
     APIKeyAuthProvider,

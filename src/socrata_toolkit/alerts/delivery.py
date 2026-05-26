@@ -21,10 +21,8 @@ Example::
 
 from __future__ import annotations
 
-import json
 import logging
 import os
-from typing import Any, Dict, List, Optional
 
 import requests as _requests
 
@@ -34,9 +32,9 @@ log = logging.getLogger(__name__)
 
 
 def deliver_alerts(
-    alerts: List[RuleAlert],
-    channels: Optional[List[str]] = None,
-) -> Dict[str, int]:
+    alerts: list[RuleAlert],
+    channels: list[str] | None = None,
+) -> dict[str, int]:
     """Deliver alerts to all configured channels.
 
     Auto-detects channels from environment variables unless explicitly specified.
@@ -52,7 +50,7 @@ def deliver_alerts(
         return {}
 
     available = channels or _detect_channels()
-    results: Dict[str, int] = {}
+    results: dict[str, int] = {}
 
     for channel in available:
         count = 0
@@ -77,7 +75,7 @@ def deliver_alerts(
     return results
 
 
-def _detect_channels() -> List[str]:
+def _detect_channels() -> list[str]:
     """Auto-detect available delivery channels from environment."""
     channels = ["log"]  # always available
     if os.getenv("TEAMS_WEBHOOK_URL"):

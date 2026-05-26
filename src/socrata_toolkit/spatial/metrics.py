@@ -15,7 +15,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -26,9 +26,9 @@ class SpatialCoverageMetric:
     metric_name: str
     value: float
     unit: str  # "percent", "count", "density", "km2"
-    borough: Optional[str] = None
-    district: Optional[str] = None
-    timestamp: Optional[datetime] = None
+    borough: str | None = None
+    district: str | None = None
+    timestamp: datetime | None = None
     
     def __post_init__(self) -> None:
         if self.timestamp is None:
@@ -43,7 +43,7 @@ class MaterialDistributionMetric:
     segment_count: int
     percentage: float
     average_condition: float
-    borough: Optional[str] = None
+    borough: str | None = None
 
 
 @dataclass
@@ -65,7 +65,7 @@ class SLAComplianceMetric:
     actual_value: float
     compliance_percentage: float
     status: str  # "compliant", "at_risk", "non_compliant"
-    borough: Optional[str] = None
+    borough: str | None = None
 
 
 class SpatialMetricsCollector:
@@ -124,7 +124,7 @@ class SpatialMetricsCollector:
     
     def calculate_material_distribution(
         self,
-        borough: Optional[str] = None,
+        borough: str | None = None,
     ) -> list[MaterialDistributionMetric]:
         """
         Calculate distribution of sidewalk materials.
@@ -169,7 +169,7 @@ class SpatialMetricsCollector:
         self,
         area_name: str,
         days_lookback: int = 30,
-    ) -> Optional[InspectionDensityMetric]:
+    ) -> InspectionDensityMetric | None:
         """
         Calculate inspection activity density.
         
@@ -393,7 +393,7 @@ class SpatialMetricsCollector:
     def _get_material_stats(
         self,
         material: str,
-        borough: Optional[str] = None,
+        borough: str | None = None,
     ) -> dict[str, float]:
         """Get statistics for material type."""
         # Placeholder: would query database
@@ -537,7 +537,7 @@ class SpatialQualityScorer:
         recency: float,
         accuracy: float,
         consistency: float,
-        weights: Optional[dict[str, float]] = None,
+        weights: dict[str, float] | None = None,
     ) -> float:
         """
         Calculate weighted overall quality score.

@@ -25,7 +25,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import pandas as pd
 
@@ -34,8 +34,8 @@ import pandas as pd
 class BotResponse:
     """Response from the bot adapter."""
     text: str
-    data: Optional[Dict[str, Any]] = None
-    attachments: List[str] = field(default_factory=list)
+    data: dict[str, Any] | None = None
+    attachments: list[str] = field(default_factory=list)
     intent: str = "unknown"
     confidence: float = 0.0
 
@@ -47,7 +47,7 @@ class BotAdapter:
     the appropriate toolkit module for a response.
     """
 
-    def __init__(self, default_data: Optional[pd.DataFrame] = None) -> None:
+    def __init__(self, default_data: pd.DataFrame | None = None) -> None:
         self.default_data = default_data
         self._intents = [
             (r"status\s+(?:of\s+)?contract\s+(\S+)", "contract_status"),
@@ -63,7 +63,7 @@ class BotAdapter:
     def handle(
         self,
         message: str,
-        context: Optional[Dict[str, Any]] = None,
+        context: dict[str, Any] | None = None,
     ) -> BotResponse:
         """Parse a message and return a response.
 
@@ -196,7 +196,7 @@ class BotAdapter:
             return BotResponse(text=f"Search failed: {e}", intent="search_datasets", confidence=0.3)
 
 
-def _find_col(df: pd.DataFrame, candidates: List[str]) -> Optional[str]:
+def _find_col(df: pd.DataFrame, candidates: list[str]) -> str | None:
     for c in candidates:
         if c in df.columns:
             return c

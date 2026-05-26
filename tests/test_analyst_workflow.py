@@ -4,27 +4,15 @@
 
 from __future__ import annotations
 
-
-
 import json
-
 from pathlib import Path
 
-
-
 import pandas as pd
-
 import pytest
-
 import yaml
 
-
-
 from socrata_toolkit.analyst import run_analyst_pack
-
 from socrata_toolkit.analyst.diff import diff_construction_lists
-
-
 
 FIXTURES = Path(__file__).parent / "fixtures" / "analyst"
 

@@ -20,10 +20,10 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
-from .matching import MatchingStrategy, CompositeMatch, FuzzyMatch, ExactMatch
-from ..core.master_data import MasterDataManager, MasterEntity
+from ..core.master_data import MasterDataManager
+from .matching import CompositeMatch, ExactMatch, FuzzyMatch, MatchingStrategy
 
 
 class MatchDecision(str, Enum):
@@ -38,12 +38,12 @@ class MatchDecision(str, Enum):
 class MatchingResult:
     """Result of matching a new record."""
     record_id: str
-    matched_entity_id: Optional[str] = None
+    matched_entity_id: str | None = None
     confidence_score: float = 0.0
-    candidate_matches: List[Tuple[str, float]] = field(default_factory=list)  # (entity_id, score)
+    candidate_matches: list[tuple[str, float]] = field(default_factory=list)  # (entity_id, score)
     decision: MatchDecision = MatchDecision.UNMATCHED
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    user: Optional[str] = None
+    user: str | None = None
     notes: str = ""
 
 
@@ -53,8 +53,8 @@ class MatchingDecision:
     case_id: str
     record_id: str
     decision: str  # 'match' or 'no_match' or 'entity_id'
-    entity_id: Optional[str] = None
-    user: Optional[str] = None
+    entity_id: str | None = None
+    user: str | None = None
     confidence: float = 1.0
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     notes: str = ""
@@ -93,9 +93,9 @@ class IncrementalMatcher:
         ])
         
         # Track all matching decisions
-        self._matching_decisions: Dict[str, MatchingDecision] = {}
-        self._queued_for_review: List[str] = []
-        self._auto_assigned: Dict[str, str] = {}  # record_id -> entity_id
+        self._matching_decisions: dict[str, MatchingDecision] = {}
+        self._queued_for_review: list[str] = []
+        self._auto_assigned: dict[str, str] = {}  # record_id -> entity_id
     
     def set_matching_strategy(self, strategy: MatchingStrategy) -> None:
         """Set custom matching strategy."""
@@ -103,8 +103,8 @@ class IncrementalMatcher:
     
     def match_against_existing(
         self,
-        new_record: Dict[str, Any],
-        entity_type: Optional[str] = None,
+        new_record: dict[str, Any],
+        entity_type: str | None = None,
         top_k: int = 5
     ) -> MatchingResult:
         """
@@ -119,7 +119,7 @@ class IncrementalMatcher:
             MatchingResult with best matches
         """
         record_id = str(new_record.get('id', str(uuid.uuid4())))
-        candidates: List[Tuple[str, float]] = []
+        candidates: list[tuple[str, float]] = []
         
         # Score against all master entities
         for entity_id, entity in self.master_data._entities.items():
@@ -161,8 +161,8 @@ class IncrementalMatcher:
         self,
         record_id: str,
         entity_id: str,
-        new_record: Optional[Dict[str, Any]] = None,
-        user: Optional[str] = None
+        new_record: dict[str, Any] | None = None,
+        user: str | None = None
     ) -> bool:
         """
         Assign new record to master entity.
@@ -199,7 +199,7 @@ class IncrementalMatcher:
     def queue_for_review(
         self,
         record_id: str,
-        candidate_matches: List[Tuple[str, float]],
+        candidate_matches: list[tuple[str, float]],
         reason: str = ""
     ) -> bool:
         """
@@ -220,7 +220,7 @@ class IncrementalMatcher:
         
         return True
     
-    def get_review_queue(self) -> List[str]:
+    def get_review_queue(self) -> list[str]:
         """Get list of record IDs queued for review."""
         return self._queued_for_review.copy()
     
@@ -228,8 +228,8 @@ class IncrementalMatcher:
         self,
         record_id: str,
         decision: str,
-        entity_id: Optional[str] = None,
-        user: Optional[str] = None,
+        entity_id: str | None = None,
+        user: str | None = None,
         confidence: float = 1.0,
         notes: str = ""
     ) -> bool:
@@ -286,7 +286,7 @@ class IncrementalMatcher:
         self,
         record_id: str,
         new_entity_id: str,
-        user: Optional[str] = None,
+        user: str | None = None,
         reason: str = ""
     ) -> bool:
         """
@@ -321,15 +321,15 @@ class IncrementalMatcher:
         
         return True
     
-    def get_assignment_for_record(self, record_id: str) -> Optional[str]:
+    def get_assignment_for_record(self, record_id: str) -> str | None:
         """Get entity ID that record is assigned to."""
         return self._auto_assigned.get(record_id)
     
-    def get_matching_decision(self, record_id: str) -> Optional[MatchingDecision]:
+    def get_matching_decision(self, record_id: str) -> MatchingDecision | None:
         """Get matching decision for record."""
         return self._matching_decisions.get(record_id)
     
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get matching statistics."""
         total_decisions = len(self._matching_decisions)
         
@@ -357,10 +357,10 @@ class IncrementalMatcher:
     
     def create_batch_matches(
         self,
-        records: List[Dict[str, Any]],
-        entity_type: Optional[str] = None,
+        records: list[dict[str, Any]],
+        entity_type: str | None = None,
         auto_assign_only: bool = False
-    ) -> Dict[str, MatchingResult]:
+    ) -> dict[str, MatchingResult]:
         """
         Match batch of records against existing masters.
         
@@ -387,8 +387,8 @@ class IncrementalMatcher:
     
     def apply_batch_decisions(
         self,
-        decisions: List[Dict[str, Any]],
-        user: Optional[str] = None
+        decisions: list[dict[str, Any]],
+        user: str | None = None
     ) -> int:
         """
         Apply batch of matching decisions.

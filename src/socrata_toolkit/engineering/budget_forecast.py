@@ -13,8 +13,8 @@ Example::
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from dataclasses import dataclass
+from typing import Any
 
 import numpy as np  # type: ignore[import]
 import pandas as pd  # type: ignore[import]
@@ -27,7 +27,7 @@ class SpendForecast:
     projected_total: float
     monthly_burn_rate: float
     months_remaining: int
-    forecast_values: List[Dict[str, Any]]
+    forecast_values: list[dict[str, Any]]
     confidence: str  # "high", "medium", "low"
 
 
@@ -38,7 +38,7 @@ class CompletionForecast:
     daily_capacity: float
     projected_days: int
     projected_date: str
-    weekly_projection: List[Dict[str, Any]]
+    weekly_projection: list[dict[str, Any]]
 
 
 def forecast_spend(
@@ -148,7 +148,7 @@ def forecast_workload(
     weekly_intake: float = 50.0,
     weekly_completion: float = 40.0,
     horizon_weeks: int = 26,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Project workload (backlog) over time given intake and completion rates.
 
     Returns weekly projections showing how the backlog grows or shrinks.

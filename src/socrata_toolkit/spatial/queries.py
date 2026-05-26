@@ -14,18 +14,13 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
-import psycopg  # type: ignore[import]
-from psycopg import sql  # type: ignore[import]
-from shapely.geometry import Point, Polygon, LineString  # type: ignore[import]
+from shapely.geometry import Point, Polygon  # type: ignore[import]
 
 from .database import (
-    SpatialDatabaseConnection,
-    SpatialSegment,
-    SpatialBlock,
-    SpatialInspection,
     SRID_WGS84,
+    SpatialDatabaseConnection,
 )
 
 logger = logging.getLogger(__name__)
@@ -48,8 +43,8 @@ class SpatialAggregation:
     total_length_meters: float
     segment_count: int
     average_condition: float
-    borough: Optional[str] = None
-    district: Optional[str] = None
+    borough: str | None = None
+    district: str | None = None
 
 
 class SpatialQuery:
@@ -74,7 +69,7 @@ class SpatialQuery:
         self,
         point: Point,
         distance_meters: float,
-        material_type: Optional[str] = None,
+        material_type: str | None = None,
         limit: int = 100,
     ) -> list[ProximityResult]:
         """
@@ -159,7 +154,7 @@ class SpatialQuery:
     def find_segments_in_polygon(
         self,
         polygon: Polygon,
-        material_type: Optional[str] = None,
+        material_type: str | None = None,
     ) -> list[str]:
         """
         Find all segments that intersect with a polygon.
@@ -243,7 +238,7 @@ class SpatialQuery:
     def find_material_zones(
         self,
         material_type: str,
-        borough: Optional[str] = None,
+        borough: str | None = None,
     ) -> list[dict[str, Any]]:
         """
         Find zones with specific material type using aggregation.
@@ -300,7 +295,7 @@ class SpatialQuery:
         self,
         segment_id_1: str,
         segment_id_2: str,
-    ) -> Optional[float]:
+    ) -> float | None:
         """
         Measure distance between two segments.
         
@@ -336,7 +331,7 @@ class SpatialQuery:
         
         return None
     
-    def measure_area(self, block_id: str) -> Optional[float]:
+    def measure_area(self, block_id: str) -> float | None:
         """
         Measure area of a block in square meters.
         
@@ -368,7 +363,7 @@ class SpatialQuery:
         
         return None
     
-    def measure_length(self, segment_id: str) -> Optional[float]:
+    def measure_length(self, segment_id: str) -> float | None:
         """
         Measure length of a segment in meters.
         
@@ -404,7 +399,7 @@ class SpatialQuery:
         self,
         segment_id: str,
         distance_meters: float,
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Create a buffer zone around a segment.
         
@@ -553,7 +548,7 @@ class SpatialQuery:
     def _aggregate_segments(
         self,
         group_by_cols: list[str],
-        primary_category: Optional[str] = None,
+        primary_category: str | None = None,
     ) -> list[SpatialAggregation]:
         """
         Generic spatial aggregation helper.
@@ -647,8 +642,8 @@ class SpatialQuery:
     
     def condition_statistics(
         self,
-        borough: Optional[str] = None,
-        material_type: Optional[str] = None,
+        borough: str | None = None,
+        material_type: str | None = None,
     ) -> dict[str, float]:
         """
         Get condition statistics for filtered segments.

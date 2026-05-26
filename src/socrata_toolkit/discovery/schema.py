@@ -15,11 +15,11 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass, asdict, field
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import pandas as pd
 
@@ -66,7 +66,7 @@ class ColumnSchema:
     dtype: str
     nullable: bool
     position: int
-    sample_value: Optional[str] = None
+    sample_value: str | None = None
 
 
 @dataclass
@@ -270,7 +270,7 @@ class SchemaRegistry:
 
     @staticmethod
     def extract_schema_from_dataframe(
-        df: pd.DataFrame, dataset_id: str, metadata: Optional[dict[str, Any]] = None
+        df: pd.DataFrame, dataset_id: str, metadata: dict[str, Any] | None = None
     ) -> DatasetSchema:
         """Extract schema from a Pandas DataFrame.
 
@@ -371,8 +371,8 @@ class SchemaRegistry:
         )
 
     def get_schema_version(
-        self, dataset_id: str, version: Optional[int] = None
-    ) -> Optional[DatasetSchema]:
+        self, dataset_id: str, version: int | None = None
+    ) -> DatasetSchema | None:
         """Retrieve a specific schema version for a dataset.
 
         Args:
@@ -560,7 +560,7 @@ class SchemaRegistry:
             return []
 
         try:
-            with open(history_path, "r") as f:
+            with open(history_path) as f:
                 data = json.load(f)
                 return sorted(
                     [DatasetSchema.from_dict(item) for item in data],

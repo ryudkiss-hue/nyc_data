@@ -1,6 +1,7 @@
 ﻿from __future__ import annotations
 
-from typing import Iterable, Any
+from collections.abc import Iterable
+from typing import Any
 
 
 def _quote_value(v: Any) -> str:

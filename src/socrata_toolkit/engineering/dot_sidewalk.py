@@ -21,10 +21,10 @@ Standards: Python 3.9+, type hints, comprehensive docstrings, operational loggin
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, asdict
-from typing import Any, Optional
-from datetime import datetime, timezone
 import logging
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timezone
+from typing import Any
 
 import pandas as pd
 
@@ -187,11 +187,11 @@ def compute_material_aware_kpis(
     material_col: str = "material_type",
     defect_col: str = "defect_count",
     linear_feet_col: str = "linear_feet",
-    ada_compliant_col: Optional[str] = None,
-    severity_col: Optional[str] = None,
-    contractor_col: Optional[str] = None,
-    repair_cost_col: Optional[str] = None,
-    repair_date_col: Optional[str] = None,
+    ada_compliant_col: str | None = None,
+    severity_col: str | None = None,
+    contractor_col: str | None = None,
+    repair_cost_col: str | None = None,
+    repair_date_col: str | None = None,
 ) -> MaterialAwareSidewalkKPI:
     """Compute material-aware KPIs aligned with NYC DOT operational requirements.
 
@@ -255,9 +255,9 @@ def compute_material_aware_kpis(
     ada_compliance_rate = 0.0
     if ada_compliant_col and ada_compliant_col in df.columns:
         ada_compliance_rate = (
-            (df[ada_compliant_col] == True).sum() / len(df) * 100 if len(df) > 0 else 0.0
+            (df[ada_compliant_col] == True).sum() / len(df) * 100  # noqa: E712
+            if len(df) > 0 else 0.0
         )
-
     # Hazardous defect coverage
     hazardous_defect_coverage: dict[str, float] = {}
     hazardous_defect_count = 0
@@ -415,7 +415,7 @@ def compute_material_lifecycle_cost_kpi(
     material_col: str = "material_type",
     defect_col: str = "defect_count",
     linear_feet_col: str = "linear_feet",
-    installation_date_col: Optional[str] = None,
+    installation_date_col: str | None = None,
 ) -> dict[str, Any]:
     """Compute material lifecycle cost KPIs for cost-aware maintenance decisions.
     
@@ -443,9 +443,9 @@ def compute_material_lifecycle_cost_kpi(
     try:
         from socrata_toolkit.material.definitions import (
             MATERIAL_DEFINITIONS,
-            get_material_by_category,
+            get_material_by_category,  # noqa: F401
         )
-        from socrata_toolkit.material.standards import MaterialCategory
+        from socrata_toolkit.material.standards import MaterialCategory  # noqa: F401
     except ImportError:
         logger.warning("Material definitions not available - returning empty KPI")
         return {}
@@ -556,8 +556,8 @@ def compute_ada_compliance_kpi(
     df: pd.DataFrame,
     period_label: str = "all-time",
     material_col: str = "material_type",
-    ada_compliant_col: Optional[str] = None,
-    violation_col: Optional[str] = None,
+    ada_compliant_col: str | None = None,
+    violation_col: str | None = None,
 ) -> dict[str, Any]:
     """Compute ADA compliance KPIs stratified by material type.
     
@@ -596,7 +596,7 @@ def compute_ada_compliance_kpi(
         if total_segments == 0:
             continue
         
-        compliant_segments = (material_data[ada_compliant_col] == True).sum()
+        compliant_segments = (material_data[ada_compliant_col] == True).sum()  # noqa: E712
         compliance_rate = (compliant_segments / total_segments * 100) if total_segments > 0 else 0.0
         
         violation_count = 0

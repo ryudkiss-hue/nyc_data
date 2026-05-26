@@ -7,7 +7,12 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-from dash import html
+
+pytestmark = pytest.mark.legacy  # requires dash — skipped in standard CI
+
+pytest.importorskip("dash", reason="dash not installed; install with pip install dash")
+
+from dash import html  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 LEGACY_DASH = ROOT / "legacy_archive"

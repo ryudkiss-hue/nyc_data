@@ -1,5 +1,7 @@
 from __future__ import annotations
+
 from typing import Any
+
 
 class SoQLBuilder:
     """Fluent interface for building Socrata Query Language (SoQL) strings."""

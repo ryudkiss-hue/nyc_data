@@ -29,12 +29,12 @@ import csv
 import gzip
 import json
 import logging
-from dataclasses import dataclass, field
-from datetime import datetime, date, timezone
+from contextlib import contextmanager
+from dataclasses import dataclass
+from datetime import date, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, IO
-from contextlib import contextmanager
+from typing import IO
 
 try:
     import psycopg
@@ -71,11 +71,11 @@ class ExportResult:
     success: bool
     format: str
     record_count: int = 0
-    file_path: Optional[str] = None
+    file_path: str | None = None
     size_bytes: int = 0
     duration_seconds: float = 0.0
     message: str = ""
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class CDCExporter:
@@ -113,7 +113,7 @@ class CDCExporter:
         source_dataset: str,
         output_path: str,
         compress: bool = False,
-        limit: Optional[int] = None,
+        limit: int | None = None,
     ) -> ExportResult:
         """Export CDC events to CSV.
         
@@ -184,7 +184,7 @@ class CDCExporter:
             )
 
     @staticmethod
-    def _write_csv_data(f: IO, rows: List[tuple]) -> None:
+    def _write_csv_data(f: IO, rows: list[tuple]) -> None:
         """Write CDC rows to CSV file.
         
         Args:
@@ -221,9 +221,9 @@ class CDCExporter:
     def export_to_json(
         self,
         source_dataset: str,
-        output_path: Optional[str] = None,
+        output_path: str | None = None,
         format: str = "array",
-        limit: Optional[int] = None,
+        limit: int | None = None,
     ) -> ExportResult:
         """Export CDC events to JSON.
         
@@ -318,7 +318,7 @@ class CDCExporter:
         self,
         source_dataset: str,
         output_path: str,
-        limit: Optional[int] = None,
+        limit: int | None = None,
     ) -> ExportResult:
         """Export CDC events to Parquet format.
         
@@ -418,7 +418,7 @@ class CDCExporter:
     def export_compacted_cdc(
         self,
         source_dataset: str,
-        output_path: Optional[str] = None,
+        output_path: str | None = None,
     ) -> ExportResult:
         """Export compacted CDC (latest version per business_key).
         
@@ -506,7 +506,7 @@ class CDCExporter:
         self,
         table: str,
         output_path: str,
-        as_of_date: Optional[datetime] = None,
+        as_of_date: datetime | None = None,
     ) -> ExportResult:
         """Export SCD Type 2 snapshot.
         

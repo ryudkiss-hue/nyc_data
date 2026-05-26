@@ -13,23 +13,23 @@ from __future__ import annotations
 import json
 import logging
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 try:
     import psycopg  # type: ignore[import]
-    from psycopg import sql, Connection  # type: ignore[import]
+    from psycopg import Connection, sql  # noqa: F401  # type: ignore[import]
 except ImportError:
     psycopg = None  # type: ignore
     Connection = Any  # type: ignore
 
 from .core import (
-    TransformationNode,
+    DAG,
+    EdgeType,
     ExecutionRecord,
+    ExecutionStatus,
     LineageEdge,
     NodeType,
-    EdgeType,
-    ExecutionStatus,
-    DAG,
+    TransformationNode,
 )
 
 logger = logging.getLogger(__name__)
@@ -42,7 +42,7 @@ class LineagePersistence:
     All timestamps are UTC-aware.
     """
 
-    def __init__(self, db_connection: Optional[Connection] = None) -> None:
+    def __init__(self, db_connection: Connection | None = None) -> None:
         """Initialize persistence layer.
         
         Args:
@@ -144,7 +144,7 @@ class LineagePersistence:
             logger.error(f"Failed to save node {node.node_id}: {e}")
             raise RuntimeError(f"Failed to save node: {e}")
 
-    def get_node(self, node_id: str) -> Optional[TransformationNode]:
+    def get_node(self, node_id: str) -> TransformationNode | None:
         """Retrieve a transformation node by ID.
         
         Args:
@@ -253,7 +253,7 @@ class LineagePersistence:
             logger.error(f"Failed to save edge: {e}")
             raise RuntimeError(f"Failed to save edge: {e}")
 
-    def get_edges(self, source_id: Optional[str] = None, target_id: Optional[str] = None) -> List[LineageEdge]:
+    def get_edges(self, source_id: str | None = None, target_id: str | None = None) -> list[LineageEdge]:
         """Retrieve edges, optionally filtered by source or target.
         
         Args:
@@ -360,7 +360,7 @@ class LineagePersistence:
 
     def get_execution_history(
         self, node_id: str, limit: int = 50
-    ) -> List[ExecutionRecord]:
+    ) -> list[ExecutionRecord]:
         """Get execution history for a node, newest first.
         
         Args:
@@ -535,11 +535,11 @@ class LineagePersistence:
         self,
         cursor: Any,
         event_type: str,
-        node_id: Optional[str] = None,
-        edge_source_id: Optional[str] = None,
-        edge_target_id: Optional[str] = None,
-        old_value: Optional[Dict[str, Any]] = None,
-        new_value: Optional[Dict[str, Any]] = None,
+        node_id: str | None = None,
+        edge_source_id: str | None = None,
+        edge_target_id: str | None = None,
+        old_value: dict[str, Any] | None = None,
+        new_value: dict[str, Any] | None = None,
         user: str = "system",
     ) -> None:
         """Log an audit event. Internal method."""

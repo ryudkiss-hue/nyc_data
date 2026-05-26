@@ -16,15 +16,13 @@ Standards: Python 3.9+, type hints, comprehensive docstrings
 
 from __future__ import annotations
 
+import logging
+
 from socrata_toolkit.material.standards import (
+    MaintenanceSchedule,
     MaterialCategory,
     MaterialSpecification,
-    MaintenanceSchedule,
-    ADAComplianceRule,
-    ADAFailureSeverity,
 )
-from datetime import datetime
-import logging
 
 logger = logging.getLogger(__name__)
 

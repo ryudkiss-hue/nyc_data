@@ -21,9 +21,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Set, Tuple
-
-import hashlib
+from typing import Any
 
 
 @dataclass
@@ -41,7 +39,7 @@ class BlockStatistics:
 class BlockingAlgorithm(ABC):
     """Base class for blocking algorithms."""
     
-    def __init__(self, blocking_keys: List[str]):
+    def __init__(self, blocking_keys: list[str]):
         """
         Initialize blocker.
         
@@ -49,13 +47,13 @@ class BlockingAlgorithm(ABC):
             blocking_keys: Fields to use for blocking
         """
         self.blocking_keys = blocking_keys
-        self._statistics: Optional[BlockStatistics] = None
+        self._statistics: BlockStatistics | None = None
     
     @abstractmethod
     def create_candidate_pairs(
         self,
-        records: List[Dict[str, Any]]
-    ) -> List[Tuple[int, int]]:
+        records: list[dict[str, Any]]
+    ) -> list[tuple[int, int]]:
         """
         Create candidate record pairs for matching.
         
@@ -67,7 +65,7 @@ class BlockingAlgorithm(ABC):
         """
         pass
     
-    def get_statistics(self) -> Optional[BlockStatistics]:
+    def get_statistics(self) -> BlockStatistics | None:
         """Get statistics from last blocking operation."""
         return self._statistics
     
@@ -75,7 +73,7 @@ class BlockingAlgorithm(ABC):
         self,
         total_records: int,
         candidate_pairs: int,
-        blocks: Dict[str, List[int]]
+        blocks: dict[str, list[int]]
     ) -> BlockStatistics:
         """Calculate blocking statistics."""
         total_possible = total_records * (total_records - 1) // 2
@@ -104,8 +102,8 @@ class StandardBlocker(BlockingAlgorithm):
     
     def create_candidate_pairs(
         self,
-        records: List[Dict[str, Any]]
-    ) -> List[Tuple[int, int]]:
+        records: list[dict[str, Any]]
+    ) -> list[tuple[int, int]]:
         """
         Create candidate pairs using standard blocking.
         
@@ -135,9 +133,9 @@ class StandardBlocker(BlockingAlgorithm):
         
         return pairs
     
-    def _create_blocks(self, records: List[Dict[str, Any]]) -> Dict[str, List[int]]:
+    def _create_blocks(self, records: list[dict[str, Any]]) -> dict[str, list[int]]:
         """Create blocks from records using blocking keys."""
-        blocks: Dict[str, List[int]] = {}
+        blocks: dict[str, list[int]] = {}
         
         for idx, record in enumerate(records):
             block_key = self._generate_block_key(record)
@@ -148,7 +146,7 @@ class StandardBlocker(BlockingAlgorithm):
         
         return blocks
     
-    def _generate_block_key(self, record: Dict[str, Any]) -> str:
+    def _generate_block_key(self, record: dict[str, Any]) -> str:
         """Generate blocking key from record."""
         key_parts = []
         
@@ -172,7 +170,7 @@ class SortedNeighborhoodBlocker(BlockingAlgorithm):
     
     def __init__(
         self,
-        blocking_keys: List[str],
+        blocking_keys: list[str],
         window_size: int = 50
     ):
         """
@@ -187,8 +185,8 @@ class SortedNeighborhoodBlocker(BlockingAlgorithm):
     
     def create_candidate_pairs(
         self,
-        records: List[Dict[str, Any]]
-    ) -> List[Tuple[int, int]]:
+        records: list[dict[str, Any]]
+    ) -> list[tuple[int, int]]:
         """
         Create candidate pairs using sorted neighborhood.
         
@@ -233,7 +231,7 @@ class SortedNeighborhoodBlocker(BlockingAlgorithm):
         
         return pairs_list
     
-    def _generate_sort_key(self, record: Dict[str, Any]) -> str:
+    def _generate_sort_key(self, record: dict[str, Any]) -> str:
         """Generate sortable key from record."""
         key_parts = []
         
@@ -247,10 +245,10 @@ class SortedNeighborhoodBlocker(BlockingAlgorithm):
     
     def _create_pseudo_blocks(
         self,
-        sortable_records: List[Tuple[str, int, Dict]]
-    ) -> Dict[str, List[int]]:
+        sortable_records: list[tuple[str, int, dict]]
+    ) -> dict[str, list[int]]:
         """Create pseudo-blocks for statistics."""
-        blocks: Dict[str, List[int]] = {}
+        blocks: dict[str, list[int]] = {}
         
         for sort_key, idx, _ in sortable_records:
             if sort_key not in blocks:
@@ -269,7 +267,7 @@ class SuffixArrayBlocker(BlockingAlgorithm):
     
     def __init__(
         self,
-        blocking_keys: List[str],
+        blocking_keys: list[str],
         token_length: int = 3,
         min_tokens: int = 1
     ):
@@ -287,8 +285,8 @@ class SuffixArrayBlocker(BlockingAlgorithm):
     
     def create_candidate_pairs(
         self,
-        records: List[Dict[str, Any]]
-    ) -> List[Tuple[int, int]]:
+        records: list[dict[str, Any]]
+    ) -> list[tuple[int, int]]:
         """
         Create candidate pairs using suffix arrays.
         
@@ -299,13 +297,13 @@ class SuffixArrayBlocker(BlockingAlgorithm):
             List of (index1, index2) pairs
         """
         # Extract tokens for each record
-        record_tokens: List[Set[str]] = []
+        record_tokens: list[set[str]] = []
         for record in records:
             tokens = self._extract_tokens(record)
             record_tokens.append(tokens)
         
         # Create inverted index: token -> record indices
-        token_index: Dict[str, Set[int]] = {}
+        token_index: dict[str, set[int]] = {}
         for idx, tokens in enumerate(record_tokens):
             for token in tokens:
                 if token not in token_index:
@@ -313,7 +311,7 @@ class SuffixArrayBlocker(BlockingAlgorithm):
                 token_index[token].add(idx)
         
         # Generate candidate pairs from shared tokens
-        pairs: Set[Tuple[int, int]] = set()
+        pairs: set[tuple[int, int]] = set()
         for indices in token_index.values():
             if len(indices) > 1:
                 # Create pairs of records sharing this token
@@ -342,9 +340,9 @@ class SuffixArrayBlocker(BlockingAlgorithm):
         
         return pairs_list
     
-    def _extract_tokens(self, record: Dict[str, Any]) -> Set[str]:
+    def _extract_tokens(self, record: dict[str, Any]) -> set[str]:
         """Extract tokens from record."""
-        tokens: Set[str] = set()
+        tokens: set[str] = set()
         
         for field in self.blocking_keys:
             value = record.get(field, '')
@@ -372,7 +370,7 @@ class CanopyBlocker(BlockingAlgorithm):
     
     def __init__(
         self,
-        blocking_keys: List[str],
+        blocking_keys: list[str],
         loose_threshold: float = 0.5,
         tight_threshold: float = 0.8
     ):
@@ -390,8 +388,8 @@ class CanopyBlocker(BlockingAlgorithm):
     
     def create_candidate_pairs(
         self,
-        records: List[Dict[str, Any]]
-    ) -> List[Tuple[int, int]]:
+        records: list[dict[str, Any]]
+    ) -> list[tuple[int, int]]:
         """
         Create candidate pairs using canopy clustering.
         
@@ -405,7 +403,7 @@ class CanopyBlocker(BlockingAlgorithm):
         canopies = self._create_canopies(records)
         
         # Generate pairs within canopies
-        pairs: Set[Tuple[int, int]] = set()
+        pairs: set[tuple[int, int]] = set()
         for canopy in canopies:
             # Create all pairs within canopy
             for i in range(len(canopy)):
@@ -434,10 +432,10 @@ class CanopyBlocker(BlockingAlgorithm):
     
     def _create_canopies(
         self,
-        records: List[Dict[str, Any]]
-    ) -> List[List[int]]:
+        records: list[dict[str, Any]]
+    ) -> list[list[int]]:
         """Create canopies from records."""
-        canopies: List[List[int]] = []
+        canopies: list[list[int]] = []
         remaining = set(range(len(records)))
         
         while remaining:
@@ -465,8 +463,8 @@ class CanopyBlocker(BlockingAlgorithm):
     
     def _record_similarity(
         self,
-        record1: Dict[str, Any],
-        record2: Dict[str, Any]
+        record1: dict[str, Any],
+        record2: dict[str, Any]
     ) -> float:
         """Calculate quick similarity between records."""
         if not self.blocking_keys:
@@ -497,7 +495,7 @@ class HybridBlocker(BlockingAlgorithm):
     
     def __init__(
         self,
-        blockers: List[BlockingAlgorithm]
+        blockers: list[BlockingAlgorithm]
     ):
         """
         Initialize hybrid blocker.
@@ -515,8 +513,8 @@ class HybridBlocker(BlockingAlgorithm):
     
     def create_candidate_pairs(
         self,
-        records: List[Dict[str, Any]]
-    ) -> List[Tuple[int, int]]:
+        records: list[dict[str, Any]]
+    ) -> list[tuple[int, int]]:
         """
         Create candidate pairs by combining multiple blockers.
         
@@ -526,7 +524,7 @@ class HybridBlocker(BlockingAlgorithm):
         Returns:
             List of (index1, index2) pairs (union of all blockers)
         """
-        all_pairs: Set[Tuple[int, int]] = set()
+        all_pairs: set[tuple[int, int]] = set()
         
         for blocker in self.blockers:
             pairs = blocker.create_candidate_pairs(records)
@@ -535,7 +533,7 @@ class HybridBlocker(BlockingAlgorithm):
         pairs_list = sorted(list(all_pairs))
         
         # Calculate combined statistics
-        combined_blocks: Dict[str, List[int]] = {}
+        combined_blocks: dict[str, list[int]] = {}
         total_possible = len(records) * (len(records) - 1) // 2
         
         self._statistics = BlockStatistics(

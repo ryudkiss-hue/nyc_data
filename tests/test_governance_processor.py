@@ -11,6 +11,9 @@ from datetime import datetime, timezone
 
 import pytest
 
+# GovernanceProcessor uses networkx for DAG — skip if not available
+pytest.importorskip("networkx", reason="networkx not installed; install with pip install networkx")
+
 try:
     from socrata_toolkit.governance import (
         GovernanceEvent,

@@ -18,13 +18,12 @@ Usage:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, asdict, field
-from datetime import datetime, timezone
-from enum import Enum
 import json
 import logging
-from typing import Optional
 import uuid
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timezone
+from enum import Enum
 
 try:
     import sqlparse
@@ -74,7 +73,7 @@ class LineageEdge:
     source_columns: list[str]
     target_columns: list[str]
     transformation_type: TransformationType
-    transformation_sql: Optional[str] = None
+    transformation_sql: str | None = None
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> dict:
@@ -141,7 +140,7 @@ class ColumnLineage:
     target_column: str
     upstream_tables: list[str]
     upstream_columns: list[list[str]]
-    transformation_sql: Optional[str] = None
+    transformation_sql: str | None = None
     lineage_depth: int = 0
 
     def to_dict(self) -> dict:
@@ -217,7 +216,7 @@ class LineageGraph:
         source_columns: list[str],
         target_columns: list[str],
         transformation_type: TransformationType = TransformationType.CUSTOM_SQL,
-        transformation_sql: Optional[str] = None,
+        transformation_sql: str | None = None,
     ) -> str:
         """Add a lineage edge to the graph.
 
@@ -394,7 +393,7 @@ class LineageGraph:
         collect_downstream(table_id)
         return list(downstream)
 
-    def trace_column_lineage(self, table_id: str, column_name: str) -> Optional[ColumnLineage]:
+    def trace_column_lineage(self, table_id: str, column_name: str) -> ColumnLineage | None:
         """Trace column-level lineage through transformations.
 
         Follows a column from target through upstream edges to find its
@@ -578,7 +577,7 @@ class LineageRegistry:
     historical analysis, and schema evolution tracking.
     """
 
-    def __init__(self, db_dsn: Optional[str] = None, table_name: str = "column_lineage_registry"):
+    def __init__(self, db_dsn: str | None = None, table_name: str = "column_lineage_registry"):
         """Initialize lineage registry.
 
         Args:
@@ -636,7 +635,7 @@ class LineageRegistry:
         source_columns: list[str],
         target_columns: list[str],
         transformation_type: TransformationType = TransformationType.CUSTOM_SQL,
-        transformation_sql: Optional[str] = None,
+        transformation_sql: str | None = None,
     ) -> str:
         """Add edge to lineage graph and persist to database.
 
@@ -677,7 +676,7 @@ class LineageRegistry:
         source_columns: list[str],
         target_columns: list[str],
         transformation_type: TransformationType,
-        transformation_sql: Optional[str],
+        transformation_sql: str | None,
     ) -> None:
         """Persist edge to PostgreSQL."""
         if not self.db_dsn:

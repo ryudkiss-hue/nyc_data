@@ -23,8 +23,8 @@ Example:
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import datetime, timedelta, timezone
+from typing import Any
 
 try:
     from socrata_toolkit.governance.processor import GovernanceProcessor
@@ -54,7 +54,7 @@ class ProjectAnalystReports:
         self,
         contract_id: str,
         days_back: int = 90,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate audit trail for contract budget changes.
         
         Shows all budget modifications with who, when, before/after values.
@@ -129,8 +129,8 @@ class ProjectAnalystReports:
     def construction_compliance(
         self,
         project_id: str,
-        segment_ids: Optional[List[str]] = None,
-    ) -> Dict[str, Any]:
+        segment_ids: list[str] | None = None,
+    ) -> dict[str, Any]:
         """Validate construction list against design standards.
         
         Checks that all segments in project comply with:
@@ -188,7 +188,7 @@ class ProjectAnalystReports:
         self,
         metric_name: str,
         dataset: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Trace data lineage for a metric.
         
         Shows which source datasets fed into this metric and all
@@ -241,7 +241,7 @@ class ProjectAnalystReports:
     def repair_progress_summary(
         self,
         days_back: int = 30,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate repair progress summary for period.
         
         Shows completion rate, budget burn, and variance analysis
@@ -312,7 +312,7 @@ class ProjectAnalystReports:
     def contractor_performance_audit(
         self,
         contractor_id: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Audit contractor performance metrics.
         
         Shows quality score changes, schedule compliance, budget adherence,

@@ -27,14 +27,19 @@ PRIORITY_INFO = "info"
 LBL_SYSTEM = "system"
 MODEL_DEFAULT = "gpt-3.5-turbo"
 
-from .api import create_app
-from .client import SocrataClient, SocrataConfig
-from .db_helpers import ensure_fts_index
-from .models import DatasetMetadata, SearchResult
-from .config import get_default, load_local_config
-from .db_helpers import build_fts_index_sql
-from .duckdb_store import DuckDBManager, DuckDBRepository, get_bundle_dir
-from .profiles import ProfilePaths, active_profile_name, ensure_profile_exists, list_profiles, profile_paths
+from .api import create_app  # noqa: F401
+from .client import SocrataClient, SocrataConfig  # noqa: F401
+from .config import get_default, load_local_config  # noqa: F401
+from .db_helpers import build_fts_index_sql, ensure_fts_index  # noqa: F401
+from .duckdb_store import DuckDBManager, DuckDBRepository, get_bundle_dir  # noqa: F401
+from .models import DatasetMetadata, SearchResult  # noqa: F401
+from .profiles import (  # noqa: F401
+    ProfilePaths,
+    active_profile_name,
+    ensure_profile_exists,
+    list_profiles,
+    profile_paths,
+)
 
 
 class DuckDBExporter:
@@ -52,18 +57,15 @@ class DuckDBExporter:
 
 def search_nyc_datasets(query: str, domain: str = "data.cityofnewyork.us", limit: int = 10):
     """Search NYC Open Data catalog and return results as a DataFrame."""
-    import pandas as pd
     from dataclasses import asdict
+
+    import pandas as pd
 
     client = SocrataClient()
     results = client.search(query=query, domain=domain, limit=limit)
     return pd.DataFrame([asdict(r) for r in results])
-from .master_data import EntityMergeStrategy, MasterDataManager, MasterEntity
-from .state import load_state, save_state
-from .temporal import ChangePattern, ChangeSummary
-
 # Schema registry lives under discovery but tests import from core
-from ..discovery.schema import (
+from ..discovery.schema import (  # noqa: F401
     BackwardCompatibilityChecker,
     BreakingChangeAlert,
     ChangeType,
@@ -73,6 +75,9 @@ from ..discovery.schema import (
     SchemaRegistry,
     SchemaValidator,
 )
+from .master_data import EntityMergeStrategy, MasterDataManager, MasterEntity  # noqa: F401
+from .state import load_state, save_state  # noqa: F401
+from .temporal import ChangePattern, ChangeSummary  # noqa: F401
 
 # NYC datasets / dictionary helpers
 try:
@@ -84,7 +89,7 @@ except ImportError:
     list_available_datasets = lambda: []  # type: ignore
 
 # SoQL builder (optional; used by query_builder tests)
-from ..query_builder import (
+from ..query_builder import (  # noqa: F401
     _quote_value,
     and_join,
     equals_clause,
@@ -92,8 +97,7 @@ from ..query_builder import (
     like_clause,
     or_join,
 )
-
-from .soql_builder import SoQLBuilder
+from .soql_builder import SoQLBuilder  # noqa: F401
 
 __all__ = [
     "COL_LAT",

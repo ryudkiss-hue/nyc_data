@@ -16,7 +16,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import pandas as pd
 
@@ -36,7 +36,7 @@ class LineageEntry:
     action: str  # "fetch", "transform", "filter", "join", "export"
     row_count_in: int
     row_count_out: int
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -45,7 +45,7 @@ class LineageRecord:
     dataset_id: str
     run_id: str
     created_at: str
-    steps: List[LineageEntry] = field(default_factory=list)
+    steps: list[LineageEntry] = field(default_factory=list)
 
     def add_step(
         self,
@@ -66,7 +66,7 @@ class LineageRecord:
             metadata=metadata,
         ))
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "dataset_id": self.dataset_id,
             "run_id": self.run_id,
@@ -103,7 +103,7 @@ class LineageRecord:
         return record
 
 
-def create_lineage(dataset_id: str, run_id: Optional[str] = None) -> LineageRecord:
+def create_lineage(dataset_id: str, run_id: str | None = None) -> LineageRecord:
     """Create a new lineage record for a pipeline run."""
     if run_id is None:
         run_id = hashlib.sha256(
@@ -127,7 +127,7 @@ class AuditEvent:
     actor: str
     action: str  # "read", "write", "delete", "export", "query"
     resource: str
-    details: Dict[str, Any] = field(default_factory=dict)
+    details: dict[str, Any] = field(default_factory=dict)
 
 
 class AuditLogger:
@@ -138,7 +138,7 @@ class AuditLogger:
     """
 
     def __init__(self) -> None:
-        self.events: List[AuditEvent] = []
+        self.events: list[AuditEvent] = []
 
     def log_event(
         self,
@@ -159,10 +159,10 @@ class AuditLogger:
 
     def query(
         self,
-        actor: Optional[str] = None,
-        action: Optional[str] = None,
-        resource: Optional[str] = None,
-    ) -> List[AuditEvent]:
+        actor: str | None = None,
+        action: str | None = None,
+        resource: str | None = None,
+    ) -> list[AuditEvent]:
         """Filter audit events by actor, action, or resource."""
         results = self.events
         if actor:
@@ -212,15 +212,15 @@ class QualityScore:
     validity: float      # % values passing type/format checks
     consistency: float   # % rows without duplicate keys
     freshness: float     # score based on data recency
-    details: Dict[str, Any] = field(default_factory=dict)
+    details: dict[str, Any] = field(default_factory=dict)
 
 
 def compute_quality_score(
     df: pd.DataFrame,
-    key_columns: Optional[List[str]] = None,
-    date_column: Optional[str] = None,
+    key_columns: list[str] | None = None,
+    date_column: str | None = None,
     freshness_days_threshold: int = 30,
-    type_rules: Optional[Dict[str, str]] = None,
+    type_rules: dict[str, str] | None = None,
 ) -> QualityScore:
     """Compute a composite quality score for a DataFrame.
 
@@ -311,15 +311,15 @@ def compute_quality_score(
 @dataclass
 class SchemaDiff:
     """Differences between two schemas."""
-    added_columns: List[str]
-    removed_columns: List[str]
-    type_changes: List[Dict[str, str]]
+    added_columns: list[str]
+    removed_columns: list[str]
+    type_changes: list[dict[str, str]]
     is_compatible: bool
 
 
 def detect_schema_drift(
     current_df: pd.DataFrame,
-    baseline_schema: Dict[str, str],
+    baseline_schema: dict[str, str],
 ) -> SchemaDiff:
     """Compare a DataFrame's schema against a baseline schema dict.
 
@@ -354,7 +354,7 @@ def detect_schema_drift(
     )
 
 
-def snapshot_schema(df: pd.DataFrame) -> Dict[str, str]:
+def snapshot_schema(df: pd.DataFrame) -> dict[str, str]:
     """Capture the current schema as a dict suitable for drift detection baselines."""
     return {col: str(dtype) for col, dtype in df.dtypes.items()}
 
@@ -367,7 +367,7 @@ def save_schema_snapshot(df: pd.DataFrame, path: str) -> None:
     p.write_text(json.dumps(schema, indent=2), encoding="utf-8")
 
 
-def load_schema_snapshot(path: str) -> Dict[str, str]:
+def load_schema_snapshot(path: str) -> dict[str, str]:
     """Load a schema snapshot from a JSON file."""
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
@@ -390,8 +390,8 @@ def apply_retention_policy(
     df: pd.DataFrame,
     date_column: str,
     retention_days: int = 365,
-    reference_date: Optional[datetime] = None,
-) -> Tuple[pd.DataFrame, RetentionReport]:
+    reference_date: datetime | None = None,
+) -> tuple[pd.DataFrame, RetentionReport]:
     """Flag or filter rows that exceed the retention period.
 
     Returns a tuple of (retained_df, report).

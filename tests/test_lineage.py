@@ -16,6 +16,9 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
+# networkx is required for DAG operations; skip entire module if not available
+pytest.importorskip("networkx", reason="networkx not installed; install with pip install networkx")
+
 from socrata_toolkit.governance import (
     DAG,
     EdgeType,

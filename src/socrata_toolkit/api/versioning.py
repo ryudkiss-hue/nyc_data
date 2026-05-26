@@ -51,8 +51,10 @@ class VersionManager:
 
     def get_breaking_changes(self, from_version: str, to_version: str) -> list[str]:
         changes = []
-        if from_version in self.versions: changes.extend(self.versions[from_version].breaking_changes)
-        if to_version in self.versions: changes.extend(self.versions[to_version].breaking_changes)
+        if from_version in self.versions:
+            changes.extend(self.versions[from_version].breaking_changes)
+        if to_version in self.versions:
+            changes.extend(self.versions[to_version].breaking_changes)
         return changes
 
 

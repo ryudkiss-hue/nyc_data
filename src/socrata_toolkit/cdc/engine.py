@@ -37,11 +37,10 @@ from __future__ import annotations
 import json
 import logging
 import uuid
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
 from contextlib import contextmanager
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any
 
 try:
     import psycopg
@@ -82,12 +81,12 @@ class CDCEvent:
     operation: str
     record_id: str
     timestamp_ms: int
-    before: Optional[Dict[str, Any]] = None
-    after: Optional[Dict[str, Any]] = None
-    metadata: Optional[Dict[str, Any]] = None
+    before: dict[str, Any] | None = None
+    after: dict[str, Any] | None = None
+    metadata: dict[str, Any] | None = None
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> CDCEvent:
+    def from_dict(cls, data: dict[str, Any]) -> CDCEvent:
         """Create from dictionary."""
         return cls(
             event_id=data.get("event_id", str(uuid.uuid4())),
@@ -100,7 +99,7 @@ class CDCEvent:
             metadata=data.get("metadata"),
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "event_id": self.event_id,
@@ -128,8 +127,8 @@ class ProcessingResult:
     success: bool
     event_id: str
     message: str
-    scd_record_id: Optional[str] = None
-    error: Optional[str] = None
+    scd_record_id: str | None = None
+    error: str | None = None
 
 
 @dataclass
@@ -142,8 +141,8 @@ class OrderingReport:
         stats: Statistics about the events
     """
     valid: bool
-    issues: List[str]
-    stats: Dict[str, Any]
+    issues: list[str]
+    stats: dict[str, Any]
 
 
 class CDCStorage:
@@ -208,7 +207,7 @@ class CDCStorage:
         self.logger.debug(f"Stored CDC event: {event.event_id}")
         return True
 
-    def store_batch(self, events: List[CDCEvent]) -> int:
+    def store_batch(self, events: list[CDCEvent]) -> int:
         """Store multiple CDC events.
         
         Args:
@@ -245,7 +244,7 @@ class CDCStorage:
 
     def get_events(
         self, source_dataset: str, limit: int = 10000
-    ) -> List[CDCEvent]:
+    ) -> list[CDCEvent]:
         """Get CDC events for a dataset.
         
         Args:
@@ -286,7 +285,7 @@ class CDCStorage:
 
     def get_events_by_operation(
         self, operation: str, limit: int = 10000
-    ) -> List[CDCEvent]:
+    ) -> list[CDCEvent]:
         """Get CDC events by operation type.
         
         Args:
@@ -331,7 +330,7 @@ class CDCStorage:
         start_ms: int,
         end_ms: int,
         limit: int = 10000,
-    ) -> List[CDCEvent]:
+    ) -> list[CDCEvent]:
         """Get CDC events in a time window.
         
         Args:
@@ -393,7 +392,7 @@ class CDCProcessor:
         self.logger = logger.getChild(self.__class__.__name__)
 
     @staticmethod
-    def deduplicate_events(events: List[CDCEvent]) -> List[CDCEvent]:
+    def deduplicate_events(events: list[CDCEvent]) -> list[CDCEvent]:
         """Remove duplicate consecutive updates to same record.
         
         If multiple UPDATE events exist for the same record_id in succession
@@ -434,7 +433,7 @@ class CDCProcessor:
         return deduped
 
     @staticmethod
-    def validate_event_order(events: List[CDCEvent]) -> OrderingReport:
+    def validate_event_order(events: list[CDCEvent]) -> OrderingReport:
         """Validate that events are in correct order.
         
         Checks that events for the same record_id are chronologically ordered
@@ -447,7 +446,7 @@ class CDCProcessor:
             OrderingReport with validation results
         """
         issues = []
-        record_timestamps: Dict[str, int] = {}
+        record_timestamps: dict[str, int] = {}
         
         for event in sorted(events, key=lambda e: e.timestamp_ms):
             record_id = event.record_id
@@ -462,7 +461,7 @@ class CDCProcessor:
             record_timestamps[record_id] = event.timestamp_ms
         
         # Validate operations
-        record_sequence: Dict[str, List[str]] = {}
+        record_sequence: dict[str, list[str]] = {}
         for event in sorted(events, key=lambda e: e.timestamp_ms):
             record_id = event.record_id
             if record_id not in record_sequence:
@@ -517,7 +516,7 @@ class CDCProcessor:
                 error=str(e),
             )
 
-    def batch_process_cdc(self, events: List[CDCEvent]) -> Dict[str, Any]:
+    def batch_process_cdc(self, events: list[CDCEvent]) -> dict[str, Any]:
         """Process multiple CDC events in a batch.
         
         Args:
@@ -590,7 +589,7 @@ class CDCProcessor:
             self.logger.error(f"Failed to update watermark: {e}")
             return False
 
-    def get_watermark(self, source_dataset: str) -> Optional[Tuple[str, int]]:
+    def get_watermark(self, source_dataset: str) -> tuple[str, int] | None:
         """Get the last processed watermark for a dataset.
         
         Args:
@@ -621,7 +620,7 @@ class CDCProcessor:
             self.logger.error(f"Failed to get watermark: {e}")
             return None
 
-    def get_events(self, source_dataset: str, limit: int = 10000) -> List[CDCEvent]:
+    def get_events(self, source_dataset: str, limit: int = 10000) -> list[CDCEvent]:
         """Get CDC events for a dataset.
         
         Args:

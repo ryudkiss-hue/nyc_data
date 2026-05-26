@@ -15,13 +15,13 @@ Standards: Python 3.9+, type hints, comprehensive docstrings
 
 from __future__ import annotations
 
+import logging
+
 from socrata_toolkit.material.standards import (
-    MaterialCategory,
     ADAComplianceRule,
     ADAFailureSeverity,
+    MaterialCategory,
 )
-from typing import Any, Optional
-import logging
 
 logger = logging.getLogger(__name__)
 

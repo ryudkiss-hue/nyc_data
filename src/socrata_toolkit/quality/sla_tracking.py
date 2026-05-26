@@ -13,8 +13,7 @@ Example::
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from dataclasses import dataclass
 
 import pandas as pd
 
@@ -28,7 +27,7 @@ class SLAMetrics:
     median_total_cycle_days: float
     sla_compliance_rate: float  # percentage meeting target
     violations_count: int
-    by_borough: Dict[str, Dict[str, float]]
+    by_borough: dict[str, dict[str, float]]
 
 
 @dataclass
@@ -62,7 +61,7 @@ def compute_cycle_times(
 
 def compute_sla_metrics(
     df: pd.DataFrame,
-    target: Optional[SLATarget] = None,
+    target: SLATarget | None = None,
     borough_col: str = "borough",
     complaint_date_col: str = "complaint_date",
     inspection_date_col: str = "inspection_date",
@@ -79,7 +78,7 @@ def compute_sla_metrics(
     violations = int((total > t.total_cycle_days).sum()) if not total.empty else 0
     compliance = round((1 - violations / max(len(total), 1)) * 100, 1) if not total.empty else 100.0
 
-    by_borough: Dict[str, Dict[str, float]] = {}
+    by_borough: dict[str, dict[str, float]] = {}
     if borough_col in tmp.columns:
         for boro, group in tmp.groupby(borough_col):
             bc2i = group["_days_complaint_to_inspection"].dropna()
@@ -103,7 +102,7 @@ def compute_sla_metrics(
 
 def flag_sla_violations(
     df: pd.DataFrame,
-    target: Optional[SLATarget] = None,
+    target: SLATarget | None = None,
     **date_cols: str,
 ) -> pd.DataFrame:
     """Flag records that violate SLA targets.

@@ -1,41 +1,38 @@
 from __future__ import annotations
 
-from concurrent.futures import ThreadPoolExecutor
 import json
 import logging
+from concurrent.futures import ThreadPoolExecutor
 
 import click
 import pandas as pd
 
-from ..analysis import profile_dataframe, quality_report
-from .config import get_default, load_local_config
-from ..analysis import generate_text_insights
-from .logging_utils import get_logger, write_run_report
+from ..analysis import generate_text_insights, profile_dataframe, quality_report
 from ..llm.duck_bridge import LLMAugmentConfig, augment_dataframe_with_llm
 from ..spatial.core import spatial_intersects_join
+from .config import get_default, load_local_config
+from .logging_utils import get_logger, write_run_report
+
 try:
     from ..nlp.advanced import analyze_text, translate_text  # type: ignore
 except Exception:  # pragma: no cover
     analyze_text = None  # type: ignore
     translate_text = None  # type: ignore
-from .state import load_state, save_state
+from ..pipeline.streaming import stream_pipeline
 from ..quality.validation import validate_required_columns
 from .client import SocrataClient, SocrataConfig
 from .exporters import MongoExporter, PostgresExporter, XLSXExporter
-from ..pipeline.streaming import stream_pipeline
+from .state import load_state, save_state
+
 try:
-    from ..sql.conflict import ConflictResolver, PostGISConflictResolver  # type: ignore
     from ..sql.builder import in_clause  # type: ignore
+    from ..sql.conflict import ConflictResolver, PostGISConflictResolver  # type: ignore
 except Exception:  # pragma: no cover
     ConflictResolver = None  # type: ignore
     PostGISConflictResolver = None  # type: ignore
     in_clause = None  # type: ignore
-from ..alerts.manager import AlertManager, CLINotifier, EmailNotifier, DBNotifier, Alert
-from ..discovery.schema import SchemaRegistry, SchemaValidator, BackwardCompatibilityChecker
-from ..lineage.core import DAG, TransformationNode, NodeType
-from ..lineage.query import LineageQuery
-from ..lineage.visualization import LineageVisualizer
-from ..lineage.impact import ImpactAnalysis
+from ..alerts.manager import Alert, AlertManager, CLINotifier, DBNotifier, EmailNotifier
+from ..discovery.schema import BackwardCompatibilityChecker, SchemaRegistry, SchemaValidator
 
 
 def _client() -> SocrataClient:
@@ -485,7 +482,7 @@ def conflict_cmd(proposed_domain, proposed_fourfour, proposed_file, proposed_geo
 def batch_search_cmd(domain, fourfour, field, file_path, out):
     """Run a batch search against a dataset field using a newline-separated file of values."""
     values: list[str] = []
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         for ln in f:
             v = ln.strip()
             if v:
@@ -730,7 +727,8 @@ def migrate_cmd(dsn, migrations_dir):
         import psycopg
     except Exception as exc:
         raise click.ClickException("Install postgres extras: pip install '.[postgres]'") from exc
-    import glob, os
+    import glob
+    import os
     files = sorted(glob.glob(os.path.join(migrations_dir, "*.sql")))
     if not files:
         click.echo("No migration files found")
@@ -739,7 +737,7 @@ def migrate_cmd(dsn, migrations_dir):
     cur = conn.cursor()
     for f in files:
         click.echo(f"Applying {f}")
-        with open(f, "r", encoding="utf-8") as fh:
+        with open(f, encoding="utf-8") as fh:
             cur.execute(fh.read())
     conn.commit()
     cur.close()
@@ -1105,7 +1103,7 @@ def schema_validate_cmd(ctx, dataset_id, jsonl_file):
     
     # Load and validate records
     records = []
-    with open(jsonl_file, "r", encoding="utf-8") as f:
+    with open(jsonl_file, encoding="utf-8") as f:
         for idx, line in enumerate(f, 1):
             try:
                 record = json.loads(line)
@@ -1121,7 +1119,7 @@ def schema_validate_cmd(ctx, dataset_id, jsonl_file):
     click.echo(f"  Invalid records: {len(records) - valid_count}")
     
     if errors:
-        click.echo(f"\nFirst 10 errors:")
+        click.echo("\nFirst 10 errors:")
         for error in errors[:10]:
             click.echo(f"  - {error}")
         if len(errors) > 10:
@@ -1146,7 +1144,7 @@ def schema_check_compat_cmd(ctx, dataset_id, jsonl_file, strict):
     
     # Load new data and extract schema
     records = []
-    with open(jsonl_file, "r", encoding="utf-8") as f:
+    with open(jsonl_file, encoding="utf-8") as f:
         for line in f:
             if line.strip():
                 records.append(json.loads(line))
@@ -1191,8 +1189,9 @@ def material_group(ctx):
 def material_list(ctx, category, json_out):
     """List all defined material types."""
     try:
-        from socrata_toolkit.material.definitions import MATERIAL_DEFINITIONS, get_material_by_category
-        from socrata_toolkit.material.standards import MaterialCategory
+        from socrata_toolkit.material.definitions import (
+            MATERIAL_DEFINITIONS,
+        )
         
         materials = []
         
@@ -1317,10 +1316,11 @@ def compliance_group(ctx):
 def compliance_check(material_id, condition, json_out):
     """Check compliance for a material type."""
     try:
-        from socrata_toolkit.material.definitions import get_material_by_id
-        from socrata_toolkit.material.standards import SurfaceCondition, SurfaceAssessment
-        from socrata_toolkit.material.compliance import MaterialCompliance
         from datetime import datetime
+
+        from socrata_toolkit.material.compliance import MaterialCompliance
+        from socrata_toolkit.material.definitions import get_material_by_id
+        from socrata_toolkit.material.standards import SurfaceAssessment, SurfaceCondition
         
         spec = get_material_by_id(material_id)
         if not spec:
@@ -1349,7 +1349,7 @@ def compliance_check(material_id, condition, json_out):
             click.echo(f"  Status: {report.overall_status.value}")
             click.echo(f"  Score: {report.overall_score:.1f}/100")
             click.echo(f"  ADA Violations: {report.ada_compliance.critical_violations + report.ada_compliance.high_violations}")
-            click.echo(f"\nCritical Actions:")
+            click.echo("\nCritical Actions:")
             for action in report.critical_actions:
                 click.echo(f"  - {action}")
     except Exception as e:
@@ -1363,7 +1363,6 @@ def compliance_ada_violations(severity, json_out):
     """List all ADA violation rules."""
     try:
         from socrata_toolkit.standards.design import ADA_COMPLIANCE_RULES
-        from socrata_toolkit.material.standards import ADAFailureSeverity
         
         rules = []
         for rule_id, rule in ADA_COMPLIANCE_RULES.items():
@@ -1396,8 +1395,8 @@ def compliance_ada_violations(severity, json_out):
 def compliance_report(material, json_out):
     """Generate compliance summary report."""
     try:
-        from socrata_toolkit.standards.design import get_critical_rules, get_rules_by_severity
         from socrata_toolkit.material.standards import ADAFailureSeverity
+        from socrata_toolkit.standards.design import get_critical_rules, get_rules_by_severity
         
         critical = get_critical_rules()
         high = get_rules_by_severity(ADAFailureSeverity.HIGH)
@@ -1671,7 +1670,7 @@ def lineage_freshness(node_id, stale_hours):
             click.echo(f"  Age: {freshness.age_seconds / 3600:.1f} hours")
             click.echo(f"  Status: {'STALE' if freshness.is_stale else 'CURRENT'}")
         else:
-            click.echo(f"  Status: NEVER EXECUTED")
+            click.echo("  Status: NEVER EXECUTED")
     except Exception as e:
         raise click.ClickException(f"Error checking freshness: {e}")
 
@@ -1905,8 +1904,9 @@ def observability_health(detailed, json_format):
 def observability_export(format, output, export_type):
     """Export observability data."""
     try:
-        from ..observability.integration import get_observability_manager
         from pathlib import Path
+
+        from ..observability.integration import get_observability_manager
         
         obs = get_observability_manager()
         output_path = Path(output)

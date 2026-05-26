@@ -1,6 +1,7 @@
 import pytest
 
 try:
+    import flask  # noqa: F401
     HAS_FLASK = True
 except ImportError:
     HAS_FLASK = False

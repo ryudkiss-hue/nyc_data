@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pandas as pd
-import pytest
 
 from app import analytics, data_loader
 
@@ -55,7 +54,7 @@ def test_qa_qc_ledger_owner_mismatch():
     lot["_bbl"] = data_loader.normalize_bbl(lot["bbl"])
     pluto = pd.DataFrame({"bbl": ["1000010001"], "ownername": ["Private"]})
     pluto["_bbl"] = data_loader.normalize_bbl(pluto["bbl"])
-    ledger, stale, joins = analytics.qa_qc_inventory_ledger(lot, pluto, pd.DataFrame())
+    ledger, stale, joins, _ = analytics.qa_qc_inventory_ledger(lot, pluto, pd.DataFrame())
     assert joins >= 1
     assert ledger["owner_discrepancy"].any()
 

@@ -14,7 +14,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 
 try:
     import networkx as nx
@@ -63,16 +63,16 @@ class ImpactReport:
     """
     node_id: str
     analysis_timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    affected_nodes: List[str] = field(default_factory=list)
+    affected_nodes: list[str] = field(default_factory=list)
     affected_count: int = 0
-    affected_users: List[str] = field(default_factory=list)
-    breaking_changes: List[BreakingChange] = field(default_factory=list)
-    critical_paths: List[List[str]] = field(default_factory=list)
-    remediation_steps: List[str] = field(default_factory=list)
+    affected_users: list[str] = field(default_factory=list)
+    breaking_changes: list[BreakingChange] = field(default_factory=list)
+    critical_paths: list[list[str]] = field(default_factory=list)
+    remediation_steps: list[str] = field(default_factory=list)
     estimated_effort_hours: float = 0.0
     risk_score: float = 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert report to dictionary."""
         return {
             "node_id": self.node_id,
@@ -106,7 +106,7 @@ class ImpactAnalysis:
     and schemas. Provides risk assessment and remediation recommendations.
     """
 
-    def __init__(self, dag: Optional[Any] = None) -> None:
+    def __init__(self, dag: Any | None = None) -> None:
         """Initialize impact analysis engine.
         
         Args:
@@ -163,8 +163,8 @@ class ImpactAnalysis:
         return report
 
     def find_breaking_changes(
-        self, old_schema: Dict[str, Any], new_schema: Dict[str, Any], node_id: str
-    ) -> List[BreakingChange]:
+        self, old_schema: dict[str, Any], new_schema: dict[str, Any], node_id: str
+    ) -> list[BreakingChange]:
         """Detect breaking changes between two schema versions.
         
         Args:
@@ -233,7 +233,7 @@ class ImpactAnalysis:
 
         return changes
 
-    def estimate_downstream_impact(self, node_id: str) -> Dict[str, float]:
+    def estimate_downstream_impact(self, node_id: str) -> dict[str, float]:
         """Estimate impact scores for each downstream node.
         
         Args:
@@ -290,7 +290,7 @@ class ImpactAnalysis:
 
         return impact_scores
 
-    def _find_critical_paths(self, node_id: str) -> List[List[str]]:
+    def _find_critical_paths(self, node_id: str) -> list[list[str]]:
         """Find critical dependency paths that include the node."""
         if not self.dag or nx is None:
             return []
@@ -321,14 +321,14 @@ class ImpactAnalysis:
         except Exception:
             return []
 
-    def _estimate_effort(self, affected_nodes: List[str]) -> float:
+    def _estimate_effort(self, affected_nodes: list[str]) -> float:
         """Estimate remediation effort in hours."""
         # Base effort + per-node effort
         base_effort = 2.0  # 2 hours for planning and testing
         per_node_effort = 1.0  # 1 hour per affected node
         return base_effort + (len(affected_nodes) * per_node_effort)
 
-    def _calculate_risk_score(self, affected_nodes: List[str], critical_paths: List[List[str]]) -> float:
+    def _calculate_risk_score(self, affected_nodes: list[str], critical_paths: list[list[str]]) -> float:
         """Calculate overall risk score (0-100)."""
         # Risk based on affected node count
         node_count_score = min(100.0, len(affected_nodes) * 5.0)
@@ -349,8 +349,8 @@ class ImpactAnalysis:
         return risk_score
 
     def _generate_remediation_steps(
-        self, node_id: str, affected_nodes: List[str], breaking_changes: List[BreakingChange]
-    ) -> List[str]:
+        self, node_id: str, affected_nodes: list[str], breaking_changes: list[BreakingChange]
+    ) -> list[str]:
         """Generate human-readable remediation steps."""
         steps = []
 

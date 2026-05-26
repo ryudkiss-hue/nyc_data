@@ -1,7 +1,7 @@
 """Entity reconciliation for identifying and resolving data discrepancies."""
-from typing import Any, Dict, List, Optional
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum, auto
+from typing import Any
 
 __all__ = ["ReconciliationEngine", "identify_discrepancies", "Reconciler", "ExternalMasterLink", "LinkStatus", "ReconciliationReport"]
 
@@ -27,10 +27,10 @@ class ReconciliationReport:
 class Reconciler:
     def __init__(self, master_manager: Any):
         self.master_manager = master_manager
-        self.external_data: Dict[str, List[Dict[str, Any]]] = {}
-        self.links: List[ExternalMasterLink] = []
+        self.external_data: dict[str, list[dict[str, Any]]] = {}
+        self.links: list[ExternalMasterLink] = []
         
-    def import_external_master(self, system_name: str, external_data: List[Dict[str, Any]]):
+    def import_external_master(self, system_name: str, external_data: list[dict[str, Any]]):
         self.external_data[system_name] = external_data
         
     def reconcile_to_external(self, system_name: str) -> ReconciliationReport:
@@ -68,8 +68,8 @@ class ReconciliationEngine:
     def __init__(self) -> None:
         pass
 
-    def reconcile(self, source_data: List[Dict[str, Any]], target_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def reconcile(self, source_data: list[dict[str, Any]], target_data: list[dict[str, Any]]) -> dict[str, Any]:
         return {}
 
-def identify_discrepancies(source: List[Dict[str, Any]], target: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def identify_discrepancies(source: list[dict[str, Any]], target: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return []

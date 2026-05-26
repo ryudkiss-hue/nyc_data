@@ -25,7 +25,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 
 from ..entity.matching import MatchingStrategy
 
@@ -51,13 +51,13 @@ class DuplicateGroup:
     Represents a group of records identified as potential duplicates.
     """
     group_id: str
-    duplicate_record_ids: List[str]
+    duplicate_record_ids: list[str]
     confidence_score: float
     matching_strategy: str
-    matching_details: Dict[str, Any] = field(default_factory=dict)
-    potential_canonical_id: Optional[str] = None
+    matching_details: dict[str, Any] = field(default_factory=dict)
+    potential_canonical_id: str | None = None
     status: DuplicateStatus = DuplicateStatus.UNRESOLVED
-    user_decision: Optional[str] = None
+    user_decision: str | None = None
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     notes: str = ""
     
@@ -80,7 +80,7 @@ class DeduplicationRule:
         entity_type: str,
         matching_strategy: MatchingStrategy,
         threshold: float = 0.85,
-        blocking_keys: Optional[List[str]] = None,
+        blocking_keys: list[str] | None = None,
         materialization: MaterializationMode = MaterializationMode.SOFT,
         enabled: bool = True,
         max_group_size: int = 100,
@@ -122,7 +122,7 @@ class DeduplicationResult:
     def __init__(
         self,
         rule_id: str,
-        duplicate_groups: List[DuplicateGroup],
+        duplicate_groups: list[DuplicateGroup],
         total_records: int,
         duplicates_found: int,
         execution_time_seconds: float
@@ -154,11 +154,11 @@ class Deduplicator:
     
     def __init__(self):
         """Initialize deduplicator."""
-        self._duplicate_registry: Dict[str, DuplicateGroup] = {}
-        self._record_to_group: Dict[str, str] = {}  # record_id -> group_id
-        self._canonical_mapping: Dict[str, str] = {}  # record_id -> canonical_id
+        self._duplicate_registry: dict[str, DuplicateGroup] = {}
+        self._record_to_group: dict[str, str] = {}  # record_id -> group_id
+        self._canonical_mapping: dict[str, str] = {}  # record_id -> canonical_id
     
-    def _create_blocking_key(self, record: Dict[str, Any], blocking_keys: List[str]) -> str:
+    def _create_blocking_key(self, record: dict[str, Any], blocking_keys: list[str]) -> str:
         """
         Create blocking key from record.
         
@@ -184,9 +184,9 @@ class Deduplicator:
     
     def _get_candidate_pairs(
         self,
-        records: List[Dict[str, Any]],
-        blocking_keys: List[str]
-    ) -> List[Tuple[int, int]]:
+        records: list[dict[str, Any]],
+        blocking_keys: list[str]
+    ) -> list[tuple[int, int]]:
         """
         Get candidate record pairs using blocking.
         
@@ -201,7 +201,7 @@ class Deduplicator:
             List of (index1, index2) pairs to compare
         """
         # Group records by blocking key
-        blocks: Dict[str, List[int]] = {}
+        blocks: dict[str, list[int]] = {}
         
         for idx, record in enumerate(records):
             block_key = self._create_blocking_key(record, blocking_keys)
@@ -221,9 +221,9 @@ class Deduplicator:
     
     def find_duplicates(
         self,
-        records: List[Dict[str, Any]],
+        records: list[dict[str, Any]],
         rule: DeduplicationRule
-    ) -> List[DuplicateGroup]:
+    ) -> list[DuplicateGroup]:
         """
         Find duplicates in dataset using rule.
         
@@ -244,7 +244,7 @@ class Deduplicator:
             return []
         
         # Score each pair
-        scored_pairs: List[Tuple[int, int, float]] = []
+        scored_pairs: list[tuple[int, int, float]] = []
         for idx1, idx2 in pairs:
             score = rule.matching_strategy.score(records[idx1], records[idx2])
             if score >= rule.threshold:
@@ -260,17 +260,17 @@ class Deduplicator:
     
     def _cluster_duplicates(
         self,
-        records: List[Dict[str, Any]],
-        scored_pairs: List[Tuple[int, int, float]],
+        records: list[dict[str, Any]],
+        scored_pairs: list[tuple[int, int, float]],
         rule: DeduplicationRule
-    ) -> List[DuplicateGroup]:
+    ) -> list[DuplicateGroup]:
         """
         Cluster record pairs into duplicate groups.
         
         Uses union-find algorithm to efficiently group related records.
         """
         # Union-find data structure
-        parent: Dict[int, int] = {}
+        parent: dict[int, int] = {}
         
         def find(x: int) -> int:
             if x not in parent:
@@ -285,13 +285,13 @@ class Deduplicator:
                 parent[px] = py
         
         # Build groups from scored pairs
-        pair_scores: Dict[Tuple[int, int], float] = {}
+        pair_scores: dict[tuple[int, int], float] = {}
         for idx1, idx2, score in scored_pairs:
             union(idx1, idx2)
             pair_scores[(min(idx1, idx2), max(idx1, idx2))] = score
         
         # Collect groups
-        groups_dict: Dict[int, List[int]] = {}
+        groups_dict: dict[int, list[int]] = {}
         for idx in range(len(records)):
             if scored_pairs:  # Only if we found some pairs
                 root = find(idx)
@@ -342,7 +342,7 @@ class Deduplicator:
     
     def apply_rule(
         self,
-        records: List[Dict[str, Any]],
+        records: list[dict[str, Any]],
         rule: DeduplicationRule
     ) -> DeduplicationResult:
         """
@@ -373,10 +373,10 @@ class Deduplicator:
     
     def mark_as_duplicates(
         self,
-        record_ids: List[str],
+        record_ids: list[str],
         canonical_id: str,
         reason: str = "",
-        user: Optional[str] = None
+        user: str | None = None
     ) -> bool:
         """
         Manually mark records as duplicates of canonical.
@@ -413,7 +413,7 @@ class Deduplicator:
         
         return True
     
-    def unmark_duplicates(self, record_ids: List[str]) -> bool:
+    def unmark_duplicates(self, record_ids: list[str]) -> bool:
         """
         Remove duplicate markings for records.
         
@@ -429,7 +429,7 @@ class Deduplicator:
         
         return True
     
-    def get_duplicates_for_record(self, record_id: str) -> List[str]:
+    def get_duplicates_for_record(self, record_id: str) -> list[str]:
         """
         Get all records identified as duplicates for a record.
         
@@ -449,7 +449,7 @@ class Deduplicator:
         
         return [rid for rid in group.duplicate_record_ids if rid != record_id]
     
-    def get_canonical_for_record(self, record_id: str) -> Optional[str]:
+    def get_canonical_for_record(self, record_id: str) -> str | None:
         """
         Get canonical ID for a record if it's a duplicate.
         
@@ -461,7 +461,7 @@ class Deduplicator:
         """
         return self._canonical_mapping.get(record_id)
     
-    def get_duplicate_group(self, group_id: str) -> Optional[DuplicateGroup]:
+    def get_duplicate_group(self, group_id: str) -> DuplicateGroup | None:
         """Get a duplicate group by ID."""
         return self._duplicate_registry.get(group_id)
     
@@ -469,7 +469,7 @@ class Deduplicator:
         self,
         group_id: str,
         canonical_id: str,
-        user: Optional[str] = None,
+        user: str | None = None,
         notes: str = ""
     ) -> bool:
         """
@@ -501,14 +501,14 @@ class Deduplicator:
         
         return True
     
-    def get_unresolved_groups(self) -> List[DuplicateGroup]:
+    def get_unresolved_groups(self) -> list[DuplicateGroup]:
         """Get all unresolved duplicate groups."""
         return [
             g for g in self._duplicate_registry.values()
             if g.status == DuplicateStatus.UNRESOLVED
         ]
     
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """
         Get deduplication statistics.
         

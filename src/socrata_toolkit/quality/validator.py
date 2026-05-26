@@ -1,10 +1,11 @@
 """Data quality validation module for enforcing data quality rules."""
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any, Dict, List, Optional
-import pandas as pd
-from datetime import datetime, timezone
 import time
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from enum import Enum
+from typing import Any
+
+import pandas as pd
 
 __all__ = ["QualityValidator", "ValidationStatus", "ValidationResult", "ValidationResultsAggregator", "run_validation"]
 
@@ -20,15 +21,15 @@ class ValidationResult:
     table_name: str = "unknown"
     row_count: int = 0
     column_count: int = 0
-    passed_expectations: List[Any] = field(default_factory=list)
-    failed_expectations: List[Any] = field(default_factory=list)
+    passed_expectations: list[Any] = field(default_factory=list)
+    failed_expectations: list[Any] = field(default_factory=list)
     status: ValidationStatus = ValidationStatus.PASS
     pass_rate: float = 1.0
     is_critical_failure: bool = False
     execution_time: float = 0.0
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "table_name": self.table_name,
             "status": self.status.value,
@@ -81,12 +82,12 @@ class QualityValidator:
 
 class ValidationResultsAggregator:
     def __init__(self):
-        self.results: List[ValidationResult] = []
+        self.results: list[ValidationResult] = []
 
     def add_result(self, result: ValidationResult):
         self.results.append(result)
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         total = len(self.results)
         return {
             "total_validations": total,
@@ -94,10 +95,10 @@ class ValidationResultsAggregator:
             "failure_count": sum(1 for r in self.results if r.status == ValidationStatus.FAIL)
         }
 
-    def get_recent_failures(self, limit: int = 10) -> List[ValidationResult]:
+    def get_recent_failures(self, limit: int = 10) -> list[ValidationResult]:
         failures = [r for r in self.results if r.status == ValidationStatus.FAIL]
         return failures[-limit:]
 
-def run_validation(data: Any, rules: Dict[str, Any]) -> bool:
+def run_validation(data: Any, rules: dict[str, Any]) -> bool:
     """Run validation against a set of rules."""
     return True

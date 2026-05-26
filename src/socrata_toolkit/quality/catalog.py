@@ -11,11 +11,11 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +46,7 @@ class DatasetQualityScore:
     timeliness: float = 0.0
     accuracy: float = 0.0
 
-    def to_dict(self) -> Dict[str, float]:
+    def to_dict(self) -> dict[str, float]:
         """Convert to dictionary."""
         return asdict(self)
 
@@ -71,14 +71,14 @@ class DatasetQualityProfile:
     dataset_name: str
     last_validation: datetime
     quality_score: DatasetQualityScore
-    validation_results: List[Dict[str, Any]] = field(default_factory=list)
-    anomalies: List[Dict[str, Any]] = field(default_factory=list)
-    sla_compliance: Dict[str, float] = field(default_factory=dict)
+    validation_results: list[dict[str, Any]] = field(default_factory=list)
+    anomalies: list[dict[str, Any]] = field(default_factory=list)
+    sla_compliance: dict[str, float] = field(default_factory=dict)
     trend: QualityTrend = QualityTrend.STABLE
-    violation_summary: Dict[str, int] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    violation_summary: dict[str, int] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "dataset_id": self.dataset_id,
@@ -146,13 +146,13 @@ class DataQualityCatalog:
         """
         self.storage_dir = Path(storage_dir)
         self.storage_dir.mkdir(parents=True, exist_ok=True)
-        self.profiles: Dict[str, DatasetQualityProfile] = {}
+        self.profiles: dict[str, DatasetQualityProfile] = {}
 
     def register_dataset(
         self,
         dataset_id: str,
         dataset_name: str,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """Register a dataset in the catalog.
         
@@ -207,7 +207,7 @@ class DataQualityCatalog:
     def add_validation_result(
         self,
         dataset_id: str,
-        result: Dict[str, Any],
+        result: dict[str, Any],
     ) -> None:
         """Add validation result to dataset profile.
         
@@ -229,7 +229,7 @@ class DataQualityCatalog:
     def add_anomaly(
         self,
         dataset_id: str,
-        anomaly: Dict[str, Any],
+        anomaly: dict[str, Any],
     ) -> None:
         """Add anomaly to dataset profile.
         
@@ -251,7 +251,7 @@ class DataQualityCatalog:
     def update_sla_compliance(
         self,
         dataset_id: str,
-        sla_compliance: Dict[str, float],
+        sla_compliance: dict[str, float],
     ) -> None:
         """Update SLA compliance for dataset.
         
@@ -268,7 +268,7 @@ class DataQualityCatalog:
     def update_violation_summary(
         self,
         dataset_id: str,
-        violation_summary: Dict[str, int],
+        violation_summary: dict[str, int],
     ) -> None:
         """Update violation summary for dataset.
         
@@ -282,7 +282,7 @@ class DataQualityCatalog:
 
         self.profiles[dataset_id].violation_summary = violation_summary
 
-    def get_profile(self, dataset_id: str) -> Optional[DatasetQualityProfile]:
+    def get_profile(self, dataset_id: str) -> DatasetQualityProfile | None:
         """Get quality profile for dataset.
         
         Args:
@@ -293,7 +293,7 @@ class DataQualityCatalog:
         """
         return self.profiles.get(dataset_id)
 
-    def list_datasets(self) -> List[Dict[str, Any]]:
+    def list_datasets(self) -> list[dict[str, Any]]:
         """List all datasets in catalog.
         
         Returns:
@@ -315,7 +315,7 @@ class DataQualityCatalog:
         min_score: float = 0.0,
         max_score: float = 100.0,
         order: str = "desc",
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """List datasets filtered by quality score.
         
         Args:
@@ -341,7 +341,7 @@ class DataQualityCatalog:
         reverse = order.lower() == "desc"
         return sorted(filtered, key=lambda x: x["quality_score"], reverse=reverse)
 
-    def list_by_trend(self, trend: QualityTrend) -> List[Dict[str, Any]]:
+    def list_by_trend(self, trend: QualityTrend) -> list[dict[str, Any]]:
         """List datasets by trend direction.
         
         Args:
@@ -361,7 +361,7 @@ class DataQualityCatalog:
             if profile.trend == trend
         ]
 
-    def get_health_summary(self) -> Dict[str, Any]:
+    def get_health_summary(self) -> dict[str, Any]:
         """Get overall catalog health summary.
         
         Returns:

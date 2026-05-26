@@ -12,11 +12,9 @@ from __future__ import annotations
 import logging
 import math
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
-
-import pandas as pd
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -48,12 +46,12 @@ class Anomaly:
     metric_name: str
     anomaly_type: str
     value: float
-    expected_range: Tuple[float, float]
+    expected_range: tuple[float, float]
     severity: AnomalySeverity
-    z_score: Optional[float] = None
+    z_score: float | None = None
     explanation: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "timestamp": self.timestamp.isoformat(),
@@ -79,17 +77,17 @@ class AnomalyReport:
         suggested_actions: Recommended actions
     """
     detected_at: datetime
-    anomalies: List[Anomaly] = field(default_factory=list)
-    affected_metrics: List[str] = field(default_factory=list)
+    anomalies: list[Anomaly] = field(default_factory=list)
+    affected_metrics: list[str] = field(default_factory=list)
     severity_level: AnomalySeverity = AnomalySeverity.INFO
-    suggested_actions: List[str] = field(default_factory=list)
+    suggested_actions: list[str] = field(default_factory=list)
 
     @property
     def has_critical_anomalies(self) -> bool:
         """Whether there are critical anomalies."""
         return any(a.severity == AnomalySeverity.CRITICAL for a in self.anomalies)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "detected_at": self.detected_at.isoformat(),
@@ -125,7 +123,7 @@ class AnomalyDetector:
     def detect_outliers(
         self,
         metric_name: str,
-        metric_history: List[Tuple[datetime, float]],
+        metric_history: list[tuple[datetime, float]],
     ) -> AnomalyReport:
         """Detect outliers in metric history using Z-score.
         
@@ -187,7 +185,7 @@ class AnomalyDetector:
     def detect_drift(
         self,
         metric_name: str,
-        metric_history: List[Tuple[datetime, float]],
+        metric_history: list[tuple[datetime, float]],
         window_size: int = 5,
         threshold: float = 0.1,
     ) -> AnomalyReport:
@@ -242,8 +240,8 @@ class AnomalyDetector:
 
     def detect_schema_changes(
         self,
-        schema_old: Dict[str, Any],
-        schema_new: Dict[str, Any],
+        schema_old: dict[str, Any],
+        schema_new: dict[str, Any],
     ) -> AnomalyReport:
         """Detect structural schema changes.
         
@@ -315,7 +313,7 @@ class AnomalyDetector:
     def detect_seasonality_violation(
         self,
         metric_name: str,
-        metric_history: List[Tuple[datetime, float]],
+        metric_history: list[tuple[datetime, float]],
         expected_period_hours: int = 24,
     ) -> AnomalyReport:
         """Detect violation of expected seasonality pattern.
@@ -377,7 +375,7 @@ class AnomalyDetector:
 
     def detect_multi_metric_anomaly(
         self,
-        metrics: Dict[str, List[Tuple[datetime, float]]],
+        metrics: dict[str, list[tuple[datetime, float]]],
     ) -> AnomalyReport:
         """Detect anomalies across multiple related metrics.
         

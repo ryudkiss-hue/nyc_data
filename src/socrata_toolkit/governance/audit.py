@@ -36,11 +36,11 @@ import csv
 import json
 import logging
 import uuid
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timezone, date
-from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, IO
 from contextlib import contextmanager
+from dataclasses import dataclass, field
+from datetime import date, datetime, timezone
+from enum import Enum
+from typing import IO, Any
 
 try:
     import psycopg
@@ -102,18 +102,18 @@ class AuditEvent:
     entity_type: str
     entity_id: str
     change_type: str  # ChangeType value
-    old_values: Optional[Dict[str, Any]] = None
-    new_values: Optional[Dict[str, Any]] = None
-    diff: Optional[Dict[str, Any]] = None
-    reason: Optional[str] = None
-    lineage_node_id: Optional[str] = None
-    correlation_id: Optional[str] = None
-    ip_address: Optional[str] = None
-    user_agent: Optional[str] = None
+    old_values: dict[str, Any] | None = None
+    new_values: dict[str, Any] | None = None
+    diff: dict[str, Any] | None = None
+    reason: str | None = None
+    lineage_node_id: str | None = None
+    correlation_id: str | None = None
+    ip_address: str | None = None
+    user_agent: str | None = None
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> AuditEvent:
+    def from_dict(cls, data: dict[str, Any]) -> AuditEvent:
         """Create from dictionary."""
         return cls(
             audit_id=data["audit_id"],
@@ -134,7 +134,7 @@ class AuditEvent:
             created_at=data.get("created_at", datetime.now(timezone.utc)),
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "audit_id": self.audit_id,
@@ -188,7 +188,7 @@ class AuditTrail:
             conn.close()
 
     @staticmethod
-    def _calculate_diff(old: Optional[Dict[str, Any]], new: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    def _calculate_diff(old: dict[str, Any] | None, new: dict[str, Any] | None) -> dict[str, Any]:
         """Calculate difference between old and new values.
         
         Args:
@@ -218,13 +218,13 @@ class AuditTrail:
         self,
         table: str,
         entity_id: str,
-        new_values: Dict[str, Any],
+        new_values: dict[str, Any],
         user: str = "SYSTEM",
-        reason: Optional[str] = None,
-        lineage_node_id: Optional[str] = None,
-        correlation_id: Optional[str] = None,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
+        reason: str | None = None,
+        lineage_node_id: str | None = None,
+        correlation_id: str | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
     ) -> str:
         """Log an INSERT operation.
         
@@ -281,14 +281,14 @@ class AuditTrail:
         self,
         table: str,
         entity_id: str,
-        old: Dict[str, Any],
-        new: Dict[str, Any],
+        old: dict[str, Any],
+        new: dict[str, Any],
         user: str = "SYSTEM",
-        reason: Optional[str] = None,
-        lineage_node_id: Optional[str] = None,
-        correlation_id: Optional[str] = None,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
+        reason: str | None = None,
+        lineage_node_id: str | None = None,
+        correlation_id: str | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
     ) -> str:
         """Log an UPDATE operation.
         
@@ -346,13 +346,13 @@ class AuditTrail:
         self,
         table: str,
         entity_id: str,
-        old_values: Dict[str, Any],
+        old_values: dict[str, Any],
         user: str = "SYSTEM",
-        reason: Optional[str] = None,
-        lineage_node_id: Optional[str] = None,
-        correlation_id: Optional[str] = None,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
+        reason: str | None = None,
+        lineage_node_id: str | None = None,
+        correlation_id: str | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
     ) -> str:
         """Log a DELETE operation.
         
@@ -407,7 +407,7 @@ class AuditTrail:
 
     def get_events(
         self, entity_type: str, entity_id: str, limit: int = 1000
-    ) -> List[AuditEvent]:
+    ) -> list[AuditEvent]:
         """Get all audit events for a specific entity.
         
         Args:
@@ -458,7 +458,7 @@ class AuditTrail:
 
     def get_events_by_user(
         self, user: str, start_date: date, end_date: date, limit: int = 10000
-    ) -> List[AuditEvent]:
+    ) -> list[AuditEvent]:
         """Get all audit events by a specific user in a date range.
         
         Args:
@@ -510,7 +510,7 @@ class AuditTrail:
                     )
                 return events
 
-    def get_events_by_action(self, action: str, limit: int = 10000) -> List[AuditEvent]:
+    def get_events_by_action(self, action: str, limit: int = 10000) -> list[AuditEvent]:
         """Get all audit events of a specific action type.
         
         Args:
@@ -558,7 +558,7 @@ class AuditTrail:
                     )
                 return events
 
-    def search_events(self, criteria: Dict[str, Any], limit: int = 10000) -> List[AuditEvent]:
+    def search_events(self, criteria: dict[str, Any], limit: int = 10000) -> list[AuditEvent]:
         """Search audit events by multiple criteria.
         
         Supported criteria keys:
@@ -645,7 +645,7 @@ class AuditTrail:
                     )
                 return events
 
-    def export_csv(self, output: IO, criteria: Optional[Dict[str, Any]] = None) -> int:
+    def export_csv(self, output: IO, criteria: dict[str, Any] | None = None) -> int:
         """Export audit events to CSV.
         
         Args:
@@ -711,7 +711,7 @@ class AuditTrail:
         
         return len(events)
 
-    def export_json(self, criteria: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    def export_json(self, criteria: dict[str, Any] | None = None) -> list[dict[str, Any]]:
         """Export audit events to JSON-serializable list.
         
         Args:
@@ -757,7 +757,7 @@ class AuditTrail:
         
         return [event.to_dict() for event in events]
 
-    def generate_compliance_report(self) -> Dict[str, Any]:
+    def generate_compliance_report(self) -> dict[str, Any]:
         """Generate compliance report from audit trail.
         
         Returns:

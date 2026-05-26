@@ -2,6 +2,7 @@
 budget forecast, map view, QGIS, PDF reports, messaging bot, 311 ingestion."""
 
 import pandas as pd
+import pytest
 
 # -- Cost Estimator -----------------------------------------------------------
 from socrata_toolkit.engineering import (
@@ -189,6 +190,8 @@ from socrata_toolkit.analysis import dataframe_to_pdf
 
 
 def test_dataframe_to_pdf_fallback(tmp_path):
+    if dataframe_to_pdf is None:
+        pytest.skip("dataframe_to_pdf requires weasyprint/plotly (optional dependency not installed)")
     df = pd.DataFrame({"a": [1, 2], "b": ["x", "y"]})
     path = dataframe_to_pdf(df, str(tmp_path / "report.pdf"), title="Test Report")
     # Falls back to HTML without weasyprint

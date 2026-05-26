@@ -14,12 +14,11 @@ Example:
 from __future__ import annotations
 
 import uuid
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
-
-from collections import defaultdict
+from typing import Any
 
 
 class RelationshipType(str, Enum):
@@ -44,7 +43,7 @@ class EntityRelationship:
     target_entity_id: str
     relationship_type: RelationshipType
     confidence: float = 1.0
-    attributes: Dict[str, Any] = field(default_factory=dict)
+    attributes: dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     created_by: str = "system"
     notes: str = ""
@@ -65,12 +64,12 @@ class RelationshipGraph:
     def __init__(self):
         """Initialize relationship graph."""
         # Store relationships
-        self._relationships: Dict[str, EntityRelationship] = {}
+        self._relationships: dict[str, EntityRelationship] = {}
         
         # Index relationships for fast lookups
-        self._outgoing: Dict[str, List[str]] = defaultdict(list)  # source -> rel_ids
-        self._incoming: Dict[str, List[str]] = defaultdict(list)  # target -> rel_ids
-        self._by_type: Dict[str, List[str]] = defaultdict(list)  # type -> rel_ids
+        self._outgoing: dict[str, list[str]] = defaultdict(list)  # source -> rel_ids
+        self._incoming: dict[str, list[str]] = defaultdict(list)  # target -> rel_ids
+        self._by_type: dict[str, list[str]] = defaultdict(list)  # type -> rel_ids
     
     def add_relationship(
         self,
@@ -78,7 +77,7 @@ class RelationshipGraph:
         target_id: str,
         rel_type: RelationshipType | str,
         confidence: float = 1.0,
-        attributes: Optional[Dict[str, Any]] = None,
+        attributes: dict[str, Any] | None = None,
         notes: str = ""
     ) -> str:
         """
@@ -126,8 +125,8 @@ class RelationshipGraph:
         entity2_id: str,
         rel_type: RelationshipType | str,
         confidence: float = 1.0,
-        attributes: Optional[Dict[str, Any]] = None
-    ) -> Tuple[str, str]:
+        attributes: dict[str, Any] | None = None
+    ) -> tuple[str, str]:
         """
         Add bidirectional relationship.
         
@@ -180,7 +179,7 @@ class RelationshipGraph:
         
         return reverse_map.get(rel_type, rel_type)
     
-    def get_relationship(self, rel_id: str) -> Optional[EntityRelationship]:
+    def get_relationship(self, rel_id: str) -> EntityRelationship | None:
         """Get relationship by ID."""
         return self._relationships.get(rel_id)
     
@@ -203,9 +202,9 @@ class RelationshipGraph:
     def get_related_entities(
         self,
         entity_id: str,
-        relationship_type: Optional[RelationshipType | str] = None,
+        relationship_type: RelationshipType | str | None = None,
         direction: str = "outgoing"
-    ) -> List[Tuple[str, RelationshipType, float]]:
+    ) -> list[tuple[str, RelationshipType, float]]:
         """
         Get entities related to given entity.
         
@@ -243,9 +242,9 @@ class RelationshipGraph:
     
     def get_all_relationships(
         self,
-        source_id: Optional[str] = None,
-        rel_type: Optional[RelationshipType | str] = None
-    ) -> List[EntityRelationship]:
+        source_id: str | None = None,
+        rel_type: RelationshipType | str | None = None
+    ) -> list[EntityRelationship]:
         """
         Get relationships matching criteria.
         
@@ -278,7 +277,7 @@ class RelationshipGraph:
         source_id: str,
         target_id: str,
         max_depth: int = 5
-    ) -> Optional[List[str]]:
+    ) -> list[str] | None:
         """
         Find path between entities using BFS.
         
@@ -322,7 +321,7 @@ class RelationshipGraph:
         source_id: str,
         target_id: str,
         max_depth: int = 3
-    ) -> List[List[str]]:
+    ) -> list[list[str]]:
         """
         Find all paths between entities.
         
@@ -336,7 +335,7 @@ class RelationshipGraph:
         """
         paths = []
         
-        def dfs(current: str, target: str, path: List[str], depth: int):
+        def dfs(current: str, target: str, path: list[str], depth: int):
             if depth > max_depth:
                 return
             
@@ -356,8 +355,8 @@ class RelationshipGraph:
     def get_transitive_closure(
         self,
         entity_id: str,
-        relationship_type: Optional[RelationshipType | str] = None
-    ) -> Set[str]:
+        relationship_type: RelationshipType | str | None = None
+    ) -> set[str]:
         """
         Get all entities reachable from given entity.
         
@@ -392,7 +391,7 @@ class RelationshipGraph:
         visited.discard(entity_id)  # Don't include source
         return visited
     
-    def export_graph(self) -> Dict[str, Any]:
+    def export_graph(self) -> dict[str, Any]:
         """
         Export graph as data structure.
         
@@ -421,7 +420,7 @@ class RelationshipGraph:
             'edge_count': len(edges)
         }
     
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get graph statistics."""
         if not self._relationships:
             return {

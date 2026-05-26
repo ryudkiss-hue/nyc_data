@@ -13,8 +13,8 @@ Example::
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from dataclasses import dataclass
+from typing import Any
 
 import pandas as pd
 
@@ -36,10 +36,10 @@ class ChangeReport:
     modified_count: int
     unchanged_count: int
     total_field_changes: int
-    added_keys: List[Any]
-    removed_keys: List[Any]
-    field_changes: List[FieldChange]
-    summary_by_field: Dict[str, int]
+    added_keys: list[Any]
+    removed_keys: list[Any]
+    field_changes: list[FieldChange]
+    summary_by_field: dict[str, int]
     added_df: pd.DataFrame
     removed_df: pd.DataFrame
     modified_df: pd.DataFrame
@@ -49,8 +49,8 @@ def detect_changes(
     old_df: pd.DataFrame,
     new_df: pd.DataFrame,
     key_col: str = "id",
-    compare_cols: Optional[List[str]] = None,
-    ignore_cols: Optional[List[str]] = None,
+    compare_cols: list[str] | None = None,
+    ignore_cols: list[str] | None = None,
 ) -> ChangeReport:
     """Compare two DataFrames and return a detailed change report.
 
@@ -79,8 +79,8 @@ def detect_changes(
         shared_cols = set(compare_cols) & shared_cols
     shared_cols = sorted(shared_cols)
 
-    field_changes: List[FieldChange] = []
-    summary_by_field: Dict[str, int] = {c: 0 for c in shared_cols}
+    field_changes: list[FieldChange] = []
+    summary_by_field: dict[str, int] = {c: 0 for c in shared_cols}
     modified_keys_set: set = set()
 
     old_indexed = old_df.set_index(key_col) if key_col in old_df.columns else pd.DataFrame()

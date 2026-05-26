@@ -16,11 +16,11 @@ import json
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 try:
     import folium  # type: ignore[import]
-    from folium import plugins  # type: ignore[import]
+    from folium import plugins  # noqa: F401  # type: ignore[import]
     HAS_FOLIUM = True
 except ImportError:
     HAS_FOLIUM = False
@@ -61,8 +61,8 @@ class SpatialVisualization:
         self,
         features: list[dict[str, Any]],
         title: str = "Sidewalk Condition Map",
-        style: Optional[MapStyle] = None,
-    ) -> Optional[Any]:
+        style: MapStyle | None = None,
+    ) -> Any | None:
         """
         Create interactive map colored by condition score.
         
@@ -153,8 +153,8 @@ class SpatialVisualization:
         self,
         features: list[dict[str, Any]],
         title: str = "Material Distribution Map",
-        style: Optional[MapStyle] = None,
-    ) -> Optional[Any]:
+        style: MapStyle | None = None,
+    ) -> Any | None:
         """
         Create map showing material type distribution.
         
@@ -231,9 +231,9 @@ class SpatialVisualization:
     def create_hotspot_map(
         self,
         hotspots: list[dict[str, Any]],
-        segments: Optional[list[dict[str, Any]]] = None,
+        segments: list[dict[str, Any]] | None = None,
         title: str = "Problem Area Hotspots",
-    ) -> Optional[Any]:
+    ) -> Any | None:
         """
         Create heatmap showing problem concentration areas.
         
@@ -328,7 +328,7 @@ class SpatialVisualization:
         features_before: list[dict[str, Any]],
         features_after: list[dict[str, Any]],
         title: str = "Before/After Comparison",
-    ) -> Optional[Any]:
+    ) -> Any | None:
         """
         Create side-by-side comparison map using Folium's HeatMap.
         

@@ -10,21 +10,20 @@ Standards: Python 3.9+, type hints, comprehensive docstrings, logging
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, asdict
-from typing import Any, Optional
-from datetime import datetime, date, timedelta, timezone
-from enum import Enum
 import logging
+from dataclasses import asdict, dataclass, field
+from datetime import date, datetime, timedelta, timezone
+from enum import Enum
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 # Circular import handling - import at function level where needed
 from socrata_toolkit.material.standards import (
-    SurfaceAssessment,
-    MaterialSpecification,
-    SurfaceCondition,
-    MaintenanceUrgency,
     ADAFailureSeverity,
+    MaintenanceUrgency,
+    SurfaceAssessment,
+    SurfaceCondition,
 )
 
 
@@ -248,7 +247,7 @@ class MaterialCompliance:
     def ada_compliance_check(
         self,
         assessment: SurfaceAssessment,
-        as_of_date: Optional[date] = None,
+        as_of_date: date | None = None,
     ) -> ADAComplianceCheckResult:
         """Check ADA compliance for a surface assessment.
         
@@ -333,7 +332,7 @@ class MaterialCompliance:
         self,
         assessment: SurfaceAssessment,
         last_maintenance: date,
-        as_of_date: Optional[date] = None,
+        as_of_date: date | None = None,
     ) -> MaintenanceScheduleCheckResult:
         """Check if maintenance is due per material schedule.
         
@@ -402,7 +401,7 @@ class MaterialCompliance:
         self,
         assessment: SurfaceAssessment,
         installation_date: date,
-        as_of_date: Optional[date] = None,
+        as_of_date: date | None = None,
     ) -> LifecycleRecommendation:
         """Assess material lifecycle stage and replacement recommendation.
         
@@ -466,9 +465,9 @@ class MaterialCompliance:
         self,
         assessment: SurfaceAssessment,
         location_description: str = "",
-        last_maintenance: Optional[date] = None,
-        installation_date: Optional[date] = None,
-        as_of_date: Optional[date] = None,
+        last_maintenance: date | None = None,
+        installation_date: date | None = None,
+        as_of_date: date | None = None,
     ) -> ComplianceReport:
         """Generate comprehensive compliance report for an assessment.
         

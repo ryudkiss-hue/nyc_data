@@ -27,14 +27,13 @@ Example:
 
 from __future__ import annotations
 
-import json
 import logging
 import uuid
-from dataclasses import dataclass, asdict, field
+from copy import deepcopy
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Optional, Dict, List, Set, Tuple, TYPE_CHECKING
-from copy import deepcopy
+from typing import TYPE_CHECKING, Any
 
 try:
     import networkx as nx
@@ -96,17 +95,17 @@ class ExecutionRecord:
     execution_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     node_id: str = ""
     started_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    completed_at: Optional[datetime] = None
+    completed_at: datetime | None = None
     duration_seconds: float = 0.0
     status: ExecutionStatus = ExecutionStatus.RUNNING
     input_row_count: int = 0
     output_row_count: int = 0
-    error_message: Optional[str] = None
-    data_quality_metrics: Dict[str, float] = field(default_factory=dict)
+    error_message: str | None = None
+    data_quality_metrics: dict[str, float] = field(default_factory=dict)
     user: str = "system"
-    notes: Optional[str] = None
+    notes: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary with serialized enums and timestamps."""
         d = asdict(self)
         d["status"] = self.status.value
@@ -115,7 +114,7 @@ class ExecutionRecord:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> ExecutionRecord:
+    def from_dict(cls, data: dict[str, Any]) -> ExecutionRecord:
         """Create from dictionary, parsing timestamps and enums."""
         d = deepcopy(data)
         d["status"] = ExecutionStatus(d["status"])
@@ -143,11 +142,11 @@ class LineageEdge:
     target_node_id: str
     edge_type: EdgeType = EdgeType.DATA_FLOW
     cardinality: str = "1:1"  # 1:1, 1:N, N:1, N:N
-    join_keys: List[str] = field(default_factory=list)
-    filter_conditions: Optional[str] = None
+    join_keys: list[str] = field(default_factory=list)
+    filter_conditions: str | None = None
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary with serialized values."""
         d = asdict(self)
         d["edge_type"] = self.edge_type.value
@@ -155,7 +154,7 @@ class LineageEdge:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> LineageEdge:
+    def from_dict(cls, data: dict[str, Any]) -> LineageEdge:
         """Create from dictionary."""
         d = deepcopy(data)
         d["edge_type"] = EdgeType(d["edge_type"])
@@ -189,14 +188,14 @@ class TransformationNode:
     owner: str = ""
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     last_modified: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    input_datasets: List[str] = field(default_factory=list)
-    output_datasets: List[str] = field(default_factory=list)
-    configuration: Dict[str, Any] = field(default_factory=dict)
-    execution_history: List[ExecutionRecord] = field(default_factory=list)
-    schema_version: Optional[str] = None
-    tags: List[str] = field(default_factory=list)
+    input_datasets: list[str] = field(default_factory=list)
+    output_datasets: list[str] = field(default_factory=list)
+    configuration: dict[str, Any] = field(default_factory=dict)
+    execution_history: list[ExecutionRecord] = field(default_factory=list)
+    schema_version: str | None = None
+    tags: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary with serialized nested objects."""
         d = asdict(self)
         d["node_type"] = self.node_type.value
@@ -208,7 +207,7 @@ class TransformationNode:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> TransformationNode:
+    def from_dict(cls, data: dict[str, Any]) -> TransformationNode:
         """Create from dictionary."""
         d = deepcopy(data)
         d["node_type"] = NodeType(d["node_type"])
@@ -225,10 +224,10 @@ class TransformationNode:
         input_rows: int = 0,
         output_rows: int = 0,
         duration_secs: float = 0.0,
-        error_msg: Optional[str] = None,
-        metrics: Optional[Dict[str, float]] = None,
+        error_msg: str | None = None,
+        metrics: dict[str, float] | None = None,
         user: str = "system",
-        notes: Optional[str] = None,
+        notes: str | None = None,
     ) -> ExecutionRecord:
         """Record an execution of this transformation node.
         
@@ -263,13 +262,13 @@ class TransformationNode:
         self.last_modified = datetime.now(timezone.utc)
         return exec_record
 
-    def get_latest_execution(self) -> Optional[ExecutionRecord]:
+    def get_latest_execution(self) -> ExecutionRecord | None:
         """Get the most recent execution record."""
         if not self.execution_history:
             return None
         return self.execution_history[-1]
 
-    def get_execution_history(self, limit: int = 10) -> List[ExecutionRecord]:
+    def get_execution_history(self, limit: int = 10) -> list[ExecutionRecord]:
         """Get recent execution history, newest first."""
         return self.execution_history[-limit:][::-1]
 
@@ -290,8 +289,8 @@ class DAG:
         """Initialize empty DAG."""
         if nx is None:
             raise ImportError("networkx is required for DAG operations")
-        self.nodes: Dict[str, TransformationNode] = {}
-        self.edges: Dict[Tuple[str, str], LineageEdge] = {}
+        self.nodes: dict[str, TransformationNode] = {}
+        self.edges: dict[tuple[str, str], LineageEdge] = {}
         self.graph: Any = nx.DiGraph()  # type: ignore
 
     def add_node(self, node: TransformationNode) -> None:
@@ -315,8 +314,8 @@ class DAG:
         target_id: str,
         edge_type: EdgeType = EdgeType.DATA_FLOW,
         cardinality: str = "1:1",
-        join_keys: Optional[List[str]] = None,
-        filter_conditions: Optional[str] = None,
+        join_keys: list[str] | None = None,
+        filter_conditions: str | None = None,
     ) -> LineageEdge:
         """Add a dependency edge between two nodes.
         
@@ -391,11 +390,11 @@ class DAG:
         del self.nodes[node_id]
         logger.debug(f"Removed node {node_id}")
 
-    def get_node(self, node_id: str) -> Optional[TransformationNode]:
+    def get_node(self, node_id: str) -> TransformationNode | None:
         """Get a node by ID."""
         return self.nodes.get(node_id)
 
-    def get_upstream_dependencies(self, node_id: str) -> List[str]:
+    def get_upstream_dependencies(self, node_id: str) -> list[str]:
         """Get all upstream dependencies (sources) for a node.
         
         Args:
@@ -414,7 +413,7 @@ class DAG:
         except nx.NetworkXError:
             return []
 
-    def get_downstream_consumers(self, node_id: str) -> List[str]:
+    def get_downstream_consumers(self, node_id: str) -> list[str]:
         """Get all downstream consumers (targets) for a node.
         
         Args:
@@ -435,7 +434,7 @@ class DAG:
         except nx.NetworkXError:
             return []
 
-    def get_critical_path(self) -> List[str]:
+    def get_critical_path(self) -> list[str]:
         """Get longest dependency chain in the DAG.
         
         Returns:
@@ -453,7 +452,8 @@ class DAG:
             
             for source in sources:
                 for sink in sinks:
-                    if source == sink: continue
+                    if source == sink:
+                        continue
                     try:
                         paths = list(nx.all_simple_paths(self.graph, source=source, target=sink))
                         if paths:
@@ -466,7 +466,7 @@ class DAG:
         except (nx.NetworkXError, StopIteration):  # type: ignore
             return []
 
-    def get_impact_scope(self, node_id: str) -> Dict[str, Any]:
+    def get_impact_scope(self, node_id: str) -> dict[str, Any]:
         """Analyze impact of changing a node on downstream systems.
         
         Args:
@@ -480,7 +480,7 @@ class DAG:
 
         affected = self.get_downstream_consumers(node_id)
         affected_users = set()
-        affected_by_type: Dict[str, List[str]] = {}
+        affected_by_type: dict[str, list[str]] = {}
 
         for affected_id in affected:
             node = self.nodes.get(affected_id)
@@ -496,7 +496,8 @@ class DAG:
         all_paths = []
         sinks = [n for n, d in self.graph.out_degree() if d == 0]
         for sink in sinks:
-            if node_id == sink: continue
+            if node_id == sink:
+                continue
             try:
                 paths = list(nx.all_simple_paths(self.graph, source=node_id, target=sink))
                 all_paths.extend(paths)
@@ -517,7 +518,7 @@ class DAG:
             "critical_path_count": len(critical_paths),
         }
 
-    def validate(self) -> Dict[str, Any]:
+    def validate(self) -> dict[str, Any]:
         """Validate DAG integrity.
         
         Returns:
@@ -559,7 +560,7 @@ class DAG:
 
         return issues
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert entire DAG to dictionary."""
         return {
             "nodes": {
@@ -579,7 +580,7 @@ class DAG:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> DAG:
+    def from_dict(cls, data: dict[str, Any]) -> DAG:
         """Reconstruct DAG from dictionary."""
         dag = cls()
         
@@ -602,7 +603,7 @@ class DAG:
         
         return dag
 
-    def get_node_lineage_summary(self, node_id: str) -> Dict[str, Any]:
+    def get_node_lineage_summary(self, node_id: str) -> dict[str, Any]:
         """Get complete lineage summary for a node.
         
         Args:

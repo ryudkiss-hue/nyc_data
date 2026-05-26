@@ -8,7 +8,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 import pandas as pd
 
@@ -24,9 +24,6 @@ from .core import (
     COL_LAT,
     COL_LON,
     COL_REPAIR,
-    COLOR_GREEN,
-    COLOR_RED,
-    COLOR_YELLOW,
     DTYPE_NUM,
 )
 
@@ -241,24 +238,27 @@ def extract_patterns(df: pd.DataFrame, column: str, pattern_type: str = "emails"
 def parse_sim_complaints(df: pd.DataFrame, text_col: str = "description") -> pd.DataFrame:
     """
     Quantitatively parse Sidewalk Inspection and Management (SIM) complaints using
-    statistical methods. Uses TF-IDF for keyword extraction and domain-specific
-    taxonomies to extract insights and calculate severity.
+    statistical methods. Uses TF-IDF for keyword extraction (if scikit-learn is
+    installed) and domain-specific taxonomies to extract insights and calculate severity.
+
+    Taxonomy-based columns (_sim_flags, _sim_severity_score, _sim_category) are always
+    added. TF-IDF keyword extraction (_sim_unique_keywords) requires scikit-learn.
     """
+    # Check for sklearn — only needed for TF-IDF keywords, not taxonomy flagging
+    _has_sklearn = False
     try:
-        import sklearn.feature_extraction.text as sklearn_text
-
-        if sklearn_text is None:
-            raise ImportError
+        import sklearn.feature_extraction.text as sklearn_text  # noqa: F401
+        _has_sklearn = sklearn_text is not None
     except ImportError:
-        logger.error(
-            "scikit-learn is not installed. Cannot perform TF-IDF keyword extraction. "
-            "Please run 'pip install scikit-learn' to enable this functionality."
+        logger.warning(
+            "scikit-learn is not installed. TF-IDF keyword extraction disabled. "
+            "Taxonomy flagging and severity scoring will still run. "
+            "Run 'pip install scikit-learn' to enable full analysis."
         )
-        return df
 
-    vectorizer_cls = TfidfVectorizer
-    if vectorizer_cls is None:
-        from sklearn.feature_extraction.text import TfidfVectorizer as vectorizer_cls
+    vectorizer_cls = TfidfVectorizer if _has_sklearn else None
+    if _has_sklearn and vectorizer_cls is None:
+        from sklearn.feature_extraction.text import TfidfVectorizer as vectorizer_cls  # noqa: F401
 
     import numpy as np
 
@@ -295,10 +295,11 @@ def parse_sim_complaints(df: pd.DataFrame, text_col: str = "description") -> pd.
     out["_sim_severity_score"] = out["_sim_flags"].apply(calculate_severity)
 
     # 2. Unique Keyword Extraction using TF-IDF
+    # 2. Unique Keyword Extraction using TF-IDF (requires scikit-learn)
     corpus = texts[texts.str.strip() != ""]
     out["_sim_unique_keywords"] = [[] for _ in range(len(out))]  # Initialize column
 
-    if not corpus.empty:
+    if _has_sklearn and vectorizer_cls is not None and not corpus.empty:
 
         def custom_tokenizer(text: str) -> list[str]:
             tokens = WORD_RE.findall(text.lower())
@@ -1625,23 +1626,6 @@ def list_available_visualizations() -> pd.DataFrame:
 
 # ── Pillar compatibility re-exports ───────────────────────────────────────────
 
-from .freshness import (  # noqa: E402
-    AlertSeverity,
-    DatasetFreshness,
-    FreshnessAlert,
-    FreshnessTracker,
-)
-from .plotly_charts import (  # noqa: E402
-    borough_bar_chart,
-    contract_gantt,
-    kpi_gauge,
-    priority_heatmap,
-    save_chart,
-    status_donut,
-    trend_line,
-)
-from .relevance import build_weighted_rank_sql, websearch_to_tsquery_sql  # noqa: E402
-from .sla_tracking import SLATarget, compute_cycle_times  # noqa: E402
 
 try:
     from .viz.map import create_map, save_map  # noqa: E402
@@ -1656,66 +1640,40 @@ except ImportError:
     dataframe_to_pdf = None  # type: ignore
     quality_dashboard = None  # type: ignore
 
-from .metrics import (  # noqa: E402
-    DataQualityMetrics,
-    MetricPoint,
-    MetricsRegistry,
-    PipelineMetrics,
-    get_global_registry,
-    reset_global_registry,
-)
-from .quality_catalog import DataQualityCatalog, DatasetQualityScore  # noqa: E402
-from .quality_expectations import (  # noqa: E402
-    Expectation,
-    ExpectationSuite,
-    ExpectationType,
-    SeverityLevel,
-    create_311_complaints_suite,
-    create_sidewalk_inspections_suite,
-)
-from .quality_profiler import DataType, DriftReport, ProfileGenerator  # noqa: E402
-from .quality_reports import QualityReportGenerator  # noqa: E402
-from .quality_rules import (  # noqa: E402
-    BusinessRulesEngine,
-    QualityRule,
-    RuleMode,
-    RuleSeverity,
-    RuleViolations,
-    create_311_complaints_rules,
-    create_sidewalk_rules,
-)
-from .quality_sla import (  # noqa: E402
-    DataQualityTracker,
-    MetricType,
-    SLADefinition,
-    Severity,
-    TrendDirection,
-    create_standard_slas,
-)
-from .quality_validator import (  # noqa: E402
-    QualityValidator,
-    ValidationResult,
-    ValidationResultsAggregator,
-)
 
 # Override simplified stubs with full implementations expected by the test suite
-from .quality.anomalies import (  # noqa: E402
-    Anomaly,
-    AnomalyDetector,
-    AnomalyReport,
-    AnomalySeverity,
+from .freshness import (  # noqa: E402, F401
+    AlertSeverity,
+    DatasetFreshness,
+    FreshnessAlert,
+    FreshnessTracker,
 )
-from .quality.validation import (  # noqa: E402
-    ValidationReport,
-    validate_ada_compliance_gates,
-    validate_defect_applicability,
-    validate_geospatial_bounds,
-    validate_marking_standards,
-    validate_material_coverage,
-    validate_required_columns,
-    validate_schema_types,
+from .plotly_charts import (  # noqa: E402, F401
+    borough_bar_chart,
+    contract_gantt,
+    kpi_gauge,
+    priority_heatmap,
+    save_chart,
+    status_donut,
+    trend_line,
 )
-from .analysis_advanced import (  # noqa: E402
+from .relevance import build_weighted_rank_sql, websearch_to_tsquery_sql  # noqa: E402, F401
+from .sla_tracking import SLATarget, compute_cycle_times  # noqa: E402, F401
+
+try:
+    from .viz.map import create_map, save_map  # noqa: E402, F401
+except ImportError:
+    create_map = None  # type: ignore
+    save_map = None  # type: ignore
+
+try:
+    from .viz.core import box_plot, dataframe_to_pdf, quality_dashboard  # noqa: E402, F401
+except ImportError:
+    box_plot = None  # type: ignore
+    dataframe_to_pdf = None  # type: ignore
+    quality_dashboard = None  # type: ignore
+
+from .analysis_advanced import (  # noqa: E402, F401
     CorrelationResult,
     OutlierReport,
     classify_all_distributions,
@@ -1727,31 +1685,88 @@ from .analysis_advanced import (  # noqa: E402
     flag_anomalies,
     time_series_summary,
 )
-from .program_metrics import (  # noqa: E402
+from .metrics import (  # noqa: E402, F401
+    DataQualityMetrics,
+    MetricPoint,
+    MetricsRegistry,
+    PipelineMetrics,
+    get_global_registry,
+    reset_global_registry,
+)
+from .program_metrics import (  # noqa: E402, F401
     MetricSnapshot,
     MetricsTracker,
     ProgramDashboard,
     compute_program_dashboard,
 )
-from .reporting import (  # noqa: E402
+
+# Override simplified stubs with full implementations expected by the test suite
+from .quality.anomalies import (  # noqa: E402, F401
+    Anomaly,
+    AnomalyDetector,
+    AnomalyReport,
+    AnomalySeverity,
+)
+from .quality.validation import (  # noqa: E402, F401
+    ValidationReport,
+    validate_ada_compliance_gates,
+    validate_defect_applicability,
+    validate_geospatial_bounds,
+    validate_marking_standards,
+    validate_material_coverage,
+    validate_required_columns,
+    validate_schema_types,
+)
+from .quality_catalog import DataQualityCatalog, DatasetQualityScore  # noqa: E402, F401
+from .quality_expectations import (  # noqa: E402, F401
+    Expectation,
+    ExpectationSuite,
+    ExpectationType,
+    SeverityLevel,
+    create_311_complaints_suite,
+    create_sidewalk_inspections_suite,
+)
+from .quality_profiler import DataType, DriftReport, ProfileGenerator  # noqa: E402, F401
+from .quality_reports import QualityReportGenerator  # noqa: E402, F401
+from .quality_rules import (  # noqa: E402, F401
+    BusinessRulesEngine,
+    QualityRule,
+    RuleMode,
+    RuleSeverity,
+    RuleViolations,
+    create_311_complaints_rules,
+    create_sidewalk_rules,
+)
+from .quality_sla import (  # noqa: E402, F401
+    DataQualityTracker,
+    MetricType,
+    Severity,
+    SLADefinition,
+    TrendDirection,
+    create_standard_slas,
+)
+from .quality_validator import (  # noqa: E402, F401
+    QualityValidator,
+    ValidationResult,
+    ValidationResultsAggregator,
+)
+from .reporting import (  # noqa: E402, F401
     Report,
     ReportSection,
     generate_contract_report,
     generate_inquiry_response,
     generate_program_report,
 )
-from .sla_tracking import compute_sla_metrics, flag_sla_violations  # noqa: E402
-from .visualization import (  # noqa: E402
+from .sla_tracking import compute_sla_metrics, flag_sla_violations  # noqa: E402, F401
+from .visualization import (  # noqa: E402, F401
     ChartResult,
     bar_chart,
-    box_plot,
     correlation_heatmap,
     histogram,
-    quality_dashboard,
     time_series_chart,
 )
 
 try:
-    from .reports.analyst import ProjectAnalystReports  # noqa: E402
+    from .reports.analyst import ProjectAnalystReports  # noqa: E402, F401
 except ImportError:
     ProjectAnalystReports = None  # type: ignore

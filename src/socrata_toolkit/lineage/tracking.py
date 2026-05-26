@@ -21,23 +21,24 @@ from __future__ import annotations
 import functools
 import logging
 import time
+from collections.abc import Callable
 from contextlib import contextmanager
 from datetime import datetime, timezone
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from .core import (
-    TransformationNode,
     ExecutionRecord,
-    NodeType,
     ExecutionStatus,
+    NodeType,
+    TransformationNode,
 )
 
 logger = logging.getLogger(__name__)
 
 # Global lineage context
-_lineage_context: Optional[Dict[str, Any]] = None
-_lineage_nodes: Dict[str, TransformationNode] = {}
-_lineage_persistence: Optional[Any] = None
+_lineage_context: dict[str, Any] | None = None
+_lineage_nodes: dict[str, TransformationNode] = {}
+_lineage_persistence: Any | None = None
 
 
 def set_global_persistence(persistence: Any) -> None:
@@ -52,11 +53,11 @@ def set_global_persistence(persistence: Any) -> None:
 
 
 def track_transformation(
-    inputs: Optional[List[str]] = None,
-    outputs: Optional[List[str]] = None,
+    inputs: list[str] | None = None,
+    outputs: list[str] | None = None,
     transformation_type: str = "transformation",
     owner: str = "system",
-    tags: Optional[List[str]] = None,
+    tags: list[str] | None = None,
 ) -> Callable:
     """Decorator to automatically track transformation execution.
     
@@ -177,10 +178,10 @@ def track_transformation(
 @contextmanager
 def lineage_context(
     context_name: str,
-    inputs: Optional[List[str]] = None,
-    outputs: Optional[List[str]] = None,
+    inputs: list[str] | None = None,
+    outputs: list[str] | None = None,
     owner: str = "system",
-    tags: Optional[List[str]] = None,
+    tags: list[str] | None = None,
 ):
     """Context manager for tracking transformations in code blocks.
     
@@ -263,7 +264,7 @@ def register_ingestion_node(
     dataset_name: str,
     source: str = "socrata",
     owner: str = "system",
-    schema_version: Optional[str] = None,
+    schema_version: str | None = None,
 ) -> TransformationNode:
     """Register a data ingestion node.
     
@@ -307,7 +308,7 @@ def register_sink_node(
     sink_id: str,
     sink_name: str,
     sink_type: str,
-    input_datasets: List[str],
+    input_datasets: list[str],
     owner: str = "system",
 ) -> TransformationNode:
     """Register a data sink (persistence target) node.
@@ -352,7 +353,7 @@ def register_validation_node(
     validation_id: str,
     validation_name: str,
     input_dataset: str,
-    rules: Optional[Dict[str, Any]] = None,
+    rules: dict[str, Any] | None = None,
     owner: str = "system",
 ) -> TransformationNode:
     """Register a data quality validation node.
@@ -374,7 +375,7 @@ def register_validation_node(
         node_id=node_id,
         name=f"{validation_name} Validation",
         node_type=NodeType.VALIDATION,
-        description=f"Data quality validation",
+        description="Data quality validation",
         owner=owner,
         input_datasets=[input_dataset],
         tags=["validation", "quality"],
@@ -393,11 +394,11 @@ def register_validation_node(
     return node
 
 
-def get_tracked_node(node_id: str) -> Optional[TransformationNode]:
+def get_tracked_node(node_id: str) -> TransformationNode | None:
     """Get a tracked lineage node by ID."""
     return _lineage_nodes.get(node_id)
 
 
-def get_all_tracked_nodes() -> Dict[str, TransformationNode]:
+def get_all_tracked_nodes() -> dict[str, TransformationNode]:
     """Get all tracked lineage nodes."""
     return _lineage_nodes.copy()

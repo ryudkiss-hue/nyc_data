@@ -10,10 +10,11 @@ Standards: Python 3.9+, full type hints, comprehensive docstrings, logging
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any
 
 import pandas as pd
 
@@ -51,11 +52,11 @@ class RuleViolation:
     rule_name: str
     severity: RuleSeverity
     violation_count: int
-    affected_records: List[str] = field(default_factory=list)
+    affected_records: list[str] = field(default_factory=list)
     suggested_remediation: str = ""
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "rule_id": self.rule_id,
@@ -78,7 +79,7 @@ class RuleViolations:
         critical_violations: Count of critical violations
         can_proceed: Whether data passes hard rules
     """
-    violations: List[RuleViolation] = field(default_factory=list)
+    violations: list[RuleViolation] = field(default_factory=list)
 
     @property
     def total_violations(self) -> int:
@@ -95,7 +96,7 @@ class RuleViolations:
         """Whether data passes all hard rules."""
         return self.critical_violations == 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "total_violations": self.total_violations,
@@ -115,7 +116,7 @@ class QualityRule:
         self,
         rule_id: str,
         rule_name: str,
-        rule_func: Callable[[pd.DataFrame], List[str]],
+        rule_func: Callable[[pd.DataFrame], list[str]],
         severity: RuleSeverity = RuleSeverity.HIGH,
         mode: RuleMode = RuleMode.SOFT,
         remediation: str = "",
@@ -184,8 +185,8 @@ class BusinessRulesEngine:
 
     def __init__(self):
         """Initialize engine."""
-        self.rules: Dict[str, QualityRule] = {}
-        self.evaluation_history: List[Dict[str, Any]] = []
+        self.rules: dict[str, QualityRule] = {}
+        self.evaluation_history: list[dict[str, Any]] = []
 
     def register_rule(self, rule: QualityRule) -> None:
         """Register a rule.
@@ -200,7 +201,7 @@ class BusinessRulesEngine:
         self,
         df: pd.DataFrame,
         key_column: str = "id",
-        rule_ids: Optional[Set[str]] = None,
+        rule_ids: set[str] | None = None,
     ) -> RuleViolations:
         """Apply rules to DataFrame.
         
@@ -255,7 +256,7 @@ class BusinessRulesEngine:
 
     def get_violations_by_severity(
         self, violations: RuleViolations
-    ) -> Dict[str, List[RuleViolation]]:
+    ) -> dict[str, list[RuleViolation]]:
         """Group violations by severity.
         
         Args:
@@ -264,7 +265,7 @@ class BusinessRulesEngine:
         Returns:
             Dict mapping severity to violations
         """
-        by_severity: Dict[str, List[RuleViolation]] = {}
+        by_severity: dict[str, list[RuleViolation]] = {}
         for violation in violations.violations:
             severity = violation.severity.value
             if severity not in by_severity:
@@ -290,7 +291,7 @@ def create_sidewalk_rules() -> BusinessRulesEngine:
         "metal", "brick_stone", "composite", "other"
     }
 
-    def material_type_valid(df: pd.DataFrame) -> List[str]:
+    def material_type_valid(df: pd.DataFrame) -> list[str]:
         """Check material types are valid."""
         if "material_type" not in df.columns:
             return []
@@ -309,7 +310,7 @@ def create_sidewalk_rules() -> BusinessRulesEngine:
     # Condition rating rule
     valid_conditions = {"EXCELLENT", "GOOD", "FAIR", "POOR", "CRITICAL"}
 
-    def condition_valid(df: pd.DataFrame) -> List[str]:
+    def condition_valid(df: pd.DataFrame) -> list[str]:
         """Check condition ratings are valid."""
         if "condition_rating" not in df.columns:
             return []
@@ -326,7 +327,7 @@ def create_sidewalk_rules() -> BusinessRulesEngine:
     ))
 
     # Geographic bounds rule
-    def location_in_nyc(df: pd.DataFrame) -> List[str]:
+    def location_in_nyc(df: pd.DataFrame) -> list[str]:
         """Check location is within NYC bounds."""
         if "latitude" not in df.columns or "longitude" not in df.columns:
             return []
@@ -346,7 +347,7 @@ def create_sidewalk_rules() -> BusinessRulesEngine:
     ))
 
     # Inspection date recency rule
-    def inspection_recent(df: pd.DataFrame) -> List[str]:
+    def inspection_recent(df: pd.DataFrame) -> list[str]:
         """Check inspections are recent (within 1 year)."""
         if "inspection_date" not in df.columns:
             return []
@@ -369,7 +370,7 @@ def create_sidewalk_rules() -> BusinessRulesEngine:
     ))
 
     # Defect count consistency rule
-    def defect_count_logical(df: pd.DataFrame) -> List[str]:
+    def defect_count_logical(df: pd.DataFrame) -> list[str]:
         """Check defect counts are consistent with data."""
         if "defect_count" not in df.columns or "defects" not in df.columns:
             return []
@@ -394,7 +395,7 @@ def create_sidewalk_rules() -> BusinessRulesEngine:
     ))
 
     # No duplicate inspections on same day
-    def no_duplicate_same_day(df: pd.DataFrame) -> List[str]:
+    def no_duplicate_same_day(df: pd.DataFrame) -> list[str]:
         """Check for duplicate inspections on same day/location."""
         if "location_address" not in df.columns or "inspection_date" not in df.columns:
             return []
@@ -433,7 +434,7 @@ def create_311_complaints_rules() -> BusinessRulesEngine:
     engine = BusinessRulesEngine()
 
     # Valid complaint types
-    def complaint_type_valid(df: pd.DataFrame) -> List[str]:
+    def complaint_type_valid(df: pd.DataFrame) -> list[str]:
         """Check complaint types are valid."""
         if "complaint_type" not in df.columns:
             return []
@@ -454,7 +455,7 @@ def create_311_complaints_rules() -> BusinessRulesEngine:
     # Valid status values
     valid_statuses = {"OPEN", "IN PROGRESS", "CLOSED", "ESCALATED", "PENDING"}
 
-    def status_valid(df: pd.DataFrame) -> List[str]:
+    def status_valid(df: pd.DataFrame) -> list[str]:
         """Check statuses are valid."""
         if "status" not in df.columns:
             return []

@@ -1,3 +1,4 @@
+import importlib.util
 import sys
 from unittest.mock import MagicMock, patch
 
@@ -5,11 +6,13 @@ import numpy as np
 import pandas as pd
 import pytest
 
+_has_sklearn = importlib.util.find_spec("sklearn") is not None
+
 from socrata_toolkit.analysis import (
     generate_text_insights,
-    profile_dataframe,
     list_available_visualizations,
     parse_sim_complaints,
+    profile_dataframe,
 )
 
 
@@ -106,6 +109,7 @@ class TestParseSimComplaints:
         # Row 4 (empty): unknown
         assert result_df.loc[4, "_sim_category"] == "unknown"
 
+    @pytest.mark.skipif(not _has_sklearn, reason="scikit-learn not installed")
     def test_keyword_extraction_with_mock(self, mock_sklearn_vectorizer):
         """Test that TF-IDF is called and keywords are extracted based on mock scores."""
         df = pd.DataFrame({"description": ["wheelchair hazard crack", "just a root", "rebar metal"]})
@@ -133,17 +137,18 @@ class TestParseSimComplaints:
         assert result_df.loc[2, "_sim_unique_keywords"] == ["hazard", "rebar", "metal"]
 
     def test_graceful_failure_if_sklearn_not_installed(self, sample_df, monkeypatch):
-        """Test that the function returns the original df if sklearn is not found."""
-        # Simulate ImportError for any sklearn module
+        """Test that taxonomy columns are still added even when sklearn is not installed."""
+        # Simulate sklearn not being installed
         monkeypatch.setitem(sys.modules, "sklearn.feature_extraction.text", None)
 
-        # The function should log an error and return the original dataframe
         result_df = parse_sim_complaints(sample_df, text_col="description")
 
-        # Ensure no new columns were added
-        assert "_sim_flags" not in result_df.columns
-        # Check that the returned object is the same as the input
-        pd.testing.assert_frame_equal(result_df, sample_df)
+        # Taxonomy-based columns are always added (sklearn only needed for TF-IDF keywords)
+        assert "_sim_flags" in result_df.columns
+        assert "_sim_severity_score" in result_df.columns
+        assert "_sim_category" in result_df.columns
+        # TF-IDF keywords column is present but empty lists (sklearn unavailable)
+        assert "_sim_unique_keywords" in result_df.columns
 
     def test_handles_missing_text_column(self, sample_df):
         """Test that the function returns a copy of the df if the text column is missing."""
