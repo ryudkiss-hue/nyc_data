@@ -3,6 +3,15 @@
 from __future__ import annotations
 
 import os
+import sys
+from pathlib import Path
+
+# Ensure repo root is on sys.path so `from app.X import ...` works whether the
+# app is launched as `streamlit run app/app.py` (path = app/) or installed as a
+# package.  Adding to index 0 gives it priority over site-packages.
+_REPO_ROOT = str(Path(__file__).resolve().parents[1])
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
 
 import streamlit as st
 
@@ -29,10 +38,11 @@ st.set_page_config(
 )
 
 WORKFLOW_KEYS = {
-    "qa": "QA/QC & Inventory Ledger",
-    "spatial": "Spatial Conflict Detection",
-    "contract": "Contract & Dispatch Clearance",
-    "productivity": "Productivity & ADA Progress",
+    "qa": "🔍 QA/QC & Inventory Ledger",
+    "spatial": "🗺️ Spatial Conflict Detection",
+    "contract": "📋 Contract & Dispatch Clearance",
+    "productivity": "🚶 Productivity & ADA Progress",
+    "quality": "🩺 Data Quality Dashboard",
 }
 
 NAV_KEYS = ["nav_home", "nav_workflows", "nav_publish", "nav_settings"]
@@ -40,6 +50,12 @@ NAV_KEYS = ["nav_home", "nav_workflows", "nav_publish", "nav_settings"]
 
 @st.cache_data(ttl=CACHE_TTL_SECONDS, show_spinner="Loading workflow datasets…")
 def _load_workflow_frames(workflow_key: str, limit: int) -> dict:
+    # Quality view uses all workflow datasets for cross-dataset profiling
+    if workflow_key == "quality":
+        all_wf_keys: list[str] = []
+        for v in WORKFLOW_DATASETS.values():
+            all_wf_keys.extend(v)
+        return fetch_datasets_for_keys(tuple(dict.fromkeys(all_wf_keys)), limit=limit)
     return fetch_datasets_for_keys(keys_for_workflow(workflow_key), limit=limit)
 
 
@@ -78,11 +94,12 @@ def main() -> None:
 
     with st.sidebar:
         render_language_selector()
-        st.markdown("**NYC DOT · SIM**")
+        st.markdown("**🚧 NYC DOT · SIM**")
         nav_labels = [t(k) for k in NAV_KEYS]
         page_label = st.radio(t("navigation"), nav_labels, label_visibility="collapsed")
         page = _nav_page_from_key(NAV_KEYS[nav_labels.index(page_label)])
         st.divider()
+
         view_key = "qa"
         show_ingest = False
         row_limit = 10_000
@@ -94,12 +111,15 @@ def main() -> None:
             row_limit = st.slider("Max rows per dataset", 1_000, 50_000, 10_000, step=1_000)
             if demo_mode_enabled():
                 st.info(t("demo_active"))
-            if st.button(t("refresh_cache"), type="primary"):
+            if st.button(t("refresh_cache"), type="primary", use_container_width=True):
                 st.cache_data.clear()
-            st.caption(f"{len(WORKFLOW_DATASETS.get(view_key, ()))} datasets · view")
-            show_ingest = st.checkbox("Full ingestion matrix")
+                st.rerun()
+            dataset_count = len(WORKFLOW_DATASETS.get(view_key, ()))
+            st.caption(f"{dataset_count} dataset(s) · workflow: `{view_key}`")
+            show_ingest = st.checkbox("Full ingestion matrix", help="Load all registered datasets")
 
-        if st.button(t("clear_session")):
+        st.divider()
+        if st.button(t("clear_session"), use_container_width=True):
             for k in list(st.session_state.keys()):
                 del st.session_state[k]
             st.cache_data.clear()
@@ -123,6 +143,9 @@ def main() -> None:
         settings.render_settings_page()
         return
 
+    # ------------------------------------------------------------------ #
+    # Workflows page
+    # ------------------------------------------------------------------ #
     frames: dict = {}
     map_layers: dict = {}
     try:
@@ -164,9 +187,18 @@ def main() -> None:
         workflows.view_contract(results)
     elif view_key == "productivity":
         workflows.view_productivity(results)
+    elif view_key == "quality":
+        workflows.view_quality(results, frames)
 
-    with st.expander("ROI calculation detail"):
+    with st.expander("📊 ROI calculation detail", expanded=False):
         st.json(roi.as_dict())
+
+    # Ingestion summary in expander on all workflow views
+    if not show_ingest and view_key != "quality":
+        with st.expander("📥 Ingestion matrix", expanded=False):
+            from app.data_loader import ingestion_summary
+            summary = ingestion_summary(frames)
+            st.dataframe(summary, use_container_width=True, hide_index=True)
 
 
 if __name__ == "__main__":

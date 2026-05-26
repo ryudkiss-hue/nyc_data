@@ -5,7 +5,10 @@ description = "NYC DOT Sidewalk Inspection & Management Toolkit"
 authors = ["Richard Yudkiss ryudkiss@gmail.com"]
 readme = "README.md"
 license = "MIT"
-packages = [{ include = "socrata_toolkit", from = "src" }]
+packages = [
+    { include = "socrata_toolkit", from = "src" },
+    { include = "app" },
+]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.15"
