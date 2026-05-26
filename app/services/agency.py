@@ -1,8 +1,11 @@
-"""Agency operations: packs, publish, health, completeness."""
+"""Agency operations: packs, publish, health, completeness, and system diagnostics."""
 
 from __future__ import annotations
 
+import importlib
 import json
+import shutil
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -68,8 +71,12 @@ def load_completeness_items() -> list[dict[str, str]]:
         if not line.strip().startswith("|") or "---" in line or "Item" in line:
             continue
         parts = [c.strip() for c in line.split("|") if c.strip()]
-        if len(parts) >= 3 and parts[0] not in ("Item", "------"):
-            items.append({"item": parts[0], "verify": parts[2] if len(parts) > 2 else ""})
+        if len(parts) >= 2 and parts[0] not in ("Item", "------"):
+            items.append({
+                "item": parts[0],
+                "verify": parts[2] if len(parts) > 2 else "",
+                "category": parts[1] if len(parts) > 1 else "General",
+            })
     return items
 
 
@@ -82,49 +89,158 @@ def tail_ingest_log(lines: int = 30) -> list[dict[str, Any]]:
             rows.append(json.loads(raw))
         except json.JSONDecodeError:
             continue
-    return rows
+    return list(reversed(rows))  # most recent first
+
+
+def _check_package(name: str) -> dict[str, Any]:
+    """Check if a Python package is importable and get its version."""
+    try:
+        mod = importlib.import_module(name.replace("-", "_"))
+        version = getattr(mod, "__version__", "unknown")
+        return {"name": name, "ok": True, "detail": f"v{version}"}
+    except ImportError:
+        return {
+            "name": name,
+            "ok": False,
+            "fix": f'pip install -e ".[mission]" or pip install {name}',
+        }
+
+
+def _check_file(name: str, path: Path, *, required: bool = True) -> dict[str, Any]:
+    exists = path.exists()
+    return {
+        "name": name,
+        "ok": exists or not required,
+        "detail": str(path) if exists else f"Not found: {path}",
+        "fix": f"Create {path}" if not exists and required else "",
+    }
+
+
+def _check_env(var: str) -> dict[str, Any]:
+    import os
+
+    val = os.getenv(var, "").strip()
+    return {
+        "name": f"env:{var}",
+        "ok": bool(val),
+        "detail": "(set)" if val else "(missing)",
+        "fix": f"Set {var} in .env" if not val else "",
+    }
 
 
 def system_health() -> dict[str, Any]:
+    """Comprehensive system health check."""
     checks: list[dict[str, Any]] = []
+
+    # Required files
+    checks.append(_check_file("datasets_registry", _REPO / "config" / "datasets.yaml"))
+    checks.append(_check_file("mission_entry", _REPO / "main.py"))
+    checks.append(_check_file("env_example", _REPO / ".env.example", required=False))
     checks.append(
-        {
-            "name": "analyst_profile",
-            "ok": (_REPO / "config" / "analyst_profile.yaml").exists() or _ANALYST_EXAMPLE.exists(),
-        }
+        _check_file(
+            "analyst_profile",
+            _REPO / "config" / "analyst_profile.yaml",
+            required=False,
+        )
     )
-    checks.append({"name": "publish_profile", "ok": _PUBLISH_EXAMPLE.exists()})
-    checks.append({"name": "datasets_registry", "ok": (_REPO / "config" / "datasets.yaml").exists()})
-    checks.append({"name": "mission_entry", "ok": (_REPO / "main.py").exists()})
-    try:
-        import sodapy  # noqa: F401
+    checks.append(_check_file("publish_profile", _PUBLISH_EXAMPLE, required=False))
 
-        checks.append({"name": "sodapy", "ok": True})
-    except ImportError:
-        checks.append({"name": "sodapy", "ok": False, "fix": 'pip install -e ".[mission]"'})
-    try:
-        import geopandas  # noqa: F401
+    # Critical packages
+    for pkg in ["streamlit", "pandas", "sodapy", "yaml", "dotenv"]:
+        checks.append(_check_package(pkg))
 
-        checks.append({"name": "geopandas", "ok": True})
-    except ImportError:
-        checks.append({"name": "geopandas", "ok": False, "fix": 'pip install -e ".[mission]"'})
+    # Optional but important packages
+    for pkg in ["geopandas", "shapely", "pyarrow", "plotly"]:
+        c = _check_package(pkg)
+        c["optional"] = True
+        checks.append(c)
+
+    # Outputs directory
+    outputs_dir = _REPO / "outputs"
+    checks.append({
+        "name": "outputs_dir",
+        "ok": outputs_dir.exists() or True,  # creates on first use
+        "detail": str(outputs_dir),
+    })
+
+    # Latest pack
     packs = list_pack_dirs(1)
-    checks.append({"name": "latest_analyst_pack", "ok": bool(packs), "detail": str(packs[0]) if packs else ""})
-    ok_count = sum(1 for c in checks if c["ok"])
+    checks.append({
+        "name": "latest_analyst_pack",
+        "ok": bool(packs),
+        "detail": str(packs[0].name) if packs else "No packs yet",
+        "fix": "Run an analyst pack from the Publish page" if not packs else "",
+    })
+
+    # Disk space
+    try:
+        usage = shutil.disk_usage(_REPO)
+        free_gb = usage.free / (1024 ** 3)
+        checks.append({
+            "name": "disk_space",
+            "ok": free_gb > 0.5,
+            "detail": f"{free_gb:.1f} GB free",
+            "fix": "Free up disk space" if free_gb <= 0.5 else "",
+        })
+    except Exception:
+        pass
+
+    # Python version
+    py_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+    checks.append({
+        "name": "python_version",
+        "ok": sys.version_info >= (3, 10),
+        "detail": f"Python {py_version}",
+        "fix": "Upgrade to Python 3.10+" if sys.version_info < (3, 10) else "",
+    })
+
+    required_checks = [c for c in checks if not c.get("optional")]
+    ok_count = sum(1 for c in required_checks if c["ok"])
+    total = len(required_checks)
+
     return {
         "checked_at": datetime.now(timezone.utc).isoformat(),
         "checks": checks,
-        "score": round(100.0 * ok_count / len(checks), 1) if checks else 0,
+        "score": round(100.0 * ok_count / total, 1) if total else 0,
+        "python_version": py_version,
     }
 
 
 def onboarding_steps() -> list[str]:
     return [
-        "Install: pip install -e \".[mission]\"",
-        "Configure: copy config/analyst_profile.example.yaml → analyst_profile.yaml",
-        "Token: set SOCRATA_APP_TOKEN in .env (or use demo mode)",
-        "Run pack: sidebar → Run Analyst Pack, or scripts/nightly_analyst_sync.ps1",
-        "Review workflows: QA → Spatial → Contract → Productivity",
-        "Publish: Publish & Pack page → dry-run first",
-        "Sign-off: Settings → Completeness checklist",
+        'Install dependencies: `pip install -e ".[mission]"`',
+        "Copy and configure: `config/analyst_profile.example.yaml` → `analyst_profile.yaml`",
+        "Set `SOCRATA_APP_TOKEN` in `.env` (or use demo mode for testing)",
+        "Run first analyst pack: sidebar → Publish → Run Analyst Pack",
+        "Review all four workflows: QA → Spatial → Contract → Productivity",
+        "Check data quality: Workflows → 🩺 Data Quality Dashboard",
+        "Publish outputs: Publish & Pack → dry-run first, then live",
+        "Sign off: Settings → Completeness checklist",
     ]
+
+
+def ingest_log_summary() -> dict[str, Any]:
+    """Aggregate stats from the ingest log."""
+    rows = tail_ingest_log(1000)
+    if not rows:
+        return {"total_events": 0}
+
+    event_types: dict[str, int] = {}
+    total_rows_fetched = 0
+    errors: list[str] = []
+
+    for r in rows:
+        et = r.get("event", "unknown")
+        event_types[et] = event_types.get(et, 0) + 1
+        total_rows_fetched += r.get("rows", 0)
+        if "error" in r and r["error"]:
+            errors.append(f"{r.get('dataset', '?')}: {r['error']}")
+
+    return {
+        "total_events": len(rows),
+        "event_types": event_types,
+        "total_rows_fetched": total_rows_fetched,
+        "error_count": len(errors),
+        "recent_errors": errors[-5:],
+        "last_event_ts": rows[0].get("ts") if rows else None,
+    }
