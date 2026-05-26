@@ -2,10 +2,7 @@ name: Deploy Mission Control to GitHub Pages
 
 on:
   push:
-    branches: [main, claude/project-optimization-upgrade-R2Qw6]
-    paths:
-      - "app/static/**"
-      - ".github/workflows/pages.yml"
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -13,7 +10,6 @@ permissions:
   pages: write
   id-token: write
 
-# Only one deployment at a time; skip queued runs but don't cancel in-progress
 concurrency:
   group: "pages"
   cancel-in-progress: false
@@ -31,19 +27,16 @@ jobs:
       - name: Prepare Pages content
         run: |
           mkdir -p _site
-          # Copy the app as index.html so the root URL works directly
           cp app/static/mission_control_v2.html _site/index.html
-          # Also keep the original filename as an alias
           cp app/static/mission_control_v2.html _site/mission_control_v2.html
-          # Create a minimal 404 redirect
           cat > _site/404.html << 'EOF'
           <!DOCTYPE html>
           <html>
           <head>
-            <meta http-equiv="refresh" content="0; url=/">
+            <meta http-equiv="refresh" content="0; url=/nyc_data/">
             <title>Redirecting…</title>
           </head>
-          <body>Redirecting to <a href="/">Mission Control</a>…</body>
+          <body>Redirecting to <a href="/nyc_data/">Mission Control</a>…</body>
           </html>
           EOF
 
