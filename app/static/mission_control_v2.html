@@ -129,6 +129,45 @@ body { font-family: 'Inter', system-ui, sans-serif; }
 
 /* Bounding box draw */
 .leaflet-draw-toolbar a { background-color:#1f2937; }
+
+/* ===== TUTORIAL / HELP SYSTEM ===== */
+/* Onboarding banner */
+@keyframes slideDown { from{transform:translateY(-100%);opacity:0} to{transform:translateY(0);opacity:1} }
+#onboarding-banner { animation: slideDown .5s ease forwards; }
+
+/* Tour spotlight overlay */
+#tour-overlay { position:fixed; inset:0; z-index:2000; pointer-events:none; }
+#tour-spotlight { position:absolute; border-radius:10px; box-shadow:0 0 0 9999px rgba(0,0,0,.72); transition:all .4s cubic-bezier(.4,0,.2,1); pointer-events:none; }
+#tour-tooltip { position:absolute; background:#1f2937; border:1px solid #4b5563; border-radius:12px; padding:18px 20px; max-width:320px; pointer-events:auto; box-shadow:0 8px 32px rgba(0,0,0,.5); }
+#tour-arrow { position:absolute; width:12px; height:12px; background:#1f2937; border:1px solid #4b5563; transform:rotate(45deg); }
+
+/* Feature card grid */
+.feat-card { border-radius:12px; padding:18px; transition:transform .2s,box-shadow .2s; cursor:default; }
+.feat-card:hover { transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,.4); }
+
+/* FAQ accordion */
+.faq-item summary { list-style:none; cursor:pointer; display:flex; align-items:center; justify-content:space-between; }
+.faq-item summary::-webkit-details-marker { display:none; }
+.faq-item summary .faq-chevron { transition:transform .3s; flex-shrink:0; }
+.faq-item[open] summary .faq-chevron { transform:rotate(180deg); }
+.faq-item[open] summary { color:#38bdf8; }
+
+/* Help modal tab */
+.help-tab-btn { padding:8px 16px; border-radius:20px; font-size:12px; font-weight:600; transition:all .2s; white-space:nowrap; }
+.help-tab-btn.active { background:linear-gradient(135deg,#0ea5e9,#6366f1); color:#fff; }
+.help-tab-btn:not(.active) { color:#9ca3af; }
+.help-tab-btn:not(.active):hover { color:#e5e7eb; background:#374151; }
+
+/* Step cards */
+.step-card { background:linear-gradient(135deg,var(--c1),var(--c2)); border-radius:14px; padding:20px; color:#fff; position:relative; overflow:hidden; }
+.step-card::before { content:''; position:absolute; top:-20px; right:-20px; width:80px; height:80px; border-radius:50%; background:rgba(255,255,255,.1); }
+.step-num { width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,.2); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; margin-bottom:12px; }
+
+/* Tip callout */
+.tip-box { background:linear-gradient(135deg,rgba(14,165,233,.12),rgba(99,102,241,.12)); border:1px solid rgba(99,102,241,.3); border-radius:10px; padding:12px 16px; }
+
+/* Keyboard shortcut row */
+.shortcut-row { display:flex; align-items:center; justify-content:space-between; padding:8px 12px; border-radius:8px; background:#111827; margin-bottom:4px; }
 </style>
 </head>
 <body class="bg-gray-950 text-gray-200 flex flex-col h-screen overflow-hidden">
@@ -144,8 +183,8 @@ body { font-family: 'Inter', system-ui, sans-serif; }
   <button onclick="shareURL()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-all" title="Share current state">
     <i class="fa-solid fa-share-nodes"></i><span>Share</span>
   </button>
-  <button onclick="toggleModal('shortcuts-modal')" class="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all" title="Keyboard shortcuts (?)">
-    <i class="fa-solid fa-question text-xs"></i>
+  <button onclick="toggleModal('help-modal')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-all" title="Help, tutorials & FAQ">
+    <i class="fa-solid fa-circle-question"></i><span>Help</span>
   </button>
   <button id="dark-toggle" onclick="toggleDark()" class="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all" title="Toggle dark mode">
     <i class="fa-solid fa-moon text-xs"></i>
@@ -154,6 +193,45 @@ body { font-family: 'Inter', system-ui, sans-serif; }
     <i class="fa-solid fa-gear"></i><span>Config</span>
   </button>
 </header>
+
+<!-- ONBOARDING BANNER (shown on first visit) -->
+<div id="onboarding-banner" class="hidden flex-shrink-0 bg-gradient-to-r from-indigo-900/80 via-purple-900/80 to-blue-900/80 border-b border-indigo-700/50 px-4 py-2.5 flex items-center gap-4">
+  <div class="flex items-center gap-2 flex-1">
+    <span class="text-2xl">👋</span>
+    <div>
+      <span class="text-white font-bold text-sm">Welcome to Manhattan Mission Control!</span>
+      <span class="text-indigo-200 text-xs ml-2">Explore 100k+ open government datasets, build maps, run SOQL queries, and generate code.</span>
+    </div>
+  </div>
+  <button onclick="startTour()" class="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500 hover:bg-indigo-400 text-white text-xs font-bold rounded-lg transition-all flex-shrink-0">
+    <i class="fa-solid fa-map-signs"></i> Take the Tour
+  </button>
+  <button onclick="toggleModal('help-modal')" class="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-lg transition-all flex-shrink-0">
+    <i class="fa-solid fa-book-open"></i> View Guides
+  </button>
+  <button onclick="dismissOnboarding()" class="text-indigo-300 hover:text-white text-lg transition-all flex-shrink-0" title="Dismiss">
+    <i class="fa-solid fa-xmark"></i>
+  </button>
+</div>
+
+<!-- TOUR OVERLAY -->
+<div id="tour-overlay" class="hidden">
+  <div id="tour-spotlight"></div>
+  <div id="tour-tooltip" class="hidden">
+    <div class="flex items-center gap-2 mb-3">
+      <span id="tour-step-badge" class="px-2 py-0.5 rounded-full text-xs font-bold bg-brand-600 text-white"></span>
+      <span class="text-xs text-gray-400 ml-auto" id="tour-step-counter"></span>
+    </div>
+    <div id="tour-arrow"></div>
+    <p id="tour-title" class="text-sm font-bold text-white mb-1"></p>
+    <p id="tour-body" class="text-xs text-gray-300 leading-relaxed mb-4"></p>
+    <div class="flex items-center gap-2">
+      <button onclick="prevTourStep()" id="tour-prev" class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs rounded-lg transition-all">← Back</button>
+      <button onclick="nextTourStep()" id="tour-next" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold rounded-lg transition-all flex-1">Next →</button>
+      <button onclick="endTour()" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-400 text-xs rounded-lg transition-all">Skip</button>
+    </div>
+  </div>
+</div>
 
 <!-- BODY -->
 <div class="flex flex-1 overflow-hidden">
@@ -777,6 +855,473 @@ body { font-family: 'Inter', system-ui, sans-serif; }
     </div>
   </div>
 </div>
+
+<!-- ================================================================ -->
+<!-- HELP MODAL                                                      -->
+<!-- ================================================================ -->
+<div id="help-modal" class="modal-overlay hidden">
+  <div class="modal-box w-full max-w-4xl p-0 overflow-hidden" style="max-height:92vh">
+
+    <!-- Header -->
+    <div class="brand-gradient px-6 py-5 flex items-center justify-between flex-shrink-0">
+      <div class="flex items-center gap-3">
+        <i class="fa-solid fa-circle-question text-white text-2xl"></i>
+        <div>
+          <h2 class="text-white font-black text-lg tracking-tight">Help Center</h2>
+          <p class="text-white/70 text-xs">Tutorials · Feature Guide · FAQ · Keyboard Shortcuts</p>
+        </div>
+      </div>
+      <button onclick="toggleModal('help-modal')" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-all">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <!-- Tab nav -->
+    <div class="flex gap-2 px-6 py-3 border-b border-gray-800 bg-gray-900 flex-shrink-0 overflow-x-auto">
+      <button class="help-tab-btn active" onclick="switchHelpTab('ht-quickstart',this)">🚀 Quick Start</button>
+      <button class="help-tab-btn" onclick="switchHelpTab('ht-features',this)">✨ Features</button>
+      <button class="help-tab-btn" onclick="switchHelpTab('ht-faq',this)">❓ FAQ</button>
+      <button class="help-tab-btn" onclick="switchHelpTab('ht-shortcuts',this)">⌨️ Shortcuts</button>
+      <button class="help-tab-btn" onclick="switchHelpTab('ht-tips',this)">💡 Tips</button>
+    </div>
+
+    <!-- Tab bodies -->
+    <div class="overflow-y-auto" style="max-height:calc(92vh - 140px)">
+
+      <!-- ===== QUICK START ===== -->
+      <div id="ht-quickstart" class="help-tab-body p-6">
+        <p class="text-gray-400 text-sm mb-6 text-center max-w-xl mx-auto">Get up and running in four simple steps. Manhattan Mission Control lets you search, analyze, and export government open data — no coding required.</p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+          <!-- Step 1 -->
+          <div class="step-card" style="--c1:#0369a1;--c2:#0ea5e9">
+            <div class="step-num">1</div>
+            <div class="text-2xl mb-2">🔍</div>
+            <h3 class="font-bold text-base mb-1">Search Datasets</h3>
+            <p class="text-white/80 text-xs leading-relaxed">Type any keyword in the sidebar — <em>permits, 311, trees, sidewalk</em> — and press <strong>Enter</strong> or click Search. Choose from 15+ city portals using the Domain dropdown.</p>
+            <div class="mt-3 flex gap-1.5 flex-wrap">
+              <span class="px-2 py-0.5 bg-white/20 rounded-full text-xs">NYC</span>
+              <span class="px-2 py-0.5 bg-white/20 rounded-full text-xs">Chicago</span>
+              <span class="px-2 py-0.5 bg-white/20 rounded-full text-xs">LA</span>
+              <span class="px-2 py-0.5 bg-white/20 rounded-full text-xs">+ 12 more</span>
+            </div>
+          </div>
+          <!-- Step 2 -->
+          <div class="step-card" style="--c1:#5b21b6;--c2:#7c3aed">
+            <div class="step-num">2</div>
+            <div class="text-2xl mb-2">🛒</div>
+            <h3 class="font-bold text-base mb-1">Add to Cart</h3>
+            <p class="text-white/80 text-xs leading-relaxed">Click <strong>+ Add</strong> on any result to add it to your Cart. The cart is your workspace — reorder items, add notes, compare schemas, and export in bulk.</p>
+            <div class="mt-3 tip-box" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2)">
+              <span class="text-xs">💡 Click <strong>Select All</strong> to add all results at once</span>
+            </div>
+          </div>
+          <!-- Step 3 -->
+          <div class="step-card" style="--c1:#065f46;--c2:#059669">
+            <div class="step-num">3</div>
+            <div class="text-2xl mb-2">🗺️</div>
+            <h3 class="font-bold text-base mb-1">Explore & Analyze</h3>
+            <p class="text-white/80 text-xs leading-relaxed">Use the tabs at the top to switch between <strong>Map View</strong>, <strong>Diagrams</strong>, <strong>SOQL Query Runner</strong>, <strong>AI Chat</strong>, and <strong>Column Profiler</strong>.</p>
+            <div class="mt-3 flex gap-2 flex-wrap">
+              <span class="px-2 py-0.5 bg-white/20 rounded-full text-xs">🗺 Maps</span>
+              <span class="px-2 py-0.5 bg-white/20 rounded-full text-xs">📊 Charts</span>
+              <span class="px-2 py-0.5 bg-white/20 rounded-full text-xs">🤖 AI</span>
+            </div>
+          </div>
+          <!-- Step 4 -->
+          <div class="step-card" style="--c1:#92400e;--c2:#d97706">
+            <div class="step-num">4</div>
+            <div class="text-2xl mb-2">⚡</div>
+            <h3 class="font-bold text-base mb-1">Generate & Export</h3>
+            <p class="text-white/80 text-xs leading-relaxed">Head to the <strong>Code</strong> tab to auto-generate Python, dbt, FastAPI, Docker Compose, or Great Expectations code. Export data as CSV or JSON.</p>
+            <div class="mt-3 flex gap-2 flex-wrap">
+              <span class="px-2 py-0.5 bg-white/20 rounded-full text-xs">Python</span>
+              <span class="px-2 py-0.5 bg-white/20 rounded-full text-xs">dbt</span>
+              <span class="px-2 py-0.5 bg-white/20 rounded-full text-xs">FastAPI</span>
+              <span class="px-2 py-0.5 bg-white/20 rounded-full text-xs">Airflow</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="tip-box mb-6">
+          <div class="flex items-start gap-3">
+            <span class="text-xl mt-0.5">🎯</span>
+            <div>
+              <p class="text-brand-300 font-bold text-sm mb-1">Pro Tip: Shareable Links</p>
+              <p class="text-gray-300 text-xs leading-relaxed">Your entire session — search results, cart contents, domain selection — is encoded in the URL hash. Click <strong>Share</strong> in the top-right to copy a link anyone can open to see your exact workspace.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-center">
+          <button onclick="endTour();toggleModal('help-modal');startTour();" class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-sm font-bold rounded-xl transition-all shadow-lg">
+            <i class="fa-solid fa-map-signs"></i> Start Interactive Tour
+          </button>
+          <p class="text-gray-500 text-xs mt-2">Takes about 60 seconds — highlights each panel interactively</p>
+        </div>
+      </div>
+
+      <!-- ===== FEATURES ===== -->
+      <div id="ht-features" class="help-tab-body hidden p-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          <div class="feat-card bg-gradient-to-br from-blue-950 to-blue-900 border border-blue-800">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded-xl bg-blue-600/30 flex items-center justify-center text-xl">🔍</div>
+              <div><h3 class="font-bold text-white text-sm">Smart Search</h3><p class="text-blue-300 text-xs">15+ city portals</p></div>
+            </div>
+            <p class="text-blue-200 text-xs leading-relaxed mb-3">Search across NYC, Chicago, LA, Seattle, Austin, Boston, Denver, and more simultaneously. Results show dataset size, update frequency, and category tags.</p>
+            <div class="bg-blue-900/50 rounded-lg p-3 text-xs text-blue-300">
+              <strong class="text-white block mb-1">How to use:</strong>
+              • Type keyword → press Enter or click Search<br>
+              • Enable "Search All Cities" for cross-portal search<br>
+              • Use Advanced Filters to filter by category & update date<br>
+              • Scroll to bottom of results to load more pages
+            </div>
+          </div>
+
+          <div class="feat-card bg-gradient-to-br from-purple-950 to-purple-900 border border-purple-800">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded-xl bg-purple-600/30 flex items-center justify-center text-xl">🛒</div>
+              <div><h3 class="font-bold text-white text-sm">Dataset Cart</h3><p class="text-purple-300 text-xs">Your analysis workspace</p></div>
+            </div>
+            <p class="text-purple-200 text-xs leading-relaxed mb-3">Collect datasets for comparison, bulk export, or code generation. Reorder items by drag handle, add per-dataset notes, and see a quality health bar for each.</p>
+            <div class="bg-purple-900/50 rounded-lg p-3 text-xs text-purple-300">
+              <strong class="text-white block mb-1">How to use:</strong>
+              • Click <strong>+ Add</strong> on any result card<br>
+              • Use ↑↓ arrows to reorder items in the cart<br>
+              • Click the pencil icon to add a note<br>
+              • Click ★ to save to Favorites (persists across sessions)
+            </div>
+          </div>
+
+          <div class="feat-card bg-gradient-to-br from-emerald-950 to-emerald-900 border border-emerald-800">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded-xl bg-emerald-600/30 flex items-center justify-center text-xl">🗺️</div>
+              <div><h3 class="font-bold text-white text-sm">Interactive Maps</h3><p class="text-emerald-300 text-xs">Leaflet GIS with heatmaps</p></div>
+            </div>
+            <p class="text-emerald-200 text-xs leading-relaxed mb-3">Visualize geographic datasets as heatmaps or marker clusters. Switch between satellite, street, terrain, and dark tile layers. All layers are individually toggleable.</p>
+            <div class="bg-emerald-900/50 rounded-lg p-3 text-xs text-emerald-300">
+              <strong class="text-white block mb-1">How to use:</strong>
+              • Go to the <strong>Map</strong> tab with geo datasets in cart<br>
+              • Or click <strong>🗺 Full Map View</strong> in the sidebar<br>
+              • Toggle Heatmap / Clusters using the layer buttons<br>
+              • Switch basemaps with the tile selector toolbar
+            </div>
+          </div>
+
+          <div class="feat-card bg-gradient-to-br from-orange-950 to-orange-900 border border-orange-800">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded-xl bg-orange-600/30 flex items-center justify-center text-xl">📊</div>
+              <div><h3 class="font-bold text-white text-sm">ER Diagrams</h3><p class="text-orange-300 text-xs">Mermaid.js + svg-pan-zoom</p></div>
+            </div>
+            <p class="text-orange-200 text-xs leading-relaxed mb-3">Auto-generate Entity Relationship, Class, Flowchart, or Mindmap diagrams from your cart datasets. Pan and zoom the SVG, then download it as a vector file.</p>
+            <div class="bg-orange-900/50 rounded-lg p-3 text-xs text-orange-300">
+              <strong class="text-white block mb-1">How to use:</strong>
+              • Go to the <strong>Diagram</strong> tab<br>
+              • Choose diagram type (ERD, Class, Mindmap, Flow)<br>
+              • Click <strong>Generate Diagram</strong><br>
+              • Pan/zoom with mouse · Download as SVG
+            </div>
+          </div>
+
+          <div class="feat-card bg-gradient-to-br from-pink-950 to-pink-900 border border-pink-800">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded-xl bg-pink-600/30 flex items-center justify-center text-xl">🤖</div>
+              <div><h3 class="font-bold text-white text-sm">AI Assistant</h3><p class="text-pink-300 text-xs">Gemini + GPT-4o</p></div>
+            </div>
+            <p class="text-pink-200 text-xs leading-relaxed mb-3">Ask natural-language questions about your datasets. The AI understands your cart context and can suggest joins, explain columns, write SOQL queries, and summarize data quality.</p>
+            <div class="bg-pink-900/50 rounded-lg p-3 text-xs text-pink-300">
+              <strong class="text-white block mb-1">How to use:</strong>
+              • Go to the <strong>AI Chat</strong> tab<br>
+              • Enter your Gemini or OpenAI API key in Config<br>
+              • Ask anything: <em>"What columns could I join on?"</em><br>
+              • History is preserved within your session
+            </div>
+          </div>
+
+          <div class="feat-card bg-gradient-to-br from-cyan-950 to-cyan-900 border border-cyan-800">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded-xl bg-cyan-600/30 flex items-center justify-center text-xl">⚡</div>
+              <div><h3 class="font-bold text-white text-sm">SOQL Query Runner</h3><p class="text-cyan-300 text-xs">Live Socrata queries</p></div>
+            </div>
+            <p class="text-cyan-200 text-xs leading-relaxed mb-3">Write and execute SOQL (Socrata Query Language) directly against any dataset in your cart. Results appear in a paginated table you can sort and export.</p>
+            <div class="bg-cyan-900/50 rounded-lg p-3 text-xs text-cyan-300">
+              <strong class="text-white block mb-1">How to use:</strong>
+              • Go to the <strong>SOQL</strong> tab<br>
+              • Pick a dataset from your cart<br>
+              • Write your query or use the visual builder<br>
+              • Example: <code class="bg-cyan-900 px-1 rounded">SELECT * WHERE status='Open' LIMIT 100</code>
+            </div>
+          </div>
+
+          <div class="feat-card bg-gradient-to-br from-indigo-950 to-indigo-900 border border-indigo-800">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded-xl bg-indigo-600/30 flex items-center justify-center text-xl">🔬</div>
+              <div><h3 class="font-bold text-white text-sm">Column Profiler</h3><p class="text-indigo-300 text-xs">Auto data quality analysis</p></div>
+            </div>
+            <p class="text-indigo-200 text-xs leading-relaxed mb-3">Click any dataset's <strong>Profile</strong> button to see null%, unique value count, top values, min/max, and a data quality score for every column — no code needed.</p>
+            <div class="bg-indigo-900/50 rounded-lg p-3 text-xs text-indigo-300">
+              <strong class="text-white block mb-1">How to use:</strong>
+              • Add a dataset to the cart<br>
+              • Click the <strong>🔬 Profile</strong> button on the cart item<br>
+              • Review the column table in the panel below<br>
+              • Use Compare to diff two datasets side-by-side
+            </div>
+          </div>
+
+          <div class="feat-card bg-gradient-to-br from-teal-950 to-teal-900 border border-teal-800">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded-xl bg-teal-600/30 flex items-center justify-center text-xl">📦</div>
+              <div><h3 class="font-bold text-white text-sm">Code Generator</h3><p class="text-teal-300 text-xs">8 output formats</p></div>
+            </div>
+            <p class="text-teal-200 text-xs leading-relaxed mb-3">Instantly generate production-ready code from your cart datasets. Supports Python/PySpark, dbt models, FastAPI endpoints, Docker Compose, Great Expectations, Airflow DAGs, and Prefect flows.</p>
+            <div class="bg-teal-900/50 rounded-lg p-3 text-xs text-teal-300">
+              <strong class="text-white block mb-1">How to use:</strong>
+              • Go to the <strong>Code</strong> tab<br>
+              • Select a language/framework from the dropdown<br>
+              • Click <strong>Generate</strong> to produce the code<br>
+              • Copy to clipboard or download as a file
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ===== FAQ ===== -->
+      <div id="ht-faq" class="help-tab-body hidden p-6">
+        <p class="text-gray-400 text-sm mb-6">Frequently asked questions about Manhattan Mission Control.</p>
+
+        <div class="space-y-3">
+
+          <details class="faq-item bg-gray-800 rounded-xl border border-gray-700 px-5 py-4">
+            <summary class="text-sm font-semibold text-gray-200">
+              <span class="flex items-center gap-2"><span class="text-brand-400">Q</span> Do I need an account or API key to use this?</span>
+              <i class="fa-solid fa-chevron-down faq-chevron text-gray-500 text-xs"></i>
+            </summary>
+            <div class="mt-3 text-xs text-gray-300 leading-relaxed pt-3 border-t border-gray-700">
+              <strong class="text-green-400">No account needed!</strong> All Socrata open data APIs are publicly accessible. You can search, browse, and export datasets without any registration. <br><br>
+              Optional: Add a free <strong>Socrata App Token</strong> in the Config panel to increase rate limits from ~1 request/sec to 1000/sec. Get one at <a href="https://opendata.socrata.com/signup" target="_blank" class="text-brand-400 underline">opendata.socrata.com</a>.<br><br>
+              The <strong>AI Chat</strong> feature requires a Google Gemini or OpenAI API key — enter it in Config → API Keys. These are only stored in your browser session, never sent anywhere except the AI provider.
+            </div>
+          </details>
+
+          <details class="faq-item bg-gray-800 rounded-xl border border-gray-700 px-5 py-4">
+            <summary class="text-sm font-semibold text-gray-200">
+              <span class="flex items-center gap-2"><span class="text-brand-400">Q</span> How do I save my work and come back to it later?</span>
+              <i class="fa-solid fa-chevron-down faq-chevron text-gray-500 text-xs"></i>
+            </summary>
+            <div class="mt-3 text-xs text-gray-300 leading-relaxed pt-3 border-t border-gray-700">
+              There are three ways:<br><br>
+              <strong class="text-yellow-400">1. Share URL</strong> — Click the <strong>Share</strong> button in the top-right. Your entire cart and settings are encoded in the URL hash. Bookmark it or send it to a colleague.<br><br>
+              <strong class="text-yellow-400">2. Workspaces</strong> — Click <strong>📁 Workspaces</strong> in the sidebar, give your session a name, and save it. Workspaces are stored in your browser's localStorage and persist across page reloads.<br><br>
+              <strong class="text-yellow-400">3. Favorites ★</strong> — Star individual datasets to pin them to your Favorites list, accessible from the sidebar. Favorites also persist in localStorage.
+            </div>
+          </details>
+
+          <details class="faq-item bg-gray-800 rounded-xl border border-gray-700 px-5 py-4">
+            <summary class="text-sm font-semibold text-gray-200">
+              <span class="flex items-center gap-2"><span class="text-brand-400">Q</span> What is SOQL and how is it different from SQL?</span>
+              <i class="fa-solid fa-chevron-down faq-chevron text-gray-500 text-xs"></i>
+            </summary>
+            <div class="mt-3 text-xs text-gray-300 leading-relaxed pt-3 border-t border-gray-700">
+              <strong class="text-brand-400">SOQL</strong> (Socrata Query Language) is Socrata's SQL-like query dialect used to filter and aggregate their datasets via URL parameters.<br><br>
+              Key differences from standard SQL:<br>
+              • Uses <code class="bg-gray-700 px-1 rounded">$where</code>, <code class="bg-gray-700 px-1 rounded">$select</code>, <code class="bg-gray-700 px-1 rounded">$limit</code> prefixes<br>
+              • No <code class="bg-gray-700 px-1 rounded">JOIN</code> — joins must be done client-side<br>
+              • Supports geospatial functions like <code class="bg-gray-700 px-1 rounded">within_circle()</code><br>
+              • Max 50,000 rows per query (use <code class="bg-gray-700 px-1 rounded">$offset</code> to paginate)<br><br>
+              Example: <code class="bg-gray-700 px-1.5 py-0.5 rounded">SELECT borough, COUNT(*) WHERE status='Open' GROUP BY borough</code>
+            </div>
+          </details>
+
+          <details class="faq-item bg-gray-800 rounded-xl border border-gray-700 px-5 py-4">
+            <summary class="text-sm font-semibold text-gray-200">
+              <span class="flex items-center gap-2"><span class="text-brand-400">Q</span> Why do some map datasets not show up on the map?</span>
+              <i class="fa-solid fa-chevron-down faq-chevron text-gray-500 text-xs"></i>
+            </summary>
+            <div class="mt-3 text-xs text-gray-300 leading-relaxed pt-3 border-t border-gray-700">
+              The map only renders datasets that have geographic coordinates. A dataset needs either:<br><br>
+              • A column named <code class="bg-gray-700 px-1 rounded">location</code>, <code class="bg-gray-700 px-1 rounded">latitude</code>/<code class="bg-gray-700 px-1 rounded">longitude</code>, or <code class="bg-gray-700 px-1 rounded">the_geom</code><br>
+              • A Socrata datatype of <strong>Location</strong> or <strong>Point</strong><br><br>
+              Datasets without geographic data (e.g., contract tables, financial records) will still appear in the cart but won't add any points to the map. Check the dataset's column list in the Profile panel to confirm it has spatial fields.
+            </div>
+          </details>
+
+          <details class="faq-item bg-gray-800 rounded-xl border border-gray-700 px-5 py-4">
+            <summary class="text-sm font-semibold text-gray-200">
+              <span class="flex items-center gap-2"><span class="text-brand-400">Q</span> How does the Schema Comparison tool work?</span>
+              <i class="fa-solid fa-chevron-down faq-chevron text-gray-500 text-xs"></i>
+            </summary>
+            <div class="mt-3 text-xs text-gray-300 leading-relaxed pt-3 border-t border-gray-700">
+              Click <strong>⚖ Compare Schemas</strong> in the sidebar (or the Compare button on the cart). Pick two datasets and the tool produces a side-by-side diff:<br><br>
+              • 🟢 <strong>Shared columns</strong> — appear in both (potential join keys)<br>
+              • 🔴 <strong>Unique to A</strong> or <strong>Unique to B</strong> — only in one dataset<br><br>
+              This is especially useful for finding BBL, block_id, or permit_number join keys across NYC datasets before writing a SOQL merge.
+            </div>
+          </details>
+
+          <details class="faq-item bg-gray-800 rounded-xl border border-gray-700 px-5 py-4">
+            <summary class="text-sm font-semibold text-gray-200">
+              <span class="flex items-center gap-2"><span class="text-brand-400">Q</span> Is my data sent to any server? Is it private?</span>
+              <i class="fa-solid fa-chevron-down faq-chevron text-gray-500 text-xs"></i>
+            </summary>
+            <div class="mt-3 text-xs text-gray-300 leading-relaxed pt-3 border-t border-gray-700">
+              <strong class="text-green-400">This app is 100% client-side</strong> — it's a single HTML file with no backend. Nothing you do is sent to our servers because there are no servers.<br><br>
+              Data flows:<br>
+              • <strong>Socrata API</strong> — your browser queries Socrata directly (public open data)<br>
+              • <strong>AI Chat</strong> — your message + dataset metadata goes to Google/OpenAI (only if you enter an API key)<br>
+              • <strong>localStorage</strong> — workspaces and favorites are stored only in your browser<br>
+              • <strong>URL hash</strong> — cart state is in the URL, visible only to people you share it with
+            </div>
+          </details>
+
+          <details class="faq-item bg-gray-800 rounded-xl border border-gray-700 px-5 py-4">
+            <summary class="text-sm font-semibold text-gray-200">
+              <span class="flex items-center gap-2"><span class="text-brand-400">Q</span> How do I download the generated diagram as a file?</span>
+              <i class="fa-solid fa-chevron-down faq-chevron text-gray-500 text-xs"></i>
+            </summary>
+            <div class="mt-3 text-xs text-gray-300 leading-relaxed pt-3 border-t border-gray-700">
+              After generating a diagram in the <strong>Diagram</strong> tab:<br><br>
+              • Click <strong>⬇ Download SVG</strong> — saves a vector SVG (scalable to any size, editable in Figma/Illustrator)<br>
+              • Right-click the diagram → "Save image as…" — for PNG<br><br>
+              The SVG download preserves all styling and is suitable for presentations, documentation, or data dictionaries.
+            </div>
+          </details>
+
+          <details class="faq-item bg-gray-800 rounded-xl border border-gray-700 px-5 py-4">
+            <summary class="text-sm font-semibold text-gray-200">
+              <span class="flex items-center gap-2"><span class="text-brand-400">Q</span> Can I use this app offline?</span>
+              <i class="fa-solid fa-chevron-down faq-chevron text-gray-500 text-xs"></i>
+            </summary>
+            <div class="mt-3 text-xs text-gray-300 leading-relaxed pt-3 border-t border-gray-700">
+              Partially. The HTML file itself works offline, but most features need internet access:<br><br>
+              <strong class="text-green-400">Works offline:</strong> The UI, saved workspaces, favorites, code generator (from cart metadata already loaded)<br><br>
+              <strong class="text-red-400">Needs internet:</strong> Search (hits Socrata API), Map tiles (CDN), AI Chat (AI provider), Diagram rendering (Mermaid CDN), column profiling (fetches live data)<br><br>
+              Tip: If you've already searched and have results in your cart, the Code Generator and Diagram features will work offline since they use cart metadata, not live data.
+            </div>
+          </details>
+
+        </div>
+      </div>
+
+      <!-- ===== KEYBOARD SHORTCUTS ===== -->
+      <div id="ht-shortcuts" class="help-tab-body hidden p-6">
+        <p class="text-gray-400 text-sm mb-5">Power through your workflow without touching the mouse.</p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div>
+            <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Navigation</h3>
+            <div class="shortcut-row"><span class="text-gray-300 text-xs">Focus search box</span><span><kbd class="kbd">Ctrl</kbd>+<kbd class="kbd">K</kbd></span></div>
+            <div class="shortcut-row"><span class="text-gray-300 text-xs">Close any modal</span><span><kbd class="kbd">Esc</kbd></span></div>
+            <div class="shortcut-row"><span class="text-gray-300 text-xs">Switch to tab 1–6</span><span><kbd class="kbd">Shift</kbd>+<kbd class="kbd">1-6</kbd></span></div>
+            <div class="shortcut-row"><span class="text-gray-300 text-xs">Open shortcuts</span><span><kbd class="kbd">?</kbd></span></div>
+          </div>
+          <div>
+            <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Search & Data</h3>
+            <div class="shortcut-row"><span class="text-gray-300 text-xs">Execute search</span><span><kbd class="kbd">Ctrl</kbd>+<kbd class="kbd">↵</kbd></span></div>
+            <div class="shortcut-row"><span class="text-gray-300 text-xs">Export / download menu</span><span><kbd class="kbd">Ctrl</kbd>+<kbd class="kbd">E</kbd></span></div>
+            <div class="shortcut-row"><span class="text-gray-300 text-xs">Send AI chat message</span><span><kbd class="kbd">Ctrl</kbd>+<kbd class="kbd">↵</kbd> <span class="text-gray-500">(in chat)</span></span></div>
+          </div>
+          <div>
+            <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Appearance</h3>
+            <div class="shortcut-row"><span class="text-gray-300 text-xs">Toggle dark/light mode</span><span><kbd class="kbd">Ctrl</kbd>+<kbd class="kbd">Shift</kbd>+<kbd class="kbd">D</kbd></span></div>
+            <div class="shortcut-row"><span class="text-gray-300 text-xs">Collapse sidebar</span><span>Click <i class="fa-solid fa-angles-left text-gray-400 mx-1"></i> icon</span></div>
+          </div>
+          <div>
+            <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Help</h3>
+            <div class="shortcut-row"><span class="text-gray-300 text-xs">Open Help Center</span><span>Click <strong class="text-brand-400">Help</strong> button</span></div>
+            <div class="shortcut-row"><span class="text-gray-300 text-xs">Start interactive tour</span><span>Help → Quick Start → Tour</span></div>
+          </div>
+        </div>
+
+        <div class="tip-box mt-6">
+          <div class="flex items-start gap-3">
+            <span class="text-xl">⌨️</span>
+            <div>
+              <p class="text-brand-300 font-bold text-sm mb-1">Tip: Search-First Workflow</p>
+              <p class="text-gray-300 text-xs leading-relaxed">Press <kbd class="kbd">Ctrl</kbd>+<kbd class="kbd">K</kbd> to jump to search instantly, type your query, then <kbd class="kbd">Ctrl</kbd>+<kbd class="kbd">↵</kbd> to execute. No mouse needed from search to results.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== TIPS ===== -->
+      <div id="ht-tips" class="help-tab-body hidden p-6">
+        <p class="text-gray-400 text-sm mb-6">Power-user tips to get the most out of Mission Control.</p>
+
+        <div class="space-y-4">
+
+          <div class="flex gap-4 p-4 bg-gray-800 rounded-xl border border-gray-700 hover:border-brand-700 transition-all">
+            <div class="text-3xl flex-shrink-0">🔗</div>
+            <div>
+              <h3 class="font-bold text-white text-sm mb-1">Find Join Keys Between Datasets</h3>
+              <p class="text-gray-300 text-xs leading-relaxed">Add two NYC datasets to your cart, then use <strong>⚖ Compare Schemas</strong>. Green-highlighted columns appear in both datasets — these are your join keys. Common ones: <code class="bg-gray-700 px-1 rounded">bbl</code>, <code class="bg-gray-700 px-1 rounded">bin</code>, <code class="bg-gray-700 px-1 rounded">block</code>, <code class="bg-gray-700 px-1 rounded">permit_number</code>, <code class="bg-gray-700 px-1 rounded">unique_key</code>.</p>
+            </div>
+          </div>
+
+          <div class="flex gap-4 p-4 bg-gray-800 rounded-xl border border-gray-700 hover:border-purple-700 transition-all">
+            <div class="text-3xl flex-shrink-0">📋</div>
+            <div>
+              <h3 class="font-bold text-white text-sm mb-1">Multi-City Research in One Session</h3>
+              <p class="text-gray-300 text-xs leading-relaxed">Enable <strong>Search All Cities</strong> in the sidebar. Then search for a common dataset type like "permits" — you'll get results from NYC, Chicago, LA, and more in a single result list, perfect for cross-city policy analysis.</p>
+            </div>
+          </div>
+
+          <div class="flex gap-4 p-4 bg-gray-800 rounded-xl border border-gray-700 hover:border-green-700 transition-all">
+            <div class="text-3xl flex-shrink-0">⚡</div>
+            <div>
+              <h3 class="font-bold text-white text-sm mb-1">Generate a Full dbt Project in 30 Seconds</h3>
+              <p class="text-gray-300 text-xs leading-relaxed">Search for 3–4 related datasets (e.g., inspections, violations, permits), add them all to your cart, go to <strong>Code</strong> tab, select <strong>dbt Models</strong>, and click Generate. You'll get a complete dbt project with sources, staging models, and a mart layer.</p>
+            </div>
+          </div>
+
+          <div class="flex gap-4 p-4 bg-gray-800 rounded-xl border border-gray-700 hover:border-yellow-700 transition-all">
+            <div class="text-3xl flex-shrink-0">🎯</div>
+            <div>
+              <h3 class="font-bold text-white text-sm mb-1">Use SOQL for Targeted Data Pulls</h3>
+              <p class="text-gray-300 text-xs leading-relaxed">Instead of downloading an entire 1M-row dataset, use the SOQL runner to pull only what you need. Example: <code class="bg-gray-700 px-1 rounded text-green-300">SELECT * WHERE borough='MANHATTAN' AND created_date > '2024-01-01' LIMIT 5000</code>. Then export just those rows as CSV.</p>
+            </div>
+          </div>
+
+          <div class="flex gap-4 p-4 bg-gray-800 rounded-xl border border-gray-700 hover:border-pink-700 transition-all">
+            <div class="text-3xl flex-shrink-0">🤖</div>
+            <div>
+              <h3 class="font-bold text-white text-sm mb-1">Let AI Write Your SOQL Queries</h3>
+              <p class="text-gray-300 text-xs leading-relaxed">Add datasets to your cart, then go to AI Chat and ask: <em>"Write a SOQL query to find all open 311 complaints in Manhattan from the last 30 days, grouped by complaint type."</em> The AI has your cart context and produces ready-to-run queries.</p>
+            </div>
+          </div>
+
+          <div class="flex gap-4 p-4 bg-gray-800 rounded-xl border border-gray-700 hover:border-cyan-700 transition-all">
+            <div class="text-3xl flex-shrink-0">🗺️</div>
+            <div>
+              <h3 class="font-bold text-white text-sm mb-1">Layer Multiple Datasets on One Map</h3>
+              <p class="text-gray-300 text-xs leading-relaxed">Add several geo datasets to your cart (e.g., 311 complaints + sidewalk inspections + tree census), then click <strong>🗺 Full Map View</strong>. All datasets render as separate layer groups you can toggle on/off individually.</p>
+            </div>
+          </div>
+
+          <div class="flex gap-4 p-4 bg-gray-800 rounded-xl border border-gray-700 hover:border-indigo-700 transition-all">
+            <div class="text-3xl flex-shrink-0">💾</div>
+            <div>
+              <h3 class="font-bold text-white text-sm mb-1">Share Research with Your Team</h3>
+              <p class="text-gray-300 text-xs leading-relaxed">After building your cart, click <strong>Share</strong> in the top-right header. The URL encodes your entire workspace. Anyone who opens the link sees your exact cart, search state, and domain selection — no login required.</p>
+            </div>
+          </div>
+
+          <div class="flex gap-4 p-4 bg-gray-800 rounded-xl border border-gray-700 hover:border-orange-700 transition-all">
+            <div class="text-3xl flex-shrink-0">📐</div>
+            <div>
+              <h3 class="font-bold text-white text-sm mb-1">Use Mindmaps for Dataset Discovery</h3>
+              <p class="text-gray-300 text-xs leading-relaxed">Start with one anchor dataset (e.g., "Street Permits"), go to <strong>Diagram → Mindmap</strong>, and generate. The mindmap shows the dataset's columns as branches. Use it to spot categories, then search for datasets that complement each branch.</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- /scroll area -->
+  </div><!-- /modal-box -->
+</div><!-- /help-modal -->
 
 <!-- CONFIRM MODAL -->
 <div id="confirm-modal" class="modal-overlay hidden">
@@ -3161,5 +3706,130 @@ function init() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
+// ============================================================
+// HELP SYSTEM — tabs, onboarding, interactive tour
+// ============================================================
+function switchHelpTab(id, btn) {
+  document.querySelectorAll('.help-tab-body').forEach(el => el.classList.add('hidden'));
+  document.querySelectorAll('.help-tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.remove('hidden');
+  btn.classList.add('active');
+}
+
+function dismissOnboarding() {
+  const banner = document.getElementById('onboarding-banner');
+  banner.style.transition = 'height .3s ease, opacity .3s ease';
+  banner.style.height = banner.offsetHeight + 'px';
+  requestAnimationFrame(() => { banner.style.height = '0'; banner.style.opacity = '0'; });
+  setTimeout(() => banner.classList.add('hidden'), 320);
+  localStorage.setItem('mc_onboarded', '1');
+}
+
+function showOnboardingIfNew() {
+  if (!localStorage.getItem('mc_onboarded')) {
+    const banner = document.getElementById('onboarding-banner');
+    banner.classList.remove('hidden');
+    banner.style.display = 'flex';
+  }
+}
+
+// ---- Interactive Tour ----
+const TOUR_STEPS = [
+  {
+    selector: '#search-input',
+    title: '🔍 Search Datasets',
+    body: 'Type any keyword here — 311, permits, trees, sidewalk — and press Enter. You can also use the Domain dropdown above to search across 15+ city portals simultaneously.',
+    badge: 'Search'
+  },
+  {
+    selector: '#domain-select',
+    title: '🌍 Choose a City Portal',
+    body: 'Switch between NYC, Chicago, LA, Seattle, Austin and more. Enable "Search All Cities" below to search every portal at once for cross-city comparisons.',
+    badge: 'Domains'
+  },
+  {
+    selector: '#results-tbody',
+    title: '📋 Search Results',
+    body: 'Results appear here. Click Preview to browse the data, + Add to put it in your cart, or ★ to save to favorites. Click "Load More" at the bottom to paginate.',
+    badge: 'Results'
+  },
+  {
+    selector: '#cart-list',
+    title: '🛒 Your Cart',
+    body: 'Datasets you add land here. Reorder with ↑↓, add notes with the pencil icon, compare schemas, or export everything at once. Your cart is saved in the URL so you can share it.',
+    badge: 'Cart'
+  },
+  {
+    selector: '.tab-btn',
+    title: '📑 Analysis Tabs',
+    body: 'These tabs switch between views: Map (Leaflet GIS), Diagram (Mermaid ERD), SOQL (live query runner), Code (generator), AI Chat, and Column Profiler. Each tab works with your cart.',
+    badge: 'Tabs'
+  },
+  {
+    selector: 'header',
+    title: '⚙️ Config & Sharing',
+    body: 'Click Config to enter API keys for Gemini/OpenAI. Click Share to copy a URL encoding your entire workspace. The Help button (you found it!) opens this guide anytime.',
+    badge: 'Header'
+  },
+];
+
+let tourStep = 0;
+
+function startTour() {
+  dismissOnboarding();
+  tourStep = 0;
+  document.getElementById('tour-overlay').classList.remove('hidden');
+  renderTourStep();
+}
+
+function endTour() {
+  document.getElementById('tour-overlay').classList.add('hidden');
+  document.getElementById('tour-tooltip').classList.add('hidden');
+}
+
+function nextTourStep() {
+  if (tourStep < TOUR_STEPS.length - 1) { tourStep++; renderTourStep(); }
+  else endTour();
+}
+
+function prevTourStep() {
+  if (tourStep > 0) { tourStep--; renderTourStep(); }
+}
+
+function renderTourStep() {
+  const step = TOUR_STEPS[tourStep];
+  const target = document.querySelector(step.selector);
+  const tooltip = document.getElementById('tour-tooltip');
+  const spotlight = document.getElementById('tour-spotlight');
+
+  document.getElementById('tour-title').textContent = step.title;
+  document.getElementById('tour-body').textContent = step.body;
+  document.getElementById('tour-step-badge').textContent = step.badge;
+  document.getElementById('tour-step-counter').textContent = `${tourStep + 1} / ${TOUR_STEPS.length}`;
+  document.getElementById('tour-prev').style.opacity = tourStep === 0 ? '0.4' : '1';
+  document.getElementById('tour-next').textContent = tourStep === TOUR_STEPS.length - 1 ? '✓ Finish' : 'Next →';
+
+  if (target) {
+    const rect = target.getBoundingClientRect();
+    const pad = 8;
+    spotlight.style.cssText = `left:${rect.left - pad}px;top:${rect.top - pad}px;width:${rect.width + pad * 2}px;height:${rect.height + pad * 2}px`;
+
+    // Position tooltip below the target, or above if near bottom
+    tooltip.classList.remove('hidden');
+    const tH = 200;
+    const spaceBelow = window.innerHeight - rect.bottom - pad;
+    const top = spaceBelow > tH + 20 ? rect.bottom + pad + 16 : rect.top - tH - 24;
+    const left = Math.min(Math.max(rect.left, 10), window.innerWidth - 340);
+    tooltip.style.cssText = `left:${left}px;top:${top}px;width:320px`;
+    target.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+}
+
+// Init: show banner on first visit
+(function() {
+  // Run after DOM ready (already wrapped in DOMContentLoaded above via init)
+  setTimeout(showOnboardingIfNew, 800);
+})();
 </script>
 </html>
