@@ -197,14 +197,44 @@ def _postprocess_dataset(dataset_key: str, df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def _fetch_live(dataset_key: str, *, limit: int, where: str | None) -> pd.DataFrame:
+def _fetch_live(
+    dataset_key: str,
+    *,
+    limit: int,
+    where: str | None,
+    retries: int = 3,
+    backoff: float = 2.0,
+) -> pd.DataFrame:
+    """Fetch from Socrata with exponential-backoff retry."""
     meta = DATASET_REGISTRY[dataset_key]
     client = get_socrata_client()
     kwargs: dict[str, Any] = {"limit": limit}
     if where:
         kwargs["where"] = where
-    rows = client.get(meta["fourfour"], **kwargs)
-    return _postprocess_dataset(dataset_key, pd.DataFrame.from_records(rows))
+
+    last_exc: Exception | None = None
+    for attempt in range(retries):
+        try:
+            rows = client.get(meta["fourfour"], **kwargs)
+            df = pd.DataFrame.from_records(rows) if rows else pd.DataFrame()
+            return _postprocess_dataset(dataset_key, df)
+        except Exception as exc:
+            last_exc = exc
+            wait = backoff ** attempt
+            logging.warning(
+                "Socrata fetch attempt %d/%d failed for %s: %s — retrying in %.1fs",
+                attempt + 1,
+                retries,
+                dataset_key,
+                exc,
+                wait,
+            )
+            if attempt < retries - 1:
+                time.sleep(wait)
+
+    raise RuntimeError(
+        f"All {retries} fetch attempts failed for {dataset_key}: {last_exc}"
+    ) from last_exc
 
 
 @_cache_decorator()
@@ -381,14 +411,57 @@ def ingestion_summary(frames: dict[str, pd.DataFrame]) -> pd.DataFrame:
     for key, meta in DATASET_REGISTRY.items():
         df = frames.get(key, pd.DataFrame())
         err = df["_error"].iloc[0] if not df.empty and "_error" in df.columns else ""
+        loaded = key in frames and not df.empty and "_error" not in df.columns
+
+        # Cache freshness
+        cache_path = _parquet_path(key)
+        cache_age_h = (
+            round((time.time() - cache_path.stat().st_mtime) / 3600, 1)
+            if cache_path.exists()
+            else None
+        )
+        source = (
+            "demo" if not loaded else ("parquet" if cache_path.exists() and _parquet_fresh(cache_path) else "live")
+        )
+
         rows.append(
             {
                 "key": key,
                 "label": meta["label"],
+                "group": meta.get("group", "—"),
                 "fourfour": meta["fourfour"],
                 "rows": 0 if err else len(df),
-                "bbl_coverage_pct": round(df["_bbl"].notna().mean() * 100, 1) if "_bbl" in df.columns and len(df) else 0,
+                "columns": len(df.columns) if not df.empty and not err else 0,
+                "bbl_coverage_%": (
+                    round(df["_bbl"].notna().mean() * 100, 1)
+                    if "_bbl" in df.columns and len(df)
+                    else 0
+                ),
+                "cache_age_h": cache_age_h,
+                "source": source,
+                "status": "✅" if loaded else ("❌ error" if err else "—"),
                 "error": err,
             }
         )
     return pd.DataFrame(rows)
+
+
+def cache_freshness_report() -> pd.DataFrame:
+    """Report on the age and size of all parquet caches."""
+    rows = []
+    for key in DATASET_REGISTRY:
+        path = _parquet_path(key)
+        if path.exists():
+            stat = path.stat()
+            age_h = round((time.time() - stat.st_mtime) / 3600, 1)
+            size_kb = round(stat.st_size / 1024, 1)
+            rows.append({
+                "key": key,
+                "age_hours": age_h,
+                "size_kb": size_kb,
+                "fresh": age_h < (CACHE_TTL_SECONDS / 3600),
+                "path": str(path),
+            })
+    return pd.DataFrame(rows) if rows else pd.DataFrame(
+        columns=["key", "age_hours", "size_kb", "fresh", "path"]
+    )
