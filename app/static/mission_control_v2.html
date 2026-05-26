@@ -13,6 +13,7 @@
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 <script>
 tailwind.config = {
   darkMode: 'class',
@@ -191,6 +192,48 @@ body { font-family: 'Inter', system-ui, sans-serif; }
 .gloss-term { border-radius:10px; padding:14px 16px; border:1px solid #374151; background:#111827; margin-bottom:8px; transition:border-color .2s; }
 .gloss-term:hover { border-color:#4b5563; }
 .gloss-badge { font-size:9px; padding:1px 7px; border-radius:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; }
+
+/* ===== GROUP 1: UI/UX POLISH ===== */
+
+/* #5 Tab transition animations */
+.tab-content-panel { animation: tabFadeIn .2s ease; }
+@keyframes tabFadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+
+/* #2 Custom color themes - CSS variables */
+:root {
+  --brand-primary: #0ea5e9;
+  --brand-secondary: #6366f1;
+}
+
+/* ===== GROUP 4: MAPS ===== */
+/* #32 Cluster count labels */
+.cluster-icon { background:linear-gradient(135deg,#0ea5e9,#6366f1); border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:12px; border:2px solid rgba(255,255,255,.3); box-shadow:0 2px 8px rgba(0,0,0,.4); }
+
+/* ===== GROUP 5: DATA EXPLORATION ===== */
+/* PII badge */
+.pii-badge { font-size:9px; padding:1px 5px; border-radius:10px; font-weight:700; background:#7f1d1d; color:#fca5a5; }
+
+/* ===== GROUP 7: AI ASSISTANT ===== */
+/* #47 Prompt chips */
+.prompt-chip { padding:4px 12px; background:#1f2937; border:1px solid #374151; border-radius:20px; font-size:11px; color:#9ca3af; cursor:pointer; white-space:nowrap; transition:all .2s; }
+.prompt-chip:hover { border-color:#0ea5e9; color:#38bdf8; background:#1e3a5f; }
+
+/* ===== GROUP 10: ACCESSIBILITY ===== */
+/* #63 High contrast mode */
+.high-contrast { --bg: #000000; --text: #ffffff; --accent: #ffff00; }
+.high-contrast body { background:#000!important; color:#fff!important; }
+.high-contrast .bg-gray-900,.high-contrast .bg-gray-800,.high-contrast .bg-gray-950 { background:#111!important; }
+.high-contrast a,.high-contrast button { outline:2px solid #ffff00; }
+
+/* #64 Keyboard focus indicators */
+*:focus-visible { outline:2px solid #0ea5e9!important; outline-offset:2px!important; border-radius:4px; }
+
+/* #66 Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration:0.01ms!important; transition-duration:0.01ms!important; }
+  .brand-gradient { animation:none!important; }
+  .skeleton { animation:none!important; background:#1f2937; }
+}
 </style>
 </head>
 <body class="bg-gray-950 text-gray-200 flex flex-col h-screen overflow-hidden">
@@ -203,6 +246,30 @@ body { font-family: 'Inter', system-ui, sans-serif; }
     <span class="text-white/60 text-xs font-mono">v2.0</span>
   </div>
   <div class="flex-1"></div>
+  <!-- #6 Font size controls -->
+  <div class="flex items-center gap-0.5 bg-white/10 rounded-lg px-1 py-0.5">
+    <button onclick="adjustFontSize(-1)" class="w-6 h-6 text-white/80 hover:text-white text-xs font-bold transition-all" title="Decrease font size">A-</button>
+    <button onclick="adjustFontSize(0)" class="w-6 h-6 text-white/60 hover:text-white text-xs transition-all" title="Reset font size">A</button>
+    <button onclick="adjustFontSize(1)" class="w-6 h-6 text-white/80 hover:text-white text-xs font-bold transition-all" title="Increase font size">A+</button>
+  </div>
+  <!-- #7 Notification center -->
+  <div class="relative">
+    <button onclick="toggleNotifCenter()" class="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all" title="Notifications">
+      <i class="fa-solid fa-bell text-xs"></i>
+      <span id="notif-badge" class="hidden absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-xs flex items-center justify-center text-white font-bold">0</span>
+    </button>
+    <div id="notif-center" class="hidden absolute right-0 top-9 w-72 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl z-50 overflow-hidden">
+      <div class="flex items-center justify-between px-4 py-2 border-b border-gray-800">
+        <span class="text-xs font-bold text-gray-300">Notifications</span>
+        <button onclick="clearNotifs()" class="text-xs text-gray-500 hover:text-gray-300 transition-all">Clear all</button>
+      </div>
+      <div id="notif-list" class="max-h-64 overflow-y-auto"></div>
+    </div>
+  </div>
+  <!-- #4 Fullscreen mode -->
+  <button onclick="toggleFullscreen()" title="Fullscreen" class="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all"><i id="fullscreen-icon" class="fa-solid fa-expand text-xs"></i></button>
+  <!-- #58 QR code -->
+  <button onclick="showQRCode()" class="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all" title="QR Code"><i class="fa-solid fa-qrcode text-xs"></i></button>
   <button onclick="shareURL()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-all" title="Share current state">
     <i class="fa-solid fa-share-nodes"></i><span>Share</span>
   </button>
@@ -364,6 +431,14 @@ body { font-family: 'Inter', system-ui, sans-serif; }
       </div>
     </div>
     <div id="cart-list" class="flex flex-col gap-1 max-h-48 overflow-y-auto"></div>
+    <!-- #21 Undo/redo + #25 stats -->
+    <div class="sidebar-text flex items-center justify-between mt-1.5 px-0.5">
+      <span id="cart-stats-bar" class="text-xs text-gray-600">Empty cart</span>
+      <div class="flex gap-1">
+        <button onclick="cartUndo()" class="px-1.5 py-0.5 bg-gray-800 hover:bg-gray-700 rounded text-xs text-gray-400 transition-all" title="Undo (Ctrl+Z)">↩</button>
+        <button onclick="cartRedo()" class="px-1.5 py-0.5 bg-gray-800 hover:bg-gray-700 rounded text-xs text-gray-400 transition-all" title="Redo (Ctrl+Y)">↪</button>
+      </div>
+    </div>
   </div>
 
   <!-- Export buttons -->
@@ -374,6 +449,25 @@ body { font-family: 'Inter', system-ui, sans-serif; }
       <button onclick="exportData('json')" class="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs text-gray-300 transition-all" title="Export JSON">JSON</button>
       <button onclick="exportData('geojson')" class="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs text-gray-300 transition-all" title="Export GeoJSON">GeoJSON</button>
       <button onclick="exportData('tsv')" class="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs text-gray-300 transition-all" title="Export TSV">TSV</button>
+      <button onclick="exportMarkdownReport()" class="px-2 py-1 bg-indigo-800 hover:bg-indigo-700 rounded text-xs text-indigo-200 transition-all" title="Export Markdown report">MD</button>
+      <button onclick="exportDataDictionary()" class="px-2 py-1 bg-teal-800 hover:bg-teal-700 rounded text-xs text-teal-200 transition-all" title="Data dictionary CSV">Dict</button>
+      <button onclick="exportJupyterNotebook()" class="px-2 py-1 bg-orange-800 hover:bg-orange-700 rounded text-xs text-orange-200 transition-all" title="Export Jupyter notebook">.ipynb</button>
+      <button onclick="printWorkspace()" class="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs text-gray-300 transition-all" title="Print / save as PDF">Print</button>
+      <button onclick="emailWorkspace()" class="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs text-gray-300 transition-all" title="Email workspace">Email</button>
+      <button onclick="showEmbed()" class="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs text-gray-300 transition-all" title="Embed snippet">Embed</button>
+    </div>
+    <!-- #22 Templates + #14 Recently viewed -->
+    <button onclick="showTemplatesModal()" class="sidebar-text mt-2 w-full flex items-center gap-1.5 px-2 py-1.5 bg-gray-800 hover:bg-gray-700 rounded text-xs text-gray-300 transition-all">
+      <i class="fa-solid fa-layer-group text-brand-400"></i> Starter Templates
+    </button>
+    <div class="sidebar-text mt-2">
+      <div class="text-xs text-gray-600 mb-1 flex items-center gap-1"><i class="fa-solid fa-clock-rotate-left text-xs"></i> Recently viewed</div>
+      <div id="recently-viewed-list" class="flex flex-col gap-1"><span class="text-xs text-gray-600">None yet</span></div>
+    </div>
+    <!-- #15 Related suggestions -->
+    <div class="sidebar-text mt-2">
+      <div class="text-xs text-gray-600 mb-1 flex items-center gap-1"><i class="fa-solid fa-wand-sparkles text-xs text-purple-400"></i> Related</div>
+      <div id="related-suggestions" class="flex flex-wrap gap-1"></div>
     </div>
   </div>
 
@@ -399,6 +493,23 @@ body { font-family: 'Inter', system-ui, sans-serif; }
     </button>
   </div>
 </aside>
+
+<!-- #3 Sidebar resize handle -->
+<div id="sidebar-resize-handle" style="width:4px;cursor:col-resize;background:transparent;flex-shrink:0;transition:background .2s;z-index:10" onmouseenter="this.style.background='#374151'" onmouseleave="this.style.background='transparent'"></div>
+
+<!-- #65 ARIA live region -->
+<div id="aria-live" aria-live="polite" aria-atomic="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden"></div>
+
+<!-- #8 Back to top button -->
+<button id="back-to-top" onclick="document.querySelector('.overflow-y-auto')?.scrollTo({top:0,behavior:'smooth'})" class="hidden fixed bottom-20 right-6 w-9 h-9 bg-brand-600 hover:bg-brand-500 text-white rounded-full shadow-lg flex items-center justify-center transition-all z-50" title="Back to top"><i class="fa-solid fa-chevron-up text-xs"></i></button>
+
+<!-- #24 Print styles -->
+<style media="print">
+  header,aside,#sidebar-resize-handle,#toast-container,.modal-overlay,#back-to-top,#onboarding-banner,#tour-overlay,#status-bar { display:none!important; }
+  body { background:#fff!important; color:#000!important; }
+  main { overflow:visible!important; }
+  .brand-gradient { background:#003366!important; }
+</style>
 
 <!-- MAIN CONTENT -->
 <main class="flex-1 flex flex-col overflow-hidden">
@@ -431,12 +542,21 @@ body { font-family: 'Inter', system-ui, sans-serif; }
 
     <!-- DISCOVERY TAB -->
     <div id="tab-content-discovery" class="h-full flex flex-col overflow-hidden p-0">
-      <div class="px-4 py-2 border-b border-gray-800 flex items-center gap-2 flex-shrink-0">
+      <div class="px-4 py-2 border-b border-gray-800 flex items-center gap-2 flex-shrink-0 flex-wrap">
         <button onclick="selectAllResults()" class="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs text-gray-300 transition-all">Select All</button>
         <button onclick="deselectAllResults()" class="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs text-gray-300 transition-all">Deselect All</button>
+        <!-- #10 Sort -->
+        <select id="sort-select" onchange="sortAndRenderResults()" class="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-brand-500">
+          <option value="relevance">Sort: Relevance</option>
+          <option value="rows_desc">Most Rows</option>
+          <option value="updated_desc">Recently Updated</option>
+          <option value="name_asc">Name A→Z</option>
+        </select>
         <span class="flex-1"></span>
         <span id="select-count" class="text-xs text-gray-500"></span>
       </div>
+      <!-- #16 Category filter pills -->
+      <div id="category-pills" class="px-4 py-1.5 flex gap-1.5 flex-wrap border-b border-gray-800 flex-shrink-0 min-h-0"></div>
       <div class="flex-1 overflow-auto">
         <table class="w-full text-xs border-collapse">
           <thead class="sticky top-0 bg-gray-900 z-10">
@@ -621,6 +741,16 @@ body { font-family: 'Inter', system-ui, sans-serif; }
         <button onclick="sendPreset('List all columns that likely contain geographic or location data')" class="px-2 py-0.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded text-xs text-gray-300 transition-all">Geo Columns</button>
         <button onclick="sendPreset('Write an Airflow DAG that ingests all datasets in my cart into PostgreSQL')" class="px-2 py-0.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded text-xs text-gray-300 transition-all">Airflow DAG</button>
       </div>
+      <!-- #47 Prompt chips -->
+      <div class="flex gap-2 overflow-x-auto px-4 py-2 flex-shrink-0 border-b border-gray-800">
+        <button onclick="setAIPrompt('Summarize these datasets and their key use cases')" class="prompt-chip">📋 Summarize</button>
+        <button onclick="setAIPrompt('What columns could I join across these datasets? List shared keys.')" class="prompt-chip">🔗 Find Joins</button>
+        <button onclick="setAIPrompt('Write a SOQL query to get the most recent 100 records with location data')" class="prompt-chip">⚡ Write SOQL</button>
+        <button onclick="setAIPrompt('What data quality issues do you see in these datasets?')" class="prompt-chip">🩺 Quality Check</button>
+        <button onclick="setAIPrompt('Generate a dbt staging model for each dataset in my cart')" class="prompt-chip">📦 dbt Models</button>
+        <button onclick="setAIPrompt('What interesting analysis could I do by combining these datasets?')" class="prompt-chip">💡 Analysis Ideas</button>
+        <button onclick="setAIPrompt('List all PII-sensitive columns across my datasets')" class="prompt-chip">🔒 PII Audit</button>
+      </div>
       <div id="chat-messages" class="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3"></div>
       <div class="px-4 py-3 border-t border-gray-800 flex gap-2 flex-shrink-0">
         <textarea id="chat-input" rows="2" placeholder="Ask about your datasets… (Ctrl+Enter to send)"
@@ -708,6 +838,8 @@ body { font-family: 'Inter', system-ui, sans-serif; }
           <div id="soql-results-header" class="px-4 py-2 border-b border-gray-800 flex items-center gap-2 flex-shrink-0">
             <span id="soql-results-count" class="text-xs text-gray-400">No results yet</span>
           </div>
+          <!-- #44 Result chart -->
+          <div id="soql-chart" class="px-4 py-2 flex-shrink-0 overflow-x-auto"></div>
           <div class="flex-1 overflow-auto">
             <table class="w-full text-xs border-collapse">
               <thead id="soql-results-thead" class="sticky top-0 bg-gray-900 z-10"></thead>
@@ -1610,6 +1742,78 @@ body { font-family: 'Inter', system-ui, sans-serif; }
     </div><!-- /scroll area -->
   </div><!-- /modal-box -->
 </div><!-- /help-modal -->
+
+<!-- QR CODE MODAL (#58) -->
+<div id="qr-modal" class="modal-overlay hidden">
+  <div class="modal-box w-full max-w-sm p-6 text-center">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-base font-bold text-gray-100"><i class="fa-solid fa-qrcode mr-2 text-brand-400"></i>Share QR Code</h2>
+      <button onclick="toggleModal('qr-modal')" class="text-gray-500 hover:text-gray-300"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <div id="qr-modal-body" class="flex flex-col items-center gap-3">
+      <div class="skeleton w-48 h-48 rounded-lg"></div>
+    </div>
+  </div>
+</div>
+
+<!-- CITATION MODAL (#60) -->
+<div id="citation-modal" class="modal-overlay hidden">
+  <div class="modal-box w-full max-w-lg p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-base font-bold text-gray-100"><i class="fa-solid fa-quote-left mr-2 text-brand-400"></i>Dataset Citation</h2>
+      <button onclick="toggleModal('citation-modal')" class="text-gray-500 hover:text-gray-300"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <div id="citation-modal-body"></div>
+  </div>
+</div>
+
+<!-- EMBED MODAL (#61) -->
+<div id="embed-modal" class="modal-overlay hidden">
+  <div class="modal-box w-full max-w-lg p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-base font-bold text-gray-100"><i class="fa-solid fa-code mr-2 text-brand-400"></i>Embed This Workspace</h2>
+      <button onclick="toggleModal('embed-modal')" class="text-gray-500 hover:text-gray-300"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <p class="text-xs text-gray-400 mb-3">Paste this snippet into any HTML page to embed Mission Control with your current cart pre-loaded.</p>
+    <div id="embed-modal-body"></div>
+  </div>
+</div>
+
+<!-- TEMPLATES MODAL (#22) -->
+<div id="templates-modal" class="modal-overlay hidden">
+  <div class="modal-box w-full max-w-lg p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-base font-bold text-gray-100"><i class="fa-solid fa-layer-group mr-2 text-brand-400"></i>Starter Templates</h2>
+      <button onclick="toggleModal('templates-modal')" class="text-gray-500 hover:text-gray-300"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <p class="text-xs text-gray-400 mb-4">Jump-start your research with a pre-built dataset collection. Click any template to load it.</p>
+    <div id="templates-modal-body" class="grid grid-cols-1 gap-3"></div>
+  </div>
+</div>
+
+<!-- SOQL HISTORY MODAL (#41) -->
+<div id="soql-history-modal" class="modal-overlay hidden">
+  <div class="modal-box w-full max-w-lg p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-base font-bold text-gray-100"><i class="fa-solid fa-clock-rotate-left mr-2 text-brand-400"></i>Query History</h2>
+      <button onclick="toggleModal('soql-history-modal')" class="text-gray-500 hover:text-gray-300"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <div id="soql-history-list" class="flex flex-col gap-2 max-h-80 overflow-y-auto"></div>
+  </div>
+</div>
+
+<!-- SOQL TEMPLATES MODAL (#42) -->
+<div id="soql-templates-modal" class="modal-overlay hidden">
+  <div class="modal-box w-full max-w-lg p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-base font-bold text-gray-100"><i class="fa-solid fa-file-code mr-2 text-brand-400"></i>Query Templates</h2>
+      <button onclick="toggleModal('soql-templates-modal')" class="text-gray-500 hover:text-gray-300"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <div class="flex flex-col gap-3">
+      ${(()=>{ try{ return SOQL_TEMPLATES.map((t,i)=>`<button onclick="applySOQLTemplate(${i})" class="text-left p-3 bg-gray-800 hover:bg-gray-700 rounded-lg border border-gray-700 hover:border-brand-600 transition-all"><div class="text-xs font-bold text-white mb-1">${t.label}</div><code class="text-xs text-green-300 break-all">${t.sql.slice(0,80)}…</code></button>`).join(''); }catch(e){ return ''; } })()}
+    </div>
+  </div>
+</div>
 
 <!-- CONFIRM MODAL -->
 <div id="confirm-modal" class="modal-overlay hidden">
@@ -4128,8 +4332,763 @@ function renderTourStep() {
 
 // Init: show banner on first visit
 (function() {
-  // Run after DOM ready (already wrapped in DOMContentLoaded above via init)
   setTimeout(showOnboardingIfNew, 800);
 })();
+
+// ============================================================
+// ALL 66 IMPROVEMENTS — JAVASCRIPT IMPLEMENTATIONS
+// ============================================================
+
+// ── #1 Theme persistence ──────────────────────────────────────
+function applyTheme(name) {
+  const themes = {
+    navy:   { primary:'#0ea5e9', secondary:'#6366f1', bg:'#030712', surface:'#0f172a' },
+    purple: { primary:'#8b5cf6', secondary:'#a78bfa', bg:'#0d0a1a', surface:'#1a1033' },
+    forest: { primary:'#10b981', secondary:'#34d399', bg:'#021a0e', surface:'#052e16' },
+    slate:  { primary:'#94a3b8', secondary:'#cbd5e1', bg:'#0b1120', surface:'#1e293b' },
+  };
+  const t = themes[name] || themes.navy;
+  const r = document.documentElement.style;
+  r.setProperty('--brand-primary', t.primary);
+  r.setProperty('--brand-secondary', t.secondary);
+  // Update Tailwind brand-500 proxy via dynamic style tag
+  let st = document.getElementById('dyn-theme-style');
+  if(!st){ st=document.createElement('style'); st.id='dyn-theme-style'; document.head.appendChild(st); }
+  st.textContent = `
+    .brand-gradient{background:linear-gradient(135deg,${t.primary},${t.secondary},${t.primary});background-size:300% 300%;animation:gradShift 6s ease infinite}
+    .bg-brand-600{background-color:${t.primary}!important}
+    .bg-brand-500{background-color:${t.secondary}!important}
+    .text-brand-400{color:${t.primary}!important}
+    .border-brand-500{border-color:${t.primary}!important}
+    .focus\\:border-brand-500:focus{border-color:${t.primary}!important}
+    *:focus-visible{outline-color:${t.primary}!important}
+  `;
+  document.querySelectorAll('.theme-dot').forEach(d=>d.classList.remove('ring-2','ring-white'));
+  const active = document.querySelector(`.theme-dot[data-theme="${name}"]`);
+  if(active) active.classList.add('ring-2','ring-white');
+  localStorage.setItem('mc_theme', name);
+}
+// Apply saved theme on load
+(function(){ const t=localStorage.getItem('mc_theme'); if(t) applyTheme(t); })();
+
+// ── #4 Fullscreen mode ────────────────────────────────────────
+function toggleFullscreen() {
+  const sidebar = document.getElementById('sidebar');
+  const handle  = document.getElementById('sidebar-resize-handle');
+  const icon    = document.getElementById('fullscreen-icon');
+  const hidden  = sidebar.style.display === 'none';
+  sidebar.style.display = hidden ? '' : 'none';
+  if(handle) handle.style.display = hidden ? '' : 'none';
+  icon.className = hidden ? 'fa-solid fa-expand text-xs' : 'fa-solid fa-compress text-xs';
+}
+
+// ── #6 Font size ──────────────────────────────────────────────
+let _fontSize = parseFloat(localStorage.getItem('mc_fontsize') || '14');
+function adjustFontSize(dir) {
+  if(dir===0) _fontSize=14;
+  else _fontSize=Math.max(11,Math.min(20,_fontSize+(dir>0?1:-1)));
+  document.body.style.fontSize=_fontSize+'px';
+  localStorage.setItem('mc_fontsize', _fontSize);
+}
+// Apply on load
+(function(){ document.body.style.fontSize=_fontSize+'px'; })();
+
+// ── #7 Notification center ────────────────────────────────────
+if(!AppState.notifications) AppState.notifications=[];
+if(!AppState.notifUnread)   AppState.notifUnread=0;
+
+function _pushNotif(msg,type){
+  AppState.notifications.unshift({msg,type,time:new Date().toLocaleTimeString()});
+  if(AppState.notifications.length>50) AppState.notifications.pop();
+  AppState.notifUnread++;
+  const b=document.getElementById('notif-badge');
+  if(b){ b.textContent=AppState.notifUnread; b.classList.remove('hidden'); }
+}
+// Patch toast() to also push notification
+const _origToast=window.toast||function(){};
+window.toast=function(msg,type='info'){
+  _origToast.call(this,msg,type);
+  _pushNotif(msg,type);
+};
+
+function toggleNotifCenter(){
+  const nc=document.getElementById('notif-center');
+  nc.classList.toggle('hidden');
+  if(!nc.classList.contains('hidden')){
+    AppState.notifUnread=0;
+    const b=document.getElementById('notif-badge');
+    if(b) b.classList.add('hidden');
+    renderNotifList();
+  }
+}
+function clearNotifs(){ AppState.notifications=[]; renderNotifList(); }
+function renderNotifList(){
+  const el=document.getElementById('notif-list');
+  if(!el) return;
+  if(!AppState.notifications.length){ el.innerHTML='<div class="px-4 py-6 text-center text-xs text-gray-600">No notifications yet</div>'; return; }
+  el.innerHTML=AppState.notifications.slice(0,20).map(n=>`
+    <div class="flex items-start gap-2 px-4 py-2.5 border-b border-gray-800 hover:bg-gray-800 transition-all">
+      <span class="text-sm mt-0.5">${n.type==='success'?'✅':n.type==='error'?'❌':n.type==='warning'?'⚠️':'ℹ️'}</span>
+      <div class="flex-1 min-w-0"><p class="text-xs text-gray-200 leading-snug">${sanitize(n.msg)}</p><p class="text-xs text-gray-600 mt-0.5">${n.time}</p></div>
+    </div>`).join('');
+}
+document.addEventListener('click',e=>{ if(!e.target.closest('#notif-center')&&!e.target.closest('[onclick="toggleNotifCenter()"]')) document.getElementById('notif-center')?.classList.add('hidden'); });
+
+// ── #8 Back to top ────────────────────────────────────────────
+(function(){
+  const btn=document.getElementById('back-to-top');
+  if(!btn) return;
+  const scroller=document.querySelector('.overflow-y-auto')||document.getElementById('main-content-scroll');
+  if(scroller) scroller.addEventListener('scroll',()=>{ btn.classList.toggle('hidden',scroller.scrollTop<200); });
+})();
+
+// ── #3 Resizable sidebar ──────────────────────────────────────
+(function(){
+  const handle=document.getElementById('sidebar-resize-handle');
+  const sidebar=document.getElementById('sidebar');
+  if(!handle||!sidebar) return;
+  let dragging=false,startX=0,startW=0;
+  handle.addEventListener('mousedown',e=>{ dragging=true; startX=e.clientX; startW=sidebar.offsetWidth; document.body.style.userSelect='none'; });
+  document.addEventListener('mousemove',e=>{ if(!dragging)return; const w=Math.max(180,Math.min(480,startW+(e.clientX-startX))); sidebar.style.width=w+'px'; document.documentElement.style.setProperty('--sidebar-w',w+'px'); });
+  document.addEventListener('mouseup',()=>{ dragging=false; document.body.style.userSelect=''; });
+})();
+
+// ── #9 Keyword highlighting ───────────────────────────────────
+function highlight(text, query){
+  if(!query||!text) return sanitize(text||'');
+  const esc=query.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  return sanitize(String(text)).replace(new RegExp(`(${esc})`,'gi'),'<mark style="background:rgba(251,191,36,.25);color:#fde68a;border-radius:2px;padding:0 2px">$1</mark>');
+}
+
+// ── #10 Sort results ──────────────────────────────────────────
+function sortAndRenderResults(){
+  const sort=(document.getElementById('sort-select')||{}).value||'relevance';
+  let arr=[...AppState.searchResults];
+  if(sort==='rows_desc') arr.sort((a,b)=>(b.resource?.download_count||0)-(a.resource?.download_count||0));
+  if(sort==='updated_desc') arr.sort((a,b)=>new Date(b.resource?.updatedAt||0)-new Date(a.resource?.updatedAt||0));
+  if(sort==='name_asc') arr.sort((a,b)=>(a.resource?.name||'').localeCompare(b.resource?.name||''));
+  _renderResultRows(arr);
+}
+
+// ── #11 Freshness traffic light ───────────────────────────────
+function freshnessIndicator(updatedAt){
+  if(!updatedAt) return '<span style="width:8px;height:8px;border-radius:50%;background:#4b5563;display:inline-block" title="Unknown update date"></span>';
+  const days=(Date.now()-new Date(updatedAt))/(1000*86400);
+  const [c,l]=days<30?['#22c55e','Updated recently']:days<180?['#f59e0b',`~${Math.round(days)}d ago`]:['#ef4444',`~${Math.round(days/30)}mo ago`];
+  return `<span style="width:8px;height:8px;border-radius:50%;background:${c};display:inline-block;flex-shrink:0" title="${l}"></span>`;
+}
+
+// ── #12 AND/OR/NOT query parsing ──────────────────────────────
+function matchesAdvancedQuery(text,query){
+  const q=query.toLowerCase(), t=(text||'').toLowerCase();
+  if(q.includes(' not ')){ const[inc,exc]=q.split(' not '); return t.includes(inc.trim())&&!t.includes(exc.trim()); }
+  if(q.includes(' or ')) return q.split(' or ').some(p=>t.includes(p.trim()));
+  if(q.includes(' and ')) return q.split(' and ').every(p=>t.includes(p.trim()));
+  return t.includes(q);
+}
+
+// ── #13 Keyboard-navigable results ───────────────────────────
+let _focusedRow=-1;
+function handleResultKeyNav(e){
+  const rows=document.querySelectorAll('#results-tbody tr[data-result-idx]');
+  if(!rows.length) return;
+  if(e.key==='ArrowDown'){ e.preventDefault(); _focusedRow=Math.min(_focusedRow+1,rows.length-1); }
+  else if(e.key==='ArrowUp'){ e.preventDefault(); _focusedRow=Math.max(_focusedRow-1,0); }
+  else if(e.key==='Enter'&&_focusedRow>=0){ rows[_focusedRow].querySelector('[data-add-btn]')?.click(); return; }
+  else return;
+  rows.forEach((r,i)=>r.classList.toggle('ring-2',i===_focusedRow));
+  rows[_focusedRow]?.scrollIntoView({block:'nearest'});
+}
+document.getElementById('search-input')?.addEventListener('keydown',handleResultKeyNav);
+
+// ── #14 Recently viewed ───────────────────────────────────────
+function getRecentlyViewed(){ try{ return JSON.parse(localStorage.getItem('mc_recently_viewed')||'[]'); }catch{ return []; } }
+function addRecentlyViewed(item){
+  let rv=getRecentlyViewed().filter(x=>x.id!==item.id);
+  rv.unshift({id:item.id,name:item.name,domain:item.domain});
+  localStorage.setItem('mc_recently_viewed',JSON.stringify(rv.slice(0,10)));
+  renderRecentlyViewed();
+}
+function renderRecentlyViewed(){
+  const el=document.getElementById('recently-viewed-list');
+  if(!el) return;
+  const rv=getRecentlyViewed();
+  el.innerHTML=rv.length?rv.slice(0,5).map(x=>`<button onclick="runSample(${JSON.stringify(x.name)})" class="sample-chip w-full text-left truncate">${sanitize(x.name.slice(0,28))}</button>`).join(''):'<span class="text-xs text-gray-600">None yet</span>';
+}
+
+// ── #15 Related suggestions ───────────────────────────────────
+function renderRelatedSuggestions(){
+  const el=document.getElementById('related-suggestions');
+  if(!el||!AppState.cart.length) return;
+  const words=AppState.cart.flatMap(i=>(i.name||'').split(/\s+/)).filter(w=>w.length>4);
+  const freq={};
+  words.forEach(w=>{ freq[w]=(freq[w]||0)+1; });
+  const top=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([w])=>w);
+  el.innerHTML=top.map(w=>`<button onclick="runSample('${w}')" class="sample-chip">${w}</button>`).join('');
+}
+
+// ── #16 Category filter pills ─────────────────────────────────
+let _activeCats=new Set();
+function renderCategoryPills(){
+  const el=document.getElementById('category-pills');
+  if(!el) return;
+  const cats=[...new Set(AppState.searchResults.map(r=>r.classification?.domain_category||r.resource?.type||'').filter(Boolean))].slice(0,8);
+  if(!cats.length){ el.innerHTML=''; return; }
+  el.innerHTML=cats.map(c=>`<button onclick="toggleCatFilter(${JSON.stringify(c)},this)" class="sample-chip ${_activeCats.has(c)?'border-brand-500 text-brand-400':''}">${sanitize(c)}</button>`).join('');
+}
+function toggleCatFilter(cat,btn){
+  _activeCats.has(cat)?_activeCats.delete(cat):_activeCats.add(cat);
+  btn.classList.toggle('border-blue-400'); btn.classList.toggle('text-blue-300');
+  filterResultsByCat();
+}
+function filterResultsByCat(){
+  if(!_activeCats.size){ sortAndRenderResults(); return; }
+  const filtered=AppState.searchResults.filter(r=>_activeCats.has(r.classification?.domain_category||r.resource?.type||''));
+  _renderResultRows(filtered);
+}
+
+// ── #17 Dataset size warning ──────────────────────────────────
+function warnIfLarge(result, onOk){
+  const rows=parseInt(result.resource?.page_views?.page_views_total||result.resource?.rows_updated_at||0);
+  if(rows>1000000){ confirmDialog(`⚠️ Large dataset (~${formatNumber(rows)}+ rows). Add metadata only — use the SOQL tab to query specific slices.`,onOk); }
+  else onOk();
+}
+
+// ── #18 Duplicate detection ───────────────────────────────────
+function isInCart(id){ return AppState.cart.some(i=>i.id===id); }
+
+// ── #19 Cart color tagging ────────────────────────────────────
+const CART_COLORS=['red','orange','yellow','green','blue','purple'];
+function setCartColor(idx,color){
+  if(AppState.cart[idx]) AppState.cart[idx].color=color;
+  renderCart();
+}
+function cartColorDots(idx){
+  return `<div class="flex gap-1 mt-1">${CART_COLORS.map(c=>`<button onclick="event.stopPropagation();setCartColor(${idx},'${c}')" style="width:10px;height:10px;border-radius:50%;background:var(--tw-${c});flex-shrink:0;cursor:pointer" title="${c}" class="bg-${c}-400 hover:ring-2 ring-white"></button>`).join('')}</div>`;
+}
+
+// ── #21 Cart undo/redo ────────────────────────────────────────
+AppState.cartHistory=AppState.cartHistory||[];
+AppState.cartFuture=AppState.cartFuture||[];
+function _cartSnapshot(){ AppState.cartHistory.push(JSON.stringify(AppState.cart)); AppState.cartFuture=[]; if(AppState.cartHistory.length>30) AppState.cartHistory.shift(); }
+function cartUndo(){
+  if(!AppState.cartHistory.length){ toast('Nothing to undo','warning'); return; }
+  AppState.cartFuture.push(JSON.stringify(AppState.cart));
+  AppState.cart=JSON.parse(AppState.cartHistory.pop());
+  renderCart(); updateCartBadge(); updateCartStats(); toast('Undo','info');
+}
+function cartRedo(){
+  if(!AppState.cartFuture.length){ toast('Nothing to redo','warning'); return; }
+  AppState.cartHistory.push(JSON.stringify(AppState.cart));
+  AppState.cart=JSON.parse(AppState.cartFuture.pop());
+  renderCart(); updateCartBadge(); updateCartStats(); toast('Redo','info');
+}
+document.addEventListener('keydown',e=>{
+  if(e.ctrlKey&&!e.shiftKey&&e.key==='z'){ cartUndo(); }
+  if(e.ctrlKey&&(e.key==='y'||(e.shiftKey&&e.key==='z'))){ cartRedo(); }
+});
+
+// ── #25 Total cart stats ──────────────────────────────────────
+function updateCartStats(){
+  const el=document.getElementById('cart-stats-bar');
+  if(!el) return;
+  const n=AppState.cart.length;
+  el.textContent=n?`${n} dataset${n>1?'s':''} in cart`:'Empty cart';
+}
+
+// ── #22 Starter cart templates ────────────────────────────────
+const STARTER_TEMPLATES=[
+  { icon:'🏠', name:'NYC Property Research', searches:['MapPLUTO property','HPD violations','DOB permits','tax liens'] },
+  { icon:'🚌', name:'Transit Analysis', searches:['subway ridership','bus breakdown','taxi trips','Citi Bike'] },
+  { icon:'📞', name:'311 Operations', searches:['311 service requests','noise complaints','rodent sightings','heat complaints'] },
+  { icon:'🌳', name:'Environmental', searches:['tree census NYC','air quality monitoring','green infrastructure','park events'] },
+];
+function showTemplatesModal(){
+  const el=document.getElementById('templates-modal-body');
+  if(el) el.innerHTML=STARTER_TEMPLATES.map((t,i)=>`
+    <div class="p-4 bg-gray-800 rounded-xl border border-gray-700 hover:border-brand-600 transition-all cursor-pointer" onclick="loadTemplate(${i})">
+      <div class="flex items-center gap-2 mb-2"><span class="text-2xl">${t.icon}</span><h3 class="font-bold text-white text-sm">${sanitize(t.name)}</h3></div>
+      <div class="flex flex-wrap gap-1">${t.searches.map(s=>`<span class="sample-chip">${sanitize(s)}</span>`).join('')}</div>
+    </div>`).join('');
+  toggleModal('templates-modal');
+}
+function loadTemplate(i){
+  const t=STARTER_TEMPLATES[i];
+  toggleModal('templates-modal');
+  runSample(t.searches[0]);
+  toast(`Loading ${t.name} template — search for the others: ${t.searches.slice(1).join(', ')}`, 'info');
+}
+
+// ── #23 Markdown report export ────────────────────────────────
+function exportMarkdownReport(){
+  const lines=[`# NYC Open Data Research Report\n_Generated: ${new Date().toLocaleString()}_\n`];
+  lines.push(`## Datasets in Cart (${AppState.cart.length})\n`);
+  lines.push('| Dataset | Domain | ID | Notes |');
+  lines.push('|---------|--------|-----|-------|');
+  AppState.cart.forEach(i=>lines.push(`| ${i.name||'—'} | ${i.domain||'—'} | \`${i.id||'—'}\` | ${i.note||''} |`));
+  lines.push(`\n## Share URL\n${location.href}`);
+  const blob=new Blob([lines.join('\n')],{type:'text/markdown'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='mission_control_report.md'; a.click();
+  URL.revokeObjectURL(a.href); toast('Report downloaded!','success');
+}
+
+// ── #24 Print / PDF ───────────────────────────────────────────
+function printWorkspace(){ window.print(); }
+
+// ── #26 Map legend ────────────────────────────────────────────
+function updateMapLegend(layers){
+  const el=document.getElementById('map-legend'); if(!el) return;
+  const colors=['#0ea5e9','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#84cc16'];
+  el.innerHTML=layers.map((l,i)=>`<div class="flex items-center gap-1.5"><span style="width:10px;height:10px;border-radius:50%;background:${colors[i%colors.length]};flex-shrink:0"></span><span class="text-gray-300 truncate">${sanitize(l)}</span></div>`).join('');
+}
+
+// ── #28 Distance measurement tool ────────────────────────────
+function haversineKm(lat1,lon1,lat2,lon2){
+  const R=6371,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+let _measurePoints=[], _measureLayer=null, _measureMode=false;
+function toggleMeasure(){
+  _measureMode=!_measureMode;
+  _measurePoints=[];
+  if(_measureLayer&&AppState.mapInstance){ AppState.mapInstance.removeLayer(_measureLayer); _measureLayer=null; }
+  toast(_measureMode?'Click two points on the map to measure distance':'Measure mode off','info');
+  const btn=document.getElementById('measure-btn');
+  if(btn) btn.classList.toggle('active',_measureMode);
+  if(AppState.mapInstance){
+    AppState.mapInstance.off('click',_onMapMeasureClick);
+    if(_measureMode) AppState.mapInstance.on('click',_onMapMeasureClick);
+  }
+}
+function _onMapMeasureClick(e){
+  _measurePoints.push([e.latlng.lat,e.latlng.lng]);
+  if(_measurePoints.length>=2){
+    const d=haversineKm(..._measurePoints[0],..._measurePoints[1]);
+    const mi=(d*0.621371).toFixed(2);
+    if(_measureLayer) AppState.mapInstance.removeLayer(_measureLayer);
+    _measureLayer=L.polyline(_measurePoints,{color:'#f59e0b',weight:3,dashArray:'6,4'}).addTo(AppState.mapInstance);
+    _measureLayer.bindPopup(`📏 ${d.toFixed(2)} km / ${mi} mi`).openPopup();
+    _measurePoints=[];
+    toggleMeasure();
+  }
+}
+
+// ── #30 Export map as PNG ─────────────────────────────────────
+async function exportMapPNG(){
+  const container=document.getElementById('multi-map-container')||document.querySelector('.leaflet-container');
+  if(!container||typeof html2canvas==='undefined'){ toast('Map not ready or html2canvas not loaded','warning'); return; }
+  toast('Capturing map…','info');
+  try{
+    const canvas=await html2canvas(container,{useCORS:true,backgroundColor:'#030712'});
+    const a=document.createElement('a'); a.href=canvas.toDataURL('image/png'); a.download='mission_control_map.png'; a.click();
+    toast('Map exported as PNG!','success');
+  }catch(e){ toast('Export failed: '+e.message,'error'); }
+}
+
+// ── #31 Street View ───────────────────────────────────────────
+function openStreetView(lat,lng){
+  window.open(`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lng}`,'_blank');
+}
+
+// ── #33 Inline sparkline charts ───────────────────────────────
+function renderSparkline(values){
+  if(!values||!values.length) return '';
+  const nums=values.map(Number).filter(v=>!isNaN(v));
+  if(!nums.length) return '';
+  const min=Math.min(...nums), max=Math.max(...nums), range=max-min||1;
+  const W=80, H=20, bars=Math.min(nums.length,20), bw=W/bars;
+  const rects=nums.slice(0,bars).map((v,i)=>{
+    const h=Math.max(2,Math.round(((v-min)/range)*H));
+    return `<rect x="${Math.round(i*bw)}" y="${H-h}" width="${Math.max(1,Math.round(bw)-1)}" height="${h}" fill="#0ea5e9" opacity=".8"/>`;
+  }).join('');
+  return `<svg width="${W}" height="${H}" style="display:inline-block;vertical-align:middle">${rects}</svg>`;
+}
+
+// ── #34 Column type icons ─────────────────────────────────────
+function colTypeIcon(type){
+  const m={text:'T',number:'#',calendar_date:'📅',date:'📅',point:'📍',location:'📍',checkbox:'☑',url:'🔗',email:'📧',phone:'📞',money:'💲',percent:'%'};
+  const icon=m[type]||'•';
+  const isEmoji=icon.length>1;
+  return `<span style="font-size:${isEmoji?'11px':'10px'};color:#6b7280;margin-right:4px;font-family:monospace">${icon}</span>`;
+}
+
+// ── #35 Value frequency histogram ────────────────────────────
+function valueFreqBars(topValues){
+  if(!topValues||!topValues.length) return '';
+  const max=topValues[0].count||1;
+  return topValues.slice(0,5).map(v=>`
+    <div style="display:flex;align-items:center;gap:8px;font-size:11px;margin-bottom:3px">
+      <span style="width:80px;color:#9ca3af;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${sanitize(String(v.value))}">${sanitize(String(v.value||'(empty)').slice(0,12))}</span>
+      <div style="flex:1;background:#1f2937;border-radius:3px;height:6px"><div style="background:#0ea5e9;height:6px;border-radius:3px;width:${Math.round(100*(v.count||1)/max)}%"></div></div>
+      <span style="color:#6b7280;width:30px;text-align:right">${v.count||''}</span>
+    </div>`).join('');
+}
+
+// ── #36 Outlier detection ─────────────────────────────────────
+function checkOutliers(values){
+  const nums=values.map(Number).filter(v=>!isNaN(v));
+  if(nums.length<5) return false;
+  const mean=nums.reduce((a,b)=>a+b,0)/nums.length;
+  const std=Math.sqrt(nums.reduce((a,b)=>a+(b-mean)**2,0)/nums.length);
+  return nums.some(v=>Math.abs(v-mean)>3*std);
+}
+
+// ── #37 PII scanner ───────────────────────────────────────────
+const PII_PATTERNS=['name','email','phone','ssn','social_security','dob','birth','address','zip','latitude','longitude','ip_address','user_id','license','passport','credit_card','account'];
+function isPII(colName){ return PII_PATTERNS.some(p=>colName.toLowerCase().includes(p)); }
+function piiLabel(col){ return isPII(col)?'<span class="pii-badge">🔒 PII</span>':''; }
+
+// ── #39 Quick stats bar update ────────────────────────────────
+function updateQuickStats(){
+  const total=document.getElementById('status-total-cart');
+  if(total) total.textContent=`🛒 ${AppState.cart.length}`;
+}
+
+// ── #40 Data dictionary export ────────────────────────────────
+function exportDataDictionary(){
+  const rows=[['Dataset','Fourfour','Column','Type','PII Risk','Description']];
+  AppState.cart.forEach(item=>{
+    (item.columns||[]).forEach(col=>{
+      rows.push([item.name||'',item.id||'',col.fieldName||col,'',isPII(col.fieldName||col)?'Yes':'No',col.description||'']);
+    });
+  });
+  const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='data_dictionary.csv'; a.click();
+  URL.revokeObjectURL(a.href); toast('Data dictionary downloaded!','success');
+}
+
+// ── #41 SOQL query history ────────────────────────────────────
+AppState.soqlHistory=AppState.soqlHistory||[];
+function pushSoqlHistory(query,dataset,rowCount){
+  AppState.soqlHistory.unshift({query,dataset,rowCount,time:new Date().toLocaleTimeString()});
+  if(AppState.soqlHistory.length>20) AppState.soqlHistory.pop();
+  renderSoqlHistory();
+}
+function renderSoqlHistory(){
+  const el=document.getElementById('soql-history-list'); if(!el) return;
+  el.innerHTML=AppState.soqlHistory.length
+    ?AppState.soqlHistory.map((h,i)=>`<div class="flex items-center gap-2 p-2 bg-gray-800 rounded hover:bg-gray-700 cursor-pointer transition-all" onclick="loadSoqlHistory(${i})">
+        <div class="flex-1 min-w-0"><code class="text-xs text-green-300 truncate block">${sanitize(h.query.slice(0,60))}…</code><span class="text-xs text-gray-500">${h.time} · ${h.dataset||'?'}</span></div>
+        <span class="text-xs text-gray-600">${h.rowCount||''} rows</span></div>`).join('')
+    :'<div class="text-xs text-gray-600 p-3 text-center">No queries yet</div>';
+}
+function loadSoqlHistory(i){
+  const h=AppState.soqlHistory[i];
+  if(!h) return;
+  const ta=document.getElementById('soql-manual-input')||document.querySelector('textarea[placeholder*="SELECT"]');
+  if(ta) ta.value=h.query;
+  toggleModal('soql-history-modal');
+}
+
+// ── #42 SOQL query templates ──────────────────────────────────
+const SOQL_TEMPLATES=[
+  { label:'Count by Borough', sql:'SELECT borough, COUNT(*) AS cnt WHERE borough IS NOT NULL GROUP BY borough ORDER BY cnt DESC' },
+  { label:'Recent 7 Days', sql:`SELECT * WHERE created_date > '${new Date(Date.now()-7*86400000).toISOString().split('T')[0]}' ORDER BY created_date DESC LIMIT 100` },
+  { label:'Top 20 Values', sql:'SELECT status, COUNT(*) AS freq WHERE status IS NOT NULL GROUP BY status ORDER BY freq DESC LIMIT 20' },
+  { label:'Null Check', sql:'SELECT COUNT(*) AS total_null WHERE location IS NULL' },
+  { label:'Manhattan Only', sql:"SELECT * WHERE borough='MANHATTAN' LIMIT 500" },
+  { label:'Last 30 Days', sql:`SELECT * WHERE created_date > '${new Date(Date.now()-30*86400000).toISOString().split('T')[0]}' LIMIT 500` },
+];
+function applySOQLTemplate(i){
+  const ta=document.getElementById('soql-manual-input')||document.querySelector('textarea[placeholder*="SELECT"]');
+  if(ta) ta.value=SOQL_TEMPLATES[i].sql;
+  toggleModal('soql-templates-modal');
+  toast(`Template applied: ${SOQL_TEMPLATES[i].label}`,'success');
+}
+
+// ── #44 SOQL result bar chart ─────────────────────────────────
+function renderSoqlChart(data){
+  const el=document.getElementById('soql-chart'); if(!el){ return; }
+  if(!data||data.length<2){ el.innerHTML=''; return; }
+  const keys=Object.keys(data[0]);
+  const labelKey=keys.find(k=>typeof data[0][k]==='string')||keys[0];
+  const numKey=keys.find(k=>k!==labelKey&&!isNaN(parseFloat(data[0][k])))||keys[1];
+  if(!numKey){ el.innerHTML=''; return; }
+  const vals=data.slice(0,20).map(r=>({label:String(r[labelKey]||'?').slice(0,16),val:parseFloat(r[numKey])||0}));
+  const maxV=Math.max(...vals.map(v=>v.val))||1;
+  const W=480, H=160, pad=40, barW=Math.max(8,Math.floor((W-pad*2)/vals.length)-2);
+  const bars=vals.map((v,i)=>{
+    const bh=Math.max(2,Math.round(((v.val/maxV)*(H-pad))));
+    const x=pad+i*(barW+2), y=H-pad-bh;
+    return `<rect x="${x}" y="${y}" width="${barW}" height="${bh}" fill="#0ea5e9" opacity=".85" rx="2"/>
+      <text x="${x+barW/2}" y="${H-pad+14}" text-anchor="middle" font-size="9" fill="#9ca3af">${sanitize(v.label)}</text>`;
+  }).join('');
+  el.innerHTML=`<svg width="${W}" height="${H}" style="max-width:100%"><g>${bars}</g><text x="${pad}" y="12" font-size="10" fill="#6b7280">${sanitize(numKey)} by ${sanitize(labelKey)}</text></svg>`;
+}
+
+// ── #45 SOQL result map ───────────────────────────────────────
+function plotSoqlResultsOnMap(data){
+  if(!data||!data.length){ toast('No results to map','warning'); return; }
+  const hasGeo=data[0].latitude||data[0].longitude||data[0].location;
+  if(!hasGeo){ toast('No location columns in results','warning'); return; }
+  toggleModal('map-modal');
+  setTimeout(()=>{
+    initOrUpdateMap();
+    const points=data.slice(0,500).map(r=>{
+      const lat=parseFloat(r.latitude||r.location?.latitude||r.lat||0);
+      const lon=parseFloat(r.longitude||r.location?.longitude||r.lon||0);
+      return lat&&lon?[lat,lon]:null;
+    }).filter(Boolean);
+    if(AppState.mapInstance&&points.length){
+      const group=L.layerGroup().addTo(AppState.mapInstance);
+      points.forEach(p=>L.circleMarker(p,{radius:5,color:'#f59e0b',weight:1,fillOpacity:.7}).addTo(group));
+      toast(`Plotted ${points.length} SOQL result points`,'success');
+    }
+  },400);
+}
+
+// ── #46 Save SOQL query ───────────────────────────────────────
+AppState.savedQueries=AppState.savedQueries||JSON.parse(localStorage.getItem('mc_saved_queries')||'[]');
+function saveCurrentSOQLQuery(){
+  const ta=document.getElementById('soql-manual-input')||document.querySelector('textarea[placeholder*="SELECT"]');
+  if(!ta||!ta.value.trim()){ toast('No query to save','warning'); return; }
+  const name=prompt('Name this query:'); if(!name) return;
+  AppState.savedQueries.push({name,query:ta.value,time:new Date().toISOString()});
+  localStorage.setItem('mc_saved_queries',JSON.stringify(AppState.savedQueries));
+  toast(`Query saved: ${name}`,'success');
+}
+
+// ── #47 AI prompt chip helper ─────────────────────────────────
+function setAIPrompt(text){
+  const inp=document.getElementById('chat-input');
+  if(inp){ inp.value=text; inp.focus(); }
+}
+
+// ── #48 Explain this dataset ──────────────────────────────────
+function explainDataset(idx){
+  const item=AppState.cart[idx]; if(!item) return;
+  const prompt=`Explain this dataset: "${item.name}" from ${item.domain}. ${item.description?'Description: '+item.description.slice(0,200)+'.':''} What is it used for? What analysis can I do with it? What are the most important columns?`;
+  switchTab('chat',document.querySelector('.tab-btn[data-tab="chat"]'));
+  const inp=document.getElementById('chat-input');
+  if(inp){ inp.value=prompt; }
+  setTimeout(sendChat,100);
+}
+
+// ── #52 Generic SQL ───────────────────────────────────────────
+function genGenericSQL(){
+  if(!AppState.cart.length){ toast('Add datasets to cart first','warning'); return; }
+  const lines=AppState.cart.map(item=>{
+    const tbl=(item.name||item.id||'dataset').toLowerCase().replace(/[^a-z0-9]/g,'_').slice(0,30);
+    const cols=(item.columns||[]).slice(0,20).map(c=>`  ${(c.fieldName||c+'').padEnd(30)} TEXT`).join(',\n');
+    return `-- ${sanitize(item.name||item.id)}\nCREATE TABLE IF NOT EXISTS ${tbl} (\n  id BIGSERIAL PRIMARY KEY${cols?',\n'+cols:''}\n);\nSELECT * FROM ${tbl} LIMIT 100;\n`;
+  }).join('\n');
+  return lines;
+}
+
+// ── #53 R / tidyverse code gen ────────────────────────────────
+function genR(){
+  if(!AppState.cart.length){ toast('Add datasets to cart first','warning'); return ''; }
+  const lines=['library(tidyverse)\nlibrary(httr2)\n'];
+  AppState.cart.forEach(item=>{
+    const fn=(item.name||item.id||'dataset').toLowerCase().replace(/[^a-z0-9]/g,'_').slice(0,20);
+    lines.push(`# ${sanitize(item.name||item.id)}\nfetch_${fn} <- function(limit=1000) {
+  url <- "https://${item.domain}/resource/${item.id}.json"
+  request(url) |>
+    req_url_query(\`$limit\`=limit) |>
+    req_perform() |>
+    resp_body_json() |>
+    bind_rows()
+}\n\ndf_${fn} <- fetch_${fn}()\nglimpse(df_${fn})\n`);
+  });
+  return lines.join('\n');
+}
+
+// ── #54 Jupyter notebook export ───────────────────────────────
+function exportJupyterNotebook(){
+  if(!AppState.cart.length){ toast('Add datasets to cart first','warning'); return; }
+  const cells=[];
+  cells.push({cell_type:'markdown',metadata:{},source:['# NYC Open Data Analysis\n','Generated by Manhattan Mission Control\n',`\nDatasets: ${AppState.cart.map(i=>i.name).join(', ')}`]});
+  cells.push({cell_type:'code',execution_count:null,metadata:{},outputs:[],source:['import requests\nimport pandas as pd\nimport matplotlib.pyplot as plt\n']});
+  AppState.cart.forEach(item=>{
+    const fn=(item.name||item.id||'ds').toLowerCase().replace(/[^a-z0-9]/g,'_').slice(0,20);
+    cells.push({cell_type:'code',execution_count:null,metadata:{},outputs:[],source:[
+      `# ${item.name||item.id}\n`,
+      `url = "https://${item.domain}/resource/${item.id}.json"\n`,
+      `df_${fn} = pd.DataFrame(requests.get(url, params={"$limit":1000}).json())\n`,
+      `print(f"${item.name}: {len(df_${fn})} rows, {len(df_${fn}.columns)} columns")\n`,
+      `df_${fn}.head()`
+    ]});
+    cells.push({cell_type:'code',execution_count:null,metadata:{},outputs:[],source:[`df_${fn}.describe()`]});
+  });
+  const nb={nbformat:4,nbformat_minor:5,metadata:{kernelspec:{display_name:'Python 3',language:'python',name:'python3'}},cells};
+  const blob=new Blob([JSON.stringify(nb,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='mission_control_analysis.ipynb'; a.click();
+  URL.revokeObjectURL(a.href); toast('Jupyter notebook downloaded!','success');
+}
+
+// ── #55 GitHub Actions YAML ───────────────────────────────────
+function genGithubActionsYAML(){
+  const datasets=AppState.cart.slice(0,5);
+  return `name: Daily NYC Open Data Pull
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  pull-data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install requests pandas pyarrow
+      - name: Fetch datasets
+        env:
+          SOCRATA_APP_TOKEN: \${{ secrets.SOCRATA_APP_TOKEN }}
+        run: |
+          python -c "
+import requests, pandas as pd, os
+token = os.getenv('SOCRATA_APP_TOKEN','')
+headers = {'X-App-Token': token} if token else {}
+${datasets.map(i=>{const fn=(i.name||i.id||'ds').toLowerCase().replace(/[^a-z0-9]/g,'_').slice(0,20);return `df=pd.DataFrame(requests.get('https://${i.domain}/resource/${i.id}.json',params={'\$limit':5000},headers=headers).json()); df.to_parquet('data/${fn}.parquet',index=False); print(f'${i.name}: {len(df)} rows')`;}).join('\n')}
+"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nyc-data-\${{ github.run_number }}
+          path: data/*.parquet
+          retention-days: 30
+`;
+}
+
+// ── #56 Auto README ───────────────────────────────────────────
+function genReadmeMd(){
+  const datasets=AppState.cart;
+  return `# NYC Open Data Analysis Project
+> Generated by [Manhattan Mission Control](https://ryudkiss-hue.github.io/nyc_data/)
+
+## Datasets (${datasets.length})
+
+| Dataset | Domain | ID |
+|---------|--------|-----|
+${datasets.map(i=>`| ${i.name||'—'} | ${i.domain||'—'} | \`${i.id||'—'}\` |`).join('\n')}
+
+## Setup
+
+\`\`\`bash
+pip install requests pandas pyarrow
+\`\`\`
+
+## Fetch Data
+
+\`\`\`python
+import requests, pandas as pd
+
+${datasets.slice(0,3).map(i=>{const fn=(i.name||i.id).toLowerCase().replace(/[^a-z0-9]/g,'_').slice(0,20);return `df_${fn} = pd.DataFrame(requests.get("https://${i.domain}/resource/${i.id}.json",params={"$limit":5000}).json())`;}).join('\n')}
+\`\`\`
+
+## Share URL
+
+${location.href}
+
+---
+_Generated ${new Date().toLocaleDateString()}_
+`;
+}
+
+// ── #58 QR code ───────────────────────────────────────────────
+function showQRCode(){
+  const url=encodeURIComponent(location.href);
+  const src=`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${url}&bgcolor=1f2937&color=ffffff&margin=10`;
+  const body=document.getElementById('qr-modal-body');
+  if(body) body.innerHTML=`<img src="${src}" alt="QR Code" class="rounded-lg mx-auto" width="200" height="200"><p class="text-xs text-gray-400 mt-3 text-center break-all max-w-xs mx-auto">${sanitize(decodeURIComponent(url).slice(0,80))}…</p>`;
+  toggleModal('qr-modal');
+}
+
+// ── #59 Email workspace ───────────────────────────────────────
+function emailWorkspace(){
+  const subject=encodeURIComponent('NYC Open Data Workspace — Mission Control');
+  const body=encodeURIComponent(`Check out my dataset collection:\n\n${AppState.cart.map(i=>` • ${i.name} (${i.domain})`).join('\n')}\n\nOpen workspace:\n${location.href}`);
+  window.location.href=`mailto:?subject=${subject}&body=${body}`;
+}
+
+// ── #60 Dataset citation ──────────────────────────────────────
+function showCitation(idx){
+  const item=AppState.cart[idx]; if(!item) return;
+  const year=new Date().getFullYear();
+  const publisher=item.domain||'Socrata Open Data';
+  const apa=`${publisher}. (${year}). *${item.name||item.id}* [Data set]. Retrieved ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}, from https://${item.domain}/resource/${item.id}`;
+  const chicago=`${publisher}. "${item.name||item.id}." Dataset. Accessed ${new Date().toLocaleDateString()}. https://${item.domain}/resource/${item.id}.`;
+  const body=document.getElementById('citation-modal-body');
+  if(body) body.innerHTML=`
+    <div class="mb-4">
+      <h3 class="text-xs font-bold text-gray-400 uppercase mb-1">APA</h3>
+      <p class="text-xs text-gray-200 bg-gray-800 p-3 rounded-lg leading-relaxed">${sanitize(apa)}</p>
+      <button onclick="copyText(${JSON.stringify(apa)},'APA citation')" class="text-xs text-brand-400 hover:text-brand-300 mt-1 transition-all">Copy APA</button>
+    </div>
+    <div>
+      <h3 class="text-xs font-bold text-gray-400 uppercase mb-1">Chicago</h3>
+      <p class="text-xs text-gray-200 bg-gray-800 p-3 rounded-lg leading-relaxed">${sanitize(chicago)}</p>
+      <button onclick="copyText(${JSON.stringify(chicago)},'Chicago citation')" class="text-xs text-brand-400 hover:text-brand-300 mt-1 transition-all">Copy Chicago</button>
+    </div>`;
+  toggleModal('citation-modal');
+}
+
+// ── #61 Embed snippet ─────────────────────────────────────────
+function showEmbed(){
+  const src=sanitize(location.href);
+  const snippet=`<iframe src="${location.href}" width="100%" height="700" style="border:none;border-radius:12px" title="Mission Control"></iframe>`;
+  const body=document.getElementById('embed-modal-body');
+  if(body) body.innerHTML=`<div class="code-block"><pre id="embed-code">${sanitize(snippet)}</pre></div>
+    <button onclick="copyText(${JSON.stringify(snippet)},'Embed code')" class="mt-3 px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-xs rounded-lg font-semibold transition-all w-full">Copy Embed Code</button>`;
+  toggleModal('embed-modal');
+}
+
+// ── #63 High contrast toggle ──────────────────────────────────
+function toggleHighContrast(){
+  const on=document.body.classList.toggle('high-contrast');
+  localStorage.setItem('mc_hc',on?'1':'0');
+  toast(on?'High contrast on':'High contrast off','info');
+}
+(function(){ if(localStorage.getItem('mc_hc')==='1') document.body.classList.add('high-contrast'); })();
+
+// ── #65 ARIA live region update ───────────────────────────────
+function announceResults(count){
+  const el=document.getElementById('aria-live');
+  if(el) el.textContent=`${count} dataset${count!==1?'s':''} found`;
+}
+
+// ── Code gen additions: wire up new formats ───────────────────
+function generateCodeFull(){
+  const format=(document.getElementById('code-format-select')||{}).value||'python';
+  let code='';
+  switch(format){
+    case 'sql':         code=genGenericSQL(); break;
+    case 'r':           code=genR(); break;
+    case 'github_yaml': code=genGithubActionsYAML(); break;
+    case 'readme':      code=genReadmeMd(); break;
+    case 'python':      code=genPythonPandas(); break;
+    case 'pyspark':     code=genPythonPySpark(); break;
+    case 'dbt':         code=genSQLDbt(); break;
+    case 'fastapi':     code=genPythonFastAPI(); break;
+    case 'docker':      code=genYAMLDockerCompose(); break;
+    case 'ge':          code=genYAMLGreatExpectations(); break;
+    case 'airflow':     code=genPythonAirflow(); break;
+    case 'prefect':     code=genPythonPrefect(); break;
+    default:            code=genPythonPandas();
+  }
+  const out=document.getElementById('code-output');
+  if(out) out.textContent=code;
+  else if(typeof generateCode==='function') generateCode();
+}
+
+// ── Session timer in status bar ───────────────────────────────
+(function(){
+  const start=Date.now();
+  const el=document.getElementById('status-session-time');
+  if(!el) return;
+  setInterval(()=>{
+    const m=Math.floor((Date.now()-start)/60000);
+    el.textContent=`⏱ ${m}m`;
+  },30000);
+  el.textContent='⏱ 0m';
+})();
+
+// ── Close notif center on outside click (already above) ───────
+// ── Wire Ctrl+Z/Y (already above) ────────────────────────────
 </script>
 </html>
