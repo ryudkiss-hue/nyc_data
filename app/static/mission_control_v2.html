@@ -168,6 +168,29 @@ body { font-family: 'Inter', system-ui, sans-serif; }
 
 /* Keyboard shortcut row */
 .shortcut-row { display:flex; align-items:center; justify-content:space-between; padding:8px 12px; border-radius:8px; background:#111827; margin-bottom:4px; }
+
+/* ===== INLINE TOOLTIP SYSTEM ===== */
+.mc-tip { position:relative; display:inline-flex; align-items:center; cursor:help; }
+.mc-tip-icon { width:14px; height:14px; border-radius:50%; background:#374151; border:1px solid #4b5563; color:#9ca3af; font-size:9px; font-weight:800; display:inline-flex; align-items:center; justify-content:center; margin-left:4px; flex-shrink:0; transition:all .2s; }
+.mc-tip:hover .mc-tip-icon { background:#0ea5e9; border-color:#0ea5e9; color:#fff; }
+.mc-tip-bubble { position:absolute; left:50%; bottom:calc(100% + 6px); transform:translateX(-50%); background:#111827; border:1px solid #374151; border-radius:8px; padding:8px 12px; font-size:11px; color:#d1d5db; white-space:nowrap; max-width:260px; white-space:normal; z-index:3000; pointer-events:none; opacity:0; transition:opacity .15s; line-height:1.5; box-shadow:0 4px 16px rgba(0,0,0,.5); }
+.mc-tip-bubble::after { content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:5px solid transparent; border-top-color:#374151; }
+.mc-tip:hover .mc-tip-bubble { opacity:1; }
+
+/* Sample search chips */
+.sample-chip { display:inline-flex; align-items:center; gap:4px; padding:3px 8px; background:#1f2937; border:1px solid #374151; border-radius:20px; font-size:10px; color:#9ca3af; cursor:pointer; transition:all .2s; white-space:nowrap; }
+.sample-chip:hover { background:#374151; border-color:#0ea5e9; color:#38bdf8; }
+
+/* Changelog entry */
+.changelog-entry { border-left:3px solid; padding:12px 16px; border-radius:0 8px 8px 0; margin-bottom:12px; }
+.changelog-entry.new { border-color:#10b981; background:rgba(16,185,129,.06); }
+.changelog-entry.fix { border-color:#f59e0b; background:rgba(245,158,11,.06); }
+.changelog-entry.perf { border-color:#6366f1; background:rgba(99,102,241,.06); }
+
+/* Glossary term */
+.gloss-term { border-radius:10px; padding:14px 16px; border:1px solid #374151; background:#111827; margin-bottom:8px; transition:border-color .2s; }
+.gloss-term:hover { border-color:#4b5563; }
+.gloss-badge { font-size:9px; padding:1px 7px; border-radius:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; }
 </style>
 </head>
 <body class="bg-gray-950 text-gray-200 flex flex-col h-screen overflow-hidden">
@@ -248,7 +271,9 @@ body { font-family: 'Inter', system-ui, sans-serif; }
 
   <!-- Domain selector -->
   <div class="px-3 py-2 border-b border-gray-800 flex-shrink-0">
-    <label class="sidebar-text text-xs text-gray-400 block mb-1">Domain</label>
+    <label class="sidebar-text text-xs text-gray-400 flex items-center mb-1">Domain
+      <span class="mc-tip"><span class="mc-tip-icon">?</span><span class="mc-tip-bubble">Choose which city's open data portal to search. Enable "Search All Cities" to query all portals simultaneously.</span></span>
+    </label>
     <select id="domain-select" class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-brand-500" onchange="AppState.domain=this.value;updateStatusBar();saveURLState()">
       <option value="data.cityofnewyork.us">NYC Open Data</option>
       <option value="data.cityofchicago.org">Chicago Data Portal</option>
@@ -264,7 +289,9 @@ body { font-family: 'Inter', system-ui, sans-serif; }
 
   <!-- Search -->
   <div class="px-3 py-2 border-b border-gray-800 flex-shrink-0">
-    <label class="sidebar-text text-xs text-gray-400 block mb-1">Search Datasets</label>
+    <label class="sidebar-text text-xs text-gray-400 flex items-center mb-1">Search Datasets
+      <span class="mc-tip"><span class="mc-tip-icon">?</span><span class="mc-tip-bubble">Search Socrata's catalog. Use keywords like "permits", "311", "trees". Press Enter or click Search. Use Ctrl+K to focus this box from anywhere.</span></span>
+    </label>
     <div class="relative">
       <input id="search-input" type="text" placeholder="e.g. 311, trees, permits…"
         class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-brand-500 pr-7"
@@ -304,13 +331,31 @@ body { font-family: 'Inter', system-ui, sans-serif; }
     </button>
     <div id="results-summary" class="sidebar-text text-xs text-gray-500 mt-1 text-center"></div>
     <button id="load-more-btn" onclick="loadMoreResults()" class="sidebar-text hidden w-full mt-1 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs font-semibold py-1 rounded transition-all">Load More</button>
+
+    <!-- Sample searches -->
+    <div class="sidebar-text mt-2">
+      <div class="text-xs text-gray-600 mb-1.5 flex items-center gap-1">
+        <i class="fa-solid fa-bolt text-yellow-600 text-xs"></i> Try a sample:
+      </div>
+      <div class="flex flex-wrap gap-1">
+        <button class="sample-chip" onclick="runSample('311 complaints')"><i class="fa-solid fa-phone text-xs"></i> 311</button>
+        <button class="sample-chip" onclick="runSample('sidewalk inspection')"><i class="fa-solid fa-road text-xs"></i> Sidewalk</button>
+        <button class="sample-chip" onclick="runSample('tree census')"><i class="fa-solid fa-tree text-xs"></i> Trees</button>
+        <button class="sample-chip" onclick="runSample('building permits')"><i class="fa-solid fa-building text-xs"></i> Permits</button>
+        <button class="sample-chip" onclick="runSample('parking violations')"><i class="fa-solid fa-car text-xs"></i> Parking</button>
+        <button class="sample-chip" onclick="runSample('restaurant inspections')"><i class="fa-solid fa-utensils text-xs"></i> Restaurants</button>
+        <button class="sample-chip" onclick="runSample('crime statistics')"><i class="fa-solid fa-shield text-xs"></i> Crime</button>
+        <button class="sample-chip" onclick="runSample('subway ridership')"><i class="fa-solid fa-train text-xs"></i> Subway</button>
+      </div>
+    </div>
   </div>
 
   <!-- Cart -->
   <div class="px-3 py-2 border-b border-gray-800 flex-shrink-0">
     <div class="flex items-center justify-between mb-2">
-      <span class="sidebar-text text-xs font-semibold text-gray-400 uppercase tracking-wider">
-        Cart <span id="cart-badge" class="tab-badge bg-gray-700 text-gray-300">0</span>
+      <span class="sidebar-text text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center">
+        Cart <span id="cart-badge" class="tab-badge bg-gray-700 text-gray-300 ml-1">0</span>
+        <span class="mc-tip ml-1"><span class="mc-tip-icon">?</span><span class="mc-tip-bubble">Your dataset workspace. Add datasets from search results. Reorder with ↑↓, add notes, compare schemas, or bulk-export. Cart is saved in the URL — click Share to save your session.</span></span>
       </span>
       <div class="flex gap-1">
         <button onclick="confirmClearCart()" class="sidebar-text text-gray-500 hover:text-red-400 text-xs p-1 rounded hover:bg-gray-800 transition-all" title="Clear cart"><i class="fa-solid fa-trash-can"></i></button>
@@ -406,12 +451,38 @@ body { font-family: 'Inter', system-ui, sans-serif; }
           </thead>
           <tbody id="results-tbody">
             <tr id="empty-state-row">
-              <td colspan="6" class="text-center py-16 text-gray-600">
+              <td colspan="6" class="text-center py-10 text-gray-600">
                 <i class="fa-solid fa-satellite-dish text-4xl mb-3 block text-gray-700"></i>
                 <div class="text-base font-semibold text-gray-500 mb-1">Ready to explore</div>
-                <div class="text-xs mb-3">Enter a search term or click Search to discover datasets</div>
-                <button onclick="document.getElementById('search-input').focus()" class="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-xs rounded-lg font-semibold transition-all">
-                  <i class="fa-solid fa-magnifying-glass mr-1"></i>Start searching
+                <div class="text-xs text-gray-600 mb-4">Search the sidebar, or jump straight in with a popular dataset:</div>
+                <div class="flex flex-wrap gap-2 justify-center max-w-lg mx-auto mb-4">
+                  <button onclick="runSample('311 service requests')" class="flex items-center gap-1.5 px-3 py-2 bg-blue-950 hover:bg-blue-900 border border-blue-800 hover:border-blue-600 text-blue-300 text-xs rounded-lg transition-all font-medium">
+                    <i class="fa-solid fa-phone-volume text-blue-400"></i> 311 Service Requests
+                  </button>
+                  <button onclick="runSample('sidewalk inspection')" class="flex items-center gap-1.5 px-3 py-2 bg-emerald-950 hover:bg-emerald-900 border border-emerald-800 hover:border-emerald-600 text-emerald-300 text-xs rounded-lg transition-all font-medium">
+                    <i class="fa-solid fa-road text-emerald-400"></i> Sidewalk Inspections
+                  </button>
+                  <button onclick="runSample('tree census')" class="flex items-center gap-1.5 px-3 py-2 bg-green-950 hover:bg-green-900 border border-green-800 hover:border-green-600 text-green-300 text-xs rounded-lg transition-all font-medium">
+                    <i class="fa-solid fa-tree text-green-400"></i> Tree Census
+                  </button>
+                  <button onclick="runSample('building permits')" class="flex items-center gap-1.5 px-3 py-2 bg-orange-950 hover:bg-orange-900 border border-orange-800 hover:border-orange-600 text-orange-300 text-xs rounded-lg transition-all font-medium">
+                    <i class="fa-solid fa-building text-orange-400"></i> Building Permits
+                  </button>
+                  <button onclick="runSample('restaurant inspections')" class="flex items-center gap-1.5 px-3 py-2 bg-red-950 hover:bg-red-900 border border-red-800 hover:border-red-600 text-red-300 text-xs rounded-lg transition-all font-medium">
+                    <i class="fa-solid fa-utensils text-red-400"></i> Restaurant Grades
+                  </button>
+                  <button onclick="runSample('subway ridership')" class="flex items-center gap-1.5 px-3 py-2 bg-purple-950 hover:bg-purple-900 border border-purple-800 hover:border-purple-600 text-purple-300 text-xs rounded-lg transition-all font-medium">
+                    <i class="fa-solid fa-train text-purple-400"></i> Subway Ridership
+                  </button>
+                  <button onclick="runSample('parking violations')" class="flex items-center gap-1.5 px-3 py-2 bg-yellow-950 hover:bg-yellow-900 border border-yellow-800 hover:border-yellow-600 text-yellow-300 text-xs rounded-lg transition-all font-medium">
+                    <i class="fa-solid fa-car text-yellow-400"></i> Parking Violations
+                  </button>
+                  <button onclick="runSample('crime statistics')" class="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-500 text-slate-300 text-xs rounded-lg transition-all font-medium">
+                    <i class="fa-solid fa-shield-halved text-slate-400"></i> Crime Statistics
+                  </button>
+                </div>
+                <button onclick="toggleModal('help-modal')" class="inline-flex items-center gap-1.5 text-xs text-gray-600 hover:text-brand-400 transition-all">
+                  <i class="fa-solid fa-circle-question"></i> New here? Open the Help Center
                 </button>
               </td>
             </tr>
@@ -883,6 +954,8 @@ body { font-family: 'Inter', system-ui, sans-serif; }
       <button class="help-tab-btn" onclick="switchHelpTab('ht-faq',this)">❓ FAQ</button>
       <button class="help-tab-btn" onclick="switchHelpTab('ht-shortcuts',this)">⌨️ Shortcuts</button>
       <button class="help-tab-btn" onclick="switchHelpTab('ht-tips',this)">💡 Tips</button>
+      <button class="help-tab-btn" onclick="switchHelpTab('ht-glossary',this)">📖 Glossary</button>
+      <button class="help-tab-btn" onclick="switchHelpTab('ht-changelog',this)">🆕 What's New</button>
     </div>
 
     <!-- Tab bodies -->
@@ -1316,6 +1389,221 @@ body { font-family: 'Inter', system-ui, sans-serif; }
             </div>
           </div>
 
+        </div>
+      </div>
+
+      <!-- ===== GLOSSARY ===== -->
+      <div id="ht-glossary" class="help-tab-body hidden p-6">
+        <p class="text-gray-400 text-sm mb-6">Key terms used throughout NYC open data and this application.</p>
+
+        <div class="gloss-term">
+          <div class="flex items-start gap-3">
+            <span class="gloss-badge bg-blue-900 text-blue-300 mt-0.5">ID</span>
+            <div>
+              <h3 class="font-bold text-white text-sm">BBL — Borough-Block-Lot</h3>
+              <p class="text-gray-300 text-xs leading-relaxed mt-1">A 10-digit unique identifier for every parcel of land in NYC. Format: <code class="bg-gray-800 px-1 rounded">B-BBBBB-LLLL</code> (1 digit borough + 5 digit block + 4 digit lot). Used as the primary join key across property, violation, inspection, and tax datasets. Example: <code class="bg-gray-800 px-1 rounded">1000477501</code> = Manhattan, Block 477, Lot 7501.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="gloss-term">
+          <div class="flex items-start gap-3">
+            <span class="gloss-badge bg-blue-900 text-blue-300 mt-0.5">ID</span>
+            <div>
+              <h3 class="font-bold text-white text-sm">BIN — Building Identification Number</h3>
+              <p class="text-gray-300 text-xs leading-relaxed mt-1">A 7-digit identifier assigned to every physical building structure in NYC by the Department of Buildings (DOB). Unlike BBL which identifies a tax lot, BIN identifies a building — one BBL can have multiple BINs. Used extensively in DOB permits, complaints, and inspection data.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="gloss-term">
+          <div class="flex items-start gap-3">
+            <span class="gloss-badge bg-purple-900 text-purple-300 mt-0.5">API</span>
+            <div>
+              <h3 class="font-bold text-white text-sm">SOQL — Socrata Query Language</h3>
+              <p class="text-gray-300 text-xs leading-relaxed mt-1">A SQL-like query language used to filter and aggregate Socrata open data via REST API. Queries are URL parameters appended to the dataset endpoint. Key clauses: <code class="bg-gray-800 px-1 rounded">$select</code>, <code class="bg-gray-800 px-1 rounded">$where</code>, <code class="bg-gray-800 px-1 rounded">$group</code>, <code class="bg-gray-800 px-1 rounded">$order</code>, <code class="bg-gray-800 px-1 rounded">$limit</code>, <code class="bg-gray-800 px-1 rounded">$offset</code>. Max 50k rows per request — use <code class="bg-gray-800 px-1 rounded">$offset</code> to paginate.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="gloss-term">
+          <div class="flex items-start gap-3">
+            <span class="gloss-badge bg-green-900 text-green-300 mt-0.5">ID</span>
+            <div>
+              <h3 class="font-bold text-white text-sm">Fourfour ID (4×4)</h3>
+              <p class="text-gray-300 text-xs leading-relaxed mt-1">The unique 8-character identifier Socrata assigns to every dataset. Format: <code class="bg-gray-800 px-1 rounded">xxxx-xxxx</code> (4 alphanumeric characters, a dash, then 4 more). Example: <code class="bg-gray-800 px-1 rounded">erm2-nwe9</code> is NYC's 311 dataset. Appears in every dataset URL and API endpoint. This app displays the fourfour ID on each cart item.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="gloss-term">
+          <div class="flex items-start gap-3">
+            <span class="gloss-badge bg-yellow-900 text-yellow-300 mt-0.5">Auth</span>
+            <div>
+              <h3 class="font-bold text-white text-sm">Socrata App Token</h3>
+              <p class="text-gray-300 text-xs leading-relaxed mt-1">A free API credential that increases your Socrata rate limit from ~1 req/sec (throttled) to 1,000 req/sec (generous). Register at <a href="https://opendata.socrata.com/signup" target="_blank" class="text-brand-400 underline">opendata.socrata.com</a>. Enter it in Config → API Keys. Without it the app still works, just slower on large result sets.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="gloss-term">
+          <div class="flex items-start gap-3">
+            <span class="gloss-badge bg-orange-900 text-orange-300 mt-0.5">Geo</span>
+            <div>
+              <h3 class="font-bold text-white text-sm">the_geom / Point / MultiPolygon</h3>
+              <p class="text-gray-300 text-xs leading-relaxed mt-1">Socrata stores geographic data in a column commonly named <code class="bg-gray-800 px-1 rounded">the_geom</code> using GeoJSON or WKT format. <strong>Point</strong> = a single lat/lon coordinate. <strong>MultiPolygon</strong> = a complex shape like a borough boundary. This app auto-detects geometry columns to render markers and heatmaps on the map.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="gloss-term">
+          <div class="flex items-start gap-3">
+            <span class="gloss-badge bg-cyan-900 text-cyan-300 mt-0.5">NYC</span>
+            <div>
+              <h3 class="font-bold text-white text-sm">MapPLUTO</h3>
+              <p class="text-gray-300 text-xs leading-relaxed mt-1">NYC Department of City Planning's comprehensive land use and geographic dataset. Contains tax lot info (BBL, address, zoning, building class, year built, floor area, owner name) for every parcel in the city. The definitive reference dataset for NYC property analysis.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="gloss-term">
+          <div class="flex items-start gap-3">
+            <span class="gloss-badge bg-red-900 text-red-300 mt-0.5">NYC</span>
+            <div>
+              <h3 class="font-bold text-white text-sm">SIM — Sidewalk Inspection Management</h3>
+              <p class="text-gray-300 text-xs leading-relaxed mt-1">NYC DOT's program for managing and tracking sidewalk repair orders throughout Manhattan. SIM data includes inspection outcomes, repair assignments, contractor tracking, and payment milestones. The core operational dataset driving this application's analytics.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="gloss-term">
+          <div class="flex items-start gap-3">
+            <span class="gloss-badge bg-indigo-900 text-indigo-300 mt-0.5">Data</span>
+            <div>
+              <h3 class="font-bold text-white text-sm">Parquet Cache</h3>
+              <p class="text-gray-300 text-xs leading-relaxed mt-1">In the Streamlit backend, datasets fetched from Socrata are stored locally as Apache Parquet files (columnar binary format) to avoid re-fetching on every page load. Caches expire after 24 hours. Manage them in Streamlit → Settings → Cache tab.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="gloss-term">
+          <div class="flex items-start gap-3">
+            <span class="gloss-badge bg-pink-900 text-pink-300 mt-0.5">Data</span>
+            <div>
+              <h3 class="font-bold text-white text-sm">dbt — Data Build Tool</h3>
+              <p class="text-gray-300 text-xs leading-relaxed mt-1">An open-source SQL transformation framework. This app's Code Generator can produce dbt <strong>source</strong> YAML (declaring Socrata datasets as raw sources), <strong>staging models</strong> (type casting + renaming), and a <strong>mart model</strong> (joining datasets). dbt models are version-controlled SQL files that compile into your warehouse.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="gloss-term">
+          <div class="flex items-start gap-3">
+            <span class="gloss-badge bg-teal-900 text-teal-300 mt-0.5">Quality</span>
+            <div>
+              <h3 class="font-bold text-white text-sm">Great Expectations</h3>
+              <p class="text-gray-300 text-xs leading-relaxed mt-1">An open-source data quality framework. The Code Generator produces GE <strong>Expectation Suites</strong> — YAML/JSON files that define rules like "column X should never be null", "column Y should be between 0 and 100", "column Z should match regex". Run suites against live data to catch pipeline issues early.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="gloss-term">
+          <div class="flex items-start gap-3">
+            <span class="gloss-badge bg-gray-700 text-gray-300 mt-0.5">NYC</span>
+            <div>
+              <h3 class="font-bold text-white text-sm">Borough Codes</h3>
+              <p class="text-gray-300 text-xs leading-relaxed mt-1">NYC uses single-digit codes in BBL and many datasets: <code class="bg-gray-800 px-1 rounded">1</code> = Manhattan, <code class="bg-gray-800 px-1 rounded">2</code> = Bronx, <code class="bg-gray-800 px-1 rounded">3</code> = Brooklyn, <code class="bg-gray-800 px-1 rounded">4</code> = Queens, <code class="bg-gray-800 px-1 rounded">5</code> = Staten Island. Some datasets use the text names (<code class="bg-gray-800 px-1 rounded">MANHATTAN</code>) while others use the numeric codes — always check before joining.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== WHAT'S NEW ===== -->
+      <div id="ht-changelog" class="help-tab-body hidden p-6">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-600 to-indigo-600 flex items-center justify-center text-2xl flex-shrink-0">🆕</div>
+          <div>
+            <h2 class="font-black text-white text-lg">Version 2.0</h2>
+            <p class="text-gray-400 text-xs">Released May 2026 · Complete rebuild from V1</p>
+          </div>
+        </div>
+
+        <div class="changelog-entry new">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="gloss-badge bg-emerald-900 text-emerald-300">NEW</span>
+            <h3 class="font-bold text-white text-sm">18 New Feature Groups</h3>
+          </div>
+          <ul class="text-xs text-gray-300 leading-relaxed space-y-1">
+            <li>• <strong>Multi-domain search</strong> — 15+ city portals (NYC, Chicago, LA, Seattle, Austin, Boston, Denver…)</li>
+            <li>• <strong>URL hash state</strong> — full workspace encoded in #fragment; shareable one-click links</li>
+            <li>• <strong>Column profiler</strong> — null%, cardinality, sample values, min/max per column with quality score</li>
+            <li>• <strong>AI Chat</strong> — Gemini + GPT-4o with multi-turn history and dataset context</li>
+            <li>• <strong>SOQL runner</strong> — live query execution with paginated results table</li>
+            <li>• <strong>Leaflet GIS</strong> — heatmap layer, marker clustering, 4 tile switchers</li>
+            <li>• <strong>Mermaid diagrams</strong> — ERD, Class, Mindmap, Flowchart with svg-pan-zoom</li>
+            <li>• <strong>Code generator</strong> — Python/PySpark, dbt, FastAPI, Docker Compose, Great Expectations, Airflow, Prefect</li>
+            <li>• <strong>Dataset comparison</strong> — side-by-side schema diff to find join keys</li>
+            <li>• <strong>Workspaces</strong> — named saves/loads to localStorage</li>
+            <li>• <strong>Favorites</strong> — star datasets; persists across sessions</li>
+            <li>• <strong>Cart reordering</strong> — ↑↓ buttons + per-item notes</li>
+            <li>• <strong>Custom joins builder</strong> — multi-dataset join key configurator</li>
+            <li>• <strong>Export formats</strong> — CSV, JSON, TSV export from cart</li>
+            <li>• <strong>Help Center</strong> — this modal! Tutorials, FAQ, Glossary, interactive tour</li>
+            <li>• <strong>Sample searches</strong> — one-click popular dataset shortcuts</li>
+            <li>• <strong>Onboarding banner</strong> — first-visit guided experience</li>
+          </ul>
+        </div>
+
+        <div class="changelog-entry fix">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="gloss-badge bg-yellow-900 text-yellow-300">FIX</span>
+            <h3 class="font-bold text-white text-sm">5 V1 Bug Fixes</h3>
+          </div>
+          <ul class="text-xs text-gray-300 leading-relaxed space-y-1">
+            <li>• <strong>SVG download broken</strong> — corrupted <code class="bg-gray-800 px-1 rounded">xmlns</code> URL in V1; now uses <code class="bg-gray-800 px-1 rounded">XMLSerializer</code> with explicit namespace</li>
+            <li>• <strong>Tile layer memory leak</strong> — old Leaflet layers now properly removed before adding new ones</li>
+            <li>• <strong>Workspace list stale</strong> — workspace list now refreshes on every modal open</li>
+            <li>• <strong>Diagram tab layout</strong> — replaced conflicting Tailwind <code class="bg-gray-800 px-1 rounded">hidden</code> class with custom <code class="bg-gray-800 px-1 rounded">hidden-diagram</code> CSS</li>
+            <li>• <strong>Cart flooding</strong> — "Select All" now queues items with 100ms delay to prevent UI lock</li>
+          </ul>
+        </div>
+
+        <div class="changelog-entry perf">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="gloss-badge bg-indigo-900 text-indigo-300">PERF</span>
+            <h3 class="font-bold text-white text-sm">Performance & Security</h3>
+          </div>
+          <ul class="text-xs text-gray-300 leading-relaxed space-y-1">
+            <li>• <strong>AbortController</strong> — all fetch requests are cancellable; switching searches mid-flight no longer races</li>
+            <li>• <strong>XSS sanitization</strong> — all user-supplied content is passed through <code class="bg-gray-800 px-1 rounded">sanitize()</code> before DOM injection</li>
+            <li>• <strong>Exponential backoff</strong> — Socrata API failures retry 3× at 2s/4s/8s before surfacing an error</li>
+            <li>• <strong>Shimmer skeletons</strong> — animated placeholders replace blank loading states throughout</li>
+            <li>• <strong>Debounced search</strong> — keystrokes debounced at 300ms to prevent API flooding while typing</li>
+          </ul>
+        </div>
+
+        <div class="changelog-entry new" style="border-color:#6366f1;background:rgba(99,102,241,.06)">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="gloss-badge bg-indigo-900 text-indigo-300">BACKEND</span>
+            <h3 class="font-bold text-white text-sm">Streamlit Backend Upgrades</h3>
+          </div>
+          <ul class="text-xs text-gray-300 leading-relaxed space-y-1">
+            <li>• <strong>Data Quality Dashboard</strong> — new 5th workflow tab with column-level scorecards</li>
+            <li>• <strong>Parquet caching</strong> — local cache with freshness report in Settings → Cache</li>
+            <li>• <strong>System health monitor</strong> — disk space, Python version, package checks</li>
+            <li>• <strong>Retry logic</strong> — exponential backoff on Socrata fetches (3×: 2s→4s→8s)</li>
+            <li>• <strong>Log export</strong> — download ingestion logs as CSV from Settings → Logs</li>
+            <li>• <strong>Render.com fix</strong> — PYTHONPATH fix resolves ModuleNotFoundError on deployment</li>
+          </ul>
+        </div>
+
+        <div class="mt-6 tip-box">
+          <div class="flex items-center gap-3">
+            <span class="text-2xl">🗺️</span>
+            <div>
+              <p class="text-brand-300 font-bold text-sm">Coming in V2.1</p>
+              <p class="text-gray-400 text-xs leading-relaxed">Real-time dataset change notifications · AI-powered join recommendation engine · Saved SOQL query library · Dark/light theme persistence · PWA offline mode</p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -3715,6 +4003,18 @@ function switchHelpTab(id, btn) {
   document.querySelectorAll('.help-tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById(id).classList.remove('hidden');
   btn.classList.add('active');
+}
+
+function runSample(query) {
+  // Close help modal if open
+  document.querySelectorAll('.modal-overlay').forEach(m => m.classList.add('hidden'));
+  // Set search value and trigger search
+  const input = document.getElementById('search-input');
+  input.value = query;
+  input.dispatchEvent(new Event('input'));
+  // Small delay so debounce clears, then execute
+  setTimeout(() => executeSearch(), 150);
+  toast(`Searching for "${query}"…`, 'info');
 }
 
 function dismissOnboarding() {
