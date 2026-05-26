@@ -598,24 +598,25 @@ body { font-family: 'Inter', system-ui, sans-serif; }
       <h2 class="text-base font-bold text-gray-100"><i class="fa-solid fa-gear mr-2 text-brand-400"></i>Configuration</h2>
       <button onclick="toggleModal('config-modal')" class="text-gray-500 hover:text-gray-300"><i class="fa-solid fa-xmark text-lg"></i></button>
     </div>
-    <div class="flex flex-col gap-4">
+    <!-- autocomplete="off" prevents browser autofill; onsubmit prevents accidental submission -->
+    <form autocomplete="off" onsubmit="saveConfig(); return false;" class="flex flex-col gap-4">
       <div>
         <label class="text-xs text-gray-400 block mb-1">Socrata App Token <span class="text-gray-600">(optional but recommended)</span></label>
-        <input id="socrata-token-input" type="password" placeholder="your-app-token" class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-brand-500">
+        <input id="socrata-token-input" type="password" autocomplete="new-password" placeholder="your-app-token" class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-brand-500">
       </div>
       <div>
         <label class="text-xs text-gray-400 block mb-1">Google Gemini API Key</label>
-        <input id="gemini-key-input" type="password" placeholder="AIza…" class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-brand-500">
+        <input id="gemini-key-input" type="password" autocomplete="new-password" placeholder="AIza…" class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-brand-500">
       </div>
       <div>
         <label class="text-xs text-gray-400 block mb-1">OpenAI API Key</label>
-        <input id="openai-key-input" type="password" placeholder="sk-…" class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-brand-500">
+        <input id="openai-key-input" type="password" autocomplete="new-password" placeholder="sk-…" class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-brand-500">
       </div>
       <div class="flex gap-3 justify-end pt-2 border-t border-gray-700">
-        <button onclick="toggleModal('config-modal')" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm rounded-lg transition-all">Cancel</button>
-        <button onclick="saveConfig()" class="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold rounded-lg transition-all">Save</button>
+        <button type="button" onclick="toggleModal('config-modal')" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm rounded-lg transition-all">Cancel</button>
+        <button type="submit" class="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold rounded-lg transition-all">Save</button>
       </div>
-    </div>
+    </form>
   </div>
 </div>
 
@@ -1133,7 +1134,9 @@ async function executeSearch(append=false) {
 
   try {
     const fetchPromises = domains.map(domain => {
-      let url = `https://${domain}/api/catalog/v1?q=${encodeURIComponent(q)}&limit=${limit}&offset=${AppState.searchOffset}`;
+      // Use the CORS-safe Socrata Discovery API (api.us.socrata.com) instead of
+      // domain-direct catalog API which doesn't send Access-Control-Allow-Origin headers.
+      let url = `https://api.us.socrata.com/api/catalog/v1?domains=${encodeURIComponent(domain)}&q=${encodeURIComponent(q)}&limit=${limit}&offset=${AppState.searchOffset}`;
       const headers = token ? { 'X-App-Token': token } : {};
       return fetch(url, { headers, signal })
         .then(r => r.json())
