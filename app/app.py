@@ -3,6 +3,15 @@
 from __future__ import annotations
 
 import os
+import sys
+from pathlib import Path
+
+# Ensure repo root is on sys.path so `from app.X import ...` works whether the
+# app is launched as `streamlit run app/app.py` (path = app/) or installed as a
+# package.  Adding to index 0 gives it priority over site-packages.
+_REPO_ROOT = str(Path(__file__).resolve().parents[1])
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
 
 import streamlit as st
 
