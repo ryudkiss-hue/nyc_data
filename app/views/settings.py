@@ -6,7 +6,7 @@ import streamlit as st
 
 from app.data_loader import cache_freshness_report
 from app.services import agency
-from app.ui.theme import render_readiness_bars, render_quality_badge
+from app.ui.theme import render_quality_badge, render_readiness_bars
 from app.utils.i18n import t
 from socrata_toolkit.core.readiness import run_readiness_checks
 
@@ -49,7 +49,7 @@ def render_settings_page() -> None:
                 st.success("✅ All readiness checks pass!")
 
         with st.expander("✅ Passing checks"):
-            for axis, items in report.get("axes", {}).items():
+            for _axis, items in report.get("axes", {}).items():
                 passed = [i for i in items if i.get("ok")]
                 for item in passed:
                     st.markdown(f"- ✅ **{item['name']}**")
@@ -80,7 +80,6 @@ def render_settings_page() -> None:
                     st.caption(f"Verify: `{row['verify']}`")
 
             pct = round(100.0 * done / total, 1)
-            color = "normal" if pct >= 80 else ("inverse" if pct < 40 else "off")
             st.progress(done / total, text=f"Completeness: {pct}% ({done}/{total})")
             st.metric("Sign-off progress", f"{pct}%", delta=f"{done}/{total} items")
 
