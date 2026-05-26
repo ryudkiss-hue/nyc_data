@@ -7,7 +7,6 @@ Includes enhanced column profiling, health scoring, and quality metrics.
 
 from __future__ import annotations
 
-import hashlib
 import logging
 from dataclasses import dataclass, field
 from datetime import timezone

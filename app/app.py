@@ -13,10 +13,10 @@ _REPO_ROOT = str(Path(__file__).resolve().parents[1])
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-import streamlit as st
+import streamlit as st  # noqa: E402
 
-from app.analytics import run_all_workflows
-from app.data_loader import (
+from app.analytics import run_all_workflows  # noqa: E402
+from app.data_loader import (  # noqa: E402
     CACHE_TTL_SECONDS,
     WORKFLOW_DATASETS,
     demo_mode_enabled,
@@ -25,10 +25,10 @@ from app.data_loader import (
     load_manhattan_map_layers,
     token_status,
 )
-from app.ui.empty_states import frames_are_empty, render_empty_state
-from app.ui.theme import inject_theme, render_agency_header, render_skip_link
-from app.utils.i18n import render_language_selector, t
-from app.views import home, publish, settings, workflows
+from app.ui.empty_states import frames_are_empty, render_empty_state  # noqa: E402
+from app.ui.theme import inject_theme, render_agency_header, render_skip_link  # noqa: E402
+from app.utils.i18n import render_language_selector, t  # noqa: E402
+from app.views import home, publish, settings, workflows  # noqa: E402
 
 st.set_page_config(
     page_title="Manhattan Mission Control | NYC DOT SIM",
