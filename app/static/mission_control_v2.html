@@ -201,21 +201,21 @@ body { font-family: 'Inter', system-ui, sans-serif; }
         <i class="fa-solid fa-sliders text-xs"></i> <span>Filters</span>
       </summary>
       <div class="mt-2 flex flex-col gap-1.5">
-        <select id="filter-type" class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-200">
+        <select id="filter-type" onchange="renderResults();updateSearchUI()" class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-200">
           <option value="">All Types</option>
           <option value="dataset">Dataset</option>
           <option value="map">Map</option>
           <option value="geospatial">Geospatial</option>
           <option value="chart">Chart</option>
         </select>
-        <input id="filter-attribution" type="text" placeholder="Publisher keyword…" class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-brand-500">
+        <input id="filter-attribution" type="text" placeholder="Publisher keyword…" oninput="renderResults();updateSearchUI()" class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-brand-500">
         <div class="flex gap-1">
-          <input id="filter-date-from" type="date" class="flex-1 bg-gray-800 border border-gray-700 rounded px-1 py-1 text-xs text-gray-200 focus:outline-none focus:border-brand-500" title="Updated after">
-          <input id="filter-date-to" type="date" class="flex-1 bg-gray-800 border border-gray-700 rounded px-1 py-1 text-xs text-gray-200 focus:outline-none focus:border-brand-500" title="Updated before">
+          <input id="filter-date-from" type="date" onchange="renderResults();updateSearchUI()" class="flex-1 bg-gray-800 border border-gray-700 rounded px-1 py-1 text-xs text-gray-200 focus:outline-none focus:border-brand-500" title="Updated after">
+          <input id="filter-date-to" type="date" onchange="renderResults();updateSearchUI()" class="flex-1 bg-gray-800 border border-gray-700 rounded px-1 py-1 text-xs text-gray-200 focus:outline-none focus:border-brand-500" title="Updated before">
         </div>
-        <input id="filter-minrows" type="number" placeholder="Min row count…" class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-brand-500">
+        <input id="filter-minrows" type="number" placeholder="Min row count…" oninput="renderResults();updateSearchUI()" class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-brand-500">
         <div class="flex items-center gap-1.5">
-          <input type="checkbox" id="filter-favorites" onchange="renderResults()">
+          <input type="checkbox" id="filter-favorites" onchange="renderResults();updateSearchUI()">
           <label for="filter-favorites" class="text-xs text-gray-400 cursor-pointer">Favorites only <span id="fav-count-badge" class="tab-badge bg-yellow-900 text-yellow-300">0</span></label>
         </div>
       </div>
@@ -308,10 +308,21 @@ body { font-family: 'Inter', system-ui, sans-serif; }
 
     <!-- DISCOVERY TAB -->
     <div id="tab-content-discovery" class="h-full flex flex-col overflow-hidden p-0">
-      <div class="px-4 py-2 border-b border-gray-800 flex items-center gap-2 flex-shrink-0">
+      <div class="px-4 py-2 border-b border-gray-800 flex items-center gap-2 flex-shrink-0 flex-wrap">
         <button onclick="selectAllResults()" class="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs text-gray-300 transition-all">Select All</button>
         <button onclick="deselectAllResults()" class="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs text-gray-300 transition-all">Deselect All</button>
         <span class="flex-1"></span>
+        <label class="text-xs text-gray-500 flex items-center gap-1.5">
+          <i class="fa-solid fa-arrow-up-wide-short text-gray-600"></i>
+          <select id="sort-select" onchange="renderResults();updateSearchUI()" class="bg-gray-800 border border-gray-700 rounded px-2 py-0.5 text-xs text-gray-300 focus:outline-none focus:border-brand-500">
+            <option value="relevance">Relevance</option>
+            <option value="updated_desc">Updated ↓</option>
+            <option value="updated_asc">Updated ↑</option>
+            <option value="name_asc">Name A–Z</option>
+            <option value="name_desc">Name Z–A</option>
+            <option value="downloads_desc">Downloads ↓</option>
+          </select>
+        </label>
         <span id="select-count" class="text-xs text-gray-500"></span>
       </div>
       <div class="flex-1 overflow-auto">
@@ -899,7 +910,7 @@ const AppState = {
   domain: 'data.cityofnewyork.us',
   cart: [],           // [{id, name, domain, resource, columns, notes}]
   results: [],        // raw search results (all domains)
-  searchOffset: 0,
+  _domainOffsets: {}, // per-domain pagination offsets (replaces single searchOffset)
   searchTotal: 0,
   vizMode: 'erd',
   tileLayer: null,
@@ -1015,7 +1026,9 @@ function startClock() {
 function saveURLState() {
   const ids = AppState.cart.map(c => c.id).join(',');
   const domain = AppState.domain;
-  const hash = `#domain=${encodeURIComponent(domain)}&cart=${encodeURIComponent(ids)}`;
+  const q = (document.getElementById('search-input')?.value || '').trim();
+  let hash = `#domain=${encodeURIComponent(domain)}&cart=${encodeURIComponent(ids)}`;
+  if (q) hash += `&q=${encodeURIComponent(q)}`;
   history.replaceState(null, '', hash);
 }
 
@@ -1039,6 +1052,14 @@ function loadURLState() {
         hydrateDatasetById(id, AppState.domain);
       }
     });
+  }
+  if (params.q) {
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+      searchInput.value = params.q;
+      // Restore the last search results automatically
+      executeSearch();
+    }
   }
 }
 
@@ -1089,7 +1110,7 @@ let searchDebounceTimer = null;
 function debouncedSearch() {
   clearTimeout(searchDebounceTimer);
   searchDebounceTimer = setTimeout(() => {
-    if (document.getElementById('search-input').value.trim().length > 1) executeSearch();
+    if (document.getElementById('search-input').value.trim().length >= 1) executeSearch();
   }, 500);
 }
 
@@ -1100,8 +1121,17 @@ function handleSearchKey(e) {
 function clearSearch() {
   document.getElementById('search-input').value = '';
   AppState.results = [];
-  AppState.searchOffset = 0;
+  AppState._resultMap = {};
+  AppState._domainOffsets = {};
   AppState.searchTotal = 0;
+  // Also reset all sidebar filter fields so they don't silently suppress the next search
+  document.getElementById('filter-type').value = '';
+  document.getElementById('filter-attribution').value = '';
+  document.getElementById('filter-date-from').value = '';
+  document.getElementById('filter-date-to').value = '';
+  document.getElementById('filter-minrows').value = '';
+  document.getElementById('filter-favorites').checked = false;
+  updateFavBadge();
   renderResults();
   document.getElementById('results-summary').textContent = '';
   document.getElementById('load-more-btn').classList.add('hidden');
@@ -1144,8 +1174,11 @@ async function executeSearch(append=false) {
   const signal = AppState.fetchController.signal;
 
   if (!append) {
-    AppState.searchOffset = 0;
+    // Fresh search — reset per-domain offsets, results, and lookup map
+    AppState._domainOffsets = {};
     AppState.results = [];
+    AppState._resultMap = {};
+    AppState.searchTotal = 0;
   }
 
   const limit = 20;
@@ -1155,43 +1188,58 @@ async function executeSearch(append=false) {
   showSearchSkeleton();
 
   try {
+    // Use per-domain offsets so "Load More" paginates each domain independently
     const fetchPromises = domains.map(domain => {
-      // Use the CORS-safe Socrata Discovery API (api.us.socrata.com) instead of
-      // domain-direct catalog API which doesn't send Access-Control-Allow-Origin headers.
-      let url = `https://api.us.socrata.com/api/catalog/v1?domains=${encodeURIComponent(domain)}&q=${encodeURIComponent(q)}&limit=${limit}&offset=${AppState.searchOffset}`;
+      const offset = AppState._domainOffsets[domain] || 0;
+      // CORS-safe Socrata Discovery API (api.us.socrata.com)
+      const url = `https://api.us.socrata.com/api/catalog/v1?domains=${encodeURIComponent(domain)}&q=${encodeURIComponent(q)}&limit=${limit}&offset=${offset}`;
       const headers = token ? { 'X-App-Token': token } : {};
       return fetch(url, { headers, signal })
-        .then(r => r.json())
-        .then(data => ({ domain, data }))
-        .catch(() => ({ domain, data: { results: [], resultSetSize: 0 } }));
+        .then(r => {
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          return r.json();
+        })
+        .then(data => ({ domain, data, ok: true }))
+        .catch(err => ({ domain, data: null, ok: false, errorMsg: err.message }));
     });
 
     const allResponses = await Promise.all(fetchPromises);
     const newResults = [];
     let totalCount = 0;
+    let anyDomainFailed = false;
 
-    allResponses.forEach(({ domain, data }) => {
-      if (!data.results) return;
-      const filtered = filterSearchResults(data.results);
-      filtered.forEach(r => { r._domain = domain; });
-      newResults.push(...filtered);
-      totalCount += (data.resultSetSize || 0);
+    allResponses.forEach(({ domain, data, ok, errorMsg }) => {
+      if (!ok || !data?.results) {
+        // Surface per-domain errors as warning toasts instead of silently returning 0 results
+        if (!ok && errorMsg && !errorMsg.includes('abort')) {
+          toast(`${DOMAIN_SHORT[domain] || domain}: ${errorMsg}`, 'warning');
+          anyDomainFailed = true;
+        }
+        return;
+      }
+      // Store raw results — filterSearchResults() runs in renderResults() so
+      // changing a filter without re-searching re-renders from the full raw set.
+      const raw = data.results;
+      raw.forEach(r => { r._domain = domain; });
+      newResults.push(...raw);
+      totalCount += data.resultSetSize || 0;
+      // Advance per-domain offset
+      AppState._domainOffsets[domain] = (AppState._domainOffsets[domain] || 0) + limit;
     });
 
     if (append) {
       AppState.results.push(...newResults);
     } else {
       AppState.results = newResults;
-      AppState._resultMap = {};
     }
-    // Build id→result lookup so renderResults can avoid unsafe JSON in HTML attributes
+    // Build id→result lookup (never cleared on append — Load More extends the map)
     newResults.forEach(r => {
       const id = (r.resource || {}).id;
-      if (id) AppState._resultMap[id] = r;
+      if (id != null) AppState._resultMap[id] = r;
     });
 
-    AppState.searchTotal = totalCount;
-    AppState.searchOffset += limit;
+    // In multi-domain mode, total is summed across domains
+    AppState.searchTotal = append ? Math.max(AppState.searchTotal, totalCount) : totalCount;
     AppState.lastSearchTime = new Date().toLocaleTimeString();
 
     updateSearchUI();
@@ -1231,22 +1279,34 @@ function filterSearchResults(results) {
       const updated = new Date(Number(res.updatedAt)*1000 || res.updatedAt);
       if (updated > new Date(dateTo)) return false;
     }
-    if (minRows > 0 && res.rows_updated_at) {
-      // row count not always available; skip if unavailable
+    if (minRows > 0) {
+      // Use metadata.row_count when available; skip filter if not present
+      const rowCount = (r.metadata || {}).row_count;
+      if (rowCount != null && rowCount < minRows) return false;
     }
     return true;
   });
 }
 
 function updateSearchUI() {
-  const shown = AppState.results.length;
   const total = AppState.searchTotal;
-  document.getElementById('results-summary').textContent = `Showing ${shown} of ~${total}`;
+  const raw = AppState.results.length;
+
+  // Compute the post-filter count that renderResults() will actually display
+  let filtered = filterSearchResults(AppState.results);
+  const showFavOnly = document.getElementById('filter-favorites')?.checked;
+  if (showFavOnly) filtered = filtered.filter(r => AppState.favorites.has((r.resource || {}).id));
+  const shown = filtered.length;
+
+  document.getElementById('results-summary').textContent =
+    shown < raw ? `Showing ${shown} (filtered) of ~${total}` : `Showing ${shown} of ~${total}`;
   document.getElementById('discovery-badge').textContent = shown;
+  updateFavBadge();
+
   const loadMore = document.getElementById('load-more-btn');
-  if (shown < total) {
+  if (raw < total) {
     loadMore.classList.remove('hidden');
-    loadMore.textContent = `Load More (${shown}/${total})`;
+    loadMore.textContent = `Load More (${raw}/${total})`;
   } else {
     loadMore.classList.add('hidden');
   }
@@ -1290,20 +1350,48 @@ const DOMAIN_COLORS = {
 
 function renderResults() {
   const tbody = document.getElementById('results-tbody');
-  const showFavOnly = document.getElementById('filter-favorites').checked;
+  const showFavOnly = document.getElementById('filter-favorites')?.checked;
 
-  let toShow = AppState.results;
-  if (showFavOnly) toShow = toShow.filter(r => AppState.favorites.has(r.resource.id));
+  // Apply server-side filter fields (type, attribution, date, minrows)
+  let toShow = filterSearchResults(AppState.results);
 
-  // Dedup by name similarity (simple: exact name match across domains)
+  // Apply favorites filter
+  if (showFavOnly) toShow = toShow.filter(r => AppState.favorites.has((r.resource || {}).id));
+
+  // Dedup by name similarity (trim + lowercase for robustness)
   if (AppState.multiDomain) {
     const seen = new Set();
     toShow = toShow.filter(r => {
-      const key = (r.resource.name || '').toLowerCase().trim();
+      const key = ((r.resource || {}).name || '').trim().toLowerCase();
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
     });
+  }
+
+  // Client-side sort
+  const sortBy = document.getElementById('sort-select')?.value || 'relevance';
+  if (sortBy === 'updated_desc') {
+    toShow = [...toShow].sort((a, b) => {
+      const at = (a.resource || {}).updatedAt || (a.resource || {}).data_updated_at || '';
+      const bt = (b.resource || {}).updatedAt || (b.resource || {}).data_updated_at || '';
+      return bt.localeCompare(at);
+    });
+  } else if (sortBy === 'updated_asc') {
+    toShow = [...toShow].sort((a, b) => {
+      const at = (a.resource || {}).updatedAt || (a.resource || {}).data_updated_at || '';
+      const bt = (b.resource || {}).updatedAt || (b.resource || {}).data_updated_at || '';
+      return at.localeCompare(bt);
+    });
+  } else if (sortBy === 'name_asc') {
+    toShow = [...toShow].sort((a, b) =>
+      ((a.resource || {}).name || '').localeCompare((b.resource || {}).name || ''));
+  } else if (sortBy === 'name_desc') {
+    toShow = [...toShow].sort((a, b) =>
+      ((b.resource || {}).name || '').localeCompare((a.resource || {}).name || ''));
+  } else if (sortBy === 'downloads_desc') {
+    toShow = [...toShow].sort((a, b) =>
+      ((b.resource || {}).download_count || 0) - ((a.resource || {}).download_count || 0));
   }
 
   if (!toShow.length) {
@@ -1346,7 +1434,7 @@ function renderResults() {
       <td class="px-3 py-2 w-24">
         <span class="domain-badge ${typeColor} text-xs">${sanitize(type)}</span>
       </td>
-      <td class="px-3 py-2 w-24 text-gray-400 text-xs">${res.download_count ? formatNumber(res.download_count)+' dl' : '—'}</td>
+      <td class="px-3 py-2 w-24 text-gray-400 text-xs">${res.download_count != null ? formatNumber(res.download_count)+' dl' : '—'}</td>
       <td class="px-3 py-2 w-28 text-gray-400 text-xs">${timeAgo(res.updatedAt || res.data_updated_at)}</td>
       <td class="px-3 py-2 w-8">
         <div class="flex items-center gap-1">
@@ -1383,10 +1471,16 @@ function updateFavBadge() {
 // CART
 // ============================================================
 async function toggleDataset(id, resultJSON) {
-  // resultJSON is now optional — prefer the safe _resultMap lookup
-  const result = AppState._resultMap[id]
-    || (typeof resultJSON === 'string' ? JSON.parse(resultJSON) : resultJSON)
-    || {};
+  // Prefer the safe _resultMap lookup; fall back to resultJSON with try-catch
+  let parsedResult = AppState._resultMap[id] || null;
+  if (!parsedResult) {
+    if (typeof resultJSON === 'string') {
+      try { parsedResult = JSON.parse(resultJSON); } catch(_) { parsedResult = null; }
+    } else if (resultJSON && typeof resultJSON === 'object') {
+      parsedResult = resultJSON;
+    }
+  }
+  const result = parsedResult || {};
   const idx = AppState.cart.findIndex(c => c.id === id);
   if (idx >= 0) {
     AppState.cart.splice(idx, 1);
@@ -1534,13 +1628,19 @@ function confirmClearCart() {
 }
 
 function selectAllResults() {
-  const addQueue = AppState.results.filter(r => !AppState.cart.find(c => c.id === r.resource.id));
+  const addQueue = AppState.results.filter(r => {
+    const id = (r.resource || {}).id;
+    return id != null && !AppState.cart.find(c => c.id === id);
+  });
   if (!addQueue.length) return;
   let i = 0;
   const next = () => {
     if (i >= addQueue.length) { renderResults(); return; }
     const r = addQueue[i++];
-    hydrateAndAdd(r.resource.id, r._domain || AppState.domain, r).then(() => setTimeout(next, 100));
+    const id = (r.resource || {}).id;
+    hydrateAndAdd(id, r._domain || AppState.domain, r)
+      .then(() => setTimeout(next, 100))
+      .catch(err => { toast(`Failed to add: ${err.message}`, 'error'); setTimeout(next, 100); });
   };
   next();
 }
