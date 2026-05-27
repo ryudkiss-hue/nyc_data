@@ -1,4 +1,4 @@
-﻿"""Task Board and Collaboration Module for DOT Sidewalk Toolkit.
+"""Task Board and Collaboration Module for DOT Sidewalk Toolkit.
 
 Provides a lightweight, file-backed task management system with:
 - Kanban-style boards with customizable columns

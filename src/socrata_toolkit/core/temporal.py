@@ -1,4 +1,4 @@
-﻿"""Temporal query engine and change pattern analysis."""
+"""Temporal query engine and change pattern analysis."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field

@@ -1,4 +1,4 @@
-﻿"""QGIS Project File Generator for DOT Sidewalk Toolkit.
+"""QGIS Project File Generator for DOT Sidewalk Toolkit.
 
 Generate .qgs project files pre-configured with PostGIS layers
 and styled by priority/status for the DOT sidewalk team.

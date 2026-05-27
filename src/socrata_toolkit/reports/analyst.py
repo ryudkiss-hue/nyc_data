@@ -1,4 +1,4 @@
-﻿"""Project Analyst Reports Module - NYC DOT Sidewalk Toolkit.
+"""Project Analyst Reports Module - NYC DOT Sidewalk Toolkit.
 
 Provides reporting and analysis capabilities for Project Analysts to:
 - Audit budget/progress changes with full before/after history

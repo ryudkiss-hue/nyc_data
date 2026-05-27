@@ -1,4 +1,4 @@
-﻿"""Data freshness monitoring and SLA compliance tracking.
+"""Data freshness monitoring and SLA compliance tracking.
 
 This module provides comprehensive freshness tracking for datasets, monitoring
 staleness, SLA compliance, and alerting on data quality issues related to update

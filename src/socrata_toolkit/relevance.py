@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 """Relevance ranking helpers for combined FTS + spatial + SLA scoring.
 

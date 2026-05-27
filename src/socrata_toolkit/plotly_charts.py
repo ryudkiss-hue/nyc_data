@@ -1,4 +1,4 @@
-﻿"""Plotly Interactive Charts for DOT Sidewalk Toolkit.
+"""Plotly Interactive Charts for DOT Sidewalk Toolkit.
 
 Interactive, browser-based visualizations using Plotly. All functions
 return Plotly Figure objects that can be:

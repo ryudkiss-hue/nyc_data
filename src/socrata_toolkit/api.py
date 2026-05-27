@@ -1,4 +1,4 @@
-﻿"""Flask REST API for DOT Sidewalk Toolkit.
+"""Flask REST API for DOT Sidewalk Toolkit.
 
 Provides a JSON API for programmatic access to toolkit functionality.
 Can be deployed standalone or alongside the Streamlit dashboard.

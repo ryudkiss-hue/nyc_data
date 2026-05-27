@@ -1,4 +1,4 @@
-﻿"""SLA Tracking for DOT Sidewalk Toolkit.
+"""SLA Tracking for DOT Sidewalk Toolkit.
 
 Track response times from complaint to inspection to repair,
 flag SLA violations, and compute cycle time metrics by borough and scope.

@@ -1,4 +1,4 @@
-﻿"""Prometheus metrics export and observability instrumentation.
+"""Prometheus metrics export and observability instrumentation.
 
 This module provides operational metrics collection and export in Prometheus format
 for integration with Grafana, Prometheus, and other monitoring systems.
