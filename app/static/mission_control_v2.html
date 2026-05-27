@@ -639,15 +639,26 @@ body { font-family: 'Inter', system-ui, sans-serif; }
 <!-- MAP MODAL -->
 <div id="map-modal" class="modal-overlay hidden">
   <div class="modal-box w-full max-w-6xl p-0 overflow-hidden" style="height:90vh">
-    <div class="flex items-center justify-between px-4 py-3 border-b border-gray-700">
+    <div class="flex items-center justify-between px-4 py-3 border-b border-gray-700 flex-wrap gap-2">
       <h2 class="text-sm font-bold text-gray-100"><i class="fa-solid fa-map mr-2 text-green-400"></i>Multi-Layer GIS Map</h2>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 flex-wrap">
         <div class="flex gap-1" id="tile-layer-btns">
           <button class="map-layer-btn active" onclick="switchTileLayer('osm',this)">OSM</button>
           <button class="map-layer-btn" onclick="switchTileLayer('carto-light',this)">Light</button>
           <button class="map-layer-btn" onclick="switchTileLayer('carto-dark',this)">Dark</button>
           <button class="map-layer-btn" onclick="switchTileLayer('esri',this)">Satellite</button>
         </div>
+        <!-- Row limit selector — cap prevents browser hang on million-row datasets -->
+        <label class="text-xs text-gray-500 flex items-center gap-1" title="Max rows fetched per dataset layer">
+          <i class="fa-solid fa-gauge-high text-gray-600"></i>
+          <select id="map-row-limit" onchange="renderMultiMap()" class="bg-gray-800 border border-gray-700 rounded px-1.5 py-0.5 text-xs text-gray-300 focus:outline-none">
+            <option value="200">200 rows</option>
+            <option value="500" selected>500 rows</option>
+            <option value="1000">1 000 rows</option>
+            <option value="2000">2 000 rows</option>
+            <option value="5000">5 000 rows ⚠️</option>
+          </select>
+        </label>
         <button onclick="exportMapGeoJSON()" class="px-3 py-1 bg-green-700 hover:bg-green-600 text-white text-xs rounded transition-all">
           <i class="fa-solid fa-download mr-1"></i>GeoJSON
         </button>
@@ -657,7 +668,10 @@ body { font-family: 'Inter', system-ui, sans-serif; }
     <div class="flex h-full" style="height:calc(90vh - 53px)">
       <div id="map-container" class="flex-1"></div>
       <div class="w-56 bg-gray-900 border-l border-gray-700 p-3 overflow-y-auto flex-shrink-0">
-        <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Layers</div>
+        <div class="flex items-center justify-between mb-2">
+          <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Layers</div>
+          <span id="map-loading-indicator" class="hidden text-xs text-brand-400 animate-pulse">Loading…</span>
+        </div>
         <div id="map-legend" class="flex flex-col gap-2 text-xs"></div>
         <div class="mt-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Bounding Box</div>
         <button onclick="drawBoundingBox()" class="w-full px-2 py-1.5 bg-gray-700 hover:bg-gray-600 text-xs text-gray-300 rounded transition-all">
@@ -2932,7 +2946,10 @@ async function exportData(format) {
   const headers = token ? { 'X-App-Token': token } : {};
 
   try {
-    const resp = await fetch(`https://${item.domain}/resource/${item.id}.json?$limit=5000`, { headers });
+    // 5 000-row cap for export — warn users so they know to use SOQL $limit for full pulls
+    const EXPORT_LIMIT = 5000;
+    toast(`Fetching up to ${EXPORT_LIMIT.toLocaleString()} rows for export…`, 'info');
+    const resp = await fetch(`https://${item.domain}/resource/${item.id}.json?$limit=${EXPORT_LIMIT}`, { headers });
     const data = await resp.json();
 
     let content, mimeType, ext;
@@ -3084,7 +3101,15 @@ async function renderMultiMap() {
   const token = localStorage.getItem('socrata_token') || '';
   const headers = token ? { 'X-App-Token': token } : {};
 
+  // Configurable row cap — prevents browser hang on million-row datasets
+  const rowLimit = parseInt(document.getElementById('map-row-limit')?.value || '500', 10);
+
+  // Show loading indicator
+  const loadingEl = document.getElementById('map-loading-indicator');
+  if (loadingEl) loadingEl.classList.remove('hidden');
+
   const allBounds = [];
+  let layersAdded = 0;
 
   for (let i = 0; i < AppState.cart.length; i++) {
     const item = AppState.cart[i];
@@ -3095,10 +3120,20 @@ async function renderMultiMap() {
         c.dataTypeName === 'location' || c.fieldName.toLowerCase() === 'location' ||
         c.fieldName.toLowerCase() === 'the_geom' || c.fieldName.toLowerCase().includes('geom')
       );
-      if (!geoCol && !item.columns.find(c => c.fieldName === 'latitude' || c.fieldName === 'lat')) continue;
+      if (!geoCol && !item.columns.find(c => c.fieldName === 'latitude' || c.fieldName === 'lat')) {
+        // No geo column — show disabled entry in legend
+        const div = document.createElement('div');
+        div.className = 'flex items-center gap-2 opacity-40';
+        div.innerHTML = `<span class="w-3 h-3 rounded-full flex-shrink-0 bg-gray-600"></span>
+          <span class="text-gray-500 text-xs truncate" title="${sanitize(item.name)}">${sanitize(item.name.substring(0, 22))}</span>
+          <span class="text-gray-600 text-xs ml-auto">no geo</span>`;
+        legend.appendChild(div);
+        continue;
+      }
 
-      const url = `https://${item.domain}/resource/${item.id}.json?$limit=500${geoCol ? `&$where=${geoCol.fieldName}+IS+NOT+NULL` : ''}`;
+      const url = `https://${item.domain}/resource/${item.id}.json?$limit=${rowLimit}${geoCol ? `&$where=${encodeURIComponent(geoCol.fieldName + ' IS NOT NULL')}` : ''}`;
       const resp = await fetch(url, { headers });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
 
       if (!Array.isArray(data) || !data.length) continue;
@@ -3135,26 +3170,50 @@ async function renderMultiMap() {
         }
       });
 
+      const featCount = clusterGroup.getLayers().length;
       clusterGroup.addTo(AppState.mapInstance);
       AppState.mapLayers[item.id] = clusterGroup;
       AppState.mapLayerVisible[item.id] = true;
+      layersAdded++;
 
-      // Legend entry
+      // Truncation warning — if we got exactly rowLimit rows, there are likely more
+      const truncated = data.length >= rowLimit;
+      if (truncated) {
+        toast(
+          `${item.name.substring(0, 24)}: capped at ${rowLimit} rows. Increase limit or add a WHERE filter.`,
+          'warning'
+        );
+      }
+
+      // Legend entry with feature count
       const div = document.createElement('div');
       div.className = 'flex items-center gap-2 cursor-pointer';
       div.innerHTML = `<span class="w-3 h-3 rounded-full flex-shrink-0" style="background:${color}"></span>
-        <span class="text-gray-300 text-xs truncate flex-1" title="${sanitize(item.name)}">${sanitize(item.name.substring(0,22))}</span>
+        <span class="text-gray-300 text-xs truncate flex-1" title="${sanitize(item.name)}">${sanitize(item.name.substring(0,18))}</span>
+        <span class="text-gray-500 text-xs flex-shrink-0">${featCount}${truncated ? '+' : ''}</span>
         <i class="fa-solid fa-eye text-gray-400 text-xs" id="eye-${sanitize(item.id)}"></i>`;
       div.onclick = () => toggleMapLayer(item.id);
       legend.appendChild(div);
 
     } catch(e) {
-      console.warn('Map layer failed:', item.name, e);
+      toast(`Map layer "${item.name.substring(0, 24)}": ${e.message}`, 'error');
+      // Show error entry in legend
+      const div = document.createElement('div');
+      div.className = 'flex items-center gap-2 opacity-50';
+      div.innerHTML = `<span class="w-3 h-3 rounded-full flex-shrink-0 bg-red-700"></span>
+        <span class="text-red-400 text-xs truncate" title="${sanitize(item.name)}">${sanitize(item.name.substring(0, 22))}</span>
+        <span class="text-red-600 text-xs ml-auto">error</span>`;
+      legend.appendChild(div);
     }
   }
 
+  // Hide loading indicator
+  if (loadingEl) loadingEl.classList.add('hidden');
+
   if (allBounds.length > 0) {
     AppState.mapInstance.fitBounds(allBounds, { padding: [30, 30] });
+  } else if (layersAdded === 0 && AppState.cart.length > 0) {
+    toast('No geographic data found in cart datasets. Add datasets with location/latitude columns.', 'info');
   }
 }
 
