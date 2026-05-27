@@ -1141,15 +1141,17 @@ function restoreCartCache() {
 }
 
 function saveURLState() {
-  const ids = AppState.cart.map(c => c.id).join(',');
+  // Encode each cart item as "SHORTDOMAIN:id" so loadURLState knows which
+  // endpoint to call — avoids cross-domain 404s when restoring a shared URL.
+  const cartParam = AppState.cart
+    .map(c => `${DOMAIN_SHORT[c.domain] || c.domain}:${c.id}`)
+    .join(',');
   const domain = AppState.domain;
   const q = (document.getElementById('search-input')?.value || '').trim();
-  // Use the short domain code (NYC, CHI …) to keep URLs compact
   const shortDomain = DOMAIN_SHORT[domain] || domain;
-  let hash = `#d=${encodeURIComponent(shortDomain)}&cart=${encodeURIComponent(ids)}`;
+  let hash = `#d=${encodeURIComponent(shortDomain)}&cart=${encodeURIComponent(cartParam)}`;
   if (q) hash += `&q=${encodeURIComponent(q)}`;
   history.replaceState(null, '', hash);
-  // Also keep the cart columns persisted so reloads are API-free
   persistCart();
 }
 
@@ -1180,11 +1182,20 @@ function loadURLState() {
   }
 
   if (params.cart && params.cart.trim()) {
-    const ids = params.cart.split(',').filter(Boolean);
-    ids.forEach(id => {
-      // Skip API call if already restored from localStorage cache
+    // Each token may be "SHORTDOMAIN:4x4id" (new format) or bare "4x4id" (legacy).
+    params.cart.split(',').filter(Boolean).forEach(token => {
+      const colonIdx = token.indexOf(':');
+      let id, itemDomain;
+      if (colonIdx > 0) {
+        const shortCode = token.slice(0, colonIdx);
+        id = token.slice(colonIdx + 1);
+        itemDomain = DOMAIN_FROM_SHORT[shortCode] || shortCode;
+      } else {
+        id = token;
+        itemDomain = AppState.domain; // legacy: best-guess using current domain
+      }
       if (!AppState.cart.find(c => c.id === id)) {
-        hydrateDatasetById(id, AppState.domain);
+        hydrateDatasetById(id, itemDomain);
       }
     });
   }
@@ -1643,42 +1654,89 @@ async function hydrateAndAdd(id, domain, result) {
   // Check already in cart
   if (AppState.cart.find(c => c.id === id)) return;
 
+  // Prefer Discovery API data already in _resultMap (avoids /api/views/ call entirely
+  // and handles datasets that return 404 on the per-domain endpoint).
+  const discoveryEntry = AppState._resultMap[id] || result || null;
+  const discoveryRes   = (discoveryEntry || {}).resource || {};
+
+  // The Discovery API response includes parallel column arrays we can use directly.
+  const fieldNames  = discoveryRes.columns_field_name;
+  const colNames    = discoveryRes.columns_name;
+  const colTypes    = discoveryRes.columns_datatype;
+  const hasDiscoveryCols = Array.isArray(fieldNames) && fieldNames.length > 0;
+
+  if (hasDiscoveryCols) {
+    const columns = fieldNames.map((f, i) => ({
+      fieldName: f,
+      name: (colNames || [])[i] || f,
+      dataTypeName: (colTypes || [])[i] || 'text',
+    }));
+    _addToCart({
+      id,
+      name: discoveryRes.name || id,
+      domain: (discoveryEntry && discoveryEntry._domain) || domain,
+      columns,
+      resource: discoveryRes,
+    });
+    return;
+  }
+
+  // No Discovery API column data — fetch from /api/views/ endpoint.
   const token = localStorage.getItem('socrata_token') || '';
   const headers = token ? { 'X-App-Token': token } : {};
 
   try {
-    const metaUrl = `https://${domain}/api/views/${id}.json`;
-    const resp = await fetch(metaUrl, { headers });
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const meta = await resp.json();
+    const resp = await fetch(`https://${domain}/api/views/${id}.json`, { headers });
 
+    if (!resp.ok) {
+      // Dataset not found at this endpoint (retired, federated, or wrong domain).
+      // Fall back: add with whatever metadata we have, just without column detail.
+      if (resp.status === 404) {
+        _addToCart({
+          id,
+          name: discoveryRes.name || id,
+          domain: (discoveryEntry && discoveryEntry._domain) || domain,
+          columns: [],   // SOQL builder won't have column autocomplete
+          resource: discoveryRes,
+        }, /*warn=*/true);
+        return;
+      }
+      throw new Error(`HTTP ${resp.status}`);
+    }
+
+    const meta = await resp.json();
     const columns = (meta.columns || []).map(c => ({
       fieldName: c.fieldName,
       name: c.name,
       dataTypeName: c.dataTypeName,
-      description: c.description || ''
+      description: c.description || '',
     }));
-
-    const item = {
+    _addToCart({
       id,
-      name: meta.name || result?.resource?.name || id,
+      name: meta.name || discoveryRes.name || id,
       domain,
       columns,
-      resource: result?.resource || {},
-      notes: '',
-      addedAt: Date.now(),
-    };
-
-    AppState.cart.push(item);
-    renderCart();
-    updateCartBadge();
-    updateSOQLDatasetSelect();
-    updateProfileSelect();
-    saveURLState();
-    toast(`Added: ${item.name.substring(0,40)}`, 'success');
+      resource: discoveryRes,
+    });
   } catch(e) {
     toast(`Failed to load ${id}: ${e.message}`, 'error');
-    // Retry button in cart would normally appear; for now just notify
+  }
+}
+
+/** Shared helper: push a fully-built item into AppState.cart and refresh UI. */
+function _addToCart(item, warn = false) {
+  item.notes    = item.notes || '';
+  item.addedAt  = item.addedAt || Date.now();
+  AppState.cart.push(item);
+  renderCart();
+  updateCartBadge();
+  updateSOQLDatasetSelect();
+  updateProfileSelect();
+  saveURLState();
+  if (warn) {
+    toast(`Added (no column info): ${item.name.substring(0, 40)}`, 'warning');
+  } else {
+    toast(`Added: ${item.name.substring(0, 40)}`, 'success');
   }
 }
 
