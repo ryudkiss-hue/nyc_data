@@ -1396,6 +1396,7 @@ async function executeSearch(append=false) {
     updateSearchUI();
     renderResults();
     updateStatusBar();
+    switchTab('discovery');
 
   } catch(e) {
     if (e.name !== 'AbortError') {
