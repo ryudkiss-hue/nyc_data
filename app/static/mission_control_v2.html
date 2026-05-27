@@ -895,6 +895,7 @@ const AppState = {
   soqlWhereConditions: [],
   fetchController: null,
   columnSamples: {},  // dataset_id -> {col -> samples[]}
+  _resultMap: {},     // id -> full result object (avoids unsafe JSON in HTML attributes)
 };
 
 // ============================================================
@@ -1160,7 +1161,13 @@ async function executeSearch(append=false) {
       AppState.results.push(...newResults);
     } else {
       AppState.results = newResults;
+      AppState._resultMap = {};
     }
+    // Build id→result lookup so renderResults can avoid unsafe JSON in HTML attributes
+    newResults.forEach(r => {
+      const id = (r.resource || {}).id;
+      if (id) AppState._resultMap[id] = r;
+    });
 
     AppState.searchTotal = totalCount;
     AppState.searchOffset += limit;
@@ -1301,7 +1308,7 @@ function renderResults() {
 
     return `<tr class="border-b border-gray-800 hover:bg-gray-900 transition-colors ${inCart ? 'bg-brand-950' : ''}">
       <td class="px-3 py-2 w-8">
-        <input type="checkbox" ${inCart ? 'checked' : ''} onchange="toggleDataset('${sanitize(id)}', ${JSON.stringify(JSON.stringify(r))})" class="rounded">
+        <input type="checkbox" ${inCart ? 'checked' : ''} onchange="toggleDataset('${sanitize(id)}')" class="rounded">
       </td>
       <td class="px-3 py-2">
         <div class="flex items-start gap-2">
@@ -1355,7 +1362,10 @@ function updateFavBadge() {
 // CART
 // ============================================================
 async function toggleDataset(id, resultJSON) {
-  const result = typeof resultJSON === 'string' ? JSON.parse(resultJSON) : resultJSON;
+  // resultJSON is now optional — prefer the safe _resultMap lookup
+  const result = AppState._resultMap[id]
+    || (typeof resultJSON === 'string' ? JSON.parse(resultJSON) : resultJSON)
+    || {};
   const idx = AppState.cart.findIndex(c => c.id === id);
   if (idx >= 0) {
     AppState.cart.splice(idx, 1);
