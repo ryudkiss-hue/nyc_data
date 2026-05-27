@@ -242,4 +242,115 @@ def create_app():
             })
         return jsonify({"health": "unknown", "metrics": [], "budget_codes": []})
 
+    # -------------------------------------------------------------------
+    # AI Proxy  (Issue 2 — keeps API keys server-side)
+    # -------------------------------------------------------------------
+
+    @app.route("/api/ai/status")
+    def ai_status():
+        """Return which AI providers have keys configured (never expose the keys)."""
+        import os
+        return jsonify({
+            "gemini": bool(os.environ.get("GEMINI_API_KEY")),
+            "openai": bool(os.environ.get("OPENAI_API_KEY")),
+        })
+
+    @app.route("/api/ai/chat", methods=["POST"])
+    def ai_chat():
+        """Proxy AI chat requests — API keys stay on the server."""
+        import os
+        import urllib.request
+
+        data = request.get_json(silent=True) or {}
+        provider = data.get("provider", "gemini")
+        messages = data.get("messages", [])  # [{role, content}, ...]
+        context = data.get("context", "")
+
+        if provider == "gemini":
+            key = os.environ.get("GEMINI_API_KEY", "")
+            if not key:
+                return jsonify({"error": "GEMINI_API_KEY not configured on server"}), 503
+
+            system_prompt = (
+                "You are a data engineering expert. "
+                + (f"Context:\n{context}\n\n" if context else "")
+                + "Help with SOQL queries, SQL, data pipelines, and analysis."
+            )
+            # Flatten to a single user turn (Gemini doesn't have a system role)
+            user_text = (
+                system_prompt
+                + "\n\n---\n\n"
+                + "\n".join(
+                    f"{'User' if m['role']=='user' else 'Assistant'}: {m['content']}"
+                    for m in messages
+                )
+            )
+            payload = json.dumps(
+                {"contents": [{"role": "user", "parts": [{"text": user_text}]}]}
+            ).encode()
+            url = (
+                "https://generativelanguage.googleapis.com/v1beta/models/"
+                f"gemini-1.5-flash:generateContent?key={key}"
+            )
+            req = urllib.request.Request(
+                url,
+                data=payload,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            try:
+                with urllib.request.urlopen(req, timeout=30) as resp:
+                    result = json.loads(resp.read())
+                reply = (
+                    result.get("candidates", [{}])[0]
+                    .get("content", {})
+                    .get("parts", [{}])[0]
+                    .get("text", "No response from Gemini")
+                )
+                return jsonify({"reply": reply})
+            except Exception as exc:
+                return jsonify({"error": f"Gemini error: {exc}"}), 502
+
+        elif provider == "openai":
+            key = os.environ.get("OPENAI_API_KEY", "")
+            if not key:
+                return jsonify({"error": "OPENAI_API_KEY not configured on server"}), 503
+
+            system_msg = {
+                "role": "system",
+                "content": (
+                    "You are a data engineering expert. "
+                    + (f"Context:\n{context}" if context else "")
+                ),
+            }
+            openai_messages = [system_msg] + [
+                {"role": m["role"], "content": m["content"]} for m in messages
+            ]
+            payload = json.dumps(
+                {"model": "gpt-4o", "messages": openai_messages, "max_tokens": 2000}
+            ).encode()
+            req = urllib.request.Request(
+                "https://api.openai.com/v1/chat/completions",
+                data=payload,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {key}",
+                },
+                method="POST",
+            )
+            try:
+                with urllib.request.urlopen(req, timeout=30) as resp:
+                    result = json.loads(resp.read())
+                reply = (
+                    result.get("choices", [{}])[0]
+                    .get("message", {})
+                    .get("content", "No response from OpenAI")
+                )
+                return jsonify({"reply": reply})
+            except Exception as exc:
+                return jsonify({"error": f"OpenAI error: {exc}"}), 502
+
+        else:
+            return jsonify({"error": f"Unknown provider: {provider}"}), 400
+
     return app

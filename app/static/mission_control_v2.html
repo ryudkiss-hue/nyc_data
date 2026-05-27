@@ -618,13 +618,15 @@ body { font-family: 'Inter', system-ui, sans-serif; }
         <label class="text-xs text-gray-400 block mb-1">Socrata App Token <span class="text-gray-600">(optional but recommended)</span></label>
         <input id="socrata-token-input" type="password" autocomplete="new-password" placeholder="your-app-token" class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-brand-500">
       </div>
-      <div>
-        <label class="text-xs text-gray-400 block mb-1">Google Gemini API Key</label>
-        <input id="gemini-key-input" type="password" autocomplete="new-password" placeholder="AIza…" class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-brand-500">
-      </div>
-      <div>
-        <label class="text-xs text-gray-400 block mb-1">OpenAI API Key</label>
-        <input id="openai-key-input" type="password" autocomplete="new-password" placeholder="sk-…" class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-brand-500">
+      <!-- AI keys are configured server-side — never entered in the browser -->
+      <div class="rounded-lg border border-gray-700 bg-gray-800/60 px-4 py-3 text-xs text-gray-400 flex items-start gap-2">
+        <i class="fa-solid fa-shield-halved text-brand-400 mt-0.5 flex-shrink-0"></i>
+        <div>
+          <div class="font-semibold text-gray-300 mb-1">AI Keys — Server-side Only</div>
+          <div>Set <code class="bg-gray-700 px-1 rounded text-gray-200">GEMINI_API_KEY</code> and <code class="bg-gray-700 px-1 rounded text-gray-200">OPENAI_API_KEY</code> environment variables on the server.
+          Keys are never stored in the browser. AI calls route through <code class="bg-gray-700 px-1 rounded text-gray-200">/api/ai/chat</code>.</div>
+          <div id="ai-status-detail" class="mt-1.5 text-gray-500">Checking…</div>
+        </div>
       </div>
       <div class="flex gap-3 justify-end pt-2 border-t border-gray-700">
         <button type="button" onclick="toggleModal('config-modal')" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm rounded-lg transition-all">Cancel</button>
@@ -928,6 +930,7 @@ const AppState = {
   fetchController: null,
   columnSamples: {},  // dataset_id -> {col -> samples[]}
   _resultMap: {},     // id -> full result object (avoids unsafe JSON in HTML attributes)
+  _aiStatus: null,   // {gemini: bool, openai: bool} — populated by checkAIStatus()
 };
 
 // ============================================================
@@ -975,26 +978,52 @@ function toggleModal(id) {
 // ============================================================
 function loadConfigInputs() {
   document.getElementById('socrata-token-input').value = localStorage.getItem('socrata_token') || '';
-  document.getElementById('gemini-key-input').value = localStorage.getItem('gemini_key') || '';
-  document.getElementById('openai-key-input').value = localStorage.getItem('openai_key') || '';
+  // AI key status fetched from backend — not stored in browser
+  checkAIStatus();
 }
 
 function saveConfig() {
   localStorage.setItem('socrata_token', document.getElementById('socrata-token-input').value.trim());
-  localStorage.setItem('gemini_key', document.getElementById('gemini-key-input').value.trim());
-  localStorage.setItem('openai_key', document.getElementById('openai-key-input').value.trim());
   toggleModal('config-modal');
   updateTokenStatus();
   toast('Configuration saved', 'success');
 }
 
+/** Fetch AI provider availability from the backend proxy. */
+async function checkAIStatus() {
+  try {
+    const resp = await fetch('/api/ai/status');
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    AppState._aiStatus = data; // { gemini: bool, openai: bool }
+    const el = document.getElementById('ai-status-detail');
+    if (el) {
+      const parts = [];
+      if (data.gemini) parts.push('<span class="text-green-400">✓ Gemini</span>');
+      else parts.push('<span class="text-gray-600">✗ Gemini (not set)</span>');
+      if (data.openai) parts.push('<span class="text-green-400">✓ OpenAI</span>');
+      else parts.push('<span class="text-gray-600">✗ OpenAI (not set)</span>');
+      el.innerHTML = parts.join(' &nbsp; ');
+    }
+    updateTokenStatus();
+  } catch(_) {
+    // Backend proxy not running — show offline notice
+    AppState._aiStatus = { gemini: false, openai: false, offline: true };
+    const el = document.getElementById('ai-status-detail');
+    if (el) el.innerHTML = '<span class="text-yellow-500">Proxy offline — start app/llm_proxy.py to enable AI</span>';
+    updateTokenStatus();
+  }
+}
+
 function updateTokenStatus() {
-  const gemini = localStorage.getItem('gemini_key');
-  const openai = localStorage.getItem('openai_key');
   const socrata = localStorage.getItem('socrata_token');
+  const ai = AppState._aiStatus || {};
   const el = document.getElementById('sb-token-status');
-  if (gemini || openai) {
+  if (!el) return;
+  if (ai.gemini || ai.openai) {
     el.innerHTML = `<span class="inline-block w-2 h-2 rounded-full bg-green-500 mr-1"></span>AI Ready`;
+  } else if (ai.offline) {
+    el.innerHTML = `<span class="inline-block w-2 h-2 rounded-full bg-yellow-500 mr-1"></span>AI Offline`;
   } else if (socrata) {
     el.innerHTML = `<span class="inline-block w-2 h-2 rounded-full bg-yellow-500 mr-1"></span>Socrata Token`;
   } else {
@@ -2313,22 +2342,23 @@ async function sendChat() {
   renderChatMessages();
 
   const provider = document.getElementById('ai-provider').value;
-  const key = provider === 'gemini' ? localStorage.getItem('gemini_key') : localStorage.getItem('openai_key');
+  const ai = AppState._aiStatus || {};
 
-  if (!key) {
-    toast('Configure API key in Config first', 'warning');
+  // Check availability via cached backend status
+  const providerAvailable = provider === 'gemini' ? ai.gemini : ai.openai;
+  if (!providerAvailable) {
+    if (ai.offline) {
+      toast('AI proxy offline — start app/llm_proxy.py or the Flask API', 'warning');
+    } else {
+      toast(`${provider === 'gemini' ? 'GEMINI_API_KEY' : 'OPENAI_API_KEY'} not set on server`, 'warning');
+    }
     return;
   }
 
   showTypingIndicator();
 
   try {
-    let reply = '';
-    if (provider === 'gemini') {
-      reply = await callGemini(key, text);
-    } else {
-      reply = await callOpenAI(key, text);
-    }
+    const reply = await callAIProxy(provider, AppState.chatHistory, getCartContext());
     hideTypingIndicator();
     AppState.chatHistory.push({ role: 'assistant', content: reply });
     renderChatMessages();
@@ -2341,43 +2371,25 @@ async function sendChat() {
   }
 }
 
-async function callGemini(key, userMessage) {
-  const systemContext = `You are a data engineering expert. The user has these datasets loaded:\n\n${getCartContext()}\n\nHelp with SOQL queries, SQL, data pipelines, and analysis.`;
-  const contents = [
-    { role: 'user', parts: [{ text: systemContext + '\n\n---\n\n' + userMessage }] },
-    ...AppState.chatHistory.slice(1, -1).map(m => ({
-      role: m.role === 'user' ? 'user' : 'model',
-      parts: [{ text: m.content }]
-    })),
-    { role: 'user', parts: [{ text: userMessage }] }
-  ];
-
-  const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+/**
+ * Route AI chat through the backend proxy (/api/ai/chat).
+ * API keys live in server environment variables — never in the browser.
+ *
+ * @param {string} provider  - "gemini" | "openai"
+ * @param {Array}  messages  - [{role, content}, ...] chat history
+ * @param {string} context   - dataset/schema context string
+ */
+async function callAIProxy(provider, messages, context = '') {
+  const resp = await fetch('/api/ai/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: systemContext + '\n\nUser: ' + userMessage }] }] })
+    body: JSON.stringify({ provider, messages, context }),
   });
-  if (!resp.ok) throw new Error('Gemini API error: ' + resp.status);
   const data = await resp.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response from Gemini';
-}
-
-async function callOpenAI(key, userMessage) {
-  const systemContext = `You are a data engineering expert. The user has these datasets:\n\n${getCartContext()}`;
-  const messages = [
-    { role: 'system', content: systemContext },
-    ...AppState.chatHistory.slice(0, -1).map(m => ({ role: m.role, content: m.content })),
-    { role: 'user', content: userMessage }
-  ];
-
-  const resp = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
-    body: JSON.stringify({ model: 'gpt-4o', messages, max_tokens: 2000 })
-  });
-  if (!resp.ok) throw new Error('OpenAI API error: ' + resp.status);
-  const data = await resp.json();
-  return data.choices?.[0]?.message?.content || 'No response from OpenAI';
+  if (!resp.ok || data.error) {
+    throw new Error(data.error || `Proxy error: ${resp.status}`);
+  }
+  return data.reply;
 }
 
 function showTypingIndicator() {
@@ -3515,8 +3527,8 @@ function init() {
   // Init mermaid
   mermaid.initialize({ theme: 'dark', startOnLoad: false, securityLevel: 'loose' });
 
-  // Load config inputs (will be visible when modal opens)
-  updateTokenStatus();
+  // Check AI backend status on startup (updates status bar + Config modal info)
+  checkAIStatus();
 
   // Init cart UI
   renderCart();
