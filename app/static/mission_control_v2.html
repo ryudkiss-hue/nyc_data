@@ -751,7 +751,7 @@ body { font-family: 'Inter', system-ui, sans-serif; }
       <div class="flex gap-3">
         <div class="flex-1">
           <label class="text-xs text-gray-400 block mb-1">Left Join Key</label>
-          <select id="join-left-col" class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1.5 text-xs text-gray-200 focus:outline-none"></select>
+          <select id="join-left-col" onchange="checkJoinTypeMismatch()" class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1.5 text-xs text-gray-200 focus:outline-none"></select>
         </div>
         <div class="w-24">
           <label class="text-xs text-gray-400 block mb-1">Join Type</label>
@@ -764,8 +764,12 @@ body { font-family: 'Inter', system-ui, sans-serif; }
         </div>
         <div class="flex-1">
           <label class="text-xs text-gray-400 block mb-1">Right Join Key</label>
-          <select id="join-right-col" class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1.5 text-xs text-gray-200 focus:outline-none"></select>
+          <select id="join-right-col" onchange="checkJoinTypeMismatch()" class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1.5 text-xs text-gray-200 focus:outline-none"></select>
         </div>
+      </div>
+      <div id="join-type-warning" class="hidden text-xs text-yellow-400 bg-yellow-900/30 border border-yellow-800 rounded px-3 py-2 flex items-start gap-2">
+        <i class="fa-solid fa-triangle-exclamation flex-shrink-0 mt-0.5"></i>
+        <span id="join-type-warning-text"></span>
       </div>
       <button onclick="generateJoinSQL()" class="px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white text-sm font-semibold rounded-lg transition-all w-full">Generate JOIN SQL</button>
       <div id="join-sql-output" class="code-block hidden">
@@ -3495,19 +3499,63 @@ function populateJoinSelects() {
   loadJoinColumns('right');
 }
 
+// Map Socrata column types to SQL type families for cast inference
+const SOCRATA_TYPE_FAMILY = {
+  text: 'text', url: 'text', email: 'text', phone: 'text', html: 'text',
+  number: 'numeric', money: 'numeric',
+  calendar_date: 'date', date: 'date',
+  checkbox: 'boolean',
+  location: 'geometry', point: 'geometry', polygon: 'geometry',
+  multipolygon: 'geometry', line: 'geometry', multipoint: 'geometry',
+};
+
+// SQL CAST target for a given Socrata dataTypeName
+function sqlCastType(socrataType) {
+  const fam = SOCRATA_TYPE_FAMILY[socrataType] || 'text';
+  return { text: 'TEXT', numeric: 'NUMERIC', date: 'DATE', boolean: 'BOOLEAN', geometry: 'GEOMETRY' }[fam];
+}
+
 function loadJoinColumns(side) {
   const id = document.getElementById(`join-${side}-ds`).value;
   const item = AppState.cart.find(c => c.id === id);
   const sel = document.getElementById(`join-${side}-col`);
   if (!item) { sel.innerHTML = ''; return; }
-  sel.innerHTML = item.columns.map(c => `<option value="${sanitize(c.fieldName)}">${sanitize(c.fieldName)}</option>`).join('');
+  // Show type alongside field name so users can spot mismatches at a glance
+  sel.innerHTML = item.columns.map(c => {
+    const typeLabel = c.dataTypeName ? ` [${c.dataTypeName}]` : '';
+    return `<option value="${sanitize(c.fieldName)}" data-type="${sanitize(c.dataTypeName||'text')}">${sanitize(c.fieldName)}${typeLabel}</option>`;
+  }).join('');
+  checkJoinTypeMismatch();
+}
+
+/** Live type-mismatch indicator shown before Generate is clicked. */
+function checkJoinTypeMismatch() {
+  const leftColSel = document.getElementById('join-left-col');
+  const rightColSel = document.getElementById('join-right-col');
+  const warnEl = document.getElementById('join-type-warning');
+  const warnText = document.getElementById('join-type-warning-text');
+  if (!leftColSel || !rightColSel || !warnEl) return;
+
+  const leftOpt = leftColSel.selectedOptions[0];
+  const rightOpt = rightColSel.selectedOptions[0];
+  const leftType = leftOpt?.dataset?.type || 'text';
+  const rightType = rightOpt?.dataset?.type || 'text';
+  const leftFam = SOCRATA_TYPE_FAMILY[leftType] || 'text';
+  const rightFam = SOCRATA_TYPE_FAMILY[rightType] || 'text';
+
+  if (leftFam !== rightFam) {
+    warnText.textContent = `Type mismatch: left key is ${leftType} (${leftFam}) but right key is ${rightType} (${rightFam}). A CAST will be generated automatically.`;
+    warnEl.classList.remove('hidden');
+  } else {
+    warnEl.classList.add('hidden');
+  }
 }
 
 function generateJoinSQL() {
   const leftId = document.getElementById('join-left-ds').value;
   const rightId = document.getElementById('join-right-ds').value;
-  const leftCol = document.getElementById('join-left-col').value;
-  const rightCol = document.getElementById('join-right-col').value;
+  const leftColName = document.getElementById('join-left-col').value;
+  const rightColName = document.getElementById('join-right-col').value;
   const joinType = document.getElementById('join-type').value;
 
   const a = AppState.cart.find(c => c.id === leftId);
@@ -3518,21 +3566,61 @@ function generateJoinSQL() {
   const la = leftId.replace(/-/g,'_');
   const lb = rightId.replace(/-/g,'_');
 
-  const sql = `-- ${joinType} JOIN: ${a.name} x ${b.name}
+  // Resolve column type info
+  const leftColMeta = a.columns.find(c => c.fieldName === leftColName) || {};
+  const rightColMeta = b.columns.find(c => c.fieldName === rightColName) || {};
+  const leftType = leftColMeta.dataTypeName || 'text';
+  const rightType = rightColMeta.dataTypeName || 'text';
+  const leftFamily = SOCRATA_TYPE_FAMILY[leftType] || 'text';
+  const rightFamily = SOCRATA_TYPE_FAMILY[rightType] || 'text';
+  const typeMismatch = leftFamily !== rightFamily;
+
+  // Build ON clause with CAST when types differ
+  let onClause, castNote = '';
+  if (typeMismatch) {
+    // Cast the right-side column to match the left-side type (more commonly the driving table)
+    const castTarget = sqlCastType(leftType);
+    onClause = `ON a.${leftColName} = CAST(b.${rightColName} AS ${castTarget})`;
+    castNote = `-- ⚠️  Type mismatch: left=${leftType} right=${rightType}
+-- Casting right key to ${castTarget}. Verify this is the correct coercion.`;
+    toast(`Type mismatch: ${leftType} vs ${rightType} — CAST added to join condition`, 'warning');
+  } else {
+    onClause = `ON a.${leftColName} = b.${rightColName}`;
+    castNote = `-- Join key types match: ${leftType}`;
+  }
+
+  // Python/pandas equivalent
+  const pandasLeftType = { text: 'str', numeric: 'float', date: 'str', boolean: 'bool' }[leftFamily] || 'str';
+  const pandasRightType = { text: 'str', numeric: 'float', date: 'str', boolean: 'bool' }[rightFamily] || 'str';
+  const pandasCast = typeMismatch
+    ? `df_b['${rightColName}'] = df_b['${rightColName}'].astype(${pandasLeftType})\n`
+    : '';
+  const pandasJoinHow = { INNER: 'inner', LEFT: 'left', RIGHT: 'right', 'FULL': 'outer' }[joinType] || 'inner';
+
+  const bColsSafe = b.columns.slice(0, 5).map(c => c.fieldName.replace(/[^a-zA-Z0-9_]/g, '_'));
+
+  const sql = `-- ${joinType} JOIN: ${a.name} × ${b.name}
 -- Auto-generated by Manhattan Mission Control v2
+${castNote}
 
 SELECT
   a.*,
-  ${b.columns.slice(0,5).map(c => `b.${c.fieldName.replace(/[^a-zA-Z0-9_]/g,'_')}`).join(',\n  ')}
+  ${bColsSafe.map(f => `b.${f}`).join(',\n  ')}
 FROM ${la} a
 ${joinType} JOIN ${lb} b
-  ON a.${leftCol} = b.${rightCol};
+  ${onClause};
 
 -- PostGIS spatial join variant (if applicable):
 -- SELECT a.*, b.*
 -- FROM ${la} a
 -- JOIN ${lb} b
---   ON ST_Intersects(a.the_geom, b.the_geom);`;
+--   ON ST_Intersects(a.the_geom, b.the_geom);
+
+-- ── Python/pandas equivalent ──────────────────────────────────
+-- import pandas as pd
+-- df_a = pd.read_csv(...)   # ${a.name}
+-- df_b = pd.read_csv(...)   # ${b.name}
+-- ${pandasCast}-- result = df_a.merge(df_b, left_on='${leftColName}', right_on='${rightColName}', how='${pandasJoinHow}')`;
 
   document.getElementById('join-sql-code').textContent = sql;
   document.getElementById('join-sql-output').classList.remove('hidden');
