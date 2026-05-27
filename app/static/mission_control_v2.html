@@ -1250,7 +1250,20 @@ function debouncedSearch() {
 }
 
 function handleSearchKey(e) {
-  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); executeSearch(); }
+  if (e.key === 'Enter') { e.preventDefault(); clearTimeout(searchDebounceTimer); executeSearch(); }
+}
+
+/** Reset only the filter widgets (not the search query or results). */
+function clearActiveFilters() {
+  if (document.getElementById('filter-type')) document.getElementById('filter-type').value = '';
+  if (document.getElementById('filter-attribution')) document.getElementById('filter-attribution').value = '';
+  if (document.getElementById('filter-date-from')) document.getElementById('filter-date-from').value = '';
+  if (document.getElementById('filter-date-to')) document.getElementById('filter-date-to').value = '';
+  if (document.getElementById('filter-minrows')) document.getElementById('filter-minrows').value = '';
+  if (document.getElementById('filter-favorites')) document.getElementById('filter-favorites').checked = false;
+  updateFavBadge();
+  renderResults();
+  updateSearchUI();
 }
 
 function clearSearch() {
@@ -1259,15 +1272,7 @@ function clearSearch() {
   AppState._resultMap = {};
   AppState._domainOffsets = {};
   AppState.searchTotal = 0;
-  // Also reset all sidebar filter fields so they don't silently suppress the next search
-  document.getElementById('filter-type').value = '';
-  document.getElementById('filter-attribution').value = '';
-  document.getElementById('filter-date-from').value = '';
-  document.getElementById('filter-date-to').value = '';
-  document.getElementById('filter-minrows').value = '';
-  document.getElementById('filter-favorites').checked = false;
-  updateFavBadge();
-  renderResults();
+  clearActiveFilters();
   document.getElementById('results-summary').textContent = '';
   document.getElementById('load-more-btn').classList.add('hidden');
 }
@@ -1389,11 +1394,11 @@ async function executeSearch(append=false) {
 }
 
 function filterSearchResults(results) {
-  const type = document.getElementById('filter-type').value;
-  const attr = (document.getElementById('filter-attribution').value || '').toLowerCase();
-  const dateFrom = document.getElementById('filter-date-from').value;
-  const dateTo = document.getElementById('filter-date-to').value;
-  const minRows = parseInt(document.getElementById('filter-minrows').value) || 0;
+  const type = (document.getElementById('filter-type')?.value || '');
+  const attr = (document.getElementById('filter-attribution')?.value || '').toLowerCase();
+  const dateFrom = document.getElementById('filter-date-from')?.value || '';
+  const dateTo = document.getElementById('filter-date-to')?.value || '';
+  const minRows = parseInt(document.getElementById('filter-minrows')?.value || '0') || 0;
 
   return results.filter(r => {
     const res = r.resource || {};
@@ -1530,10 +1535,15 @@ function renderResults() {
   }
 
   if (!toShow.length) {
+    const rawCount = AppState.results.length;
+    const hint = rawCount > 0
+      ? `API returned ${rawCount} result${rawCount === 1 ? '' : 's'} — active filters removed all of them`
+      : 'Try different search terms or adjust filters';
     tbody.innerHTML = `<tr><td colspan="6" class="text-center py-12 text-gray-600">
       <i class="fa-solid fa-binoculars text-3xl mb-2 block text-gray-700"></i>
-      <div class="text-sm text-gray-500">No results found</div>
-      <div class="text-xs mt-1">Try different search terms or adjust filters</div>
+      <div class="text-sm text-gray-500">No results match the current filters</div>
+      <div class="text-xs mt-1">${hint}</div>
+      ${rawCount > 0 ? `<button onclick="clearActiveFilters()" class="mt-3 px-3 py-1 bg-brand-700 hover:bg-brand-600 text-white text-xs rounded font-semibold">Clear Filters</button>` : ''}
     </td></tr>`;
     return;
   }
@@ -1782,7 +1792,9 @@ function selectAllResults() {
 
 function deselectAllResults() {
   AppState.results.forEach(r => {
-    const idx = AppState.cart.findIndex(c => c.id === r.resource.id);
+    const id = (r.resource || {}).id;
+    if (!id) return;
+    const idx = AppState.cart.findIndex(c => c.id === id);
     if (idx >= 0) AppState.cart.splice(idx, 1);
   });
   renderCart();
@@ -3735,10 +3747,10 @@ document.addEventListener('keydown', e => {
 
   if (e.ctrlKey || e.metaKey) {
     if (e.key === 'k') { e.preventDefault(); document.getElementById('search-input').focus(); return; }
-    if (e.key === 'Enter' && AppState.activeTab === 'discovery') { e.preventDefault(); executeSearch(); return; }
     if (e.shiftKey && e.key === 'D') { e.preventDefault(); toggleDark(); return; }
     if (e.key === 'e') { e.preventDefault(); exportData('csv'); return; }
   }
+  // Plain Enter when search input is focused: handled by handleSearchKey in the input itself
 
   if (e.shiftKey && !inInput) {
     const tabMap = { '1':'discovery','2':'profiles','3':'erd','4':'generators','5':'ai','6':'soql' };
@@ -3761,6 +3773,9 @@ function init() {
 
   // Init mermaid
   mermaid.initialize({ theme: 'dark', startOnLoad: false, securityLevel: 'loose' });
+
+  // Reset filter widgets so browser-preserved form values don't silently hide results
+  clearActiveFilters();
 
   // Check AI backend status on startup (updates status bar + Config modal info)
   checkAIStatus();
