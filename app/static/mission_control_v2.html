@@ -494,6 +494,9 @@ body { font-family: 'Inter', system-ui, sans-serif; }
           <button onclick="runSOQLQuery()" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold rounded transition-all">
             <i class="fa-solid fa-play mr-1"></i>Run Query
           </button>
+          <button onclick="openTemplatesModal()" class="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded transition-all" title="Browse pre-built query templates">
+            <i class="fa-solid fa-book-open mr-1"></i>Templates
+          </button>
           <button onclick="copySOQLAsPython()" class="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded transition-all">
             <i class="fa-brands fa-python mr-1"></i>Python
           </button>
@@ -775,6 +778,24 @@ body { font-family: 'Inter', system-ui, sans-serif; }
       <div class="flex items-center justify-between p-2 bg-gray-800 rounded"><span class="text-gray-300">Shortcuts help</span><span><kbd class="kbd">?</kbd></span></div>
       <div class="flex items-center justify-between p-2 bg-gray-800 rounded"><span class="text-gray-300">Tab 1–6</span><span><kbd class="kbd">Shift</kbd>+<kbd class="kbd">1-6</kbd></span></div>
       <div class="flex items-center justify-between p-2 bg-gray-800 rounded"><span class="text-gray-300">Send AI message</span><span><kbd class="kbd">Ctrl</kbd>+<kbd class="kbd">↵</kbd></span></div>
+    </div>
+  </div>
+</div>
+
+<!-- QUERY TEMPLATES MODAL -->
+<div id="templates-modal" class="modal-overlay hidden">
+  <div class="modal-box w-full max-w-2xl p-0 overflow-hidden" style="max-height:80vh">
+    <div class="flex items-center justify-between px-4 py-3 border-b border-gray-700">
+      <h2 class="text-sm font-bold text-gray-100"><i class="fa-solid fa-book-open mr-2 text-brand-400"></i>SOQL Query Templates</h2>
+      <button onclick="toggleModal('templates-modal')" class="text-gray-500 hover:text-gray-300"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <!-- Category filter tabs -->
+    <div class="flex gap-1 px-4 py-2 border-b border-gray-700 flex-wrap" id="tpl-cat-tabs">
+      <!-- Rendered by JS -->
+    </div>
+    <!-- Template cards -->
+    <div id="templates-list" class="overflow-y-auto p-4 grid grid-cols-1 gap-3" style="max-height:calc(80vh - 110px)">
+      <!-- Rendered by JS -->
     </div>
   </div>
 </div>
@@ -2338,6 +2359,255 @@ function exportChatMarkdown() {
 }
 
 // ============================================================
+// QUERY TEMPLATES
+// ============================================================
+const SOQL_TEMPLATES = [
+  // ── Basic ────────────────────────────────────────────────
+  {
+    id: 'basic_recent',
+    name: 'Recent 100 Rows',
+    description: 'Fetch the 100 most recently updated records.',
+    category: 'Basic',
+    params: { $order: ':updated_at DESC', $limit: '100', $offset: '0' },
+    where: []
+  },
+  {
+    id: 'basic_count',
+    name: 'Count All Rows',
+    description: 'Returns the total number of records in the dataset.',
+    category: 'Basic',
+    params: { $select: 'count(*) AS total_count', $limit: '1', $offset: '0' },
+    where: []
+  },
+  {
+    id: 'basic_sample',
+    name: 'Random Sample',
+    description: 'Retrieve a random sample of 500 rows for exploration.',
+    category: 'Basic',
+    params: { $limit: '500', $offset: '0' },
+    where: [],
+    hint: 'Add $order=:id for a more stable sample.'
+  },
+  // ── Filtering ────────────────────────────────────────────
+  {
+    id: 'filter_open',
+    name: 'Open / Active Records',
+    description: 'Filter to rows where the status field is "Open" — common in 311, permits, complaints.',
+    category: 'Filtering',
+    params: { $limit: '500', $offset: '0' },
+    where: [{ field: 'status', op: '=', val: 'Open' }]
+  },
+  {
+    id: 'filter_borough_mn',
+    name: 'Manhattan Only',
+    description: 'Restrict results to Manhattan borough.',
+    category: 'Filtering',
+    params: { $limit: '500', $offset: '0' },
+    where: [{ field: 'borough', op: '=', val: 'MANHATTAN' }]
+  },
+  {
+    id: 'filter_nonnull_geo',
+    name: 'Non-Null Locations',
+    description: 'Return only rows that have both latitude and longitude populated.',
+    category: 'Filtering',
+    params: { $limit: '1000', $offset: '0' },
+    where: [
+      { field: 'latitude', op: 'IS NOT NULL', val: '' },
+      { field: 'longitude', op: 'IS NOT NULL', val: '' }
+    ],
+    rawWhere: 'latitude IS NOT NULL AND longitude IS NOT NULL'
+  },
+  // ── Aggregation ──────────────────────────────────────────
+  {
+    id: 'agg_by_borough',
+    name: 'Count by Borough',
+    description: 'Group records and count occurrences per NYC borough.',
+    category: 'Aggregation',
+    params: { $select: 'borough,count(*) AS record_count', $group: 'borough', $order: 'record_count DESC', $limit: '10', $offset: '0' },
+    where: []
+  },
+  {
+    id: 'agg_by_status',
+    name: 'Count by Status',
+    description: 'Summarise how many records fall into each status category.',
+    category: 'Aggregation',
+    params: { $select: 'status,count(*) AS record_count', $group: 'status', $order: 'record_count DESC', $limit: '50', $offset: '0' },
+    where: []
+  },
+  {
+    id: 'agg_by_agency',
+    name: 'Count by Agency',
+    description: 'Break down record volume by the responsible city agency.',
+    category: 'Aggregation',
+    params: { $select: 'agency,count(*) AS record_count', $group: 'agency', $order: 'record_count DESC', $limit: '50', $offset: '0' },
+    where: []
+  },
+  // ── Date ─────────────────────────────────────────────────
+  {
+    id: 'date_last_30',
+    name: 'Created — Last 30 Days',
+    description: 'Records with a created_date within the past 30 days.',
+    category: 'Date',
+    params: { $order: 'created_date DESC', $limit: '500', $offset: '0' },
+    rawWhere: "created_date > '" + new Date(Date.now() - 30*86400*1000).toISOString().slice(0,10) + "T00:00:00.000'"
+  },
+  {
+    id: 'date_this_year',
+    name: 'Created — This Year',
+    description: 'Records created since January 1 of the current calendar year.',
+    category: 'Date',
+    params: { $order: 'created_date DESC', $limit: '1000', $offset: '0' },
+    rawWhere: "created_date >= '" + new Date().getFullYear() + "-01-01T00:00:00.000'"
+  },
+  // ── Geospatial ───────────────────────────────────────────
+  {
+    id: 'geo_within_radius',
+    name: 'Within 1 km of Times Square',
+    description: 'Spatial filter: all points within ~1 km of Times Square (40.758, −73.985). Requires a location column.',
+    category: 'Geospatial',
+    params: { $limit: '500', $offset: '0' },
+    rawWhere: "within_circle(location, 40.7580, -73.9855, 1000)"
+  },
+  {
+    id: 'geo_bounding_box',
+    name: 'Bounding Box — Manhattan',
+    description: 'All records whose location falls inside the Manhattan bounding box.',
+    category: 'Geospatial',
+    params: { $limit: '1000', $offset: '0' },
+    rawWhere: "within_box(location, 40.6957, -74.0185, 40.8820, -73.9070)"
+  }
+];
+
+// Active category filter (null = All)
+let _tplActiveCategory = null;
+
+function openTemplatesModal() {
+  _tplActiveCategory = null;
+  _renderTemplateCategories();
+  _renderTemplateCards();
+  toggleModal('templates-modal');
+}
+
+function _renderTemplateCategories() {
+  const categories = ['All', ...new Set(SOQL_TEMPLATES.map(t => t.category))];
+  const el = document.getElementById('tpl-cat-tabs');
+  // Build category tab HTML using a proper template literal — NOT a string
+  el.innerHTML = categories.map(cat => `
+    <button
+      class="px-3 py-1 rounded-full text-xs font-semibold transition-all
+             ${(_tplActiveCategory === null && cat === 'All') || _tplActiveCategory === cat
+               ? 'bg-brand-600 text-white'
+               : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}"
+      onclick="filterTemplateCategory('${sanitize(cat)}')">${sanitize(cat)}</button>
+  `).join('');
+}
+
+function filterTemplateCategory(cat) {
+  _tplActiveCategory = cat === 'All' ? null : cat;
+  _renderTemplateCategories();
+  _renderTemplateCards();
+}
+
+function _renderTemplateCards() {
+  const el = document.getElementById('templates-list');
+  const visible = _tplActiveCategory
+    ? SOQL_TEMPLATES.filter(t => t.category === _tplActiveCategory)
+    : SOQL_TEMPLATES;
+
+  if (!visible.length) {
+    el.innerHTML = '<div class="text-center text-gray-500 py-8">No templates in this category.</div>';
+    return;
+  }
+
+  // All rendering uses proper backtick template literals — every ${...} expression
+  // is evaluated at runtime, never stored as a raw string and injected as innerHTML.
+  el.innerHTML = visible.map(tpl => {
+    const catColor = {
+      Basic:       'bg-gray-700 text-gray-300',
+      Filtering:   'bg-blue-900 text-blue-300',
+      Aggregation: 'bg-purple-900 text-purple-300',
+      Date:        'bg-yellow-900 text-yellow-300',
+      Geospatial:  'bg-green-900 text-green-300'
+    }[tpl.category] || 'bg-gray-700 text-gray-300';
+
+    // Build preview of key params as pill tags
+    const paramPills = Object.entries(tpl.params || {})
+      .filter(([k]) => k !== '$offset')
+      .slice(0, 4)
+      .map(([k, v]) => `<span class="inline-block font-mono text-xs bg-gray-900 border border-gray-700 rounded px-1.5 py-0.5 mr-1">${sanitize(k)}=${sanitize(String(v).substring(0, 40))}</span>`)
+      .join('');
+    const rawPill = tpl.rawWhere
+      ? `<span class="inline-block font-mono text-xs bg-gray-900 border border-gray-700 rounded px-1.5 py-0.5 mr-1">$where=${sanitize(tpl.rawWhere.substring(0, 50))}…</span>`
+      : '';
+
+    return `<div class="border border-gray-700 rounded-lg p-4 hover:border-brand-500 transition-colors bg-gray-800 hover:bg-gray-750 cursor-pointer group"
+              onclick="applyTemplate('${sanitize(tpl.id)}')">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div>
+          <span class="font-semibold text-gray-100 text-sm group-hover:text-brand-300 transition-colors">${sanitize(tpl.name)}</span>
+          ${tpl.hint ? `<span class="ml-2 text-xs text-yellow-400"><i class="fa-solid fa-circle-info mr-1"></i>${sanitize(tpl.hint)}</span>` : ''}
+        </div>
+        <span class="flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-semibold ${catColor}">${sanitize(tpl.category)}</span>
+      </div>
+      <p class="text-xs text-gray-400 mb-3">${sanitize(tpl.description)}</p>
+      <div class="flex flex-wrap gap-1">${paramPills}${rawPill}</div>
+    </div>`;
+  }).join('');
+}
+
+function applyTemplate(tplId) {
+  const tpl = SOQL_TEMPLATES.find(t => t.id === tplId);
+  if (!tpl) { toast('Template not found', 'error'); return; }
+
+  // Apply LIMIT
+  if (tpl.params.$limit) {
+    const limitEl = document.getElementById('soql-limit');
+    if (limitEl) limitEl.value = tpl.params.$limit;
+  }
+  // Apply OFFSET
+  if (tpl.params.$offset !== undefined) {
+    const offsetEl = document.getElementById('soql-offset');
+    if (offsetEl) offsetEl.value = tpl.params.$offset;
+  }
+  // Apply ORDER BY
+  if (tpl.params.$order) {
+    const orderParts = tpl.params.$order.split(' ');
+    const orderCol = orderParts[0];
+    const orderDir = orderParts[1] || 'ASC';
+    const orderSel = document.getElementById('soql-orderby');
+    const dirSel = document.getElementById('soql-order-dir');
+    if (orderSel) {
+      // Try to select matching column; fall back gracefully if not found
+      const opt = [...orderSel.options].find(o => o.value === orderCol);
+      if (opt) { orderSel.value = orderCol; }
+    }
+    if (dirSel) dirSel.value = orderDir.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+  }
+  // Clear and re-add WHERE conditions
+  const whereContainer = document.getElementById('where-conditions');
+  if (whereContainer) {
+    whereContainer.innerHTML = '';
+    AppState.soqlWhereConditions = [];
+  }
+  // Apply rawWhere directly into the URL preview by storing as a single custom condition
+  if (tpl.rawWhere) {
+    // Insert a read-only raw WHERE display row
+    const div = document.createElement('div');
+    div.className = 'where-condition';
+    div.id = 'wc_raw_' + Date.now();
+    div.innerHTML = `
+      <span class="flex-1 font-mono text-brand-300 text-xs bg-gray-900 border border-gray-700 rounded px-2 py-1 overflow-x-auto whitespace-nowrap">${sanitize(tpl.rawWhere)}</span>
+      <button onclick="this.parentElement.remove();buildSOQLURL()" class="text-red-400 hover:text-red-300 ml-1 flex-shrink-0"><i class="fa-solid fa-xmark text-xs"></i></button>`;
+    div.dataset.rawWhere = tpl.rawWhere;
+    if (whereContainer) whereContainer.appendChild(div);
+  }
+
+  toggleModal('templates-modal');
+  buildSOQLURL();
+  toast(`Template "${tpl.name}" applied`, 'success');
+}
+
+// ============================================================
 // SOQL BUILDER
 // ============================================================
 function updateSOQLDatasetSelect() {
@@ -2448,16 +2718,23 @@ function buildSOQLURL() {
     params.set('$select', selectedCols.join(','));
   }
 
-  // WHERE conditions
+  // WHERE conditions — supports both standard builder rows and raw-WHERE template rows
   const conditions = [];
   document.querySelectorAll('.where-condition').forEach(div => {
+    // Raw WHERE rows (injected by applyTemplate) store the clause in data-raw-where
+    if (div.dataset.rawWhere) {
+      conditions.push(div.dataset.rawWhere);
+      return;
+    }
     const field = div.querySelector('.wc-field')?.value;
     const op = div.querySelector('.wc-op')?.value;
     const val = div.querySelector('.wc-val')?.value;
-    if (field && op && val !== undefined && val !== '') {
-      if (op === 'LIKE') {
-        conditions.push(`${field} like '%${val}%'`);
-      } else {
+    if (field && op) {
+      if (op === 'IS NOT NULL') {
+        conditions.push(`${field} IS NOT NULL`);
+      } else if (op === 'LIKE') {
+        if (val) conditions.push(`${field} like '%${val}%'`);
+      } else if (val !== undefined && val !== '') {
         const numVal = !isNaN(val) ? val : `'${val}'`;
         conditions.push(`${field}${op}${numVal}`);
       }
