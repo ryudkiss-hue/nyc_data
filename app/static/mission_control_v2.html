@@ -958,7 +958,7 @@ function toggleDark() {
   document.documentElement.classList.toggle('dark');
   const isDark = document.documentElement.classList.contains('dark');
   document.getElementById('dark-toggle').innerHTML = isDark ? '<i class="fa-solid fa-moon text-xs"></i>' : '<i class="fa-solid fa-sun text-xs"></i>';
-  localStorage.setItem('mmc_dark', isDark ? '1' : '0');
+  safeLocalSet('mmc_dark', isDark ? '1' : '0');
 }
 
 // ============================================================
@@ -969,7 +969,7 @@ function toggleSidebar() {
   const icon = document.getElementById('sidebar-toggle-icon');
   const collapsed = sb.classList.toggle('collapsed');
   icon.className = collapsed ? 'fa-solid fa-angles-right text-xs' : 'fa-solid fa-angles-left text-xs';
-  localStorage.setItem('mmc_sidebar_collapsed', collapsed ? '1' : '0');
+  safeLocalSet('mmc_sidebar_collapsed', collapsed ? '1' : '0');
 }
 
 // ============================================================
@@ -1001,7 +1001,7 @@ function loadConfigInputs() {
 }
 
 function saveConfig() {
-  localStorage.setItem('socrata_token', document.getElementById('socrata-token-input').value.trim());
+  safeLocalSet('socrata_token', document.getElementById('socrata-token-input').value.trim());
   toggleModal('config-modal');
   updateTokenStatus();
   toast('Configuration saved', 'success');
@@ -1070,41 +1070,129 @@ function startClock() {
 // ============================================================
 // URL STATE
 // ============================================================
+// ============================================================
+// STATE PERSISTENCE  (Issue 6 — localStorage cart cache + quota guard)
+// ============================================================
+const CART_CACHE_KEY = 'mmc_cart_v2';
+
+/**
+ * Wrap localStorage.setItem with QuotaExceededError handling.
+ * Call this instead of localStorage.setItem everywhere state is written.
+ */
+function safeLocalSet(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch(e) {
+    if (e.name === 'QuotaExceededError' || e.code === 22) {
+      toast('Browser storage full — clear saved workspaces to free space', 'warning');
+    }
+  }
+}
+
+/**
+ * Persist a slim copy of the cart to localStorage.
+ * Strips large blobs (resource object, column descriptions) to stay well under
+ * the 5 MB localStorage quota.  On next page load, restoreCartCache() reads
+ * this so hydrateDatasetById() API calls are skipped for already-cached items.
+ */
+function persistCart() {
+  const slim = AppState.cart.map(item => ({
+    id: item.id,
+    name: item.name,
+    domain: item.domain,
+    notes: item.notes || '',
+    addedAt: item.addedAt || Date.now(),
+    // Columns: keep only the three fields the app actually uses downstream
+    columns: (item.columns || []).map(c => ({
+      fieldName: c.fieldName,
+      name: c.name || c.fieldName,
+      dataTypeName: c.dataTypeName || 'text',
+    })),
+    // Minimal resource stub for renderResults / toggleDataset
+    resource: {
+      id: (item.resource || {}).id || item.id,
+      name: (item.resource || {}).name || item.name,
+      type: (item.resource || {}).type,
+      download_count: (item.resource || {}).download_count,
+    },
+  }));
+  safeLocalSet(CART_CACHE_KEY, JSON.stringify(slim));
+}
+
+/**
+ * Restore the slim cart from localStorage before the URL hash is processed.
+ * Returns the set of IDs restored so loadURLState() can skip re-hydrating them.
+ */
+function restoreCartCache() {
+  const raw = localStorage.getItem(CART_CACHE_KEY);
+  if (!raw) return new Set();
+  try {
+    const slim = JSON.parse(raw);
+    if (!Array.isArray(slim) || !slim.length) return new Set();
+    AppState.cart = slim;
+    renderCart();
+    updateCartBadge();
+    updateSOQLDatasetSelect();
+    updateProfileSelect();
+    return new Set(slim.map(c => c.id));
+  } catch(_) {
+    return new Set();
+  }
+}
+
 function saveURLState() {
   const ids = AppState.cart.map(c => c.id).join(',');
   const domain = AppState.domain;
   const q = (document.getElementById('search-input')?.value || '').trim();
-  let hash = `#domain=${encodeURIComponent(domain)}&cart=${encodeURIComponent(ids)}`;
+  // Use the short domain code (NYC, CHI …) to keep URLs compact
+  const shortDomain = DOMAIN_SHORT[domain] || domain;
+  let hash = `#d=${encodeURIComponent(shortDomain)}&cart=${encodeURIComponent(ids)}`;
   if (q) hash += `&q=${encodeURIComponent(q)}`;
   history.replaceState(null, '', hash);
+  // Also keep the cart columns persisted so reloads are API-free
+  persistCart();
 }
+
+// Reverse lookup: short code → full domain
+const DOMAIN_FROM_SHORT = Object.fromEntries(
+  Object.entries(DOMAIN_SHORT).map(([full, short]) => [short, full])
+);
 
 function loadURLState() {
   const hash = location.hash.replace('#', '');
   if (!hash) return;
   const params = {};
   hash.split('&').forEach(p => {
-    const [k,v] = p.split('=');
-    params[k] = decodeURIComponent(v || '');
+    const eqIdx = p.indexOf('=');
+    if (eqIdx < 0) return;
+    const k = p.slice(0, eqIdx);
+    const v = decodeURIComponent(p.slice(eqIdx + 1));
+    params[k] = v;
   });
-  if (params.domain) {
-    AppState.domain = params.domain;
+
+  // Support both old 'domain' param and new short 'd' param
+  const domainParam = params.domain || params.d;
+  if (domainParam) {
+    const full = DOMAIN_FROM_SHORT[domainParam] || domainParam;
+    AppState.domain = full;
     const sel = document.getElementById('domain-select');
-    if (sel) sel.value = params.domain;
+    if (sel) sel.value = full;
   }
+
   if (params.cart && params.cart.trim()) {
     const ids = params.cart.split(',').filter(Boolean);
     ids.forEach(id => {
+      // Skip API call if already restored from localStorage cache
       if (!AppState.cart.find(c => c.id === id)) {
         hydrateDatasetById(id, AppState.domain);
       }
     });
   }
+
   if (params.q) {
     const searchInput = document.getElementById('search-input');
     if (searchInput) {
       searchInput.value = params.q;
-      // Restore the last search results automatically
       executeSearch();
     }
   }
@@ -1128,7 +1216,7 @@ function saveRecentSearch(q) {
   arr = arr.filter(x => x !== q);
   arr.unshift(q);
   if (arr.length > 10) arr = arr.slice(0, 10);
-  localStorage.setItem('mmc_recent_searches', JSON.stringify(arr));
+  safeLocalSet('mmc_recent_searches', JSON.stringify(arr));
 }
 
 function showRecentDropdown() {
@@ -1504,7 +1592,7 @@ function toggleFavorite(id) {
   } else {
     AppState.favorites.add(id);
   }
-  localStorage.setItem('mmc_favorites', JSON.stringify([...AppState.favorites]));
+  safeLocalSet('mmc_favorites', JSON.stringify([...AppState.favorites]));
   updateFavBadge();
   renderResults();
 }
@@ -3352,7 +3440,7 @@ function saveWorkspace() {
   if (!name) { toast('Enter a workspace name', 'warning'); return; }
   const workspaces = JSON.parse(localStorage.getItem('mmc_workspaces') || '{}');
   workspaces[name] = { cart: AppState.cart, domain: AppState.domain, savedAt: Date.now() };
-  localStorage.setItem('mmc_workspaces', JSON.stringify(workspaces));
+  safeLocalSet('mmc_workspaces', JSON.stringify(workspaces));
   document.getElementById('new-workspace-name').value = '';
   loadWorkspacesList();
   toast(`Workspace "${name}" saved`, 'success');
@@ -3380,7 +3468,7 @@ function deleteWorkspace(name) {
   confirmDialog(`Delete workspace "${name}"?`, () => {
     const workspaces = JSON.parse(localStorage.getItem('mmc_workspaces') || '{}');
     delete workspaces[name];
-    localStorage.setItem('mmc_workspaces', JSON.stringify(workspaces));
+    safeLocalSet('mmc_workspaces', JSON.stringify(workspaces));
     loadWorkspacesList();
     toast(`Workspace deleted`, 'info');
   });
@@ -3392,7 +3480,7 @@ function renameWorkspace(oldName) {
   const workspaces = JSON.parse(localStorage.getItem('mmc_workspaces') || '{}');
   workspaces[newName] = workspaces[oldName];
   delete workspaces[oldName];
-  localStorage.setItem('mmc_workspaces', JSON.stringify(workspaces));
+  safeLocalSet('mmc_workspaces', JSON.stringify(workspaces));
   loadWorkspacesList();
   toast(`Renamed to "${newName}"`, 'success');
 }
@@ -3418,7 +3506,7 @@ function importWorkspaceJSON(event) {
       const name = file.name.replace('.json','');
       const workspaces = JSON.parse(localStorage.getItem('mmc_workspaces') || '{}');
       workspaces[name] = ws;
-      localStorage.setItem('mmc_workspaces', JSON.stringify(workspaces));
+      safeLocalSet('mmc_workspaces', JSON.stringify(workspaces));
       loadWorkspacesList();
       toast('Workspace imported', 'success');
     } catch(e) { toast('Invalid workspace JSON', 'error'); }
@@ -3677,12 +3765,11 @@ function init() {
   // Check AI backend status on startup (updates status bar + Config modal info)
   checkAIStatus();
 
-  // Init cart UI
-  renderCart();
-  updateCartBadge();
+  // Restore cart from localStorage cache (avoids API calls on refresh)
+  restoreCartCache();
   updateFavBadge();
 
-  // Load URL state
+  // Load URL state — skip hydrateDatasetById for IDs already in the cache
   loadURLState();
 
   // Status bar
