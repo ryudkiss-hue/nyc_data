@@ -6,17 +6,17 @@ import os
 import sys
 from pathlib import Path
 
-# Ensure repo root is on sys.path so `from app.X import ...` works whether the
-# app is launched as `streamlit run app/app.py` (path = app/) or installed as a
-# package.  Adding to index 0 gives it priority over site-packages.
+# Ensures repo root is on sys.path so absolute imports like `from app.X` work 
+# perfectly in Render's environment without namespace collisions.
 _REPO_ROOT = str(Path(__file__).resolve().parents[1])
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-import streamlit as st  # noqa: E402
+import streamlit as st  
 
-from app.analytics import run_all_workflows  # noqa: E402
-from app.data_loader import (  # noqa: E402
+# Now that the file is named main.py, these absolute imports will resolve perfectly
+from app.analytics import run_all_workflows  
+from app.data_loader import (  
     CACHE_TTL_SECONDS,
     WORKFLOW_DATASETS,
     demo_mode_enabled,
@@ -25,10 +25,10 @@ from app.data_loader import (  # noqa: E402
     load_manhattan_map_layers,
     token_status,
 )
-from app.ui.empty_states import frames_are_empty, render_empty_state  # noqa: E402
-from app.ui.theme import inject_theme, render_agency_header, render_skip_link  # noqa: E402
-from app.utils.i18n import render_language_selector, t  # noqa: E402
-from app.views import home, publish, settings, workflows  # noqa: E402
+from app.ui.empty_states import frames_are_empty, render_empty_state  
+from app.ui.theme import inject_theme, render_agency_header, render_skip_link  
+from app.utils.i18n import render_language_selector, t  
+from app.views import home, publish, settings, workflows  
 
 st.set_page_config(
     page_title="Manhattan Mission Control | NYC DOT SIM",
@@ -50,7 +50,6 @@ NAV_KEYS = ["nav_home", "nav_workflows", "nav_publish", "nav_settings"]
 
 @st.cache_data(ttl=CACHE_TTL_SECONDS, show_spinner="Loading workflow datasets…")
 def _load_workflow_frames(workflow_key: str, limit: int) -> dict:
-    # Quality view uses all workflow datasets for cross-dataset profiling
     if workflow_key == "quality":
         all_wf_keys: list[str] = []
         for v in WORKFLOW_DATASETS.values():
@@ -62,7 +61,6 @@ def _load_workflow_frames(workflow_key: str, limit: int) -> dict:
 @st.cache_data(ttl=CACHE_TTL_SECONDS, show_spinner="Loading full ingestion matrix…")
 def _load_all_frames(limit: int) -> dict:
     from app.data_loader import DATASET_REGISTRY
-
     return fetch_datasets_for_keys(tuple(DATASET_REGISTRY.keys()), limit=limit)
 
 
@@ -77,14 +75,10 @@ def _run_workflows(frames: dict) -> dict:
 
 
 def _nav_page_from_key(key: str) -> str:
-    if key == "nav_home":
-        return "Home"
-    if key == "nav_workflows":
-        return "Workflows"
-    if key == "nav_publish":
-        return "Publish"
-    if key == "nav_settings":
-        return "Settings"
+    if key == "nav_home": return "Home"
+    if key == "nav_workflows": return "Workflows"
+    if key == "nav_publish": return "Publish"
+    if key == "nav_settings": return "Settings"
     return "Home"
 
 
@@ -134,18 +128,13 @@ def main() -> None:
     if page == "Home":
         home.render_home_page()
         return
-
     if page == "Publish":
         publish.render_publish_page()
         return
-
     if page == "Settings":
         settings.render_settings_page()
         return
 
-    # ------------------------------------------------------------------ #
-    # Workflows page
-    # ------------------------------------------------------------------ #
     frames: dict = {}
     map_layers: dict = {}
     try:
@@ -193,13 +182,11 @@ def main() -> None:
     with st.expander("📊 ROI calculation detail", expanded=False):
         st.json(roi.as_dict())
 
-    # Ingestion summary in expander on all workflow views
     if not show_ingest and view_key != "quality":
         with st.expander("📥 Ingestion matrix", expanded=False):
             from app.data_loader import ingestion_summary
             summary = ingestion_summary(frames)
             st.dataframe(summary, use_container_width=True, hide_index=True)
-
 
 if __name__ == "__main__":
     main()
