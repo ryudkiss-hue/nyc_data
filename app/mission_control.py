@@ -48,6 +48,7 @@ from app.utils.i18n import t
 from app.views.home import render_home_page
 from app.views.settings import render_settings_page
 from app.views.spatial_analytics import render_spatial_tab
+from app.views.studio import render_studio_page
 from app.views.workflows import (
     render_roi_header,
     view_contract,
@@ -542,6 +543,7 @@ def main() -> None:
         tab_governance,
         tab_copilot,
         tab_settings,
+        tab_studio,
     ) = st.tabs([
         "🏠 Home",
         "🚀 Apex Engine",
@@ -551,6 +553,7 @@ def main() -> None:
         "🏛️ Governance",
         "🤖 AI Copilot",
         "⚙️ Settings",
+        "🔬 Studio",
     ])
 
     with tab_home:
@@ -576,6 +579,9 @@ def main() -> None:
 
     with tab_settings:
         _tab_settings()
+
+    with tab_studio:
+        render_studio_page()
 
 
 if __name__ == "__main__":
