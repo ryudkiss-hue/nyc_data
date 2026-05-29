@@ -1,0 +1,2 @@
+# renderer/index.html is generated at build time by scripts/copy-spa.js
+# from app/static/mission_control_v2.html (single source of truth).
