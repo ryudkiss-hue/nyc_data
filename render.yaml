@@ -14,8 +14,10 @@ services:
         value: "3.11.9"
       - key: PYTHONPATH
         value: "src:."
+      # Set MISSION_DEMO=1 in the Render dashboard to force demo mode.
+      # If not set, the app auto-detects based on whether SOCRATA_APP_TOKEN is present.
       - key: MISSION_DEMO
-        value: "1"
+        sync: false
       # NYC Open Data — set your token in the Render dashboard for higher rate limits
       - key: SOCRATA_APP_TOKEN
         sync: false
