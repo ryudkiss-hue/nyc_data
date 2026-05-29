@@ -3,7 +3,7 @@ FROM python:3.11-slim
 LABEL description="Manhattan Mission Control (Streamlit)"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc libpq-dev \
+    gcc libpq-dev libgeos-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -18,7 +18,8 @@ RUN pip install --no-cache-dir -e ".[mission,postgres,xlsx]" -q
 
 ENV PYTHONUNBUFFERED=1
 ENV MISSION_DEMO=0
+ENV PYTHONPATH=/app/src:/app
 
 EXPOSE 8501
 
-CMD ["python", "-m", "streamlit", "run", "app/app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+CMD ["python", "-m", "streamlit", "run", "app/mission_control.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.headless=true"]

@@ -16,18 +16,48 @@ import time
 import warnings
 from datetime import datetime
 
-import arviz as az
-import folium
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-import pymc as pm
 import requests
 import streamlit as st
 import streamlit.components.v1 as components
-from bs4 import BeautifulSoup
 from dateutil.relativedelta import relativedelta
-from prophet import Prophet
+
+try:
+    import arviz as az
+    _HAS_ARVIZ = True
+except ImportError:
+    az = None  # type: ignore[assignment]
+    _HAS_ARVIZ = False
+
+try:
+    import folium
+    _HAS_FOLIUM = True
+except ImportError:
+    folium = None  # type: ignore[assignment]
+    _HAS_FOLIUM = False
+
+try:
+    import pymc as pm
+    _HAS_PYMC = True
+except ImportError:
+    pm = None  # type: ignore[assignment]
+    _HAS_PYMC = False
+
+try:
+    from bs4 import BeautifulSoup
+    _HAS_BS4 = True
+except ImportError:
+    BeautifulSoup = None  # type: ignore[assignment,misc]
+    _HAS_BS4 = False
+
+try:
+    from prophet import Prophet
+    _HAS_PROPHET = True
+except ImportError:
+    Prophet = None  # type: ignore[assignment,misc]
+    _HAS_PROPHET = False
 
 from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 from socrata_toolkit.core.duckdb_store import DuckDBManager
@@ -163,7 +193,8 @@ def scrape_historical_jids(start: int, end: int) -> pd.DataFrame:
                 timeout=6,
             )
             if resp.status_code == 200:
-                soup = BeautifulSoup(resp.content, "html.parser")
+                from bs4 import BeautifulSoup as _BS4
+                soup = _BS4(resp.content, "html.parser")
                 title_elem = soup.find("h1", class_="job-title")
                 agency_elem = soup.find("span", class_="agency-name")
                 job_title = title_elem.text.strip() if title_elem else "UNKNOWN TITLE"
@@ -376,53 +407,65 @@ def run_apex_math(
     predictor = df_ts["Postings_Smoothed"].shift(best_lag).fillna(0).values
     target = df_ts["Starts"].values.astype(int)
 
-    try:
-        with pm.Model():
-            alpha = pm.Normal("Baseline_Log", mu=0, sigma=5)
-            beta = pm.Normal("Yield_Log", mu=0, sigma=5)
-            mu = pm.math.exp(alpha + beta * predictor)
-            pm.Poisson("Y_obs", mu=mu, observed=target)
-            trace = pm.sample(
-                1000,
-                tune=1000,
-                target_accept=0.9,
-                cores=1,
-                chains=2,
-                return_inferencedata=True,
-                progressbar=False,
-            )
-    except Exception as exc:
-        st.error(f"PyMC sampling failed: {exc}")
-        return None
+    if not _HAS_PYMC or not _HAS_ARVIZ:
+        st.warning("PyMC/ArviZ not available — Bayesian regression skipped. Install pymc and arviz for full analytics.")
+        yield_rate, yield_lo, yield_hi = (
+            float(df_ts["Starts"].mean() / max(df_ts["Postings"].mean(), 1)),
+            0.0, 1.0,
+        )
+        trace = None
+    else:
+        try:
+            with pm.Model():
+                alpha = pm.Normal("Baseline_Log", mu=0, sigma=5)
+                beta = pm.Normal("Yield_Log", mu=0, sigma=5)
+                mu = pm.math.exp(alpha + beta * predictor)
+                pm.Poisson("Y_obs", mu=mu, observed=target)
+                trace = pm.sample(
+                    1000,
+                    tune=1000,
+                    target_accept=0.9,
+                    cores=1,
+                    chains=2,
+                    return_inferencedata=True,
+                    progressbar=False,
+                )
+        except Exception as exc:
+            st.error(f"PyMC sampling failed: {exc}")
+            return None
 
-    summary = az.summary(trace, var_names=["Yield_Log"])
-    beta_mean = float(summary.loc["Yield_Log", "mean"])
-    beta_hdi_lo = float(summary.loc["Yield_Log", "hdi_3%"])
-    beta_hdi_hi = float(summary.loc["Yield_Log", "hdi_97%"])
-    yield_rate = float(np.exp(beta_mean))
-    yield_lo = float(np.exp(beta_hdi_lo))
-    yield_hi = float(np.exp(beta_hdi_hi))
+    if trace is not None:
+        summary = az.summary(trace, var_names=["Yield_Log"])
+        beta_mean = float(summary.loc["Yield_Log", "mean"])
+        beta_hdi_lo = float(summary.loc["Yield_Log", "hdi_3%"])
+        beta_hdi_hi = float(summary.loc["Yield_Log", "hdi_97%"])
+        yield_rate = float(np.exp(beta_mean))
+        yield_lo = float(np.exp(beta_hdi_lo))
+        yield_hi = float(np.exp(beta_hdi_hi))
 
     # 4. Prophet 12-month forecast
-    df_prophet = (
-        df_ts.rename_axis("ds")
-        .reset_index()[["ds", "Postings_Smoothed"]]
-        .rename(columns={"Postings_Smoothed": "y"})
-    )
-    m = Prophet(
-        yearly_seasonality=True,
-        weekly_seasonality=False,
-        daily_seasonality=False,
-    )
-    m.fit(df_prophet)
-    future = m.make_future_dataframe(periods=12, freq="MS")
-    forecast = m.predict(future)
-    forecast["predicted_hires"] = forecast["yhat"] * yield_rate
-    forecast["predicted_hires_lo"] = forecast["yhat_lower"] * yield_lo
-    forecast["predicted_hires_hi"] = forecast["yhat_upper"] * yield_hi
-    forecast["predicted_hires_date"] = forecast["ds"] + pd.DateOffset(months=best_lag)
     cutoff_date = df_ts.index[-1]
-    future_forecast = forecast[forecast["ds"] > cutoff_date].copy()
+    if not _HAS_PROPHET:
+        future_forecast = pd.DataFrame()
+    else:
+        df_prophet = (
+            df_ts.rename_axis("ds")
+            .reset_index()[["ds", "Postings_Smoothed"]]
+            .rename(columns={"Postings_Smoothed": "y"})
+        )
+        m = Prophet(
+            yearly_seasonality=True,
+            weekly_seasonality=False,
+            daily_seasonality=False,
+        )
+        m.fit(df_prophet)
+        future = m.make_future_dataframe(periods=12, freq="MS")
+        forecast = m.predict(future)
+        forecast["predicted_hires"] = forecast["yhat"] * yield_rate
+        forecast["predicted_hires_lo"] = forecast["yhat_lower"] * yield_lo
+        forecast["predicted_hires_hi"] = forecast["yhat_upper"] * yield_hi
+        forecast["predicted_hires_date"] = forecast["ds"] + pd.DateOffset(months=best_lag)
+        future_forecast = forecast[forecast["ds"] > cutoff_date].copy()
 
     return {
         "df_ts": df_ts,
@@ -638,6 +681,9 @@ def _kpi_row(results: dict, target_agency: str, target_title: str) -> None:
 def _map_panel(df_jobs: pd.DataFrame) -> None:
     if "work_location" not in df_jobs.columns:
         st.info("No `work_location` column in the jobs dataset — map unavailable.")
+        return
+    if not _HAS_FOLIUM:
+        st.caption("Install `folium` to enable the geospatial map panel.")
         return
 
     location_counts = df_jobs["work_location"].value_counts().reset_index()
