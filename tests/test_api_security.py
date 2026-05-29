@@ -13,6 +13,8 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
+pytest.importorskip("fastapi", reason="fastapi required for API tests")
+
 # Import authentication
 from socrata_toolkit.api.auth import (
     APIKeyAuthProvider,
