@@ -73,7 +73,7 @@ python -m socrata_toolkit.core.cli doctor --check-db
 
 | Goal | Command | URL / output |
 |------|---------|----------------|
-| **Mission Control (Streamlit)** | `python main.py` or `mission` | http://localhost:8501 |
+| **Mission Control (Streamlit)** | `python main.py` (entry: `app/mission_control.py`) | http://localhost:8501 |
 | **Legacy Dash analyst UI** | `python legacy_archive/dash_app/app.py` | http://localhost:8050 |
 | **CLI — daily sync** | `socrata sync -i erm2-nwe9 --table complaints_311` | `data/local_db/` |
 | **CLI — full pipeline** | See [Command Reference](COMMAND_REFERENCE.md) | `outputs/` |
@@ -82,6 +82,18 @@ python -m socrata_toolkit.core.cli doctor --check-db
 | **Docker (Mission Control)** | `docker build -f Dockerfile.mission -t nyc-mission .` | Port 8501 |
 
 > **Layout:** Python package lives in `src/socrata_toolkit/`; Streamlit UI in `app/`; archived Dash in `legacy_archive/dash_app/`.
+
+## 4b. Deploy to Render (alternative to local)
+
+`render.yaml` at the repo root is a Render blueprint. To deploy without a local Python install:
+
+1. Push the repo to GitHub.
+2. Go to [render.com](https://render.com) → **New** → **Blueprint** → connect your repo.
+3. Render reads `render.yaml` and auto-provisions the Mission Control service.
+4. Set `SOCRATA_APP_TOKEN` in Render dashboard → Environment tab for live data.
+5. `MISSION_DEMO=1` is set by default — the app works without a token.
+
+Free tier: the Bayesian engine uses ADVI (~50 MB RAM), which fits within Render's free memory limit.
 
 ## 5. First analyst workflow (5 minutes)
 
