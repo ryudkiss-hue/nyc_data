@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import requests
 import yaml
 
 from app.ingest_log import log_event
@@ -200,6 +201,30 @@ def _postprocess_dataset(dataset_key: str, df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def _soda3_post(
+    fourfour: str,
+    *,
+    limit: int,
+    where: str | None,
+) -> list[dict[str, Any]]:
+    """POST a SoQL query to the SODA3 endpoint and return the rows."""
+    token = (os.getenv("SOCRATA_APP_TOKEN") or "").strip()
+    if not token:
+        raise RuntimeError(
+            "SOCRATA_APP_TOKEN is not set. A token is required for SODA3 POST requests."
+        )
+    url = f"https://{DOMAIN}/api/v3/views/{fourfour}/query.json"
+    parts: list[str] = ["SELECT *"]
+    if where:
+        parts.append(f"WHERE {where}")
+    parts.append(f"LIMIT {limit}")
+    soql = " ".join(parts)
+    headers = {"X-App-Token": token}
+    resp = requests.post(url, json={"query": soql}, headers=headers, timeout=90)
+    resp.raise_for_status()
+    return resp.json()
+
+
 def _fetch_live(
     dataset_key: str,
     *,
@@ -208,17 +233,13 @@ def _fetch_live(
     retries: int = 3,
     backoff: float = 2.0,
 ) -> pd.DataFrame:
-    """Fetch from Socrata with exponential-backoff retry."""
+    """Fetch from Socrata via SODA3 POST with exponential-backoff retry."""
     meta = DATASET_REGISTRY[dataset_key]
-    client = get_socrata_client()
-    kwargs: dict[str, Any] = {"limit": limit}
-    if where:
-        kwargs["where"] = where
 
     last_exc: Exception | None = None
     for attempt in range(retries):
         try:
-            rows = client.get(meta["fourfour"], **kwargs)
+            rows = _soda3_post(meta["fourfour"], limit=limit, where=where)
             df = pd.DataFrame.from_records(rows) if rows else pd.DataFrame()
             return _postprocess_dataset(dataset_key, df)
         except Exception as exc:
