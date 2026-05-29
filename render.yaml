@@ -16,5 +16,14 @@ services:
         value: "src:."
       - key: MISSION_DEMO
         value: "1"
+      # NYC Open Data — set your token in the Render dashboard for higher rate limits
       - key: SOCRATA_APP_TOKEN
         sync: false
+      # LLM backends — set whichever you use in the Render dashboard (none required for demo mode)
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      # Ollama is self-hosted; point OLLAMA_HOST at your instance URL if using it
+      - key: OLLAMA_HOST
+        value: "http://localhost:11434"
