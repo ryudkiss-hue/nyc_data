@@ -10,7 +10,8 @@ import pandas as pd
 import streamlit as st
 
 from app.ui import charts
-from app.ui.components import kpi_row, section_header
+from app.ui.components import kpi_row, section_header, status_pill
+from app.utils import alerts
 from socrata_toolkit.quality.profiler import DataType, ProfileGenerator
 
 
@@ -282,7 +283,50 @@ def render_quality_tab(loaded_frames: dict[str, pd.DataFrame]) -> None:
 
     st.divider()
 
-    # ── 6. Export quality report ──────────────────────────────────────────────
+    # ── 6. Threshold monitor ──────────────────────────────────────────────────
+    section_header("Threshold Monitor", "Flag datasets breaching quality SLAs", icon="🚨")
+    c1, c2, c3 = st.columns(3)
+    max_null = c1.slider("Max null %", 0, 100, 20, key="alert_null")
+    min_health = c2.slider("Min health score", 0, 100, 60, key="alert_health")
+    max_dup = c3.slider("Max duplicate %", 0, 50, 5, key="alert_dup")
+    rules = [
+        alerts.ThresholdRule("null_pct", ">", float(max_null), "warn", "Null %"),
+        alerts.ThresholdRule("health_score", "<", float(min_health), "critical", "Health"),
+        alerts.ThresholdRule("duplicate_pct", ">", float(max_dup), "warn", "Duplicate %"),
+    ]
+    breach_rows: list[dict[str, Any]] = []
+    for key, df in loaded_frames.items():
+        m = metrics[key]
+        ds_metrics = {
+            "null_pct": m["null_pct"],
+            "health_score": m["score"],
+            "duplicate_pct": m["dup_pct"] * 100,
+        }
+        results = alerts.evaluate_all(rules, ds_metrics)
+        breached = [r for r in results if r.breached]
+        if breached:
+            for r in breached:
+                breach_rows.append(
+                    {
+                        "Dataset": key,
+                        "Rule": r.rule.describe(),
+                        "Actual": round(r.value, 1),
+                        "Severity": r.severity,
+                    }
+                )
+    if breach_rows:
+        n_crit = sum(1 for r in breach_rows if r["Severity"] == "critical")
+        pills = status_pill(f"{len(breach_rows)} breach(es)", "warn")
+        if n_crit:
+            pills += " " + status_pill(f"{n_crit} critical", "critical")
+        st.markdown(pills, unsafe_allow_html=True)
+        st.dataframe(pd.DataFrame(breach_rows), use_container_width=True, hide_index=True)
+    else:
+        st.markdown(status_pill("All datasets within thresholds", "ok"), unsafe_allow_html=True)
+
+    st.divider()
+
+    # ── 7. Export quality report ──────────────────────────────────────────────
     st.subheader("Export Quality Report")
     report_df = _build_quality_report(loaded_frames)
     csv_bytes = report_df.to_csv(index=False).encode("utf-8")
