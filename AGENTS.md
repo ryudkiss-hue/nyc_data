@@ -1,36 +1,56 @@
 # AGENTS.md
 
-## Cursor Cloud specific instructions
+## Development instructions for AI coding agents (Cursor, Claude Code, etc.)
 
 ### Overview
 
-This is the **NYC DOT Sidewalk Toolkit** (`socrata_toolkit` v0.3.0) — a Python toolkit for sidewalk inspection and management. The primary interface is a Streamlit dashboard called "Manhattan Mission Control" served on port 8501.
+**NYC DOT Sidewalk Toolkit** (`socrata_toolkit` v0.3.0) — Python toolkit for sidewalk inspection, open data analytics, and agency operations. The primary interface is **Manhattan Mission Control**, a unified 8-tab Streamlit dashboard (`app/mission_control.py`) served on port 8501.
 
 ### Running the Application
 
-- **Streamlit (Mission Control):** `MISSION_DEMO=1 python3 -m streamlit run app/app.py --server.port 8501 --server.headless true`
-  - `MISSION_DEMO=1` enables synthetic/demo data without needing a Socrata API token.
-  - Requires `PYTHONPATH` to include both `/workspace/src` and `/workspace` (the editable install handles this).
-- **CLI:** `python3 -m socrata_toolkit.core.cli doctor` (or use the `socrata` entry point if `~/.local/bin` is on PATH).
+```bash
+# Recommended — thin launcher shim, auto-finds entry point
+MISSION_DEMO=1 python main.py
+
+# Direct
+PYTHONPATH=src:. python -m streamlit run app/mission_control.py --server.port 8501 --server.headless true
+```
+
+`MISSION_DEMO=1` loads synthetic data without a Socrata token. Set `SOCRATA_APP_TOKEN` in `.env` for live data.
 
 ### Key Development Commands
 
 | Task | Command |
 |------|---------|
-| Install all deps | `pip install -e ".[all]" -r requirements-dev.txt` |
-| Lint | `python3 -m ruff check src/socrata_toolkit/ tests/` |
-| Tests | `python3 -m pytest tests/ -v --ignore=tests/test_interactive_explore.py` |
-| Run app (demo) | `MISSION_DEMO=1 python3 -m streamlit run app/app.py --server.headless true` |
-| Health check | `python3 -c "from socrata_toolkit.core.cli import main; import sys; sys.argv=['socrata','doctor']; main()"` |
+| Install all deps | `pip install -e ".[mission,postgres,xlsx]" -r requirements-dev.txt` |
+| Lint | `python -m ruff check src/socrata_toolkit/ tests/ app/` |
+| Tests | `python -m pytest tests/ -q -m "not legacy"` |
+| Run app (demo) | `MISSION_DEMO=1 python main.py` |
+| Health check | `python -m socrata_toolkit.core.cli doctor` |
+
+### Repository Layout
+
+```
+app/mission_control.py   ← entry point (8-tab Streamlit app)
+app/views/apex.py        ← Bayesian hiring analytics tab
+app/views/quality_dashboard.py
+app/views/governance.py
+app/views/spatial_analytics.py
+app/data_loader.py       ← Socrata ingestion + DuckDB caching
+src/socrata_toolkit/     ← core library (SocrataClient, DuckDBManager, etc.)
+config/datasets.yaml     ← 16+ NYC DOT dataset definitions
+```
 
 ### Non-obvious Caveats
 
-1. **PATH:** Installed scripts (pytest, ruff, streamlit, socrata) land in `~/.local/bin` which may not be on PATH by default. Either prefix commands with `python3 -m` or `export PATH="$HOME/.local/bin:$PATH"`.
+1. **PYTHONPATH:** Must include both `src/` and `.` — `PYTHONPATH=src:.` or use `python main.py` which sets it automatically.
 
-2. **Test exclusions:** `tests/test_interactive_explore.py` requires the `dash` package (legacy UI, not installed by default). Skip it with `--ignore`. Some tests also require `networkx` and `flask` which are not in the default extras.
+2. **Heavy ML deps** (`pymc`, `arviz`, `prophet`, `folium`) degrade gracefully — the app warns and skips those panels rather than crashing if they're missing.
 
-3. **Demo mode:** Set `MISSION_DEMO=1` to run Mission Control without a Socrata API token. This uses synthetic data.
+3. **Demo mode:** `MISSION_DEMO=1` loads sample data. No Socrata token needed.
 
-4. **psycopg:** The pure-Python psycopg driver needs either `libpq` system library or the `psycopg-binary` pip package. Install `psycopg-binary` in cloud environments to avoid needing the system library.
+4. **Test exclusions:** Run with `-m "not legacy"` to skip Dash legacy page tests (require `dash` + `dash-ag-grid` + `dask`). Some tests also need `networkx`, `scikit-learn`, `fastapi`, `httpx`.
 
-5. **FastAPI:** The `requirements.txt` lists `fastapi` but the `pyproject.toml` extras don't include it. Install it separately (`pip install fastapi`) to avoid import errors in `tests/test_api_security.py`.
+5. **Legacy Dash UI** is archived at `legacy_archive/dash_app/` — not the primary interface.
+
+6. **psycopg:** Use `psycopg-binary` in cloud environments to avoid needing the `libpq` system library.
