@@ -6387,4 +6387,753 @@ function generateCodeFull(){
   });
 })();
 </script>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     MODULE E — Deferred items: quality badges, data-peek, bulk cart ops,
+     infinite scroll, debounce hardening, rate-limiter, seasonal anomaly,
+     audit trail, empty-state CTAs, schema-diff highlights, license metadata,
+     lineage provenance graph (D3-free), lazy-init wiring, parquet cache stats.
+     All additive; patches existing globals after DOMContentLoaded.
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<style id="mmc-enh-e-style">
+/* ── Quality badge on result rows ── */
+.qbadge {
+  display:inline-flex; align-items:center; gap:3px;
+  font-size:.6rem; font-weight:700; padding:1px 5px; border-radius:9999px;
+  line-height:1.4; white-space:nowrap;
+}
+.qbadge-green  { background:#14532d; color:#86efac; }
+.qbadge-yellow { background:#713f12; color:#fde68a; }
+.qbadge-red    { background:#7f1d1d; color:#fca5a5; }
+.qbadge-gray   { background:#374151; color:#9ca3af; }
+
+/* ── Hover data-peek popover ── */
+#mmc-peek-popover {
+  position:fixed; z-index:2800; min-width:280px; max-width:400px;
+  background:#1e2330; border:1px solid #374151; border-radius:10px;
+  box-shadow:0 8px 32px #0008; padding:12px 14px;
+  font-size:.72rem; color:#d1d5db; pointer-events:none;
+  transition:opacity .12s; opacity:0;
+}
+#mmc-peek-popover.show { opacity:1; pointer-events:auto; }
+#mmc-peek-popover table { width:100%; border-collapse:collapse; }
+#mmc-peek-popover th { color:#9ca3af; font-weight:600; text-align:left; padding:2px 4px; border-bottom:1px solid #374151; }
+#mmc-peek-popover td { padding:2px 4px; vertical-align:top; word-break:break-all; }
+#mmc-peek-popover tr:nth-child(even) td { background:#ffffff08; }
+
+/* ── Bulk cart toolbar ── */
+#mmc-bulk-bar {
+  display:none; align-items:center; gap:8px;
+  background:#1e2330; border:1px solid #374151; border-radius:8px;
+  padding:6px 10px; margin-bottom:6px; font-size:.75rem; color:#d1d5db;
+}
+#mmc-bulk-bar.active { display:flex; }
+
+/* ── Infinite scroll sentinel ── */
+#mmc-scroll-sentinel { height:1px; }
+
+/* ── Lineage mini-graph ── */
+#mmc-lineage-panel {
+  background:#111827; border:1px solid #374151; border-radius:10px;
+  padding:14px; margin-top:12px;
+}
+#mmc-lineage-panel svg { display:block; margin:auto; }
+
+/* ── Audit trail drawer ── */
+#mmc-audit-drawer {
+  position:fixed; right:0; top:0; height:100vh; width:320px; z-index:3000;
+  background:#111827; border-left:1px solid #374151;
+  transform:translateX(100%); transition:transform .22s cubic-bezier(.4,0,.2,1);
+  display:flex; flex-direction:column;
+}
+#mmc-audit-drawer.open { transform:translateX(0); }
+#mmc-audit-drawer header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 16px; border-bottom:1px solid #374151; font-weight:700; font-size:.85rem;
+}
+#mmc-audit-log { flex:1; overflow-y:auto; padding:10px 14px; }
+.audit-entry {
+  font-size:.68rem; color:#9ca3af; padding:4px 0; border-bottom:1px solid #1f2937;
+  display:flex; gap:6px;
+}
+.audit-entry .audit-ts { color:#4b5563; flex-shrink:0; white-space:nowrap; }
+.audit-entry .audit-op { color:#60a5fa; font-weight:600; }
+
+/* ── Schema-diff highlights ── */
+.schema-diff-add { background:#14532d44; border-left:3px solid #22c55e; padding-left:4px; }
+.schema-diff-rem { background:#7f1d1d44; border-left:3px solid #ef4444; padding-left:4px; }
+.schema-diff-chg { background:#78350f44; border-left:3px solid #f59e0b; padding-left:4px; }
+
+/* ── License/access chip ── */
+.license-chip {
+  display:inline-flex; align-items:center; gap:4px;
+  font-size:.62rem; padding:2px 7px; border-radius:9999px; font-weight:600;
+  background:#1e3a5f; color:#93c5fd;
+}
+
+/* ── Parquet stats panel ── */
+#mmc-parquet-stats { font-size:.72rem; color:#9ca3af; }
+#mmc-parquet-stats table { width:100%; border-collapse:collapse; }
+#mmc-parquet-stats td { padding:3px 6px; border-bottom:1px solid #1f2937; }
+#mmc-parquet-stats td:first-child { color:#6b7280; }
+</style>
+
+<script id="mmc-enh-e">
+(function () {
+'use strict';
+
+/* ────────────────────────────────────────────────────────────────
+   AUDIT TRAIL
+   ──────────────────────────────────────────────────────────────── */
+const _auditLog = [];
+const MAX_AUDIT = 500;
+
+function mmcAudit(op, detail) {
+  const entry = { ts: new Date().toISOString(), op, detail: detail || '' };
+  _auditLog.unshift(entry);
+  if (_auditLog.length > MAX_AUDIT) _auditLog.length = MAX_AUDIT;
+  const logEl = document.getElementById('mmc-audit-log');
+  if (logEl) _renderAuditEntry(logEl, entry, true);
+  // Persist last 100 to sessionStorage
+  try { sessionStorage.setItem('mmc_audit', JSON.stringify(_auditLog.slice(0,100))); } catch(_){}
+}
+window.mmcAudit = mmcAudit;
+
+function _renderAuditEntry(container, entry, prepend) {
+  const div = document.createElement('div');
+  div.className = 'audit-entry';
+  div.innerHTML = `<span class="audit-ts">${entry.ts.slice(11,19)}</span>
+    <span class="audit-op">${_esc(entry.op)}</span>
+    <span>${_esc(String(entry.detail).substring(0,80))}</span>`;
+  if (prepend && container.firstChild) container.insertBefore(div, container.firstChild);
+  else container.appendChild(div);
+}
+
+function _buildAuditDrawer() {
+  if (document.getElementById('mmc-audit-drawer')) return;
+  const d = document.createElement('div');
+  d.id = 'mmc-audit-drawer';
+  d.setAttribute('role','complementary');
+  d.setAttribute('aria-label','Audit trail');
+  d.innerHTML = `<header>
+    <span><i class="fa-solid fa-clipboard-list mr-2"></i>Audit Trail</span>
+    <button onclick="document.getElementById('mmc-audit-drawer').classList.remove('open')"
+      aria-label="Close audit trail" class="text-gray-400 hover:text-white">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </header>
+  <div style="padding:6px 14px; border-bottom:1px solid #374151; display:flex; gap:6px;">
+    <button onclick="_mmcAuditDownload()" class="text-xs text-brand-400 hover:text-brand-300">
+      <i class="fa-solid fa-download mr-1"></i>Export
+    </button>
+    <button onclick="_mmcAuditClear()" class="text-xs text-red-400 hover:text-red-300">
+      <i class="fa-solid fa-trash mr-1"></i>Clear
+    </button>
+  </div>
+  <div id="mmc-audit-log"></div>`;
+  document.body.appendChild(d);
+  // Restore persisted entries
+  try {
+    const saved = JSON.parse(sessionStorage.getItem('mmc_audit') || '[]');
+    const logEl = d.querySelector('#mmc-audit-log');
+    saved.forEach(e => _renderAuditEntry(logEl, e, false));
+  } catch(_){}
+}
+
+window._mmcAuditDownload = function() {
+  const blob = new Blob([JSON.stringify(_auditLog, null, 2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `mmc_audit_${new Date().toISOString().slice(0,10)}.json`; a.click();
+};
+window._mmcAuditClear = function() {
+  _auditLog.length = 0;
+  const logEl = document.getElementById('mmc-audit-log');
+  if (logEl) logEl.innerHTML = '';
+  try { sessionStorage.removeItem('mmc_audit'); } catch(_){}
+};
+
+// Audit button in header
+function _injectAuditBtn() {
+  const header = document.querySelector('header nav, header [role="navigation"], header');
+  if (!header) return;
+  if (document.getElementById('mmc-audit-btn')) return;
+  const btn = document.createElement('button');
+  btn.id = 'mmc-audit-btn';
+  btn.className = 'p-1.5 text-gray-500 hover:text-gray-300 rounded transition-colors ml-1';
+  btn.setAttribute('aria-label', 'Open audit trail');
+  btn.title = 'Audit Trail';
+  btn.innerHTML = '<i class="fa-solid fa-clipboard-list text-sm"></i>';
+  btn.onclick = () => {
+    _buildAuditDrawer();
+    document.getElementById('mmc-audit-drawer').classList.add('open');
+  };
+  header.appendChild(btn);
+}
+
+/* ────────────────────────────────────────────────────────────────
+   QUALITY SCORE BADGE  (fast heuristic, no fetch)
+   ──────────────────────────────────────────────────────────────── */
+function _qualityBadge(res) {
+  // Quick freshness + completeness heuristic from search result metadata
+  let score = 50;
+  const updated = res.updatedAt || res.data_updated_at;
+  if (updated) {
+    const age = (Date.now() - new Date(Number(updated) > 1e10 ? Number(updated)*1000 : updated)) / 864e5;
+    if (age < 30) score += 25;
+    else if (age < 180) score += 15;
+    else if (age < 365) score += 5;
+    else score -= 15;
+  }
+  if (res.download_count > 1000) score += 10;
+  if (res.description && res.description.length > 50) score += 10;
+  if (res.columns_field_names && res.columns_field_names.length > 5) score += 5;
+  score = Math.max(0, Math.min(100, score));
+  const cls = score >= 75 ? 'qbadge-green' : score >= 45 ? 'qbadge-yellow' : 'qbadge-red';
+  const icon = score >= 75 ? '●' : score >= 45 ? '◐' : '○';
+  return `<span class="qbadge ${cls}" title="Quality score: ${score}/100 (freshness + completeness heuristic)">${icon} ${score}</span>`;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   LICENSE / ACCESS METADATA CHIP
+   ──────────────────────────────────────────────────────────────── */
+function _licenseChip(res, classification) {
+  const lic = (classification && (classification.domain_tags || []).find(t => /license|cc|pddl|odc/i.test(t)))
+    || (res.license && res.license.name) || '';
+  if (!lic) return '';
+  return `<span class="license-chip" title="License / access right"><i class="fa-solid fa-scale-balanced text-xs"></i>${_esc(lic.substring(0,20))}</span>`;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   PATCH renderResults — inject quality badge + license chip
+   ──────────────────────────────────────────────────────────────── */
+const _origRenderResults = window.renderResults;
+window.renderResults = function() {
+  _origRenderResults();
+  // After rendering, inject quality badges and license chips into each row
+  const tbody = document.getElementById('results-tbody');
+  if (!tbody) return;
+  const rows = tbody.querySelectorAll('tr[class]'); // rendered rows
+  const results = (window.AppState && window.AppState.results) || [];
+  rows.forEach((row, i) => {
+    const r = results[i]; if (!r) return;
+    const res = r.resource || {};
+    // Inject quality badge after the type badge cell
+    const typeCell = row.cells[2];
+    if (typeCell && !typeCell.querySelector('.qbadge')) {
+      typeCell.innerHTML += '<br>' + _qualityBadge(res);
+    }
+    // Inject license chip into name cell
+    const nameCell = row.cells[1];
+    if (nameCell && !nameCell.querySelector('.license-chip')) {
+      const lic = _licenseChip(res, r.classification);
+      if (lic) nameCell.querySelector('.flex-1').insertAdjacentHTML('beforeend', lic);
+    }
+    // Wire hover for data-peek
+    row.addEventListener('mouseenter', _onRowHover.bind(null, r), {passive:true});
+    row.addEventListener('mouseleave', _hidePeek, {passive:true});
+  });
+};
+
+/* ────────────────────────────────────────────────────────────────
+   INLINE DATA-PEEK POPOVER  (#17)
+   ──────────────────────────────────────────────────────────────── */
+let _peekTimer = null, _peekAbort = null;
+const _peekCache = new Map();
+
+function _buildPeekPopover() {
+  if (document.getElementById('mmc-peek-popover')) return;
+  const p = document.createElement('div');
+  p.id = 'mmc-peek-popover';
+  p.setAttribute('aria-live','polite');
+  p.setAttribute('role','status');
+  document.body.appendChild(p);
+}
+
+function _onRowHover(r, evt) {
+  clearTimeout(_peekTimer);
+  _peekTimer = setTimeout(async () => {
+    const id = r.resource && r.resource.id; if (!id) return;
+    const domain = r._domain || (window.AppState && window.AppState.domain);
+    await _showPeek(id, domain, evt.currentTarget);
+  }, 550);
+}
+
+async function _showPeek(id, domain, row) {
+  _buildPeekPopover();
+  const pop = document.getElementById('mmc-peek-popover');
+  if (!pop) return;
+
+  // Position
+  const rect = row.getBoundingClientRect();
+  pop.style.left = Math.min(rect.left + 40, window.innerWidth - 420) + 'px';
+  pop.style.top = (rect.bottom + 4) + 'px';
+  pop.innerHTML = '<div style="color:#6b7280;font-style:italic">Loading preview…</div>';
+  pop.classList.add('show');
+
+  if (_peekCache.has(id)) { _renderPeek(pop, _peekCache.get(id)); return; }
+
+  if (_peekAbort) _peekAbort.abort();
+  _peekAbort = new AbortController();
+  const token = localStorage.getItem('socrata_token') || '';
+  const headers = token ? { 'X-App-Token': token } : {};
+  try {
+    const url = `https://${domain}/resource/${id}.json?$limit=5`;
+    const resp = await fetch(url, { headers, signal: _peekAbort.signal });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const rows = await resp.json();
+    _peekCache.set(id, rows);
+    _renderPeek(pop, rows);
+    mmcAudit('data-peek', id);
+  } catch(e) {
+    if (e.name !== 'AbortError') pop.innerHTML = `<div style="color:#f87171">Preview unavailable: ${_esc(e.message)}</div>`;
+  }
+}
+
+function _renderPeek(pop, rows) {
+  if (!rows || !rows.length) { pop.innerHTML = '<div style="color:#6b7280">No rows returned</div>'; return; }
+  const cols = Object.keys(rows[0]).slice(0, 5);
+  let html = `<div style="font-weight:700;margin-bottom:6px;color:#e5e7eb">Data Preview <span style="color:#6b7280;font-weight:400">(first ${rows.length} rows)</span></div>
+    <table><thead><tr>${cols.map(c=>`<th>${_esc(c)}</th>`).join('')}</tr></thead><tbody>`;
+  rows.forEach(row => {
+    html += '<tr>' + cols.map(c => `<td>${_esc(String(row[c]??'').substring(0,30))}</td>`).join('') + '</tr>';
+  });
+  html += '</tbody></table>';
+  pop.innerHTML = html;
+}
+
+function _hidePeek() {
+  clearTimeout(_peekTimer);
+  if (_peekAbort) { _peekAbort.abort(); _peekAbort = null; }
+  const pop = document.getElementById('mmc-peek-popover');
+  if (pop) pop.classList.remove('show');
+}
+
+/* ────────────────────────────────────────────────────────────────
+   BULK CART OPERATIONS  (#18)
+   ──────────────────────────────────────────────────────────────── */
+function _buildBulkBar() {
+  if (document.getElementById('mmc-bulk-bar')) return;
+  const tbl = document.querySelector('#results-tbody');
+  if (!tbl) return;
+  const bar = document.createElement('div');
+  bar.id = 'mmc-bulk-bar';
+  bar.setAttribute('aria-label', 'Bulk operations for checked rows');
+  bar.innerHTML = `
+    <span id="mmc-bulk-count" style="font-weight:700;color:#e5e7eb">0</span>
+    <span style="color:#6b7280">selected</span>
+    <button onclick="_mmcBulkAddCart()" class="px-2 py-0.5 bg-brand-700 hover:bg-brand-600 text-white rounded text-xs font-semibold">
+      <i class="fa-solid fa-cart-plus mr-1"></i>Add all to cart
+    </button>
+    <button onclick="_mmcBulkRemoveCart()" class="px-2 py-0.5 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded text-xs">
+      <i class="fa-solid fa-cart-arrow-down mr-1"></i>Remove all
+    </button>
+    <button onclick="_mmcBulkTagNote()" class="px-2 py-0.5 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded text-xs">
+      <i class="fa-solid fa-tag mr-1"></i>Tag…
+    </button>
+    <button onclick="_mmcBulkExport()" class="px-2 py-0.5 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded text-xs">
+      <i class="fa-solid fa-file-export mr-1"></i>Export
+    </button>
+    <span style="flex:1"></span>
+    <button onclick="_mmcBulkClearSel()" class="text-gray-500 hover:text-gray-300 text-xs">
+      <i class="fa-solid fa-xmark mr-1"></i>Clear
+    </button>`;
+  // Insert before results table
+  const resultsSection = tbl.closest('table');
+  if (resultsSection) resultsSection.before(bar);
+}
+
+// Track checked rows separate from cart
+const _checkedRows = new Set();
+window._mmcBulkToggle = function(id, checked) {
+  if (checked) _checkedRows.add(id); else _checkedRows.delete(id);
+  _updateBulkBar();
+};
+function _updateBulkBar() {
+  const bar = document.getElementById('mmc-bulk-bar');
+  const cnt = document.getElementById('mmc-bulk-count');
+  if (!bar) return;
+  if (_checkedRows.size > 0) bar.classList.add('active'); else bar.classList.remove('active');
+  if (cnt) cnt.textContent = _checkedRows.size;
+}
+
+window._mmcBulkAddCart = async function() {
+  const results = (window.AppState && window.AppState.results) || [];
+  const toAdd = results.filter(r => _checkedRows.has(r.resource.id));
+  for (const r of toAdd) {
+    await (window.hydrateAndAdd || function(){})(r.resource.id, r._domain || (window.AppState && window.AppState.domain), r);
+  }
+  mmcAudit('bulk-add-cart', `${toAdd.length} datasets`);
+  _mmcBulkClearSel();
+};
+window._mmcBulkRemoveCart = function() {
+  _checkedRows.forEach(id => {
+    const idx = (window.AppState.cart || []).findIndex(c => c.id === id);
+    if (idx >= 0 && window.AppState.cart) { window.AppState.cart.splice(idx, 1); }
+  });
+  if (window.renderCart) window.renderCart();
+  if (window.updateCartBadge) window.updateCartBadge();
+  if (window.renderResults) window.renderResults();
+  mmcAudit('bulk-remove-cart', `${_checkedRows.size} datasets`);
+  _mmcBulkClearSel();
+};
+window._mmcBulkTagNote = function() {
+  const tag = prompt('Enter tag/note to apply to selected cart items:');
+  if (tag === null) return;
+  _checkedRows.forEach(id => {
+    const item = (window.AppState && window.AppState.cart || []).find(c => c.id === id);
+    if (item) item.notes = (item.notes ? item.notes + '; ' : '') + tag;
+  });
+  if (window.renderCart) window.renderCart();
+  mmcAudit('bulk-tag', `"${tag}" → ${_checkedRows.size} items`);
+};
+window._mmcBulkExport = function() {
+  const results = (window.AppState && window.AppState.results) || [];
+  const sel = results.filter(r => _checkedRows.has(r.resource.id));
+  const blob = new Blob([JSON.stringify(sel, null, 2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `mmc_selection_${Date.now()}.json`; a.click();
+  mmcAudit('bulk-export', `${sel.length} datasets`);
+};
+window._mmcBulkClearSel = function() {
+  _checkedRows.clear(); _updateBulkBar();
+  document.querySelectorAll('#results-tbody input[type=checkbox]').forEach(cb => { cb.checked = false; });
+};
+
+// Patch renderResults to also set up bulk checkboxes
+const _rr2 = window.renderResults;
+window.renderResults = function() {
+  _rr2();
+  _buildBulkBar();
+  // Wire checkboxes for bulk selection (column 0)
+  const results = (window.AppState && window.AppState.results) || [];
+  document.querySelectorAll('#results-tbody tr').forEach((row, i) => {
+    const r = results[i]; if (!r) return;
+    const cb = row.cells[0] && row.cells[0].querySelector('input[type=checkbox]');
+    if (cb && !cb.dataset.bulkWired) {
+      cb.dataset.bulkWired = '1';
+      cb.addEventListener('change', () => {
+        window._mmcBulkToggle(r.resource.id, cb.checked);
+      });
+    }
+  });
+};
+
+/* ────────────────────────────────────────────────────────────────
+   INFINITE SCROLL  (#74)
+   ──────────────────────────────────────────────────────────────── */
+function _setupInfiniteScroll() {
+  if (document.getElementById('mmc-scroll-sentinel')) return;
+  const sentinel = document.createElement('div');
+  sentinel.id = 'mmc-scroll-sentinel';
+  // Insert after results table
+  const loadMoreBtn = document.getElementById('load-more-btn');
+  if (loadMoreBtn) loadMoreBtn.after(sentinel);
+
+  const obs = new IntersectionObserver(entries => {
+    if (!entries[0].isIntersecting) return;
+    const state = window.AppState;
+    if (!state) return;
+    if (state.results.length < state.searchTotal && !state._loading) {
+      window.loadMoreResults && window.loadMoreResults();
+    }
+  }, { threshold: 0.1 });
+  obs.observe(sentinel);
+}
+
+/* ────────────────────────────────────────────────────────────────
+   DEBOUNCE HARDENING  (#72) — tighten to 350ms + cancel on empty
+   ──────────────────────────────────────────────────────────────── */
+function _hardenDebounce() {
+  const inp = document.getElementById('search-input');
+  if (!inp || inp.dataset.eHardened) return;
+  inp.dataset.eHardened = '1';
+  inp.addEventListener('input', () => {
+    clearTimeout(window._eDebounce);
+    const q = inp.value.trim();
+    if (!q) return; // don't fire on empty
+    window._eDebounce = setTimeout(() => {
+      if (inp.value.trim().length > 1 && window.executeSearch) window.executeSearch();
+    }, 350);
+  });
+}
+
+/* ────────────────────────────────────────────────────────────────
+   RATE-LIMIT CONCURRENCY CAP  (#75)
+   Wraps the global fetch so simultaneous domain requests are
+   limited to 3 in-flight, with 429 retry + exponential backoff.
+   ──────────────────────────────────────────────────────────────── */
+(function _wrapFetchRateLimit() {
+  if (window._mmcFetchWrapped) return;
+  window._mmcFetchWrapped = true;
+  const _origFetch = window.fetch.bind(window);
+  let _inflight = 0;
+  const _queue = [];
+  const MAX_CONCURRENT = 3;
+
+  function _next() {
+    if (!_queue.length || _inflight >= MAX_CONCURRENT) return;
+    const { resolve, reject, args } = _queue.shift();
+    _inflight++;
+    _doFetch(args, resolve, reject, 1);
+  }
+
+  async function _doFetch(args, resolve, reject, attempt) {
+    try {
+      const resp = await _origFetch(...args);
+      _inflight--; _next();
+      if (resp.status === 429 && attempt <= 4) {
+        const wait = Math.pow(2, attempt) * 1000;
+        setTimeout(() => _doFetch(args, resolve, reject, attempt + 1), wait);
+        return;
+      }
+      resolve(resp);
+    } catch(e) {
+      _inflight--; _next();
+      reject(e);
+    }
+  }
+
+  // Only rate-limit Socrata API calls to avoid breaking Leaflet/CDN fetches
+  window.fetch = function(...args) {
+    const url = typeof args[0] === 'string' ? args[0] : (args[0] && args[0].url) || '';
+    const isSocrata = /\.gov\/|\.us\/|socrata/i.test(url);
+    if (!isSocrata) return _origFetch(...args);
+    return new Promise((resolve, reject) => {
+      _queue.push({ resolve, reject, args });
+      _next();
+    });
+  };
+})();
+
+/* ────────────────────────────────────────────────────────────────
+   SEASONAL ANOMALY DETECTION  (#57 completion)
+   STL-lite: subtract centered moving average, then z-score residuals.
+   ──────────────────────────────────────────────────────────────── */
+window.mmcSeasonalAnomalies = function(values, period) {
+  period = period || 7; // default weekly
+  const n = values.length;
+  if (n < period * 2) return values.map(() => 0); // not enough data
+
+  // 1. Centered moving average (trend)
+  const half = Math.floor(period / 2);
+  const trend = new Float64Array(n);
+  for (let i = half; i < n - half; i++) {
+    let sum = 0;
+    for (let j = i - half; j <= i + half; j++) sum += values[j];
+    trend[i] = sum / (2 * half + 1);
+  }
+  // fill edges with nearest computed value
+  for (let i = 0; i < half; i++) trend[i] = trend[half];
+  for (let i = n - half; i < n; i++) trend[i] = trend[n - half - 1];
+
+  // 2. Seasonal component: average residual per phase
+  const detrended = values.map((v, i) => v - trend[i]);
+  const seasonal = new Float64Array(period);
+  const counts = new Uint32Array(period);
+  detrended.forEach((v, i) => { seasonal[i % period] += v; counts[i % period]++; });
+  for (let k = 0; k < period; k++) if (counts[k]) seasonal[k] /= counts[k];
+
+  // 3. Residuals = original - trend - seasonal
+  const residuals = values.map((v, i) => v - trend[i] - seasonal[i % period]);
+
+  // 4. Z-score the residuals
+  const mean = residuals.reduce((a, b) => a + b, 0) / n;
+  const std = Math.sqrt(residuals.reduce((a, b) => a + (b - mean) ** 2, 0) / n) || 1;
+  return residuals.map(r => (r - mean) / std);
+};
+
+/* ────────────────────────────────────────────────────────────────
+   EMPTY-STATE REDESIGN  (#16) — richer CTAs with guide actions
+   ──────────────────────────────────────────────────────────────── */
+function _patchEmptyState() {
+  const tbody = document.getElementById('results-tbody');
+  if (!tbody) return;
+  // Watch for the basic empty state and replace it with richer version
+  const obs = new MutationObserver(() => {
+    const row = document.getElementById('empty-state-row');
+    if (!row || row.dataset.enhanced) return;
+    row.dataset.enhanced = '1';
+    const td = row.querySelector('td');
+    if (!td) return;
+    td.innerHTML = `
+      <div style="padding:48px 24px; max-width:480px; margin:auto;">
+        <div style="font-size:2.5rem; margin-bottom:12px;">🛰️</div>
+        <div style="font-size:1rem; font-weight:700; color:#e5e7eb; margin-bottom:4px;">Mission Control Ready</div>
+        <div style="font-size:.8rem; color:#6b7280; margin-bottom:20px;">Search NYC, Chicago, LA, Seattle &amp; Austin open data — or try a quick-start below.</div>
+        <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">
+          <button onclick="document.getElementById('search-input').value='sidewalk inspection';window.executeSearch&&window.executeSearch()" class="px-3 py-1.5 bg-brand-700 hover:bg-brand-600 text-white text-xs rounded-lg font-semibold transition-all">
+            <i class="fa-solid fa-road mr-1"></i>Sidewalk Inspections
+          </button>
+          <button onclick="document.getElementById('search-input').value='311 complaints';window.executeSearch&&window.executeSearch()" class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs rounded-lg font-semibold transition-all">
+            <i class="fa-solid fa-phone mr-1"></i>311 Complaints
+          </button>
+          <button onclick="document.getElementById('search-input').value='budget spending';window.executeSearch&&window.executeSearch()" class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs rounded-lg font-semibold transition-all">
+            <i class="fa-solid fa-coins mr-1"></i>Budget &amp; Spending
+          </button>
+          <button onclick="document.getElementById('search-input').value='permits construction';window.executeSearch&&window.executeSearch()" class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs rounded-lg font-semibold transition-all">
+            <i class="fa-solid fa-helmet-safety mr-1"></i>Permits
+          </button>
+          <button onclick="document.getElementById('search-input').value='crime incidents';window.executeSearch&&window.executeSearch()" class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs rounded-lg font-semibold transition-all">
+            <i class="fa-solid fa-shield-halved mr-1"></i>Crime Data
+          </button>
+        </div>
+        <div style="margin-top:16px; font-size:.72rem; color:#4b5563;">
+          <i class="fa-solid fa-lightbulb mr-1"></i>Tip: Use Ctrl+P to open the command palette
+        </div>
+      </div>`;
+  });
+  obs.observe(tbody, { childList: true, subtree: false });
+}
+
+/* ────────────────────────────────────────────────────────────────
+   SCHEMA-DIFF HIGHLIGHTING  (#68)
+   Called from the existing Compare modal after it renders.
+   ──────────────────────────────────────────────────────────────── */
+window.mmcSchemaDiff = function(containerSelector) {
+  const container = document.querySelector(containerSelector);
+  if (!container) return;
+  // Find table rows with diff markers from existing compare modal
+  container.querySelectorAll('tr').forEach(row => {
+    const text = row.textContent;
+    if (/\+\s|added|new column/i.test(text)) row.classList.add('schema-diff-add');
+    else if (/-\s|removed|dropped/i.test(text)) row.classList.add('schema-diff-rem');
+    else if (/changed|type mismatch|renamed/i.test(text)) row.classList.add('schema-diff-chg');
+  });
+};
+
+// Patch compare modal opener to auto-apply diff highlights
+(function _patchCompare() {
+  const orig = window.openCompareModal || window.showCompare;
+  if (!orig) return;
+  const fn = window.openCompareModal ? 'openCompareModal' : 'showCompare';
+  window[fn] = function(...args) {
+    orig.apply(this, args);
+    setTimeout(() => window.mmcSchemaDiff('#compare-modal, .compare-modal, [id*=compare]'), 300);
+    mmcAudit('schema-diff', 'compare modal opened');
+  };
+})();
+
+/* ────────────────────────────────────────────────────────────────
+   LAZY-INIT WIRING  (#73 completion) — hook actual map + Mermaid init
+   ──────────────────────────────────────────────────────────────── */
+(function _wireActualLazyInit() {
+  if (!window.mmcLazy) return; // Module C not loaded yet; retry
+  const initMap = window.initMap || window.initLeafletMap || window.loadMapTab;
+  const initMermaid = window.initMermaid || window.renderMermaid || window.loadDiagram;
+  if (initMap) window.mmcLazy('map', initMap);
+  if (initMermaid) window.mmcLazy('mermaid', initMermaid);
+})();
+
+/* ────────────────────────────────────────────────────────────────
+   PARQUET CACHE STATS  (#77) — surface in Settings panel
+   ──────────────────────────────────────────────────────────────── */
+function _buildParquetStats() {
+  const settings = document.querySelector('#settings-panel, [id*=settings], .settings-panel');
+  if (!settings || document.getElementById('mmc-parquet-stats')) return;
+
+  const container = document.createElement('div');
+  container.id = 'mmc-parquet-stats';
+  container.innerHTML = `<div style="font-weight:700;color:#e5e7eb;margin-bottom:8px;font-size:.8rem;">
+    <i class="fa-solid fa-database mr-1 text-brand-400"></i>Cache Statistics
+  </div>
+  <div id="mmc-parquet-stats-body"></div>
+  <button onclick="window._mmcRefreshCacheStats()" style="margin-top:8px;" class="text-xs text-brand-400 hover:text-brand-300">
+    <i class="fa-solid fa-rotate-right mr-1"></i>Refresh
+  </button>`;
+  settings.appendChild(container);
+  window._mmcRefreshCacheStats();
+}
+
+window._mmcRefreshCacheStats = function() {
+  const body = document.getElementById('mmc-parquet-stats-body');
+  if (!body) return;
+  // Enumerate sessionStorage LRU cache entries
+  let count = 0, bytes = 0;
+  try {
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const k = sessionStorage.key(i);
+      if (!k.startsWith('mmc_cache_')) continue;
+      count++;
+      bytes += (sessionStorage.getItem(k) || '').length * 2; // UTF-16
+    }
+  } catch(_){}
+  // localStorage counts
+  let lsBytes = 0;
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (/^mmc_/.test(k)) lsBytes += (localStorage.getItem(k) || '').length * 2;
+    }
+  } catch(_){}
+  body.innerHTML = `<table>
+    <tr><td>Session cache entries</td><td style="text-align:right;color:#e5e7eb">${count}</td></tr>
+    <tr><td>Session cache size</td><td style="text-align:right;color:#e5e7eb">${(bytes/1024).toFixed(1)} KB</td></tr>
+    <tr><td>Persistent store size</td><td style="text-align:right;color:#e5e7eb">${(lsBytes/1024).toFixed(1)} KB</td></tr>
+    <tr><td>Audit entries</td><td style="text-align:right;color:#e5e7eb">${_auditLog.length}</td></tr>
+  </table>
+  <button onclick="sessionStorage.clear();window._mmcRefreshCacheStats();window.toast&&toast('Session cache cleared','info')"
+    style="margin-top:6px;font-size:.65rem;" class="text-red-400 hover:text-red-300">
+    <i class="fa-solid fa-broom mr-1"></i>Clear session cache
+  </button>`;
+};
+
+/* ────────────────────────────────────────────────────────────────
+   AUDIT WRAPPERS on existing governance operations  (#50)
+   ──────────────────────────────────────────────────────────────── */
+function _wrapWithAudit(fnName, label) {
+  const orig = window[fnName];
+  if (!orig || orig._audited) return;
+  window[fnName] = function(...args) {
+    mmcAudit(label, args[0] !== undefined ? String(args[0]).substring(0,60) : '');
+    return orig.apply(this, args);
+  };
+  window[fnName]._audited = true;
+}
+
+const _auditTargets = [
+  ['exportGovernanceReport', 'governance-export'],
+  ['runPIIScan', 'pii-scan'],
+  ['runDMBOKScore', 'dmbok-score'],
+  ['runFAIRScore', 'fair-score'],
+  ['runProphet', 'forecast-prophet'],
+  ['runBayesian', 'bayesian-yield'],
+  ['toggleDataset', 'cart-toggle'],
+  ['confirmClearCart', 'cart-clear'],
+  ['exportCartJSON', 'cart-export'],
+];
+
+/* ────────────────────────────────────────────────────────────────
+   INIT
+   ──────────────────────────────────────────────────────────────── */
+function _esc(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function _init() {
+  _buildPeekPopover();
+  _buildBulkBar();
+  _setupInfiniteScroll();
+  _hardenDebounce();
+  _patchEmptyState();
+  _injectAuditBtn();
+  _buildParquetStats();
+  _wireActualLazyInit();
+  _auditTargets.forEach(([fn, label]) => _wrapWithAudit(fn, label));
+
+  // Re-run lazy-init wiring after a short delay in case map/mermaid init
+  // functions are defined later in the page lifecycle
+  setTimeout(_wireActualLazyInit, 2000);
+  setTimeout(_buildParquetStats, 1500);
+
+  mmcAudit('app-init', navigator.userAgent.substring(0, 60));
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', _init);
+} else {
+  setTimeout(_init, 0);
+}
+
+})();
+</script>
 </html>

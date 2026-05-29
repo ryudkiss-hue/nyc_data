@@ -52,6 +52,104 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
+# ---------------------------------------------------------------------------
+# Lightweight in-process audit trail (no DB required) — suitable for the
+# FastAPI sidecar and standalone governance scripts.
+# ---------------------------------------------------------------------------
+
+import functools
+import threading
+from collections.abc import Callable
+from dataclasses import dataclass as _dataclass
+
+
+@_dataclass
+class AuditEntry:
+    """Single in-process audit record."""
+
+    timestamp: str
+    operation: str
+    detail: str
+    user: str = "system"
+    success: bool = True
+    error: str = ""
+
+
+class _InProcessTrail:
+    """Thread-safe ring-buffer of AuditEntry records."""
+
+    def __init__(self, maxlen: int = 1000) -> None:
+        self._lock = threading.Lock()
+        self._entries: list[AuditEntry] = []
+        self._maxlen = maxlen
+
+    def record(self, operation: str, detail: str = "", user: str = "system",
+               success: bool = True, error: str = "") -> AuditEntry:
+        from datetime import datetime, timezone
+        entry = AuditEntry(
+            timestamp=datetime.now(timezone.utc).isoformat(),
+            operation=operation,
+            detail=str(detail)[:200],
+            user=user,
+            success=success,
+            error=str(error)[:200],
+        )
+        with self._lock:
+            self._entries.append(entry)
+            if len(self._entries) > self._maxlen:
+                self._entries = self._entries[-self._maxlen:]
+        logger.debug("audit: %s %s", operation, detail)
+        return entry
+
+    def entries(self) -> list[AuditEntry]:
+        with self._lock:
+            return list(self._entries)
+
+    def to_json(self) -> str:
+        import json
+        return json.dumps(
+            [e.__dict__ for e in self.entries()], indent=2, default=str
+        )
+
+    def clear(self) -> None:
+        with self._lock:
+            self._entries.clear()
+
+
+# Module-level singleton — importable by sidecar and governance utilities
+_global_trail = _InProcessTrail()
+
+
+def get_global_trail() -> _InProcessTrail:
+    """Return the module-level audit trail singleton."""
+    return _global_trail
+
+
+def audit_op(operation: str, user: str = "system") -> Callable:
+    """Decorator that records function calls to the global audit trail.
+
+    Usage::
+
+        @audit_op("pii-scan")
+        def scan_pii(df):
+            ...
+    """
+    def decorator(fn: Callable) -> Callable:
+        @functools.wraps(fn)
+        def wrapper(*args, **kwargs):
+            detail = f"args={len(args)} kwargs={list(kwargs.keys())}"
+            try:
+                result = fn(*args, **kwargs)
+                _global_trail.record(operation, detail, user=user, success=True)
+                return result
+            except Exception as exc:
+                _global_trail.record(operation, detail, user=user, success=False, error=str(exc))
+                raise
+        return wrapper
+    return decorator
+
+
+
 class ActionType(Enum):
     """Type of data operation."""
     INSERT = "INSERT"

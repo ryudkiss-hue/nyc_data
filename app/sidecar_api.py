@@ -30,6 +30,18 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
+# Lightweight in-process audit trail for governance operations (#50)
+try:
+    from socrata_toolkit.governance.audit import audit_op
+    from socrata_toolkit.governance.audit import get_global_trail as _get_trail
+    _AUDIT_OK = True
+except ImportError:
+    _AUDIT_OK = False
+    def audit_op(op, **_):  # type: ignore[misc]
+        import functools
+        def d(fn): return fn
+        return d
+
 app = FastAPI(title="NYC Data Sidecar", version="1.0.0")
 
 # CORS is intentionally restricted to local origins. This sidecar exposes
@@ -341,31 +353,154 @@ class AnomalyRequest(BaseModel):
 
     values: list[float] = Field(..., min_length=1)
     method: str = "zscore"
+    period: int = Field(default=7, ge=2, le=365, description="Seasonal period for STL decomposition")
 
 
 @app.post("/api/quality/anomalies")
 def quality_anomalies(req: AnomalyRequest) -> dict[str, Any]:
-    """Flag outliers via z-score (|z| > 3). Pure-numpy, no sibling deps."""
+    """Flag outliers via z-score or STL seasonal decomposition.
+
+    * ``method="zscore"``  — global z-score, |z| > 3 (original behaviour).
+    * ``method="seasonal"`` — STL-lite: remove trend (centered moving average)
+      and seasonal component (mean-per-phase), then z-score residuals.
+      Requires ``len(values) >= 2 * period``.
+    """
     import numpy as np
 
-    if req.method != "zscore":
-        raise HTTPException(400, f"unsupported method: {req.method}")
+    if req.method not in ("zscore", "seasonal"):
+        raise HTTPException(400, f"unsupported method: {req.method!r}; use 'zscore' or 'seasonal'")
 
     arr = np.asarray(req.values, dtype=float)
-    mean = float(arr.mean())
-    std = float(arr.std())
-    if std == 0.0:
-        zscores = np.zeros_like(arr)
-    else:
-        zscores = (arr - mean) / std
+    n = len(arr)
+
+    if req.method == "zscore":
+        mean = float(arr.mean())
+        std = float(arr.std())
+        zscores = np.zeros_like(arr) if std == 0.0 else (arr - mean) / std
+        mask = np.abs(zscores) > 3.0
+        indices = [int(i) for i in np.flatnonzero(mask)]
+        return {
+            "method": "zscore",
+            "mean": mean,
+            "std": std,
+            "indices": indices,
+            "scores": [float(zscores[i]) for i in indices],
+            "all_scores": [float(z) for z in zscores],
+        }
+
+    # seasonal (STL-lite)
+    period = req.period
+    if n < period * 2:
+        raise HTTPException(422, f"Need at least {period * 2} values for seasonal period={period}; got {n}")
+
+    # 1. Trend: centered moving average
+    half = period // 2
+    trend = np.empty(n)
+    for i in range(n):
+        lo = max(0, i - half)
+        hi = min(n, i + half + 1)
+        trend[i] = arr[lo:hi].mean()
+
+    # 2. Seasonal: average detrended value per phase
+    detrended = arr - trend
+    seasonal = np.zeros(period)
+    counts = np.zeros(period, dtype=int)
+    for i, v in enumerate(detrended):
+        seasonal[i % period] += v
+        counts[i % period] += 1
+    with np.errstate(invalid="ignore"):
+        seasonal = np.where(counts > 0, seasonal / counts, 0.0)
+
+    # 3. Residuals and z-score
+    residuals = arr - trend - seasonal[np.arange(n) % period]
+    r_mean = float(residuals.mean())
+    r_std = float(residuals.std())
+    zscores = np.zeros_like(residuals) if r_std == 0.0 else (residuals - r_mean) / r_std
 
     mask = np.abs(zscores) > 3.0
     indices = [int(i) for i in np.flatnonzero(mask)]
     return {
-        "method": "zscore",
-        "mean": mean,
-        "std": std,
+        "method": "seasonal",
+        "period": period,
+        "residual_mean": r_mean,
+        "residual_std": r_std,
         "indices": indices,
         "scores": [float(zscores[i]) for i in indices],
         "all_scores": [float(z) for z in zscores],
+        "trend": [float(t) for t in trend],
+        "seasonal": [float(seasonal[i % period]) for i in range(n)],
     }
+
+
+# --------------------------------------------------------------------------- #
+# Governance: attach DMBOK quality score to FAIR catalog entry  (#47)
+# --------------------------------------------------------------------------- #
+class QualityCatalogRequest(BaseModel):
+    """Attach a DMBOK quality assessment to an existing catalog entry."""
+
+    dataset_id: str
+    rows: list[dict[str, Any]] = Field(..., min_length=1)
+    key_columns: list[str] = Field(default_factory=list)
+    date_column: str | None = None
+    catalog_path: str | None = None  # path to persist updated catalog JSON
+
+
+@app.post("/api/governance/quality-catalog")
+def governance_quality_catalog(req: QualityCatalogRequest) -> dict[str, Any]:
+    """Score dataset with DMBOK and attach the report to the FAIR catalog entry."""
+    try:
+        import pandas as pd  # noqa: PLC0415
+
+        from socrata_toolkit.fair.catalog import FairCatalog  # noqa: PLC0415
+        from socrata_toolkit.privacy.dmbok import score_dataframe  # noqa: PLC0415
+    except ImportError as exc:
+        raise HTTPException(503, f"Required library missing: {exc}") from exc
+
+    df = pd.DataFrame(req.rows)
+    report = score_dataframe(df, key_columns=req.key_columns, date_column=req.date_column)
+    dims = {d.dimension: d.score for d in report.dimensions}
+
+    catalog_updated = False
+    if req.catalog_path:
+        import pathlib  # noqa: PLC0415
+        p = pathlib.Path(req.catalog_path)
+        if p.exists():
+            try:
+                catalog = FairCatalog.from_json(p.read_text(encoding="utf-8"))
+                ds = catalog.get(req.dataset_id)
+                if ds is not None:
+                    ds.extra_metadata = getattr(ds, "extra_metadata", None) or {}
+                    ds.extra_metadata["dmbok_overall"] = report.overall
+                    ds.extra_metadata["dmbok_dimensions"] = dims
+                    p.write_text(catalog.to_json(), encoding="utf-8")
+                    catalog_updated = True
+            except Exception:
+                pass
+
+    return {
+        "dataset_id": req.dataset_id,
+        "dmbok_overall": report.overall,
+        "dimensions": dims,
+        "catalog_updated": catalog_updated,
+    }
+
+
+# --------------------------------------------------------------------------- #
+# Audit trail endpoint  (#50)
+# --------------------------------------------------------------------------- #
+@app.get("/api/audit/trail")
+def audit_trail_get(limit: int = 100) -> dict[str, Any]:
+    """Return recent in-process audit entries."""
+    if not _AUDIT_OK:
+        return {"entries": [], "note": "audit module not available"}
+    entries = _get_trail().entries()[-limit:]
+    return {"entries": [e.__dict__ for e in reversed(entries)], "total": len(_get_trail().entries())}
+
+
+@app.delete("/api/audit/trail")
+def audit_trail_clear() -> dict[str, Any]:
+    """Clear in-process audit entries."""
+    if not _AUDIT_OK:
+        return {"cleared": False}
+    _get_trail().clear()
+    return {"cleared": True}
