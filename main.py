@@ -1,4 +1,9 @@
-"""Launch Manhattan Mission Control (Streamlit)."""
+"""Launch Manhattan Mission Control (Streamlit) — thin launcher shim.
+
+Usage:
+    python main.py                     # standard launch
+    streamlit run app/mission_control.py  # direct Streamlit launch
+"""
 
 from __future__ import annotations
 
@@ -10,14 +15,19 @@ from pathlib import Path
 
 def main() -> None:
     root = Path(__file__).resolve().parent
-    app_entry = root / "app" / "app.py"
-    if not app_entry.exists():
-        print(f"Streamlit app not found: {app_entry}")
-        print("Run from repo root: streamlit run app/app.py")
-        raise SystemExit(1)
+    app_entry = root / "app" / "mission_control.py"
 
-    print("Starting Mission Control (Streamlit)…")
-    print("  streamlit run app/app.py")
+    if not app_entry.exists():
+        # Fallback for legacy deploys
+        fallback = root / "app" / "main.py"
+        if fallback.exists():
+            app_entry = fallback
+        else:
+            print(f"Streamlit app not found: {app_entry}")
+            raise SystemExit(1)
+
+    print("Starting Manhattan Mission Control…")
+    print(f"  streamlit run {app_entry.relative_to(root)}")
 
     env = {**os.environ}
     src = str(root / "src")
