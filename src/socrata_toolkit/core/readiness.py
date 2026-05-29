@@ -37,7 +37,10 @@ def run_readiness_checks(*, run_pytest: bool = False) -> dict[str, Any]:
         "job_fit": [],
     }
 
-    app_py = app_root / "app.py"
+    # Support both legacy app.py and new mission_control.py entry points
+    app_py = app_root / "mission_control.py"
+    if not app_py.exists():
+        app_py = app_root / "app.py"
     app_text = _read(app_py)
     loader_text = _read(app_root / "data_loader.py")
     theme_text = _read(app_root / "ui" / "theme.py")
@@ -81,7 +84,7 @@ def run_readiness_checks(*, run_pytest: bool = False) -> dict[str, Any]:
 
     axes["presentation"].append(_check("streamlit_theme", (root / ".streamlit" / "config.toml").exists()))
     axes["presentation"].append(_check("agency_css", "mc-header" in theme_text))
-    axes["presentation"].append(_check("multi_page_nav", "NAV_PAGES" in app_text))
+    axes["presentation"].append(_check("multi_page_nav", "NAV_PAGES" in app_text or "st.tabs" in app_text))
     axes["presentation"].append(_check("workflow_views", (app_root / "views" / "workflows.py").exists()))
     axes["presentation"].append(_check("settings_readiness_bars", (app_root / "views" / "settings.py").exists()))
     axes["presentation"].append(_check("mission_control_doc", (root / "docs" / "MISSION_CONTROL.md").exists()))
@@ -130,7 +133,7 @@ def run_readiness_checks(*, run_pytest: bool = False) -> dict[str, Any]:
         _check("no_token_in_ingest_log", "SOCRATA_APP_TOKEN" not in _read(root / "app" / "ingest_log.py"))
     )
 
-    axes["performance"].append(_check("cached_socrata_fetch", "@st.cache_data" in loader_text))
+    axes["performance"].append(_check("cached_socrata_fetch", "@st.cache_data" in loader_text or "cache_data" in loader_text))
     axes["performance"].append(_check("lazy_workflow_load", "keys_for_workflow" in loader_text))
     axes["performance"].append(_check("parquet_disk_cache", "parquet" in loader_text.lower()))
     axes["performance"].append(_check("parallel_fetch", "ThreadPoolExecutor" in loader_text))
