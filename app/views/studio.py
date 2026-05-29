@@ -486,7 +486,7 @@ def _render_search_panel(token: str) -> None:
         order = {"Relevance": "", "Last updated": "updatedAt DESC", "Most viewed": "page_views_last_month DESC"}[
             sort_label
         ]
-        if st.button("Search Socrata", type="primary", width="stretch"):
+        if st.button("Search Socrata", type="primary", use_container_width=True):
             results = _search_catalog(query, domain, category, order, limit, token)
             if use_regex and query:
                 try:
@@ -523,15 +523,15 @@ def _render_cart_panel(token: str) -> None:
         for dataset_id, item in list(cart.items()):
             cols = st.columns([0.72, 0.28])
             cols[0].markdown(f"**{item['name']}**  \n`{dataset_id}`")
-            if cols[1].button("Remove", key=f"remove-{dataset_id}", width="stretch"):
+            if cols[1].button("Remove", key=f"remove-{dataset_id}", use_container_width=True):
                 del cart[dataset_id]
                 st.rerun()
         action_cols = st.columns(2)
-        if action_cols[0].button("Profile cart", disabled=not cart, width="stretch"):
+        if action_cols[0].button("Profile cart", disabled=not cart, use_container_width=True):
             for item in cart.values():
                 _hydrate_item(item, token)
             st.success("Cart profiles refreshed.")
-        if action_cols[1].button("Clear", disabled=not cart, width="stretch"):
+        if action_cols[1].button("Clear", disabled=not cart, use_container_width=True):
             cart.clear()
             st.rerun()
 
@@ -539,17 +539,17 @@ def _render_cart_panel(token: str) -> None:
         st.markdown("#### Workspaces")
         name = st.text_input("Workspace name", placeholder="weekly-sidewalk-pack")
         cols = st.columns(2)
-        if cols[0].button("Save", disabled=not cart or not name, width="stretch"):
+        if cols[0].button("Save", disabled=not cart or not name, use_container_width=True):
             st.session_state[_session_key("workspaces")][name] = json.loads(json.dumps(cart))
             st.success(f"Saved {name}.")
         workspaces = st.session_state[_session_key("workspaces")]
         if workspaces:
             choice = st.selectbox("Saved workspaces", list(workspaces))
             load_cols = st.columns(2)
-            if load_cols[0].button("Load", width="stretch"):
+            if load_cols[0].button("Load", use_container_width=True):
                 st.session_state[_session_key("cart")] = json.loads(json.dumps(workspaces[choice]))
                 st.rerun()
-            if load_cols[1].button("Delete", width="stretch"):
+            if load_cols[1].button("Delete", use_container_width=True):
                 del workspaces[choice]
                 st.rerun()
 
@@ -565,27 +565,27 @@ def _render_export_panel(cart: dict[str, dict[str, Any]], relationships: list[di
             dictionary_rows.extend(_column_profile(item.get("metadata") or {}))
         csv_payload = pd.DataFrame(dictionary_rows).to_csv(index=False).encode("utf-8")
         col1, col2, col3 = st.columns(3)
-        col1.download_button("CSV", csv_payload, "mission_control_dictionary.csv", width="stretch")
+        col1.download_button("CSV", csv_payload, "mission_control_dictionary.csv", use_container_width=True)
         col2.download_button(
             "JSON",
             json.dumps(cart, indent=2).encode("utf-8"),
             "mission_control_schema.json",
             "application/json",
-            width="stretch",
+            use_container_width=True,
         )
         col3.download_button(
             "HTML",
             _build_dictionary_html(cart).encode("utf-8"),
             "mission_control_dictionary.html",
             "text/html",
-            width="stretch",
+            use_container_width=True,
         )
         st.download_button(
             "Jupyter notebook",
             _build_notebook(cart, relationships).encode("utf-8"),
             "mission_control_pipeline.ipynb",
             "application/json",
-            width="stretch",
+            use_container_width=True,
         )
 
 
@@ -608,16 +608,16 @@ def _render_discovery_tab(results: list[dict[str, Any]], token: str) -> None:
                 "geo": bool((result.get("metadata") or {}).get("is_geo")),
             }
         )
-    st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
+    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 
     labels = {f"{r['name']} ({r['fourfour']})": r for r in results}
     selected = st.multiselect("Add discovery result(s) to extraction cart", list(labels))
     add_cols = st.columns(2)
-    if add_cols[0].button("Add selected", disabled=not selected, width="stretch"):
+    if add_cols[0].button("Add selected", disabled=not selected, use_container_width=True):
         for label in selected:
             _add_to_cart(labels[label], token)
         st.success(f"Added {len(selected)} dataset(s).")
-    if add_cols[1].button("Select all results", width="stretch"):
+    if add_cols[1].button("Select all results", use_container_width=True):
         for result in results:
             _add_to_cart(result, token)
         st.success(f"Added {len(results)} dataset(s).")
@@ -644,19 +644,19 @@ def _render_profiles_tab(cart: dict[str, dict[str, Any]], token: str) -> None:
                 "license": meta.get("license"),
             }
         )
-    st.dataframe(pd.DataFrame(profile_rows), width="stretch", hide_index=True)
+    st.dataframe(pd.DataFrame(profile_rows), use_container_width=True, hide_index=True)
     dataset_label = st.selectbox(
         "Inspect columns",
         [f"{item['name']} ({dataset_id})" for dataset_id, item in cart.items()],
     )
     selected_id = dataset_label.rsplit("(", 1)[-1].rstrip(")")
     selected_meta = cart[selected_id].get("metadata") or {}
-    st.dataframe(pd.DataFrame(_column_profile(selected_meta)), width="stretch", hide_index=True)
+    st.dataframe(pd.DataFrame(_column_profile(selected_meta)), use_container_width=True, hide_index=True)
 
     if st.button("Preview live sample", key="studio-preview-sample"):
         try:
             rows = _fetch_sample(cart[selected_id]["domain"], selected_id, 25, token)
-            st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
+            st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
         except Exception as exc:
             st.error(f"Sample fetch failed: {exc}")
 
@@ -668,11 +668,11 @@ def _render_diagram_tab(cart: dict[str, dict[str, Any]], relationships: list[dic
         return
     if relationships:
         st.success(f"Inferred {len(relationships)} relationship(s) from shared civic keys.")
-        st.dataframe(pd.DataFrame(relationships), width="stretch", hide_index=True)
+        st.dataframe(pd.DataFrame(relationships), use_container_width=True, hide_index=True)
     else:
         st.warning("No shared key relationships inferred yet. Add datasets with common civic identifiers.")
     graphviz = _build_graphviz(cart, relationships)
-    st.graphviz_chart(graphviz, width="stretch")
+    st.graphviz_chart(graphviz, use_container_width=True)
     with st.expander("Mermaid ERD source"):
         st.code(_build_mermaid(cart, relationships), language="mermaid")
 

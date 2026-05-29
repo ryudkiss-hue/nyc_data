@@ -220,7 +220,7 @@ def render_spatial_tab(loaded_frames: dict[str, pd.DataFrame]) -> None:
         with tab:
             fig = _borough_bar(df, key)
             if fig:
-                st.plotly_chart(fig, width="stretch")
+                st.plotly_chart(fig, use_container_width=True)
             else:
                 st.caption(f"No borough column detected in `{key}`.")
 
@@ -234,7 +234,7 @@ def render_spatial_tab(loaded_frames: dict[str, pd.DataFrame]) -> None:
         df_geo = geo_datasets[selected_geo]
         fig_map = _density_heatmap(df_geo, selected_geo)
         if fig_map:
-            st.plotly_chart(fig_map, width="stretch")
+            st.plotly_chart(fig_map, use_container_width=True)
             df_coords = _to_numeric_coords(df_geo)
             st.caption(
                 f"{len(df_coords):,} geocoded records plotted "
@@ -263,7 +263,7 @@ def render_spatial_tab(loaded_frames: dict[str, pd.DataFrame]) -> None:
                 components.html(html, height=460)
             else:
                 st.caption("Install `folium` for interactive bubble maps.")
-                st.dataframe(counts, width="stretch", hide_index=True)
+                st.dataframe(counts, use_container_width=True, hide_index=True)
 
     # ── Conflict detection ────────────────────────────────────────────────
     keys = list(loaded_frames.keys())
@@ -289,7 +289,7 @@ def render_spatial_tab(loaded_frames: dict[str, pd.DataFrame]) -> None:
                     "potential scheduling overlap.",
                     icon="⚠️",
                 )
-                st.dataframe(conflicts, width="stretch", hide_index=True)
+                st.dataframe(conflicts, use_container_width=True, hide_index=True)
 
     # ── Coordinate export ─────────────────────────────────────────────────
     if geo_datasets:
@@ -306,5 +306,5 @@ def render_spatial_tab(loaded_frames: dict[str, pd.DataFrame]) -> None:
                 csv,
                 file_name=f"mmc_{export_ds}_geocoded.csv",
                 mime="text/csv",
-                width="stretch",
+                use_container_width=True,
             )
