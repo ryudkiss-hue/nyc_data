@@ -4,6 +4,66 @@ All notable changes to the NYC Sidewalk Data Toolkit are documented in this file
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - 84-Initiative Optimization Program
+
+Additive upgrade across the SPA, Electron shell, and Python layer. The
+Streamlit app is unchanged. Frameworks: WCAG 2.2 AAA, DAMA-DMBOK, W3C PROV
+lineage, FAIR principles. See `docs/IMPROVEMENTS_PLAN.md` for the full record.
+
+### Added
+
+#### Data governance (Python)
+- **FAIR metadata catalog** (`socrata_toolkit.fair`): `FairDataset`/`SchemaField`
+  model, transparent `score_fairness()` rubric (0–100 + gap list), `FairCatalog`
+  with JSON persistence and **DCAT JSON-LD** export, registry bridge from
+  `config/datasets.yaml`. (11 tests)
+- **PII scanner** (`socrata_toolkit.privacy.pii_scanner`): multi-signal detection
+  (column-name heuristics + value regex + Luhn credit-card check + entropy/
+  uniqueness), severity classification.
+- **Masking utilities** (`...privacy.masking`): redact, deterministic salted
+  hash token, numeric bucketing, geo truncation, partial mask, strategy
+  recommendation (reversibility documented).
+- **DAMA-DMBOK scorer** (`...privacy.dmbok`): all six dimensions
+  (completeness, validity, uniqueness, consistency, timeliness, accuracy) with
+  documented formulas and weighted overall. (privacy suite: 18 tests)
+
+#### Analytics sidecar (Python + Electron)
+- **FastAPI sidecar** (`app/sidecar_api.py`, localhost-only, lazy imports):
+  health/capability probe, Bayesian Beta-Binomial yield rate (PyMC ADVI with
+  Beta-bootstrap fallback), Prophet forecast, PII scan, DMBOK score, FAIRness
+  score, pure-numpy anomaly detection. Graceful 503 when optional deps absent.
+  Wired into Electron `main.js`. (10 tests)
+
+#### SPA — accessibility (WCAG 2.2 AAA)
+- Semantic landmarks; ARIA tablist (roving tabindex, arrow/Home/End nav);
+  modal focus-trap + restoration; `prefers-color-scheme`/`prefers-contrast`
+  detection; ARIA live error/status announcements; skip-to-content link;
+  AAA-contrast focus rings; auto aria-labels; reduced-motion JS guard.
+
+#### SPA — UX
+- Command palette (Ctrl/Cmd+P, fuzzy search); toast notification history;
+  resilient `mmcFetch` (retry + backoff + 429 Retry-After); skeleton loaders.
+
+#### SPA — data visualization
+- Pure-canvas charts (offline, Okabe-Ito color-blind-safe palette, HiDPI,
+  a11y table fallbacks): bar, histogram, box-plot stats, sparkline, correlation
+  heatmap.
+
+#### SPA — Governance tab
+- Per-dataset DAMA-DMBOK scorecard, FAIRness scorecard (F/A/I/R + gaps), PII
+  inspector with severity chips; client-side scoring that mirrors the Python
+  modules and uses the sidecar when running in Electron; JSON report export.
+
+#### SPA — performance
+- sessionStorage LRU cache with TTL; virtualized table rendering; inline Web
+  Worker for large sorts; lazy panel init; runtime Web-Vitals-style timing.
+  See `docs/PERFORMANCE_BUDGET.md`.
+
+#### Desktop (Electron)
+- Offline CDN vendoring (Tailwind, FontAwesome, Leaflet, MarkerCluster,
+  Mermaid, svg-pan-zoom, html2canvas) with build-time URL rewriting; branded
+  NYC-skyline app icons (ico/icns/png).
+
 ## [3.0.0] - 2026-05-11
 
 ### Added

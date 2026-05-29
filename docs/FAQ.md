@@ -331,6 +331,47 @@ ADVI (Automatic Differentiation Variational Inference) is a fast approximate inf
 
 The 12-month forecast chart in the Apex Engine tab is skipped with a warning. All other tabs are unaffected. Install Prophet with `pip install -e ".[mission]"`.
 
+### Q52. What is the Governance tab in the desktop/SPA app?
+
+It assesses any dataset in your cart across three lenses, over a 500-row sample:
+- **DAMA-DMBOK quality** — completeness, validity, uniqueness, consistency,
+  timeliness, accuracy, with a weighted overall score.
+- **FAIRness** — Findable / Accessible / Interoperable / Reusable sub-scores
+  with a list of detected gaps.
+- **PII inspector** — flags columns containing personal data (multi-signal:
+  column name + value patterns + Luhn check) with severity chips.
+
+Click **Assess**, then **Export report** for a JSON record. Scores are computed
+client-side; when running the Electron desktop app with the Python sidecar
+(`MMC_SIDECAR=1`), heavier server-side scoring is used instead.
+
+### Q53. How do I run the optional analytics sidecar?
+
+From the `desktop/` folder: `MMC_SIDECAR=1 MMC_PYTHON=python npm start`. This
+spawns `app.sidecar_api:app` (FastAPI on 127.0.0.1:8000) exposing Bayesian
+yield-rate (PyMC ADVI), Prophet forecasting, PII scan, DMBOK score, FAIRness
+score, and anomaly detection. It is **off by default** — the app runs fully
+without it, and every endpoint degrades gracefully if optional deps are absent.
+
+### Q54. Does the desktop app work offline?
+
+Yes. The Electron build vendors all front-end libraries (Tailwind, FontAwesome,
+Leaflet, Mermaid, etc.) locally — `copy-spa.js` rewrites CDN URLs to bundled
+`vendor/` paths at build time. Live Socrata data still requires a connection.
+
+### Q55. What accessibility features are available?
+
+WCAG 2.2 AAA-oriented: full keyboard tab navigation (arrow keys), command
+palette (Ctrl/Cmd+P), modal focus trapping, skip-to-content, high-contrast and
+reduced-motion support, screen-reader announcements, and high-contrast focus
+rings. Charts include data-table fallbacks for non-visual access.
+
+### Q56. How do I check performance / clear the cache?
+
+In the app's DevTools console: `mmcPerfReport()` shows timing (TTFB, LCP, long
+tasks); `mmcCacheStats()` shows cache size; `mmcCacheClear()` empties it. See
+`docs/PERFORMANCE_BUDGET.md`.
+
 ---
 
 ## Still stuck?
