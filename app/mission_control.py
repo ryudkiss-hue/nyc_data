@@ -366,7 +366,7 @@ def _tab_copilot(target_agency: str, target_title: str) -> None:
     ]
     cols = st.columns(len(chips))
     for col, (label, query) in zip(cols, chips, strict=False):
-        if col.button(label, key=f"chip_{label}", width="stretch"):
+        if col.button(label, key=f"chip_{label}", use_container_width=True):
             st.session_state.copilot_messages.append({"role": "user", "content": query})
             with st.spinner("Thinking…"):
                 reply = _dispatch_llm(query, sys_prompt, st.session_state.copilot_messages)
@@ -435,7 +435,7 @@ def _render_sidebar() -> tuple[str, str, int, int]:
         if st.button(
             "Load All Datasets",
             type="primary",
-            width="stretch",
+            use_container_width=True,
             key="load_all_btn",
             help="Pull all 16+ datasets from config/datasets.yaml via Socrata.",
         ):
@@ -501,7 +501,7 @@ def _render_sidebar() -> tuple[str, str, int, int]:
         st.markdown("---")
 
         # Reset / session
-        if st.button("🔄 Reset Session", width="stretch", key="reset_btn"):
+        if st.button("🔄 Reset Session", use_container_width=True, key="reset_btn"):
             for k in ["apex_results", "df_jobs_cache", "df_payroll_cache",
                       "apex_pipeline_ran_at", "loaded_frames"]:
                 st.session_state[k] = None if k != "loaded_frames" else {}
