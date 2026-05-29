@@ -10,8 +10,13 @@ from app.ui.components import empty_state, kpi_row, section_header
 from app.utils import export
 
 
+@st.fragment
 def render_export_center() -> None:
-    """Render the Export Center tab."""
+    """Render the Export Center tab.
+
+    Wrapped in @st.fragment so format/dataset selection reruns only this tab,
+    not the entire 11-tab app — important on slower connections.
+    """
     section_header(
         "Export Center",
         "Download loaded datasets as CSV, Excel, JSON, or a bundled ZIP archive.",
