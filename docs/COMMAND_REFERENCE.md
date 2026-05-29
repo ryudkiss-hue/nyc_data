@@ -6,13 +6,13 @@ Quick cheat sheet for CLI and launcher commands. For narrative examples and job-
 
 | Invocation | CLI surface |
 |------------|-------------|
-| `socrata …` | **Toolkit CLI** (`socrata_toolkit.cli`) — search, fetch, analyze, sync, status, map-toolkit |
-| `python -m socrata_toolkit.core.cli …` | **Extended CLI** — pipeline, conflict, schema, lineage, alerts, quality, etc. |
-| `python launcher.py cli …` | Forwards to **Toolkit CLI** (same as `socrata`) |
-| `python launcher.py web` | Dash dashboard at http://127.0.0.1:8050 |
-| `python launcher.py docker up\|down\|logs\|status` | Docker Compose stack |
-| `python launcher.py doctor` | Host health checks |
-| `python launcher.py setup all` | Config / schema / DB setup hints |
+| `python main.py` / `mission` | **Mission Control** (Streamlit) at http://localhost:8501 |
+| `socrata …` | **Toolkit CLI** — search, fetch, analyze, sync, status |
+| `python -m socrata_toolkit.core.cli …` | **Extended CLI** — pipeline, analyst, readiness, quality |
+| `python launcher.py` / `launcher.py web` | Same as `python main.py` (compat shim) |
+| `python launcher.py cli …` | Forwards to extended CLI |
+| `python launcher.py doctor` | `socrata doctor` |
+| `python launcher.py setup all` | `socrata setup` (install wizard) |
 
 ## Toolkit CLI (`socrata`)
 
@@ -28,13 +28,13 @@ socrata analyze --file data/samples/sidewalk_inspections_full.csv
 
 # Incremental DuckDB sync (nightly)
 socrata sync -i erm2-nwe9 --table complaints_311 --updated-col created_date \
-  --db-path nyc_mission_control.duckdb --optimize
+  --db-path data/local_db/nyc_mission_control.duckdb --optimize
 
 # Optional Parquet backup after sync
 socrata sync -i erm2-nwe9 --table complaints_311 --export-parquet backups/parquet
 
 # DuckDB table row counts
-socrata status --db-path nyc_mission_control.duckdb
+socrata status --db-path data/local_db/nyc_mission_control.duckdb
 
 # Capability map (HTML)
 socrata map-toolkit --output toolkit_map.html
@@ -143,19 +143,20 @@ socrata publish --profile config/publish_profile.yaml --pack outputs/analyst_pac
 ## Web applications
 
 ```bash
-python dash_app/app.py          # Dash — NYC DOT Data Assistant
-python app.py                   # NiceGUI — Mission Control
-cd frontend && npm run dev      # React LLM UI (with API on :8000)
+python main.py                  # Mission Control (Streamlit) — recommended
+mission                         # Same (after pip install -e ".[mission]")
+python launcher.py              # Compatibility shim → main.py
+python legacy_archive/dash_app/app.py   # Legacy Dash analyst pack UI
 ```
 
-## Docker Compose (from repo root)
+## Docker (Mission Control)
 
 ```bash
-docker compose up -d postgres redis api scheduler webserver
-docker compose ps
+docker build -f Dockerfile.mission -t nyc-mission .
+docker run -p 8501:8501 -e SOCRATA_APP_TOKEN=your-token nyc-mission
 ```
 
-Services: Postgres/PostGIS (5432), Redis (6379), API (8000), Airflow UI (8080), Grafana (3000), Prometheus (9090), Jaeger (16686), frontend dev (5173).
+Legacy Compose stack files were removed; use `Dockerfile.analyst` for CLI-only batch jobs if needed.
 
 ## Scheduled jobs
 

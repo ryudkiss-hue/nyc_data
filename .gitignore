@@ -8,6 +8,8 @@ airflow_app/logs/
 airflow_app/config/*.cfg
 
 # --- Python tooling ---
+.venv/
+venv/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
@@ -18,6 +20,15 @@ htmlcov/
 .vscode/
 
 # --- Generated outputs/state ---
+node_modules/
+data/local_db/
+data/local_db/socrata_cache/
+# Local archive bulk (keep dash_app for CI import tests)
+legacy_archive/*
+!legacy_archive/dash_app/
+!legacy_archive/dash_app/**
+legacy_archive/**/__pycache__/
+legacy_archive/**/*.pyc
 outputs/
 *.log
 nyc_toolkit.log

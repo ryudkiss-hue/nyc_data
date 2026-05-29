@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-  Launch the analyst Dash GUI or open Getting Started if Dash is unavailable.
+  Launch Streamlit Mission Control or legacy Dash; open Getting Started if unavailable.
 #>
 param(
     [string] $AppDir = $PSScriptRoot
@@ -12,9 +12,38 @@ $AppDir = (Resolve-Path $AppDir).Path
 $Exe = Join-Path $AppDir "nyc-dot-toolkit.exe"
 $GettingStarted = Join-Path $AppDir "docs\GETTING_STARTED.md"
 
+$StreamlitApp = Join-Path $AppDir "app\app.py"
+$DashLegacy = Join-Path $AppDir "legacy_archive\dash_app\app.py"
+
+$MainPy = Join-Path $AppDir "main.py"
+if (Test-Path -LiteralPath $MainPy) {
+    $py = (Get-Command python -ErrorAction SilentlyContinue)?.Source
+    if ($py) {
+        $env:PYTHONPATH = "$(Join-Path $AppDir 'src');$AppDir"
+        & $py $MainPy
+        if ($LASTEXITCODE -eq 0) { exit 0 }
+    }
+}
+if (Test-Path -LiteralPath $StreamlitApp) {
+    $py = (Get-Command python -ErrorAction SilentlyContinue)?.Source
+    if ($py) {
+        $env:PYTHONPATH = "$(Join-Path $AppDir 'src');$AppDir"
+        & $py -m streamlit run $StreamlitApp
+        if ($LASTEXITCODE -eq 0) { exit 0 }
+    }
+}
+
 if (Test-Path -LiteralPath $Exe) {
     & $Exe dash
     if ($LASTEXITCODE -eq 0) { exit 0 }
+}
+
+if (Test-Path -LiteralPath $DashLegacy) {
+    $py = (Get-Command python -ErrorAction SilentlyContinue)?.Source
+    if ($py) {
+        & $py $DashLegacy
+        if ($LASTEXITCODE -eq 0) { exit 0 }
+    }
 }
 
 if (Test-Path -LiteralPath $GettingStarted) {

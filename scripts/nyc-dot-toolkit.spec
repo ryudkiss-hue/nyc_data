@@ -11,7 +11,7 @@ sep = ";" if sys.platform.startswith("win") else ":"
 
 datas = [
     (str(project_root / "config"), "config"),
-    (str(project_root / "socrata_toolkit"), "socrata_toolkit"),
+    (str(project_root / "src" / "socrata_toolkit"), "socrata_toolkit"),
 ]
 
 hiddenimports = [
@@ -42,7 +42,7 @@ hiddenimports = [
 
 a = Analysis(
     [str(project_root / "scripts" / "exe_entry.py")],
-    pathex=[str(project_root)],
+    pathex=[str(project_root), str(project_root / "src")],
     binaries=[],
     datas=datas,
     hiddenimports=hiddenimports,

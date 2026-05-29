@@ -73,14 +73,15 @@ python -m socrata_toolkit.core.cli doctor --check-db
 
 | Goal | Command | URL / output |
 |------|---------|----------------|
-| **Dash analyst UI** | `python dash_app/app.py` | http://localhost:8050 (default Dash port) |
-| **Mission Control (NiceGUI)** | `python app.py` | http://localhost:8501 |
-| **CLI — daily sync** | `socrata sync -i erm2-nwe9 --table complaints_311` | `nyc_mission_control.duckdb` |
+| **Mission Control (Streamlit)** | `python main.py` or `mission` | http://localhost:8501 |
+| **Legacy Dash analyst UI** | `python legacy_archive/dash_app/app.py` | http://localhost:8050 |
+| **CLI — daily sync** | `socrata sync -i erm2-nwe9 --table complaints_311` | `data/local_db/` |
 | **CLI — full pipeline** | See [Command Reference](COMMAND_REFERENCE.md) | `outputs/` |
-| **Analyst weekly pack** | Python API — see [User Manual — Analyst Autopilot](USER_MANUAL.md#analyst-autopilot-weekly-pack) | `outputs/analyst_pack/` |
-| **Docker stack** | `python launcher.py docker up` | Postgres :5432, Airflow :8080, API :8000 |
+| **Analyst weekly pack** | `socrata analyst run --profile config/analyst_profile.yaml` | `outputs/analyst_pack/` |
+| **Nightly (Task Scheduler)** | `scripts\nightly_analyst_sync.ps1` | Same pack output |
+| **Docker (Mission Control)** | `docker build -f Dockerfile.mission -t nyc-mission .` | Port 8501 |
 
-> **Note:** `python launcher.py web` starts Streamlit against `app.py`, but `app.py` is a NiceGUI app. Prefer `python app.py` or `python dash_app/app.py` directly until the launcher is aligned.
+> **Layout:** Python package lives in `src/socrata_toolkit/`; Streamlit UI in `app/`; archived Dash in `legacy_archive/dash_app/`.
 
 ## 5. First analyst workflow (5 minutes)
 
@@ -91,10 +92,12 @@ socrata sync -i erm2-nwe9 --table complaints_311 --updated-col created_date
 socrata status
 ```
 
-2. **Open the Dash dashboard** and explore KPI and map pages:
+2. **Open Mission Control** (Streamlit) or legacy Dash:
 
 ```bash
-python dash_app/app.py
+python main.py
+# Demo/offline (no token): MISSION_DEMO=1 python main.py
+# Legacy Dash: python legacy_archive/dash_app/app.py
 ```
 
 3. **Optional — run Analyst Autopilot** with the example profile:

@@ -9,6 +9,8 @@ from socrata_toolkit.core.readiness import run_readiness_checks
 
 def test_readiness_report_structure():
     report = run_readiness_checks()
+    assert report["overall_score"] >= 95
+    assert report.get("grade") == "agency_ready"
     assert "overall_score" in report
     assert "axis_scores" in report
     assert "axes" in report
@@ -45,4 +47,6 @@ def test_doctor_checklist_includes_readiness():
     assert result.exit_code == 0
     data = json.loads(result.output)
     assert "readiness" in data
-    assert data["readiness"]["overall_score"] >= 50
+    assert data["readiness"]["overall_score"] >= 90
+    func = data["readiness"]["axes"]["functionality"]
+    assert any(i["name"] == "datasets_yaml" and i["ok"] for i in func)

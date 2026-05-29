@@ -1,366 +1,62 @@
+# Local stack: Postgres, Mission Control (Streamlit), analyst CLI runner, Prometheus.
+# Usage: docker compose up -d mission-control
+# Copy .env.example to .env and set SOCRATA_APP_TOKEN before production use.
+
 services:
-  # PostgreSQL 14 with PostGIS for spatial queries and full schema
   postgres:
-    image: postgis/postgis:16-3.4
-    container_name: nyc_data_postgres
+    image: postgis/postgis:15-3.3
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-dot_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dot_pass}
-      POSTGRES_DB: ${POSTGRES_DB:-sidewalk_db}
+      POSTGRES_USER: ${DB_USER:-nyc_analyst}
+      POSTGRES_PASSWORD: ${DB_PASS:-secure_password}
+      POSTGRES_DB: ${DB_NAME:-nyc_data}
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/00-init.sql
-      - ./docker/postgres/init_airflow_db.sql:/docker-entrypoint-initdb.d/001-init_airflow_db.sql
-      - ./sql/003_schema_registry_tables.sql:/docker-entrypoint-initdb.d/003-schema_registry.sql
-      - ./sql/004_lineage_tables.sql:/docker-entrypoint-initdb.d/004-lineage.sql
-      - ./sql/005_observability_tables.sql:/docker-entrypoint-initdb.d/005-observability.sql
-      - ./sql/006_cdc_audit_tables.sql:/docker-entrypoint-initdb.d/006-cdc_audit.sql
-      - ./sql/007_quality_tables.sql:/docker-entrypoint-initdb.d/007-quality.sql
-      - ./sql/008_entity_resolution_tables.sql:/docker-entrypoint-initdb.d/008-entity_resolution.sql
-      - ./sql/009_api_governance_tables.sql:/docker-entrypoint-initdb.d/009-api_governance.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-dot_user} -d ${POSTGRES_DB:-sidewalk_db}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-nyc_analyst} -d ${DB_NAME:-nyc_data}"]
       interval: 5s
       timeout: 5s
-      retries: 10
-    networks:
-      - nyc_data
+      retries: 5
 
-  # Redis 7 for caching and rate limiting
-  redis:
-    image: redis:7-alpine
-    container_name: nyc_data_redis
+  mission-control:
+    build:
+      context: .
+      dockerfile: Dockerfile.mission
     ports:
-      - "6379:6379"
-    volumes:
-      - redisdata:/data
-    command: redis-server --appendonly yes
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-    networks:
-      - nyc_data
+      - "8501:8501"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      MISSION_DEMO: ${MISSION_DEMO:-0}
+      PG_DSN: postgresql://${DB_USER:-nyc_analyst}:${DB_PASS:-secure_password}@postgres:5432/${DB_NAME:-nyc_data}
+    depends_on:
+      postgres:
+        condition: service_healthy
 
-  # Prometheus for metrics collection
+  analyst-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.analyst
+    profiles: ["batch"]
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      ANALYST_PROFILE: config/analyst_profile.example.yaml
+      PG_DSN: postgresql://${DB_USER:-nyc_analyst}:${DB_PASS:-secure_password}@postgres:5432/${DB_NAME:-nyc_data}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   prometheus:
-    image: prom/prometheus:v2.45.0
-    container_name: nyc_data_prometheus
+    image: prom/prometheus:v2.47.0
+    profiles: ["observability"]
     ports:
       - "9090:9090"
     volumes:
-      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus_data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-    depends_on:
-      - postgres
-      - redis
-    networks:
-      - nyc_data
-
-  # Grafana for dashboards
-  grafana:
-    image: grafana/grafana:10.2.2
-    container_name: nyc_data_grafana
-    ports:
-      - "3000:3000"
-    environment:
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
-      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
-      GF_INSTALL_PLUGINS: "grafana-piechart-panel"
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./docker/grafana/provisioned:/etc/grafana/provisioning
-    depends_on:
-      - prometheus
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - nyc_data
-
-  # Jaeger for distributed tracing
-  jaeger:
-    image: jaegertracing/all-in-one:1.50
-    container_name: nyc_data_jaeger
-    ports:
-      - "16686:16686"  # Jaeger UI
-      - "6831:6831/udp"  # Jaeger agent
-      - "14250:14250"  # Jaeger collector gRPC
-    environment:
-      COLLECTOR_ZIPKIN_HOST_PORT: ":9411"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:16686/api/health"]
-      interval: 10s
-      timeout: 10s
-      retries: 30
-      start_period: 20s
-    networks:
-      - nyc_data
-
-  # FastAPI service with all endpoints
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile.api
-    container_name: nyc_data_api
-    command: uvicorn socrata_toolkit.api.main:app --host 0.0.0.0 --port 8000 --reload
-    ports:
-      - "8000:8000"
-    environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-dot_user}:${POSTGRES_PASSWORD:-dot_pass}@postgres:5432/${POSTGRES_DB:-sidewalk_db}
-      REDIS_URL: redis://redis:6379
-      POSTGRES_USER: ${POSTGRES_USER:-dot_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dot_pass}
-      POSTGRES_DB: ${POSTGRES_DB:-sidewalk_db}
-      JWT_SECRET: ${JWT_SECRET:-dev-secret-key-change-in-production}
-      JAEGER_AGENT_HOST: jaeger
-      JAEGER_AGENT_PORT: 6831
-      ENVIRONMENT: development
-    volumes:
-      - ./socrata_toolkit:/app/socrata_toolkit
-      - ./docs:/app/docs
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      prometheus:
-        condition: service_started
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - nyc_data
-
-  # MinIO for S3-compatible storage (optional)
-  minio:
-    image: minio/minio:RELEASE.2023-10-16T04-13-43Z
-    container_name: nyc_data_minio
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
-    volumes:
-      - miniodata:/data
-    command: minio server /data --console-address ":9001"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - nyc_data
-
-  # Airflow Scheduler
-  scheduler:
-    build:
-      context: .
-      dockerfile: airflow_app/Dockerfile.scheduler
-    container_name: airflow-scheduler
-    environment:
-      AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
-      AIRFLOW__CORE__LOAD_EXAMPLES: 'False'
-      AIRFLOW__CORE__PLUGINS_FOLDER: /opt/airflow/plugins
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql://${POSTGRES_USER:-dot_user}:${POSTGRES_PASSWORD:-dot_pass}@postgres:5432/airflow
-      AIRFLOW__CORE__PARALLELISM: 32
-      AIRFLOW__CORE__DAG_CONCURRENCY: 16
-      AIRFLOW__CORE__MAX_ACTIVE_RUNS_PER_DAG: 8
-      AIRFLOW__SCHEDULER__SCHEDULER_HEARTBEAT_SEC: 5
-      AIRFLOW__CORE__ENABLE_XCOM_PICKLING: 'True'
-      AIRFLOW_HOME: /opt/airflow
-      POSTGRES_WAREHOUSE_HOST: postgres
-      POSTGRES_WAREHOUSE_PORT: 5432
-      POSTGRES_WAREHOUSE_USER: ${POSTGRES_USER:-dot_user}
-      POSTGRES_WAREHOUSE_PASSWORD: ${POSTGRES_PASSWORD:-dot_pass}
-      POSTGRES_WAREHOUSE_DB: ${POSTGRES_DB:-sidewalk_db}
-      SOCRATA_APP_TOKEN: ${SOCRATA_APP_TOKEN:-demo_token}
-      PYTHONPATH: /opt/airflow/project:/opt/airflow/plugins:/opt/airflow/dags:/opt/airflow/config
-    volumes:
-      - ./airflow_app/dags:/opt/airflow/dags
-      - ./airflow_app/plugins:/opt/airflow/plugins
-      - ./airflow_app/logs:/opt/airflow/logs
-      - ./airflow_app/config:/opt/airflow/config
-      - .:/opt/airflow/project
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    command: scheduler
-    networks:
-      - nyc_data
-    healthcheck:
-      test: ["CMD-SHELL", "python -c 'import airflow; print(airflow.__version__)'"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # Airflow Webserver
-  webserver:
-    build:
-      context: .
-      dockerfile: airflow_app/Dockerfile.webserver
-    container_name: airflow-webserver
-    environment:
-      AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
-      AIRFLOW__CORE__LOAD_EXAMPLES: 'False'
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql://${POSTGRES_USER:-dot_user}:${POSTGRES_PASSWORD:-dot_pass}@postgres:5432/airflow
-      AIRFLOW__CORE__PARALLELISM: 4
-      AIRFLOW__WEBSERVER__EXPOSE_CONFIG: 'True'
-      AIRFLOW__WEBSERVER__ENABLE_PROXY_FIX: 'True'
-      AIRFLOW_HOME: /opt/airflow
-      POSTGRES_WAREHOUSE_HOST: postgres
-      POSTGRES_WAREHOUSE_PORT: 5432
-      POSTGRES_WAREHOUSE_USER: ${POSTGRES_USER:-dot_user}
-      POSTGRES_WAREHOUSE_PASSWORD: ${POSTGRES_PASSWORD:-dot_pass}
-      POSTGRES_WAREHOUSE_DB: ${POSTGRES_DB:-sidewalk_db}
-      SOCRATA_APP_TOKEN: ${SOCRATA_APP_TOKEN:-demo_token}
-      PYTHONPATH: /opt/airflow/project:/opt/airflow/plugins:/opt/airflow/dags:/opt/airflow/config
-    volumes:
-      - ./airflow_app/dags:/opt/airflow/dags
-      - ./airflow_app/plugins:/opt/airflow/plugins
-      - ./airflow_app/logs:/opt/airflow/logs
-      - ./airflow_app/config:/opt/airflow/config
-      - .:/opt/airflow/project
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      scheduler:
-        condition: service_healthy
-    ports:
-      - "8080:8080"
-    command: webserver
-    networks:
-      - nyc_data
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-
-  # React Frontend (Vite Dev Server)
-  frontend:
-    image: node:18-alpine
-    container_name: nyc_data_frontend
-    working_dir: /app
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules  # Isolate node_modules inside the container
-    environment:
-      - VITE_API_URL=http://localhost:8000/api/v1/llm
-    ports:
-      - "5173:5173"
-    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
-    networks:
-      - nyc_data
-    depends_on:
-      api:
-        condition: service_started
-
-  # One-shot setup / install wizard (profile: analyst)
-  setup:
-    profiles: ["analyst"]
-    build:
-      context: .
-      dockerfile: Dockerfile.analyst
-    container_name: nyc_toolkit_setup
-    env_file:
-      - .env
-    environment:
-      WIZARD_NONINTERACTIVE: ${WIZARD_NONINTERACTIVE:-0}
-      SOCRATA_APP_TOKEN: ${SOCRATA_APP_TOKEN:-}
-      SOCRATA_DOMAIN: ${SOCRATA_DOMAIN:-data.cityofnewyork.us}
-      PG_DSN: ${PG_DSN:-postgresql://${POSTGRES_USER:-dot_user}:${POSTGRES_PASSWORD:-dot_pass}@postgres:5432/${POSTGRES_DB:-sidewalk_db}}
-      DATA_DIR: /app/data
-      OUTPUT_DIR: /app/outputs
-      ANALYST_PROFILE: /app/config/analyst_profile.yaml
-      DUCKDB_PATH: /app/nyc_mission_control.duckdb
-    volumes:
-      - ./config:/app/config
-      - ./data:/app/data
-      - ./outputs:/app/outputs
-    working_dir: /app
-    command: ["python", "-m", "socrata_toolkit.install_wizard"]
-    networks:
-      - nyc_data
-
-  # Analyst Autopilot scheduled runner (profile: analyst)
-  analyst-runner:
-    profiles: ["analyst"]
-    build:
-      context: .
-      dockerfile: Dockerfile.analyst
-    container_name: nyc_analyst_runner
-    env_file:
-      - .env
-    environment:
-      PG_DSN: ${PG_DSN:-postgresql://${POSTGRES_USER:-dot_user}:${POSTGRES_PASSWORD:-dot_pass}@postgres:5432/${POSTGRES_DB:-sidewalk_db}}
-      SOCRATA_APP_TOKEN: ${SOCRATA_APP_TOKEN:-}
-      ANALYST_PROFILE: ${ANALYST_PROFILE:-config/analyst_profile.yaml}
-      ANALYST_CRON: ${ANALYST_CRON:-0 6 * * 1}
-      DUCKDB_PATH: ${DUCKDB_PATH:-/app/nyc_mission_control.duckdb}
-    volumes:
-      - ./data:/app/data
-      - ./outputs:/app/outputs
-      - ./config:/app/config
-    working_dir: /app
-    entrypoint: ["/usr/local/bin/setup-entrypoint.sh"]
-    command: ["sh", "-c", "python scripts/analyst_scheduler.py"]
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - nyc_data
-
-  # Dash web UI (profile: analyst) — optional local dashboard
-  dash-web:
-    profiles: ["analyst"]
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: nyc_dash_web
-    env_file:
-      - .env
-    environment:
-      DUCKDB_PATH: ${DUCKDB_PATH:-/app/nyc_mission_control.duckdb}
-    ports:
-      - "${DASH_PORT:-8050}:8050"
-    volumes:
-      - ./config:/app/config
-      - ./data:/app/data
-      - ./outputs:/app/outputs
-      - ./dash_app:/app/dash_app
-    working_dir: /app
-    command: ["python", "dash_app/app.py"]
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - nyc_data
-
-networks:
-  nyc_data:
-    driver: bridge
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
 
 volumes:
   pgdata:
-  redisdata:
-  prometheus_data:
-  grafana_data:
-  miniodata:

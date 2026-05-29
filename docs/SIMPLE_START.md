@@ -35,10 +35,15 @@ Outputs land in `outputs/analyst_pack/YYYY-MM-DD/` (Excel, Markdown, HTML, JSON)
 ## 3. Open the dashboard
 
 ```bash
-python dash_app/app.py
+pip install -e ".[mission]"
+python main.py
 ```
 
-Browser: **http://127.0.0.1:8050**
+No Socrata token? Demo mode loads automatically (or set `MISSION_DEMO=1`).
+
+Browser: **http://localhost:8501** (Streamlit Mission Control)
+
+Legacy Analyst Pack UI (Dash): `python legacy_archive/dash_app/app.py` → http://127.0.0.1:8050
 
 | Page | What to do |
 |------|------------|
@@ -46,7 +51,17 @@ Browser: **http://127.0.0.1:8050**
 | **Review** | Approve conflicts and sign-offs |
 | **Publish** | Send pack to share folder, email, Teams, or BI |
 
-## 4. Publish (optional)
+## 4. Nightly pack (optional)
+
+Schedule the weekly analyst pack on Windows Task Scheduler:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\nightly_analyst_sync.ps1
+```
+
+Then review in Mission Control: `python main.py`.
+
+## 5. Publish (optional)
 
 ```bash
 socrata analyst publish --profile config/publish_profile.yaml
