@@ -37,7 +37,8 @@ In-app: **Settings & Quality → Readiness** and **Completeness** tabs.
 |---------|----------|
 | Analyst PC | `pip install -e ".[mission]"` + `python main.py` |
 | Scheduled pack | `scripts/nightly_analyst_sync.ps1` |
-| Container | `Dockerfile.mission` on port 8501 |
+| Container | `docker build -f Dockerfile.mission . && docker run -p 8501:8501 <image>` |
+| Render.com | Push to GitHub → New Blueprint → connect repo (`render.yaml` auto-deploys) |
 | Windows installer | `scripts/build_installer.ps1` |
 
 ## Sign-off
