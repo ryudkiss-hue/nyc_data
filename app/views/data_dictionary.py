@@ -38,8 +38,12 @@ def _profile_columns(df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+@st.fragment
 def render_data_dictionary() -> None:
-    """Render the Data Dictionary tab."""
+    """Render the Data Dictionary tab.
+
+    Wrapped in @st.fragment so search/select interactions rerun only this tab.
+    """
     section_header(
         "Data Dictionary",
         "Searchable field-level metadata across every loaded dataset — types, "
