@@ -33,9 +33,12 @@ InsightsEngine = _monolith.InsightsEngine
 DataProfile = _monolith.DataProfile
 detect_all_outliers = _monolith.detect_all_outliers
 correlation_analysis = _monolith.correlation_analysis
-MetricsTracker = getattr(_monolith, "MetricsTracker", None)
+def _from_submod(mod_path: str, attr: str):
+    return getattr(__import__(mod_path, fromlist=[attr]), attr)
+
+MetricsTracker = getattr(_monolith, "MetricsTracker", None) or _from_submod("socrata_toolkit.program_metrics", "MetricsTracker")
 DashboardSummary = getattr(_monolith, "DashboardSummary", None)
-compute_program_dashboard = getattr(_monolith, "compute_program_dashboard", None) or __import__("socrata_toolkit.program_metrics", fromlist=["compute_program_dashboard"]).compute_program_dashboard
+compute_program_dashboard = getattr(_monolith, "compute_program_dashboard", None) or _from_submod("socrata_toolkit.program_metrics", "compute_program_dashboard")
 TfidfVectorizer = getattr(_monolith, "TfidfVectorizer", None)
 parse_sim_complaints = _monolith.parse_sim_complaints
 
