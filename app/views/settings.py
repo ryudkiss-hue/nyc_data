@@ -128,7 +128,7 @@ def render_settings_page() -> None:
             c1.metric("Cached datasets", len(df))
             c2.metric("Fresh (< 24h)", fresh_count)
             c3.metric("Stale (> 24h)", stale_count, delta_color="inverse")
-            st.dataframe(df, use_container_width=True, hide_index=True)
+            st.dataframe(df, width="stretch", hide_index=True)
 
         if st.button("🗑️ Clear all parquet caches", type="secondary"):
             from pathlib import Path
@@ -162,7 +162,7 @@ def render_settings_page() -> None:
             if filter_event != "all" and "event" in log_df.columns:
                 log_df = log_df[log_df["event"] == filter_event]
 
-            st.dataframe(log_df, use_container_width=True, hide_index=True)
+            st.dataframe(log_df, width="stretch", hide_index=True)
             st.download_button(
                 "⬇ Export log (CSV)",
                 log_df.to_csv(index=False).encode("utf-8"),
