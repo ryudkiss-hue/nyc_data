@@ -40,7 +40,7 @@ st.set_page_config(
 
 SOCRATA_TOKEN = os.getenv("SOCRATA_TOKEN", "")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent"
 
 # Initialize Streamlit Session State to prevent the Vanishing Dashboard bug
 if "pipeline_run" not in st.session_state:
