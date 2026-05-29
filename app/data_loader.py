@@ -94,7 +94,10 @@ def _require_sodapy() -> None:
 
 
 def demo_mode_enabled() -> bool:
-    if os.getenv("MISSION_DEMO", "").strip().lower() in ("1", "true", "yes"):
+    mission_demo = os.getenv("MISSION_DEMO", "").strip().lower()
+    if mission_demo in ("0", "false", "no", "off"):
+        return False
+    if mission_demo in ("1", "true", "yes", "on"):
         return True
     token = (os.getenv("SOCRATA_APP_TOKEN") or "").strip()
     key_id = (os.getenv("SOCRATA_KEY_ID") or "").strip()
