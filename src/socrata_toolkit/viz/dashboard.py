@@ -117,7 +117,7 @@ def _page_dashboard(st) -> None:
 
     # KPI Cards
     cols = st.columns(len(dashboard.metrics))
-    for col, metric in zip(cols, dashboard.metrics):
+    for col, metric in zip(cols, dashboard.metrics, strict=False):
         color_class = f"status-{metric.status}"
         with col:
             st.markdown(f'<div class="{color_class}">', unsafe_allow_html=True)
@@ -159,7 +159,7 @@ def _show_demo_dashboard(st) -> None:
         ("First Pass Yield", "88%", "yellow"),
         ("Rework Factor", "4.2%", "green"),
     ]
-    for col, (name, value, status) in zip(demo_cols, demos):
+    for col, (name, value, status) in zip(demo_cols, demos, strict=False):
         with col:
             st.markdown(f'<div class="status-{status}">', unsafe_allow_html=True)
             st.metric(name, value)
@@ -173,7 +173,7 @@ def _show_demo_dashboard(st) -> None:
 def _page_task_board(st) -> None:
     st.title("Task Board")
 
-    from ..tools.tasks import TaskBoard, Task, STATUS_LABELS, PRIORITY_COLORS, CATEGORY_COLORS
+    from ..tools.tasks import CATEGORY_COLORS, STATUS_LABELS, Task, TaskBoard
 
     # Load or create board
     if "board" not in st.session_state:
@@ -235,7 +235,7 @@ def _page_task_board(st) -> None:
         ("Overdue", stats["overdue_count"]),
         ("Done %", f"{stats['completion_rate']}%"),
     ]
-    for col, (label, val) in zip(stat_cols[:3], stat_items):
+    for col, (label, val) in zip(stat_cols[:3], stat_items, strict=False):
         col.metric(label, val)
 
     # Filters
@@ -252,10 +252,10 @@ def _page_task_board(st) -> None:
 
     # Kanban columns
     kanban_cols = st.columns(len(board.columns))
-    for kcol, status in zip(kanban_cols, board.columns):
+    for kcol, status in zip(kanban_cols, board.columns, strict=False):
         with kcol:
             count = stats["by_status"].get(status, 0)
-            st.markdown(f'<div class="kanban-col">', unsafe_allow_html=True)
+            st.markdown('<div class="kanban-col">', unsafe_allow_html=True)
             st.markdown(f"**{STATUS_LABELS.get(status, status)}** ({count})")
             st.markdown("---")
 
@@ -285,7 +285,7 @@ def _page_task_board(st) -> None:
                 # Move buttons
                 move_cols = st.columns(len(board.columns) - 1)
                 other_statuses = [s for s in board.columns if s != status]
-                for mcol, target in zip(move_cols, other_statuses):
+                for mcol, target in zip(move_cols, other_statuses, strict=False):
                     if mcol.button(STATUS_LABELS.get(target, target)[:6], key=f"move_{tid}_{target}"):
                         board.move_task(tid, target)
                         st.rerun()
@@ -315,7 +315,13 @@ def _page_construction(st) -> None:
     df = st.session_state["cl_data"]
     st.dataframe(df.head(20), use_container_width=True)
 
-    from ..engineering.construction_list import prioritize_construction_list, classify_scope, flag_ada_locations, summarize_construction_list, export_construction_list
+    from ..engineering.construction_list import (
+        classify_scope,
+        export_construction_list,
+        flag_ada_locations,
+        prioritize_construction_list,
+        summarize_construction_list,
+    )
 
     col1, col2 = st.columns(2)
     with col1:
@@ -363,7 +369,11 @@ def _page_contracts(st) -> None:
         return
 
     df = st.session_state["ca_data"]
-    from ..engineering.contract_analytics import analyze_contract_progress, budget_analysis, productivity_metrics
+    from ..engineering.contract_analytics import (
+        analyze_contract_progress,
+        budget_analysis,
+        productivity_metrics,
+    )
 
     tab1, tab2, tab3 = st.tabs(["Progress", "Budget", "Productivity"])
 

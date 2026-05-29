@@ -11,10 +11,10 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import pandas as pd
 
@@ -34,14 +34,14 @@ class ReportMetadata:
 
 class QualityReportGenerator:
     """Generates comprehensive quality reports.
-    
+
     Creates executive summaries, detailed metrics, trend analysis,
     SLA compliance reports, and anomaly detection reports.
     """
 
     def __init__(self, output_dir: Path | str = "./quality_reports"):
         """Initialize report generator.
-        
+
         Args:
             output_dir: Directory for saving reports
         """
@@ -50,17 +50,17 @@ class QualityReportGenerator:
 
     def generate_daily_report(
         self,
-        datasets: Dict[str, Dict[str, Any]],
-        sla_results: Dict[str, Any],
-        anomalies: List[Any],
-    ) -> Dict[str, Any]:
+        datasets: dict[str, dict[str, Any]],
+        sla_results: dict[str, Any],
+        anomalies: list[Any],
+    ) -> dict[str, Any]:
         """Generate daily quality report across all datasets.
-        
+
         Args:
             datasets: Dict of dataset quality summaries
             sla_results: SLA compliance results
             anomalies: List of detected anomalies
-            
+
         Returns:
             Report dictionary
         """
@@ -79,18 +79,18 @@ class QualityReportGenerator:
     def generate_dataset_report(
         self,
         dataset_name: str,
-        profile: Optional[Dict[str, Any]] = None,
-        validation_results: Optional[List[Dict[str, Any]]] = None,
-        anomalies: Optional[List[Any]] = None,
-    ) -> Dict[str, Any]:
+        profile: dict[str, Any] | None = None,
+        validation_results: list[dict[str, Any]] | None = None,
+        anomalies: list[Any] | None = None,
+    ) -> dict[str, Any]:
         """Generate detailed report for a single dataset.
-        
+
         Args:
             dataset_name: Name of dataset
             profile: Data profile
             validation_results: Validation results
             anomalies: Detected anomalies
-            
+
         Returns:
             Report dictionary
         """
@@ -108,17 +108,17 @@ class QualityReportGenerator:
 
     def generate_sla_compliance_report(
         self,
-        sla_evaluations: Dict[str, Dict[str, Any]],
+        sla_evaluations: dict[str, dict[str, Any]],
         period_start: datetime,
         period_end: datetime,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate SLA compliance report.
-        
+
         Args:
             sla_evaluations: Dict of SLA names to compliance data
             period_start: Report period start
             period_end: Report period end
-            
+
         Returns:
             Report dictionary
         """
@@ -148,17 +148,17 @@ class QualityReportGenerator:
 
     def generate_anomaly_report(
         self,
-        anomalies: List[Any],
+        anomalies: list[Any],
         period_start: datetime,
         period_end: datetime,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate anomaly detection report.
-        
+
         Args:
             anomalies: List of anomalies
             period_start: Report period start
             period_end: Report period end
-            
+
         Returns:
             Report dictionary
         """
@@ -200,15 +200,15 @@ class QualityReportGenerator:
 
     def _generate_summary(
         self,
-        datasets: Dict[str, Dict[str, Any]],
-        sla_results: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        datasets: dict[str, dict[str, Any]],
+        sla_results: dict[str, Any],
+    ) -> dict[str, Any]:
         """Generate executive summary.
-        
+
         Args:
             datasets: Dataset quality data
             sla_results: SLA compliance data
-            
+
         Returns:
             Summary dictionary
         """
@@ -227,13 +227,13 @@ class QualityReportGenerator:
         }
 
     def _summarize_datasets(
-        self, datasets: Dict[str, Dict[str, Any]]
-    ) -> Dict[str, Any]:
+        self, datasets: dict[str, dict[str, Any]]
+    ) -> dict[str, Any]:
         """Summarize dataset quality metrics.
-        
+
         Args:
             datasets: Dataset data
-            
+
         Returns:
             Summarized data
         """
@@ -249,15 +249,15 @@ class QualityReportGenerator:
 
     def _extract_metrics(
         self,
-        profile: Optional[Dict[str, Any]],
-        validation_results: Optional[List[Dict[str, Any]]],
-    ) -> Dict[str, Any]:
+        profile: dict[str, Any] | None,
+        validation_results: list[dict[str, Any]] | None,
+    ) -> dict[str, Any]:
         """Extract key metrics from profile and validation.
-        
+
         Args:
             profile: Data profile
             validation_results: Validation results
-            
+
         Returns:
             Key metrics
         """
@@ -279,13 +279,13 @@ class QualityReportGenerator:
         return metrics
 
     def _analyze_sla_trends(
-        self, sla_evaluations: Dict[str, Dict[str, Any]]
-    ) -> Dict[str, Any]:
+        self, sla_evaluations: dict[str, dict[str, Any]]
+    ) -> dict[str, Any]:
         """Analyze trends in SLA compliance.
-        
+
         Args:
             sla_evaluations: SLA evaluation data
-            
+
         Returns:
             Trend analysis
         """
@@ -311,15 +311,15 @@ class QualityReportGenerator:
 
     def _generate_recommendations(
         self,
-        datasets: Dict[str, Dict[str, Any]],
-        anomalies: List[Any],
-    ) -> List[str]:
+        datasets: dict[str, dict[str, Any]],
+        anomalies: list[Any],
+    ) -> list[str]:
         """Generate recommendations based on quality state.
-        
+
         Args:
             datasets: Dataset quality data
             anomalies: Detected anomalies
-            
+
         Returns:
             List of recommendations
         """
@@ -351,13 +351,13 @@ class QualityReportGenerator:
 
         return recommendations
 
-    def export_to_json(self, report: Dict[str, Any], filename: str) -> Path:
+    def export_to_json(self, report: dict[str, Any], filename: str) -> Path:
         """Export report to JSON.
-        
+
         Args:
             report: Report dictionary
             filename: Output filename
-            
+
         Returns:
             Path to saved file
         """
@@ -367,13 +367,13 @@ class QualityReportGenerator:
         logger.info(f"Exported report to {filepath}")
         return filepath
 
-    def export_to_html(self, report: Dict[str, Any], filename: str) -> Path:
+    def export_to_html(self, report: dict[str, Any], filename: str) -> Path:
         """Export report to HTML.
-        
+
         Args:
             report: Report dictionary
             filename: Output filename
-            
+
         Returns:
             Path to saved file
         """
@@ -397,12 +397,12 @@ class QualityReportGenerator:
         <body>
             <h1>{report.get('title', 'Report')}</h1>
             <p>Generated: {report.get('generated_at', 'Unknown')}</p>
-            
+
             <div class="summary">
                 <h2>Summary</h2>
                 {self._html_dict(report.get('summary', {}))}
             </div>
-            
+
             <h2>Details</h2>
             {self._html_dict({k: v for k, v in report.items() if k not in ['title', 'generated_at', 'summary']})}
         </body>
@@ -414,12 +414,12 @@ class QualityReportGenerator:
         logger.info(f"Exported HTML report to {filepath}")
         return filepath
 
-    def _html_dict(self, data: Dict[str, Any]) -> str:
+    def _html_dict(self, data: dict[str, Any]) -> str:
         """Convert dictionary to HTML table.
-        
+
         Args:
             data: Dictionary
-            
+
         Returns:
             HTML string
         """
@@ -431,7 +431,7 @@ class QualityReportGenerator:
             html += f"<th>{key}</th>"
         html += "</tr>"
 
-        for value_list in zip(*data.values()):
+        for value_list in zip(*data.values(), strict=False):
             html += "<tr>"
             for val in value_list:
                 html += f"<td>{val}</td>"
@@ -440,13 +440,13 @@ class QualityReportGenerator:
         html += "</table>"
         return html
 
-    def export_to_csv(self, report: Dict[str, Any], filename: str) -> Path:
+    def export_to_csv(self, report: dict[str, Any], filename: str) -> Path:
         """Export report data to CSV.
-        
+
         Args:
             report: Report dictionary
             filename: Output filename
-            
+
         Returns:
             Path to saved file
         """
@@ -454,7 +454,7 @@ class QualityReportGenerator:
 
         # Convert report to CSV-friendly format
         data_list = []
-        
+
         if "anomalies" in report and isinstance(report["anomalies"], list):
             data_list = report["anomalies"]
         elif "sla_details" in report:

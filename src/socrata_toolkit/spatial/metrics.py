@@ -15,7 +15,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -26,10 +26,10 @@ class SpatialCoverageMetric:
     metric_name: str
     value: float
     unit: str  # "percent", "count", "density", "km2"
-    borough: Optional[str] = None
-    district: Optional[str] = None
-    timestamp: Optional[datetime] = None
-    
+    borough: str | None = None
+    district: str | None = None
+    timestamp: datetime | None = None
+
     def __post_init__(self) -> None:
         if self.timestamp is None:
             self.timestamp = datetime.now(timezone.utc)
@@ -43,7 +43,7 @@ class MaterialDistributionMetric:
     segment_count: int
     percentage: float
     average_condition: float
-    borough: Optional[str] = None
+    borough: str | None = None
 
 
 @dataclass
@@ -65,31 +65,31 @@ class SLAComplianceMetric:
     actual_value: float
     compliance_percentage: float
     status: str  # "compliant", "at_risk", "non_compliant"
-    borough: Optional[str] = None
+    borough: str | None = None
 
 
 class SpatialMetricsCollector:
     """
     Collects and aggregates spatial metrics for monitoring and KPIs.
-    
+
     Integrates with observability stack (Prometheus, Grafana, etc.).
     """
-    
+
     def __init__(self, db_connection: Any = None) -> None:
         """
         Initialize metrics collector.
-        
+
         Args:
             db_connection: Optional database connection for querying
         """
         self.db_connection = db_connection
         self.metrics: list[dict[str, Any]] = []
         self.collection_timestamp = datetime.now(timezone.utc)
-    
+
     def calculate_coverage_by_borough(self) -> list[SpatialCoverageMetric]:
         """
         Calculate percentage of street network covered by borough.
-        
+
         Returns:
             List of coverage metrics by borough
         """
@@ -97,16 +97,16 @@ class SpatialMetricsCollector:
             if not self.db_connection:
                 logger.warning("No database connection for coverage calculation")
                 return []
-            
+
             metrics = []
-            
+
             # In production, would query database
             boroughs = ["Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"]
-            
+
             for borough in boroughs:
                 # Calculate: segments with data / total street network length
                 coverage_percent = self._get_borough_coverage(borough)
-                
+
                 metric = SpatialCoverageMetric(
                     metric_name="street_network_coverage_percent",
                     value=coverage_percent,
@@ -114,40 +114,40 @@ class SpatialMetricsCollector:
                     borough=borough,
                 )
                 metrics.append(metric)
-            
+
             logger.info(f"Calculated coverage for {len(metrics)} boroughs")
             return metrics
-        
+
         except Exception as e:
             logger.error(f"Error calculating coverage by borough: {e}")
             return []
-    
+
     def calculate_material_distribution(
         self,
-        borough: Optional[str] = None,
+        borough: str | None = None,
     ) -> list[MaterialDistributionMetric]:
         """
         Calculate distribution of sidewalk materials.
-        
+
         Args:
             borough: Optional filter by borough
-            
+
         Returns:
             List of material distribution metrics
         """
         try:
             if not self.db_connection:
                 return []
-            
+
             metrics = []
-            
+
             # Material types
             materials = ["asphalt", "concrete", "brick", "stone", "other"]
-            
+
             for material in materials:
                 # Query total length and count for each material
                 result = self._get_material_stats(material, borough)
-                
+
                 metric = MaterialDistributionMetric(
                     material_type=material,
                     total_length_meters=result.get("length", 0),
@@ -157,39 +157,39 @@ class SpatialMetricsCollector:
                     borough=borough,
                 )
                 metrics.append(metric)
-            
+
             logger.info(f"Calculated material distribution for {len(metrics)} materials")
             return metrics
-        
+
         except Exception as e:
             logger.error(f"Error calculating material distribution: {e}")
             return []
-    
+
     def calculate_inspection_density(
         self,
         area_name: str,
         days_lookback: int = 30,
-    ) -> Optional[InspectionDensityMetric]:
+    ) -> InspectionDensityMetric | None:
         """
         Calculate inspection activity density.
-        
+
         Args:
             area_name: Geographic area name
             days_lookback: Number of days to look back
-            
+
         Returns:
             InspectionDensityMetric or None if error
         """
         try:
             if not self.db_connection:
                 return None
-            
+
             # Query inspection data
             result = self._get_inspection_stats(area_name, days_lookback)
-            
+
             if not result:
                 return None
-            
+
             metric = InspectionDensityMetric(
                 area_name=area_name,
                 inspections_per_km2=result.get("density", 0),
@@ -198,35 +198,35 @@ class SpatialMetricsCollector:
                 time_period_days=days_lookback,
                 last_inspection_age_days=result.get("age_days", 999),
             )
-            
+
             logger.info(f"Inspection density for {area_name}: {metric.inspections_per_km2:.2f} per km²")
             return metric
-        
+
         except Exception as e:
             logger.error(f"Error calculating inspection density: {e}")
             return None
-    
+
     def calculate_sla_compliance(
         self,
         sla_definition: dict[str, Any],
     ) -> list[SLAComplianceMetric]:
         """
         Calculate SLA compliance for spatial data quality.
-        
+
         Args:
             sla_definition: SLA definition with targets
-            
+
         Returns:
             List of SLA compliance metrics
         """
         try:
             metrics = []
-            
+
             # Example SLAs:
             # 1. 95% of street network must have data
             # 2. 50% of segments inspected within 12 months
             # 3. Average condition score >= 60
-            
+
             slas = [
                 {
                     "name": "coverage_target",
@@ -244,17 +244,17 @@ class SpatialMetricsCollector:
                     "actual": self._get_average_condition(),
                 },
             ]
-            
+
             for sla in slas:
                 compliance_percent = (sla["actual"] / sla["target"] * 100) if sla["target"] > 0 else 0
-                
+
                 if compliance_percent >= 100:
                     status = "compliant"
                 elif compliance_percent >= 90:
                     status = "at_risk"
                 else:
                     status = "non_compliant"
-                
+
                 metric = SLAComplianceMetric(
                     metric_name=sla["name"],
                     target_value=sla["target"],
@@ -263,58 +263,58 @@ class SpatialMetricsCollector:
                     status=status,
                 )
                 metrics.append(metric)
-            
+
             logger.info(f"Calculated SLA compliance: {len(metrics)} metrics")
             return metrics
-        
+
         except Exception as e:
             logger.error(f"Error calculating SLA compliance: {e}")
             return []
-    
+
     def calculate_spatial_gaps(self) -> dict[str, Any]:
         """
         Identify geographic areas with missing or incomplete data.
-        
+
         Returns:
             Dictionary with gap analysis results
         """
         try:
             if not self.db_connection:
                 return {}
-            
+
             gaps = {
                 "total_gaps": 0,
                 "critical_gaps": [],
                 "high_priority_gaps": [],
                 "medium_priority_gaps": [],
             }
-            
+
             # In production, would query for areas with:
             # - No segments (complete gaps)
             # - No recent inspections
             # - All segments in poor condition
-            
+
             # Query critical gaps (no data at all)
             critical = self._get_critical_gaps()
             gaps["critical_gaps"] = critical
             gaps["total_gaps"] += len(critical)
-            
+
             # Query high priority gaps (no recent inspections)
             high = self._get_high_priority_gaps()
             gaps["high_priority_gaps"] = high
             gaps["total_gaps"] += len(high)
-            
+
             logger.info(f"Identified {gaps['total_gaps']} geographic gaps")
             return gaps
-        
+
         except Exception as e:
             logger.error(f"Error calculating spatial gaps: {e}")
             return {}
-    
+
     def export_metrics_prometheus(self) -> str:
         """
         Export metrics in Prometheus format.
-        
+
         Returns:
             Prometheus-formatted metrics text
         """
@@ -322,24 +322,24 @@ class SpatialMetricsCollector:
             "# HELP sidewalk_spatial_coverage_percent Percentage of street network with data",
             "# TYPE sidewalk_spatial_coverage_percent gauge",
         ]
-        
+
         coverage_metrics = self.calculate_coverage_by_borough()
         for metric in coverage_metrics:
             labels = f'borough="{metric.borough}"'
             lines.append(f"sidewalk_spatial_coverage_percent{{{labels}}} {metric.value}")
-        
+
         lines.append("")
         lines.append("# HELP sidewalk_inspection_density_per_km2 Inspections per square kilometer")
         lines.append("# TYPE sidewalk_inspection_density_per_km2 gauge")
-        
+
         # Add inspection density metrics
-        
+
         return "\n".join(lines)
-    
+
     def export_metrics_json(self) -> dict[str, Any]:
         """
         Export metrics as JSON for API response.
-        
+
         Returns:
             Dictionary with all metrics
         """
@@ -375,9 +375,9 @@ class SpatialMetricsCollector:
                 for m in self.calculate_sla_compliance({})
             ],
         }
-    
+
     # Helper methods (would query database in production)
-    
+
     def _get_borough_coverage(self, borough: str) -> float:
         """Get coverage percentage for borough."""
         # Placeholder: would query database
@@ -389,11 +389,11 @@ class SpatialMetricsCollector:
             "Staten Island": 75.3,
         }
         return coverage_map.get(borough, 0)
-    
+
     def _get_material_stats(
         self,
         material: str,
-        borough: Optional[str] = None,
+        borough: str | None = None,
     ) -> dict[str, float]:
         """Get statistics for material type."""
         # Placeholder: would query database
@@ -403,7 +403,7 @@ class SpatialMetricsCollector:
             "percentage": 55 if material == "asphalt" else 45,
             "avg_condition": 65 if material == "concrete" else 55,
         }
-    
+
     def _get_inspection_stats(
         self,
         area_name: str,
@@ -417,23 +417,23 @@ class SpatialMetricsCollector:
             "segments": 30,
             "age_days": 5,
         }
-    
+
     def _get_actual_coverage(self) -> float:
         """Get actual coverage percentage."""
         return 87.5  # Placeholder
-    
+
     def _get_inspection_frequency(self) -> float:
         """Get percentage of segments inspected recently."""
         return 48.2  # Placeholder
-    
+
     def _get_average_condition(self) -> float:
         """Get average condition score."""
         return 62.4  # Placeholder
-    
+
     def _get_critical_gaps(self) -> list[dict[str, Any]]:
         """Get areas with no data at all."""
         return []  # Placeholder
-    
+
     def _get_high_priority_gaps(self) -> list[dict[str, Any]]:
         """Get areas needing urgent inspection."""
         return []  # Placeholder
@@ -442,10 +442,10 @@ class SpatialMetricsCollector:
 class SpatialQualityScorer:
     """
     Calculate spatial data quality scores for observability.
-    
+
     Combines multiple quality dimensions into single quality metric.
     """
-    
+
     @staticmethod
     def calculate_completeness_score(
         segments_with_data: int,
@@ -453,19 +453,19 @@ class SpatialQualityScorer:
     ) -> float:
         """
         Calculate data completeness score (0-100).
-        
+
         Args:
             segments_with_data: Count of segments with data
             total_street_network_segments: Total network segments
-            
+
         Returns:
             Completeness score 0-100
         """
         if total_street_network_segments == 0:
             return 0.0
-        
+
         return (segments_with_data / total_street_network_segments) * 100
-    
+
     @staticmethod
     def calculate_recency_score(
         days_since_last_inspection: int,
@@ -473,22 +473,22 @@ class SpatialQualityScorer:
     ) -> float:
         """
         Calculate data recency score (0-100).
-        
+
         Args:
             days_since_last_inspection: Days since last inspection
             target_inspection_interval_days: Target inspection interval
-            
+
         Returns:
             Recency score 0-100
         """
         if days_since_last_inspection <= 0:
             return 100.0
-        
+
         if days_since_last_inspection >= target_inspection_interval_days * 2:
             return 0.0
-        
+
         return max(0, 100 - (days_since_last_inspection / target_inspection_interval_days * 100))
-    
+
     @staticmethod
     def calculate_accuracy_score(
         average_gps_accuracy_meters: float,
@@ -496,20 +496,20 @@ class SpatialQualityScorer:
     ) -> float:
         """
         Calculate GPS accuracy score (0-100).
-        
+
         Args:
             average_gps_accuracy_meters: Average GPS accuracy
             target_accuracy_meters: Target accuracy
-            
+
         Returns:
             Accuracy score 0-100
         """
         if average_gps_accuracy_meters <= target_accuracy_meters:
             return 100.0
-        
+
         degradation = (average_gps_accuracy_meters - target_accuracy_meters) / target_accuracy_meters
         return max(0, 100 - (degradation * 50))  # 50% penalty per unit
-    
+
     @staticmethod
     def calculate_consistency_score(
         duplicate_segments: int,
@@ -517,38 +517,38 @@ class SpatialQualityScorer:
     ) -> float:
         """
         Calculate data consistency score (0-100).
-        
+
         Args:
             duplicate_segments: Count of duplicate/conflicting records
             total_segments: Total segments
-            
+
         Returns:
             Consistency score 0-100
         """
         if total_segments == 0:
             return 100.0
-        
+
         duplicate_rate = duplicate_segments / total_segments
         return max(0, 100 - (duplicate_rate * 100))
-    
+
     @staticmethod
     def calculate_overall_quality(
         completeness: float,
         recency: float,
         accuracy: float,
         consistency: float,
-        weights: Optional[dict[str, float]] = None,
+        weights: dict[str, float] | None = None,
     ) -> float:
         """
         Calculate weighted overall quality score.
-        
+
         Args:
             completeness: Completeness score 0-100
             recency: Recency score 0-100
             accuracy: Accuracy score 0-100
             consistency: Consistency score 0-100
             weights: Optional weight dictionary
-            
+
         Returns:
             Overall quality score 0-100
         """
@@ -559,12 +559,12 @@ class SpatialQualityScorer:
                 "accuracy": 0.20,
                 "consistency": 0.15,
             }
-        
+
         overall = (
             completeness * weights.get("completeness", 0) +
             recency * weights.get("recency", 0) +
             accuracy * weights.get("accuracy", 0) +
             consistency * weights.get("consistency", 0)
         )
-        
+
         return min(100, max(0, overall))

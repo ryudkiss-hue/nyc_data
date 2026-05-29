@@ -13,10 +13,11 @@ Classes:
 
 from __future__ import annotations
 
-from typing import Any, Iterable
+import uuid
+from collections.abc import Iterable
+from typing import Any
 
 import pandas as pd
-import uuid
 
 
 class XLSXExporter:
@@ -43,7 +44,7 @@ class PostgresExporter:
         self.psycopg = psycopg
         self.conn = psycopg.connect(dsn)
 
-    def __enter__(self) -> "PostgresExporter":
+    def __enter__(self) -> PostgresExporter:
         return self
 
     def __exit__(self, exc_type, exc, tb) -> None:
@@ -113,7 +114,8 @@ class PostgresExporter:
             try:
                 # Build an in-memory CSV representation and feed it into COPY.
                 # The psycopg cursor `copy` method may accept a file-like object.
-                import io, csv
+                import csv
+                import io
 
                 s = io.StringIO()
                 writer = csv.writer(s)
@@ -163,7 +165,7 @@ class MongoExporter:
         self.client = MongoClient(uri)
         self.db = self.client[db_name]
 
-    def __enter__(self) -> "MongoExporter":
+    def __enter__(self) -> MongoExporter:
         return self
 
     def __exit__(self, exc_type, exc, tb) -> None:

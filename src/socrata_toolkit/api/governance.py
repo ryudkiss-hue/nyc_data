@@ -40,7 +40,7 @@ class GovernanceEnforcer:
     def apply_masking(self, dataset_id: str, data: dict[str, Any], role: str) -> dict[str, Any]:
         if role == "admin":
             return data
-        
+
         result = data.copy()
         fields = self.pii_fields.get(dataset_id, {})
         for field_name, info in fields.items():

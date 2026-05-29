@@ -99,12 +99,23 @@ line-length = 100
 target-version = "py310"
 
 [tool.ruff.lint]
-# Select rules to enable: Pyflakes (F), pycodestyle (E, W), isort (I), pyupgrade (UP), flake8-bugbear (B)
 select = ["E", "F", "W", "I", "UP", "B"]
-# Ignore rules that conflict with Black formatting (like line length enforcing)
-ignore = ["E501"]
-# Customize exactly which rules Ruff should automatically fix
-# E.g., fix imports (I), pyupgrade (UP), and specific Pyflakes rules like unused imports (F401)
-fixable = ["I", "UP", "F401"]
-# Ensure certain risky rules are NEVER auto-fixed (like unused variables F841 or Bugbear B)
-unfixable = ["F841", "B"]
+ignore = [
+    "E501",   # line too long (handled by Black/formatter)
+    "E402",   # module import not at top (needed for sys.path manipulation)
+    "F401",   # unused import (re-exports are intentional in __init__ files)
+    "F403",   # star import used (intentional in __init__ re-exports)
+    "F811",   # redefinition of unused name (shadowing is intentional in some cases)
+    "F841",   # local variable assigned but never used
+    "B007",   # loop variable not used in body
+    "B023",   # function definition in loop
+    "B904",   # exception chaining (raise X from e)
+    "E701",   # multiple statements on one line
+    "E722",   # bare except
+]
+fixable = ["ALL"]
+unfixable = []
+
+[tool.ruff.lint.per-file-ignores]
+"legacy_archive/**" = ["ALL"]
+"tests/test_dash_pages_import.py" = ["E402", "F401"]

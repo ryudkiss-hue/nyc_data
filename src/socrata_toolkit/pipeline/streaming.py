@@ -13,9 +13,10 @@ import json
 import logging
 import tempfile
 import uuid
+from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any
 
 from ..core.pipeline import generate_postgres_preview
 
@@ -28,17 +29,17 @@ except ImportError:
 
 
 def stream_pipeline(
-    client, 
-    domain: str, 
-    fourfour: str, 
-    targets: dict, 
-    dry_run: bool = True, 
-    chunk_size: int | None = None, 
-    max_rows: int | None = None, 
+    client,
+    domain: str,
+    fourfour: str,
+    targets: dict,
+    dry_run: bool = True,
+    chunk_size: int | None = None,
+    max_rows: int | None = None,
     progress_callback: Callable[[int, int | None], None] | None = None,
-    governance_processor: Optional[Any] = None,
+    governance_processor: Any | None = None,
 ) -> dict[str, Any]:
-    
+
     if chunk_size is not None:
         client.config.page_size = chunk_size
 
@@ -68,9 +69,9 @@ def stream_pipeline(
         if targets.get("xlsx", {}).get("enabled"):
             # Note: Streaming defaults to JSONL to prevent memory exhaustion
             report["targets"]["xlsx"] = {
-                "sample": sample_batch[:5], 
+                "sample": sample_batch[:5],
                 "suggested_path": str(Path(tempfile.gettempdir()) / f"{fourfour}_backup.jsonl")
-            } 
+            }
         return report
 
     pg_writer = None
@@ -83,9 +84,9 @@ def stream_pipeline(
             pg = targets["postgres"]
             try:
                 import psycopg
-            except Exception as exc: 
+            except Exception as exc:
                 raise ImportError("Postgres support requires psycopg: pip install '.[postgres]'") from exc
-            
+
             conn = psycopg.connect(pg["dsn"])
             cur = conn.cursor()
             pg_writer = {"conn": conn, "cur": cur, "table": pg.get("table", "socrata_data"), "conflict": pg.get("conflict_column"), "initialized": False}
@@ -98,9 +99,9 @@ def stream_pipeline(
                 raise ImportError("Mongo support requires pymongo: pip install '.[mongo]'") from exc
             # Ensure UpdateOne is attached so it can be used in the loop
             mongo_client = {
-                "client": MongoClient(mg["uri"]), 
-                "db": mg["db"], 
-                "collection": mg["collection"], 
+                "client": MongoClient(mg["uri"]),
+                "db": mg["db"],
+                "collection": mg["collection"],
                 "conflict": mg["conflict_field"],
                 "UpdateOne": UpdateOne  # Store reference for ease of use
             }
@@ -139,7 +140,7 @@ def stream_pipeline(
                 # Sanitize identifiers by removing quotes to prevent SQL injection issues
                 table = pg_writer["table"].replace('"', '')
                 conflict = pg_writer["conflict"].replace('"', '') if pg_writer["conflict"] else None
-                
+
                 if not pg_writer["initialized"]:
                     cols = list(batch[0].keys())
                     defs = ", ".join(f'"{c.replace(chr(34), "")}" TEXT' for c in cols)
@@ -148,11 +149,11 @@ def stream_pipeline(
                         # FIX: Changed UNIQUE_INDEX to UNIQUE INDEX
                         cur.execute(f'CREATE UNIQUE INDEX IF NOT EXISTS "{table}_{conflict}_idx" ON "{table}" ("{conflict}")')
                     pg_writer["initialized"] = True
-                
+
                 cols = list(batch[0].keys())
                 placeholders = ",".join(["%s"] * len(cols))
                 col_list = ", ".join(f'"{c.replace(chr(34), "")}"' for c in cols)
-                
+
                 if conflict:
                     updates = ", ".join(f'"{c.replace(chr(34), "")}" = EXCLUDED."{c.replace(chr(34), "")}"' for c in cols if c != conflict)
                     if updates:
@@ -171,7 +172,7 @@ def stream_pipeline(
                 col = mongo_client["client"][mongo_client["db"]][mongo_client["collection"]]
                 UpdateOneClass = mongo_client["UpdateOne"]
                 conflict_f = mongo_client["conflict"]
-                
+
                 # FIX: Use UpdateOne class directly, not as an attribute of MongoClient
                 ops = [
                     UpdateOneClass({conflict_f: doc.get(conflict_f)}, {"$set": doc}, upsert=True)

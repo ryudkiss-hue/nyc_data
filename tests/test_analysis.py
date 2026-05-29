@@ -7,9 +7,9 @@ import pytest
 
 from socrata_toolkit.analysis import (
     generate_text_insights,
-    profile_dataframe,
     list_available_visualizations,
     parse_sim_complaints,
+    profile_dataframe,
 )
 
 

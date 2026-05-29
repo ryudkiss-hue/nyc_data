@@ -36,11 +36,11 @@ import csv
 import json
 import logging
 import uuid
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timezone, date
-from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, IO
 from contextlib import contextmanager
+from dataclasses import dataclass, field
+from datetime import date, datetime, timezone
+from enum import Enum
+from typing import IO, Any
 
 try:
     import psycopg
@@ -73,10 +73,10 @@ class ChangeType(Enum):
 @dataclass
 class AuditEvent:
     """Single audit trail event.
-    
+
     This is an immutable record of a single change, capturing complete provenance
     information for compliance and root cause analysis.
-    
+
     Attributes:
         audit_id: Unique event identifier (UUID)
         timestamp: When the change occurred (UTC)
@@ -102,18 +102,18 @@ class AuditEvent:
     entity_type: str
     entity_id: str
     change_type: str  # ChangeType value
-    old_values: Optional[Dict[str, Any]] = None
-    new_values: Optional[Dict[str, Any]] = None
-    diff: Optional[Dict[str, Any]] = None
-    reason: Optional[str] = None
-    lineage_node_id: Optional[str] = None
-    correlation_id: Optional[str] = None
-    ip_address: Optional[str] = None
-    user_agent: Optional[str] = None
+    old_values: dict[str, Any] | None = None
+    new_values: dict[str, Any] | None = None
+    diff: dict[str, Any] | None = None
+    reason: str | None = None
+    lineage_node_id: str | None = None
+    correlation_id: str | None = None
+    ip_address: str | None = None
+    user_agent: str | None = None
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> AuditEvent:
+    def from_dict(cls, data: dict[str, Any]) -> AuditEvent:
         """Create from dictionary."""
         return cls(
             audit_id=data["audit_id"],
@@ -134,7 +134,7 @@ class AuditEvent:
             created_at=data.get("created_at", datetime.now(timezone.utc)),
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "audit_id": self.audit_id,
@@ -158,7 +158,7 @@ class AuditEvent:
 
 class AuditTrail:
     """Main audit trail interface.
-    
+
     Provides methods for logging all data operations and querying the
     immutable audit log. The audit trail is append-only and cannot be
     modified after creation (enforced by database rules).
@@ -166,10 +166,10 @@ class AuditTrail:
 
     def __init__(self, dsn: str) -> None:
         """Initialize audit trail.
-        
+
         Args:
             dsn: PostgreSQL connection string
-            
+
         Raises:
             ImportError: If psycopg not installed
         """
@@ -188,13 +188,13 @@ class AuditTrail:
             conn.close()
 
     @staticmethod
-    def _calculate_diff(old: Optional[Dict[str, Any]], new: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    def _calculate_diff(old: dict[str, Any] | None, new: dict[str, Any] | None) -> dict[str, Any]:
         """Calculate difference between old and new values.
-        
+
         Args:
             old: Before state
             new: After state
-            
+
         Returns:
             Dict with only changed fields, in format {"field": [old_val, new_val]}
         """
@@ -202,32 +202,32 @@ class AuditTrail:
             old = {}
         if new is None:
             new = {}
-        
+
         diff = {}
         all_keys = set(old.keys()) | set(new.keys())
-        
+
         for key in all_keys:
             old_val = old.get(key)
             new_val = new.get(key)
             if old_val != new_val:
                 diff[key] = [old_val, new_val]
-        
+
         return diff
 
     def log_insert(
         self,
         table: str,
         entity_id: str,
-        new_values: Dict[str, Any],
+        new_values: dict[str, Any],
         user: str = "SYSTEM",
-        reason: Optional[str] = None,
-        lineage_node_id: Optional[str] = None,
-        correlation_id: Optional[str] = None,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
+        reason: str | None = None,
+        lineage_node_id: str | None = None,
+        correlation_id: str | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
     ) -> str:
         """Log an INSERT operation.
-        
+
         Args:
             table: Table name
             entity_id: Business key
@@ -238,14 +238,14 @@ class AuditTrail:
             correlation_id: Link to observability logs
             ip_address: Source IP
             user_agent: Client user agent
-            
+
         Returns:
             audit_id of the new event
         """
         audit_id = str(uuid.uuid4())
         now = datetime.now(timezone.utc)
         diff = self._calculate_diff({}, new_values)
-        
+
         with self._get_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
@@ -273,7 +273,7 @@ class AuditTrail:
                     )
                 )
                 conn.commit()
-        
+
         self.logger.info(f"Logged INSERT: {table}/{entity_id} by {user}")
         return audit_id
 
@@ -281,17 +281,17 @@ class AuditTrail:
         self,
         table: str,
         entity_id: str,
-        old: Dict[str, Any],
-        new: Dict[str, Any],
+        old: dict[str, Any],
+        new: dict[str, Any],
         user: str = "SYSTEM",
-        reason: Optional[str] = None,
-        lineage_node_id: Optional[str] = None,
-        correlation_id: Optional[str] = None,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
+        reason: str | None = None,
+        lineage_node_id: str | None = None,
+        correlation_id: str | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
     ) -> str:
         """Log an UPDATE operation.
-        
+
         Args:
             table: Table name
             entity_id: Business key
@@ -303,14 +303,14 @@ class AuditTrail:
             correlation_id: Link to observability logs
             ip_address: Source IP
             user_agent: Client user agent
-            
+
         Returns:
             audit_id of the new event
         """
         audit_id = str(uuid.uuid4())
         now = datetime.now(timezone.utc)
         diff = self._calculate_diff(old, new)
-        
+
         with self._get_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
@@ -338,7 +338,7 @@ class AuditTrail:
                     )
                 )
                 conn.commit()
-        
+
         self.logger.info(f"Logged UPDATE: {table}/{entity_id} by {user}")
         return audit_id
 
@@ -346,16 +346,16 @@ class AuditTrail:
         self,
         table: str,
         entity_id: str,
-        old_values: Dict[str, Any],
+        old_values: dict[str, Any],
         user: str = "SYSTEM",
-        reason: Optional[str] = None,
-        lineage_node_id: Optional[str] = None,
-        correlation_id: Optional[str] = None,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
+        reason: str | None = None,
+        lineage_node_id: str | None = None,
+        correlation_id: str | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
     ) -> str:
         """Log a DELETE operation.
-        
+
         Args:
             table: Table name
             entity_id: Business key
@@ -366,14 +366,14 @@ class AuditTrail:
             correlation_id: Link to observability logs
             ip_address: Source IP
             user_agent: Client user agent
-            
+
         Returns:
             audit_id of the new event
         """
         audit_id = str(uuid.uuid4())
         now = datetime.now(timezone.utc)
         diff = self._calculate_diff(old_values, {})
-        
+
         with self._get_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
@@ -401,20 +401,20 @@ class AuditTrail:
                     )
                 )
                 conn.commit()
-        
+
         self.logger.info(f"Logged DELETE: {table}/{entity_id} by {user}")
         return audit_id
 
     def get_events(
         self, entity_type: str, entity_id: str, limit: int = 1000
-    ) -> List[AuditEvent]:
+    ) -> list[AuditEvent]:
         """Get all audit events for a specific entity.
-        
+
         Args:
             entity_type: Table name
             entity_id: Business key
             limit: Maximum results
-            
+
         Returns:
             List of AuditEvents (most recent first)
         """
@@ -431,7 +431,7 @@ class AuditTrail:
                     (entity_type, entity_id, limit)
                 )
                 rows = cur.fetchall()
-                
+
                 events = []
                 for row in rows:
                     events.append(
@@ -458,15 +458,15 @@ class AuditTrail:
 
     def get_events_by_user(
         self, user: str, start_date: date, end_date: date, limit: int = 10000
-    ) -> List[AuditEvent]:
+    ) -> list[AuditEvent]:
         """Get all audit events by a specific user in a date range.
-        
+
         Args:
             user: User name
             start_date: Range start (inclusive)
             end_date: Range end (inclusive)
             limit: Maximum results
-            
+
         Returns:
             List of AuditEvents
         """
@@ -485,7 +485,7 @@ class AuditTrail:
                     (user, start_date, end_date, limit)
                 )
                 rows = cur.fetchall()
-                
+
                 events = []
                 for row in rows:
                     events.append(
@@ -510,13 +510,13 @@ class AuditTrail:
                     )
                 return events
 
-    def get_events_by_action(self, action: str, limit: int = 10000) -> List[AuditEvent]:
+    def get_events_by_action(self, action: str, limit: int = 10000) -> list[AuditEvent]:
         """Get all audit events of a specific action type.
-        
+
         Args:
             action: ActionType value (INSERT, UPDATE, DELETE, etc.)
             limit: Maximum results
-            
+
         Returns:
             List of AuditEvents
         """
@@ -533,7 +533,7 @@ class AuditTrail:
                     (action, limit)
                 )
                 rows = cur.fetchall()
-                
+
                 events = []
                 for row in rows:
                     events.append(
@@ -558,9 +558,9 @@ class AuditTrail:
                     )
                 return events
 
-    def search_events(self, criteria: Dict[str, Any], limit: int = 10000) -> List[AuditEvent]:
+    def search_events(self, criteria: dict[str, Any], limit: int = 10000) -> list[AuditEvent]:
         """Search audit events by multiple criteria.
-        
+
         Supported criteria keys:
             - entity_type: str
             - entity_id: str
@@ -570,57 +570,57 @@ class AuditTrail:
             - start_date: date or datetime
             - end_date: date or datetime
             - reason_contains: str (substring match)
-            
+
         Args:
             criteria: Search filters
             limit: Maximum results
-            
+
         Returns:
             List of matching AuditEvents
         """
         query = "SELECT audit_id, timestamp, user_name, action, entity_type, entity_id, change_type, old_values, new_values, diff, reason, lineage_node_id, correlation_id, ip_address, user_agent, created_at FROM public.audit_trail WHERE 1=1"
         params = []
-        
+
         if "entity_type" in criteria:
             query += " AND entity_type = %s"
             params.append(criteria["entity_type"])
-        
+
         if "entity_id" in criteria:
             query += " AND entity_id = %s"
             params.append(criteria["entity_id"])
-        
+
         if "user_name" in criteria:
             query += " AND user_name = %s"
             params.append(criteria["user_name"])
-        
+
         if "action" in criteria:
             query += " AND action = %s"
             params.append(criteria["action"])
-        
+
         if "change_type" in criteria:
             query += " AND change_type = %s"
             params.append(criteria["change_type"])
-        
+
         if "start_date" in criteria:
             query += " AND timestamp >= %s"
             params.append(criteria["start_date"])
-        
+
         if "end_date" in criteria:
             query += " AND timestamp <= %s"
             params.append(criteria["end_date"])
-        
+
         if "reason_contains" in criteria:
             query += " AND reason ILIKE %s"
             params.append(f"%{criteria['reason_contains']}%")
-        
+
         query += " ORDER BY timestamp DESC LIMIT %s"
         params.append(limit)
-        
+
         with self._get_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(query, params)
                 rows = cur.fetchall()
-                
+
                 events = []
                 for row in rows:
                     events.append(
@@ -645,13 +645,13 @@ class AuditTrail:
                     )
                 return events
 
-    def export_csv(self, output: IO, criteria: Optional[Dict[str, Any]] = None) -> int:
+    def export_csv(self, output: IO, criteria: dict[str, Any] | None = None) -> int:
         """Export audit events to CSV.
-        
+
         Args:
             output: File object to write to
             criteria: Optional search criteria
-            
+
         Returns:
             Number of rows exported
         """
@@ -680,7 +680,7 @@ class AuditTrail:
                         )
                         for row in rows
                     ]
-        
+
         writer = csv.DictWriter(
             output,
             fieldnames=[
@@ -708,15 +708,15 @@ class AuditTrail:
                     "reason": event.reason or "",
                 }
             )
-        
+
         return len(events)
 
-    def export_json(self, criteria: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    def export_json(self, criteria: dict[str, Any] | None = None) -> list[dict[str, Any]]:
         """Export audit events to JSON-serializable list.
-        
+
         Args:
             criteria: Optional search criteria
-            
+
         Returns:
             List of event dicts
         """
@@ -754,12 +754,12 @@ class AuditTrail:
                         )
                         for row in rows
                     ]
-        
+
         return [event.to_dict() for event in events]
 
-    def generate_compliance_report(self) -> Dict[str, Any]:
+    def generate_compliance_report(self) -> dict[str, Any]:
         """Generate compliance report from audit trail.
-        
+
         Returns:
             Dict with:
                 - total_events: Total audit entries
@@ -774,46 +774,46 @@ class AuditTrail:
                 # Total events
                 cur.execute("SELECT COUNT(*) FROM public.audit_trail")
                 total = cur.fetchone()[0]
-                
+
                 # Date range
                 cur.execute(
-                    """SELECT MIN(timestamp), MAX(timestamp) 
+                    """SELECT MIN(timestamp), MAX(timestamp)
                        FROM public.audit_trail"""
                 )
                 min_ts, max_ts = cur.fetchone()
-                
+
                 # Actions by type
                 cur.execute(
-                    """SELECT action, COUNT(*) 
+                    """SELECT action, COUNT(*)
                        FROM public.audit_trail
                        GROUP BY action"""
                 )
                 actions = {row[0]: row[1] for row in cur.fetchall()}
-                
+
                 # Users
                 cur.execute(
-                    """SELECT DISTINCT user_name 
+                    """SELECT DISTINCT user_name
                        FROM public.audit_trail
                        ORDER BY user_name"""
                 )
                 users = [row[0] for row in cur.fetchall()]
-                
+
                 # Unique entities
                 cur.execute(
                     """SELECT COUNT(DISTINCT entity_id)
                        FROM public.audit_trail"""
                 )
                 unique_entities = cur.fetchone()[0]
-                
+
                 # Unique entity types
                 cur.execute(
                     """SELECT COUNT(DISTINCT entity_type)
                        FROM public.audit_trail"""
                 )
                 unique_types = cur.fetchone()[0]
-        
+
         duration_days = (max_ts - min_ts).days if min_ts and max_ts else 0
-        
+
         return {
             "total_events": total,
             "date_range": {

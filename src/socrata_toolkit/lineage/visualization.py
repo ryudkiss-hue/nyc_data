@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -23,9 +23,9 @@ logger = logging.getLogger(__name__)
 class LineageVisualizer:
     """Exports lineage in multiple formats for visualization and analysis."""
 
-    def __init__(self, dag: Optional[Any] = None) -> None:
+    def __init__(self, dag: Any | None = None) -> None:
         """Initialize visualizer.
-        
+
         Args:
             dag: DAG object to visualize (LineageCore.DAG)
         """
@@ -33,13 +33,13 @@ class LineageVisualizer:
 
     def to_json(self, indent: bool = True) -> str:
         """Export complete DAG as JSON.
-        
+
         Includes all nodes, edges, execution history, and metadata.
         This is the most complete export format.
-        
+
         Args:
             indent: Whether to pretty-print JSON
-            
+
         Returns:
             JSON string representation of DAG
         """
@@ -51,10 +51,10 @@ class LineageVisualizer:
 
     def to_graphml(self) -> str:
         """Export DAG as GraphML for visualization tools.
-        
+
         GraphML can be imported into tools like Gephi, yEd, and others
         for interactive graph visualization and analysis.
-        
+
         Returns:
             GraphML XML string
         """
@@ -69,15 +69,15 @@ class LineageVisualizer:
             logger.error(f"Failed to export to GraphML: {e}")
             return ""
 
-    def to_mermaid(self, subgraph_node_id: Optional[str] = None) -> str:
+    def to_mermaid(self, subgraph_node_id: str | None = None) -> str:
         """Export DAG as Mermaid diagram syntax.
-        
+
         Mermaid diagrams can be embedded in GitHub README files and markdown.
         Useful for documentation and analysis.
-        
+
         Args:
             subgraph_node_id: If specified, only show this node and its connections
-            
+
         Returns:
             Mermaid diagram syntax
         """
@@ -89,11 +89,11 @@ class LineageVisualizer:
         if subgraph_node_id:
             # Show node and its neighbors only
             node_ids = {subgraph_node_id}
-            
+
             # Add upstream dependencies
             for upstream in self.dag.get_upstream_dependencies(subgraph_node_id):
                 node_ids.add(upstream)
-            
+
             # Add downstream consumers
             for downstream in self.dag.get_downstream_consumers(subgraph_node_id):
                 node_ids.add(downstream)
@@ -111,10 +111,10 @@ class LineageVisualizer:
 
     def to_dot(self) -> str:
         """Export DAG as Graphviz DOT format.
-        
+
         DOT files can be rendered using Graphviz tools (dot, neato, etc.)
         for custom graph visualization.
-        
+
         Returns:
             DOT format string
         """
@@ -130,13 +130,13 @@ class LineageVisualizer:
 
     def to_ascii(self, max_depth: int = 5) -> str:
         """Generate ASCII visualization of DAG.
-        
+
         Shows the DAG in a text-friendly format suitable for terminal output.
         Useful for quick inspection and debugging.
-        
+
         Args:
             max_depth: Maximum depth to display (limits recursion)
-            
+
         Returns:
             ASCII art representation of DAG
         """
@@ -169,7 +169,7 @@ class LineageVisualizer:
 
     def to_html_table(self) -> str:
         """Export DAG as HTML table for web display.
-        
+
         Returns:
             HTML table representation of nodes and edges
         """
@@ -218,13 +218,13 @@ class LineageVisualizer:
 
         return "\n".join(html)
 
-    def get_subgraph(self, node_id: str, include_downstream: bool = True) -> Optional[Any]:
+    def get_subgraph(self, node_id: str, include_downstream: bool = True) -> Any | None:
         """Extract a subgraph containing a node and related nodes.
-        
+
         Args:
             node_id: Central node
             include_downstream: If True, include downstream consumers; else include only upstream
-            
+
         Returns:
             Subgraph DAG or None if node doesn't exist
         """
@@ -269,16 +269,16 @@ class LineageVisualizer:
             logger.error(f"Failed to extract subgraph: {e}")
             return None
 
-    def get_lineage_summary_by_type(self) -> Dict[str, List[str]]:
+    def get_lineage_summary_by_type(self) -> dict[str, list[str]]:
         """Get summary of nodes grouped by type.
-        
+
         Returns:
             Dictionary mapping node types to lists of node IDs
         """
         if not self.dag:
             return {}
 
-        summary: Dict[str, List[str]] = {}
+        summary: dict[str, list[str]] = {}
 
         for node_id, node in self.dag.nodes.items():
             node_type = node.node_type.value
@@ -288,9 +288,9 @@ class LineageVisualizer:
 
         return summary
 
-    def get_execution_summary(self) -> Dict[str, Any]:
+    def get_execution_summary(self) -> dict[str, Any]:
         """Get summary of recent executions across all nodes.
-        
+
         Returns:
             Dictionary with execution statistics
         """
@@ -354,8 +354,8 @@ class LineageVisualizer:
         return node_id.replace(".", "_").replace("-", "_")
 
     def _ascii_subtree(
-        self, node_id: str, depth: int = 0, max_depth: int = 5, visited: Optional[Set[str]] = None
-    ) -> List[str]:
+        self, node_id: str, depth: int = 0, max_depth: int = 5, visited: set[str] | None = None
+    ) -> list[str]:
         """Generate ASCII representation of node subtree."""
         if visited is None:
             visited = set()

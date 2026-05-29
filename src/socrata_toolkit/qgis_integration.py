@@ -16,13 +16,12 @@ from __future__ import annotations
 
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from typing import Dict, List, Optional
 from urllib.parse import urlparse
 
 
 def generate_qgis_project(
     dsn: str,
-    layers: List[str],
+    layers: list[str],
     output: str = "sidewalk_project.qgs",
     geom_col: str = "geom",
     srid: int = 4326,

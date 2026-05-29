@@ -6,7 +6,7 @@ These helpers generate SQL snippets for Postgres that combine `ts_rank` with
 operational signals (age, spatial priority) into a single `final_rank` value.
 """
 
-from typing import Iterable
+from collections.abc import Iterable
 
 
 def build_weighted_rank_sql(text_columns: Iterable[str], text_query_param: str = "%s", weight_text: float = 1.0, weight_geo: float = 1.0, weight_age: float = 1.0) -> str:
