@@ -36,7 +36,6 @@ langchain-openai = {version = ">=0.1.0", optional = true}
 ollama = {version = ">=0.1.0", optional = true}
 openai = {version = ">=1.0.0", optional = true}
 huggingface-hub = {version = ">=0.16.0", optional = true}
-streamlit = {version = ">=1.10", optional = true}
 spacy = {version = ">=3.5", optional = true}
 shapely = {version = "^2.0", optional = true}
 geopandas = {version = ">=0.14", optional = true}
@@ -62,16 +61,14 @@ llm = ["langchain", "langchain-community", "langchain-openai", "ollama", "openai
 viz = ["matplotlib", "plotly"]
 geo = ["shapely", "geopandas"]
 reports = ["plotly", "weasyprint"]
-ui = ["streamlit"]
-mission = ["streamlit", "sodapy", "geopandas", "shapely", "plotly", "pyarrow", "folium", "pymc", "arviz", "prophet", "beautifulsoup4"]
+mission = ["sodapy", "geopandas", "shapely", "plotly", "pyarrow", "folium", "pymc", "arviz", "prophet", "beautifulsoup4"]
 pptx = ["python-pptx"]
 exe = ["pyinstaller"]
 desktop = ["pywebview"]
-all = ["openpyxl", "spacy", "shapely", "geopandas", "matplotlib", "plotly", "weasyprint", "streamlit", "psycopg", "python-pptx", "langchain", "langchain-community", "langchain-openai", "ollama", "openai", "huggingface-hub", "pyinstaller"]
+all = ["openpyxl", "spacy", "shapely", "geopandas", "matplotlib", "plotly", "weasyprint", "psycopg", "python-pptx", "langchain", "langchain-community", "langchain-openai", "ollama", "openai", "huggingface-hub", "pyinstaller"]
 
 [tool.poetry.scripts]
 socrata = "socrata_toolkit.core.cli:main"
-mission = "main:main"
 socrata-fair = "socrata_toolkit.fair.cli:main"
 
 [build-system]

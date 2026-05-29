@@ -14,7 +14,6 @@ from dataclasses import dataclass, field
 from typing import Any, Protocol
 
 # Fix: Import os specifically to avoid 'os is not defined' in _send_email
-# Fix: Removed the problematic 'from streamlit import login, user' as it conflicted with SMTP logic
 
 try:
     from rich import print as rprint

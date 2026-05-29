@@ -568,7 +568,7 @@ def doctor_cmd(check_db, checklist):
     if missing_opt:
         fixes.append("Install optional extras (examples): `pip install '.[postgres]'`, `pip install '.[pptx]'`, `pip install '.[spatial]'`.")
     fixes.append("If Dash pages look empty, run an Analyst Pack: `socrata analyst run --profile <path>`.")
-    fixes.append("Open Mission Control: `streamlit run app/app.py` (legacy Dash: `legacy_archive/dash_app/app.py`).")
+    fixes.append("Open Mission Control SPA: open app/static/mission_control_v2.html in a browser, or run the Electron desktop app via `cd desktop && npm start`.")
 
     import_checks: dict[str, str] = {}
     for label, modpath in [
@@ -585,8 +585,8 @@ def doctor_cmd(check_db, checklist):
     checklist = {
         "wizard_module": "ok" if __import__("importlib").util.find_spec("socrata_toolkit.install_wizard") else "missing",
         "analyst_module": "ok" if __import__("importlib").util.find_spec("socrata_toolkit.analyst") else "missing",
-        "streamlit_app": "ok"
-        if (Path(__file__).resolve().parents[3] / "app" / "app.py").exists()
+        "spa_html": "ok"
+        if (Path(__file__).resolve().parents[3] / "app" / "static" / "mission_control_v2.html").exists()
         else "missing",
     }
     payload = {

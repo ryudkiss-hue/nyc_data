@@ -37,26 +37,23 @@ def run_readiness_checks(*, run_pytest: bool = False) -> dict[str, Any]:
         "job_fit": [],
     }
 
-    # Support both legacy app.py and new mission_control.py entry points
-    app_py = app_root / "mission_control.py"
-    if not app_py.exists():
-        app_py = app_root / "app.py"
-    app_text = _read(app_py)
-    loader_text = _read(app_root / "data_loader.py")
-    theme_text = _read(app_root / "ui" / "theme.py")
+    spa_html = app_root / "static" / "mission_control_v2.html"
+    spa_text = _read(spa_html)
+    sidecar_text = _read(app_root / "sidecar_api.py")
 
-    axes["accessibility"].append(_check("streamlit_app_entry", app_py.exists()))
+    axes["accessibility"].append(_check("spa_entry", spa_html.exists(), detail="SPA HTML entry point."))
     axes["accessibility"].append(
-        _check("skip_link", "mc-skip" in theme_text, detail="Keyboard skip to main content.")
+        _check("skip_link", "skip-to-content" in spa_text or "mc-skip" in spa_text,
+               detail="Keyboard skip to main content.")
     )
     axes["accessibility"].append(
-        _check("reduced_motion_css", "prefers-reduced-motion" in theme_text)
+        _check("reduced_motion", "prefers-reduced-motion" in spa_text)
     )
     axes["accessibility"].append(
-        _check("metric_help_text", "help=" in _read(app_root / "views" / "workflows.py"))
+        _check("aria_tablist", 'role="tablist"' in spa_text or "role=tablist" in spa_text)
     )
     axes["accessibility"].append(
-        _check("readiness_aria", "aria-valuenow" in theme_text or "aria-label" in theme_text)
+        _check("aria_live_region", "aria-live" in spa_text)
     )
 
     profile = root / "config" / "analyst_profile.yaml"
@@ -66,10 +63,9 @@ def run_readiness_checks(*, run_pytest: bool = False) -> dict[str, Any]:
         _check("analyst_workflow", (Path(__file__).resolve().parents[1] / "analyst" / "workflow.py").exists())
     )
     axes["functionality"].append(_check("publish_module", (Path(__file__).resolve().parents[1] / "analyst" / "publish.py").exists()))
-    axes["functionality"].append(_check("publish_ui", (app_root / "views" / "publish.py").exists()))
     axes["functionality"].append(_check("datasets_yaml", (root / "config" / "datasets.yaml").exists()))
-    axes["functionality"].append(_check("demo_mode", "demo_mode_enabled" in loader_text))
-    axes["functionality"].append(_check("agency_services", (app_root / "services" / "agency.py").exists()))
+    axes["functionality"].append(_check("sidecar_api", (app_root / "sidecar_api.py").exists()))
+    axes["functionality"].append(_check("sidecar_health", "/health" in sidecar_text))
 
     for mod in (
         "socrata_toolkit.analysis.advanced",
@@ -82,32 +78,27 @@ def run_readiness_checks(*, run_pytest: bool = False) -> dict[str, Any]:
         except Exception as exc:
             axes["functionality"].append(_check(mod, False, str(exc)))
 
-    axes["presentation"].append(_check("streamlit_theme", (root / ".streamlit" / "config.toml").exists()))
-    axes["presentation"].append(_check("agency_css", "mc-header" in theme_text))
-    axes["presentation"].append(_check("multi_page_nav", "NAV_PAGES" in app_text or "st.tabs" in app_text))
-    axes["presentation"].append(_check("workflow_views", (app_root / "views" / "workflows.py").exists()))
-    axes["presentation"].append(_check("settings_readiness_bars", (app_root / "views" / "settings.py").exists()))
+    axes["presentation"].append(_check("spa_dark_theme", "bg-gray-900" in spa_text or "brand-" in spa_text))
+    axes["presentation"].append(_check("multi_tab_nav", 'role="tablist"' in spa_text))
+    axes["presentation"].append(_check("command_palette", "command-palette" in spa_text or "Ctrl+P" in spa_text))
     axes["presentation"].append(_check("mission_control_doc", (root / "docs" / "MISSION_CONTROL.md").exists()))
     axes["presentation"].append(_check("agency_runbook", (root / "docs" / "AGENCY_RUNBOOK.md").exists()))
-    axes["presentation"].append(_check("i18n_module", (app_root / "utils" / "i18n.py").exists()))
-    axes["presentation"].append(_check("empty_states", (app_root / "ui" / "empty_states.py").exists()))
+    axes["presentation"].append(_check("faq_doc", (root / "docs" / "FAQ.md").exists()))
+    axes["presentation"].append(_check("improvements_plan", (root / "docs" / "IMPROVEMENTS_PLAN.md").exists()))
+
     axes["packaging"].append(_check("docker_compose", (root / "docker-compose.yml").exists()))
     axes["packaging"].append(_check("build_unix_script", (root / "scripts" / "build_unix.sh").exists()))
-    axes["packaging"].append(_check("cloud_app_json", (root / "app.json").exists()))
-    axes["packaging"].append(_check("render_blueprint", (root / "render.yaml").exists()))
-    axes["packaging"].append(_check("procfile", (root / "Procfile").exists()))
-
+    axes["packaging"].append(_check("electron_main", (root / "desktop" / "main.js").exists()))
+    axes["packaging"].append(_check("electron_package", (root / "desktop" / "package.json").exists()))
     axes["packaging"].append(_check("install_wizard", importlib.util.find_spec("socrata_toolkit.install_wizard") is not None))
     axes["packaging"].append(_check("installer_script", (root / "scripts" / "build_installer.ps1").exists()))
-    axes["packaging"].append(_check("main_launcher", (root / "main.py").exists()))
-    axes["packaging"].append(_check("mission_script", "mission" in _read(root / "pyproject.toml")))
     axes["packaging"].append(_check("launcher_shim", (root / "launcher.py").exists()))
     axes["packaging"].append(_check("dockerfile_mission", (root / "Dockerfile.mission").exists()))
     axes["packaging"].append(_check("nightly_sync_script", (root / "scripts" / "nightly_analyst_sync.ps1").exists()))
 
-    axes["reliability"].append(_check("mission_tests", (root / "tests" / "test_mission_control.py").exists()))
-    axes["reliability"].append(_check("agency_service_tests", (root / "tests" / "test_agency_services.py").exists()))
-    axes["reliability"].append(_check("ingest_log", (app_root / "ingest_log.py").exists()))
+    axes["reliability"].append(_check("sidecar_tests", (root / "tests" / "test_sidecar_api.py").exists()))
+    axes["reliability"].append(_check("fair_tests", (root / "tests" / "test_fair.py").exists()))
+    axes["reliability"].append(_check("privacy_tests", (root / "tests" / "test_privacy.py").exists()))
 
     for doc in (
         "USER_MANUAL.md",
@@ -127,17 +118,17 @@ def run_readiness_checks(*, run_pytest: bool = False) -> dict[str, Any]:
         _check("socrata_token_env", "SOCRATA_APP_TOKEN" in _read(root / ".env.example"))
     )
     axes["security"].append(
-        _check("publish_dry_run_default", "dry_run" in _read(app_root / "views" / "publish.py"))
+        _check("cors_localhost_only", "127.0.0.1" in sidecar_text and "allow_origin_regex" in sidecar_text)
     )
     axes["security"].append(
-        _check("no_token_in_ingest_log", "SOCRATA_APP_TOKEN" not in _read(root / "app" / "ingest_log.py"))
+        _check("no_secrets_in_code", "SOCRATA_APP_TOKEN" not in sidecar_text)
     )
 
-    axes["performance"].append(_check("cached_socrata_fetch", "@st.cache_data" in loader_text or "cache_data" in loader_text))
-    axes["performance"].append(_check("lazy_workflow_load", "keys_for_workflow" in loader_text))
-    axes["performance"].append(_check("parquet_disk_cache", "parquet" in loader_text.lower()))
-    axes["performance"].append(_check("parallel_fetch", "ThreadPoolExecutor" in loader_text))
-    axes["performance"].append(_check("per_view_dataset_limit", "WORKFLOW_DATASETS" in loader_text))
+    axes["performance"].append(_check("spa_lru_cache", "mmcCachedFetch" in spa_text or "mmc_cache_" in spa_text))
+    axes["performance"].append(_check("spa_virtual_table", "mmcVirtualTable" in spa_text))
+    axes["performance"].append(_check("spa_web_worker", "Worker" in spa_text))
+    axes["performance"].append(_check("spa_lazy_init", "mmcLazy" in spa_text))
+    axes["performance"].append(_check("spa_infinite_scroll", "IntersectionObserver" in spa_text))
 
     role_dir = root / "config" / "role_profiles"
     axes["job_fit"].append(_check("role_profiles_dir", role_dir.is_dir()))
