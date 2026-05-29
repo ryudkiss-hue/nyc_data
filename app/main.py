@@ -38,7 +38,9 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-SOCRATA_TOKEN = os.getenv("SOCRATA_TOKEN", "") 
+SOCRATA_TOKEN = os.getenv("SOCRATA_TOKEN", "")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 
 # Initialize Streamlit Session State to prevent the Vanishing Dashboard bug
 if "pipeline_run" not in st.session_state:
@@ -47,6 +49,13 @@ if "apex_results" not in st.session_state:
     st.session_state.apex_results = None
 if "df_jobs_cache" not in st.session_state:
     st.session_state.df_jobs_cache = None
+if "copilot_messages" not in st.session_state:
+    st.session_state.copilot_messages = [
+        {
+            "role": "assistant",
+            "content": "Hello! I am your Manhattan Mission Control AI Copilot. Run the pipeline first, then ask me to analyze OMB hiring lag, explain MCMC posteriors, write PostGIS joins, or interpret any forecast results."
+        }
+    ]
 
 # ==========================================
 # --- DATA INGESTION PIPELINES ---
@@ -173,6 +182,64 @@ def run_apex_math(df_jobs: pd.DataFrame, df_payroll: pd.DataFrame, max_lag: int 
     }
 
 # ==========================================
+# --- AI COPILOT ENGINE ---
+# ==========================================
+
+def build_copilot_system_prompt(results: dict | None, agency: str, title: str) -> str:
+    lag = results["best_lag"] if results else "unknown"
+    yield_rate = f"{results['yield_rate']:.2f}" if results else "unknown"
+    if results:
+        projected = int(results["future_forecast"]["predicted_hires"].sum())
+    else:
+        projected = "unknown"
+
+    return f"""You are the Manhattan Mission Control AI — a Senior Data Architect and Civil Operations Strategist for New York City open datasets.
+Your tone is futuristic, precise, and professional, matching an "Enterprise Apex Engine" aesthetic.
+You have access to the currently calculated parameters from the Socrata Bayesian pipeline:
+- Target Agency: "{agency}"
+- Target Civil Service Title: "{title}"
+- Optimized OMB Hiring Lag: {lag} months
+- Bayesian Yield Multiplier (Postings → Starts): {yield_rate}x
+- 12-Month Projected Hires: {projected}
+
+Respond directly to the user's question. Include actual statistics or insights when relevant.
+Keep responses highly scannable, Markdown-formatted, and use bullet points where helpful."""
+
+
+def query_gemini_copilot(user_prompt: str, system_prompt: str, history: list) -> str:
+    if not GEMINI_API_KEY:
+        return (
+            "**[OFFLINE MODE]** No `GEMINI_API_KEY` found in environment. "
+            "Set the `GEMINI_API_KEY` secret and restart the app to enable live AI responses.\n\n"
+            f"Your question was: *{user_prompt}*"
+        )
+
+    contents = []
+    for msg in history[1:]:  # skip the initial system greeting
+        role = "user" if msg["role"] == "user" else "model"
+        contents.append({"role": role, "parts": [{"text": msg["content"]}]})
+    contents.append({"role": "user", "parts": [{"text": user_prompt}]})
+
+    payload = {
+        "system_instruction": {"parts": [{"text": system_prompt}]},
+        "contents": contents,
+        "generationConfig": {"temperature": 0.7}
+    }
+
+    try:
+        resp = requests.post(
+            f"{GEMINI_ENDPOINT}?key={GEMINI_API_KEY}",
+            json=payload,
+            timeout=30
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        return data["candidates"][0]["content"]["parts"][0]["text"]
+    except Exception as e:
+        return f"⚠️ Gemini API error: {e}"
+
+
+# ==========================================
 # --- FRONTEND UI ---
 # ==========================================
 
@@ -253,6 +320,18 @@ def main():
         st.session_state.pipeline_run = False
         return
 
+    # Tab layout: Dashboard | AI Copilot
+    tab_dash, tab_copilot = st.tabs(["📊 Dashboard", "🤖 AI Copilot"])
+
+    with tab_dash:
+        _render_dashboard(results, target_agency, target_title)
+
+    with tab_copilot:
+        _render_copilot(results, target_agency, target_title)
+
+
+def _render_dashboard(results: dict, target_agency: str, target_title: str):
+    """Renders the main analytics dashboard."""
     # Dashboard Rendering
     col1, col2 = st.columns(2)
     with col1:
@@ -319,6 +398,63 @@ def main():
             ).add_to(m)
             
         components.html(m._repr_html_(), height=500)
+
+
+def _render_copilot(results: dict | None, target_agency: str, target_title: str):
+    """Renders the Gemini AI Copilot chat panel."""
+    system_prompt = build_copilot_system_prompt(results, target_agency, target_title)
+
+    if not GEMINI_API_KEY:
+        st.warning(
+            "**AI Copilot is in offline mode.** "
+            "Set the `GEMINI_API_KEY` environment variable to enable live responses.",
+            icon="⚠️"
+        )
+
+    st.caption("Ask me to analyze OMB lag, explain MCMC posteriors, write PostGIS joins, or interpret any forecast data.")
+
+    # Quick-action chips
+    chips = [
+        ("OMB Latency Analysis", "Can you analyze why there is an OMB hiring lag bottleneck on the active data records?"),
+        ("Explain MCMC Priors", "Explain what prior distributions and parameter bounds are used in our Bayesian model."),
+        ("PostGIS Join Code", "Write a high-performance PostGIS query to join city jobs location with complaint borough coordinates."),
+        ("Forecast Interpretation", "Interpret the 12-month hire forecast and flag any anomalies I should be aware of."),
+    ]
+
+    chip_cols = st.columns(len(chips))
+    for col, (label, query) in zip(chip_cols, chips):
+        if col.button(label, key=f"chip_{label}", use_container_width=True):
+            st.session_state.copilot_messages.append({"role": "user", "content": query})
+            with st.spinner("Thinking..."):
+                reply = query_gemini_copilot(query, system_prompt, st.session_state.copilot_messages)
+            st.session_state.copilot_messages.append({"role": "assistant", "content": reply})
+
+    st.divider()
+
+    # Render message history
+    for msg in st.session_state.copilot_messages:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+
+    # Chat input
+    if user_input := st.chat_input("Ask about the pipeline, data quality, MCMC, or write custom queries..."):
+        st.session_state.copilot_messages.append({"role": "user", "content": user_input})
+        with st.chat_message("user"):
+            st.markdown(user_input)
+
+        with st.chat_message("assistant"):
+            with st.spinner("Contacting Gemini..."):
+                reply = query_gemini_copilot(user_input, system_prompt, st.session_state.copilot_messages)
+            st.markdown(reply)
+            st.session_state.copilot_messages.append({"role": "assistant", "content": reply})
+
+    # Clear chat button
+    if st.button("🗑️ Clear Chat", key="clear_copilot"):
+        st.session_state.copilot_messages = [
+            {"role": "assistant", "content": "Chat cleared. Ready for new queries."}
+        ]
+        st.rerun()
+
 
 if __name__ == "__main__":
     main()
