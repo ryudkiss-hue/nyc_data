@@ -5,14 +5,17 @@ NYC DOT Sidewalk Inspection & Management · Analyst Workspace · Apex Engine
 
 Tabs
 ----
-1. 🏠  Home            — status, datasets, onboarding
-2. 🚀  Apex Engine     — Bayesian hiring analytics (MCMC + Prophet)
-3. 🔍  Agency Workflows— QA/QC, spatial, contract, productivity
-4. 📊  Data Quality    — profiling, SLA, anomaly detection
-5. 🗺️  Spatial         — maps, hotspots, conflict detection
-6. 🏛️  Governance      — lineage DAG, audit trail, compliance
-7. 🤖  AI Copilot      — Gemini · OpenAI · Ollama (selectable)
-8. ⚙️  Settings        — readiness, health, cache, logs
+1.  🏠  Home            — status, datasets, onboarding
+2.  🚀  Apex Engine     — Bayesian hiring analytics (MCMC + Prophet)
+3.  🔍  Agency Workflows— QA/QC, spatial, contract, productivity
+4.  📊  Data Quality    — profiling, SLA, anomaly detection
+5.  🗺️  Spatial         — maps, hotspots, conflict detection
+6.  🏛️  Governance      — lineage DAG, audit trail, compliance
+7.  🤖  AI Copilot      — Gemini · OpenAI · Ollama (selectable)
+8.  📖  Dictionary      — searchable field-level metadata browser
+9.  📦  Export          — CSV / Excel / JSON / ZIP export center
+10. ⚙️  Settings        — readiness, health, cache, logs
+11. 🔬  Studio          — Socrata data architecture studio
 
 Entry points
 ------------
@@ -33,8 +36,10 @@ import streamlit as st
 # ── App-level modules ───────────────────────────────────────────────────────
 from app.data_loader import (
     DATASET_REGISTRY,
-    fetch_dataset as load_dataset,
     token_status,
+)
+from app.data_loader import (
+    fetch_dataset as load_dataset,
 )
 from app.ingest_log import log_event
 from app.ui.theme import (
@@ -45,6 +50,8 @@ from app.ui.theme import (
 from app.utils.i18n import t
 
 # ── View modules ────────────────────────────────────────────────────────────
+from app.views.data_dictionary import render_data_dictionary
+from app.views.export_center import render_export_center
 from app.views.home import render_home_page
 from app.views.settings import render_settings_page
 from app.views.spatial_analytics import render_spatial_tab
@@ -450,9 +457,29 @@ def _render_sidebar() -> tuple[str, str, int, int]:
         loaded = st.session_state.get("loaded_frames", {})
         if loaded:
             st.caption(f"✅ {len(loaded)} datasets loaded")
-            with st.expander("Dataset list", expanded=False):
-                for k in loaded:
-                    st.markdown(f"- `{k}` ({len(loaded[k]):,} rows)")
+            # Global dataset/field search (command-palette style)
+            search = st.text_input(
+                "🔎 Search datasets & fields",
+                placeholder="dataset name or column…",
+                key="global_search",
+            ).strip().lower()
+            with st.expander("Dataset list", expanded=bool(search)):
+                shown = 0
+                for k, df in loaded.items():
+                    cols = [c for c in df.columns] if df is not None else []
+                    field_hit = search and any(search in str(c).lower() for c in cols)
+                    name_hit = search in k.lower()
+                    if search and not (field_hit or name_hit):
+                        continue
+                    shown += 1
+                    matched = (
+                        f" · matches `{next(c for c in cols if search in str(c).lower())}`"
+                        if field_hit and not name_hit
+                        else ""
+                    )
+                    st.markdown(f"- `{k}` ({len(df):,} rows){matched}")
+                if search and shown == 0:
+                    st.caption("No matching datasets or fields.")
 
         st.markdown("---")
 
@@ -542,6 +569,8 @@ def main() -> None:
         tab_spatial,
         tab_governance,
         tab_copilot,
+        tab_dictionary,
+        tab_export,
         tab_settings,
         tab_studio,
     ) = st.tabs([
@@ -552,6 +581,8 @@ def main() -> None:
         "🗺️ Spatial",
         "🏛️ Governance",
         "🤖 AI Copilot",
+        "📖 Dictionary",
+        "📦 Export",
         "⚙️ Settings",
         "🔬 Studio",
     ])
@@ -576,6 +607,12 @@ def main() -> None:
 
     with tab_copilot:
         _tab_copilot(target_agency, target_title)
+
+    with tab_dictionary:
+        render_data_dictionary()
+
+    with tab_export:
+        render_export_center()
 
     with tab_settings:
         _tab_settings()
