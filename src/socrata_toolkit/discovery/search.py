@@ -16,11 +16,11 @@ Supports:
 from __future__ import annotations
 
 import json
-import streamlit as st
+
 import pandas as pd
+import streamlit as st
 
 from socrata_toolkit.core.client import SocrataClient
-
 
 # ---------------------------------------------------
 # Setup

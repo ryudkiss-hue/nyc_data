@@ -1,7 +1,8 @@
 """Data profiling module for analyzing dataset characteristics."""
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 import pandas as pd
 
 __all__ = ["DataProfiler", "generate_profile_report", "DataType", "ColumnProfile", "TableProfile", "ProfileGenerator", "DriftReport"]
@@ -25,9 +26,9 @@ class TableProfile:
     table_name: str
     row_count: int
     column_count: int
-    column_profiles: Dict[str, ColumnProfile]
+    column_profiles: dict[str, ColumnProfile]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "table_name": self.table_name,
             "row_count": self.row_count,
@@ -46,7 +47,7 @@ class TableProfile:
 @dataclass
 class DriftReport:
     is_drifted: bool = False
-    drift_details: Dict[str, Any] = field(default_factory=dict)
+    drift_details: dict[str, Any] = field(default_factory=dict)
 
 class ProfileGenerator:
     def __init__(self, sample_size: int = 1000):
@@ -57,11 +58,11 @@ class ProfileGenerator:
             sample_df = df.sample(self.sample_size, random_state=42)
         else:
             sample_df = df
-            
+
         profiles = {}
         for col in sample_df.columns:
             profiles[col] = self._profile_column(sample_df[col], col)
-            
+
         return TableProfile(
             table_name=table_name,
             row_count=len(df),
@@ -101,7 +102,7 @@ class ProfileGenerator:
                 cardinality=series.nunique()
             )
 
-    def suggest_expectations(self, profile: TableProfile) -> List[Dict[str, Any]]:
+    def suggest_expectations(self, profile: TableProfile) -> list[dict[str, Any]]:
         suggestions = []
         for col, col_prof in profile.column_profiles.items():
             suggestions.append({
@@ -118,7 +119,7 @@ class ProfileGenerator:
     def compare_profiles(self, profile1: TableProfile, profile2: TableProfile) -> DriftReport:
         return DriftReport(is_drifted=True)
 
-    def detect_schema_drift(self, profile1: TableProfile, profile2: TableProfile) -> Dict[str, Any]:
+    def detect_schema_drift(self, profile1: TableProfile, profile2: TableProfile) -> dict[str, Any]:
         cols1 = set(profile1.column_profiles.keys())
         cols2 = set(profile2.column_profiles.keys())
         return {
@@ -126,7 +127,7 @@ class ProfileGenerator:
             "columns_removed": list(cols1 - cols2)
         }
 
-    def generate_summary(self, profile: TableProfile) -> Dict[str, Any]:
+    def generate_summary(self, profile: TableProfile) -> dict[str, Any]:
         return {
             "row_count": profile.row_count,
             "column_count": profile.column_count
@@ -134,7 +135,7 @@ class ProfileGenerator:
 
 # Legacy stubs
 class DataProfiler:
-    def profile_dataset(self, data: Any) -> Dict[str, Any]:
+    def profile_dataset(self, data: Any) -> dict[str, Any]:
         return {}
 
 def generate_profile_report(data: Any) -> str:

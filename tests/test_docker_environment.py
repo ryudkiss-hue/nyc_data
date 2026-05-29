@@ -74,7 +74,7 @@ class TestDatabaseConnectivity:
         for table in required_tables:
             cursor.execute(f"""
                 SELECT EXISTS (
-                    SELECT 1 FROM information_schema.tables 
+                    SELECT 1 FROM information_schema.tables
                     WHERE table_name = '{table}'
                 );
             """)
@@ -248,8 +248,8 @@ class TestDataIntegrity:
         cursor = conn.cursor()
 
         cursor.execute("""
-            SELECT column_name, data_type 
-            FROM information_schema.columns 
+            SELECT column_name, data_type
+            FROM information_schema.columns
             WHERE table_name = 'sidewalk_inspections'
             ORDER BY ordinal_position;
         """)
@@ -272,7 +272,7 @@ class TestDataIntegrity:
 
         # Check for NULL inspection_ids (should be unique)
         cursor.execute("""
-            SELECT COUNT(*) FROM sidewalk_inspections 
+            SELECT COUNT(*) FROM sidewalk_inspections
             WHERE inspection_id IS NULL;
         """)
         null_count = cursor.fetchone()[0]
@@ -291,7 +291,7 @@ class TestObservability:
         cursor = conn.cursor()
 
         cursor.execute("""
-            SELECT COUNT(*) FROM quality_metrics 
+            SELECT COUNT(*) FROM quality_metrics
             WHERE measurement_timestamp > NOW() - INTERVAL '1 day';
         """)
         count = cursor.fetchone()[0]
@@ -319,7 +319,7 @@ class TestObservability:
 
         # Create a test entry and verify it's logged
         cursor.execute("""
-            INSERT INTO audit_log (table_name, operation, changed_by) 
+            INSERT INTO audit_log (table_name, operation, changed_by)
             VALUES ('test_table', 'test_operation', 'test_user')
             RETURNING id;
         """)

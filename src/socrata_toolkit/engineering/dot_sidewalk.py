@@ -21,10 +21,10 @@ Standards: Python 3.9+, type hints, comprehensive docstrings, operational loggin
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, asdict
-from typing import Any, Optional
-from datetime import datetime, timezone
 import logging
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timezone
+from typing import Any
 
 import pandas as pd
 
@@ -187,11 +187,11 @@ def compute_material_aware_kpis(
     material_col: str = "material_type",
     defect_col: str = "defect_count",
     linear_feet_col: str = "linear_feet",
-    ada_compliant_col: Optional[str] = None,
-    severity_col: Optional[str] = None,
-    contractor_col: Optional[str] = None,
-    repair_cost_col: Optional[str] = None,
-    repair_date_col: Optional[str] = None,
+    ada_compliant_col: str | None = None,
+    severity_col: str | None = None,
+    contractor_col: str | None = None,
+    repair_cost_col: str | None = None,
+    repair_date_col: str | None = None,
 ) -> MaterialAwareSidewalkKPI:
     """Compute material-aware KPIs aligned with NYC DOT operational requirements.
 
@@ -255,7 +255,7 @@ def compute_material_aware_kpis(
     ada_compliance_rate = 0.0
     if ada_compliant_col and ada_compliant_col in df.columns:
         ada_compliance_rate = (
-            (df[ada_compliant_col] == True).sum() / len(df) * 100 if len(df) > 0 else 0.0
+            (df[ada_compliant_col]).sum() / len(df) * 100 if len(df) > 0 else 0.0
         )
 
     # Hazardous defect coverage
@@ -415,13 +415,13 @@ def compute_material_lifecycle_cost_kpi(
     material_col: str = "material_type",
     defect_col: str = "defect_count",
     linear_feet_col: str = "linear_feet",
-    installation_date_col: Optional[str] = None,
+    installation_date_col: str | None = None,
 ) -> dict[str, Any]:
     """Compute material lifecycle cost KPIs for cost-aware maintenance decisions.
-    
+
     Stratifies cost data by material type and lifecycle stage, enabling
     ROI-based prioritization for rehabilitation and replacement projects.
-    
+
     Args:
         df: DataFrame with material, defect, and cost data
         period_label: Identifier for analysis period
@@ -429,10 +429,10 @@ def compute_material_lifecycle_cost_kpi(
         defect_col: Column name for defect count
         linear_feet_col: Column name for segment length
         installation_date_col: Optional column for installation date
-        
+
     Returns:
         Dictionary with lifecycle cost metrics by material
-        
+
     Example:
         >>> kpis = compute_material_lifecycle_cost_kpi(
         ...     df, material_col="material", defect_col="defects"
@@ -449,27 +449,27 @@ def compute_material_lifecycle_cost_kpi(
     except ImportError:
         logger.warning("Material definitions not available - returning empty KPI")
         return {}
-    
+
     lifecycle_costs = {}
-    
+
     # Process each material category
     for material_name in df[material_col].unique():
         if pd.isna(material_name):
             continue
-        
+
         material_data = df[df[material_col] == material_name]
         total_linear_feet = float(material_data[linear_feet_col].fillna(0).sum())
-        
+
         if total_linear_feet == 0:
             continue
-        
+
         # Get material specification if available
         material_spec = None
         for mat_def in MATERIAL_DEFINITIONS.values():
             if material_name.lower() in mat_def.name.lower():
                 material_spec = mat_def
                 break
-        
+
         lifecycle_costs[str(material_name)] = {
             "segment_count": len(material_data),
             "total_linear_feet": total_linear_feet,
@@ -487,7 +487,7 @@ def compute_material_lifecycle_cost_kpi(
                 material_spec.carbon_footprint_kg_per_sqft if material_spec else 0.0
             ),
         }
-    
+
     logger.info(f"Computed lifecycle cost KPIs for {len(lifecycle_costs)} materials")
     return lifecycle_costs
 
@@ -501,10 +501,10 @@ def compute_material_deterioration_rate_kpi(
     months_between: int = 12,
 ) -> dict[str, float]:
     """Compute material-specific deterioration rates over time.
-    
+
     Analyzes defect growth and condition decline by material type, enabling
     predictive maintenance scheduling and budget forecasting.
-    
+
     Args:
         current_df: Current inspection data
         prior_df: Prior inspection data for comparison
@@ -512,10 +512,10 @@ def compute_material_deterioration_rate_kpi(
         defect_col: Column name for defect count
         linear_feet_col: Column name for segment length
         months_between: Months between inspections
-        
+
     Returns:
         Dictionary with deterioration rate (defects/year) by material
-        
+
     Example:
         >>> rates = compute_material_deterioration_rate_kpi(
         ...     current_df, prior_df, months_between=12
@@ -523,31 +523,31 @@ def compute_material_deterioration_rate_kpi(
         >>> print(f"Asphalt defect growth: {rates['asphalt']:.2f} defects/year/mile")
     """
     deterioration_rates = {}
-    
+
     for material in current_df[material_col].unique():
         if pd.isna(material):
             continue
-        
+
         current_material = current_df[current_df[material_col] == material]
         prior_material = prior_df[prior_df[material_col] == material]
-        
+
         if len(current_material) == 0 or len(prior_material) == 0:
             continue
-        
+
         current_defects = float(current_material[defect_col].fillna(0).sum())
         prior_defects = float(prior_material[defect_col].fillna(0).sum())
-        
+
         current_miles = (
             float(current_material[linear_feet_col].fillna(0).sum()) / 5280 or 1.0
         )
-        
+
         # Calculate deterioration per year
         defect_increase = current_defects - prior_defects
         years = months_between / 12
-        
+
         deterioration_rate = (defect_increase / current_miles) / years if years > 0 else 0.0
         deterioration_rates[str(material)] = float(deterioration_rate)
-    
+
     logger.info(f"Computed deterioration rates for {len(deterioration_rates)} materials")
     return deterioration_rates
 
@@ -556,24 +556,24 @@ def compute_ada_compliance_kpi(
     df: pd.DataFrame,
     period_label: str = "all-time",
     material_col: str = "material_type",
-    ada_compliant_col: Optional[str] = None,
-    violation_col: Optional[str] = None,
+    ada_compliant_col: str | None = None,
+    violation_col: str | None = None,
 ) -> dict[str, Any]:
     """Compute ADA compliance KPIs stratified by material type.
-    
+
     Uses material-aware ADA rules from NYC Street Design Manual to compute
     compliance metrics, violation rates, and remediation priorities.
-    
+
     Args:
         df: DataFrame with material and ADA data
         period_label: Analysis period label
         material_col: Column name for material type
         ada_compliant_col: Column name for ADA compliance flag
         violation_col: Column name for violation count
-        
+
     Returns:
         Dictionary with ADA compliance metrics by material
-        
+
     Example:
         >>> ada_kpis = compute_ada_compliance_kpi(
         ...     df, material_col="material", ada_compliant_col="is_ada_compliant"
@@ -581,28 +581,28 @@ def compute_ada_compliance_kpi(
         >>> print(f"Concrete ADA compliance rate: {ada_kpis['concrete']['compliance_rate']:.1f}%")
     """
     ada_metrics = {}
-    
+
     if ada_compliant_col is None or ada_compliant_col not in df.columns:
         logger.warning("ADA compliance column not found in DataFrame")
         return ada_metrics
-    
+
     for material in df[material_col].unique():
         if pd.isna(material):
             continue
-        
+
         material_data = df[df[material_col] == material]
         total_segments = len(material_data)
-        
+
         if total_segments == 0:
             continue
-        
-        compliant_segments = (material_data[ada_compliant_col] == True).sum()
+
+        compliant_segments = (material_data[ada_compliant_col]).sum()
         compliance_rate = (compliant_segments / total_segments * 100) if total_segments > 0 else 0.0
-        
+
         violation_count = 0
         if violation_col and violation_col in df.columns:
             violation_count = int(material_data[violation_col].fillna(0).sum())
-        
+
         ada_metrics[str(material)] = {
             "segment_count": total_segments,
             "compliant_segments": int(compliant_segments),
@@ -613,7 +613,7 @@ def compute_ada_compliance_kpi(
                 violation_count / total_segments if total_segments > 0 else 0.0
             ),
         }
-    
+
     logger.info(f"Computed ADA compliance KPIs for {len(ada_metrics)} materials")
     return ada_metrics
 

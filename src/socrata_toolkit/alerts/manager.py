@@ -5,13 +5,13 @@ It supports CLI, Email, and Postgres-based persistence.
 """
 from __future__ import annotations
 
+import json
+import logging
 import os
 import threading
 import time
-import json
-import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Protocol
+from typing import Any, Protocol
 
 # Fix: Import os specifically to avoid 'os is not defined' in _send_email
 # Fix: Removed the problematic 'from streamlit import login, user' as it conflicted with SMTP logic
@@ -28,7 +28,7 @@ class Alert:
     """Represents a single operational alert."""
     severity: str
     message: str
-    payload: Dict[str, Any] = field(default_factory=dict)
+    payload: dict[str, Any] = field(default_factory=dict)
     created_at: float = field(default_factory=time.time)
 
 class Subscriber(Protocol):
@@ -39,11 +39,11 @@ class Subscriber(Protocol):
 class AlertManager:
     """Manages subscribers and dispatches alerts."""
     def __init__(self, batch_mode: bool = True, batch_interval: float = 30.0):
-        self.subscribers: List[Subscriber] = []
+        self.subscribers: list[Subscriber] = []
         self.lock = threading.Lock()
         self.batch_mode = batch_mode
         self.batch_interval = batch_interval
-        self._batch: List[Alert] = []
+        self._batch: list[Alert] = []
         self._stop = False
         if self.batch_mode:
             self._thread = threading.Thread(target=self._worker, daemon=True)
@@ -116,10 +116,10 @@ class CLINotifier:
 
 class EmailNotifier:
     """Sends alerts via SMTP."""
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         self.config = config
 
-    def _send_email(self, subject: str, body: str, recipients: List[str]) -> None:
+    def _send_email(self, subject: str, body: str, recipients: list[str]) -> None:
         import smtplib
         from email.message import EmailMessage
 
@@ -151,7 +151,7 @@ class EmailNotifier:
 
 class DBNotifier:
     """Persist alerts into Postgres."""
-    
+
     ALERTS_TABLE_SQL = """
     CREATE TABLE IF NOT EXISTS alerts (
       id SERIAL PRIMARY KEY,
@@ -170,7 +170,7 @@ class DBNotifier:
             self.Json = Json
         except ImportError as exc:
             raise ImportError("psycopg is required: pip install 'psycopg[binary]'") from exc
-        
+
         self.dsn = dsn
         # Fix: Use context manager to satisfy Pylint 'no-member' check
         with self.psycopg.connect(self.dsn) as conn:

@@ -15,13 +15,13 @@ Standards: Python 3.9+, type hints, comprehensive docstrings
 
 from __future__ import annotations
 
+import logging
+
 from socrata_toolkit.material.standards import (
-    MaterialCategory,
     ADAComplianceRule,
     ADAFailureSeverity,
+    MaterialCategory,
 )
-from typing import Any, Optional
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -507,10 +507,10 @@ MATERIAL_APPLICABLE_RULES: dict[MaterialCategory, list[str]] = {
 
 def get_rule(rule_id: str) -> ADAComplianceRule | None:
     """Retrieve a specific ADA compliance rule by ID.
-    
+
     Args:
         rule_id: Rule identifier (e.g., 'ADA-1.2.1')
-        
+
     Returns:
         ADAComplianceRule or None if not found
     """
@@ -519,10 +519,10 @@ def get_rule(rule_id: str) -> ADAComplianceRule | None:
 
 def get_rules_for_material(material_category: MaterialCategory) -> list[ADAComplianceRule]:
     """Get all applicable ADA rules for a material category.
-    
+
     Args:
         material_category: MaterialCategory enum value
-        
+
     Returns:
         List of applicable ADAComplianceRule objects
     """
@@ -532,7 +532,7 @@ def get_rules_for_material(material_category: MaterialCategory) -> list[ADACompl
 
 def get_critical_rules() -> list[ADAComplianceRule]:
     """Get all rules with CRITICAL failure severity.
-    
+
     Returns:
         List of CRITICAL-severity rules
     """
@@ -545,7 +545,7 @@ def get_critical_rules() -> list[ADAComplianceRule]:
 
 def get_rules_requiring_measurement() -> list[ADAComplianceRule]:
     """Get all rules requiring equipment measurement for validation.
-    
+
     Returns:
         List of rules with 'measurement' validation method
     """
@@ -558,10 +558,10 @@ def get_rules_requiring_measurement() -> list[ADAComplianceRule]:
 
 def get_rules_by_severity(severity: ADAFailureSeverity) -> list[ADAComplianceRule]:
     """Get all rules matching a specific failure severity.
-    
+
     Args:
         severity: ADAFailureSeverity enum value
-        
+
     Returns:
         List of matching rules
     """

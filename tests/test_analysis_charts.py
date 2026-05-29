@@ -1,6 +1,5 @@
 import pandas as pd
 import plotly.graph_objects as go
-import pytest
 
 from socrata_toolkit.analysis import DashboardSummary, DataProfile
 from socrata_toolkit.core import COLOR_GREEN, COLOR_RED, COLOR_YELLOW

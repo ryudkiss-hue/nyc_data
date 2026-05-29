@@ -9,17 +9,18 @@ Standards: Python 3.9+, full type hints, comprehensive docstrings, logging
 
 from __future__ import annotations
 
-import logging
 import functools
-from typing import Any, Callable, Dict, Optional
+import logging
+from collections.abc import Callable
+from typing import Any
 
 import pandas as pd
 
-from socrata_toolkit.quality.expectations import ExpectationSuite
-from socrata_toolkit.quality.validator import QualityValidator, ValidationResult
-from socrata_toolkit.quality.sla import DataQualityTracker, MetricType
 from socrata_toolkit.quality.anomalies import AnomalyDetector
+from socrata_toolkit.quality.expectations import ExpectationSuite
 from socrata_toolkit.quality.rules import BusinessRulesEngine
+from socrata_toolkit.quality.sla import DataQualityTracker, MetricType
+from socrata_toolkit.quality.validator import QualityValidator, ValidationResult
 
 logger = logging.getLogger(__name__)
 
@@ -36,19 +37,19 @@ __all__ = [
 
 class QualityIntegration:
     """Integrates quality validation into pipelines and operations.
-    
+
     Manages validation at multiple stages: ingestion, transformation, and serving.
     """
 
     def __init__(
         self,
-        default_suite: Optional[ExpectationSuite] = None,
-        tracker: Optional[DataQualityTracker] = None,
-        anomaly_detector: Optional[AnomalyDetector] = None,
-        rules_engine: Optional[BusinessRulesEngine] = None,
+        default_suite: ExpectationSuite | None = None,
+        tracker: DataQualityTracker | None = None,
+        anomaly_detector: AnomalyDetector | None = None,
+        rules_engine: BusinessRulesEngine | None = None,
     ):
         """Initialize integration.
-        
+
         Args:
             default_suite: Default expectation suite
             tracker: SLA tracker for metrics
@@ -65,15 +66,15 @@ class QualityIntegration:
         self,
         df: pd.DataFrame,
         dataset_name: str,
-        suite: Optional[ExpectationSuite] = None,
+        suite: ExpectationSuite | None = None,
     ) -> ValidationResult:
         """Validate data at ingestion point.
-        
+
         Args:
             df: Data to validate
             dataset_name: Dataset name
             suite: Expectation suite (uses default if not provided)
-            
+
         Returns:
             ValidationResult
         """
@@ -102,15 +103,15 @@ class QualityIntegration:
         self,
         df: pd.DataFrame,
         transformation_name: str,
-        suite: Optional[ExpectationSuite] = None,
+        suite: ExpectationSuite | None = None,
     ) -> ValidationResult:
         """Validate data after transformation.
-        
+
         Args:
             df: Transformed data
             transformation_name: Name of transformation
             suite: Expectation suite
-            
+
         Returns:
             ValidationResult
         """
@@ -126,15 +127,15 @@ class QualityIntegration:
         self,
         df: pd.DataFrame,
         api_name: str,
-        suite: Optional[ExpectationSuite] = None,
+        suite: ExpectationSuite | None = None,
     ) -> ValidationResult:
         """Validate data before serving via API.
-        
+
         Args:
             df: Data to serve
             api_name: API name
             suite: Expectation suite
-            
+
         Returns:
             ValidationResult
         """
@@ -150,12 +151,12 @@ class QualityIntegration:
         self, df: pd.DataFrame, dataset_name: str, stage: str
     ) -> ValidationResult:
         """Create empty validation result when no suite available.
-        
+
         Args:
             df: DataFrame
             dataset_name: Dataset name
             stage: Validation stage
-            
+
         Returns:
             Empty ValidationResult
         """
@@ -175,20 +176,20 @@ class QualityIntegration:
 
 
 def validate_data(
-    suite: Optional[ExpectationSuite] = None,
+    suite: ExpectationSuite | None = None,
     fail_on_error: bool = False,
 ) -> Callable:
     """Decorator to validate data in a function.
-    
+
     Usage:
         @validate_data(suite=my_suite)
         def process_data(df: pd.DataFrame) -> pd.DataFrame:
             return df
-    
+
     Args:
         suite: Expectation suite to validate against
         fail_on_error: Whether to raise exception on validation failure
-        
+
     Returns:
         Decorator function
     """
@@ -221,19 +222,19 @@ def validate_data(
 
 def check_sla(
     metric_name: str,
-    tracker: Optional[DataQualityTracker] = None,
+    tracker: DataQualityTracker | None = None,
 ) -> Callable:
     """Decorator to check SLA compliance.
-    
+
     Usage:
         @check_sla(metric_name='dataset_completeness')
         def load_data() -> pd.DataFrame:
             return df
-    
+
     Args:
         metric_name: SLA metric name
         tracker: Quality tracker
-        
+
     Returns:
         Decorator function
     """
@@ -258,13 +259,13 @@ def check_sla(
 
 
 def detect_anomalies(
-    detector: Optional[AnomalyDetector] = None,
+    detector: AnomalyDetector | None = None,
 ) -> Callable:
     """Decorator to detect anomalies in operation results.
-    
+
     Args:
         detector: Anomaly detector
-        
+
     Returns:
         Decorator function
     """
@@ -285,15 +286,15 @@ def detect_anomalies(
 
 
 def apply_business_rules(
-    rules_engine: Optional[BusinessRulesEngine] = None,
+    rules_engine: BusinessRulesEngine | None = None,
     key_column: str = "id",
 ) -> Callable:
     """Decorator to apply business rules.
-    
+
     Args:
         rules_engine: Business rules engine
         key_column: Column for record identifiers
-        
+
     Returns:
         Decorator function
     """
@@ -324,22 +325,22 @@ class QualityValidator:
 
 
 # Global integration instance
-_global_integration: Optional[QualityIntegration] = None
+_global_integration: QualityIntegration | None = None
 
 
 class QualityFramework:
     """Framework for managing quality checks and validation."""
-    
+
     def initialize(self) -> None:
         """Initialize the quality framework."""
         pass
-    
+
     def run_quality_checks(self, data: Any) -> dict:
         """Run all quality checks on data.
-        
+
         Args:
             data: Data to validate
-            
+
         Returns:
             Dictionary with check results
         """
@@ -348,26 +349,26 @@ class QualityFramework:
 
 class QualityPipeline:
     """Pipeline for executing quality checks in sequence."""
-    
+
     def __init__(self) -> None:
         """Initialize the quality pipeline."""
         self._checks = []
-    
+
     def add_check(self, check_name: str, check_func: Callable) -> None:
         """Add a quality check to the pipeline.
-        
+
         Args:
             check_name: Name of the check
             check_func: Function to execute
         """
         self._checks.append((check_name, check_func))
-    
+
     def execute(self, data: Any) -> dict:
         """Execute all checks in the pipeline.
-        
+
         Args:
             data: Data to validate
-            
+
         Returns:
             Dictionary with execution results
         """
@@ -376,7 +377,7 @@ class QualityPipeline:
 
 def create_quality_pipeline() -> QualityPipeline:
     """Create a new quality pipeline.
-    
+
     Returns:
         QualityPipeline instance
     """
@@ -385,10 +386,10 @@ def create_quality_pipeline() -> QualityPipeline:
 
 def run_all_quality_checks(data: Any) -> dict:
     """Run all quality checks on data.
-    
+
     Args:
         data: Data to check
-        
+
     Returns:
         Dictionary with check results
     """
@@ -397,7 +398,7 @@ def run_all_quality_checks(data: Any) -> dict:
 
 def get_quality_integration() -> QualityIntegration:
     """Get or create global quality integration instance.
-    
+
     Returns:
         QualityIntegration instance
     """
@@ -409,7 +410,7 @@ def get_quality_integration() -> QualityIntegration:
 
 def set_quality_integration(integration: QualityIntegration) -> None:
     """Set global quality integration instance.
-    
+
     Args:
         integration: QualityIntegration to use globally
     """

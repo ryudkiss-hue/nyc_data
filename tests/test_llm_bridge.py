@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 import pandas as pd
+
 from socrata_toolkit.llm.duck_bridge import LLMAugmentConfig, augment_dataframe_with_llm
 
 

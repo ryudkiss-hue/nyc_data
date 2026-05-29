@@ -11,11 +11,11 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ class QualityTrend(Enum):
 @dataclass
 class DatasetQualityScore:
     """Quality score for a dataset (0-100).
-    
+
     Attributes:
         overall: Overall quality score
         completeness: Completeness score
@@ -46,7 +46,7 @@ class DatasetQualityScore:
     timeliness: float = 0.0
     accuracy: float = 0.0
 
-    def to_dict(self) -> Dict[str, float]:
+    def to_dict(self) -> dict[str, float]:
         """Convert to dictionary."""
         return asdict(self)
 
@@ -54,7 +54,7 @@ class DatasetQualityScore:
 @dataclass
 class DatasetQualityProfile:
     """Complete quality profile for a dataset.
-    
+
     Attributes:
         dataset_id: Unique dataset identifier
         dataset_name: Human-readable name
@@ -71,14 +71,14 @@ class DatasetQualityProfile:
     dataset_name: str
     last_validation: datetime
     quality_score: DatasetQualityScore
-    validation_results: List[Dict[str, Any]] = field(default_factory=list)
-    anomalies: List[Dict[str, Any]] = field(default_factory=list)
-    sla_compliance: Dict[str, float] = field(default_factory=dict)
+    validation_results: list[dict[str, Any]] = field(default_factory=list)
+    anomalies: list[dict[str, Any]] = field(default_factory=list)
+    sla_compliance: dict[str, float] = field(default_factory=dict)
     trend: QualityTrend = QualityTrend.STABLE
-    violation_summary: Dict[str, int] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    violation_summary: dict[str, int] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "dataset_id": self.dataset_id,
@@ -95,7 +95,7 @@ class DatasetQualityProfile:
 
     def to_json(self, path: Path | str) -> None:
         """Save profile to JSON.
-        
+
         Args:
             path: File path
         """
@@ -106,10 +106,10 @@ class DatasetQualityProfile:
     @classmethod
     def from_json(cls, path: Path | str) -> DatasetQualityProfile:
         """Load profile from JSON.
-        
+
         Args:
             path: File path
-            
+
         Returns:
             Loaded profile
         """
@@ -133,29 +133,29 @@ class DatasetQualityProfile:
 
 class DataQualityCatalog:
     """Manages dataset quality profiles in a catalog.
-    
+
     Tracks quality scores, metadata, trends, and anomalies for all datasets.
     Enables filtering and discovery by quality.
     """
 
     def __init__(self, storage_dir: Path | str = "./quality_catalog"):
         """Initialize catalog.
-        
+
         Args:
             storage_dir: Directory for catalog storage
         """
         self.storage_dir = Path(storage_dir)
         self.storage_dir.mkdir(parents=True, exist_ok=True)
-        self.profiles: Dict[str, DatasetQualityProfile] = {}
+        self.profiles: dict[str, DatasetQualityProfile] = {}
 
     def register_dataset(
         self,
         dataset_id: str,
         dataset_name: str,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """Register a dataset in the catalog.
-        
+
         Args:
             dataset_id: Unique dataset ID
             dataset_name: Human-readable name
@@ -177,7 +177,7 @@ class DataQualityCatalog:
         quality_score: DatasetQualityScore,
     ) -> None:
         """Update quality score for a dataset.
-        
+
         Args:
             dataset_id: Dataset identifier
             quality_score: New quality score
@@ -207,10 +207,10 @@ class DataQualityCatalog:
     def add_validation_result(
         self,
         dataset_id: str,
-        result: Dict[str, Any],
+        result: dict[str, Any],
     ) -> None:
         """Add validation result to dataset profile.
-        
+
         Args:
             dataset_id: Dataset identifier
             result: Validation result
@@ -229,10 +229,10 @@ class DataQualityCatalog:
     def add_anomaly(
         self,
         dataset_id: str,
-        anomaly: Dict[str, Any],
+        anomaly: dict[str, Any],
     ) -> None:
         """Add anomaly to dataset profile.
-        
+
         Args:
             dataset_id: Dataset identifier
             anomaly: Anomaly data
@@ -251,10 +251,10 @@ class DataQualityCatalog:
     def update_sla_compliance(
         self,
         dataset_id: str,
-        sla_compliance: Dict[str, float],
+        sla_compliance: dict[str, float],
     ) -> None:
         """Update SLA compliance for dataset.
-        
+
         Args:
             dataset_id: Dataset identifier
             sla_compliance: Dict mapping SLA names to compliance %
@@ -268,10 +268,10 @@ class DataQualityCatalog:
     def update_violation_summary(
         self,
         dataset_id: str,
-        violation_summary: Dict[str, int],
+        violation_summary: dict[str, int],
     ) -> None:
         """Update violation summary for dataset.
-        
+
         Args:
             dataset_id: Dataset identifier
             violation_summary: Dict of violation counts by type
@@ -282,20 +282,20 @@ class DataQualityCatalog:
 
         self.profiles[dataset_id].violation_summary = violation_summary
 
-    def get_profile(self, dataset_id: str) -> Optional[DatasetQualityProfile]:
+    def get_profile(self, dataset_id: str) -> DatasetQualityProfile | None:
         """Get quality profile for dataset.
-        
+
         Args:
             dataset_id: Dataset identifier
-            
+
         Returns:
             DatasetQualityProfile or None
         """
         return self.profiles.get(dataset_id)
 
-    def list_datasets(self) -> List[Dict[str, Any]]:
+    def list_datasets(self) -> list[dict[str, Any]]:
         """List all datasets in catalog.
-        
+
         Returns:
             List of dataset summaries
         """
@@ -315,14 +315,14 @@ class DataQualityCatalog:
         min_score: float = 0.0,
         max_score: float = 100.0,
         order: str = "desc",
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """List datasets filtered by quality score.
-        
+
         Args:
             min_score: Minimum quality score
             max_score: Maximum quality score
             order: 'asc' or 'desc' (default: desc)
-            
+
         Returns:
             Sorted list of datasets
         """
@@ -341,12 +341,12 @@ class DataQualityCatalog:
         reverse = order.lower() == "desc"
         return sorted(filtered, key=lambda x: x["quality_score"], reverse=reverse)
 
-    def list_by_trend(self, trend: QualityTrend) -> List[Dict[str, Any]]:
+    def list_by_trend(self, trend: QualityTrend) -> list[dict[str, Any]]:
         """List datasets by trend direction.
-        
+
         Args:
             trend: Trend direction to filter by
-            
+
         Returns:
             List of datasets with matching trend
         """
@@ -361,9 +361,9 @@ class DataQualityCatalog:
             if profile.trend == trend
         ]
 
-    def get_health_summary(self) -> Dict[str, Any]:
+    def get_health_summary(self) -> dict[str, Any]:
         """Get overall catalog health summary.
-        
+
         Returns:
             Summary statistics
         """
@@ -392,10 +392,10 @@ class DataQualityCatalog:
 
     def export_to_json(self, filename: str) -> Path:
         """Export catalog to JSON.
-        
+
         Args:
             filename: Output filename
-            
+
         Returns:
             Path to saved file
         """
@@ -415,10 +415,10 @@ class DataQualityCatalog:
 
     def save_profile(self, dataset_id: str) -> Path:
         """Save individual dataset profile.
-        
+
         Args:
             dataset_id: Dataset identifier
-            
+
         Returns:
             Path to saved file
         """
@@ -433,7 +433,7 @@ class DataQualityCatalog:
 
     def load_profile(self, dataset_id: str, filename: str) -> None:
         """Load dataset profile from JSON.
-        
+
         Args:
             dataset_id: Dataset identifier
             filename: File to load

@@ -15,11 +15,10 @@ Standards: Python 3.9+, type hints, comprehensive docstrings, operational loggin
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
-from typing import Any, Optional
 
 import pandas as pd
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -141,7 +140,7 @@ def validate_schema_types(df: pd.DataFrame, schema: dict[str, str]) -> Validatio
             errors.append(f"Missing expected column: {c}")
             continue
         actual = str(df[c].dtype)
-        
+
         # Check for compatibility
         is_compatible = False
         if expected in actual:
@@ -274,7 +273,7 @@ def validate_defect_applicability(
 
         if pd.isna(defect):
             continue
-            
+
         if pd.isna(material):
             errors.append(f"Row {idx}: Defect '{defect}' present but material is missing")
             invalid_count += 1
@@ -294,7 +293,7 @@ def validate_defect_applicability(
                     if category in applicable and material in members:
                         is_valid = True
                         break
-            
+
             # Special case for "concrete" category members
             if not is_valid and "concrete" in applicable and "PCC" in material:
                  is_valid = True
@@ -318,8 +317,8 @@ def validate_defect_applicability(
 def validate_ada_compliance_gates(
     df: pd.DataFrame,
     ada_compliance_col: str = "ada_compliant",
-    clear_path_width_col: Optional[str] = None,
-    slope_col: Optional[str] = None,
+    clear_path_width_col: str | None = None,
+    slope_col: str | None = None,
 ) -> ValidationReport:
     """Validate ADA compliance gates and scoring.
 
@@ -394,7 +393,7 @@ def validate_marking_standards(
     df: pd.DataFrame,
     marking_col: str = "marking_type",
     color_col: str = "marking_color",
-    reflectivity_col: Optional[str] = None,
+    reflectivity_col: str | None = None,
 ) -> ValidationReport:
     """Validate pavement marking standards per SDM Section 5.
 
@@ -464,7 +463,7 @@ def validate_geospatial_bounds(
     df: pd.DataFrame,
     lat_col: str = "latitude",
     lon_col: str = "longitude",
-    nyc_bounds: Optional[dict[str, float]] = None,
+    nyc_bounds: dict[str, float] | None = None,
 ) -> ValidationReport:
     """Validate that all coordinates fall within NYC bounds.
 

@@ -8,7 +8,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 import pandas as pd
 
@@ -24,9 +24,6 @@ from .core import (
     COL_LAT,
     COL_LON,
     COL_REPAIR,
-    COLOR_GREEN,
-    COLOR_RED,
-    COLOR_YELLOW,
     DTYPE_NUM,
 )
 
@@ -592,7 +589,7 @@ class AnomalyDetector:
 
     def detect_seasonality_violation(self, metric_name: str, history: list[tuple[datetime, float]]) -> AnomalyReport:
         return AnomalyReport(detected_at=datetime.now(timezone.utc))
-    
+
     def detect_multi_metric_anomaly(self, metrics: dict[str, list[tuple[datetime, float]]]) -> AnomalyReport:
         return AnomalyReport(detected_at=datetime.now(timezone.utc))
 
@@ -987,10 +984,12 @@ def _apply_modern_layout(fig: Any, title: str | None = None) -> Any:
     return fig
 
 
-def export_plotly_figure(fig: Any, base_filepath: str, formats: list[str] = ["html"]) -> list[str]:
+def export_plotly_figure(fig: Any, base_filepath: str, formats: list[str] = None) -> list[str]:
     """Export a Plotly figure to multiple formats for portability and presentations.
     Formats supported: 'html' (interactive), 'json' (live-update state), 'png', 'pdf' (requires kaleido).
     """
+    if formats is None:
+        formats = ["html"]
     saved_paths = []
     base_path = Path(base_filepath)
     base_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1625,23 +1624,6 @@ def list_available_visualizations() -> pd.DataFrame:
 
 # ── Pillar compatibility re-exports ───────────────────────────────────────────
 
-from .freshness import (  # noqa: E402
-    AlertSeverity,
-    DatasetFreshness,
-    FreshnessAlert,
-    FreshnessTracker,
-)
-from .plotly_charts import (  # noqa: E402
-    borough_bar_chart,
-    contract_gantt,
-    kpi_gauge,
-    priority_heatmap,
-    save_chart,
-    status_donut,
-    trend_line,
-)
-from .relevance import build_weighted_rank_sql, websearch_to_tsquery_sql  # noqa: E402
-from .sla_tracking import SLATarget, compute_cycle_times  # noqa: E402
 
 try:
     from .viz.map import create_map, save_map  # noqa: E402
@@ -1656,100 +1638,25 @@ except ImportError:
     dataframe_to_pdf = None  # type: ignore
     quality_dashboard = None  # type: ignore
 
-from .metrics import (  # noqa: E402
-    DataQualityMetrics,
-    MetricPoint,
-    MetricsRegistry,
-    PipelineMetrics,
-    get_global_registry,
-    reset_global_registry,
-)
-from .quality_catalog import DataQualityCatalog, DatasetQualityScore  # noqa: E402
-from .quality_expectations import (  # noqa: E402
-    Expectation,
-    ExpectationSuite,
-    ExpectationType,
-    SeverityLevel,
-    create_311_complaints_suite,
-    create_sidewalk_inspections_suite,
-)
-from .quality_profiler import DataType, DriftReport, ProfileGenerator  # noqa: E402
-from .quality_reports import QualityReportGenerator  # noqa: E402
-from .quality_rules import (  # noqa: E402
-    BusinessRulesEngine,
-    QualityRule,
-    RuleMode,
-    RuleSeverity,
-    RuleViolations,
-    create_311_complaints_rules,
-    create_sidewalk_rules,
-)
-from .quality_sla import (  # noqa: E402
-    DataQualityTracker,
-    MetricType,
-    SLADefinition,
-    Severity,
-    TrendDirection,
-    create_standard_slas,
-)
-from .quality_validator import (  # noqa: E402
-    QualityValidator,
-    ValidationResult,
-    ValidationResultsAggregator,
+from .analysis_advanced import (  # noqa: E402
+    classify_distribution,
+    correlation_analysis,
+    detect_outliers_iqr,
 )
 
 # Override simplified stubs with full implementations expected by the test suite
 from .quality.anomalies import (  # noqa: E402
     Anomaly,
-    AnomalyDetector,
     AnomalyReport,
     AnomalySeverity,
 )
 from .quality.validation import (  # noqa: E402
     ValidationReport,
-    validate_ada_compliance_gates,
-    validate_defect_applicability,
-    validate_geospatial_bounds,
-    validate_marking_standards,
-    validate_material_coverage,
-    validate_required_columns,
-    validate_schema_types,
-)
-from .analysis_advanced import (  # noqa: E402
-    CorrelationResult,
-    OutlierReport,
-    classify_all_distributions,
-    classify_distribution,
-    correlation_analysis,
-    detect_all_outliers,
-    detect_outliers_iqr,
-    detect_outliers_zscore,
-    flag_anomalies,
-    time_series_summary,
-)
-from .program_metrics import (  # noqa: E402
-    MetricSnapshot,
-    MetricsTracker,
-    ProgramDashboard,
-    compute_program_dashboard,
 )
 from .reporting import (  # noqa: E402
     Report,
-    ReportSection,
-    generate_contract_report,
-    generate_inquiry_response,
-    generate_program_report,
 )
-from .sla_tracking import compute_sla_metrics, flag_sla_violations  # noqa: E402
-from .visualization import (  # noqa: E402
-    ChartResult,
-    bar_chart,
-    box_plot,
-    correlation_heatmap,
-    histogram,
-    quality_dashboard,
-    time_series_chart,
-)
+from .sla_tracking import compute_sla_metrics  # noqa: E402
 
 try:
     from .reports.analyst import ProjectAnalystReports  # noqa: E402

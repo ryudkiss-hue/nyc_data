@@ -15,17 +15,15 @@ Example::
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
 
 import pandas as pd
-
 
 # ---------------------------------------------------------------------------
 # Rate Tables (per-unit costs in USD, approximate DOT averages)
 # ---------------------------------------------------------------------------
 
 #: Base rates per square foot by scope type.
-SCOPE_RATES: Dict[str, float] = {
+SCOPE_RATES: dict[str, float] = {
     "sidewalk_repair": 25.0,
     "pedestrian_ramp": 85.0,
     "curb_replacement": 45.0,
@@ -35,7 +33,7 @@ SCOPE_RATES: Dict[str, float] = {
 }
 
 #: Borough multipliers (Manhattan is most expensive due to logistics).
-BOROUGH_MULTIPLIERS: Dict[str, float] = {
+BOROUGH_MULTIPLIERS: dict[str, float] = {
     "MANHATTAN": 1.35,
     "BRONX": 1.05,
     "BROOKLYN": 1.15,
@@ -67,8 +65,8 @@ class CostEstimate:
 class CostSummary:
     """Aggregate cost summary."""
     total_estimated: float
-    by_borough: Dict[str, float]
-    by_scope: Dict[str, float]
+    by_borough: dict[str, float]
+    by_scope: dict[str, float]
     avg_cost_per_location: float
     avg_cost_per_sqft: float
     location_count: int

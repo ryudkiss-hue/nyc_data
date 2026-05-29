@@ -287,14 +287,16 @@ def _nl_to_sql(question: str, table: str | None) -> tuple[str, str]:
         return sql, f"📊 Counting by `{cat}`:\n```sql\n{sql}\n```"
 
     if any(x in q for x in ["null", "missing", "empty"]):
-        sql = f"SELECT {', '.join(f'SUM(CASE WHEN "{c}" IS NULL THEN 1 ELSE 0 END) AS "{c}_nulls"' for c in db.query_df(f'SELECT * FROM {t} LIMIT 1').columns)} FROM {t}"
+        null_parts = ', '.join(f'SUM(CASE WHEN "{c}" IS NULL THEN 1 ELSE 0 END) AS "{c}_nulls"' for c in db.query_df(f'SELECT * FROM {t} LIMIT 1').columns)
+        sql = f"SELECT {null_parts} FROM {t}"
         return sql, f"🔍 Null count query:\n```sql\n{sql}\n```"
 
     if any(x in q for x in ["average", "avg", "mean"]):
         num_df = db.query_df(f"SELECT * FROM {t} LIMIT 1")
         num_cols = num_df.select_dtypes("number").columns.tolist()
         if num_cols:
-            sql = f"SELECT {', '.join(f'AVG("{c}") AS avg_{c}' for c in num_cols[:6])} FROM {t}"
+            avg_parts = ', '.join(f'AVG("{c}") AS avg_{c}' for c in num_cols[:6])
+            sql = f"SELECT {avg_parts} FROM {t}"
             return sql, f"📈 Averages:\n```sql\n{sql}\n```"
 
     if any(x in q for x in ["recent", "latest", "last", "new"]):
@@ -302,7 +304,8 @@ def _nl_to_sql(question: str, table: str | None) -> tuple[str, str]:
         return sql, f"📋 Most recent rows:\n```sql\n{sql}\n```"
 
     if any(x in q for x in ["unique", "distinct"]):
-        sql = f"SELECT {', '.join(f'COUNT(DISTINCT "{c}") AS distinct_{c}' for c in db.query_df(f'SELECT * FROM {t} LIMIT 1').columns[:8])} FROM {t}"
+        distinct_parts = ', '.join(f'COUNT(DISTINCT "{c}") AS distinct_{c}' for c in db.query_df(f'SELECT * FROM {t} LIMIT 1').columns[:8])
+        sql = f"SELECT {distinct_parts} FROM {t}"
         return sql, f"🔢 Distinct value counts:\n```sql\n{sql}\n```"
 
     # fallback
