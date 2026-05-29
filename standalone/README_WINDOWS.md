@@ -3,6 +3,16 @@
 This directory contains the tools to package the Manhattan Mission Control
 Streamlit app as a native Windows desktop application.
 
+There are **two** ways to run it as an app:
+
+| Build | Source | UX |
+|-------|--------|-----|
+| **Native window** (recommended) | `desktop_app.py` → `MissionControl.exe` | Opens in its own OS window via **pywebview** — no browser tab, no visible localhost URL |
+| **Setup wizard** | `launcher.py` → `MissionControlLauncher.exe` | 4-page tkinter wizard: installs deps, collects API keys, then opens the app in the browser |
+
+Both read API keys from `%APPDATA%\ManhattanMissionControl\.env`, so you can
+configure once with the wizard and run the native window thereafter.
+
 ---
 
 ## Prerequisites
@@ -11,53 +21,73 @@ Streamlit app as a native Windows desktop application.
 |------|---------|-------|
 | Python | 3.11 | Must be on `PATH` — [python.org/downloads](https://python.org/downloads) |
 | pip | latest | Bundled with Python |
+| pywebview | latest | `pip install pywebview` — needed for the native window |
 | PyInstaller | 6.x | `pip install pyinstaller` |
 | Inno Setup | 6.x | [jrsoftware.org/isdl.php](https://jrsoftware.org/isdl.php) |
 
-Install PyInstaller before building:
+Install the build/runtime tooling:
 
 ```powershell
-pip install pyinstaller
+pip install pyinstaller pywebview
+pip install -e ".[mission,postgres,xlsx,desktop]"
 ```
 
 ---
 
-## Running the launcher directly (no build required)
+## Running directly (no build required)
 
-From the repo root:
+**Native desktop window:**
+
+```bat
+python standalone\desktop_app.py
+```
+
+Boots Streamlit on a free port and renders it in a native window. Requires
+`pip install pywebview` and the app deps.
+
+**Setup wizard (browser):**
 
 ```bat
 python standalone\launcher.py
 ```
 
-The 4-page wizard opens immediately. Dependencies are installed on the fly by
-the wizard's Install page. No PyInstaller or Inno Setup needed.
+The 4-page wizard opens immediately and installs dependencies on its Install
+page. No PyInstaller or Inno Setup needed.
 
 ---
 
 ## Step-by-step: build the .exe and installer
 
-### 1 — Build the executable
+### 1 — Build the executables
 
 ```bat
 cd standalone
 python build_exe.py
 ```
 
-`build_exe.py` calls PyInstaller with `--onefile --windowed` and writes the
-result to `standalone\dist\MissionControlLauncher.exe`.
+`build_exe.py` builds **both** executables with PyInstaller `--onefile
+--windowed` into `standalone\dist\`:
 
-If `standalone\icons\icon.ico` exists it is embedded automatically;
-otherwise the build continues without a custom icon.
+- `MissionControl.exe` — native window (bundles pywebview via `--collect-all`)
+- `MissionControlLauncher.exe` — setup wizard
 
-### 2 — Verify the executable
+Build just one with `--desktop-only` or `--launcher-only`. If
+`standalone\icons\icon.ico` exists it is embedded automatically.
+
+### 2 — Verify the executables
+
+```bat
+standalone\dist\MissionControl.exe
+```
+
+The native window should open and render the 12-tab app directly (no browser).
 
 ```bat
 standalone\dist\MissionControlLauncher.exe
 ```
 
 The wizard should open, allow configuration, install dependencies, and
-start the Streamlit server at http://localhost:8501.
+start the Streamlit server.
 
 ### 3 — Compile the Inno Setup installer
 
@@ -75,10 +105,12 @@ standalone\Output\ManhattanMissionControlSetup.exe
 
 Share `ManhattanMissionControlSetup.exe` with end users. The installer:
 
-- Bundles `MissionControlLauncher.exe` plus `app\`, `src\`, `config\`, and
-  `pyproject.toml`.
-- Creates a **Start Menu** group and an optional **Desktop** shortcut.
-- Launches the configuration wizard automatically after installation.
+- Bundles `MissionControl.exe` (native window) and `MissionControlLauncher.exe`
+  (setup wizard), plus `app\`, `src\`, `config\`, and `pyproject.toml`.
+- Creates a **Start Menu** group with the app + a "Setup" shortcut, and an
+  optional **Desktop** shortcut to the native app.
+- Runs the configuration wizard once after installation so the user can enter
+  API keys before first launch.
 
 ---
 
@@ -86,8 +118,9 @@ Share `ManhattanMissionControlSetup.exe` with end users. The installer:
 
 | File | Purpose |
 |------|---------|
-| `launcher.py` | tkinter 4-page wizard — the main launcher |
-| `build_exe.py` | PyInstaller build script |
+| `desktop_app.py` | pywebview native-window wrapper — primary app entry |
+| `launcher.py` | tkinter 4-page setup/config wizard |
+| `build_exe.py` | PyInstaller build script (builds both exes) |
 | `installer.iss` | Inno Setup 6 script |
 | `icons/icon.ico` | Application icon (optional) |
 
