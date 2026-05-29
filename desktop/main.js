@@ -224,7 +224,7 @@ function startSidecar() {
   const python = process.env.MMC_PYTHON || "python";
   sidecar = spawn(
     python,
-    ["-m", "uvicorn", "socrata_toolkit.api:app", "--host", "127.0.0.1", "--port", "8000"],
+    ["-m", "uvicorn", "app.sidecar_api:app", "--host", "127.0.0.1", "--port", "8000"],
     { cwd: path.join(__dirname, ".."), stdio: "ignore" }
   );
   sidecar.on("error", (err) => console.error("Sidecar failed to start:", err));
