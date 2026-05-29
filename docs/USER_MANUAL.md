@@ -62,13 +62,34 @@ See [DOCKER_LOCAL.md](DOCKER_LOCAL.md) for compose profiles and volumes.
 
 ---
 
-## Analyst GUI (primary)
+## Mission Control (primary UI)
 
 ```bash
-python dash_app/app.py
+# Recommended shortcut
+python main.py
+
+# Full form
+PYTHONPATH=src:. python -m streamlit run app/mission_control.py
 ```
 
-Open http://localhost:8050. The sidebar guides the happy path: **Setup** → edit `config/analyst_profile.yaml` → **Run Analyst Pack** on Home → review pages.
+Open http://localhost:8501. Mission Control is the unified 8-tab Streamlit app for all agency workflows.
+
+### 8-tab layout
+
+| Tab | What it does |
+|-----|-------------|
+| **Home** | Dataset status cards, Load All Datasets button, audit trail |
+| **Apex Engine** | Hiring analytics: JID scraper, Bayesian ADVI yield model, Prophet 12-month forecast, lag correlation, Folium map |
+| **Agency Workflows** | QA/spatial/contract/productivity views |
+| **Data Quality** | Per-dataset health scores, null/duplicate profiling, SLA freshness (green <7d, amber <30d, red >30d), anomaly detection, CSV export |
+| **Spatial Analytics** | Borough bar charts, Plotly Scattermapbox, Folium bubble map, conflict detection |
+| **Governance** | Plotly lineage DAG, dataset registry, ingest audit log, SLA compliance |
+| **AI Copilot** | Gemini/OpenAI/Ollama multi-backend chat; context-hydrated; quick-action chips |
+| **Settings & Quality** | Readiness score, completeness checklist, system health |
+
+Demo mode (no Socrata token needed): `MISSION_DEMO=1 python main.py`
+
+Legacy Analyst Pack UI (archived Dash): `python legacy_archive/dash_app/app.py` → http://localhost:8050
 
 ### Theme, offline mode, and preferences
 
