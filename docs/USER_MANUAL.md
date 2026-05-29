@@ -102,39 +102,6 @@ Legacy Analyst Pack UI (archived Dash): `python legacy_archive/dash_app/app.py` 
 
 Preferences persist per toolkit profile (`TOOLKIT_PROFILE`, default `default`).
 
-### Deep links and demo pack
-
-Open a specific page and pack without clicking through the UI:
-
-```
-http://localhost:8050/?page=explore&pack=2026-05-01
-http://localhost:8050/?page=construction&pack=2026-05-01
-```
-
-Supported `page` values: `home`, `explore`, `construction`, `contracts`, `metrics`, `inquiries`, `review`, `data-trust`, `publish`, `settings`.
-
-When no Analyst Pack exists, **Explore** and **Construction** offer **Load demo data** (copies `tests/fixtures/analyst/` into `outputs/analyst_pack/demo_pack/`).
-
-See [DASH_UX_AUDIT.md](DASH_UX_AUDIT.md) for the full before/after checklist and performance budget.
-
-## Interactive exploration
-
-The Dash GUI includes Brilliant/Wolfram-style controls for learning and what-if analysis **without replacing** deterministic Analyst Pack runs.
-
-| Page | What you can do |
-|------|-----------------|
-| **Explore** | Adjust priority weights, borough filter, top-N preview, conflict/ADA toggles; save prefs to `outputs/.state/.../explore_prefs.json`; copy a YAML snippet (does not write your profile). |
-| **Construction** | Live re-rank preview + borough chart from latest `construction_list.xlsx`. |
-| **Contracts** | Reporting window slider, CPI vs productivity toggle, EVM explainer. |
-| **Metrics** | Category checkboxes filter traffic-light KPI cards; expanders explain each metric. |
-| **Data Trust** | Source lineage diagram; show/hide warnings and partial failures. |
-| **Review** | Status dropdown with instant save feedback toast. |
-| **Publish** | Per-destination checkboxes with inline “what gets sent” tips. |
-
-Accessibility: focus rings, ARIA labels on sliders/checkboxes, text + icon status (not color-only), keyboard-friendly `<details>` tip cards.
-
-**Canonical data** still comes from `socrata analyst run`. Use **Explore** or Construction sliders to test parameters; apply changes to production only by updating `config/analyst_profile.yaml` and re-running the pack (or pasting the snippet from Explore).
-
 <!-- Screenshot placeholder: docs/images/analyst-home.png -->
 
 Golden column headers for Excel sources: `config/templates/*_headers.txt`.
