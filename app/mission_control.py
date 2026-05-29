@@ -33,7 +33,7 @@ import streamlit as st
 # ── App-level modules ───────────────────────────────────────────────────────
 from app.data_loader import (
     DATASET_REGISTRY,
-    load_dataset,
+    fetch_dataset as load_dataset,
     token_status,
 )
 from app.ingest_log import log_event
