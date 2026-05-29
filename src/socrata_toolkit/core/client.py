@@ -94,10 +94,59 @@ class SocrataClient:
             columns=payload.get("columns", []),
         )
 
+    def _build_soql(
+        self,
+        limit: int,
+        offset: int,
+        select: str | None = None,
+        where: str | None = None,
+        order: str | None = None,
+    ) -> str:
+        """Build a SoQL SELECT statement for SODA3."""
+        parts: list[str] = []
+        parts.append(f"SELECT {select}" if select else "SELECT *")
+        if where:
+            parts.append(f"WHERE {where}")
+        if order:
+            parts.append(f"ORDER BY {order}")
+        parts.append(f"LIMIT {limit}")
+        parts.append(f"OFFSET {offset}")
+        return " ".join(parts)
+
     def fetch_json(self, domain: str, fourfour: str, where: str | None = None, select: str | None = None, order: str | None = None, q: str | None = None, max_rows: int | None = None) -> Generator[list[dict[str, Any]], None, None]:
-        # Stream JSON pages from the Socrata resource endpoint. The method
-        # yields lists of dicts (a page) so callers can process data in chunks
+        # Stream JSON pages via the SODA3 POST endpoint. The method yields
+        # lists of dicts (a page) so callers can process data in chunks
         # without requiring large amounts of RAM.
+        if not self.config.app_token:
+            import warnings as _warnings
+            _warnings.warn(
+                "No SOCRATA_APP_TOKEN set; falling back to SODA2 GET for unauthenticated access.",
+                stacklevel=2,
+            )
+            yield from self._fetch_json_soda2(domain, fourfour, where=where, select=select, order=order, q=q, max_rows=max_rows)
+            return
+
+        offset = 0
+        remaining = max_rows
+        url = f"https://{domain}/api/v3/views/{fourfour}/query.json"
+        while True:
+            limit = self.config.page_size if remaining is None else min(self.config.page_size, remaining)
+            soql = self._build_soql(limit, offset, select=select, where=where, order=order)
+            resp = with_retries(lambda: requests.post(url, json={"query": soql}, headers=self._headers(), timeout=self.config.timeout))
+            batch = resp.json()
+            if not batch:
+                break
+            # Yield the page to the caller
+            yield batch
+            got = len(batch)
+            offset += got
+            if remaining is not None:
+                remaining -= got
+                if remaining <= 0:
+                    break
+
+    def _fetch_json_soda2(self, domain: str, fourfour: str, where: str | None = None, select: str | None = None, order: str | None = None, q: str | None = None, max_rows: int | None = None) -> Generator[list[dict[str, Any]], None, None]:
+        """SODA2 GET fallback (used when no app token is available)."""
         offset = 0
         remaining = max_rows
         while True:
@@ -111,14 +160,11 @@ class SocrataClient:
                 params["$order"] = order
             if q:
                 params["$q"] = q
-
-            # Use a retriable requests wrapper to handle transient HTTP errors
             url = f"https://{domain}/resource/{fourfour}.json"
             resp = with_retries(lambda: requests.get(url, params=params, headers=self._headers(), timeout=self.config.timeout))
             batch = resp.json()
             if not batch:
                 break
-            # Yield the page to the caller
             yield batch
             got = len(batch)
             offset += got
