@@ -218,7 +218,10 @@ def view_spatial(results: dict, map_layers: dict[str, pd.DataFrame]) -> None:
 
     if map_points:
         combined = pd.concat(map_points, ignore_index=True)
-        st.map(combined, latitude="lat", longitude="lon", color="layer", size=20)
+        if "lat" in combined.columns and "lon" in combined.columns:
+            combined = combined.dropna(subset=["lat", "lon"])
+        if not combined.empty and "lat" in combined.columns:
+            st.map(combined, latitude="lat", longitude="lon", color="layer", size=20)
         st.caption(f"Showing {len(combined):,} points · {len([x for x in map_points if not x.empty])} layers")
     else:
         st.info("No geospatial layers loaded. Select 'Spatial' workflow and reload datasets.")
