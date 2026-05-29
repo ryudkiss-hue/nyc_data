@@ -112,3 +112,79 @@ def test_fairness_present_or_absent():
         json={"title": "Test", "description": "d", "license": "CC0"},
     )
     assert r.status_code in (200, 503)
+
+
+def test_anomaly_zscore():
+    # Need enough points so the outlier clearly exceeds |z| > 3
+    normal = [2.0] * 30
+    normal[15] = 200.0  # clear outlier
+    r = client.post(
+        "/api/quality/anomalies",
+        json={"values": normal, "method": "zscore"},
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["method"] == "zscore"
+    assert 15 in body["indices"]
+    assert len(body["all_scores"]) == 30
+
+
+def test_anomaly_seasonal():
+    import math
+    # Sine wave with a spike on index 14
+    values = [math.sin(2 * math.pi * i / 7) for i in range(21)]
+    values[14] += 50.0
+    r = client.post(
+        "/api/quality/anomalies",
+        json={"values": values, "method": "seasonal", "period": 7},
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["method"] == "seasonal"
+    assert 14 in body["indices"]
+    assert "trend" in body
+    assert "seasonal" in body
+
+
+def test_anomaly_seasonal_too_short():
+    r = client.post(
+        "/api/quality/anomalies",
+        json={"values": [1.0, 2.0, 3.0], "method": "seasonal", "period": 7},
+    )
+    assert r.status_code == 422
+
+
+def test_anomaly_bad_method():
+    r = client.post(
+        "/api/quality/anomalies",
+        json={"values": [1.0, 2.0], "method": "interpolation"},
+    )
+    assert r.status_code == 400
+
+
+def test_audit_trail_endpoints():
+    # GET returns a list (may be empty)
+    r = client.get("/api/audit/trail")
+    assert r.status_code == 200
+    body = r.json()
+    assert "entries" in body
+
+    # DELETE clears the trail
+    r2 = client.delete("/api/audit/trail")
+    assert r2.status_code == 200
+
+
+def test_quality_catalog_basic():
+    r = client.post(
+        "/api/governance/quality-catalog",
+        json={
+            "dataset_id": "test-123",
+            "rows": [{"id": 1, "name": "Alice"}, {"id": 2, "name": "Bob"}],
+        },
+    )
+    assert r.status_code in (200, 503)
+    if r.status_code == 200:
+        body = r.json()
+        assert body["dataset_id"] == "test-123"
+        assert "dmbok_overall" in body
+        assert "dimensions" in body

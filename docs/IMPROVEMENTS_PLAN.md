@@ -33,9 +33,9 @@ Legend: ☐ todo · ☑ done · ◐ partial
 13. ☑ Toast notification center with history + severity levels
 14. ☑ Robust error handling with retry + exponential backoff on Socrata fetches
 15. ☑ Auto-save indicator ("saving… / saved ✓") for cart & workspaces
-16. ☐ Empty-state redesign with primary CTA hierarchy per panel
-17. ☐ Inline data-peek preview on result hover (first rows)
-18. ☐ Bulk cart operations (tag, annotate, remove multiple)
+16. ☑ Empty-state redesign with primary CTA hierarchy per panel
+17. ☑ Inline data-peek preview on result hover (first rows)
+18. ☑ Bulk cart operations (tag, annotate, remove multiple)
 19. ☑ Resize-safe tooltip/positioning engine
 20. ☐ Onboarding product tour upgrade (spotlight + step state persistence)
 
@@ -70,10 +70,10 @@ Legend: ☐ todo · ☑ done · ◐ partial
 44. ☑ DAMA-DMBOK 6-dimension scorer surfaced as a single report object
 45. ☑ Privacy-preserving lineage option (mask PII column names in exports)
 46. ☑ Data-contract validator (declare + assert schema/constraints)
-47. ◐ Quality → governance integration: attach scores to catalog entries
+47. ☑ Quality → governance integration: attach scores to catalog entries
 48. ☑ Retention-policy evaluator (flag stale-beyond-policy datasets)
 49. ☑ Unit tests for PII scanner + masking + DMBOK scorer
-50. ☐ Audit-trail decorator applied to new governance ops
+50. ☑ Audit-trail decorator applied to new governance ops
 
 ## Wave 6 — Sidecar API surfacing (Python + Electron)
 51. ☑ `app/sidecar_api.py` (FastAPI): health + capability probe
@@ -82,7 +82,7 @@ Legend: ☐ todo · ☑ done · ◐ partial
 54. ☑ Endpoint: PII scan for posted rows
 55. ☑ Endpoint: DMBOK quality score for posted rows
 56. ☑ Endpoint: FAIRness score for a dataset descriptor
-57. ◐ Endpoint: anomaly detection (z-score/seasonal)
+57. ☑ Endpoint: anomaly detection (z-score/seasonal)
 58. ☑ CORS locked to localhost; graceful degradation when libs absent
 59. ☑ Electron `main.js` spawns `app.sidecar_api:app`; capability badge in SPA
 60. ☑ Sidecar integration tests (TestClient)
@@ -92,21 +92,21 @@ Legend: ☐ todo · ☑ done · ◐ partial
 62. ◐ FAIRness scorecard panel with sub-score radar
 63. ◐ PII inspector: scan current dataset, show flagged columns + masking preview
 64. ☐ Lineage/provenance mini-graph for cart datasets (shared-column join graph)
-65. ☐ Data-quality badge on each result card (completeness/freshness at a glance)
+65. ☑ Data-quality badge on each result card (completeness/freshness at a glance)
 66. ☑ Export governance report (JSON + human-readable) per dataset
-67. ☐ License + access metadata surfaced on dataset detail
-68. ☐ Schema-diff visual highlighting in Compare modal
+67. ☑ License + access metadata surfaced on dataset detail
+68. ☑ Schema-diff visual highlighting in Compare modal
 
 ## Wave 8 — Performance & Scope (SPA + data layer)
 69. ☑ Virtualized table rendering for large result/preview sets
 70. ☑ Web Worker for heavy JSON parse / sort / profiling
 71. ☑ Client-side LRU cache (sessionStorage) for fetched datasets w/ TTL
-72. ☐ Debounce tuning + request cancellation hardening
-73. ◐ Lazy-init heavy panels (map/Mermaid) only when first shown
-74. ☐ Infinite-scroll option for result list
-75. ◐ Rate-limit-aware multi-domain fetch (concurrency cap + 429 backoff)
+72. ☑ Debounce tuning + request cancellation hardening
+73. ☑ Lazy-init heavy panels (map/Mermaid) only when first shown
+74. ☑ Infinite-scroll option for result list
+75. ☑ Rate-limit-aware multi-domain fetch (concurrency cap + 429 backoff)
 76. ☐ Expand dataset registry coverage / discovery breadth
-77. ☐ Parquet cache stats + cache-control surfaced in settings
+77. ☑ Parquet cache stats + cache-control surfaced in settings
 78. ☑ Performance budget doc (LCP/INP/CLS targets) + lightweight runtime timing
 
 ## Wave 9 — Quality, Docs & Hardening
