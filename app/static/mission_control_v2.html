@@ -535,6 +535,9 @@ body { font-family: 'Inter', system-ui, sans-serif; }
     <button class="tab-btn" onclick="switchTab('soql',this)" id="tab-soql">
       <i class="fa-solid fa-database mr-1"></i>SOQL Builder
     </button>
+    <button class="tab-btn" onclick="switchTab('bayesian',this)" id="tab-bayesian" style="display:none">
+      <i class="fa-solid fa-chart-line mr-1"></i>Bayesian ML
+    </button>
   </div>
 
   <!-- Tab content area -->
@@ -849,6 +852,114 @@ body { font-family: 'Inter', system-ui, sans-serif; }
             </table>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- BAYESIAN ML TAB (desktop sidecar only) -->
+    <div id="tab-content-bayesian" class="h-full flex flex-col overflow-hidden hidden">
+      <div class="px-4 py-3 border-b border-gray-800 flex-shrink-0 flex items-center gap-3">
+        <i class="fa-solid fa-chart-line text-brand-400"></i>
+        <span class="text-sm font-semibold text-gray-200">Bayesian Analytics</span>
+        <span id="sidecar-status-badge" class="px-2 py-0.5 rounded text-xs font-semibold bg-yellow-900 text-yellow-300">sidecar loading…</span>
+        <span class="text-xs text-gray-500 ml-auto">Powered by PyMC ADVI + Prophet · local sidecar on :8000</span>
+      </div>
+
+      <!-- Two-column layout -->
+      <div class="flex flex-1 overflow-hidden gap-0">
+
+        <!-- LEFT: Yield-Rate Panel -->
+        <div class="w-1/2 border-r border-gray-800 flex flex-col overflow-y-auto p-4 gap-4">
+          <h3 class="text-sm font-bold text-gray-200 flex items-center gap-2">
+            <i class="fa-solid fa-percent text-brand-400"></i> Beta-Binomial Yield Rate
+          </h3>
+          <p class="text-xs text-gray-500">Enter success counts and trial totals (one per line) to fit a Bayesian Beta-Binomial model via PyMC ADVI.</p>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div class="flex flex-col gap-1">
+              <label class="text-gray-400 font-semibold">Successes (one per line)</label>
+              <textarea id="bayes-obs" rows="6" class="bg-gray-900 border border-gray-700 rounded p-2 text-gray-200 font-mono text-xs focus:outline-none focus:border-brand-500 resize-none" placeholder="12&#10;18&#10;9&#10;22">12
+18
+9
+22</textarea>
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-gray-400 font-semibold">Trials (one per line)</label>
+              <textarea id="bayes-tot" rows="6" class="bg-gray-900 border border-gray-700 rounded p-2 text-gray-200 font-mono text-xs focus:outline-none focus:border-brand-500 resize-none" placeholder="50&#10;60&#10;45&#10;80">50
+60
+45
+80</textarea>
+            </div>
+          </div>
+          <button onclick="runBayesianYield()" class="self-start px-4 py-1.5 bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold rounded transition-all">
+            <i class="fa-solid fa-flask mr-1"></i>Run ADVI Model
+          </button>
+          <div id="bayes-result" class="hidden">
+            <div class="grid grid-cols-3 gap-2 text-center mb-3">
+              <div class="bg-gray-800 rounded p-2">
+                <div class="text-xs text-gray-400">Posterior Mean</div>
+                <div id="bayes-mean" class="text-lg font-bold text-brand-400">—</div>
+              </div>
+              <div class="bg-gray-800 rounded p-2">
+                <div class="text-xs text-gray-400">HDI 3%</div>
+                <div id="bayes-lo" class="text-lg font-bold text-gray-300">—</div>
+              </div>
+              <div class="bg-gray-800 rounded p-2">
+                <div class="text-xs text-gray-400">HDI 97%</div>
+                <div id="bayes-hi" class="text-lg font-bold text-gray-300">—</div>
+              </div>
+            </div>
+            <canvas id="bayes-canvas" height="120" class="w-full rounded bg-gray-900"></canvas>
+            <div id="bayes-method" class="text-xs text-gray-500 mt-1 text-right"></div>
+          </div>
+          <div id="bayes-error" class="hidden text-xs text-red-400 bg-red-950 border border-red-800 rounded p-2"></div>
+        </div>
+
+        <!-- RIGHT: Prophet Forecast Panel -->
+        <div class="w-1/2 flex flex-col overflow-y-auto p-4 gap-4">
+          <h3 class="text-sm font-bold text-gray-200 flex items-center gap-2">
+            <i class="fa-solid fa-arrow-trend-up text-purple-400"></i> Prophet Time-Series Forecast
+          </h3>
+          <p class="text-xs text-gray-500">Enter date-value pairs to fit a Prophet model and forecast ahead.</p>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div class="flex flex-col gap-1">
+              <label class="text-gray-400 font-semibold">Dates (YYYY-MM-DD)</label>
+              <textarea id="prop-dates" rows="6" class="bg-gray-900 border border-gray-700 rounded p-2 text-gray-200 font-mono text-xs focus:outline-none focus:border-brand-500 resize-none">2024-01-01
+2024-02-01
+2024-03-01
+2024-04-01
+2024-05-01
+2024-06-01</textarea>
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-gray-400 font-semibold">Values</label>
+              <textarea id="prop-vals" rows="6" class="bg-gray-900 border border-gray-700 rounded p-2 text-gray-200 font-mono text-xs focus:outline-none focus:border-brand-500 resize-none">120
+135
+128
+142
+155
+147</textarea>
+            </div>
+          </div>
+          <div class="flex gap-3 items-center text-xs">
+            <label class="text-gray-400 font-semibold">Forecast periods:</label>
+            <input id="prop-periods" type="number" value="30" min="1" max="365" class="w-20 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-gray-200 focus:outline-none focus:border-brand-500">
+            <label class="text-gray-400 font-semibold">Freq:</label>
+            <select id="prop-freq" class="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-gray-200 focus:outline-none focus:border-brand-500">
+              <option value="D">Daily</option>
+              <option value="W">Weekly</option>
+              <option value="MS" selected>Monthly</option>
+              <option value="QS">Quarterly</option>
+            </select>
+            <button onclick="runProphetForecast()" class="px-4 py-1.5 bg-purple-700 hover:bg-purple-600 text-white text-xs font-semibold rounded transition-all">
+              <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>Forecast
+            </button>
+          </div>
+          <div id="prop-result" class="hidden">
+            <canvas id="prop-canvas" height="180" class="w-full rounded bg-gray-900"></canvas>
+            <div class="text-xs text-gray-500 mt-1 text-right">Prophet + 94% confidence interval</div>
+          </div>
+          <div id="prop-error" class="hidden text-xs text-red-400 bg-red-950 border border-red-800 rounded p-2"></div>
+        </div>
+
       </div>
     </div>
 
@@ -5090,6 +5201,172 @@ function generateCodeFull(){
 
 // ── Close notif center on outside click (already above) ───────
 // ── Wire Ctrl+Z/Y (already above) ────────────────────────────
+
+// ── Bayesian ML sidecar integration ──────────────────────────
+(function() {
+  const SIDECAR = 'http://127.0.0.1:8000';
+  const isDesktop = window.missionControl?.isDesktop;
+
+  // Show Bayesian tab only in Electron desktop builds
+  if (isDesktop) {
+    const btn = document.getElementById('tab-bayesian');
+    if (btn) btn.style.display = '';
+    checkSidecar();
+  }
+
+  async function checkSidecar() {
+    const badge = document.getElementById('sidecar-status-badge');
+    try {
+      const r = await fetch(SIDECAR + '/health', { signal: AbortSignal.timeout(3000) });
+      if (r.ok) {
+        const d = await r.json();
+        if (badge) {
+          badge.textContent = `sidecar ok · PyMC:${d.pymc?'✓':'✗'} Prophet:${d.prophet?'✓':'✗'}`;
+          badge.className = 'px-2 py-0.5 rounded text-xs font-semibold bg-green-900 text-green-300';
+        }
+      } else throw new Error('non-ok');
+    } catch {
+      if (badge) {
+        badge.textContent = 'sidecar offline — run: MMC_SIDECAR=1 npm start';
+        badge.className = 'px-2 py-0.5 rounded text-xs font-semibold bg-red-900 text-red-300';
+      }
+    }
+  }
+
+  window.runBayesianYield = async function() {
+    const obsRaw = document.getElementById('bayes-obs').value.trim().split(/\s+/).map(Number);
+    const totRaw = document.getElementById('bayes-tot').value.trim().split(/\s+/).map(Number);
+    const errEl = document.getElementById('bayes-error');
+    const resEl = document.getElementById('bayes-result');
+    errEl.classList.add('hidden');
+    resEl.classList.add('hidden');
+    try {
+      const r = await fetch(SIDECAR + '/api/bayesian/yield-rate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ observations: obsRaw, totals: totRaw, draws: 500, tune: 200 }),
+        signal: AbortSignal.timeout(60000),
+      });
+      if (!r.ok) { const e = await r.json(); throw new Error(e.detail || 'request failed'); }
+      const d = await r.json();
+      document.getElementById('bayes-mean').textContent = (d.mean * 100).toFixed(2) + '%';
+      document.getElementById('bayes-lo').textContent = (d.hdi_3 * 100).toFixed(2) + '%';
+      document.getElementById('bayes-hi').textContent = (d.hdi_97 * 100).toFixed(2) + '%';
+      document.getElementById('bayes-method').textContent = 'method: ' + d.method;
+      resEl.classList.remove('hidden');
+      drawHistogram('bayes-canvas', d.samples, d.mean, d.hdi_3, d.hdi_97);
+    } catch (e) {
+      errEl.textContent = 'Error: ' + e.message;
+      errEl.classList.remove('hidden');
+    }
+  };
+
+  window.runProphetForecast = async function() {
+    const dates = document.getElementById('prop-dates').value.trim().split(/\s+/);
+    const vals = document.getElementById('prop-vals').value.trim().split(/\s+/).map(Number);
+    const periods = parseInt(document.getElementById('prop-periods').value) || 30;
+    const freq = document.getElementById('prop-freq').value;
+    const errEl = document.getElementById('prop-error');
+    const resEl = document.getElementById('prop-result');
+    errEl.classList.add('hidden');
+    resEl.classList.add('hidden');
+    try {
+      const r = await fetch(SIDECAR + '/api/forecast/prophet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dates, values: vals, periods, freq }),
+        signal: AbortSignal.timeout(90000),
+      });
+      if (!r.ok) { const e = await r.json(); throw new Error(e.detail || 'request failed'); }
+      const d = await r.json();
+      resEl.classList.remove('hidden');
+      drawForecast('prop-canvas', dates, vals, d);
+    } catch (e) {
+      errEl.textContent = 'Error: ' + e.message;
+      errEl.classList.remove('hidden');
+    }
+  };
+
+  function drawHistogram(canvasId, samples, mean, lo, hi) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.offsetWidth || 400;
+    const H = canvas.height || 120;
+    canvas.width = W;
+    ctx.clearRect(0, 0, W, H);
+
+    const bins = 40;
+    const min = Math.min(...samples), max = Math.max(...samples);
+    const binW = (max - min) / bins;
+    const counts = new Array(bins).fill(0);
+    samples.forEach(s => {
+      const b = Math.min(Math.floor((s - min) / binW), bins - 1);
+      counts[b]++;
+    });
+    const maxC = Math.max(...counts);
+    const barW = W / bins;
+    const pad = 10;
+
+    counts.forEach((c, i) => {
+      const x = i * barW;
+      const h = ((c / maxC) * (H - pad * 2));
+      const val = min + i * binW;
+      const inHDI = val >= lo && val <= hi;
+      ctx.fillStyle = inHDI ? '#38bdf8' : '#1e3a4a';
+      ctx.fillRect(x, H - pad - h, barW - 1, h);
+    });
+
+    // Mean line
+    const mx = ((mean - min) / (max - min)) * W;
+    ctx.strokeStyle = '#f4c430';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(mx, pad); ctx.lineTo(mx, H - pad); ctx.stroke();
+  }
+
+  function drawForecast(canvasId, histDates, histVals, fc) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.offsetWidth || 500;
+    const H = canvas.height || 180;
+    canvas.width = W;
+    ctx.clearRect(0, 0, W, H);
+
+    const allY = [...fc.yhat_lower, ...fc.yhat_upper, ...histVals];
+    const minY = Math.min(...allY), maxY = Math.max(...allY);
+    const n = fc.dates.length;
+    const pad = { top: 10, bottom: 20, left: 5, right: 5 };
+    const chartW = W - pad.left - pad.right;
+    const chartH = H - pad.top - pad.bottom;
+
+    const scaleX = i => pad.left + (i / (n - 1)) * chartW;
+    const scaleY = v => pad.top + (1 - (v - minY) / (maxY - minY)) * chartH;
+
+    // Confidence band
+    ctx.fillStyle = 'rgba(99,102,241,0.15)';
+    ctx.beginPath();
+    fc.yhat_upper.forEach((v, i) => i ? ctx.lineTo(scaleX(i), scaleY(v)) : ctx.moveTo(scaleX(i), scaleY(v)));
+    fc.yhat_lower.slice().reverse().forEach((v, i) => ctx.lineTo(scaleX(n - 1 - i), scaleY(v)));
+    ctx.closePath(); ctx.fill();
+
+    // Forecast line
+    ctx.strokeStyle = '#818cf8'; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    fc.yhat.forEach((v, i) => i ? ctx.lineTo(scaleX(i), scaleY(v)) : ctx.moveTo(scaleX(i), scaleY(v)));
+    ctx.stroke();
+
+    // Historical actuals
+    const nHist = histVals.length;
+    ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2;
+    ctx.beginPath();
+    histVals.forEach((v, i) => {
+      const xi = scaleX(Math.round((i / (nHist - 1)) * (n - 1) * (nHist / n)));
+      i ? ctx.lineTo(xi, scaleY(v)) : ctx.moveTo(xi, scaleY(v));
+    });
+    ctx.stroke();
+  }
+})();
 </script>
 
 <!-- ============================================================
