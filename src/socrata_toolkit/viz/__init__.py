@@ -8,6 +8,5 @@ from .charts_extra import (
     plot_geospatial_compliance_map,
 )
 from .core import *
-from .dashboard import *
 from .map import *
 from .plotly import *

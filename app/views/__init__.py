@@ -1,1 +1,0 @@
-"""Mission Control page views."""
