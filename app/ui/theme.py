@@ -131,6 +131,89 @@ AGENCY_CSS = """
   section[data-testid="stSidebar"] .stRadio > label {
     color: #c5d4e3 !important;
   }
+
+  /* ===== Fluid typography (clamp — scales without breakpoints) ===== */
+  .mc-header h1 { font-size: clamp(1.35rem, 4vw, 1.95rem) !important; }
+  .mc-subtitle  { font-size: clamp(0.8rem, 2vw, 0.95rem) !important; }
+  .mc-section-header h3 {
+    font-size: clamp(1.05rem, 2.6vw, 1.35rem);
+    color: #e8eef4; margin: 0 0 0.15rem 0; letter-spacing: -0.3px;
+  }
+  .mc-section-sub { color: #9eb3c7; font-size: clamp(0.78rem, 1.8vw, 0.9rem); margin: 0 0 0.5rem 0; }
+  .mc-section-header { margin: 0.25rem 0 0.75rem 0; border-left: 3px solid #f4c430; padding-left: 0.65rem; }
+
+  /* ===== KPI cards (responsive auto-fit grid) ===== */
+  .mc-kpi {
+    background: linear-gradient(135deg, #16233a, #1a2840);
+    border: 1px solid #2a3a55; border-radius: 12px;
+    padding: 0.85rem 1rem; min-height: 76px;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .mc-kpi:hover { border-color: #3a5a8a; transform: translateY(-2px); }
+  .mc-kpi-label {
+    font-size: clamp(0.68rem, 1.6vw, 0.78rem); color: #8fa3bc;
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.35rem;
+  }
+  .mc-kpi-value {
+    font-size: clamp(1.3rem, 3.5vw, 1.75rem); font-weight: 700; color: #e8eef4;
+    display: flex; align-items: baseline; gap: 0.5rem; line-height: 1.1;
+  }
+  .mc-kpi-delta { font-size: clamp(0.7rem, 1.6vw, 0.85rem); font-weight: 600; }
+
+  /* ===== Status pills (icon + color, never color alone) ===== */
+  .mc-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 600;
+    background: color-mix(in srgb, var(--pill) 18%, transparent);
+    color: var(--pill); border: 1px solid color-mix(in srgb, var(--pill) 45%, transparent);
+  }
+
+  /* ===== Skeleton loaders ===== */
+  .mc-skeleton { display: flex; flex-direction: column; gap: 10px; padding: 8px 0; }
+  .mc-skeleton-bar {
+    border-radius: 6px;
+    background: linear-gradient(90deg, #1a2332 25%, #243149 50%, #1a2332 75%);
+    background-size: 200% 100%; animation: mc-shimmer 1.4s infinite;
+  }
+  @keyframes mc-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+  /* ===== Empty states ===== */
+  .mc-empty { text-align: center; padding: 2.5rem 1rem; color: #9eb3c7; }
+  .mc-empty-icon { font-size: 2.5rem; margin-bottom: 0.5rem; opacity: 0.7; }
+  .mc-empty-title { font-size: 1.05rem; font-weight: 600; color: #c5d4e3; }
+  .mc-empty-body { font-size: 0.88rem; margin-top: 0.35rem; max-width: 460px; margin-inline: auto; }
+
+  /* ===== Touch targets (WCAG 2.5.8 — min 44px) ===== */
+  .stButton > button, .stDownloadButton > button {
+    min-height: 44px; border-radius: 8px;
+  }
+  @media (max-width: 640px) {
+    .stButton > button, .stDownloadButton > button { width: 100%; }
+    /* Horizontal-scroll tab strip on small screens (9 tabs overflow) */
+    div[data-testid="stTabs"] div[role="tablist"] {
+      overflow-x: auto; flex-wrap: nowrap; scrollbar-width: thin;
+      -webkit-overflow-scrolling: touch;
+    }
+    div[data-testid="stTabs"] button[role="tab"] { white-space: nowrap; }
+  }
+
+  /* ===== Visible focus rings (WCAG 2.4.7 / 2.4.13) ===== */
+  a:focus-visible, button:focus-visible,
+  [role="tab"]:focus-visible, input:focus-visible, select:focus-visible {
+    outline: 3px solid #f4c430 !important; outline-offset: 2px !important;
+    border-radius: 4px;
+  }
+
+  /* ===== Reduced motion ===== */
+  @media (prefers-reduced-motion: reduce) {
+    .mc-bar-fill, .mc-kpi, .mc-skeleton-bar { transition: none !important; animation: none !important; }
+  }
+  /* ===== High contrast ===== */
+  @media (prefers-contrast: high) {
+    .mc-kpi { border-color: #fff; background: #000; }
+    .mc-kpi-value, .mc-kpi-label { color: #fff !important; }
+    .mc-pill { border-width: 2px; }
+  }
 </style>
 """
 
