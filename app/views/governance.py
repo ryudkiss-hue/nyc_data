@@ -12,6 +12,9 @@ import plotly.graph_objects as go
 import streamlit as st
 import yaml
 
+from app.ui import charts
+from app.ui.components import kpi_row, section_header
+
 # Optional lineage imports
 try:
     from socrata_toolkit.lineage.core import (  # type: ignore[import]
@@ -192,7 +195,7 @@ def render_governance_tab(loaded_frames: dict[str, pd.DataFrame]) -> None:
     datasets_cfg: dict[str, Any] = config_data.get("datasets", {})
 
     # ── 1. Lineage DAG ────────────────────────────────────────────────────────
-    st.subheader("Dataset Lineage DAG")
+    section_header("Dataset Lineage DAG", "Source → transform → output flow", icon="🕸️")
     with st.container(border=True):
         if _HAS_LINEAGE:
             st.caption("Lineage powered by socrata_toolkit.lineage")
@@ -270,8 +273,9 @@ def render_governance_tab(loaded_frames: dict[str, pd.DataFrame]) -> None:
     st.divider()
 
     # ── 4. Data freshness compliance ──────────────────────────────────────────
-    st.subheader("Data Freshness Compliance (SLA: 7-day)")
+    section_header("Data Freshness Compliance", "SLA target: 7 days", icon="⏱️")
     freshness_rows: list[dict[str, Any]] = []
+    compliant = stale = overdue = 0
     for key, df in loaded_frames.items():
         date_col = _find_date_col(df)
         if not date_col:
@@ -281,10 +285,13 @@ def render_governance_tab(loaded_frames: dict[str, pd.DataFrame]) -> None:
             status = "⚪ Unknown"
         elif days <= 7:
             status = "🟢 Compliant"
+            compliant += 1
         elif days <= 30:
             status = "🟡 Stale"
+            stale += 1
         else:
             status = "🔴 Overdue"
+            overdue += 1
         freshness_rows.append(
             {
                 "Dataset": key,
@@ -295,7 +302,35 @@ def render_governance_tab(loaded_frames: dict[str, pd.DataFrame]) -> None:
         )
 
     if freshness_rows:
-        st.dataframe(pd.DataFrame(freshness_rows), use_container_width=True, hide_index=True)
+        total_tracked = compliant + stale + overdue
+        kpi_row(
+            [
+                {"label": "Compliant", "value": compliant, "icon": "🟢",
+                 "delta_good": True},
+                {"label": "Stale (8–30d)", "value": stale, "icon": "🟡",
+                 "delta_good": stale == 0},
+                {"label": "Overdue (>30d)", "value": overdue, "icon": "🔴",
+                 "delta_good": overdue == 0},
+                {"label": "SLA Compliance", "value": f"{(100 * compliant / total_tracked):.0f}%"
+                 if total_tracked else "—", "icon": "✅"},
+            ]
+        )
+        fresh_df = pd.DataFrame(freshness_rows)
+        # Chart numeric staleness with accessible table fallback
+        chart_df = fresh_df[fresh_df["Days Stale"] != "—"].copy()
+        if not chart_df.empty and charts.available():
+            chart_df["Days Stale"] = pd.to_numeric(chart_df["Days Stale"], errors="coerce")
+            fig = charts.bar(
+                chart_df.sort_values("Days Stale", ascending=False),
+                x="Dataset", y="Days Stale", title="Days since last record",
+                height=max(220, 28 * len(chart_df)),
+            )
+            charts.render_with_table(
+                fig, fresh_df, caption="Bars over 7 indicate SLA breach.",
+                table_label="View freshness table", key="gov_freshness_chart",
+            )
+        else:
+            st.dataframe(fresh_df, use_container_width=True, hide_index=True)
     else:
         st.info("No datasets with detectable date columns are loaded.")
 
