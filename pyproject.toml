@@ -72,6 +72,7 @@ all = ["openpyxl", "spacy", "shapely", "geopandas", "matplotlib", "plotly", "wea
 [tool.poetry.scripts]
 socrata = "socrata_toolkit.core.cli:main"
 mission = "main:main"
+socrata-fair = "socrata_toolkit.fair.cli:main"
 
 [build-system]
 requires = ["poetry-core"]

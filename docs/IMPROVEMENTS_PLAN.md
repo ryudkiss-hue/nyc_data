@@ -61,15 +61,15 @@ Legend: ☐ todo · ☑ done · ◐ partial
 37. ☑ Catalog persistence (JSON) + loader
 38. ☑ DCAT/JSON-LD export endpoint
 39. ☑ Unit tests for FAIR catalog + scoring
-40. ☐ CLI command to emit FAIR catalog for the registry
+40. ☑ CLI command to emit FAIR catalog for the registry
 
 ## Wave 5 — Data Governance: PII & Quality (Python, NEW)
 41. ☑ Enhanced PII scanner: regex + heuristic + column-name + value-entropy signals
 42. ☑ PII severity classification + recommended masking strategy
 43. ☑ Reversible/irreversible masking utilities (hash, redact, tokenize, bucket)
 44. ☑ DAMA-DMBOK 6-dimension scorer surfaced as a single report object
-45. ☐ Privacy-preserving lineage option (mask PII column names in exports)
-46. ☐ Data-contract validator (declare + assert schema/constraints)
+45. ☑ Privacy-preserving lineage option (mask PII column names in exports)
+46. ☑ Data-contract validator (declare + assert schema/constraints)
 47. ◐ Quality → governance integration: attach scores to catalog entries
 48. ☑ Retention-policy evaluator (flag stale-beyond-policy datasets)
 49. ☑ Unit tests for PII scanner + masking + DMBOK scorer
