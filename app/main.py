@@ -11,18 +11,18 @@ import time
 import warnings
 from datetime import datetime
 
+import agentql
 import arviz as az
 import folium
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import pymc as pm
-import agentql
 import requests
 import streamlit as st
 import streamlit.components.v1 as components
-from playwright.sync_api import sync_playwright
 from dateutil.relativedelta import relativedelta
+from playwright.sync_api import sync_playwright
 from prophet import Prophet
 
 warnings.filterwarnings("ignore")
