@@ -35,7 +35,7 @@ detect_all_outliers = _monolith.detect_all_outliers
 correlation_analysis = _monolith.correlation_analysis
 MetricsTracker = getattr(_monolith, "MetricsTracker", None)
 DashboardSummary = getattr(_monolith, "DashboardSummary", None)
-compute_program_dashboard = getattr(_monolith, "compute_program_dashboard", None)
+compute_program_dashboard = getattr(_monolith, "compute_program_dashboard", None) or __import__("socrata_toolkit.program_metrics", fromlist=["compute_program_dashboard"]).compute_program_dashboard
 TfidfVectorizer = getattr(_monolith, "TfidfVectorizer", None)
 parse_sim_complaints = _monolith.parse_sim_complaints
 
@@ -105,6 +105,8 @@ _SUBMODULE_MAP: dict[str, str] = {
     # relevance
     "build_weighted_rank_sql": "socrata_toolkit.relevance",
     "websearch_to_tsquery_sql": "socrata_toolkit.relevance",
+    # program_metrics (also re-exported via analysis)
+    "compute_program_dashboard": "socrata_toolkit.program_metrics",
 }
 
 
