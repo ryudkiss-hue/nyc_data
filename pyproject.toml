@@ -45,6 +45,12 @@ psycopg = {version = ">=3.1", optional = true}
 plotly = {version = ">=5.0", optional = true}
 weasyprint = {version = ">=60.0", optional = true}
 python-pptx = {version = ">=0.6.23", optional = true}
+folium = {version = ">=0.14", optional = true}
+pymc = {version = ">=5.0", optional = true}
+arviz = {version = ">=0.16", optional = true}
+prophet = {version = ">=1.1", optional = true}
+beautifulsoup4 = {version = ">=4.11", optional = true}
+python-dateutil = {version = ">=2.8"}
 
 [tool.poetry.extras]
 # Default install: pip install -e .  (core analyst + Dash workflow)
@@ -57,7 +63,7 @@ viz = ["matplotlib", "plotly"]
 geo = ["shapely", "geopandas"]
 reports = ["plotly", "weasyprint"]
 ui = ["streamlit"]
-mission = ["streamlit", "sodapy", "geopandas", "shapely", "plotly", "pyarrow"]
+mission = ["streamlit", "sodapy", "geopandas", "shapely", "plotly", "pyarrow", "folium", "pymc", "arviz", "prophet", "beautifulsoup4"]
 pptx = ["python-pptx"]
 exe = ["pyinstaller"]
 all = ["openpyxl", "spacy", "shapely", "geopandas", "matplotlib", "plotly", "weasyprint", "streamlit", "psycopg", "python-pptx", "langchain", "langchain-community", "langchain-openai", "ollama", "openai", "huggingface-hub", "pyinstaller"]

@@ -4,8 +4,14 @@ from __future__ import annotations
 
 import logging
 
-import folium
 import pandas as pd
+
+try:
+    import folium
+    _HAS_FOLIUM = True
+except ImportError:
+    folium = None  # type: ignore[assignment]
+    _HAS_FOLIUM = False
 import plotly.graph_objects as go
 import streamlit as st
 import streamlit.components.v1 as components
@@ -252,8 +258,12 @@ def render_spatial_tab(loaded_frames: dict[str, pd.DataFrame]) -> None:
                 .head(30)
             )
             counts.columns = ["Location", "Count"]
-            html = _folium_bubble_map(counts, "Location", "Count", selected_text)
-            components.html(html, height=460)
+            if _HAS_FOLIUM:
+                html = _folium_bubble_map(counts, "Location", "Count", selected_text)
+                components.html(html, height=460)
+            else:
+                st.caption("Install `folium` for interactive bubble maps.")
+                st.dataframe(counts, use_container_width=True, hide_index=True)
 
     # ── Conflict detection ────────────────────────────────────────────────
     keys = list(loaded_frames.keys())

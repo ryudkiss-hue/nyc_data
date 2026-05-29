@@ -30,6 +30,8 @@ legacy_archive/*
 legacy_archive/**/__pycache__/
 legacy_archive/**/*.pyc
 outputs/
+!outputs/logs/
+!outputs/logs/.gitkeep
 *.log
 nyc_toolkit.log
 
