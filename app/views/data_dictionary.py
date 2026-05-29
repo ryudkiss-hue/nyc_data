@@ -6,6 +6,7 @@ import pandas as pd
 import streamlit as st
 
 from app.ui.components import empty_state, kpi_row, section_header
+from app.utils import annotations
 
 
 def _infer_kind(series: pd.Series) -> str:
@@ -113,3 +114,41 @@ def render_data_dictionary() -> None:
         file_name=f"{selected}_schema.csv",
         mime="text/csv",
     )
+
+    # ── Annotations ───────────────────────────────────────────────────────
+    st.divider()
+    note_n = annotations.count(selected)
+    section_header(
+        "Annotations",
+        f"Capture institutional knowledge about “{selected}” — {note_n} note(s).",
+        icon="📝",
+    )
+    with st.form(key=f"note_form_{selected}", clear_on_submit=True):
+        note_text = st.text_area("Add a note", placeholder="e.g. BBL field is sparse before 2019…")
+        fc1, fc2 = st.columns([1, 3])
+        tag = fc1.text_input("Tag", placeholder="quality")
+        submitted = fc2.form_submit_button("💾 Save note", use_container_width=True)
+        if submitted and annotations.add_note(selected, note_text, tag=tag):
+            st.rerun()
+
+    notes = annotations.list_notes(selected)
+    if notes:
+        for i, n in enumerate(reversed(notes)):
+            real_idx = len(notes) - 1 - i
+            with st.container(border=True):
+                meta = f"🏷️ {n['tag']} · " if n.get("tag") else ""
+                st.markdown(f"{meta}*{n['timestamp']}* — {n['author']}")
+                st.markdown(n["text"])
+                if st.button("🗑 Delete", key=f"del_note_{selected}_{real_idx}"):
+                    annotations.delete_note(selected, real_idx)
+                    st.rerun()
+        # Export
+        ec1, ec2 = st.columns(2)
+        ec1.download_button(
+            "⬇ Notes (CSV)", annotations.export_csv(),
+            file_name="annotations.csv", mime="text/csv", use_container_width=True,
+        )
+        ec2.download_button(
+            "⬇ Notes (JSON)", annotations.export_json().encode("utf-8"),
+            file_name="annotations.json", mime="application/json", use_container_width=True,
+        )

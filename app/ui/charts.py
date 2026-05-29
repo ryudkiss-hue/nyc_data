@@ -201,6 +201,164 @@ def small_multiples(
 
 
 # ---------------------------------------------------------------------------
+# Distribution — box plot
+# ---------------------------------------------------------------------------
+def box_plot(
+    df: pd.DataFrame,
+    *,
+    y: str,
+    group: str | None = None,
+    title: str = "",
+    height: int = 340,
+) -> go.Figure | None:
+    """Box plot of a numeric column, optionally split by a categorical group."""
+    if not _HAS_PLOTLY or df.empty or y not in df.columns:
+        return None
+    if not pd.api.types.is_numeric_dtype(df[y]):
+        return None
+    fig = px.box(
+        df,
+        x=group if group and group in df.columns else None,
+        y=y,
+        color=group if group and group in df.columns else None,
+        color_discrete_sequence=AGENCY_CATEGORICAL,
+        points="outliers",
+    )
+    apply_theme(fig, height=height)
+    if title:
+        fig.update_layout(title=title)
+    return fig
+
+
+# ---------------------------------------------------------------------------
+# Correlation heatmap (diverging)
+# ---------------------------------------------------------------------------
+def correlation_heatmap(
+    df: pd.DataFrame,
+    *,
+    title: str = "",
+    height: int = 420,
+    max_cols: int = 15,
+) -> go.Figure | None:
+    """Correlation matrix heatmap over numeric columns (RdBu diverging)."""
+    if not _HAS_PLOTLY or df.empty:
+        return None
+    num = df.select_dtypes(include="number")
+    if num.shape[1] < 2:
+        return None
+    if num.shape[1] > max_cols:
+        num = num.iloc[:, :max_cols]
+    corr = num.corr().round(2)
+    fig = go.Figure(
+        go.Heatmap(
+            z=corr.values,
+            x=list(corr.columns),
+            y=list(corr.index),
+            colorscale="RdBu",
+            zmid=0,
+            zmin=-1,
+            zmax=1,
+            text=corr.values,
+            texttemplate="%{text}",
+            textfont={"size": 10},
+            hovertemplate="%{x} × %{y}: %{z}<extra></extra>",
+        )
+    )
+    apply_theme(fig, height=height)
+    if title:
+        fig.update_layout(title=title)
+    return fig
+
+
+# ---------------------------------------------------------------------------
+# Treemap (hierarchical proportions)
+# ---------------------------------------------------------------------------
+def treemap(
+    df: pd.DataFrame,
+    *,
+    path: list[str],
+    values: str,
+    title: str = "",
+    height: int = 420,
+) -> go.Figure | None:
+    """Treemap for hierarchical category → value proportions."""
+    if not _HAS_PLOTLY or df.empty or values not in df.columns:
+        return None
+    valid_path = [c for c in path if c in df.columns]
+    if not valid_path:
+        return None
+    fig = px.treemap(
+        df,
+        path=valid_path,
+        values=values,
+        color_discrete_sequence=AGENCY_CATEGORICAL,
+    )
+    fig.update_traces(hovertemplate="<b>%{label}</b><br>%{value:,.0f}<extra></extra>")
+    apply_theme(fig, height=height)
+    if title:
+        fig.update_layout(title=title)
+    return fig
+
+
+# ---------------------------------------------------------------------------
+# Pareto (sorted bars + cumulative % line)
+# ---------------------------------------------------------------------------
+def pareto(
+    df: pd.DataFrame,
+    *,
+    category: str,
+    value: str,
+    title: str = "",
+    height: int = 360,
+    top_n: int = 15,
+) -> go.Figure | None:
+    """Pareto chart: descending bars with a cumulative-percentage line."""
+    if not _HAS_PLOTLY or df.empty:
+        return None
+    if category not in df.columns or value not in df.columns:
+        return None
+    agg = (
+        df.groupby(category, dropna=False)[value]
+        .sum()
+        .sort_values(ascending=False)
+        .head(top_n)
+        .reset_index()
+    )
+    if agg.empty:
+        return None
+    total = agg[value].sum() or 1
+    agg["cum_pct"] = 100 * agg[value].cumsum() / total
+    fig = go.Figure()
+    fig.add_trace(
+        go.Bar(
+            x=agg[category].astype(str),
+            y=agg[value],
+            name=value.replace("_", " ").title(),
+            marker_color="#3B82F6",
+            hovertemplate="<b>%{x}</b><br>%{y:,.0f}<extra></extra>",
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=agg[category].astype(str),
+            y=agg["cum_pct"],
+            name="Cumulative %",
+            yaxis="y2",
+            mode="lines+markers",
+            line={"color": "#F4C430", "width": 2},
+            hovertemplate="%{y:.1f}%<extra></extra>",
+        )
+    )
+    apply_theme(fig, height=height)
+    fig.update_layout(
+        title=title or None,
+        yaxis2={"overlaying": "y", "side": "right", "range": [0, 105],
+                "ticksuffix": "%", "gridcolor": "rgba(0,0,0,0)"},
+    )
+    return fig
+
+
+# ---------------------------------------------------------------------------
 # Density heatmap (sequential viridis)
 # ---------------------------------------------------------------------------
 def density_map(

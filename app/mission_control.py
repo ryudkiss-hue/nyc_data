@@ -12,10 +12,11 @@ Tabs
 5.  🗺️  Spatial         — maps, hotspots, conflict detection
 6.  🏛️  Governance      — lineage DAG, audit trail, compliance
 7.  🤖  AI Copilot      — Gemini · OpenAI · Ollama (selectable)
-8.  📖  Dictionary      — searchable field-level metadata browser
-9.  📦  Export          — CSV / Excel / JSON / ZIP export center
-10. ⚙️  Settings        — readiness, health, cache, logs
-11. 🔬  Studio          — Socrata data architecture studio
+8.  📖  Dictionary      — searchable field metadata + annotations
+9.  🔀  Compare         — cross-dataset schema & distribution comparison
+10. 📦  Export          — CSV / Excel / JSON / ZIP export center
+11. ⚙️  Settings        — readiness, health, cache, logs
+12. 🔬  Studio          — Socrata data architecture studio
 
 Entry points
 ------------
@@ -51,6 +52,7 @@ from app.utils import url_state
 from app.utils.i18n import t
 
 # ── View modules ────────────────────────────────────────────────────────────
+from app.views.compare import render_compare_tab
 from app.views.data_dictionary import render_data_dictionary
 from app.views.export_center import render_export_center
 from app.views.home import render_home_page
@@ -606,6 +608,7 @@ def main() -> None:
         tab_governance,
         tab_copilot,
         tab_dictionary,
+        tab_compare,
         tab_export,
         tab_settings,
         tab_studio,
@@ -618,6 +621,7 @@ def main() -> None:
         "🏛️ Governance",
         "🤖 AI Copilot",
         "📖 Dictionary",
+        "🔀 Compare",
         "📦 Export",
         "⚙️ Settings",
         "🔬 Studio",
@@ -646,6 +650,9 @@ def main() -> None:
 
     with tab_dictionary:
         render_data_dictionary()
+
+    with tab_compare:
+        render_compare_tab()
 
     with tab_export:
         render_export_center()
