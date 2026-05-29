@@ -83,25 +83,25 @@ def render_home_page() -> None:
         with st.container(border=True):
             st.markdown("**🔍 QA/QC Ledger**")
             st.caption("Cross-check lot ownership against MapPLUTO")
-            if st.button("Open QA/QC", width="stretch"):
+            if st.button("Open QA/QC", use_container_width=True):
                 st.session_state["_quick_nav"] = "qa"
     with qa2:
         with st.container(border=True):
             st.markdown("**🗺️ Spatial Conflicts**")
             st.caption("Detect construction schedule intersections")
-            if st.button("Open Spatial", width="stretch"):
+            if st.button("Open Spatial", use_container_width=True):
                 st.session_state["_quick_nav"] = "spatial"
     with qa3:
         with st.container(border=True):
             st.markdown("**🩺 Data Quality**")
             st.caption("Column profiling and quality scores")
-            if st.button("Open Quality", width="stretch"):
+            if st.button("Open Quality", use_container_width=True):
                 st.session_state["_quick_nav"] = "quality"
     with qa4:
         with st.container(border=True):
             st.markdown("**📥 Ingest Matrix**")
             st.caption("All datasets with row counts and status")
-            if st.button("Open Ingest", width="stretch"):
+            if st.button("Open Ingest", use_container_width=True):
                 st.session_state["_quick_nav"] = "ingest"
 
     # ---- Dataset registry summary ----
@@ -139,7 +139,7 @@ def render_home_page() -> None:
         import pandas as pd
 
         log_df = pd.DataFrame(rows)
-        st.dataframe(log_df, width="stretch", hide_index=True)
+        st.dataframe(log_df, use_container_width=True, hide_index=True)
     else:
         st.caption("No ingestion events yet. Load a workflow to see activity here.")
 
