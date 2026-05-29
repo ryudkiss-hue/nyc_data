@@ -16,6 +16,8 @@ import plotly.graph_objects as go
 import streamlit as st
 import streamlit.components.v1 as components
 
+from app.ui.components import kpi_row, section_header
+
 log = logging.getLogger(__name__)
 
 BOROUGH_COORDS: dict[str, list[float]] = {
@@ -178,10 +180,11 @@ def _detect_spatial_conflicts(
 
 def render_spatial_tab(loaded_frames: dict[str, pd.DataFrame]) -> None:
     """Render the Spatial Analytics tab."""
-    st.markdown("### 🗺️ Spatial Analytics")
-    st.caption(
-        "Geospatial distribution, density hotspots, and construction conflict detection "
-        "across all loaded NYC datasets."
+    section_header(
+        "Spatial Analytics",
+        "Geospatial distribution, density hotspots, and construction conflict "
+        "detection across all loaded NYC datasets.",
+        icon="🗺️",
     )
 
     if not loaded_frames:
@@ -207,10 +210,13 @@ def render_spatial_tab(loaded_frames: dict[str, pd.DataFrame]) -> None:
     total_points = sum(
         len(_to_numeric_coords(df)) for df in geo_datasets.values()
     )
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Geo-referenced datasets", len(geo_datasets))
-    c2.metric("Total spatial records", f"{total_points:,}")
-    c3.metric("Text-location datasets", len(text_location_datasets))
+    kpi_row(
+        [
+            {"label": "Geo-referenced datasets", "value": len(geo_datasets), "icon": "📍"},
+            {"label": "Total spatial records", "value": f"{total_points:,}", "icon": "🗺️"},
+            {"label": "Text-location datasets", "value": len(text_location_datasets), "icon": "🏙️"},
+        ]
+    )
     st.divider()
 
     # ── Borough distribution ───────────────────────────────────────────────

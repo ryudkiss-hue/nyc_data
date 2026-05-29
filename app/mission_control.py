@@ -47,6 +47,7 @@ from app.ui.theme import (
     render_agency_header,
     render_skip_link,
 )
+from app.utils import url_state
 from app.utils.i18n import t
 
 # ── View modules ────────────────────────────────────────────────────────────
@@ -527,6 +528,41 @@ def _render_sidebar() -> tuple[str, str, int, int]:
 
         st.markdown("---")
 
+        # Saved views — bookmark agency/title combos, restore via URL state
+        with st.expander("⭐ Saved views", expanded=False):
+            view_state = {
+                "agency": target_agency,
+                "title": target_title,
+                "backend": backend,
+            }
+            new_name = st.text_input(
+                "Name this view", placeholder="e.g. DOT Analysts", key="save_view_name"
+            )
+            if st.button("💾 Save current view", use_container_width=True, key="save_view_btn"):
+                if new_name.strip():
+                    url_state.save_view(new_name, view_state)
+                    st.success(f"Saved “{new_name.strip()}”.")
+                else:
+                    st.warning("Enter a name first.")
+
+            saved = url_state.list_views()
+            if saved:
+                pick = st.selectbox("Restore a view", ["—", *saved], key="restore_view_pick")
+                cols = st.columns(2)
+                if cols[0].button("↩ Load", use_container_width=True, key="load_view_btn") and pick != "—":
+                    state = url_state.load_view(pick) or {}
+                    for k, v in state.items():
+                        st.query_params[k] = str(v)
+                    st.rerun()
+                if cols[1].button("🗑 Delete", use_container_width=True, key="del_view_btn") and pick != "—":
+                    url_state.delete_view(pick)
+                    st.rerun()
+                # Shareable link for the current selection
+                st.caption("Shareable link for current view:")
+                st.code(url_state.share_url(view_state), language="text")
+
+        st.markdown("---")
+
         # Reset / session
         if st.button("🔄 Reset Session", use_container_width=True, key="reset_btn"):
             for k in ["apex_results", "df_jobs_cache", "df_payroll_cache",
@@ -534,7 +570,7 @@ def _render_sidebar() -> tuple[str, str, int, int]:
                 st.session_state[k] = None if k != "loaded_frames" else {}
             st.rerun()
 
-        st.caption(f"v2.0 · {datetime.now().strftime('%Y-%m-%d')}")
+        st.caption(f"v3.0 · {datetime.now().strftime('%Y-%m-%d')}")
 
     return target_agency, target_title, scrape_start, scrape_end
 
