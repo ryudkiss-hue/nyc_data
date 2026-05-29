@@ -181,27 +181,56 @@ class SocrataClient:
 
     def fetch_geojson(self, domain: str, fourfour: str, where: str | None = None, max_rows: int | None = None) -> dict[str, Any]:
         # Fetch GeoJSON in pages and merge into a single FeatureCollection.
+        # Uses SODA3 POST endpoint when an app token is configured; falls back
+        # to the SODA2 GeoJSON endpoint otherwise.
         features: list[dict[str, Any]] = []
         offset = 0
         remaining = max_rows
-        while True:
-            limit = self.config.page_size if remaining is None else min(self.config.page_size, remaining)
-            params: dict[str, Any] = {"$limit": limit, "$offset": offset}
-            if where:
-                params["$where"] = where
-            url = f"https://{domain}/resource/{fourfour}.geojson"
-            resp = with_retries(lambda: requests.get(url, params=params, headers=self._headers(), timeout=self.config.timeout))
-            fc = resp.json()
-            batch = fc.get("features", [])
-            if not batch:
-                break
-            features.extend(batch)
-            got = len(batch)
-            offset += got
-            if remaining is not None:
-                remaining -= got
-                if remaining <= 0:
+
+        if self.config.app_token:
+            # SODA3 path: POST to /api/v3/views/{id}/query.geojson
+            url = f"https://{domain}/api/v3/views/{fourfour}/query.geojson"
+            while True:
+                limit = self.config.page_size if remaining is None else min(self.config.page_size, remaining)
+                soql = self._build_soql(limit, offset, where=where)
+                resp = with_retries(lambda: requests.post(url, json={"query": soql}, headers=self._headers(), timeout=self.config.timeout))
+                fc = resp.json()
+                batch = fc.get("features", [])
+                if not batch:
                     break
+                features.extend(batch)
+                got = len(batch)
+                offset += got
+                if remaining is not None:
+                    remaining -= got
+                    if remaining <= 0:
+                        break
+        else:
+            # SODA2 fallback: GET /resource/{id}.geojson
+            import warnings as _warnings
+            _warnings.warn(
+                "No SOCRATA_APP_TOKEN set; falling back to SODA2 GET for GeoJSON.",
+                stacklevel=2,
+            )
+            while True:
+                limit = self.config.page_size if remaining is None else min(self.config.page_size, remaining)
+                params: dict[str, Any] = {"$limit": limit, "$offset": offset}
+                if where:
+                    params["$where"] = where
+                url_soda2 = f"https://{domain}/resource/{fourfour}.geojson"
+                resp = with_retries(lambda: requests.get(url_soda2, params=params, headers=self._headers(), timeout=self.config.timeout))
+                fc = resp.json()
+                batch = fc.get("features", [])
+                if not batch:
+                    break
+                features.extend(batch)
+                got = len(batch)
+                offset += got
+                if remaining is not None:
+                    remaining -= got
+                    if remaining <= 0:
+                        break
+
         # Return a merged FeatureCollection for downstream exporters
         return {"type": "FeatureCollection", "features": features}
 
