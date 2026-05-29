@@ -35,21 +35,25 @@ Outputs land in `outputs/analyst_pack/YYYY-MM-DD/` (Excel, Markdown, HTML, JSON)
 ## 3. Open the dashboard
 
 ```bash
-pip install -e ".[mission]"
+pip install -e ".[mission,postgres,xlsx]"
 python main.py
 ```
 
 No Socrata token? Demo mode loads automatically (or set `MISSION_DEMO=1`).
 
-Browser: **http://localhost:8501** (Streamlit Mission Control)
+Browser: **http://localhost:8501** (Streamlit Mission Control — `app/mission_control.py`)
 
-Legacy Analyst Pack UI (Dash): `python legacy_archive/dash_app/app.py` → http://127.0.0.1:8050
+**Alternative — Render one-click deploy:** push the repo to GitHub and connect it at [render.com](https://render.com) → New Blueprint. No local setup required; `render.yaml` handles everything. Set `SOCRATA_APP_TOKEN` in the Render dashboard for live data.
 
-| Page | What to do |
-|------|------------|
-| **Home** | Run pack, see latest files |
-| **Review** | Approve conflicts and sign-offs |
-| **Publish** | Send pack to share folder, email, Teams, or BI |
+Legacy Analyst Pack UI (archived Dash): `python legacy_archive/dash_app/app.py` → http://127.0.0.1:8050
+
+| Tab | What to do |
+|-----|------------|
+| **Home** | Load datasets, see audit trail |
+| **Agency Workflows** | QA / Spatial / Contract / Productivity views |
+| **Data Quality** | Health scores, SLA freshness, CSV export |
+| **AI Copilot** | Chat with your data (set `GEMINI_API_KEY` or `OPENAI_API_KEY`) |
+| **Settings & Quality** | Readiness score, system health |
 
 ## 4. Nightly pack (optional)
 
