@@ -1,13 +1,14 @@
 """Quality expectations module for defining and validating data quality rules."""
 from dataclasses import dataclass, field
-from enum import Enum, auto
-from typing import Any, Dict, List, Optional, Set
+from enum import Enum
+from typing import Any
+
 import pandas as pd
 
 __all__ = [
-    "Expectation", "ExpectationType", "SeverityLevel", "ExpectationSuite", 
-    "ValidationSuiteResult", "create_sidewalk_inspections_suite", 
-    "create_311_complaints_suite", "QualityExpectation", 
+    "Expectation", "ExpectationType", "SeverityLevel", "ExpectationSuite",
+    "ValidationSuiteResult", "create_sidewalk_inspections_suite",
+    "create_311_complaints_suite", "QualityExpectation",
     "define_expectation", "validate_against_expectation"
 ]
 
@@ -25,8 +26,8 @@ class SeverityLevel(str, Enum):
 @dataclass
 class Expectation:
     expectation_type: ExpectationType
-    kwargs: Dict[str, Any]
-    meta: Dict[str, Any] = field(default_factory=dict)
+    kwargs: dict[str, Any]
+    meta: dict[str, Any] = field(default_factory=dict)
     severity: SeverityLevel = SeverityLevel.MEDIUM
 
 @dataclass
@@ -40,7 +41,7 @@ class ExpectationSuite:
         self.name = name
         self.description = description
         self.version = version
-        self.expectations: List[Expectation] = []
+        self.expectations: list[Expectation] = []
 
     def add_column_exists(self, column: str, severity: SeverityLevel = SeverityLevel.CRITICAL):
         self.expectations.append(Expectation(
@@ -69,7 +70,7 @@ class ExpectationSuite:
     def validate(self, df: pd.DataFrame) -> ValidationSuiteResult:
         passed_count = 0
         failed_count = 0
-        
+
         for exp in self.expectations:
             col = exp.kwargs.get("column")
             if exp.expectation_type == ExpectationType.COLUMN_EXISTS:
@@ -95,11 +96,11 @@ class ExpectationSuite:
                     passed_count += 1
                 else:
                     failed_count += 1
-        
+
         status = "FAIL" if failed_count > 0 else "PASS"
         return ValidationSuiteResult(overall_status=status, passed_count=passed_count, failed_count=failed_count)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "description": self.description,
@@ -137,11 +138,11 @@ def create_311_complaints_suite() -> ExpectationSuite:
 @dataclass
 class QualityExpectation:
     name: str
-    rules: Dict[str, Any]
+    rules: dict[str, Any]
     def validate(self, data: Any) -> bool:
         return True
 
-def define_expectation(name: str, rules: Dict[str, Any]) -> QualityExpectation:
+def define_expectation(name: str, rules: dict[str, Any]) -> QualityExpectation:
     return QualityExpectation(name=name, rules=rules)
 
 def validate_against_expectation(data: Any, expectation: QualityExpectation) -> bool:

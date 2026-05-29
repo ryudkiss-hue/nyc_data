@@ -12,8 +12,8 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import datetime, timedelta, timezone
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class FreshnessInfo:
     """Information about data freshness and staleness.
-    
+
     Attributes:
         node_id: Node being analyzed
         last_execution_time: When it was last executed
@@ -31,23 +31,23 @@ class FreshnessInfo:
         next_expected_update: Expected next update time
     """
     node_id: str
-    last_execution_time: Optional[datetime] = None
+    last_execution_time: datetime | None = None
     age_seconds: float = 0.0
     is_stale: bool = False
     stale_threshold_seconds: float = 86400.0  # 24 hours default
-    next_expected_update: Optional[datetime] = None
+    next_expected_update: datetime | None = None
 
 
 class LineageQuery:
     """Query interface for data lineage relationships and analysis.
-    
+
     Provides methods to discover data lineage, find dependencies,
     search nodes, and analyze data freshness.
     """
 
-    def __init__(self, dag: Optional[Any] = None, persistence: Optional[Any] = None) -> None:
+    def __init__(self, dag: Any | None = None, persistence: Any | None = None) -> None:
         """Initialize query interface.
-        
+
         Args:
             dag: DAG object (LineageCore.DAG)
             persistence: LineagePersistence instance for queries
@@ -55,17 +55,17 @@ class LineageQuery:
         self.dag = dag
         self.persistence = persistence
 
-    def find_sources(self, node_id: str) -> List[str]:
+    def find_sources(self, node_id: str) -> list[str]:
         """Find all upstream data sources for a node.
-        
+
         Returns direct and indirect sources that feed into this node.
-        
+
         Args:
             node_id: Target node ID
-            
+
         Returns:
             List of upstream source node IDs, ordered by distance
-            
+
         Example:
             sources = query.find_sources('transformation_xyz')
             # Returns: ['ingest.construction_list', 'ingest.complaints']
@@ -75,17 +75,17 @@ class LineageQuery:
 
         return self.dag.get_upstream_dependencies(node_id)
 
-    def find_consumers(self, node_id: str) -> List[str]:
+    def find_consumers(self, node_id: str) -> list[str]:
         """Find all downstream consumers of a node.
-        
+
         Returns nodes that depend on this node's output.
-        
+
         Args:
             node_id: Source node ID
-            
+
         Returns:
             List of downstream consumer node IDs, ordered by distance
-            
+
         Example:
             consumers = query.find_consumers('ingest.construction_list')
             # Returns: ['transform.clean_construction', 'sink.postgres_warehouse']
@@ -95,18 +95,18 @@ class LineageQuery:
 
         return self.dag.get_downstream_consumers(node_id)
 
-    def find_path(self, source_id: str, target_id: str) -> Optional[List[str]]:
+    def find_path(self, source_id: str, target_id: str) -> list[str] | None:
         """Find transformation path between two nodes.
-        
+
         Finds one (shortest) path of transformations from source to target.
-        
+
         Args:
             source_id: Starting node ID
             target_id: Ending node ID
-            
+
         Returns:
             List of node IDs in path (including source and target), or None if no path
-            
+
         Example:
             path = query.find_path('ingest.construction_list', 'sink.reporting_db')
             # Returns: ['ingest.construction_list', 'transform.clean', 'transform.aggregate', 'sink.reporting_db']
@@ -123,14 +123,14 @@ class LineageQuery:
         except Exception:
             return None
 
-    def find_all_paths(self, source_id: str, target_id: str, limit: int = 10) -> List[List[str]]:
+    def find_all_paths(self, source_id: str, target_id: str, limit: int = 10) -> list[list[str]]:
         """Find all paths between two nodes.
-        
+
         Args:
             source_id: Starting node ID
             target_id: Ending node ID
             limit: Maximum number of paths to return
-            
+
         Returns:
             List of paths (each path is a list of node IDs)
         """
@@ -150,26 +150,26 @@ class LineageQuery:
 
     def search_nodes(
         self,
-        name: Optional[str] = None,
-        node_type: Optional[str] = None,
-        owner: Optional[str] = None,
-        tag: Optional[str] = None,
-    ) -> List[str]:
+        name: str | None = None,
+        node_type: str | None = None,
+        owner: str | None = None,
+        tag: str | None = None,
+    ) -> list[str]:
         """Search for nodes matching criteria.
-        
+
         Args:
             name: Substring of node name to match
             node_type: Node type filter (ingestion, transformation, sink, etc.)
             owner: Owner email/user ID filter
             tag: Tag filter (matches if node has this tag)
-            
+
         Returns:
             List of matching node IDs
-            
+
         Example:
             # Find all sinks owned by data-eng team
             sinks = query.search_nodes(node_type='sink', owner='data-eng')
-            
+
             # Find all nodes with 'construction' in name
             construction_nodes = query.search_nodes(name='construction')
         """
@@ -199,15 +199,15 @@ class LineageQuery:
 
         return results
 
-    def get_node_info(self, node_id: str) -> Optional[Dict[str, Any]]:
+    def get_node_info(self, node_id: str) -> dict[str, Any] | None:
         """Get complete information about a node.
-        
+
         Args:
             node_id: Node to retrieve
-            
+
         Returns:
             Dictionary with node details, or None if not found
-            
+
         Example:
             info = query.get_node_info('transform.construction_cleaning')
         """
@@ -222,16 +222,16 @@ class LineageQuery:
 
     def get_freshness(self, node_id: str, stale_threshold_hours: float = 24) -> FreshnessInfo:
         """Analyze data freshness for a node.
-        
+
         Determines if data is current or stale based on last execution time.
-        
+
         Args:
             node_id: Node to analyze
             stale_threshold_hours: Hours after which data is considered stale
-            
+
         Returns:
             FreshnessInfo with staleness analysis
-            
+
         Example:
             freshness = query.get_freshness('ingest.construction_list', stale_threshold_hours=12)
             if freshness.is_stale:
@@ -270,14 +270,14 @@ class LineageQuery:
 
         return freshness
 
-    def get_completeness(self, node_id: str) -> Dict[str, Any]:
+    def get_completeness(self, node_id: str) -> dict[str, Any]:
         """Analyze data completeness metrics for a node.
-        
+
         Returns quality metrics from recent executions.
-        
+
         Args:
             node_id: Node to analyze
-            
+
         Returns:
             Dictionary with completeness metrics
         """
@@ -349,15 +349,15 @@ class LineageQuery:
 
         return metrics
 
-    def find_by_tag(self, tag: str) -> List[str]:
+    def find_by_tag(self, tag: str) -> list[str]:
         """Find all nodes with a specific tag.
-        
+
         Args:
             tag: Tag to search for
-            
+
         Returns:
             List of node IDs with this tag
-            
+
         Example:
             daily_nodes = query.find_by_tag('daily')
             high_priority = query.find_by_tag('high-priority')
@@ -370,12 +370,12 @@ class LineageQuery:
             if tag in node.tags
         ]
 
-    def find_by_owner(self, owner: str) -> List[str]:
+    def find_by_owner(self, owner: str) -> list[str]:
         """Find all nodes owned by a specific user/team.
-        
+
         Args:
             owner: Owner email or user ID
-            
+
         Returns:
             List of node IDs owned by this owner
         """
@@ -387,12 +387,12 @@ class LineageQuery:
             if node.owner == owner
         ]
 
-    def find_by_type(self, node_type: str) -> List[str]:
+    def find_by_type(self, node_type: str) -> list[str]:
         """Find all nodes of a specific type.
-        
+
         Args:
             node_type: Type filter (ingestion, transformation, sink, etc.)
-            
+
         Returns:
             List of node IDs of this type
         """
@@ -404,9 +404,9 @@ class LineageQuery:
             if node.node_type.value == node_type
         ]
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get overall lineage statistics.
-        
+
         Returns:
             Dictionary with DAG statistics
         """
@@ -435,9 +435,9 @@ class LineageQuery:
 
         return stats
 
-    def validate_lineage(self) -> Dict[str, Any]:
+    def validate_lineage(self) -> dict[str, Any]:
         """Validate lineage integrity.
-        
+
         Returns:
             Dictionary with validation results
         """

@@ -1,41 +1,38 @@
 from __future__ import annotations
 
-from concurrent.futures import ThreadPoolExecutor
 import json
 import logging
+from concurrent.futures import ThreadPoolExecutor
 
 import click
 import pandas as pd
 
-from ..analysis import profile_dataframe, quality_report
-from .config import get_default, load_local_config
-from ..analysis import generate_text_insights
-from .logging_utils import get_logger, write_run_report
+from ..analysis import generate_text_insights, profile_dataframe, quality_report
 from ..llm.duck_bridge import LLMAugmentConfig, augment_dataframe_with_llm
 from ..spatial.core import spatial_intersects_join
+from .config import get_default, load_local_config
+from .logging_utils import get_logger, write_run_report
+
 try:
     from ..nlp.advanced import analyze_text, translate_text  # type: ignore
 except Exception:  # pragma: no cover
     analyze_text = None  # type: ignore
     translate_text = None  # type: ignore
-from .state import load_state, save_state
+from ..pipeline.streaming import stream_pipeline
 from ..quality.validation import validate_required_columns
 from .client import SocrataClient, SocrataConfig
 from .exporters import MongoExporter, PostgresExporter, XLSXExporter
-from ..pipeline.streaming import stream_pipeline
+from .state import load_state, save_state
+
 try:
-    from ..sql.conflict import ConflictResolver, PostGISConflictResolver  # type: ignore
     from ..sql.builder import in_clause  # type: ignore
+    from ..sql.conflict import ConflictResolver, PostGISConflictResolver  # type: ignore
 except Exception:  # pragma: no cover
     ConflictResolver = None  # type: ignore
     PostGISConflictResolver = None  # type: ignore
     in_clause = None  # type: ignore
-from ..alerts.manager import AlertManager, CLINotifier, EmailNotifier, DBNotifier, Alert
-from ..discovery.schema import SchemaRegistry, SchemaValidator, BackwardCompatibilityChecker
-from ..lineage.core import DAG, TransformationNode, NodeType
-from ..lineage.query import LineageQuery
-from ..lineage.visualization import LineageVisualizer
-from ..lineage.impact import ImpactAnalysis
+from ..alerts.manager import Alert, AlertManager, CLINotifier, DBNotifier, EmailNotifier
+from ..discovery.schema import BackwardCompatibilityChecker, SchemaRegistry, SchemaValidator
 
 
 def _client() -> SocrataClient:
@@ -485,7 +482,7 @@ def conflict_cmd(proposed_domain, proposed_fourfour, proposed_file, proposed_geo
 def batch_search_cmd(domain, fourfour, field, file_path, out):
     """Run a batch search against a dataset field using a newline-separated file of values."""
     values: list[str] = []
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         for ln in f:
             v = ln.strip()
             if v:
@@ -730,7 +727,8 @@ def migrate_cmd(dsn, migrations_dir):
         import psycopg
     except Exception as exc:
         raise click.ClickException("Install postgres extras: pip install '.[postgres]'") from exc
-    import glob, os
+    import glob
+    import os
     files = sorted(glob.glob(os.path.join(migrations_dir, "*.sql")))
     if not files:
         click.echo("No migration files found")
@@ -739,7 +737,7 @@ def migrate_cmd(dsn, migrations_dir):
     cur = conn.cursor()
     for f in files:
         click.echo(f"Applying {f}")
-        with open(f, "r", encoding="utf-8") as fh:
+        with open(f, encoding="utf-8") as fh:
             cur.execute(fh.read())
     conn.commit()
     cur.close()
@@ -958,11 +956,11 @@ def schema_list_cmd(ctx, dataset_id, json_out):
     """List all schema versions for a dataset."""
     registry = ctx.obj["registry"]
     history = registry._load_schema_history(dataset_id)
-    
+
     if not history:
         click.echo(f"No schema versions found for {dataset_id}")
         return
-    
+
     payload = []
     for schema in history:
         payload.append({
@@ -971,7 +969,7 @@ def schema_list_cmd(ctx, dataset_id, json_out):
             "columns": len(schema.columns),
             "row_count": schema.row_count,
         })
-    
+
     if json_out:
         with open(json_out, "w", encoding="utf-8") as f:
             json.dump(payload, f, indent=2)
@@ -988,11 +986,11 @@ def schema_current_cmd(ctx, dataset_id, json_out):
     """Show the latest schema version for a dataset."""
     registry = ctx.obj["registry"]
     schema = registry.get_schema_version(dataset_id)
-    
+
     if not schema:
         click.echo(f"No schema found for {dataset_id}")
         return
-    
+
     payload = {
         "dataset_id": schema.dataset_id,
         "version": schema.version,
@@ -1009,7 +1007,7 @@ def schema_current_cmd(ctx, dataset_id, json_out):
         },
         "metadata": schema.metadata,
     }
-    
+
     if json_out:
         with open(json_out, "w", encoding="utf-8") as f:
             json.dump(payload, f, indent=2)
@@ -1026,22 +1024,22 @@ def schema_current_cmd(ctx, dataset_id, json_out):
 def schema_diff_cmd(ctx, dataset_id, version1, version2):
     """Show schema changes between two versions."""
     registry = ctx.obj["registry"]
-    
+
     schema_v1 = registry.get_schema_version(dataset_id, version1)
     schema_v2 = registry.get_schema_version(dataset_id, version2)
-    
+
     if not schema_v1:
         click.echo(f"Version {version1} not found for {dataset_id}")
         return
     if not schema_v2:
         click.echo(f"Version {version2} not found for {dataset_id}")
         return
-    
+
     # Manually detect changes between v1 and v2
     changes = []
     cols_v1 = schema_v1.columns
     cols_v2 = schema_v2.columns
-    
+
     # Deleted columns
     for col_name in cols_v1:
         if col_name not in cols_v2:
@@ -1051,7 +1049,7 @@ def schema_diff_cmd(ctx, dataset_id, version1, version2):
                 "description": f"Column '{col_name}' deleted",
                 "breaking": True,
             })
-    
+
     # Added columns
     for col_name in cols_v2:
         if col_name not in cols_v1:
@@ -1063,7 +1061,7 @@ def schema_diff_cmd(ctx, dataset_id, version1, version2):
                 "description": f"Column '{col_name}' added",
                 "breaking": False,
             })
-    
+
     # Type changes
     for col_name in cols_v1:
         if col_name in cols_v2:
@@ -1076,7 +1074,7 @@ def schema_diff_cmd(ctx, dataset_id, version1, version2):
                     "description": f"Column '{col_name}' type changed",
                     "breaking": True,
                 })
-    
+
     if not changes:
         click.echo(f"No changes between v{version1} and v{version2}")
     else:
@@ -1097,31 +1095,31 @@ def schema_validate_cmd(ctx, dataset_id, jsonl_file):
     """Validate a JSONL file against a schema."""
     registry = ctx.obj["registry"]
     schema = registry.get_schema_version(dataset_id)
-    
+
     if not schema:
         raise click.ClickException(f"No schema found for {dataset_id}")
-    
+
     validator = SchemaValidator(schema)
-    
+
     # Load and validate records
     records = []
-    with open(jsonl_file, "r", encoding="utf-8") as f:
+    with open(jsonl_file, encoding="utf-8") as f:
         for idx, line in enumerate(f, 1):
             try:
                 record = json.loads(line)
                 records.append(record)
             except json.JSONDecodeError as e:
                 click.echo(f"Error parsing line {idx}: {e}")
-    
+
     valid_count, errors = validator.validate_batch(records)
-    
+
     click.echo(f"Validation results for {dataset_id}:")
     click.echo(f"  Total records: {len(records)}")
     click.echo(f"  Valid records: {valid_count}")
     click.echo(f"  Invalid records: {len(records) - valid_count}")
-    
+
     if errors:
-        click.echo(f"\nFirst 10 errors:")
+        click.echo("\nFirst 10 errors:")
         for error in errors[:10]:
             click.echo(f"  - {error}")
         if len(errors) > 10:
@@ -1136,35 +1134,35 @@ def schema_validate_cmd(ctx, dataset_id, jsonl_file):
 def schema_check_compat_cmd(ctx, dataset_id, jsonl_file, strict):
     """Check schema backward compatibility."""
     import pandas as pd
-    
+
     registry = ctx.obj["registry"]
     old_schema = registry.get_schema_version(dataset_id)
-    
+
     if not old_schema:
         click.echo(f"No previous schema found for {dataset_id}")
         return
-    
+
     # Load new data and extract schema
     records = []
-    with open(jsonl_file, "r", encoding="utf-8") as f:
+    with open(jsonl_file, encoding="utf-8") as f:
         for line in f:
             if line.strip():
                 records.append(json.loads(line))
-    
+
     if not records:
         raise click.ClickException("No records found in JSONL file")
-    
+
     df = pd.DataFrame(records)
     new_schema = SchemaRegistry.extract_schema_from_dataframe(df, dataset_id)
-    
+
     # Check compatibility
     checker = BackwardCompatibilityChecker(strict_mode=strict)
     is_compatible, violations = checker.check_compatibility(old_schema, new_schema)
-    
+
     click.echo(f"Backward compatibility check for {dataset_id}:")
     click.echo(f"  Compatible: {is_compatible}")
     click.echo(f"  Violations: {len(violations)}")
-    
+
     if violations:
         click.echo("\nDetailed violations:")
         for violation in violations:
@@ -1191,16 +1189,17 @@ def material_group(ctx):
 def material_list(ctx, category, json_out):
     """List all defined material types."""
     try:
-        from socrata_toolkit.material.definitions import MATERIAL_DEFINITIONS, get_material_by_category
-        from socrata_toolkit.material.standards import MaterialCategory
-        
+        from socrata_toolkit.material.definitions import (
+            MATERIAL_DEFINITIONS,
+        )
+
         materials = []
-        
+
         for key, spec in MATERIAL_DEFINITIONS.items():
             if category:
                 if spec.category.value != category:
                     continue
-            
+
             materials.append({
                 "id": spec.material_id,
                 "name": spec.name,
@@ -1210,7 +1209,7 @@ def material_list(ctx, category, json_out):
                 "lifecycle_cost_per_sqft": spec.lifecycle_cost_per_sqft,
                 "sustainability_score": spec.sustainability_score,
             })
-        
+
         if json_out:
             with open(json_out, "w", encoding="utf-8") as f:
                 json.dump(materials, f, indent=2)
@@ -1229,13 +1228,13 @@ def material_show(material_id, json_out):
     """Show complete specification for a material."""
     try:
         from socrata_toolkit.material.definitions import get_material_by_id
-        
+
         spec = get_material_by_id(material_id)
         if not spec:
             raise click.ClickException(f"Material {material_id} not found")
-        
+
         output = spec.to_dict()
-        
+
         if json_out:
             with open(json_out, "w", encoding="utf-8") as f:
                 json.dump(output, f, indent=2)
@@ -1263,11 +1262,11 @@ def material_maintenance_schedule(material_id):
     """Show maintenance schedule for a material."""
     try:
         from socrata_toolkit.material.definitions import get_material_by_id
-        
+
         spec = get_material_by_id(material_id)
         if not spec:
             raise click.ClickException(f"Material {material_id} not found")
-        
+
         click.echo(f"Maintenance Schedule: {spec.name}")
         click.echo(f"  Routine interval: Every {spec.maintenance_schedule.routine_interval_years} years")
         click.echo(f"  Preventive overlay: Year {spec.maintenance_schedule.preventive_overlay_years}")
@@ -1286,13 +1285,13 @@ def material_ada_rules(material_id):
     try:
         from socrata_toolkit.material.definitions import get_material_by_id
         from socrata_toolkit.standards.design import get_rules_for_material
-        
+
         spec = get_material_by_id(material_id)
         if not spec:
             raise click.ClickException(f"Material {material_id} not found")
-        
+
         rules = get_rules_for_material(spec.category)
-        
+
         click.echo(f"ADA Compliance Rules for {spec.name}:")
         for rule in rules:
             click.echo(f"\n  {rule.rule_id}: {rule.title}")
@@ -1317,15 +1316,16 @@ def compliance_group(ctx):
 def compliance_check(material_id, condition, json_out):
     """Check compliance for a material type."""
     try:
-        from socrata_toolkit.material.definitions import get_material_by_id
-        from socrata_toolkit.material.standards import SurfaceCondition, SurfaceAssessment
-        from socrata_toolkit.material.compliance import MaterialCompliance
         from datetime import datetime
-        
+
+        from socrata_toolkit.material.compliance import MaterialCompliance
+        from socrata_toolkit.material.definitions import get_material_by_id
+        from socrata_toolkit.material.standards import SurfaceAssessment, SurfaceCondition
+
         spec = get_material_by_id(material_id)
         if not spec:
             raise click.ClickException(f"Material {material_id} not found")
-        
+
         # Create dummy assessment
         assessment = SurfaceAssessment(
             location_id="test-location",
@@ -1333,13 +1333,13 @@ def compliance_check(material_id, condition, json_out):
             last_inspected=datetime.now(),
             condition=SurfaceCondition(condition),
         )
-        
+
         # Check compliance
         checker = MaterialCompliance()
         report = checker.generate_compliance_report(assessment, location_description=spec.name)
-        
+
         output = report.to_dict()
-        
+
         if json_out:
             with open(json_out, "w", encoding="utf-8") as f:
                 json.dump(output, f, indent=2)
@@ -1349,7 +1349,7 @@ def compliance_check(material_id, condition, json_out):
             click.echo(f"  Status: {report.overall_status.value}")
             click.echo(f"  Score: {report.overall_score:.1f}/100")
             click.echo(f"  ADA Violations: {report.ada_compliance.critical_violations + report.ada_compliance.high_violations}")
-            click.echo(f"\nCritical Actions:")
+            click.echo("\nCritical Actions:")
             for action in report.critical_actions:
                 click.echo(f"  - {action}")
     except Exception as e:
@@ -1363,14 +1363,13 @@ def compliance_ada_violations(severity, json_out):
     """List all ADA violation rules."""
     try:
         from socrata_toolkit.standards.design import ADA_COMPLIANCE_RULES
-        from socrata_toolkit.material.standards import ADAFailureSeverity
-        
+
         rules = []
         for rule_id, rule in ADA_COMPLIANCE_RULES.items():
             if severity:
                 if rule.failure_severity.value != severity:
                     continue
-            
+
             rules.append({
                 "rule_id": rule_id,
                 "title": rule.title,
@@ -1378,7 +1377,7 @@ def compliance_ada_violations(severity, json_out):
                 "validation_method": rule.validation_method,
                 "description": rule.description[:100],
             })
-        
+
         if json_out:
             with open(json_out, "w", encoding="utf-8") as f:
                 json.dump(rules, f, indent=2)
@@ -1396,13 +1395,13 @@ def compliance_ada_violations(severity, json_out):
 def compliance_report(material, json_out):
     """Generate compliance summary report."""
     try:
-        from socrata_toolkit.standards.design import get_critical_rules, get_rules_by_severity
         from socrata_toolkit.material.standards import ADAFailureSeverity
-        
+        from socrata_toolkit.standards.design import get_critical_rules, get_rules_by_severity
+
         critical = get_critical_rules()
         high = get_rules_by_severity(ADAFailureSeverity.HIGH)
         medium = get_rules_by_severity(ADAFailureSeverity.MEDIUM)
-        
+
         report = {
             "total_rules": len(get_critical_rules()) + len(high) + len(medium),
             "critical_rules": len(critical),
@@ -1410,7 +1409,7 @@ def compliance_report(material, json_out):
             "medium_rules": len(medium),
             "critical_rule_ids": [r.rule_id for r in critical],
         }
-        
+
         if json_out:
             with open(json_out, "w", encoding="utf-8") as f:
                 json.dump(report, f, indent=2)
@@ -1442,13 +1441,13 @@ def lineage_nodes(type, owner, tag, output_json):
     try:
         from ..lineage.core import DAG
         from ..lineage.query import LineageQuery
-        
+
         dag = DAG()
         query = LineageQuery(dag)
-        
+
         # Search nodes based on criteria
         nodes = query.search_nodes(node_type=type, owner=owner, tag=tag)
-        
+
         if output_json:
             result = {
                 "count": len(nodes),
@@ -1482,14 +1481,14 @@ def lineage_node(node_id, full):
     try:
         from ..lineage.core import DAG
         from ..lineage.query import LineageQuery
-        
+
         dag = DAG()
         query = LineageQuery(dag)
-        
+
         info = query.get_node_info(node_id)
         if not info:
             raise click.ClickException(f"Node {node_id} not found")
-        
+
         click.echo(f"Node: {info['node_id']}")
         click.echo(f"Name: {info['name']}")
         click.echo(f"Type: {info['type']}")
@@ -1499,7 +1498,7 @@ def lineage_node(node_id, full):
         click.echo(f"Upstream Dependencies: {', '.join(info['upstream_dependencies'])}")
         click.echo(f"Downstream Consumers: {', '.join(info['downstream_consumers'])}")
         click.echo(f"Tags: {', '.join(info['tags'])}")
-        
+
         if full and info['execution_count'] > 0:
             click.echo(f"\nExecution History ({info['execution_count']} total):")
             if info['latest_execution']:
@@ -1518,15 +1517,15 @@ def lineage_sources(node_id):
     try:
         from ..lineage.core import DAG
         from ..lineage.query import LineageQuery
-        
+
         dag = DAG()
         query = LineageQuery(dag)
-        
+
         sources = query.find_sources(node_id)
         if not sources:
             click.echo(f"No upstream sources found for {node_id}")
             return
-        
+
         click.echo(f"Upstream sources for {node_id}:")
         for src_id in sources:
             node = dag.nodes.get(src_id)
@@ -1543,15 +1542,15 @@ def lineage_consumers(node_id):
     try:
         from ..lineage.core import DAG
         from ..lineage.query import LineageQuery
-        
+
         dag = DAG()
         query = LineageQuery(dag)
-        
+
         consumers = query.find_consumers(node_id)
         if not consumers:
             click.echo(f"No downstream consumers found for {node_id}")
             return
-        
+
         click.echo(f"Downstream consumers of {node_id}:")
         for consumer_id in consumers:
             node = dag.nodes.get(consumer_id)
@@ -1569,15 +1568,15 @@ def lineage_path(source_id, target_id):
     try:
         from ..lineage.core import DAG
         from ..lineage.query import LineageQuery
-        
+
         dag = DAG()
         query = LineageQuery(dag)
-        
+
         path = query.find_path(source_id, target_id)
         if not path:
             click.echo(f"No path found from {source_id} to {target_id}")
             return
-        
+
         click.echo(f"Path from {source_id} to {target_id}:")
         for i, node_id in enumerate(path):
             node = dag.nodes.get(node_id)
@@ -1596,19 +1595,19 @@ def lineage_impact(node_id):
     try:
         from ..lineage.core import DAG
         from ..lineage.impact import ImpactAnalysis
-        
+
         dag = DAG()
         analyzer = ImpactAnalysis(dag)
-        
+
         report = analyzer.analyze_change(node_id)
-        
+
         click.echo(f"Impact Analysis for {node_id}:")
         click.echo(f"  Affected nodes: {report.affected_count}")
         click.echo(f"  Affected users: {', '.join(report.affected_users)}")
         click.echo(f"  Critical paths: {len(report.critical_paths)}")
         click.echo(f"  Risk score: {report.risk_score:.1f}/100")
         click.echo(f"  Estimated effort: {report.estimated_effort_hours:.1f} hours")
-        
+
         if report.remediation_steps:
             click.echo("\n  Remediation steps:")
             for i, step in enumerate(report.remediation_steps, 1):
@@ -1625,10 +1624,10 @@ def lineage_dag(format, output):
     try:
         from ..lineage.core import DAG
         from ..lineage.visualization import LineageVisualizer
-        
+
         dag = DAG()
         visualizer = LineageVisualizer(dag)
-        
+
         # Get export based on format
         if format == "json":
             content = visualizer.to_json()
@@ -1640,7 +1639,7 @@ def lineage_dag(format, output):
             content = visualizer.to_dot()
         else:  # ascii
             content = visualizer.to_ascii()
-        
+
         if output:
             with open(output, "w", encoding="utf-8") as f:
                 f.write(content)
@@ -1659,19 +1658,19 @@ def lineage_freshness(node_id, stale_hours):
     try:
         from ..lineage.core import DAG
         from ..lineage.query import LineageQuery
-        
+
         dag = DAG()
         query = LineageQuery(dag)
-        
+
         freshness = query.get_freshness(node_id, stale_threshold_hours=stale_hours)
-        
+
         click.echo(f"Freshness for {node_id}:")
         if freshness.last_execution_time:
             click.echo(f"  Last execution: {freshness.last_execution_time}")
             click.echo(f"  Age: {freshness.age_seconds / 3600:.1f} hours")
             click.echo(f"  Status: {'STALE' if freshness.is_stale else 'CURRENT'}")
         else:
-            click.echo(f"  Status: NEVER EXECUTED")
+            click.echo("  Status: NEVER EXECUTED")
     except Exception as e:
         raise click.ClickException(f"Error checking freshness: {e}")
 
@@ -1682,17 +1681,17 @@ def lineage_stats():
     try:
         from ..lineage.core import DAG
         from ..lineage.query import LineageQuery
-        
+
         dag = DAG()
         query = LineageQuery(dag)
-        
+
         stats = query.get_statistics()
-        
+
         click.echo("Lineage Statistics:")
         click.echo(f"  Total nodes: {stats['total_nodes']}")
         click.echo(f"  Total edges: {stats['total_edges']}")
         click.echo(f"  DAG depth: {stats['depth']}")
-        
+
         if stats['nodes_by_type']:
             click.echo("\n  Nodes by type:")
             for node_type, count in stats['nodes_by_type'].items():
@@ -1716,11 +1715,11 @@ def observability_status():
     """Show current observability status and metrics summary."""
     try:
         from ..observability.integration import get_observability_manager
-        
+
         obs = get_observability_manager()
-        
+
         click.echo("\n=== Observability Status ===\n")
-        
+
         # Health status
         health = obs.health_status()
         click.echo(f"Health Status: {health['status']}")
@@ -1729,7 +1728,7 @@ def observability_status():
         for comp in health['components']:
             status_symbol = "✓" if comp['status'] == 'HEALTHY' else "✗"
             click.echo(f"  {status_symbol} {comp['name']}: {comp['status']}")
-        
+
         # Metrics summary
         click.echo("\nMetrics Summary:")
         metrics = obs.metrics_summary()
@@ -1737,7 +1736,7 @@ def observability_status():
         click.echo(f"  Gauges: {metrics['gauge_count']}")
         click.echo(f"  Histograms: {metrics['histogram_count']}")
         click.echo(f"  Summaries: {metrics['summary_count']}")
-        
+
         # SLA summary
         click.echo("\nSLA Summary:")
         sla_report = obs.sla_report()
@@ -1745,7 +1744,7 @@ def observability_status():
         click.echo(f"  Passing: {sla_report['passing_slas']}")
         click.echo(f"  Failing: {sla_report['failing_slas']}")
         click.echo(f"  Compliance: {sla_report['compliance_percent']:.1f}%")
-        
+
     except Exception as e:
         raise click.ClickException(f"Error getting observability status: {e}")
 
@@ -1760,9 +1759,9 @@ def observability_logs(level, correlation_id, limit, dataset_id, json_format):
     """Query and display recent logs."""
     try:
         from ..observability.integration import get_observability_manager
-        
+
         obs = get_observability_manager()
-        
+
         # Build filters
         filters = {}
         if level:
@@ -1771,10 +1770,10 @@ def observability_logs(level, correlation_id, limit, dataset_id, json_format):
             filters['correlation_id'] = correlation_id
         if dataset_id:
             filters['dataset_id'] = dataset_id
-        
+
         logs = obs.query_logs(**filters)
         logs = logs[-limit:] if len(logs) > limit else logs
-        
+
         if json_format:
             data = [log.to_dict() for log in logs]
             click.echo(json.dumps(data, indent=2, default=str))
@@ -1786,7 +1785,7 @@ def observability_logs(level, correlation_id, limit, dataset_id, json_format):
                 if log.context:
                     click.echo(f"  Context: {log.context}")
                 click.echo()
-    
+
     except Exception as e:
         raise click.ClickException(f"Error querying logs: {e}")
 
@@ -1799,10 +1798,10 @@ def observability_metrics(metric, format, output):
     """Show metrics data."""
     try:
         from ..observability.integration import get_observability_manager
-        
+
         obs = get_observability_manager()
         metrics_collector = obs.get_metrics()
-        
+
         if format == "prometheus":
             data = metrics_collector.export_prometheus()
         elif format == "json":
@@ -1816,14 +1815,14 @@ Gauge Metrics: {summary['gauge_count']}
 Histogram Metrics: {summary['histogram_count']}
 Summary Metrics: {summary['summary_count']}
 Timestamp: {summary['timestamp']}"""
-        
+
         if output:
             with open(output, 'w') as f:
                 f.write(data)
             click.echo(f"Metrics exported to {output}")
         else:
             click.echo(data)
-    
+
     except Exception as e:
         raise click.ClickException(f"Error exporting metrics: {e}")
 
@@ -1835,10 +1834,10 @@ def observability_sla_report(window, json_format):
     """Show SLA compliance report."""
     try:
         from ..observability.integration import get_observability_manager
-        
+
         obs = get_observability_manager()
         report = obs.sla_report()
-        
+
         if json_format:
             click.echo(json.dumps(report, indent=2, default=str))
         else:
@@ -1849,14 +1848,14 @@ def observability_sla_report(window, json_format):
             click.echo(f"Failing: {report['failing_slas']}")
             click.echo(f"Compliance: {report['compliance_percent']:.1f}%")
             click.echo(f"Trend: {report.get('trend', 'unknown')}")
-            
+
             if report.get('violations'):
                 click.echo("\nViolations:")
                 for v in report['violations']:
                     click.echo(f"  ✗ {v['sla_name']}")
                     click.echo(f"    Target: {v['target']}, Actual: {v['actual']}")
                     click.echo(f"    Severity: {v['severity']}")
-    
+
     except Exception as e:
         raise click.ClickException(f"Error generating SLA report: {e}")
 
@@ -1868,13 +1867,13 @@ def observability_health(detailed, json_format):
     """Check system health status."""
     try:
         from ..observability.integration import get_observability_manager
-        
+
         obs = get_observability_manager()
-        
+
         # Get health status
         readiness = obs.readiness_status()
         health = obs.health_status()
-        
+
         if json_format:
             click.echo(json.dumps(health, indent=2, default=str))
         else:
@@ -1883,7 +1882,7 @@ def observability_health(detailed, json_format):
             click.echo(f"Overall Status: {health['status']}")
             click.echo(f"Unhealthy: {health['unhealthy_count']}")
             click.echo(f"Degraded: {health['degraded_count']}")
-            
+
             if detailed:
                 click.echo("\nComponent Details:")
                 for comp in health['components']:
@@ -1893,7 +1892,7 @@ def observability_health(detailed, json_format):
                         click.echo(f"      {comp['message']}")
                     if comp.get('duration_ms'):
                         click.echo(f"      Duration: {comp['duration_ms']:.2f}ms")
-    
+
     except Exception as e:
         raise click.ClickException(f"Error checking health: {e}")
 
@@ -1905,12 +1904,13 @@ def observability_health(detailed, json_format):
 def observability_export(format, output, export_type):
     """Export observability data."""
     try:
-        from ..observability.integration import get_observability_manager
         from pathlib import Path
-        
+
+        from ..observability.integration import get_observability_manager
+
         obs = get_observability_manager()
         output_path = Path(output)
-        
+
         if export_type == "metrics":
             if format == "prometheus":
                 data = obs.export_metrics_prometheus()
@@ -1921,11 +1921,11 @@ def observability_export(format, output, export_type):
                 obs.get_metrics().export_csv(output_path)
                 click.echo(f"Metrics exported to {output}")
                 return
-            
+
             with open(output_path, 'w') as f:
                 f.write(data)
             click.echo(f"Metrics exported to {output}")
-        
+
         elif export_type == "logs":
             if format == "json":
                 obs.export_logs_json(output_path)
@@ -1934,7 +1934,7 @@ def observability_export(format, output, export_type):
             else:
                 raise click.ClickException("Logs support JSON and CSV formats only")
             click.echo(f"Logs exported to {output}")
-        
+
         elif export_type == "traces":
             if format == "json":
                 data = obs.export_traces_jaeger()
@@ -1943,7 +1943,7 @@ def observability_export(format, output, export_type):
                 click.echo(f"Traces exported to {output}")
             else:
                 raise click.ClickException("Traces support JSON format only")
-    
+
     except Exception as e:
         raise click.ClickException(f"Error exporting data: {e}")
 
@@ -1955,26 +1955,26 @@ def observability_trace(trace_id, json_format):
     """Show detailed trace information."""
     try:
         from ..observability.integration import get_observability_manager
-        
+
         obs = get_observability_manager()
         trace = obs.get_trace(trace_id)
-        
+
         if not trace:
             click.echo(f"No trace found with ID: {trace_id}")
             return
-        
+
         if json_format:
             data = [span.to_dict() for span in trace]
             click.echo(json.dumps(data, indent=2, default=str))
         else:
             click.echo(f"\n=== Trace: {trace_id} ===\n")
             click.echo(f"Spans: {len(trace)}\n")
-            
+
             for span in trace:
                 indent = "  " if span.parent_span_id else ""
                 status_icon = "✓" if span.status == "ok" else "✗"
                 duration = f"{span.duration_ms:.2f}ms" if span.duration_ms else "running"
-                
+
                 click.echo(f"{indent}{status_icon} {span.operation_name} {duration}")
                 if span.attributes:
                     for k, v in span.attributes.items():
@@ -1982,7 +1982,7 @@ def observability_trace(trace_id, json_format):
                 if span.error_message:
                     click.echo(f"{indent}  ERROR: {span.error_message}")
                 click.echo()
-    
+
     except Exception as e:
         raise click.ClickException(f"Error retrieving trace: {e}")
 

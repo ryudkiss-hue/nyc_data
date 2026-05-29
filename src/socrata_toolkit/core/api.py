@@ -28,8 +28,6 @@ Or with gunicorn::
 from __future__ import annotations
 
 import json
-import os
-from typing import Any
 
 
 def create_app():
@@ -88,6 +86,7 @@ def create_app():
     @app.route("/api/analyze", methods=["POST"])
     def analyze():
         import pandas as pd
+
         from ..analysis import profile_dataframe
         data = request.get_json()
         if not data or "rows" not in data:
@@ -109,6 +108,7 @@ def create_app():
     @app.route("/api/quality-score", methods=["POST"])
     def quality_score():
         import pandas as pd
+
         from ..governance.core import compute_quality_score
         data = request.get_json()
         if not data or "rows" not in data:
@@ -132,7 +132,13 @@ def create_app():
     @app.route("/api/prioritize", methods=["POST"])
     def prioritize():
         import pandas as pd
-        from ..engineering.construction_list import prioritize_construction_list, classify_scope, flag_ada_locations, summarize_construction_list
+
+        from ..engineering.construction_list import (
+            classify_scope,
+            flag_ada_locations,
+            prioritize_construction_list,
+            summarize_construction_list,
+        )
         data = request.get_json()
         if not data or "rows" not in data:
             return jsonify({"error": "POST JSON with 'rows' array"}), 400
@@ -158,6 +164,7 @@ def create_app():
     @app.route("/api/triage", methods=["POST"])
     def triage():
         import pandas as pd
+
         from ..ai import triage_complaints
         data = request.get_json()
         if not data or "rows" not in data:
@@ -173,8 +180,9 @@ def create_app():
 
     @app.route("/api/board")
     def board_state():
-        from ..task_board import TaskBoard
         from pathlib import Path
+
+        from ..task_board import TaskBoard
         board_path = Path("outputs/board.json")
         if board_path.exists():
             board = TaskBoard.load(str(board_path))
@@ -188,8 +196,9 @@ def create_app():
 
     @app.route("/api/board/task", methods=["POST"])
     def create_task():
-        from ..task_board import TaskBoard, Task
         from pathlib import Path
+
+        from ..task_board import Task, TaskBoard
         board_path = Path("outputs/board.json")
         if board_path.exists():
             board = TaskBoard.load(str(board_path))
@@ -214,8 +223,9 @@ def create_app():
 
     @app.route("/api/kpis")
     def kpis():
-        from ..program_metrics import MetricsTracker
         from pathlib import Path
+
+        from ..program_metrics import MetricsTracker
         metrics_path = Path("outputs/metrics.json")
         if metrics_path.exists():
             tracker = MetricsTracker()

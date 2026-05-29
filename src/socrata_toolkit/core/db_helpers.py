@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable
+from collections.abc import Iterable
 
 
 def build_fts_index_sql(table: str, columns: Iterable[str], language: str = "english", index_name: str | None = None) -> str:

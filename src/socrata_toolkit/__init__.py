@@ -188,18 +188,17 @@ _loaded_cache: dict[str, object] = {}
 
 if TYPE_CHECKING:
     from . import api  # noqa: F401
+    from .alerts.rules import Alert, Rule, RulesEngine  # noqa: F401
     from .analysis import (  # noqa: F401
         DashboardSummary,
         DataProfile,
-        SLATarget,
         InsightsReport,
-        generate_insights,
-        smart_recommendations,
-        compute_cycle_times,
         MetricsTracker,
+        SLATarget,
         classify_all_distributions,
         classify_distribution,
         compute_borough_metrics,
+        compute_cycle_times,
         compute_program_dashboard,
         compute_sla_trends,
         correlation_analysis,
@@ -210,20 +209,23 @@ if TYPE_CHECKING:
         detect_outliers_zscore,
         flag_anomalies,
         generate_analysis_results,
-        list_available_visualizations,
         generate_executive_briefing_automated,
+        generate_insights,
         generate_semantic_network_map,
+        list_available_visualizations,
         profile_dataframe,
         quality_report,
+        smart_recommendations,
         time_series_summary,
     )
     from .core import (  # noqa: F401
+        DATASETS,
+        DataDictionary,
         DatasetMetadata,
         DuckDBExporter,
         DuckDBManager,
         DuckDBRepository,
         SchemaRegistry,
-        DataDictionary,
         SchemaValidator,
         SearchResult,
         SocrataClient,
@@ -232,7 +234,6 @@ if TYPE_CHECKING:
         ensure_fts_index,
         generate_data_dictionary,
         list_available_datasets,
-        DATASETS,
         search_nyc_datasets,
     )
     from .engineering import (  # noqa: F401
@@ -293,8 +294,8 @@ if TYPE_CHECKING:
         material_breakdown_pie_chart,
         metric_status_pie_chart,
         operations_gantt_chart,
-        plot_geospatial_compliance_map,
         plot_ada_compliance_map,
+        plot_geospatial_compliance_map,
         plot_sidewalk_anatomy,
         quality_radar_chart,
         sunburst_chart,
@@ -303,7 +304,6 @@ if TYPE_CHECKING:
         triage_funnel_chart,
         violin_plot,
     )
-    from .alerts.rules import Alert, Rule, RulesEngine  # noqa: F401
 
 
 def _import_target(target: str):

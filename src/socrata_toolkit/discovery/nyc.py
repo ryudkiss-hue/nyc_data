@@ -19,7 +19,7 @@ Example::
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import pandas as pd
 
@@ -31,15 +31,15 @@ class DatasetConfig:
     fourfour: str
     domain: str = "data.cityofnewyork.us"
     description: str = ""
-    key_columns: List[str] = field(default_factory=list)
-    date_column: Optional[str] = None
-    borough_column: Optional[str] = None
-    geo_columns: Optional[Dict[str, str]] = None
-    column_mapping: Dict[str, str] = field(default_factory=dict)
+    key_columns: list[str] = field(default_factory=list)
+    date_column: str | None = None
+    borough_column: str | None = None
+    geo_columns: dict[str, str] | None = None
+    column_mapping: dict[str, str] = field(default_factory=dict)
 
 
 #: Registry of pre-configured NYC datasets relevant to DOT sidewalk work.
-DATASETS: Dict[str, DatasetConfig] = {
+DATASETS: dict[str, DatasetConfig] = {
     "311_service_requests": DatasetConfig(
         name="311 Service Requests",
         fourfour="erm2-nwe9",
@@ -99,7 +99,7 @@ DATASETS: Dict[str, DatasetConfig] = {
 def fetch_dataset(
     dataset_key: str,
     max_rows: int = 10000,
-    where: Optional[str] = None,
+    where: str | None = None,
     **kwargs: Any,
 ) -> pd.DataFrame:
     """Fetch a pre-configured dataset by its registry key.
@@ -121,8 +121,8 @@ def fetch_dataset(
 
 def fetch_sidewalk_complaints(
     max_rows: int = 1000,
-    since: Optional[str] = None,
-    borough: Optional[str] = None,
+    since: str | None = None,
+    borough: str | None = None,
 ) -> pd.DataFrame:
     """Convenience: fetch 311 sidewalk complaints with common filters."""
     where_parts = ["complaint_type IN ('Sidewalk Condition','Broken Sidewalk','Curb Condition')"]
@@ -139,7 +139,7 @@ def fetch_active_permits(max_rows: int = 5000) -> pd.DataFrame:
     return fetch_dataset("dot_permits", max_rows=max_rows)
 
 
-def list_available_datasets() -> List[Dict[str, str]]:
+def list_available_datasets() -> list[dict[str, str]]:
     """List all pre-configured datasets with their descriptions."""
     return [
         {"key": k, "name": v.name, "fourfour": v.fourfour, "description": v.description}

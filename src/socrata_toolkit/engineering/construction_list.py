@@ -36,20 +36,16 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple
 
-import numpy as np  # type: ignore[import]
 import pandas as pd  # type: ignore[import]
-
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 
 #: NYC borough codes used throughout DOT systems.
-BOROUGH_CODES: Dict[str, int] = {
+BOROUGH_CODES: dict[str, int] = {
     "MANHATTAN": 1,
     "BRONX": 2,
     "BROOKLYN": 3,
@@ -68,7 +64,7 @@ SCOPE_CATEGORIES = [
 ]
 
 #: Default priority weights used in scoring (higher = more important).
-DEFAULT_PRIORITY_WEIGHTS: Dict[str, float] = {
+DEFAULT_PRIORITY_WEIGHTS: dict[str, float] = {
     "severity": 0.30,
     "pedestrian_volume": 0.20,
     "age_days": 0.15,
@@ -91,7 +87,7 @@ class ConstructionItem:
     scope: str
     priority_score: float
     has_conflict: bool = False
-    conflict_details: List[str] = field(default_factory=list)
+    conflict_details: list[str] = field(default_factory=list)
     ada_required: bool = False
     estimated_sqft: float = 0.0
     notes: str = ""
@@ -105,15 +101,15 @@ class ConflictCheckResult:
     conflict_rate: float
     clean: pd.DataFrame
     conflicts: pd.DataFrame
-    summary_by_borough: Dict[str, int]
+    summary_by_borough: dict[str, int]
 
 
 @dataclass
 class ConstructionListSummary:
     """Summary statistics for a construction list."""
     total_locations: int
-    by_borough: Dict[str, int]
-    by_scope: Dict[str, int]
+    by_borough: dict[str, int]
+    by_scope: dict[str, int]
     ada_count: int
     total_estimated_sqft: float
     avg_priority_score: float
@@ -126,7 +122,7 @@ class ConstructionListSummary:
 
 def compute_priority_score(
     row: pd.Series,
-    weights: Optional[Dict[str, float]] = None,
+    weights: dict[str, float] | None = None,
     severity_col: str = "severity_rating",
     volume_col: str = "pedestrian_volume",
     issued_date_col: str = "issued_date",
@@ -179,7 +175,7 @@ def compute_priority_score(
 
 def prioritize_construction_list(
     df: pd.DataFrame,
-    weights: Optional[Dict[str, float]] = None,
+    weights: dict[str, float] | None = None,
     **column_overrides: str,
 ) -> pd.DataFrame:
     """Score and sort a DataFrame of inspection records by priority.
@@ -212,7 +208,7 @@ def detect_construction_conflicts(
     permits_df: pd.DataFrame,
     location_col: str = "location_id",
     permit_location_col: str = "location_id",
-    buffer_col: Optional[str] = None,
+    buffer_col: str | None = None,
 ) -> ConflictCheckResult:
     """Check a construction list against active permits for conflicts.
 
@@ -248,7 +244,7 @@ def detect_construction_conflicts(
 
     # Borough summary
     borough_col = "borough" if "borough" in construction_df.columns else None
-    summary_by_borough: Dict[str, int] = {}
+    summary_by_borough: dict[str, int] = {}
     if borough_col and borough_col in conflicts.columns:
         summary_by_borough = conflicts[borough_col].value_counts().to_dict()
 

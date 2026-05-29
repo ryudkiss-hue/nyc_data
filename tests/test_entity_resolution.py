@@ -13,6 +13,8 @@ Tests cover:
 """
 
 import pytest
+
+from socrata_toolkit.core import EntityMergeStrategy, MasterDataManager
 from socrata_toolkit.entity.blocking import StandardBlocker
 from socrata_toolkit.entity.incremental import IncrementalMatcher, MatchDecision
 from socrata_toolkit.entity.matching import (
@@ -26,8 +28,6 @@ from socrata_toolkit.entity.matching import (
 from socrata_toolkit.entity.reconciliation import Reconciler
 from socrata_toolkit.entity.relationships import RelationshipGraph, RelationshipType
 from socrata_toolkit.entity.review import ReviewCase, ReviewDecision, ReviewWorkflow
-
-from socrata_toolkit.core import EntityMergeStrategy, MasterDataManager
 from socrata_toolkit.pipeline import DeduplicationRule, Deduplicator
 
 # ========== MATCHING STRATEGY TESTS ==========

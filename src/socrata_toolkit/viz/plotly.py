@@ -23,15 +23,15 @@ Example::
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any
 
 import pandas as pd
 
 
 def _get_plotly():
     try:
-        import plotly.graph_objects as go
         import plotly.express as px
+        import plotly.graph_objects as go
         return go, px
     except ImportError as exc:
         raise ImportError("Install plotly: pip install plotly") from exc
@@ -46,8 +46,8 @@ def borough_bar_chart(
     borough_col: str = "borough",
     value_col: str = "violations",
     agg: str = "sum",
-    title: Optional[str] = None,
-    color_map: Optional[Dict[str, str]] = None,
+    title: str | None = None,
+    color_map: dict[str, str] | None = None,
 ) -> Any:
     """Interactive bar chart of a metric by borough."""
     go, px = _get_plotly()
@@ -82,8 +82,8 @@ def kpi_gauge(
     title: str,
     target: float,
     min_val: float = 0,
-    max_val: Optional[float] = None,
-    thresholds: Optional[Dict[str, float]] = None,
+    max_val: float | None = None,
+    thresholds: dict[str, float] | None = None,
 ) -> Any:
     """Interactive gauge chart for a single KPI."""
     go, _ = _get_plotly()
@@ -122,8 +122,8 @@ def contract_gantt(
     task_col: str = "contract_id",
     start_col: str = "start_date",
     end_col: str = "end_date",
-    color_col: Optional[str] = "status",
-    title: Optional[str] = None,
+    color_col: str | None = "status",
+    title: str | None = None,
 ) -> Any:
     """Interactive Gantt chart for contract schedules."""
     go, px = _get_plotly()
@@ -158,7 +158,7 @@ def priority_heatmap(
     col_col: str = "status",
     value_col: str = "violations",
     agg: str = "sum",
-    title: Optional[str] = None,
+    title: str | None = None,
 ) -> Any:
     """Interactive heatmap showing values across two categorical dimensions."""
     go, _ = _get_plotly()
@@ -183,10 +183,10 @@ def trend_line(
     df: pd.DataFrame,
     date_col: str,
     value_col: str,
-    group_col: Optional[str] = None,
+    group_col: str | None = None,
     resample: str = "ME",
     agg: str = "sum",
-    title: Optional[str] = None,
+    title: str | None = None,
 ) -> Any:
     """Interactive time series trend line with optional grouping."""
     go, px = _get_plotly()
@@ -217,8 +217,8 @@ def trend_line(
 def status_donut(
     df: pd.DataFrame,
     status_col: str = "status",
-    title: Optional[str] = None,
-    color_map: Optional[Dict[str, str]] = None,
+    title: str | None = None,
+    color_map: dict[str, str] | None = None,
 ) -> Any:
     """Interactive donut chart for status distribution."""
     go, _ = _get_plotly()

@@ -21,10 +21,11 @@ Features:
 from __future__ import annotations
 
 import logging
+from collections.abc import Generator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Generator, Optional
+from typing import Any
 
 try:
     import psycopg
@@ -34,7 +35,7 @@ except ImportError:
     sql = None
 
 try:
-    from shapely.geometry import Point, Polygon, LineString, MultiPolygon, shape
+    from shapely.geometry import LineString, MultiPolygon, Point, Polygon, shape
     from shapely.geometry.base import BaseGeometry
 except ImportError:
     Point = None
@@ -76,18 +77,18 @@ class SpatialGeometry:
     geometry: BaseGeometry
     srid: int = SRID_WGS84
     geometry_type: str = field(init=False)
-    
+
     def __post_init__(self) -> None:
         """Validate and classify geometry type."""
         geom_name = self.geometry.geom_type
         if geom_name not in ["Point", "LineString", "Polygon", "MultiPolygon", "MultiLineString"]:
             raise ValueError(f"Unsupported geometry type: {geom_name}")
         self.geometry_type = geom_name
-    
+
     def to_wkt(self) -> str:
         """Convert to Well-Known Text format with SRID."""
         return f"SRID={self.srid};{self.geometry.wkt}"
-    
+
     def to_geojson(self) -> dict[str, Any]:
         """Convert to GeoJSON representation."""
         return {
@@ -95,11 +96,11 @@ class SpatialGeometry:
             "properties": {"srid": self.srid},
             "geometry": shape(self.geometry).__geo_interface__,
         }
-    
+
     def buffer(self, distance: float) -> SpatialGeometry:
         """Create buffer zone around geometry."""
         return SpatialGeometry(self.geometry.buffer(distance), self.srid)
-    
+
     def distance(self, other: SpatialGeometry) -> float:
         """Calculate distance to another geometry (in degrees for WGS84)."""
         if self.srid != other.srid:
@@ -115,24 +116,24 @@ class SpatialSegment:
     material_type: str
     condition_score: float
     borough: str
-    block_id: Optional[str] = None
-    district: Optional[str] = None
-    council_district: Optional[str] = None
-    length_meters: Optional[float] = None
-    last_inspection: Optional[datetime] = None
+    block_id: str | None = None
+    district: str | None = None
+    council_district: str | None = None
+    length_meters: float | None = None
+    last_inspection: datetime | None = None
     defects: int = 0
-    
+
     def __post_init__(self) -> None:
         """Validate segment data."""
         if not isinstance(self.geometry, SpatialGeometry):
             raise ValueError("geometry must be a SpatialGeometry instance")
-        
+
         if self.geometry.geometry_type != "LineString":
             raise ValueError(f"Segment must be LineString, got {self.geometry.geometry_type}")
-        
+
         if not 0 <= self.condition_score <= 100:
             raise ValueError(f"condition_score must be 0-100, got {self.condition_score}")
-        
+
         valid_boroughs = {"Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"}
         if self.borough not in valid_boroughs:
             raise ValueError(f"borough must be one of {valid_boroughs}")
@@ -144,16 +145,16 @@ class SpatialBlock:
     block_id: str
     geometry: SpatialGeometry
     borough: str
-    district: Optional[str] = None
-    council_district: Optional[str] = None
-    area_square_meters: Optional[float] = None
+    district: str | None = None
+    council_district: str | None = None
+    area_square_meters: float | None = None
     segments_count: int = 0
-    
+
     def __post_init__(self) -> None:
         """Validate block data."""
         if not isinstance(self.geometry, SpatialGeometry):
             raise ValueError("geometry must be a SpatialGeometry instance")
-        
+
         if self.geometry.geometry_type != "Polygon":
             raise ValueError(f"Block must be Polygon, got {self.geometry.geometry_type}")
 
@@ -168,17 +169,17 @@ class SpatialInspection:
     timestamp: datetime
     defect_type: str
     severity: str  # "low", "medium", "high", "critical"
-    photo_url: Optional[str] = None
+    photo_url: str | None = None
     gps_accuracy_meters: float = 5.0
-    
+
     def __post_init__(self) -> None:
         """Validate inspection data."""
         if not isinstance(self.geometry, SpatialGeometry):
             raise ValueError("geometry must be a SpatialGeometry instance")
-        
+
         if self.geometry.geometry_type != "Point":
             raise ValueError(f"Inspection must be Point, got {self.geometry.geometry_type}")
-        
+
         valid_severities = {"low", "medium", "high", "critical"}
         if self.severity not in valid_severities:
             raise ValueError(f"severity must be one of {valid_severities}")
@@ -190,15 +191,15 @@ class SpatialMaterialZone:
     zone_id: str
     geometry: SpatialGeometry
     material_type: str
-    area_square_meters: Optional[float] = None
+    area_square_meters: float | None = None
     segment_count: int = 0
     average_condition: float = 0.0
-    
+
     def __post_init__(self) -> None:
         """Validate zone data."""
         if not isinstance(self.geometry, SpatialGeometry):
             raise ValueError("geometry must be a SpatialGeometry instance")
-        
+
         if self.geometry.geometry_type not in ["Polygon", "MultiPolygon"]:
             raise ValueError(f"Zone must be Polygon/MultiPolygon, got {self.geometry.geometry_type}")
 
@@ -206,10 +207,10 @@ class SpatialMaterialZone:
 class SpatialDatabaseConnection:
     """
     Manager for PostGIS database connections and spatial operations.
-    
+
     Handles connection pooling, transaction management, and spatial query execution.
     """
-    
+
     def __init__(
         self,
         host: str,
@@ -222,7 +223,7 @@ class SpatialDatabaseConnection:
     ) -> None:
         """
         Initialize spatial database connection.
-        
+
         Args:
             host: PostgreSQL host
             port: PostgreSQL port
@@ -237,14 +238,14 @@ class SpatialDatabaseConnection:
         self.max_connections = max_connections
         self._connection = None
         self._in_transaction = False
-        
+
         logger.info(f"Initialized spatial database connection to {host}:{port}/{database}")
-    
+
     @contextmanager
     def get_connection(self) -> Generator[psycopg.Connection, None, None]:
         """
         Context manager for database connections.
-        
+
         Yields:
             psycopg.Connection: Active database connection
         """
@@ -261,11 +262,11 @@ class SpatialDatabaseConnection:
         finally:
             if conn:
                 conn.close()
-    
+
     def check_postgis_enabled(self) -> bool:
         """
         Verify PostGIS extension is installed and enabled.
-        
+
         Returns:
             bool: True if PostGIS is available
         """
@@ -275,26 +276,26 @@ class SpatialDatabaseConnection:
                 cur.execute("SELECT EXISTS(SELECT 1 FROM pg_extension WHERE extname='postgis')")
                 result = cur.fetchone()
                 is_enabled = result[0] if result else False
-                
+
             if is_enabled:
                 logger.info("PostGIS extension verified")
             else:
                 logger.warning("PostGIS extension not found")
-            
+
             return is_enabled
         except Exception as e:
             logger.error(f"Error checking PostGIS: {e}")
             return False
-    
+
     def create_spatial_tables(self) -> None:
         """
         Create spatial tables for sidewalk segments, blocks, inspections, and material zones.
-        
+
         Note: This is a convenience method. Use SQL migrations for production.
         """
         with self.get_connection() as conn:
             cur = conn.cursor()
-            
+
             # Sidewalk segments table
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS sidewalk_segments (
@@ -313,19 +314,19 @@ class SpatialDatabaseConnection:
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
-            
+
             # Spatial index on segments
             cur.execute("""
-                CREATE INDEX IF NOT EXISTS idx_segments_geom 
+                CREATE INDEX IF NOT EXISTS idx_segments_geom
                 ON sidewalk_segments USING GIST(geometry)
             """)
-            
+
             # BRIN index for time-series spatial queries
             cur.execute("""
-                CREATE INDEX IF NOT EXISTS idx_segments_time_geom 
+                CREATE INDEX IF NOT EXISTS idx_segments_time_geom
                 ON sidewalk_segments USING BRIN(last_inspection, geometry)
             """)
-            
+
             # Blocks table
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS blocks (
@@ -339,12 +340,12 @@ class SpatialDatabaseConnection:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
-            
+
             cur.execute("""
-                CREATE INDEX IF NOT EXISTS idx_blocks_geom 
+                CREATE INDEX IF NOT EXISTS idx_blocks_geom
                 ON blocks USING GIST(geometry)
             """)
-            
+
             # Inspections table
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS inspections (
@@ -360,17 +361,17 @@ class SpatialDatabaseConnection:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
-            
+
             cur.execute("""
-                CREATE INDEX IF NOT EXISTS idx_inspections_geom 
+                CREATE INDEX IF NOT EXISTS idx_inspections_geom
                 ON inspections USING GIST(geometry)
             """)
-            
+
             cur.execute("""
-                CREATE INDEX IF NOT EXISTS idx_inspections_timestamp 
+                CREATE INDEX IF NOT EXISTS idx_inspections_timestamp
                 ON inspections(timestamp)
             """)
-            
+
             # Material zones table
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS material_zones (
@@ -383,21 +384,21 @@ class SpatialDatabaseConnection:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
-            
+
             cur.execute("""
-                CREATE INDEX IF NOT EXISTS idx_material_zones_geom 
+                CREATE INDEX IF NOT EXISTS idx_material_zones_geom
                 ON material_zones USING GIST(geometry)
             """)
-            
+
             logger.info("Spatial tables created successfully")
-    
+
     def insert_segment(self, segment: SpatialSegment) -> bool:
         """
         Insert a sidewalk segment into the database.
-        
+
         Args:
             segment: SpatialSegment instance
-            
+
         Returns:
             bool: True if insertion successful
         """
@@ -406,9 +407,9 @@ class SpatialDatabaseConnection:
                 cur = conn.cursor()
                 cur.execute(
                     sql.SQL("""
-                        INSERT INTO sidewalk_segments 
-                        (segment_id, geometry, material_type, condition_score, 
-                         borough, block_id, district, council_district, 
+                        INSERT INTO sidewalk_segments
+                        (segment_id, geometry, material_type, condition_score,
+                         borough, block_id, district, council_district,
                          length_meters, last_inspection, defects)
                         VALUES (%s, ST_GeomFromText(%s, %s), %s, %s, %s, %s, %s, %s, %s, %s, %s)
                         ON CONFLICT (segment_id) DO UPDATE SET
@@ -435,14 +436,14 @@ class SpatialDatabaseConnection:
         except Exception as e:
             logger.error(f"Error inserting segment {segment.segment_id}: {e}")
             return False
-    
+
     def insert_block(self, block: SpatialBlock) -> bool:
         """
         Insert a block into the database.
-        
+
         Args:
             block: SpatialBlock instance
-            
+
         Returns:
             bool: True if insertion successful
         """
@@ -451,8 +452,8 @@ class SpatialDatabaseConnection:
                 cur = conn.cursor()
                 cur.execute(
                     """
-                    INSERT INTO blocks 
-                    (block_id, geometry, borough, district, council_district, 
+                    INSERT INTO blocks
+                    (block_id, geometry, borough, district, council_district,
                      area_square_meters, segments_count)
                     VALUES (%s, ST_GeomFromText(%s, %s), %s, %s, %s, %s, %s)
                     ON CONFLICT (block_id) DO UPDATE SET
@@ -474,14 +475,14 @@ class SpatialDatabaseConnection:
         except Exception as e:
             logger.error(f"Error inserting block {block.block_id}: {e}")
             return False
-    
+
     def insert_inspection(self, inspection: SpatialInspection) -> bool:
         """
         Insert an inspection record into the database.
-        
+
         Args:
             inspection: SpatialInspection instance
-            
+
         Returns:
             bool: True if insertion successful
         """
@@ -490,8 +491,8 @@ class SpatialDatabaseConnection:
                 cur = conn.cursor()
                 cur.execute(
                     """
-                    INSERT INTO inspections 
-                    (inspection_id, geometry, segment_id, inspector_id, 
+                    INSERT INTO inspections
+                    (inspection_id, geometry, segment_id, inspector_id,
                      timestamp, defect_type, severity, photo_url, gps_accuracy_meters)
                     VALUES (%s, ST_GeomFromText(%s, %s), %s, %s, %s, %s, %s, %s, %s)
                     """,
@@ -512,14 +513,14 @@ class SpatialDatabaseConnection:
         except Exception as e:
             logger.error(f"Error inserting inspection {inspection.inspection_id}: {e}")
             return False
-    
+
     def insert_material_zone(self, zone: SpatialMaterialZone) -> bool:
         """
         Insert a material zone into the database.
-        
+
         Args:
             zone: SpatialMaterialZone instance
-            
+
         Returns:
             bool: True if insertion successful
         """
@@ -528,8 +529,8 @@ class SpatialDatabaseConnection:
                 cur = conn.cursor()
                 cur.execute(
                     """
-                    INSERT INTO material_zones 
-                    (zone_id, geometry, material_type, area_square_meters, 
+                    INSERT INTO material_zones
+                    (zone_id, geometry, material_type, area_square_meters,
                      segment_count, average_condition)
                     VALUES (%s, ST_GeomFromText(%s, %s), %s, %s, %s, %s)
                     ON CONFLICT (zone_id) DO UPDATE SET
@@ -550,14 +551,14 @@ class SpatialDatabaseConnection:
         except Exception as e:
             logger.error(f"Error inserting material zone {zone.zone_id}: {e}")
             return False
-    
-    def get_segment(self, segment_id: str) -> Optional[SpatialSegment]:
+
+    def get_segment(self, segment_id: str) -> SpatialSegment | None:
         """
         Retrieve a segment by ID.
-        
+
         Args:
             segment_id: Segment identifier
-            
+
         Returns:
             SpatialSegment or None if not found
         """
@@ -566,8 +567,8 @@ class SpatialDatabaseConnection:
                 cur = conn.cursor()
                 cur.execute(
                     """
-                    SELECT segment_id, ST_AsText(geometry), material_type, 
-                           condition_score, borough, block_id, district, 
+                    SELECT segment_id, ST_AsText(geometry), material_type,
+                           condition_score, borough, block_id, district,
                            council_district, length_meters, last_inspection, defects
                     FROM sidewalk_segments
                     WHERE segment_id = %s
@@ -575,7 +576,7 @@ class SpatialDatabaseConnection:
                     (segment_id,)
                 )
                 row = cur.fetchone()
-                
+
                 if row:
                     return SpatialSegment(
                         segment_id=row[0],
@@ -595,9 +596,9 @@ class SpatialDatabaseConnection:
                     )
         except Exception as e:
             logger.error(f"Error retrieving segment {segment_id}: {e}")
-        
+
         return None
-    
+
     def vacuum_and_analyze(self) -> None:
         """Perform VACUUM and ANALYZE for query optimization."""
         try:
@@ -612,15 +613,15 @@ class SpatialDatabaseConnection:
 class SpatialDataModel:
     """
     High-level spatial data model for NYC sidewalk infrastructure.
-    
+
     Provides type-safe abstractions for spatial entities and manages
     persistence to PostGIS database.
     """
-    
+
     def __init__(self, db_connection: SpatialDatabaseConnection) -> None:
         """
         Initialize spatial data model.
-        
+
         Args:
             db_connection: SpatialDatabaseConnection instance
         """
@@ -629,41 +630,41 @@ class SpatialDataModel:
         self._blocks: dict[str, SpatialBlock] = {}
         self._inspections: dict[str, SpatialInspection] = {}
         self._zones: dict[str, SpatialMaterialZone] = {}
-    
+
     def add_segment(self, segment: SpatialSegment) -> bool:
         """Add segment to model and persist to database."""
         self._segments[segment.segment_id] = segment
         return self.db.insert_segment(segment)
-    
+
     def add_block(self, block: SpatialBlock) -> bool:
         """Add block to model and persist to database."""
         self._blocks[block.block_id] = block
         return self.db.insert_block(block)
-    
+
     def add_inspection(self, inspection: SpatialInspection) -> bool:
         """Add inspection to model and persist to database."""
         self._inspections[inspection.inspection_id] = inspection
         return self.db.insert_inspection(inspection)
-    
+
     def add_material_zone(self, zone: SpatialMaterialZone) -> bool:
         """Add material zone to model and persist to database."""
         self._zones[zone.zone_id] = zone
         return self.db.insert_material_zone(zone)
-    
-    def get_segment(self, segment_id: str) -> Optional[SpatialSegment]:
+
+    def get_segment(self, segment_id: str) -> SpatialSegment | None:
         """Retrieve segment from cache or database."""
         if segment_id in self._segments:
             return self._segments[segment_id]
         return self.db.get_segment(segment_id)
-    
+
     def segments_count(self) -> int:
         """Get total number of segments."""
         return len(self._segments)
-    
+
     def blocks_count(self) -> int:
         """Get total number of blocks."""
         return len(self._blocks)
-    
+
     def inspections_count(self) -> int:
         """Get total number of inspections."""
         return len(self._inspections)
@@ -672,59 +673,59 @@ class SpatialDataModel:
 @dataclass
 class SpatialQuery:
     """Query parameters for spatial searches.
-    
+
     Encapsulates search criteria for geographic area queries.
     """
-    bounds: Optional[tuple[float, float, float, float]] = None
+    bounds: tuple[float, float, float, float] | None = None
     """Bounding box (min_lon, min_lat, max_lon, max_lat)"""
-    
-    center: Optional[tuple[float, float]] = None
+
+    center: tuple[float, float] | None = None
     """Center point (lon, lat)"""
-    
-    radius: Optional[float] = None
+
+    radius: float | None = None
     """Search radius in meters"""
-    
+
     filter_type: str = "intersect"
     """Filter type: 'intersect', 'contains', 'within'"""
 
 
 class SpatialIndex:
     """Spatial index for efficient geographic queries."""
-    
+
     def __init__(self) -> None:
         """Initialize the spatial index."""
         self._index = {}
-    
+
     def build_index(self, data: list) -> bool:
         """Build the spatial index from data.
-        
+
         Args:
             data: List of spatial objects to index
-            
+
         Returns:
             True if index built successfully, False otherwise
         """
         self._index = {str(i): item for i, item in enumerate(data)}
         return True
-    
+
     def query_by_bounds(self, bounds: tuple[float, float, float, float]) -> list:
         """Query objects within bounding box.
-        
+
         Args:
             bounds: Bounding box (min_lon, min_lat, max_lon, max_lat)
-            
+
         Returns:
             List of objects within bounds
         """
         return list(self._index.values())
-    
+
     def query_by_distance(self, center: tuple[float, float], radius: float) -> list:
         """Query objects within distance radius.
-        
+
         Args:
             center: Center point (lon, lat)
             radius: Distance in meters
-            
+
         Returns:
             List of objects within distance
         """
@@ -733,37 +734,37 @@ class SpatialIndex:
 
 class GeometryHandler:
     """Handler for geometry validation and conversion."""
-    
+
     def validate_geometry(self, geometry: Any) -> bool:
         """Validate geometry object.
-        
+
         Args:
             geometry: Geometry object to validate
-            
+
         Returns:
             True if geometry is valid, False otherwise
         """
         return True
-    
+
     def convert_format(self, geometry: Any, target_format: str) -> Any:
         """Convert geometry to different format.
-        
+
         Args:
             geometry: Geometry to convert
             target_format: Target format (wkt, geojson, ewkt, etc.)
-            
+
         Returns:
             Geometry in target format
         """
         return geometry
-    
+
     def buffer(self, geometry: Any, distance: float) -> Any:
         """Create buffer zone around geometry.
-        
+
         Args:
             geometry: Geometry to buffer
             distance: Buffer distance
-            
+
         Returns:
             Buffered geometry
         """
@@ -772,10 +773,10 @@ class GeometryHandler:
 
 def create_spatial_index(data: list) -> SpatialIndex:
     """Create a spatial index from data.
-    
+
     Args:
         data: List of spatial objects
-        
+
     Returns:
         Initialized SpatialIndex
     """
@@ -786,10 +787,10 @@ def create_spatial_index(data: list) -> SpatialIndex:
 
 def query_geographic_area(query: SpatialQuery) -> list:
     """Query geographic area with spatial criteria.
-    
+
     Args:
         query: SpatialQuery with search parameters
-        
+
     Returns:
         List of objects matching the query
     """

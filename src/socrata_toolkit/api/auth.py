@@ -47,21 +47,21 @@ class JWTAuthProvider:
         token = credentials.get("token")
         if not token:
             raise AuthenticationError("Missing token")
-        
+
         if token in self._token_cache:
             return self._token_cache[token]
 
         try:
             payload = jwt.decode(token, self.secret_key, algorithms=["HS256"])
             user = User(
-                user_id=payload["sub"], 
-                email=payload.get("email", ""), 
+                user_id=payload["sub"],
+                email=payload.get("email", ""),
                 roles=payload.get("roles", [])
             )
             context = AuthContext(
-                principal_id=user.user_id, 
-                user=user, 
-                roles=user.roles, 
+                principal_id=user.user_id,
+                user=user,
+                roles=user.roles,
                 permissions=set()
             )
             self._token_cache[token] = context

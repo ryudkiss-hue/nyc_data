@@ -11,13 +11,11 @@ This module extends the basic profiling in `analysis.py` with:
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 import pandas as pd
-
 
 # ---------------------------------------------------------------------------
 # Outlier Detection
@@ -31,9 +29,9 @@ class OutlierReport:
     total_rows: int
     outlier_count: int
     outlier_pct: float
-    lower_bound: Optional[float]
-    upper_bound: Optional[float]
-    outlier_indices: List[int]
+    lower_bound: float | None
+    upper_bound: float | None
+    outlier_indices: list[int]
 
 
 def detect_outliers_iqr(
@@ -102,7 +100,7 @@ def detect_all_outliers(
     df: pd.DataFrame,
     method: str = "iqr",
     **kwargs: Any,
-) -> List[OutlierReport]:
+) -> list[OutlierReport]:
     """Run outlier detection on every numeric column in the DataFrame."""
     fn = detect_outliers_iqr if method == "iqr" else detect_outliers_zscore
     reports = []
@@ -118,7 +116,7 @@ def detect_all_outliers(
 @dataclass
 class CorrelationResult:
     """Filtered correlation pairs above a significance threshold."""
-    pairs: List[Dict[str, Any]]
+    pairs: list[dict[str, Any]]
     method: str
     threshold: float
 
@@ -138,7 +136,7 @@ def correlation_analysis(
         return CorrelationResult(pairs=[], method=method, threshold=threshold)
 
     corr = numeric.corr(method=method)
-    pairs: List[Dict[str, Any]] = []
+    pairs: list[dict[str, Any]] = []
     seen: set = set()
     for i, col_a in enumerate(corr.columns):
         for j, col_b in enumerate(corr.columns):
@@ -188,7 +186,7 @@ class TimeSeriesSummary:
     trend_slope: float
     mean: float
     std: float
-    monthly_counts: Dict[str, int]
+    monthly_counts: dict[str, int]
 
 
 def time_series_summary(
@@ -305,7 +303,7 @@ def classify_distribution(df: pd.DataFrame, column: str) -> DistributionInfo:
     )
 
 
-def classify_all_distributions(df: pd.DataFrame) -> List[DistributionInfo]:
+def classify_all_distributions(df: pd.DataFrame) -> list[DistributionInfo]:
     """Classify distributions for all numeric columns."""
     return [classify_distribution(df, col) for col in df.select_dtypes(include="number").columns]
 
@@ -320,14 +318,14 @@ class AnomalyReport:
     total_rows: int
     flagged_rows: int
     flagged_pct: float
-    column_reports: List[OutlierReport]
+    column_reports: list[OutlierReport]
 
 
 def flag_anomalies(
     df: pd.DataFrame,
     method: str = "iqr",
     **kwargs: Any,
-) -> Tuple[pd.DataFrame, AnomalyReport]:
+) -> tuple[pd.DataFrame, AnomalyReport]:
     """Add an `_anomaly` boolean column and return a summary report.
 
     A row is flagged as anomalous if it is an outlier in any numeric column.

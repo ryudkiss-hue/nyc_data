@@ -25,7 +25,7 @@ class APIRequestPipeline:
         auth = request.headers.get("Authorization", "")
         if auth.startswith("Bearer "):
             creds["token"] = auth[7:]
-        
+
         key = request.headers.get("X-API-Key")
         if key:
             creds["api_key"] = key

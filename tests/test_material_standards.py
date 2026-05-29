@@ -12,13 +12,6 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta
 
 import pytest
-from socrata_toolkit.standards.design import (
-    ADA_COMPLIANCE_RULES,
-    get_critical_rules,
-    get_rule,
-    get_rules_by_severity,
-    get_rules_for_material,
-)
 
 from socrata_toolkit.engineering import (
     ASPH_STANDARD,
@@ -37,6 +30,13 @@ from socrata_toolkit.engineering import (
     get_material_by_category,
     get_material_by_id,
     get_materials_by_lifecycle_cost_range,
+)
+from socrata_toolkit.standards.design import (
+    ADA_COMPLIANCE_RULES,
+    get_critical_rules,
+    get_rule,
+    get_rules_by_severity,
+    get_rules_for_material,
 )
 
 # ============================================================================

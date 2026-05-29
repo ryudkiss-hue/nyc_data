@@ -25,12 +25,11 @@ Example:
 
 from __future__ import annotations
 
-import json
 import logging
-from dataclasses import dataclass, field
-from datetime import datetime, date, timezone, timedelta
-from typing import Any, Dict, List, Optional, Tuple
 from contextlib import contextmanager
+from dataclasses import dataclass, field
+from datetime import date, datetime, timezone
+from typing import Any
 
 try:
     import psycopg
@@ -45,7 +44,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ComplianceCheckResult:
     """Result of a single compliance check.
-    
+
     Attributes:
         check_name: Name of the check
         passed: Whether check passed
@@ -55,7 +54,7 @@ class ComplianceCheckResult:
     """
     check_name: str
     passed: bool
-    issues: List[str] = field(default_factory=list)
+    issues: list[str] = field(default_factory=list)
     severity: str = "info"
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -63,7 +62,7 @@ class ComplianceCheckResult:
 @dataclass
 class ComplianceReport:
     """Overall compliance report.
-    
+
     Attributes:
         report_date: When report was generated
         total_checks: Number of checks run
@@ -77,7 +76,7 @@ class ComplianceReport:
     total_checks: int
     passed_checks: int
     failed_checks: int
-    checks: List[ComplianceCheckResult]
+    checks: list[ComplianceCheckResult]
     overall_status: str
     summary: str
 
@@ -85,7 +84,7 @@ class ComplianceReport:
 @dataclass
 class ReconciliationResult:
     """Result of reconciliation between CDC and source.
-    
+
     Attributes:
         source_system: Source system name
         cdc_record_count: Records in CDC log
@@ -98,25 +97,25 @@ class ReconciliationResult:
     source_system: str
     cdc_record_count: int
     source_record_count: int
-    missing_events: List[str] = field(default_factory=list)
-    extra_events: List[str] = field(default_factory=list)
-    timestamp_mismatches: List[Tuple[str, int, int]] = field(default_factory=list)
+    missing_events: list[str] = field(default_factory=list)
+    extra_events: list[str] = field(default_factory=list)
+    timestamp_mismatches: list[tuple[str, int, int]] = field(default_factory=list)
     reconciled: bool = False
 
 
 class CDCReconciler:
     """Verify CDC system integrity and generate compliance reports.
-    
+
     Performs comprehensive checks on CDC, audit trail, and SCD systems
     to ensure data integrity and regulatory compliance.
     """
 
     def __init__(self, dsn: str) -> None:
         """Initialize reconciler.
-        
+
         Args:
             dsn: PostgreSQL connection string
-            
+
         Raises:
             ImportError: If psycopg not installed
         """
@@ -136,17 +135,17 @@ class CDCReconciler:
 
     def verify_audit_trail_completeness(self) -> ComplianceCheckResult:
         """Verify audit trail has no gaps and is complete.
-        
+
         Checks:
         1. All tables have audit entries
         2. No suspiciously large time gaps
         3. Audit entries match expected operations
-        
+
         Returns:
             ComplianceCheckResult
         """
         issues = []
-        
+
         try:
             with self._get_connection() as conn:
                 with conn.cursor() as cur:
@@ -155,10 +154,10 @@ class CDCReconciler:
                         """SELECT COUNT(*) FROM public.audit_trail"""
                     )
                     total_audit = cur.fetchone()[0]
-                    
+
                     if total_audit == 0:
                         issues.append("No audit trail entries found")
-                    
+
                     # Check for gaps (>24 hours between entries for same entity)
                     cur.execute(
                         """WITH gaps AS (
@@ -174,7 +173,7 @@ class CDCReconciler:
                     gap_count = cur.fetchone()[0]
                     if gap_count > 0:
                         issues.append(f"{gap_count} entities have >24hr gaps in audit trail")
-                    
+
                     # Verify immutability (no updates/deletes)
                     cur.execute(
                         """SELECT COUNT(*) FROM pg_stat_user_tables
@@ -184,7 +183,7 @@ class CDCReconciler:
                         issues.append("Audit trail has been modified (updates/deletes detected)")
         except Exception as e:
             issues.append(f"Audit trail check failed: {e}")
-        
+
         return ComplianceCheckResult(
             check_name="audit_trail_completeness",
             passed=len(issues) == 0,
@@ -194,17 +193,17 @@ class CDCReconciler:
 
     def verify_cdc_event_ordering(self) -> ComplianceCheckResult:
         """Verify CDC events are in correct chronological order.
-        
+
         Checks:
         1. Events for same record_id are chronologically ordered
         2. No duplicate event IDs
         3. Operation sequences are valid (INSERT before UPDATE/DELETE)
-        
+
         Returns:
             ComplianceCheckResult
         """
         issues = []
-        
+
         try:
             with self._get_connection() as conn:
                 with conn.cursor() as cur:
@@ -218,7 +217,7 @@ class CDCReconciler:
                     duplicates = cur.fetchall()
                     if duplicates:
                         issues.append(f"{len(duplicates)} duplicate event IDs found")
-                    
+
                     # Check for out-of-order events
                     cur.execute(
                         """WITH ordered AS (
@@ -232,7 +231,7 @@ class CDCReconciler:
                     out_of_order = cur.fetchone()[0]
                     if out_of_order > 0:
                         issues.append(f"{out_of_order} out-of-order events detected")
-                    
+
                     # Check operation sequences
                     cur.execute(
                         """WITH ops AS (
@@ -249,7 +248,7 @@ class CDCReconciler:
                         issues.append(f"{invalid_ops} invalid operation sequences detected")
         except Exception as e:
             issues.append(f"CDC ordering check failed: {e}")
-        
+
         return ComplianceCheckResult(
             check_name="cdc_event_ordering",
             passed=len(issues) == 0,
@@ -259,18 +258,18 @@ class CDCReconciler:
 
     def verify_scd_integrity(self, table: str) -> ComplianceCheckResult:
         """Verify SCD Type 2 table integrity.
-        
+
         Checks:
         1. No overlapping date ranges
         2. At most one is_current=TRUE per business_key
         3. end_date >= start_date
         4. Hash consistency
-        
+
         Returns:
             ComplianceCheckResult
         """
         issues = []
-        
+
         try:
             with self._get_connection() as conn:
                 with conn.cursor() as cur:
@@ -284,7 +283,7 @@ class CDCReconciler:
                     )
                     if cur.fetchall():
                         issues.append(f"Multiple is_current=TRUE records found in {table}")
-                    
+
                     # Check for overlapping dates
                     cur.execute(
                         f"""SELECT COUNT(*) FROM {sql.Identifier(table)} t1
@@ -297,7 +296,7 @@ class CDCReconciler:
                     overlaps = cur.fetchone()[0]
                     if overlaps > 0:
                         issues.append(f"{overlaps} overlapping date ranges detected in {table}")
-                    
+
                     # Check end_date >= start_date
                     cur.execute(
                         f"""SELECT COUNT(*) FROM {sql.Identifier(table)}
@@ -308,7 +307,7 @@ class CDCReconciler:
                         issues.append(f"{invalid_ranges} invalid date ranges (end < start) in {table}")
         except Exception as e:
             issues.append(f"SCD integrity check failed: {e}")
-        
+
         return ComplianceCheckResult(
             check_name=f"scd_integrity_{table}",
             passed=len(issues) == 0,
@@ -320,16 +319,16 @@ class CDCReconciler:
         self, table: str, source_table: str
     ) -> ReconciliationResult:
         """Reconcile SCD table with source table.
-        
+
         Checks:
         1. Current SCD records match source
         2. No missing records
         3. No extra records
-        
+
         Args:
             table: SCD table name
             source_table: Source table name
-            
+
         Returns:
             ReconciliationResult
         """
@@ -343,12 +342,12 @@ class CDCReconciler:
                            WHERE is_current = TRUE"""
                     )
                     scd_count = cur.fetchone()[0]
-                    
+
                     cur.execute(
                         f"""SELECT COUNT(*) FROM {sql.Identifier(source_table)}"""
                     )
                     source_count = cur.fetchone()[0]
-                    
+
                     # Find missing events
                     cur.execute(
                         f"""SELECT st.id FROM {sql.Identifier(source_table)} st
@@ -356,7 +355,7 @@ class CDCReconciler:
                            WHERE scd.business_key IS NULL"""
                     )
                     missing = [row[0] for row in cur.fetchall()]
-                    
+
                     # Find extra events
                     cur.execute(
                         f"""SELECT scd.business_key FROM {sql.Identifier(table)} scd
@@ -372,7 +371,7 @@ class CDCReconciler:
                 source_record_count=0,
                 reconciled=False,
             )
-        
+
         return ReconciliationResult(
             source_system=source_table,
             cdc_record_count=scd_count,
@@ -386,16 +385,16 @@ class CDCReconciler:
         self, table: str, expected_count: int
     ) -> ComplianceCheckResult:
         """Verify record counts match expectations.
-        
+
         Args:
             table: Table name
             expected_count: Expected number of current records
-            
+
         Returns:
             ComplianceCheckResult
         """
         issues = []
-        
+
         try:
             with self._get_connection() as conn:
                 with conn.cursor() as cur:
@@ -405,14 +404,14 @@ class CDCReconciler:
                            WHERE is_current = TRUE"""
                     )
                     actual_count = cur.fetchone()[0]
-            
+
             if actual_count != expected_count:
                 issues.append(
                     f"Record count mismatch: expected {expected_count}, got {actual_count}"
                 )
         except Exception as e:
             issues.append(f"Count check failed: {e}")
-        
+
         return ComplianceCheckResult(
             check_name=f"record_count_{table}",
             passed=len(issues) == 0,
@@ -422,14 +421,14 @@ class CDCReconciler:
 
     def check_audit_trail_coverage(self) -> ComplianceCheckResult:
         """Verify audit trail covers all transactions.
-        
+
         Checks percentage of time period covered and identifies gaps.
-        
+
         Returns:
             ComplianceCheckResult
         """
         issues = []
-        
+
         try:
             with self._get_connection() as conn:
                 with conn.cursor() as cur:
@@ -439,7 +438,7 @@ class CDCReconciler:
                            FROM public.audit_trail"""
                     )
                     min_ts, max_ts = cur.fetchone()
-                    
+
                     if not min_ts or not max_ts:
                         issues.append("No audit trail entries found")
                         return ComplianceCheckResult(
@@ -448,7 +447,7 @@ class CDCReconciler:
                             issues=issues,
                             severity="critical",
                         )
-                    
+
                     # Check for days with no entries
                     cur.execute(
                         """SELECT COUNT(DISTINCT DATE(timestamp)) as days_with_entries,
@@ -457,7 +456,7 @@ class CDCReconciler:
                     )
                     days_with, total_days = cur.fetchone()
                     coverage = (days_with / total_days * 100) if total_days > 0 else 0
-                    
+
                     if coverage < 100:
                         issues.append(
                             f"Audit trail coverage: {coverage:.1f}% "
@@ -465,7 +464,7 @@ class CDCReconciler:
                         )
         except Exception as e:
             issues.append(f"Coverage check failed: {e}")
-        
+
         return ComplianceCheckResult(
             check_name="audit_trail_coverage",
             passed=len(issues) == 0,
@@ -475,9 +474,9 @@ class CDCReconciler:
 
     def generate_compliance_report(self) -> ComplianceReport:
         """Generate comprehensive compliance report.
-        
+
         Runs all compliance checks and generates summary.
-        
+
         Returns:
             ComplianceReport
         """
@@ -486,14 +485,14 @@ class CDCReconciler:
             self.verify_cdc_event_ordering(),
             self.check_audit_trail_coverage(),
         ]
-        
+
         passed = sum(1 for c in checks if c.passed)
         failed = len(checks) - passed
-        
+
         # Determine overall status
         critical = any(c.severity == "critical" and not c.passed for c in checks)
         overall = "critical" if critical else ("warning" if failed > 0 else "compliant")
-        
+
         summary = f"{passed}/{len(checks)} checks passed. "
         if critical:
             summary += "CRITICAL ISSUES FOUND. "
@@ -501,7 +500,7 @@ class CDCReconciler:
             summary += "Warning: some checks failed. "
         else:
             summary += "All checks passed. "
-        
+
         return ComplianceReport(
             report_date=datetime.now(timezone.utc),
             total_checks=len(checks),
@@ -514,16 +513,16 @@ class CDCReconciler:
 
     def detect_missing_changes(
         self, start_date: date, end_date: date
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Detect potentially missing changes in date range.
-        
+
         Identifies suspicious gaps or patterns that might indicate
         missing CDC events.
-        
+
         Args:
             start_date: Range start
             end_date: Range end
-            
+
         Returns:
             Dict with findings
         """
@@ -546,7 +545,7 @@ class CDCReconciler:
                         (start_date, end_date, start_date, end_date)
                     )
                     no_change = cur.fetchone()[0]
-                    
+
                     # Find entities with too-frequent changes (potential duplicates)
                     cur.execute(
                         """SELECT entity_id, COUNT(*) as change_count
@@ -563,7 +562,7 @@ class CDCReconciler:
             self.logger.error(f"Missing changes detection failed: {e}")
             frequent = []
             no_change = 0
-        
+
         return {
             "entities_no_change": no_change,
             "high_frequency_changes": [{"entity_id": row[0], "count": row[1]} for row in frequent],
@@ -571,10 +570,10 @@ class CDCReconciler:
 
     def export_compliance_report(self, report: ComplianceReport) -> str:
         """Export compliance report to formatted string.
-        
+
         Args:
             report: ComplianceReport
-            
+
         Returns:
             Formatted report string
         """
@@ -590,12 +589,12 @@ class CDCReconciler:
             "Check Results:",
             "-" * 60,
         ]
-        
+
         for check in report.checks:
             status = "✓ PASS" if check.passed else "✗ FAIL"
             lines.append(f"{status} | {check.check_name} ({check.severity})")
             for issue in check.issues:
                 lines.append(f"       {issue}")
-        
+
         lines.append("-" * 60)
         return "\n".join(lines)

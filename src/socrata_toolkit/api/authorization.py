@@ -50,12 +50,12 @@ class RBACEnforcer:
     def check_permission(self, principal_id: str, resource: str, action: str, roles: list[str], permissions: set[str]) -> Decision:
         if "admin" in roles or ("data_consumer" in roles and action == "read"):
             return Decision(allowed=True, principal_id=principal_id, resource=resource, action=action, roles_checked=roles)
-        
+
         for d in self.delegations:
             if d.grantee_id == principal_id and d.permission == f"datasets:{action}" and d.resource_pattern == resource:
                 return Decision(allowed=True, principal_id=principal_id, resource=resource, action=action)
 
-        if f"datasets:{action}" in permissions or f"datasets:*" in permissions:
+        if f"datasets:{action}" in permissions or "datasets:*" in permissions:
             return Decision(allowed=True, principal_id=principal_id, resource=resource, action=action)
 
         return Decision(allowed=False, principal_id=principal_id, resource=resource, action=action, reason="No matching permission")

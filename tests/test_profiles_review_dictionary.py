@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import pandas as pd
 
+from socrata_toolkit.analyst.data_dictionary import build_data_dictionary, render_data_dictionary_md
 from socrata_toolkit.core.profiles import profile_paths
 from socrata_toolkit.review.store import ReviewStore
-from socrata_toolkit.analyst.data_dictionary import build_data_dictionary, render_data_dictionary_md
 
 
 def test_profile_paths_resolve_state_root(tmp_path: Path, monkeypatch) -> None:

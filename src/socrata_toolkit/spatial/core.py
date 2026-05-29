@@ -1,6 +1,9 @@
 from __future__ import annotations
+
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any, Iterable
+from typing import Any
+
 import pandas as pd
 
 """Lightweight local spatial helpers using Shapely.
@@ -50,7 +53,7 @@ class SpatialIndex:
             if shape(f["geometry"]).contains(pt):
                 hits.append(f)
         return hits
-    
+
 @dataclass
 class SpatialJoinResult:
     joined: pd.DataFrame
@@ -60,8 +63,8 @@ class SpatialJoinResult:
 
 def _to_geom(value: Any):
     try:
-        from shapely.geometry import shape
         from shapely import wkt
+        from shapely.geometry import shape
     except ImportError as exc:
         raise ImportError("Install geospatial support: pip install shapely") from exc
 

@@ -29,12 +29,12 @@ import csv
 import gzip
 import json
 import logging
-from dataclasses import dataclass, field
-from datetime import datetime, date, timezone
+from contextlib import contextmanager
+from dataclasses import dataclass
+from datetime import date, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, IO
-from contextlib import contextmanager
+from typing import IO
 
 try:
     import psycopg
@@ -57,7 +57,7 @@ class ExportFormat(Enum):
 @dataclass
 class ExportResult:
     """Result of CDC export operation.
-    
+
     Attributes:
         success: Whether export succeeded
         format: Export format used
@@ -71,26 +71,26 @@ class ExportResult:
     success: bool
     format: str
     record_count: int = 0
-    file_path: Optional[str] = None
+    file_path: str | None = None
     size_bytes: int = 0
     duration_seconds: float = 0.0
     message: str = ""
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class CDCExporter:
     """Export CDC events in multiple formats.
-    
+
     Supports various export formats for integration with downstream systems:
     data lakes, event streaming platforms, analytics tools, etc.
     """
 
     def __init__(self, dsn: str) -> None:
         """Initialize CDC exporter.
-        
+
         Args:
             dsn: PostgreSQL connection string
-            
+
         Raises:
             ImportError: If psycopg not installed
         """
@@ -113,22 +113,22 @@ class CDCExporter:
         source_dataset: str,
         output_path: str,
         compress: bool = False,
-        limit: Optional[int] = None,
+        limit: int | None = None,
     ) -> ExportResult:
         """Export CDC events to CSV.
-        
+
         Args:
             source_dataset: Dataset identifier
             output_path: Directory or file path for output
             compress: Whether to gzip compress
             limit: Maximum rows to export
-            
+
         Returns:
             ExportResult
         """
         start_time = datetime.now()
         records = []
-        
+
         try:
             with self._get_connection() as conn:
                 with conn.cursor() as cur:
@@ -138,14 +138,14 @@ class CDCExporter:
                               WHERE source_dataset = %s
                               ORDER BY timestamp_ms ASC"""
                     params = [source_dataset]
-                    
+
                     if limit:
                         query += " LIMIT %s"
                         params.append(limit)
-                    
+
                     cur.execute(query, params)
                     rows = cur.fetchall()
-            
+
             # Prepare output path
             path = Path(output_path)
             if path.is_dir():
@@ -153,7 +153,7 @@ class CDCExporter:
                 if compress:
                     filename += ".gz"
                 path = path / filename
-            
+
             # Write CSV
             if compress:
                 with gzip.open(path, "wt", encoding="utf-8") as f:
@@ -161,10 +161,10 @@ class CDCExporter:
             else:
                 with open(path, "w", encoding="utf-8", newline="") as f:
                     self._write_csv_data(f, rows)
-            
+
             duration = (datetime.now() - start_time).total_seconds()
             file_size = path.stat().st_size
-            
+
             return ExportResult(
                 success=True,
                 format="csv",
@@ -184,9 +184,9 @@ class CDCExporter:
             )
 
     @staticmethod
-    def _write_csv_data(f: IO, rows: List[tuple]) -> None:
+    def _write_csv_data(f: IO, rows: list[tuple]) -> None:
         """Write CDC rows to CSV file.
-        
+
         Args:
             f: File object
             rows: Database rows
@@ -205,7 +205,7 @@ class CDCExporter:
             ],
         )
         writer.writeheader()
-        
+
         for row in rows:
             writer.writerow({
                 "event_id": row[0],
@@ -221,23 +221,23 @@ class CDCExporter:
     def export_to_json(
         self,
         source_dataset: str,
-        output_path: Optional[str] = None,
+        output_path: str | None = None,
         format: str = "array",
-        limit: Optional[int] = None,
+        limit: int | None = None,
     ) -> ExportResult:
         """Export CDC events to JSON.
-        
+
         Args:
             source_dataset: Dataset identifier
             output_path: Optional file path (if None, returns data in memory)
             format: 'array' for JSON array or 'jsonl' for newline-delimited JSON
             limit: Maximum rows to export
-            
+
         Returns:
             ExportResult with data in memory if no output_path
         """
         start_time = datetime.now()
-        
+
         try:
             with self._get_connection() as conn:
                 with conn.cursor() as cur:
@@ -247,14 +247,14 @@ class CDCExporter:
                               WHERE source_dataset = %s
                               ORDER BY timestamp_ms ASC"""
                     params = [source_dataset]
-                    
+
                     if limit:
                         query += " LIMIT %s"
                         params.append(limit)
-                    
+
                     cur.execute(query, params)
                     rows = cur.fetchall()
-            
+
             # Convert to dicts
             events = []
             for row in rows:
@@ -268,16 +268,16 @@ class CDCExporter:
                     "after": json.loads(row[6]) if row[6] else None,
                     "metadata": json.loads(row[7]) if row[7] else None,
                 })
-            
+
             duration = (datetime.now() - start_time).total_seconds()
-            
+
             # Write to file if path provided
             if output_path:
                 path = Path(output_path)
                 if path.is_dir():
                     filename = f"{source_dataset}_{date.today().isoformat()}.json"
                     path = path / filename
-                
+
                 if format == "jsonl":
                     with open(path, "w", encoding="utf-8") as f:
                         for event in events:
@@ -285,7 +285,7 @@ class CDCExporter:
                 else:
                     with open(path, "w", encoding="utf-8") as f:
                         json.dump(events, f, indent=2, default=str)
-                
+
                 file_size = path.stat().st_size
                 return ExportResult(
                     success=True,
@@ -318,17 +318,17 @@ class CDCExporter:
         self,
         source_dataset: str,
         output_path: str,
-        limit: Optional[int] = None,
+        limit: int | None = None,
     ) -> ExportResult:
         """Export CDC events to Parquet format.
-        
+
         Requires pyarrow to be installed.
-        
+
         Args:
             source_dataset: Dataset identifier
             output_path: Directory for output
             limit: Maximum rows to export
-            
+
         Returns:
             ExportResult
         """
@@ -342,9 +342,9 @@ class CDCExporter:
                 message="Parquet export failed",
                 error="pyarrow not installed. Install with: pip install pyarrow",
             )
-        
+
         start_time = datetime.now()
-        
+
         try:
             with self._get_connection() as conn:
                 with conn.cursor() as cur:
@@ -354,14 +354,14 @@ class CDCExporter:
                               WHERE source_dataset = %s
                               ORDER BY timestamp_ms ASC"""
                     params = [source_dataset]
-                    
+
                     if limit:
                         query += " LIMIT %s"
                         params.append(limit)
-                    
+
                     cur.execute(query, params)
                     rows = cur.fetchall()
-            
+
             # Convert to Arrow table
             data = {
                 "event_id": [],
@@ -373,7 +373,7 @@ class CDCExporter:
                 "after": [],
                 "metadata": [],
             }
-            
+
             for row in rows:
                 data["event_id"].append(row[0])
                 data["source_dataset"].append(row[1])
@@ -383,20 +383,20 @@ class CDCExporter:
                 data["before"].append(json.dumps(json.loads(row[5])) if row[5] else None)
                 data["after"].append(json.dumps(json.loads(row[6])) if row[6] else None)
                 data["metadata"].append(json.dumps(json.loads(row[7])) if row[7] else None)
-            
+
             table = pa.table(data)
-            
+
             # Write parquet
             path = Path(output_path)
             if path.is_dir():
                 filename = f"{source_dataset}_{date.today().isoformat()}.parquet"
                 path = path / filename
-            
+
             pq.write_table(table, str(path))
-            
+
             duration = (datetime.now() - start_time).total_seconds()
             file_size = path.stat().st_size
-            
+
             return ExportResult(
                 success=True,
                 format="parquet",
@@ -418,28 +418,28 @@ class CDCExporter:
     def export_compacted_cdc(
         self,
         source_dataset: str,
-        output_path: Optional[str] = None,
+        output_path: str | None = None,
     ) -> ExportResult:
         """Export compacted CDC (latest version per business_key).
-        
+
         Removes intermediate updates, keeping only the latest state of each record.
         Useful for snapshots, dimension tables, etc.
-        
+
         Args:
             source_dataset: Dataset identifier
             output_path: Optional file path
-            
+
         Returns:
             ExportResult
         """
         start_time = datetime.now()
-        
+
         try:
             with self._get_connection() as conn:
                 with conn.cursor() as cur:
                     # Get latest record per business_key
                     query = """WITH latest AS (
-                                 SELECT DISTINCT ON (record_id) 
+                                 SELECT DISTINCT ON (record_id)
                                    event_id, source_dataset, operation, record_id,
                                    timestamp_ms, before_values, after_values, metadata
                                  FROM public.cdc_events
@@ -448,10 +448,10 @@ class CDCExporter:
                                )
                                SELECT * FROM latest
                                ORDER BY timestamp_ms DESC"""
-                    
+
                     cur.execute(query, (source_dataset,))
                     rows = cur.fetchall()
-            
+
             # Convert to dicts
             events = []
             for row in rows:
@@ -463,18 +463,18 @@ class CDCExporter:
                     "timestamp_ms": row[4],
                     "after": json.loads(row[6]) if row[6] else None,
                 })
-            
+
             duration = (datetime.now() - start_time).total_seconds()
-            
+
             if output_path:
                 path = Path(output_path)
                 if path.is_dir():
                     filename = f"{source_dataset}_compacted_{date.today().isoformat()}.json"
                     path = path / filename
-                
+
                 with open(path, "w", encoding="utf-8") as f:
                     json.dump(events, f, indent=2, default=str)
-                
+
                 file_size = path.stat().st_size
                 return ExportResult(
                     success=True,
@@ -506,22 +506,22 @@ class CDCExporter:
         self,
         table: str,
         output_path: str,
-        as_of_date: Optional[datetime] = None,
+        as_of_date: datetime | None = None,
     ) -> ExportResult:
         """Export SCD Type 2 snapshot.
-        
+
         Exports all current records or records as of a specific date.
-        
+
         Args:
             table: SCD table name
             output_path: Directory for output
             as_of_date: Optional historical date
-            
+
         Returns:
             ExportResult
         """
         start_time = datetime.now()
-        
+
         try:
             with self._get_connection() as conn:
                 with conn.cursor() as cur:
@@ -540,9 +540,9 @@ class CDCExporter:
                                   WHERE is_current = TRUE
                                   ORDER BY business_key"""
                         cur.execute(query)
-                    
+
                     rows = cur.fetchall()
-            
+
             # Convert to dicts
             records = []
             for row in rows:
@@ -554,21 +554,21 @@ class CDCExporter:
                     "is_current": row[4],
                     "data": json.loads(row[5]) if isinstance(row[5], str) else row[5],
                 })
-            
+
             duration = (datetime.now() - start_time).total_seconds()
-            
+
             # Write
             path = Path(output_path)
             if path.is_dir():
                 date_str = as_of_date.date().isoformat() if as_of_date else date.today().isoformat()
                 filename = f"{table}_snapshot_{date_str}.json"
                 path = path / filename
-            
+
             with open(path, "w", encoding="utf-8") as f:
                 json.dump(records, f, indent=2, default=str)
-            
+
             file_size = path.stat().st_size
-            
+
             return ExportResult(
                 success=True,
                 format="scd_snapshot",

@@ -13,9 +13,9 @@ Example::
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import pandas as pd
 
@@ -29,10 +29,10 @@ class ColumnProfile:
     null_pct: float
     unique_count: int
     unique_pct: float
-    sample_values: List[Any]
-    min_value: Optional[Any] = None
-    max_value: Optional[Any] = None
-    mean_value: Optional[float] = None
+    sample_values: list[Any]
+    min_value: Any | None = None
+    max_value: Any | None = None
+    mean_value: float | None = None
     description: str = ""
 
 
@@ -42,15 +42,15 @@ class DataDictionary:
     dataset_name: str
     row_count: int
     column_count: int
-    columns: List[ColumnProfile]
+    columns: list[ColumnProfile]
     generated_at: str = ""
 
     def to_markdown(self) -> str:
         lines = [
             f"# Data Dictionary: {self.dataset_name}",
-            f"",
+            "",
             f"**Rows:** {self.row_count:,} | **Columns:** {self.column_count}",
-            f"",
+            "",
             "| Column | Type | Nulls | Unique | Sample | Description |",
             "|--------|------|-------|--------|--------|-------------|",
         ]
@@ -60,7 +60,7 @@ class DataDictionary:
             lines.append(f"| `{c.name}` | {c.dtype} | {c.null_pct:.1f}% | {c.unique_count} | {samples} | {desc} |")
         return "\n".join(lines)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "dataset_name": self.dataset_name,
             "row_count": self.row_count,
@@ -82,7 +82,7 @@ class DataDictionary:
 def generate_data_dictionary(
     df: pd.DataFrame,
     dataset_name: str = "Dataset",
-    descriptions: Optional[Dict[str, str]] = None,
+    descriptions: dict[str, str] | None = None,
 ) -> DataDictionary:
     """Generate a complete data dictionary from a DataFrame."""
     from datetime import datetime, timezone

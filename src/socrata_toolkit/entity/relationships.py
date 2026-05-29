@@ -14,12 +14,11 @@ Example:
 from __future__ import annotations
 
 import uuid
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
-
-from collections import defaultdict
+from typing import Any
 
 
 class RelationshipType(str, Enum):
@@ -44,11 +43,11 @@ class EntityRelationship:
     target_entity_id: str
     relationship_type: RelationshipType
     confidence: float = 1.0
-    attributes: Dict[str, Any] = field(default_factory=dict)
+    attributes: dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     created_by: str = "system"
     notes: str = ""
-    
+
     def __repr__(self) -> str:
         return (f"EntityRelationship({self.source_entity_id} "
                 f"{self.relationship_type.value} {self.target_entity_id})")
@@ -57,33 +56,33 @@ class EntityRelationship:
 class RelationshipGraph:
     """
     Graph of entity relationships.
-    
+
     Provides efficient storage and querying of entity relationships,
     supporting multiple relationship types and traversal patterns.
     """
-    
+
     def __init__(self):
         """Initialize relationship graph."""
         # Store relationships
-        self._relationships: Dict[str, EntityRelationship] = {}
-        
+        self._relationships: dict[str, EntityRelationship] = {}
+
         # Index relationships for fast lookups
-        self._outgoing: Dict[str, List[str]] = defaultdict(list)  # source -> rel_ids
-        self._incoming: Dict[str, List[str]] = defaultdict(list)  # target -> rel_ids
-        self._by_type: Dict[str, List[str]] = defaultdict(list)  # type -> rel_ids
-    
+        self._outgoing: dict[str, list[str]] = defaultdict(list)  # source -> rel_ids
+        self._incoming: dict[str, list[str]] = defaultdict(list)  # target -> rel_ids
+        self._by_type: dict[str, list[str]] = defaultdict(list)  # type -> rel_ids
+
     def add_relationship(
         self,
         source_id: str,
         target_id: str,
         rel_type: RelationshipType | str,
         confidence: float = 1.0,
-        attributes: Optional[Dict[str, Any]] = None,
+        attributes: dict[str, Any] | None = None,
         notes: str = ""
     ) -> str:
         """
         Add relationship between entities.
-        
+
         Args:
             source_id: Source entity ID
             target_id: Target entity ID
@@ -91,15 +90,15 @@ class RelationshipGraph:
             confidence: Confidence in relationship
             attributes: Optional relationship attributes
             notes: Optional notes
-            
+
         Returns:
             Relationship ID
         """
         if isinstance(rel_type, str):
             rel_type = RelationshipType(rel_type.lower())
-        
+
         rel_id = str(uuid.uuid4())
-        
+
         relationship = EntityRelationship(
             relationship_id=rel_id,
             source_entity_id=source_id,
@@ -109,35 +108,35 @@ class RelationshipGraph:
             attributes=attributes or {},
             notes=notes
         )
-        
+
         # Store
         self._relationships[rel_id] = relationship
-        
+
         # Index
         self._outgoing[source_id].append(rel_id)
         self._incoming[target_id].append(rel_id)
         self._by_type[rel_type.value].append(rel_id)
-        
+
         return rel_id
-    
+
     def add_bidirectional_relationship(
         self,
         entity1_id: str,
         entity2_id: str,
         rel_type: RelationshipType | str,
         confidence: float = 1.0,
-        attributes: Optional[Dict[str, Any]] = None
-    ) -> Tuple[str, str]:
+        attributes: dict[str, Any] | None = None
+    ) -> tuple[str, str]:
         """
         Add bidirectional relationship.
-        
+
         Args:
             entity1_id: First entity
             entity2_id: Second entity
             rel_type: Relationship type (automatically reversed for opposite direction)
             confidence: Confidence
             attributes: Optional attributes
-            
+
         Returns:
             Tuple of (forward_rel_id, backward_rel_id)
         """
@@ -148,10 +147,10 @@ class RelationshipGraph:
             confidence,
             attributes
         )
-        
+
         # Reverse relationship type
         reverse_type = self._get_reverse_type(rel_type)
-        
+
         backward_id = self.add_relationship(
             entity2_id,
             entity1_id,
@@ -159,14 +158,14 @@ class RelationshipGraph:
             confidence,
             attributes
         )
-        
+
         return forward_id, backward_id
-    
+
     def _get_reverse_type(self, rel_type: RelationshipType | str) -> RelationshipType:
         """Get reverse of relationship type."""
         if isinstance(rel_type, str):
             rel_type = RelationshipType(rel_type.lower())
-        
+
         reverse_map = {
             RelationshipType.CONTAINS: RelationshipType.PART_OF,
             RelationshipType.PART_OF: RelationshipType.CONTAINS,
@@ -177,43 +176,43 @@ class RelationshipGraph:
             RelationshipType.REFERENCES: RelationshipType.REFERENCES,
             RelationshipType.DERIVED_FROM: RelationshipType.REFERENCES,
         }
-        
+
         return reverse_map.get(rel_type, rel_type)
-    
-    def get_relationship(self, rel_id: str) -> Optional[EntityRelationship]:
+
+    def get_relationship(self, rel_id: str) -> EntityRelationship | None:
         """Get relationship by ID."""
         return self._relationships.get(rel_id)
-    
+
     def remove_relationship(self, rel_id: str) -> bool:
         """Remove relationship."""
         rel = self._relationships.get(rel_id)
         if not rel:
             return False
-        
+
         # Remove from indexes
         self._outgoing[rel.source_entity_id].remove(rel_id)
         self._incoming[rel.target_entity_id].remove(rel_id)
         self._by_type[rel.relationship_type.value].remove(rel_id)
-        
+
         # Remove relationship
         del self._relationships[rel_id]
-        
+
         return True
-    
+
     def get_related_entities(
         self,
         entity_id: str,
-        relationship_type: Optional[RelationshipType | str] = None,
+        relationship_type: RelationshipType | str | None = None,
         direction: str = "outgoing"
-    ) -> List[Tuple[str, RelationshipType, float]]:
+    ) -> list[tuple[str, RelationshipType, float]]:
         """
         Get entities related to given entity.
-        
+
         Args:
             entity_id: Entity ID
             relationship_type: Filter by type (None = all)
             direction: 'outgoing' or 'incoming'
-            
+
         Returns:
             List of (related_entity_id, rel_type, confidence) tuples
         """
@@ -221,191 +220,191 @@ class RelationshipGraph:
             rel_ids = self._outgoing.get(entity_id, [])
         else:
             rel_ids = self._incoming.get(entity_id, [])
-        
+
         results = []
-        
+
         for rel_id in rel_ids:
             rel = self._relationships[rel_id]
-            
+
             # Filter by type if specified
             if relationship_type:
                 if isinstance(relationship_type, str):
                     relationship_type = RelationshipType(relationship_type.lower())
-                
+
                 if rel.relationship_type != relationship_type:
                     continue
-            
+
             # Add result
             target = rel.target_entity_id if direction == "outgoing" else rel.source_entity_id
             results.append((target, rel.relationship_type, rel.confidence))
-        
+
         return results
-    
+
     def get_all_relationships(
         self,
-        source_id: Optional[str] = None,
-        rel_type: Optional[RelationshipType | str] = None
-    ) -> List[EntityRelationship]:
+        source_id: str | None = None,
+        rel_type: RelationshipType | str | None = None
+    ) -> list[EntityRelationship]:
         """
         Get relationships matching criteria.
-        
+
         Args:
             source_id: Filter by source (None = all)
             rel_type: Filter by type (None = all)
-            
+
         Returns:
             List of matching relationships
         """
         results = []
-        
+
         for rel in self._relationships.values():
             if source_id and rel.source_entity_id != source_id:
                 continue
-            
+
             if rel_type:
                 if isinstance(rel_type, str):
                     rel_type = RelationshipType(rel_type.lower())
-                
+
                 if rel.relationship_type != rel_type:
                     continue
-            
+
             results.append(rel)
-        
+
         return results
-    
+
     def find_path(
         self,
         source_id: str,
         target_id: str,
         max_depth: int = 5
-    ) -> Optional[List[str]]:
+    ) -> list[str] | None:
         """
         Find path between entities using BFS.
-        
+
         Args:
             source_id: Start entity
             target_id: End entity
             max_depth: Maximum depth to search
-            
+
         Returns:
             List of entity IDs forming path, or None if not found
         """
         from collections import deque
-        
+
         if source_id == target_id:
             return [source_id]
-        
+
         queue = deque([(source_id, [source_id])])
         visited = {source_id}
-        
+
         while queue:
             current, path = queue.popleft()
-            
+
             if len(path) > max_depth:
                 continue
-            
+
             # Get all outgoing relationships
             related = self.get_related_entities(current, direction="outgoing")
-            
+
             for entity_id, _, _ in related:
                 if entity_id == target_id:
                     return path + [entity_id]
-                
+
                 if entity_id not in visited:
                     visited.add(entity_id)
                     queue.append((entity_id, path + [entity_id]))
-        
+
         return None
-    
+
     def find_all_paths(
         self,
         source_id: str,
         target_id: str,
         max_depth: int = 3
-    ) -> List[List[str]]:
+    ) -> list[list[str]]:
         """
         Find all paths between entities.
-        
+
         Args:
             source_id: Start entity
             target_id: End entity
             max_depth: Maximum depth
-            
+
         Returns:
             List of paths (each path is a list of entity IDs)
         """
         paths = []
-        
-        def dfs(current: str, target: str, path: List[str], depth: int):
+
+        def dfs(current: str, target: str, path: list[str], depth: int):
             if depth > max_depth:
                 return
-            
+
             if current == target:
                 paths.append(path)
                 return
-            
+
             related = self.get_related_entities(current, direction="outgoing")
-            
+
             for entity_id, _, _ in related:
                 if entity_id not in path:  # Avoid cycles
                     dfs(entity_id, target, path + [entity_id], depth + 1)
-        
+
         dfs(source_id, target_id, [source_id], 1)
         return paths
-    
+
     def get_transitive_closure(
         self,
         entity_id: str,
-        relationship_type: Optional[RelationshipType | str] = None
-    ) -> Set[str]:
+        relationship_type: RelationshipType | str | None = None
+    ) -> set[str]:
         """
         Get all entities reachable from given entity.
-        
+
         Args:
             entity_id: Starting entity
             relationship_type: Filter by relationship type
-            
+
         Returns:
             Set of reachable entity IDs
         """
         visited = set()
         to_visit = [entity_id]
-        
+
         while to_visit:
             current = to_visit.pop(0)
-            
+
             if current in visited:
                 continue
-            
+
             visited.add(current)
-            
+
             related = self.get_related_entities(
                 current,
                 relationship_type=relationship_type,
                 direction="outgoing"
             )
-            
+
             for entity_id, _, _ in related:
                 if entity_id not in visited:
                     to_visit.append(entity_id)
-        
+
         visited.discard(entity_id)  # Don't include source
         return visited
-    
-    def export_graph(self) -> Dict[str, Any]:
+
+    def export_graph(self) -> dict[str, Any]:
         """
         Export graph as data structure.
-        
+
         Returns:
             Dictionary with relationships
         """
         nodes = set()
         edges = []
-        
+
         for rel in self._relationships.values():
             nodes.add(rel.source_entity_id)
             nodes.add(rel.target_entity_id)
-            
+
             edges.append({
                 'source': rel.source_entity_id,
                 'target': rel.target_entity_id,
@@ -413,15 +412,15 @@ class RelationshipGraph:
                 'confidence': rel.confidence,
                 'attributes': rel.attributes
             })
-        
+
         return {
             'nodes': list(nodes),
             'edges': edges,
             'node_count': len(nodes),
             'edge_count': len(edges)
         }
-    
-    def get_statistics(self) -> Dict[str, Any]:
+
+    def get_statistics(self) -> dict[str, Any]:
         """Get graph statistics."""
         if not self._relationships:
             return {
@@ -430,23 +429,23 @@ class RelationshipGraph:
                 'relationship_types': [],
                 'avg_confidence': 0.0
             }
-        
+
         # Count unique entities
         entities = set()
         for rel in self._relationships.values():
             entities.add(rel.source_entity_id)
             entities.add(rel.target_entity_id)
-        
+
         # Count by type
         by_type = defaultdict(int)
         for rel in self._relationships.values():
             by_type[rel.relationship_type.value] += 1
-        
+
         # Average confidence
         avg_conf = sum(
             r.confidence for r in self._relationships.values()
         ) / len(self._relationships)
-        
+
         return {
             'total_relationships': len(self._relationships),
             'total_entities': len(entities),

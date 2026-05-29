@@ -15,8 +15,8 @@ try:
 except ImportError:
     DOCX_AVAILABLE = False
 
-from ...viz import export_plotly_figure, plot_sidewalk_anatomy
 from ...engineering import SIDEWALK_MATERIALS, SidewalkAnatomy, SidewalkZone
+from ...viz import export_plotly_figure, plot_sidewalk_anatomy
 
 CACHE_FILE: Final[Path] = Path("material_costs_cache.json")
 

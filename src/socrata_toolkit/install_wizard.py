@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import os
 import platform
-import shutil
-import sys
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -191,7 +190,7 @@ def test_socrata(token: str, domain: str) -> tuple[bool, str]:
     try:
         import requests
 
-        url = f"https://api.us.socrata.com/api/catalog/v1"
+        url = "https://api.us.socrata.com/api/catalog/v1"
         resp = requests.get(
             url,
             params={"domains": domain, "limit": 1},

@@ -15,6 +15,7 @@ def test_launcher_help_exits_zero():
 
 def test_launcher_doctor_via_cli():
     from click.testing import CliRunner
+
     from socrata_toolkit.core.cli import main
 
     runner = CliRunner()

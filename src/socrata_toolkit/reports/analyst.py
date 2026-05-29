@@ -23,8 +23,8 @@ Example:
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import datetime, timedelta, timezone
+from typing import Any
 
 try:
     from socrata_toolkit.governance.processor import GovernanceProcessor
@@ -36,37 +36,37 @@ logger = logging.getLogger(__name__)
 
 class ProjectAnalystReports:
     """Generate reports for Project Analysts from governance data.
-    
+
     Provides specialized reporting views for construction list management,
     budget tracking, and compliance validation.
     """
-    
+
     def __init__(self, governance_processor: GovernanceProcessor):
         """Initialize reports with governance processor.
-        
+
         Args:
             governance_processor: GovernanceProcessor instance
         """
         self.governance = governance_processor
         self.logger = logger.getChild(self.__class__.__name__)
-    
+
     def contract_budget_audit(
         self,
         contract_id: str,
         days_back: int = 90,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate audit trail for contract budget changes.
-        
+
         Shows all budget modifications with who, when, before/after values.
         Enables verification of spend accuracy and compliance.
-        
+
         Args:
             contract_id: Contract identifier
             days_back: How many days of history to include
-            
+
         Returns:
             Report with budget changes, totals, and variance analysis
-            
+
         Example:
             >>> audit = reports.contract_budget_audit("CONTR-2026-001")
             >>> for change in audit['changes']:
@@ -79,14 +79,14 @@ class ProjectAnalystReports:
                 contract_id,
                 limit=500
             )
-            
+
             budget_changes = []
             for event in audit_trail:
                 if event.after and 'budget_amount' in event.after:
                     old_value = None
                     if event.before and 'budget_amount' in event.before:
                         old_value = event.before['budget_amount']
-                    
+
                     budget_changes.append({
                         'event_id': event.event_id,
                         'timestamp': event.timestamp.isoformat() if event.timestamp else None,
@@ -98,7 +98,7 @@ class ProjectAnalystReports:
                         'schema_valid': event.schema_valid,
                         'compliant': event.is_compliant,
                     })
-            
+
             # Calculate variance
             if budget_changes:
                 initial_budget = budget_changes[-1]['old_budget'] or 0
@@ -108,7 +108,7 @@ class ProjectAnalystReports:
                 initial_budget = 0
                 final_budget = 0
                 variance = 0
-            
+
             return {
                 'contract_id': contract_id,
                 'changes_count': len(budget_changes),
@@ -125,26 +125,26 @@ class ProjectAnalystReports:
                 'error': str(e),
                 'generated_at': datetime.now(timezone.utc).isoformat(),
             }
-    
+
     def construction_compliance(
         self,
         project_id: str,
-        segment_ids: Optional[List[str]] = None,
-    ) -> Dict[str, Any]:
+        segment_ids: list[str] | None = None,
+    ) -> dict[str, Any]:
         """Validate construction list against design standards.
-        
+
         Checks that all segments in project comply with:
         - NYC Street Design Manual material requirements
         - ADA accessibility standards
         - Surface treatment specifications
-        
+
         Args:
             project_id: Project identifier
             segment_ids: Optional list of specific segments to check
-            
+
         Returns:
             Report with compliance violations and remediation steps
-            
+
         Example:
             >>> compliance = reports.construction_compliance("PROJ-2026-001")
             >>> if compliance['is_compliant']:
@@ -155,20 +155,20 @@ class ProjectAnalystReports:
         """
         try:
             violations = self.governance.get_compliance_violations("segments")
-            
+
             project_violations = []
             for violation in violations:
                 # Filter by project/segment
                 if segment_ids and violation.get('record_id') not in segment_ids:
                     continue
-                
+
                 project_violations.append({
                     'segment_id': violation['record_id'],
                     'violations': violation['violations'],
                     'timestamp': violation['timestamp'].isoformat(),
                     'remediation_required': len(violation['violations']) > 0,
                 })
-            
+
             return {
                 'project_id': project_id,
                 'is_compliant': len(project_violations) == 0,
@@ -183,25 +183,25 @@ class ProjectAnalystReports:
                 'error': str(e),
                 'generated_at': datetime.now(timezone.utc).isoformat(),
             }
-    
+
     def data_lineage_for_metric(
         self,
         metric_name: str,
         dataset: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Trace data lineage for a metric.
-        
+
         Shows which source datasets fed into this metric and all
         transformations applied. Enables understanding of metric
         definitions and validation of calculation logic.
-        
+
         Args:
             metric_name: Metric name (e.g., 'defect_density')
             dataset: Target dataset containing the metric
-            
+
         Returns:
             Report with lineage chain and transformation steps
-            
+
         Example:
             >>> lineage = reports.data_lineage_for_metric(
             ...     "defect_density", "sidewalk_kpis"
@@ -211,7 +211,7 @@ class ProjectAnalystReports:
         """
         try:
             audit_trail = self.governance.get_audit_trail(dataset, metric_name, limit=100)
-            
+
             lineage_chain = []
             for event in audit_trail:
                 if event.lineage_metadata:
@@ -222,7 +222,7 @@ class ProjectAnalystReports:
                         'columns': event.lineage_metadata.get('changed_columns', []),
                         'source_dataset': event.lineage_metadata.get('dataset'),
                     })
-            
+
             return {
                 'metric_name': metric_name,
                 'dataset': dataset,
@@ -237,37 +237,37 @@ class ProjectAnalystReports:
                 'error': str(e),
                 'generated_at': datetime.now(timezone.utc).isoformat(),
             }
-    
+
     def repair_progress_summary(
         self,
         days_back: int = 30,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate repair progress summary for period.
-        
+
         Shows completion rate, budget burn, and variance analysis
         across all active construction contracts.
-        
+
         Args:
             days_back: Number of days to include in summary
-            
+
         Returns:
             Report with progress metrics and trends
         """
         try:
             # Get repairs from audit trail in period
             start_date = datetime.now(timezone.utc) - timedelta(days=days_back)
-            
+
             audit_trail = self.governance.get_audit_trail(
                 "repairs",
                 "summary",
                 limit=1000
             )
-            
+
             total_repairs = 0
             completed_repairs = 0
             total_budget = 0
             spent_budget = 0
-            
+
             for event in audit_trail:
                 if event.timestamp and event.timestamp >= start_date:
                     if event.operation == "INSERT":
@@ -278,14 +278,14 @@ class ProjectAnalystReports:
                         if event.after.get('status') == 'completed':
                             completed_repairs += 1
                             spent_budget += event.after.get('spent', 0)
-            
+
             completion_rate = (
                 (completed_repairs / total_repairs * 100)
                 if total_repairs > 0 else 0
             )
-            
+
             budget_variance = spent_budget - total_budget
-            
+
             return {
                 'period_days': days_back,
                 'start_date': start_date.isoformat(),
@@ -308,19 +308,19 @@ class ProjectAnalystReports:
                 'error': str(e),
                 'generated_at': datetime.now(timezone.utc).isoformat(),
             }
-    
+
     def contractor_performance_audit(
         self,
         contractor_id: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Audit contractor performance metrics.
-        
+
         Shows quality score changes, schedule compliance, budget adherence,
         and material standard violations over time.
-        
+
         Args:
             contractor_id: Contractor identifier
-            
+
         Returns:
             Report with performance trends and incidents
         """
@@ -330,25 +330,25 @@ class ProjectAnalystReports:
                 contractor_id,
                 limit=500
             )
-            
+
             score_changes = []
             violations = 0
-            
+
             for event in audit_trail:
                 if event.after and 'quality_score' in event.after:
                     score_changes.append({
                         'timestamp': event.timestamp.isoformat() if event.timestamp else None,
                         'score': event.after['quality_score'],
                     })
-                
+
                 if event.design_rule_violations:
                     violations += len(event.design_rule_violations)
-            
+
             avg_score = (
                 sum(s['score'] for s in score_changes) / len(score_changes)
                 if score_changes else 0
             )
-            
+
             return {
                 'contractor_id': contractor_id,
                 'performance_changes': len(score_changes),

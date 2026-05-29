@@ -13,23 +13,23 @@ from __future__ import annotations
 import json
 import logging
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 try:
     import psycopg  # type: ignore[import]
-    from psycopg import sql, Connection  # type: ignore[import]
+    from psycopg import Connection, sql  # type: ignore[import]
 except ImportError:
     psycopg = None  # type: ignore
     Connection = Any  # type: ignore
 
 from .core import (
-    TransformationNode,
+    DAG,
+    EdgeType,
     ExecutionRecord,
+    ExecutionStatus,
     LineageEdge,
     NodeType,
-    EdgeType,
-    ExecutionStatus,
-    DAG,
+    TransformationNode,
 )
 
 logger = logging.getLogger(__name__)
@@ -37,14 +37,14 @@ logger = logging.getLogger(__name__)
 
 class LineagePersistence:
     """PostgreSQL persistence layer for lineage data.
-    
+
     Provides thread-safe CRUD operations with automatic audit logging.
     All timestamps are UTC-aware.
     """
 
-    def __init__(self, db_connection: Optional[Connection] = None) -> None:
+    def __init__(self, db_connection: Connection | None = None) -> None:
         """Initialize persistence layer.
-        
+
         Args:
             db_connection: PostgreSQL connection. If None, methods will fail.
         """
@@ -54,14 +54,14 @@ class LineagePersistence:
 
     def save_node(self, node: TransformationNode, user: str = "system") -> str:
         """Save or update a transformation node.
-        
+
         Args:
             node: TransformationNode to save
             user: User performing the operation
-            
+
         Returns:
             node_id of the saved node
-            
+
         Raises:
             RuntimeError: If database operation fails
         """
@@ -144,12 +144,12 @@ class LineagePersistence:
             logger.error(f"Failed to save node {node.node_id}: {e}")
             raise RuntimeError(f"Failed to save node: {e}")
 
-    def get_node(self, node_id: str) -> Optional[TransformationNode]:
+    def get_node(self, node_id: str) -> TransformationNode | None:
         """Retrieve a transformation node by ID.
-        
+
         Args:
             node_id: ID of node to retrieve
-            
+
         Returns:
             TransformationNode or None if not found
         """
@@ -198,11 +198,11 @@ class LineagePersistence:
         self, edge: LineageEdge, user: str = "system"
     ) -> None:
         """Save a lineage edge (dependency).
-        
+
         Args:
             edge: LineageEdge to save
             user: User performing the operation
-            
+
         Raises:
             RuntimeError: If database operation fails
         """
@@ -253,13 +253,13 @@ class LineagePersistence:
             logger.error(f"Failed to save edge: {e}")
             raise RuntimeError(f"Failed to save edge: {e}")
 
-    def get_edges(self, source_id: Optional[str] = None, target_id: Optional[str] = None) -> List[LineageEdge]:
+    def get_edges(self, source_id: str | None = None, target_id: str | None = None) -> list[LineageEdge]:
         """Retrieve edges, optionally filtered by source or target.
-        
+
         Args:
             source_id: Filter by source node ID
             target_id: Filter by target node ID
-            
+
         Returns:
             List of LineageEdge objects
         """
@@ -301,14 +301,14 @@ class LineagePersistence:
 
     def save_execution(self, execution: ExecutionRecord, user: str = "system") -> str:
         """Save an execution record.
-        
+
         Args:
             execution: ExecutionRecord to save
             user: User performing the operation
-            
+
         Returns:
             execution_id of the saved record
-            
+
         Raises:
             RuntimeError: If database operation fails
         """
@@ -360,13 +360,13 @@ class LineagePersistence:
 
     def get_execution_history(
         self, node_id: str, limit: int = 50
-    ) -> List[ExecutionRecord]:
+    ) -> list[ExecutionRecord]:
         """Get execution history for a node, newest first.
-        
+
         Args:
             node_id: Node to get history for
             limit: Maximum number of records to return
-            
+
         Returns:
             List of ExecutionRecord objects
         """
@@ -414,11 +414,11 @@ class LineagePersistence:
 
     def delete_node(self, node_id: str, user: str = "system") -> bool:
         """Delete a node and all its edges.
-        
+
         Args:
             node_id: Node to delete
             user: User performing the operation
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -462,10 +462,10 @@ class LineagePersistence:
 
     def export_dag(self, format: str = "json") -> str:
         """Export complete DAG in specified format.
-        
+
         Args:
             format: Export format: 'json', 'graphml', 'mermaid', 'dot'
-            
+
         Returns:
             String representation in specified format
         """
@@ -474,7 +474,7 @@ class LineagePersistence:
 
         try:
             dag = self.load_dag()
-            
+
             if format == "json":
                 return json.dumps(dag.to_dict(), indent=2, default=str)
             elif format == "graphml":
@@ -492,7 +492,7 @@ class LineagePersistence:
 
     def load_dag(self) -> DAG:
         """Load complete DAG from database.
-        
+
         Returns:
             DAG object with all nodes and edges
         """
@@ -535,11 +535,11 @@ class LineagePersistence:
         self,
         cursor: Any,
         event_type: str,
-        node_id: Optional[str] = None,
-        edge_source_id: Optional[str] = None,
-        edge_target_id: Optional[str] = None,
-        old_value: Optional[Dict[str, Any]] = None,
-        new_value: Optional[Dict[str, Any]] = None,
+        node_id: str | None = None,
+        edge_source_id: str | None = None,
+        edge_target_id: str | None = None,
+        old_value: dict[str, Any] | None = None,
+        new_value: dict[str, Any] | None = None,
         user: str = "system",
     ) -> None:
         """Log an audit event. Internal method."""

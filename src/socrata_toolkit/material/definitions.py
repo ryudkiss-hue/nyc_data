@@ -16,15 +16,13 @@ Standards: Python 3.9+, type hints, comprehensive docstrings
 
 from __future__ import annotations
 
+import logging
+
 from socrata_toolkit.material.standards import (
+    MaintenanceSchedule,
     MaterialCategory,
     MaterialSpecification,
-    MaintenanceSchedule,
-    ADAComplianceRule,
-    ADAFailureSeverity,
 )
-from datetime import datetime
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -725,10 +723,10 @@ MATERIAL_DEFINITIONS_BY_ID: dict[str, MaterialSpecification] = {
 
 def get_material_by_id(material_id: str) -> MaterialSpecification | None:
     """Retrieve material specification by material ID.
-    
+
     Args:
         material_id: Material ID (e.g., 'ASPH-NYC-001')
-        
+
     Returns:
         MaterialSpecification or None if not found
     """
@@ -737,10 +735,10 @@ def get_material_by_id(material_id: str) -> MaterialSpecification | None:
 
 def get_material_by_category(category: MaterialCategory) -> list[MaterialSpecification]:
     """Get all materials in a specific category.
-    
+
     Args:
         category: MaterialCategory to filter
-        
+
     Returns:
         List of MaterialSpecification objects
     """
@@ -751,13 +749,13 @@ def get_materials_by_lifecycle_cost_range(
     min_cost: float, max_cost: float
 ) -> list[MaterialSpecification]:
     """Get materials within a lifecycle cost range.
-    
+
     Useful for budget-constrained material selection.
-    
+
     Args:
         min_cost: Minimum lifecycle cost per sqft
         max_cost: Maximum lifecycle cost per sqft
-        
+
     Returns:
         List of qualified materials
     """

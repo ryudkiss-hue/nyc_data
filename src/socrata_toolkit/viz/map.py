@@ -16,9 +16,7 @@ Example::
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
@@ -45,11 +43,11 @@ def create_map(
     df: pd.DataFrame,
     lat_col: str = "latitude",
     lon_col: str = "longitude",
-    color_col: Optional[str] = None,
-    color_map: Optional[Dict[str, str]] = None,
-    popup_cols: Optional[List[str]] = None,
+    color_col: str | None = None,
+    color_map: dict[str, str] | None = None,
+    popup_cols: list[str] | None = None,
     title: str = "DOT Sidewalk Map",
-    center: Optional[tuple] = None,
+    center: tuple | None = None,
     zoom: int = 11,
 ) -> str:
     """Create an interactive map with markers.
@@ -96,7 +94,7 @@ def cluster_map(
     df: pd.DataFrame,
     lat_col: str = "latitude",
     lon_col: str = "longitude",
-    popup_cols: Optional[List[str]] = None,
+    popup_cols: list[str] | None = None,
     title: str = "DOT Sidewalk Clusters",
 ) -> str:
     """Create a map with marker clustering for hotspot visualization."""
