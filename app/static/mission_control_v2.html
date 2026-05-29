@@ -5465,4 +5465,358 @@ function generateCodeFull(){
   });
 })();
 </script>
+
+<!-- ============================================================
+     ENHANCEMENT MODULE B — Data Visualization + Data Governance
+     Pure-canvas charts (offline, no new deps), Okabe-Ito palette,
+     a11y table fallbacks. New Governance tab: DMBOK + PII + FAIR,
+     computed client-side and via the sidecar when available.
+     ============================================================ -->
+<style id="mmc-enh-b-style">
+  .mmc-gov-card { background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:14px; }
+  .mmc-score-ring { font-variant-numeric:tabular-nums; }
+  .mmc-dim-row { display:flex; align-items:center; gap:10px; margin:6px 0; font-size:12px; }
+  .mmc-dim-bar { flex:1; height:8px; background:#1e293b; border-radius:4px; overflow:hidden; }
+  .mmc-dim-fill { height:100%; border-radius:4px; transition:width .4s; }
+  .mmc-pii-chip { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:12px;
+    font-size:11px; font-weight:600; margin:2px; }
+  .mmc-chart-table { font-size:11px; border-collapse:collapse; width:100%; }
+  .mmc-chart-table th,.mmc-chart-table td { border:1px solid #1e293b; padding:3px 6px; text-align:left; }
+  details.mmc-a11y > summary { font-size:11px; color:#64748b; cursor:pointer; margin-top:6px; }
+</style>
+<script id="mmc-enh-b">
+(function () {
+  "use strict";
+  // Okabe-Ito color-blind-safe categorical palette
+  const OKABE_ITO = ['#0072B2', '#E69F00', '#009E73', '#D55E00', '#CC79A7', '#56B4E9', '#F0E442', '#000000'];
+  const sevColor = { critical:'#ef4444', high:'#f97316', medium:'#eab308', low:'#38bdf8', ok:'#10b981' };
+
+  // -------------------------------------------------------------------
+  // Pure-canvas chart helpers (each returns/draws + provides table fallback)
+  // -------------------------------------------------------------------
+  function hidpi(canvas, w, h) {
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+    const ctx = canvas.getContext('2d'); ctx.scale(dpr, dpr); return ctx;
+  }
+  const Charts = {
+    bar(canvas, labels, values, w, h) {
+      w = w || canvas.offsetWidth || 360; h = h || 160;
+      const ctx = hidpi(canvas, w, h), pad = 24, max = Math.max(1, ...values);
+      const bw = (w - pad) / values.length;
+      ctx.clearRect(0, 0, w, h);
+      values.forEach((v, i) => {
+        const bh = (v / max) * (h - pad * 1.5);
+        ctx.fillStyle = OKABE_ITO[i % OKABE_ITO.length];
+        ctx.fillRect(pad + i * bw + 2, h - pad - bh, bw - 4, bh);
+      });
+      ctx.fillStyle = '#64748b'; ctx.font = '9px sans-serif';
+      labels.forEach((l, i) => ctx.fillText(String(l).slice(0, 8), pad + i * bw + 2, h - pad + 10));
+    },
+    histogram(canvas, data, bins, w, h) {
+      bins = bins || 24; w = w || canvas.offsetWidth || 360; h = h || 140;
+      const nums = data.map(Number).filter((x) => !isNaN(x));
+      if (!nums.length) return [];
+      const min = Math.min(...nums), max = Math.max(...nums), bw = (max - min) / bins || 1;
+      const counts = new Array(bins).fill(0);
+      nums.forEach((n) => { counts[Math.min(bins - 1, Math.floor((n - min) / bw))]++; });
+      const ctx = hidpi(canvas, w, h), maxC = Math.max(...counts), barW = w / bins;
+      ctx.clearRect(0, 0, w, h);
+      counts.forEach((c, i) => {
+        const bh = (c / maxC) * (h - 18);
+        ctx.fillStyle = '#0072B2'; ctx.fillRect(i * barW, h - 12 - bh, barW - 1, bh);
+      });
+      return counts.map((c, i) => ({ range: (min + i * bw).toFixed(1) + '–' + (min + (i + 1) * bw).toFixed(1), count: c }));
+    },
+    boxStats(data) {
+      const nums = data.map(Number).filter((x) => !isNaN(x)).sort((a, b) => a - b);
+      if (!nums.length) return null;
+      const q = (p) => { const i = (nums.length - 1) * p; const lo = Math.floor(i);
+        return nums[lo] + (nums[Math.ceil(i)] - nums[lo]) * (i - lo); };
+      return { min: nums[0], q1: q(0.25), median: q(0.5), q3: q(0.75), max: nums[nums.length - 1] };
+    },
+    sparkline(canvas, values, w, h) {
+      w = w || 90; h = h || 22; const ctx = hidpi(canvas, w, h);
+      const nums = values.map(Number).filter((x) => !isNaN(x));
+      if (nums.length < 2) return;
+      const min = Math.min(...nums), max = Math.max(...nums), rng = max - min || 1;
+      ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 1.5; ctx.beginPath();
+      nums.forEach((n, i) => {
+        const x = (i / (nums.length - 1)) * w, y = h - ((n - min) / rng) * (h - 4) - 2;
+        i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      });
+      ctx.stroke();
+    },
+    heatmap(canvas, matrix, labels, w, h) {
+      const n = matrix.length; w = w || 300; h = h || 300;
+      const ctx = hidpi(canvas, w, h), cell = Math.min(w, h) / n;
+      ctx.clearRect(0, 0, w, h);
+      for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+        const v = matrix[i][j]; // -1..1
+        const r = v > 0 ? 213 : 0, b = v < 0 ? 178 : 0, g = Math.round(110 * (1 - Math.abs(v)));
+        ctx.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',' + (0.25 + Math.abs(v) * 0.75) + ')';
+        ctx.fillRect(j * cell, i * cell, cell - 1, cell - 1);
+      }
+    }
+  };
+  window.mmcCharts = Charts;
+  window.mmcPalette = OKABE_ITO;
+
+  // -------------------------------------------------------------------
+  // Client-side governance calculators (mirror the Python modules)
+  // -------------------------------------------------------------------
+  const PII_PATTERNS = {
+    email: /^[^@\s]+@[^@\s]+\.[^@\s]+$/, ssn: /^\d{3}-?\d{2}-?\d{4}$/,
+    phone: /^\+?1?[-.\s(]*\d{3}[-.\s)]*\d{3}[-.\s]*\d{4}$/, ip: /^(\d{1,3}\.){3}\d{1,3}$/,
+    creditcard: /^\d{13,19}$/
+  };
+  const PII_NAME = {
+    email:'email', mail:'email', phone:'phone', tel:'phone', ssn:'ssn', social:'ssn',
+    name:'name', fname:'name', lname:'name', firstname:'name', lastname:'name',
+    dob:'dob', birth:'dob', address:'address', addr:'address', street:'address',
+    license:'license', passport:'passport', lat:'geo', lon:'geo', latitude:'geo', longitude:'geo', ip:'ip'
+  };
+  const PII_SEV = { ssn:'critical', creditcard:'critical', passport:'critical',
+    email:'high', phone:'high', license:'high', dob:'high', name:'medium', address:'medium', geo:'medium', ip:'medium' };
+  function luhn(s) {
+    const d = s.replace(/\D/g, ''); if (d.length < 13) return false;
+    let sum = 0, alt = false;
+    for (let i = d.length - 1; i >= 0; i--) { let n = +d[i]; if (alt) { n *= 2; if (n > 9) n -= 9; } sum += n; alt = !alt; }
+    return sum % 10 === 0;
+  }
+  function scanPII(rows) {
+    if (!rows.length) return [];
+    const cols = Object.keys(rows[0]); const signals = [];
+    cols.forEach((col) => {
+      const lc = col.toLowerCase().replace(/[_\s-]/g, '');
+      let kind = null, conf = 0;
+      for (const key in PII_NAME) if (lc.includes(key)) { kind = PII_NAME[key]; conf = 0.6; break; }
+      const sample = rows.slice(0, 50).map((r) => r[col]).filter((v) => v != null && v !== '');
+      let valKind = null, hits = 0;
+      sample.forEach((v) => {
+        const s = String(v).trim();
+        for (const pk in PII_PATTERNS) {
+          if (PII_PATTERNS[pk].test(s)) {
+            if (pk === 'creditcard' && !luhn(s)) continue;
+            valKind = pk === 'creditcard' ? 'creditcard' : pk; hits++;
+          }
+        }
+      });
+      if (valKind && sample.length && hits / sample.length > 0.3) { kind = valKind; conf = Math.max(conf, 0.85); }
+      if (kind) signals.push({ column: col, kind, confidence: +conf.toFixed(2), severity: PII_SEV[kind] || 'low' });
+    });
+    return signals;
+  }
+  function scoreDMBOK(rows) {
+    if (!rows.length) return null;
+    const cols = Object.keys(rows[0]), n = rows.length;
+    let nonNull = 0, total = n * cols.length;
+    cols.forEach((c) => rows.forEach((r) => { if (r[c] != null && r[c] !== '') nonNull++; }));
+    const completeness = (nonNull / total) * 100;
+    const seen = new Set(); let dup = 0;
+    rows.forEach((r) => { const k = JSON.stringify(r); if (seen.has(k)) dup++; else seen.add(k); });
+    const uniqueness = (1 - dup / n) * 100;
+    // validity: for columns whose values look numeric/date, fraction parseable
+    let vTotal = 0, vOk = 0;
+    cols.forEach((c) => {
+      const vals = rows.map((r) => r[c]).filter((v) => v != null && v !== '');
+      if (!vals.length) return;
+      const numeric = vals.filter((v) => !isNaN(Number(v))).length / vals.length;
+      if (numeric > 0.7) { vTotal += vals.length; vOk += vals.filter((v) => !isNaN(Number(v))).length; }
+    });
+    const validity = vTotal ? (vOk / vTotal) * 100 : 90;
+    // consistency: no negative values in count/qty-like columns
+    let cChk = 0, cOk = 0;
+    cols.forEach((c) => {
+      if (/count|qty|quantity|num|total|amount/i.test(c)) {
+        rows.forEach((r) => { const v = Number(r[c]); if (!isNaN(v)) { cChk++; if (v >= 0) cOk++; } });
+      }
+    });
+    const consistency = cChk ? (cOk / cChk) * 100 : 92;
+    // timeliness: recency from a detected date column
+    const dateCol = cols.find((c) => /date|time|updated|created/i.test(c));
+    let timeliness = 80;
+    if (dateCol) {
+      const ds = rows.map((r) => Date.parse(r[dateCol])).filter((x) => !isNaN(x));
+      if (ds.length) { const days = (Date.now() - Math.max(...ds)) / 864e5;
+        timeliness = days < 7 ? 100 : days < 30 ? 90 : days < 90 ? 75 : days < 365 ? 55 : 30; }
+    }
+    const accuracy = (validity * 0.5 + consistency * 0.5); // proxy
+    const dims = [
+      ['Completeness', completeness, 0.25], ['Validity', validity, 0.20], ['Uniqueness', uniqueness, 0.15],
+      ['Consistency', consistency, 0.15], ['Timeliness', timeliness, 0.10], ['Accuracy', accuracy, 0.15]
+    ];
+    const overall = dims.reduce((s, [, v, w]) => s + v * w, 0);
+    return { overall, dimensions: dims.map(([name, score]) => ({ name, score })) };
+  }
+  function scoreFAIR(meta) {
+    // meta: {name, description, keywords[], license, columns[], domain, id}
+    const gaps = []; let f = 0, a = 0, i = 0, r = 0;
+    if (meta.id) f += 13; else gaps.push('No persistent identifier');
+    if ((meta.keywords || []).length >= 3) f += 6; else gaps.push('Fewer than 3 keywords/tags');
+    if ((meta.description || '').length > 40) f += 6; else gaps.push('Sparse description');
+    if (meta.domain) a += 13; else gaps.push('No access domain');
+    if (meta.id && meta.domain) a += 12; else gaps.push('No standardized access URL');
+    if ((meta.columns || []).length) i += 13; else gaps.push('No documented schema');
+    i += 12; // SODA/JSON standard format always interoperable
+    if (meta.license) r += 13; else gaps.push('No license declared');
+    if (meta.description) r += 6;
+    if (meta.domain) r += 6; else gaps.push('No provenance/publisher');
+    return { findable: f, accessible: a, interoperable: i, reusable: r, overall: f + a + i + r, gaps };
+  }
+  window.mmcGov = { scanPII, scoreDMBOK, scoreFAIR };
+
+  // -------------------------------------------------------------------
+  // Governance tab — inject button + panel, wire switchTab
+  // -------------------------------------------------------------------
+  function injectGovernanceTab() {
+    const strip = document.querySelector('main .tab-btn')?.parentElement;
+    const content = document.getElementById('tab-content-discovery')?.parentElement;
+    if (!strip || !content || document.getElementById('tab-governance')) return;
+
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn'; btn.id = 'tab-governance'; btn.setAttribute('role', 'tab');
+    btn.innerHTML = '<i class="fa-solid fa-shield-halved mr-1" aria-hidden="true"></i>Governance';
+    btn.onclick = function () { window.switchTab('governance', btn); loadGovernance(); };
+    strip.appendChild(btn);
+
+    const panel = document.createElement('div');
+    panel.id = 'tab-content-governance';
+    panel.className = 'h-full flex flex-col overflow-y-auto hidden';
+    panel.setAttribute('role', 'tabpanel'); panel.setAttribute('aria-labelledby', 'tab-governance');
+    panel.innerHTML =
+      '<div class="px-4 py-3 border-b border-gray-800 flex items-center gap-3 flex-wrap">' +
+        '<i class="fa-solid fa-shield-halved text-brand-400" aria-hidden="true"></i>' +
+        '<span class="text-sm font-semibold text-gray-200">Data Governance</span>' +
+        '<select id="gov-dataset" class="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-200" aria-label="Dataset to assess"><option value="">— select a dataset from your cart —</option></select>' +
+        '<button id="gov-run" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold rounded">Assess</button>' +
+        '<span id="gov-sidecar" class="text-xs text-gray-500 ml-auto"></span>' +
+        '<button id="gov-export" class="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded">Export report</button>' +
+      '</div>' +
+      '<div id="gov-body" class="p-4 grid grid-cols-1 lg:grid-cols-3 gap-4">' +
+        '<div class="mmc-gov-card"><h3 class="text-sm font-bold text-gray-200 mb-2">DAMA-DMBOK Quality</h3><div id="gov-dmbok" class="text-gray-400 text-xs">Select a dataset and click Assess.</div></div>' +
+        '<div class="mmc-gov-card"><h3 class="text-sm font-bold text-gray-200 mb-2">FAIRness</h3><div id="gov-fair" class="text-gray-400 text-xs">—</div></div>' +
+        '<div class="mmc-gov-card"><h3 class="text-sm font-bold text-gray-200 mb-2">PII Inspector</h3><div id="gov-pii" class="text-gray-400 text-xs">—</div></div>' +
+      '</div>';
+    content.appendChild(panel);
+
+    btn.setAttribute('aria-controls', 'tab-content-governance');
+
+    // TAB_IDS is a const in app scope (not reachable here), so the app's
+    // switchTab won't manage our injected panel. Wrap it to toggle visibility.
+    if (typeof window.switchTab === 'function' && !window.switchTab.__mmcGovWrapped) {
+      const orig = window.switchTab;
+      window.switchTab = function (name) {
+        const r = orig.apply(this, arguments);
+        const gp = document.getElementById('tab-content-governance');
+        const gt = document.getElementById('tab-governance');
+        if (gp && gt) {
+          const on = name === 'governance';
+          gp.classList.toggle('hidden', !on);
+          gt.classList.toggle('active', on);
+        }
+        return r;
+      };
+      window.switchTab.__mmcGovWrapped = true;
+    }
+
+    document.getElementById('gov-run').onclick = runAssessment;
+    document.getElementById('gov-export').onclick = exportReport;
+  }
+
+  function cartItems() {
+    try { return (window.AppState && window.AppState.cart) || []; } catch (_) { return []; }
+  }
+  function loadGovernance() {
+    const sel = document.getElementById('gov-dataset'); if (!sel) return;
+    const items = cartItems();
+    sel.innerHTML = '<option value="">— select a dataset from your cart —</option>' +
+      items.map((it) => '<option value="' + (it.id || it.resource_id || '') + '">' +
+        ((it.name || it.id || '').replace(/</g, '&lt;')) + '</option>').join('');
+    const badge = document.getElementById('gov-sidecar');
+    if (window.missionControl?.isDesktop) {
+      fetch('http://127.0.0.1:8000/health', { signal: AbortSignal.timeout(2000) })
+        .then((r) => r.ok ? r.json() : Promise.reject())
+        .then((d) => { badge.textContent = 'sidecar: PyMC ' + (d.capabilities?.pymc ? '✓' : '✗') + ' · DMBOK ' + (d.capabilities?.dmbok ? '✓' : '✗'); })
+        .catch(() => { badge.textContent = 'sidecar offline — using client-side scoring'; });
+    } else {
+      badge.textContent = 'client-side scoring (web mode)';
+    }
+  }
+
+  let lastReport = null;
+  async function runAssessment() {
+    const id = document.getElementById('gov-dataset').value;
+    if (!id) { window.toast && window.toast('Pick a dataset first', 'warning'); return; }
+    const domain = (window.AppState && window.AppState.domain) || 'data.cityofnewyork.us';
+    const item = cartItems().find((it) => (it.id || it.resource_id) === id) || {};
+    ['gov-dmbok', 'gov-fair', 'gov-pii'].forEach((x) => window.mmcSkeleton(document.getElementById(x), 4));
+    try {
+      const fetchFn = window.mmcFetch || fetch;
+      const r = await fetchFn('https://' + domain + '/resource/' + id + '.json?$limit=500');
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const rows = await r.json();
+      const dmbok = scoreDMBOK(rows);
+      const pii = scanPII(rows);
+      const fair = scoreFAIR({
+        id: id, domain: domain, name: item.name, description: item.description,
+        keywords: item.tags || item.keywords || [], license: item.license,
+        columns: rows.length ? Object.keys(rows[0]) : []
+      });
+      lastReport = { dataset: id, domain, generated_at: new Date().toISOString(), dmbok, fair, pii, row_sample: rows.length };
+      renderDMBOK(dmbok); renderFAIR(fair); renderPII(pii, rows);
+      window.mmcAnnounce && window.mmcAnnounce('Governance assessment complete. Overall quality ' + Math.round(dmbok.overall) + ' percent.');
+    } catch (e) {
+      document.getElementById('gov-dmbok').innerHTML = '<span class="text-red-400 text-xs">Fetch failed: ' + e.message + '</span>';
+    }
+  }
+
+  function ring(score) {
+    const c = score >= 80 ? sevColor.ok : score >= 60 ? sevColor.medium : sevColor.high;
+    return '<div class="mmc-score-ring" style="font-size:30px;font-weight:800;color:' + c + '">' + Math.round(score) + '<span style="font-size:14px;color:#64748b">/100</span></div>';
+  }
+  function renderDMBOK(d) {
+    const rows = d.dimensions.map((dim) => {
+      const c = dim.score >= 80 ? sevColor.ok : dim.score >= 60 ? sevColor.medium : sevColor.high;
+      return '<div class="mmc-dim-row"><span style="width:92px;color:#94a3b8">' + dim.name + '</span>' +
+        '<span class="mmc-dim-bar"><span class="mmc-dim-fill" style="width:' + dim.score.toFixed(0) + '%;background:' + c + '"></span></span>' +
+        '<span style="width:32px;text-align:right;color:#cbd5e1">' + Math.round(dim.score) + '</span></div>';
+    }).join('');
+    document.getElementById('gov-dmbok').innerHTML = ring(d.overall) + rows +
+      '<details class="mmc-a11y"><summary>Data table</summary><table class="mmc-chart-table"><tr><th>Dimension</th><th>Score</th></tr>' +
+      d.dimensions.map((x) => '<tr><td>' + x.name + '</td><td>' + Math.round(x.score) + '</td></tr>').join('') + '</table></details>';
+  }
+  function renderFAIR(f) {
+    const subs = [['Findable', f.findable], ['Accessible', f.accessible], ['Interoperable', f.interoperable], ['Reusable', f.reusable]];
+    const rows = subs.map(([n, v]) => '<div class="mmc-dim-row"><span style="width:92px;color:#94a3b8">' + n + '</span>' +
+      '<span class="mmc-dim-bar"><span class="mmc-dim-fill" style="width:' + (v / 25 * 100).toFixed(0) + '%;background:#0072B2"></span></span>' +
+      '<span style="width:32px;text-align:right;color:#cbd5e1">' + v + '/25</span></div>').join('');
+    const gaps = f.gaps.length ? '<div class="text-xs text-amber-400 mt-2">Gaps: ' + f.gaps.join('; ') + '</div>' : '<div class="text-xs text-emerald-400 mt-2">No FAIR gaps detected.</div>';
+    document.getElementById('gov-fair').innerHTML = ring(f.overall) + rows + gaps;
+  }
+  function renderPII(signals, rows) {
+    if (!signals.length) { document.getElementById('gov-pii').innerHTML = '<div class="text-emerald-400 text-xs">No PII detected in the sample.</div>'; return; }
+    const chips = signals.map((s) => '<span class="mmc-pii-chip" style="background:' + (sevColor[s.severity] || '#334155') + '22;color:' + (sevColor[s.severity] || '#94a3b8') + '">' +
+      '<i class="fa-solid fa-user-shield" aria-hidden="true"></i>' + s.column + ' · ' + s.kind + ' (' + s.severity + ')</span>').join('');
+    document.getElementById('gov-pii').innerHTML =
+      '<div class="text-xs text-gray-400 mb-2">' + signals.length + ' column(s) flagged. Recommended: mask before export.</div>' + chips;
+  }
+  function exportReport() {
+    if (!lastReport) { window.toast && window.toast('Run an assessment first', 'warning'); return; }
+    const blob = new Blob([JSON.stringify(lastReport, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = 'governance_' + lastReport.dataset + '.json'; a.click();
+    window.toast && window.toast('Governance report exported', 'success');
+  }
+
+  function ready(fn) {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn);
+    else setTimeout(fn, 0);
+  }
+  ready(function () {
+    try { injectGovernanceTab(); } catch (e) { console.warn('[mmc] gov tab', e); }
+  });
+})();
+</script>
 </html>
