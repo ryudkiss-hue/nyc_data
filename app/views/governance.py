@@ -200,7 +200,7 @@ def render_governance_tab(loaded_frames: dict[str, pd.DataFrame]) -> None:
             st.caption("Manual lineage graph (socrata_toolkit.lineage not available)")
 
         fig = _build_lineage_figure(list(loaded_frames.keys()))
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
     st.divider()
 
@@ -224,7 +224,7 @@ def render_governance_tab(loaded_frames: dict[str, pd.DataFrame]) -> None:
         # Show table without HTML column as st.dataframe, then hyperlinks via markdown
         st.dataframe(
             reg_df[["Key", "Label", "Group", "FourFour ID"]],
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
         )
         st.markdown("**Direct links to NYC Open Data:**")
@@ -259,7 +259,7 @@ def render_governance_tab(loaded_frames: dict[str, pd.DataFrame]) -> None:
                     log_df[col] = None
             st.dataframe(
                 log_df[expected_cols],
-                use_container_width=True,
+                width="stretch",
                 hide_index=True,
             )
         else:
@@ -295,7 +295,7 @@ def render_governance_tab(loaded_frames: dict[str, pd.DataFrame]) -> None:
         )
 
     if freshness_rows:
-        st.dataframe(pd.DataFrame(freshness_rows), use_container_width=True, hide_index=True)
+        st.dataframe(pd.DataFrame(freshness_rows), width="stretch", hide_index=True)
     else:
         st.info("No datasets with detectable date columns are loaded.")
 
@@ -310,7 +310,7 @@ def render_governance_tab(loaded_frames: dict[str, pd.DataFrame]) -> None:
             st.caption("No audit events recorded this session.")
         else:
             trail_df = pd.DataFrame(trail[::-1])  # most recent first
-            st.dataframe(trail_df, use_container_width=True, hide_index=True, height=250)
+            st.dataframe(trail_df, width="stretch", hide_index=True, height=250)
 
         col_a, col_b = st.columns(2)
         with col_a:

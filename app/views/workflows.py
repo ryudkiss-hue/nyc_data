@@ -110,7 +110,7 @@ def view_qa(results: dict) -> None:
 
     with tab_all:
         disp = show.drop(columns=internal_cols, errors="ignore").head(500)
-        st.dataframe(disp, use_container_width=True, hide_index=True)
+        st.dataframe(disp, width="stretch", hide_index=True)
         if not show.empty:
             csv = show.to_csv(index=False).encode("utf-8")
             st.download_button("⬇ Export full ledger (CSV)", csv, "qa_ledger.csv", mime="text/csv")
@@ -130,7 +130,7 @@ def view_qa(results: dict) -> None:
                 issues_df["severity"] = issues_df.get("_quality_severity", "info").map(
                     lambda x: _URGENCY_COLORS.get(x, "🔵")
                 )
-            st.dataframe(issues_df, use_container_width=True, hide_index=True)
+            st.dataframe(issues_df, width="stretch", hide_index=True)
             st.download_button(
                 "⬇ Export issues (CSV)",
                 issues_df.to_csv(index=False).encode("utf-8"),
@@ -145,7 +145,7 @@ def view_qa(results: dict) -> None:
             stale_disp = stale.drop(columns=[c for c in stale.columns if c.startswith("_")], errors="ignore").head(300)
             if "_days_open" in stale.columns:
                 stale_disp["days_open"] = stale["_days_open"]
-            st.dataframe(stale_disp, use_container_width=True, hide_index=True)
+            st.dataframe(stale_disp, width="stretch", hide_index=True)
             st.download_button(
                 "⬇ Export stale 311 (CSV)",
                 stale_disp.to_csv(index=False).encode("utf-8"),
@@ -227,7 +227,7 @@ def view_spatial(results: dict, map_layers: dict[str, pd.DataFrame]) -> None:
         display_cols = [c for c in ("conflict_id", "conflict_type", "conflict_severity", "_bbl", "detected_at") if c in conflicts.columns]
         extra = [c for c in conflicts.columns if c not in display_cols and not c.startswith("_")][:6]
         table = conflicts[display_cols + extra].head(300)
-        st.dataframe(table, use_container_width=True, hide_index=True)
+        st.dataframe(table, width="stretch", hide_index=True)
         st.download_button(
             "⬇ Export conflicts (CSV)",
             table.to_csv(index=False).encode("utf-8"),
@@ -266,7 +266,7 @@ def view_contract(results: dict) -> None:
             if "_clearance_urgency" in disp.columns:
                 disp["urgency"] = disp["_clearance_urgency"].map(lambda x: _URGENCY_COLORS.get(x, "🔵"))
             show_cols = [c for c in disp.columns if not c.startswith("_")]
-            st.dataframe(disp[show_cols].head(300), use_container_width=True, hide_index=True)
+            st.dataframe(disp[show_cols].head(300), width="stretch", hide_index=True)
             st.download_button(
                 "⬇ DOT dispatch list (CSV)",
                 cleared.to_csv(index=False).encode("utf-8"),
@@ -279,7 +279,7 @@ def view_contract(results: dict) -> None:
             st.info("No Parks Department routing tags generated.")
         else:
             show_cols = [c for c in parks.columns if not c.startswith("_")]
-            st.dataframe(parks[show_cols].head(200), use_container_width=True, hide_index=True)
+            st.dataframe(parks[show_cols].head(200), width="stretch", hide_index=True)
             st.download_button(
                 "⬇ Parks routing (CSV)",
                 parks.to_csv(index=False).encode("utf-8"),
@@ -350,7 +350,7 @@ def view_quality(results: dict, frames: dict) -> None:
             return "🔴"
 
         summary_df["grade"] = summary_df["quality_score"].map(_score_color)
-        st.dataframe(summary_df, use_container_width=True, hide_index=True)
+        st.dataframe(summary_df, width="stretch", hide_index=True)
         st.download_button(
             "⬇ Export quality scorecard (CSV)",
             summary_df.to_csv(index=False).encode("utf-8"),
@@ -384,7 +384,7 @@ def view_quality(results: dict, frames: dict) -> None:
             })
         if col_rows:
             cols_df = pd.DataFrame(col_rows)
-            st.dataframe(cols_df, use_container_width=True, hide_index=True)
+            st.dataframe(cols_df, width="stretch", hide_index=True)
 
     # Dataset comparison
     if len(profiles) >= 2:
@@ -398,7 +398,7 @@ def view_quality(results: dict, frames: dict) -> None:
             df_b = frames.get(ds_b, pd.DataFrame())
             if not df_a.empty and not df_b.empty:
                 cmp_df = compare_datasets(df_a, df_b, ds_a, ds_b)
-                st.dataframe(cmp_df, use_container_width=True, hide_index=True)
+                st.dataframe(cmp_df, width="stretch", hide_index=True)
                 shared = len(cmp_df[cmp_df["shared"] == "✓"])
                 join_cands = len(cmp_df[cmp_df["join_candidate"] == "🔑"])
                 st.caption(
@@ -430,7 +430,7 @@ def view_ingest(frames: dict[str, pd.DataFrame]) -> None:
     c2.metric("Loaded successfully", len(summary) - len(failed))
     c3.metric("Failed / empty", len(failed), delta_color="inverse")
 
-    st.dataframe(summary, use_container_width=True, hide_index=True)
+    st.dataframe(summary, width="stretch", hide_index=True)
 
     if not failed.empty:
         st.error(
@@ -451,7 +451,7 @@ def view_ingest(frames: dict[str, pd.DataFrame]) -> None:
     elif not df.empty:
         st.caption(f"{len(df):,} rows · {len(df.columns)} columns · Key: `{key}`")
         show_cols = [c for c in df.columns if not c.startswith("_")]
-        st.dataframe(df[show_cols].head(100), use_container_width=True, hide_index=True)
+        st.dataframe(df[show_cols].head(100), width="stretch", hide_index=True)
         csv_data = df.to_csv(index=False).encode("utf-8")
         st.download_button(
             f"⬇ Download {key}.csv",

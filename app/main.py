@@ -520,7 +520,7 @@ def _data_quality_panel(df_jobs: pd.DataFrame, df_payroll: pd.DataFrame):
         })
 
     df_q = pd.DataFrame(rows)
-    st.dataframe(df_q, use_container_width=True, hide_index=True)
+    st.dataframe(df_q, width="stretch", hide_index=True)
 
 
 def _export_panel(results: dict, df_jobs: pd.DataFrame):
@@ -544,15 +544,15 @@ def _export_panel(results: dict, df_jobs: pd.DataFrame):
     c1, c2, c3 = st.columns(3)
     c1.download_button(
         "📥  Forecast CSV", forecast_csv,
-        file_name="mmc_forecast.csv", mime="text/csv", use_container_width=True,
+        file_name="mmc_forecast.csv", mime="text/csv", width="stretch",
     )
     c2.download_button(
         "📥  Job Postings CSV", jobs_csv,
-        file_name="mmc_job_postings.csv", mime="text/csv", use_container_width=True,
+        file_name="mmc_job_postings.csv", mime="text/csv", width="stretch",
     )
     c3.download_button(
         "📄  Pipeline Summary", summary_txt,
-        file_name="mmc_summary.txt", mime="text/plain", use_container_width=True,
+        file_name="mmc_summary.txt", mime="text/plain", width="stretch",
     )
 
 # ==========================================
@@ -601,18 +601,18 @@ def _render_dashboard(results: dict, target_agency: str, target_title: str):
     # Section 1: Velocity
     st.subheader("Administrative Velocity")
     st.caption("3-month rolling average of job postings vs. payroll start dates.")
-    st.plotly_chart(_chart_velocity(results), use_container_width=True)
+    st.plotly_chart(_chart_velocity(results), width="stretch")
 
     # Section 2: Lag correlation + forecast side by side
     col_a, col_b = st.columns([1, 2])
     with col_a:
         st.subheader("Cross-Correlation")
         st.caption(f"Optimal lag: **{results['best_lag']} months** (highlighted).")
-        st.plotly_chart(_chart_lag(results), use_container_width=True)
+        st.plotly_chart(_chart_lag(results), width="stretch")
     with col_b:
         st.subheader("12-Month Forecast")
         st.caption("Prophet forecast with confidence bands; hires shifted by OMB lag.")
-        st.plotly_chart(_chart_forecast(results), use_container_width=True)
+        st.plotly_chart(_chart_forecast(results), width="stretch")
 
     # Section 3: Map
     df_jobs = st.session_state.df_jobs_cache
@@ -635,7 +635,7 @@ def _render_dashboard(results: dict, target_agency: str, target_title: str):
             show_cols = [c for c in ["job_id", "civil_service_title", "agency",
                                      "posting_date", "work_location", "Status", "source"]
                          if c in df_jobs.columns]
-            st.dataframe(df_jobs[show_cols].head(200), use_container_width=True, hide_index=True)
+            st.dataframe(df_jobs[show_cols].head(200), width="stretch", hide_index=True)
             st.caption(f"{len(df_jobs):,} total rows — showing first 200.")
 
     # Section 6: Export
@@ -671,7 +671,7 @@ def _render_copilot(results: dict | None, target_agency: str, target_title: str)
     ]
     cols = st.columns(len(chips))
     for col, (label, query) in zip(cols, chips, strict=False):
-        if col.button(label, key=f"chip_{label}", use_container_width=True):
+        if col.button(label, key=f"chip_{label}", width="stretch"):
             st.session_state.copilot_messages.append({"role": "user", "content": query})
             with st.spinner("Contacting Gemini..."):
                 reply = _query_gemini(query, sys_prompt, st.session_state.copilot_messages)
@@ -739,12 +739,12 @@ def main():
         run_btn = st.button(
             "🚀  Initialize Pipeline",
             type="primary",
-            use_container_width=True,
+            width="stretch",
             disabled=(jid_count > JID_SCRAPE_HARD_LIMIT),
         )
 
         if st.session_state.pipeline_run:
-            if st.button("🔄  Reset", use_container_width=True):
+            if st.button("🔄  Reset", width="stretch"):
                 for key in ["pipeline_run", "apex_results", "df_jobs_cache", "df_payroll_cache", "pipeline_ran_at"]:
                     st.session_state[key] = None if key != "pipeline_run" else False
                 st.rerun()

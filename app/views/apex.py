@@ -769,7 +769,7 @@ def _data_quality_panel(df_jobs: pd.DataFrame, df_payroll: pd.DataFrame) -> None
                 "Health Score": f"{score:.0f}/100",
             }
         )
-    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+    st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
 
 
 # ---------------------------------------------------------------------------
@@ -821,21 +821,21 @@ def _export_panel(results: dict, df_jobs: pd.DataFrame) -> None:
         forecast_csv,
         file_name="apex_forecast.csv",
         mime="text/csv",
-        use_container_width=True,
+        width="stretch",
     )
     c2.download_button(
         "Download Job Postings CSV",
         jobs_csv,
         file_name="apex_job_postings.csv",
         mime="text/csv",
-        use_container_width=True,
+        width="stretch",
     )
     c3.download_button(
         "Download Pipeline Summary",
         summary_txt,
         file_name="apex_summary.txt",
         mime="text/plain",
-        use_container_width=True,
+        width="stretch",
     )
 
 
@@ -954,7 +954,7 @@ def _render_dashboard(
     # Velocity chart
     st.subheader("Administrative Velocity")
     st.caption("3-month rolling average of job postings vs. payroll start dates.")
-    st.plotly_chart(_chart_velocity(results), use_container_width=True)
+    st.plotly_chart(_chart_velocity(results), width="stretch")
 
     st.divider()
 
@@ -963,13 +963,13 @@ def _render_dashboard(
     with col_lag:
         st.subheader("Cross-Correlation")
         st.caption(f"Optimal OMB lag: **{results['best_lag']} months** (highlighted).")
-        st.plotly_chart(_chart_lag(results), use_container_width=True)
+        st.plotly_chart(_chart_lag(results), width="stretch")
     with col_fc:
         st.subheader("12-Month Forecast")
         st.caption(
             "Prophet forecast with confidence bands; hires shifted by OMB lag."
         )
-        st.plotly_chart(_chart_forecast(results), use_container_width=True)
+        st.plotly_chart(_chart_forecast(results), width="stretch")
 
     # Folium map
     df_jobs: pd.DataFrame | None = st.session_state.get("df_jobs_cache")
@@ -1007,7 +1007,7 @@ def _render_dashboard(
             ]
             st.dataframe(
                 df_jobs[show_cols].head(200),
-                use_container_width=True,
+                width="stretch",
                 hide_index=True,
             )
             st.caption(f"{len(df_jobs):,} total rows — showing first 200.")
@@ -1091,11 +1091,11 @@ def render_apex_tab(
         run_clicked = st.button(
             "Run Apex Pipeline",
             type="primary",
-            use_container_width=True,
+            width="stretch",
             disabled=(jid_count > JID_SCRAPE_HARD_LIMIT),
         )
     with col_reset:
-        if results is not None and st.button("Reset Results", use_container_width=True):
+        if results is not None and st.button("Reset Results", width="stretch"):
             for key in [
                 "apex_results",
                 "df_jobs_cache",
