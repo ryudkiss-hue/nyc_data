@@ -224,12 +224,22 @@ def view_spatial(results: dict, map_layers: dict[str, pd.DataFrame]) -> None:
         map_points.append(conflict_pts)
 
     if map_points:
-        combined = pd.concat(map_points, ignore_index=True)
-        if "lat" in combined.columns and "lon" in combined.columns:
+        geo_points = [
+            df for df in map_points
+            if "lat" in df.columns and "lon" in df.columns
+            and df["lat"].notna().any() and df["lon"].notna().any()
+        ]
+        if geo_points:
+            combined = pd.concat(geo_points, ignore_index=True)
             combined = combined.dropna(subset=["lat", "lon"])
-        if not combined.empty and "lat" in combined.columns:
-            st.map(combined, latitude="lat", longitude="lon", color="color", size=20)
-        st.caption(f"Showing {len(combined):,} points · {len([x for x in map_points if not x.empty])} layers")
+            combined["lat"] = pd.to_numeric(combined["lat"], errors="coerce")
+            combined["lon"] = pd.to_numeric(combined["lon"], errors="coerce")
+            combined = combined.dropna(subset=["lat", "lon"])
+            if not combined.empty:
+                st.map(combined, latitude="lat", longitude="lon", color="color", size=20)
+                st.caption(f"Showing {len(combined):,} points · {len(geo_points)} layers")
+        else:
+            st.info("No geocoded points available to map.")
     else:
         st.info("No geospatial layers loaded. Select 'Spatial' workflow and reload datasets.")
 
