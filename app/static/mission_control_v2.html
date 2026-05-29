@@ -5753,10 +5753,10 @@ function generateCodeFull(){
     const item = cartItems().find((it) => (it.id || it.resource_id) === id) || {};
     ['gov-dmbok', 'gov-fair', 'gov-pii'].forEach((x) => window.mmcSkeleton(document.getElementById(x), 4));
     try {
-      const fetchFn = window.mmcFetch || fetch;
-      const r = await fetchFn('https://' + domain + '/resource/' + id + '.json?$limit=500');
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      const rows = await r.json();
+      const url = 'https://' + domain + '/resource/' + id + '.json?$limit=500';
+      const rows = window.mmcCachedFetch
+        ? await window.mmcCachedFetch(url, 6e5)
+        : await (await (window.mmcFetch || fetch)(url)).json();
       const dmbok = scoreDMBOK(rows);
       const pii = scanPII(rows);
       const fair = scoreFAIR({
@@ -5817,6 +5817,169 @@ function generateCodeFull(){
   ready(function () {
     try { injectGovernanceTab(); } catch (e) { console.warn('[mmc] gov tab', e); }
   });
+})();
+</script>
+
+<!-- ============================================================
+     ENHANCEMENT MODULE C — Performance & Scope
+     LRU cache (sessionStorage+TTL), virtualized tables, inline
+     Web Worker for heavy sort/parse, lazy-init, runtime timing.
+     ============================================================ -->
+<script id="mmc-enh-c">
+(function () {
+  "use strict";
+
+  // ---- LRU cache over sessionStorage with TTL (#71) -------------------
+  const NS = 'mmc_cache_', CAP = 24;
+  function cacheKeys() {
+    return Object.keys(sessionStorage).filter((k) => k.startsWith(NS))
+      .map((k) => ({ k, t: (JSON.parse(sessionStorage.getItem(k) || '{}').at) || 0 }))
+      .sort((a, b) => a.t - b.t);
+  }
+  function cacheGet(url) {
+    try {
+      const raw = sessionStorage.getItem(NS + url); if (!raw) return null;
+      const o = JSON.parse(raw);
+      if (o.ttl && Date.now() - o.at > o.ttl) { sessionStorage.removeItem(NS + url); return null; }
+      return o.data;
+    } catch (_) { return null; }
+  }
+  function cacheSet(url, data, ttl) {
+    try {
+      const keys = cacheKeys();
+      while (keys.length >= CAP) sessionStorage.removeItem(keys.shift().k);
+      sessionStorage.setItem(NS + url, JSON.stringify({ at: Date.now(), ttl: ttl || 6e5, data }));
+    } catch (_) { /* quota — evict oldest and retry once */
+      const keys = cacheKeys(); if (keys.length) { sessionStorage.removeItem(keys[0].k);
+        try { sessionStorage.setItem(NS + url, JSON.stringify({ at: Date.now(), ttl: ttl || 6e5, data })); } catch (e) {} }
+    }
+  }
+  // cached JSON fetch with retry/backoff (builds on mmcFetch)
+  window.mmcCachedFetch = async function (url, ttl) {
+    const hit = cacheGet(url);
+    if (hit != null) { mmcPerf('cache-hit', url); return hit; }
+    const fetchFn = window.mmcFetch || fetch;
+    const r = await fetchFn(url);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    cacheSet(url, data, ttl);
+    return data;
+  };
+  window.mmcCacheStats = function () {
+    const keys = cacheKeys();
+    const bytes = keys.reduce((s, { k }) => s + (sessionStorage.getItem(k) || '').length, 0);
+    return { entries: keys.length, approx_kb: Math.round(bytes / 1024) };
+  };
+  window.mmcCacheClear = function () { cacheKeys().forEach(({ k }) => sessionStorage.removeItem(k)); };
+
+  // ---- Virtualized table (#69) ---------------------------------------
+  // Renders only the visible window of rows on scroll. For large previews.
+  window.mmcVirtualTable = function (container, columns, rows, opts) {
+    opts = opts || {}; const rowH = opts.rowHeight || 28, buffer = 6;
+    container.innerHTML = '';
+    container.style.overflowY = 'auto'; container.setAttribute('role', 'region');
+    container.setAttribute('aria-label', (opts.label || 'Data') + ', ' + rows.length + ' rows');
+    const head = document.createElement('div');
+    head.style.cssText = 'position:sticky;top:0;display:flex;background:#0b1220;z-index:2;font-weight:700;font-size:11px';
+    columns.forEach((c) => { const d = document.createElement('div');
+      d.textContent = c; d.style.cssText = 'flex:1;padding:5px 8px;border-bottom:1px solid #1e293b;color:#94a3b8'; head.appendChild(d); });
+    const spacer = document.createElement('div'); spacer.style.height = (rows.length * rowH) + 'px'; spacer.style.position = 'relative';
+    const viewport = document.createElement('div'); viewport.style.cssText = 'position:absolute;top:0;left:0;right:0';
+    spacer.appendChild(viewport); container.appendChild(head); container.appendChild(spacer);
+    function paint() {
+      const top = container.scrollTop, h = container.clientHeight;
+      const start = Math.max(0, Math.floor(top / rowH) - buffer);
+      const end = Math.min(rows.length, Math.ceil((top + h) / rowH) + buffer);
+      viewport.style.transform = 'translateY(' + (start * rowH) + 'px)';
+      viewport.innerHTML = '';
+      for (let i = start; i < end; i++) {
+        const r = document.createElement('div'); r.style.cssText = 'display:flex;height:' + rowH + 'px;font-size:11px';
+        r.setAttribute('role', 'row');
+        columns.forEach((c) => { const d = document.createElement('div'); d.setAttribute('role', 'cell');
+          d.textContent = rows[i][c] == null ? '' : String(rows[i][c]);
+          d.style.cssText = 'flex:1;padding:4px 8px;border-bottom:1px solid #111827;color:#cbd5e1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap'; r.appendChild(d); });
+        viewport.appendChild(r);
+      }
+    }
+    container.onscroll = paint; paint();
+    return { repaint: paint };
+  };
+
+  // ---- Inline Web Worker for heavy sort (#70) ------------------------
+  let _worker = null;
+  function getWorker() {
+    if (_worker) return _worker;
+    try {
+      const src = 'self.onmessage=function(e){var a=e.data.arr,k=e.data.key,d=e.data.dir||1;' +
+        'a.sort(function(x,y){var vx=x[k],vy=y[k];var nx=parseFloat(vx),ny=parseFloat(vy);' +
+        'if(!isNaN(nx)&&!isNaN(ny)){return (nx-ny)*d;}return String(vx).localeCompare(String(vy))*d;});' +
+        'self.postMessage(a);};';
+      _worker = new Worker(URL.createObjectURL(new Blob([src], { type: 'application/javascript' })));
+    } catch (_) { _worker = null; }
+    return _worker;
+  }
+  window.mmcSortAsync = function (arr, key, dir) {
+    return new Promise((resolve) => {
+      const w = getWorker();
+      if (!w || arr.length < 2000) { // small sets: main thread is fine
+        resolve(arr.slice().sort((x, y) => {
+          const nx = parseFloat(x[key]), ny = parseFloat(y[key]);
+          if (!isNaN(nx) && !isNaN(ny)) return (nx - ny) * (dir || 1);
+          return String(x[key]).localeCompare(String(y[key])) * (dir || 1);
+        }));
+        return;
+      }
+      w.onmessage = (e) => resolve(e.data);
+      w.postMessage({ arr, key, dir: dir || 1 });
+    });
+  };
+
+  // ---- Lazy-init guard for heavy panels (#73) ------------------------
+  // Registers a one-time initializer that runs the first time a tab shows.
+  const _lazyDone = {};
+  window.mmcLazy = function (tabName, initFn) {
+    if (typeof window.switchTab !== 'function') return;
+    const orig = window.switchTab;
+    if (!orig.__mmcLazyWrapped) {
+      const map = (orig.__mmcLazyMap = orig.__mmcLazyMap || {});
+      window.switchTab = function (name) {
+        const r = orig.apply(this, arguments);
+        if (map[name] && !_lazyDone[name]) { _lazyDone[name] = true; try { map[name](); } catch (e) {} }
+        return r;
+      };
+      window.switchTab.__mmcLazyWrapped = true;
+      window.switchTab.__mmcLazyMap = map;
+    }
+    window.switchTab.__mmcLazyMap[tabName] = initFn;
+  };
+
+  // ---- Lightweight runtime timing / perf budget (#78) ----------------
+  const _marks = [];
+  window.mmcPerf = function (label, detail) {
+    const t = (performance && performance.now) ? performance.now() : Date.now();
+    _marks.push({ label, detail, t });
+    if (_marks.length > 200) _marks.shift();
+  };
+  window.mmcPerfReport = function () {
+    // Web Vitals-style: report navigation + paint timings if available
+    const out = { marks: _marks.slice(-40) };
+    try {
+      const nav = performance.getEntriesByType('navigation')[0];
+      if (nav) { out.ttfb = Math.round(nav.responseStart); out.domContentLoaded = Math.round(nav.domContentLoadedEventEnd);
+        out.load = Math.round(nav.loadEventEnd); }
+      const lcp = performance.getEntriesByType('largest-contentful-paint').pop();
+      if (lcp) out.lcp = Math.round(lcp.startTime);
+    } catch (_) {}
+    return out;
+  };
+  // Observe INP-ish long tasks (best-effort, no-op if unsupported)
+  try {
+    new PerformanceObserver((list) => {
+      list.getEntries().forEach((e) => { if (e.duration > 200) mmcPerf('longtask', Math.round(e.duration) + 'ms'); });
+    }).observe({ entryTypes: ['longtask'] });
+  } catch (_) {}
+
+  mmcPerf('enhancements-loaded');
 })();
 </script>
 </html>
