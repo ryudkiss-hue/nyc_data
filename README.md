@@ -35,18 +35,29 @@ Open **http://localhost:8501** — demo mode loads automatically (no token neede
 
 ---
 
-## 🗂️ The 8 Tabs
+## 🗂️ The 11 Tabs
 
 | # | Tab | What it does |
 |---|-----|-------------|
 | 1 | **Home** | Load 16+ NYC DOT datasets, view audit trail, dataset status cards |
 | 2 | **Apex Engine** | Hiring analytics — scrape JIDs, Bayesian ADVI yield rate, Prophet 12-month forecast with confidence bands, OMB lag correlation |
 | 3 | **Agency Workflows** | QA/QC ledger, spatial conflict detection, contract clearance, productivity & ADA progress |
-| 4 | **Data Quality** | Per-dataset health scores, null/duplicate profiling, SLA freshness, anomaly detection, CSV export |
+| 4 | **Data Quality** | Per-dataset health scores w/ chart, null/duplicate profiling, SLA freshness, anomaly detection, CSV export |
 | 5 | **Spatial Analytics** | Borough distribution charts, Plotly point density map, Folium bubble map, permit conflict detection |
 | 6 | **Governance** | Plotly lineage DAG, dataset registry, ingest audit log, SLA compliance table |
 | 7 | **AI Copilot** | Multi-backend chat (Gemini / OpenAI / Ollama) context-hydrated with live pipeline results |
-| 8 | **Settings & Quality** | Readiness score, completeness checklist, system health, cache manager |
+| 8 | **Dictionary** | Searchable field-level metadata browser — types, null rates, cardinality across all datasets |
+| 9 | **Export** | Export center — single/bulk CSV, JSON, multi-sheet Excel, ZIP bundle with manifest |
+| 10 | **Settings & Quality** | Readiness score, completeness checklist, system health, credential diagnostics, cache manager |
+| 11 | **Studio** | Socrata data architecture studio — schema viewer, relationship inference, code generators |
+
+### Design system
+
+The UI is built on a modular toolkit in `app/ui/`:
+- **`palettes.py`** — color-blind-safe palettes (Okabe-Ito categorical, viridis sequential)
+- **`charts.py`** — themed Plotly factory with range selectors, small multiples, chart→table a11y fallbacks
+- **`components.py`** — responsive KPI cards w/ sparklines, skeleton loaders, status pills
+- **`theme.py`** — fluid `clamp()` typography, auto-fit grids, 44px touch targets, WCAG 2.2 focus rings, reduced-motion/high-contrast
 
 ---
 

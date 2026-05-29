@@ -9,6 +9,8 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
+from app.ui import charts
+from app.ui.components import kpi_row, section_header
 from socrata_toolkit.quality.profiler import DataType, ProfileGenerator
 
 
@@ -143,12 +145,33 @@ def render_quality_tab(loaded_frames: dict[str, pd.DataFrame]) -> None:
     avg_health = float(np.mean([m["score"] for m in metrics.values()]))
 
     # ── 1. Overview metrics row ───────────────────────────────────────────────
-    st.subheader("Overview")
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Datasets Loaded", len(loaded_frames))
-    col2.metric("Avg Health Score", f"{avg_health:.1f} / 100")
-    col3.metric("Total Null Cells", f"{total_nulls:,}")
-    col4.metric("Total Duplicate Rows", f"{total_dups:,}")
+    section_header("Overview", "Fleet-wide data quality at a glance", icon="📊")
+    health_good = avg_health >= 70
+    kpi_row(
+        [
+            {"label": "Datasets Loaded", "value": len(loaded_frames), "icon": "🗂️"},
+            {"label": "Avg Health Score", "value": f"{avg_health:.0f}/100", "icon": "❤️",
+             "delta": "healthy" if health_good else "needs review", "delta_good": health_good},
+            {"label": "Total Null Cells", "value": f"{total_nulls:,}", "icon": "⬜"},
+            {"label": "Duplicate Rows", "value": f"{total_dups:,}", "icon": "👥",
+             "delta_good": total_dups == 0},
+        ]
+    )
+
+    # Health-score bar chart with accessible table fallback
+    if charts.available():
+        health_df = pd.DataFrame(
+            [{"dataset": k, "health": round(m["score"], 1)} for k, m in metrics.items()]
+        ).sort_values("health")
+        fig = charts.bar(
+            health_df, x="health", y="dataset", title="Health score by dataset",
+            orientation="h", height=max(220, 30 * len(health_df)),
+        )
+        charts.render_with_table(
+            fig, health_df.rename(columns={"dataset": "Dataset", "health": "Health"}),
+            caption="Lower bars indicate datasets needing attention.",
+            table_label="View health scores as table", key="qd_health_chart",
+        )
 
     st.divider()
 
