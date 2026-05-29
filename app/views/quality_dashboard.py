@@ -187,7 +187,7 @@ def render_quality_tab(loaded_frames: dict[str, pd.DataFrame]) -> None:
                 top_nulls["Null %"] = top_nulls["Null %"].round(2)
                 if not top_nulls.empty:
                     st.markdown("**Top columns by null %**")
-                    st.dataframe(top_nulls, use_container_width=False, hide_index=True)
+                    st.dataframe(top_nulls, width="content", hide_index=True)
                 else:
                     st.success("No null values detected.")
 
@@ -224,7 +224,7 @@ def render_quality_tab(loaded_frames: dict[str, pd.DataFrame]) -> None:
                 }
             )
         profile_df = pd.DataFrame(profile_rows)
-        st.dataframe(profile_df, use_container_width=True, hide_index=True)
+        st.dataframe(profile_df, width="stretch", hide_index=True)
 
     st.divider()
 
@@ -243,7 +243,7 @@ def render_quality_tab(loaded_frames: dict[str, pd.DataFrame]) -> None:
         )
 
     sla_df = pd.DataFrame(sla_rows)
-    st.dataframe(sla_df, use_container_width=True, hide_index=True)
+    st.dataframe(sla_df, width="stretch", hide_index=True)
 
     st.divider()
 
@@ -255,7 +255,7 @@ def render_quality_tab(loaded_frames: dict[str, pd.DataFrame]) -> None:
         anomaly_rows.append({"Dataset": key, "Potential Outlier Values": count})
 
     anomaly_df = pd.DataFrame(anomaly_rows)
-    st.dataframe(anomaly_df, use_container_width=True, hide_index=True)
+    st.dataframe(anomaly_df, width="stretch", hide_index=True)
 
     st.divider()
 
