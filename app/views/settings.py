@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import os
+
 import streamlit as st
 
-from app.data_loader import cache_freshness_report
+from app.data_loader import cache_freshness_report, demo_mode_enabled
 from app.services import agency
 from app.ui.theme import render_quality_badge, render_readiness_bars
 from app.utils.i18n import t
@@ -89,6 +91,34 @@ def render_settings_page() -> None:
 
     # ------------------------------------------------------------------
     with tab_health:
+        # Credential debug panel
+        with st.expander("🔑 Credential & mode diagnostics", expanded=demo_mode_enabled()):
+            mission_demo_raw = os.getenv("MISSION_DEMO", "<not set>")
+            token = os.getenv("SOCRATA_APP_TOKEN", "<not set>")
+            gemini = os.getenv("GEMINI_API_KEY", "<not set>")
+            openai_key = os.getenv("OPENAI_API_KEY", "<not set>")
+
+            def _mask(val: str) -> str:
+                if val in ("<not set>", ""):
+                    return "❌ not set"
+                return f"✅ set ({val[:4]}{'*' * max(0, len(val) - 8)}{val[-4:] if len(val) > 8 else ''})"
+
+            st.markdown("| Variable | Value |")
+            st.markdown("|---|---|")
+            st.markdown(f"| `MISSION_DEMO` | `{mission_demo_raw}` |")
+            st.markdown(f"| `SOCRATA_APP_TOKEN` | {_mask(token if token != '<not set>' else '')} |")
+            st.markdown(f"| `GEMINI_API_KEY` | {_mask(gemini if gemini != '<not set>' else '')} |")
+            st.markdown(f"| `OPENAI_API_KEY` | {_mask(openai_key if openai_key != '<not set>' else '')} |")
+            st.markdown(f"| **Demo mode active** | {'⚠️ YES' if demo_mode_enabled() else '✅ NO'} |")
+            if demo_mode_enabled():
+                st.warning(
+                    "App is in demo mode. To go live: "
+                    "set `SOCRATA_APP_TOKEN` in the Render dashboard **and** "
+                    "delete or set `MISSION_DEMO=0`.",
+                    icon="⚠️",
+                )
+
+
         health = agency.system_health()
         score = health["score"]
 
