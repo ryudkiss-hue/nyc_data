@@ -5,24 +5,23 @@ featuring native web scraping, Socrata API ingestion, Bayesian Inference,
 Facebook Prophet forecasting, and a Gemini AI Copilot.
 """
 
+import os
+import random
+import time
+import warnings
+from datetime import datetime
+
+import arviz as az
+import folium
+import numpy as np
+import pandas as pd
+import plotly.graph_objects as go
+import pymc as pm
+import requests
 import streamlit as st
 import streamlit.components.v1 as components
-import requests
 from bs4 import BeautifulSoup
-import pandas as pd
-import numpy as np
-from datetime import datetime
 from dateutil.relativedelta import relativedelta
-import plotly.graph_objects as go
-
-import folium
-import os
-import time
-import random
-import warnings
-
-import pymc as pm
-import arviz as az
 from prophet import Prophet
 
 warnings.filterwarnings("ignore")
@@ -579,7 +578,7 @@ def _render_landing():
         ("🧮", "Bayesian MCMC Engine", "PyMC Poisson regression finds the OMB review lag and yield multiplier."),
         ("🤖", "AI Copilot", "Gemini-powered assistant pre-loaded with your pipeline results."),
     ]
-    for col, (icon, title, desc) in zip([c1, c2, c3, c4], cards):
+    for col, (icon, title, desc) in zip([c1, c2, c3, c4], cards, strict=False):
         col.markdown(
             f"""<div style="border:1px solid #e2e8f0; border-radius:12px; padding:1.1rem; height:130px;">
             <div style="font-size:1.6rem;">{icon}</div>
@@ -671,7 +670,7 @@ def _render_copilot(results: dict | None, target_agency: str, target_title: str)
         ("Forecast Anomalies", "Interpret the 12-month hire forecast and flag any anomalies."),
     ]
     cols = st.columns(len(chips))
-    for col, (label, query) in zip(cols, chips):
+    for col, (label, query) in zip(cols, chips, strict=False):
         if col.button(label, key=f"chip_{label}", use_container_width=True):
             st.session_state.copilot_messages.append({"role": "user", "content": query})
             with st.spinner("Contacting Gemini..."):
