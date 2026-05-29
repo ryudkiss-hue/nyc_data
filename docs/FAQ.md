@@ -15,8 +15,8 @@ Python **3.9 through 3.12** (see `pyproject.toml`). Run `python --version` befor
 ```bash
 git clone https://github.com/ryudkiss-hue/nyc_data.git
 cd nyc_data
-pip install -e ".[all]"
-python launcher.py doctor
+pip install -e ".[mission,postgres,xlsx]"
+python main.py
 ```
 
 ### Q3. Do I need Docker?
@@ -217,20 +217,22 @@ Or sync from `.env.socrata` per [QUICKSTART.md](../QUICKSTART.md).
 
 ### Q35. Which web UI should analysts use daily?
 
-**Dash** (`python dash_app/app.py`) is the primary multi-page Data Assistant. **NiceGUI** Mission Control (`python app.py`) focuses on 311 fetch, triage, and maps.
+**Mission Control** (`python main.py`) is the primary 8-tab Streamlit app for all agency analytics, data quality, spatial analysis, governance, and AI Copilot workflows. The legacy Dash app is archived at `legacy_archive/dash_app/app.py`.
 
-### Q36. How do I open the dashboard?
+### Q36. How do I open Mission Control?
 
 ```bash
-python dash_app/app.py
-# or: python launcher.py web
+python main.py
+# or: PYTHONPATH=src:. python -m streamlit run app/mission_control.py
 ```
 
-Then open http://127.0.0.1:8050/. Legacy NiceGUI: `set NYC_DOT_LEGACY_NICEGUI=1` then `python app.py`.
+Then open http://localhost:8501. For demo mode (no Socrata token needed): `MISSION_DEMO=1 python main.py`.
 
-### Q37. What port does Dash use?
+Legacy Dash (archived): `python legacy_archive/dash_app/app.py` → http://127.0.0.1:8050
 
-Typically **8050** (Flask/Dash default). Check the terminal output when the server starts.
+### Q37. What port does Mission Control use?
+
+**8501** (Streamlit default). Check the terminal output when the server starts. To use a different port: `python main.py --server.port 8502`.
 
 ---
 
@@ -249,6 +251,85 @@ Install extras: `pip install -e ".[nlp,geo,all]"` or skip tests that require mis
 ### Q40. Where do I report bugs?
 
 GitHub Issues with: OS, Python version, exact command, redacted `PG_DSN`, and tail of `nyc_toolkit.log`. Do not post tokens or passwords.
+
+---
+
+---
+
+## AI Copilot
+
+### Q41. How do I enable the AI Copilot tab?
+
+Set at least one backend API key before launching Mission Control:
+
+```bash
+# Gemini (recommended — free tier available)
+export GEMINI_API_KEY=your_key
+
+# OpenAI
+export OPENAI_API_KEY=your_key
+
+# Ollama (local, no API key needed)
+# Install from https://ollama.com, then: ollama pull llama3
+# OLLAMA_HOST defaults to http://localhost:11434
+```
+
+### Q42. Where do I get a Gemini API key?
+
+Go to [Google AI Studio](https://aistudio.google.com/app/apikey) and create a key. Paste it as `GEMINI_API_KEY` in `.env` or set it in the Render dashboard.
+
+### Q43. Can I use the AI Copilot offline?
+
+Yes — use Ollama. Install from https://ollama.com, pull a model (`ollama pull llama3`), and start the server. Mission Control auto-detects it at `OLLAMA_HOST` (default `http://localhost:11434`). No internet required once the model is downloaded.
+
+### Q44. What happens if no AI backend is configured?
+
+The AI Copilot tab still loads but shows a "no backend configured" notice. All other 7 tabs work fully without any AI key.
+
+---
+
+## Render Deployment
+
+### Q45. How do I deploy to Render in one click?
+
+The repo contains `render.yaml` (a Render blueprint). Steps:
+1. Fork/push the repo to GitHub.
+2. Go to [render.com](https://render.com) → **New** → **Blueprint** → connect your repo.
+3. Render reads `render.yaml` and provisions the service automatically.
+4. Set `SOCRATA_APP_TOKEN` in Render dashboard → Environment tab for live data.
+5. The service uses `MISSION_DEMO=1` by default so it works without a token.
+
+### Q46. Does the Render free tier support the Bayesian engine?
+
+Yes. The Apex Engine uses ADVI (~50 MB RAM) rather than NUTS (~400 MB), so it fits within Render's free tier memory limit. If you switch to NUTS sampling you will need a paid tier.
+
+### Q47. How do I set environment variables on Render?
+
+In the Render dashboard: open your service → **Environment** tab → add key/value pairs. You do not need to redeploy after setting env vars; Render applies them on the next restart.
+
+### Q48. Can I use a custom domain on Render?
+
+Yes. In the Render dashboard go to your service → **Settings** → **Custom Domains** and follow the DNS instructions. TLS is provisioned automatically.
+
+---
+
+## Bayesian / ML
+
+### Q49. What is ADVI and why is it used instead of NUTS?
+
+ADVI (Automatic Differentiation Variational Inference) is a fast approximate inference method in PyMC. It uses ~50 MB RAM and completes in seconds. NUTS (No-U-Turn Sampler) is a full MCMC method that gives exact posterior samples but uses ~400 MB RAM and can take minutes. Mission Control defaults to ADVI so it works on Render's free tier.
+
+### Q50. The Bayesian sampling step failed. What do I do?
+
+1. Check that `pymc` and `arviz` are installed: `pip install -e ".[mission]"`.
+2. Verify you have at least 512 MB free RAM.
+3. Check the Streamlit logs for the specific PyMC error.
+4. If the error is `ModuleNotFoundError: No module named 'pymc'`, the heavy ML deps were not installed. Run `pip install -e ".[mission]"` with the `mission` extra.
+5. The Apex Engine degrades gracefully if PyMC is unavailable — the tab will display a warning and skip the Bayesian step.
+
+### Q51. What happens if Prophet is not installed?
+
+The 12-month forecast chart in the Apex Engine tab is skipped with a warning. All other tabs are unaffected. Install Prophet with `pip install -e ".[mission]"`.
 
 ---
 

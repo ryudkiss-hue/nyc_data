@@ -1,186 +1,248 @@
-# 🚧 Manhattan Mission Control
+# Manhattan Mission Control
 
 **NYC DOT SIM — Open Data Explorer + Agency Analytics Platform**
 
-Live at: [https://ryudkiss-hue.github.io/nyc_data/](https://ryudkiss-hue.github.io/nyc_data/)
+A unified 8-tab Streamlit application for NYC DOT analysts. Ingests 16+ NYC Open Data datasets via Socrata, runs Bayesian hiring analytics and Prophet forecasting, visualizes spatial patterns, and provides an AI Copilot backed by Gemini, OpenAI, or Ollama.
 
 ---
 
-## Two Modes
+## Quick Start (3 commands)
 
-| Mode | File | How to access |
-|------|------|--------------|
-| **🌐 Browser App** | `app/static/mission_control_v2.html` | [GitHub Pages](https://ryudkiss-hue.github.io/nyc_data/) — no install |
-| **🏢 Agency Dashboard** | `app/app.py` | `PYTHONPATH=. streamlit run app/app.py` |
+```bash
+# 1. Install
+pip install -e ".[mission,postgres,xlsx]"
 
----
+# 2. Launch
+python main.py
 
-## Browser App (V2) — Feature Summary
+# 3. Open in browser
+# http://localhost:8501
+```
 
-The standalone HTML app (`mission_control_v2.html`) runs entirely in the browser. No server, no install, no API key required.
+Or with the full PYTHONPATH form:
 
-### Search & Discovery
-- Keyword search across NYC Open Data catalog (`api.us.socrata.com/api/catalog/v1`)
-- Category, type, freshness filters
-- Sort by relevance, name, views, updated date
-- Tag pill filtering
-- Sample search chips for quick starts
-- Freshness indicators
-
-### Dataset Cart
-- Collect up to 50 datasets
-- Undo/redo (Ctrl+Z / Ctrl+Y)
-- Batch export
-- Side-by-side comparison
-
-### SOQL Query Studio
-- Live SQL-like query editor
-- Query history
-- Template library
-- Chart + map output
-- CSV / JSON export
-
-### Map Viewer
-- Leaflet.js with heatmap + clustering
-- Multiple tile layers
-- Haversine distance tool
-- Export map as PNG
-
-### AI Assistant
-- Explain datasets
-- Suggest related data
-- Generate queries
-- PII column detection
-
-### Code Generation
-- Python, R, JavaScript
-- GitHub Actions workflow
-- Jupyter Notebook
-- README.md template
-
-### Workspace Management
-- Save / restore named sessions
-- Export / import as JSON
-- Share via QR code or email
-
-### Export & Sharing
-- CSV, JSON, GeoJSON
-- Markdown report
-- Jupyter Notebook
-- Citation (APA/Chicago/MLA)
-- Embed code (iframe)
-- QR code
-
-### Accessibility (WCAG 2.1 AA)
-- Keyboard navigation
-- Screen reader / ARIA live regions
-- High contrast mode
-- Adjustable font size
-- `prefers-reduced-motion` support
-
-### Help Center
-- 7-tab interactive tutorial (Quick Start, Features, FAQ, Shortcuts, Tips, Glossary, What's New)
-- Inline contextual tooltips
-- Guided tour
+```bash
+PYTHONPATH=src:. python -m streamlit run app/mission_control.py
+```
 
 ---
 
-## Agency Dashboard (Streamlit)
+## Entry Point
 
-### Layout
+**`app/mission_control.py`** — the single entry point for the production app.
 
-| Path | Role |
+| File | Role |
 |------|------|
-| `app/app.py` | Entry point, sidebar navigation, `@st.cache_data` wrappers |
-| `app/analytics.py` | `run_all_workflows()` — all 5 workflow computations |
-| `app/data_loader.py` | Socrata ingestion, parquet cache, dataset registry |
-| `app/services/agency.py` | Health checks, completeness items, ingest log |
-| `app/ui/theme.py` | CSS injection, header, readiness bar components |
-| `app/ui/empty_states.py` | Onboarding UI for no-data state |
-| `app/utils/i18n.py` | EN/ES translation (t() function) |
-| `app/views/home.py` | Home / onboarding page |
-| `app/views/workflows.py` | All 5 workflow view renderers |
-| `app/views/publish.py` | Publish & Pack page |
-| `app/views/settings.py` | Readiness, completeness, health, cache, logs |
-| `config/datasets.yaml` | Socrata registry (single source of truth) |
-
-### Workflow Views
-
-| View key | Label | Datasets |
-|----------|-------|---------|
-| `qa` | 🔍 QA/QC & Inventory Ledger | Inspection results, defects |
-| `spatial` | 🗺️ Spatial Conflict Detection | Permits, boundaries |
-| `contract` | 📋 Contract & Dispatch Clearance | Contract status, crew |
-| `productivity` | 🚶 Productivity & ADA Progress | Inspector metrics, ADA ramps |
-| `quality` | 🩺 Data Quality Dashboard | All datasets (cross-profiling) |
-
-### Run
-
-```bash
-# Recommended
-PYTHONPATH=. streamlit run app/app.py
-
-# With explicit token
-PYTHONPATH=. SOCRATA_APP_TOKEN=your_token streamlit run app/app.py
-
-# Demo mode (no API calls)
-PYTHONPATH=. MISSION_DEMO=1 streamlit run app/app.py
-```
-
-Dataset registry: `config/datasets.yaml`  
-Local parquet cache: `data/local_db/socrata_cache/` (24h TTL)  
-Ingestion log: `outputs/logs/ingest.jsonl` (gitignored)
-
-### CLI
-
-```bash
-pip install -e ".[xlsx,postgres]"
-socrata analyst run --profile config/analyst_profile.yaml
-socrata readiness
-```
-
-### Databases
-
-DuckDB files: `data/local_db/` (see `config/analyst_profile.example.yaml`)
+| `app/mission_control.py` | Streamlit entry point, 8-tab layout |
+| `app/data_loader.py` | Centralized Socrata / DuckDB loader used by all tabs |
+| `config/datasets.yaml` | Socrata dataset registry (16+ NYC DOT datasets) |
+| `src/socrata_toolkit/core/client.py` | `SocrataClient` — paginated, auth |
+| `src/socrata_toolkit/core/duckdb_store.py` | `DuckDBManager` — local DuckDB cache |
+| `outputs/logs/ingest.jsonl` | Ingest audit log |
+| `outputs/analyst_pack/` | Weekly analyst exports |
 
 ---
 
-## Deployment
+## 8-Tab Feature Reference
 
-### GitHub Pages (HTML App)
+### 1. Home
+Dataset status cards showing load state for each configured dataset. **Load All Datasets** button triggers bulk ingestion. Audit trail of recent ingest events pulled from `outputs/logs/ingest.jsonl`.
 
-Auto-deployed via `.github/workflows/pages.yml` on every push to `main`.
+### 2. Apex Engine
+Hiring analytics pipeline:
+- Scrape Job IDs (JIDs) from NYC jobs data
+- Bayesian ADVI yield-rate model (PyMC, ~50 MB RAM on Render free tier)
+- Prophet 12-month forecast with confidence bands
+- Lag correlation chart (hiring lag vs. fill rate)
+- Folium choropleth map of hiring activity by borough
 
-```yaml
-# .github/workflows/pages.yml
-- name: Prepare Pages content
-  run: |
-    mkdir -p _site
-    cp app/static/mission_control_v2.html _site/index.html
-```
+### 3. Agency Workflows
+Multi-view workflow panel for agency operations:
+- QA/QC & Inventory Ledger
+- Spatial Conflict Detection
+- Contract & Dispatch Clearance
+- Productivity & ADA Progress
 
-### Render.com (Streamlit)
+### 4. Data Quality
+Per-dataset health scoring dashboard:
+- Null and duplicate profiling
+- SLA freshness indicator: green (<7 days), amber (<30 days), red (>30 days)
+- Anomaly detection flags
+- CSV export of quality report
 
-```yaml
-# render.yaml
-startCommand: >
-  PYTHONPATH=. python -m streamlit run app/app.py
-  --server.port=$PORT --server.address=0.0.0.0 --server.headless=true
-```
+### 5. Spatial Analytics
+- Borough bar charts
+- Plotly Scattermapbox point-density map
+- Folium bubble map
+- Conflict detection between permit and inspection geometries
 
-Critical: `PYTHONPATH=.` must be set (prevents `ModuleNotFoundError: No module named 'app'`).
+### 6. Governance
+- Plotly lineage DAG (dataset dependency graph)
+- Dataset registry table (from `config/datasets.yaml`)
+- Ingest audit log viewer
+- SLA compliance summary
+
+### 7. AI Copilot
+Multi-backend conversational assistant:
+- Backends: **Gemini** (`GEMINI_API_KEY`), **OpenAI** (`OPENAI_API_KEY`), **Ollama** (`OLLAMA_HOST`)
+- Context-hydrated with live pipeline results from the current session
+- Quick-action chips for common analyst queries
+- Falls back gracefully if no backend is configured
+
+### 8. Settings & Quality
+- Readiness score (0–100)
+- Completeness checklist
+- System health panel (dependency versions, cache sizes, token status)
 
 ---
 
-## User-Friendly Extras
+## Environment Variables
 
-- i18n (EN/ES) — `app/utils/i18n.py`
-- Empty states with demo mode CTA — `app/ui/empty_states.py`
-- Docker Compose — `docker compose up`
-- Unix build — `scripts/build_unix.sh`
-- Render/Heroku one-click deploy — `render.yaml`, Heroku button
+| Variable | Purpose | Required? |
+|----------|---------|-----------|
+| `SOCRATA_APP_TOKEN` | NYC Open Data API token — raises rate limits | Optional |
+| `GEMINI_API_KEY` | AI Copilot → Gemini backend | Optional |
+| `OPENAI_API_KEY` | AI Copilot → OpenAI backend | Optional |
+| `OLLAMA_HOST` | AI Copilot → Ollama (default: `http://localhost:11434`) | Optional |
+| `MISSION_DEMO` | `1` = demo mode, no live API calls needed | Default on Render |
 
-See [USER_FRIENDLY_FEATURES.md](USER_FRIENDLY_FEATURES.md) for details.
+Set variables in `.env` or export them in your shell before launching.
+
+---
+
+## Deployment Options
+
+### Local (Python)
+
+```bash
+pip install -e ".[mission,postgres,xlsx]"
+PYTHONPATH=src:. python -m streamlit run app/mission_control.py
+# Shortcut:
+python main.py
+```
+
+No Socrata token? Set `MISSION_DEMO=1` or leave it unset — demo mode loads automatically.
+
+### Docker
+
+```bash
+docker build -f Dockerfile.mission -t nyc-mission .
+docker run -p 8501:8501 \
+  -e SOCRATA_APP_TOKEN=your_token \
+  nyc-mission
+```
+
+Open http://localhost:8501.
+
+### Render.com (one-click)
+
+`render.yaml` at the repo root is a Render blueprint. To deploy:
+
+1. Fork / push the repo to GitHub.
+2. Go to [render.com](https://render.com) → **New Blueprint** → connect the repo.
+3. Render reads `render.yaml` and auto-deploys.
+4. Set `SOCRATA_APP_TOKEN` in the Render dashboard (Environment tab) for live data.
+5. `MISSION_DEMO=1` is set by default so the app works without a token.
+
+**Free tier notes:**
+- Bayesian engine uses ADVI (~50 MB RAM) instead of NUTS (~400 MB), so it fits on Render's free tier.
+- Render spins down free services after inactivity; first load may take ~30 seconds.
+
+### Legacy Dash (archived)
+
+The old Dash app is archived at `legacy_archive/dash_app/app.py`:
+
+```bash
+python legacy_archive/dash_app/app.py
+# Opens at http://127.0.0.1:8050
+```
+
+---
+
+## AI Copilot Setup
+
+The AI Copilot tab supports three backends. Set at least one API key/host to enable it.
+
+### Gemini (Google)
+
+1. Get an API key from [Google AI Studio](https://aistudio.google.com/app/apikey).
+2. Set `GEMINI_API_KEY=your_key` in `.env` or the Render dashboard.
+
+### OpenAI
+
+1. Get an API key from [platform.openai.com](https://platform.openai.com/api-keys).
+2. Set `OPENAI_API_KEY=your_key` in `.env` or the Render dashboard.
+
+### Ollama (local / offline)
+
+1. Install Ollama: https://ollama.com
+2. Pull a model: `ollama pull llama3`
+3. Set `OLLAMA_HOST=http://localhost:11434` (this is the default; you can omit it).
+4. The Copilot will auto-detect a running Ollama instance.
+
+### Offline mode
+
+If no backend is configured, the AI Copilot tab still loads but shows a "no backend" notice. All other tabs work fully without any AI key.
+
+---
+
+## Configuration
+
+### Dataset Registry — `config/datasets.yaml`
+
+Single source of truth for the 16+ NYC DOT Socrata datasets. Each entry includes:
+- `id` — Socrata 4x4 dataset identifier
+- `name` — human-readable label
+- `sla_days` — freshness SLA (used in Data Quality tab)
+- `columns` — expected column list for schema validation
+
+Edit this file to add, remove, or reconfigure datasets.
+
+### Streamlit Config — `.streamlit/config.toml`
+
+Controls theme, port, and upload limits. Example:
+
+```toml
+[theme]
+primaryColor = "#1f77b4"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f0f2f6"
+textColor = "#262730"
+
+[server]
+port = 8501
+headless = true
+```
+
+---
+
+## Troubleshooting
+
+### `ModuleNotFoundError: No module named 'app'`
+
+Run with `PYTHONPATH=src:.` or use `python main.py` (the shim sets this automatically).
+
+### Bayesian sampling fails / out of memory
+
+The Apex Engine uses ADVI by default (low memory). If you see OOM errors, check that PyMC and ArviZ are installed (`pip install -e ".[mission]"`) and that you have at least 512 MB free RAM.
+
+### Socrata rate limit / 429 errors
+
+Set `SOCRATA_APP_TOKEN` in your environment. Without a token, requests are throttled at the anonymous rate limit (~1 req/s).
+
+### Folium map not rendering
+
+Folium renders to an HTML iframe. If the map tab is blank, check that `folium` and `geopandas` are installed and that your browser allows iframe content.
+
+### AI Copilot returns "no backend"
+
+Set at least one of `GEMINI_API_KEY`, `OPENAI_API_KEY`, or ensure Ollama is running at `OLLAMA_HOST`.
+
+### Port 8501 already in use
+
+```bash
+PYTHONPATH=src:. python -m streamlit run app/mission_control.py --server.port 8502
+```
 
 ---
 
@@ -189,8 +251,8 @@ See [USER_FRIENDLY_FEATURES.md](USER_FRIENDLY_FEATURES.md) for details.
 | Doc | Content |
 |-----|---------|
 | [README.md](../README.md) | Main project overview |
-| [DEPLOY_CLOUD.md](DEPLOY_CLOUD.md) | Full cloud deployment guide |
-| [API_REFERENCE.md](API_REFERENCE.md) | SOQL + Socrata API |
 | [AGENCY_RUNBOOK.md](AGENCY_RUNBOOK.md) | Agency operations |
-| [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Common errors |
-| [wiki/](../wiki/) | Full wiki documentation |
+| [GETTING_STARTED.md](GETTING_STARTED.md) | Full platform setup |
+| [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) | Deployment options |
+| [FAQ.md](FAQ.md) | Common questions |
+| [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Error codes and logs |
