@@ -259,7 +259,7 @@ docker-compose exec postgres psql -U dot_user -d sidewalk_db -c "SELECT version(
 #### Step 8: Launch Web Dashboard
 
 ```bash
-streamlit run socrata_toolkit/app.py
+PYTHONPATH=src:. python -m streamlit run app/mission_control.py
 # or
 python launcher.py web
 ```
@@ -282,7 +282,7 @@ docker-compose build
 docker-compose up -d
 
 # Access Streamlit via container
-docker-compose exec app streamlit run socrata_toolkit/app.py
+docker-compose exec app PYTHONPATH=src:. python -m streamlit run app/mission_control.py
 
 # Access at http://localhost:8501
 ```
@@ -304,7 +304,7 @@ python launcher.py docker up
 python launcher.py web --dev
 
 # Direct with Streamlit
-streamlit run socrata_toolkit/app.py --logger.level=debug
+PYTHONPATH=src:. python -m streamlit run app/mission_control.py --logger.level=debug
 ```
 
 **Ideal for**:
@@ -627,7 +627,7 @@ pip install -e ".[all]"
 # Linux/MacOS: lsof -i :8501
 
 # Use different port
-streamlit run socrata_toolkit/app.py --server.port 8502
+PYTHONPATH=src:. python -m streamlit run app/mission_control.py --server.port 8502
 ```
 
 **Problem**: "No such file or directory: socrata_toolkit/app.py"
@@ -646,7 +646,7 @@ python launcher.py web
 python launcher.py --verbose cli <command>
 
 # Streamlit with debug
-streamlit run socrata_toolkit/app.py --logger.level=debug
+PYTHONPATH=src:. python -m streamlit run app/mission_control.py --logger.level=debug
 
 # Docker logs
 docker-compose logs -f
@@ -685,6 +685,32 @@ SELECT * FROM schema_registry LIMIT 10;
 # Exit
 \q
 ```
+
+---
+
+## Render.com Deployment
+
+Deploy Mission Control to Render.com using the included `render.yaml` blueprint — no server management required.
+
+### One-click deploy
+
+1. Push the repo to GitHub.
+2. Go to [render.com](https://render.com) → **New** → **Blueprint** → select your repo.
+3. Render reads `render.yaml` and provisions the service automatically.
+4. Set environment variables in Render dashboard → **Environment** tab:
+   - `SOCRATA_APP_TOKEN` — NYC Open Data token for live data (optional)
+   - `GEMINI_API_KEY` / `OPENAI_API_KEY` — for AI Copilot (optional)
+5. The default `MISSION_DEMO=1` means the app works without any token.
+
+### Free tier notes
+
+- Bayesian engine uses ADVI (~50 MB RAM) instead of NUTS (~400 MB) — fits Render free tier.
+- Free services spin down after inactivity; first load after idle may take ~30 seconds.
+- Upgrade to a paid plan for always-on uptime or NUTS sampling.
+
+### Custom domain
+
+Render dashboard → your service → **Settings** → **Custom Domains**. TLS provisioned automatically.
 
 ---
 

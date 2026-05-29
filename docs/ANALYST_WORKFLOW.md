@@ -59,10 +59,13 @@ role: project_analyst_sw
 ## GUI (primary)
 
 ```bash
-python dash_app/app.py
+python main.py
+# or: PYTHONPATH=src:. python -m streamlit run app/mission_control.py
 ```
 
-Workflow in the UI: **Setup** → configure `config/analyst_profile.yaml` → **Run Analyst Pack** (Home) → review Construction / Contracts / Metrics / Inquiries.
+Workflow in the UI: configure `config/analyst_profile.yaml` → **Home → Load All Datasets** → navigate the 8 tabs for Agency Workflows / Data Quality / Spatial Analytics / Governance / AI Copilot.
+
+Legacy Dash (archived): `python legacy_archive/dash_app/app.py` → http://127.0.0.1:8050
 
 **Explore page (what-if only):** Use **Explore** in the sidebar to adjust priority weights, filters, and preview charts from the latest pack. This does **not** replace `socrata analyst run` — pack output remains canonical until you update the profile YAML and re-run. See [USER_MANUAL.md](USER_MANUAL.md#interactive-exploration).
 
