@@ -25,13 +25,10 @@ Example::
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from dataclasses import dataclass
 
 import numpy as np  # type: ignore[import]
 import pandas as pd  # type: ignore[import]
-
 
 # ---------------------------------------------------------------------------
 # Data Classes
@@ -43,9 +40,9 @@ class ContractProgress:
     contract_id: str
     status: str  # "not_started", "in_progress", "complete", "delayed"
     pct_complete: float
-    planned_end: Optional[str]
-    projected_end: Optional[str]
-    days_remaining: Optional[int]
+    planned_end: str | None
+    projected_end: str | None
+    days_remaining: int | None
     days_over: int  # 0 if on time, positive if overdue
     milestones_hit: int
     milestones_total: int
@@ -90,7 +87,7 @@ def analyze_contract_progress(
     start_date_col: str = "start_date",
     end_date_col: str = "end_date",
     status_col: str = "status",
-) -> List[ContractProgress]:
+) -> list[ContractProgress]:
     """Analyze progress for each contract in the DataFrame.
 
     Returns a list of ContractProgress dataclasses, one per contract.
@@ -146,7 +143,7 @@ def analyze_contract_progress(
     return results
 
 
-def _parse_first_date(group: pd.DataFrame, col: str) -> Optional[pd.Timestamp]:
+def _parse_first_date(group: pd.DataFrame, col: str) -> pd.Timestamp | None:
     if col not in group.columns:
         return None
     dates = pd.to_datetime(group[col], errors="coerce").dropna()

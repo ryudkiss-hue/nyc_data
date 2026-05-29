@@ -29,10 +29,9 @@ import json
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import pandas as pd
-
 
 # ---------------------------------------------------------------------------
 # Data Classes
@@ -43,7 +42,7 @@ class ReportSection:
     """A section within a report."""
     title: str
     content: str
-    data: Optional[Dict[str, Any]] = None
+    data: dict[str, Any] | None = None
 
 
 @dataclass
@@ -51,10 +50,10 @@ class Report:
     """A complete generated report."""
     title: str
     generated_at: str
-    sections: List[ReportSection] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    sections: list[ReportSection] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def add_section(self, title: str, content: str, data: Optional[Dict[str, Any]] = None) -> None:
+    def add_section(self, title: str, content: str, data: dict[str, Any] | None = None) -> None:
         self.sections.append(ReportSection(title=title, content=content, data=data))
 
     def to_markdown(self) -> str:
@@ -263,9 +262,9 @@ def generate_program_report(
 def generate_inquiry_response(
     inquiry_type: str,
     df: pd.DataFrame,
-    contract_id: Optional[str] = None,
-    location: Optional[str] = None,
-    borough: Optional[str] = None,
+    contract_id: str | None = None,
+    location: str | None = None,
+    borough: str | None = None,
     contract_id_col: str = "contract_id",
     borough_col: str = "borough",
     status_col: str = "status",

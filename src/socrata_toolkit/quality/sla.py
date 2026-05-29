@@ -16,8 +16,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +56,7 @@ class MaterializationMode(Enum):
 @dataclass
 class MetricPoint:
     """A single measurement of a quality metric.
-    
+
     Attributes:
         timestamp: When the measurement was taken
         value: The metric value (0-1 or 0-100)
@@ -71,7 +70,7 @@ class MetricPoint:
     metric_type: MetricType
     window: str  # '5m', '1h', 'daily'
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "timestamp": self.timestamp.isoformat(),
@@ -85,7 +84,7 @@ class MetricPoint:
 @dataclass
 class SLADefinition:
     """Defines a data quality SLA.
-    
+
     Attributes:
         metric_name: Name of the SLA (e.g., 'sidewalk_completeness')
         metric_type: Type of metric (completeness, validity, etc.)
@@ -109,7 +108,7 @@ class SLADefinition:
     grace_period: int = 5
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "metric_name": self.metric_name,
@@ -125,7 +124,7 @@ class SLADefinition:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> SLADefinition:
+    def from_dict(cls, data: dict[str, Any]) -> SLADefinition:
         """Create from dictionary."""
         return cls(
             metric_name=data["metric_name"],
@@ -146,7 +145,7 @@ class SLADefinition:
 @dataclass
 class SLABreach:
     """Represents a breach of an SLA.
-    
+
     Attributes:
         sla: The SLA that was breached
         timestamp: When the breach was detected
@@ -159,10 +158,10 @@ class SLABreach:
     timestamp: datetime
     actual_value: float
     expected_value: float
-    breach_duration: Optional[timedelta] = None
+    breach_duration: timedelta | None = None
     status: str = "active"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "sla": self.sla.to_dict(),
@@ -179,7 +178,7 @@ class SLABreach:
 @dataclass
 class SLATrend:
     """Trend analysis for an SLA metric.
-    
+
     Attributes:
         sla_name: Name of the SLA
         direction: Improving, stable, or degrading
@@ -191,14 +190,14 @@ class SLATrend:
     sla_name: str
     direction: TrendDirection
     current_value: float
-    previous_value: Optional[float]
+    previous_value: float | None
     slope: float
     confidence: float
 
 
 class DataQualityTracker:
     """Tracks quality metrics over time and evaluates SLAs.
-    
+
     Thread-safe metric collection with time-series storage and SLA evaluation.
     Detects trends, identifies breaches, and generates reports.
     """
@@ -206,14 +205,14 @@ class DataQualityTracker:
     def __init__(self):
         """Initialize tracker."""
         self._lock = threading.Lock()
-        self._metrics: List[MetricPoint] = []
-        self._slas: Dict[str, SLADefinition] = {}
-        self._breaches: List[SLABreach] = []
-        self._metric_history: Dict[str, List[MetricPoint]] = defaultdict(list)
+        self._metrics: list[MetricPoint] = []
+        self._slas: dict[str, SLADefinition] = {}
+        self._breaches: list[SLABreach] = []
+        self._metric_history: dict[str, list[MetricPoint]] = defaultdict(list)
 
     def register_sla(self, sla: SLADefinition) -> None:
         """Register an SLA.
-        
+
         Args:
             sla: SLA to register
         """
@@ -230,7 +229,7 @@ class DataQualityTracker:
         window: str = "5m",
     ) -> None:
         """Record a metric measurement.
-        
+
         Args:
             metric_name: Name of the metric
             value: Measured value (0-1)
@@ -260,7 +259,7 @@ class DataQualityTracker:
 
     def _record_breach(self, sla: SLADefinition, actual_value: float) -> None:
         """Record an SLA breach (must be called within lock).
-        
+
         Args:
             sla: The SLA that was breached
             actual_value: The measured value
@@ -284,13 +283,13 @@ class DataQualityTracker:
                 f"SLA breach: {sla.metric_name} = {actual_value} (target={sla.target})"
             )
 
-    def evaluate_sla(self, sla_name: str, lookback_minutes: int = 60) -> Tuple[bool, float]:
+    def evaluate_sla(self, sla_name: str, lookback_minutes: int = 60) -> tuple[bool, float]:
         """Evaluate if an SLA is currently being met.
-        
+
         Args:
             sla_name: Name of the SLA
             lookback_minutes: How far back to look for metrics
-            
+
         Returns:
             Tuple of (is_compliant, actual_value)
         """
@@ -322,11 +321,11 @@ class DataQualityTracker:
         self, sla_name: str, lookback_minutes: int = 1440
     ) -> SLATrend:
         """Analyze the trend for an SLA metric.
-        
+
         Args:
             sla_name: Name of the SLA
             lookback_minutes: How far back to analyze
-            
+
         Returns:
             SLATrend with direction and analysis
         """
@@ -396,9 +395,9 @@ class DataQualityTracker:
             confidence=confidence,
         )
 
-    def get_breach_summary(self) -> Dict[str, Any]:
+    def get_breach_summary(self) -> dict[str, Any]:
         """Get summary of all SLA breaches.
-        
+
         Returns:
             Dictionary with breach statistics
         """
@@ -420,12 +419,12 @@ class DataQualityTracker:
                 },
             }
 
-    def get_sla_compliance_report(self, lookback_minutes: int = 1440) -> Dict[str, Any]:
+    def get_sla_compliance_report(self, lookback_minutes: int = 1440) -> dict[str, Any]:
         """Generate SLA compliance report.
-        
+
         Args:
             lookback_minutes: How far back to evaluate
-            
+
         Returns:
             Dictionary with compliance metrics
         """
@@ -458,10 +457,10 @@ class DataQualityTracker:
 
     def resolve_breach(self, sla_name: str) -> bool:
         """Mark an active breach as resolved.
-        
+
         Args:
             sla_name: Name of the SLA
-            
+
         Returns:
             True if breach was found and resolved
         """
@@ -476,10 +475,10 @@ class DataQualityTracker:
 
     def clear_old_metrics(self, older_than_days: int = 30) -> int:
         """Remove old metric points (for storage management).
-        
+
         Args:
             older_than_days: Remove metrics older than this many days
-            
+
         Returns:
             Number of metrics removed
         """
@@ -501,9 +500,9 @@ class DataQualityTracker:
         return removed_count
 
 
-def create_standard_slas() -> List[SLADefinition]:
+def create_standard_slas() -> list[SLADefinition]:
     """Create standard pre-built SLAs for common datasets.
-    
+
     Returns:
         List of SLADefinitions
     """

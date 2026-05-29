@@ -4,67 +4,35 @@
 
 from __future__ import annotations
 
-
-
 import json
-
-import os
-
 import tempfile
-
 from datetime import datetime, timezone
-
 from pathlib import Path
-
 from typing import Any
-
-
 
 import pandas as pd
 
-
-
 from ..engineering.construction_list import (
-
     ConflictCheckResult,
-
     detect_construction_conflicts,
-
     export_construction_list,
-
     prioritize_construction_list,
-
 )
-
 from ..engineering.contract_analytics import (
-
     analyze_contract_progress,
-
     budget_analysis,
-
     productivity_metrics,
-
 )
-
 from ..program_metrics import compute_program_dashboard
-
 from ..reporting import generate_contract_report
-
 from .budget import load_budget_rules, validate_budget_codes
-
 from .config import AnalystProfile, load_profile
-
 from .conflicts_queue import build_conflicts_review
-
 from .diff import diff_construction_lists, find_previous_pack_dir
-
 from .executive import build_executive_summary
-
 from .inquiries import render_inquiry_drafts
-
 from .pack import AnalystPackResult, assemble_pack
 from .publish import publish_pack
-
 from .roles import (
     build_role_task_status_md,
     compute_role_kpis,
@@ -74,11 +42,7 @@ from .roles import (
     resolve_role_profile_path,
     write_role_artifacts,
 )
-
 from .sources import build_source
-
-
-
 
 
 def _normalize_frames(frames: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
@@ -655,8 +619,8 @@ def run_analyst_pack(
 
     # Persist run state for UX ("Resume" in Dash, publish defaults, last role)
     try:
+        from ..core.profiles import ensure_profile_exists
         from ..core.state import save_state
-        from ..core.profiles import ensure_profile_exists, profile_paths
 
         pp = ensure_profile_exists(result.profile_name)
         payload = {

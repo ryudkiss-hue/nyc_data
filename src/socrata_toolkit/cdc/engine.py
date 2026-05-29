@@ -37,11 +37,10 @@ from __future__ import annotations
 import json
 import logging
 import uuid
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
 from contextlib import contextmanager
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any
 
 try:
     import psycopg
@@ -63,10 +62,10 @@ class Operation(Enum):
 @dataclass
 class CDCEvent:
     """Single CDC change event.
-    
+
     Represents a single change to a record, with before/after values.
     Used as the primary unit of work for CDC processing.
-    
+
     Attributes:
         event_id: Unique event identifier (UUID)
         source_dataset: Socrata dataset_id or source system
@@ -82,12 +81,12 @@ class CDCEvent:
     operation: str
     record_id: str
     timestamp_ms: int
-    before: Optional[Dict[str, Any]] = None
-    after: Optional[Dict[str, Any]] = None
-    metadata: Optional[Dict[str, Any]] = None
+    before: dict[str, Any] | None = None
+    after: dict[str, Any] | None = None
+    metadata: dict[str, Any] | None = None
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> CDCEvent:
+    def from_dict(cls, data: dict[str, Any]) -> CDCEvent:
         """Create from dictionary."""
         return cls(
             event_id=data.get("event_id", str(uuid.uuid4())),
@@ -100,7 +99,7 @@ class CDCEvent:
             metadata=data.get("metadata"),
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "event_id": self.event_id,
@@ -117,7 +116,7 @@ class CDCEvent:
 @dataclass
 class ProcessingResult:
     """Result of CDC event processing.
-    
+
     Attributes:
         success: Whether processing succeeded
         event_id: ID of processed event
@@ -128,37 +127,37 @@ class ProcessingResult:
     success: bool
     event_id: str
     message: str
-    scd_record_id: Optional[str] = None
-    error: Optional[str] = None
+    scd_record_id: str | None = None
+    error: str | None = None
 
 
 @dataclass
 class OrderingReport:
     """Report on event ordering validation.
-    
+
     Attributes:
         valid: Whether events are in valid order
         issues: List of ordering issues found
         stats: Statistics about the events
     """
     valid: bool
-    issues: List[str]
-    stats: Dict[str, Any]
+    issues: list[str]
+    stats: dict[str, Any]
 
 
 class CDCStorage:
     """Persistent storage for CDC events in PostgreSQL.
-    
+
     Maintains immutable CDC event log with indexes for efficient
     querying by dataset, operation type, and time window.
     """
 
     def __init__(self, dsn: str) -> None:
         """Initialize CDC storage.
-        
+
         Args:
             dsn: PostgreSQL connection string
-            
+
         Raises:
             ImportError: If psycopg not installed
         """
@@ -178,10 +177,10 @@ class CDCStorage:
 
     def store_event(self, event: CDCEvent) -> bool:
         """Store a CDC event.
-        
+
         Args:
             event: CDCEvent to store
-            
+
         Returns:
             True if successful
         """
@@ -204,16 +203,16 @@ class CDCStorage:
                     )
                 )
                 conn.commit()
-        
+
         self.logger.debug(f"Stored CDC event: {event.event_id}")
         return True
 
-    def store_batch(self, events: List[CDCEvent]) -> int:
+    def store_batch(self, events: list[CDCEvent]) -> int:
         """Store multiple CDC events.
-        
+
         Args:
             events: List of CDCEvents
-            
+
         Returns:
             Count of stored events
         """
@@ -239,19 +238,19 @@ class CDCStorage:
                     )
                     count += 1
                 conn.commit()
-        
+
         self.logger.info(f"Stored {count} CDC events")
         return count
 
     def get_events(
         self, source_dataset: str, limit: int = 10000
-    ) -> List[CDCEvent]:
+    ) -> list[CDCEvent]:
         """Get CDC events for a dataset.
-        
+
         Args:
             source_dataset: Dataset identifier
             limit: Maximum results
-            
+
         Returns:
             List of CDCEvents
         """
@@ -267,7 +266,7 @@ class CDCStorage:
                     (source_dataset, limit)
                 )
                 rows = cur.fetchall()
-                
+
                 events = []
                 for row in rows:
                     events.append(
@@ -286,13 +285,13 @@ class CDCStorage:
 
     def get_events_by_operation(
         self, operation: str, limit: int = 10000
-    ) -> List[CDCEvent]:
+    ) -> list[CDCEvent]:
         """Get CDC events by operation type.
-        
+
         Args:
             operation: Operation type (INSERT, UPDATE, DELETE)
             limit: Maximum results
-            
+
         Returns:
             List of CDCEvents
         """
@@ -308,7 +307,7 @@ class CDCStorage:
                     (operation, limit)
                 )
                 rows = cur.fetchall()
-                
+
                 events = []
                 for row in rows:
                     events.append(
@@ -331,15 +330,15 @@ class CDCStorage:
         start_ms: int,
         end_ms: int,
         limit: int = 10000,
-    ) -> List[CDCEvent]:
+    ) -> list[CDCEvent]:
         """Get CDC events in a time window.
-        
+
         Args:
             source_dataset: Dataset identifier
             start_ms: Window start (milliseconds)
             end_ms: Window end (milliseconds)
             limit: Maximum results
-            
+
         Returns:
             List of CDCEvents
         """
@@ -357,7 +356,7 @@ class CDCStorage:
                     (source_dataset, start_ms, end_ms, limit)
                 )
                 rows = cur.fetchall()
-                
+
                 events = []
                 for row in rows:
                     events.append(
@@ -377,14 +376,14 @@ class CDCStorage:
 
 class CDCProcessor:
     """Main CDC processor for handling change events.
-    
+
     Processes CDC events: deduplication, validation, SCD updates,
     watermarking, and storage.
     """
 
     def __init__(self, dsn: str) -> None:
         """Initialize CDC processor.
-        
+
         Args:
             dsn: PostgreSQL connection string
         """
@@ -393,28 +392,28 @@ class CDCProcessor:
         self.logger = logger.getChild(self.__class__.__name__)
 
     @staticmethod
-    def deduplicate_events(events: List[CDCEvent]) -> List[CDCEvent]:
+    def deduplicate_events(events: list[CDCEvent]) -> list[CDCEvent]:
         """Remove duplicate consecutive updates to same record.
-        
+
         If multiple UPDATE events exist for the same record_id in succession
         with the same final state, keep only the latest.
-        
+
         Args:
             events: List of CDC events (should be sorted by timestamp)
-            
+
         Returns:
             Deduplicated list
         """
         if not events:
             return []
-        
+
         # Sort by record_id, then timestamp
         sorted_events = sorted(events, key=lambda e: (e.record_id, e.timestamp_ms))
-        
+
         deduped = []
         current_record = None
         current_state = None
-        
+
         for event in sorted_events:
             if event.record_id != current_record:
                 # Different record, include previous event
@@ -430,44 +429,44 @@ class CDCProcessor:
                 # Different state or non-update, include
                 deduped.append(event)
                 current_state = event.after
-        
+
         return deduped
 
     @staticmethod
-    def validate_event_order(events: List[CDCEvent]) -> OrderingReport:
+    def validate_event_order(events: list[CDCEvent]) -> OrderingReport:
         """Validate that events are in correct order.
-        
+
         Checks that events for the same record_id are chronologically ordered
         and don't have gaps or overlaps.
-        
+
         Args:
             events: List of CDC events
-            
+
         Returns:
             OrderingReport with validation results
         """
         issues = []
-        record_timestamps: Dict[str, int] = {}
-        
+        record_timestamps: dict[str, int] = {}
+
         for event in sorted(events, key=lambda e: e.timestamp_ms):
             record_id = event.record_id
-            
+
             if record_id in record_timestamps:
                 if event.timestamp_ms < record_timestamps[record_id]:
                     issues.append(
                         f"Event {event.event_id} for {record_id} is out of order "
                         f"({event.timestamp_ms} < {record_timestamps[record_id]})"
                     )
-            
+
             record_timestamps[record_id] = event.timestamp_ms
-        
+
         # Validate operations
-        record_sequence: Dict[str, List[str]] = {}
+        record_sequence: dict[str, list[str]] = {}
         for event in sorted(events, key=lambda e: e.timestamp_ms):
             record_id = event.record_id
             if record_id not in record_sequence:
                 record_sequence[record_id] = []
-            
+
             ops = record_sequence[record_id]
             # INSERT can only be first
             if event.operation == "INSERT" and len(ops) > 0:
@@ -476,9 +475,9 @@ class CDCProcessor:
             if event.operation == "DELETE" and len(ops) > 0:
                 if ops[-1] == "DELETE":
                     issues.append(f"Multiple DELETEs for {record_id}")
-            
+
             ops.append(event.operation)
-        
+
         return OrderingReport(
             valid=len(issues) == 0,
             issues=issues,
@@ -492,17 +491,17 @@ class CDCProcessor:
 
     def process_cdc_event(self, event: CDCEvent) -> ProcessingResult:
         """Process a single CDC event.
-        
+
         Args:
             event: CDCEvent to process
-            
+
         Returns:
             ProcessingResult
         """
         try:
             # Store event
             self.storage.store_event(event)
-            
+
             return ProcessingResult(
                 success=True,
                 event_id=event.event_id,
@@ -517,12 +516,12 @@ class CDCProcessor:
                 error=str(e),
             )
 
-    def batch_process_cdc(self, events: List[CDCEvent]) -> Dict[str, Any]:
+    def batch_process_cdc(self, events: list[CDCEvent]) -> dict[str, Any]:
         """Process multiple CDC events in a batch.
-        
+
         Args:
             events: List of CDCEvents
-            
+
         Returns:
             Dict with results:
                 - total: number of events
@@ -532,17 +531,17 @@ class CDCProcessor:
         """
         deduped = self.deduplicate_events(events)
         removed = len(events) - len(deduped)
-        
+
         processed = 0
         failed = 0
-        
+
         try:
             self.storage.store_batch(deduped)
             processed = len(deduped)
         except Exception as e:
             self.logger.error(f"Batch processing failed: {e}")
             failed = len(deduped)
-        
+
         return {
             "total": len(events),
             "processed": processed,
@@ -554,20 +553,20 @@ class CDCProcessor:
         self, source_dataset: str, event_id: str, timestamp_ms: int
     ) -> bool:
         """Update watermark to track processing position.
-        
+
         Prevents reprocessing of the same events.
-        
+
         Args:
             source_dataset: Dataset identifier
             event_id: Latest processed event ID
             timestamp_ms: Latest processed timestamp
-            
+
         Returns:
             True if successful
         """
         if psycopg is None:
             return False
-        
+
         try:
             conn = psycopg.connect(self.dsn)
             with conn.cursor() as cur:
@@ -583,25 +582,25 @@ class CDCProcessor:
                 )
                 conn.commit()
                 conn.close()
-            
+
             self.logger.debug(f"Updated watermark for {source_dataset}")
             return True
         except Exception as e:
             self.logger.error(f"Failed to update watermark: {e}")
             return False
 
-    def get_watermark(self, source_dataset: str) -> Optional[Tuple[str, int]]:
+    def get_watermark(self, source_dataset: str) -> tuple[str, int] | None:
         """Get the last processed watermark for a dataset.
-        
+
         Args:
             source_dataset: Dataset identifier
-            
+
         Returns:
             Tuple of (event_id, timestamp_ms) or None if no watermark
         """
         if psycopg is None:
             return None
-        
+
         try:
             conn = psycopg.connect(self.dsn)
             with conn.cursor() as cur:
@@ -613,7 +612,7 @@ class CDCProcessor:
                 )
                 row = cur.fetchone()
                 conn.close()
-            
+
             if row:
                 return (row[0], row[1])
             return None
@@ -621,13 +620,13 @@ class CDCProcessor:
             self.logger.error(f"Failed to get watermark: {e}")
             return None
 
-    def get_events(self, source_dataset: str, limit: int = 10000) -> List[CDCEvent]:
+    def get_events(self, source_dataset: str, limit: int = 10000) -> list[CDCEvent]:
         """Get CDC events for a dataset.
-        
+
         Args:
             source_dataset: Dataset identifier
             limit: Maximum results
-            
+
         Returns:
             List of CDCEvents
         """

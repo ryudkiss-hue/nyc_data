@@ -7,8 +7,12 @@ from typing import Any
 
 import pandas as pd
 
-from ..engineering.contract_analytics import BudgetSummary, analyze_contract_progress, budget_analysis
 from ..engineering.construction_list import ConflictCheckResult
+from ..engineering.contract_analytics import (
+    BudgetSummary,
+    analyze_contract_progress,
+    budget_analysis,
+)
 
 
 def build_executive_summary(

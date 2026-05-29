@@ -7,16 +7,6 @@ import requests
 from .compliance import *  # noqa: F403
 
 get = requests.get  # tests monkeypatch socrata_toolkit.governance.get
-from .processor import *
-from .core import *
-# CDC audit trail types must win over access-log AuditEvent in core
-from .audit import (  # noqa: F401
-    ActionType,
-    AuditEvent,
-    AuditTrail,
-    ChangeType,
-)
-
 # Lineage DAG (tests import from governance)
 from ..lineage.core import (
     DAG,
@@ -30,3 +20,13 @@ from ..lineage.core import (
 from ..lineage.impact import ImpactAnalysis
 from ..lineage.query import LineageQuery
 from ..lineage.visualization import LineageVisualizer
+
+# CDC audit trail types must win over access-log AuditEvent in core
+from .audit import (  # noqa: F401
+    ActionType,
+    AuditEvent,
+    AuditTrail,
+    ChangeType,
+)
+from .core import *
+from .processor import *

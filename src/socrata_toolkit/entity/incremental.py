@@ -20,10 +20,10 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
-from .matching import MatchingStrategy, CompositeMatch, FuzzyMatch, ExactMatch
-from ..core.master_data import MasterDataManager, MasterEntity
+from ..core.master_data import MasterDataManager
+from .matching import CompositeMatch, ExactMatch, FuzzyMatch, MatchingStrategy
 
 
 class MatchDecision(str, Enum):
@@ -38,12 +38,12 @@ class MatchDecision(str, Enum):
 class MatchingResult:
     """Result of matching a new record."""
     record_id: str
-    matched_entity_id: Optional[str] = None
+    matched_entity_id: str | None = None
     confidence_score: float = 0.0
-    candidate_matches: List[Tuple[str, float]] = field(default_factory=list)  # (entity_id, score)
+    candidate_matches: list[tuple[str, float]] = field(default_factory=list)  # (entity_id, score)
     decision: MatchDecision = MatchDecision.UNMATCHED
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    user: Optional[str] = None
+    user: str | None = None
     notes: str = ""
 
 
@@ -53,8 +53,8 @@ class MatchingDecision:
     case_id: str
     record_id: str
     decision: str  # 'match' or 'no_match' or 'entity_id'
-    entity_id: Optional[str] = None
-    user: Optional[str] = None
+    entity_id: str | None = None
+    user: str | None = None
     confidence: float = 1.0
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     notes: str = ""
@@ -63,11 +63,11 @@ class MatchingDecision:
 class IncrementalMatcher:
     """
     Matcher for incremental entity matching.
-    
+
     Matches new records against existing master entities,
     supporting auto-assignment, manual review, and override workflows.
     """
-    
+
     def __init__(
         self,
         master_data_manager: MasterDataManager,
@@ -76,7 +76,7 @@ class IncrementalMatcher:
     ):
         """
         Initialize incremental matcher.
-        
+
         Args:
             master_data_manager: Manager with existing master entities
             auto_assign_threshold: Confidence needed for auto-assignment
@@ -85,66 +85,66 @@ class IncrementalMatcher:
         self.master_data = master_data_manager
         self.auto_assign_threshold = auto_assign_threshold
         self.review_threshold = review_threshold
-        
+
         # Default composite matching strategy
         self.matching_strategy = CompositeMatch([
             (ExactMatch(fields=['id']), 0.3),
             (FuzzyMatch(fields=['name', 'address'], threshold=0.8), 0.7)
         ])
-        
+
         # Track all matching decisions
-        self._matching_decisions: Dict[str, MatchingDecision] = {}
-        self._queued_for_review: List[str] = []
-        self._auto_assigned: Dict[str, str] = {}  # record_id -> entity_id
-    
+        self._matching_decisions: dict[str, MatchingDecision] = {}
+        self._queued_for_review: list[str] = []
+        self._auto_assigned: dict[str, str] = {}  # record_id -> entity_id
+
     def set_matching_strategy(self, strategy: MatchingStrategy) -> None:
         """Set custom matching strategy."""
         self.matching_strategy = strategy
-    
+
     def match_against_existing(
         self,
-        new_record: Dict[str, Any],
-        entity_type: Optional[str] = None,
+        new_record: dict[str, Any],
+        entity_type: str | None = None,
         top_k: int = 5
     ) -> MatchingResult:
         """
         Match a new record against existing master entities.
-        
+
         Args:
             new_record: New record to match
             entity_type: Filter masters by entity type
             top_k: Number of top candidates to return
-            
+
         Returns:
             MatchingResult with best matches
         """
         record_id = str(new_record.get('id', str(uuid.uuid4())))
-        candidates: List[Tuple[str, float]] = []
-        
+        candidates: list[tuple[str, float]] = []
+
         # Score against all master entities
         for entity_id, entity in self.master_data._entities.items():
             if entity_type and entity.entity_type != entity_type:
                 continue
-            
+
             # Score against canonical record
             score = self.matching_strategy.score(new_record, entity.canonical_record)
             if score >= self.review_threshold:
                 candidates.append((entity_id, score))
-        
+
         # Sort by confidence (descending)
         candidates.sort(key=lambda x: x[1], reverse=True)
         top_candidates = candidates[:top_k]
-        
+
         # Determine decision
         result = MatchingResult(
             record_id=record_id,
             candidate_matches=top_candidates,
             confidence_score=top_candidates[0][1] if top_candidates else 0.0
         )
-        
+
         if top_candidates:
             best_entity_id, best_score = top_candidates[0]
-            
+
             if best_score >= self.auto_assign_threshold:
                 result.matched_entity_id = best_entity_id
                 result.decision = MatchDecision.AUTO_ASSIGNED
@@ -154,36 +154,36 @@ class IncrementalMatcher:
                 result.decision = MatchDecision.UNMATCHED
         else:
             result.decision = MatchDecision.UNMATCHED
-        
+
         return result
-    
+
     def assign_to_entity(
         self,
         record_id: str,
         entity_id: str,
-        new_record: Optional[Dict[str, Any]] = None,
-        user: Optional[str] = None
+        new_record: dict[str, Any] | None = None,
+        user: str | None = None
     ) -> bool:
         """
         Assign new record to master entity.
-        
+
         Args:
             record_id: Record ID
             entity_id: Master entity ID to assign to
             new_record: Record data (optional)
             user: User making assignment
-            
+
         Returns:
             Success status
         """
         entity = self.master_data.get_master_entity(entity_id)
         if not entity:
             return False
-        
+
         # If record provided, add to master entity
         if new_record:
             self.master_data.add_record_to_entity(entity_id, new_record)
-        
+
         # Track decision
         self._auto_assigned[record_id] = entity_id
         self._matching_decisions[record_id] = MatchingDecision(
@@ -193,49 +193,49 @@ class IncrementalMatcher:
             entity_id=entity_id,
             user=user or 'system'
         )
-        
+
         return True
-    
+
     def queue_for_review(
         self,
         record_id: str,
-        candidate_matches: List[Tuple[str, float]],
+        candidate_matches: list[tuple[str, float]],
         reason: str = ""
     ) -> bool:
         """
         Queue record for manual review.
-        
+
         Args:
             record_id: Record ID
             candidate_matches: List of (entity_id, score) candidates
             reason: Reason for review
-            
+
         Returns:
             Success status
         """
         if record_id in self._queued_for_review:
             return False
-        
+
         self._queued_for_review.append(record_id)
-        
+
         return True
-    
-    def get_review_queue(self) -> List[str]:
+
+    def get_review_queue(self) -> list[str]:
         """Get list of record IDs queued for review."""
         return self._queued_for_review.copy()
-    
+
     def submit_matching_decision(
         self,
         record_id: str,
         decision: str,
-        entity_id: Optional[str] = None,
-        user: Optional[str] = None,
+        entity_id: str | None = None,
+        user: str | None = None,
         confidence: float = 1.0,
         notes: str = ""
     ) -> bool:
         """
         Submit decision on queued matching case.
-        
+
         Args:
             record_id: Record ID
             decision: 'match', 'no_match', or 'create_new'
@@ -243,15 +243,15 @@ class IncrementalMatcher:
             user: User making decision
             confidence: Confidence in decision
             notes: Decision notes
-            
+
         Returns:
             Success status
         """
         if record_id not in self._queued_for_review:
             return False
-        
+
         case_id = str(uuid.uuid4())
-        
+
         if decision == 'match' and entity_id:
             # Assign to entity
             self.assign_to_entity(record_id, entity_id, user=user)
@@ -276,38 +276,38 @@ class IncrementalMatcher:
             )
         else:
             return False
-        
+
         # Remove from queue
         self._queued_for_review.remove(record_id)
-        
+
         return True
-    
+
     def override_assignment(
         self,
         record_id: str,
         new_entity_id: str,
-        user: Optional[str] = None,
+        user: str | None = None,
         reason: str = ""
     ) -> bool:
         """
         Override previous matching decision.
-        
+
         Args:
             record_id: Record ID
             new_entity_id: New entity to assign to
             user: User making override
             reason: Reason for override
-            
+
         Returns:
             Success status
         """
         # Get or create matching decision
         old_decision = self._matching_decisions.get(record_id)
         old_entity_id = old_decision.entity_id if old_decision else None
-        
+
         # Update assignment
         self._auto_assigned[record_id] = new_entity_id
-        
+
         # Record override decision
         self._matching_decisions[record_id] = MatchingDecision(
             case_id=old_decision.case_id if old_decision else str(uuid.uuid4()),
@@ -318,31 +318,31 @@ class IncrementalMatcher:
             confidence=1.0,
             notes=f"Override from {old_entity_id} - {reason}"
         )
-        
+
         return True
-    
-    def get_assignment_for_record(self, record_id: str) -> Optional[str]:
+
+    def get_assignment_for_record(self, record_id: str) -> str | None:
         """Get entity ID that record is assigned to."""
         return self._auto_assigned.get(record_id)
-    
-    def get_matching_decision(self, record_id: str) -> Optional[MatchingDecision]:
+
+    def get_matching_decision(self, record_id: str) -> MatchingDecision | None:
         """Get matching decision for record."""
         return self._matching_decisions.get(record_id)
-    
-    def get_statistics(self) -> Dict[str, Any]:
+
+    def get_statistics(self) -> dict[str, Any]:
         """Get matching statistics."""
         total_decisions = len(self._matching_decisions)
-        
+
         auto_assigned = sum(
             1 for d in self._matching_decisions.values()
             if d.decision == 'match' and d.user == 'system'
         )
-        
+
         manually_assigned = sum(
             1 for d in self._matching_decisions.values()
             if d.decision == 'match' and d.user != 'system'
         )
-        
+
         return {
             'total_records_matched': total_decisions,
             'auto_assigned': auto_assigned,
@@ -354,60 +354,60 @@ class IncrementalMatcher:
             'queued_for_review': len(self._queued_for_review),
             'auto_assignment_rate': auto_assigned / total_decisions if total_decisions > 0 else 0.0
         }
-    
+
     def create_batch_matches(
         self,
-        records: List[Dict[str, Any]],
-        entity_type: Optional[str] = None,
+        records: list[dict[str, Any]],
+        entity_type: str | None = None,
         auto_assign_only: bool = False
-    ) -> Dict[str, MatchingResult]:
+    ) -> dict[str, MatchingResult]:
         """
         Match batch of records against existing masters.
-        
+
         Args:
             records: List of records to match
             entity_type: Filter masters by entity type
             auto_assign_only: Only return high-confidence matches
-            
+
         Returns:
             Mapping of record_id -> MatchingResult
         """
         results = {}
-        
+
         for record in records:
             result = self.match_against_existing(record, entity_type)
-            
+
             # Filter results if auto_assign_only
             if auto_assign_only and result.decision != MatchDecision.AUTO_ASSIGNED:
                 continue
-            
+
             results[result.record_id] = result
-        
+
         return results
-    
+
     def apply_batch_decisions(
         self,
-        decisions: List[Dict[str, Any]],
-        user: Optional[str] = None
+        decisions: list[dict[str, Any]],
+        user: str | None = None
     ) -> int:
         """
         Apply batch of matching decisions.
-        
+
         Args:
             decisions: List of decisions with 'record_id', 'decision', 'entity_id'
             user: User applying decisions
-            
+
         Returns:
             Number of decisions applied
         """
         applied = 0
-        
+
         for decision in decisions:
             record_id = decision.get('record_id')
             decision_type = decision.get('decision')
             entity_id = decision.get('entity_id')
             notes = decision.get('notes', '')
-            
+
             if record_id in self._queued_for_review:
                 if self.submit_matching_decision(
                     record_id,
@@ -417,5 +417,5 @@ class IncrementalMatcher:
                     notes=notes
                 ):
                     applied += 1
-        
+
         return applied

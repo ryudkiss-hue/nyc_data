@@ -18,8 +18,8 @@ from __future__ import annotations
 
 import base64
 import io
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Sequence
 
 import numpy as np
 import pandas as pd
@@ -38,11 +38,11 @@ class ChartResult:
     """Container for a generated chart."""
     title: str
     chart_type: str
-    path: Optional[str] = None
-    base64_png: Optional[str] = None
+    path: str | None = None
+    base64_png: str | None = None
 
 
-def _finalize(fig, title: str, chart_type: str, path: Optional[str] = None) -> ChartResult:
+def _finalize(fig, title: str, chart_type: str, path: str | None = None) -> ChartResult:
     """Save or encode a matplotlib figure and return a ChartResult."""
     plt = _get_plt()
     fig.tight_layout()
@@ -66,8 +66,8 @@ def histogram(
     df: pd.DataFrame,
     column: str,
     bins: int = 30,
-    title: Optional[str] = None,
-    path: Optional[str] = None,
+    title: str | None = None,
+    path: str | None = None,
     kde: bool = False,
 ) -> ChartResult:
     """Generate a histogram for a numeric column."""
@@ -101,8 +101,8 @@ def bar_chart(
     column: str,
     top_n: int = 20,
     horizontal: bool = False,
-    title: Optional[str] = None,
-    path: Optional[str] = None,
+    title: str | None = None,
+    path: str | None = None,
 ) -> ChartResult:
     """Generate a bar chart showing value counts for a column."""
     plt = _get_plt()
@@ -128,8 +128,8 @@ def bar_chart(
 def correlation_heatmap(
     df: pd.DataFrame,
     method: str = "pearson",
-    title: Optional[str] = None,
-    path: Optional[str] = None,
+    title: str | None = None,
+    path: str | None = None,
 ) -> ChartResult:
     """Generate a correlation heatmap for numeric columns."""
     plt = _get_plt()
@@ -165,8 +165,8 @@ def time_series_chart(
     resample_freq: str = "ME",
     agg: str = "mean",
     show_trend: bool = True,
-    title: Optional[str] = None,
-    path: Optional[str] = None,
+    title: str | None = None,
+    path: str | None = None,
 ) -> ChartResult:
     """Generate a time series line chart with optional trend line.
 
@@ -208,8 +208,8 @@ def time_series_chart(
 def box_plot(
     df: pd.DataFrame,
     columns: Sequence[str],
-    title: Optional[str] = None,
-    path: Optional[str] = None,
+    title: str | None = None,
+    path: str | None = None,
 ) -> ChartResult:
     """Generate side-by-side box plots for the given numeric columns."""
     plt = _get_plt()
@@ -240,8 +240,8 @@ class QualityDashboard:
 
 def quality_dashboard(
     df: pd.DataFrame,
-    title: Optional[str] = None,
-    path_prefix: Optional[str] = None,
+    title: str | None = None,
+    path_prefix: str | None = None,
 ) -> QualityDashboard:
     """Generate a quality overview chart showing missing values per column."""
     plt = _get_plt()
@@ -257,7 +257,7 @@ def quality_dashboard(
         ax.barh(missing.index.astype(str), missing.values, color=colors)
         ax.set_xlabel("Missing Values")
         # add percentage labels
-        for i, (v, col) in enumerate(zip(missing.values, missing.index)):
+        for i, (v, col) in enumerate(zip(missing.values, missing.index, strict=False)):
             pct = v / df.shape[0] * 100
             ax.text(v + 0.5, i, f"{pct:.1f}%", va="center", fontsize=8)
     else:

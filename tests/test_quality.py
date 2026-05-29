@@ -403,7 +403,7 @@ def test_sla_compliance_report(tracker):
 def test_validator_initialization():
     """Test validator initialization."""
     validator = QualityValidator()
-    assert validator.fail_fast == False
+    assert not validator.fail_fast
 
 
 def test_validator_validate_pass(sample_dataframe, expectation_suite):
@@ -462,7 +462,7 @@ def test_aggregator_recent_failures(sample_dataframe, expectation_suite):
 def test_validator_fail_fast():
     """Test fail-fast validation."""
     validator = QualityValidator(fail_fast=True)
-    assert validator.fail_fast == True
+    assert validator.fail_fast
 
 
 def test_validation_result_to_dict(sample_dataframe, expectation_suite):
@@ -531,7 +531,7 @@ def test_anomaly_report_properties():
     report = AnomalyReport(detected_at=datetime.now(timezone.utc))
     report.anomalies.append(anomaly)
 
-    assert report.has_critical_anomalies == False
+    assert not report.has_critical_anomalies
 
 
 def test_multi_metric_anomaly_detection():
@@ -812,7 +812,7 @@ def test_quality_tracking_and_sla_enforcement(sample_dataframe):
 
     # Check compliance
     compliant, _ = tracker.evaluate_sla("test_completeness")
-    assert compliant == True
+    assert compliant
 
 
 def test_quality_validation_with_rules(sample_dataframe):

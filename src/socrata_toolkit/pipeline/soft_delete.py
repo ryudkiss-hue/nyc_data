@@ -1,8 +1,8 @@
 """Soft delete management and retention policy enforcement."""
 from __future__ import annotations
-from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
-from typing import Any, Dict, List, Optional
+
+from dataclasses import dataclass
+
 
 @dataclass
 class RetentionPolicy:
@@ -14,8 +14,8 @@ class RetentionPolicy:
 
 class SoftDeleteManager:
     """Manages soft-deleted records and enforces retention policies."""
-    
-    def __init__(self, dsn: Optional[str] = None):
+
+    def __init__(self, dsn: str | None = None):
         self.dsn = dsn
 
     def soft_delete(self, table: str, business_key: str, user: str = "SYSTEM") -> bool:

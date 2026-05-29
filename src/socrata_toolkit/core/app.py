@@ -3,9 +3,9 @@
 
 from __future__ import annotations
 
-import os
 import logging
-from typing import Dict, Any, Optional, List, Tuple
+import os
+from typing import Any
 
 import pandas as pd
 from sqlalchemy import create_engine, text
@@ -18,7 +18,7 @@ log = logging.getLogger("analysis_helpers")
 # ENVIRONMENT
 # -----------------------------
 
-def load_env(env_path: str = ".env") -> Dict[str, Any]:
+def load_env(env_path: str = ".env") -> dict[str, Any]:
     """
     Loads environment variables from a .env file if python-dotenv is available.
     Returns a dict of commonly used environment values.
@@ -41,7 +41,7 @@ def load_env(env_path: str = ".env") -> Dict[str, Any]:
 # DATABASE
 # -----------------------------
 
-def get_engine(pg_dsn: Optional[str]) -> Optional[Engine]:
+def get_engine(pg_dsn: str | None) -> Engine | None:
     """
     Creates a SQLAlchemy engine for database access.
     Returns None if pg_dsn is falsy or engine creation fails.
@@ -73,7 +73,7 @@ def list_tables(engine: Engine) -> pd.DataFrame:
     return pd.read_sql_query(q, engine)
 
 
-def candidate_sidewalk_tables(engine: Engine) -> List[str]:
+def candidate_sidewalk_tables(engine: Engine) -> list[str]:
     """
     Identifies potential sidewalk-related tables based on keywords.
     Returns a de-duplicated list of candidate table names.
@@ -158,7 +158,7 @@ def safe_read_table(engine: Engine, table: str, limit: int = 2000) -> pd.DataFra
 # GEO HELPERS
 # -----------------------------
 
-def find_latlon_columns(df: pd.DataFrame) -> Optional[Tuple[str, str]]:
+def find_latlon_columns(df: pd.DataFrame) -> tuple[str, str] | None:
     """
     Heuristically finds latitude and longitude columns in a DataFrame.
     Returns a tuple (lat_col, lon_col) or None if not found.
@@ -195,7 +195,7 @@ def find_latlon_columns(df: pd.DataFrame) -> Optional[Tuple[str, str]]:
 # KPI COMPUTATION
 # -----------------------------
 
-def compute_kpis_from_df(df: pd.DataFrame) -> Dict[str, Any]:
+def compute_kpis_from_df(df: pd.DataFrame) -> dict[str, Any]:
     """
     Computes sidewalk-related KPIs from a DataFrame.
     Tries to delegate to dot_sidewalk.compute_sidewalk_kpis if available.

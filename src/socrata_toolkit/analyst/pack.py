@@ -4,22 +4,13 @@
 
 from __future__ import annotations
 
-
-
 import json
-
 from dataclasses import dataclass, field
-
 from datetime import datetime, timezone
-
 from pathlib import Path
-
 from typing import Any
 
-
-
 import pandas as pd
-
 
 
 def _dataframe_to_excel(df: pd.DataFrame, path: Path) -> None:
@@ -41,11 +32,7 @@ def _dataframe_to_excel(df: pd.DataFrame, path: Path) -> None:
 
 
 from .. import __version__
-
 from .config import AnalystProfile
-
-
-
 
 
 @dataclass

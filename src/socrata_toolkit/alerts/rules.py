@@ -18,10 +18,10 @@ Example::
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -55,13 +55,13 @@ class RulesEngine:
     """Evaluate rules against data and produce alerts."""
 
     def __init__(self) -> None:
-        self.rules: List[Rule] = []
-        self.alerts_history: List[RuleAlert] = []
+        self.rules: list[Rule] = []
+        self.alerts_history: list[RuleAlert] = []
 
     def add_rule(self, rule: Rule) -> None:
         self.rules.append(rule)
 
-    def evaluate(self, data: Dict[str, Any]) -> List[RuleAlert]:
+    def evaluate(self, data: dict[str, Any]) -> list[RuleAlert]:
         """Evaluate all rules against a data dict. Returns triggered alerts."""
         alerts = []
         for rule in self.rules:
@@ -101,9 +101,8 @@ class RulesEngine:
 
         return alerts
 
-    def evaluate_dataframe(self, df, borough_col: str = "borough", status_col: str = "status") -> List[RuleAlert]:
+    def evaluate_dataframe(self, df, borough_col: str = "borough", status_col: str = "status") -> list[RuleAlert]:
         """Evaluate rules against aggregated DataFrame metrics."""
-        import pandas as pd
         data = {
             "row_count": len(df),
             "pending_count": int((df[status_col] == "Pending Repair").sum()) if status_col in df.columns else 0,

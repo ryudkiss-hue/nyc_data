@@ -9,8 +9,7 @@ from typing import Any, Literal
 import duckdb
 import pandas as pd
 
-from ..core.profiles import ProfilePaths, ensure_profile_exists, profile_paths
-
+from ..core.profiles import ProfilePaths, profile_paths
 
 DecisionKind = Literal["conflict", "approval"]
 ConflictStatus = Literal["resolved", "defer", "needs_coordination"]
@@ -57,7 +56,7 @@ class ReviewStore:
         except Exception:
             pass
 
-    def __enter__(self) -> "ReviewStore":
+    def __enter__(self) -> ReviewStore:
         return self
 
     def __exit__(self, exc_type, exc, tb) -> None:

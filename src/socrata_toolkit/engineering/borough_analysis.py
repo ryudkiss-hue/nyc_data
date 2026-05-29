@@ -25,12 +25,10 @@ Example::
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from dataclasses import dataclass
 
 import numpy as np  # type: ignore[import]
 import pandas as pd  # type: ignore[import]
-
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -39,7 +37,7 @@ import pandas as pd  # type: ignore[import]
 BOROUGHS = ["MANHATTAN", "BRONX", "BROOKLYN", "QUEENS", "STATEN ISLAND"]
 
 #: Approximate sidewalk miles per borough (DOT reference data, rounded).
-BOROUGH_SIDEWALK_MILES: Dict[str, float] = {
+BOROUGH_SIDEWALK_MILES: dict[str, float] = {
     "MANHATTAN": 1580.0,
     "BRONX": 1200.0,
     "BROOKLYN": 2100.0,
@@ -71,12 +69,12 @@ class HotspotCluster:
     """A geographic cluster of repair-needing locations."""
     cluster_id: int
     borough: str
-    center_lat: Optional[float]
-    center_lon: Optional[float]
+    center_lat: float | None
+    center_lon: float | None
     location_count: int
     avg_severity: float
     total_sqft: float
-    community_board: Optional[str]
+    community_board: str | None
 
 
 @dataclass
@@ -103,7 +101,7 @@ def borough_summary(
     sqft_col: str = "estimated_sqft",
     contract_col: str = "contract_id",
     status_col: str = "status",
-) -> List[BoroughMetrics]:
+) -> list[BoroughMetrics]:
     """Compute summary metrics for each borough.
 
     Args:
@@ -170,7 +168,7 @@ def identify_hotspots(
     lon_col: str = "longitude",
     cb_col: str = "community_board",
     threshold: int = 5,
-) -> List[HotspotCluster]:
+) -> list[HotspotCluster]:
     """Identify hotspot clusters -- locations with multiple repair needs.
 
     Groups by ``location_col`` and flags clusters where the count of
@@ -234,11 +232,11 @@ def identify_hotspots(
 
 def equity_analysis(
     inspections_df: pd.DataFrame,
-    resource_df: Optional[pd.DataFrame] = None,
+    resource_df: pd.DataFrame | None = None,
     borough_col: str = "borough",
     status_col: str = "status",
     spend_col: str = "actual_spend",
-) -> List[EquityScore]:
+) -> list[EquityScore]:
     """Analyze repair equity across boroughs.
 
     Computes a need index (based on pending repairs relative to sidewalk
@@ -258,8 +256,8 @@ def equity_analysis(
     resource = resource_df if resource_df is not None else inspections_df
 
     results = []
-    need_counts: Dict[str, float] = {}
-    resource_amounts: Dict[str, float] = {}
+    need_counts: dict[str, float] = {}
+    resource_amounts: dict[str, float] = {}
 
     for borough in BOROUGHS:
         boro_data = inspections_df[inspections_df[borough_col].str.upper() == borough]

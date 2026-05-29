@@ -28,13 +28,11 @@ Example::
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
 
 import pandas as pd
-
 
 # ---------------------------------------------------------------------------
 # Data Classes
@@ -80,8 +78,8 @@ class BudgetCode:
 class ProgramDashboard:
     """Complete program dashboard with all metrics and budget summary."""
     timestamp: str
-    metrics: List[MetricSnapshot]
-    budget_codes: List[BudgetCode]
+    metrics: list[MetricSnapshot]
+    budget_codes: list[BudgetCode]
     overall_health: str  # "green", "yellow", "red"
     green_count: int
     yellow_count: int
@@ -92,7 +90,7 @@ class ProgramDashboard:
 # Standard DOT Sidewalk KPI Definitions
 # ---------------------------------------------------------------------------
 
-STANDARD_KPIS: List[MetricDefinition] = [
+STANDARD_KPIS: list[MetricDefinition] = [
     MetricDefinition(
         name="defect_density",
         description="Violations per curb-mile of inspected sidewalk",
@@ -186,9 +184,9 @@ class MetricsTracker:
     """
 
     def __init__(self) -> None:
-        self.definitions: Dict[str, MetricDefinition] = {}
-        self.history: Dict[str, List[MetricSnapshot]] = {}
-        self.budget_codes: List[BudgetCode] = []
+        self.definitions: dict[str, MetricDefinition] = {}
+        self.history: dict[str, list[MetricSnapshot]] = {}
+        self.budget_codes: list[BudgetCode] = []
 
     def load_standard_kpis(self) -> None:
         """Load the standard DOT sidewalk program KPI definitions."""
@@ -254,12 +252,12 @@ class MetricsTracker:
         self.history[name].append(snapshot)
         return snapshot
 
-    def latest(self, name: str) -> Optional[MetricSnapshot]:
+    def latest(self, name: str) -> MetricSnapshot | None:
         """Get the most recent snapshot for a metric."""
         snapshots = self.history.get(name, [])
         return snapshots[-1] if snapshots else None
 
-    def trend(self, name: str, last_n: int = 10) -> List[MetricSnapshot]:
+    def trend(self, name: str, last_n: int = 10) -> list[MetricSnapshot]:
         """Get the last N snapshots for a metric."""
         return self.history.get(name, [])[-last_n:]
 
