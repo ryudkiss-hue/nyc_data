@@ -42,12 +42,81 @@ parse_sim_complaints = _monolith.parse_sim_complaints
 
 _VIZ_MAP_NAMES = frozenset({"create_map", "save_map", "cluster_map", "heatmap_map"})
 
+# Submodule routing for symbols not in the analysis.py monolith
+_SUBMODULE_MAP: dict[str, str] = {
+    # sla_tracking
+    "SLATarget": "socrata_toolkit.sla_tracking",
+    "compute_cycle_times": "socrata_toolkit.sla_tracking",
+    "compute_sla_metrics": "socrata_toolkit.sla_tracking",
+    "flag_sla_violations": "socrata_toolkit.sla_tracking",
+    # freshness
+    "AlertSeverity": "socrata_toolkit.freshness",
+    "DatasetFreshness": "socrata_toolkit.freshness",
+    "FreshnessAlert": "socrata_toolkit.freshness",
+    "FreshnessTracker": "socrata_toolkit.freshness",
+    # metrics
+    "DataQualityMetrics": "socrata_toolkit.metrics",
+    "MetricPoint": "socrata_toolkit.metrics",
+    "MetricsRegistry": "socrata_toolkit.metrics",
+    "PipelineMetrics": "socrata_toolkit.metrics",
+    "get_global_registry": "socrata_toolkit.metrics",
+    "reset_global_registry": "socrata_toolkit.metrics",
+    # plotly_charts
+    "borough_bar_chart": "socrata_toolkit.plotly_charts",
+    "contract_gantt": "socrata_toolkit.plotly_charts",
+    "kpi_gauge": "socrata_toolkit.plotly_charts",
+    "priority_heatmap": "socrata_toolkit.plotly_charts",
+    "save_chart": "socrata_toolkit.plotly_charts",
+    "status_donut": "socrata_toolkit.plotly_charts",
+    "trend_line": "socrata_toolkit.plotly_charts",
+    # quality subpackage
+    "BusinessRulesEngine": "socrata_toolkit.quality.rules",
+    "QualityRule": "socrata_toolkit.quality.rules",
+    "RuleMode": "socrata_toolkit.quality.rules",
+    "RuleSeverity": "socrata_toolkit.quality.rules",
+    "RuleViolations": "socrata_toolkit.quality.rules",
+    "create_311_complaints_rules": "socrata_toolkit.quality.rules",
+    "create_sidewalk_rules": "socrata_toolkit.quality.rules",
+    "Anomaly": "socrata_toolkit.quality.anomalies",
+    "AnomalyDetector": "socrata_toolkit.quality.anomalies",
+    "AnomalyReport": "socrata_toolkit.quality.anomalies",
+    "AnomalySeverity": "socrata_toolkit.quality.anomalies",
+    "DataType": "socrata_toolkit.quality.profiler",
+    "DriftReport": "socrata_toolkit.quality.profiler",
+    "ProfileGenerator": "socrata_toolkit.quality.profiler",
+    "Expectation": "socrata_toolkit.quality.expectations",
+    "ExpectationSuite": "socrata_toolkit.quality.expectations",
+    "ExpectationType": "socrata_toolkit.quality.expectations",
+    "SeverityLevel": "socrata_toolkit.quality.expectations",
+    "create_sidewalk_inspections_suite": "socrata_toolkit.quality.expectations",
+    "create_311_complaints_suite": "socrata_toolkit.quality.expectations",
+    "MetricType": "socrata_toolkit.quality.sla",
+    "DataQualityTracker": "socrata_toolkit.quality.sla",
+    "Severity": "socrata_toolkit.quality.sla",
+    "TrendDirection": "socrata_toolkit.quality.sla",
+    "SLADefinition": "socrata_toolkit.quality.sla",
+    "create_standard_slas": "socrata_toolkit.quality.sla",
+    "DatasetQualityScore": "socrata_toolkit.quality.catalog",
+    "DataQualityCatalog": "socrata_toolkit.quality.catalog",
+    "QualityReportGenerator": "socrata_toolkit.quality.reports",
+    "QualityValidator": "socrata_toolkit.quality.validator",
+    "ValidationResult": "socrata_toolkit.quality.validator",
+    "ValidationResultsAggregator": "socrata_toolkit.quality.validator",
+    # relevance
+    "build_weighted_rank_sql": "socrata_toolkit.relevance",
+    "websearch_to_tsquery_sql": "socrata_toolkit.relevance",
+}
+
 
 def __getattr__(name: str):
     if name in _VIZ_MAP_NAMES:
         from socrata_toolkit.viz import map as _viz_map
 
         return getattr(_viz_map, name)
+    if name in _SUBMODULE_MAP:
+        import importlib
+        mod = importlib.import_module(_SUBMODULE_MAP[name])
+        return getattr(mod, name)
     return getattr(_monolith, name)
 
 
