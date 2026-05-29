@@ -66,6 +66,7 @@ ui = ["streamlit"]
 mission = ["streamlit", "sodapy", "geopandas", "shapely", "plotly", "pyarrow", "folium", "pymc", "arviz", "prophet", "beautifulsoup4"]
 pptx = ["python-pptx"]
 exe = ["pyinstaller"]
+desktop = ["pywebview"]
 all = ["openpyxl", "spacy", "shapely", "geopandas", "matplotlib", "plotly", "weasyprint", "streamlit", "psycopg", "python-pptx", "langchain", "langchain-community", "langchain-openai", "ollama", "openai", "huggingface-hub", "pyinstaller"]
 
 [tool.poetry.scripts]
