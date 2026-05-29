@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Mission Control" />
+  <title>Manhattan Mission Control</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.svg" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: "class" };
+  </script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: "base",
+      themeVariables: {
+        primaryColor: "#eff6ff",
+        primaryBorderColor: "#3b82f6",
+        lineColor: "#94a3b8"
+      }
+    });
+    window.mermaid = mermaid;
+  </script>
+  <style>
+    .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
+    .truncate-cell { max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .code-block { font-family: ui-monospace, SFMono-Regular, Monaco, Consolas, monospace; }
+    .type-badge { font-size: 0.62rem; padding: 0.1rem 0.35rem; border-radius: 0.25rem; background: #e2e8f0; color: #475569; margin-left: 4px; font-family: monospace; }
+    .dark .type-badge { background: #334155; color: #cbd5e1; }
+    .stale-warning { color: #ef4444; font-size: 0.7rem; font-weight: 700; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.48; } }
+    #map-container { height: 100%; min-height: 480px; width: 100%; z-index: 10; }
+    #mermaid-container svg { width: 100%; height: 100%; max-height: none; }
+    #llm-chat-log { display: flex; flex-direction: column; gap: 8px; }
+    .msg-user { background: #3b82f6; color: white; align-self: flex-end; padding: 8px 12px; border-radius: 12px 12px 0 12px; max-width: 80%; font-size: 0.8rem; }
+    .msg-ai { background: #f1f5f9; color: #1e293b; align-self: flex-start; padding: 8px 12px; border-radius: 12px 12px 12px 0; max-width: 80%; font-size: 0.8rem; font-family: ui-monospace, SFMono-Regular, Monaco, Consolas, monospace; white-space: pre-wrap; }
+    .dark .msg-ai { background: #1e293b; color: #e2e8f0; }
+    .toast-animate { transition: opacity 0.3s ease, transform 0.3s ease; }
+    .tab-btn.active, .viz-btn.active { color: #2563eb; border-color: #2563eb; font-weight: 700; }
+    #pwa-install-button { display: none; }
+    @media (display-mode: browser) {
+      #pwa-install-button.is-ready { display: inline-flex; }
+    }
+    @media (max-width: 768px) {
+      html, body { height: auto !important; min-height: 100%; overflow: auto !important; }
+      body { display: block !important; }
+      header { position: sticky; top: 0; flex-wrap: wrap; gap: 0.65rem; padding: 0.75rem !important; }
+      header > div:first-child { width: 100%; }
+      header h1 { font-size: 1rem !important; }
+      header .tracking-widest { letter-spacing: 0.06em; }
+      header > div:last-child { width: 100%; justify-content: space-between; overflow-x: auto; padding-bottom: 2px; }
+      body > div.flex { flex-direction: column !important; height: auto !important; min-height: calc(100vh - 96px); overflow: visible !important; }
+      aside { width: 100% !important; max-height: none !important; border-right: 0 !important; border-bottom: 1px solid #e2e8f0; }
+      aside > div:nth-child(2) { max-height: 260px; min-height: 180px; }
+      main { min-height: 760px; overflow: visible !important; }
+      main > div:first-child { padding-left: 0.75rem !important; padding-right: 0.75rem !important; gap: 1rem !important; }
+      main section { padding: 0.75rem !important; min-height: 720px; }
+      #view-results .mb-4 { align-items: flex-start; gap: 0.75rem; flex-direction: column; }
+      table { min-width: 760px; }
+      #view-diagram { min-height: 720px; }
+      #mermaid-container { min-height: 640px; }
+      #view-scripts .grid { grid-template-columns: 1fr !important; height: auto !important; }
+      #view-scripts pre { min-height: 320px; }
+      #view-llm { min-height: 720px; }
+      #map-modal { padding: 0 !important; }
+      #map-modal > div { border-radius: 0 !important; width: 100vw !important; height: 100dvh !important; }
+      #map-modal .flex-1.relative.flex { flex-direction: column !important; }
+      #map-container { min-height: 62dvh; }
+      #map-legend { width: 100% !important; max-height: 30dvh; border-left: 0 !important; border-top: 1px solid #334155; }
+      #preview-modal { padding: 0 !important; }
+      #preview-modal > div { border-radius: 0 !important; width: 100vw !important; height: 100dvh !important; }
+      .fixed.inset-0 > .max-w-md { width: calc(100vw - 1rem) !important; margin: 0.5rem; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-200 font-sans h-screen flex flex-col overflow-hidden transition-colors">
+  <header class="bg-slate-900 dark:bg-black text-white p-3 shadow-md flex justify-between items-center shrink-0 z-20 border-b border-slate-800">
+    <div class="flex items-center gap-3">
+      <div class="bg-blue-600 p-2 rounded text-white shadow-inner"><i class="fa-solid fa-satellite-dish text-lg"></i></div>
+      <div>
+        <h1 class="font-bold text-lg leading-tight tracking-wide">Manhattan Mission Control</h1>
+        <div class="flex items-center gap-2">
+          <p class="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Data Architecture Studio</p>
+          <select id="city-domain" onchange="changeCityDomain()" class="bg-slate-800 text-slate-300 text-[10px] border border-slate-700 rounded px-1 outline-none">
+            <option value="data.cityofnewyork.us">NYC Open Data</option>
+            <option value="data.cityofchicago.org">Chicago Data</option>
+            <option value="data.lacity.org">LA Open Data</option>
+            <option value="data.seattle.gov">Seattle Open Data</option>
+            <option value="data.austintexas.gov">Austin Open Data</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="toggleDarkMode()" class="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 flex items-center justify-center transition-colors" aria-label="Toggle dark mode">
+        <i id="theme-icon" class="fa-solid fa-moon text-slate-300"></i>
+      </button>
+      <button id="pwa-install-button" onclick="installPwa()" class="items-center gap-2 bg-blue-700 hover:bg-blue-600 px-3 py-1.5 rounded text-xs transition-colors font-medium border border-blue-600">
+        <i class="fa-solid fa-mobile-screen-button text-blue-200"></i> Install
+      </button>
+      <button onclick="toggleModal('workspace-modal')" class="flex items-center gap-2 bg-emerald-700 hover:bg-emerald-600 px-3 py-1.5 rounded text-xs transition-colors font-medium border border-emerald-600">
+        <i class="fa-solid fa-floppy-disk text-emerald-300"></i> Workspaces
+      </button>
+      <button onclick="toggleModal('config-modal')" class="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded text-xs transition-colors font-medium border border-slate-700">
+        <i class="fa-solid fa-gear text-slate-300"></i> Config
+      </button>
+    </div>
+  </header>
+
+  <div class="flex flex-1 overflow-hidden">
+    <aside class="w-[380px] bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col shrink-0 z-10 transition-colors">
+      <div class="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50">
+        <div class="flex space-x-2 mb-3">
+          <input type="text" id="search-query" placeholder="Search Socrata..." class="w-full text-sm border border-slate-300 dark:border-slate-600 rounded px-3 py-2 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none" />
+        </div>
+        <div class="grid grid-cols-2 gap-2 mb-3">
+          <select id="search-category" class="w-full text-xs border border-slate-300 dark:border-slate-600 rounded p-2 bg-white dark:bg-slate-900 outline-none">
+            <option value="">All Categories</option>
+            <option value="Transportation">Transportation</option>
+            <option value="City Government">City Govt</option>
+            <option value="Environment">Environment</option>
+            <option value="Housing & Development">Housing</option>
+            <option value="Public Safety">Public Safety</option>
+          </select>
+          <select id="search-sort" class="w-full text-xs border border-slate-300 dark:border-slate-600 rounded p-2 bg-white dark:bg-slate-900 outline-none">
+            <option value="relevance">Relevance</option>
+            <option value="updatedAt">Last Updated</option>
+            <option value="page_views_last_month">Most Viewed</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-[10px] font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-700">
+          <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="filter-original" class="w-3 h-3 text-blue-600" /> Original Only</label>
+          <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="filter-maps" class="w-3 h-3 text-blue-600" /> Maps Only</label>
+          <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="use-regex" class="w-3 h-3 text-blue-600" /> Regex Filter</label>
+          <label class="flex items-center gap-1 cursor-pointer text-emerald-600 dark:text-emerald-400"><input type="checkbox" id="filter-location" class="w-3 h-3" /> Deep Geo Scan</label>
+        </div>
+        <button onclick="executeSearch()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded transition-colors mt-3 text-sm flex justify-center items-center gap-2">
+          Search Socrata <i class="fa-solid fa-magnifying-glass"></i>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto custom-scrollbar p-4 flex flex-col relative">
+        <div class="flex justify-between items-center mb-3 sticky top-0 bg-white dark:bg-slate-800 z-10 pb-2 border-b border-slate-100 dark:border-slate-700">
+          <h3 class="font-bold text-sm">Extraction Cart (<span id="sel-count" class="text-blue-600 dark:text-blue-400">0</span>)</h3>
+          <div class="flex gap-1">
+            <button onclick="previewMultiMap()" class="text-[10px] font-bold uppercase text-emerald-600 px-1.5 py-1 rounded bg-emerald-50 dark:bg-emerald-900/30 transition-colors" title="Multi-Layer Map"><i class="fa-solid fa-layer-group"></i> GIS</button>
+            <button onclick="toggleModal('join-modal')" class="text-[10px] font-bold uppercase text-blue-600 px-1.5 py-1 rounded bg-blue-50 dark:bg-blue-900/30 transition-colors"><i class="fa-solid fa-link"></i> Join</button>
+            <button onclick="clearSelection()" class="text-[10px] font-bold uppercase text-red-500 px-1.5 py-1 rounded bg-red-50 dark:bg-red-900/30 transition-colors" title="Clear cart"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>
+        <div id="selection-list" class="space-y-2 flex-1">
+          <p class="text-xs text-slate-400 text-center mt-6" id="empty-sel-msg"><i class="fa-solid fa-cart-arrow-down text-3xl mb-2 block"></i>Cart Empty.</p>
+        </div>
+      </div>
+
+      <div class="p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 space-y-2">
+        <h3 class="font-bold text-[10px] text-slate-500 uppercase tracking-wider mb-2">Engineering Exports</h3>
+        <div class="grid grid-cols-3 gap-2">
+          <button onclick="exportData('csv')" class="btn-export text-xs bg-white dark:bg-slate-700 border dark:border-slate-600 py-1.5 rounded">CSV</button>
+          <button onclick="exportData('json')" class="btn-export text-xs bg-white dark:bg-slate-700 border dark:border-slate-600 py-1.5 rounded">JSON</button>
+          <button onclick="exportData('geojson')" class="btn-export text-xs bg-white dark:bg-slate-700 border dark:border-slate-600 py-1.5 rounded">GeoJSON</button>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="exportData('html')" class="btn-export text-xs bg-white dark:bg-slate-700 border dark:border-slate-600 py-1.5 rounded"><i class="fa-brands fa-html5 mr-1"></i> HTML Dict</button>
+          <button onclick="exportData('ipynb')" class="btn-export text-xs bg-white dark:bg-slate-700 border dark:border-slate-600 py-1.5 rounded"><i class="fa-solid fa-book text-orange-500 mr-1"></i> Jupyter</button>
+        </div>
+        <button onclick="triggerAnalysis()" id="btn-analyze" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition-colors text-sm flex items-center justify-center gap-2 mt-2 disabled:opacity-50" disabled>
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Build Pipelines
+        </button>
+      </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col min-w-0 bg-slate-100 dark:bg-slate-900 relative">
+      <div class="flex border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-6 pt-3 gap-6 shrink-0 overflow-x-auto custom-scrollbar">
+        <button onclick="switchTab('results')" id="tab-results" class="tab-btn active text-blue-600 border-b-2 border-blue-600 font-bold pb-2 px-1 whitespace-nowrap"><i class="fa-solid fa-list"></i> Discovery</button>
+        <button onclick="switchTab('metadata')" id="tab-metadata" class="tab-btn text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 border-b-2 border-transparent pb-2 px-1 whitespace-nowrap"><i class="fa-solid fa-table-cells"></i> Profiles</button>
+        <button onclick="switchTab('diagram')" id="tab-diagram" class="tab-btn text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 border-b-2 border-transparent pb-2 px-1 whitespace-nowrap"><i class="fa-solid fa-sitemap"></i> ERD Studio</button>
+        <button onclick="switchTab('scripts')" id="tab-scripts" class="tab-btn text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 border-b-2 border-transparent pb-2 px-1 whitespace-nowrap"><i class="fa-solid fa-code"></i> Generators</button>
+        <button onclick="switchTab('llm')" id="tab-llm" class="tab-btn text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 border-b-2 border-transparent pb-2 px-1 whitespace-nowrap"><i class="fa-solid fa-robot text-purple-500"></i> AI Assistant</button>
+      </div>
+
+      <section id="view-results" class="flex-1 overflow-auto custom-scrollbar p-6 relative">
+        <div id="loading-spinner" class="hidden absolute inset-0 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-sm flex flex-col items-center justify-center z-20">
+          <i class="fa-solid fa-circle-notch fa-spin text-5xl text-blue-600 mb-4"></i>
+          <p id="loading-text" class="text-sm font-bold text-slate-700 dark:text-slate-300">Querying Socrata...</p>
+        </div>
+        <div class="mb-4 flex justify-between items-center">
+          <div>
+            <h2 class="text-lg font-bold">Discovery Results (<span id="results-count">0</span>)</h2>
+            <p class="text-xs text-slate-500">Search, profile, and select open datasets from Socrata-backed civic portals.</p>
+          </div>
+          <button onclick="selectAllResults()" class="bg-blue-100 dark:bg-blue-900 hover:bg-blue-200 text-blue-700 dark:text-blue-300 font-semibold px-4 py-1.5 rounded text-xs transition-colors"><i class="fa-solid fa-check-double mr-1"></i> Select All</button>
+        </div>
+        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden flex flex-col">
+          <div class="overflow-auto custom-scrollbar">
+            <table class="w-full text-left whitespace-nowrap text-sm">
+              <thead class="bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 text-[11px] uppercase sticky top-0 z-10">
+                <tr>
+                  <th class="p-3 w-10 text-center">Sel</th>
+                  <th class="p-3 min-w-[300px]">Dataset / Health</th>
+                  <th class="p-3 w-32">Socrata ID</th>
+                  <th class="p-3 w-44">Domain</th>
+                  <th class="p-3 w-40">Signals</th>
+                </tr>
+              </thead>
+              <tbody id="results-table-body" class="divide-y divide-slate-100 dark:divide-slate-700 text-xs">
+                <tr><td colspan="5" class="p-10 text-center text-slate-500">Apply filters to begin.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-metadata" class="flex-1 overflow-auto custom-scrollbar p-6 hidden">
+        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden flex flex-col h-full">
+          <div class="overflow-auto custom-scrollbar">
+            <table class="w-full text-left whitespace-nowrap text-sm">
+              <thead class="bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 text-[11px] uppercase sticky top-0 z-10">
+                <tr>
+                  <th class="p-3">Dataset</th>
+                  <th class="p-3">Keys (PK/FK)</th>
+                  <th class="p-3">Data Dictionary & Types</th>
+                  <th class="p-3 text-center">Preview</th>
+                </tr>
+              </thead>
+              <tbody id="metadata-table-body" class="divide-y divide-slate-100 dark:divide-slate-700">
+                <tr><td colspan="4" class="p-10 text-center text-slate-500">Cart empty.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-diagram" class="flex-1 overflow-hidden p-6 hidden flex-col">
+        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl flex-1 flex flex-col overflow-hidden">
+          <div class="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 p-2 flex justify-between items-center z-20">
+            <div class="flex gap-1">
+              <button onclick="setVizMode('erd')" id="viz-btn-erd" class="viz-btn active text-xs px-3 py-1 rounded bg-blue-50 dark:bg-blue-900/20 text-blue-600 font-bold border border-blue-200">ERD</button>
+              <button onclick="setVizMode('class')" id="viz-btn-class" class="viz-btn text-xs px-3 py-1 rounded border border-transparent">Classes</button>
+              <button onclick="setVizMode('mindmap')" id="viz-btn-mindmap" class="viz-btn text-xs px-3 py-1 rounded border border-transparent">Mindmap</button>
+            </div>
+            <button onclick="downloadSVG()" class="text-xs bg-white dark:bg-slate-700 px-2 py-1 rounded border dark:border-slate-600"><i class="fa-solid fa-download"></i> SVG</button>
+          </div>
+          <div id="mermaid-container" class="flex-1 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px] overflow-hidden">
+            <div class="text-slate-500 h-full flex items-center justify-center">Run "Build Pipelines" to generate.</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-scripts" class="flex-1 overflow-auto custom-scrollbar p-6 hidden">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
+          <div class="bg-slate-900 border border-slate-700 rounded-xl flex flex-col overflow-hidden">
+            <div class="bg-slate-800 border-b border-slate-700 p-2 flex justify-between items-center text-white">
+              <select id="py-format-select" onchange="generateScripts()" class="bg-slate-700 text-xs rounded outline-none p-1">
+                <option value="pandas">Pandas Pipeline</option>
+                <option value="airflow">Airflow DAG</option>
+              </select>
+              <button onclick="copyCode('py-code')" class="text-xs bg-slate-700 px-2 py-1 rounded"><i class="fa-solid fa-copy"></i></button>
+            </div>
+            <pre id="py-code" class="flex-1 overflow-auto custom-scrollbar p-4 text-green-400 text-[10px] code-block whitespace-pre-wrap">Add datasets and build pipelines.</pre>
+          </div>
+          <div class="bg-slate-900 border border-slate-700 rounded-xl flex flex-col overflow-hidden">
+            <div class="bg-slate-800 border-b border-slate-700 p-2 flex justify-between items-center text-white">
+              <select id="sql-format-select" onchange="generateScripts()" class="bg-slate-700 text-xs rounded outline-none p-1">
+                <option value="postgis">PostgreSQL / PostGIS</option>
+                <option value="dbt">dbt Sources YAML</option>
+              </select>
+              <button onclick="copyCode('sql-code')" class="text-xs bg-slate-700 px-2 py-1 rounded"><i class="fa-solid fa-copy"></i></button>
+            </div>
+            <pre id="sql-code" class="flex-1 overflow-auto custom-scrollbar p-4 text-sky-300 text-[10px] code-block whitespace-pre-wrap">Add datasets and build pipelines.</pre>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-llm" class="flex-1 overflow-hidden p-6 hidden flex-col">
+        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl flex-1 flex flex-col overflow-hidden">
+          <div class="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 p-3 z-20 flex justify-between items-center">
+            <h2 class="text-sm font-bold"><i class="fa-solid fa-robot text-purple-500 mr-2"></i>Schema Assistant</h2>
+            <span class="text-[10px] text-slate-500">Injects current cart metadata automatically.</span>
+          </div>
+          <div id="llm-chat-log" class="flex-1 overflow-auto custom-scrollbar p-4">
+            <div class="msg-ai">Hello. Add datasets to your cart, then ask for SQL, Python, dbt, or architecture guidance.</div>
+          </div>
+          <div class="p-3 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex gap-2">
+            <input type="text" id="llm-input" placeholder="e.g. Write a PostGIS query joining these tables..." class="flex-1 text-sm border rounded px-3 py-2 outline-none dark:bg-slate-800 dark:border-slate-700" />
+            <button onclick="sendLLMQuery()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm font-bold"><i class="fa-solid fa-paper-plane"></i></button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="config-modal" class="fixed inset-0 bg-slate-900/60 flex items-center justify-center z-50 hidden backdrop-blur-sm">
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-md overflow-hidden border dark:border-slate-700">
+      <div class="bg-slate-900 px-6 py-4 flex justify-between items-center text-white">
+        <h3 class="font-bold"><i class="fa-solid fa-gear mr-2"></i>Configuration</h3>
+        <button onclick="toggleModal('config-modal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div class="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 text-yellow-800 dark:text-yellow-200 text-xs p-3 rounded">
+          <strong>Security Notice:</strong> Requests occur in your browser. API keys should only be used in trusted local environments.
+        </div>
+        <div>
+          <label class="text-xs font-bold uppercase text-slate-500 block mb-1">Socrata App Token</label>
+          <input type="password" id="api-token-input" placeholder="Raises API rate limits (session only)" class="w-full border dark:border-slate-600 rounded px-3 py-2 text-sm dark:bg-slate-900 outline-none" />
+        </div>
+        <div>
+          <label class="text-xs font-bold uppercase text-slate-500 block mb-1">Google Gemini API Key</label>
+          <input type="password" id="llm-key-input" placeholder="AI Studio key (memory only)" class="w-full border dark:border-slate-600 rounded px-3 py-2 text-sm dark:bg-slate-900 outline-none" />
+          <p class="text-[9px] text-slate-400 mt-1">The Gemini key is not persisted. It disappears when you refresh.</p>
+        </div>
+        <button onclick="saveConfig()" class="w-full bg-blue-600 text-white py-2 rounded text-sm font-bold">Apply Configuration</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="map-modal" class="fixed inset-0 bg-slate-900/80 flex items-center justify-center z-50 hidden backdrop-blur-sm p-6">
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full h-full flex flex-col overflow-hidden">
+      <div class="bg-slate-900 px-6 py-3 flex justify-between items-center text-white shrink-0">
+        <h3 class="font-bold flex items-center gap-2"><i class="fa-solid fa-earth-americas text-emerald-400"></i> Multi-Layer GIS View</h3>
+        <div class="flex gap-3 items-center">
+          <label class="text-xs flex items-center gap-1 cursor-pointer"><input type="checkbox" id="map-heatmap-toggle" onchange="renderMultiMap()" /> Heatmap Mode</label>
+          <button onclick="toggleModal('map-modal')" class="hover:text-red-400"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+      </div>
+      <div class="flex-1 relative flex min-h-0">
+        <div id="map-loading" class="absolute inset-0 bg-slate-900/50 z-20 flex flex-col items-center justify-center hidden text-white">
+          <i class="fa-solid fa-spinner fa-spin text-4xl mb-3"></i><p>Plotting cart geospatial data...</p>
+        </div>
+        <div id="map-container" class="flex-1 h-full rounded-none"></div>
+        <div id="map-legend" class="w-56 bg-white dark:bg-slate-800 border-l dark:border-slate-700 p-3 overflow-y-auto custom-scrollbar text-xs"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="workspace-modal" class="fixed inset-0 bg-slate-900/60 flex items-center justify-center z-50 hidden backdrop-blur-sm">
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+      <div class="bg-emerald-800 px-6 py-4 flex justify-between items-center text-white">
+        <h3 class="font-bold">Workspaces</h3>
+        <button onclick="toggleModal('workspace-modal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="p-6">
+        <div class="flex gap-2 mb-4">
+          <input type="text" id="ws-name" placeholder="Name..." class="flex-1 border rounded px-3 text-sm dark:bg-slate-900 dark:border-slate-600" />
+          <button onclick="saveWorkspace()" class="bg-emerald-600 text-white px-3 rounded text-sm">Save</button>
+        </div>
+        <div id="ws-list" class="space-y-2 max-h-64 overflow-y-auto custom-scrollbar"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="join-modal" class="fixed inset-0 bg-slate-900/60 flex items-center justify-center z-50 hidden backdrop-blur-sm">
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+      <div class="bg-blue-800 px-6 py-4 flex justify-between items-center text-white">
+        <h3 class="font-bold">Custom Join</h3>
+        <button onclick="toggleModal('join-modal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="p-6 text-sm">
+        <select id="join-from-id" onchange="populateJoinCols('join-from-id','join-from-col')" class="w-full mb-2 border rounded p-2 dark:bg-slate-900"></select>
+        <select id="join-from-col" class="w-full mb-2 border rounded p-2 dark:bg-slate-900"></select>
+        <div class="text-center my-2 text-slate-400"><i class="fa-solid fa-arrow-down"></i></div>
+        <select id="join-to-id" onchange="populateJoinCols('join-to-id','join-to-col')" class="w-full mb-2 border rounded p-2 dark:bg-slate-900"></select>
+        <select id="join-to-col" class="w-full mb-4 border rounded p-2 dark:bg-slate-900"></select>
+        <button onclick="addCustomJoin()" class="w-full bg-blue-600 text-white py-2 rounded font-bold">Force Join</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="preview-modal" class="fixed inset-0 bg-slate-900/60 flex items-center justify-center z-50 hidden backdrop-blur-sm p-10">
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full h-full flex flex-col overflow-hidden">
+      <div class="bg-slate-900 px-6 py-4 flex justify-between items-center text-white shrink-0">
+        <h3 class="font-bold" id="preview-title">Live Sample</h3>
+        <button onclick="toggleModal('preview-modal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="overflow-auto custom-scrollbar p-0 flex-1 relative">
+        <table class="w-full text-left text-xs whitespace-nowrap">
+          <thead id="preview-thead" class="bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 uppercase sticky top-0"></thead>
+          <tbody id="preview-tbody" class="divide-y divide-slate-200 dark:divide-slate-700"></tbody>
+        </table>
+        <div id="preview-loading" class="absolute inset-0 bg-white/70 dark:bg-slate-800/70 flex justify-center items-center hidden">
+          <i class="fa-solid fa-circle-notch fa-spin text-4xl text-blue-500"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <script>
+    const KNOWN_KEYS = ["bbl", "bblid", "physicalid", "violation_number", "inspection_no", "inspection_number", "permit_number", "project_id", "corner_id", "bin", "job_number", "unique_key", "borough", "block", "lot", "zip", "zipcode"];
+    const GEO_TYPES = ["location", "point", "multipolygon", "polygon", "line"];
+    const AppState = {
+      socrataToken: sessionStorage.getItem("mmc_socrata_token") || "",
+      llmKey: "",
+      workspaces: JSON.parse(localStorage.getItem("mmc_workspaces") || "{}"),
+      isDark: localStorage.getItem("mmc_theme") === "dark",
+      domain: "data.cityofnewyork.us",
+      searchResults: [],
+      cart: new Map(),
+      customJoins: [],
+      relationships: [],
+      leafletMap: null,
+      baseLayer: null,
+      mapLayers: [],
+      panZoom: null,
+      vizMode: "erd"
+    };
+    let deferredInstallPrompt = null;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("api-token-input").value = AppState.socrataToken;
+      document.getElementById("city-domain").value = AppState.domain;
+      if (AppState.isDark) {
+        document.documentElement.classList.add("dark");
+        document.getElementById("theme-icon").className = "fa-solid fa-sun text-slate-300";
+      }
+      loadWorkspacesList();
+      document.getElementById("llm-input").addEventListener("keydown", event => {
+        if (event.key === "Enter") sendLLMQuery();
+      });
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("./service-worker.js").catch(() => {
+          console.warn("Service worker registration failed.");
+        });
+      }
+    });
+
+    window.addEventListener("beforeinstallprompt", event => {
+      event.preventDefault();
+      deferredInstallPrompt = event;
+      document.getElementById("pwa-install-button").classList.add("is-ready");
+    });
+
+    window.addEventListener("appinstalled", () => {
+      deferredInstallPrompt = null;
+      document.getElementById("pwa-install-button").classList.remove("is-ready");
+      showToast("Installed on this device.", "success");
+    });
+
+    async function installPwa() {
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        await deferredInstallPrompt.userChoice;
+        deferredInstallPrompt = null;
+        document.getElementById("pwa-install-button").classList.remove("is-ready");
+        return;
+      }
+      showToast("On iPhone/iPad: Share -> Add to Home Screen. On Android: browser menu -> Install app.", "info");
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#039;"
+      }[char]));
+    }
+
+    function headers() {
+      return AppState.socrataToken ? { "X-App-Token": AppState.socrataToken } : {};
+    }
+
+    function datasetEntityName(name, id) {
+      const cleaned = String(name || id).replace(/[^a-zA-Z0-9]/g, "").slice(0, 36);
+      return cleaned || id.replace("-", "");
+    }
+
+    function fieldName(column) {
+      return String(column.fieldName || column.name || "").toLowerCase();
+    }
+
+    function columnType(column) {
+      return String(column.dataTypeName || "text").toLowerCase();
+    }
+
+    function isGeoColumn(column) {
+      const name = fieldName(column);
+      return GEO_TYPES.includes(columnType(column)) || ["latitude", "longitude", "lat", "lon", "lng", "the_geom"].includes(name);
+    }
+
+    function toggleDarkMode() {
+      AppState.isDark = !AppState.isDark;
+      document.documentElement.classList.toggle("dark", AppState.isDark);
+      localStorage.setItem("mmc_theme", AppState.isDark ? "dark" : "light");
+      document.getElementById("theme-icon").className = AppState.isDark ? "fa-solid fa-sun text-slate-300" : "fa-solid fa-moon text-slate-300";
+      if (AppState.leafletMap) renderMultiMap();
+    }
+
+    function changeCityDomain() {
+      AppState.domain = document.getElementById("city-domain").value;
+      clearSelection();
+      AppState.searchResults = [];
+      document.getElementById("results-count").innerText = "0";
+      document.getElementById("results-table-body").innerHTML = `<tr><td colspan="5" class="p-10 text-center">Switched to ${escapeHtml(AppState.domain)}. Run a search.</td></tr>`;
+    }
+
+    function showToast(message, type = "info") {
+      const container = document.getElementById("toast-container");
+      const toast = document.createElement("div");
+      const color = type === "success" ? "bg-emerald-600" : type === "error" ? "bg-red-600" : "bg-blue-600";
+      toast.className = `${color} text-white px-4 py-2 rounded shadow-lg text-sm flex items-center gap-2 toast-animate pointer-events-auto`;
+      toast.innerHTML = `<span>${escapeHtml(message)}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transform = "translateY(8px)";
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    function toggleModal(id) {
+      const modal = document.getElementById(id);
+      modal.classList.toggle("hidden");
+      if (id === "map-modal" && !modal.classList.contains("hidden")) {
+        setTimeout(() => {
+          if (AppState.leafletMap) AppState.leafletMap.invalidateSize();
+          renderMultiMap();
+        }, 200);
+      }
+      if (id === "join-modal" && !modal.classList.contains("hidden")) updateJoinSelects();
+      if (id === "workspace-modal" && !modal.classList.contains("hidden")) loadWorkspacesList();
+    }
+
+    function saveConfig() {
+      AppState.socrataToken = document.getElementById("api-token-input").value.trim();
+      sessionStorage.setItem("mmc_socrata_token", AppState.socrataToken);
+      AppState.llmKey = document.getElementById("llm-key-input").value.trim();
+      toggleModal("config-modal");
+      showToast("Configuration updated.", "success");
+    }
+
+    function switchTab(tab) {
+      ["results", "metadata", "diagram", "scripts", "llm"].forEach(name => {
+        document.getElementById(`view-${name}`).classList.toggle("hidden", name !== tab);
+        const button = document.getElementById(`tab-${name}`);
+        button.className = `tab-btn ${name === tab ? "active text-blue-600 border-b-2 border-blue-600 font-bold" : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 border-b-2 border-transparent"} pb-2 px-1 whitespace-nowrap transition-colors`;
+      });
+      if (tab === "diagram" && AppState.panZoom) setTimeout(() => AppState.panZoom.resize(), 100);
+    }
+
+    async function copyCode(id) {
+      await navigator.clipboard.writeText(document.getElementById(id).innerText);
+      showToast("Copied to clipboard.", "success");
+    }
+
+    function isStale(dateString) {
+      const date = new Date(dateString);
+      if (Number.isNaN(date.getTime())) return false;
+      return (Date.now() - date.getTime()) > (365 * 24 * 60 * 60 * 1000);
+    }
+
+    function calculateHealth(result, detailed = null) {
+      let score = 35;
+      const resource = result.resource || {};
+      const classification = result.classification || {};
+      if ((resource.description || "").length > 40) score += 15;
+      if ((resource.tags || []).length > 0 || (classification.domain_tags || []).length > 0) score += 10;
+      if ((classification.categories || []).length > 0) score += 10;
+      if (resource.page_views && resource.page_views.page_views_last_month) score += 10;
+      if (resource.updatedAt && !isStale(resource.updatedAt)) score += 10;
+      if (detailed && detailed.columns && detailed.columns.length) score += 10;
+      if (detailed && detailed.isGeo) score += 5;
+      return Math.min(score, 100);
+    }
+
+    async function executeSearch() {
+      const query = document.getElementById("search-query").value.trim();
+      const useRegex = document.getElementById("use-regex").checked;
+      const category = document.getElementById("search-category").value;
+      const sort = document.getElementById("search-sort").value;
+      const originalOnly = document.getElementById("filter-original").checked;
+      const mapsOnly = document.getElementById("filter-maps").checked;
+      const geoScan = document.getElementById("filter-location").checked;
+      const tbody = document.getElementById("results-table-body");
+      const spinner = document.getElementById("loading-spinner");
+      spinner.classList.remove("hidden");
+      tbody.innerHTML = "";
+      document.getElementById("loading-text").innerText = "Querying Socrata...";
+
+      try {
+        let limit = (useRegex || originalOnly || mapsOnly || geoScan) ? 1000 : 100;
+        let url = `https://api.us.socrata.com/api/catalog/v1?domains=${encodeURIComponent(AppState.domain)}&search_context=${encodeURIComponent(AppState.domain)}&limit=${limit}`;
+        if (!useRegex && query) url += `&q=${encodeURIComponent(query)}`;
+        if (category) url += `&categories=${encodeURIComponent(category)}`;
+        if (sort !== "relevance") url += `&order=${encodeURIComponent(sort + " DESC")}`;
+        const response = await fetch(url, { headers: headers() });
+        if (!response.ok) throw new Error(`Catalog request failed (${response.status})`);
+        const payload = await response.json();
+        let results = payload.results || [];
+
+        if (useRegex && query) {
+          let rx;
+          try {
+            rx = new RegExp(query, "i");
+          } catch (error) {
+            showToast(`Invalid regex: ${error.message}`, "error");
+            return;
+          }
+          results = results.filter(result => rx.test(result.resource?.name || "") || rx.test(result.resource?.description || ""));
+        }
+        if (originalOnly) results = results.filter(result => ["dataset", "map", "geospatial"].includes(result.resource?.type));
+        if (mapsOnly) results = results.filter(result => ["map", "geospatial"].includes(result.resource?.type));
+
+        if (geoScan && results.length) {
+          const maxScan = Math.min(30, results.length);
+          if (results.length > maxScan) showToast(`Capping deep geo scan to first ${maxScan} results.`, "info");
+          document.getElementById("loading-text").innerText = `Deep Geospatial Scan (${maxScan} items)...`;
+          const scanned = await Promise.all(results.slice(0, maxScan).map(async result => {
+            try {
+              const detail = await fetchDatasetMetadata(result.resource.id);
+              result._detailed = detail;
+              return detail.isGeo ? result : null;
+            } catch {
+              return null;
+            }
+          }));
+          results = scanned.filter(Boolean);
+        }
+
+        AppState.searchResults = results;
+        renderResultsTable();
+        switchTab("results");
+      } catch (error) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-red-500">Search failed: ${escapeHtml(error.message)}</td></tr>`;
+      } finally {
+        spinner.classList.add("hidden");
+      }
+    }
+
+    function renderResultsTable() {
+      const tbody = document.getElementById("results-table-body");
+      document.getElementById("results-count").innerText = AppState.searchResults.length;
+      if (!AppState.searchResults.length) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center">No results.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = AppState.searchResults.map(result => {
+        const id = result.resource.id;
+        const checked = AppState.cart.has(id) ? "checked" : "";
+        const health = calculateHealth(result, result._detailed);
+        const stale = isStale(result.resource.updatedAt) ? `<span class="stale-warning"><i class="fa-solid fa-triangle-exclamation"></i> Stale</span>` : "";
+        const category = result.classification?.categories?.[0] || result.resource.category || "Misc";
+        const creator = result.creator?.display_name || result.metadata?.domain || AppState.domain;
+        return `
+          <tr class="hover:bg-blue-50/50 dark:hover:bg-slate-700/50 transition-colors border-b dark:border-slate-700">
+            <td class="p-3 text-center"><input type="checkbox" id="chk-${id}" onchange="toggleDataset('${id}')" ${checked} class="w-4 h-4 cursor-pointer"></td>
+            <td class="p-3 max-w-[300px]">
+              <div class="font-bold truncate" title="${escapeHtml(result.resource.name)}">${escapeHtml(result.resource.name)}</div>
+              <div class="text-[10px] text-slate-500 truncate" title="${escapeHtml(result.resource.description)}">${escapeHtml(result.resource.description || "No description provided.")}</div>
+              <div class="flex items-center gap-2 mt-1"><span class="text-[9px] bg-slate-200 dark:bg-slate-700 px-1 rounded">Score: ${health}/100</span> ${stale}</div>
+            </td>
+            <td class="p-3 font-mono text-[10px] text-slate-500">${escapeHtml(id)}</td>
+            <td class="p-3"><div class="text-[10px] font-bold truncate">${escapeHtml(creator)}</div><div class="text-[9px] uppercase">${escapeHtml(category)}</div></td>
+            <td class="p-3 text-[10px]"><div>${escapeHtml(result.resource.type || "dataset")}</div><div class="text-slate-500">Updated: ${result.resource.updatedAt ? new Date(result.resource.updatedAt).toLocaleDateString() : "n/a"}</div></td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function selectAllResults() {
+      AppState.searchResults.forEach(result => {
+        if (!AppState.cart.has(result.resource.id)) toggleDataset(result.resource.id, result);
+      });
+    }
+
+    async function toggleDataset(id, preset = null) {
+      if (AppState.cart.has(id)) {
+        AppState.cart.delete(id);
+        AppState.customJoins = AppState.customJoins.filter(join => join.sId !== id && join.tId !== id);
+      } else {
+        const result = preset || AppState.searchResults.find(item => item.resource.id === id);
+        if (!result) return;
+        AppState.cart.set(id, { basic: result, detailed: result._detailed || null, loading: !result._detailed });
+        await hydrateDataset(id);
+      }
+      const checkbox = document.getElementById(`chk-${id}`);
+      if (checkbox) checkbox.checked = AppState.cart.has(id);
+      updateCartUI();
+      renderMetadataTable();
+      document.getElementById("btn-analyze").disabled = AppState.cart.size === 0;
+    }
+
+    function removeFromCart(id) {
+      toggleDataset(id);
+    }
+
+    async function fetchDatasetMetadata(id) {
+      const response = await fetch(`https://${AppState.domain}/api/views/${id}.json`, { headers: headers() });
+      if (!response.ok) throw new Error(`Metadata request failed (${response.status})`);
+      const data = await response.json();
+      const columns = (data.columns || []).filter(column => column.fieldName).map(column => ({
+        name: fieldName(column),
+        fieldName: fieldName(column),
+        dataTypeName: columnType(column),
+        description: column.description || "",
+        position: column.position
+      }));
+      const colNames = columns.map(column => column.name);
+      const pk = colNames.find(name => name.includes("id") || name.includes("no") || name.includes("key") || KNOWN_KEYS.includes(name)) || colNames[0] || "unknown";
+      const fks = KNOWN_KEYS.filter(key => colNames.includes(key) && key !== pk);
+      const isGeo = columns.some(isGeoColumn);
+      return {
+        name: data.name || id,
+        agency: data.owner?.displayName || data.attribution || "City",
+        description: data.description || "",
+        rows: Number(data.rowsCount || data.viewCount || 0),
+        license: typeof data.license === "object" ? data.license?.name : data.license,
+        columns,
+        colNames,
+        pk,
+        fks: fks.length ? fks : ["None"],
+        isGeo,
+        endpoint: `https://${AppState.domain}/resource/${id}.json`
+      };
+    }
+
+    async function hydrateDataset(id) {
+      if (!AppState.cart.has(id)) return;
+      const item = AppState.cart.get(id);
+      if (item.detailed) return;
+      try {
+        item.detailed = await fetchDatasetMetadata(id);
+        item.loading = false;
+      } catch (error) {
+        item.error = error.message;
+        item.loading = false;
+        showToast(`Metadata failed for ${id}: ${error.message}`, "error");
+      }
+      updateCartUI();
+      renderMetadataTable();
+    }
+
+    function clearSelection() {
+      AppState.cart.clear();
+      AppState.customJoins = [];
+      document.querySelectorAll("input[type='checkbox']").forEach(input => {
+        if (input.id.startsWith("chk-")) input.checked = false;
+      });
+      updateCartUI();
+      renderMetadataTable();
+      document.getElementById("btn-analyze").disabled = true;
+    }
+
+    function updateCartUI() {
+      document.getElementById("sel-count").innerText = AppState.cart.size;
+      const list = document.getElementById("selection-list");
+      if (!AppState.cart.size) {
+        list.innerHTML = `<p class="text-xs text-slate-400 text-center mt-6"><i class="fa-solid fa-cart-arrow-down text-3xl mb-2 block"></i>Cart Empty.</p>`;
+        return;
+      }
+      list.innerHTML = "";
+      AppState.cart.forEach((item, id) => {
+        const name = item.detailed?.name || item.basic?.resource?.name || id;
+        const status = item.loading ? "Loading profile..." : item.error ? "Profile error" : `${item.detailed?.columns?.length || 0} columns`;
+        list.innerHTML += `
+          <div class="flex justify-between items-center bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-2 rounded mb-2 shadow-sm">
+            <div class="truncate pr-2 flex-1">
+              <p class="text-xs font-bold truncate" title="${escapeHtml(name)}">${escapeHtml(name)}</p>
+              <span class="text-[9px] font-mono text-slate-500">${escapeHtml(id)} · ${escapeHtml(status)}</span>
+            </div>
+            <div class="flex gap-1 shrink-0">
+              <button onclick="previewData('${id}')" class="text-blue-500 w-6 h-6 rounded hover:bg-blue-50 dark:hover:bg-slate-700" title="Preview data"><i class="fa-solid fa-table text-xs"></i></button>
+              <button onclick="removeFromCart('${id}')" class="text-red-400 w-6 h-6 rounded hover:bg-red-50 dark:hover:bg-slate-700" title="Remove"><i class="fa-solid fa-xmark text-xs"></i></button>
+            </div>
+          </div>`;
+      });
+    }
+
+    async function previewData(id) {
+      toggleModal("preview-modal");
+      const head = document.getElementById("preview-thead");
+      const body = document.getElementById("preview-tbody");
+      const loading = document.getElementById("preview-loading");
+      head.innerHTML = "";
+      body.innerHTML = "";
+      loading.classList.remove("hidden");
+      document.getElementById("preview-title").innerText = `Data Preview (${id})`;
+      try {
+        const response = await fetch(`https://${AppState.domain}/resource/${id}.json?$limit=25`, { headers: headers() });
+        if (!response.ok) throw new Error(`Preview request failed (${response.status})`);
+        const rows = await response.json();
+        if (!rows.length) {
+          body.innerHTML = `<tr><td class="p-10 text-center">Empty dataset.</td></tr>`;
+          return;
+        }
+        const columns = Object.keys(rows[0]);
+        head.innerHTML = `<tr>${columns.map(column => `<th class="p-2 border-b dark:border-slate-700">${escapeHtml(column)}</th>`).join("")}</tr>`;
+        body.innerHTML = rows.map(row => `<tr>${columns.map(column => `<td class="p-2 border-b dark:border-slate-700 truncate max-w-[220px] text-[10px]" title="${escapeHtml(row[column])}">${escapeHtml(row[column])}</td>`).join("")}</tr>`).join("");
+      } catch (error) {
+        body.innerHTML = `<tr><td class="p-10 text-red-500">Fetch failed: ${escapeHtml(error.message)}</td></tr>`;
+      } finally {
+        loading.classList.add("hidden");
+      }
+    }
+
+    function getLatLng(row) {
+      let lat = row.latitude || row.lat;
+      let lng = row.longitude || row.lon || row.lng;
+      ["the_geom", "location", "point"].forEach(key => {
+        const geo = row[key];
+        if (geo && typeof geo === "object") {
+          lat = lat || geo.latitude;
+          lng = lng || geo.longitude;
+          if (Array.isArray(geo.coordinates) && geo.coordinates.length >= 2) {
+            lng = lng || geo.coordinates[0];
+            lat = lat || geo.coordinates[1];
+          }
+        }
+      });
+      const parsedLat = Number(lat);
+      const parsedLng = Number(lng);
+      if (Number.isFinite(parsedLat) && Number.isFinite(parsedLng)) return [parsedLat, parsedLng];
+      return null;
+    }
+
+    async function renderMultiMap() {
+      if (!AppState.leafletMap) {
+        AppState.leafletMap = L.map("map-container").setView([40.7128, -74.0060], 11);
+      }
+      const tileUrl = AppState.isDark
+        ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+        : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+      if (AppState.baseLayer) AppState.leafletMap.removeLayer(AppState.baseLayer);
+      AppState.baseLayer = L.tileLayer(tileUrl, { attribution: "&copy; OpenStreetMap & Carto" }).addTo(AppState.leafletMap);
+      AppState.mapLayers.forEach(layer => AppState.leafletMap.removeLayer(layer));
+      AppState.mapLayers = [];
+      const isHeat = document.getElementById("map-heatmap-toggle").checked;
+      const legend = document.getElementById("map-legend");
+      const loader = document.getElementById("map-loading");
+      legend.innerHTML = `<h4 class="font-bold mb-2">Layers</h4>`;
+      const geoSets = Array.from(AppState.cart.entries()).filter(([, item]) => item.detailed && item.detailed.isGeo);
+      if (!geoSets.length) {
+        legend.innerHTML += `<p class="text-slate-500">No geospatial datasets in cart.</p>`;
+        return;
+      }
+      loader.classList.remove("hidden");
+      const colors = ["#3b82f6", "#ef4444", "#10b981", "#f59e0b", "#8b5cf6", "#06b6d4"];
+      const bounds = [];
+      try {
+        for (let index = 0; index < geoSets.length; index++) {
+          const [id, item] = geoSets[index];
+          const color = colors[index % colors.length];
+          legend.innerHTML += `<div class="flex items-center gap-2 mb-1"><div class="w-3 h-3 rounded-full" style="background:${color}"></div><span class="truncate" title="${escapeHtml(item.detailed.name)}">${escapeHtml(item.detailed.name)}</span></div>`;
+          const response = await fetch(`https://${AppState.domain}/resource/${id}.json?$limit=${isHeat ? 1000 : 200}`, { headers: headers() });
+          if (!response.ok) continue;
+          const rows = await response.json();
+          const points = rows.map(getLatLng).filter(Boolean);
+          if (isHeat) {
+            const heat = L.heatLayer(points.map(point => [point[0], point[1], 1]), { radius: 18, blur: 20 }).addTo(AppState.leafletMap);
+            AppState.mapLayers.push(heat);
+          } else {
+            points.forEach((point, pointIndex) => {
+              bounds.push(point);
+              const marker = L.circleMarker(point, { radius: 4, color, fillOpacity: 0.8 }).addTo(AppState.leafletMap)
+                .bindPopup(`<pre class="text-[9px] dark:bg-slate-800 dark:text-slate-300 p-1">${escapeHtml(JSON.stringify(rows[pointIndex], null, 2).slice(0, 500))}</pre>`);
+              AppState.mapLayers.push(marker);
+            });
+          }
+        }
+        if (bounds.length) AppState.leafletMap.fitBounds(bounds, { padding: [30, 30] });
+      } finally {
+        loader.classList.add("hidden");
+      }
+    }
+
+    function previewMultiMap() {
+      toggleModal("map-modal");
+    }
+
+    function updateJoinSelects() {
+      const fromSelect = document.getElementById("join-from-id");
+      const toSelect = document.getElementById("join-to-id");
+      fromSelect.innerHTML = `<option value="">Source...</option>`;
+      toSelect.innerHTML = `<option value="">Target...</option>`;
+      AppState.cart.forEach((item, id) => {
+        const name = item.detailed?.name || item.basic?.resource?.name || id;
+        fromSelect.innerHTML += `<option value="${id}">${escapeHtml(name)}</option>`;
+        toSelect.innerHTML += `<option value="${id}">${escapeHtml(name)}</option>`;
+      });
+      populateJoinCols("join-from-id", "join-from-col");
+      populateJoinCols("join-to-id", "join-to-col");
+    }
+
+    function populateJoinCols(idSelectId, colSelectId) {
+      const datasetId = document.getElementById(idSelectId).value;
+      const colSelect = document.getElementById(colSelectId);
+      colSelect.innerHTML = `<option value="">Column...</option>`;
+      if (datasetId && AppState.cart.has(datasetId) && AppState.cart.get(datasetId).detailed) {
+        AppState.cart.get(datasetId).detailed.colNames.forEach(column => {
+          colSelect.innerHTML += `<option value="${escapeHtml(column)}">${escapeHtml(column)}</option>`;
+        });
+      }
+    }
+
+    function addCustomJoin() {
+      const sId = document.getElementById("join-from-id").value;
+      const sCol = document.getElementById("join-from-col").value;
+      const tId = document.getElementById("join-to-id").value;
+      const tCol = document.getElementById("join-to-col").value;
+      if (sId && sCol && tId && tCol && sId !== tId) {
+        AppState.customJoins.push({ sId, sCol, tId, tCol });
+        toggleModal("join-modal");
+        triggerAnalysis(false);
+        showToast("Custom join added.", "success");
+      } else {
+        showToast("Choose two datasets and columns.", "error");
+      }
+    }
+
+    function inferRelationships() {
+      const relationships = [];
+      const entries = Array.from(AppState.cart.entries()).filter(([, item]) => item.detailed);
+      for (let i = 0; i < entries.length; i++) {
+        for (let j = i + 1; j < entries.length; j++) {
+          const [leftId, left] = entries[i];
+          const [rightId, right] = entries[j];
+          const leftKeys = new Set([left.detailed.pk, ...left.detailed.fks, ...left.detailed.colNames.filter(name => name.endsWith("_id") || name.endsWith("_number"))]);
+          const rightKeys = new Set([right.detailed.pk, ...right.detailed.fks, ...right.detailed.colNames.filter(name => name.endsWith("_id") || name.endsWith("_number"))]);
+          const shared = [...leftKeys].filter(key => key !== "None" && rightKeys.has(key));
+          if (shared.length) relationships.push({ sId: leftId, sCol: shared[0], tId: rightId, tCol: shared[0] });
+        }
+      }
+      AppState.customJoins.forEach(join => relationships.push(join));
+      AppState.relationships = relationships;
+    }
+
+    function setVizMode(mode) {
+      AppState.vizMode = mode;
+      ["erd", "class", "mindmap"].forEach(name => {
+        const button = document.getElementById(`viz-btn-${name}`);
+        button.classList.toggle("active", name === mode);
+      });
+      triggerAnalysis(false);
+    }
+
+    async function triggerAnalysis(switchView = true) {
+      if (!AppState.cart.size) return;
+      if (switchView) switchTab("diagram");
+      inferRelationships();
+      const container = document.getElementById("mermaid-container");
+      container.innerHTML = `<div class="w-full h-full flex items-center justify-center text-blue-500"><i class="fa-solid fa-spinner fa-spin text-3xl"></i></div>`;
+      let mermaidSource = AppState.vizMode === "class" ? "classDiagram\n" : "erDiagram\n";
+
+      if (AppState.vizMode === "mindmap") {
+        mermaidSource = "mindmap\n  root((Data Cart))\n";
+        AppState.cart.forEach((item, id) => {
+          if (!item.detailed) return;
+          mermaidSource += `    ${item.detailed.name.replace(/[^a-zA-Z0-9 ]/g, "")}\n`;
+          item.detailed.colNames.slice(0, 5).forEach(column => {
+            mermaidSource += `      ${column}\n`;
+          });
+        });
+      } else {
+        AppState.cart.forEach((item, id) => {
+          if (!item.detailed) return;
+          const entity = datasetEntityName(item.detailed.name, id);
+          if (AppState.vizMode === "class") {
+            mermaidSource += `  class ${entity} {\n`;
+            item.detailed.columns.slice(0, 10).forEach(column => {
+              mermaidSource += `    +${column.dataTypeName} ${column.name}\n`;
+            });
+            mermaidSource += "  }\n";
+          } else {
+            mermaidSource += `  ${entity} {\n`;
+            item.detailed.columns.slice(0, 12).forEach(column => {
+              const role = column.name === item.detailed.pk ? " PK" : item.detailed.fks.includes(column.name) ? " FK" : "";
+              mermaidSource += `    ${column.dataTypeName} ${column.name}${role}\n`;
+            });
+            mermaidSource += "  }\n";
+          }
+        });
+        AppState.relationships.forEach(relationship => {
+          const left = datasetEntityName(AppState.cart.get(relationship.sId)?.detailed?.name, relationship.sId);
+          const right = datasetEntityName(AppState.cart.get(relationship.tId)?.detailed?.name, relationship.tId);
+          mermaidSource += AppState.vizMode === "class"
+            ? `  ${left} --> ${right} : ${relationship.sCol}\n`
+            : `  ${left} }o--o{ ${right} : "${relationship.sCol}"\n`;
+        });
+      }
+
+      try {
+        if (AppState.panZoom) {
+          AppState.panZoom.destroy();
+          AppState.panZoom = null;
+        }
+        container.innerHTML = `<div class="mermaid w-full h-full">${escapeHtml(mermaidSource)}</div>`;
+        await window.mermaid.run({ querySelector: ".mermaid" });
+        const svg = document.querySelector("#mermaid-container svg");
+        if (svg) AppState.panZoom = svgPanZoom(svg, { zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true });
+      } catch (error) {
+        container.innerHTML = `<div class="p-4"><p class="text-red-500 font-bold">Diagram rendering failed.</p><pre class="text-xs whitespace-pre-wrap">${escapeHtml(mermaidSource)}</pre></div>`;
+      }
+      generateScripts();
+    }
+
+    function renderMetadataTable() {
+      const tbody = document.getElementById("metadata-table-body");
+      tbody.innerHTML = "";
+      if (!AppState.cart.size) {
+        tbody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-slate-500">Cart empty.</td></tr>`;
+        return;
+      }
+      AppState.cart.forEach((item, id) => {
+        const detail = item.detailed;
+        if (!detail) return;
+        const columns = detail.columns.slice(0, 16).map(column => `${escapeHtml(column.name)}<span class="type-badge">${escapeHtml(column.dataTypeName)}</span>`).join(", ") + (detail.columns.length > 16 ? "..." : "");
+        tbody.innerHTML += `
+          <tr class="border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800">
+            <td class="p-3"><div class="font-bold">${escapeHtml(detail.name)}</div><div class="text-[9px] font-mono mt-1">${escapeHtml(id)}</div><div class="text-[9px] text-slate-500">${escapeHtml(detail.rows || 0)} rows · ${escapeHtml(detail.license || "license n/a")}</div></td>
+            <td class="p-3"><span class="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-1 rounded text-[10px]">PK: ${escapeHtml(detail.pk)}</span><br><span class="bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 px-1 rounded text-[10px] mt-1 inline-block">FK: ${escapeHtml(detail.fks.join(", "))}</span></td>
+            <td class="p-3 text-[10px] truncate-cell" title="${escapeHtml(detail.colNames.join(", "))}">${columns}</td>
+            <td class="p-3 text-center"><button onclick="previewData('${id}')" class="text-blue-500"><i class="fa-solid fa-eye"></i></button></td>
+          </tr>`;
+      });
+    }
+
+    function pgType(socrataType) {
+      const map = {
+        "number": "NUMERIC",
+        "money": "NUMERIC",
+        "text": "TEXT",
+        "url": "TEXT",
+        "calendar_date": "DATE",
+        "floating_timestamp": "TIMESTAMP",
+        "checkbox": "BOOLEAN",
+        "point": "GEOMETRY(Point, 4326)",
+        "location": "GEOMETRY(Point, 4326)",
+        "line": "GEOMETRY(LineString, 4326)",
+        "polygon": "GEOMETRY(Polygon, 4326)",
+        "multipolygon": "GEOMETRY(MultiPolygon, 4326)"
+      };
+      return map[socrataType] || "TEXT";
+    }
+
+    function sqlIdentifier(value) {
+      return String(value || "dataset").toLowerCase().replace(/[^a-z0-9_]+/g, "_").replace(/^_+|_+$/g, "") || "dataset";
+    }
+
+    function generateScripts() {
+      const pyFormat = document.getElementById("py-format-select").value;
+      let py = "";
+      if (pyFormat === "pandas") {
+        py = `import pandas as pd\nimport requests\n\nAPP_TOKEN = None\nHEADERS = {"X-App-Token": APP_TOKEN} if APP_TOKEN else {}\n\ndef read_socrata(url):\n    response = requests.get(url, headers=HEADERS, timeout=60)\n    response.raise_for_status()\n    return pd.DataFrame(response.json())\n\n`;
+        AppState.cart.forEach((item, id) => {
+          py += `df_${sqlIdentifier(id).replaceAll("_", "").slice(0, 8)} = read_socrata("https://${AppState.domain}/resource/${id}.json?$limit=50000")\n`;
+        });
+        if (AppState.relationships.length) {
+          py += "\n# Suggested joins inferred from shared civic keys.\n";
+          AppState.relationships.forEach((relationship, index) => {
+            py += `joined_${index + 1} = df_${sqlIdentifier(relationship.sId).replaceAll("_", "").slice(0, 8)}.merge(df_${sqlIdentifier(relationship.tId).replaceAll("_", "").slice(0, 8)}, left_on="${relationship.sCol}", right_on="${relationship.tCol}", how="left")\n`;
+          });
+        }
+      } else {
+        py = `from __future__ import annotations\nfrom datetime import datetime\nimport pandas as pd\nfrom airflow import DAG\nfrom airflow.operators.python import PythonOperator\n\ndef extract_socrata(**_context):\n`;
+        AppState.cart.forEach((item, id) => {
+          const varName = sqlIdentifier(id).replaceAll("_", "").slice(0, 8);
+          py += `    df_${varName} = pd.read_json("https://${AppState.domain}/resource/${id}.json?$limit=50000")\n    df_${varName}.to_parquet("/tmp/${varName}.parquet", index=False)\n`;
+        });
+        py += `\nwith DAG("mission_control_socrata_extract", start_date=datetime(2026, 1, 1), schedule="@daily", catchup=False) as dag:\n    extract = PythonOperator(task_id="extract_socrata", python_callable=extract_socrata)\n`;
+      }
+      document.getElementById("py-code").innerText = py;
+
+      const sqlFormat = document.getElementById("sql-format-select").value;
+      let sql = "";
+      if (sqlFormat === "postgis") {
+        sql = "-- PostgreSQL / PostGIS Data Model\n\n";
+        AppState.cart.forEach((item, id) => {
+          const table = `stg_${sqlIdentifier(id)}`;
+          sql += `CREATE TABLE IF NOT EXISTS ${table} (\n`;
+          const columns = item.detailed?.columns?.slice(0, 60).map(column => `  ${sqlIdentifier(column.name)} ${pgType(column.dataTypeName)}`) || ["  raw JSONB"];
+          sql += columns.join(",\n") + "\n);\n\n";
+        });
+        const ids = Array.from(AppState.cart.keys());
+        if (ids.length) {
+          const aliases = Object.fromEntries(ids.map((id, index) => [id, `t${index + 1}`]));
+          sql += "-- Analyst-ready join scaffold\n";
+          sql += `SELECT ${aliases[ids[0]]}.*\nFROM stg_${sqlIdentifier(ids[0])} AS ${aliases[ids[0]]}\n`;
+          const used = new Set([ids[0]]);
+          AppState.relationships.forEach(relationship => {
+            if (used.has(relationship.sId) && !used.has(relationship.tId)) {
+              sql += `LEFT JOIN stg_${sqlIdentifier(relationship.tId)} AS ${aliases[relationship.tId]}\n`;
+              sql += `  ON ${aliases[relationship.sId]}.${sqlIdentifier(relationship.sCol)} = ${aliases[relationship.tId]}.${sqlIdentifier(relationship.tCol)}\n`;
+              used.add(relationship.tId);
+            }
+          });
+          sql += "LIMIT 1000;\n";
+        }
+      } else {
+        sql = "version: 2\n\nsources:\n  - name: socrata\n    tables:\n";
+        AppState.cart.forEach((item, id) => {
+          const description = (item.detailed?.description || item.basic?.resource?.description || "").replaceAll("\"", "'");
+          sql += `      - name: ${sqlIdentifier(id)}\n        description: "${description.slice(0, 240)}"\n        meta:\n          domain: ${AppState.domain}\n          fourfour: ${id}\n`;
+        });
+      }
+      document.getElementById("sql-code").innerText = sql;
+    }
+
+    async function sendLLMQuery() {
+      if (AppState.cart.size === 0) return showToast("Add datasets to cart first.", "error");
+      const input = document.getElementById("llm-input");
+      const question = input.value.trim();
+      if (!question) return;
+      const log = document.getElementById("llm-chat-log");
+      log.innerHTML += `<div class="msg-user">${escapeHtml(question)}</div>`;
+      input.value = "";
+      let schemaContext = "I am working with these Socrata datasets:\\n";
+      AppState.cart.forEach((item, id) => {
+        if (item.detailed) schemaContext += `- ${item.detailed.name} (${AppState.domain}/${id}); columns: ${item.detailed.colNames.slice(0, 20).join(", ")}\\n`;
+      });
+      if (AppState.relationships.length) {
+        schemaContext += "Relationships:\\n";
+        AppState.relationships.forEach(relationship => {
+          schemaContext += `- ${relationship.sId}.${relationship.sCol} -> ${relationship.tId}.${relationship.tCol}\\n`;
+        });
+      }
+      schemaContext += `\\nUser query: ${question}\\nProvide concise SQL, Python, or architecture guidance based only on this schema.`;
+
+      if (!AppState.llmKey) {
+        log.innerHTML += `<div class="msg-ai">No Gemini API key configured. Copy this prompt into your approved AI environment:\\n\\n${escapeHtml(schemaContext)}</div>`;
+        log.scrollTop = log.scrollHeight;
+        return;
+      }
+      try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(AppState.llmKey)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contents: [{ parts: [{ text: schemaContext }] }] })
+        });
+        if (!response.ok) throw new Error(`Gemini request denied (${response.status})`);
+        const data = await response.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response text returned.";
+        log.innerHTML += `<div class="msg-ai">${escapeHtml(text.replaceAll("```", ""))}</div>`;
+      } catch (error) {
+        log.innerHTML += `<div class="msg-ai text-red-500">LLM error: ${escapeHtml(error.message)}</div>`;
+      }
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function loadWorkspacesList() {
+      const list = document.getElementById("ws-list");
+      list.innerHTML = "";
+      const names = Object.keys(AppState.workspaces);
+      if (!names.length) {
+        list.innerHTML = `<p class="text-xs text-slate-500 text-center italic py-2">No saved workspaces.</p>`;
+        return;
+      }
+      names.forEach(name => {
+        list.innerHTML += `
+          <div class="flex justify-between items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-2 rounded">
+            <span class="text-sm font-bold text-slate-700 dark:text-slate-300">${escapeHtml(name)}</span>
+            <div class="flex gap-2">
+              <button onclick="restoreWorkspace('${escapeHtml(name)}')" class="text-xs bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 px-2 py-1 rounded shadow-sm">Load</button>
+              <button onclick="deleteWorkspace('${escapeHtml(name)}')" class="text-xs text-red-500 px-2 py-1"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          </div>`;
+      });
+    }
+
+    function saveWorkspace() {
+      const name = document.getElementById("ws-name").value.trim();
+      if (!name || AppState.cart.size === 0) return showToast("Need a name and non-empty cart.", "error");
+      AppState.workspaces[name] = {
+        domain: AppState.domain,
+        cart: Array.from(AppState.cart.entries()),
+        joins: AppState.customJoins
+      };
+      localStorage.setItem("mmc_workspaces", JSON.stringify(AppState.workspaces));
+      showToast("Workspace saved.", "success");
+      loadWorkspacesList();
+    }
+
+    function restoreWorkspace(name) {
+      const state = AppState.workspaces[name];
+      if (!state) return;
+      AppState.domain = state.domain || AppState.domain;
+      document.getElementById("city-domain").value = AppState.domain;
+      AppState.cart = new Map(state.cart || []);
+      AppState.customJoins = state.joins || [];
+      updateCartUI();
+      renderMetadataTable();
+      document.getElementById("btn-analyze").disabled = AppState.cart.size === 0;
+      toggleModal("workspace-modal");
+      showToast(`Loaded workspace: ${name}`, "success");
+    }
+
+    function deleteWorkspace(name) {
+      delete AppState.workspaces[name];
+      localStorage.setItem("mmc_workspaces", JSON.stringify(AppState.workspaces));
+      loadWorkspacesList();
+    }
+
+    function exportData(type) {
+      if (AppState.cart.size === 0) return showToast("Cart empty.", "error");
+      if (type === "html") {
+        let doc = `<!doctype html><html><head><meta charset="utf-8"><title>Data Dictionary</title><style>body{font-family:Arial,sans-serif;padding:2rem;}table{border-collapse:collapse;width:100%;margin-bottom:2rem;}th,td{border:1px solid #ccc;padding:8px;text-align:left;}th{background:#eef2ff;}</style></head><body><h1>Mission Control Data Dictionary</h1>`;
+        AppState.cart.forEach((item, id) => {
+          if (!item.detailed) return;
+          doc += `<h2>${escapeHtml(item.detailed.name)} (${escapeHtml(id)})</h2><p><b>Agency:</b> ${escapeHtml(item.detailed.agency)} | <b>PK:</b> ${escapeHtml(item.detailed.pk)}</p><table><tr><th>Column</th><th>Type</th><th>Description</th></tr>`;
+          item.detailed.columns.forEach(column => {
+            doc += `<tr><td>${escapeHtml(column.name)}</td><td>${escapeHtml(column.dataTypeName)}</td><td>${escapeHtml(column.description || "-")}</td></tr>`;
+          });
+          doc += "</table>";
+        });
+        doc += "</body></html>";
+        downloadFile(doc, "MissionControl_Dictionary.html", "text/html");
+      } else if (type === "ipynb") {
+        const cells = [
+          { cell_type: "markdown", metadata: {}, source: ["# Mission Control Socrata Pipeline\\n", "Generated from the extraction cart."] },
+          { cell_type: "code", execution_count: null, metadata: {}, outputs: [], source: [document.getElementById("py-code").innerText || ""] }
+        ];
+        downloadFile(JSON.stringify({ cells, metadata: {}, nbformat: 4, nbformat_minor: 5 }, null, 2), "MissionControl_Pipeline.ipynb", "application/json");
+      } else if (type === "csv") {
+        let csv = "ID,Name,Column,Type,Description\\n";
+        AppState.cart.forEach((item, id) => {
+          if (!item.detailed) return;
+          item.detailed.columns.forEach(column => {
+            csv += `"${id}","${String(item.detailed.name).replaceAll("\"", "\"\"")}","${column.name}","${column.dataTypeName}","${String(column.description || "").replaceAll("\"", "\"\"")}"\\n`;
+          });
+        });
+        downloadFile(csv, "MissionControl_Schema.csv", "text/csv");
+      } else {
+        const payload = {};
+        AppState.cart.forEach((item, id) => {
+          if (item.detailed) payload[id] = item.detailed;
+        });
+        if (type === "geojson") {
+          payload.note = "Use the GIS preview for live sampled features. This export contains schema metadata for geospatial datasets.";
+        }
+        downloadFile(JSON.stringify(payload, null, 2), type === "geojson" ? "MissionControl_GeoSchema.json" : "MissionControl_Schema.json", "application/json");
+      }
+    }
+
+    function downloadFile(content, filename, type) {
+      const blob = new Blob([content], { type });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(link.href);
+      showToast("Exported.", "success");
+    }
+
+    function downloadSVG() {
+      const svgElement = document.querySelector("#mermaid-container svg");
+      if (!svgElement) return showToast("Generate a diagram first.", "error");
+      svgElement.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+      const blob = new Blob([svgElement.outerHTML], { type: "image/svg+xml;charset=utf-8" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "MissionControl_Diagram.svg";
+      link.click();
+      URL.revokeObjectURL(link.href);
+      showToast("SVG saved.", "success");
+    }
+  </script>
+</body>
+</html>
