@@ -5091,4 +5091,378 @@ function generateCodeFull(){
 // ── Close notif center on outside click (already above) ───────
 // ── Wire Ctrl+Z/Y (already above) ────────────────────────────
 </script>
+
+<!-- ============================================================
+     ENHANCEMENT MODULE A — Accessibility (WCAG 2.2 AAA) + UX
+     Progressive enhancement: patches the existing DOM on load.
+     Fully additive; degrades safely if elements are absent.
+     ============================================================ -->
+<style id="mmc-enh-a-style">
+  /* AAA-oriented focus visibility (>=3px, high-contrast outline) */
+  :focus-visible { outline: 3px solid #ffd24a !important; outline-offset: 2px !important; border-radius: 3px; }
+  .high-contrast :focus-visible { outline-color: #ffff00 !important; }
+  /* Skip link */
+  .mmc-skip-link { position: fixed; left: 8px; top: -48px; z-index: 4000; background: #0ea5e9; color: #fff;
+    padding: 8px 14px; border-radius: 0 0 8px 8px; font-weight: 700; font-size: 13px; transition: top .15s; }
+  .mmc-skip-link:focus { top: 0; }
+  /* Command palette */
+  #mmc-cmdk { position: fixed; inset: 0; z-index: 3500; display: none; align-items: flex-start; justify-content: center;
+    background: rgba(0,0,0,.55); backdrop-filter: blur(2px); }
+  #mmc-cmdk.open { display: flex; }
+  #mmc-cmdk .box { margin-top: 12vh; width: min(640px, 92vw); background: #0f172a; border: 1px solid #1e293b;
+    border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,.6); overflow: hidden; }
+  #mmc-cmdk input { width: 100%; background: #0b1220; color: #e2e8f0; border: 0; border-bottom: 1px solid #1e293b;
+    padding: 14px 16px; font-size: 15px; outline: none; }
+  #mmc-cmdk ul { max-height: 50vh; overflow-y: auto; margin: 0; padding: 6px; list-style: none; }
+  #mmc-cmdk li { padding: 9px 12px; border-radius: 8px; color: #cbd5e1; font-size: 13px; cursor: pointer;
+    display: flex; align-items: center; gap: 10px; }
+  #mmc-cmdk li.active, #mmc-cmdk li:hover { background: #1e293b; color: #fff; }
+  #mmc-cmdk li .hint { margin-left: auto; font-size: 11px; color: #64748b; }
+  /* Toast history drawer */
+  #mmc-toast-log { position: fixed; right: 12px; bottom: 56px; width: 320px; max-height: 50vh; overflow-y: auto;
+    background: #0f172a; border: 1px solid #1e293b; border-radius: 10px; z-index: 3400; display: none; padding: 8px; }
+  #mmc-toast-log.open { display: block; }
+  #mmc-toast-log .item { font-size: 12px; padding: 6px 8px; border-left: 3px solid #334155; margin-bottom: 4px; color: #cbd5e1; }
+  #mmc-toast-log .item.error { border-left-color: #ef4444; }
+  #mmc-toast-log .item.success { border-left-color: #10b981; }
+  #mmc-toast-log .item.warning { border-left-color: #f59e0b; }
+  /* Generic skeleton */
+  .mmc-skel { background: linear-gradient(90deg,#1e293b 25%,#273449 37%,#1e293b 63%); background-size: 400% 100%;
+    animation: mmcShimmer 1.2s infinite; border-radius: 6px; }
+  @keyframes mmcShimmer { 0% { background-position: 100% 0 } 100% { background-position: -100% 0 } }
+  @media (prefers-reduced-motion: reduce) { .mmc-skel { animation: none; } }
+</style>
+<script id="mmc-enh-a">
+(function () {
+  "use strict";
+  const reduceMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  window.mmcReduceMotion = reduceMotion;
+
+  // ---- robust announcement helper (errors + status, not just results) ----
+  function announce(msg, assertive) {
+    let el = document.getElementById('aria-live');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'aria-live';
+      el.setAttribute('aria-live', 'polite');
+      el.style.cssText = 'position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden';
+      document.body.appendChild(el);
+    }
+    el.setAttribute('aria-live', assertive ? 'assertive' : 'polite');
+    el.textContent = '';
+    setTimeout(() => { el.textContent = msg; }, 30);
+  }
+  window.mmcAnnounce = announce;
+
+  function ready(fn) {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn);
+    else setTimeout(fn, 0);
+  }
+
+  // =====================================================================
+  // WAVE 1 — Accessibility foundation
+  // =====================================================================
+  function applyLandmarks() {
+    const header = document.querySelector('header');
+    if (header && !header.getAttribute('role')) { header.setAttribute('role', 'banner'); }
+    const aside = document.querySelector('aside');
+    if (aside) { aside.setAttribute('role', 'complementary'); aside.setAttribute('aria-label', 'Tools and saved items'); }
+    const main = document.querySelector('main');
+    if (main) { main.id = main.id || 'mmc-main'; main.setAttribute('role', 'main'); main.setAttribute('aria-label', 'Workspace'); }
+    const statusBar = document.getElementById('status-bar');
+    if (statusBar) statusBar.setAttribute('role', 'status');
+  }
+
+  function applyTablist() {
+    const strip = document.querySelector('main .tab-btn')?.parentElement;
+    if (!strip) return;
+    strip.setAttribute('role', 'tablist');
+    strip.setAttribute('aria-label', 'Main sections');
+    const tabs = Array.from(strip.querySelectorAll('.tab-btn'));
+    tabs.forEach((tab) => {
+      const name = (tab.id || '').replace(/^tab-/, '');
+      tab.setAttribute('role', 'tab');
+      tab.setAttribute('aria-controls', 'tab-content-' + name);
+      const selected = tab.classList.contains('active');
+      tab.setAttribute('aria-selected', selected ? 'true' : 'false');
+      tab.setAttribute('tabindex', selected ? '0' : '-1');
+      const panel = document.getElementById('tab-content-' + name);
+      if (panel) { panel.setAttribute('role', 'tabpanel'); panel.setAttribute('aria-labelledby', tab.id); }
+    });
+    // roving tabindex + arrow-key navigation
+    strip.addEventListener('keydown', (e) => {
+      if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(e.key)) return;
+      const list = Array.from(strip.querySelectorAll('.tab-btn'));
+      let idx = list.findIndex((t) => t.getAttribute('tabindex') === '0');
+      if (idx < 0) idx = 0;
+      if (e.key === 'ArrowRight') idx = (idx + 1) % list.length;
+      else if (e.key === 'ArrowLeft') idx = (idx - 1 + list.length) % list.length;
+      else if (e.key === 'Home') idx = 0;
+      else if (e.key === 'End') idx = list.length - 1;
+      e.preventDefault();
+      list[idx].focus();
+      list[idx].click();
+    });
+    // keep aria-selected in sync with the app's own switchTab
+    if (typeof window.switchTab === 'function' && !window.switchTab.__mmcWrapped) {
+      const orig = window.switchTab;
+      window.switchTab = function (name, btn) {
+        const r = orig.apply(this, arguments);
+        try {
+          strip.querySelectorAll('.tab-btn').forEach((t) => {
+            const on = t.id === 'tab-' + name;
+            t.setAttribute('aria-selected', on ? 'true' : 'false');
+            t.setAttribute('tabindex', on ? '0' : '-1');
+          });
+          const lbl = document.getElementById('tab-' + name)?.textContent.trim();
+          if (lbl) announce(lbl + ' tab');
+        } catch (_) {}
+        return r;
+      };
+      window.switchTab.__mmcWrapped = true;
+    }
+  }
+
+  function decorateIcons() {
+    // decorative icons hidden from AT
+    document.querySelectorAll('i.fa-solid, i.fa-regular, i.fa-brands').forEach((i) => {
+      if (!i.hasAttribute('aria-hidden')) i.setAttribute('aria-hidden', 'true');
+    });
+    // icon-only buttons get an accessible name from title/aria
+    document.querySelectorAll('button').forEach((b) => {
+      const text = (b.textContent || '').trim();
+      if (!text && !b.getAttribute('aria-label')) {
+        const t = b.getAttribute('title') || b.querySelector('i')?.className?.match(/fa-([a-z-]+)/)?.[1];
+        if (t) b.setAttribute('aria-label', t.replace(/-/g, ' '));
+      }
+    });
+  }
+
+  function labelControls() {
+    document.querySelectorAll('input,select,textarea').forEach((el) => {
+      if (el.getAttribute('aria-label') || el.id && document.querySelector('label[for="' + el.id + '"]')) return;
+      const ph = el.getAttribute('placeholder');
+      if (ph) { el.setAttribute('aria-label', ph); return; }
+      const prev = el.previousElementSibling;
+      if (prev && /label|span/i.test(prev.tagName) && prev.textContent.trim()) {
+        el.setAttribute('aria-label', prev.textContent.trim());
+      }
+    });
+  }
+
+  function detectPreferences() {
+    try {
+      // honor OS contrast preference once (don't override an explicit user choice)
+      if (!localStorage.getItem('mc_hc') && window.matchMedia('(prefers-contrast: more)').matches) {
+        document.documentElement.classList.add('high-contrast');
+      }
+      // honor OS light scheme if user hasn't chosen
+      if (localStorage.getItem('mmc_dark') === null && window.matchMedia('(prefers-color-scheme: light)').matches) {
+        if (typeof window.toggleDark === 'function') { /* leave to app default; flagged for app */ }
+      }
+    } catch (_) {}
+  }
+
+  function modalFocusTrap() {
+    let lastFocused = null;
+    const isOpen = (m) => !m.classList.contains('hidden') && m.offsetParent !== null;
+    const focusables = (m) => Array.from(m.querySelectorAll(
+      'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
+    )).filter((el) => el.offsetParent !== null);
+    document.querySelectorAll('.modal-overlay').forEach((m) => {
+      m.setAttribute('role', m.getAttribute('role') || 'dialog');
+      m.setAttribute('aria-modal', 'true');
+    });
+    // observe modal visibility to manage focus
+    const obs = new MutationObserver((muts) => {
+      muts.forEach((mut) => {
+        const m = mut.target;
+        if (!m.classList || !m.classList.contains('modal-overlay')) return;
+        if (isOpen(m)) {
+          lastFocused = document.activeElement;
+          const f = focusables(m);
+          if (f.length) setTimeout(() => f[0].focus(), 20);
+        } else if (lastFocused && typeof lastFocused.focus === 'function') {
+          setTimeout(() => lastFocused.focus(), 0);
+          lastFocused = null;
+        }
+      });
+    });
+    document.querySelectorAll('.modal-overlay').forEach((m) =>
+      obs.observe(m, { attributes: true, attributeFilter: ['class'] })
+    );
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Tab') return;
+      const open = Array.from(document.querySelectorAll('.modal-overlay')).find(isOpen);
+      if (!open) return;
+      const f = focusables(open);
+      if (!f.length) return;
+      const first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
+  }
+
+  function addSkipLink() {
+    if (document.querySelector('.mmc-skip-link')) return;
+    const a = document.createElement('a');
+    a.href = '#mmc-main';
+    a.className = 'mmc-skip-link';
+    a.textContent = 'Skip to main content';
+    a.addEventListener('click', (e) => {
+      const main = document.getElementById('mmc-main') || document.querySelector('main');
+      if (main) { e.preventDefault(); main.setAttribute('tabindex', '-1'); main.focus(); }
+    });
+    document.body.insertBefore(a, document.body.firstChild);
+  }
+
+  // =====================================================================
+  // WAVE 2 — UX polish: command palette, toast history, fetch retry
+  // =====================================================================
+  function buildCommandPalette() {
+    if (document.getElementById('mmc-cmdk')) return;
+    const overlay = document.createElement('div');
+    overlay.id = 'mmc-cmdk';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', 'Command palette');
+    overlay.innerHTML =
+      '<div class="box"><input type="text" id="mmc-cmdk-input" placeholder="Type a command…  (Esc to close)" aria-label="Command search" autocomplete="off"><ul id="mmc-cmdk-list" role="listbox"></ul></div>';
+    document.body.appendChild(overlay);
+
+    const actions = [];
+    const addTabActions = () => {
+      document.querySelectorAll('.tab-btn').forEach((t) => {
+        const name = (t.id || '').replace(/^tab-/, '');
+        const label = t.textContent.trim().replace(/\s+\d+$/, '');
+        if (name) actions.push({ label: 'Go to ' + label, hint: 'Tab', run: () => window.switchTab(name, t) });
+      });
+    };
+    addTabActions();
+    [
+      ['Search datasets', 'Ctrl+K', () => document.querySelector('#search-input,[id*="search"]')?.focus()],
+      ['Toggle dark / light', '', () => window.toggleDark && window.toggleDark()],
+      ['Toggle high contrast', '', () => window.toggleHighContrast && window.toggleHighContrast()],
+      ['Open help', '?', () => document.getElementById('help-modal')?.classList.remove('hidden')],
+      ['Open API config', '', () => document.getElementById('config-modal')?.classList.remove('hidden')],
+      ['Open map', '', () => document.getElementById('map-modal')?.classList.remove('hidden')],
+      ['Show notifications', '', () => window.mmcToggleToastLog && window.mmcToggleToastLog()],
+    ].forEach(([label, hint, run]) => actions.push({ label, hint, run }));
+
+    const input = overlay.querySelector('#mmc-cmdk-input');
+    const list = overlay.querySelector('#mmc-cmdk-list');
+    let filtered = actions.slice(), active = 0;
+
+    const fuzzy = (q, s) => {
+      q = q.toLowerCase(); s = s.toLowerCase(); let i = 0;
+      for (const ch of s) { if (ch === q[i]) i++; if (i === q.length) return true; }
+      return q.length === 0;
+    };
+    const render = () => {
+      list.innerHTML = filtered.map((a, i) =>
+        '<li role="option" data-i="' + i + '" class="' + (i === active ? 'active' : '') + '">' +
+        a.label.replace(/</g, '&lt;') + '<span class="hint">' + (a.hint || '') + '</span></li>').join('');
+    };
+    const open = () => {
+      overlay.classList.add('open'); input.value = ''; filtered = actions.slice(); active = 0; render();
+      setTimeout(() => input.focus(), 20);
+    };
+    const close = () => overlay.classList.remove('open');
+    const exec = () => { const a = filtered[active]; close(); if (a) try { a.run(); } catch (_) {} };
+
+    input.addEventListener('input', () => {
+      const q = input.value.trim();
+      filtered = actions.filter((a) => fuzzy(q, a.label)); active = 0; render();
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown') { active = Math.min(active + 1, filtered.length - 1); render(); e.preventDefault(); }
+      else if (e.key === 'ArrowUp') { active = Math.max(active - 1, 0); render(); e.preventDefault(); }
+      else if (e.key === 'Enter') { exec(); e.preventDefault(); }
+      else if (e.key === 'Escape') { close(); }
+    });
+    list.addEventListener('click', (e) => {
+      const li = e.target.closest('li'); if (li) { active = +li.dataset.i; exec(); }
+    });
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+
+    window.mmcOpenCommandPalette = open;
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 'P') && !e.shiftKey) {
+        e.preventDefault(); overlay.classList.contains('open') ? close() : open();
+      }
+    });
+  }
+
+  function buildToastHistory() {
+    if (document.getElementById('mmc-toast-log')) return;
+    const log = document.createElement('div');
+    log.id = 'mmc-toast-log';
+    log.setAttribute('role', 'log');
+    log.setAttribute('aria-label', 'Notification history');
+    log.innerHTML = '<div style="font-size:11px;color:#64748b;padding:4px 8px;font-weight:700">NOTIFICATIONS</div>';
+    document.body.appendChild(log);
+    window.mmcToggleToastLog = () => log.classList.toggle('open');
+
+    const history = [];
+    const prev = window.toast;
+    window.toast = function (msg, type) {
+      try {
+        history.unshift({ msg, type: type || 'info', t: Date.now() });
+        if (history.length > 50) history.pop();
+        const item = document.createElement('div');
+        item.className = 'item ' + (type || 'info');
+        item.textContent = msg;
+        const anchor = log.querySelector('div');
+        anchor.after(item);
+        if (type === 'error') announce(msg, true);
+      } catch (_) {}
+      return typeof prev === 'function' ? prev.apply(this, arguments) : undefined;
+    };
+    window.mmcToastHistory = history;
+  }
+
+  // resilient fetch with retry + exponential backoff (opt-in helper)
+  window.mmcFetch = async function (url, opts, retries) {
+    retries = retries == null ? 2 : retries;
+    let delay = 400;
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const r = await fetch(url, opts);
+        if (r.status === 429 && attempt < retries) {
+          const ra = parseInt(r.headers.get('Retry-After')) * 1000;
+          await new Promise((res) => setTimeout(res, ra || delay));
+          delay *= 2; continue;
+        }
+        return r;
+      } catch (err) {
+        if (attempt === retries) throw err;
+        await new Promise((res) => setTimeout(res, delay));
+        delay *= 2;
+      }
+    }
+  };
+
+  // generic skeleton util
+  window.mmcSkeleton = function (el, lines) {
+    if (!el) return;
+    lines = lines || 5;
+    el.innerHTML = Array.from({ length: lines }, () =>
+      '<div class="mmc-skel" style="height:14px;margin:8px 0;width:' + (60 + Math.random() * 35).toFixed(0) + '%"></div>').join('');
+  };
+
+  // =====================================================================
+  ready(function () {
+    try { applyLandmarks(); } catch (e) { console.warn('[mmc] landmarks', e); }
+    try { applyTablist(); } catch (e) { console.warn('[mmc] tablist', e); }
+    try { decorateIcons(); } catch (e) { console.warn('[mmc] icons', e); }
+    try { labelControls(); } catch (e) { console.warn('[mmc] labels', e); }
+    try { detectPreferences(); } catch (e) { console.warn('[mmc] prefs', e); }
+    try { modalFocusTrap(); } catch (e) { console.warn('[mmc] focustrap', e); }
+    try { addSkipLink(); } catch (e) { console.warn('[mmc] skiplink', e); }
+    try { buildCommandPalette(); } catch (e) { console.warn('[mmc] cmdk', e); }
+    try { buildToastHistory(); } catch (e) { console.warn('[mmc] toastlog', e); }
+    announce('Mission Control ready. Press Control or Command P for the command palette.');
+  });
+})();
+</script>
 </html>
