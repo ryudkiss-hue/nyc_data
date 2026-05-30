@@ -7135,7 +7135,388 @@ if (document.readyState === 'loading') {
 } else {
   setTimeout(_init, 0);
 }
+<!-- ═══════════════════════════════════════════════════════════════════
+     MODULE F — Performance, Offline, Visualization, and Interactivity
+     ════════════════════════════════════════════════════════════════ -->
 
+<!-- GROUP 1: DuckDB-WASM, Apache Arrow, Comlink -->
+<script type="module">
+// ── Apache Arrow JS ──────────────────────────────────────────────
+import * as Arrow from 'https://cdn.jsdelivr.net/npm/apache-arrow@latest/+esm';
+window.mmcArrowDecode = function(buf) {
+  try { return Arrow.tableFromIPC(buf); } catch(e) { console.warn('Arrow decode failed', e); return null; }
+};
+
+// ── DuckDB-WASM singleton ────────────────────────────────────────
+(async function initDuckDB() {
+  try {
+    const duckdb = await import('https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@latest/+esm');
+    const JSDELIVR_BUNDLES = duckdb.getJsDelivrBundles();
+    const bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
+    const worker = new Worker(bundle.mainWorker);
+    const logger = new duckdb.ConsoleLogger();
+    const db = new duckdb.AsyncDuckDB(logger, worker);
+    await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
+    window.mmcDuckDB = db;
+
+    // Route dataset count/filter queries through DuckDB when available
+    window.mmcDuckQuery = async function(sql) {
+      const conn = await db.connect();
+      try {
+        const result = await conn.query(sql);
+        return result.toArray();
+      } finally {
+        await conn.close();
+      }
+    };
+    console.log('[MMC] DuckDB-WASM ready');
+  } catch(e) {
+    console.warn('[MMC] DuckDB-WASM unavailable, falling back to plain JS', e);
+  }
+})();
+
+// ── Comlink + STL anomaly worker ─────────────────────────────────
+import ComlinkLib from 'https://unpkg.com/comlink/dist/esm/comlink.mjs';
+window.Comlink = ComlinkLib;
+
+const stlWorkerCode = `
+importScripts('https://unpkg.com/comlink/dist/umd/comlink.js');
+const api = {
+  detectAnomalies(values, windowSize = 7, threshold = 2.5) {
+    if (!values || values.length < windowSize * 2) return [];
+    const anomalies = [];
+    for (let i = windowSize; i < values.length - windowSize; i++) {
+      const window_ = values.slice(i - windowSize, i + windowSize + 1);
+      const mean = window_.reduce((a, b) => a + b, 0) / window_.length;
+      const std = Math.sqrt(window_.reduce((a, b) => a + (b - mean) ** 2, 0) / window_.length);
+      if (std > 0 && Math.abs(values[i] - mean) / std > threshold) {
+        anomalies.push({ index: i, value: values[i], zscore: (values[i] - mean) / std });
+      }
+    }
+    return anomalies;
+  }
+};
+Comlink.expose(api);
+`;
+try {
+  const blob = new Blob([stlWorkerCode], { type: 'application/javascript' });
+  const workerUrl = URL.createObjectURL(blob);
+  const stlWorker = new Worker(workerUrl);
+  window.mmcSTLWorker = ComlinkLib.wrap(stlWorker);
+  console.log('[MMC] STL anomaly worker ready (Comlink)');
+} catch(e) {
+  console.warn('[MMC] Comlink worker unavailable', e);
+}
+</script>
+
+<!-- GROUP 1: OffscreenCanvas transfer for histogram -->
+<script>
+(function() {
+  const _origDrawHistogram = window._mmcDrawHistogramOriginal;
+  window.mmcDrawHistogramOffscreen = function(canvasId, samples, mean, lo, hi) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    if (typeof OffscreenCanvas !== 'undefined' && canvas.transferControlToOffscreen) {
+      try {
+        const offscreen = canvas.transferControlToOffscreen();
+        const worker = new Worker(URL.createObjectURL(new Blob([`
+          self.onmessage = function(e) {
+            const { canvas, samples, mean, lo, hi, bins } = e.data;
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width, H = canvas.height;
+            if (!samples || samples.length === 0) return;
+            const min = Math.min(...samples), max = Math.max(...samples);
+            const binW = (max - min) / bins;
+            if (binW === 0) return;
+            const counts = new Array(bins).fill(0);
+            samples.forEach(s => { const b = Math.min(Math.floor((s - min) / binW), bins - 1); counts[b]++; });
+            const maxC = Math.max(...counts);
+            const pad = { top: 8, bottom: 20, left: 28, right: 8 };
+            const bw = (W - pad.left - pad.right) / bins;
+            ctx.clearRect(0, 0, W, H);
+            counts.forEach((c, i) => {
+              const x = pad.left + i * bw;
+              const h = (c / maxC) * (H - pad.top - pad.bottom);
+              const val = min + i * binW;
+              const inHDI = val >= lo && val <= hi;
+              ctx.fillStyle = inHDI ? '#818cf8' : '#374151';
+              ctx.fillRect(x, H - pad.bottom - h, bw - 1, h);
+            });
+            const scaleX = v => pad.left + ((v - min) / (max - min)) * (W - pad.left - pad.right);
+            ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2;
+            ctx.beginPath(); const mx = scaleX(mean); ctx.moveTo(mx, pad.top); ctx.lineTo(mx, H - pad.bottom); ctx.stroke();
+          };
+        `], { type: 'application/javascript' })));
+        worker.postMessage({ canvas: offscreen, samples, mean, lo, hi, bins: 40 }, [offscreen]);
+        return;
+      } catch(e) { /* fall through to regular canvas */ }
+    }
+  };
+})();
+</script>
+
+<!-- GROUP 1: Rate-limit wrapper covering /api/ endpoints -->
+<script>
+(function() {
+  const _originalFetch = window.fetch.bind(window);
+  const _queue = [];
+  let _running = 0;
+  const MAX_CONCURRENT = 4;
+  const MIN_INTERVAL_MS = 100;
+  let _lastCall = 0;
+
+  function _processQueue() {
+    if (_running >= MAX_CONCURRENT || _queue.length === 0) return;
+    const now = Date.now();
+    const wait = Math.max(0, _lastCall + MIN_INTERVAL_MS - now);
+    setTimeout(() => {
+      if (_queue.length === 0) return;
+      const { url, opts, resolve, reject } = _queue.shift();
+      _running++;
+      _lastCall = Date.now();
+      _originalFetch(url, opts)
+        .then(resolve)
+        .catch(reject)
+        .finally(() => { _running--; _processQueue(); });
+      _processQueue();
+    }, wait);
+  }
+
+  window.fetch = function(url, opts) {
+    const urlStr = typeof url === 'string' ? url : (url.url || '');
+    // Apply rate limiting to Socrata and /api/ calls
+    if (/socrata|\.gov\/resource|\/api\//.test(urlStr)) {
+      return new Promise((resolve, reject) => {
+        _queue.push({ url, opts, resolve, reject });
+        _processQueue();
+      });
+    }
+    return _originalFetch(url, opts);
+  };
+
+  console.log('[MMC] Rate-limit wrapper active for Socrata + /api/ endpoints');
+})();
+</script>
+
+<!-- GROUP 3: idb for IndexedDB persistence -->
+<script src="https://cdn.jsdelivr.net/npm/idb@7/build/umd.js"></script>
+<script>
+(function() {
+  const IDB_NAME = 'mmc-store';
+  const IDB_VERSION = 1;
+
+  async function openDB() {
+    return idb.openDB(IDB_NAME, IDB_VERSION, {
+      upgrade(db) {
+        if (!db.objectStoreNames.contains('kv')) db.createObjectStore('kv');
+      }
+    });
+  }
+
+  window.mmcIDB = {
+    async get(key) {
+      try { const db = await openDB(); return db.get('kv', key); } catch { return undefined; }
+    },
+    async set(key, val) {
+      try { const db = await openDB(); return db.put('kv', val, key); } catch {}
+    },
+    async del(key) {
+      try { const db = await openDB(); return db.delete('kv', key); } catch {}
+    },
+  };
+
+  // Persist cart to IndexedDB on change and restore on load
+  async function persistCart() {
+    if (window.AppState?.cart) {
+      await window.mmcIDB.set('mmc-cart-v1', Array.from(window.AppState.cart));
+    }
+  }
+
+  async function restoreCart() {
+    const saved = await window.mmcIDB.get('mmc-cart-v1');
+    if (Array.isArray(saved) && saved.length && window.AppState?.cart) {
+      saved.forEach(id => window.AppState.cart.add(id));
+    }
+  }
+
+  // Persist catalog to IndexedDB
+  window.mmcPersistCatalog = async function(catalog) {
+    await window.mmcIDB.set('mmc-catalog-v1', { ts: Date.now(), data: catalog });
+  };
+
+  window.mmcLoadCachedCatalog = async function() {
+    const cached = await window.mmcIDB.get('mmc-catalog-v1');
+    if (cached && cached.data) return cached.data;
+    return null;
+  };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    restoreCart().catch(() => {});
+    // Hook cart mutations
+    const _origAdd = Set.prototype.add;
+    if (window.AppState?.cart) {
+      window.AppState.cart.add = function(v) {
+        _origAdd.call(this, v);
+        persistCart().catch(() => {});
+        return this;
+      };
+    }
+  });
+
+  console.log('[MMC] IndexedDB (mmcIDB) helpers ready');
+})();
+</script>
+
+<!-- GROUP 3: Service worker registration -->
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/static/sw.js').catch(() => {});
+}
+</script>
+
+<!-- GROUP 5: deck.gl map (with Leaflet fallback) -->
+<script>
+(async function() {
+  try {
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://unpkg.com/deck.gl@latest/dist.min.js';
+      s.onload = resolve; s.onerror = reject;
+      document.head.appendChild(s);
+    });
+
+    window.mmcDeckGLInit = function(containerId, data) {
+      const container = document.getElementById(containerId);
+      if (!container || !window.deck) return false;
+      try {
+        const { DeckGL, ScatterplotLayer } = window.deck;
+        const deckInstance = new DeckGL({
+          container,
+          initialViewState: { longitude: -74.006, latitude: 40.7128, zoom: 11, pitch: 0, bearing: 0 },
+          controller: true,
+          layers: [
+            new ScatterplotLayer({
+              id: 'inspection-points',
+              data: data || [],
+              getPosition: d => [d.longitude || d.lon || 0, d.latitude || d.lat || 0],
+              getColor: d => d.color || [99, 102, 241, 200],
+              getRadius: 40,
+              pickable: true,
+            }),
+          ],
+        });
+        container._deckInstance = deckInstance;
+        return true;
+      } catch(e) {
+        console.warn('[MMC] DeckGL init failed', e);
+        return false;
+      }
+    };
+    console.log('[MMC] deck.gl loaded');
+  } catch(e) {
+    console.warn('[MMC] deck.gl unavailable, Leaflet map remains active', e);
+  }
+})();
+</script>
+
+<!-- GROUP 5: Observable Plot for Trends tab -->
+<script src="https://cdn.jsdelivr.net/npm/@observablehq/plot/dist/plot.umd.min.js"></script>
+<script>
+(function() {
+  window.mmcRenderTrends = function(containerId, records, xField, yField) {
+    const container = document.getElementById(containerId);
+    if (!container || !window.Plot) return;
+    try {
+      container.innerHTML = '';
+      const chart = Plot.plot({
+        width: container.offsetWidth || 600,
+        height: 260,
+        marks: [
+          Plot.lineY(records, { x: xField, y: yField, stroke: '#818cf8', strokeWidth: 2 }),
+          Plot.dotY(records, { x: xField, y: yField, fill: '#818cf8', r: 3 }),
+        ],
+        style: { background: 'transparent', color: '#e2e8f0' },
+        x: { label: xField },
+        y: { label: yField },
+      });
+      container.appendChild(chart);
+    } catch(e) { console.warn('[MMC] Observable Plot render failed', e); }
+  };
+})();
+</script>
+
+<!-- GROUP 5: Simple/Expert mode toggle -->
+<script>
+(function() {
+  // Add toggle button after DOM ready
+  document.addEventListener('DOMContentLoaded', function() {
+    const btn = document.createElement('button');
+    btn.id = 'expert-mode-toggle';
+    btn.textContent = 'Simple Mode';
+    btn.title = 'Toggle Simple/Expert mode';
+    btn.className = 'fixed bottom-4 right-4 z-50 px-3 py-1.5 rounded text-xs font-semibold bg-slate-700 text-slate-200 hover:bg-slate-600 border border-slate-500 shadow-lg';
+    let expert = false;
+    btn.addEventListener('click', function() {
+      expert = !expert;
+      btn.textContent = expert ? 'Expert Mode' : 'Simple Mode';
+      document.querySelectorAll('[data-expert]').forEach(el => {
+        el.style.display = expert ? '' : 'none';
+      });
+    });
+    // Init: hide expert elements
+    document.querySelectorAll('[data-expert]').forEach(el => { el.style.display = 'none'; });
+    document.body.appendChild(btn);
+  });
+})();
+</script>
+
+<!-- GROUP 5: Floating UI tooltips -->
+<script>
+(async function() {
+  try {
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/@floating-ui/dom@latest/dist/floating-ui.dom.umd.min.js';
+      s.onload = resolve; s.onerror = reject;
+      document.head.appendChild(s);
+    });
+
+    const { computePosition, autoPlacement, offset, shift } = window.FloatingUIDOM;
+    let activeTooltip = null;
+
+    function createFloatingTooltip(text) {
+      const tt = document.createElement('div');
+      tt.className = 'mmc-floating-tooltip';
+      tt.textContent = text;
+      tt.style.cssText = 'position:absolute;z-index:9999;background:#1e293b;color:#e2e8f0;padding:6px 10px;border-radius:6px;font-size:12px;max-width:260px;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,.4);border:1px solid #334155;';
+      document.body.appendChild(tt);
+      return tt;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('[data-tooltip]').forEach(el => {
+        const text = el.getAttribute('data-tooltip') || el.title;
+        if (!text) return;
+        el.removeAttribute('title');
+
+        el.addEventListener('mouseenter', async () => {
+          if (activeTooltip) { activeTooltip.remove(); activeTooltip = null; }
+          activeTooltip = createFloatingTooltip(text);
+          const { x, y } = await computePosition(el, activeTooltip, {
+            middleware: [offset(8), shift({ padding: 8 }), autoPlacement()],
+          });
+          Object.assign(activeTooltip.style, { left: `${x}px`, top: `${y}px` });
+        });
+        el.addEventListener('mouseleave', () => {
+          if (activeTooltip) { activeTooltip.remove(); activeTooltip = null; }
+        });
+      });
+    });
+
+    console.log('[MMC] Floating UI tooltips ready');
+  } catch(e) {
+    console.warn('[MMC] Floating UI unavailable, title= tooltips remain', e);
+  }
 })();
 </script>
 </html>

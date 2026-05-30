@@ -19,10 +19,14 @@ const {
   ipcMain,
   dialog,
   nativeTheme,
+  session,
 } = require("electron");
 const path = require("path");
 const Store = require("electron-store");
 const { autoUpdater } = require("electron-updater");
+const { crashReporter } = require("electron");
+
+crashReporter.start({ productName: "MissionControl", submitURL: "", uploadToServer: false });
 
 const store = new Store({ name: "window-state" });
 const isDev = !app.isPackaged;
@@ -260,6 +264,21 @@ if (!gotLock) {
   });
 
   app.whenReady().then(() => {
+    // Inject Content-Security-Policy header for all requests
+    session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+      callback({
+        responseHeaders: {
+          ...details.responseHeaders,
+          "Content-Security-Policy": [
+            "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: " +
+              "https://cdn.jsdelivr.net https://unpkg.com https://api.beta.nyc " +
+              "https://*.socrata.com https://*.data.cityofnewyork.us " +
+              "http://127.0.0.1:8000 ws://127.0.0.1:8000;",
+          ],
+        },
+      });
+    });
+
     buildMenu();
     createWindow();
     buildTray();
