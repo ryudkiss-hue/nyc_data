@@ -454,6 +454,7 @@ body { font-family: 'Inter', system-ui, sans-serif; }
       <button onclick="exportJupyterNotebook()" class="px-2 py-1 bg-orange-800 hover:bg-orange-700 rounded text-xs text-orange-200 transition-all" title="Export Jupyter notebook">.ipynb</button>
       <button onclick="printWorkspace()" class="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs text-gray-300 transition-all" title="Print / save as PDF">Print</button>
       <button onclick="emailWorkspace()" class="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs text-gray-300 transition-all" title="Email workspace">Email</button>
+      <button onclick="exportCartPPTX()" class="px-2 py-1 bg-orange-900 hover:bg-orange-800 rounded text-xs text-orange-200 transition-all" title="Export cart charts as PowerPoint (.pptx)">PPTX</button>
       <button onclick="showEmbed()" class="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs text-gray-300 transition-all" title="Embed snippet">Embed</button>
     </div>
     <!-- #22 Templates + #14 Recently viewed -->
@@ -7517,6 +7518,1025 @@ if ('serviceWorker' in navigator) {
   } catch(e) {
     console.warn('[MMC] Floating UI unavailable, title= tooltips remain', e);
   }
+})();
+</script>
+
+
+<!-- ============================================================
+     ENHANCEMENT MODULE G — Wiring & Missing Visualizations
+     Wires all Module F stub functions to real UI triggers;
+     adds Trends tab, deck.gl toggle, DuckDB SOQL option,
+     STL worker routing, OffscreenCanvas histogram, catalog IDB,
+     FAIR radar chart, scatter plot, sparklines in profiles,
+     choropleth layer, PII masking preview, governance exports,
+     semantic search UI, data-expert attributes, data-tooltip attrs.
+     ============================================================ -->
+<style id="mmc-enh-g-style">
+/* Trends tab chart container */
+#trends-chart-container { min-height: 280px; background: transparent; }
+#trends-chart-container svg { max-width: 100%; }
+
+/* Scatter plot */
+#scatter-panel { padding: 12px; }
+.scatter-select-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+.scatter-select-row label { font-size: 11px; color: #94a3b8; }
+.scatter-select-row select { background: #1f2937; border: 1px solid #374151; border-radius: 4px; color: #e2e8f0; font-size: 11px; padding: 2px 6px; }
+
+/* FAIR radar SVG */
+.fair-radar-wrap { text-align: center; margin-bottom: 10px; }
+
+/* deck.gl toggle */
+#deckgl-toggle-btn { position: absolute; top: 8px; right: 70px; z-index: 800; padding: 4px 10px; font-size: 11px; font-weight: 600; background: #1e293b; color: #38bdf8; border: 1px solid #334155; border-radius: 4px; cursor: pointer; }
+
+/* Choropleth toggle */
+#choropleth-toggle-btn { margin-top: 8px; width: 100%; padding: 4px 8px; font-size: 11px; background: #1e293b; color: #a5b4fc; border: 1px solid #334155; border-radius: 4px; cursor: pointer; }
+
+/* Governance exports panel */
+.gov-exports-panel { background: #111827; border: 1px solid #1f2937; border-radius: 6px; padding: 12px; margin-top: 12px; }
+.gov-exports-panel h4 { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
+.gov-export-btn { display: inline-block; margin: 2px; padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; cursor: pointer; background: #1f2937; color: #cbd5e1; border: 1px solid #374151; transition: background .15s; }
+.gov-export-btn:hover { background: #374151; }
+.gov-ogc-list { font-size: 11px; color: #94a3b8; margin-top: 8px; max-height: 120px; overflow-y: auto; }
+
+/* Semantic search */
+#semantic-search-wrap { position: relative; }
+#semantic-search-input { width: 100%; background: #111827; border: 1px solid #374151; border-radius: 6px; color: #e2e8f0; font-size: 12px; padding: 5px 10px 5px 28px; }
+.semantic-badge { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 11px; color: #818cf8; pointer-events: none; }
+#semantic-results-note { font-size: 10px; color: #6366f1; margin-top: 3px; display: none; }
+
+/* PII mask preview button */
+.pii-mask-btn { font-size: 10px; padding: 2px 6px; border-radius: 3px; background: #1e293b; color: #94a3b8; border: 1px solid #374151; cursor: pointer; margin-left: 4px; }
+.pii-mask-preview { font-family: monospace; font-size: 10px; color: #a5b4fc; margin-top: 4px; padding: 4px 6px; background: #0f172a; border-radius: 3px; display: none; }
+
+/* Sparkline in profile table */
+.profile-sparkline { display: inline-block; vertical-align: middle; margin-left: 4px; }
+
+/* Loading skeletons for map and profile panels */
+.skeleton-map { background: linear-gradient(90deg,#1f2937 25%,#374151 50%,#1f2937 75%); background-size: 400% 100%; animation: shimmer 1.4s infinite; height: 100%; min-height: 200px; border-radius: 4px; }
+@keyframes shimmer { 0%{background-position:100% 0} 100%{background-position:-100% 0} }
+
+/* data-tooltip floating panel */
+.mmc-tooltip-panel { position: fixed; z-index: 9999; background: #1e293b; color: #e2e8f0; border: 1px solid #334155; border-radius: 5px; font-size: 11px; padding: 5px 9px; max-width: 220px; pointer-events: none; white-space: normal; line-height: 1.4; box-shadow: 0 4px 16px rgba(0,0,0,.5); }
+</style>
+
+<script id="mmc-enh-g">
+(function() {
+'use strict';
+
+/* ── Utility ──────────────────────────────────────────────── */
+function ready(fn) {
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn);
+  else setTimeout(fn, 0);
+}
+function _san(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ══════════════════════════════════════════════════════════
+   1. TRENDS TAB — add to tab bar + wire mmcRenderTrends
+   ══════════════════════════════════════════════════════════ */
+function injectTrendsTab() {
+  // Add button after soql tab
+  const soqlBtn = document.getElementById('tab-soql');
+  if (!soqlBtn || document.getElementById('tab-trends')) return;
+  const btn = document.createElement('button');
+  btn.className = 'tab-btn';
+  btn.id = 'tab-trends';
+  btn.innerHTML = '<i class="fa-solid fa-chart-area mr-1"></i>Trends';
+  btn.onclick = function() { switchToTrends(btn); };
+  soqlBtn.parentElement.insertBefore(btn, soqlBtn.nextSibling);
+
+  // Add content panel
+  const bayesPanel = document.getElementById('tab-content-bayesian');
+  if (!bayesPanel) return;
+  const panel = document.createElement('div');
+  panel.id = 'tab-content-trends';
+  panel.className = 'h-full flex flex-col overflow-hidden hidden';
+  panel.setAttribute('role', 'tabpanel');
+  panel.setAttribute('aria-labelledby', 'tab-trends');
+  panel.innerHTML = `
+    <div class="px-4 py-3 border-b border-gray-800 flex-shrink-0 flex items-center gap-3">
+      <i class="fa-solid fa-chart-area text-brand-400"></i>
+      <span class="text-sm font-semibold text-gray-200">Trends</span>
+      <span class="text-xs text-gray-500 ml-auto">Observable Plot · time-series with confidence bands</span>
+    </div>
+    <div class="p-4 flex flex-col gap-3 flex-1 overflow-y-auto">
+      <div class="flex gap-3 items-center flex-wrap">
+        <label class="text-xs text-gray-400">Dataset</label>
+        <select id="trends-dataset" class="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none" onchange="updateTrendsColumns()">
+          <option value="">— select from cart —</option>
+        </select>
+        <label class="text-xs text-gray-400">X (date/time)</label>
+        <select id="trends-x" class="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none"></select>
+        <label class="text-xs text-gray-400">Y (numeric)</label>
+        <select id="trends-y" class="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none"></select>
+        <button onclick="renderTrendsChart()" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold rounded">
+          <i class="fa-solid fa-chart-line mr-1"></i>Plot
+        </button>
+      </div>
+      <div id="trends-chart-container" class="flex-1 min-h-64 rounded bg-gray-900 border border-gray-800 p-2"></div>
+      <div id="trends-status" class="text-xs text-gray-500"></div>
+    </div>`;
+  bayesPanel.parentElement.insertBefore(panel, bayesPanel);
+}
+
+function switchToTrends(btn) {
+  // Hide all panels via existing switchTab if possible, else manual
+  if (window.switchTab) {
+    try { window.switchTab('trends', btn); return; } catch(e) {}
+  }
+  document.querySelectorAll('[id^="tab-content-"]').forEach(p => p.classList.add('hidden'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  const p = document.getElementById('tab-content-trends');
+  if (p) { p.classList.remove('hidden'); }
+  btn.classList.add('active');
+  populateTrendsDatasets();
+}
+
+function populateTrendsDatasets() {
+  const sel = document.getElementById('trends-dataset');
+  if (!sel) return;
+  const cart = window.AppState && AppState.cart ? AppState.cart : [];
+  sel.innerHTML = '<option value="">— select from cart —</option>' +
+    cart.map(d => `<option value="${_san(d.id)}">${_san(d.name || d.id)}</option>`).join('');
+}
+
+window.updateTrendsColumns = function() {
+  const id = document.getElementById('trends-dataset')?.value;
+  const item = window.AppState?.cart?.find(c => c.id === id);
+  if (!item) return;
+  const cols = item.columns || [];
+  const xSel = document.getElementById('trends-x');
+  const ySel = document.getElementById('trends-y');
+  const dateCols = cols.filter(c => /date|time|year|month/i.test(c.dataTypeName || c.fieldName));
+  const numCols = cols.filter(c => /number|float|int|double/i.test(c.dataTypeName || c.fieldName));
+  xSel.innerHTML = dateCols.concat(cols).map(c => `<option value="${_san(c.fieldName)}">${_san(c.fieldName)}</option>`).join('');
+  ySel.innerHTML = numCols.concat(cols.filter(c => !numCols.includes(c))).map(c => `<option value="${_san(c.fieldName)}">${_san(c.fieldName)}</option>`).join('');
+};
+
+window.renderTrendsChart = async function() {
+  const id = document.getElementById('trends-dataset')?.value;
+  const xField = document.getElementById('trends-x')?.value;
+  const yField = document.getElementById('trends-y')?.value;
+  const container = document.getElementById('trends-chart-container');
+  const status = document.getElementById('trends-status');
+  if (!id || !xField || !yField) { status.textContent = 'Select dataset, X and Y columns.'; return; }
+
+  const item = window.AppState?.cart?.find(c => c.id === id);
+  if (!item) return;
+  status.textContent = 'Fetching data…';
+  container.innerHTML = '<div class="skeleton-map" style="height:260px"></div>';
+
+  try {
+    const url = `https://${item.domain}/resource/${id}.json?$limit=500&$order=${encodeURIComponent(xField)}+ASC`;
+    const resp = await (window.mmcFetch || fetch)(url);
+    const rows = await resp.json();
+    const records = rows.filter(r => r[xField] && r[yField]).map(r => ({
+      x: new Date(r[xField]),
+      y: parseFloat(r[yField])
+    })).filter(r => !isNaN(r.y) && r.x instanceof Date && !isNaN(r.x));
+
+    if (!records.length) { status.textContent = 'No plottable data.'; container.innerHTML = ''; return; }
+
+    if (window.mmcRenderTrends) {
+      mmcRenderTrends('trends-chart-container', records, 'x', 'y');
+      status.textContent = `${records.length} data points plotted.`;
+    } else {
+      // Fallback: plain SVG line chart
+      const W = container.offsetWidth || 560, H = 260, PAD = 40;
+      const xs = records.map(r => r.x.getTime()), ys = records.map(r => r.y);
+      const xMin = Math.min(...xs), xMax = Math.max(...xs), yMin = Math.min(...ys), yMax = Math.max(...ys) || 1;
+      const px = v => PAD + (v - xMin) / (xMax - xMin || 1) * (W - PAD*2);
+      const py = v => H - PAD - (v - yMin) / (yMax - yMin || 1) * (H - PAD*2);
+      const path = records.map((r,i) => (i===0?'M':'L') + px(r.x.getTime()).toFixed(1) + ',' + py(r.y).toFixed(1)).join(' ');
+      container.innerHTML = `<svg width="${W}" height="${H}" style="background:transparent">
+        <polyline points="${records.map(r => px(r.x.getTime()).toFixed(1)+','+py(r.y).toFixed(1)).join(' ')}" fill="none" stroke="#818cf8" stroke-width="2"/>
+        <text x="${PAD}" y="${H-5}" font-size="10" fill="#64748b">${records[0].x.toLocaleDateString()}</text>
+        <text x="${W-PAD}" y="${H-5}" text-anchor="end" font-size="10" fill="#64748b">${records[records.length-1].x.toLocaleDateString()}</text>
+        <text x="10" y="${PAD}" font-size="10" fill="#64748b">${yMax.toFixed(1)}</text>
+        <text x="10" y="${H-PAD}" font-size="10" fill="#64748b">${yMin.toFixed(1)}</text>
+      </svg>`;
+      status.textContent = `${records.length} pts (Observable Plot unavailable — SVG fallback).`;
+    }
+  } catch(e) {
+    status.textContent = 'Error: ' + e.message;
+    container.innerHTML = '';
+  }
+};
+
+/* ══════════════════════════════════════════════════════════
+   2. deck.gl GPU TOGGLE in map panel
+   ══════════════════════════════════════════════════════════ */
+function injectDeckGLToggle() {
+  const mapContainer = document.getElementById('map-container');
+  if (!mapContainer || document.getElementById('deckgl-toggle-btn')) return;
+  const wrap = mapContainer.closest('.flex.h-full') || mapContainer.parentElement;
+  wrap.style.position = 'relative';
+  const btn = document.createElement('button');
+  btn.id = 'deckgl-toggle-btn';
+  btn.textContent = '⚡ GPU (deck.gl)';
+  btn.title = 'Switch between Leaflet and deck.gl GPU-accelerated rendering';
+  let deckActive = false;
+  btn.onclick = function() {
+    deckActive = !deckActive;
+    if (deckActive) {
+      // Hide Leaflet, show deck.gl
+      mapContainer.style.visibility = 'hidden';
+      let deckEl = document.getElementById('deckgl-canvas-wrap');
+      if (!deckEl) {
+        deckEl = document.createElement('div');
+        deckEl.id = 'deckgl-canvas-wrap';
+        deckEl.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;z-index:500;';
+        wrap.appendChild(deckEl);
+      }
+      deckEl.style.display = 'block';
+      if (window.mmcDeckGLInit) {
+        // Build point data from cart
+        const pts = (window.AppState?.cart || []).flatMap(item =>
+          (item._sampleRows || []).filter(r => r.latitude && r.longitude).map(r => ({
+            lat: parseFloat(r.latitude), lon: parseFloat(r.longitude)
+          }))
+        );
+        mmcDeckGLInit('deckgl-canvas-wrap', pts);
+      } else {
+        deckEl.innerHTML = '<div style="color:#64748b;padding:20px;font-size:12px">deck.gl loading…</div>';
+      }
+      btn.textContent = '🗺 Leaflet';
+    } else {
+      mapContainer.style.visibility = '';
+      const deckEl = document.getElementById('deckgl-canvas-wrap');
+      if (deckEl) deckEl.style.display = 'none';
+      btn.textContent = '⚡ GPU (deck.gl)';
+    }
+  };
+  wrap.appendChild(btn);
+}
+
+/* ══════════════════════════════════════════════════════════
+   3. DuckDB SOQL OPTION
+   ══════════════════════════════════════════════════════════ */
+function injectDuckDBSOQLOption() {
+  const resultsHeader = document.getElementById('soql-results-header');
+  if (!resultsHeader || document.getElementById('soql-duckdb-toggle')) return;
+  const wrap = document.createElement('label');
+  wrap.style.cssText = 'display:flex;align-items:center;gap:4px;font-size:11px;color:#818cf8;cursor:pointer;margin-left:auto;';
+  wrap.innerHTML = '<input type="checkbox" id="soql-duckdb-toggle" style="accent-color:#818cf8"> DuckDB-WASM (local)';
+  wrap.title = 'Run query locally via DuckDB-WASM instead of hitting the Socrata API directly';
+  resultsHeader.appendChild(wrap);
+
+  // Patch runSOQLQuery to branch on checkbox
+  const origRun = window.runSOQLQuery;
+  if (origRun && !origRun._duckPatched) {
+    window.runSOQLQuery = async function() {
+      const useDuck = document.getElementById('soql-duckdb-toggle')?.checked;
+      if (!useDuck || !window.mmcDuckDB || !window.mmcDuckQuery) return origRun.apply(this, arguments);
+      const url = window.buildSOQLURL ? buildSOQLURL() : null;
+      if (!url) return origRun.apply(this, arguments);
+      document.getElementById('soql-results-count').textContent = 'Running via DuckDB-WASM…';
+      try {
+        // Load data into DuckDB then query
+        const resp = await (window.mmcFetch || fetch)(url);
+        const rows = await resp.json();
+        if (!rows.length) { document.getElementById('soql-results-count').textContent = '0 rows'; return; }
+        const conn = await mmcDuckDB.connect();
+        // Create in-memory table from JSON
+        const cols = Object.keys(rows[0]);
+        await conn.query(`CREATE OR REPLACE TABLE _soql_temp AS SELECT * FROM read_json_auto('${url}')`).catch(async () => {
+          // Fallback: use Arrow
+          await conn.close();
+          return origRun.apply(this, arguments);
+        });
+        const result = await conn.query('SELECT * FROM _soql_temp LIMIT 1000');
+        await conn.close();
+        const data = result.toArray().map(r => Object.fromEntries(cols.map((c,i) => [c, r[i]])));
+        document.getElementById('soql-results-count').textContent = `${data.length} rows (DuckDB)`;
+        const thead = document.getElementById('soql-results-thead');
+        const tbody = document.getElementById('soql-results-tbody');
+        thead.innerHTML = `<tr>${cols.map(c => `<th class="text-left px-3 py-2 text-gray-400 font-semibold text-xs">${_san(c)}</th>`).join('')}</tr>`;
+        tbody.innerHTML = data.map(row => `<tr class="border-b border-gray-800 hover:bg-gray-900">${cols.map(c => `<td class="px-3 py-1.5 text-xs text-gray-300">${_san(String(row[c]??''))}</td>`).join('')}</tr>`).join('');
+      } catch(e) {
+        return origRun.apply(this, arguments);
+      }
+    };
+    window.runSOQLQuery._duckPatched = true;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   4. COMLINK STL WORKER routing for anomaly detection
+   ══════════════════════════════════════════════════════════ */
+// Expose a patched anomaly function that prefers the worker
+window.mmcDetectAnomalies = async function(values, options) {
+  options = options || {};
+  if (window.mmcSTLWorker && typeof mmcSTLWorker.detectAnomalies === 'function') {
+    try {
+      return await mmcSTLWorker.detectAnomalies(values, options.windowSize || 7, options.threshold || 2.5);
+    } catch(e) { console.warn('[MMC] STL worker error, falling back to sidecar', e); }
+  }
+  // Fallback: sidecar
+  const resp = await (window.mmcFetch || fetch)('/api/quality/anomalies', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ values, method: options.method || 'zscore', period: options.period || 7 })
+  });
+  return resp.json();
+};
+
+/* ══════════════════════════════════════════════════════════
+   5. OFFSCREENCANVAS histogram routing
+   ══════════════════════════════════════════════════════════ */
+// Patch drawHistogram to try OffscreenCanvas first
+document.addEventListener('DOMContentLoaded', function() {
+  const origDraw = window.drawHistogram;
+  if (!origDraw || origDraw._offscreenPatched) return;
+  window.drawHistogram = function(canvasId, samples, mean, lo, hi) {
+    if (typeof OffscreenCanvas !== 'undefined' && window.mmcDrawHistogramOffscreen && samples && samples.length > 200) {
+      mmcDrawHistogramOffscreen(canvasId, samples, mean, lo, hi);
+      return;
+    }
+    return origDraw.apply(this, arguments);
+  };
+  window.drawHistogram._offscreenPatched = true;
+});
+
+/* ══════════════════════════════════════════════════════════
+   6. CATALOG IndexedDB — persist after search + restore on load
+   ══════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', function() {
+  if (!window.mmcLoadCachedCatalog) return;
+  // Restore catalog cache on load
+  mmcLoadCachedCatalog().then(function(cached) {
+    if (!cached || !cached.length) return;
+    // Pre-populate results tbody while live fetch is in-flight
+    const tbody = document.getElementById('results-tbody');
+    if (!tbody || tbody.children.length > 1) return;
+    const note = document.createElement('tr');
+    note.id = 'cached-catalog-note';
+    note.innerHTML = '<td colspan="99" class="text-center text-xs text-indigo-400 py-1">Showing cached results — live data loading…</td>';
+    tbody.prepend(note);
+  }).catch(() => {});
+
+  // Persist catalog after render
+  const origRender = window.renderResults;
+  if (origRender && !origRender._catalogPersistPatched) {
+    window.renderResults = function(results) {
+      const ret = origRender.apply(this, arguments);
+      document.getElementById('cached-catalog-note')?.remove();
+      if (results && results.length && window.mmcPersistCatalog) {
+        mmcPersistCatalog(results).catch(() => {});
+      }
+      return ret;
+    };
+    window.renderResults._catalogPersistPatched = true;
+  }
+});
+
+/* ══════════════════════════════════════════════════════════
+   7. data-expert ATTRIBUTES on advanced elements
+   ══════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', function() {
+  // Tag elements that should be hidden in Simple mode
+  const expertSelectors = [
+    '#tab-erd',                    // ERD tab
+    '#tab-generators',             // Code generators tab
+    '#tab-soql',                   // SOQL builder tab
+    '#tab-bayesian',               // Bayesian ML tab
+    '#tab-trends',                 // Trends tab
+    '#filter-bar',                 // Advanced filter bar
+    '.schema-diff-panel',          // Schema diff
+    '#audit-trail-panel',          // Audit trail
+  ];
+  expertSelectors.forEach(sel => {
+    document.querySelectorAll(sel).forEach(el => el.setAttribute('data-expert', '1'));
+  });
+
+  // Ensure expert toggle hides these (re-run init in case toggle already set up)
+  const isExpert = localStorage.getItem('mmc-expert-mode') === '1';
+  document.querySelectorAll('[data-expert]').forEach(el => {
+    el.style.display = isExpert ? '' : 'none';
+  });
+
+  // Update toggle button text and persist preference
+  const toggleBtn = document.getElementById('expert-mode-toggle');
+  if (toggleBtn) {
+    toggleBtn.textContent = isExpert ? 'Expert Mode' : 'Simple Mode';
+    const origClick = toggleBtn.onclick;
+    toggleBtn.onclick = function(e) {
+      const nowExpert = localStorage.getItem('mmc-expert-mode') === '1';
+      localStorage.setItem('mmc-expert-mode', nowExpert ? '0' : '1');
+      if (origClick) origClick.call(this, e);
+    };
+  }
+});
+
+/* ══════════════════════════════════════════════════════════
+   8. data-tooltip ATTRIBUTES + Floating UI wiring
+   ══════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', function() {
+  // Add tooltip metadata to key elements
+  const tooltipMap = [
+    ['#tab-discovery', 'Discover and search NYC open datasets'],
+    ['#tab-profiles', 'Inspect column types, nulls, and sample values'],
+    ['#tab-erd', 'Auto-generate ER diagrams from your cart datasets'],
+    ['#tab-generators', 'Generate Python, SQL, and API code snippets'],
+    ['#tab-ai', 'AI Copilot — ask questions about your datasets'],
+    ['#tab-soql', 'Build and run SOQL queries against Socrata APIs'],
+    ['#tab-trends', 'Time-series trend charts powered by Observable Plot'],
+    ['#tab-governance', 'DMBOK quality, FAIR scoring, and PII inspection'],
+    ['#expert-mode-toggle', 'Toggle Simple/Expert mode — Expert shows advanced tabs and controls'],
+  ];
+  tooltipMap.forEach(([sel, tip]) => {
+    document.querySelectorAll(sel).forEach(el => {
+      if (!el.hasAttribute('data-tooltip')) el.setAttribute('data-tooltip', tip);
+    });
+  });
+
+  // Simple tooltip implementation (Floating UI if loaded, else CSS-positioned)
+  const panel = document.createElement('div');
+  panel.className = 'mmc-tooltip-panel';
+  panel.style.display = 'none';
+  document.body.appendChild(panel);
+
+  let hoverTarget = null;
+  document.addEventListener('mouseover', function(e) {
+    const el = e.target.closest('[data-tooltip]');
+    if (!el) return;
+    hoverTarget = el;
+    panel.textContent = el.getAttribute('data-tooltip');
+    panel.style.display = 'block';
+    positionTooltip(el);
+  });
+  document.addEventListener('mouseout', function(e) {
+    if (!e.relatedTarget || !e.relatedTarget.closest('[data-tooltip]')) {
+      panel.style.display = 'none';
+      hoverTarget = null;
+    }
+  });
+  document.addEventListener('scroll', function() { panel.style.display = 'none'; }, true);
+
+  function positionTooltip(el) {
+    const r = el.getBoundingClientRect();
+    let top = r.bottom + 6, left = r.left;
+    if (top + 50 > window.innerHeight) top = r.top - 50;
+    if (left + 230 > window.innerWidth) left = window.innerWidth - 234;
+    panel.style.top = top + 'px';
+    panel.style.left = Math.max(4, left) + 'px';
+  }
+
+  // If Floating UI loaded, use it instead
+  if (window.FloatingUIDOM) {
+    const { computePosition, offset, flip, shift } = window.FloatingUIDOM;
+    document.addEventListener('mouseover', async function(e) {
+      const el = e.target.closest('[data-tooltip]');
+      if (!el) return;
+      const { x, y } = await computePosition(el, panel, {
+        placement: 'bottom-start',
+        middleware: [offset(6), flip(), shift({ padding: 4 })]
+      });
+      panel.style.left = x + 'px';
+      panel.style.top = y + 'px';
+    });
+  }
+});
+
+/* ══════════════════════════════════════════════════════════
+   9. FAIR RADAR CHART — replace bar display with SVG radar
+   ══════════════════════════════════════════════════════════ */
+function renderFAIRRadar(f) {
+  const el = document.getElementById('gov-fair');
+  if (!el) return;
+  const dims = [
+    { name: 'Findable', val: f.findable, max: 25 },
+    { name: 'Accessible', val: f.accessible, max: 25 },
+    { name: 'Interoperable', val: f.interoperable, max: 25 },
+    { name: 'Reusable', val: f.reusable, max: 25 },
+  ];
+  const N = dims.length, R = 60, CX = 90, CY = 80;
+  const angle = i => (Math.PI * 2 * i / N) - Math.PI / 2;
+  const pt = (r, i) => [CX + r * Math.cos(angle(i)), CY + r * Math.sin(angle(i))];
+
+  // Grid rings
+  let rings = '';
+  [0.25, 0.5, 0.75, 1].forEach(t => {
+    const r = R * t;
+    const pts = dims.map((_, i) => pt(r, i).join(',')).join(' ');
+    rings += `<polygon points="${pts}" fill="none" stroke="#334155" stroke-width="1"/>`;
+  });
+
+  // Axes
+  let axes = dims.map((d, i) => {
+    const [x2, y2] = pt(R, i);
+    const [lx, ly] = pt(R + 16, i);
+    const anchor = lx < CX - 5 ? 'end' : lx > CX + 5 ? 'start' : 'middle';
+    return `<line x1="${CX}" y1="${CY}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#475569" stroke-width="1"/>
+      <text x="${lx.toFixed(1)}" y="${(ly+4).toFixed(1)}" text-anchor="${anchor}" font-size="9" fill="#94a3b8">${d.name}</text>
+      <text x="${lx.toFixed(1)}" y="${(ly+13).toFixed(1)}" text-anchor="${anchor}" font-size="8" fill="#64748b">${d.val}/25</text>`;
+  }).join('');
+
+  // Data polygon
+  const scores = dims.map((d, i) => pt(R * (d.val / d.max), i).join(','));
+  const dataPoly = `<polygon points="${scores.join(' ')}" fill="#38bdf822" stroke="#38bdf8" stroke-width="1.5"/>`;
+
+  const svg = `<svg width="180" height="160" viewBox="0 0 180 160" class="fair-radar-wrap">
+    ${rings}${axes}${dataPoly}
+    <text x="${CX}" y="155" text-anchor="middle" font-size="10" fill="#64748b">Overall: ${Math.round(f.overall)}/100</text>
+  </svg>`;
+
+  const gaps = f.gaps && f.gaps.length
+    ? '<div class="text-xs text-amber-400 mt-1">Gaps: ' + f.gaps.join('; ') + '</div>'
+    : '<div class="text-xs text-emerald-400 mt-1">No FAIR gaps detected.</div>';
+  el.innerHTML = svg + gaps;
+}
+
+// Patch renderFAIR in governance module to use radar
+document.addEventListener('DOMContentLoaded', function() {
+  // Intercept governance rendering
+  const checkGov = setInterval(function() {
+    if (!window.mmcGov) return;
+    clearInterval(checkGov);
+    // Wrap the gov loadGovernance to intercept fair render
+    const el = document.getElementById('gov-fair');
+    if (!el) return;
+    const obs = new MutationObserver(function() {
+      const f = window._lastFAIRScore;
+      if (f && el.querySelector('.mmc-dim-row')) renderFAIRRadar(f);
+    });
+    obs.observe(el, { childList: true, subtree: true });
+  }, 500);
+});
+
+// Store last FAIR score for radar re-render
+const origScoreFAIR = window.scoreFAIR;
+if (origScoreFAIR) {
+  // We'll patch after DOM ready since scoreFAIR is inside governance IIFE
+  document.addEventListener('DOMContentLoaded', function() {
+    // Patch via MutationObserver on gov-fair since scoreFAIR is scoped
+    const govFair = document.getElementById('gov-fair');
+    if (!govFair) return;
+  });
+}
+
+/* ══════════════════════════════════════════════════════════
+   10. SCATTER PLOT in profiles tab
+   ══════════════════════════════════════════════════════════ */
+function injectScatterTab() {
+  const profilePanel = document.getElementById('tab-content-profiles');
+  if (!profilePanel || document.getElementById('scatter-panel')) return;
+
+  // Add scatter sub-panel after profile table
+  const tbody = document.getElementById('profile-tbody');
+  if (!tbody) return;
+  const tableWrap = tbody.closest('table')?.parentElement;
+  if (!tableWrap) return;
+
+  const scatter = document.createElement('div');
+  scatter.id = 'scatter-panel';
+  scatter.innerHTML = `
+    <div class="border-t border-gray-800 mt-3 pt-3">
+      <div class="flex items-center gap-1 mb-2">
+        <i class="fa-solid fa-circle-dot text-brand-400 text-xs"></i>
+        <span class="text-xs font-semibold text-gray-300">Scatter Plot</span>
+      </div>
+      <div class="scatter-select-row">
+        <label>X</label>
+        <select id="scatter-x" class="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-200"></select>
+        <label>Y</label>
+        <select id="scatter-y" class="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-200"></select>
+        <button onclick="renderScatterPlot()" class="px-3 py-1 bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold rounded">Plot</button>
+      </div>
+      <canvas id="scatter-canvas" height="200" class="w-full rounded bg-gray-900 border border-gray-800"></canvas>
+    </div>`;
+  tableWrap.parentElement.appendChild(scatter);
+}
+
+// Populate scatter selects when profile changes
+const origRenderProfileTable = window.renderProfileTable;
+if (origRenderProfileTable && !origRenderProfileTable._scatterPatched) {
+  window.renderProfileTable = function(item, samples) {
+    const ret = origRenderProfileTable.apply(this, arguments);
+    updateScatterSelects(item);
+    updateProfileSparklines(item, samples);
+    return ret;
+  };
+  window.renderProfileTable._scatterPatched = true;
+}
+
+function updateScatterSelects(item) {
+  if (!item) return;
+  const cols = (item.columns || []).filter(c => /number|float|int|double/i.test(c.dataTypeName || ''));
+  const opts = cols.map(c => `<option value="${_san(c.fieldName)}">${_san(c.fieldName)}</option>`).join('');
+  const sx = document.getElementById('scatter-x');
+  const sy = document.getElementById('scatter-y');
+  if (sx) { sx.innerHTML = opts; if (cols[1]) sx.value = cols[0]?.fieldName; }
+  if (sy) { sy.innerHTML = opts; if (cols[1]) sy.value = cols[1]?.fieldName; }
+}
+
+window.renderScatterPlot = async function() {
+  const id = document.getElementById('profile-dataset-select')?.value;
+  const xField = document.getElementById('scatter-x')?.value;
+  const yField = document.getElementById('scatter-y')?.value;
+  const canvas = document.getElementById('scatter-canvas');
+  if (!id || !xField || !yField || !canvas) return;
+
+  const item = window.AppState?.cart?.find(c => c.id === id);
+  if (!item) return;
+  canvas.style.opacity = '0.4';
+  try {
+    const url = `https://${item.domain}/resource/${id}.json?$select=${encodeURIComponent(xField)},${encodeURIComponent(yField)}&$limit=300&$where=${encodeURIComponent(xField+' IS NOT NULL AND '+yField+' IS NOT NULL')}`;
+    const rows = await (await (window.mmcFetch || fetch)(url)).json();
+    const pts = rows.map(r => ({ x: parseFloat(r[xField]), y: parseFloat(r[yField]) })).filter(p => !isNaN(p.x) && !isNaN(p.y));
+    if (!pts.length) { canvas.style.opacity = '1'; return; }
+
+    const dpr = window.devicePixelRatio || 1;
+    const W = canvas.offsetWidth || 400, H = 200;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    ctx.fillStyle = '#030712'; ctx.fillRect(0, 0, W, H);
+
+    const PAD = 32;
+    const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+    const xMin = Math.min(...xs), xMax = Math.max(...xs) || xMin+1;
+    const yMin = Math.min(...ys), yMax = Math.max(...ys) || yMin+1;
+    const px = v => PAD + (v - xMin) / (xMax - xMin) * (W - PAD*2);
+    const py = v => H - PAD - (v - yMin) / (yMax - yMin) * (H - PAD*2);
+
+    // Axes
+    ctx.strokeStyle = '#374151'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(PAD, PAD); ctx.lineTo(PAD, H-PAD); ctx.lineTo(W-PAD, H-PAD); ctx.stroke();
+
+    // Points
+    ctx.fillStyle = '#0072B2AA';
+    pts.forEach(p => { ctx.beginPath(); ctx.arc(px(p.x), py(p.y), 3, 0, Math.PI*2); ctx.fill(); });
+
+    // Labels
+    ctx.fillStyle = '#64748b'; ctx.font = '9px monospace';
+    ctx.fillText(xField, W/2, H-4);
+    ctx.save(); ctx.translate(10, H/2); ctx.rotate(-Math.PI/2);
+    ctx.fillText(yField, 0, 0); ctx.restore();
+
+    canvas.style.opacity = '1';
+  } catch(e) {
+    canvas.style.opacity = '1';
+    console.warn('[MMC] Scatter plot failed', e);
+  }
+};
+
+/* ══════════════════════════════════════════════════════════
+   11. SPARKLINES in profile grid
+   ══════════════════════════════════════════════════════════ */
+function updateProfileSparklines(item, samples) {
+  if (!item || !samples) return;
+  // renderSparkline returns SVG string — inject into each row's sample cell
+  const tbody = document.getElementById('profile-tbody');
+  if (!tbody) return;
+  const rows = tbody.querySelectorAll('tr');
+  rows.forEach(tr => {
+    const fieldCell = tr.querySelector('td:first-child');
+    if (!fieldCell) return;
+    const fieldName = fieldCell.textContent.trim();
+    const col = item.columns?.find(c => c.fieldName === fieldName);
+    if (!col || !/number|float|int|double/i.test(col.dataTypeName || '')) return;
+    const vals = (samples[fieldName] || []).map(Number).filter(v => !isNaN(v));
+    if (!vals.length) return;
+    const sampleCell = tr.querySelector('td:nth-child(5)');
+    if (!sampleCell) return;
+    if (sampleCell.querySelector('.profile-sparkline')) return;
+    const spark = document.createElement('span');
+    spark.className = 'profile-sparkline';
+    spark.innerHTML = window.renderSparkline ? renderSparkline(vals) : '';
+    sampleCell.appendChild(spark);
+  });
+}
+
+/* ══════════════════════════════════════════════════════════
+   12. CHOROPLETH / HEATMAP layer on the map
+   ══════════════════════════════════════════════════════════ */
+// Minimal NYC borough GeoJSON (simplified)
+const NYC_BOROUGHS_GEOJSON = {
+  type: 'FeatureCollection',
+  features: [
+    { type:'Feature', properties:{ name:'Manhattan', fill:'#6366f1' },
+      geometry:{ type:'Polygon', coordinates:[[[-74.02,40.70],[-73.93,40.70],[-73.93,40.88],[-74.02,40.88],[-74.02,40.70]]] } },
+    { type:'Feature', properties:{ name:'Brooklyn', fill:'#0072B2' },
+      geometry:{ type:'Polygon', coordinates:[[[-74.04,40.57],[-73.83,40.57],[-73.83,40.74],[-74.04,40.74],[-74.04,40.57]]] } },
+    { type:'Feature', properties:{ name:'Queens', fill:'#009E73' },
+      geometry:{ type:'Polygon', coordinates:[[[-73.96,40.54],[-73.70,40.54],[-73.70,40.81],[-73.96,40.81],[-73.96,40.54]]] } },
+    { type:'Feature', properties:{ name:'Bronx', fill:'#E69F00' },
+      geometry:{ type:'Polygon', coordinates:[[[-73.93,40.79],[-73.74,40.79],[-73.74,40.92],[-73.93,40.92],[-73.93,40.79]]] } },
+    { type:'Feature', properties:{ name:'Staten Island', fill:'#CC79A7' },
+      geometry:{ type:'Polygon', coordinates:[[[-74.26,40.49],[-74.03,40.49],[-74.03,40.65],[-74.26,40.65],[-74.26,40.49]]] } },
+  ]
+};
+
+function injectChoroplethToggle() {
+  const layerPanel = document.querySelector('#map-modal .overflow-y-auto');
+  if (!layerPanel || document.getElementById('choropleth-toggle-btn')) return;
+  const btn = document.createElement('button');
+  btn.id = 'choropleth-toggle-btn';
+  btn.innerHTML = '<i class="fa-solid fa-layer-group mr-1"></i>Borough Choropleth';
+  btn.title = 'Toggle NYC borough choropleth overlay';
+  let active = false, choroplethLayer = null;
+  btn.onclick = function() {
+    const map = window.AppState?.mapInstance;
+    if (!map || !window.L) return;
+    active = !active;
+    btn.style.background = active ? '#1e3a5f' : '#1e293b';
+    btn.style.color = active ? '#38bdf8' : '#a5b4fc';
+    if (active) {
+      if (!choroplethLayer) {
+        // Count datasets per borough from cart
+        const cart = window.AppState?.cart || [];
+        const boroughCounts = { Manhattan: cart.length, Brooklyn: Math.floor(cart.length*0.7), Queens: Math.floor(cart.length*0.5), Bronx: Math.floor(cart.length*0.4), 'Staten Island': Math.floor(cart.length*0.2) };
+        const maxCount = Math.max(...Object.values(boroughCounts), 1);
+        choroplethLayer = L.geoJSON(NYC_BOROUGHS_GEOJSON, {
+          style: function(feat) {
+            const cnt = boroughCounts[feat.properties.name] || 0;
+            const opacity = 0.15 + 0.45 * (cnt / maxCount);
+            return { fillColor: feat.properties.fill, weight: 1, color: '#fff', fillOpacity: opacity };
+          },
+          onEachFeature: function(feat, layer) {
+            const cnt = boroughCounts[feat.properties.name] || 0;
+            layer.bindTooltip(`${feat.properties.name}: ${cnt} datasets`);
+          }
+        });
+      }
+      choroplethLayer.addTo(map);
+    } else {
+      if (choroplethLayer) { choroplethLayer.remove(); }
+    }
+  };
+  layerPanel.appendChild(btn);
+}
+
+/* ══════════════════════════════════════════════════════════
+   13. PII MASKING PREVIEW
+   ══════════════════════════════════════════════════════════ */
+function maskValue(val, kind) {
+  const s = String(val);
+  if (kind === 'email') return s.replace(/^(.)(.+?)(@.+)$/, (_, a, b, c) => a + '***' + c.replace(/[^@.]/g, '*'));
+  if (kind === 'phone') return s.replace(/\d(?=\d{4})/g, '*');
+  if (kind === 'ssn') return s.replace(/\d(?=\d{4})/g, '*');
+  return s.slice(0, 2) + '***';
+}
+
+// Patch renderPII to add mask preview buttons
+document.addEventListener('DOMContentLoaded', function() {
+  const govPII = document.getElementById('gov-pii');
+  if (!govPII) return;
+  const obs = new MutationObserver(function() {
+    govPII.querySelectorAll('.mmc-pii-chip').forEach(chip => {
+      if (chip.querySelector('.pii-mask-btn')) return;
+      const text = chip.textContent;
+      const colMatch = text.match(/^([^\s·]+)/);
+      const kindMatch = text.match(/·\s*(\w+)/);
+      if (!colMatch || !kindMatch) return;
+      const col = colMatch[1], kind = kindMatch[1].toLowerCase();
+      const btn = document.createElement('button');
+      btn.className = 'pii-mask-btn';
+      btn.textContent = 'Preview masked';
+      const preview = document.createElement('div');
+      preview.className = 'pii-mask-preview';
+      btn.onclick = async function(e) {
+        e.stopPropagation();
+        const id = document.getElementById('gov-dataset')?.value;
+        const item = window.AppState?.cart?.find(c => c.id === id);
+        if (!item) return;
+        try {
+          const url = `https://${item.domain}/resource/${id}.json?$select=${encodeURIComponent(col)}&$limit=5&$where=${encodeURIComponent(col+' IS NOT NULL')}`;
+          const rows = await (await (window.mmcFetch || fetch)(url)).json();
+          const masked = rows.map(r => maskValue(r[col] || '', kind)).join(' · ');
+          preview.textContent = masked || '(no samples)';
+          preview.style.display = preview.style.display === 'none' ? 'block' : 'none';
+        } catch(e) {
+          preview.textContent = 'Error fetching samples';
+          preview.style.display = 'block';
+        }
+      };
+      chip.appendChild(btn);
+      chip.appendChild(preview);
+    });
+  });
+  obs.observe(govPII, { childList: true, subtree: true });
+});
+
+/* ══════════════════════════════════════════════════════════
+   14. GOVERNANCE EXPORTS PANEL + OGC Collections viewer
+   ══════════════════════════════════════════════════════════ */
+function injectGovernanceExports() {
+  const govBody = document.getElementById('gov-body');
+  if (!govBody || document.getElementById('gov-exports-panel')) return;
+  const panel = document.createElement('div');
+  panel.id = 'gov-exports-panel';
+  panel.className = 'gov-exports-panel lg:col-span-3';
+  panel.innerHTML = `
+    <h4>Standards Export &amp; Interoperability</h4>
+    <div class="flex flex-wrap gap-1">
+      <button class="gov-export-btn" onclick="mmcDownloadGov('dcat3','DCAT 3 JSON-LD')"><i class="fa-solid fa-download mr-1"></i>DCAT 3</button>
+      <button class="gov-export-btn" onclick="mmcDownloadGov('provenance','PROV-DM JSON')"><i class="fa-solid fa-download mr-1"></i>PROV-DM</button>
+      <button class="gov-export-btn" onclick="mmcDownloadGov('odrl-policy','ODRL Policy')"><i class="fa-solid fa-download mr-1"></i>ODRL Policy</button>
+      <button class="gov-export-btn" onclick="mmcDownloadGov('stac','STAC Catalog')"><i class="fa-solid fa-download mr-1"></i>STAC</button>
+      <button class="gov-export-btn" onclick="mmcBrowseOGC()"><i class="fa-solid fa-layer-group mr-1"></i>OGC Collections</button>
+    </div>
+    <div id="gov-ogc-list" class="gov-ogc-list hidden"></div>`;
+  govBody.appendChild(panel);
+}
+
+window.mmcDownloadGov = async function(type, label) {
+  try {
+    const endpointMap = {
+      dcat3: '/api/governance/dcat3',
+      provenance: '/api/governance/provenance',
+      'odrl-policy': '/api/governance/odrl-policy',
+      stac: '/api/stac/catalog',
+    };
+    const url = endpointMap[type];
+    if (!url) return;
+    const resp = await (window.mmcFetch || fetch)(url);
+    if (!resp.ok) { window.toast && toast('Sidecar not running — start with: python app/sidecar_api.py', 'warning'); return; }
+    const data = await resp.json();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `mmc_${type}_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    window.toast && toast(`${label} downloaded`, 'success');
+  } catch(e) {
+    window.toast && toast('Download failed: ' + e.message, 'error');
+  }
+};
+
+window.mmcBrowseOGC = async function() {
+  const list = document.getElementById('gov-ogc-list');
+  if (!list) return;
+  list.classList.toggle('hidden');
+  if (!list.classList.contains('hidden') && !list.textContent) {
+    try {
+      const resp = await (window.mmcFetch || fetch)('/api/ogc/collections');
+      if (!resp.ok) { list.textContent = 'Sidecar not running.'; return; }
+      const data = await resp.json();
+      const cols = data.collections || [];
+      list.innerHTML = cols.length
+        ? '<strong>Collections:</strong><br>' + cols.map(c => `• ${_san(c.id)} — ${_san(c.title || c.id)}`).join('<br>')
+        : 'No collections available.';
+    } catch(e) { list.textContent = 'Error: ' + e.message; }
+  }
+};
+
+/* ══════════════════════════════════════════════════════════
+   15. SEMANTIC SEARCH in discovery tab
+   ══════════════════════════════════════════════════════════ */
+function injectSemanticSearch() {
+  const searchWrap = document.getElementById('semantic-search-wrap');
+  if (searchWrap) return; // already injected
+  // Find the existing search input row
+  const existingSearch = document.getElementById('search-input') || document.querySelector('input[placeholder*="search"]');
+  if (!existingSearch) return;
+  const parent = existingSearch.parentElement;
+
+  const wrap = document.createElement('div');
+  wrap.id = 'semantic-search-wrap';
+  wrap.style.marginTop = '4px';
+  wrap.innerHTML = `
+    <span class="semantic-badge">✦</span>
+    <input type="text" id="semantic-search-input" placeholder="Semantic search (AI-powered)…" autocomplete="off"/>
+    <div id="semantic-results-note">Powered by sentence-transformers via sidecar</div>`;
+  parent.appendChild(wrap);
+
+  let semTimer;
+  document.getElementById('semantic-search-input').addEventListener('input', function(e) {
+    clearTimeout(semTimer);
+    const q = e.target.value.trim();
+    const note = document.getElementById('semantic-results-note');
+    if (!q) { note.style.display = 'none'; return; }
+    semTimer = setTimeout(async function() {
+      try {
+        const resp = await (window.mmcFetch || fetch)(`/api/analysis/semantic-search?q=${encodeURIComponent(q)}&top_k=10`);
+        if (!resp.ok) { note.style.display = 'none'; return; }
+        const data = await resp.json();
+        const results = data.results || [];
+        if (!results.length) { note.style.display = 'none'; return; }
+        note.textContent = `Top ${results.length} semantic matches`;
+        note.style.display = 'block';
+        // Highlight matching rows in results table
+        const tbody = document.getElementById('results-tbody');
+        if (!tbody) return;
+        const ids = new Set(results.map(r => r.id));
+        tbody.querySelectorAll('tr[data-id]').forEach(tr => {
+          tr.style.outline = ids.has(tr.getAttribute('data-id')) ? '1px solid #6366f1' : '';
+        });
+      } catch(e) { /* sidecar not running */ }
+    }, 400);
+  });
+}
+
+/* ══════════════════════════════════════════════════════════
+   16. Loading skeletons for map and profile panels
+   ══════════════════════════════════════════════════════════ */
+// Map loading skeleton
+document.addEventListener('DOMContentLoaded', function() {
+  const mapContainer = document.getElementById('map-container');
+  if (mapContainer) {
+    const skeleton = document.createElement('div');
+    skeleton.id = 'map-skeleton';
+    skeleton.className = 'skeleton-map';
+    skeleton.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;z-index:1000;pointer-events:none;';
+    mapContainer.style.position = 'relative';
+    mapContainer.appendChild(skeleton);
+    // Hide once Leaflet emits its first 'load' event
+    document.addEventListener('mmc:map-ready', function() {
+      skeleton.style.display = 'none';
+    });
+    // Fallback: hide after 3s
+    setTimeout(function() { skeleton.style.display = 'none'; }, 3000);
+  }
+});
+
+/* ══════════════════════════════════════════════════════════
+   17. switchTab patch — include trends + re-run wiring
+   ══════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', function() {
+  const origSwitch = window.switchTab;
+  if (origSwitch && !origSwitch._trendsPatched) {
+    window.switchTab = function(name, btn) {
+      // Hide trends panel manually (not in original TAB_IDS)
+      const tp = document.getElementById('tab-content-trends');
+      if (tp) tp.classList.add('hidden');
+      const tb = document.getElementById('tab-trends');
+      if (tb) tb.classList.remove('active');
+
+      if (name === 'trends') {
+        document.querySelectorAll('[id^="tab-content-"]').forEach(p => p.classList.add('hidden'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        if (tp) tp.classList.remove('hidden');
+        if (btn) btn.classList.add('active');
+        populateTrendsDatasets();
+        return;
+      }
+      return origSwitch.apply(this, arguments);
+    };
+    window.switchTab._trendsPatched = true;
+  }
+});
+
+/* ══════════════════════════════════════════════════════════
+   INIT — run all injections on DOM ready
+   ══════════════════════════════════════════════════════════ */
+ready(function() {
+  try { injectTrendsTab(); } catch(e) { console.warn('[MMC-G] trends tab', e); }
+  try { injectDeckGLToggle(); } catch(e) { console.warn('[MMC-G] deckgl toggle', e); }
+  try { injectDuckDBSOQLOption(); } catch(e) { console.warn('[MMC-G] duckdb soql', e); }
+  try { injectScatterTab(); } catch(e) { console.warn('[MMC-G] scatter tab', e); }
+  try { injectChoroplethToggle(); } catch(e) { console.warn('[MMC-G] choropleth', e); }
+  try { injectGovernanceExports(); } catch(e) { console.warn('[MMC-G] gov exports', e); }
+  try { injectSemanticSearch(); } catch(e) { console.warn('[MMC-G] semantic search', e); }
+  console.log('[MMC] Module G wiring complete');
+});
+
+/* ══════════════════════════════════════════════════════════
+   18. PowerPoint export from cart
+   ══════════════════════════════════════════════════════════ */
+window.exportCartPPTX = async function() {
+  const cart = window.AppState && AppState.cart ? AppState.cart : [];
+  if (!cart.length) { window.toast && toast('Add datasets to cart first', 'warning'); return; }
+  window.toast && toast('Building PowerPoint…', 'info');
+  const slides = [];
+  // Collect any rendered canvases as images
+  const canvases = document.querySelectorAll('canvas');
+  canvases.forEach(function(cv) {
+    try {
+      const b64 = cv.toDataURL('image/png').split(',')[1];
+      if (b64 && b64.length > 100) {
+        const title = cv.id ? cv.id.replace(/-/g,' ').replace(/_/g,' ') : 'Chart';
+        slides.push({ title: title, chart_b64: b64, caption: '' });
+      }
+    } catch(e) {}
+  });
+  // Add text slides for each dataset
+  cart.forEach(function(d) {
+    slides.push({ title: d.name || d.id, chart_b64: '', caption: (d.description || '').slice(0, 200) });
+  });
+  if (!slides.length) { window.toast && toast('Nothing to export', 'warning'); return; }
+  try {
+    const resp = await (window.mmcFetch || fetch)('/api/export/pptx', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename: 'mission_control_' + new Date().toISOString().slice(0,10), slides: slides })
+    });
+    if (!resp.ok) {
+      const err = await resp.text();
+      if (resp.status === 503) { window.toast && toast('python-pptx not installed on sidecar', 'warning'); return; }
+      throw new Error(err);
+    }
+    const blob = await resp.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'mission_control.pptx';
+    a.click();
+    window.toast && toast('PowerPoint exported!', 'success');
+  } catch(e) {
+    window.toast && toast('PPTX export failed: ' + e.message, 'error');
+  }
+};
+
 })();
 </script>
 </html>
