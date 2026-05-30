@@ -1,0 +1,20 @@
+# Render Blueprint — one-click deploy for Mission Control
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: nyc-mission-control
+    runtime: python
+    plan: free
+    buildCommand: pip install -e ".[mission,postgres,xlsx]"
+    startCommand: PYTHONPATH=. python -m streamlit run app/app.py --server.port=$PORT --server.address=0.0.0.0 --server.headless=true
+    healthCheckPath: /
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: PYTHONPATH
+        value: "."
+      - key: MISSION_DEMO
+        value: "1"
+      - key: SOCRATA_APP_TOKEN
+        sync: false
