@@ -55,6 +55,8 @@ dowhy = {version = ">=0.11", optional = true}
 sentence-transformers = {version = ">=2.2", optional = true}
 numba = {version = ">=0.57", optional = true}
 opendp = {version = ">=0.9", optional = true}
+agentql = {version = ">=1.19.0", optional = true}
+playwright = {version = ">=1.40", optional = true}
 python-dateutil = {version = ">=2.8"}
 
 [tool.poetry.extras]
@@ -67,7 +69,8 @@ llm = ["langchain", "langchain-community", "langchain-openai", "ollama", "openai
 viz = ["matplotlib", "plotly"]
 geo = ["shapely", "geopandas"]
 reports = ["plotly", "weasyprint"]
-mission = ["sodapy", "geopandas", "shapely", "plotly", "pyarrow", "folium", "pymc", "arviz", "prophet", "beautifulsoup4", "river", "mapie", "dowhy", "sentence-transformers", "numba", "opendp"]
+ui = ["streamlit"]
+mission = ["streamlit", "sodapy", "geopandas", "shapely", "plotly", "pyarrow", "folium", "pymc", "arviz", "prophet", "beautifulsoup4", "river", "mapie", "dowhy", "sentence-transformers", "numba", "opendp", "agentql", "playwright"]
 pptx = ["python-pptx"]
 exe = ["pyinstaller"]
 desktop = ["pywebview"]

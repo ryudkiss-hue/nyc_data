@@ -46,4 +46,6 @@ dist/
 !desktop/build/**
 installer/output/*.exe
 !installer/output/.gitkeep
-.claude/
+
+# IDE / tool configs with potential secrets
+.roo/
