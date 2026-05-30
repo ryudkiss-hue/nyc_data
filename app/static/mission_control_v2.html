@@ -5299,6 +5299,7 @@ function generateCodeFull(){
     const bins = 40;
     const min = Math.min(...samples), max = Math.max(...samples);
     const binW = (max - min) / bins;
+    if (binW === 0) return;
     const counts = new Array(bins).fill(0);
     samples.forEach(s => {
       const b = Math.min(Math.floor((s - min) / binW), bins - 1);
@@ -5358,6 +5359,7 @@ function generateCodeFull(){
 
     // Historical actuals
     const nHist = histVals.length;
+    if (nHist < 2) return;
     ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2;
     ctx.beginPath();
     histVals.forEach((v, i) => {
