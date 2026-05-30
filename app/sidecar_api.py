@@ -22,13 +22,18 @@ Design principles:
 from __future__ import annotations
 
 import importlib.util
+import logging
+import os
 import random
 import time
+from collections import OrderedDict
 from typing import Any, Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+
+logger = logging.getLogger("mmc.sidecar")
 
 # Lightweight in-process audit trail for governance operations (#50)
 try:
@@ -65,6 +70,29 @@ app.add_middleware(
 
 _START_TIME = time.monotonic()
 
+# ---------------------------------------------------------------------------
+# In-memory quality catalog (dataset_id -> dict)
+# ---------------------------------------------------------------------------
+_quality_catalog: dict[str, Any] = {}
+
+
+def _write_catalog(dataset_id: str, entry: dict) -> None:
+    """Persist a catalog entry; logs warnings on failure."""
+    try:
+        _quality_catalog[dataset_id] = entry
+    except Exception as exc:
+        logger.warning("catalog write failed: %s", exc)
+
+
+# ---------------------------------------------------------------------------
+# In-memory audit trail
+# ---------------------------------------------------------------------------
+_audit_trail: "OrderedDict[str, dict]" = OrderedDict()
+
+
+def _get_trail() -> "OrderedDict[str, dict]":
+    return _audit_trail
+
 
 def _module_available(name: str) -> bool:
     """Return True if a module can be imported without importing it."""
@@ -93,9 +121,41 @@ def health() -> dict[str, Any]:
     }
 
 
+def _pymc_available() -> bool:
+    try:
+        import pymc  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
+
+def _prophet_available() -> bool:
+    try:
+        from prophet import Prophet  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
+
+# ---------------------------------------------------------------------------
+# Audit trail endpoint
+# ---------------------------------------------------------------------------
+
+@app.get("/api/audit-trail")
+def audit_trail_get(limit: int = 100, offset: int = 0):
+    """Return paginated audit trail entries (snapshot for atomicity)."""
+    if not _AUDIT_OK:
+        return {"total": 0, "entries": []}
+    entries = list(_get_trail().entries())  # snapshot once
+    total = len(entries)
+    page = entries[offset: offset + limit]
+    return {"total": total, "entries": [e.__dict__ for e in page]}
+
+
 # --------------------------------------------------------------------------- #
 # Bayesian yield-rate
 # --------------------------------------------------------------------------- #
+
 class YieldRateRequest(BaseModel):
     """Beta-Binomial yield-rate request.
 
