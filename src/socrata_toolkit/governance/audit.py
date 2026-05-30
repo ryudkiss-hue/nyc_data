@@ -209,6 +209,7 @@ class AuditEvent:
     ip_address: str | None = None
     user_agent: str | None = None
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    prov_type: str = "prov:Activity"
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> AuditEvent:

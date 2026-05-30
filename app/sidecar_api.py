@@ -563,4 +563,247 @@ def audit_trail_clear() -> dict[str, Any]:
     if not _AUDIT_OK:
         return {"cleared": False}
     _get_trail().clear()
-    return {"cleared": True}
+    return {"cleared": True}# ---------------------------------------------------------------------------
+# GROUP 2 — Semantic search endpoint
+# ---------------------------------------------------------------------------
+
+_semantic_search_instance = None
+
+
+def _get_semantic_search():
+    global _semantic_search_instance
+    if _semantic_search_instance is None:
+        from socrata_toolkit.analysis.semantic_search import SemanticCatalogSearch  # noqa: E402
+        _semantic_search_instance = SemanticCatalogSearch()
+        records = [{"id": k, "name": v.get("name", k)} for k, v in _quality_catalog.items()]
+        if records:
+            _semantic_search_instance.index(records)
+    return _semantic_search_instance
+
+
+@app.get("/api/analysis/semantic-search")
+def semantic_search(q: str = "", top_k: int = 10):
+    """Semantic search over quality catalog dataset names."""
+    try:
+        searcher = _get_semantic_search()
+        # Re-index if catalog has grown
+        records = [{"id": k, "name": v.get("name", k)} for k, v in _quality_catalog.items()]
+        if records:
+            searcher.index(records)
+        results = searcher.search(q, top_k=top_k)
+        return {"results": results}
+    except ImportError as exc:
+        raise HTTPException(503, f"sentence-transformers not installed: {exc}") from exc
+    except Exception as exc:
+        raise HTTPException(500, str(exc)) from exc
+
+
+class DPHistogramRequest(BaseModel):
+    values: list[float]
+    epsilon: float = 1.0
+
+
+@app.post("/api/analysis/dp-histogram")
+def dp_histogram(req: DPHistogramRequest):
+    """Differentially private histogram using OpenDP if available, else plain."""
+    if not req.values:
+        raise HTTPException(400, "values must be non-empty")
+    import math
+    bins = min(20, max(5, int(math.sqrt(len(req.values)))))
+    lo, hi = min(req.values), max(req.values)
+    if lo == hi:
+        return {"bins": [{"bin": lo, "count": len(req.values)}], "method": "plain", "epsilon": req.epsilon}
+
+    bin_width = (hi - lo) / bins
+    counts = [0] * bins
+    for v in req.values:
+        idx = min(int((v - lo) / bin_width), bins - 1)
+        counts[idx] += 1
+
+    method = "plain"
+    try:
+        import opendp.prelude as dp  # type: ignore
+        dp.enable_features("contrib", "floating-point")
+        sensitivity = 2.0
+        noise_scale = sensitivity / req.epsilon
+        import random
+        rng = random.Random()
+        noised = [max(0, c + rng.gauss(0, noise_scale)) for c in counts]
+        counts = [round(v) for v in noised]
+        method = "opendp-laplace"
+    except Exception:
+        pass
+
+    bins_out = [{"bin": round(lo + i * bin_width, 4), "count": counts[i]} for i in range(bins)]
+    return {"bins": bins_out, "method": method, "epsilon": req.epsilon}
+
+
+# ---------------------------------------------------------------------------
+# GROUP 4 — Governance: DCAT 3, PROV-DM, ODRL
+# ---------------------------------------------------------------------------
+
+@app.get("/api/governance/dcat3")
+def governance_dcat3():
+    """Serialize quality catalog as DCAT 3 JSON-LD."""
+    datasets = []
+    for dataset_id, entry in _quality_catalog.items():
+        datasets.append({
+            "@type": "dcat:Dataset",
+            "@id": f"urn:nyc:dataset:{dataset_id}",
+            "dct:identifier": dataset_id,
+            "dct:title": entry.get("name", dataset_id),
+            "dct:description": entry.get("description", ""),
+            "dcat:keyword": entry.get("tags", []),
+            "dct:modified": entry.get("updated_at", ""),
+            "dcat:distribution": [],
+        })
+    return {
+        "@context": "https://www.w3.org/ns/dcat3",
+        "@type": "dcat:Catalog",
+        "dct:title": "NYC Mission Control Quality Catalog",
+        "dct:description": "Quality-scored NYC open datasets",
+        "dcat:dataset": datasets,
+    }
+
+
+@app.get("/api/governance/provenance")
+def governance_provenance():
+    """Return W3C PROV-DM JSON built from audit trail entries."""
+    entries = list(_get_trail().values())
+    entities = {}
+    activities = []
+    for e in entries:
+        eid = e.get("dataset_id", e.get("id", "unknown"))
+        entities[eid] = {
+            "prov:id": f"urn:nyc:dataset:{eid}",
+            "prov:type": "prov:Entity",
+        }
+        activities.append({
+            "prov:id": f"urn:nyc:activity:{e.get('timestamp', '')}:{eid}",
+            "prov:type": e.get("prov_type", "prov:Activity"),
+            "prov:startTime": e.get("timestamp", ""),
+            "prov:used": f"urn:nyc:dataset:{eid}",
+            "dc:description": e.get("action", ""),
+        })
+    return {
+        "@context": {
+            "prov": "http://www.w3.org/ns/prov#",
+            "dc": "http://purl.org/dc/elements/1.1/",
+            "xsd": "http://www.w3.org/2001/XMLSchema#",
+        },
+        "prov:entity": list(entities.values()),
+        "prov:activity": activities,
+    }
+
+
+@app.get("/api/governance/odrl-policy")
+def governance_odrl_policy():
+    """Return ODRL 2.2 policy JSON for the dataset collection."""
+    return {
+        "@context": "http://www.w3.org/ns/odrl.jsonld",
+        "@type": "odrl:Policy",
+        "@id": "urn:nyc:policy:mission-control",
+        "odrl:uid": "urn:nyc:policy:mission-control",
+        "odrl:profile": "http://www.w3.org/ns/odrl/2/",
+        "odrl:permission": [
+            {
+                "odrl:target": "urn:nyc:catalog:all",
+                "odrl:action": "odrl:read",
+                "odrl:assigner": "urn:nyc:dot",
+            },
+            {
+                "odrl:target": "urn:nyc:catalog:all",
+                "odrl:action": "odrl:distribute",
+                "odrl:constraint": {
+                    "odrl:leftOperand": "odrl:purpose",
+                    "odrl:operator": "odrl:eq",
+                    "odrl:rightOperand": "public-benefit",
+                },
+            },
+        ],
+        "odrl:prohibition": [
+            {
+                "odrl:target": "urn:nyc:catalog:all",
+                "odrl:action": "odrl:sell",
+            }
+        ],
+    }
+
+
+# ---------------------------------------------------------------------------
+# GROUP 7 — Standards interop: STAC, OGC API Features
+# ---------------------------------------------------------------------------
+
+@app.get("/api/stac/catalog")
+def stac_catalog():
+    """Minimal STAC 1.0 Catalog JSON."""
+    links = [
+        {"rel": "self", "href": "/api/stac/catalog", "type": "application/json"},
+        {"rel": "root", "href": "/api/stac/catalog", "type": "application/json"},
+    ]
+    for dataset_id in list(_quality_catalog.keys())[:50]:
+        links.append({
+            "rel": "item",
+            "href": f"/api/stac/catalog/items/{dataset_id}",
+            "type": "application/geo+json",
+            "title": _quality_catalog[dataset_id].get("name", dataset_id),
+        })
+    return {
+        "type": "Catalog",
+        "id": "nyc-mission-control",
+        "stac_version": "1.0.0",
+        "description": "NYC Mission Control quality-scored dataset catalog",
+        "title": "NYC Mission Control",
+        "links": links,
+    }
+
+
+@app.get("/api/ogc/collections")
+def ogc_collections():
+    """OGC API Features collections list."""
+    collections = []
+    for dataset_id, entry in _quality_catalog.items():
+        collections.append({
+            "id": dataset_id,
+            "title": entry.get("name", dataset_id),
+            "description": entry.get("description", ""),
+            "links": [
+                {"rel": "items", "href": f"/api/ogc/collections/{dataset_id}/items", "type": "application/geo+json"},
+            ],
+        })
+    return {
+        "collections": collections,
+        "links": [{"rel": "self", "href": "/api/ogc/collections", "type": "application/json"}],
+    }
+
+
+@app.get("/api/ogc/collections/{collection_id}/items")
+def ogc_collection_items(collection_id: str):
+    """GeoJSON FeatureCollection from catalog entries with geospatial metadata."""
+    entry = _quality_catalog.get(collection_id)
+    if not entry:
+        raise HTTPException(404, f"Collection {collection_id!r} not found")
+
+    features = []
+    rows = entry.get("rows", []) or entry.get("sample_rows", [])
+    for row in rows:
+        lon = row.get("longitude") or row.get("lon") or row.get("x")
+        lat = row.get("latitude") or row.get("lat") or row.get("y")
+        if lon is not None and lat is not None:
+            try:
+                features.append({
+                    "type": "Feature",
+                    "geometry": {"type": "Point", "coordinates": [float(lon), float(lat)]},
+                    "properties": {k: v for k, v in row.items() if k not in ("longitude", "latitude", "lon", "lat", "x", "y")},
+                })
+            except (TypeError, ValueError):
+                pass
+
+    return {
+        "type": "FeatureCollection",
+        "features": features,
+        "numberMatched": len(features),
+        "numberReturned": len(features),
+        "links": [{"rel": "self", "href": f"/api/ogc/collections/{collection_id}/items"}],
+    }
+
