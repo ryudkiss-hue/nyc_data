@@ -46,3 +46,4 @@ dist/
 !desktop/build/**
 installer/output/*.exe
 !installer/output/.gitkeep
+.claude/
