@@ -807,3 +807,138 @@ def ogc_collection_items(collection_id: str):
         "links": [{"rel": "self", "href": f"/api/ogc/collections/{collection_id}/items"}],
     }
 
+
+
+# --------------------------------------------------------------------------- #
+# MAPIE uncertainty bands on Prophet forecast (optional enhancement)
+# --------------------------------------------------------------------------- #
+class ProphetMAPIERequest(BaseModel):
+    dates: list[str]
+    values: list[float]
+    periods: int = Field(default=30, ge=1, le=730)
+    freq: str = "D"
+    coverage: float = Field(default=0.9, ge=0.5, le=0.99)
+
+
+@app.post("/api/forecast/prophet-mapie")
+def forecast_prophet_mapie(req: ProphetMAPIERequest) -> dict[str, Any]:
+    """Prophet forecast wrapped with MAPIE conformal prediction intervals.
+
+    Falls back to plain Prophet if MAPIE is not installed.
+    """
+    if len(req.dates) != len(req.values):
+        raise HTTPException(400, "dates and values must have equal length")
+    if len(req.dates) < 10:
+        raise HTTPException(400, "MAPIE requires at least 10 data points")
+
+    try:
+        import numpy as np
+        import pandas as pd
+        from prophet import Prophet  # type: ignore
+    except ImportError as exc:
+        raise HTTPException(503, f"prophet is not installed: {exc}") from exc
+
+    df = pd.DataFrame({"ds": pd.to_datetime(req.dates), "y": req.values})
+    model = Prophet()
+    model.fit(df)
+    future = model.make_future_dataframe(periods=req.periods, freq=req.freq)
+    fc = model.predict(future)
+
+    mapie_lower, mapie_upper, mapie_used = None, None, False
+    try:
+        from mapie.time_series import MapieTimeSeriesRegressor  # type: ignore
+        from sklearn.linear_model import Ridge
+
+        X = np.arange(len(req.values)).reshape(-1, 1)
+        y = np.array(req.values)
+        mapie = MapieTimeSeriesRegressor(Ridge(), method="enbpi", cv="prefit", agg_function="mean")
+        mapie.estimator.fit(X, y)
+        mapie.fit(X, y)
+        X_future = np.arange(len(req.values) + req.periods).reshape(-1, 1)
+        _, intervals = mapie.predict(X_future, alpha=1.0 - req.coverage, ensemble=True)
+        mapie_lower = intervals[:, 0, 0].tolist()
+        mapie_upper = intervals[:, 1, 0].tolist()
+        mapie_used = True
+    except Exception:
+        pass
+
+    result: dict[str, Any] = {
+        "dates": [d.strftime("%Y-%m-%d") for d in fc["ds"]],
+        "yhat": [float(v) for v in fc["yhat"]],
+        "yhat_lower": [float(v) for v in fc["yhat_lower"]],
+        "yhat_upper": [float(v) for v in fc["yhat_upper"]],
+        "trend": [float(v) for v in fc["trend"]],
+        "method": "prophet+mapie" if mapie_used else "prophet",
+        "coverage": req.coverage,
+    }
+    if mapie_used:
+        result["mapie_lower"] = mapie_lower
+        result["mapie_upper"] = mapie_upper
+    return result
+
+
+# --------------------------------------------------------------------------- #
+# PowerPoint export
+# --------------------------------------------------------------------------- #
+import base64
+import io
+
+
+class PPTXSlide(BaseModel):
+    title: str
+    chart_b64: str = ""  # base64-encoded PNG
+    caption: str = ""
+
+
+class PPTXRequest(BaseModel):
+    filename: str = "mission_control_export"
+    slides: list[PPTXSlide] = Field(default_factory=list)
+
+
+@app.post("/api/export/pptx")
+def export_pptx(req: PPTXRequest):
+    """Build a PowerPoint deck from chart images and return as file download."""
+    try:
+        from pptx import Presentation  # type: ignore
+        from pptx.util import Inches, Pt  # type: ignore
+    except ImportError as exc:
+        raise HTTPException(503, f"python-pptx is not installed: {exc}") from exc
+
+    from fastapi.responses import StreamingResponse
+
+    prs = Presentation()
+    blank_layout = prs.slide_layouts[6]  # blank
+
+    for slide_data in req.slides:
+        slide = prs.slides.add_slide(blank_layout)
+        # Title
+        txBox = slide.shapes.add_textbox(Inches(0.5), Inches(0.2), Inches(9), Inches(0.6))
+        tf = txBox.text_frame
+        tf.text = slide_data.title
+        tf.paragraphs[0].runs[0].font.size = Pt(20)
+        tf.paragraphs[0].runs[0].font.bold = True
+
+        # Chart image
+        if slide_data.chart_b64:
+            try:
+                img_bytes = base64.b64decode(slide_data.chart_b64)
+                img_stream = io.BytesIO(img_bytes)
+                slide.shapes.add_picture(img_stream, Inches(0.5), Inches(1.0), Inches(9), Inches(5.5))
+            except Exception:
+                pass
+
+        # Caption
+        if slide_data.caption:
+            cap = slide.shapes.add_textbox(Inches(0.5), Inches(6.7), Inches(9), Inches(0.5))
+            cap.text_frame.text = slide_data.caption
+            cap.text_frame.paragraphs[0].runs[0].font.size = Pt(10)
+
+    buf = io.BytesIO()
+    prs.save(buf)
+    buf.seek(0)
+    fname = req.filename.replace("/", "_") + ".pptx"
+    return StreamingResponse(
+        buf,
+        media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        headers={"Content-Disposition": f'attachment; filename="{fname}"'},
+    )

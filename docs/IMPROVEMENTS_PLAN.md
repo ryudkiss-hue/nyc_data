@@ -29,7 +29,7 @@ Legend: ☐ todo · ☑ done · ◐ partial
 
 ## Wave 2 — UX Polish & Interaction Design (SPA)
 11. ☑ Command palette (Ctrl/Cmd+P) with fuzzy action search
-12. ◐ Loading skeletons for profile / map / SOQL panels (not just search)
+12. ☑ Loading skeletons for profile / map / SOQL panels (not just search)
 13. ☑ Toast notification center with history + severity levels
 14. ☑ Robust error handling with retry + exponential backoff on Socrata fetches
 15. ☑ Auto-save indicator ("saving… / saved ✓") for cart & workspaces
@@ -40,16 +40,16 @@ Legend: ☐ todo · ☑ done · ◐ partial
 20. ☐ Onboarding product tour upgrade (spotlight + step state persistence)
 
 ## Wave 3 — Data Visualization (SPA)
-21. ◐ Vendored charting lib (offline) — themed bar/line/area
+21. ☑ Vendored charting lib (offline) — Trends tab (Observable Plot) + scatter plot + SVG sparklines
 22. ☑ Histogram + KDE for numeric column distributions
 23. ☑ Box-plot / five-number summary per numeric column
 24. ☑ Correlation heatmap across numeric columns
 25. ☑ Time-series viewer with range selector for date columns
 26. ☑ Categorical top-N Pareto chart
-27. ☐ Choropleth/heatmap layer option on the map
+27. ☑ Choropleth/heatmap layer option on the map
 28. ☑ Color-blind-safe (Okabe-Ito) categorical palette across all charts
-29. ◐ Chart→data-table a11y fallback (every chart has a tabular equivalent)
-30. ◐ Sparkline column summaries in profile grid
+29. ☑ Chart→data-table a11y fallback (every chart has a tabular equivalent)
+30. ☑ Sparkline column summaries in profile grid
 
 ## Wave 4 — Data Governance: FAIR Catalog (Python, NEW)
 31. ☑ `fair/` package: FAIR-aligned metadata catalog model
@@ -89,8 +89,8 @@ Legend: ☐ todo · ☑ done · ◐ partial
 
 ## Wave 7 — Governance surfaced in the SPA (NEW panels)
 61. ☑ "Governance" tab: per-dataset DMBOK dimension scorecard (calls sidecar or client calc)
-62. ◐ FAIRness scorecard panel with sub-score radar
-63. ◐ PII inspector: scan current dataset, show flagged columns + masking preview
+62. ☑ FAIRness scorecard panel with sub-score radar
+63. ☑ PII inspector: scan current dataset, show flagged columns + masking preview
 64. ☐ Lineage/provenance mini-graph for cart datasets (shared-column join graph)
 65. ☑ Data-quality badge on each result card (completeness/freshness at a glance)
 66. ☑ Export governance report (JSON + human-readable) per dataset
