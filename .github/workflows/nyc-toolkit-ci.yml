@@ -17,7 +17,7 @@ jobs:
     name: Tests (Python 3.11)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: actions/setup-python@v5
         with:
@@ -65,7 +65,7 @@ jobs:
     name: Legacy Dash imports
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -83,7 +83,7 @@ jobs:
     name: Readiness report
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -99,7 +99,7 @@ jobs:
     name: Docker (Mission Control)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: docker/setup-buildx-action@v4
       - name: Build mission image
         uses: docker/build-push-action@v6
