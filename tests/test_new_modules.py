@@ -1,8 +1,8 @@
 """Tests for all new modules: cost estimator, change detection, contractor scorecards,
 budget forecast, map view, QGIS, PDF reports, messaging bot, 311 ingestion."""
 
-import pytest
 import pandas as pd
+import pytest
 
 # -- Cost Estimator -----------------------------------------------------------
 from socrata_toolkit.engineering import (

@@ -8,7 +8,7 @@ from .compliance import *  # noqa: F403
 
 get = requests.get  # tests monkeypatch socrata_toolkit.governance.get
 # Lineage DAG (tests import from governance)
-from ..lineage.core import (
+from ..lineage.core import (  # noqa: I001
     DAG,
     EdgeType,
     ExecutionRecord,
@@ -21,10 +21,9 @@ from ..lineage.impact import ImpactAnalysis
 from ..lineage.query import LineageQuery
 from ..lineage.visualization import LineageVisualizer
 
+# .core star-import must come before .audit so named .audit exports win
 from .core import *
 from .processor import *
-
-# CDC audit trail types must win over access-log AuditEvent in core — import last
 from .audit import (  # noqa: F401
     ActionType,
     AuditEntry,
