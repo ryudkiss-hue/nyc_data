@@ -771,66 +771,120 @@ def compute_freshness_score(df: pd.DataFrame, date_col: str) -> float:
     return max(0.0, 100.0 - age)
 
 
-def detect_outliers_iqr(df: pd.DataFrame, column: str) -> pd.Series:
-    q1 = df[column].quantile(0.25)
-    q3 = df[column].quantile(0.75)
-    iqr = q3 - q1
-    return (df[column] < (q1 - 1.5 * iqr)) | (df[column] > (q3 + 1.5 * iqr))
-
-
-def detect_outliers_zscore(df: pd.DataFrame, column: str, threshold: float = 3.0) -> pd.Series:
-    mean = df[column].mean()
-    std = df[column].std()
-    if std == 0:
-        return pd.Series([False] * len(df))
-    return ((df[column] - mean).abs() / std) > threshold
-
-
 @dataclass
 class OutlierResult:
     column: str
     outlier_count: int
+    method: str = "iqr"
+    outlier_indices: list = None  # type: ignore[assignment]
+
+    def __post_init__(self) -> None:
+        if self.outlier_indices is None:
+            self.outlier_indices = []
 
 
-def detect_all_outliers(df: pd.DataFrame) -> list[OutlierResult]:
+def detect_outliers_iqr(df: pd.DataFrame, column: str) -> "OutlierResult":
+    q1 = df[column].quantile(0.25)
+    q3 = df[column].quantile(0.75)
+    iqr = q3 - q1
+    mask = (df[column] < (q1 - 1.5 * iqr)) | (df[column] > (q3 + 1.5 * iqr))
+    return OutlierResult(column=column, outlier_count=int(mask.sum()), method="iqr", outlier_indices=list(df.index[mask]))
+
+
+def detect_outliers_zscore(df: pd.DataFrame, column: str, threshold: float = 3.0) -> "OutlierResult":
+    mean = df[column].mean()
+    std = df[column].std()
+    if std == 0:
+        return OutlierResult(column=column, outlier_count=0, method="zscore", outlier_indices=[])
+    mask = ((df[column] - mean).abs() / std) > threshold
+    return OutlierResult(column=column, outlier_count=int(mask.sum()), method="zscore", outlier_indices=list(df.index[mask]))
+
+
+def detect_all_outliers(df: pd.DataFrame, method: str = "iqr") -> "list[OutlierResult]":
     num_cols = df.select_dtypes(include=DTYPE_NUM).columns
-    return [
-        OutlierResult(column=col, outlier_count=int(detect_outliers_iqr(df, col).sum()))
-        for col in num_cols
-    ]
+    fn = detect_outliers_zscore if method == "zscore" else detect_outliers_iqr
+    return [fn(df, col) for col in num_cols]
 
 
-def correlation_analysis(df: pd.DataFrame) -> pd.DataFrame:
-    return df.select_dtypes(include=DTYPE_NUM).corr()
+@dataclass
+class CorrelationResult:
+    pairs: list
 
 
-def time_series_summary(df: pd.DataFrame, date_col: str, value_col: str) -> dict[str, Any]:
+def correlation_analysis(df: pd.DataFrame, threshold: float = 0.0) -> "CorrelationResult":
+    num = df.select_dtypes(include=DTYPE_NUM)
+    if num.empty:
+        return CorrelationResult(pairs=[])
+    corr = num.corr()
+    cols = list(corr.columns)
+    pairs = []
+    for i, a in enumerate(cols):
+        for b in cols[i + 1:]:
+            val = float(corr.loc[a, b])
+            if abs(val) >= threshold:
+                pairs.append({"column_a": a, "column_b": b, "correlation": val})
+    return CorrelationResult(pairs=pairs)
+
+
+@dataclass
+class TimeSeriesSummary:
+    count: int
+    mean: float
+    max: float
+    trend_direction: str
+    trend_slope: float
+
+
+def time_series_summary(df: pd.DataFrame, date_col: str, value_col: str) -> "TimeSeriesSummary":
+    if df.empty:
+        return TimeSeriesSummary(count=0, mean=0.0, max=0.0, trend_direction="flat", trend_slope=0.0)
     tmp = df.copy()
     tmp[date_col] = pd.to_datetime(tmp[date_col])
-    return {"mean": tmp[value_col].mean(), "max": tmp[value_col].max()}
-
-
-def classify_distribution(series: pd.Series) -> str:
-    if series.nunique() < 10:
-        return "categorical"
-    return "numeric"
+    tmp = tmp.sort_values(date_col)
+    vals = tmp[value_col].astype(float)
+    n = len(vals)
+    slope = 0.0
+    if n >= 2:
+        x = list(range(n))
+        x_mean = sum(x) / n
+        y_mean = float(vals.mean())
+        num_s = sum((x[i] - x_mean) * (float(vals.iloc[i]) - y_mean) for i in range(n))
+        den = sum((xi - x_mean) ** 2 for xi in x)
+        slope = num_s / den if den != 0 else 0.0
+    direction = "increasing" if slope > 1e-9 else ("decreasing" if slope < -1e-9 else "flat")
+    return TimeSeriesSummary(count=n, mean=float(vals.mean()), max=float(vals.max()), trend_direction=direction, trend_slope=slope)
 
 
 @dataclass
 class DistributionResult:
     column: str
     best_fit: str
+    classification: str = ""
+    sample_size: int = 0
+
+    def __post_init__(self) -> None:
+        if not self.classification:
+            self.classification = self.best_fit
 
 
-def classify_all_distributions(df: pd.DataFrame) -> list[DistributionResult]:
-    return [
-        DistributionResult(column=col, best_fit=classify_distribution(df[col]))
-        for col in df.columns
-    ]
+def classify_distribution(df: pd.DataFrame, column: str) -> "DistributionResult":
+    series = df[column]
+    n = len(series)
+    if n < 5:
+        cls = "sparse"
+    elif series.nunique() < 10:
+        cls = "categorical"
+    else:
+        cls = "normal"
+    return DistributionResult(column=column, best_fit=cls, classification=cls, sample_size=n)
+
+
+def classify_all_distributions(df: pd.DataFrame) -> "list[DistributionResult]":
+    num_cols = df.select_dtypes(include=DTYPE_NUM).columns
+    return [classify_distribution(df, col) for col in num_cols]
 
 
 def detect_anomalies(df: pd.DataFrame) -> pd.DataFrame:
-    """Statistical anomaly detection using Z-score."""
     num = df.select_dtypes(DTYPE_NUM)
     if num.empty:
         return pd.DataFrame()
@@ -839,13 +893,22 @@ def detect_anomalies(df: pd.DataFrame) -> pd.DataFrame:
     return df.loc[anom_mask].reset_index(drop=True)
 
 
-def flag_anomalies(df: pd.DataFrame) -> pd.DataFrame:
-    """Add a boolean column flag for anomalies."""
+@dataclass
+class AnomalyReport:
+    flagged_rows: int
+    total_rows: int
+
+
+def flag_anomalies(df: pd.DataFrame) -> "tuple[pd.DataFrame, AnomalyReport]":
+    num = df.select_dtypes(DTYPE_NUM)
     out = df.copy()
-    anoms = detect_anomalies(df)
-    out["_is_anomaly"] = False
-    out.loc[anoms.index, "_is_anomaly"] = True
-    return out
+    if num.empty:
+        out["_anomaly"] = False
+        return out, AnomalyReport(flagged_rows=0, total_rows=len(df))
+    z = (num - num.mean()) / num.std()
+    anom_mask = (z.abs() > 3).any(axis=1)
+    out["_anomaly"] = anom_mask
+    return out, AnomalyReport(flagged_rows=int(anom_mask.sum()), total_rows=len(df))
 
 
 def detect_data_drift(old_df: pd.DataFrame, new_df: pd.DataFrame, num_col: str) -> dict[str, Any]:
@@ -1662,17 +1725,27 @@ except ImportError:
     dataframe_to_pdf = None  # type: ignore
     quality_dashboard = None  # type: ignore
 
-from .analysis_advanced import (  # noqa: E402
-    classify_distribution,
-    correlation_analysis,
-    detect_outliers_iqr,
-)
-
-# Override simplified stubs with full implementations expected by the test suite
 from .quality.anomalies import (  # noqa: E402
     Anomaly,
     AnomalyReport,
     AnomalySeverity,
+)
+
+# analysis_advanced full implementations win over simplified stubs above
+from .analysis_advanced import (  # noqa: E402
+    AnomalyReport as AnomalyFlagReport,  # alias to avoid clash with quality.anomalies.AnomalyReport
+    CorrelationResult,
+    DistributionInfo,
+    OutlierReport,
+    TimeSeriesSummary,
+    classify_all_distributions,
+    classify_distribution,
+    correlation_analysis,
+    detect_all_outliers,
+    detect_outliers_iqr,
+    detect_outliers_zscore,
+    flag_anomalies,
+    time_series_summary,
 )
 from .quality.validation import (  # noqa: E402
     ValidationReport,

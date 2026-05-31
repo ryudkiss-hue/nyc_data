@@ -1,6 +1,7 @@
 """Tests for all new modules: cost estimator, change detection, contractor scorecards,
 budget forecast, map view, QGIS, PDF reports, messaging bot, 311 ingestion."""
 
+import pytest
 import pandas as pd
 
 # -- Cost Estimator -----------------------------------------------------------
@@ -188,6 +189,7 @@ def test_generate_qgis_project(tmp_path):
 from socrata_toolkit.analysis import dataframe_to_pdf
 
 
+@pytest.mark.skipif(dataframe_to_pdf is None, reason="viz extras not installed")
 def test_dataframe_to_pdf_fallback(tmp_path):
     df = pd.DataFrame({"a": [1, 2], "b": ["x", "y"]})
     path = dataframe_to_pdf(df, str(tmp_path / "report.pdf"), title="Test Report")
