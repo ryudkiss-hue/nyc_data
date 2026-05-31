@@ -4,6 +4,7 @@ A self-contained Streamlit application for NYC DOT Operations,
 featuring native web scraping, Socrata API ingestion, Bayesian Inference,
 Facebook Prophet forecasting, and a Gemini AI Copilot.
 """
+from __future__ import annotations
 
 import os
 import random
