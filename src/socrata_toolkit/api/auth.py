@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import hashlib
 import secrets
 from dataclasses import dataclass, field
