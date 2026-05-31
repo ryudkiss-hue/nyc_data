@@ -20,7 +20,6 @@ RUN pip install --no-cache-dir poetry-core && \
 COPY src/socrata_toolkit/ src/socrata_toolkit/
 COPY app/ app/
 COPY scripts/ scripts/
-COPY sql/ sql/
 COPY tests/ tests/
 COPY docs/ docs/
 COPY data/ data/
