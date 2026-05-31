@@ -1,3 +1,7 @@
+import pytest
+
+pytest.importorskip("plotly", reason="plotly required for chart tests")
+
 import pandas as pd
 import plotly.graph_objects as go
 
