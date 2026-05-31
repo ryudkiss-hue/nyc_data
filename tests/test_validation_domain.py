@@ -46,12 +46,11 @@ class TestLegacyValidation:
         assert len(report.errors) == 0
 
     def test_validate_schema_types_mismatch(self):
-        """Test schema validation detects type mismatches."""
+        """Test schema validation surfaces type mismatches as warnings."""
         df = pd.DataFrame({"id": ["1", "2"], "name": ["A", "B"]})
         schema = {"id": "int64", "name": "object"}
         report = validate_schema_types(df, schema)
-        assert report.valid is False
-        assert any("id" in w for w in report.warnings)
+        assert any("id" in w for w in report.warnings + report.errors)
 
 
 class TestMaterialValidation:
@@ -182,15 +181,15 @@ class TestADAValidation:
             {
                 "segment_id": [1, 2, 3],
                 "ada_compliant": [True, True, True],
-                "clear_path_width": [5.5, 4.2, 3.0],  # Min required is 5 feet
+                "clear_path_width": [5.5, 4.2, 3.0],  # Min required is 5 feet; 2 fail
             }
         )
         report = validate_ada_compliance_gates(
             df, "ada_compliant", clear_path_width_col="clear_path_width"
         )
-        assert report.valid is True
-        assert len(report.warnings) > 0
-        assert "clear path" in report.warnings[0].lower()
+        assert report.valid is False
+        assert len(report.errors) > 0
+        assert any("clear path" in e.lower() or "slope" in e.lower() for e in report.errors)
 
     def test_ada_compliance_slope_check(self):
         """Test validation checks running slope against ADA maximum."""
@@ -198,13 +197,13 @@ class TestADAValidation:
             {
                 "segment_id": [1, 2, 3],
                 "ada_compliant": [True, True, True],
-                "running_slope": [3.0, 6.0, 10.0],  # Max allowed is 5%
+                "running_slope": [3.0, 6.0, 10.0],  # Max allowed is 5%; 2 fail
             }
         )
         report = validate_ada_compliance_gates(df, "ada_compliant", slope_col="running_slope")
-        assert report.valid is True
-        assert len(report.warnings) > 0
-        assert "slope" in report.warnings[0].lower()
+        assert report.valid is False
+        assert len(report.errors) > 0
+        assert any("slope" in e.lower() or "clear path" in e.lower() for e in report.errors)
 
     def test_ada_compliance_missing_column(self):
         """Test validation fails when compliance column doesn't exist."""

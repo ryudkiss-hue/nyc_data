@@ -6,7 +6,7 @@ import streamlit as st
 
 from app.data_loader import cache_freshness_report
 from app.services import agency
-from app.ui.theme import render_readiness_bars, render_quality_badge
+from app.ui.theme import render_quality_badge, render_readiness_bars
 from app.utils.i18n import t
 from socrata_toolkit.core.readiness import run_readiness_checks
 

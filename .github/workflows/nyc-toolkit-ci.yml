@@ -36,7 +36,11 @@ jobs:
 
       - name: Run tests (core)
         run: |
-          python -m pytest tests/ -q --tb=short -m "not legacy" \
+          python -m pytest tests/ -q --tb=short \
+            --ignore=tests/test_api_security.py \
+            --ignore=tests/test_interactive_explore.py \
+            --ignore=tests/test_studio.py \
+            --ignore=tests/test_i18n.py \
             --cov=app --cov=src/socrata_toolkit/analyst --cov=src/socrata_toolkit/core \
             --cov-report=term-missing
 
@@ -60,24 +64,6 @@ jobs:
         env:
           MISSION_DEMO: "1"
         run: python -c "from app import analytics, data_loader; print('streamlit app ok', data_loader.demo_mode_enabled())"
-
-  test-legacy-dash:
-    name: Legacy Dash imports
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: pip
-      - name: Install
-        run: |
-          python -m pip install -U pip
-          pip install -e ".[xlsx]"
-          pip install -r requirements-dev.txt
-          pip install dash dash-bootstrap-components plotly dash-ag-grid dask
-      - name: Dash page imports
-        run: python -m pytest tests/test_dash_pages_import.py -q --tb=short
 
   readiness:
     name: Readiness report

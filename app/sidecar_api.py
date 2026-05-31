@@ -87,10 +87,10 @@ def _write_catalog(dataset_id: str, entry: dict) -> None:
 # ---------------------------------------------------------------------------
 # In-memory audit trail
 # ---------------------------------------------------------------------------
-_audit_trail: "OrderedDict[str, dict]" = OrderedDict()
+_audit_trail: OrderedDict[str, dict] = OrderedDict()
 
 
-def _get_trail() -> "OrderedDict[str, dict]":
+def _get_trail() -> OrderedDict[str, dict]:
     return _audit_trail
 
 
@@ -551,17 +551,14 @@ def governance_quality_catalog(req: QualityCatalogRequest) -> dict[str, Any]:
 @app.get("/api/audit/trail")
 def audit_trail_get(limit: int = 100) -> dict[str, Any]:
     """Return recent in-process audit entries."""
-    if not _AUDIT_OK:
-        return {"entries": [], "note": "audit module not available"}
-    entries = _get_trail().entries()[-limit:]
-    return {"entries": [e.__dict__ for e in reversed(entries)], "total": len(_get_trail().entries())}
+    trail = _get_trail()
+    entries = list(trail.values())[-limit:]
+    return {"entries": list(reversed(entries)), "total": len(trail)}
 
 
 @app.delete("/api/audit/trail")
 def audit_trail_clear() -> dict[str, Any]:
     """Clear in-process audit entries."""
-    if not _AUDIT_OK:
-        return {"cleared": False}
     _get_trail().clear()
     return {"cleared": True}# ---------------------------------------------------------------------------
 # GROUP 2 — Semantic search endpoint

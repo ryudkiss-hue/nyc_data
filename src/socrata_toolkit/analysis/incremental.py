@@ -1,7 +1,9 @@
 """Incremental/online quality model using River (optional)."""
 from __future__ import annotations
+
 try:
-    from river import tree, metrics as river_metrics
+    from river import metrics as river_metrics
+    from river import tree
     _RIVER = True
 except ImportError:
     _RIVER = False

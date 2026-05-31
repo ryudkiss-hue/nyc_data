@@ -12,6 +12,11 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[1]
 ISS_FILE = REPO_ROOT / "installer" / "nyc_dot_toolkit.iss"
 BUILD_SCRIPT = REPO_ROOT / "scripts" / "build_installer.ps1"
+
+pytestmark = pytest.mark.skipif(
+    not ISS_FILE.exists(),
+    reason="installer/nyc_dot_toolkit.iss not present — skip installer checks",
+)
 DIST_EXE = REPO_ROOT / "dist" / "nyc-dot-toolkit.exe"
 SETUP_OUTPUT = REPO_ROOT / "installer" / "output" / "NYC-DOT-Sidewalk-Toolkit-Setup.exe"
 

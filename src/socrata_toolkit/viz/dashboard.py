@@ -117,7 +117,7 @@ def _page_dashboard(st) -> None:
 
     # KPI Cards
     cols = st.columns(len(dashboard.metrics))
-    for col, metric in zip(cols, dashboard.metrics):
+    for col, metric in zip(cols, dashboard.metrics, strict=False):
         color_class = f"status-{metric.status}"
         with col:
             st.markdown(f'<div class="{color_class}">', unsafe_allow_html=True)
@@ -159,7 +159,7 @@ def _show_demo_dashboard(st) -> None:
         ("First Pass Yield", "88%", "yellow"),
         ("Rework Factor", "4.2%", "green"),
     ]
-    for col, (name, value, status) in zip(demo_cols, demos):
+    for col, (name, value, status) in zip(demo_cols, demos, strict=False):
         with col:
             st.markdown(f'<div class="status-{status}">', unsafe_allow_html=True)
             st.metric(name, value)
@@ -235,7 +235,7 @@ def _page_task_board(st) -> None:
         ("Overdue", stats["overdue_count"]),
         ("Done %", f"{stats['completion_rate']}%"),
     ]
-    for col, (label, val) in zip(stat_cols[:3], stat_items):
+    for col, (label, val) in zip(stat_cols[:3], stat_items, strict=False):
         col.metric(label, val)
 
     # Filters
@@ -252,7 +252,7 @@ def _page_task_board(st) -> None:
 
     # Kanban columns
     kanban_cols = st.columns(len(board.columns))
-    for kcol, status in zip(kanban_cols, board.columns):
+    for kcol, status in zip(kanban_cols, board.columns, strict=False):
         with kcol:
             count = stats["by_status"].get(status, 0)
             st.markdown('<div class="kanban-col">', unsafe_allow_html=True)
@@ -285,7 +285,7 @@ def _page_task_board(st) -> None:
                 # Move buttons
                 move_cols = st.columns(len(board.columns) - 1)
                 other_statuses = [s for s in board.columns if s != status]
-                for mcol, target in zip(move_cols, other_statuses):
+                for mcol, target in zip(move_cols, other_statuses, strict=False):
                     if mcol.button(STATUS_LABELS.get(target, target)[:6], key=f"move_{tid}_{target}"):
                         board.move_task(tid, target)
                         st.rerun()
