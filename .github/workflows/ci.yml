@@ -13,4 +13,4 @@ jobs:
         with: {python-version: "3.11"}
       - run: pip install -e ".[mission]" pytest
       - run: pip install -r requirements-dev.txt fastapi httpx networkx scikit-learn
-      - run: pytest tests/ -m "not legacy" -q --tb=short --ignore=tests/test_api_security.py
+      - run: pytest tests/ -q --tb=short --ignore=tests/test_api_security.py

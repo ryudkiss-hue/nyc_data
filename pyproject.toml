@@ -96,13 +96,12 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 markers = [
-    "legacy: archived Dash UI import tests (slow, optional in CI)",
     "slow: long-running tests",
 ]
 
 [tool.coverage.run]
 source = ["app", "src/socrata_toolkit/analyst", "src/socrata_toolkit/core"]
-omit = ["*/tests/*", "legacy_archive/*"]
+omit = ["*/tests/*"]
 
 [tool.coverage.report]
 fail_under = 35
@@ -130,6 +129,3 @@ ignore = [
 fixable = ["ALL"]
 unfixable = []
 
-[tool.ruff.lint.per-file-ignores]
-"legacy_archive/**" = ["ALL"]
-"tests/test_dash_pages_import.py" = ["E402", "F401"]
