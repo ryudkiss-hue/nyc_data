@@ -21,7 +21,10 @@ from ..lineage.impact import ImpactAnalysis
 from ..lineage.query import LineageQuery
 from ..lineage.visualization import LineageVisualizer
 
-# CDC audit trail types must win over access-log AuditEvent in core
+from .core import *
+from .processor import *
+
+# CDC audit trail types must win over access-log AuditEvent in core — import last
 from .audit import (  # noqa: F401
     ActionType,
     AuditEntry,
@@ -31,5 +34,3 @@ from .audit import (  # noqa: F401
     audit_op,
     get_global_trail,
 )
-from .core import *
-from .processor import *

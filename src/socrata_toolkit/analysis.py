@@ -383,27 +383,36 @@ def validate_required_columns(df: pd.DataFrame, required: list[str]) -> Validati
 
 
 def validate_geospatial_bounds(
-    df: pd.DataFrame, lat_col: str = COL_LAT, lon_col: str = COL_LON
+    df: pd.DataFrame,
+    lat_col: str = COL_LAT,
+    lon_col: str = COL_LON,
+    nyc_bounds: dict | None = None,
 ) -> ValidationReport:
-    bounds = {"min_lat": 40.4774, "max_lat": 40.9176, "min_lon": -74.2591, "max_lon": -73.7004}
+    bounds = nyc_bounds or {"min_lat": 40.4774, "max_lat": 40.9176, "min_lon": -74.2591, "max_lon": -73.7004}
     if lat_col not in df.columns or lon_col not in df.columns:
         return ValidationReport(False, ["Geo columns missing"], [])
+    missing = int((df[lat_col].isna() | df[lon_col].isna()).sum())
     out_lat = (df[lat_col] < bounds["min_lat"]) | (df[lat_col] > bounds["max_lat"])
     out_lon = (df[lon_col] < bounds["min_lon"]) | (df[lon_col] > bounds["max_lon"])
-    affected = int((out_lat | out_lon | df[lat_col].isna() | df[lon_col].isna()).sum())
+    out_of_bounds = int((out_lat | out_lon).fillna(False).sum())
+    errors = []
+    if missing:
+        errors.append(f"{missing} records missing coordinates")
+    if out_of_bounds:
+        errors.append(f"{out_of_bounds} records out of bounds")
     return ValidationReport(
-        valid=affected == 0,
-        errors=[f"{affected} records out of NYC bounds"] if affected else [],
+        valid=len(errors) == 0,
+        errors=errors,
         warnings=[],
-        affected_records=affected,
+        affected_records=missing + out_of_bounds,
     )
 
 
 def validate_ada_compliance_gates(
     df: pd.DataFrame,
     ada_col: str = "ada_compliant",
-    width_col: str | None = "path_width",
-    slope_col: str | None = "running_slope",
+    clear_path_width_col: str | None = None,
+    slope_col: str | None = None,
 ) -> ValidationReport:
     """Rigorous NYC SDM & ADA compliance audit."""
     errors = []
@@ -413,16 +422,23 @@ def validate_ada_compliance_gates(
     if ada_col not in df.columns:
         return ValidationReport(False, [f"Column {ada_col} missing"], [])
 
-    # Vectorized compliance logic
+    # Check for missing compliance scores
+    missing = int(df[ada_col].isna().sum())
+    if missing:
+        errors.append(f"{missing} records missing ADA compliance scores")
+        affected += missing
+
+    # Vectorized path width / slope checks
     mask = pd.Series([True] * len(df))
-    if width_col in df.columns:
-        mask &= df[width_col] >= ADA_REQUIREMENTS["clear_path_width"]["min_feet"]
-    if slope_col in df.columns:
+    if clear_path_width_col and clear_path_width_col in df.columns:
+        mask &= df[clear_path_width_col] >= ADA_REQUIREMENTS["clear_path_width"]["min_feet"]
+    if slope_col and slope_col in df.columns:
         mask &= df[slope_col] <= ADA_REQUIREMENTS["running_slope"]["max_percent"]
 
-    affected = int((~mask).sum())
-    if affected > 0:
-        errors.append(f"{affected} records fail NYC SDM clear path or slope requirements.")
+    measure_affected = int((~mask).sum())
+    if measure_affected > 0:
+        errors.append(f"{measure_affected} records fail NYC SDM clear path or slope requirements.")
+        affected += measure_affected
 
     return ValidationReport(
         valid=affected == 0, errors=errors, warnings=warnings, affected_records=affected
@@ -461,13 +477,21 @@ def validate_defect_applicability(
     if material_col not in df.columns or defect_col not in df.columns:
         return ValidationReport(False, ["Required columns missing"], [])
 
-    # Simple compatibility matrix
-    # e.g., 'Spalling' is concrete-only, 'Potholes' is asphalt-only (in this simplified logic)
+    _KNOWN_MATERIALS = {"hma", "pcc", "permeable pavers", "asphalt", "concrete", "stone", "brick", "all"}
     errors = []
+
+    null_count = int(df[material_col].isna().sum())
+    if null_count:
+        errors.append(f"{null_count} records missing material type — cannot validate applicability")
+
     for _, row in df.iterrows():
+        if pd.isna(row[material_col]) or pd.isna(row[defect_col]):
+            continue
         mat = str(row[material_col]).lower()
         defect = str(row[defect_col]).lower()
-        if pd.isna(row[material_col]) or pd.isna(row[defect_col]):
+
+        if not any(k in mat for k in _KNOWN_MATERIALS):
+            errors.append(f"Unknown material type: {row[material_col]}")
             continue
 
         if "concrete" in mat and "pothole" in defect:
@@ -1655,6 +1679,9 @@ from .quality.validation import (  # noqa: E402
 )
 from .reporting import (  # noqa: E402
     Report,
+    generate_contract_report,
+    generate_inquiry_response,
+    generate_program_report,
 )
 from .sla_tracking import compute_sla_metrics  # noqa: E402
 
