@@ -101,6 +101,29 @@ def _load_permits(limit: int = 25_000) -> pd.DataFrame:
     return _normalize_permits(df)
 
 
+@st.cache_data(ttl=86_400, show_spinner="Loading HIQA street construction inspections…")
+def _load_street_construction_inspections(limit: int = 15_000) -> pd.DataFrame:
+    try:
+        df = fetch_dataset("street_construction_inspections", limit=limit)
+        if "inspectiondate" in df.columns:
+            df["inspectiondate"] = pd.to_datetime(df["inspectiondate"], errors="coerce")
+        return df
+    except Exception:
+        return pd.DataFrame()
+
+
+@st.cache_data(ttl=86_400, show_spinner="Loading capital reconstruction intersections…")
+def _load_capital_intersections(limit: int = 10_000) -> pd.DataFrame:
+    try:
+        df = fetch_dataset("capital_intersections", limit=limit)
+        for col in ("designstar", "construc_2"):
+            if col in df.columns:
+                df[col] = pd.to_datetime(df[col], errors="coerce")
+        return df
+    except Exception:
+        return pd.DataFrame()
+
+
 def _flag_in_bounds(df: pd.DataFrame) -> pd.DataFrame:
     if "latitude" not in df.columns or "longitude" not in df.columns:
         return df
@@ -244,11 +267,12 @@ def render_gis_page() -> None:
     st.header("🗺️ GIS & Spatial Analysis")
     st.caption("Conflict detection, hotspot mapping, and spatial reporting for sidewalk inspection data.")
 
-    tab1, tab2, tab3, tab4 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "📍 Inspection Map",
         "⚠️ Conflict Detection",
         "🔥 Hotspot Analysis",
         "📊 Spatial Reports",
+        "🚧 HIQA & Capital Projects",
     ])
 
     with tab1:
@@ -259,6 +283,8 @@ def render_gis_page() -> None:
         _render_hotspot_tab()
     with tab4:
         _render_spatial_reports_tab()
+    with tab5:
+        _render_hiqa_capital_tab()
 
 
 def _get_inspection_df(key_prefix: str) -> pd.DataFrame:
@@ -552,3 +578,90 @@ def _render_spatial_reports_tab() -> None:
             f"spatial_report_{date.today()}.xlsx",
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
+
+
+def _render_hiqa_capital_tab() -> None:
+    st.subheader("🚧 HIQA Street Construction Inspections & Capital Projects")
+    st.caption(
+        "Highway Inspection & Quality Assurance (HIQA) inspections of permit compliance on city streets. "
+        "Capital Reconstruction Projects — intersection-level spatial data."
+    )
+
+    sub_hiqa, sub_cap = st.tabs(["🔍 HIQA Inspections", "🏗️ Capital Intersections"])
+
+    with sub_hiqa:
+        hiqa_limit = st.number_input("Row limit", 1_000, 50_000, 10_000, step=1_000, key="hiqa_lim")
+        df_hiqa = _load_street_construction_inspections(int(hiqa_limit))
+        if df_hiqa.empty:
+            st.info("No HIQA data loaded. Configure SOCRATA_APP_TOKEN in Settings.")
+        else:
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Total inspections", f"{len(df_hiqa):,}")
+            if "inspectionresulttype" in df_hiqa.columns:
+                vio = df_hiqa["inspectionresulttype"].str.upper().str.contains("FAIL|VIOL|NOV", na=False).sum()
+                c2.metric("Violations / NOV", int(vio))
+            if "novnumber" in df_hiqa.columns:
+                c3.metric("NOV numbers issued", int(df_hiqa["novnumber"].notna().sum()))
+
+            if "inspectiontype" in df_hiqa.columns:
+                type_filter = st.multiselect(
+                    "Inspection type",
+                    df_hiqa["inspectiontype"].dropna().unique().tolist(),
+                    key="hiqa_type",
+                )
+                if type_filter:
+                    df_hiqa = df_hiqa[df_hiqa["inspectiontype"].isin(type_filter)]
+
+            show_cols = [c for c in (
+                "inspectiondate", "permitnumber", "permitteename", "onstreetname",
+                "fromstreetname", "tostreetname", "inspectiontype", "inspectionresulttype",
+                "novnumber", "novcodedescription", "defectivecuts",
+            ) if c in df_hiqa.columns]
+            st.dataframe(df_hiqa[show_cols] if show_cols else df_hiqa,
+                         use_container_width=True, hide_index=True)
+            st.download_button("⬇ Export (CSV)", df_hiqa.to_csv(index=False).encode(),
+                               "hiqa_inspections.csv", mime="text/csv")
+
+            if HAS_PLOTLY and "inspectionresulttype" in df_hiqa.columns:
+                result_counts = df_hiqa["inspectionresulttype"].value_counts().head(10).reset_index()
+                result_counts.columns = ["result", "count"]
+                fig = px.bar(result_counts, x="count", y="result", orientation="h",
+                             title="HIQA inspection results (top 10)")
+                fig.update_layout(yaxis={"categoryorder": "total ascending"})
+                st.plotly_chart(fig, use_container_width=True)
+
+    with sub_cap:
+        cap_limit = st.number_input("Row limit", 500, 20_000, 5_000, step=500, key="cap_lim")
+        df_cap = _load_capital_intersections(int(cap_limit))
+        if df_cap.empty:
+            st.info("No capital intersection data loaded. Configure SOCRATA_APP_TOKEN in Settings.")
+        else:
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Total projects", f"{len(df_cap):,}")
+            if "projectsta" in df_cap.columns:
+                active = df_cap["projectsta"].str.upper().str.contains("ACTIVE|CONSTRUCT|DESIGN", na=False).sum()
+                c2.metric("Active/In progress", int(active))
+            if "projectcost" in df_cap.columns:
+                df_cap["projectcost"] = pd.to_numeric(df_cap["projectcost"], errors="coerce")
+                c3.metric("Total project cost", f"${df_cap['projectcost'].sum():,.0f}")
+
+            if "boroughnam" in df_cap.columns:
+                boro_sel = st.multiselect("Borough filter", df_cap["boroughnam"].dropna().unique().tolist(), key="cap_boro")
+                if boro_sel:
+                    df_cap = df_cap[df_cap["boroughnam"].isin(boro_sel)]
+
+            show_cols = [c for c in (
+                "projtitle", "boroughnam", "onstreetname", "fromstreet", "tostreetna",
+                "projectsta", "designstar", "construc_2", "projectcost", "leadagency",
+            ) if c in df_cap.columns]
+            st.dataframe(df_cap[show_cols] if show_cols else df_cap,
+                         use_container_width=True, hide_index=True)
+            st.download_button("⬇ Export (CSV)", df_cap.to_csv(index=False).encode(),
+                               "capital_intersections.csv", mime="text/csv")
+
+            if HAS_PLOTLY and "projectsta" in df_cap.columns:
+                status_counts = df_cap["projectsta"].value_counts().reset_index()
+                status_counts.columns = ["status", "count"]
+                fig = px.pie(status_counts, names="status", values="count",
+                             title="Capital projects by status", hole=0.4)
+                st.plotly_chart(fig, use_container_width=True)

@@ -10,13 +10,18 @@ workflow_datasets:
     - lot_info
     - mappluto
     - complaints_311
+    - correspondences
   spatial:
     - weekly_construction
     - street_permits
     - capital_blocks
+    - capital_intersections
+    - street_closures_block
   contract:
     - violations
     - tree_damage
+    - dismissals
+    - street_construction_inspections
   productivity:
     - built
     - ramp_progress
@@ -48,6 +53,16 @@ datasets:
     fourfour: j6v2-6uxq
     group: core_smd
     label: All Tree Damage
+  dismissals:
+    fourfour: p4u2-3jgx
+    group: core_smd
+    label: Sidewalk Dismissal Inspection Tracking
+    manhattan_where: "upper(borough) = 'MANHATTAN'"
+  correspondences:
+    fourfour: bheb-sjfi
+    group: core_smd
+    label: Sidewalk Correspondences
+    manhattan_where: "upper(borough) = 'MANHATTAN'"
   ramp_locations:
     fourfour: ufzp-rrqu
     group: accessibility
@@ -73,6 +88,22 @@ datasets:
     fourfour: jvk9-k4re
     group: coordination
     label: Capital Reconstruction Blocks
+  capital_intersections:
+    fourfour: 97nd-ff3i
+    group: coordination
+    label: Capital Reconstruction Projects - Intersection
+  street_construction_inspections:
+    fourfour: ydkf-mpxb
+    group: coordination
+    label: Street Construction Inspections (HIQA)
+  street_closures_block:
+    fourfour: i6b5-j7bu
+    group: coordination
+    label: Street Closures by Block
+  permit_stipulations:
+    fourfour: gsgx-6efw
+    group: coordination
+    label: Street Construction Permit Stipulations
   sidewalk_planimetric:
     fourfour: vfx9-tbb6
     group: overlays
