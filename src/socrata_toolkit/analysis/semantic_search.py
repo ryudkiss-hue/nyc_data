@@ -1,9 +1,11 @@
 """Semantic catalog search using sentence-transformers (optional)."""
 from __future__ import annotations
-from typing import List, Dict, Any
+
+from typing import Any
+
 try:
-    from sentence_transformers import SentenceTransformer
     import numpy as np
+    from sentence_transformers import SentenceTransformer
     _ST = True
 except ImportError:
     _ST = False
@@ -14,14 +16,14 @@ class SemanticCatalogSearch:
             raise ImportError("sentence-transformers required")
         self._model = SentenceTransformer(model_name)
         self._embeddings = None
-        self._records: List[Dict[str, Any]] = []
+        self._records: list[dict[str, Any]] = []
 
-    def index(self, records: List[Dict[str, Any]], text_field: str = "name") -> None:
+    def index(self, records: list[dict[str, Any]], text_field: str = "name") -> None:
         self._records = records
         texts = [r.get(text_field, "") for r in records]
         self._embeddings = self._model.encode(texts, convert_to_numpy=True)
 
-    def search(self, query: str, top_k: int = 10) -> List[Dict[str, Any]]:
+    def search(self, query: str, top_k: int = 10) -> list[dict[str, Any]]:
         if self._embeddings is None:
             return []
         q = self._model.encode([query], convert_to_numpy=True)
