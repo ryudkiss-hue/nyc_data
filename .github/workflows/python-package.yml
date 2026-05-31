@@ -27,9 +27,12 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install poetry-core
-        pip install -e ".[xlsx]"
-        pip install pandas numpy pyyaml requests python-dateutil
+        # Install core deps explicitly to avoid poetry build-backend issues
+        pip install "pandas>=2.0,<3.0" "numpy>=1.24,<3.0" pyyaml requests \
+            python-dateutil click "pydantic>=2.0" "openpyxl>=3.0" \
+            "duckdb>=0.9.0" tenacity apscheduler
+        # Editable install without re-resolving deps
+        pip install --no-deps -e .
         pip install -r requirements-dev.txt
         pip install networkx scikit-learn fastapi httpx flake8
     - name: Lint with flake8
