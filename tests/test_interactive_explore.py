@@ -7,6 +7,8 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
+
+pytest.importorskip("dash")
 from dash import html
 
 ROOT = Path(__file__).resolve().parents[1]
