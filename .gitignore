@@ -49,3 +49,6 @@ installer/output/*.exe
 
 # IDE / tool configs with potential secrets
 .roo/
+
+# Claude Code internal state
+.claude/worktrees/
