@@ -5,8 +5,16 @@ from __future__ import annotations
 import io
 from datetime import date
 
+import numpy as np
 import pandas as pd
 import streamlit as st
+
+from app.data_loader import (
+    DATE_CANDIDATES,
+    demo_mode_enabled,
+    fetch_dataset,
+    pick_column,
+)
 
 try:
     import plotly.express as px
@@ -15,51 +23,46 @@ try:
 except ImportError:
     HAS_PLOTLY = False
 
-import numpy as np
 
 # ---------------------------------------------------------------------------
-# Demo data generators
+# Socrata data loaders
 # ---------------------------------------------------------------------------
 
-def _demo_contracts(n: int = 20) -> pd.DataFrame:
-    rng = np.random.default_rng(42)
-    boroughs = ["Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"]
-    statuses = ["Active", "Active", "Active", "Pending", "Closed"]
-    contractors = ["ACME Paving LLC", "BoroPave Inc.", "SidewalkPro NY", "MetroConstruct", "Urban Surfaces Ltd"]
-    starts = pd.to_datetime("2024-01-01") + pd.to_timedelta(rng.integers(0, 300, n), unit="D")
-    durations = rng.integers(180, 730, n)
-    pct = rng.uniform(10, 100, n).round(1)
-    awarded = rng.integers(500_000, 8_000_000, n)
-    return pd.DataFrame({
-        "contract_id": [f"C-2025-{i:03d}" for i in range(1, n + 1)],
-        "contractor": rng.choice(contractors, n),
-        "borough": rng.choice(boroughs, n),
-        "awarded_value": awarded,
-        "spent_to_date": (awarded * pct / 100 * rng.uniform(0.85, 1.05, n)).astype(int),
-        "planned_start": starts,
-        "planned_end": starts + pd.to_timedelta(durations, unit="D"),
-        "actual_start": starts + pd.to_timedelta(rng.integers(-14, 30, n), unit="D"),
-        "percent_complete": pct,
-        "status": rng.choice(statuses, n),
-        "budget_code": rng.choice(["HW-001", "HW-002", "SW-003", "PR-004", "PR-005"], n),
-    })
+@st.cache_data(ttl=86_400, show_spinner="Loading built/inspection data from Socrata…")
+def _load_productivity_from_socrata(limit: int = 25_000) -> pd.DataFrame:
+    """Load inspector productivity proxy from SMD Built + Inspection datasets."""
+    frames = []
+    for key in ("built", "ramp_progress", "inspection"):
+        try:
+            df = fetch_dataset(key, limit=limit // 3)
+            if not df.empty:
+                df["_source"] = key
+                frames.append(df)
+        except Exception:
+            pass
+    if not frames:
+        return pd.DataFrame()
+    combined = pd.concat(frames, ignore_index=True)
+    date_col = pick_column(combined, DATE_CANDIDATES)
+    if date_col:
+        combined["date"] = pd.to_datetime(combined[date_col], errors="coerce")
+    return combined
 
 
-def _demo_productivity(n: int = 300) -> pd.DataFrame:
-    rng = np.random.default_rng(7)
-    boroughs = ["Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"]
-    inspectors = [f"INSP-{i:03d}" for i in range(1, 11)]
-    base_date = pd.Timestamp("2024-01-01")
-    dates = [base_date + pd.Timedelta(days=int(i)) for i in rng.integers(0, 365, n)]
-    return pd.DataFrame({
-        "inspector_id": rng.choice(inspectors, n),
-        "date": dates,
-        "lots_inspected": rng.integers(5, 40, n),
-        "sqft_completed": rng.integers(500, 8000, n),
-        "borough": rng.choice(boroughs, n),
-        "defects_found": rng.integers(0, 15, n),
-        "contract_id": rng.choice([f"C-2025-{i:03d}" for i in range(1, 6)], n),
-    })
+def _upload_or_note(label: str, key: str, note: str = "") -> pd.DataFrame | None:
+    """File uploader widget; returns None if no file selected."""
+    if note:
+        st.caption(note)
+    up = st.file_uploader(label, type=["csv", "xlsx"], key=key)
+    if up is None:
+        return None
+    try:
+        if up.name.endswith(".xlsx"):
+            return pd.read_excel(up)
+        return pd.read_csv(up)
+    except Exception as exc:
+        st.error(f"Could not parse {up.name}: {exc}")
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -90,8 +93,6 @@ def _render_contract_progress(df: pd.DataFrame) -> None:
     st.subheader("Contract Progress Dashboard")
 
     today = pd.Timestamp.today()
-
-    # KPI cards
     total = len(df)
     total_awarded = df["awarded_value"].sum() if "awarded_value" in df.columns else 0
     total_spent = df["spent_to_date"].sum() if "spent_to_date" in df.columns else 0
@@ -99,6 +100,7 @@ def _render_contract_progress(df: pd.DataFrame) -> None:
 
     behind = 0
     if {"planned_end", "percent_complete"}.issubset(df.columns):
+        df = df.copy()
         df["planned_end"] = pd.to_datetime(df["planned_end"], errors="coerce")
         behind = int(((df["planned_end"] < today) & (df["percent_complete"] < 100)).sum())
 
@@ -113,7 +115,6 @@ def _render_contract_progress(df: pd.DataFrame) -> None:
         st.dataframe(df, use_container_width=True)
         return
 
-    # Progress bar chart
     if {"contract_id", "percent_complete", "status"}.issubset(df.columns):
         df_sorted = df.sort_values("percent_complete", ascending=True)
         color_map = {"Active": "#1f77b4", "Closed": "#2ca02c", "Pending": "#aec7e8"}
@@ -132,15 +133,16 @@ def _render_contract_progress(df: pd.DataFrame) -> None:
         fig.update_layout(xaxis_range=[0, 110])
         st.plotly_chart(fig, use_container_width=True)
 
-    # Behind-schedule table
     if behind > 0:
         st.warning(f"⚠️ {behind} contract(s) are past planned end date with less than 100% completion.")
-        behind_df = df[(df["planned_end"] < today) & (df["percent_complete"] < 100)][
-            ["contract_id", "contractor", "borough", "planned_end", "percent_complete", "status"]
+        behind_df = df[
+            (df["planned_end"] < today) & (df["percent_complete"] < 100)
+        ][["contract_id", "contractor", "borough", "planned_end", "percent_complete", "status"]
+          if all(c in df.columns for c in ["contractor", "borough"])
+          else [c for c in ["contract_id", "planned_end", "percent_complete", "status"] if c in df.columns]
         ].sort_values("percent_complete")
         st.dataframe(behind_df, use_container_width=True, hide_index=True)
 
-    # Full table
     with st.expander("Full Contract Table"):
         display_cols = [c for c in ["contract_id", "contractor", "borough", "awarded_value",
                                      "spent_to_date", "percent_complete", "status", "planned_end"] if c in df.columns]
@@ -154,7 +156,6 @@ def _render_budget_analysis(df: pd.DataFrame) -> None:
         st.warning("Budget analysis requires awarded_value, spent_to_date, and percent_complete columns.")
         return
 
-    # CPI calculation
     df = df.copy()
     df["cpi"] = df.apply(
         lambda r: _cpi(r["awarded_value"], r["spent_to_date"], r["percent_complete"]), axis=1
@@ -173,7 +174,6 @@ def _render_budget_analysis(df: pd.DataFrame) -> None:
     c3.metric("🟢 On Track (≥ 0.97)", on_track)
 
     if HAS_PLOTLY and "contract_id" in df.columns:
-        # Awarded vs Spent grouped bar
         fig = go.Figure()
         fig.add_trace(go.Bar(name="Awarded", x=df["contract_id"], y=df["awarded_value"], marker_color="#4C78A8"))
         fig.add_trace(go.Bar(name="Spent", x=df["contract_id"], y=df["spent_to_date"], marker_color="#F58518"))
@@ -187,20 +187,17 @@ def _render_budget_analysis(df: pd.DataFrame) -> None:
         )
         st.plotly_chart(fig, use_container_width=True)
 
-        # Borough breakdown pie
         if "borough" in df.columns:
             boro_budget = df.groupby("borough")["awarded_value"].sum().reset_index()
             fig2 = px.pie(boro_budget, names="borough", values="awarded_value",
                           title="Awarded Value by Borough")
             st.plotly_chart(fig2, use_container_width=True)
 
-    # CPI table
     st.markdown("**Cost Performance Index (CPI) — higher is better, <0.9 flags over-budget**")
     cpi_cols = [c for c in ["contract_id", "contractor", "awarded_value", "spent_to_date",
                              "percent_complete", "cpi", "budget_status"] if c in df.columns]
     st.dataframe(df[cpi_cols].sort_values("cpi"), use_container_width=True, hide_index=True)
 
-    # Budget codes validator
     st.markdown("---")
     st.markdown("**Budget Codes Validator**")
     col1, col2 = st.columns(2)
@@ -231,35 +228,52 @@ def _render_productivity(df: pd.DataFrame) -> None:
         st.info("No productivity data loaded.")
         return
 
-    required = {"lots_inspected", "sqft_completed", "date"}
-    if not required.issubset(df.columns):
-        st.warning(f"Missing columns for productivity analysis: {required - set(df.columns)}")
+    df = df.copy()
+    date_col = pick_column(df, DATE_CANDIDATES) or (
+        next((c for c in df.columns if "date" in c.lower()), None)
+    )
+    if date_col and date_col != "date":
+        df = df.rename(columns={date_col: "date"})
+
+    if "date" not in df.columns:
+        st.warning("No date column found — cannot build time-series view.")
+        st.dataframe(df.head(100), use_container_width=True)
         return
 
-    df = df.copy()
     df["date"] = pd.to_datetime(df["date"], errors="coerce")
     df = df.dropna(subset=["date"])
 
-    # Summary KPIs
+    lot_col = next((c for c in df.columns if "lot" in c.lower()), None)
+    sqft_col = next((c for c in df.columns if "sqft" in c.lower() or "area" in c.lower() or "length" in c.lower()), None)
+
+    if lot_col and lot_col != "lots_inspected":
+        df = df.rename(columns={lot_col: "lots_inspected"})
+    if sqft_col and sqft_col != "sqft_completed":
+        df = df.rename(columns={sqft_col: "sqft_completed"})
+
+    if "lots_inspected" not in df.columns:
+        df["lots_inspected"] = 1
+    if "sqft_completed" not in df.columns:
+        df["sqft_completed"] = np.nan
+
     avg_lots = df["lots_inspected"].mean()
-    total_sqft = df["sqft_completed"].sum()
-    total_defects = df["defects_found"].sum() if "defects_found" in df.columns else 0
+    total_sqft = df["sqft_completed"].sum() if df["sqft_completed"].notna().any() else 0
+    defect_col = next((c for c in df.columns if "defect" in c.lower() or "violation" in c.lower()), None)
+    total_defects = int(df[defect_col].sum()) if defect_col else 0
 
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Avg Lots/Day", f"{avg_lots:.1f}")
-    c2.metric("Total sqft Inspected", f"{total_sqft:,.0f}")
+    c2.metric("Total sqft Inspected", f"{total_sqft:,.0f}" if total_sqft else "N/A")
     c3.metric("Total Defects Found", f"{total_defects:,}")
-    if "inspector_id" in df.columns:
-        c4.metric("Active Inspectors", df["inspector_id"].nunique())
+    insp_col = next((c for c in df.columns if "inspector" in c.lower() or "officer" in c.lower()), None)
+    if insp_col:
+        c4.metric("Active Inspectors", df[insp_col].nunique())
 
     if not HAS_PLOTLY:
         st.dataframe(df.head(100), use_container_width=True)
         return
 
-    # Daily trend
-    daily = df.groupby("date")[["lots_inspected", "sqft_completed"]].sum().reset_index()
-    daily = daily.sort_values("date")
-
+    daily = df.groupby("date")["lots_inspected"].sum().reset_index().sort_values("date")
     fig = go.Figure()
     fig.add_trace(go.Scatter(
         x=daily["date"], y=daily["lots_inspected"],
@@ -272,31 +286,15 @@ def _render_productivity(df: pd.DataFrame) -> None:
         mode="lines", name="7-Day Rolling Avg",
         line=dict(color="#ff7f0e", dash="dash", width=1.5),
     ))
-    fig.update_layout(title="Daily Lots Inspected", height=350,
-                      xaxis_title="Date", yaxis_title="Lots")
+    fig.update_layout(title="Daily Lots Inspected", height=350, xaxis_title="Date", yaxis_title="Lots")
     st.plotly_chart(fig, use_container_width=True)
 
-    col1, col2 = st.columns(2)
-    with col1:
-        # Inspector leaderboard
-        if "inspector_id" in df.columns:
-            leaderboard = df.groupby("inspector_id").agg(
-                total_lots=("lots_inspected", "sum"),
-                total_sqft=("sqft_completed", "sum"),
-                days_active=("date", "nunique"),
-            ).reset_index().sort_values("total_sqft", ascending=False)
-            leaderboard["avg_sqft_day"] = (leaderboard["total_sqft"] / leaderboard["days_active"]).round(0)
-            st.markdown("**Inspector Leaderboard**")
-            st.dataframe(leaderboard, use_container_width=True, hide_index=True)
-
-    with col2:
-        # Borough breakdown
-        if "borough" in df.columns:
-            boro_prod = df.groupby("borough")[["lots_inspected", "sqft_completed"]].sum().reset_index()
-            fig_boro = px.bar(boro_prod, x="borough", y="sqft_completed",
-                              color="borough", title="sqft Completed by Borough")
-            fig_boro.update_layout(showlegend=False, height=320)
-            st.plotly_chart(fig_boro, use_container_width=True)
+    if "borough" in df.columns:
+        boro_prod = df.groupby("borough")["lots_inspected"].sum().reset_index()
+        fig_boro = px.bar(boro_prod, x="borough", y="lots_inspected",
+                          color="borough", title="Lots Inspected by Borough")
+        fig_boro.update_layout(showlegend=False, height=320)
+        st.plotly_chart(fig_boro, use_container_width=True)
 
 
 def _render_export(df_contracts: pd.DataFrame, df_productivity: pd.DataFrame) -> None:
@@ -313,6 +311,7 @@ def _render_export(df_contracts: pd.DataFrame, df_productivity: pd.DataFrame) ->
 
         if not df_contracts.empty:
             if "planned_start" in df_contracts.columns:
+                df_contracts = df_contracts.copy()
                 df_contracts["planned_start"] = pd.to_datetime(df_contracts["planned_start"], errors="coerce")
                 mask = df_contracts["planned_start"].between(str(start_date), str(end_date))
                 sheets["Contract Progress"] = df_contracts[mask] if mask.any() else df_contracts
@@ -328,9 +327,11 @@ def _render_export(df_contracts: pd.DataFrame, df_productivity: pd.DataFrame) ->
                 sheets["Budget Summary"] = summary
 
         if not df_productivity.empty:
-            if "date" in df_productivity.columns:
-                df_productivity["date"] = pd.to_datetime(df_productivity["date"], errors="coerce")
-                mask = df_productivity["date"].between(str(start_date), str(end_date))
+            date_col = pick_column(df_productivity, DATE_CANDIDATES)
+            if date_col:
+                df_productivity = df_productivity.copy()
+                df_productivity[date_col] = pd.to_datetime(df_productivity[date_col], errors="coerce")
+                mask = df_productivity[date_col].between(str(start_date), str(end_date))
                 sheets["Productivity"] = df_productivity[mask] if mask.any() else df_productivity
 
         if not sheets:
@@ -362,25 +363,44 @@ def render_contracts_page() -> None:
         "📥 Export & Reports",
     ])
 
-    use_demo = st.sidebar.checkbox("Use demo data (all tabs)", value=True, key="contracts_demo")
-
-    if use_demo:
-        df_contracts = _demo_contracts()
-        df_productivity = _demo_productivity()
-        st.sidebar.caption("Showing synthetic demo data. Uncheck to upload your own.")
+    # --- Contract data (upload only — no matching Socrata dataset) ---
+    st.sidebar.markdown("**Contract Data**")
+    st.sidebar.caption(
+        "Upload a contracts CSV/Excel with columns: contract_id, contractor, borough, "
+        "awarded_value, spent_to_date, percent_complete, planned_start, planned_end, status"
+    )
+    up_c = st.sidebar.file_uploader("Contracts CSV / Excel", type=["csv", "xlsx"], key="up_contracts")
+    if up_c:
+        df_contracts = pd.read_excel(up_c) if up_c.name.endswith(".xlsx") else pd.read_csv(up_c)
     else:
-        st.sidebar.markdown("**Upload Contract Data**")
-        up_c = st.sidebar.file_uploader("Contracts CSV", type="csv", key="up_contracts")
-        df_contracts = pd.read_csv(up_c) if up_c else pd.DataFrame()
+        df_contracts = pd.DataFrame()
+        st.sidebar.info("No contract data loaded. Upload a file to begin.")
 
-        st.sidebar.markdown("**Upload Productivity Data**")
-        up_p = st.sidebar.file_uploader("Productivity CSV", type="csv", key="up_prod")
-        df_productivity = pd.read_csv(up_p) if up_p else pd.DataFrame()
+    # --- Productivity data (Socrata or upload) ---
+    st.sidebar.markdown("**Productivity Data**")
+    prod_src = st.sidebar.radio("Source", ["Socrata (live)", "Upload CSV/Excel"], key="prod_src")
+    if prod_src == "Socrata (live)":
+        prod_limit = st.sidebar.number_input("Row limit", 1_000, 50_000, 15_000, step=5_000, key="prod_lim")
+        df_productivity = _load_productivity_from_socrata(int(prod_limit))
+        if demo_mode_enabled():
+            st.sidebar.caption("⚠️ Demo mode — configure SOCRATA_APP_TOKEN in Settings for live data.")
+    else:
+        up_p = st.sidebar.file_uploader("Productivity CSV / Excel", type=["csv", "xlsx"], key="up_prod")
+        if up_p:
+            df_productivity = pd.read_excel(up_p) if up_p.name.endswith(".xlsx") else pd.read_csv(up_p)
+        else:
+            df_productivity = pd.DataFrame()
 
     with tab1:
-        _render_contract_progress(df_contracts)
+        if df_contracts.empty:
+            st.info("Upload contract data in the sidebar to populate this view.")
+        else:
+            _render_contract_progress(df_contracts)
     with tab2:
-        _render_budget_analysis(df_contracts)
+        if df_contracts.empty:
+            st.info("Upload contract data in the sidebar to populate this view.")
+        else:
+            _render_budget_analysis(df_contracts)
     with tab3:
         _render_productivity(df_productivity)
     with tab4:

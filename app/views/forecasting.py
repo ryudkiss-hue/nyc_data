@@ -9,6 +9,13 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
+from app.data_loader import (
+    DATE_CANDIDATES,
+    demo_mode_enabled,
+    fetch_dataset,
+    pick_column,
+)
+
 try:
     import plotly.express as px
     import plotly.graph_objects as go
@@ -30,26 +37,32 @@ except ImportError:
 
 
 # ---------------------------------------------------------------------------
-# Demo data
+# Socrata data loader
 # ---------------------------------------------------------------------------
 
-def _demo_series(months: int = 30) -> pd.DataFrame:
-    rng = np.random.default_rng(42)
-    dates = pd.date_range("2023-01-01", periods=months, freq="MS")
-    trend = np.linspace(100, 160, months)
-    seasonal = 20 * np.sin(2 * np.pi * np.arange(months) / 12)
-    noise = rng.normal(0, 8, months)
-    lots = (trend + seasonal + noise).clip(50, 250).astype(int)
-    sqft = (lots * rng.uniform(150, 300, months)).astype(int)
-    contracts_active = rng.integers(8, 22, months)
-    defects = (lots * rng.uniform(0.2, 0.5, months)).astype(int)
-    return pd.DataFrame({
-        "date": dates,
-        "lots_completed": lots,
-        "sqft_completed": sqft,
-        "contracts_active": contracts_active,
-        "defects_found": defects,
-    })
+@st.cache_data(ttl=86_400, show_spinner="Loading time-series data from Socrata…")
+def _load_timeseries_from_socrata(dataset_key: str, limit: int = 50_000) -> pd.DataFrame:
+    """Fetch a dataset and aggregate to monthly time-series."""
+    df = fetch_dataset(dataset_key, limit=limit)
+    if df.empty:
+        return df
+    date_col = pick_column(df, DATE_CANDIDATES)
+    if not date_col:
+        date_col = next((c for c in df.columns if "date" in c.lower()), None)
+    if not date_col:
+        return pd.DataFrame()
+    df = df.copy()
+    df["_date"] = pd.to_datetime(df[date_col], errors="coerce")
+    df = df.dropna(subset=["_date"])
+    df["date"] = df["_date"].dt.to_period("M").dt.to_timestamp()
+    numeric_cols = df.select_dtypes(include="number").columns.tolist()
+    numeric_cols = [c for c in numeric_cols if not c.startswith("_")]
+    if not numeric_cols:
+        agg_df = df.groupby("date").size().reset_index(name="record_count")
+    else:
+        agg_df = df.groupby("date")[numeric_cols].sum().reset_index()
+        agg_df["record_count"] = df.groupby("date").size().values
+    return agg_df.sort_values("date")
 
 
 # ---------------------------------------------------------------------------
@@ -61,10 +74,8 @@ def _exp_smooth_forecast(series: np.ndarray, alpha: float, periods: int) -> tupl
     smoothed[0] = series[0]
     for i in range(1, len(series)):
         smoothed[i] = alpha * series[i] + (1 - alpha) * smoothed[i - 1]
-
     last = smoothed[-1]
     forecast = np.full(periods, last)
-
     residuals = series - smoothed
     std_resid = np.std(residuals)
     lower = forecast - 1.96 * std_resid
@@ -122,7 +133,7 @@ def _render_trend_analysis(df: pd.DataFrame, date_col: str, metrics: list[str]) 
         fig.add_trace(go.Scatter(
             x=rolling.index, y=rolling.values,
             mode="lines", name=f"{window}-day avg",
-            line=dict(color="#F58518", width=2.5, dash="solid"),
+            line=dict(color="#F58518", width=2.5),
         ))
         if show_trendline:
             trendline = slope * x_numeric + intercept
@@ -174,7 +185,6 @@ def _render_seasonality(df: pd.DataFrame, date_col: str, metrics: list[str]) -> 
         fig2.update_layout(height=320, xaxis_title="Day", yaxis_title=f"Avg {metric}")
         st.plotly_chart(fig2, use_container_width=True)
 
-    # Year-over-year
     years = sorted(df["year"].unique())
     if len(years) >= 2:
         st.markdown("**Year-over-Year Comparison**")
@@ -185,7 +195,6 @@ def _render_seasonality(df: pd.DataFrame, date_col: str, metrics: list[str]) -> 
                            xaxis_title="Month", yaxis_title=f"Avg {metric}")
         st.plotly_chart(fig3, use_container_width=True)
 
-    # Decomposition
     if HAS_STATSMODELS and len(df) >= 24:
         with st.expander("Seasonal Decomposition (statsmodels)"):
             try:
@@ -379,32 +388,53 @@ def render_forecasting_page() -> None:
     st.header("📈 Trend Analysis & Forecasting")
     st.caption("Time-series analysis, seasonality detection, and forecasting for SIM Program KPIs.")
 
-    # Sidebar: data source + metric selection
     st.sidebar.markdown("**Data Source**")
-    use_demo = st.sidebar.checkbox("Use demo data", value=True, key="fc_demo")
+    source = st.sidebar.radio("Source", ["Socrata (live)", "Upload CSV/Excel"], key="fc_src")
 
-    if use_demo:
-        df = _demo_series(30)
-        date_col = "date"
-        st.sidebar.caption("Demo: 30-month synthetic SIM series")
-    else:
-        up = st.sidebar.file_uploader("Upload time-series CSV", type="csv", key="fc_upload")
-        if up is None:
-            st.info("Upload a CSV with a date column and numeric metric columns, or enable demo data in the sidebar.")
+    if source == "Socrata (live)":
+        SOCRATA_KEYS = {
+            "SMD Inspection (dntt-gqwq)": "inspection",
+            "SMD Built (ugc8-s3f6)": "built",
+            "Ramp Progress (e7gc-ub6z)": "ramp_progress",
+            "Street Permits (tqtj-sjs8)": "street_permits",
+            "Weekly Construction (r528-jcks)": "weekly_construction",
+        }
+        dataset_label = st.sidebar.selectbox("Dataset", list(SOCRATA_KEYS.keys()), key="fc_dataset")
+        dataset_key = SOCRATA_KEYS[dataset_label]
+        fc_limit = st.sidebar.number_input("Row limit", 1_000, 100_000, 25_000, step=5_000, key="fc_limit")
+        with st.spinner(f"Loading {dataset_label} from Socrata…"):
+            df = _load_timeseries_from_socrata(dataset_key, int(fc_limit))
+        if df.empty:
+            st.warning("No data returned from Socrata. Check your API token in Settings.")
             return
-        df = pd.read_csv(up)
+        if demo_mode_enabled():
+            st.sidebar.caption("⚠️ Demo mode — configure SOCRATA_APP_TOKEN in Settings for live data.")
+        date_col = "date"
+    else:
+        up = st.sidebar.file_uploader("Upload time-series CSV/Excel", type=["csv", "xlsx"], key="fc_upload")
+        if up is None:
+            st.info("Upload a CSV/Excel with a date column and numeric metric columns, or switch to Socrata.")
+            return
+        df = pd.read_excel(up) if up.name.endswith(".xlsx") else pd.read_csv(up)
         date_cols = [c for c in df.columns if "date" in c.lower() or "time" in c.lower()]
-        date_col = st.sidebar.selectbox("Date column", date_cols, key="fc_date_col") if date_cols else df.columns[0]
+        if not date_cols:
+            st.error("No date column found. Ensure your file has a column with 'date' or 'time' in the name.")
+            return
+        date_col = st.sidebar.selectbox("Date column", date_cols, key="fc_date_col")
 
-    numeric_cols = df.select_dtypes(include="number").columns.tolist()
-    if date_col in numeric_cols:
-        numeric_cols.remove(date_col)
+    numeric_cols = [c for c in df.select_dtypes(include="number").columns if c != date_col]
 
     selected_metrics = st.sidebar.multiselect(
         "Metrics to analyze", numeric_cols,
         default=numeric_cols[:2] if len(numeric_cols) >= 2 else numeric_cols,
         key="fc_metrics",
     )
+
+    if not selected_metrics:
+        st.info("Select at least one metric to analyze from the sidebar.")
+        return
+
+    st.caption(f"Loaded {len(df):,} rows · {len(numeric_cols)} numeric columns")
 
     tab1, tab2, tab3, tab4 = st.tabs([
         "📉 Trends",

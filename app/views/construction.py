@@ -8,6 +8,15 @@ from datetime import date, timedelta
 import pandas as pd
 import streamlit as st
 
+from app.data_loader import (
+    DATE_CANDIDATES,
+    LAT_CANDIDATES,
+    LON_CANDIDATES,
+    demo_mode_enabled,
+    fetch_dataset,
+    pick_column,
+)
+
 try:
     import plotly.express as px
 
@@ -49,67 +58,48 @@ _SCHEDULE_COLUMNS = {
 
 
 # ---------------------------------------------------------------------------
-# Sample data generators
+# Socrata data loader
 # ---------------------------------------------------------------------------
 
-def _sample_inspection_df() -> pd.DataFrame:
-    rng = pd.date_range("2023-01-01", periods=30, freq="7D")
-    defects = ["Cracking", "Heaving", "Missing Panel", "Deterioration", "Trip Hazard"]
-    statuses = ["Pending", "In Review", "Approved", "Deferred"]
-    rows = []
-    for i in range(30):
-        rows.append(
-            {
-                "block_id": f"BLK-{1000 + i}",
-                "borough": _BOROUGHS[i % len(_BOROUGHS)],
-                "address": f"{100 + i * 3} Main St",
-                "condition_score": max(5, 95 - (i * 3)),
-                "defect_type": defects[i % len(defects)],
-                "inspection_date": rng[i].date(),
-                "area_sqft": 100 + (i * 20),
-                "priority_score": 0.0,
-                "status": statuses[i % len(statuses)],
-            }
+@st.cache_data(ttl=86_400, show_spinner="Loading inspection data from Socrata…")
+def _load_inspection_from_socrata(limit: int = 25_000) -> pd.DataFrame:
+    """Load and normalize the SMD inspection dataset for the construction list view."""
+    df = fetch_dataset("inspection", limit=limit)
+    if df.empty:
+        return df
+    df = df.copy()
+    lat_col = pick_column(df, LAT_CANDIDATES)
+    lon_col = pick_column(df, LON_CANDIDATES)
+    date_col = pick_column(df, DATE_CANDIDATES)
+    renames: dict[str, str] = {}
+    if lat_col and lat_col != "latitude":
+        renames[lat_col] = "latitude"
+    if lon_col and lon_col != "longitude":
+        renames[lon_col] = "longitude"
+    if date_col and date_col != "inspection_date":
+        renames[date_col] = "inspection_date"
+    for src, dst in [("boro", "borough"), ("streetname", "address"), ("onstreet", "address")]:
+        if src in df.columns and dst not in df.columns:
+            renames[src] = dst
+    if renames:
+        df = df.rename(columns=renames)
+    if "block_id" not in df.columns:
+        id_col = next(
+            (c for c in df.columns if any(k in c.lower() for k in ("streetfaceid", "blockid", "inspectionid"))),
+            None,
         )
-    return pd.DataFrame(rows)
-
-
-def _sample_contract_df() -> pd.DataFrame:
-    today = date.today()
-    rows = []
-    for i in range(10):
-        start = today + timedelta(days=i * 15 - 30)
-        rows.append(
-            {
-                "contract_id": f"CNT-{200 + i}",
-                "block_id": f"BLK-{1000 + i * 3}",
-                "borough": _BOROUGHS[i % len(_BOROUGHS)],
-                "start_date": start,
-                "end_date": start + timedelta(days=60),
-                "status": "Active" if i % 3 != 0 else "Planned",
-                "contractor": f"ABC Construction {i + 1}",
-            }
-        )
-    return pd.DataFrame(rows)
-
-
-def _sample_schedule_df() -> pd.DataFrame:
-    today = date.today()
-    rows = []
-    for i in range(15):
-        start = today + timedelta(days=i * 10)
-        rows.append(
-            {
-                "block_id": f"BLK-{1000 + i}",
-                "borough": _BOROUGHS[i % len(_BOROUGHS)],
-                "address": f"{100 + i * 3} Main St",
-                "condition_score": max(5, 95 - (i * 3)),
-                "priority_score": round(0.9 - (i * 0.05), 2),
-                "planned_start": start,
-                "planned_end": start + timedelta(days=30 + i * 5),
-            }
-        )
-    return pd.DataFrame(rows)
+        df["block_id"] = df[id_col].astype(str) if id_col else df.index.astype(str)
+    for col in ("condition_score", "area_sqft"):
+        if col not in df.columns:
+            df[col] = None
+    if "defect_type" not in df.columns:
+        result_col = next((c for c in df.columns if "result" in c.lower()), None)
+        df["defect_type"] = df[result_col] if result_col else "Unknown"
+    if "status" not in df.columns:
+        df["status"] = "Active"
+    if "priority_score" not in df.columns:
+        df["priority_score"] = 0.0
+    return df
 
 
 # ---------------------------------------------------------------------------
@@ -244,17 +234,25 @@ def _render_construction_list_tab() -> None:
     elif st.session_state.get("construction_inspection_df") is not None:
         df = st.session_state["construction_inspection_df"]
     else:
-        with st.expander("No data loaded — use sample data?", expanded=True):
-            if st.button("Load sample inspection data", key="load_sample_insp"):
-                df = _sample_inspection_df()
-                st.session_state["construction_inspection_df"] = df
-                st.rerun()
-            else:
+        with st.expander("No data loaded — load from Socrata or upload a file", expanded=True):
+            c1, c2 = st.columns(2)
+            with c1:
+                soc_limit = st.number_input("Row limit", 1_000, 100_000, 25_000, step=5_000, key="ci_soc_lim")
+                if st.button("Load from Socrata (SMD Inspection)", key="load_socrata_insp"):
+                    loaded = _load_inspection_from_socrata(int(soc_limit))
+                    if loaded.empty:
+                        st.warning("No data returned. Check SOCRATA_APP_TOKEN in Settings.")
+                    else:
+                        st.session_state["construction_inspection_df"] = loaded
+                        if demo_mode_enabled():
+                            st.info("Running in demo mode — configure SOCRATA_APP_TOKEN for live data.")
+                        st.rerun()
+            with c2:
                 st.caption(
-                    "Click above, or upload a CSV with columns: block_id, borough, address, "
+                    "Or upload a CSV with columns: block_id, borough, address, "
                     "condition_score, defect_type, inspection_date, area_sqft, priority_score, status"
                 )
-                return
+            return
 
     if df is None or df.empty:
         st.warning("Loaded DataFrame is empty.")
@@ -427,19 +425,12 @@ def _render_conflict_detection_tab() -> None:
             st.error(f"Could not parse contracts file: {exc}")
             return
 
-    use_sample = False
     if insp_df is None or contr_df is None:
-        with st.expander("No data loaded — use sample data?", expanded=True):
-            if st.button("Load sample conflict data", key="load_sample_conflict"):
-                insp_df = _sample_inspection_df()
-                contr_df = _sample_contract_df()
-                use_sample = True
-            else:
-                st.caption(
-                    "Upload both files above, or generate a construction list in Tab 1 "
-                    "and upload contracts here."
-                )
-                return
+        st.info(
+            "Upload both files above, or generate a construction list in Tab 1 "
+            "and upload a contracts file here."
+        )
+        return
 
     if insp_df is None or insp_df.empty:
         st.warning("Construction list is empty.")
@@ -455,9 +446,6 @@ def _render_conflict_detection_tab() -> None:
         for e in all_errors:
             st.error(e)
         return
-
-    if use_sample:
-        st.caption("Using synthetic sample data for demonstration.")
 
     conflicts = _detect_conflicts(insp_df, contr_df)
 
@@ -547,16 +535,10 @@ def _render_schedule_tab() -> None:
         sched_df = base
         st.info("Using construction list from Tab 1 with auto-assigned placeholder dates.")
 
-    col_mock, _ = st.columns([1, 3])
-    with col_mock:
-        if st.button("Load mock schedule data", key="load_mock_schedule"):
-            st.session_state["schedule_df"] = _sample_schedule_df()
-            st.rerun()
-
     if sched_df is None or sched_df.empty:
         st.info(
-            "No schedule data loaded. Upload a CSV, generate a construction list in Tab 1, "
-            "or click 'Load mock schedule data' above."
+            "No schedule data loaded. Upload a CSV or generate a construction list in Tab 1 "
+            "to populate the schedule view."
         )
         return
 
