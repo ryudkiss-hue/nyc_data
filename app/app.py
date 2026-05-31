@@ -28,6 +28,7 @@ from app.utils.i18n import render_language_selector, t
 from app.views import home, publish, settings, workflows
 from app.views.construction import render_construction_page
 from app.views.contracts_dashboard import render_contracts_page
+from app.views.data_discovery import render_data_discovery_page
 from app.views.forecasting import render_forecasting_page
 from app.views.gis_dashboard import render_gis_page
 
@@ -46,6 +47,7 @@ _SECTIONS = {
     "📋 Contract Analytics":   "contracts",
     "📈 Forecasting":          "forecasting",
     "⚙️ Data Workflows":       "workflows",
+    "🔍 Data Discovery":       "discovery",
     "📤 Publish":              "publish",
     "⚙️ Settings":             "settings",
 }
@@ -165,6 +167,10 @@ def main() -> None:
 
     if section == "forecasting":
         render_forecasting_page()
+        return
+
+    if section == "discovery":
+        render_data_discovery_page()
         return
 
     if section == "publish":
