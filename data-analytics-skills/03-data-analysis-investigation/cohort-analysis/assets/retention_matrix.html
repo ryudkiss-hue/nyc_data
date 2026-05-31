@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cohort Retention Matrix</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 24px; color: #1a1a1a; }
+  h1 { font-size: 1.4rem; font-weight: 600; margin-bottom: 4px; }
+  .meta { font-size: 0.85rem; color: #666; margin-bottom: 20px; }
+  table { border-collapse: collapse; font-size: 0.85rem; }
+  th { background: #f4f4f4; font-weight: 600; padding: 8px 12px; text-align: center; border: 1px solid #ddd; }
+  th.cohort-header { text-align: left; }
+  td { padding: 6px 12px; text-align: center; border: 1px solid #eee; min-width: 70px; }
+  td.cohort-label { text-align: left; font-weight: 500; background: #f9f9f9; }
+  td.size { color: #555; font-size: 0.8rem; }
+  .legend { margin-top: 20px; font-size: 0.8rem; color: #666; }
+  .legend-swatch { display: inline-block; width: 16px; height: 16px; margin-right: 4px; vertical-align: middle; border-radius: 2px; }
+</style>
+<script>
+// Color scale: white (0%) → light blue (50%) → dark blue (100%)
+function retentionColor(pct) {
+  if (pct === null || pct === undefined || pct === '') return '#f5f5f5';
+  const v = Math.min(Math.max(parseFloat(pct), 0), 100) / 100;
+  const r = Math.round(255 - v * 100);
+  const g = Math.round(255 - v * 60);
+  const b = Math.round(255 - v * 10);
+  return `rgb(${r},${g},${b})`;
+}
+
+function textColor(pct) {
+  return parseFloat(pct) > 60 ? '#fff' : '#1a1a1a';
+}
+
+// ============================================================
+// EDIT THIS SECTION with your actual data
+// ============================================================
+const cohortData = {
+  title: "Monthly Cohort Retention",
+  product: "[Product Name]",
+  retentionEvent: "[e.g. Logged in]",
+  asOf: "[YYYY-MM-DD]",
+  // periods[0] is always "P0" (100%)
+  periods: ["P0", "P1", "P2", "P3", "P4", "P5", "P6"],
+  cohorts: [
+    // { label: "YYYY-MM", size: N, rates: [100, 45.2, 30.1, ...] }
+    { label: "2024-01", size: 320, rates: [100, 48, 34, 25, 22, 20, 19] },
+    { label: "2024-02", size: 280, rates: [100, 51, 37, 28, 24, 21, null] },
+    { label: "2024-03", size: 310, rates: [100, 53, 39, 30, 26, null, null] },
+    { label: "2024-04", size: 295, rates: [100, 55, 41, 31, null, null, null] },
+    { label: "2024-05", size: 340, rates: [100, 57, 42, null, null, null, null] },
+    { label: "2024-06", size: 360, rates: [100, 59, null, null, null, null, null] },
+  ]
+};
+// ============================================================
+
+window.onload = function() {
+  const d = cohortData;
+  document.getElementById('title').textContent = d.title;
+  document.getElementById('meta').textContent =
+    `Product: ${d.product} | Retention event: ${d.retentionEvent} | As of: ${d.asOf}`;
+
+  const thead = document.getElementById('thead');
+  let headerRow = '<tr><th class="cohort-header">Cohort</th><th>Size</th>';
+  d.periods.forEach(p => { headerRow += `<th>${p}</th>`; });
+  headerRow += '</tr>';
+  thead.innerHTML = headerRow;
+
+  const tbody = document.getElementById('tbody');
+  let rows = '';
+  d.cohorts.forEach(c => {
+    rows += `<tr><td class="cohort-label">${c.label}</td><td class="size">${c.size.toLocaleString()}</td>`;
+    d.periods.forEach((_, i) => {
+      const val = c.rates[i];
+      const display = val !== null && val !== undefined ? val.toFixed(1) + '%' : '—';
+      const bg = retentionColor(val);
+      const fg = val !== null ? textColor(val) : '#999';
+      rows += `<td style="background:${bg};color:${fg}">${display}</td>`;
+    });
+    rows += '</tr>';
+  });
+  tbody.innerHTML = rows;
+};
+</script>
+</head>
+<body>
+<h1 id="title"></h1>
+<div class="meta" id="meta"></div>
+<table>
+  <thead id="thead"></thead>
+  <tbody id="tbody"></tbody>
+</table>
+<div class="legend">
+  <span class="legend-swatch" style="background:#e8f0fe"></span> Low retention &nbsp;&nbsp;
+  <span class="legend-swatch" style="background:#6699cc"></span> Medium &nbsp;&nbsp;
+  <span class="legend-swatch" style="background:#1a4a8a"></span> High retention &nbsp;&nbsp;
+  <span style="color:#999">— = not yet available (immature cohort)</span>
+</div>
+<p style="font-size:0.75rem;color:#aaa;margin-top:16px">
+  Edit the <code>cohortData</code> object in the &lt;script&gt; section to populate with your data.
+</p>
+</body>
+</html>

@@ -1,0 +1,28 @@
+# Entity Definition Template
+# Fill in all fields marked [REQUIRED] before use.
+
+entities:
+  - name: [REQUIRED]  # snake_case, e.g. customer
+    label: "[REQUIRED] Human-readable entity name, e.g. 'Customer'"
+    description: "[REQUIRED] What real-world object this entity represents"
+    type: primary  # primary | foreign | unique | natural
+    expr: "[REQUIRED] column that identifies this entity, e.g. customer_id"
+    meta:
+      owner: "[REQUIRED]"
+      source_table: "[REQUIRED] e.g. analytics.dim_customers"
+      grain: "[REQUIRED] e.g. one row per customer"
+      relationships:
+        - entity: "[related entity name, e.g. order]"
+          type: "one_to_many"  # one_to_many | many_to_one | many_to_many
+          join_key: "[foreign key column, e.g. customer_id]"
+          notes: "[OPTIONAL]"
+
+  # Foreign key entity example:
+  # - name: product
+  #   label: "Product"
+  #   description: "A product in the catalogue."
+  #   type: foreign
+  #   expr: product_id
+  #   meta:
+  #     source_table: analytics.dim_products
+  #     grain: one row per product SKU
