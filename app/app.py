@@ -1,4 +1,4 @@
-"""Manhattan Mission Control — agency-grade Streamlit application."""
+"""NYC DOT SIM Analyst Toolkit — Streamlit desktop application."""
 
 from __future__ import annotations
 
@@ -6,9 +6,6 @@ import os
 import sys
 from pathlib import Path
 
-# Ensure repo root is on sys.path so `from app.X import ...` works whether the
-# app is launched as `streamlit run app/app.py` (path = app/) or installed as a
-# package.  Adding to index 0 gives it priority over site-packages.
 _REPO_ROOT = str(Path(__file__).resolve().parents[1])
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
@@ -29,13 +26,31 @@ from app.ui.empty_states import frames_are_empty, render_empty_state
 from app.ui.theme import inject_theme, render_agency_header, render_skip_link
 from app.utils.i18n import render_language_selector, t
 from app.views import home, publish, settings, workflows
+from app.views.construction import render_construction_page
+from app.views.contracts_dashboard import render_contracts_page
+from app.views.data_discovery import render_data_discovery_page
+from app.views.forecasting import render_forecasting_page
+from app.views.gis_dashboard import render_gis_page
 
 st.set_page_config(
-    page_title="Manhattan Mission Control | NYC DOT SIM",
+    page_title="NYC DOT SIM Analyst Toolkit",
     page_icon="🚧",
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+# Top-level navigation sections
+_SECTIONS = {
+    "🏠 Home":                 "home",
+    "🏗️ Construction Lists":   "construction",
+    "🗺️ GIS & Conflicts":      "gis",
+    "📋 Contract Analytics":   "contracts",
+    "📈 Forecasting":          "forecasting",
+    "⚙️ Data Workflows":       "workflows",
+    "🔍 Data Discovery":       "discovery",
+    "📤 Publish":              "publish",
+    "⚙️ Settings":             "settings",
+}
 
 WORKFLOW_KEYS = {
     "qa": "🔍 QA/QC & Inventory Ledger",
@@ -45,24 +60,20 @@ WORKFLOW_KEYS = {
     "quality": "🩺 Data Quality Dashboard",
 }
 
-NAV_KEYS = ["nav_home", "nav_workflows", "nav_publish", "nav_settings"]
-
 
 @st.cache_data(ttl=CACHE_TTL_SECONDS, show_spinner="Loading workflow datasets…")
 def _load_workflow_frames(workflow_key: str, limit: int) -> dict:
-    # Quality view uses all workflow datasets for cross-dataset profiling
     if workflow_key == "quality":
-        all_wf_keys: list[str] = []
+        all_keys: list[str] = []
         for v in WORKFLOW_DATASETS.values():
-            all_wf_keys.extend(v)
-        return fetch_datasets_for_keys(tuple(dict.fromkeys(all_wf_keys)), limit=limit)
+            all_keys.extend(v)
+        return fetch_datasets_for_keys(tuple(dict.fromkeys(all_keys)), limit=limit)
     return fetch_datasets_for_keys(keys_for_workflow(workflow_key), limit=limit)
 
 
 @st.cache_data(ttl=CACHE_TTL_SECONDS, show_spinner="Loading full ingestion matrix…")
 def _load_all_frames(limit: int) -> dict:
     from app.data_loader import DATASET_REGISTRY
-
     return fetch_datasets_for_keys(tuple(DATASET_REGISTRY.keys()), limit=limit)
 
 
@@ -76,54 +87,58 @@ def _run_workflows(frames: dict) -> dict:
     return run_all_workflows(frames)
 
 
-def _nav_page_from_key(key: str) -> str:
-    if key == "nav_home":
-        return "Home"
-    if key == "nav_workflows":
-        return "Workflows"
-    if key == "nav_publish":
-        return "Publish"
-    if key == "nav_settings":
-        return "Settings"
-    return "Home"
+def _sidebar_nav() -> tuple[str, dict]:
+    """Render sidebar navigation. Returns (section_key, workflow_opts)."""
+    with st.sidebar:
+        render_language_selector()
+        st.image("https://www.nyc.gov/assets/dot/images/content/pages/about/dot_logo.gif",
+                 width=120) if False else st.markdown("### 🚧 NYC DOT · SIM")
+        st.markdown("**Analyst Toolkit**")
+        st.caption("Sidewalk Inspection Management")
+        st.divider()
+
+        section_label = st.radio(
+            "Navigation",
+            list(_SECTIONS.keys()),
+            label_visibility="collapsed",
+            key="main_nav",
+        )
+        section = _SECTIONS[section_label]
+        st.divider()
+
+        wf_opts: dict = {"view_key": "qa", "row_limit": 10_000, "show_ingest": False}
+
+        if section == "workflows":
+            wf_labels = list(WORKFLOW_KEYS.values())
+            view_label = st.radio("Workflow", wf_labels, index=0, key="wf_select")
+            wf_opts["view_key"] = [k for k, v in WORKFLOW_KEYS.items() if v == view_label][0]
+            wf_opts["row_limit"] = st.slider("Max rows / dataset", 1_000, 50_000, 10_000, step=1_000)
+            if demo_mode_enabled():
+                st.info(t("demo_active"))
+            if st.button(t("refresh_cache"), type="primary", use_container_width=True):
+                st.cache_data.clear()
+                st.rerun()
+            wf_opts["show_ingest"] = st.checkbox("Full ingestion matrix")
+
+        st.divider()
+        if st.button("🗑️ Clear Session", use_container_width=True):
+            for k in list(st.session_state.keys()):
+                del st.session_state[k]
+            st.cache_data.clear()
+            st.rerun()
+
+        # Quick-stats footer
+        st.markdown("---")
+        st.caption("NYC DOT · SIM Program  \nAnalyst Toolkit v2.0")
+
+    return section, wf_opts
 
 
 def main() -> None:
     inject_theme()
     render_skip_link()
 
-    with st.sidebar:
-        render_language_selector()
-        st.markdown("**🚧 NYC DOT · SIM**")
-        nav_labels = [t(k) for k in NAV_KEYS]
-        page_label = st.radio(t("navigation"), nav_labels, label_visibility="collapsed")
-        page = _nav_page_from_key(NAV_KEYS[nav_labels.index(page_label)])
-        st.divider()
-
-        view_key = "qa"
-        show_ingest = False
-        row_limit = 10_000
-
-        if page == "Workflows":
-            wf_labels = list(WORKFLOW_KEYS.values())
-            view_label = st.radio(t("workflows"), wf_labels, index=0)
-            view_key = [k for k, v in WORKFLOW_KEYS.items() if v == view_label][0]
-            row_limit = st.slider("Max rows per dataset", 1_000, 50_000, 10_000, step=1_000)
-            if demo_mode_enabled():
-                st.info(t("demo_active"))
-            if st.button(t("refresh_cache"), type="primary", use_container_width=True):
-                st.cache_data.clear()
-                st.rerun()
-            dataset_count = len(WORKFLOW_DATASETS.get(view_key, ()))
-            st.caption(f"{dataset_count} dataset(s) · workflow: `{view_key}`")
-            show_ingest = st.checkbox("Full ingestion matrix", help="Load all registered datasets")
-
-        st.divider()
-        if st.button(t("clear_session"), use_container_width=True):
-            for k in list(st.session_state.keys()):
-                del st.session_state[k]
-            st.cache_data.clear()
-            st.rerun()
+    section, wf_opts = _sidebar_nav()
 
     token = token_status()
     render_agency_header(
@@ -131,23 +146,50 @@ def main() -> None:
         live_auth=bool(token["configured"] or token.get("key_pair")),
     )
 
-    if page == "Home":
+    # ------------------------------------------------------------------ #
+    # Route to section
+    # ------------------------------------------------------------------ #
+    if section == "home":
         home.render_home_page()
         return
 
-    if page == "Publish":
+    if section == "construction":
+        render_construction_page()
+        return
+
+    if section == "gis":
+        render_gis_page()
+        return
+
+    if section == "contracts":
+        render_contracts_page()
+        return
+
+    if section == "forecasting":
+        render_forecasting_page()
+        return
+
+    if section == "discovery":
+        render_data_discovery_page()
+        return
+
+    if section == "publish":
         publish.render_publish_page()
         return
 
-    if page == "Settings":
+    if section == "settings":
         settings.render_settings_page()
         return
 
     # ------------------------------------------------------------------ #
-    # Workflows page
+    # Data Workflows section (Socrata-backed)
     # ------------------------------------------------------------------ #
+    view_key = wf_opts["view_key"]
+    row_limit = wf_opts["row_limit"]
+    show_ingest = wf_opts["show_ingest"]
     frames: dict = {}
     map_layers: dict = {}
+
     try:
         if show_ingest:
             frames = _load_all_frames(row_limit)
@@ -193,7 +235,6 @@ def main() -> None:
     with st.expander("📊 ROI calculation detail", expanded=False):
         st.json(roi.as_dict())
 
-    # Ingestion summary in expander on all workflow views
     if not show_ingest and view_key != "quality":
         with st.expander("📥 Ingestion matrix", expanded=False):
             from app.data_loader import ingestion_summary
