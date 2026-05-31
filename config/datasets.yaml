@@ -18,6 +18,8 @@ workflow_datasets:
     - capital_blocks
     - capital_intersections
     - street_closures_block
+    - street_resurfacing_schedule
+    - street_resurfacing_inhouse
   contract:
     - violations
     - tree_damage
@@ -114,6 +116,14 @@ datasets:
     fourfour: u9au-h79y
     group: overlays
     label: Step Streets Locations
+  street_resurfacing_schedule:
+    fourfour: xnfm-u3k5
+    group: coordination
+    label: Street Resurfacing Schedule
+  street_resurfacing_inhouse:
+    fourfour: ffaf-8mrv
+    group: coordination
+    label: DOT In-house Street Resurfacing Projects
   sidewalk_planimetric:
     fourfour: vfx9-tbb6
     group: overlays
@@ -130,3 +140,4 @@ datasets:
     fourfour: erm2-nwe9
     group: overlays
     label: 311 Sidewalk/Curb
+    default_where: "complaint_type IN ('Sidewalk Condition', 'Curb Condition', 'Damaged Tree', 'Root/Sewer/Sidewalk Condition', 'Sidewalk Cafe', 'Streetlight Condition')"

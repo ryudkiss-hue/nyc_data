@@ -244,6 +244,9 @@ def fetch_dataset(dataset_key: str, *, limit: int = 50_000, where: str | None = 
     if demo_mode_enabled():
         log_event("fetch_demo", dataset=dataset_key, rows=1)
         return _demo_frame(dataset_key)
+    # Apply dataset-level default WHERE filter when caller doesn't supply one
+    if where is None:
+        where = DATASET_REGISTRY[dataset_key].get("default_where")
     cached = _read_parquet_cache(dataset_key)
     if cached is not None:
         log_event("fetch_parquet", dataset=dataset_key, rows=len(cached))
