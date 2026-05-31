@@ -87,10 +87,10 @@ def _write_catalog(dataset_id: str, entry: dict) -> None:
 # ---------------------------------------------------------------------------
 # In-memory audit trail
 # ---------------------------------------------------------------------------
-_audit_trail: "OrderedDict[str, dict]" = OrderedDict()
+_audit_trail: OrderedDict[str, dict] = OrderedDict()
 
 
-def _get_trail() -> "OrderedDict[str, dict]":
+def _get_trail() -> OrderedDict[str, dict]:
     return _audit_trail
 
 

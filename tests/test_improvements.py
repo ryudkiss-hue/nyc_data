@@ -4,7 +4,6 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
-
 # ---------------------------------------------------------------------------
 # GROUP 2 — ML analysis modules
 # ---------------------------------------------------------------------------

@@ -51,7 +51,7 @@ def test_redact_column_names_pseudonymizes_only_flagged():
 
     flagged = {s.column for s in signals}
     assert "amount" in redacted  # non-PII kept
-    for name, new in zip(df.columns, redacted):
+    for name, new in zip(df.columns, redacted, strict=False):
         if name in flagged:
             assert new.startswith("pii_col_")
         else:
