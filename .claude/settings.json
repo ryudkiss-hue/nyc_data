@@ -6,6 +6,12 @@
                 "source": "github",
                 "repo": "mhattingpete/claude-skills-marketplace"
             }
+        },
+        "data-analytics-skills": {
+            "source": {
+                "source": "directory",
+                "path": "data-analytics-skills"
+            }
         }
     },
     "enabledPlugins": {
