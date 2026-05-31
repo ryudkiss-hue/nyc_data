@@ -11,6 +11,7 @@ workflow_datasets:
     - mappluto
     - complaints_311
     - correspondences
+    - curb_metal_protruding
   spatial:
     - weekly_construction
     - street_permits
@@ -104,6 +105,15 @@ datasets:
     fourfour: gsgx-6efw
     group: coordination
     label: Street Construction Permit Stipulations
+  curb_metal_protruding:
+    fourfour: i2y3-sx2e
+    group: core_smd
+    label: Curb Metal Protruding Data
+    manhattan_where: "upper(borough) = 'MANHATTAN'"
+  step_streets:
+    fourfour: u9au-h79y
+    group: overlays
+    label: Step Streets Locations
   sidewalk_planimetric:
     fourfour: vfx9-tbb6
     group: overlays
