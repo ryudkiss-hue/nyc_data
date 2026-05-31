@@ -36,7 +36,7 @@ jobs:
 
       - name: Run tests (core)
         run: |
-          python -m pytest tests/ -q --tb=short -m "not legacy" \
+          python -m pytest tests/ -q --tb=short \
             --ignore=tests/test_api_security.py \
             --cov=app --cov=src/socrata_toolkit/analyst --cov=src/socrata_toolkit/core \
             --cov-report=term-missing
