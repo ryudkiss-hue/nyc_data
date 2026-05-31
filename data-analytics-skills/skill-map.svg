@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1560 1165">
+  <!-- Title -->
+  <text x="780" y="42" text-anchor="middle" font-size="26" font-weight="bold" font-family="Arial, sans-serif" fill="#1e1e1e">Data Analytics Skills for Claude</text>
+  <text x="780" y="68" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#757575">31 portable AI-powered skills across 6 categories for every analyst</text>
+
+  <!-- ROW 1 CATEGORY BACKGROUNDS -->
+  <rect x="30" y="85" width="480" height="510" rx="12" fill="#dbe4ff" stroke="#4a9eed" stroke-width="2"/>
+  <rect x="540" y="85" width="480" height="510" rx="12" fill="#fff3bf" stroke="#f59e0b" stroke-width="2"/>
+  <rect x="1050" y="85" width="480" height="510" rx="12" fill="#e5dbff" stroke="#8b5cf6" stroke-width="2"/>
+
+  <!-- ROW 2 CATEGORY BACKGROUNDS -->
+  <rect x="30" y="625" width="480" height="510" rx="12" fill="#ffd0e8" stroke="#ec4899" stroke-width="2"/>
+  <rect x="540" y="625" width="480" height="510" rx="12" fill="#d3f9d8" stroke="#22c55e" stroke-width="2"/>
+  <rect x="1050" y="625" width="480" height="510" rx="12" fill="#c3fae8" stroke="#06b6d4" stroke-width="2"/>
+
+  <!-- CAT 01 HEADER -->
+  <text x="55" y="110" font-size="17" font-weight="bold" font-family="Arial, sans-serif" fill="#1e3a5f">01  Data Quality &amp; Validation</text>
+  <text x="55" y="132" font-size="13" font-family="Arial, sans-serif" fill="#2563eb">Ensure data reliability and correctness</text>
+
+  <!-- CAT 01 SKILLS -->
+  <rect x="45" y="145" width="450" height="38" rx="8" fill="#a5d8ff" stroke="#4a9eed" stroke-width="1"/>
+  <text x="270" y="169" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#1e3a5f">programmatic-eda</text>
+  <rect x="45" y="190" width="450" height="38" rx="8" fill="#a5d8ff" stroke="#4a9eed" stroke-width="1"/>
+  <text x="270" y="214" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#1e3a5f">data-quality-audit</text>
+  <rect x="45" y="235" width="450" height="38" rx="8" fill="#a5d8ff" stroke="#4a9eed" stroke-width="1"/>
+  <text x="270" y="259" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#1e3a5f">query-validation</text>
+  <rect x="45" y="280" width="450" height="38" rx="8" fill="#a5d8ff" stroke="#4a9eed" stroke-width="1"/>
+  <text x="270" y="304" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#1e3a5f">schema-mapper</text>
+  <rect x="45" y="325" width="450" height="38" rx="8" fill="#a5d8ff" stroke="#4a9eed" stroke-width="1"/>
+  <text x="270" y="349" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#1e3a5f">metric-reconciliation</text>
+
+  <!-- CAT 02 HEADER -->
+  <text x="565" y="110" font-size="17" font-weight="bold" font-family="Arial, sans-serif" fill="#78350f">02  Documentation &amp; Knowledge</text>
+  <text x="565" y="132" font-size="13" font-family="Arial, sans-serif" fill="#92400e">Build reusable context and institutional knowledge</text>
+
+  <!-- CAT 02 SKILLS -->
+  <rect x="555" y="145" width="450" height="38" rx="8" fill="#ffd8a8" stroke="#f59e0b" stroke-width="1"/>
+  <text x="780" y="169" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#78350f">semantic-model-builder</text>
+  <rect x="555" y="190" width="450" height="38" rx="8" fill="#ffd8a8" stroke="#f59e0b" stroke-width="1"/>
+  <text x="780" y="214" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#78350f">analysis-documentation</text>
+  <rect x="555" y="235" width="450" height="38" rx="8" fill="#ffd8a8" stroke="#f59e0b" stroke-width="1"/>
+  <text x="780" y="259" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#78350f">data-catalog-entry</text>
+  <rect x="555" y="280" width="450" height="38" rx="8" fill="#ffd8a8" stroke="#f59e0b" stroke-width="1"/>
+  <text x="780" y="304" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#78350f">sql-to-business-logic</text>
+  <rect x="555" y="325" width="450" height="38" rx="8" fill="#ffd8a8" stroke="#f59e0b" stroke-width="1"/>
+  <text x="780" y="349" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#78350f">analysis-assumptions-log</text>
+
+  <!-- CAT 03 HEADER -->
+  <text x="1075" y="110" font-size="17" font-weight="bold" font-family="Arial, sans-serif" fill="#4c1d95">03  Data Analysis &amp; Investigation</text>
+  <text x="1075" y="132" font-size="13" font-family="Arial, sans-serif" fill="#6d28d9">Core analytical workflows for discovering insights</text>
+
+  <!-- CAT 03 SKILLS (7 skills) -->
+  <rect x="1065" y="145" width="450" height="38" rx="8" fill="#d0bfff" stroke="#8b5cf6" stroke-width="1"/>
+  <text x="1290" y="169" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#4c1d95">cohort-analysis</text>
+  <rect x="1065" y="190" width="450" height="38" rx="8" fill="#d0bfff" stroke="#8b5cf6" stroke-width="1"/>
+  <text x="1290" y="214" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#4c1d95">segmentation-analysis</text>
+  <rect x="1065" y="235" width="450" height="38" rx="8" fill="#d0bfff" stroke="#8b5cf6" stroke-width="1"/>
+  <text x="1290" y="259" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#4c1d95">funnel-analysis</text>
+  <rect x="1065" y="280" width="450" height="38" rx="8" fill="#d0bfff" stroke="#8b5cf6" stroke-width="1"/>
+  <text x="1290" y="304" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#4c1d95">time-series-analysis</text>
+  <rect x="1065" y="325" width="450" height="38" rx="8" fill="#d0bfff" stroke="#8b5cf6" stroke-width="1"/>
+  <text x="1290" y="349" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#4c1d95">root-cause-investigation</text>
+  <rect x="1065" y="370" width="450" height="38" rx="8" fill="#d0bfff" stroke="#8b5cf6" stroke-width="1"/>
+  <text x="1290" y="394" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#4c1d95">ab-test-analysis</text>
+  <rect x="1065" y="415" width="450" height="38" rx="8" fill="#d0bfff" stroke="#8b5cf6" stroke-width="1"/>
+  <text x="1290" y="439" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#4c1d95">business-metrics-calculator</text>
+
+  <!-- CAT 04 HEADER -->
+  <text x="55" y="648" font-size="17" font-weight="bold" font-family="Arial, sans-serif" fill="#831843">04  Storytelling &amp; Visualization</text>
+  <text x="55" y="670" font-size="13" font-family="Arial, sans-serif" fill="#9d174d">Transform analysis into compelling narratives</text>
+
+  <!-- CAT 04 SKILLS -->
+  <rect x="45" y="683" width="450" height="38" rx="8" fill="#eebefa" stroke="#ec4899" stroke-width="1"/>
+  <text x="270" y="707" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#831843">insight-synthesis</text>
+  <rect x="45" y="728" width="450" height="38" rx="8" fill="#eebefa" stroke="#ec4899" stroke-width="1"/>
+  <text x="270" y="752" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#831843">visualization-builder</text>
+  <rect x="45" y="773" width="450" height="38" rx="8" fill="#eebefa" stroke="#ec4899" stroke-width="1"/>
+  <text x="270" y="797" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#831843">executive-summary-generator</text>
+  <rect x="45" y="818" width="450" height="38" rx="8" fill="#eebefa" stroke="#ec4899" stroke-width="1"/>
+  <text x="270" y="842" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#831843">dashboard-specification</text>
+  <rect x="45" y="863" width="450" height="38" rx="8" fill="#eebefa" stroke="#ec4899" stroke-width="1"/>
+  <text x="270" y="887" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#831843">data-narrative-builder</text>
+
+  <!-- CAT 05 HEADER -->
+  <text x="565" y="648" font-size="17" font-weight="bold" font-family="Arial, sans-serif" fill="#14532d">05  Stakeholder Communication</text>
+  <text x="565" y="670" font-size="13" font-family="Arial, sans-serif" fill="#15803d">Bridge technical analysis and business audiences</text>
+
+  <!-- CAT 05 SKILLS -->
+  <rect x="555" y="683" width="450" height="38" rx="8" fill="#b2f2bb" stroke="#22c55e" stroke-width="1"/>
+  <text x="780" y="707" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#14532d">technical-to-business-translator</text>
+  <rect x="555" y="728" width="450" height="38" rx="8" fill="#b2f2bb" stroke="#22c55e" stroke-width="1"/>
+  <text x="780" y="752" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#14532d">stakeholder-requirements-gathering</text>
+  <rect x="555" y="773" width="450" height="38" rx="8" fill="#b2f2bb" stroke="#22c55e" stroke-width="1"/>
+  <text x="780" y="797" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#14532d">analysis-qa-checklist</text>
+  <rect x="555" y="818" width="450" height="38" rx="8" fill="#b2f2bb" stroke="#22c55e" stroke-width="1"/>
+  <text x="780" y="842" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#14532d">methodology-explainer</text>
+  <rect x="555" y="863" width="450" height="38" rx="8" fill="#b2f2bb" stroke="#22c55e" stroke-width="1"/>
+  <text x="780" y="887" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#14532d">impact-quantification</text>
+
+  <!-- CAT 06 HEADER -->
+  <text x="1075" y="648" font-size="17" font-weight="bold" font-family="Arial, sans-serif" fill="#164e63">06  Workflow Optimization</text>
+  <text x="1075" y="670" font-size="13" font-family="Arial, sans-serif" fill="#0e7490">Streamline and improve analytical processes</text>
+
+  <!-- CAT 06 SKILLS (4 skills) -->
+  <rect x="1065" y="683" width="450" height="38" rx="8" fill="#7fe8c9" stroke="#06b6d4" stroke-width="1"/>
+  <text x="1290" y="707" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#164e63">analysis-planning</text>
+  <rect x="1065" y="728" width="450" height="38" rx="8" fill="#7fe8c9" stroke="#06b6d4" stroke-width="1"/>
+  <text x="1290" y="752" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#164e63">context-packager</text>
+  <rect x="1065" y="773" width="450" height="38" rx="8" fill="#7fe8c9" stroke="#06b6d4" stroke-width="1"/>
+  <text x="1290" y="797" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#164e63">peer-review-template</text>
+  <rect x="1065" y="818" width="450" height="38" rx="8" fill="#7fe8c9" stroke="#06b6d4" stroke-width="1"/>
+  <text x="1290" y="842" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#164e63">analysis-retrospective</text>
+</svg>

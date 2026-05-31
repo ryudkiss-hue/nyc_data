@@ -1,0 +1,26 @@
+# Dimension Definition Template
+# Fill in all fields marked [REQUIRED] before use.
+
+dimensions:
+  - name: [REQUIRED]  # snake_case, e.g. customer_segment
+    label: "[REQUIRED] Human-readable label, e.g. 'Customer Segment'"
+    description: "[REQUIRED] What this dimension represents"
+    type: categorical  # categorical | time
+    expr: "[REQUIRED] column name or SQL expression"
+    meta:
+      owner: "[REQUIRED]"
+      possible_values:
+        - "[OPTIONAL] list all known values]"
+        - "[e.g. enterprise, smb, consumer]"
+      notes: "[OPTIONAL] any nuances — e.g. 'null means pre-segmentation users'"
+
+  # Time dimension example:
+  # - name: created_at
+  #   label: "Created At"
+  #   description: "Timestamp when the record was created (UTC)."
+  #   type: time
+  #   expr: created_at
+  #   type_params:
+  #     time_granularity: day
+  #   meta:
+  #     owner: data-engineering
