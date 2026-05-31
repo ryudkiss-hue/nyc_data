@@ -220,18 +220,33 @@ def _fetch_live(
             return _postprocess_dataset(dataset_key, df)
         except Exception as exc:
             last_exc = exc
+            exc_str = str(exc)
+            # 429 = Socrata throttle. Surface a clear message and back off longer.
+            if "429" in exc_str or "Too Many Requests" in exc_str:
+                wait = backoff ** (attempt + 2)  # longer wait for throttle
+                logging.warning(
+                    "Socrata rate-limited (429) on %s — no app token or abusive rate. "
+                    "Set SOCRATA_APP_TOKEN env var. Backing off %.0fs.",
+                    dataset_key, wait,
+                )
+                if attempt < retries - 1:
+                    time.sleep(wait)
+                continue
             wait = backoff ** attempt
             logging.warning(
                 "Socrata fetch attempt %d/%d failed for %s: %s — retrying in %.1fs",
-                attempt + 1,
-                retries,
-                dataset_key,
-                exc,
-                wait,
+                attempt + 1, retries, dataset_key, exc, wait,
             )
             if attempt < retries - 1:
                 time.sleep(wait)
 
+    # Surface a helpful message for 429 exhaustion
+    if last_exc and ("429" in str(last_exc) or "Too Many Requests" in str(last_exc)):
+        raise RuntimeError(
+            f"Socrata rate-limited (HTTP 429) for '{dataset_key}'. "
+            "Add SOCRATA_APP_TOKEN to your .env file (Settings → API Tokens) "
+            "to get a dedicated request pool with no throttling."
+        ) from last_exc
     raise RuntimeError(
         f"All {retries} fetch attempts failed for {dataset_key}: {last_exc}"
     ) from last_exc
