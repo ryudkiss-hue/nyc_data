@@ -37,11 +37,11 @@ if getattr(sys, "frozen", False):
 else:
     APP_ROOT = Path(__file__).resolve().parent.parent
 
-APP_SCRIPT = APP_ROOT / "app" / "mission_control.py"
-ENV_DIR = Path(os.environ.get("APPDATA", Path.home())) / "ManhattanMissionControl"
+APP_SCRIPT = APP_ROOT / "app" / "app.py"
+ENV_DIR = Path(os.environ.get("APPDATA", Path.home())) / "NYCDOTAnalystToolkit"
 ENV_FILE = ENV_DIR / ".env"
 
-WINDOW_TITLE = "Manhattan Mission Control"
+WINDOW_TITLE = "NYC DOT SIM Analyst Toolkit"
 
 
 # ---------------------------------------------------------------------------

@@ -1,6 +1,9 @@
-"""Settings, readiness, completeness, health, and cache management."""
+"""Settings, readiness, completeness, health, cache management, and API configuration."""
 
 from __future__ import annotations
+
+import os
+from pathlib import Path
 
 import streamlit as st
 
@@ -10,11 +13,64 @@ from app.ui.theme import render_quality_badge, render_readiness_bars
 from app.utils.i18n import t
 from socrata_toolkit.core.readiness import run_readiness_checks
 
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_ENV_FILE = _REPO_ROOT / ".env"
+
+
+def _read_env_file() -> dict[str, str]:
+    """Read key=value pairs from .env file, ignoring comments."""
+    env: dict[str, str] = {}
+    if _ENV_FILE.exists():
+        for line in _ENV_FILE.read_text().splitlines():
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                k, _, v = line.partition("=")
+                env[k.strip()] = v.strip().strip('"').strip("'")
+    return env
+
+
+def _write_env_file(env: dict[str, str]) -> None:
+    """Write key=value pairs to .env file (preserves existing non-Socrata entries)."""
+    existing_lines: list[str] = []
+    managed_keys = {
+        "SOCRATA_APP_TOKEN", "SOCRATA_KEY_ID", "SOCRATA_KEY_SECRET",
+        "SOCRATA_DOMAIN", "SOCRATA_DOMAIN_SECONDARY",
+        "SOCRATA_ROW_LIMIT", "SOCRATA_CACHE_TTL_SECONDS",
+    }
+
+    if _ENV_FILE.exists():
+        for line in _ENV_FILE.read_text().splitlines():
+            stripped = line.strip()
+            if stripped and not stripped.startswith("#") and "=" in stripped:
+                k = stripped.split("=", 1)[0].strip()
+                if k not in managed_keys:
+                    existing_lines.append(line)
+            elif stripped.startswith("#"):
+                existing_lines.append(line)
+
+    new_lines = ["# Socrata / NYC Open Data API configuration (managed by Settings UI)"]
+    for k, v in env.items():
+        new_lines.append(f'{k}={v}')
+
+    _ENV_FILE.write_text("\n".join(existing_lines + [""] + new_lines) + "\n")
+
 
 def render_settings_page() -> None:
     st.subheader(f"⚙️ {t('settings_title')}")
 
-    tab_ready, tab_complete, tab_health, tab_cache, tab_logs = st.tabs([
+    (
+        tab_tokens,
+        tab_config,
+        tab_registry,
+        tab_ready,
+        tab_complete,
+        tab_health,
+        tab_cache,
+        tab_logs,
+    ) = st.tabs([
+        "🔑 API Tokens",
+        "⚙️ Configuration",
+        "📦 Dataset Registry",
         f"🎯 {t('tab_readiness')}",
         f"✅ {t('tab_completeness')}",
         f"🩺 {t('tab_health')}",
@@ -23,6 +79,17 @@ def render_settings_page() -> None:
     ])
 
     # ------------------------------------------------------------------
+    with tab_tokens:
+        _render_api_tokens_tab()
+
+    # ------------------------------------------------------------------
+    with tab_config:
+        _render_configuration_tab()
+
+    # ------------------------------------------------------------------
+    with tab_registry:
+        _render_registry_tab()
+
     with tab_ready:
         report = run_readiness_checks()
         overall = report.get("overall_score", 0)
@@ -170,3 +237,292 @@ def render_settings_page() -> None:
                 "ingest_log.csv",
                 mime="text/csv",
             )
+
+
+# --------------------------------------------------------------------------- #
+# New tab helpers
+# --------------------------------------------------------------------------- #
+
+def _render_api_tokens_tab() -> None:
+    st.markdown("#### Socrata / NYC Open Data API Credentials")
+    st.caption(
+        "Credentials are saved to your local `.env` file and loaded at startup. "
+        "Get an App Token at [data.cityofnewyork.us/profile/app_tokens](https://data.cityofnewyork.us/profile/app_tokens). "
+        "Key ID + Secret support OAuth-signed write access (advanced)."
+    )
+
+    current = _read_env_file()
+
+    with st.form("api_token_form"):
+        app_token = st.text_input(
+            "App Token (`SOCRATA_APP_TOKEN`)",
+            value=current.get("SOCRATA_APP_TOKEN", ""),
+            type="password",
+            help="Required to avoid rate limits (429). Free — register at data.cityofnewyork.us.",
+        )
+
+        st.markdown("**OAuth key pair** (optional — needed for dataset write/publish)")
+        kc1, kc2 = st.columns(2)
+        key_id = kc1.text_input(
+            "Key ID (`SOCRATA_KEY_ID`)",
+            value=current.get("SOCRATA_KEY_ID", ""),
+            type="password",
+        )
+        key_secret = kc2.text_input(
+            "Key Secret (`SOCRATA_KEY_SECRET`)",
+            value=current.get("SOCRATA_KEY_SECRET", ""),
+            type="password",
+        )
+
+        save_btn = st.form_submit_button("💾 Save credentials", type="primary")
+
+    if save_btn:
+        new_env = dict(current)
+        if app_token:
+            new_env["SOCRATA_APP_TOKEN"] = app_token
+        elif "SOCRATA_APP_TOKEN" in new_env:
+            del new_env["SOCRATA_APP_TOKEN"]
+        if key_id:
+            new_env["SOCRATA_KEY_ID"] = key_id
+        elif "SOCRATA_KEY_ID" in new_env:
+            del new_env["SOCRATA_KEY_ID"]
+        if key_secret:
+            new_env["SOCRATA_KEY_SECRET"] = key_secret
+        elif "SOCRATA_KEY_SECRET" in new_env:
+            del new_env["SOCRATA_KEY_SECRET"]
+        try:
+            _write_env_file({k: v for k, v in new_env.items()
+                             if k in {"SOCRATA_APP_TOKEN", "SOCRATA_KEY_ID", "SOCRATA_KEY_SECRET",
+                                      "SOCRATA_DOMAIN", "SOCRATA_DOMAIN_SECONDARY",
+                                      "SOCRATA_ROW_LIMIT", "SOCRATA_CACHE_TTL_SECONDS"}})
+            st.success("Credentials saved to `.env`. Restart the app to pick up new values.")
+        except Exception as exc:
+            st.error(f"Failed to write .env: {exc}")
+
+    # Token status live check
+    st.divider()
+    st.markdown("#### Live token status")
+    if st.button("🔍 Check current token", use_container_width=False):
+        from app.data_loader import token_status
+        status = token_status()
+        if status.get("demo_mode"):
+            st.warning("Running in demo mode — no live Socrata access.")
+        elif status.get("configured"):
+            st.success(f"App token configured. Registered datasets: {status.get('datasets', 0)}")
+        elif status.get("key_pair"):
+            st.success("OAuth key pair configured.")
+        else:
+            st.error("No credentials found. Set SOCRATA_APP_TOKEN in your .env file.")
+
+        with st.expander("Full status dict"):
+            st.json(status)
+
+    st.divider()
+    st.markdown("#### Verify connectivity")
+    if st.button("🌐 Test Socrata connection", use_container_width=False):
+        import requests
+        token = os.getenv("SOCRATA_APP_TOKEN", "").strip()
+        headers = {"X-App-Token": token} if token else {}
+        try:
+            r = requests.get(
+                "https://api.us.socrata.com/api/catalog/v1",
+                params={"q": "sidewalk", "limit": 1},
+                headers=headers,
+                timeout=8,
+            )
+            r.raise_for_status()
+            total = r.json().get("resultSetSize", "?")
+            st.success(f"Connected. Discovery API returned {total:,} results for 'sidewalk'.")
+        except Exception as exc:
+            st.error(f"Connection failed: {exc}")
+
+
+def _render_configuration_tab() -> None:
+    st.markdown("#### Data Ingestion Configuration")
+    st.caption("These settings control how much data the app loads from Socrata and how long it caches results.")
+
+    current = _read_env_file()
+
+    with st.form("config_form"):
+        domain = st.text_input(
+            "Primary Socrata domain (`SOCRATA_DOMAIN`)",
+            value=current.get("SOCRATA_DOMAIN", "data.cityofnewyork.us"),
+            help="Default: data.cityofnewyork.us",
+        )
+        domain_secondary = st.text_input(
+            "Secondary domain (`SOCRATA_DOMAIN_SECONDARY`)",
+            value=current.get("SOCRATA_DOMAIN_SECONDARY", ""),
+            help="Optional second portal (e.g. opendata.cityofnewyork.us).",
+        )
+
+        st.markdown("**Row limits**")
+        rl_col1, rl_col2 = st.columns(2)
+        row_limit = rl_col1.number_input(
+            "Default row limit per dataset (`SOCRATA_ROW_LIMIT`)",
+            min_value=1_000,
+            max_value=500_000,
+            value=int(current.get("SOCRATA_ROW_LIMIT", 50_000)),
+            step=5_000,
+            help="Max rows fetched per dataset unless overridden in the view.",
+        )
+        cache_ttl = rl_col2.number_input(
+            "Cache TTL seconds (`SOCRATA_CACHE_TTL_SECONDS`)",
+            min_value=60,
+            max_value=86_400,
+            value=int(current.get("SOCRATA_CACHE_TTL_SECONDS", 3_600)),
+            step=300,
+            help="How long to cache dataset results. 3600 = 1 hour.",
+        )
+
+        st.markdown("**Discovery API defaults**")
+        dc1, dc2 = st.columns(2)
+        disc_limit = dc1.number_input(
+            "Discovery results per page",
+            min_value=10,
+            max_value=100,
+            value=25,
+            step=5,
+            help="Default number of results shown per search page in Data Discovery.",
+        )
+        disc_domains = dc2.text_input(
+            "Discovery default domains",
+            value=current.get("SOCRATA_DOMAIN", "data.cityofnewyork.us"),
+            help="Comma-separated domains pre-filled in Discovery search.",
+        )
+
+        save_cfg = st.form_submit_button("💾 Save configuration", type="primary")
+
+    if save_cfg:
+        new_vals: dict[str, str] = {}
+        if domain:
+            new_vals["SOCRATA_DOMAIN"] = domain
+        if domain_secondary:
+            new_vals["SOCRATA_DOMAIN_SECONDARY"] = domain_secondary
+        new_vals["SOCRATA_ROW_LIMIT"] = str(int(row_limit))
+        new_vals["SOCRATA_CACHE_TTL_SECONDS"] = str(int(cache_ttl))
+
+        existing = _read_env_file()
+        existing.update(new_vals)
+        _write_env_file({k: v for k, v in existing.items()
+                         if k in {"SOCRATA_APP_TOKEN", "SOCRATA_KEY_ID", "SOCRATA_KEY_SECRET",
+                                  "SOCRATA_DOMAIN", "SOCRATA_DOMAIN_SECONDARY",
+                                  "SOCRATA_ROW_LIMIT", "SOCRATA_CACHE_TTL_SECONDS"}})
+        st.success("Configuration saved to `.env`. Restart the app to apply.")
+
+    st.divider()
+    st.markdown("#### Environment variable reference")
+    env_table = {
+        "SOCRATA_APP_TOKEN": "App token for authenticated API calls (no rate limits)",
+        "SOCRATA_KEY_ID": "OAuth key ID for write access",
+        "SOCRATA_KEY_SECRET": "OAuth key secret for write access",
+        "SOCRATA_USERNAME": "Username (legacy auth fallback)",
+        "SOCRATA_PASSWORD": "Password (legacy auth fallback)",
+        "SOCRATA_DOMAIN": "Primary Socrata portal domain",
+        "SOCRATA_ROW_LIMIT": "Default row fetch limit per dataset",
+        "SOCRATA_CACHE_TTL_SECONDS": "Parquet + st.cache_data TTL",
+        "MISSION_DEMO": "Set to 1 to force demo mode (no live data)",
+    }
+    import pandas as pd
+    st.dataframe(
+        pd.DataFrame([{"variable": k, "description": v} for k, v in env_table.items()]),
+        use_container_width=True,
+        hide_index=True,
+    )
+
+    st.divider()
+    st.markdown("#### Current environment")
+    if st.button("👁 Show loaded env vars (redacted)", use_container_width=False):
+        rows = []
+        for var in env_table:
+            raw = os.getenv(var, "")
+            if raw:
+                display = raw[:4] + "****" if len(raw) > 8 else "****"
+            else:
+                display = "(not set)"
+            rows.append({"variable": var, "value": display})
+        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+
+
+def _render_registry_tab() -> None:
+    import pandas as pd
+    import yaml
+
+    st.markdown("#### Dataset Registry")
+    st.caption(
+        "Registered datasets drive data ingestion across all app views. "
+        "Edits below update `config/datasets.yaml` directly."
+    )
+
+    datasets_yaml_path = _REPO_ROOT / "config" / "datasets.yaml"
+
+    if not datasets_yaml_path.exists():
+        st.error("`config/datasets.yaml` not found.")
+        return
+
+    with open(datasets_yaml_path) as f:
+        registry = yaml.safe_load(f)
+
+    datasets = registry.get("datasets", {})
+
+    # Show as editable table
+    rows = []
+    for key, meta in datasets.items():
+        rows.append({
+            "key": key,
+            "fourfour": meta.get("fourfour", ""),
+            "label": meta.get("label", ""),
+            "group": meta.get("group", ""),
+            "manhattan_where": meta.get("manhattan_where", ""),
+        })
+
+    df = pd.DataFrame(rows)
+    st.markdown(f"**{len(df)} registered datasets**")
+    st.dataframe(df, use_container_width=True, hide_index=True)
+
+    st.divider()
+    st.markdown("#### Add a dataset")
+    with st.form("add_dataset_form"):
+        ac1, ac2 = st.columns(2)
+        new_key = ac1.text_input("Registry key", placeholder="e.g. sidewalk_dismissal",
+                                  help="Snake-case identifier used in code.")
+        new_fourfour = ac2.text_input("Socrata Dataset ID", placeholder="e.g. p4u2-3jgx")
+        ac3, ac4 = st.columns(2)
+        new_label = ac3.text_input("Label", placeholder="e.g. Sidewalk Dismissal")
+        new_group = ac4.selectbox("Group", ["core_smd", "accessibility", "coordination", "overlays", "other"])
+        new_where = st.text_input(
+            "Manhattan WHERE clause (optional)",
+            placeholder="upper(borough) = 'MANHATTAN'",
+            help="SoQL predicate to filter to Manhattan rows.",
+        )
+        add_btn = st.form_submit_button("➕ Add dataset", type="primary")
+
+    if add_btn:
+        if not new_key or not new_fourfour:
+            st.warning("Key and Dataset ID are required.")
+        elif new_key in datasets:
+            st.warning(f"Key `{new_key}` already exists.")
+        else:
+            entry: dict = {"fourfour": new_fourfour, "group": new_group, "label": new_label}
+            if new_where:
+                entry["manhattan_where"] = new_where
+            registry["datasets"][new_key] = entry
+            with open(datasets_yaml_path, "w") as f:
+                yaml.safe_dump(registry, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+            st.success(f"Added `{new_key}` (`{new_fourfour}`) to registry. Restart app to use in workflows.")
+            st.rerun()
+
+    st.divider()
+    st.markdown("#### Remove a dataset")
+    remove_key = st.selectbox("Select dataset to remove", ["(select)"] + list(datasets.keys()))
+    if remove_key != "(select)":
+        if st.button(f"🗑 Remove `{remove_key}`", type="secondary"):
+            del registry["datasets"][remove_key]
+            with open(datasets_yaml_path, "w") as f:
+                yaml.safe_dump(registry, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+            st.success(f"Removed `{remove_key}` from registry.")
+            st.rerun()
+
+    st.divider()
+    with st.expander("Raw YAML"):
+        with open(datasets_yaml_path) as f:
+            st.code(f.read(), language="yaml")
