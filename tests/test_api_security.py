@@ -14,6 +14,7 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 pytest.importorskip("fastapi", reason="fastapi required for API tests")
+pytest.importorskip("jwt", reason="PyJWT required for API security tests")
 
 # Import authentication
 from socrata_toolkit.api.auth import (
