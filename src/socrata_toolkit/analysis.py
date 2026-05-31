@@ -783,7 +783,7 @@ class OutlierResult:
             self.outlier_indices = []
 
 
-def detect_outliers_iqr(df: pd.DataFrame, column: str) -> "OutlierResult":
+def detect_outliers_iqr(df: pd.DataFrame, column: str) -> OutlierResult:
     q1 = df[column].quantile(0.25)
     q3 = df[column].quantile(0.75)
     iqr = q3 - q1
@@ -791,7 +791,7 @@ def detect_outliers_iqr(df: pd.DataFrame, column: str) -> "OutlierResult":
     return OutlierResult(column=column, outlier_count=int(mask.sum()), method="iqr", outlier_indices=list(df.index[mask]))
 
 
-def detect_outliers_zscore(df: pd.DataFrame, column: str, threshold: float = 3.0) -> "OutlierResult":
+def detect_outliers_zscore(df: pd.DataFrame, column: str, threshold: float = 3.0) -> OutlierResult:
     mean = df[column].mean()
     std = df[column].std()
     if std == 0:
@@ -800,7 +800,7 @@ def detect_outliers_zscore(df: pd.DataFrame, column: str, threshold: float = 3.0
     return OutlierResult(column=column, outlier_count=int(mask.sum()), method="zscore", outlier_indices=list(df.index[mask]))
 
 
-def detect_all_outliers(df: pd.DataFrame, method: str = "iqr") -> "list[OutlierResult]":
+def detect_all_outliers(df: pd.DataFrame, method: str = "iqr") -> list[OutlierResult]:
     num_cols = df.select_dtypes(include=DTYPE_NUM).columns
     fn = detect_outliers_zscore if method == "zscore" else detect_outliers_iqr
     return [fn(df, col) for col in num_cols]
@@ -811,7 +811,7 @@ class CorrelationResult:
     pairs: list
 
 
-def correlation_analysis(df: pd.DataFrame, threshold: float = 0.0) -> "CorrelationResult":
+def correlation_analysis(df: pd.DataFrame, threshold: float = 0.0) -> CorrelationResult:
     num = df.select_dtypes(include=DTYPE_NUM)
     if num.empty:
         return CorrelationResult(pairs=[])
@@ -835,7 +835,7 @@ class TimeSeriesSummary:
     trend_slope: float
 
 
-def time_series_summary(df: pd.DataFrame, date_col: str, value_col: str) -> "TimeSeriesSummary":
+def time_series_summary(df: pd.DataFrame, date_col: str, value_col: str) -> TimeSeriesSummary:
     if df.empty:
         return TimeSeriesSummary(count=0, mean=0.0, max=0.0, trend_direction="flat", trend_slope=0.0)
     tmp = df.copy()
@@ -867,7 +867,7 @@ class DistributionResult:
             self.classification = self.best_fit
 
 
-def classify_distribution(df: pd.DataFrame, column: str) -> "DistributionResult":
+def classify_distribution(df: pd.DataFrame, column: str) -> DistributionResult:
     series = df[column]
     n = len(series)
     if n < 5:
@@ -879,7 +879,7 @@ def classify_distribution(df: pd.DataFrame, column: str) -> "DistributionResult"
     return DistributionResult(column=column, best_fit=cls, classification=cls, sample_size=n)
 
 
-def classify_all_distributions(df: pd.DataFrame) -> "list[DistributionResult]":
+def classify_all_distributions(df: pd.DataFrame) -> list[DistributionResult]:
     num_cols = df.select_dtypes(include=DTYPE_NUM).columns
     return [classify_distribution(df, col) for col in num_cols]
 
@@ -899,7 +899,7 @@ class AnomalyReport:
     total_rows: int
 
 
-def flag_anomalies(df: pd.DataFrame) -> "tuple[pd.DataFrame, AnomalyReport]":
+def flag_anomalies(df: pd.DataFrame) -> tuple[pd.DataFrame, AnomalyReport]:
     num = df.select_dtypes(DTYPE_NUM)
     out = df.copy()
     if num.empty:
@@ -1725,15 +1725,11 @@ except ImportError:
     dataframe_to_pdf = None  # type: ignore
     quality_dashboard = None  # type: ignore
 
-from .quality.anomalies import (  # noqa: E402
-    Anomaly,
-    AnomalyReport,
-    AnomalySeverity,
-)
-
 # analysis_advanced full implementations win over simplified stubs above
 from .analysis_advanced import (  # noqa: E402
     AnomalyReport as AnomalyFlagReport,  # alias to avoid clash with quality.anomalies.AnomalyReport
+)
+from .analysis_advanced import (
     CorrelationResult,
     DistributionInfo,
     OutlierReport,
@@ -1746,6 +1742,11 @@ from .analysis_advanced import (  # noqa: E402
     detect_outliers_zscore,
     flag_anomalies,
     time_series_summary,
+)
+from .quality.anomalies import (  # noqa: E402
+    Anomaly,
+    AnomalyReport,
+    AnomalySeverity,
 )
 from .quality.validation import (  # noqa: E402
     ValidationReport,
