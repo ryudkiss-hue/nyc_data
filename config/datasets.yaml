@@ -16,10 +16,7 @@ workflow_datasets:
     - weekly_construction
     - street_permits
     - capital_blocks
-    - capital_intersections
-    - street_closures_block
-    - street_resurfacing_schedule
-    - street_resurfacing_inhouse
+    - sidewalk_planimetric
   contract:
     - violations
     - tree_damage
@@ -133,7 +130,7 @@ datasets:
     group: overlays
     label: Pedestrian Demand
   mappluto:
-    fourfour: 6fi9-q3ta
+    fourfour: 64uk-42ks
     group: overlays
     label: MapPLUTO
   complaints_311:
