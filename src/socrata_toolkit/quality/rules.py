@@ -275,6 +275,292 @@ class BusinessRulesEngine:
         return by_severity
 
 
+# ============================================================================
+# Dataset Expectations & Scorecard
+# ============================================================================
+
+DATASET_EXPECTATIONS: dict[str, dict] = {
+    "sidewalk_inspections": {
+        "required_cols": ["inspection_id", "borough", "status", "open_date"],
+        "min_rows": 100,
+        "date_cols": ["open_date", "close_date"],
+        "status_values": ["Open", "Closed", "In Progress"],
+    },
+    "work_orders": {
+        "required_cols": ["work_order_id", "borough"],
+        "min_rows": 10,
+        "date_cols": [],
+        "status_values": [],
+    },
+    "violations": {
+        "required_cols": ["borough"],
+        "min_rows": 10,
+        "date_cols": [],
+        "status_values": [],
+    },
+    "complaints_311": {
+        "required_cols": ["complaint_type", "borough", "created_date"],
+        "min_rows": 50,
+        "date_cols": ["created_date", "closed_date"],
+        "status_values": ["Open", "Closed", "Assigned", "In Progress"],
+    },
+    "street_permits": {
+        "required_cols": ["jobno", "borough"],
+        "min_rows": 10,
+        "date_cols": ["startdate", "expirationdate"],
+        "status_values": [],
+    },
+}
+
+
+def validate_expectations(key: str, df: pd.DataFrame) -> list[dict]:
+    """Validate a DataFrame against DATASET_EXPECTATIONS for the given key.
+
+    Args:
+        key: Dataset key in DATASET_EXPECTATIONS
+        df: DataFrame to validate
+
+    Returns:
+        List of violation dicts with keys: rule, message, severity
+    """
+    if key not in DATASET_EXPECTATIONS:
+        return [
+            {
+                "rule": "unknown_key",
+                "message": f"No expectations defined for key '{key}'",
+                "severity": "high",
+            }
+        ]
+
+    spec = DATASET_EXPECTATIONS[key]
+    violations: list[dict] = []
+
+    # Check required columns
+    missing_cols = [c for c in spec.get("required_cols", []) if c not in df.columns]
+    if missing_cols:
+        violations.append(
+            {
+                "rule": "required_cols",
+                "message": f"Missing required columns: {missing_cols}",
+                "severity": "critical",
+            }
+        )
+
+    # Check min rows
+    min_rows = spec.get("min_rows", 0)
+    if len(df) < min_rows:
+        violations.append(
+            {
+                "rule": "min_rows",
+                "message": f"Row count {len(df)} is below minimum {min_rows}",
+                "severity": "high",
+            }
+        )
+
+    # Check date columns are parseable
+    for date_col in spec.get("date_cols", []):
+        if date_col in df.columns:
+            parsed = pd.to_datetime(df[date_col], errors="coerce")
+            null_pct = float(parsed.isna().mean())
+            if null_pct > 0.5:
+                violations.append(
+                    {
+                        "rule": "date_parseable",
+                        "message": f"Column '{date_col}' has {null_pct:.0%} unparseable values",
+                        "severity": "medium",
+                    }
+                )
+
+    # Check status values
+    status_values = spec.get("status_values", [])
+    if status_values and "status" in df.columns:
+        non_null_status = df["status"].dropna()
+        invalid_statuses = non_null_status[~non_null_status.isin(status_values)]
+        if not invalid_statuses.empty:
+            bad = invalid_statuses.unique().tolist()[:5]
+            violations.append(
+                {
+                    "rule": "status_values",
+                    "message": f"Invalid status values found: {bad}",
+                    "severity": "medium",
+                }
+            )
+
+    return violations
+
+
+def validate_schema(df: pd.DataFrame, expected_cols: list[str]) -> dict:
+    """Compare DataFrame columns against an expected schema.
+
+    Args:
+        df: DataFrame to inspect
+        expected_cols: List of expected column names
+
+    Returns:
+        Dict with keys: missing (list), extra (list), matched (list)
+    """
+    actual = set(df.columns.tolist())
+    expected = set(expected_cols)
+    return {
+        "missing": sorted(expected - actual),
+        "extra": sorted(actual - expected),
+        "matched": sorted(actual & expected),
+    }
+
+
+def build_data_dictionary(df: pd.DataFrame) -> pd.DataFrame:
+    """Build a data dictionary describing each column in a DataFrame.
+
+    Args:
+        df: DataFrame to describe
+
+    Returns:
+        DataFrame with columns: field, dtype, null_pct, unique_count, sample_values, notes
+    """
+    if df.empty:
+        return pd.DataFrame(
+            columns=["field", "dtype", "null_pct", "unique_count", "sample_values", "notes"]
+        )
+
+    rows = []
+    for col in df.columns:
+        series = df[col]
+        null_pct = round(float(series.isna().mean()) * 100, 1)
+        unique_count = int(series.nunique())
+        non_null = series.dropna()
+        sample_values = non_null.head(3).tolist() if not non_null.empty else []
+
+        notes_parts: list[str] = []
+        if null_pct > 50:
+            notes_parts.append("high nulls")
+        if unique_count == 1:
+            notes_parts.append("constant")
+        if len(df) > 0 and unique_count == len(df):
+            notes_parts.append("likely key")
+        notes = "; ".join(notes_parts)
+
+        rows.append(
+            {
+                "field": col,
+                "dtype": str(series.dtype),
+                "null_pct": null_pct,
+                "unique_count": unique_count,
+                "sample_values": sample_values,
+                "notes": notes,
+            }
+        )
+
+    return pd.DataFrame(rows)
+
+
+def quality_scorecard(df: pd.DataFrame) -> dict:
+    """Compute a 0-100 quality score with weighted component breakdown.
+
+    Score components:
+    - completeness (weight 30): % non-null across all cells
+    - uniqueness (weight 20): % unique rows vs total
+    - validity (weight 30): % rows passing basic type/range checks
+    - timeliness (weight 20): recency score based on max date column
+
+    Args:
+        df: DataFrame to score
+
+    Returns:
+        Dict with keys: total, completeness, uniqueness, validity, timeliness, issues
+    """
+    issues: list[str] = []
+
+    if df.empty:
+        return {
+            "total": 0.0,
+            "completeness": 0.0,
+            "uniqueness": 0.0,
+            "validity": 0.0,
+            "timeliness": 0.0,
+            "issues": ["DataFrame is empty"],
+        }
+
+    # Completeness: % non-null across all cells
+    total_cells = df.size
+    non_null_cells = int(df.notna().sum().sum())
+    completeness = round(non_null_cells / total_cells * 100, 1) if total_cells > 0 else 0.0
+    if completeness < 80:
+        issues.append(f"Completeness is low ({completeness}%)")
+
+    # Uniqueness: % unique rows vs total
+    unique_rows = df.drop_duplicates().shape[0]
+    uniqueness = round(unique_rows / len(df) * 100, 1)
+    if uniqueness < 90:
+        issues.append(f"Duplicate rows detected (uniqueness {uniqueness}%)")
+
+    # Validity: % rows free of inf/nan in numeric columns
+    numeric_cols = df.select_dtypes(include="number").columns.tolist()
+    if numeric_cols:
+        import numpy as np
+
+        validity_mask = pd.Series([True] * len(df), index=df.index)
+        for col in numeric_cols:
+            col_series = df[col]
+            invalid = col_series.isna() | col_series.isin([float("inf"), float("-inf")])
+            validity_mask = validity_mask & (~invalid)
+        validity = round(float(validity_mask.sum()) / len(df) * 100, 1)
+    else:
+        validity = 100.0
+
+    if validity < 95:
+        issues.append(f"Validity issues found ({validity}% rows pass checks)")
+
+    # Timeliness: find max date value across date-like columns
+    date_cols = [
+        c
+        for c in df.columns
+        if "date" in c.lower() or "time" in c.lower() or "created" in c.lower()
+    ]
+    timeliness = 100.0
+    if date_cols:
+        max_dates: list[pd.Timestamp] = []
+        for col in date_cols:
+            try:
+                parsed = pd.to_datetime(df[col], errors="coerce")
+                if parsed.notna().any():
+                    max_dates.append(parsed.max())
+            except (TypeError, ValueError):
+                pass
+
+        if max_dates:
+            latest = max(max_dates)
+            now = pd.Timestamp.now(tz=latest.tzinfo)
+            days_old = (now - latest).days
+            if days_old <= 7:
+                timeliness = 100.0
+            elif days_old <= 30:
+                timeliness = 80.0
+            elif days_old <= 90:
+                timeliness = 60.0
+            elif days_old <= 365:
+                timeliness = 40.0
+            else:
+                timeliness = 20.0
+                issues.append(f"Data is stale (latest date is {days_old} days old)")
+
+    total = round(
+        completeness * 0.30
+        + uniqueness * 0.20
+        + validity * 0.30
+        + timeliness * 0.20,
+        1,
+    )
+
+    return {
+        "total": total,
+        "completeness": completeness,
+        "uniqueness": uniqueness,
+        "validity": validity,
+        "timeliness": timeliness,
+        "issues": issues,
+    }
+
+
 # NYC DOT Domain-Specific Rules
 
 def create_sidewalk_rules() -> BusinessRulesEngine:
