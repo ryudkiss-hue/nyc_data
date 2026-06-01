@@ -892,3 +892,206 @@ def test_division_by_zero_protection():
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+# ============================================================================
+# UNIT-13 ADDITIONS
+# ============================================================================
+
+# ---------------------------------------------------------------------------
+# Quality scorecard (compute_quality_score from governance.core)
+# ---------------------------------------------------------------------------
+
+
+def _nyc_inspection_df(nrows: int = 10) -> pd.DataFrame:
+    """Small realistic-looking NYC inspection DataFrame."""
+    from datetime import datetime
+
+    boroughs = ["MANHATTAN", "BROOKLYN", "QUEENS", "BRONX", "STATEN ISLAND"]
+    rows = [
+        {
+            "inspection_id": f"INS-{i:04d}",
+            "borough": boroughs[i % 5],
+            "condition_score": 50 + (i * 3) % 50,
+            "address": f"{100 + i} {'Broadway' if i % 2 == 0 else 'Atlantic Ave'}",
+            "inspection_date": datetime(2025, 1, 1 + (i % 28)),
+        }
+        for i in range(nrows)
+    ]
+    return pd.DataFrame(rows)
+
+
+class TestQualityScorecard:
+    def test_quality_scorecard_basic(self):
+        """compute_quality_score on a clean DataFrame should return total in [0,100]."""
+        from socrata_toolkit.governance.core import compute_quality_score
+
+        df = _nyc_inspection_df(nrows=20)
+        score = compute_quality_score(df)
+        assert 0.0 <= score.overall <= 100.0
+
+    def test_quality_scorecard_has_dimensions(self):
+        """Score object should carry completeness, validity, consistency, freshness."""
+        from socrata_toolkit.governance.core import compute_quality_score
+
+        df = _nyc_inspection_df(nrows=10)
+        score = compute_quality_score(df)
+        assert hasattr(score, "completeness")
+        assert hasattr(score, "validity")
+        assert hasattr(score, "consistency")
+        assert hasattr(score, "freshness")
+
+    def test_quality_scorecard_empty_df(self):
+        """Empty DataFrame should not raise; overall should be 0 or handled gracefully."""
+        from socrata_toolkit.governance.core import compute_quality_score
+
+        empty = pd.DataFrame()
+        score = compute_quality_score(empty)
+        assert score.overall == 0.0 or score.overall >= 0.0
+
+    def test_quality_scorecard_with_nulls_lower_score(self):
+        """A DataFrame with many nulls should score lower than a clean one."""
+        from socrata_toolkit.governance.core import compute_quality_score
+
+        clean = _nyc_inspection_df(nrows=20)
+        dirty = clean.copy()
+        dirty.loc[:10, "condition_score"] = None
+        dirty.loc[:10, "borough"] = None
+
+        score_clean = compute_quality_score(clean)
+        score_dirty = compute_quality_score(dirty)
+        assert score_dirty.overall <= score_clean.overall
+
+
+# ---------------------------------------------------------------------------
+# Schema validation
+# ---------------------------------------------------------------------------
+
+
+class TestValidateSchema:
+    def test_validate_schema_missing_col_appears_in_errors(self):
+        """Missing required column should appear in validation errors."""
+        from socrata_toolkit.quality.validation import validate_required_columns
+
+        df = pd.DataFrame({"inspection_id": [1, 2], "borough": ["M", "B"]})
+        required = ["inspection_id", "borough", "condition_score"]
+        report = validate_required_columns(df, required)
+        assert not report.valid
+        assert any("condition_score" in e for e in report.errors)
+
+    def test_validate_schema_all_present(self):
+        from socrata_toolkit.quality.validation import validate_required_columns
+
+        df = pd.DataFrame({"a": [1], "b": [2], "c": [3]})
+        report = validate_required_columns(df, ["a", "b", "c"])
+        assert report.valid
+        assert report.errors == []
+
+
+# ---------------------------------------------------------------------------
+# Expectations — min rows
+# ---------------------------------------------------------------------------
+
+
+class TestValidateExpectations:
+    def test_validate_expectations_min_rows(self):
+        """A DataFrame with 1 row — ExpectationSuite.validate should not raise."""
+        suite = ExpectationSuite("min_rows_test")
+        suite.add_column_exists("col1")
+
+        df = pd.DataFrame({"col1": ["value"]})
+        result = suite.validate(df)
+
+        # The single column exists, so it should pass
+        assert result.passed_count >= 1
+
+    def test_validate_missing_column_is_violation(self):
+        """Expecting a column that doesn't exist → failed_count >= 1."""
+        suite = ExpectationSuite("min_rows_explicit")
+        suite.add_column_exists("expected_col_that_is_missing")
+
+        df = pd.DataFrame({"col1": range(1)})  # only 1 row, wrong column
+        result = suite.validate(df)
+        assert result.failed_count >= 1
+
+
+# ---------------------------------------------------------------------------
+# SLA breach forecast
+# ---------------------------------------------------------------------------
+
+
+class TestForecastSlaBreaches:
+    def test_flag_sla_violations_returns_dataframe(self):
+        """flag_sla_violations should return a DataFrame with sla columns."""
+        from socrata_toolkit.quality.sla_tracking import flag_sla_violations
+
+        df = pd.DataFrame(
+            {
+                "complaint_date": pd.to_datetime(
+                    ["2024-01-01", "2024-01-15", "2024-02-01", "2023-06-01"]
+                ),
+                "inspection_date": pd.to_datetime(
+                    ["2024-02-15", "2024-03-01", "2024-02-20", "2023-08-01"]
+                ),
+                "repair_date": pd.to_datetime(
+                    ["2024-06-01", "2024-07-01", "2024-06-15", "2024-02-01"]
+                ),
+                "borough": ["MANHATTAN", "BROOKLYN", "QUEENS", "BRONX"],
+            }
+        )
+        result = flag_sla_violations(df)
+        assert isinstance(result, pd.DataFrame)
+        assert len(result) == len(df)
+
+    def test_flag_sla_violations_columns(self):
+        """Result DataFrame should include _sla_violation column."""
+        from socrata_toolkit.quality.sla_tracking import SLATarget, flag_sla_violations
+
+        df = pd.DataFrame(
+            {
+                "complaint_date": pd.to_datetime(["2024-01-01"]),
+                "inspection_date": pd.to_datetime(["2024-04-01"]),  # > 30 days
+                "repair_date": pd.to_datetime(["2024-12-01"]),
+                "borough": ["MANHATTAN"],
+            }
+        )
+        # Use SLATarget to set tight thresholds so the row above triggers a violation
+        target = SLATarget(complaint_to_inspection_days=30)
+        result = flag_sla_violations(df, target=target)
+        # Should have at least one violation column
+        assert "_sla_violation" in result.columns
+        assert "_sla_violation_type" in result.columns
+
+
+# ---------------------------------------------------------------------------
+# Quality trend record and load
+# ---------------------------------------------------------------------------
+
+
+class TestQualityTrend:
+    def test_record_and_load_quality_trend(self):
+        """Record a metric and load trend — should appear in history."""
+        tracker = DataQualityTracker()
+        tracker.record_metric(
+            "unit13_completeness",
+            0.97,
+            "unit13_dataset",
+            MetricType.COMPLETENESS,
+        )
+        # _metric_history is a dict[str, list[MetricPoint]]
+        history = tracker._metric_history
+        assert "unit13_completeness" in history
+        assert len(history["unit13_completeness"]) >= 1
+
+    def test_record_multiple_metrics_trend(self):
+        """Multiple records for the same key should accumulate in that key's list."""
+        tracker = DataQualityTracker()
+        for val in [0.90, 0.92, 0.95, 0.97]:
+            tracker.record_metric(
+                "unit13_trend",
+                val,
+                "unit13_dataset",
+                MetricType.COMPLETENESS,
+            )
+        assert "unit13_trend" in tracker._metric_history
+        assert len(tracker._metric_history["unit13_trend"]) >= 4

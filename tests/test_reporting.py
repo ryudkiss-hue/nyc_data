@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import json
 
 import pandas as pd
+import pytest
 
 from socrata_toolkit.analysis import (
     Report,
@@ -112,3 +115,101 @@ def test_generate_inquiry_response_borough():
     report = generate_inquiry_response("borough_overview", df, borough="MANHATTAN")
     md = report.to_markdown()
     assert "MANHATTAN" in md
+
+
+# ---------------------------------------------------------------------------
+# Unit-13 additions: Excel, HTML table, PDF, (optional WeasyPrint)
+# ---------------------------------------------------------------------------
+
+
+def _small_df() -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "inspection_id": ["INS-001", "INS-002", "INS-003"],
+            "borough": ["MANHATTAN", "BRONX", "QUEENS"],
+            "condition_score": [88, 72, 65],
+            "address": ["1 Broadway", "500 Grand Concourse", "90-01 Queens Blvd"],
+        }
+    )
+
+
+def test_generate_excel_report_smoke(tmp_path):
+    """generate_excel_report should return bytes; save to tmp_path and verify size > 0."""
+    from app.utils.reporting import generate_excel_report
+
+    df = _small_df()
+    excel_bytes = generate_excel_report(
+        sheets={"Inspections": df},
+        summary_text="Unit-13 smoke test",
+    )
+    assert isinstance(excel_bytes, bytes)
+    assert len(excel_bytes) > 0
+
+    out_path = tmp_path / "report.xlsx"
+    out_path.write_bytes(excel_bytes)
+    assert out_path.exists()
+    assert out_path.stat().st_size > 0
+
+
+def test_generate_excel_report_multiple_sheets(tmp_path):
+    """Multiple sheets should all appear in the workbook."""
+    try:
+        import openpyxl
+    except ImportError:
+        pytest.skip("openpyxl not installed")
+
+    from app.utils.reporting import generate_excel_report
+
+    df = _small_df()
+    excel_bytes = generate_excel_report(
+        sheets={"Sheet1": df, "Sheet2": df.head(1)},
+        summary_text="Multi-sheet test",
+    )
+    import io
+
+    wb = openpyxl.load_workbook(io.BytesIO(excel_bytes))
+    sheet_names = wb.sheetnames
+    assert "Sheet1" in sheet_names
+    assert "Sheet2" in sheet_names
+
+
+def test_dataframe_to_html_table_basic():
+    """dataframe_to_html_table should return a string containing <table and column names."""
+    from app.utils.reporting import dataframe_to_html_table
+
+    df = _small_df()
+    html = dataframe_to_html_table(df)
+    assert isinstance(html, str)
+    assert "<table" in html.lower()
+    for col in df.columns:
+        assert col in html
+
+
+def test_dataframe_to_html_table_max_rows():
+    """max_rows parameter should truncate the output."""
+    from app.utils.reporting import dataframe_to_html_table
+
+    df = pd.DataFrame({"val": range(50)})
+    html_5 = dataframe_to_html_table(df, max_rows=5)
+    html_50 = dataframe_to_html_table(df, max_rows=50)
+    # The 5-row version should be shorter
+    assert len(html_5) < len(html_50)
+
+
+def test_generate_pdf_report_smoke():
+    """generate_pdf_report should raise ImportError when WeasyPrint is absent,
+    or return bytes when it is present."""
+    from app.utils.reporting import generate_pdf_report
+
+    df = _small_df()
+    try:
+        result = generate_pdf_report(
+            title="Unit-13 PDF Test",
+            summary_text="Smoke test for PDF generation.",
+            dataframes={"Inspections": df},
+            output_bytes=True,
+        )
+        assert isinstance(result, bytes)
+        assert len(result) > 0
+    except ImportError:
+        pytest.skip("WeasyPrint not installed — PDF smoke test skipped")
