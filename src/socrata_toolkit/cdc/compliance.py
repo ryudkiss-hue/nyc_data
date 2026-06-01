@@ -275,23 +275,25 @@ class CDCReconciler:
                 with conn.cursor() as cur:
                     # Check for multiple is_current
                     cur.execute(
-                        f"""SELECT business_key, COUNT(*)
-                           FROM {sql.Identifier(table)}
+                        sql.SQL("""SELECT business_key, COUNT(*)
+                           FROM {}
                            WHERE is_current = TRUE
                            GROUP BY business_key
-                           HAVING COUNT(*) > 1"""
+                           HAVING COUNT(*) > 1""").format(sql.Identifier(table))
                     )
                     if cur.fetchall():
                         issues.append(f"Multiple is_current=TRUE records found in {table}")
 
                     # Check for overlapping dates
                     cur.execute(
-                        f"""SELECT COUNT(*) FROM {sql.Identifier(table)} t1
-                           JOIN {sql.Identifier(table)} t2 ON t1.business_key = t2.business_key
+                        sql.SQL("""SELECT COUNT(*) FROM {} t1
+                           JOIN {} t2 ON t1.business_key = t2.business_key
                            WHERE t1.scd_id != t2.scd_id
                              AND t1.start_date <= t2.start_date
                              AND (t1.end_date IS NULL OR t1.end_date > t2.start_date)
-                             AND (t2.end_date IS NULL OR t2.end_date > t1.start_date)"""
+                             AND (t2.end_date IS NULL OR t2.end_date > t1.start_date)""").format(
+                            sql.Identifier(table), sql.Identifier(table)
+                        )
                     )
                     overlaps = cur.fetchone()[0]
                     if overlaps > 0:
@@ -299,8 +301,10 @@ class CDCReconciler:
 
                     # Check end_date >= start_date
                     cur.execute(
-                        f"""SELECT COUNT(*) FROM {sql.Identifier(table)}
-                           WHERE end_date IS NOT NULL AND end_date < start_date"""
+                        sql.SQL("""SELECT COUNT(*) FROM {}
+                           WHERE end_date IS NOT NULL AND end_date < start_date""").format(
+                            sql.Identifier(table)
+                        )
                     )
                     invalid_ranges = cur.fetchone()[0]
                     if invalid_ranges > 0:
@@ -337,30 +341,34 @@ class CDCReconciler:
                 with conn.cursor() as cur:
                     # Count records
                     cur.execute(
-                        f"""SELECT COUNT(DISTINCT business_key)
-                           FROM {sql.Identifier(table)}
-                           WHERE is_current = TRUE"""
+                        sql.SQL("""SELECT COUNT(DISTINCT business_key)
+                           FROM {}
+                           WHERE is_current = TRUE""").format(sql.Identifier(table))
                     )
                     scd_count = cur.fetchone()[0]
 
                     cur.execute(
-                        f"""SELECT COUNT(*) FROM {sql.Identifier(source_table)}"""
+                        sql.SQL("SELECT COUNT(*) FROM {}").format(sql.Identifier(source_table))
                     )
                     source_count = cur.fetchone()[0]
 
                     # Find missing events
                     cur.execute(
-                        f"""SELECT st.id FROM {sql.Identifier(source_table)} st
-                           LEFT JOIN {sql.Identifier(table)} scd ON st.id = scd.business_key
-                           WHERE scd.business_key IS NULL"""
+                        sql.SQL("""SELECT st.id FROM {} st
+                           LEFT JOIN {} scd ON st.id = scd.business_key
+                           WHERE scd.business_key IS NULL""").format(
+                            sql.Identifier(source_table), sql.Identifier(table)
+                        )
                     )
                     missing = [row[0] for row in cur.fetchall()]
 
                     # Find extra events
                     cur.execute(
-                        f"""SELECT scd.business_key FROM {sql.Identifier(table)} scd
-                           LEFT JOIN {sql.Identifier(source_table)} st ON scd.business_key = st.id
-                           WHERE scd.is_current = TRUE AND st.id IS NULL"""
+                        sql.SQL("""SELECT scd.business_key FROM {} scd
+                           LEFT JOIN {} st ON scd.business_key = st.id
+                           WHERE scd.is_current = TRUE AND st.id IS NULL""").format(
+                            sql.Identifier(table), sql.Identifier(source_table)
+                        )
                     )
                     extra = [row[0] for row in cur.fetchall()]
         except Exception as e:

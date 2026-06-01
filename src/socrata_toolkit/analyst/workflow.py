@@ -163,12 +163,14 @@ def _stage_duckdb(profile: AnalystProfile, frames: dict[str, pd.DataFrame]) -> N
 
                 continue
 
-            mgr.conn.register(f"analyst_{name}", df)
+            # Sanitize name: only allow alphanumeric and underscores as identifier
+            import re
+            safe_name = re.sub(r'[^\w]', '_', name)
+            view_name = f"analyst_{safe_name}"
+            mgr.conn.register(view_name, df)
 
             mgr.conn.execute(
-
-                f'CREATE OR REPLACE TABLE "analyst_{name}" AS SELECT * FROM analyst_{name}'
-
+                f'CREATE OR REPLACE TABLE "{view_name}" AS SELECT * FROM "{view_name}"'
             )
 
         mgr.close()
