@@ -46,6 +46,34 @@ except ImportError:
     gpd = None
     HAS_GEOPANDAS = False
 
+try:
+    import pydeck as pdk
+
+    HAS_PYDECK = True
+except ImportError:
+    pdk = None
+    HAS_PYDECK = False
+
+try:
+    import numpy as np
+    from sklearn.cluster import DBSCAN
+
+    HAS_SKLEARN = True
+except ImportError:
+    HAS_SKLEARN = False
+
+try:
+    from scipy.spatial import KDTree
+    HAS_SCIPY = True
+except ImportError:
+    HAS_SCIPY = False
+
+try:
+    from pyproj import Transformer
+    HAS_PYPROJ = True
+except ImportError:
+    HAS_PYPROJ = False
+
 NYC_BOUNDS = {"lat_min": 40.477, "lat_max": 40.917, "lon_min": -74.259, "lon_max": -73.700}
 BOROUGHS = ["Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"]
 
