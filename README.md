@@ -1,32 +1,63 @@
-# 🗽 Manhattan Mission Control
+# NYC DOT SIM Analyst Toolkit
 
-**NYC DOT Open Data Explorer & Agency Analytics Platform**
+[![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-blue?style=flat-square&logo=python)](https://python.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+[![30+ Visualizations](https://img.shields.io/badge/Visualizations-30%2B-orange?style=flat-square)](app/)
+[![75+ Features](https://img.shields.io/badge/Features-75%2B-purple?style=flat-square)](src/socrata_toolkit/)
 
-[![Deploy to Render](https://img.shields.io/badge/Deploy-Render.com-46E3B7?style=for-the-badge&logo=render)](https://render.com/deploy?repo=https://github.com/ryudkiss-hue/nyc_data)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
-[![Python 3.9–3.12](https://img.shields.io/badge/Python-3.9–3.12-yellow?style=for-the-badge&logo=python)](https://python.org)
-[![CI](https://github.com/ryudkiss-hue/nyc_data/actions/workflows/nyc-toolkit-ci.yml/badge.svg)](https://github.com/ryudkiss-hue/nyc_data/actions/workflows/nyc-toolkit-ci.yml)
-
----
-
-## What Is This?
-
-Manhattan Mission Control is a **unified 8-tab Streamlit app** for NYC DOT analysts. It combines Socrata open data ingestion, Bayesian hiring analytics, geospatial visualization, data quality monitoring, and an AI copilot — all in one dashboard.
-
-> **One-click deploy:** connect this repo at [render.com](https://render.com) → New Blueprint. No local setup required.
+A unified Streamlit Mission Control dashboard and Python CLI toolkit for NYC DOT analysts. It ingests live Socrata open data, runs Bayesian SLA forecasting, performs spatial conflict detection, and surfaces 30+ interactive visualizations — all backed by a DuckDB L2 cache and a natural-language query interface powered by the Claude API.
 
 ---
 
-## 🚀 Quick Start
+## Feature Matrix
+
+| Feature | Status |
+|---------|--------|
+| Streamlit Mission Control | ✅ |
+| GIS Dashboard (10 charts) | ✅ |
+| Advanced Analytics (13 charts) | ✅ |
+| Spatial Conflict Detection | ✅ |
+| Contract Analytics & Gantt | ✅ |
+| Bayesian SLA Forecasting | ✅ |
+| DuckDB L2 Cache | ✅ |
+| Nightly Prefetch Scheduler | ✅ |
+| NL Query (Claude API) | ✅ |
+| PDF/Excel/PPTX Reports | ✅ |
+| CLI Analyst Commands | ✅ |
+| Data Quality Scorecard | ✅ |
+
+---
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────┐
+│           NYC DOT SIM Analyst Toolkit        │
+├──────────────┬──────────────┬────────────────┤
+│  Streamlit   │  CLI Toolkit │  Python API    │
+│  Mission     │  socrata     │  socrata_      │
+│  Control     │  commands    │  toolkit       │
+├──────────────┴──────────────┴────────────────┤
+│              Data Layer                      │
+│  ┌──────────────┐    ┌───────────────────┐   │
+│  │ Socrata SODA │    │ L2 Parquet Cache  │   │
+│  │ NYC Open Data│    │ DuckDB Store      │   │
+│  └──────────────┘    └───────────────────┘   │
+└─────────────────────────────────────────────┘
+```
+
+---
+
+## Quickstart
 
 ```bash
-# 1. Install
-git clone https://github.com/ryudkiss-hue/nyc_data.git
-cd nyc_data
-pip install -e ".[mission,postgres,xlsx]"
+pip install -e ".[mission]"
+streamlit run app/app.py
 
-# 2. Launch
-python main.py
+# CLI:
+socrata --help
+socrata dataset health
+socrata nl-query "How many inspections per borough?" --dataset sidewalk_inspections
 ```
 
 Open **http://localhost:8501** — demo mode loads automatically (no token needed).
@@ -35,185 +66,99 @@ Open **http://localhost:8501** — demo mode loads automatically (no token neede
 
 ---
 
-## 🗂️ The 12 Tabs
+## Dataset Registry
 
-| # | Tab | What it does |
-|---|-----|-------------|
-| 1 | **Home** | Load 16+ NYC DOT datasets, guided tour, audit trail, dataset status cards |
-| 2 | **Apex Engine** | Hiring analytics — scrape JIDs, Bayesian ADVI yield rate, Prophet 12-month forecast with confidence bands, OMB lag correlation |
-| 3 | **Agency Workflows** | QA/QC ledger, spatial conflict detection, contract clearance, productivity & ADA progress |
-| 4 | **Data Quality** | Health scores w/ chart, null/dup profiling, SLA freshness, anomaly detection, **configurable threshold monitor**, CSV export |
-| 5 | **Spatial Analytics** | Borough distribution charts, Plotly point density map, Folium bubble map, permit conflict detection |
-| 6 | **Governance** | Plotly lineage DAG, dataset registry, ingest audit log, SLA compliance KPIs + freshness chart |
-| 7 | **AI Copilot** | Multi-backend chat (Gemini / OpenAI / Ollama) context-hydrated with live pipeline results |
-| 8 | **Dictionary** | Searchable field metadata browser + **dataset annotations** (notes, export) |
-| 9 | **Compare** | Cross-dataset schema overlap + distribution comparison with box plots |
-| 10 | **Export** | Export center — single/bulk CSV, JSON, multi-sheet Excel, ZIP bundle with manifest |
-| 11 | **Settings & Quality** | Readiness score, completeness checklist, system health, credential diagnostics, cache manager |
-| 12 | **Studio** | Socrata data architecture studio — schema viewer, relationship inference, code generators |
+All 26 datasets are defined in `config/datasets.yaml` and loaded at runtime.
 
-Plus **saved views** (bookmark + share filter state via URL) and a **global dataset/field search** in the sidebar.
-
-### Design system
-
-The UI is built on a modular toolkit in `app/ui/` + `app/utils/`:
-- **`palettes.py`** — color-blind-safe palettes (Okabe-Ito categorical, viridis sequential)
-- **`charts.py`** — themed Plotly factory: range selectors, small multiples, box plots, correlation heatmaps, treemaps, pareto, density maps, sparklines, chart→table a11y fallbacks
-- **`components.py`** — responsive KPI cards w/ sparklines, skeleton loaders, status pills
-- **`theme.py`** — fluid `clamp()` typography, auto-fit grids, 44px touch targets, WCAG 2.2 focus rings, reduced-motion/high-contrast
-- **`utils/url_state.py`** — bookmarkable filter state + named saved views
-- **`utils/export.py`** — CSV/JSON/Excel/ZIP export builders
-- **`utils/alerts.py`** — threshold rule evaluation for the quality monitor
-- **`utils/annotations.py`** — dataset notes store with CSV/JSON export
-
----
-
-## ⚙️ Configuration
-
-Copy `.env.example` → `.env` and set what you need:
-
-```bash
-# NYC Open Data token — optional, removes rate limits
-SOCRATA_APP_TOKEN=your_token
-
-# AI Copilot — set whichever backend you use (all optional)
-GEMINI_API_KEY=...
-OPENAI_API_KEY=...
-OLLAMA_HOST=http://localhost:11434   # self-hosted Ollama
-
-# Demo mode — loads sample data without a Socrata token
-MISSION_DEMO=1
-```
-
-Dataset registry: **`config/datasets.yaml`** — 16+ NYC DOT Open Data endpoints.
+| Key | Description | Fourfour | Category |
+|-----|-------------|----------|----------|
+| `inspection` | SMD Inspection | dntt-gqwq | core_smd |
+| `violations` | SMD Violations | 6kbp-uz6m | core_smd |
+| `built` | SMD Built | ugc8-s3f6 | core_smd |
+| `lot_info` | SMD Lot Info | i642-2fxq | core_smd |
+| `reinspection` | SMD ReInspection | gx72-kirf | core_smd |
+| `tree_damage` | All Tree Damage | j6v2-6uxq | core_smd |
+| `dismissals` | Sidewalk Dismissal Inspection Tracking | p4u2-3jgx | core_smd |
+| `correspondences` | Sidewalk Correspondences | bheb-sjfi | core_smd |
+| `curb_metal_protruding` | Curb Metal Protruding Data | i2y3-sx2e | core_smd |
+| `ramp_locations` | Pedestrian Ramp Locations | ufzp-rrqu | accessibility |
+| `ramp_complaints` | Ramp Complaints | jagj-gttd | accessibility |
+| `ramp_progress` | Ramp Program Progress | e7gc-ub6z | accessibility |
+| `street_permits` | Street Construction Permits | tqtj-sjs8 | coordination |
+| `weekly_construction` | Weekly Construction Schedule | r528-jcks | coordination |
+| `capital_blocks` | Capital Reconstruction Blocks | jvk9-k4re | coordination |
+| `capital_intersections` | Capital Reconstruction Projects - Intersection | 97nd-ff3i | coordination |
+| `street_construction_inspections` | Street Construction Inspections (HIQA) | ydkf-mpxb | coordination |
+| `street_closures_block` | Street Closures by Block | i6b5-j7bu | coordination |
+| `permit_stipulations` | Street Construction Permit Stipulations | gsgx-6efw | coordination |
+| `street_resurfacing_schedule` | Street Resurfacing Schedule | xnfm-u3k5 | coordination |
+| `street_resurfacing_inhouse` | DOT In-house Street Resurfacing Projects | ffaf-8mrv | coordination |
+| `step_streets` | Step Streets Locations | u9au-h79y | overlays |
+| `sidewalk_planimetric` | Planimetric Sidewalks | vfx9-tbb6 | overlays |
+| `pedestrian_demand` | Pedestrian Demand | fwpa-qxaf | overlays |
+| `mappluto` | MapPLUTO | 6fi9-q3ta | overlays |
+| `complaints_311` | 311 Sidewalk/Curb | erm2-nwe9 | overlays |
 
 ---
 
-## ☁️ Deploy to Render
+## CLI Reference
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/ryudkiss-hue/nyc_data)
-
-1. Click the button above (or connect the repo manually at render.com → New Blueprint)
-2. `render.yaml` handles build + start commands automatically
-3. Set `SOCRATA_APP_TOKEN` in the Render dashboard for live data  
-4. `MISSION_DEMO=1` is the default — the app works without any token
-
-**Free tier compatible:** the Bayesian engine uses ADVI variational inference (~50 MB RAM) instead of NUTS sampling (~400 MB), so it runs comfortably within Render's 512 MB free plan.
+| Command | Description |
+|---------|-------------|
+| `socrata conflict-detect --borough MN` | Detect spatial conflicts |
+| `socrata report contract` | Generate contract report |
+| `socrata dataset health` | Check dataset status |
+| `socrata cache refresh <key>` | Refresh L2 cache |
+| `socrata export <key> --format csv` | Export dataset |
+| `socrata nl-query "<question>"` | Natural language query |
 
 ---
 
-## 🐳 Docker
+## Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|---------|
+| `SOCRATA_APP_TOKEN` | Socrata API token | No |
+| `ANTHROPIC_API_KEY` | Claude API key for NL queries | No |
+| `SLACK_WEBHOOK_URL` | Slack alerts webhook | No |
+| `SOCRATA_CACHE_DIR` | L2 cache directory | No |
+
+---
+
+## Docker
 
 ```bash
 docker build -f Dockerfile.mission -t mission-control .
 docker run -p 8501:8501 --env-file .env mission-control
 ```
 
-Or with Compose:
-
-```bash
-docker compose up
-```
-
 ---
 
-## 🧪 Development
+## Development
 
 ```bash
 # Run tests
-python -m pytest tests/ -q -m "not legacy"
+python -m pytest tests/ -q --tb=short
 
 # Lint
-ruff check app/ src/
+ruff check src/socrata_toolkit tests app
 
-# Direct launch
-PYTHONPATH=src:. python -m streamlit run app/mission_control.py
+# Format
+black src/socrata_toolkit tests app
 ```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full development guide.
 
 ---
 
-## 🗂️ Repository Layout
-
-```
-nyc_data/
-├── app/
-│   ├── mission_control.py      # ← entry point (8-tab Streamlit app)
-│   ├── data_loader.py          # Socrata ingestion + DuckDB caching
-│   ├── analytics.py            # Workflow analytics engine
-│   ├── views/
-│   │   ├── apex.py             # Bayesian hiring analytics tab
-│   │   ├── quality_dashboard.py
-│   │   ├── governance.py
-│   │   ├── spatial_analytics.py
-│   │   ├── workflows.py
-│   │   ├── home.py
-│   │   ├── settings.py
-│   │   └── publish.py
-│   └── ui/theme.py             # Dark agency CSS + components
-│
-├── src/socrata_toolkit/        # Core Python library
-│   ├── core/                   # SocrataClient, DuckDBManager, CLI
-│   ├── quality/                # Profiler, rules, SLA tracking
-│   ├── lineage/                # DAG, impact analysis
-│   └── analyst/                # Analyst pack workflows
-│
-├── config/
-│   └── datasets.yaml           # 16+ NYC DOT dataset definitions
-│
-├── docs/                       # 80+ documentation files
-├── tests/                      # pytest suite (670+ passing)
-├── render.yaml                 # Render.com one-click blueprint
-├── Dockerfile.mission          # Production container
-├── Procfile                    # Heroku/Railway
-└── pyproject.toml
-```
-
----
-
-## 📦 Install Extras
-
-```bash
-pip install -e ".[mission,postgres,xlsx]"   # recommended — includes all ML + geo deps
-pip install -e ".[all]"                      # everything
-pip install -e ".[llm]"                      # LangChain NL→SQL (heavy)
-```
-
----
-
-## 📚 Documentation
+## Documentation
 
 | Doc | Description |
 |-----|-------------|
-| [docs/SIMPLE_START.md](docs/SIMPLE_START.md) | 5-minute walkthrough |
-| [docs/MISSION_CONTROL.md](docs/MISSION_CONTROL.md) | Full tab-by-tab reference |
-| [docs/FAQ.md](docs/FAQ.md) | Common questions incl. AI Copilot & Render |
-| [docs/AGENCY_RUNBOOK.md](docs/AGENCY_RUNBOOK.md) | Daily operations guide |
-| [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) | Technical setup |
-| [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md) | All deployment options |
-| [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Error fixes |
-
----
-
-## 📋 Changelog
-
-### v3.0 — Unified Mission Control (2026-05)
-- **8-tab Streamlit app** — all workflows in one unified entry point (`app/mission_control.py`)
-- **Apex Engine** — Bayesian ADVI hiring analytics with Prophet forecasting + OMB lag correlation
-- **AI Copilot** — Gemini / OpenAI / Ollama multi-backend, context-hydrated with live pipeline data
-- **Data Quality tab** — automated health scores, SLA freshness, anomaly detection
-- **Governance tab** — Plotly lineage DAG, ingest audit log, SLA compliance
-- **Spatial Analytics tab** — density maps, Folium bubble map, conflict detection
-- **Render free-tier deploy** — ADVI replaces NUTS (10× less RAM), graceful degradation for all heavy deps
-- 670+ passing tests, ruff-clean codebase
-
-### v2.0 — Agency Dashboard (2025)
-- Streamlit agency dashboard with QA/QC, Spatial, Contract, Productivity workflows
-- Socrata ingestion + DuckDB parquet caching
-- Readiness scoring + completeness tracker
-
-### v1.0 — CLI Toolkit
-- Python CLI + analyst pack
-- Socrata API client, SOQL builder, data profiler
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Development setup and PR guidelines |
+| [CHANGELOG.md](CHANGELOG.md) | Version history |
+| [CLAUDE.md](CLAUDE.md) | AI assistant guidance for this repo |
+| [data-analytics-skills/QUICKSTART.md](data-analytics-skills/QUICKSTART.md) | 31-skill analytics library |
 
 ---
 
