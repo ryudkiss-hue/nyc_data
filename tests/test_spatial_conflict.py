@@ -13,7 +13,6 @@ shapely = pytest.importorskip("shapely")
 
 from shapely.geometry import Point, Polygon  # noqa: E402
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
