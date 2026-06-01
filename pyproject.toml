@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "socrata_toolkit"
-version = "0.3.0"
+version = "0.4.0"
 description = "NYC DOT Sidewalk Inspection & Management Toolkit"
 authors = ["Richard Yudkiss ryudkiss@gmail.com"]
 readme = "README.md"
@@ -105,12 +105,12 @@ source = ["app", "src/socrata_toolkit/analyst", "src/socrata_toolkit/core"]
 omit = ["*/tests/*"]
 
 [tool.coverage.report]
-fail_under = 30
+fail_under = 50
 show_missing = true
 
 [tool.ruff]
 line-length = 100
-target-version = "py310"
+target-version = "py39"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B"]
