@@ -13,10 +13,29 @@ NYC DOT Sidewalk Inspection & Management Toolkit — a Streamlit-based applicati
 - `tests/` — Test suite (pytest)
 - `scripts/` — Utility scripts
 
-**Current visualizations:** 6 across the app:
+**Current visualizations:** 30 across the app:
 - 3 Plotly charts (velocity, lag, forecast) in mission control
 - 2 Streamlit maps (spatial workflows, studio view)
 - 1 scatter chart (workflows view)
+- 13 Advanced Analytics charts (CUSUM, Bayesian CI, KMeans, survival curves, etc.)
+- 10 GIS Dashboard charts (DBSCAN, TSP, conflict buffers, animated bar, etc.)
+- 1 quality scorecard chart
+
+---
+
+## v0.4.0 Features
+
+New capabilities shipped in v0.4.0 (2026-06-01):
+
+- **6 new CLI commands** — `conflict-detect`, `report`, `dataset health`, `cache refresh`, `export`, `nl-query`
+- **13 new Advanced Analytics charts** — CUSUM control charts, Bayesian confidence intervals, KMeans clustering, survival curves, Moran's I spatial autocorrelation, and more
+- **10 new GIS Dashboard charts** — DBSCAN spatial clustering, TSP route optimization, conflict buffer overlays, animated borough bar chart, and more
+- **Bayesian SLA forecasting** — PyMC-based breach probability with credible intervals
+- **NL query interface** — Claude API (claude-haiku-4-5) translates natural-language questions to SOQL
+- **DuckDB L2 cache + delta fetch** — schema-drift detection, incremental Parquet updates
+- **Quality scorecard module** — 0–100 composite score across completeness, uniqueness, validity, timeliness
+- **WeasyPrint PDF + Excel + PPTX reports** — exportable analyst deliverables
+- **Nightly scheduler** — APScheduler-based prefetch with configurable cron
 
 ---
 
