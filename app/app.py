@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import sys
 from contextlib import contextmanager
+from datetime import date, timedelta
 from pathlib import Path
 
 _REPO_ROOT = str(Path(__file__).resolve().parents[1])
@@ -81,6 +82,52 @@ _NAV_GROUPS = {
     ],
 }
 
+_BOROUGH_OPTIONS = ["Manhattan", "Brooklyn", "Queens", "The Bronx", "Staten Island"]
+_STATUS_OPTIONS = ["Open", "In Progress", "Closed", "Pending Review"]
+
+
+# ---------------------------------------------------------------------------
+# Fragment-wrapped chart sections
+# ---------------------------------------------------------------------------
+
+def _make_roi_chart_fragment():
+    """Return an @st.fragment-decorated ROI chart renderer (or plain fn)."""
+
+    def _render_roi_chart_inner(roi: object) -> None:
+        """Render ROI header and JSON detail without triggering full-page reload."""
+        workflows.render_roi_header(roi)
+        with st.expander("📊 ROI calculation detail", expanded=False):
+            st.json(roi.as_dict())
+
+    if hasattr(st, "fragment"):
+        return st.fragment(_render_roi_chart_inner)
+    return _render_roi_chart_inner
+
+
+def _make_ingestion_matrix_fragment():
+    """Return an @st.fragment-decorated ingestion matrix renderer (or plain fn)."""
+
+    def _render_ingestion_matrix_inner(frames: dict) -> None:
+        """Render ingestion summary without triggering full-page reload."""
+        with st.expander("📥 Ingestion matrix", expanded=False):
+            from app.data_loader import ingestion_summary
+
+            summary = ingestion_summary(frames)
+            st.dataframe(summary, use_container_width=True, hide_index=True)
+
+    if hasattr(st, "fragment"):
+        return st.fragment(_render_ingestion_matrix_inner)
+    return _render_ingestion_matrix_inner
+
+
+# Build fragment callables once at module level
+_render_roi_chart = _make_roi_chart_fragment()
+_render_ingestion_matrix = _make_ingestion_matrix_fragment()
+
+
+# ---------------------------------------------------------------------------
+# Cached data loaders
+# ---------------------------------------------------------------------------
 
 @contextmanager
 def _spinner_view():
@@ -101,6 +148,7 @@ def _load_workflow_frames(workflow_key: str, limit: int) -> dict:
 @st.cache_data(ttl=CACHE_TTL_SECONDS, show_spinner="Loading full ingestion matrix…")
 def _load_all_frames(limit: int) -> dict:
     from app.data_loader import DATASET_REGISTRY
+
     return fetch_datasets_for_keys(tuple(DATASET_REGISTRY.keys()), limit=limit)
 
 
@@ -112,6 +160,66 @@ def _load_map_layers(limit: int) -> dict:
 @st.cache_data(ttl=600, show_spinner="Running analyst workflows…")
 def _run_workflows(frames: dict) -> dict:
     return run_all_workflows(frames)
+
+
+# ---------------------------------------------------------------------------
+# Sidebar
+# ---------------------------------------------------------------------------
+
+def _init_filter_defaults() -> None:
+    """Initialise sticky sidebar filter state with safe defaults."""
+    if "filter_borough" not in st.session_state:
+        st.session_state["filter_borough"] = []
+    if "filter_date_range" not in st.session_state:
+        today = date.today()
+        st.session_state["filter_date_range"] = (today - timedelta(days=90), today)
+    if "filter_status" not in st.session_state:
+        st.session_state["filter_status"] = []
+
+
+def _render_sticky_filters(section: str) -> None:
+    """Render persistent data filters in the sidebar."""
+    with st.expander("🔽 Data Filters", expanded=False):
+        st.session_state["filter_borough"] = st.multiselect(
+            "Borough",
+            _BOROUGH_OPTIONS,
+            default=st.session_state.get("filter_borough", []),
+            key="sb_filter_borough",
+            placeholder="All boroughs",
+        )
+
+        default_range = st.session_state.get(
+            "filter_date_range",
+            (date.today() - timedelta(days=90), date.today()),
+        )
+        st.session_state["filter_date_range"] = st.date_input(
+            "Date range",
+            value=default_range,
+            key="sb_filter_date_range",
+        )
+
+        st.session_state["filter_status"] = st.multiselect(
+            "Status",
+            _STATUS_OPTIONS,
+            default=st.session_state.get("filter_status", []),
+            key="sb_filter_status",
+            placeholder="All statuses",
+        )
+
+        active_filters = sum([
+            1 if st.session_state["filter_borough"] else 0,
+            1 if st.session_state["filter_status"] else 0,
+        ])
+        if active_filters:
+            st.caption(f"✅ {active_filters} filter(s) active")
+            if st.button("Clear filters", key="sb_clear_filters", use_container_width=True):
+                st.session_state["filter_borough"] = []
+                st.session_state["filter_date_range"] = (
+                    date.today() - timedelta(days=90),
+                    date.today(),
+                )
+                st.session_state["filter_status"] = []
+                st.rerun()
 
 
 def _sidebar_nav() -> tuple[str, dict]:
@@ -176,6 +284,10 @@ def _sidebar_nav() -> tuple[str, dict]:
         else:
             section = st.session_state.get("main_nav_section", "home")
 
+        st.divider()
+
+        # Sticky filter bar
+        _render_sticky_filters(section)
         st.divider()
 
         wf_opts: dict = {"view_key": "qa", "row_limit": 10_000, "show_ingest": False}
@@ -243,7 +355,10 @@ def main() -> None:
     inject_theme()
     render_skip_link()
 
-    # Persistent filter state
+    # Initialise persistent filter state defaults
+    _init_filter_defaults()
+
+    # Persistent filter state (legacy key kept for compatibility)
     if "filter_state" not in st.session_state:
         st.session_state["filter_state"] = {}
 
@@ -307,6 +422,7 @@ def main() -> None:
         with _spinner_view():
             try:
                 from app.views.analytics_advanced import render_analytics_advanced_page
+
                 render_analytics_advanced_page()
             except ImportError:
                 st.info("Advanced Analytics view is not yet available.")
@@ -316,6 +432,7 @@ def main() -> None:
         with _spinner_view():
             try:
                 from app.views.data_catalog import render_data_catalog_page
+
                 render_data_catalog_page()
             except ImportError:
                 st.info("Data Catalog view is not yet available.")
@@ -331,12 +448,24 @@ def main() -> None:
     map_layers: dict = {}
 
     try:
-        if show_ingest:
-            frames = _load_all_frames(row_limit)
-        else:
-            frames = _load_workflow_frames(view_key, row_limit)
-        if view_key == "spatial":
-            map_layers = _load_map_layers(min(row_limit, 25_000))
+        with st.status("Loading data from Socrata…", expanded=True) as _status:
+            if show_ingest:
+                _status.update(label="Loading full ingestion matrix from Socrata…")
+                frames = _load_all_frames(row_limit)
+            else:
+                _status.update(
+                    label=f"Loading '{WORKFLOW_KEYS.get(view_key, view_key)}' datasets from Socrata…"
+                )
+                frames = _load_workflow_frames(view_key, row_limit)
+            if view_key == "spatial":
+                _status.update(label="Loading Manhattan map layers…")
+                map_layers = _load_map_layers(min(row_limit, 25_000))
+            dataset_count = len([k for k, v in frames.items() if not getattr(v, "empty", True)])
+            _status.update(
+                label=f"Loaded {dataset_count} dataset(s) — ready",
+                state="complete",
+                expanded=False,
+            )
         st.session_state["workflow_data_loaded"] = not frames_are_empty(frames)
     except ImportError as exc:
         st.error(str(exc))
@@ -356,7 +485,9 @@ def main() -> None:
 
     results = _run_workflows(frames)
     roi = results["roi"]
-    workflows.render_roi_header(roi)
+
+    # Fragment-wrapped ROI header + detail (rerenders without full-page reload)
+    _render_roi_chart(roi)
     st.divider()
 
     if show_ingest:
@@ -372,14 +503,9 @@ def main() -> None:
     elif view_key == "quality":
         workflows.view_quality(results, frames)
 
-    with st.expander("📊 ROI calculation detail", expanded=False):
-        st.json(roi.as_dict())
-
     if not show_ingest and view_key != "quality":
-        with st.expander("📥 Ingestion matrix", expanded=False):
-            from app.data_loader import ingestion_summary
-            summary = ingestion_summary(frames)
-            st.dataframe(summary, use_container_width=True, hide_index=True)
+        # Fragment-wrapped ingestion matrix (rerenders independently)
+        _render_ingestion_matrix(frames)
 
 
 if __name__ == "__main__":
