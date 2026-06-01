@@ -20,6 +20,7 @@ from app.data_loader import (
     fetch_dataset,
     pick_column,
 )
+from socrata_toolkit.core.utils import BOROUGH_LIST
 
 try:
     import folium
@@ -75,7 +76,7 @@ except ImportError:
     HAS_PYPROJ = False
 
 NYC_BOUNDS = {"lat_min": 40.477, "lat_max": 40.917, "lon_min": -74.259, "lon_max": -73.700}
-BOROUGHS = ["Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"]
+BOROUGHS = BOROUGH_LIST
 
 
 # ---------------------------------------------------------------------------

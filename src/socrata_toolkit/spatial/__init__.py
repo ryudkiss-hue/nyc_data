@@ -10,6 +10,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from ..core.utils import BOROUGH_SET
+
 try:
     from shapely.geometry import shape as shapely_shape
     from shapely.geometry.base import BaseGeometry
@@ -156,8 +158,7 @@ class SpatialSegment:
     def __post_init__(self):
         if not (0 <= self.condition_score <= 100):
             raise ValueError("condition_score must be between 0 and 100")
-        valid_boros = {"Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"}
-        if self.borough not in valid_boros:
+        if self.borough not in BOROUGH_SET:
             raise ValueError(f"Invalid borough: {self.borough}")
         if self.geometry.geometry_type != "LineString":
             raise ValueError("Segment geometry must be a LineString")

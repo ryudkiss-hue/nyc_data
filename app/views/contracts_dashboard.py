@@ -15,6 +15,7 @@ from app.data_loader import (
     fetch_dataset,
     pick_column,
 )
+from socrata_toolkit.core.utils import coerce_series_datetime
 
 try:
     import plotly.express as px
@@ -133,7 +134,7 @@ def _find_col(df: pd.DataFrame, *keywords: str) -> str | None:
 
 def _coerce_dates(df: pd.DataFrame, col: str) -> pd.Series:
     """Parse a column to datetime, tolerating bad values."""
-    return pd.to_datetime(df[col], errors="coerce")
+    return coerce_series_datetime(df[col])
 
 
 # ---------------------------------------------------------------------------
