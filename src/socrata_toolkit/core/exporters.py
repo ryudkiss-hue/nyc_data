@@ -22,6 +22,7 @@ import pandas as pd
 
 class XLSXExporter:
     def write(self, data: pd.DataFrame | list[dict[str, Any]], path: str, sheet: str = "Data", meta: Any = None, freeze_panes: bool = True, auto_filter: bool = True) -> None:
+        """Write data to an Excel file, optionally appending Summary and Column Dictionary sheets from meta."""
         df = data if isinstance(data, pd.DataFrame) else pd.DataFrame(data)
         with pd.ExcelWriter(path, engine="openpyxl") as writer:
             df.to_excel(writer, sheet_name=sheet, index=False)
@@ -62,6 +63,7 @@ class PostgresExporter:
         return "TEXT"
 
     def upsert_batches(self, batches: Iterable[list[dict[str, Any]]], table: str, conflict_column: str) -> int:
+        """Insert or update record batches into a Postgres table using ON CONFLICT DO UPDATE."""
         total = 0
         cur = self.conn.cursor()
         initialized = False
@@ -174,6 +176,7 @@ class PostgresExporter:
         return total
 
     def upsert_metadata(self, meta: Any) -> None:
+        """Upsert a metadata summary into the _socrata_metadata table keyed by fourfour."""
         cur = self.conn.cursor()
         cur.execute('CREATE TABLE IF NOT EXISTS _socrata_metadata (fourfour TEXT PRIMARY KEY, payload JSONB NOT NULL)')
         cur.execute(
@@ -200,6 +203,7 @@ class MongoExporter:
         self.client.close()
 
     def upsert_batches(self, batches: Iterable[list[dict[str, Any]]], collection: str, conflict_field: str) -> int:
+        """Upsert record batches into a MongoDB collection using bulk_write."""
         col = self.db[collection]
         total = 0
         for batch in batches:
@@ -210,6 +214,7 @@ class MongoExporter:
         return total
 
     def upsert_geojson(self, geojson: dict[str, Any], collection: str, conflict_field: str) -> int:
+        """Upsert GeoJSON feature properties (plus geometry) into a MongoDB collection."""
         col = self.db[collection]
         ops = []
         for feat in geojson.get("features", []):

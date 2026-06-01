@@ -24,9 +24,11 @@ class MatchResult:
 class MatchingStrategy:
     @property
     def name(self) -> str:
+        """Return the strategy class name as its identifier."""
         return self.__class__.__name__
 
     def score(self, record1: dict[str, Any], record2: dict[str, Any]) -> float:
+        """Return a similarity score in [0, 1] between two records."""
         return 0.0
 
 class ExactMatch(MatchingStrategy):
@@ -37,6 +39,7 @@ class ExactMatch(MatchingStrategy):
         self.threshold = threshold
 
     def score(self, record1: dict[str, Any], record2: dict[str, Any]) -> float:
+        """Return a weighted exact-match similarity score across the configured fields."""
         total_score = 0.0
         total_weight = sum(self.field_weights.get(f, 0) for f in self.fields)
         if total_weight == 0:
@@ -81,6 +84,7 @@ class FuzzyMatch(MatchingStrategy):
         return difflib.SequenceMatcher(None, s1, s2).ratio()
 
     def score(self, record1: dict[str, Any], record2: dict[str, Any]) -> float:
+        """Return the mean fuzzy string similarity across all configured fields."""
         scores = []
         for field in self.fields:
             v1 = record1.get(field)
@@ -112,6 +116,7 @@ class PhoneticMatch(MatchingStrategy):
         return (soundex + "0000")[:4]
 
     def score(self, record1: dict[str, Any], record2: dict[str, Any]) -> float:
+        """Return 1.0 if all configured fields share the same Soundex code, else the proportion that match."""
         scores = []
         for field in self.fields:
             v1 = record1.get(field)
@@ -143,6 +148,7 @@ class GeographicMatch(MatchingStrategy):
         return R * c
 
     def score(self, record1: dict[str, Any], record2: dict[str, Any]) -> float:
+        """Return a proximity score of 1.0 for records within the distance threshold, 0.0 otherwise."""
         lat1 = record1.get(self.lat_field)
         lon1 = record1.get(self.lon_field)
         lat2 = record2.get(self.lat_field)
@@ -162,6 +168,7 @@ class TemporalMatch(MatchingStrategy):
         self.end_field = end_field
 
     def score(self, record1: dict[str, Any], record2: dict[str, Any]) -> float:
+        """Return 1.0 if the date ranges of the two records overlap, 0.0 otherwise."""
         # Assuming format YYYY-MM-DD
         s1 = record1.get(self.start_field)
         e1 = record1.get(self.end_field)
@@ -180,6 +187,7 @@ class CompositeMatch(MatchingStrategy):
         self.strategies = strategies
 
     def score(self, record1: dict[str, Any], record2: dict[str, Any]) -> float:
+        """Return a weighted average of all constituent strategy scores."""
         total_score = 0.0
         total_weight = 0.0
         for strategy, weight in self.strategies:
@@ -192,11 +200,14 @@ class CompositeMatch(MatchingStrategy):
 
 class SemanticMatch(MatchingStrategy):
     def score(self, record1: dict[str, Any], record2: dict[str, Any]) -> float:
+        """Return a semantic similarity score between two records (stub, always 0.0)."""
         return 0.0
 
 class EntityMatcher:
     def match_entities(self, source: list[dict[str, Any]], target: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Match records in source against target and return a list of match results."""
         return []
 
 def calculate_similarity_score(entity1: dict[str, Any], entity2: dict[str, Any]) -> float:
+    """Return an overall similarity score between two entity dicts."""
     return 0.0
