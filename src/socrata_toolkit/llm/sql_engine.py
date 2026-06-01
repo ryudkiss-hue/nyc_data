@@ -184,8 +184,9 @@ Generate a PostgreSQL query. Return only the SQL, no markdown or explanation."""
         try:
             with psycopg.connect(self.dsn) as conn:
                 with conn.cursor() as cur:
-                    # EXPLAIN without executing
-                    cur.execute(f"EXPLAIN {sql}")
+                    # EXPLAIN without executing — sql has already passed the keyword blocklist
+                    from psycopg import sql as psycopg_sql
+                    cur.execute(psycopg_sql.SQL("EXPLAIN {}").format(psycopg_sql.SQL(sql)))
                     cur.fetchall()
             return True, "Query is valid"
         except Exception as e:
@@ -235,7 +236,14 @@ Generate a PostgreSQL query. Return only the SQL, no markdown or explanation."""
 
             with psycopg.connect(self.dsn) as conn:
                 with conn.cursor() as cur:
-                    cur.execute(f"{sql} LIMIT {self.max_results}")
+                    # sql has passed validate_query; LIMIT is an internal int constant
+                    from psycopg import sql as psycopg_sql
+                    cur.execute(
+                        psycopg_sql.SQL("{} LIMIT {}").format(
+                            psycopg_sql.SQL(sql),
+                            psycopg_sql.Literal(self.max_results),
+                        )
+                    )
 
                     # Get column names
                     if cur.description:

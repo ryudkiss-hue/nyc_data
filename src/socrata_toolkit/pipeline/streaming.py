@@ -84,6 +84,7 @@ def stream_pipeline(
             pg = targets["postgres"]
             try:
                 import psycopg
+                from psycopg import sql as psycopg_sql
             except Exception as exc:
                 raise ImportError("Postgres support requires psycopg: pip install '.[postgres]'") from exc
 
@@ -144,10 +145,23 @@ def stream_pipeline(
                 if not pg_writer["initialized"]:
                     cols = list(batch[0].keys())
                     defs = ", ".join(f'"{c.replace(chr(34), "")}" TEXT' for c in cols)
-                    cur.execute(f'CREATE TABLE IF NOT EXISTS "{table}" ({defs})')
+                    cur.execute(
+                        psycopg_sql.SQL("CREATE TABLE IF NOT EXISTS {} ({})").format(
+                            psycopg_sql.Identifier(table),
+                            psycopg_sql.SQL(defs),
+                        )
+                    )
                     if conflict and conflict in cols:
                         # FIX: Changed UNIQUE_INDEX to UNIQUE INDEX
-                        cur.execute(f'CREATE UNIQUE INDEX IF NOT EXISTS "{table}_{conflict}_idx" ON "{table}" ("{conflict}")')
+                        cur.execute(
+                            psycopg_sql.SQL(
+                                "CREATE UNIQUE INDEX IF NOT EXISTS {} ON {} ({})"
+                            ).format(
+                                psycopg_sql.Identifier(f"{table}_{conflict}_idx"),
+                                psycopg_sql.Identifier(table),
+                                psycopg_sql.Identifier(conflict),
+                            )
+                        )
                     pg_writer["initialized"] = True
 
                 cols = list(batch[0].keys())

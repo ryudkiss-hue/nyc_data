@@ -39,9 +39,11 @@ class PostgresExporter:
     def __init__(self, dsn: str):
         try:
             import psycopg
+            from psycopg import sql as psycopg_sql
         except ImportError as exc:
             raise ImportError("Install postgres extras: pip install '.[postgres]'") from exc
         self.psycopg = psycopg
+        self.psycopg_sql = psycopg_sql
         self.conn = psycopg.connect(dsn)
 
     def __enter__(self) -> PostgresExporter:
@@ -69,9 +71,22 @@ class PostgresExporter:
             cols = list(batch[0].keys())
             if not initialized:
                 defs = ", ".join(f'"{c}" {self._sql_type(batch[0].get(c))}' for c in cols)
-                cur.execute(f'CREATE TABLE IF NOT EXISTS "{table}" ({defs})')
+                cur.execute(
+                    self.psycopg_sql.SQL("CREATE TABLE IF NOT EXISTS {} ({})").format(
+                        self.psycopg_sql.Identifier(table),
+                        self.psycopg_sql.SQL(defs),
+                    )
+                )
                 if conflict_column in cols:
-                    cur.execute(f'CREATE UNIQUE INDEX IF NOT EXISTS "{table}_{conflict_column}_idx" ON "{table}" ("{conflict_column}")')
+                    cur.execute(
+                        self.psycopg_sql.SQL(
+                            "CREATE UNIQUE INDEX IF NOT EXISTS {} ON {} ({})"
+                        ).format(
+                            self.psycopg_sql.Identifier(f"{table}_{conflict_column}_idx"),
+                            self.psycopg_sql.Identifier(table),
+                            self.psycopg_sql.Identifier(conflict_column),
+                        )
+                    )
                 initialized = True
             placeholders = ", ".join(["%s"] * len(cols))
             col_list = ", ".join(f'"{c}"' for c in cols)
@@ -101,9 +116,22 @@ class PostgresExporter:
             cols = list(batch[0].keys())
             if not initialized:
                 defs = ", ".join(f'"{c}" {self._sql_type(batch[0].get(c))}' for c in cols)
-                cur.execute(f'CREATE TABLE IF NOT EXISTS "{table}" ({defs})')
+                cur.execute(
+                    self.psycopg_sql.SQL("CREATE TABLE IF NOT EXISTS {} ({})").format(
+                        self.psycopg_sql.Identifier(table),
+                        self.psycopg_sql.SQL(defs),
+                    )
+                )
                 if conflict_column in cols:
-                    cur.execute(f'CREATE UNIQUE INDEX IF NOT EXISTS "{table}_{conflict_column}_idx" ON "{table}" ("{conflict_column}")')
+                    cur.execute(
+                        self.psycopg_sql.SQL(
+                            "CREATE UNIQUE INDEX IF NOT EXISTS {} ON {} ({})"
+                        ).format(
+                            self.psycopg_sql.Identifier(f"{table}_{conflict_column}_idx"),
+                            self.psycopg_sql.Identifier(table),
+                            self.psycopg_sql.Identifier(conflict_column),
+                        )
+                    )
                 initialized = True
 
             # Create a temp staging table with the same columns
