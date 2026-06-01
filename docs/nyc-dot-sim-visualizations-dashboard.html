@@ -3,1348 +3,1180 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>NYC DOT SIM — 30 Visualizations Dashboard</title>
+<title>NYC DOT SIM — 30 Visualizations · Live Socrata Data</title>
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <style>
 :root{
-  --dot-blue:#003087;--dot-blue-mid:#1a4fa0;--dot-blue-lt:#e8f0fa;
+  --blue:#003087;--blue-mid:#1a4fa0;--blue-lt:#e8f0fa;
   --green:#276749;--green-lt:#f0fff4;
   --red:#c53030;--amber:#b7791f;--amber-lt:#fffff0;
   --grey:#4a5568;--border:#e2e8f0;--bg:#f0f4f9;
   --card:#fff;--radius:10px;
-  --map-color:#6b46c1;--bar-color:#003087;--line-color:#2b6cb0;
-  --heat-color:#c53030;--scatter-color:#276749;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:#2d3748;min-height:100vh}
+body{font-family:system-ui,-apple-system,sans-serif;font-size:14px;color:#2d3748;background:var(--bg)}
 
 /* ── Header ── */
-.app-header{background:var(--dot-blue);color:#fff;padding:18px 32px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.3)}
-.app-header h1{font-size:20px;font-weight:700}
-.app-header p{font-size:12px;color:#90cdf4;margin-top:2px}
-.header-logo{font-size:28px}
+.hdr{background:var(--blue);color:#fff;padding:16px 32px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.hdr h1{font-size:19px;font-weight:700}
+.hdr p{font-size:11px;color:#90cdf4;margin-top:2px}
+.live-dot{width:9px;height:9px;border-radius:50%;background:#48bb78;display:inline-block;margin-right:5px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ── Token bar ── */
+.token-bar{background:#1a4fa0;padding:8px 32px;display:flex;align-items:center;gap:12px;font-size:12px;color:#bee3f8}
+.token-bar input{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:4px;color:#fff;padding:4px 10px;font-size:12px;width:280px}
+.token-bar input::placeholder{color:rgba(255,255,255,.5)}
+.token-bar button{background:rgba(255,255,255,.2);border:none;color:#fff;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:12px}
+.token-bar button:hover{background:rgba(255,255,255,.35)}
+#token-status{margin-left:8px;font-size:11px}
 
 /* ── Stat bar ── */
-.stat-bar{background:var(--dot-blue-mid);color:#fff;display:flex;gap:0;padding:0 32px}
-.stat-item{flex:1;text-align:center;padding:12px 8px;border-right:1px solid rgba(255,255,255,.15);cursor:default}
+.stat-bar{background:var(--blue-mid);color:#fff;display:flex;padding:0 32px}
+.stat-item{flex:1;text-align:center;padding:10px 6px;border-right:1px solid rgba(255,255,255,.15);cursor:pointer;transition:background .15s}
 .stat-item:last-child{border-right:none}
-.stat-item .val{font-size:26px;font-weight:800;line-height:1}
-.stat-item .lbl{font-size:11px;color:#bee3f8;margin-top:3px;text-transform:uppercase;letter-spacing:.5px}
-.stat-item.clickable:hover{background:rgba(255,255,255,.1);cursor:pointer}
-.stat-item.active{background:rgba(255,255,255,.18)}
+.stat-item:hover{background:rgba(255,255,255,.12)}
+.stat-item .val{font-size:24px;font-weight:800;line-height:1}
+.stat-item .lbl{font-size:10px;color:#bee3f8;margin-top:2px;text-transform:uppercase;letter-spacing:.5px}
 
 /* ── Main layout ── */
-.main{max-width:1400px;margin:0 auto;padding:28px 28px 60px}
+.main{max-width:1380px;margin:0 auto;padding:24px 24px 60px}
 
-/* ── Section headers ── */
-.section{margin-bottom:48px}
-.section-header{display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-bottom:10px;border-bottom:3px solid var(--dot-blue)}
-.section-icon{font-size:22px}
-.section-title{font-size:18px;font-weight:700;color:var(--dot-blue)}
-.section-count{background:var(--dot-blue);color:#fff;border-radius:12px;padding:2px 10px;font-size:12px;font-weight:700;margin-left:auto}
+/* ── Section ── */
+.section{margin-bottom:44px}
+.sec-hdr{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:10px;border-bottom:3px solid var(--blue)}
+.sec-icon{font-size:20px}
+.sec-title{font-size:17px;font-weight:700;color:var(--blue)}
+.sec-count{background:var(--blue);color:#fff;border-radius:12px;padding:2px 9px;font-size:11px;font-weight:700;margin-left:auto}
 
-/* ── Chart cards grid ── */
-.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+/* ── Grid ── */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
 
-/* ── Chart card ── */
-.chart-card{background:var(--card);border-radius:var(--radius);border:2px solid var(--border);cursor:pointer;transition:all .18s;overflow:hidden;position:relative}
-.chart-card:hover{border-color:var(--dot-blue);box-shadow:0 4px 20px rgba(0,48,135,.15);transform:translateY(-2px)}
-.chart-card.active{border-color:var(--dot-blue);box-shadow:0 0 0 3px rgba(0,48,135,.2)}
-
-.card-thumb{height:130px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+/* ── Card ── */
+.card{background:#fff;border-radius:var(--radius);border:2px solid var(--border);cursor:pointer;transition:all .16s;overflow:hidden;position:relative}
+.card:hover{border-color:var(--blue);box-shadow:0 4px 18px rgba(0,48,135,.14);transform:translateY(-2px)}
+.card.active{border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,48,135,.18)}
+.card-thumb{height:120px;display:flex;align-items:center;justify-content:center;background:var(--blue-lt);position:relative;overflow:hidden}
 .card-thumb svg{width:100%;height:100%}
-
-.card-body{padding:12px 14px 14px}
-.card-type-chip{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
-.chip-map   {background:#faf5ff;color:#6b46c1}
-.chip-bar   {background:var(--dot-blue-lt);color:var(--dot-blue)}
-.chip-line  {background:#ebf8ff;color:#2b6cb0}
-.chip-heat  {background:#fff5f5;color:#c53030}
-.chip-scatter{background:var(--green-lt);color:var(--green)}
-
+.card-body{padding:11px 13px 12px}
+.chip{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
+.chip-line{background:#ebf8ff;color:#2b6cb0}
+.chip-bar {background:var(--blue-lt);color:var(--blue)}
+.chip-map {background:#faf5ff;color:#6b46c1}
+.chip-heat{background:#fff5f5;color:#c53030}
+.chip-pie {background:#f0fff4;color:#276749}
 .card-title{font-size:13px;font-weight:700;color:#1a202c;line-height:1.3}
-.card-desc {font-size:11px;color:var(--grey);margin-top:3px;line-height:1.4}
-.card-num  {position:absolute;top:8px;right:8px;background:rgba(0,48,135,.08);color:var(--dot-blue);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700}
+.card-src  {font-size:10px;color:var(--grey);margin-top:3px}
+.card-num  {position:absolute;top:7px;right:7px;background:rgba(0,48,135,.09);color:var(--blue);border-radius:50%;width:21px;height:21px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700}
 
-/* ── Expanded chart panel ── */
-.chart-panel{display:none;background:#fff;border:2px solid var(--dot-blue);border-radius:var(--radius);margin-top:16px;overflow:hidden;grid-column:1/-1}
-.chart-panel.open{display:block}
-.panel-header{background:var(--dot-blue);color:#fff;padding:12px 18px;display:flex;align-items:center;gap:10px}
-.panel-header h3{font-size:14px;font-weight:700;flex:1}
-.panel-close{background:rgba(255,255,255,.2);border:none;color:#fff;cursor:pointer;border-radius:50%;width:26px;height:26px;font-size:14px;display:flex;align-items:center;justify-content:center}
-.panel-close:hover{background:rgba(255,255,255,.35)}
-.panel-body{padding:16px}
-.plotly-chart{width:100%;height:340px}
-.panel-meta{font-size:11px;color:var(--grey);margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
-.panel-meta span{margin-right:16px}
-.panel-meta .tag{background:var(--dot-blue-lt);color:var(--dot-blue);border-radius:10px;padding:1px 7px;font-size:10px;font-weight:600}
+/* ── Panel ── */
+.panel{display:none;background:#fff;border:2px solid var(--blue);border-radius:var(--radius);margin-top:14px;overflow:hidden;grid-column:1/-1}
+.panel.open{display:block}
+.panel-hdr{background:var(--blue);color:#fff;padding:11px 16px;display:flex;align-items:center;gap:10px}
+.panel-hdr h3{font-size:13px;font-weight:700;flex:1}
+.panel-hdr .src-tag{background:rgba(255,255,255,.2);border-radius:10px;padding:2px 8px;font-size:10px;font-family:monospace}
+.close-btn{background:rgba(255,255,255,.2);border:none;color:#fff;cursor:pointer;border-radius:50%;width:24px;height:24px;font-size:13px;display:flex;align-items:center;justify-content:center}
+.close-btn:hover{background:rgba(255,255,255,.38)}
+.panel-body{padding:14px}
+.chart-div{width:100%;height:360px}
+.panel-meta{font-size:11px;color:var(--grey);margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;gap:16px;flex-wrap:wrap}
+.meta-tag{background:var(--blue-lt);color:var(--blue);border-radius:8px;padding:1px 7px;font-size:10px;font-weight:600}
 
-/* ── Legend bar ── */
-.legend-bar{display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap}
-.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--grey)}
-.legend-dot{width:12px;height:12px;border-radius:50%}
+/* ── Loading / Error ── */
+.loading{text-align:center;padding:60px 0;color:var(--grey)}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error{background:#fff5f5;color:var(--red);border:1px solid #fed7d7;border-radius:6px;padding:12px 16px;font-size:13px;margin:8px 0}
+.error code{background:#fed7d7;padding:1px 5px;border-radius:3px;font-size:11px}
 
-/* ── Responsive ── */
-@media(max-width:640px){
-  .cards-grid{grid-template-columns:1fr 1fr}
-  .stat-item .val{font-size:20px}
-  .main{padding:16px}
-}
+/* ── Legend ── */
+.legend{display:flex;gap:14px;margin-bottom:20px;flex-wrap:wrap}
+.leg{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--grey)}
+.leg-dot{width:11px;height:11px;border-radius:50%}
 </style>
 </head>
 <body>
 
 <!-- Header -->
-<div class="app-header">
-  <div class="header-logo">🏙️</div>
+<div class="hdr">
+  <div style="font-size:26px">🏙️</div>
   <div>
-    <h1>NYC DOT SIM Analyst Toolkit — Visualization Catalog</h1>
-    <p>30 interactive visualizations across 4 dashboard sections · Click any card to preview</p>
+    <h1>NYC DOT SIM Analyst Toolkit — 30 Visualizations</h1>
+    <p><span class="live-dot"></span>All charts fetch live data from NYC Open Data (data.cityofnewyork.us) — no synthetic data</p>
   </div>
+</div>
+
+<!-- Token bar -->
+<div class="token-bar">
+  <span>Socrata App Token (optional — avoids rate limits):</span>
+  <input type="password" id="app-token" placeholder="paste your X-App-Token here" oninput="saveToken()"/>
+  <button onclick="clearToken()">Clear</button>
+  <span id="token-status"></span>
 </div>
 
 <!-- Stat bar -->
 <div class="stat-bar">
-  <div class="stat-item clickable" onclick="scrollTo(0,0)">
-    <div class="val">30</div><div class="lbl">Total Charts</div>
-  </div>
-  <div class="stat-item clickable" onclick="scrollToSection('mission')">
-    <div class="val">6</div><div class="lbl">Mission Control</div>
-  </div>
-  <div class="stat-item clickable" onclick="scrollToSection('gis')">
-    <div class="val">10</div><div class="lbl">GIS Dashboard</div>
-  </div>
-  <div class="stat-item clickable" onclick="scrollToSection('analytics')">
-    <div class="val">13</div><div class="lbl">Adv. Analytics</div>
-  </div>
-  <div class="stat-item clickable" onclick="scrollToSection('catalog')">
-    <div class="val">1</div><div class="lbl">Data Catalog</div>
-  </div>
-  <div class="stat-item">
-    <div class="val">5</div><div class="lbl">Chart Types</div>
-  </div>
+  <div class="stat-item" onclick="scrollToEl('mission')"><div class="val">30</div><div class="lbl">Total Charts</div></div>
+  <div class="stat-item" onclick="scrollToEl('mission')"><div class="val">6</div><div class="lbl">Mission Control</div></div>
+  <div class="stat-item" onclick="scrollToEl('gis')"><div class="val">10</div><div class="lbl">GIS Dashboard</div></div>
+  <div class="stat-item" onclick="scrollToEl('analytics')"><div class="val">13</div><div class="lbl">Adv. Analytics</div></div>
+  <div class="stat-item" onclick="scrollToEl('catalog')"><div class="val">1</div><div class="lbl">Data Catalog</div></div>
+  <div class="stat-item"><div class="val">6</div><div class="lbl">Live Datasets</div></div>
 </div>
 
 <div class="main">
 
 <!-- Legend -->
-<div class="legend-bar">
-  <div class="legend-item"><div class="legend-dot" style="background:#6b46c1"></div>Map / Geo</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#003087"></div>Bar Chart</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#2b6cb0"></div>Line / Trend</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#c53030"></div>Heatmap</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#276749"></div>Scatter</div>
+<div class="legend">
+  <div class="leg"><div class="leg-dot" style="background:#2b6cb0"></div>Line/Trend</div>
+  <div class="leg"><div class="leg-dot" style="background:#003087"></div>Bar Chart</div>
+  <div class="leg"><div class="leg-dot" style="background:#6b46c1"></div>Map / Geo</div>
+  <div class="leg"><div class="leg-dot" style="background:#c53030"></div>Heatmap</div>
+  <div class="leg"><div class="leg-dot" style="background:#276749"></div>Pie / Donut</div>
+  <div class="leg" style="margin-left:auto;font-style:italic">Click any card to load live chart →</div>
 </div>
 
-<!-- ═══════════════════════════ SECTION 1: MISSION CONTROL ═══ -->
+<!-- ══════════════════════════ SECTION 1: MISSION CONTROL ══ -->
 <div class="section" id="mission">
-  <div class="section-header">
-    <span class="section-icon">🎛️</span>
-    <span class="section-title">Mission Control</span>
-    <span class="section-count">6 charts</span>
+  <div class="sec-hdr">
+    <span class="sec-icon">🎛️</span>
+    <span class="sec-title">Mission Control</span>
+    <span class="sec-count">6 charts</span>
   </div>
-  <div class="cards-grid" id="grid-mission">
+  <div class="cards" id="g-mission">
 
-    <!-- 1 Velocity -->
-    <div class="chart-card" onclick="toggleCard('mc1','mission')">
+    <div class="card" onclick="load('mc1','mission',this)">
       <div class="card-thumb" style="background:linear-gradient(135deg,#e8f0fa,#c3d4f5)">
-        <svg viewBox="0 0 260 130" xmlns="http://www.w3.org/2000/svg">
-          <polyline points="20,100 60,75 100,80 140,45 180,55 220,30 250,20" fill="none" stroke="#003087" stroke-width="3"/>
-          <circle cx="140" cy="45" r="5" fill="#003087"/>
-          <text x="130" y="38" font-size="9" fill="#003087" text-anchor="middle">peak</text>
-        </svg>
+        <svg viewBox="0 0 240 120"><polyline points="10,90 50,70 90,75 130,45 170,55 210,30" fill="none" stroke="#003087" stroke-width="2.5"/><text x="120" y="15" font-size="9" fill="#003087" text-anchor="middle" font-family="sans-serif">Monthly inspections · inspectiondate</text></svg>
       </div>
-      <div class="card-body">
-        <span class="card-type-chip chip-line">Line</span>
-        <div class="card-title">Inspection Velocity</div>
-        <div class="card-desc">Rolling 30-day inspection throughput trend with weekly counts</div>
-      </div>
+      <div class="card-body"><span class="chip chip-line">Line</span><div class="card-title">Inspection Monthly Trend</div><div class="card-src">dntt-gqwq · date_trunc_ym(inspectiondate) 2015–2026</div></div>
       <div class="card-num">1</div>
     </div>
 
-    <!-- 2 Lag -->
-    <div class="chart-card" onclick="toggleCard('mc2','mission')">
+    <div class="card" onclick="load('mc2','mission',this)">
       <div class="card-thumb" style="background:linear-gradient(135deg,#fff5f5,#fed7d7)">
-        <svg viewBox="0 0 260 130" xmlns="http://www.w3.org/2000/svg">
-          <rect x="30" y="30" width="35" height="80" fill="#c53030" rx="2"/>
-          <rect x="85" y="50" width="35" height="60" fill="#e53e3e" rx="2"/>
-          <rect x="140" y="40" width="35" height="70" fill="#c53030" rx="2"/>
-          <rect x="195" y="55" width="35" height="55" fill="#fc8181" rx="2"/>
-          <line x1="20" y1="115" x2="245" y2="115" stroke="#718096" stroke-width="1"/>
-          <text x="47" y="125" font-size="8" fill="#718096" text-anchor="middle">MN</text>
-          <text x="102" y="125" font-size="8" fill="#718096" text-anchor="middle">BK</text>
-          <text x="157" y="125" font-size="8" fill="#718096" text-anchor="middle">QN</text>
-          <text x="212" y="125" font-size="8" fill="#718096" text-anchor="middle">BX</text>
-        </svg>
+        <svg viewBox="0 0 240 120"><rect x="20" y="35" width="28" height="75" fill="#c53030" rx="2"/><rect x="58" y="25" width="28" height="85" fill="#e53e3e" rx="2"/><rect x="96" y="45" width="28" height="65" fill="#c53030" rx="2"/><rect x="134" y="30" width="28" height="80" fill="#e53e3e" rx="2"/><rect x="172" y="55" width="28" height="55" fill="#c53030" rx="2"/><line x1="10" y1="115" x2="225" y2="115" stroke="#a0aec0" stroke-width="1"/><text x="120" y="15" font-size="9" fill="#c53030" text-anchor="middle" font-family="sans-serif">vissuedate · violations per year</text></svg>
       </div>
-      <div class="card-body">
-        <span class="card-type-chip chip-bar">Bar</span>
-        <div class="card-title">Resolution Lag by Borough</div>
-        <div class="card-desc">Average days from violation issuance to resolution, per borough</div>
-      </div>
+      <div class="card-body"><span class="chip chip-bar">Bar</span><div class="card-title">Violations Issued by Year</div><div class="card-src">6kbp-uz6m · date_trunc_y(vissuedate) 2015–2026</div></div>
       <div class="card-num">2</div>
     </div>
 
-    <!-- 3 Forecast -->
-    <div class="chart-card" onclick="toggleCard('mc3','mission')">
+    <div class="card" onclick="load('mc3','mission',this)">
       <div class="card-thumb" style="background:linear-gradient(135deg,#f0fff4,#c6f6d5)">
-        <svg viewBox="0 0 260 130" xmlns="http://www.w3.org/2000/svg">
-          <path d="M20,95 Q80,70 130,65 T200,40 T250,20" fill="none" stroke="#276749" stroke-width="2.5"/>
-          <path d="M130,65 Q170,50 200,38 T250,18" fill="none" stroke="#276749" stroke-width="2" stroke-dasharray="5"/>
-          <path d="M130,75 Q170,62 200,50 T250,30 T250,10 T200,28 T170,38 T130,55 Z" fill="rgba(39,103,73,.12)"/>
-          <text x="195" y="15" font-size="9" fill="#276749">forecast</text>
-        </svg>
+        <svg viewBox="0 0 240 120"><path d="M120,60 m0,-50 a50,50 0 0,1 43,25 Z" fill="#276749"/><path d="M120,60 m43,-25 a50,50 0 0,1 7,50 Z" fill="#68d391"/><path d="M120,60 m0,-50 a50,50 0 1,0 43,25 Z" fill="#9ae6b4"/><text x="120" y="108" font-size="9" fill="#276749" text-anchor="middle" font-family="sans-serif">noviolationfound · violation outcome</text></svg>
       </div>
-      <div class="card-body">
-        <span class="card-type-chip chip-line">Line</span>
-        <div class="card-title">Prophet Forecast + CI</div>
-        <div class="card-desc">90-day ahead inspection volume forecast with confidence bands</div>
-      </div>
+      <div class="card-body"><span class="chip chip-pie">Pie</span><div class="card-title">Inspection Outcome Mix</div><div class="card-src">dntt-gqwq · noviolationfound + citydoit + ownerwilldoit</div></div>
       <div class="card-num">3</div>
     </div>
 
-    <!-- 4 Spatial Workflow Map -->
-    <div class="chart-card" onclick="toggleCard('mc4','mission')">
-      <div class="card-thumb" style="background:linear-gradient(135deg,#faf5ff,#e9d8fd)">
-        <svg viewBox="0 0 260 130" xmlns="http://www.w3.org/2000/svg">
-          <ellipse cx="130" cy="65" rx="100" ry="50" fill="#e9d8fd" stroke="#6b46c1" stroke-width="1"/>
-          <circle cx="85" cy="55" r="8" fill="#6b46c1" opacity=".8"/>
-          <circle cx="130" cy="45" r="6" fill="#805ad5" opacity=".7"/>
-          <circle cx="165" cy="60" r="10" fill="#6b46c1" opacity=".9"/>
-          <circle cx="110" cy="75" r="5" fill="#9f7aea" opacity=".6"/>
-          <circle cx="150" cy="80" r="7" fill="#6b46c1" opacity=".7"/>
-          <text x="130" y="108" font-size="9" fill="#6b46c1" text-anchor="middle">NYC Inspection Points</text>
-        </svg>
+    <div class="card" onclick="load('mc4','mission',this)">
+      <div class="card-thumb" style="background:linear-gradient(135deg,#e8f0fa,#c3d4f5)">
+        <svg viewBox="0 0 240 120"><rect x="30" y="40" width="35" height="70" fill="#276749" rx="2"/><rect x="80" y="55" width="35" height="55" fill="#003087" rx="2"/><rect x="130" y="35" width="35" height="75" fill="#276749" rx="2"/><rect x="180" y="50" width="35" height="60" fill="#1a4fa0" rx="2"/><line x1="15" y1="115" x2="225" y2="115" stroke="#a0aec0" stroke-width="1"/><text x="120" y="15" font-size="9" fill="#003087" text-anchor="middle" font-family="sans-serif">pass_fail + borough · dismissals</text></svg>
       </div>
-      <div class="card-body">
-        <span class="card-type-chip chip-map">Map</span>
-        <div class="card-title">Spatial Workflow Map</div>
-        <div class="card-desc">Streamlit scatter map of SIM inspections across NYC boroughs</div>
-      </div>
+      <div class="card-body"><span class="chip chip-bar">Bar</span><div class="card-title">Dismissal Pass/Fail by Borough</div><div class="card-src">p4u2-3jgx · borough × pass_fail groupby</div></div>
       <div class="card-num">4</div>
     </div>
 
-    <!-- 5 Studio View Map -->
-    <div class="chart-card" onclick="toggleCard('mc5','mission')">
-      <div class="card-thumb" style="background:linear-gradient(135deg,#f7fafc,#e2e8f0)">
-        <svg viewBox="0 0 260 130" xmlns="http://www.w3.org/2000/svg">
-          <rect x="15" y="20" width="230" height="90" rx="4" fill="#edf2f7" stroke="#a0aec0" stroke-width="1"/>
-          <path d="M90,70 L100,50 L115,65 L125,45 L145,75 L160,55 L175,70" fill="none" stroke="#2b6cb0" stroke-width="1.5"/>
-          <circle cx="90" cy="70" r="3" fill="#2b6cb0"/>
-          <circle cx="125" cy="45" r="3" fill="#2b6cb0"/>
-          <circle cx="175" cy="70" r="3" fill="#2b6cb0"/>
-          <rect x="18" y="22" width="224" height="14" rx="3" fill="#c3d4f5"/>
-          <text x="130" y="32" font-size="8" fill="#003087" text-anchor="middle">Studio — Manhattan Detail</text>
-        </svg>
+    <div class="card" onclick="load('mc5','mission',this)">
+      <div class="card-thumb" style="background:linear-gradient(135deg,#f0fff4,#c6f6d5)">
+        <svg viewBox="0 0 240 120"><polyline points="10,90 45,80 80,70 115,55 150,60 185,45 220,40" fill="none" stroke="#276749" stroke-width="2.5"/><circle cx="185" cy="45" r="4" fill="#276749"/><text x="120" y="15" font-size="9" fill="#276749" text-anchor="middle" font-family="sans-serif">inspection_date · dismissal trend</text></svg>
       </div>
-      <div class="card-body">
-        <span class="card-type-chip chip-map">Map</span>
-        <div class="card-title">Studio View Map</div>
-        <div class="card-desc">Street-level detail map for Manhattan inspection studio view</div>
-      </div>
+      <div class="card-body"><span class="chip chip-line">Line</span><div class="card-title">Dismissal Inspections Annual Trend</div><div class="card-src">p4u2-3jgx · date_trunc_y(inspection_date) 2018–2026</div></div>
       <div class="card-num">5</div>
     </div>
 
-    <!-- 6 Workflows Scatter -->
-    <div class="chart-card" onclick="toggleCard('mc6','mission')">
-      <div class="card-thumb" style="background:linear-gradient(135deg,#f0fff4,#c6f6d5)">
-        <svg viewBox="0 0 260 130" xmlns="http://www.w3.org/2000/svg">
-          <line x1="30" y1="10" x2="30" y2="115" stroke="#a0aec0" stroke-width="1"/>
-          <line x1="30" y1="115" x2="245" y2="115" stroke="#a0aec0" stroke-width="1"/>
-          <circle cx="60"  cy="80" r="6" fill="#276749" opacity=".7"/>
-          <circle cx="90"  cy="55" r="9" fill="#276749" opacity=".6"/>
-          <circle cx="120" cy="70" r="5" fill="#276749" opacity=".8"/>
-          <circle cx="155" cy="40" r="10" fill="#276749" opacity=".7"/>
-          <circle cx="185" cy="90" r="7" fill="#38a169" opacity=".6"/>
-          <circle cx="215" cy="60" r="8" fill="#276749" opacity=".75"/>
-        </svg>
+    <div class="card" onclick="load('mc6','mission',this)">
+      <div class="card-thumb" style="background:linear-gradient(135deg,#fffff0,#fefcbf)">
+        <svg viewBox="0 0 240 120"><rect x="15" y="50" width="18" height="60" fill="#b7791f" rx="1"/><rect x="40" y="35" width="18" height="75" fill="#d69e2e" rx="1"/><rect x="65" y="55" width="18" height="55" fill="#b7791f" rx="1"/><rect x="90" y="40" width="18" height="70" fill="#d69e2e" rx="1"/><rect x="115" y="60" width="18" height="50" fill="#b7791f" rx="1"/><rect x="140" y="30" width="18" height="80" fill="#d69e2e" rx="1"/><rect x="165" y="45" width="18" height="65" fill="#b7791f" rx="1"/><rect x="190" y="55" width="18" height="55" fill="#ecc94b" rx="1"/><line x1="10" y1="115" x2="225" y2="115" stroke="#a0aec0" stroke-width="1"/><text x="120" y="15" font-size="9" fill="#b7791f" text-anchor="middle" font-family="sans-serif">cb · violations by community board</text></svg>
       </div>
-      <div class="card-body">
-        <span class="card-type-chip chip-scatter">Scatter</span>
-        <div class="card-title">Workflows Scatter</div>
-        <div class="card-desc">Inspection condition score vs. days open for active workflow items</div>
-      </div>
+      <div class="card-body"><span class="chip chip-bar">Bar</span><div class="card-title">Violation Hotspots by Community Board</div><div class="card-src">6kbp-uz6m · cb groupby, top 15</div></div>
       <div class="card-num">6</div>
     </div>
 
-  </div><!-- /grid-mission -->
-  <div class="chart-panel" id="panel-mission"></div>
+  </div>
+  <div class="panel" id="p-mission"></div>
 </div>
 
-<!-- ═══════════════════════════ SECTION 2: GIS DASHBOARD ═══ -->
+<!-- ══════════════════════════ SECTION 2: GIS ══════════════ -->
 <div class="section" id="gis">
-  <div class="section-header">
-    <span class="section-icon">🗺️</span>
-    <span class="section-title">GIS Dashboard</span>
-    <span class="section-count">10 charts</span>
+  <div class="sec-hdr">
+    <span class="sec-icon">🗺️</span>
+    <span class="sec-title">GIS Dashboard</span>
+    <span class="sec-count">10 charts</span>
   </div>
-  <div class="cards-grid" id="grid-gis">
+  <div class="cards" id="g-gis">
 
-    <!-- 7 Inspection Scatter Map -->
-    <div class="chart-card" onclick="toggleCard('gis1','gis')">
+    <div class="card" onclick="load('gis1','gis',this)">
       <div class="card-thumb" style="background:linear-gradient(135deg,#faf5ff,#e9d8fd)">
-        <svg viewBox="0 0 260 130" xmlns="http://www.w3.org/2000/svg">
-          <rect x="10" y="10" width="240" height="110" rx="4" fill="#f3f0ff"/>
-          <circle cx="80"  cy="65" r="4" fill="#6b46c1"/>
-          <circle cx="100" cy="50" r="3" fill="#805ad5"/>
-          <circle cx="120" cy="70" r="5" fill="#6b46c1"/>
-          <circle cx="145" cy="45" r="4" fill="#553c9a"/>
-          <circle cx="165" cy="75" r="3" fill="#6b46c1"/>
-          <circle cx="185" cy="55" r="6" fill="#805ad5"/>
-          <circle cx="200" cy="80" r="4" fill="#6b46c1"/>
-          <text x="130" y="118" font-size="8" fill="#6b46c1" text-anchor="middle">scatter_mapbox · Plotly</text>
-        </svg>
+        <svg viewBox="0 0 240 120"><rect x="5" y="5" width="230" height="110" rx="3" fill="#f3f0ff"/><circle cx="70" cy="65" r="5" fill="#6b46c1" opacity=".8"/><circle cx="100" cy="45" r="4" fill="#805ad5"/><circle cx="130" cy="70" r="6" fill="#6b46c1"/><circle cx="160" cy="50" r="4" fill="#553c9a"/><circle cx="185" cy="75" r="5" fill="#6b46c1"/><text x="120" y="112" font-size="9" fill="#6b46c1" text-anchor="middle" font-family="sans-serif">the_geom coordinates · ramp_locations</text></svg>
       </div>
-      <div class="card-body">
-        <span class="card-type-chip chip-map">Map</span>
-        <div class="card-title">Inspection scatter_mapbox</div>
-        <div class="card-desc">Plotly scatter_mapbox with carto-positron, colored by condition score</div>
-      </div>
+      <div class="card-body"><span class="chip chip-map">Map</span><div class="card-title">Ramp Locations Map</div><div class="card-src">ufzp-rrqu · the_geom, dws_conditions (500 pts)</div></div>
       <div class="card-num">7</div>
     </div>
 
-    <!-- 8 Folium Map -->
-    <div class="chart-card" onclick="toggleCard('gis2','gis')">
-      <div class="card-thumb" style="background:linear-gradient(135deg,#e6fffa,#b2f5ea)">
-        <svg viewBox="0 0 260 130" xmlns="http://www.w3.org/2000/svg">
-          <rect x="10" y="10" width="240" height="110" rx="4" fill="#e6fffa"/>
-          <circle cx="90"  cy="60" r="7" fill="none" stroke="#319795" stroke-width="2"/>
-          <circle cx="90"  cy="60" r="3" fill="#319795"/>
-          <circle cx="150" cy="50" r="9" fill="none" stroke="#2c7a7b" stroke-width="2"/>
-          <circle cx="150" cy="50" r="4" fill="#2c7a7b"/>
-          <circle cx="120" cy="80" r="5" fill="none" stroke="#319795" stroke-width="1.5"/>
-          <circle cx="120" cy="80" r="2" fill="#319795"/>
-          <text x="130" y="118" font-size="8" fill="#2c7a7b" text-anchor="middle">Folium CircleMarker</text>
-        </svg>
+    <div class="card" onclick="load('gis2','gis',this)">
+      <div class="card-thumb" style="background:linear-gradient(135deg,#ebf8ff,#bee3f8)">
+        <svg viewBox="0 0 240 120"><rect x="5" y="5" width="230" height="110" rx="3" fill="#ebf8ff"/><circle cx="60"  cy="60" r="14" fill="rgba(43,108,178,.2)" stroke="#2b6cb0" stroke-width="1.5"/><circle cx="60"  cy="60" r="4" fill="#2b6cb0"/><circle cx="140" cy="50" r="18" fill="rgba(43,108,178,.2)" stroke="#2b6cb0" stroke-width="1.5"/><circle cx="140" cy="50" r="4" fill="#2b6cb0"/><circle cx="185" cy="75" r="10" fill="rgba(43,108,178,.15)" stroke="#2b6cb0" stroke-width="1"/><circle cx="185" cy="75" r="3" fill="#2b6cb0"/><text x="120" y="112" font-size="9" fill="#2b6cb0" text-anchor="middle" font-family="sans-serif">the_geom · capital_intersections</text></svg>
       </div>
-      <div class="card-body">
-        <span class="card-type-chip chip-map">Map</span>
-        <div class="card-title">Folium Interactive Map</div>
-        <div class="card-desc">Leaflet-backed CircleMarker map with popup details on click</div>
-      </div>
+      <div class="card-body"><span class="chip chip-map">Map</span><div class="card-title">Capital Intersections Map</div><div class="card-src">97nd-ff3i · the_geom MultiPoint, projectsta (500 pts)</div></div>
       <div class="card-num">8</div>
     </div>
 
-    <!-- 9 pydeck -->
-    <div class="chart-card" onclick="toggleCard('gis3','gis')">
-      <div class="card-thumb" style="background:linear-gradient(135deg,#1a202c,#2d3748)">
-        <svg viewBox="0 0 260 130" xmlns="http://www.w3.org/2000/svg">
-          <rect x="10" y="10" width="240" height="110" rx="4" fill="#1a202c"/>
-          <circle cx="80"  cy="75" r="6" fill="#f6ad55" opacity=".9"/>
-          <circle cx="110" cy="55" r="8" fill="#fc8181" opacity=".85"/>
-          <circle cx="145" cy="70" r="5" fill="#fbd38d" opacity=".8"/>
-          <circle cx="175" cy="50" r="10" fill="#fc8181" opacity=".9"/>
-          <circle cx="195" cy="78" r="7" fill="#f6ad55" opacity=".7"/>
-          <text x="130" y="118" font-size="8" fill="#9ae6b4" text-anchor="middle">pydeck ScatterplotLayer</text>
-        </svg>
+    <div class="card" onclick="load('gis3','gis',this)">
+      <div class="card-thumb" style="background:linear-gradient(135deg,#faf5ff,#e9d8fd)">
+        <svg viewBox="0 0 240 120"><rect x="5" y="5" width="230" height="110" rx="3" fill="#faf5ff"/><circle cx="75"  cy="55" r="5" fill="#9ae6b4"/><circle cx="110" cy="70" r="5" fill="#48bb78"/><circle cx="140" cy="45" r="5" fill="#fc8181"/><circle cx="170" cy="65" r="5" fill="#fc8181"/><circle cx="95"  cy="80" r="5" fill="#9ae6b4"/><circle cx="155" cy="80" r="5" fill="#fed7d7"/><text x="120" y="112" font-size="9" fill="#6b46c1" text-anchor="middle" font-family="sans-serif">dws_conditions · Good/Defective/Missing</text></svg>
       </div>
-      <div class="card-body">
-        <span class="card-type-chip chip-map">Map</span>
-        <div class="card-title">pydeck ScatterplotLayer</div>
-        <div class="card-desc">GPU-accelerated deck.gl map; radius scales with defect severity</div>
-      </div>
+      <div class="card-body"><span class="chip chip-map">Map</span><div class="card-title">Ramp Condition Status Map</div><div class="card-src">ufzp-rrqu · the_geom colored by dws_conditions</div></div>
       <div class="card-num">9</div>
     </div>
 
-    <!-- 10 DBSCAN -->
-    <div class="chart-card" onclick="toggleCard('gis4','gis')">
-      <div class="card-thumb" style="background:linear-gradient(135deg,#ebf8ff,#bee3f8)">
-        <svg viewBox="0 0 260 130" xmlns="http://www.w3.org/2000/svg">
-          <ellipse cx="90"  cy="65" rx="30" ry="22" fill="rgba(43,108,178,.2)" stroke="#2b6cb0" stroke-width="1.5" stroke-dasharray="4"/>
-          <ellipse cx="170" cy="55" rx="25" ry="18" fill="rgba(49,130,206,.2)" stroke="#3182ce" stroke-width="1.5" stroke-dasharray="4"/>
-          <circle cx="82"  cy="60" r="4" fill="#2b6cb0"/>
-          <circle cx="95"  cy="72" r="3" fill="#2b6cb0"/>
-          <circle cx="88"  cy="55" r="4" fill="#2b6cb0"/>
-          <circle cx="165" cy="50" r="4" fill="#3182ce"/>
-          <circle cx="178" cy="62" r="3" fill="#3182ce"/>
-          <circle cx="160" cy="65" r="4" fill="#3182ce"/>
-          <circle cx="130" cy="90" r="3" fill="#a0aec0"/>
-          <text x="90"  cy="90" font-size="8" fill="#2b6cb0" text-anchor="middle">C1</text>
-          <text x="170" cy="82" font-size="8" fill="#3182ce" text-anchor="middle">C2</text>
-        </svg>
+    <div class="card" onclick="load('gis4','gis',this)">
+      <div class="card-thumb" style="background:linear-gradient(135deg,#fff5f5,#fed7d7)">
+        <svg viewBox="0 0 240 120"><rect x="5" y="5" width="230" height="110" rx="3" fill="#fff5f5"/><circle cx="80"  cy="60" r="9" fill="#c53030" opacity=".7"/><circle cx="130" cy="45" r="13" fill="#e53e3e" opacity=".6"/><circle cx="170" cy="70" r="7"  fill="#c53030" opacity=".7"/><circle cx="100" cy="80" r="11" fill="#fc8181" opacity=".6"/><text x="120" y="112" font-size="9" fill="#c53030" text-anchor="middle" font-family="sans-serif">borough · ramp_complaints density</text></svg>
       </div>
-      <div class="card-body">
-        <span class="card-type-chip chip-map">Map</span>
-        <div class="card-title">DBSCAN Cluster Map</div>
-        <div class="card-desc">Spatial hotspot clusters via scikit-learn DBSCAN (eps=0.005)</div>
-      </div>
+      <div class="card-body"><span class="chip chip-map">Map</span><div class="card-title">Ramp Complaints Map</div><div class="card-src">jagj-gttd · borough bubble counts by area</div></div>
       <div class="card-num">10</div>
     </div>
 
-    <!-- 11 Nearest permit histogram -->
-    <div class="chart-card" onclick="toggleCard('gis5','gis')">
-      <div class="card-thumb" style="background:linear-gradient(135deg,#fffff0,#fefcbf)">
-        <svg viewBox="0 0 260 130" xmlns="http://www.w3.org/2000/svg">
-          <rect x="30" y="40" width="25" height="70" fill="#b7791f" rx="2"/>
-          <rect x="65" y="25" width="25" height="85" fill="#d69e2e" rx="2"/>
-          <rect x="100" y="50" width="25" height="60" fill="#b7791f" rx="2"/>
-          <rect x="135" y="70" width="25" height="40" fill="#d69e2e" rx="2"/>
-          <rect x="170" y="80" width="25" height="30" fill="#b7791f" rx="2"/>
-          <rect x="205" y="90" width="25" height="20" fill="#ecc94b" rx="2"/>
-          <line x1="20" y1="115" x2="245" y2="115" stroke="#a0aec0" stroke-width="1"/>
-        </svg>
+    <div class="card" onclick="load('gis5','gis',this)">
+      <div class="card-thumb" style="background:linear-gradient(135deg,#e8f0fa,#c3d4f5)">
+        <svg viewBox="0 0 240 120"><rect x="20" y="35" width="30" height="75" fill="#003087" rx="2"/><rect x="65" y="25" width="30" height="85" fill="#1a4fa0" rx="2"/><rect x="110" y="45" width="30" height="65" fill="#003087" rx="2"/><rect x="155" y="30" width="30" height="80" fill="#2a69ac" rx="2"/><line x1="10" y1="115" x2="225" y2="115" stroke="#a0aec0" stroke-width="1"/><text x="120" y="15" font-size="9" fill="#003087" text-anchor="middle" font-family="sans-serif">borough numeric → name mapping</text></svg>
       </div>
-      <div class="card-body">
-        <span class="card-type-chip chip-bar">Bar</span>
-        <div class="card-title">Nearest-Permit Distance</div>
-        <div class="card-desc">Histogram of KDTree distances (km) from each inspection to nearest permit</div>
-      </div>
+      <div class="card-body"><span class="chip chip-bar">Bar</span><div class="card-title">Ramps Count by Borough</div><div class="card-src">ufzp-rrqu · borough groupby (1=MN, 2=BX, 3=BK, 4=QN, 5=SI)</div></div>
       <div class="card-num">11</div>
     </div>
 
-    <!-- 12 Conflict Buffer Map -->
-    <div class="chart-card" onclick="toggleCard('gis6','gis')">
-      <div class="card-thumb" style="background:linear-gradient(135deg,#fff5f5,#fed7d7)">
-        <svg viewBox="0 0 260 130" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="100" cy="65" r="22" fill="rgba(197,48,48,.1)" stroke="#c53030" stroke-width="1.5" stroke-dasharray="3"/>
-          <circle cx="100" cy="65" r="5" fill="#c53030"/>
-          <circle cx="160" cy="55" r="18" fill="rgba(197,48,48,.1)" stroke="#c53030" stroke-width="1.5" stroke-dasharray="3"/>
-          <circle cx="160" cy="55" r="5" fill="#c53030"/>
-          <circle cx="120" cy="80" r="5" fill="#2b6cb0"/>
-          <circle cx="145" cy="72" r="5" fill="#2b6cb0"/>
-          <text x="130" y="118" font-size="8" fill="#c53030" text-anchor="middle">50m buffer overlay</text>
-        </svg>
+    <div class="card" onclick="load('gis6','gis',this)">
+      <div class="card-thumb" style="background:linear-gradient(135deg,#f0fff4,#c6f6d5)">
+        <svg viewBox="0 0 240 120"><rect x="20" y="20" width="100" height="28" fill="#276749" rx="2"/><rect x="20" y="55" width="65" height="28" fill="#68d391" rx="2"/><rect x="20" y="90" width="30" height="20" fill="#9ae6b4" rx="2"/><text x="180" y="38" font-size="8" fill="#276749" text-anchor="middle" font-family="sans-serif">Good Condition</text><text x="145" y="73" font-size="8" fill="#276749" text-anchor="middle" font-family="sans-serif">Missing</text><text x="100" y="104" font-size="8" fill="#276749" text-anchor="middle" font-family="sans-serif">Defective</text></svg>
       </div>
-      <div class="card-body">
-        <span class="card-type-chip chip-map">Map</span>
-        <div class="card-title">Conflict Buffer Overlay</div>
-        <div class="card-desc">Red = permits, blue = inspections within GeoPandas buffer radius</div>
-      </div>
+      <div class="card-body"><span class="chip chip-bar">Bar</span><div class="card-title">Ramp Conditions Distribution</div><div class="card-src">ufzp-rrqu · dws_conditions groupby</div></div>
       <div class="card-num">12</div>
     </div>
 
-    <!-- 13 Time-lapse animated bar -->
-    <div class="chart-card" onclick="toggleCard('gis7','gis')">
-      <div class="card-thumb" style="background:linear-gradient(135deg,#e8f0fa,#c3d4f5)">
-        <svg viewBox="0 0 260 130" xmlns="http://www.w3.org/2000/svg">
-          <rect x="20" y="45" width="28" height="65" fill="#003087" rx="2"/>
-          <rect x="60" y="30" width="28" height="80" fill="#1a4fa0" rx="2"/>
-          <rect x="100" y="55" width="28" height="55" fill="#003087" rx="2"/>
-          <rect x="140" y="25" width="28" height="85" fill="#2a69ac" rx="2"/>
-          <rect x="180" y="50" width="28" height="60" fill="#003087" rx="2"/>
-          <line x1="10" y1="115" x2="250" y2="115" stroke="#a0aec0" stroke-width="1"/>
-          <text x="130" y="15" font-size="8" fill="#003087" text-anchor="middle">▶ animation_frame = month</text>
-        </svg>
+    <div class="card" onclick="load('gis7','gis',this)">
+      <div class="card-thumb" style="background:linear-gradient(135deg,#fffff0,#fefcbf)">
+        <svg viewBox="0 0 240 120"><rect x="15" y="30" width="22" height="80" fill="#b7791f" rx="1"/><rect x="45" y="50" width="22" height="60" fill="#d69e2e" rx="1"/><rect x="75" y="40" width="22" height="70" fill="#b7791f" rx="1"/><rect x="105" y="60" width="22" height="50" fill="#ecc94b" rx="1"/><rect x="135" y="35" width="22" height="75" fill="#d69e2e" rx="1"/><rect x="165" y="55" width="22" height="55" fill="#b7791f" rx="1"/><rect x="195" y="45" width="22" height="65" fill="#d69e2e" rx="1"/><line x1="10" y1="115" x2="225" y2="115" stroke="#a0aec0" stroke-width="1"/><text x="120" y="18" font-size="9" fill="#b7791f" text-anchor="middle" font-family="sans-serif">ramp_running_slope_total histogram</text></svg>
       </div>
-      <div class="card-body">
-        <span class="card-type-chip chip-bar">Bar</span>
-        <div class="card-title">Spatial Time-lapse</div>
-        <div class="card-desc">Plotly animated bar chart of monthly inspection counts with slider</div>
-      </div>
+      <div class="card-body"><span class="chip chip-bar">Bar</span><div class="card-title">Ramp Running Slope Distribution</div><div class="card-src">ufzp-rrqu · ramp_running_slope_total bucket histogram</div></div>
       <div class="card-num">13</div>
     </div>
 
-    <!-- 14 Route Map -->
-    <div class="chart-card" onclick="toggleCard('gis8','gis')">
-      <div class="card-thumb" style="background:linear-gradient(135deg,#f0fff4,#c6f6d5)">
-        <svg viewBox="0 0 260 130" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="50"  cy="90" r="6" fill="#276749"/>
-          <circle cx="90"  cy="45" r="6" fill="#276749"/>
-          <circle cx="140" cy="70" r="6" fill="#276749"/>
-          <circle cx="185" cy="35" r="6" fill="#276749"/>
-          <circle cx="215" cy="85" r="6" fill="#276749"/>
-          <polyline points="50,90 90,45 140,70 185,35 215,85" fill="none" stroke="#276749" stroke-width="2" stroke-dasharray="5"/>
-          <text x="50"  y="107" font-size="8" fill="#276749" text-anchor="middle">①</text>
-          <text x="90"  y="62" font-size="8" fill="#276749" text-anchor="middle">②</text>
-          <text x="140" y="87" font-size="8" fill="#276749" text-anchor="middle">③</text>
-          <text x="185" y="52" font-size="8" fill="#276749" text-anchor="middle">④</text>
-          <text x="215" y="102" font-size="8" fill="#276749" text-anchor="middle">⑤</text>
-        </svg>
+    <div class="card" onclick="load('gis8','gis',this)">
+      <div class="card-thumb" style="background:linear-gradient(135deg,#fff5f5,#fed7d7)">
+        <svg viewBox="0 0 240 120"><rect x="80" y="20" width="145" height="22" fill="#c53030" rx="2"/><rect x="80" y="48" width="110" height="22" fill="#e53e3e" rx="2"/><rect x="80" y="76" width="90"  height="22" fill="#fc8181" rx="2"/><text x="75" y="35"  font-size="8" fill="#718096" text-anchor="end" font-family="sans-serif">QUEENS</text><text x="75" y="63"  font-size="8" fill="#718096" text-anchor="end" font-family="sans-serif">BROOKLYN</text><text x="75" y="91" font-size="8" fill="#718096" text-anchor="end" font-family="sans-serif">MANHATTAN</text></svg>
       </div>
-      <div class="card-body">
-        <span class="card-type-chip chip-map">Map</span>
-        <div class="card-title">TSP Route Optimizer</div>
-        <div class="card-desc">Nearest-neighbor traveling salesman path with total km estimate</div>
-      </div>
+      <div class="card-body"><span class="chip chip-bar">Bar</span><div class="card-title">Ramp Complaints by Borough</div><div class="card-src">jagj-gttd · borough groupby, count(*)</div></div>
       <div class="card-num">14</div>
     </div>
 
-    <!-- 15 Block aggregation -->
-    <div class="chart-card" onclick="toggleCard('gis9','gis')">
-      <div class="card-thumb" style="background:linear-gradient(135deg,#e8f0fa,#c3d4f5)">
-        <svg viewBox="0 0 260 130" xmlns="http://www.w3.org/2000/svg">
-          <rect x="20" y="50" width="36" height="60" fill="#003087" rx="2"/>
-          <rect x="72" y="35" width="36" height="75" fill="#1a4fa0" rx="2"/>
-          <rect x="124" y="60" width="36" height="50" fill="#003087" rx="2"/>
-          <rect x="176" y="40" width="36" height="70" fill="#2a69ac" rx="2"/>
-          <line x1="10" y1="115" x2="250" y2="115" stroke="#a0aec0" stroke-width="1"/>
-          <text x="38"  y="125" font-size="7.5" fill="#718096" text-anchor="middle">MN</text>
-          <text x="90"  y="125" font-size="7.5" fill="#718096" text-anchor="middle">BK</text>
-          <text x="142" y="125" font-size="7.5" fill="#718096" text-anchor="middle">QN</text>
-          <text x="194" y="125" font-size="7.5" fill="#718096" text-anchor="middle">BX</text>
-        </svg>
+    <div class="card" onclick="load('gis9','gis',this)">
+      <div class="card-thumb" style="background:linear-gradient(135deg,#ebf8ff,#bee3f8)">
+        <svg viewBox="0 0 240 120"><rect x="15" y="25" width="55" height="85" fill="#003087" rx="2" opacity=".9"/><rect x="80" y="45" width="30" height="65" fill="#1a4fa0" rx="2" opacity=".7"/><rect x="120" y="55" width="25" height="55" fill="#2a69ac" rx="2"/><line x1="10" y1="115" x2="225" y2="115" stroke="#a0aec0" stroke-width="1"/><text x="120" y="15" font-size="9" fill="#003087" text-anchor="middle" font-family="sans-serif">projectsta · capital project status</text></svg>
       </div>
-      <div class="card-body">
-        <span class="card-type-chip chip-bar">Bar</span>
-        <div class="card-title">Block Aggregation</div>
-        <div class="card-desc">Inspection count and avg condition score grouped by borough/block</div>
-      </div>
+      <div class="card-body"><span class="chip chip-bar">Bar</span><div class="card-title">Capital Project Status Breakdown</div><div class="card-src">97nd-ff3i · projectsta groupby</div></div>
       <div class="card-num">15</div>
     </div>
 
-    <!-- 16 Capital impact -->
-    <div class="chart-card" onclick="toggleCard('gis10','gis')">
+    <div class="card" onclick="load('gis10','gis',this)">
       <div class="card-thumb" style="background:linear-gradient(135deg,#faf5ff,#e9d8fd)">
-        <svg viewBox="0 0 260 130" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="80"  cy="65" r="18" fill="rgba(107,70,193,.15)" stroke="#6b46c1" stroke-width="1.5"/>
-          <circle cx="80"  cy="65" r="5" fill="#6b46c1"/>
-          <circle cx="160" cy="55" r="25" fill="rgba(107,70,193,.1)" stroke="#805ad5" stroke-width="1.5"/>
-          <circle cx="160" cy="55" r="5" fill="#805ad5"/>
-          <circle cx="120" cy="90" r="12" fill="rgba(107,70,193,.12)" stroke="#6b46c1" stroke-width="1.5"/>
-          <circle cx="120" cy="90" r="4" fill="#6b46c1"/>
-          <text x="130" y="118" font-size="8" fill="#6b46c1" text-anchor="middle">impact radius ∝ project size</text>
-        </svg>
+        <svg viewBox="0 0 240 120"><rect x="5" y="5" width="230" height="110" rx="3" fill="#faf5ff"/><circle cx="80"  cy="60" r="8" fill="#6b46c1" opacity=".7"/><circle cx="130" cy="45" r="12" fill="#805ad5" opacity=".6"/><circle cx="165" cy="70" r="6"  fill="#6b46c1" opacity=".8"/><circle cx="100" cy="80" r="9"  fill="#9f7aea" opacity=".65"/><circle cx="195" cy="55" r="7"  fill="#6b46c1" opacity=".7"/><text x="120" y="112" font-size="9" fill="#6b46c1" text-anchor="middle" font-family="sans-serif">projecttyp · capital type scatter</text></svg>
       </div>
-      <div class="card-body">
-        <span class="card-type-chip chip-map">Map</span>
-        <div class="card-title">Capital Impact Radius</div>
-        <div class="card-desc">Capital project locations with configurable buffer radius markers</div>
-      </div>
+      <div class="card-body"><span class="chip chip-map">Map</span><div class="card-title">Capital Intersections by Project Type</div><div class="card-src">97nd-ff3i · the_geom colored by projecttyp</div></div>
       <div class="card-num">16</div>
     </div>
 
   </div>
-  <div class="chart-panel" id="panel-gis"></div>
+  <div class="panel" id="p-gis"></div>
 </div>
 
-<!-- ═══════════════════════ SECTION 3: ADVANCED ANALYTICS ═══ -->
+<!-- ══════════════════════ SECTION 3: ADVANCED ANALYTICS ══ -->
 <div class="section" id="analytics">
-  <div class="section-header">
-    <span class="section-icon">📊</span>
-    <span class="section-title">Advanced Analytics</span>
-    <span class="section-count">13 charts</span>
+  <div class="sec-hdr">
+    <span class="sec-icon">📊</span>
+    <span class="sec-title">Advanced Analytics</span>
+    <span class="sec-count">13 charts</span>
   </div>
-  <div class="cards-grid" id="grid-analytics">
+  <div class="cards" id="g-analytics">
 
-    <!-- 17 KPI Sparkline -->
-    <div class="chart-card" onclick="toggleCard('aa1','analytics')">
-      <div class="card-thumb" style="background:linear-gradient(135deg,#e8f0fa,#c3d4f5)">
-        <svg viewBox="0 0 260 130" xmlns="http://www.w3.org/2000/svg">
-          <polyline points="15,90 35,80 55,75 75,85 95,65 115,70 135,55 155,60 175,45 195,50 215,40 235,35" fill="none" stroke="#003087" stroke-width="2.5"/>
-          <circle cx="235" cy="35" r="4" fill="#003087"/>
-          <text x="230" y="28" font-size="8" fill="#003087">↑7.2%</text>
-        </svg>
-      </div>
-      <div class="card-body">
-        <span class="card-type-chip chip-line">Line</span>
-        <div class="card-title">KPI Sparklines</div>
-        <div class="card-desc">12-week rolling inspection count trend with % change annotation</div>
-      </div>
+    <div class="card" onclick="load('aa1','analytics',this)">
+      <div class="card-thumb" style="background:linear-gradient(135deg,#e8f0fa,#c3d4f5)"><svg viewBox="0 0 240 120"><polyline points="10,95 35,85 60,75 85,85 110,60 135,65 160,45 185,50 210,38" fill="none" stroke="#003087" stroke-width="2.5"/><path d="M10,95 35,85 60,75 85,85 110,60 135,65 160,45 185,50 210,38 210,115 10,115 Z" fill="rgba(0,48,135,.07)"/><text x="120" y="15" font-size="9" fill="#003087" text-anchor="middle" font-family="sans-serif">inspectiondate monthly · KPI sparkline</text></svg></div>
+      <div class="card-body"><span class="chip chip-line">Line</span><div class="card-title">Inspection KPI Sparkline</div><div class="card-src">dntt-gqwq · monthly count with area fill</div></div>
       <div class="card-num">17</div>
     </div>
 
-    <!-- 18 YoY grouped bar -->
-    <div class="chart-card" onclick="toggleCard('aa2','analytics')">
-      <div class="card-thumb" style="background:linear-gradient(135deg,#ebf8ff,#bee3f8)">
-        <svg viewBox="0 0 260 130" xmlns="http://www.w3.org/2000/svg">
-          <rect x="20" y="50" width="16" height="60" fill="#003087" rx="1"/>
-          <rect x="38" y="40" width="16" height="70" fill="#90cdf4" rx="1"/>
-          <rect x="72" y="45" width="16" height="65" fill="#003087" rx="1"/>
-          <rect x="90" y="30" width="16" height="80" fill="#90cdf4" rx="1"/>
-          <rect x="124" y="55" width="16" height="55" fill="#003087" rx="1"/>
-          <rect x="142" y="50" width="16" height="60" fill="#90cdf4" rx="1"/>
-          <rect x="176" y="35" width="16" height="75" fill="#003087" rx="1"/>
-          <rect x="194" y="40" width="16" height="70" fill="#90cdf4" rx="1"/>
-          <line x1="10" y1="115" x2="250" y2="115" stroke="#a0aec0" stroke-width="1"/>
-          <rect x="10" y="5" width="10" height="8" fill="#003087" rx="1"/>
-          <text x="24" y="13" font-size="8" fill="#003087">2025</text>
-          <rect x="65" y="5" width="10" height="8" fill="#90cdf4" rx="1"/>
-          <text x="79" y="13" font-size="8" fill="#003087">2026</text>
-        </svg>
-      </div>
-      <div class="card-body">
-        <span class="card-type-chip chip-bar">Bar</span>
-        <div class="card-title">Year-over-Year Comparison</div>
-        <div class="card-desc">Monthly inspection counts side-by-side for this year vs last year</div>
-      </div>
+    <div class="card" onclick="load('aa2','analytics',this)">
+      <div class="card-thumb" style="background:linear-gradient(135deg,#ebf8ff,#bee3f8)"><svg viewBox="0 0 240 120"><rect x="15" y="40" width="14" height="70" fill="#003087" rx="1"/><rect x="31" y="30" width="14" height="80" fill="#90cdf4" rx="1"/><rect x="58" y="50" width="14" height="60" fill="#003087" rx="1"/><rect x="74" y="35" width="14" height="75" fill="#90cdf4" rx="1"/><rect x="101" y="55" width="14" height="55" fill="#003087" rx="1"/><rect x="117" y="40" width="14" height="70" fill="#90cdf4" rx="1"/><rect x="144" y="35" width="14" height="75" fill="#003087" rx="1"/><rect x="160" y="45" width="14" height="65" fill="#90cdf4" rx="1"/><rect x="187" y="60" width="14" height="50" fill="#003087" rx="1"/><rect x="203" y="50" width="14" height="60" fill="#90cdf4" rx="1"/><line x1="10" y1="115" x2="225" y2="115" stroke="#a0aec0" stroke-width="1"/><text x="120" y="15" font-size="9" fill="#003087" text-anchor="middle" font-family="sans-serif">2024 vs 2025 · violations YoY</text></svg></div>
+      <div class="card-body"><span class="chip chip-bar">Bar</span><div class="card-title">Violations Year-over-Year</div><div class="card-src">6kbp-uz6m · vissuedate 2024 vs 2025 monthly</div></div>
       <div class="card-num">18</div>
     </div>
 
-    <!-- 19 CUSUM -->
-    <div class="chart-card" onclick="toggleCard('aa3','analytics')">
-      <div class="card-thumb" style="background:linear-gradient(135deg,#f0fff4,#c6f6d5)">
-        <svg viewBox="0 0 260 130" xmlns="http://www.w3.org/2000/svg">
-          <polyline points="15,80 45,75 75,70 105,65 135,40 165,38 195,30 225,28" fill="none" stroke="#276749" stroke-width="2"/>
-          <line x1="130" y1="15" x2="130" y2="115" stroke="#e53e3e" stroke-width="1.5" stroke-dasharray="4"/>
-          <text x="135" y="28" font-size="8" fill="#e53e3e">changepoint</text>
-          <text x="135" y="38" font-size="7" fill="#e53e3e">2025-09</text>
-          <circle cx="130" cy="42" r="4" fill="#e53e3e"/>
-        </svg>
-      </div>
-      <div class="card-body">
-        <span class="card-type-chip chip-line">Line</span>
-        <div class="card-title">CUSUM Changepoint</div>
-        <div class="card-desc">Cumulative deviation line with annotated step-change detection point</div>
-      </div>
+    <div class="card" onclick="load('aa3','analytics',this)">
+      <div class="card-thumb" style="background:linear-gradient(135deg,#f0fff4,#c6f6d5)"><svg viewBox="0 0 240 120"><polyline points="10,80 45,75 80,70 115,65 150,40 185,38 220,30" fill="none" stroke="#276749" stroke-width="2"/><line x1="148" y1="15" x2="148" y2="110" stroke="#c53030" stroke-width="1.5" stroke-dasharray="4"/><text x="155" y="22" font-size="8" fill="#c53030" font-family="sans-serif">changepoint</text><circle cx="148" cy="41" r="4" fill="#c53030"/><text x="120" y="115" font-size="9" fill="#276749" text-anchor="middle" font-family="sans-serif">monthly inspections CUSUM deviation</text></svg></div>
+      <div class="card-body"><span class="chip chip-line">Line</span><div class="card-title">Inspection CUSUM Changepoint</div><div class="card-src">dntt-gqwq · cumulative deviation from mean (monthly)</div></div>
       <div class="card-num">19</div>
     </div>
 
-    <!-- 20 Cohort size bar -->
-    <div class="chart-card" onclick="toggleCard('aa4','analytics')">
-      <div class="card-thumb" style="background:linear-gradient(135deg,#e8f0fa,#c3d4f5)">
-        <svg viewBox="0 0 260 130" xmlns="http://www.w3.org/2000/svg">
-          <rect x="15" y="40" width="22" height="70" fill="#003087" rx="2"/>
-          <rect x="50" y="50" width="22" height="60" fill="#1a4fa0" rx="2"/>
-          <rect x="85" y="35" width="22" height="75" fill="#003087" rx="2"/>
-          <rect x="120" y="55" width="22" height="55" fill="#2a69ac" rx="2"/>
-          <rect x="155" y="45" width="22" height="65" fill="#003087" rx="2"/>
-          <rect x="190" y="60" width="22" height="50" fill="#1a4fa0" rx="2"/>
-          <line x1="10" y1="115" x2="250" y2="115" stroke="#a0aec0" stroke-width="1"/>
-          <text x="130" y="10" font-size="8" fill="#003087" text-anchor="middle">Cohort Size by Open Month</text>
-        </svg>
-      </div>
-      <div class="card-body">
-        <span class="card-type-chip chip-bar">Bar</span>
-        <div class="card-title">Cohort Size Chart</div>
-        <div class="card-desc">Monthly inspection cohort sizes from first open date</div>
-      </div>
+    <div class="card" onclick="load('aa4','analytics',this)">
+      <div class="card-thumb" style="background:linear-gradient(135deg,#f0fff4,#c6f6d5)"><svg viewBox="0 0 240 120"><circle cx="120" cy="58" r="50" fill="none"/><path d="M120,58 L120,8 A50,50,0,0,1 168,83 Z" fill="#276749"/><path d="M120,58 L168,83 A50,50,0,0,1 72,83 Z" fill="#48bb78"/><path d="M120,58 L72,83  A50,50,0,0,1 120,8  Z" fill="#9ae6b4"/><text x="120" y="115" font-size="9" fill="#276749" text-anchor="middle" font-family="sans-serif">is_311_inspection · source breakdown</text></svg></div>
+      <div class="card-body"><span class="chip chip-pie">Pie</span><div class="card-title">311 vs Staff-Initiated Inspections</div><div class="card-src">dntt-gqwq · is_311_inspection groupby</div></div>
       <div class="card-num">20</div>
     </div>
 
-    <!-- 21 Retention heatmap -->
-    <div class="chart-card" onclick="toggleCard('aa5','analytics')">
-      <div class="card-thumb" style="background:#fff">
-        <svg viewBox="0 0 260 130" xmlns="http://www.w3.org/2000/svg">
-          <rect x="10" y="10" width="240" height="110" rx="2" fill="#fff"/>
-          <!-- Heatmap grid -->
-          <rect x="40" y="15" width="26" height="18" fill="#c6f6d5"/><rect x="68" y="15" width="26" height="18" fill="#9ae6b4"/>
-          <rect x="96" y="15" width="26" height="18" fill="#68d391"/><rect x="124" y="15" width="26" height="18" fill="#48bb78"/>
-          <rect x="152" y="15" width="26" height="18" fill="#38a169"/><rect x="180" y="15" width="26" height="18" fill="#276749"/>
-          <rect x="40" y="35" width="26" height="18" fill="#9ae6b4"/><rect x="68" y="35" width="26" height="18" fill="#68d391"/>
-          <rect x="96" y="35" width="26" height="18" fill="#48bb78"/><rect x="124" y="35" width="26" height="18" fill="#38a169"/>
-          <rect x="152" y="35" width="26" height="18" fill="#276749"/><rect x="180" y="35" width="26" height="18" fill="#22543d"/>
-          <rect x="40" y="55" width="26" height="18" fill="#c6f6d5"/><rect x="68" y="55" width="26" height="18" fill="#9ae6b4"/>
-          <rect x="96" y="55" width="26" height="18" fill="#9ae6b4"/><rect x="124" y="55" width="26" height="18" fill="#68d391"/>
-          <rect x="152" y="55" width="26" height="18" fill="#48bb78"/><rect x="180" y="55" width="26" height="18" fill="#38a169"/>
-          <rect x="40" y="75" width="26" height="18" fill="#f0fff4"/><rect x="68" y="75" width="26" height="18" fill="#c6f6d5"/>
-          <rect x="96" y="75" width="26" height="18" fill="#9ae6b4"/><rect x="124" y="75" width="26" height="18" fill="#68d391"/>
-          <text x="130" y="112" font-size="8" fill="#276749" text-anchor="middle">cohort × weeks open retention heatmap</text>
-        </svg>
-      </div>
-      <div class="card-body">
-        <span class="card-type-chip chip-heat">Heatmap</span>
-        <div class="card-title">Retention Heatmap</div>
-        <div class="card-desc">Plotly imshow — cohort month × weeks since open, Blues colorscale</div>
-      </div>
+    <div class="card" onclick="load('aa5','analytics',this)">
+      <div class="card-thumb" style="background:linear-gradient(135deg,#fffff0,#fefcbf)"><svg viewBox="0 0 240 120"><rect x="20" y="15" width="50" height="90" fill="#b7791f" rx="2"/><rect x="82" y="40" width="50" height="65" fill="#d69e2e" rx="2"/><rect x="144" y="55" width="50" height="50" fill="#ecc94b" rx="2"/><line x1="10" y1="108" x2="225" y2="108" stroke="#a0aec0" stroke-width="1"/><text x="45"  y="112" font-size="7" fill="#718096" text-anchor="middle" font-family="sans-serif">45d</text><text x="107" y="112" font-size="7" fill="#718096" text-anchor="middle" font-family="sans-serif">75d</text><text x="169" y="112" font-size="7" fill="#718096" text-anchor="middle" font-family="sans-serif">10d</text></svg></div>
+      <div class="card-body"><span class="chip chip-bar">Bar</span><div class="card-title">Violation Grace Period Distribution</div><div class="card-src">6kbp-uz6m · grace_pd groupby (days to cure)</div></div>
       <div class="card-num">21</div>
     </div>
 
-    <!-- 22 Anomaly scatter -->
-    <div class="chart-card" onclick="toggleCard('aa6','analytics')">
-      <div class="card-thumb" style="background:linear-gradient(135deg,#faf5ff,#e9d8fd)">
-        <svg viewBox="0 0 260 130" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="60"  cy="75" r="4" fill="#9ae6b4"/>
-          <circle cx="80"  cy="60" r="4" fill="#9ae6b4"/>
-          <circle cx="100" cy="70" r="4" fill="#9ae6b4"/>
-          <circle cx="120" cy="65" r="4" fill="#9ae6b4"/>
-          <circle cx="140" cy="75" r="4" fill="#9ae6b4"/>
-          <circle cx="160" cy="60" r="4" fill="#9ae6b4"/>
-          <circle cx="180" cy="70" r="4" fill="#9ae6b4"/>
-          <circle cx="90"  cy="25" r="7" fill="#fc8181" stroke="#c53030" stroke-width="2"/>
-          <circle cx="170" cy="30" r="7" fill="#fc8181" stroke="#c53030" stroke-width="2"/>
-          <circle cx="200" cy="40" r="6" fill="#fc8181" stroke="#c53030" stroke-width="2"/>
-          <text x="90"  cy="16" font-size="8" fill="#c53030" text-anchor="middle">⚠</text>
-          <text x="170" cy="21" font-size="8" fill="#c53030" text-anchor="middle">⚠</text>
-        </svg>
-      </div>
-      <div class="card-body">
-        <span class="card-type-chip chip-map">Map</span>
-        <div class="card-title">Anomaly Detection Map</div>
-        <div class="card-desc">IsolationForest outliers (red) vs normal (green) on scatter_mapbox</div>
-      </div>
+    <div class="card" onclick="load('aa6','analytics',this)">
+      <div class="card-thumb" style="background:#fff"><svg viewBox="0 0 240 120"><rect x="40" y="10" width="32" height="20" fill="#c6f6d5"/><rect x="74" y="10" width="32" height="20" fill="#9ae6b4"/><rect x="108" y="10" width="32" height="20" fill="#68d391"/><rect x="142" y="10" width="32" height="20" fill="#276749"/><rect x="40" y="32" width="32" height="20" fill="#9ae6b4"/><rect x="74" y="32" width="32" height="20" fill="#48bb78"/><rect x="108" y="32" width="32" height="20" fill="#276749"/><rect x="142" y="32" width="32" height="20" fill="#22543d"/><rect x="40" y="54" width="32" height="20" fill="#c6f6d5"/><rect x="74" y="54" width="32" height="20" fill="#9ae6b4"/><rect x="108" y="54" width="32" height="20" fill="#68d391"/><rect x="142" y="54" width="32" height="20" fill="#276749"/><text x="120" y="108" font-size="9" fill="#276749" text-anchor="middle" font-family="sans-serif">borough × pass_fail · dismissal heatmap</text></svg></div>
+      <div class="card-body"><span class="chip chip-heat">Heatmap</span><div class="card-title">Dismissal Result Heatmap</div><div class="card-src">p4u2-3jgx · borough × pass_fail crosstab</div></div>
       <div class="card-num">22</div>
     </div>
 
-    <!-- 23 Borough ranking -->
-    <div class="chart-card" onclick="toggleCard('aa7','analytics')">
-      <div class="card-thumb" style="background:linear-gradient(135deg,#e8f0fa,#c3d4f5)">
-        <svg viewBox="0 0 260 130" xmlns="http://www.w3.org/2000/svg">
-          <rect x="80"  y="20" width="155" height="18" fill="#003087" rx="2"/>
-          <rect x="80"  y="45" width="120" height="18" fill="#1a4fa0" rx="2"/>
-          <rect x="80"  y="70" width="100" height="18" fill="#2a69ac" rx="2"/>
-          <rect x="80"  y="95" width="80"  height="18" fill="#4a90d9" rx="2"/>
-          <text x="75" y="33" font-size="8" fill="#718096" text-anchor="end">Manhattan</text>
-          <text x="75" y="58" font-size="8" fill="#718096" text-anchor="end">Brooklyn</text>
-          <text x="75" y="83" font-size="8" fill="#718096" text-anchor="end">Queens</text>
-          <text x="75" y="108" font-size="8" fill="#718096" text-anchor="end">Bronx</text>
-        </svg>
-      </div>
-      <div class="card-body">
-        <span class="card-type-chip chip-bar">Bar</span>
-        <div class="card-title">Borough Rankings</div>
-        <div class="card-desc">Horizontal bar chart ranked by avg condition score or inspection count</div>
-      </div>
+    <div class="card" onclick="load('aa7','analytics',this)">
+      <div class="card-thumb" style="background:linear-gradient(135deg,#e8f0fa,#c3d4f5)"><svg viewBox="0 0 240 120"><rect x="75" y="18" width="150" height="20" fill="#003087" rx="2"/><rect x="75" y="44" width="115" height="20" fill="#1a4fa0" rx="2"/><rect x="75" y="70" width="95"  height="20" fill="#2a69ac" rx="2"/><rect x="75" y="96" width="75"  height="18" fill="#4a90d9" rx="2"/><text x="70" y="32"  font-size="8" fill="#718096" text-anchor="end" font-family="sans-serif">QUEENS</text><text x="70" y="58"  font-size="8" fill="#718096" text-anchor="end" font-family="sans-serif">BROOKLYN</text><text x="70" y="84"  font-size="8" fill="#718096" text-anchor="end" font-family="sans-serif">BRONX</text><text x="70" y="109" font-size="8" fill="#718096" text-anchor="end" font-family="sans-serif">MANHATTAN</text></svg></div>
+      <div class="card-body"><span class="chip chip-bar">Bar</span><div class="card-title">Dismissals Ranked by Borough</div><div class="card-src">p4u2-3jgx · borough count, horizontal bar</div></div>
       <div class="card-num">23</div>
     </div>
 
-    <!-- 24 Inspector scorecard -->
-    <div class="chart-card" onclick="toggleCard('aa8','analytics')">
-      <div class="card-thumb" style="background:linear-gradient(135deg,#fffff0,#fefcbf)">
-        <svg viewBox="0 0 260 130" xmlns="http://www.w3.org/2000/svg">
-          <rect x="20" y="30" width="32" height="80" fill="#b7791f" rx="2"/>
-          <rect x="65" y="50" width="32" height="60" fill="#d69e2e" rx="2"/>
-          <rect x="110" y="40" width="32" height="70" fill="#b7791f" rx="2"/>
-          <rect x="155" y="55" width="32" height="55" fill="#ecc94b" rx="2"/>
-          <rect x="200" y="45" width="32" height="65" fill="#d69e2e" rx="2"/>
-          <line x1="10" y1="115" x2="250" y2="115" stroke="#a0aec0" stroke-width="1"/>
-          <text x="36"  y="125" font-size="7" fill="#718096" text-anchor="middle">INS-1</text>
-          <text x="81"  y="125" font-size="7" fill="#718096" text-anchor="middle">INS-2</text>
-          <text x="126" y="125" font-size="7" fill="#718096" text-anchor="middle">INS-3</text>
-          <text x="171" y="125" font-size="7" fill="#718096" text-anchor="middle">INS-4</text>
-          <text x="216" y="125" font-size="7" fill="#718096" text-anchor="middle">INS-5</text>
-        </svg>
-      </div>
-      <div class="card-body">
-        <span class="card-type-chip chip-bar">Bar</span>
-        <div class="card-title">Inspector Scorecard</div>
-        <div class="card-desc">Per-inspector inspection count and avg condition score ranked bar</div>
-      </div>
+    <div class="card" onclick="load('aa8','analytics',this)">
+      <div class="card-thumb" style="background:linear-gradient(135deg,#fff5f5,#fed7d7)"><svg viewBox="0 0 240 120"><rect x="18" y="20" width="38" height="90" fill="#c53030" rx="2"/><rect x="68" y="50" width="38" height="60" fill="#e53e3e" rx="2"/><rect x="118" y="65" width="38" height="45" fill="#fc8181" rx="2"/><rect x="168" y="80" width="38" height="30" fill="#fed7d7" rx="2"/><line x1="10" y1="115" x2="225" y2="115" stroke="#a0aec0" stroke-width="1"/><text x="37"  y="125" font-size="7" fill="#718096" text-anchor="middle" font-family="sans-serif">1</text><text x="87"  y="125" font-size="7" fill="#718096" text-anchor="middle" font-family="sans-serif">2</text><text x="137" y="125" font-size="7" fill="#718096" text-anchor="middle" font-family="sans-serif">3</text><text x="187" y="125" font-size="7" fill="#718096" text-anchor="middle" font-family="sans-serif">4+</text></svg></div>
+      <div class="card-body"><span class="chip chip-bar">Bar</span><div class="card-title">Dismissal Attempt Distribution</div><div class="card-src">p4u2-3jgx · attempt groupby (# inspection attempts)</div></div>
       <div class="card-num">24</div>
     </div>
 
-    <!-- 25 SLA aging histogram -->
-    <div class="chart-card" onclick="toggleCard('aa9','analytics')">
-      <div class="card-thumb" style="background:linear-gradient(135deg,#fff5f5,#fed7d7)">
-        <svg viewBox="0 0 260 130" xmlns="http://www.w3.org/2000/svg">
-          <rect x="20" y="25" width="30" height="85" fill="#c53030" rx="2"/>
-          <rect x="60" y="40" width="30" height="70" fill="#e53e3e" rx="2"/>
-          <rect x="100" y="60" width="30" height="50" fill="#fc8181" rx="2"/>
-          <rect x="140" y="75" width="30" height="35" fill="#feb2b2" rx="2"/>
-          <rect x="180" y="85" width="30" height="25" fill="#fc8181" rx="2"/>
-          <line x1="10" y1="115" x2="250" y2="115" stroke="#a0aec0" stroke-width="1"/>
-          <text x="35"  y="125" font-size="7" fill="#718096" text-anchor="middle">0-30d</text>
-          <text x="75"  y="125" font-size="7" fill="#718096" text-anchor="middle">31-60d</text>
-          <text x="115" y="125" font-size="7" fill="#718096" text-anchor="middle">61-90d</text>
-          <text x="155" y="125" font-size="7" fill="#718096" text-anchor="middle">91-120d</text>
-          <text x="195" y="125" font-size="7" fill="#718096" text-anchor="middle">120d+</text>
-        </svg>
-      </div>
-      <div class="card-body">
-        <span class="card-type-chip chip-bar">Bar</span>
-        <div class="card-title">SLA Aging Histogram</div>
-        <div class="card-desc">Open violation age distribution by days bucket, colored by SLA status</div>
-      </div>
+    <div class="card" onclick="load('aa9','analytics',this)">
+      <div class="card-thumb" style="background:linear-gradient(135deg,#f0fff4,#c6f6d5)"><svg viewBox="0 0 240 120"><polyline points="10,100 50,95 90,85 130,70 170,50 210,42" fill="none" stroke="#276749" stroke-width="2.5"/><circle cx="210" cy="42" r="4" fill="#276749"/><text x="120" y="15" font-size="9" fill="#276749" text-anchor="middle" font-family="sans-serif">complaint_date · ramp complaints trend</text></svg></div>
+      <div class="card-body"><span class="chip chip-line">Line</span><div class="card-title">Ramp Complaints Annual Trend</div><div class="card-src">jagj-gttd · date_trunc_y(complaint_date) groupby</div></div>
       <div class="card-num">25</div>
     </div>
 
-    <!-- 26 Cross-dataset reconciliation -->
-    <div class="chart-card" onclick="toggleCard('aa10','analytics')">
-      <div class="card-thumb" style="background:linear-gradient(135deg,#f0fff4,#c6f6d5)">
-        <svg viewBox="0 0 260 130" xmlns="http://www.w3.org/2000/svg">
-          <rect x="22" y="35" width="22" height="75" fill="#276749" rx="2"/>
-          <rect x="46" y="50" width="22" height="60" fill="#68d391" rx="2"/>
-          <rect x="82" y="40" width="22" height="70" fill="#276749" rx="2"/>
-          <rect x="106" y="55" width="22" height="55" fill="#68d391" rx="2"/>
-          <rect x="142" y="45" width="22" height="65" fill="#276749" rx="2"/>
-          <rect x="166" y="35" width="22" height="75" fill="#68d391" rx="2"/>
-          <rect x="202" y="60" width="22" height="50" fill="#276749" rx="2"/>
-          <line x1="10" y1="115" x2="250" y2="115" stroke="#a0aec0" stroke-width="1"/>
-          <rect x="10" y="5" width="9" height="8" fill="#276749" rx="1"/>
-          <text x="23" y="13" font-size="7.5" fill="#276749">Inspections</text>
-          <rect x="85" y="5" width="9" height="8" fill="#68d391" rx="1"/>
-          <text x="98" y="13" font-size="7.5" fill="#276749">Violations</text>
-        </svg>
-      </div>
-      <div class="card-body">
-        <span class="card-type-chip chip-bar">Bar</span>
-        <div class="card-title">Cross-Dataset Reconciliation</div>
-        <div class="card-desc">Inspection vs violation counts per borough with ratio flag highlighting</div>
-      </div>
+    <div class="card" onclick="load('aa10','analytics',this)">
+      <div class="card-thumb" style="background:linear-gradient(135deg,#e8f0fa,#c3d4f5)"><svg viewBox="0 0 240 120"><rect x="20" y="45" width="25" height="65" fill="#003087" rx="1"/><rect x="47" y="55" width="25" height="55" fill="#90cdf4" rx="1"/><rect x="86" y="40" width="25" height="70" fill="#003087" rx="1"/><rect x="113" y="60" width="25" height="50" fill="#90cdf4" rx="1"/><rect x="152" y="50" width="25" height="60" fill="#003087" rx="1"/><rect x="179" y="65" width="25" height="45" fill="#90cdf4" rx="1"/><line x1="10" y1="115" x2="225" y2="115" stroke="#a0aec0" stroke-width="1"/><text x="120" y="15" font-size="9" fill="#003087" text-anchor="middle" font-family="sans-serif">monthly · inspections vs violations</text></svg></div>
+      <div class="card-body"><span class="chip chip-bar">Bar</span><div class="card-title">Inspections vs Violations by Year</div><div class="card-src">dntt-gqwq + 6kbp-uz6m · dual dataset annual comparison</div></div>
       <div class="card-num">26</div>
     </div>
 
-    <!-- 27 Composite risk -->
-    <div class="chart-card" onclick="toggleCard('aa11','analytics')">
-      <div class="card-thumb" style="background:linear-gradient(135deg,#fff5f5,#fed7d7)">
-        <svg viewBox="0 0 260 130" xmlns="http://www.w3.org/2000/svg">
-          <rect x="80"  y="15" width="160" height="20" fill="#c53030" rx="2"/>
-          <rect x="80"  y="43" width="120" height="20" fill="#e53e3e" rx="2"/>
-          <rect x="80"  y="71" width="90"  height="20" fill="#fc8181" rx="2"/>
-          <rect x="80"  y="99" width="60"  height="20" fill="#feb2b2" rx="2"/>
-          <text x="75" y="30" font-size="8" fill="#718096" text-anchor="end">Manhattan</text>
-          <text x="75" y="58" font-size="8" fill="#718096" text-anchor="end">Brooklyn</text>
-          <text x="75" y="86" font-size="8" fill="#718096" text-anchor="end">Queens</text>
-          <text x="75" y="114" font-size="8" fill="#718096" text-anchor="end">Bronx</text>
-        </svg>
-      </div>
-      <div class="card-body">
-        <span class="card-type-chip chip-bar">Bar</span>
-        <div class="card-title">Composite Risk Score</div>
-        <div class="card-desc">Weighted risk (50% violations + 50% critical rate) ranked by borough</div>
-      </div>
+    <div class="card" onclick="load('aa11','analytics',this)">
+      <div class="card-thumb" style="background:#fff"><svg viewBox="0 0 240 120"><rect x="38" y="10" width="38" height="20" fill="#fed7d7"/><rect x="78" y="10" width="38" height="20" fill="#fc8181"/><rect x="118" y="10" width="38" height="20" fill="#c53030"/><rect x="158" y="10" width="38" height="20" fill="#e53e3e"/><rect x="38" y="32" width="38" height="20" fill="#c53030"/><rect x="78" y="32" width="38" height="20" fill="#fed7d7"/><rect x="118" y="32" width="38" height="20" fill="#fc8181"/><rect x="158" y="32" width="38" height="20" fill="#c53030"/><rect x="38" y="54" width="38" height="20" fill="#fc8181"/><rect x="78" y="54" width="38" height="20" fill="#c53030"/><rect x="118" y="54" width="38" height="20" fill="#fed7d7"/><rect x="158" y="54" width="38" height="20" fill="#fc8181"/><rect x="38" y="76" width="38" height="20" fill="#fed7d7"/><rect x="78" y="76" width="38" height="20" fill="#fc8181"/><rect x="118" y="76" width="38" height="20" fill="#c53030"/><rect x="158" y="76" width="38" height="20" fill="#fed7d7"/><text x="120" y="112" font-size="8" fill="#c53030" text-anchor="middle" font-family="sans-serif">borough × ramp condition · heatmap</text></svg></div>
+      <div class="card-body"><span class="chip chip-heat">Heatmap</span><div class="card-title">Ramp Condition by Borough Heatmap</div><div class="card-src">ufzp-rrqu · borough × dws_conditions crosstab</div></div>
       <div class="card-num">27</div>
     </div>
 
-    <!-- 28 Defect × Borough heatmap -->
-    <div class="chart-card" onclick="toggleCard('aa12','analytics')">
-      <div class="card-thumb" style="background:#fff">
-        <svg viewBox="0 0 260 130" xmlns="http://www.w3.org/2000/svg">
-          <rect x="50" y="10" width="38" height="22" fill="#fed7d7"/><rect x="90" y="10" width="38" height="22" fill="#fc8181"/>
-          <rect x="130" y="10" width="38" height="22" fill="#c53030"/><rect x="170" y="10" width="38" height="22" fill="#e53e3e"/>
-          <rect x="50" y="34" width="38" height="22" fill="#c53030"/><rect x="90" y="34" width="38" height="22" fill="#fed7d7"/>
-          <rect x="130" y="34" width="38" height="22" fill="#fc8181"/><rect x="170" y="34" width="38" height="22" fill="#c53030"/>
-          <rect x="50" y="58" width="38" height="22" fill="#fc8181"/><rect x="90" y="58" width="38" height="22" fill="#c53030"/>
-          <rect x="130" y="58" width="38" height="22" fill="#fed7d7"/><rect x="170" y="58" width="38" height="22" fill="#fc8181"/>
-          <rect x="50" y="82" width="38" height="22" fill="#fed7d7"/><rect x="90" y="82" width="38" height="22" fill="#fc8181"/>
-          <rect x="130" y="82" width="38" height="22" fill="#c53030"/><rect x="170" y="82" width="38" height="22" fill="#fed7d7"/>
-          <text x="69"  y="107" font-size="7" fill="#718096" text-anchor="middle">MN</text>
-          <text x="109" y="107" font-size="7" fill="#718096" text-anchor="middle">BK</text>
-          <text x="149" y="107" font-size="7" fill="#718096" text-anchor="middle">QN</text>
-          <text x="189" y="107" font-size="7" fill="#718096" text-anchor="middle">BX</text>
-          <text x="45" y="24"  font-size="6.5" fill="#718096" text-anchor="end">Crack</text>
-          <text x="45" y="48"  font-size="6.5" fill="#718096" text-anchor="end">Trip</text>
-          <text x="45" y="72"  font-size="6.5" fill="#718096" text-anchor="end">Broken</text>
-          <text x="45" y="96"  font-size="6.5" fill="#718096" text-anchor="end">Raised</text>
-        </svg>
-      </div>
-      <div class="card-body">
-        <span class="card-type-chip chip-heat">Heatmap</span>
-        <div class="card-title">Defect × Borough Heatmap</div>
-        <div class="card-desc">Crosstab of defect type co-occurrence by borough via px.imshow</div>
-      </div>
+    <div class="card" onclick="load('aa12','analytics',this)">
+      <div class="card-thumb" style="background:linear-gradient(135deg,#ebf8ff,#bee3f8)"><svg viewBox="0 0 240 120"><rect x="75" y="20" width="155" height="22" fill="#003087" rx="2"/><rect x="75" y="48" width="90"  height="22" fill="#1a4fa0" rx="2"/><rect x="75" y="76" width="60"  height="22" fill="#4a90d9" rx="2"/><text x="70" y="35" font-size="8" fill="#718096" text-anchor="end" font-family="sans-serif">REC</text><text x="70" y="63" font-size="8" fill="#718096" text-anchor="end" font-family="sans-serif">SEW</text><text x="70" y="91" font-size="8" fill="#718096" text-anchor="end" font-family="sans-serif">WAT</text></svg></div>
+      <div class="card-body"><span class="chip chip-bar">Bar</span><div class="card-title">Capital Project Type Breakdown</div><div class="card-src">97nd-ff3i · projecttyp groupby (REC/SEW/WAT/PED…)</div></div>
       <div class="card-num">28</div>
     </div>
 
-    <!-- 29 K-Means scatter -->
-    <div class="chart-card" onclick="toggleCard('aa13','analytics')">
-      <div class="card-thumb" style="background:linear-gradient(135deg,#f0fff4,#c6f6d5)">
-        <svg viewBox="0 0 260 130" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="70"  cy="70" r="5" fill="#276749"/>
-          <circle cx="80"  cy="60" r="4" fill="#276749"/>
-          <circle cx="65"  cy="80" r="4" fill="#276749"/>
-          <circle cx="75"  cy="55" r="5" fill="#276749"/>
-          <circle cx="150" cy="45" r="5" fill="#e53e3e"/>
-          <circle cx="160" cy="55" r="4" fill="#e53e3e"/>
-          <circle cx="145" cy="35" r="4" fill="#e53e3e"/>
-          <circle cx="120" cy="90" r="5" fill="#b7791f"/>
-          <circle cx="130" cy="100" r="4" fill="#b7791f"/>
-          <circle cx="115" cy="85" r="4" fill="#b7791f"/>
-          <circle cx="195" cy="65" r="5" fill="#6b46c1"/>
-          <circle cx="205" cy="75" r="4" fill="#6b46c1"/>
-          <circle cx="190" cy="55" r="4" fill="#6b46c1"/>
-          <text x="130" y="120" font-size="8" fill="#276749" text-anchor="middle">K=5 clusters · score+lat+lon</text>
-        </svg>
-      </div>
-      <div class="card-body">
-        <span class="card-type-chip chip-scatter">Scatter</span>
-        <div class="card-title">K-Means Segmentation</div>
-        <div class="card-desc">5-cluster scatter_mapbox colored by segment; StandardScaler preprocessing</div>
-      </div>
+    <div class="card" onclick="load('aa13','analytics',this)">
+      <div class="card-thumb" style="background:linear-gradient(135deg,#f0fff4,#c6f6d5)"><svg viewBox="0 0 240 120"><polyline points="10,95 40,90 70,82 100,78 130,72 160,65 190,55 220,45" fill="none" stroke="#276749" stroke-width="2"/><polyline points="10,100 40,95 70,88 100,85 130,80 160,74 190,64 220,55" fill="none" stroke="#003087" stroke-width="2" stroke-dasharray="4"/><text x="120" y="15" font-size="9" fill="#276749" text-anchor="middle" font-family="sans-serif">inspection + dismissal · dual trend</text></svg></div>
+      <div class="card-body"><span class="chip chip-line">Line</span><div class="card-title">Inspections vs Dismissals Trend</div><div class="card-src">dntt-gqwq + p4u2-3jgx · annual overlay comparison</div></div>
       <div class="card-num">29</div>
     </div>
 
   </div>
-  <div class="chart-panel" id="panel-analytics"></div>
+  <div class="panel" id="p-analytics"></div>
 </div>
 
-<!-- ═════════════════════════ SECTION 4: DATA CATALOG ═══ -->
+<!-- ══════════════════════════ SECTION 4: DATA CATALOG ════ -->
 <div class="section" id="catalog">
-  <div class="section-header">
-    <span class="section-icon">📚</span>
-    <span class="section-title">Data Catalog</span>
-    <span class="section-count">1 chart</span>
+  <div class="sec-hdr">
+    <span class="sec-icon">📚</span>
+    <span class="sec-title">Data Catalog</span>
+    <span class="sec-count">1 chart</span>
   </div>
-  <div class="cards-grid" id="grid-catalog">
+  <div class="cards" id="g-catalog">
 
-    <!-- 30 API Usage -->
-    <div class="chart-card" onclick="toggleCard('dc1','catalog')">
-      <div class="card-thumb" style="background:linear-gradient(135deg,#ebf8ff,#bee3f8)">
-        <svg viewBox="0 0 260 130" xmlns="http://www.w3.org/2000/svg">
-          <rect x="20" y="30" width="28" height="25" fill="#003087" rx="2"/>
-          <rect x="20" y="57" width="28" height="18" fill="#1a4fa0" rx="2"/>
-          <rect x="20" y="77" width="28" height="13" fill="#4a90d9" rx="2"/>
-          <rect x="58" y="40" width="28" height="20" fill="#003087" rx="2"/>
-          <rect x="58" y="62" width="28" height="15" fill="#1a4fa0" rx="2"/>
-          <rect x="58" y="79" width="28" height="11" fill="#4a90d9" rx="2"/>
-          <rect x="96" y="35" width="28" height="30" fill="#003087" rx="2"/>
-          <rect x="96" y="67" width="28" height="12" fill="#1a4fa0" rx="2"/>
-          <rect x="96" y="81" width="28" height="9"  fill="#4a90d9" rx="2"/>
-          <rect x="134" y="45" width="28" height="22" fill="#003087" rx="2"/>
-          <rect x="134" y="69" width="28" height="14" fill="#1a4fa0" rx="2"/>
-          <rect x="134" y="85" width="28" height="5"  fill="#4a90d9" rx="2"/>
-          <rect x="172" y="50" width="28" height="18" fill="#003087" rx="2"/>
-          <rect x="172" y="70" width="28" height="10" fill="#1a4fa0" rx="2"/>
-          <line x1="10" y1="100" x2="250" y2="100" stroke="#a0aec0" stroke-width="1"/>
-          <rect x="10" y="108" width="8" height="7" fill="#003087" rx="1"/>
-          <text x="22" y="116" font-size="7.5" fill="#003087">inspection</text>
-          <rect x="80" y="108" width="8" height="7" fill="#1a4fa0" rx="1"/>
-          <text x="92" y="116" font-size="7.5" fill="#1a4fa0">violations</text>
-          <rect x="150" y="108" width="8" height="7" fill="#4a90d9" rx="1"/>
-          <text x="162" y="116" font-size="7.5" fill="#4a90d9">permits</text>
-        </svg>
-      </div>
-      <div class="card-body">
-        <span class="card-type-chip chip-bar">Bar</span>
-        <div class="card-title">API Usage Stacked Bar</div>
-        <div class="card-desc">Daily Socrata API call volume stacked by dataset, from SQLite api_log.db</div>
-      </div>
+    <div class="card" onclick="load('dc1','catalog',this)">
+      <div class="card-thumb" style="background:linear-gradient(135deg,#ebf8ff,#bee3f8)"><svg viewBox="0 0 240 120"><rect x="15" y="30" width="22" height="80" fill="#003087" rx="2"/><rect x="50" y="45" width="22" height="65" fill="#1a4fa0" rx="2"/><rect x="85" y="55" width="22" height="55" fill="#003087" rx="2"/><rect x="120" y="35" width="22" height="75" fill="#2a69ac" rx="2"/><rect x="155" y="50" width="22" height="60" fill="#003087" rx="2"/><rect x="190" y="60" width="22" height="50" fill="#1a4fa0" rx="2"/><line x1="10" y1="115" x2="225" y2="115" stroke="#a0aec0" stroke-width="1"/><text x="120" y="18" font-size="9" fill="#003087" text-anchor="middle" font-family="sans-serif">count(*) · live row counts per dataset</text></svg></div>
+      <div class="card-body"><span class="chip chip-bar">Bar</span><div class="card-title">Live Row Counts Across All Datasets</div><div class="card-src">All 6 core datasets · $select=count(*) live query</div></div>
       <div class="card-num">30</div>
     </div>
 
   </div>
-  <div class="chart-panel" id="panel-catalog"></div>
+  <div class="panel" id="p-catalog"></div>
 </div>
 
 </div><!-- /main -->
 
 <script>
-// ── Data ──────────────────────────────────────────────────────────
-const BOROUGHS = ['Manhattan','Brooklyn','Queens','Bronx','Staten Island'];
-const MONTHS   = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const WEEKS    = Array.from({length:12},(_,i)=>`Wk ${i+1}`);
-const DOT_BLUE = '#003087';
-const COLORS   = ['#003087','#c53030','#276749','#b7791f','#6b46c1'];
+// ── Config ────────────────────────────────────────────────────────
+const DOMAIN = 'https://data.cityofnewyork.us/resource';
+const BORO_MAP = {'1':'Manhattan','2':'Bronx','3':'Brooklyn','4':'Queens','5':'Staten Island'};
+let APP_TOKEN = localStorage.getItem('socrata_token') || '';
+document.getElementById('app-token').value = APP_TOKEN;
+updateTokenStatus();
 
-function inspCount()  { return BOROUGHS.map(()=>Math.floor(800+Math.random()*1200)); }
-function scores()     { return BOROUGHS.map(()=>+(55+Math.random()*30).toFixed(1)); }
-function sparkSeries(){ return Array.from({length:12},(_,i)=>Math.floor(320+i*18+Math.random()*60)); }
+function saveToken(){
+  APP_TOKEN = document.getElementById('app-token').value.trim();
+  localStorage.setItem('socrata_token', APP_TOKEN);
+  updateTokenStatus();
+}
+function clearToken(){
+  APP_TOKEN=''; document.getElementById('app-token').value='';
+  localStorage.removeItem('socrata_token');
+  updateTokenStatus();
+}
+function updateTokenStatus(){
+  document.getElementById('token-status').textContent = APP_TOKEN ? '✅ Token active' : '⚠️ No token — anonymous (1000 req/day limit)';
+}
 
-// ── Chart builders ────────────────────────────────────────────────
-const CHARTS = {
-  mc1: () => ({
-    data:[{x:WEEKS, y:sparkSeries(), type:'scatter', mode:'lines+markers',
-           line:{color:DOT_BLUE,width:3}, marker:{size:5}}],
-    layout:{title:{text:'Inspection Velocity — 12-Week Rolling',font:{size:13}},
-            xaxis:{title:'Week'}, yaxis:{title:'Count'}, height:320}
-  }),
-  mc2: () => ({
-    data:[{x:BOROUGHS, y:[42,38,51,47,29], type:'bar',
-           marker:{color:['#c53030','#e53e3e','#c53030','#e53e3e','#fc8181']}}],
-    layout:{title:{text:'Resolution Lag by Borough (days)',font:{size:13}},
-            yaxis:{title:'Avg Days'}, height:320}
-  }),
-  mc3: () => {
-    const x = [...MONTHS,...MONTHS.slice(0,6).map(m=>m+"'27")];
-    const y = Array.from({length:18},(_,i)=>Math.floor(400+i*15+Math.random()*50));
-    const fc = Array(12).fill(null).concat(y.slice(12));
-    return {
-      data:[
-        {x:x.slice(0,13), y:y.slice(0,13), mode:'lines', name:'Actual', line:{color:DOT_BLUE,width:2.5}},
-        {x:x.slice(12),   y:fc.slice(12),  mode:'lines', name:'Forecast',
-         line:{color:'#276749',width:2,dash:'dash'}},
-        {x:[...x.slice(12),...x.slice(12).reverse()],
-         y:[...fc.slice(12).map(v=>v+50),...fc.slice(12).map(v=>v-50).reverse()],
-         fill:'toself', fillcolor:'rgba(39,103,73,.12)', line:{width:0}, name:'95% CI'}
-      ],
-      layout:{title:{text:'Prophet Forecast + Confidence Interval',font:{size:13}},
-              yaxis:{title:'Inspections'}, height:320}
-    };
-  },
-  mc4: () => ({
-    data:[{type:'scattermapbox',
-           lat:[40.758,40.706,40.728,40.783,40.651],
-           lon:[-73.985,-73.944,-73.794,-73.971,-74.005],
-           text:BOROUGHS, mode:'markers',
-           marker:{size:14, color:scores(), colorscale:'RdYlGn', showscale:true,
-                   colorbar:{title:'Score',thickness:12}}}],
-    layout:{mapbox:{style:'carto-positron',center:{lat:40.72,lon:-73.95},zoom:9},
-            title:{text:'Spatial Workflow Map',font:{size:13}}, height:340, margin:{t:40,b:0,l:0,r:0}}
-  }),
-  mc5: () => ({
-    data:[{type:'scattermapbox',
-           lat:[40.750,40.760,40.755,40.745,40.765,40.740],
-           lon:[-73.990,-73.985,-73.975,-73.980,-73.995,-73.970],
-           mode:'markers+text', text:['Site A','Site B','Site C','Site D','Site E','Site F'],
-           marker:{size:10,color:DOT_BLUE}}],
-    layout:{mapbox:{style:'carto-positron',center:{lat:40.753,lon:-73.983},zoom:13},
-            title:{text:'Studio View — Manhattan Detail',font:{size:13}}, height:340, margin:{t:40,b:0,l:0,r:0}}
-  }),
-  mc6: () => ({
-    data:[{x:Array.from({length:80},()=>+(Math.random()*100).toFixed(1)),
-           y:Array.from({length:80},()=>Math.floor(Math.random()*120)),
-           mode:'markers', type:'scatter',
-           marker:{color:'#276749',opacity:.7,size:8}}],
-    layout:{title:{text:'Condition Score vs Days Open',font:{size:13}},
-            xaxis:{title:'Condition Score'}, yaxis:{title:'Days Open'}, height:320}
-  }),
-
-  // GIS
-  gis1: () => ({
-    data:[{type:'scattermapbox',
-           lat: Array.from({length:60},()=>40.63+Math.random()*.18),
-           lon: Array.from({length:60},()=>-74.02+Math.random()*.22),
-           mode:'markers',
-           marker:{size:8,color:Array.from({length:60},()=>Math.floor(20+Math.random()*80)),
-                   colorscale:'RdYlGn',showscale:true,colorbar:{title:'Score',thickness:12}}}],
-    layout:{mapbox:{style:'carto-positron',center:{lat:40.72,lon:-73.95},zoom:10},
-            title:{text:'Inspection scatter_mapbox — Condition Score',font:{size:13}},
-            height:360,margin:{t:40,b:0,l:0,r:0}}
-  }),
-  gis2: () => ({
-    data:[{type:'scattermapbox',
-           lat: Array.from({length:40},()=>40.64+Math.random()*.16),
-           lon: Array.from({length:40},()=>-74.01+Math.random()*.20),
-           mode:'markers', text:Array.from({length:40},()=>`Score: ${Math.floor(40+Math.random()*55)}`),
-           marker:{size:10, color:'#319795', opacity:.7}}],
-    layout:{mapbox:{style:'open-street-map',center:{lat:40.72,lon:-73.95},zoom:10},
-            title:{text:'Folium-style Interactive Marker Map',font:{size:13}},
-            height:360,margin:{t:40,b:0,l:0,r:0}}
-  }),
-  gis3: () => ({
-    data:[{type:'scattermapbox',
-           lat: Array.from({length:50},()=>40.63+Math.random()*.18),
-           lon: Array.from({length:50},()=>-74.02+Math.random()*.22),
-           mode:'markers',
-           marker:{size:Array.from({length:50},()=>6+Math.random()*14),
-                   color:Array.from({length:50},()=>Math.floor(30+Math.random()*70)),
-                   colorscale:'Hot',showscale:true}}],
-    layout:{mapbox:{style:'carto-darkmatter',center:{lat:40.72,lon:-73.95},zoom:10},
-            title:{text:'pydeck ScatterplotLayer — Severity Radius',font:{size:13}},
-            height:360,margin:{t:40,b:0,l:0,r:0}}
-  }),
-  gis4: () => {
-    const clusters = [0,0,0,0,1,1,1,1,2,2,2,-1,-1];
-    const colors   = {'0':'#003087','1':'#c53030','2':'#276749','-1':'#a0aec0'};
-    const lats = Array.from({length:60},()=>40.63+Math.random()*.18);
-    const lons = Array.from({length:60},()=>-74.02+Math.random()*.22);
-    const clust= Array.from({length:60},()=>String(Math.random()<.1?-1:Math.floor(Math.random()*3)));
-    return {
-      data:[{type:'scattermapbox', lat:lats, lon:lons, mode:'markers',
-             marker:{color:clust.map(c=>colors[c]||'#a0aec0'), size:9, opacity:.8},
-             text:clust.map(c=>c==='-1'?'Noise':`Cluster ${parseInt(c)+1}`)}],
-      layout:{mapbox:{style:'carto-positron',center:{lat:40.72,lon:-73.95},zoom:10},
-              title:{text:'DBSCAN Spatial Clusters',font:{size:13}},
-              height:360,margin:{t:40,b:0,l:0,r:0}}
-    };
-  },
-  gis5: () => ({
-    data:[{x:['<0.1km','0.1-0.5','0.5-1','1-2','2-5','>5km'],
-           y:[45,120,85,60,30,15], type:'bar',
-           marker:{color:['#b7791f','#d69e2e','#ecc94b','#d69e2e','#b7791f','#f6e05e']}}],
-    layout:{title:{text:'Nearest Permit Distance Distribution',font:{size:13}},
-            xaxis:{title:'Distance'}, yaxis:{title:'Count'}, height:320}
-  }),
-  gis6: () => ({
-    data:[{type:'scattermapbox',
-           lat:[40.73,40.75,40.71,40.77,40.69],
-           lon:[-73.99,-73.96,-74.01,-73.97,-73.94],
-           mode:'markers', name:'Permits',
-           marker:{size:18, color:'#c53030', opacity:.5}},
-          {type:'scattermapbox',
-           lat:[40.738,40.745,40.718,40.762],
-           lon:[-73.985,-73.952,-74.005,-73.958],
-           mode:'markers', name:'Inspections (conflict)',
-           marker:{size:9, color:'#003087'}}],
-    layout:{mapbox:{style:'carto-positron',center:{lat:40.73,lon:-73.97},zoom:11},
-            title:{text:'Conflict Buffer Map — 50m radius',font:{size:13}},
-            height:360, margin:{t:40,b:0,l:0,r:0}, legend:{orientation:'h'}}
-  }),
-  gis7: () => {
-    const frames = MONTHS.map((m,i)=>({
-      name:m, data:[{x:BOROUGHS, y:BOROUGHS.map(()=>Math.floor(200+i*20+Math.random()*120))}]
-    }));
-    return {
-      data:[{x:BOROUGHS, y:[320,410,290,380,180], type:'bar',
-             marker:{color:DOT_BLUE},
-             name:'Jan'}],
-      layout:{title:{text:'Spatial Time-lapse — Monthly Inspection Count',font:{size:13}},
-              yaxis:{title:'Inspections'},
-              updatemenus:[{type:'buttons',buttons:[{label:'▶ Play',method:'animate',
-                args:[null,{frame:{duration:500},transition:{duration:300}}]}]}],
-              sliders:[{steps:frames.map((f,i)=>({label:f.name,method:'animate',
-                args:[[f.name],{frame:{duration:400}}]})),
-                currentvalue:{prefix:'Month: '}}],
-              height:360},
-      frames
-    };
-  },
-  gis8: () => {
-    const lats=[40.73,40.75,40.71,40.77,40.69,40.74];
-    const lons=[-73.99,-73.96,-74.01,-73.97,-73.94,-73.98];
-    const route=[0,2,5,4,1,3];
-    const routeLats=route.map(i=>lats[i]);
-    const routeLons=route.map(i=>lons[i]);
-    return {
-      data:[{type:'scattermapbox',lat:routeLats,lon:routeLons,mode:'lines',
-             line:{color:'#276749',width:3},name:'Route'},
-            {type:'scattermapbox',lat:lats,lon:lons,
-             mode:'markers+text',text:route.map((_,i)=>`${i+1}`),
-             textposition:'top center',
-             marker:{size:12,color:'#276749'},name:'Stops'}],
-      layout:{mapbox:{style:'carto-positron',center:{lat:40.73,lon:-73.97},zoom:11},
-              title:{text:'TSP Route Optimizer — Inspector Path',font:{size:13}},
-              height:360,margin:{t:40,b:0,l:0,r:0}}
-    };
-  },
-  gis9: () => ({
-    data:[{x:BOROUGHS, y:inspCount(), type:'bar', name:'Count',
-           marker:{color:DOT_BLUE}},
-          {x:BOROUGHS, y:scores(), type:'bar', name:'Avg Score',
-           marker:{color:'#90cdf4'}, yaxis:'y2'}],
-    layout:{title:{text:'Block Aggregation — Count & Avg Score',font:{size:13}},
-            barmode:'group', yaxis:{title:'Inspections'},
-            yaxis2:{title:'Avg Score',overlaying:'y',side:'right'},
-            height:320, legend:{orientation:'h'}}
-  }),
-  gis10: () => ({
-    data:[{type:'scattermapbox',
-           lat:[40.72,40.76,40.68,40.80],
-           lon:[-73.99,-73.95,-74.00,-73.96],
-           mode:'markers', name:'Capital Projects',
-           marker:{size:[25,40,30,35], color:'#6b46c1', opacity:.4,
-                   sizemode:'diameter'},
-           text:['Project A: $2.1M','Project B: $4.8M','Project C: $3.2M','Project D: $4.1M']}],
-    layout:{mapbox:{style:'carto-positron',center:{lat:40.74,lon:-73.97},zoom:11},
-            title:{text:'Capital Impact Radius (size ∝ budget)',font:{size:13}},
-            height:360,margin:{t:40,b:0,l:0,r:0}}
-  }),
-
-  // Advanced Analytics
-  aa1: () => ({
-    data:[{x:WEEKS, y:sparkSeries(), mode:'lines+markers',
-           line:{color:DOT_BLUE,width:2.5}, fill:'tozeroy',
-           fillcolor:'rgba(0,48,135,.08)'}],
-    layout:{title:{text:'KPI Sparkline — 12-Week Inspection Trend',font:{size:13}},
-            yaxis:{title:'Count'}, height:300}
-  }),
-  aa2: () => ({
-    data:[{name:'2025', x:MONTHS, y:MONTHS.map(()=>Math.floor(300+Math.random()*200)),
-           type:'bar', marker:{color:DOT_BLUE}},
-          {name:'2026', x:MONTHS, y:MONTHS.map(()=>Math.floor(350+Math.random()*200)),
-           type:'bar', marker:{color:'#90cdf4'}}],
-    layout:{title:{text:'Year-over-Year Comparison',font:{size:13}},
-            barmode:'group', yaxis:{title:'Inspections'},
-            height:320, legend:{orientation:'h'}}
-  }),
-  aa3: () => {
-    const vals = Array.from({length:24},(_,i)=>Math.floor(300+i*8+Math.random()*30));
-    const mu   = vals.reduce((a,b)=>a+b,0)/vals.length;
-    const cusum= vals.map((_,i)=>vals.slice(0,i+1).reduce((s,v)=>s+(v-mu),0));
-    const cp   = cusum.indexOf(Math.max(...cusum.map(Math.abs)));
-    return {
-      data:[{x:Array.from({length:24},(_,i)=>`W${i+1}`), y:cusum,
-             mode:'lines+markers', line:{color:'#276749',width:2.5},
-             name:'CUSUM'},
-            {x:[`W${cp+1}`,`W${cp+1}`], y:[Math.min(...cusum)-20,Math.max(...cusum)+20],
-             mode:'lines', line:{color:'#c53030',dash:'dash',width:2}, name:'Changepoint'}],
-      layout:{title:{text:'CUSUM Changepoint Detection',font:{size:13}},
-              yaxis:{title:'Cumulative Deviation'}, height:320}
-    };
-  },
-  aa4: () => ({
-    data:[{x:MONTHS.slice(0,8), y:MONTHS.slice(0,8).map(()=>Math.floor(100+Math.random()*200)),
-           type:'bar', marker:{color:DOT_BLUE}}],
-    layout:{title:{text:'Cohort Sizes by Opening Month',font:{size:13}},
-            yaxis:{title:'Cohort Size'}, height:300}
-  }),
-  aa5: () => {
-    const months=['Jan','Feb','Mar','Apr','May','Jun'];
-    const z=months.map(()=>Array.from({length:12},()=>+(Math.random()).toFixed(2)));
-    return {
-      data:[{type:'heatmap', z, x:WEEKS, y:months, colorscale:'Blues',
-             showscale:true, colorbar:{title:'Rate',thickness:12}}],
-      layout:{title:{text:'Retention Heatmap — Cohort × Weeks Open',font:{size:13}},
-              xaxis:{title:'Weeks Since Open'}, yaxis:{title:'Cohort Month'},
-              height:320}
-    };
-  },
-  aa6: () => {
-    const n=80, anom=10;
-    const normLat=Array.from({length:n},()=>40.63+Math.random()*.18);
-    const normLon=Array.from({length:n},()=>-74.02+Math.random()*.22);
-    const anomLat=Array.from({length:anom},()=>40.63+Math.random()*.18);
-    const anomLon=Array.from({length:anom},()=>-74.02+Math.random()*.22);
-    return {
-      data:[{type:'scattermapbox',lat:normLat,lon:normLon,mode:'markers',
-             name:'Normal', marker:{size:7,color:'#9ae6b4',opacity:.7}},
-            {type:'scattermapbox',lat:anomLat,lon:anomLon,mode:'markers',
-             name:'Anomaly', marker:{size:12,color:'#fc8181',opacity:.9}}],
-      layout:{mapbox:{style:'carto-positron',center:{lat:40.72,lon:-73.95},zoom:10},
-              title:{text:'IsolationForest Anomaly Detection',font:{size:13}},
-              height:360,margin:{t:40,b:0,l:0,r:0}, legend:{orientation:'h'}}
-    };
-  },
-  aa7: () => ({
-    data:[{y:BOROUGHS, x:[87,81,74,68,52], type:'bar', orientation:'h',
-           marker:{color:[DOT_BLUE,'#1a4fa0','#2a69ac','#4a90d9','#90cdf4']}}],
-    layout:{title:{text:'Borough Rankings — Avg Condition Score',font:{size:13}},
-            xaxis:{title:'Avg Score'}, height:300}
-  }),
-  aa8: () => ({
-    data:[{x:['INS-001','INS-002','INS-003','INS-004','INS-005'],
-           y:[145,132,118,107,98], type:'bar',
-           marker:{color:['#b7791f','#d69e2e','#b7791f','#d69e2e','#ecc94b']}}],
-    layout:{title:{text:'Inspector Scorecard — Inspections This Month',font:{size:13}},
-            yaxis:{title:'Inspections'}, height:300}
-  }),
-  aa9: () => ({
-    data:[{x:['0-30d','31-60d','61-90d','91-120d','121-180d','>180d'],
-           y:[210,148,95,62,38,24], type:'bar',
-           marker:{color:['#c53030','#e53e3e','#fc8181','#feb2b2','#fed7d7','#fff5f5']}}],
-    layout:{title:{text:'SLA Violation Aging Histogram',font:{size:13}},
-            xaxis:{title:'Age Bucket'}, yaxis:{title:'Open Violations'}, height:300}
-  }),
-  aa10: () => ({
-    data:[{name:'Inspections', x:BOROUGHS,
-           y:BOROUGHS.map(()=>Math.floor(400+Math.random()*600)), type:'bar',
-           marker:{color:'#276749'}},
-          {name:'Violations', x:BOROUGHS,
-           y:BOROUGHS.map(()=>Math.floor(200+Math.random()*400)), type:'bar',
-           marker:{color:'#68d391'}}],
-    layout:{title:{text:'Cross-Dataset: Inspections vs Violations',font:{size:13}},
-            barmode:'group', height:320, legend:{orientation:'h'}}
-  }),
-  aa11: () => ({
-    data:[{y:BOROUGHS, x:[78,65,58,51,38], type:'bar', orientation:'h',
-           marker:{color:['#c53030','#e53e3e','#fc8181','#fc8181','#feb2b2']}}],
-    layout:{title:{text:'Composite Risk Score by Borough',font:{size:13}},
-            xaxis:{title:'Risk Score (0–100)'}, height:300}
-  }),
-  aa12: () => {
-    const defects=['Crack','Trip Hazard','Broken','Raised','Uneven'];
-    const z=defects.map(()=>BOROUGHS.map(()=>Math.floor(10+Math.random()*90)));
-    return {
-      data:[{type:'heatmap', z, x:BOROUGHS, y:defects, colorscale:'Reds',
-             showscale:true, colorbar:{title:'Count',thickness:12}}],
-      layout:{title:{text:'Defect × Borough Co-occurrence Heatmap',font:{size:13}},
-              height:320}
-    };
-  },
-  aa13: () => {
-    const clusterColors=['#003087','#c53030','#276749','#b7791f','#6b46c1'];
-    const data=clusterColors.map((col,ci)=>({
-      type:'scattermapbox',
-      lat:Array.from({length:20},()=>40.63+Math.random()*.18),
-      lon:Array.from({length:20},()=>-74.02+Math.random()*.22),
-      mode:'markers', name:`Cluster ${ci+1}`,
-      marker:{size:9,color:col,opacity:.8}
-    }));
-    return {
-      data,
-      layout:{mapbox:{style:'carto-positron',center:{lat:40.72,lon:-73.95},zoom:10},
-              title:{text:'K-Means Segmentation (K=5)',font:{size:13}},
-              height:360,margin:{t:40,b:0,l:0,r:0},
-              legend:{orientation:'h'}}
-    };
-  },
-
-  // Data Catalog
-  dc1: () => {
-    const datasets=['inspection','violations','street_permits','complaints_311','mappluto'];
-    const days=Array.from({length:14},(_,i)=>{
-      const d=new Date(2026,4,18+i);
-      return `${d.getMonth()+1}/${d.getDate()}`;
-    });
-    return {
-      data:datasets.map((ds,i)=>({
-        name:ds, x:days, type:'bar',
-        y:days.map(()=>Math.floor(2+Math.random()*25)),
-        marker:{color:COLORS[i]}
-      })),
-      layout:{title:{text:'API Usage — Daily Calls by Dataset',font:{size:13}},
-              barmode:'stack', yaxis:{title:'API Calls'},
-              height:320, legend:{orientation:'h',y:-0.3}}
-    };
-  },
-};
-
-// ── Meta info per chart ───────────────────────────────────────────
-const META = {
-  mc1:  {file:'app/views/forecasting.py',       type:'Line',    dep:'Plotly'},
-  mc2:  {file:'app/views/home.py',              type:'Bar',     dep:'Plotly'},
-  mc3:  {file:'app/views/forecasting.py',       type:'Line+CI', dep:'Plotly + Prophet'},
-  mc4:  {file:'app/views/workflows.py',         type:'Map',     dep:'Streamlit map'},
-  mc5:  {file:'app/views/studio.py',            type:'Map',     dep:'Streamlit map'},
-  mc6:  {file:'app/views/workflows.py',         type:'Scatter', dep:'Plotly'},
-  gis1: {file:'app/views/gis_dashboard.py',     type:'Map',     dep:'Plotly scatter_mapbox'},
-  gis2: {file:'app/views/gis_dashboard.py',     type:'Map',     dep:'Folium + streamlit-folium'},
-  gis3: {file:'app/views/gis_dashboard.py',     type:'Map',     dep:'pydeck'},
-  gis4: {file:'app/views/gis_dashboard.py',     type:'Map',     dep:'scikit-learn DBSCAN + Plotly'},
-  gis5: {file:'app/views/gis_dashboard.py',     type:'Bar',     dep:'scipy KDTree + Plotly'},
-  gis6: {file:'app/views/gis_dashboard.py',     type:'Map',     dep:'GeoPandas + Plotly'},
-  gis7: {file:'app/views/gis_dashboard.py',     type:'Animated Bar', dep:'Plotly animation_frame'},
-  gis8: {file:'app/views/gis_dashboard.py',     type:'Map',     dep:'Haversine TSP + Plotly'},
-  gis9: {file:'app/views/gis_dashboard.py',     type:'Bar',     dep:'Plotly dual-axis'},
-  gis10:{file:'app/views/gis_dashboard.py',     type:'Map',     dep:'Plotly bubble map'},
-  aa1:  {file:'app/views/analytics_advanced.py',type:'Line',    dep:'Plotly'},
-  aa2:  {file:'app/views/analytics_advanced.py',type:'Bar',     dep:'Plotly grouped bar'},
-  aa3:  {file:'app/views/analytics_advanced.py',type:'Line',    dep:'Plotly + NumPy CUSUM'},
-  aa4:  {file:'app/views/analytics_advanced.py',type:'Bar',     dep:'Plotly'},
-  aa5:  {file:'app/views/analytics_advanced.py',type:'Heatmap', dep:'Plotly imshow Blues'},
-  aa6:  {file:'app/views/analytics_advanced.py',type:'Map',     dep:'scikit-learn IsolationForest + Plotly'},
-  aa7:  {file:'app/views/analytics_advanced.py',type:'Bar',     dep:'Plotly horizontal bar'},
-  aa8:  {file:'app/views/analytics_advanced.py',type:'Bar',     dep:'Plotly'},
-  aa9:  {file:'app/views/analytics_advanced.py',type:'Bar',     dep:'Plotly'},
-  aa10: {file:'app/views/analytics_advanced.py',type:'Bar',     dep:'Plotly grouped bar'},
-  aa11: {file:'app/views/analytics_advanced.py',type:'Bar',     dep:'Plotly horizontal bar'},
-  aa12: {file:'app/views/analytics_advanced.py',type:'Heatmap', dep:'Plotly Reds heatmap'},
-  aa13: {file:'app/views/analytics_advanced.py',type:'Map',     dep:'scikit-learn KMeans + Plotly'},
-  dc1:  {file:'app/views/data_catalog.py',      type:'Bar',     dep:'Plotly stacked bar + SQLite'},
-};
+// ── Socrata fetch helper ──────────────────────────────────────────
+async function soql(fourfour, params){
+  const url = new URL(`${DOMAIN}/${fourfour}.json`);
+  Object.entries(params).forEach(([k,v])=>url.searchParams.set(k,v));
+  const headers = APP_TOKEN ? {'X-App-Token': APP_TOKEN} : {};
+  const res = await fetch(url.toString(), {headers});
+  if(!res.ok){
+    const txt = await res.text();
+    throw new Error(`HTTP ${res.status}: ${txt.slice(0,200)}`);
+  }
+  return res.json();
+}
 
 // ── State ─────────────────────────────────────────────────────────
-let activeCard = null;
+let activeId = null;
 
-function toggleCard(id, section) {
-  const panel  = document.getElementById(`panel-${section}`);
-  const card   = event.currentTarget;
-  const grid   = document.getElementById(`grid-${section}`);
+async function load(id, section, cardEl){
+  const panel = document.getElementById(`p-${section}`);
+  const grid  = document.getElementById(`g-${section}`);
 
-  if (activeCard === id) {
+  if(activeId === id){
     panel.classList.remove('open');
-    card.classList.remove('active');
-    activeCard = null;
+    cardEl.classList.remove('active');
+    activeId = null;
     return;
   }
+  grid.querySelectorAll('.card.active').forEach(c=>c.classList.remove('active'));
+  cardEl.classList.add('active');
+  activeId = id;
 
-  // Deactivate old card in same section
-  grid.querySelectorAll('.chart-card.active').forEach(c=>c.classList.remove('active'));
+  const title = cardEl.querySelector('.card-title').textContent;
+  const src   = cardEl.querySelector('.card-src').textContent;
 
-  // Build panel
-  const spec = CHARTS[id]();
-  const meta = META[id] || {};
   panel.innerHTML = `
-    <div class="panel-header">
-      <h3>${card.querySelector('.card-title').textContent}</h3>
-      <button class="panel-close" onclick="closePanel('${section}')">✕</button>
+    <div class="panel-hdr">
+      <h3>${title}</h3>
+      <span class="src-tag">${src.split('·')[0].trim()}</span>
+      <button class="close-btn" onclick="closePanel('${section}')">✕</button>
     </div>
     <div class="panel-body">
-      <div class="plotly-chart" id="plotly-${id}"></div>
-      <div class="panel-meta">
-        <span>📂 <code>${meta.file||''}</code></span>
-        <span>📐 Type: <span class="tag">${meta.type||''}</span></span>
-        <span>📦 Deps: <span class="tag">${meta.dep||''}</span></span>
+      <div class="loading" id="loading-${id}">
+        <div class="spinner"></div>
+        <div>Fetching live data from data.cityofnewyork.us…</div>
       </div>
+      <div class="chart-div" id="chart-${id}" style="display:none"></div>
+      <div id="meta-${id}" class="panel-meta" style="display:none"></div>
     </div>`;
-
   panel.classList.add('open');
-  card.classList.add('active');
-  activeCard = id;
+  setTimeout(()=>panel.scrollIntoView({behavior:'smooth',block:'nearest'}),50);
 
-  // Render Plotly
-  const config = {spec};
-  const layout = Object.assign({
-    margin:{t:44,b:40,l:50,r:30},
-    font:{family:'system-ui,sans-serif',size:11},
-    plot_bgcolor:'#fafafa', paper_bgcolor:'#fff'
-  }, spec.layout || {});
-
-  if (spec.frames) {
-    Plotly.newPlot(`plotly-${id}`, spec.data, layout, {responsive:true})
-      .then(()=>{ if(spec.frames) Plotly.addFrames(`plotly-${id}`, spec.frames); });
-  } else {
-    Plotly.newPlot(`plotly-${id}`, spec.data, layout, {responsive:true});
+  try {
+    await BUILDERS[id](id);
+  } catch(e) {
+    document.getElementById(`loading-${id}`).innerHTML =
+      `<div class="error">⚠️ Failed to load data<br><code>${e.message}</code></div>`;
   }
-
-  // Scroll panel into view
-  setTimeout(()=>panel.scrollIntoView({behavior:'smooth',block:'nearest'}), 50);
 }
 
-function closePanel(section) {
-  const panel = document.getElementById(`panel-${section}`);
-  panel.classList.remove('open');
-  document.querySelectorAll('.chart-card.active').forEach(c=>c.classList.remove('active'));
-  activeCard = null;
+function closePanel(section){
+  document.getElementById(`p-${section}`).classList.remove('open');
+  document.querySelectorAll('.card.active').forEach(c=>c.classList.remove('active'));
+  activeId=null;
 }
 
-function scrollToSection(id) {
-  document.getElementById(id).scrollIntoView({behavior:'smooth'});
+function showChart(id, data, layout, meta){
+  document.getElementById(`loading-${id}`).style.display='none';
+  const el = document.getElementById(`chart-${id}`);
+  el.style.display='block';
+  Plotly.newPlot(el, data,
+    Object.assign({
+      height:360, margin:{t:44,b:48,l:60,r:30},
+      font:{family:'system-ui,sans-serif',size:11},
+      plot_bgcolor:'#fafafa', paper_bgcolor:'#fff'
+    }, layout),
+    {responsive:true}
+  );
+  const metaEl = document.getElementById(`meta-${id}`);
+  metaEl.style.display='flex';
+  metaEl.innerHTML = meta.map(m=>`<span class="meta-tag">${m}</span>`).join('')
+    + `<span style="margin-left:auto;font-style:italic">Live · ${new Date().toLocaleTimeString()}</span>`;
 }
 
-// Mapbox token fallback — swap to openstreetmap if no token
-window.addEventListener('DOMContentLoaded', ()=>{
-  Plotly.setPlotConfig({mapboxAccessToken:''});
-});
+const COLORS_BLUE = ['#003087','#1a4fa0','#2a69ac','#4a90d9','#63b3ed','#90cdf4','#bee3f8'];
+const COLORS_WARM = ['#c53030','#e53e3e','#fc8181','#feb2b2','#fed7d7'];
+const COLORS_MIX  = ['#003087','#276749','#c53030','#b7791f','#6b46c1','#2b6cb0','#2c7a7b'];
+
+// ── Chart builders ────────────────────────────────────────────────
+const BUILDERS = {
+
+  // ── 1: Inspection Monthly Trend ──────────────────────────────
+  async mc1(id){
+    const rows = await soql('dntt-gqwq', {
+      '$select': "date_trunc_ym(inspectiondate) as month, count(*) as total",
+      '$where':  "inspectiondate BETWEEN '2015-01-01' AND '2026-12-31'",
+      '$group':  'month', '$order': 'month', '$limit': '200'
+    });
+    const x = rows.map(r=>r.month?.slice(0,7)).filter(Boolean);
+    const y = rows.map(r=>+r.total).filter((_,i)=>rows[i].month);
+    showChart(id,
+      [{x, y, type:'scatter', mode:'lines', fill:'tozeroy',
+        line:{color:'#003087',width:2.5}, fillcolor:'rgba(0,48,135,.08)', name:'Inspections'}],
+      {title:{text:'Monthly Inspection Count (2015–2026)'},
+       xaxis:{title:'Month'}, yaxis:{title:'Inspections'}},
+      [`${rows.length} data points`, 'dntt-gqwq', 'date_trunc_ym(inspectiondate)']
+    );
+  },
+
+  // ── 2: Violations by Year ────────────────────────────────────
+  async mc2(id){
+    const rows = await soql('6kbp-uz6m', {
+      '$select': "date_trunc_y(vissuedate) as yr, count(*) as total",
+      '$where':  "vissuedate BETWEEN '2015-01-01' AND '2026-12-31'",
+      '$group':  'yr', '$order': 'yr', '$limit': '20'
+    });
+    const x = rows.map(r=>r.yr?.slice(0,4)).filter(Boolean);
+    const y = rows.map(r=>+r.total).filter((_,i)=>rows[i].yr);
+    showChart(id,
+      [{x, y, type:'bar', marker:{color:COLORS_WARM[0]}, name:'Violations'}],
+      {title:{text:'Violations Issued per Year'},
+       xaxis:{title:'Year'}, yaxis:{title:'Count'}},
+      [`${rows.length} years`, '6kbp-uz6m', 'vissuedate']
+    );
+  },
+
+  // ── 3: Inspection Outcome Mix ────────────────────────────────
+  async mc3(id){
+    const [r1, r2] = await Promise.all([
+      soql('dntt-gqwq', {'$select':'noviolationfound,count(*) as total','$group':'noviolationfound'}),
+      soql('dntt-gqwq', {'$select':'citydoit,count(*) as total','$group':'citydoit'}),
+    ]);
+    const nvf = Object.fromEntries(r1.map(r=>[r.noviolationfound||'null', +r.total]));
+    const cdo = Object.fromEntries(r2.map(r=>[r.citydoit||'null', +r.total]));
+    const labels=['Violation Found','No Violation','City DoIt','Owner DoIt'];
+    const values=[
+      nvf['No']||0, nvf['Yes']||0,
+      cdo['Yes']||0, (nvf['No']||0)-(cdo['Yes']||0)-(cdo['No']&&nvf['No']?0:0)
+    ];
+    // Simplified: just noviolationfound
+    showChart(id,
+      [{labels: r1.map(r=>r.noviolationfound==='Yes'?'No Violation Found':'Violation Found'),
+        values: r1.map(r=>+r.total),
+        type:'pie', marker:{colors:['#276749','#c53030']},
+        hole:0.35, textinfo:'label+percent'}],
+      {title:{text:'Inspection Outcome — Violation Found vs Clear'},
+       showlegend:true},
+      [`${r1.reduce((s,r)=>s+ +r.total,0).toLocaleString()} total inspections`, 'dntt-gqwq', 'noviolationfound']
+    );
+  },
+
+  // ── 4: Dismissal Pass/Fail by Borough ───────────────────────
+  async mc4(id){
+    const rows = await soql('p4u2-3jgx', {
+      '$select': 'borough, pass_fail, count(*) as total',
+      '$where':  "borough IS NOT NULL AND pass_fail IS NOT NULL",
+      '$group':  'borough, pass_fail', '$order': 'total DESC', '$limit': '50'
+    });
+    const boroughs=[...new Set(rows.map(r=>r.borough))].sort();
+    const results=[...new Set(rows.map(r=>r.pass_fail))];
+    const traces = results.slice(0,4).map((pf,i)=>({
+      name: pf.length>25?pf.slice(0,25)+'…':pf,
+      x: boroughs,
+      y: boroughs.map(b=>{
+        const r=rows.find(r=>r.borough===b && r.pass_fail===pf);
+        return r?+r.total:0;
+      }),
+      type:'bar', marker:{color:COLORS_MIX[i]}
+    }));
+    showChart(id, traces,
+      {title:{text:'Dismissal Inspections: Pass/Fail by Borough'},
+       barmode:'group', xaxis:{title:'Borough'}, yaxis:{title:'Count'}, legend:{orientation:'h'}},
+      [`${rows.reduce((s,r)=>s+ +r.total,0).toLocaleString()} dismissals`, 'p4u2-3jgx']
+    );
+  },
+
+  // ── 5: Dismissal Annual Trend ────────────────────────────────
+  async mc5(id){
+    const rows = await soql('p4u2-3jgx', {
+      '$select': "date_trunc_y(inspection_date) as yr, count(*) as total",
+      '$where':  "inspection_date BETWEEN '2018-01-01' AND '2026-12-31'",
+      '$group':  'yr', '$order': 'yr', '$limit': '20'
+    });
+    const x = rows.map(r=>r.yr?.slice(0,4)).filter(Boolean);
+    const y = rows.map(r=>+r.total).filter((_,i)=>rows[i].yr);
+    showChart(id,
+      [{x, y, type:'scatter', mode:'lines+markers',
+        line:{color:'#276749',width:2.5}, marker:{size:7}, fill:'tozeroy',
+        fillcolor:'rgba(39,103,73,.08)'}],
+      {title:{text:'Dismissal Inspections per Year (2018–2026)'},
+       xaxis:{title:'Year'}, yaxis:{title:'Count'}},
+      [`${rows.length} years`, 'p4u2-3jgx', 'inspection_date']
+    );
+  },
+
+  // ── 6: Violation Hotspots by Community Board ─────────────────
+  async mc6(id){
+    const rows = await soql('6kbp-uz6m', {
+      '$select': 'cb, count(*) as total',
+      '$where':  'cb IS NOT NULL',
+      '$group':  'cb', '$order': 'total DESC', '$limit': '15'
+    });
+    showChart(id,
+      [{x: rows.map(r=>`CB ${r.cb}`),
+        y: rows.map(r=>+r.total),
+        type:'bar',
+        marker:{color:COLORS_WARM.map((_,i)=>COLORS_WARM[Math.min(i,COLORS_WARM.length-1)])
+                      .concat(COLORS_BLUE).slice(0,15)}}],
+      {title:{text:'Top 15 Community Boards by Violation Count'},
+       xaxis:{title:'Community Board'}, yaxis:{title:'Violations'}},
+      [`Top 15 of ${rows.length}`, '6kbp-uz6m', 'cb']
+    );
+  },
+
+  // ── 7: Ramp Locations Map ────────────────────────────────────
+  async gis1(id){
+    const rows = await soql('ufzp-rrqu', {
+      '$select': 'the_geom, dws_conditions',
+      '$where':  'the_geom IS NOT NULL',
+      '$limit':  '600'
+    });
+    const pts = rows.filter(r=>r.the_geom?.coordinates);
+    const condColors={'Good Condition':'#276749','Defective':'#c53030','Missing':'#b7791f'};
+    const byCondition = {};
+    pts.forEach(r=>{
+      const c=r.dws_conditions||'Unknown';
+      if(!byCondition[c]) byCondition[c]=[];
+      byCondition[c].push(r.the_geom.coordinates);
+    });
+    const traces = Object.entries(byCondition).map(([cond,coords])=>({
+      type:'scattermapbox',
+      lat: coords.map(c=>c[1]), lon: coords.map(c=>c[0]),
+      mode:'markers', name:cond,
+      marker:{size:6, color:condColors[cond]||'#a0aec0', opacity:.75},
+      text: coords.map(()=>cond)
+    }));
+    showChart(id, traces,
+      {title:{text:'Pedestrian Ramp Locations (NYC)'},
+       mapbox:{style:'carto-positron',center:{lat:40.71,lon:-73.98},zoom:9},
+       legend:{orientation:'h'}, margin:{t:44,b:0,l:0,r:0}},
+      [`${pts.length} ramp locations`, 'ufzp-rrqu', 'the_geom', 'dws_conditions']
+    );
+  },
+
+  // ── 8: Capital Intersections Map ────────────────────────────
+  async gis2(id){
+    const rows = await soql('97nd-ff3i', {
+      '$select': 'the_geom, projectsta, projtitle, leadagency',
+      '$where':  'the_geom IS NOT NULL',
+      '$limit':  '600'
+    });
+    const pts=[];
+    rows.forEach(r=>{
+      if(r.the_geom?.type==='MultiPoint'){
+        r.the_geom.coordinates.forEach(c=>pts.push({lon:c[0],lat:c[1],sta:r.projectsta||'Unknown',title:r.projtitle||''}));
+      } else if(r.the_geom?.type==='Point'){
+        pts.push({lon:r.the_geom.coordinates[0],lat:r.the_geom.coordinates[1],sta:r.projectsta||'Unknown',title:r.projtitle||''});
+      }
+    });
+    const staColors={'Completed Project':'#276749','Substantial Completion':'#b7791f','Final Completion':'#003087'};
+    const bySta={};
+    pts.forEach(p=>{if(!bySta[p.sta])bySta[p.sta]=[];bySta[p.sta].push(p);});
+    const traces=Object.entries(bySta).slice(0,6).map(([sta,pts])=>({
+      type:'scattermapbox',
+      lat:pts.map(p=>p.lat), lon:pts.map(p=>p.lon),
+      mode:'markers', name:sta.length>25?sta.slice(0,25)+'…':sta,
+      marker:{size:7,color:staColors[sta]||'#2b6cb0',opacity:.8},
+      text:pts.map(p=>p.title)
+    }));
+    showChart(id, traces,
+      {title:{text:'Capital Project Intersections'},
+       mapbox:{style:'carto-positron',center:{lat:40.71,lon:-73.98},zoom:9},
+       legend:{orientation:'h'}, margin:{t:44,b:0,l:0,r:0}},
+      [`${pts.length} intersections`, '97nd-ff3i', 'the_geom']
+    );
+  },
+
+  // ── 9: Ramp Condition Map (dws_conditions) ───────────────────
+  async gis3(id){
+    const rows = await soql('ufzp-rrqu', {
+      '$select': 'the_geom, dws_conditions, ramp_running_slope_total',
+      '$where':  "the_geom IS NOT NULL AND dws_conditions IN ('Good Condition','Defective','Missing')",
+      '$limit':  '800'
+    });
+    const pts=rows.filter(r=>r.the_geom?.coordinates);
+    const condColors={'Good Condition':'#276749','Defective':'#c53030','Missing':'#b7791f'};
+    const byCond={};
+    pts.forEach(r=>{
+      const c=r.dws_conditions;
+      if(!byCond[c])byCond[c]=[];
+      byCond[c].push({lon:r.the_geom.coordinates[0],lat:r.the_geom.coordinates[1],slope:r.ramp_running_slope_total||''});
+    });
+    const traces=Object.entries(byCond).map(([cond,pts])=>({
+      type:'scattermapbox', lat:pts.map(p=>p.lat), lon:pts.map(p=>p.lon),
+      mode:'markers', name:cond,
+      marker:{size:7, color:condColors[cond], opacity:.75},
+      text:pts.map(p=>`${cond}<br>Slope: ${p.slope}°`)
+    }));
+    showChart(id, traces,
+      {title:{text:'Ramp Condition Status Map'},
+       mapbox:{style:'carto-positron',center:{lat:40.71,lon:-73.98},zoom:9},
+       legend:{orientation:'h'}, margin:{t:44,b:0,l:0,r:0}},
+      [`${pts.length} ramps`, 'ufzp-rrqu', 'dws_conditions']
+    );
+  },
+
+  // ── 10: Ramp Complaints Map (bubble by borough) ──────────────
+  async gis4(id){
+    const rows = await soql('jagj-gttd', {
+      '$select': 'borough, count(*) as total',
+      '$where':  'borough IS NOT NULL',
+      '$group':  'borough', '$order': 'total DESC', '$limit': '10'
+    });
+    const BORO_CENTERS={
+      'MANHATTAN':  {lat:40.779,lon:-73.969},
+      'BROOKLYN':   {lat:40.650,lon:-73.950},
+      'QUEENS':     {lat:40.728,lon:-73.794},
+      'BRONX':      {lat:40.845,lon:-73.865},
+      'STATEN ISLAND':{lat:40.579,lon:-74.152}
+    };
+    const pts=rows.map(r=>({...BORO_CENTERS[r.borough?.toUpperCase()],borough:r.borough,total:+r.total}))
+               .filter(p=>p.lat);
+    showChart(id,
+      [{type:'scattermapbox', lat:pts.map(p=>p.lat), lon:pts.map(p=>p.lon),
+        mode:'markers', marker:{size:pts.map(p=>Math.sqrt(p.total/3)),color:'#c53030',opacity:.6,sizemode:'diameter'},
+        text:pts.map(p=>`${p.borough}: ${p.total.toLocaleString()} complaints`),
+        hoverinfo:'text', name:'Ramp Complaints'}],
+      {title:{text:'Ramp Complaint Volume by Borough'},
+       mapbox:{style:'carto-positron',center:{lat:40.70,lon:-73.95},zoom:9},
+       margin:{t:44,b:0,l:0,r:0}},
+      [`${rows.reduce((s,r)=>s+ +r.total,0).toLocaleString()} complaints`, 'jagj-gttd']
+    );
+  },
+
+  // ── 11: Ramps Count by Borough ───────────────────────────────
+  async gis5(id){
+    const rows = await soql('ufzp-rrqu', {
+      '$select': 'borough, count(*) as total',
+      '$where':  'borough IS NOT NULL',
+      '$group':  'borough', '$order': 'total DESC', '$limit': '10'
+    });
+    const x=rows.map(r=>BORO_MAP[r.borough]||`Boro ${r.borough}`);
+    const y=rows.map(r=>+r.total);
+    showChart(id,
+      [{x, y, type:'bar', marker:{color:COLORS_BLUE.slice(0,x.length)}}],
+      {title:{text:'Pedestrian Ramp Count by Borough'},
+       xaxis:{title:'Borough'}, yaxis:{title:'Ramps'}},
+      [`${y.reduce((a,b)=>a+b,0).toLocaleString()} total ramps`, 'ufzp-rrqu']
+    );
+  },
+
+  // ── 12: Ramp Conditions Distribution ─────────────────────────
+  async gis6(id){
+    const rows = await soql('ufzp-rrqu', {
+      '$select': 'dws_conditions, count(*) as total',
+      '$where':  'dws_conditions IS NOT NULL',
+      '$group':  'dws_conditions', '$order': 'total DESC', '$limit': '10'
+    });
+    showChart(id,
+      [{x:rows.map(r=>r.dws_conditions), y:rows.map(r=>+r.total), type:'bar',
+        marker:{color:rows.map(r=>r.dws_conditions==='Good Condition'?'#276749':r.dws_conditions==='Defective'?'#c53030':'#b7791f')}}],
+      {title:{text:'Ramp Condition Status Distribution'},
+       xaxis:{title:'Condition'}, yaxis:{title:'Count'}},
+      [`${rows.reduce((s,r)=>s+ +r.total,0).toLocaleString()} ramps`, 'ufzp-rrqu', 'dws_conditions']
+    );
+  },
+
+  // ── 13: Ramp Running Slope Histogram ─────────────────────────
+  async gis7(id){
+    const rows = await soql('ufzp-rrqu', {
+      '$select': 'ramp_running_slope_total',
+      '$where':  'ramp_running_slope_total IS NOT NULL AND ramp_running_slope_total < 20',
+      '$limit':  '2000'
+    });
+    const vals=rows.map(r=>+r.ramp_running_slope_total).filter(v=>!isNaN(v)&&v>=0);
+    // Bucket into 0.5° bins
+    const buckets={};
+    vals.forEach(v=>{const b=(Math.floor(v*2)/2).toFixed(1); buckets[b]=(buckets[b]||0)+1;});
+    const bk=Object.keys(buckets).sort((a,b)=>+a- +b);
+    showChart(id,
+      [{x:bk.map(Number), y:bk.map(k=>buckets[k]), type:'bar',
+        marker:{color:'#b7791f'}, name:'Ramps'}],
+      {title:{text:'Ramp Running Slope Distribution (0.5° bins)'},
+       xaxis:{title:'Slope (degrees)'}, yaxis:{title:'Count'}},
+      [`${vals.length} ramps`, 'ufzp-rrqu', 'ramp_running_slope_total']
+    );
+  },
+
+  // ── 14: Ramp Complaints by Borough ───────────────────────────
+  async gis8(id){
+    const rows = await soql('jagj-gttd', {
+      '$select': 'borough, count(*) as total',
+      '$where':  'borough IS NOT NULL',
+      '$group':  'borough', '$order': 'total DESC', '$limit': '10'
+    });
+    showChart(id,
+      [{y:rows.map(r=>r.borough), x:rows.map(r=>+r.total), type:'bar', orientation:'h',
+        marker:{color:COLORS_WARM[0]}}],
+      {title:{text:'Ramp Complaints by Borough'},
+       xaxis:{title:'Complaints'}, yaxis:{title:'Borough'},
+       margin:{t:44,b:48,l:120,r:30}},
+      [`${rows.reduce((s,r)=>s+ +r.total,0).toLocaleString()} complaints`, 'jagj-gttd']
+    );
+  },
+
+  // ── 15: Capital Project Status ────────────────────────────────
+  async gis9(id){
+    const rows = await soql('97nd-ff3i', {
+      '$select': 'projectsta, count(*) as total',
+      '$where':  'projectsta IS NOT NULL',
+      '$group':  'projectsta', '$order': 'total DESC', '$limit': '10'
+    });
+    showChart(id,
+      [{labels:rows.map(r=>r.projectsta.length>30?r.projectsta.slice(0,30)+'…':r.projectsta),
+        values:rows.map(r=>+r.total), type:'pie',
+        marker:{colors:COLORS_BLUE.concat(COLORS_MIX)}, hole:0.35,
+        textinfo:'label+percent', textposition:'auto'}],
+      {title:{text:'Capital Projects by Status'},showlegend:true},
+      [`${rows.reduce((s,r)=>s+ +r.total,0).toLocaleString()} intersections`, '97nd-ff3i']
+    );
+  },
+
+  // ── 16: Capital Intersections by Project Type ─────────────────
+  async gis10(id){
+    const [type_rows, geo_rows] = await Promise.all([
+      soql('97nd-ff3i', {
+        '$select': 'projecttyp, count(*) as total',
+        '$where':  'projecttyp IS NOT NULL',
+        '$group':  'projecttyp', '$order': 'total DESC', '$limit': '12'
+      }),
+      soql('97nd-ff3i', {
+        '$select': 'the_geom, projecttyp',
+        '$where':  'the_geom IS NOT NULL AND projecttyp IS NOT NULL',
+        '$limit':  '500'
+      })
+    ]);
+    const pts=[];
+    geo_rows.forEach(r=>{
+      if(r.the_geom?.type==='MultiPoint'){
+        r.the_geom.coordinates.forEach(c=>pts.push({lon:c[0],lat:c[1],typ:r.projecttyp}));
+      } else if(r.the_geom?.type==='Point'){
+        pts.push({lon:r.the_geom.coordinates[0],lat:r.the_geom.coordinates[1],typ:r.projecttyp});
+      }
+    });
+    const byTyp={};
+    pts.forEach(p=>{if(!byTyp[p.typ])byTyp[p.typ]=[];byTyp[p.typ].push(p);});
+    const traces=Object.entries(byTyp).slice(0,6).map(([typ,pts],i)=>({
+      type:'scattermapbox', lat:pts.map(p=>p.lat), lon:pts.map(p=>p.lon),
+      mode:'markers', name:typ,
+      marker:{size:7, color:COLORS_MIX[i%COLORS_MIX.length], opacity:.75}
+    }));
+    showChart(id, traces,
+      {title:{text:'Capital Intersections by Project Type'},
+       mapbox:{style:'carto-positron',center:{lat:40.71,lon:-73.98},zoom:9},
+       legend:{orientation:'h'}, margin:{t:44,b:0,l:0,r:0}},
+      [`${pts.length} intersections`, `${Object.keys(byTyp).length} project types`, '97nd-ff3i']
+    );
+  },
+
+  // ── 17: Inspection KPI Sparkline ─────────────────────────────
+  async aa1(id){
+    const rows = await soql('dntt-gqwq', {
+      '$select': "date_trunc_ym(inspectiondate) as month, count(*) as total",
+      '$where':  "inspectiondate BETWEEN '2019-01-01' AND '2026-12-31'",
+      '$group':  'month', '$order': 'month', '$limit': '200'
+    });
+    const valid=rows.filter(r=>r.month&&r.month>'2000');
+    const x=valid.map(r=>r.month.slice(0,7));
+    const y=valid.map(r=>+r.total);
+    showChart(id,
+      [{x, y, type:'scatter', mode:'lines', fill:'tozeroy',
+        line:{color:'#003087',width:2}, fillcolor:'rgba(0,48,135,.1)'}],
+      {title:{text:'Monthly Inspection Volume KPI (2019–2026)'},
+       xaxis:{title:'Month'}, yaxis:{title:'Count'}},
+      [`${valid.length} months`, 'dntt-gqwq']
+    );
+  },
+
+  // ── 18: Violations YoY (2024 vs 2025) ────────────────────────
+  async aa2(id){
+    const [y24, y25] = await Promise.all([
+      soql('6kbp-uz6m', {
+        '$select':"date_trunc_ym(vissuedate) as month,count(*) as total",
+        '$where': "vissuedate BETWEEN '2024-01-01' AND '2024-12-31'",
+        '$group': 'month','$order':'month','$limit':'15'
+      }),
+      soql('6kbp-uz6m', {
+        '$select':"date_trunc_ym(vissuedate) as month,count(*) as total",
+        '$where': "vissuedate BETWEEN '2025-01-01' AND '2025-12-31'",
+        '$group': 'month','$order':'month','$limit':'15'
+      })
+    ]);
+    const months=['01','02','03','04','05','06','07','08','09','10','11','12'];
+    const toMap=rows=>Object.fromEntries(rows.filter(r=>r.month).map(r=>[r.month.slice(5,7),+r.total]));
+    const m24=toMap(y24), m25=toMap(y25);
+    showChart(id,
+      [{name:'2024', x:months.map(m=>`${m}`), y:months.map(m=>m24[m]||0), type:'bar', marker:{color:'#003087'}},
+       {name:'2025', x:months.map(m=>`${m}`), y:months.map(m=>m25[m]||0), type:'bar', marker:{color:'#90cdf4'}}],
+      {title:{text:'Violations Issued: 2024 vs 2025 (Month-by-Month)'},
+       barmode:'group', xaxis:{title:'Month'}, yaxis:{title:'Count'}, legend:{orientation:'h'}},
+      ['2024 vs 2025', '6kbp-uz6m']
+    );
+  },
+
+  // ── 19: Inspection CUSUM Changepoint ─────────────────────────
+  async aa3(id){
+    const rows = await soql('dntt-gqwq', {
+      '$select':"date_trunc_ym(inspectiondate) as month,count(*) as total",
+      '$where': "inspectiondate BETWEEN '2017-01-01' AND '2026-12-31'",
+      '$group': 'month','$order':'month','$limit':'200'
+    });
+    const valid=rows.filter(r=>r.month&&r.month>'2000');
+    const counts=valid.map(r=>+r.total);
+    const mu=counts.reduce((a,b)=>a+b,0)/counts.length;
+    const cusum=counts.map((_,i)=>counts.slice(0,i+1).reduce((s,v)=>s+(v-mu),0));
+    const cpIdx=cusum.indexOf(cusum.reduce((best,v,i)=>Math.abs(v)>Math.abs(cusum[best])?i:best,0));
+    const x=valid.map(r=>r.month.slice(0,7));
+    showChart(id,
+      [{x, y:cusum, type:'scatter', mode:'lines',
+        line:{color:'#276749',width:2}, name:'CUSUM'},
+       {x:[x[cpIdx],x[cpIdx]], y:[Math.min(...cusum)-50,Math.max(...cusum)+50],
+        mode:'lines', line:{color:'#c53030',dash:'dash',width:1.5},
+        name:`Changepoint: ${x[cpIdx]}`}],
+      {title:{text:'CUSUM Changepoint Detection — Monthly Inspections'},
+       yaxis:{title:'Cumulative Deviation'}},
+      [`Changepoint: ${x[cpIdx]}`, `${valid.length} months`, 'dntt-gqwq']
+    );
+  },
+
+  // ── 20: 311 vs Staff Initiated ───────────────────────────────
+  async aa4(id){
+    const rows = await soql('dntt-gqwq', {
+      '$select':'is_311_inspection, count(*) as total',
+      '$group': 'is_311_inspection'
+    });
+    showChart(id,
+      [{labels:rows.map(r=>r.is_311_inspection==='Yes'?'311-Initiated':'Staff-Initiated'),
+        values:rows.map(r=>+r.total), type:'pie',
+        marker:{colors:['#c53030','#003087']}, hole:0.4,
+        textinfo:'label+percent+value'}],
+      {title:{text:'Inspection Source: 311 vs Staff-Initiated'},showlegend:true},
+      [`${rows.reduce((s,r)=>s+ +r.total,0).toLocaleString()} total`, 'dntt-gqwq', 'is_311_inspection']
+    );
+  },
+
+  // ── 21: Violation Grace Period Distribution ───────────────────
+  async aa5(id){
+    const rows = await soql('6kbp-uz6m', {
+      '$select':'grace_pd, count(*) as total',
+      '$where': 'grace_pd IS NOT NULL',
+      '$group': 'grace_pd','$order':'total DESC','$limit':'12'
+    });
+    showChart(id,
+      [{x:rows.map(r=>`${r.grace_pd} days`), y:rows.map(r=>+r.total), type:'bar',
+        marker:{color:'#b7791f'}}],
+      {title:{text:'Violation Grace Period Distribution'},
+       xaxis:{title:'Grace Period'}, yaxis:{title:'Violations'}},
+      [`${rows.reduce((s,r)=>s+ +r.total,0).toLocaleString()} violations`, '6kbp-uz6m', 'grace_pd']
+    );
+  },
+
+  // ── 22: Dismissal Result Heatmap ─────────────────────────────
+  async aa6(id){
+    const rows = await soql('p4u2-3jgx', {
+      '$select': 'borough, pass_fail, count(*) as total',
+      '$where':  'borough IS NOT NULL AND pass_fail IS NOT NULL',
+      '$group':  'borough, pass_fail','$order':'total DESC','$limit':'60'
+    });
+    const boroughs=[...new Set(rows.map(r=>r.borough))].sort();
+    const outcomes=[...new Set(rows.map(r=>r.pass_fail))].slice(0,5);
+    const z=outcomes.map(o=>boroughs.map(b=>{
+      const r=rows.find(r=>r.borough===b&&r.pass_fail===o);
+      return r?+r.total:0;
+    }));
+    showChart(id,
+      [{type:'heatmap',z,x:boroughs,y:outcomes.map(o=>o.length>20?o.slice(0,20)+'…':o),
+        colorscale:'Blues',showscale:true,colorbar:{title:'Count',thickness:12}}],
+      {title:{text:'Dismissal Outcome Heatmap — Borough × Result'},
+       xaxis:{title:'Borough'},margin:{t:44,b:48,l:180,r:30}},
+      [`${rows.reduce((s,r)=>s+ +r.total,0).toLocaleString()} records`, 'p4u2-3jgx']
+    );
+  },
+
+  // ── 23: Dismissals by Borough ────────────────────────────────
+  async aa7(id){
+    const rows = await soql('p4u2-3jgx', {
+      '$select':'borough, count(*) as total',
+      '$where': 'borough IS NOT NULL',
+      '$group': 'borough','$order':'total DESC','$limit':'10'
+    });
+    showChart(id,
+      [{y:rows.map(r=>r.borough), x:rows.map(r=>+r.total), type:'bar', orientation:'h',
+        marker:{color:'#003087'}}],
+      {title:{text:'Total Dismissal Inspections by Borough'},
+       xaxis:{title:'Count'}, margin:{t:44,b:48,l:110,r:30}},
+      [`${rows.reduce((s,r)=>s+ +r.total,0).toLocaleString()} total`, 'p4u2-3jgx']
+    );
+  },
+
+  // ── 24: Dismissal Attempt Distribution ───────────────────────
+  async aa8(id){
+    const rows = await soql('p4u2-3jgx', {
+      '$select':'attempt, count(*) as total',
+      '$where': 'attempt IS NOT NULL',
+      '$group': 'attempt','$order':'total DESC','$limit':'10'
+    });
+    showChart(id,
+      [{x:rows.map(r=>`Attempt ${r.attempt}`), y:rows.map(r=>+r.total), type:'bar',
+        marker:{color:COLORS_WARM}}],
+      {title:{text:'Number of Inspection Attempts per Dismissal'},
+       xaxis:{title:'Attempt #'}, yaxis:{title:'Count'}},
+      [`${rows.reduce((s,r)=>s+ +r.total,0).toLocaleString()} records`, 'p4u2-3jgx', 'attempt']
+    );
+  },
+
+  // ── 25: Ramp Complaints Annual Trend ─────────────────────────
+  async aa9(id){
+    const rows = await soql('jagj-gttd', {
+      '$select':"date_trunc_y(complaint_date) as yr, count(*) as total",
+      '$where': "complaint_date BETWEEN '2018-01-01' AND '2026-12-31'",
+      '$group': 'yr','$order':'yr','$limit':'20'
+    });
+    const valid=rows.filter(r=>r.yr&&r.yr>'2000');
+    showChart(id,
+      [{x:valid.map(r=>r.yr.slice(0,4)), y:valid.map(r=>+r.total),
+        type:'scatter', mode:'lines+markers',
+        line:{color:'#276749',width:2.5}, marker:{size:7}}],
+      {title:{text:'Ramp Complaints Filed per Year'},
+       xaxis:{title:'Year'}, yaxis:{title:'Complaints'}},
+      [`${valid.length} years`, 'jagj-gttd', 'complaint_date']
+    );
+  },
+
+  // ── 26: Inspections vs Violations Annual ─────────────────────
+  async aa10(id){
+    const [insp, viol] = await Promise.all([
+      soql('dntt-gqwq', {
+        '$select':"date_trunc_y(inspectiondate) as yr,count(*) as total",
+        '$where': "inspectiondate BETWEEN '2016-01-01' AND '2026-12-31'",
+        '$group':'yr','$order':'yr','$limit':'15'
+      }),
+      soql('6kbp-uz6m', {
+        '$select':"date_trunc_y(vissuedate) as yr,count(*) as total",
+        '$where': "vissuedate BETWEEN '2016-01-01' AND '2026-12-31'",
+        '$group':'yr','$order':'yr','$limit':'15'
+      })
+    ]);
+    const years=[...new Set([...insp,...viol].map(r=>r.yr?.slice(0,4)).filter(Boolean))].sort();
+    const toMap=rows=>Object.fromEntries(rows.filter(r=>r.yr).map(r=>[r.yr.slice(0,4),+r.total]));
+    const im=toMap(insp), vm=toMap(viol);
+    showChart(id,
+      [{name:'Inspections',x:years,y:years.map(y=>im[y]||0),type:'bar',marker:{color:'#003087'}},
+       {name:'Violations', x:years,y:years.map(y=>vm[y]||0),type:'bar',marker:{color:'#c53030'}}],
+      {title:{text:'Inspections vs Violations Issued per Year'},
+       barmode:'group',legend:{orientation:'h'}},
+      ['2016–2026', 'dntt-gqwq + 6kbp-uz6m']
+    );
+  },
+
+  // ── 27: Ramp Condition by Borough Heatmap ────────────────────
+  async aa11(id){
+    const rows = await soql('ufzp-rrqu', {
+      '$select':'borough, dws_conditions, count(*) as total',
+      '$where': 'borough IS NOT NULL AND dws_conditions IS NOT NULL',
+      '$group': 'borough, dws_conditions','$order':'total DESC','$limit':'60'
+    });
+    const boroughs=[...new Set(rows.map(r=>BORO_MAP[r.borough]||r.borough))].sort();
+    const conditions=[...new Set(rows.map(r=>r.dws_conditions))];
+    const z=conditions.map(c=>boroughs.map(b=>{
+      const bk=Object.keys(BORO_MAP).find(k=>BORO_MAP[k]===b)||b;
+      const r=rows.find(r=>(BORO_MAP[r.borough]===b||r.borough===b)&&r.dws_conditions===c);
+      return r?+r.total:0;
+    }));
+    showChart(id,
+      [{type:'heatmap',z,x:boroughs,y:conditions,
+        colorscale:'Reds',showscale:true,colorbar:{title:'Count',thickness:12}}],
+      {title:{text:'Ramp Condition by Borough'},
+       xaxis:{title:'Borough'},margin:{t:44,b:48,l:140,r:30}},
+      [`${rows.reduce((s,r)=>s+ +r.total,0).toLocaleString()} ramps`, 'ufzp-rrqu']
+    );
+  },
+
+  // ── 28: Capital Project Type Breakdown ───────────────────────
+  async aa12(id){
+    const rows = await soql('97nd-ff3i', {
+      '$select':'projecttyp, count(*) as total',
+      '$where': 'projecttyp IS NOT NULL',
+      '$group': 'projecttyp','$order':'total DESC','$limit':'12'
+    });
+    showChart(id,
+      [{y:rows.map(r=>r.projecttyp), x:rows.map(r=>+r.total), type:'bar', orientation:'h',
+        marker:{color:COLORS_BLUE.slice(0,rows.length)}}],
+      {title:{text:'Capital Project Intersections by Project Type'},
+       xaxis:{title:'Count'}, margin:{t:44,b:48,l:80,r:30}},
+      [`${rows.reduce((s,r)=>s+ +r.total,0).toLocaleString()} intersections`, '97nd-ff3i', 'projecttyp']
+    );
+  },
+
+  // ── 29: Inspections vs Dismissals Trend ──────────────────────
+  async aa13(id){
+    const [insp, dism] = await Promise.all([
+      soql('dntt-gqwq', {
+        '$select':"date_trunc_y(inspectiondate) as yr,count(*) as total",
+        '$where': "inspectiondate BETWEEN '2018-01-01' AND '2026-12-31'",
+        '$group':'yr','$order':'yr','$limit':'15'
+      }),
+      soql('p4u2-3jgx', {
+        '$select':"date_trunc_y(inspection_date) as yr,count(*) as total",
+        '$where': "inspection_date BETWEEN '2018-01-01' AND '2026-12-31'",
+        '$group':'yr','$order':'yr','$limit':'15'
+      })
+    ]);
+    const years=[...new Set([...insp,...dism].map(r=>r.yr?.slice(0,4)).filter(Boolean))].sort();
+    const im=Object.fromEntries(insp.filter(r=>r.yr).map(r=>[r.yr.slice(0,4),+r.total]));
+    const dm=Object.fromEntries(dism.filter(r=>r.yr).map(r=>[r.yr.slice(0,4),+r.total]));
+    showChart(id,
+      [{name:'Inspections',x:years,y:years.map(y=>im[y]||0),mode:'lines+markers',
+        line:{color:'#003087',width:2.5},marker:{size:6}},
+       {name:'Dismissal Insp.',x:years,y:years.map(y=>dm[y]||0),mode:'lines+markers',
+        line:{color:'#276749',width:2.5,dash:'dash'},marker:{size:6}}],
+      {title:{text:'Annual Inspections vs Dismissal Inspections'},
+       yaxis:{title:'Count'}, legend:{orientation:'h'}},
+      ['2018–2026', 'dntt-gqwq + p4u2-3jgx']
+    );
+  },
+
+  // ── 30: Live Row Counts ───────────────────────────────────────
+  async dc1(id){
+    const datasets=[
+      {key:'inspection',    ff:'dntt-gqwq', label:'SMD Inspection'},
+      {key:'violations',    ff:'6kbp-uz6m', label:'Violations'},
+      {key:'dismissals',    ff:'p4u2-3jgx', label:'Dismissals'},
+      {key:'ramp_locations',ff:'ufzp-rrqu', label:'Ramp Locations'},
+      {key:'ramp_complaints',ff:'jagj-gttd',label:'Ramp Complaints'},
+      {key:'capital_ints',  ff:'97nd-ff3i', label:'Capital Intersections'},
+    ];
+    const counts = await Promise.all(
+      datasets.map(d=>soql(d.ff,{'$select':'count(*) as n','$limit':'1'}).then(r=>+r[0].n).catch(()=>null))
+    );
+    const valid=datasets.filter((_,i)=>counts[i]!==null);
+    showChart(id,
+      [{x:valid.map((_,i)=>datasets[i].label),
+        y:valid.map((_,i)=>counts[i]),
+        type:'bar',
+        text:valid.map((_,i)=>counts[i].toLocaleString()),
+        textposition:'outside',
+        marker:{color:COLORS_BLUE.slice(0,valid.length)}}],
+      {title:{text:'Live Row Counts — 6 Core Datasets'},
+       yaxis:{title:'Rows'}, margin:{t:60,b:80,l:60,r:30}},
+      ['Live counts', 'COUNT(*) per dataset', new Date().toLocaleDateString()]
+    );
+  },
+};
+
+function scrollToEl(id){ document.getElementById(id)?.scrollIntoView({behavior:'smooth'}); }
 </script>
 </body>
 </html>
