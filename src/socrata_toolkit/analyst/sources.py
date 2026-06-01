@@ -30,6 +30,7 @@ class ExcelSource:
         self.config = config
 
     def load(self) -> pd.DataFrame:
+        """Load one or more Excel files matching the configured path glob and return a combined DataFrame."""
         path_pattern = self.config.path
         if not path_pattern:
             return pd.DataFrame()
@@ -51,6 +52,7 @@ class SocrataSource:
         self.config = config
 
     def load(self) -> pd.DataFrame:
+        """Fetch data from a Socrata dataset and return it as a DataFrame."""
         from ..core import SocrataClient
 
         if not self.config.domain or not self.config.fourfour:
@@ -69,6 +71,7 @@ class PostgresSource:
         self.config = config
 
     def load(self) -> pd.DataFrame:
+        """Query the configured Postgres table via DSN env var and return a DataFrame."""
         dsn = os.getenv(self.config.dsn_env, "")
         table = self.config.table
         if not dsn or not table:
@@ -87,6 +90,7 @@ class GeoSource:
         self.config = config
 
     def load(self) -> pd.DataFrame:
+        """Load geospatial files matching the configured path glob and return a flat DataFrame."""
         path_pattern = self.config.path
         if not path_pattern:
             return pd.DataFrame()
@@ -114,6 +118,7 @@ class GeoSource:
 
 
 def build_source(config: SourceConfig) -> DataSource:
+    """Instantiate and return the appropriate DataSource subclass for the given config type."""
     kind = config.type.lower()
     if kind == "excel":
         return ExcelSource(config)

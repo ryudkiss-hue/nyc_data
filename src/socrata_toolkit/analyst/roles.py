@@ -124,6 +124,7 @@ def list_role_profiles(directory: str | Path | None = None) -> list[RoleProfile]
 
 
 def resolve_role_profile_path(role: str | None, explicit: str | None = None) -> Path | None:
+    """Resolve a role profile file path from a role_id or an explicit path string."""
     if explicit:
         p = Path(explicit)
         return p if p.exists() else ROLE_PROFILES_DIR / explicit
@@ -326,6 +327,7 @@ def build_role_task_status_md(
     completion_pct: float,
     run_date: str,
 ) -> str:
+    """Render a Markdown task-status report for the role from per-duty completion data."""
     lines = [
         f"# Role task status — {role.display_name}",
         "",
@@ -353,6 +355,7 @@ def build_role_task_status_md(
 
 
 def role_dashboard_to_dict(dashboard: RoleKpiDashboard) -> dict[str, Any]:
+    """Serialize a RoleKpiDashboard to a JSON-compatible dict."""
     return {
         "role_id": dashboard.role_id,
         "display_name": dashboard.display_name,

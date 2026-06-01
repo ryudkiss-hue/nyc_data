@@ -44,6 +44,7 @@ class ExpectationSuite:
         self.expectations: list[Expectation] = []
 
     def add_column_exists(self, column: str, severity: SeverityLevel = SeverityLevel.CRITICAL):
+        """Add a column-exists expectation for the named column."""
         self.expectations.append(Expectation(
             expectation_type=ExpectationType.COLUMN_EXISTS,
             kwargs={"column": column},
@@ -52,6 +53,7 @@ class ExpectationSuite:
         ))
 
     def add_column_not_null(self, column: str, severity: SeverityLevel = SeverityLevel.HIGH, mostly: float = 1.0):
+        """Add a not-null expectation for the named column, with an optional mostly threshold."""
         self.expectations.append(Expectation(
             expectation_type=ExpectationType.COLUMN_NOT_NULL,
             kwargs={"column": column, "mostly": mostly},
@@ -60,6 +62,7 @@ class ExpectationSuite:
         ))
 
     def add_column_values_in_set(self, column: str, value_set: set, severity: SeverityLevel = SeverityLevel.HIGH):
+        """Add an expectation that all non-null values in column belong to value_set."""
         self.expectations.append(Expectation(
             expectation_type=ExpectationType.COLUMN_VALUES_IN_SET,
             kwargs={"column": column, "value_set": value_set},
@@ -68,6 +71,7 @@ class ExpectationSuite:
         ))
 
     def validate(self, df: pd.DataFrame) -> ValidationSuiteResult:
+        """Run all expectations against df and return a ValidationSuiteResult."""
         passed_count = 0
         failed_count = 0
 
@@ -101,6 +105,7 @@ class ExpectationSuite:
         return ValidationSuiteResult(overall_status=status, passed_count=passed_count, failed_count=failed_count)
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize the suite and all its expectations to a JSON-compatible dict."""
         return {
             "name": self.name,
             "description": self.description,
@@ -117,6 +122,7 @@ class ExpectationSuite:
         }
 
 def create_sidewalk_inspections_suite() -> ExpectationSuite:
+    """Return a pre-built ExpectationSuite for the sidewalk inspections dataset."""
     suite = ExpectationSuite(name="sidewalk_inspections", description="Sidewalk inspections data quality")
     suite.add_column_exists("inspection_id")
     suite.add_column_not_null("inspection_id")
@@ -127,6 +133,7 @@ def create_sidewalk_inspections_suite() -> ExpectationSuite:
     return suite
 
 def create_311_complaints_suite() -> ExpectationSuite:
+    """Return a pre-built ExpectationSuite for the 311 complaints dataset."""
     suite = ExpectationSuite(name="311_complaints", description="311 complaints data quality")
     suite.add_column_exists("unique_key")
     suite.add_column_not_null("unique_key")
@@ -140,10 +147,13 @@ class QualityExpectation:
     name: str
     rules: dict[str, Any]
     def validate(self, data: Any) -> bool:
+        """Return True if data satisfies the expectation rules (stub, always True)."""
         return True
 
 def define_expectation(name: str, rules: dict[str, Any]) -> QualityExpectation:
+    """Create and return a QualityExpectation with the given name and rules dict."""
     return QualityExpectation(name=name, rules=rules)
 
 def validate_against_expectation(data: Any, expectation: QualityExpectation) -> bool:
+    """Validate data against the given QualityExpectation and return the result."""
     return expectation.validate(data)
