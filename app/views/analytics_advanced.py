@@ -105,17 +105,9 @@ def _load_hiqa(limit: int = 10_000) -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------------------
-# CUSUM change-point detection
+# CUSUM change-point detection (pure logic lives in the analysis library)
 # ---------------------------------------------------------------------------
-
-
-def detect_cusum_changepoint(series: pd.Series) -> int | None:
-    if len(series) < 4:
-        return None
-    mu = series.mean()
-    cusum = (series - mu).cumsum()
-    return int(cusum.abs().idxmax())
-
+from socrata_toolkit.analysis.changepoint import detect_cusum_changepoint  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Anomaly summary helper

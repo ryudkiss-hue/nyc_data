@@ -1,4 +1,6 @@
 """Entity matching and similarity scoring for record deduplication."""
+from __future__ import annotations
+
 import math
 from typing import Any
 
