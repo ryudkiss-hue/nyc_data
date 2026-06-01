@@ -4,6 +4,9 @@ on:
     branches: [main, "claude/*"]
   pull_request:
     branches: [main]
+
+permissions: read-all
+
 jobs:
   test:
     runs-on: ubuntu-latest

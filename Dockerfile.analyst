@@ -20,4 +20,10 @@ RUN mkdir -p data outputs outputs/analyst_pack data/local_db
 ENV PYTHONUNBUFFERED=1
 ENV ANALYST_PROFILE=config/analyst_profile.yaml
 
+RUN useradd -m appuser
+USER appuser
+
+HEALTHCHECK --interval=60s --timeout=10s --retries=3 \
+    CMD python -c "import sys; sys.exit(0)"
+
 CMD ["python", "-m", "socrata_toolkit.core.cli", "analyst", "run", "--profile", "config/analyst_profile.example.yaml"]

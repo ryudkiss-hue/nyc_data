@@ -9,7 +9,7 @@ Usage::
     python app/llm_proxy.py
 
     # Production (gunicorn)
-    gunicorn app.llm_proxy:create_proxy_app --bind 0.0.0.0:5001
+    gunicorn app.llm_proxy:create_proxy_app --bind 127.0.0.1:5001
 
 Environment variables:
 
@@ -198,4 +198,4 @@ if __name__ == "__main__":
     print(f"  Gemini key: {'✓ set' if os.environ.get('GEMINI_API_KEY') else '✗ not set'}")
     print(f"  OpenAI key: {'✓ set' if os.environ.get('OPENAI_API_KEY') else '✗ not set'}")
     proxy = create_proxy_app()
-    proxy.run(host="0.0.0.0", port=port, debug=False)
+    proxy.run(host="127.0.0.1", port=port, debug=False)
