@@ -2,15 +2,18 @@
 
 from __future__ import annotations
 
+import datetime
 import json
 import os
 import sys
 from pathlib import Path
 
 import streamlit as st
+import yaml
 
-from app.data_loader import cache_freshness_report
+from app.data_loader import DATASET_REGISTRY, cache_freshness_report
 from app.services import agency
+from app.services.alerts import get_last_scheduler_run, send_slack_alert, test_arcgis_connection
 from app.ui.theme import render_quality_badge, render_readiness_bars
 from app.utils.i18n import t
 from socrata_toolkit.core.readiness import run_readiness_checks
@@ -18,6 +21,38 @@ from socrata_toolkit.core.readiness import run_readiness_checks
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _ENV_FILE = _REPO_ROOT / ".env"
 _PRESETS_FILE = _REPO_ROOT / "data" / "filter_presets.json"
+_SCHEDULER_CONFIG = _REPO_ROOT / "data" / "scheduler_config.json"
+_SLA_CONFIG = _REPO_ROOT / "data" / "sla_config.json"
+
+_SLA_DEFAULTS: dict[str, int] = {"HIGH": 14, "MED": 30, "LOW": 60}
+
+ENV_VARS_TABLE = [
+    {
+        "name": "SOCRATA_APP_TOKEN",
+        "description": "Socrata API app token",
+        "required": False,
+    },
+    {
+        "name": "ANTHROPIC_API_KEY",
+        "description": "Anthropic API key for NL queries",
+        "required": False,
+    },
+    {
+        "name": "SLACK_WEBHOOK_URL",
+        "description": "Slack webhook for alerts",
+        "required": False,
+    },
+    {
+        "name": "SOCRATA_CACHE_DIR",
+        "description": "L2 cache directory",
+        "required": False,
+    },
+    {
+        "name": "ARCGIS_ORG_URL",
+        "description": "ArcGIS Online org URL",
+        "required": False,
+    },
+]
 
 
 def _read_env_file() -> dict[str, str]:
@@ -73,6 +108,10 @@ def render_settings_page() -> None:
         tab_alerts,
         tab_presets,
         tab_impex,
+        tab_scheduler,
+        tab_sla,
+        tab_alert_config,
+        tab_env,
     ) = st.tabs([
         "🔑 API Tokens",
         "⚙️ Configuration",
@@ -85,6 +124,10 @@ def render_settings_page() -> None:
         "🔔 Alerts",
         "📌 Filter Presets",
         "💾 Import/Export",
+        "⏰ Scheduler",
+        "🚦 SLA Thresholds",
+        "🔔 Alert Config",
+        "📋 Environment",
     ])
 
     # ------------------------------------------------------------------
@@ -259,6 +302,22 @@ def render_settings_page() -> None:
     # ------------------------------------------------------------------
     with tab_impex:
         _render_import_export_tab()
+
+    # ------------------------------------------------------------------
+    with tab_scheduler:
+        _render_scheduler_tab()
+
+    # ------------------------------------------------------------------
+    with tab_sla:
+        _render_sla_tab()
+
+    # ------------------------------------------------------------------
+    with tab_alert_config:
+        _render_alert_config_tab()
+
+    # ------------------------------------------------------------------
+    with tab_env:
+        _render_environment_tab()
 
 
 # --------------------------------------------------------------------------- #
@@ -726,3 +785,269 @@ def _render_import_export_tab() -> None:
                 st.info("Review above then manually apply to .env")
             except Exception as exc:
                 st.error(str(exc))
+
+
+# --------------------------------------------------------------------------- #
+# Unit-14 tab helpers
+# --------------------------------------------------------------------------- #
+
+
+def _load_scheduler_config() -> dict:
+    """Load scheduler config from data/scheduler_config.json."""
+    if _SCHEDULER_CONFIG.exists():
+        try:
+            return json.loads(_SCHEDULER_CONFIG.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            pass
+    return {}
+
+
+def _save_scheduler_config(data: dict) -> None:
+    """Persist scheduler config to data/scheduler_config.json."""
+    _SCHEDULER_CONFIG.parent.mkdir(parents=True, exist_ok=True)
+    _SCHEDULER_CONFIG.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+
+def _load_sla_config() -> dict[str, int]:
+    """Load SLA thresholds from data/sla_config.json."""
+    if _SLA_CONFIG.exists():
+        try:
+            raw = json.loads(_SLA_CONFIG.read_text(encoding="utf-8"))
+            return {k: int(v) for k, v in raw.items() if k in _SLA_DEFAULTS}
+        except (json.JSONDecodeError, OSError, ValueError):
+            pass
+    return dict(_SLA_DEFAULTS)
+
+
+def _render_scheduler_tab() -> None:
+    """Tab 1: Scheduler Config."""
+    import pandas as pd
+
+    st.markdown("### ⏰ Nightly Scheduler")
+    st.caption(
+        "Configure which datasets are prefetched each night and at what time (UTC). "
+        "Settings persist to `data/scheduler_config.json`."
+    )
+
+    cfg = _load_scheduler_config()
+    dataset_keys = list(DATASET_REGISTRY.keys())
+
+    enabled = st.toggle(
+        "Enable nightly scheduler",
+        key="scheduler_enabled",
+        value=cfg.get("enabled", False),
+    )
+
+    selected_datasets = st.multiselect(
+        "Datasets to prefetch",
+        options=dataset_keys,
+        default=[k for k in cfg.get("datasets", []) if k in dataset_keys],
+        key="scheduler_datasets",
+    )
+
+    # Parse stored run time
+    stored_time_str = cfg.get("run_time_utc", "02:00")
+    try:
+        h, m = stored_time_str.split(":")
+        default_time = datetime.time(int(h), int(m))
+    except (ValueError, AttributeError):
+        default_time = datetime.time(2, 0)
+
+    run_time = st.time_input(
+        "Run time (UTC)",
+        key="scheduler_time",
+        value=default_time,
+    )
+
+    last_run = get_last_scheduler_run()
+    st.metric("Last run", value=last_run)
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        if st.button("💾 Save scheduler settings", type="primary"):
+            new_cfg = {
+                **cfg,
+                "enabled": enabled,
+                "datasets": selected_datasets,
+                "run_time_utc": run_time.strftime("%H:%M"),
+            }
+            try:
+                _save_scheduler_config(new_cfg)
+                st.success("Scheduler settings saved to `data/scheduler_config.json`.")
+            except OSError as exc:
+                st.error(f"Failed to save: {exc}")
+
+    with col2:
+        if st.button("▶ Run now", help="Trigger an immediate cache refresh for selected datasets"):
+            if not selected_datasets:
+                st.warning("Select at least one dataset to prefetch.")
+            else:
+                with st.spinner("Refreshing cache for selected datasets…"):
+                    try:
+                        from app.data_loader import fetch_datasets_for_keys
+                        frames = fetch_datasets_for_keys(
+                            tuple(selected_datasets), limit=50_000
+                        )
+                        loaded = [k for k, v in frames.items() if v is not None and not getattr(v, "empty", True)]
+                        # Record last run
+                        import datetime as _dt
+                        now_iso = _dt.datetime.utcnow().isoformat() + "Z"
+                        run_cfg = _load_scheduler_config()
+                        run_cfg["last_run"] = now_iso
+                        _save_scheduler_config(run_cfg)
+                        st.success(f"Cache refreshed for {len(loaded)}/{len(selected_datasets)} dataset(s).")
+                    except Exception as exc:
+                        st.error(f"Cache refresh failed: {exc}")
+
+    if cfg:
+        with st.expander("Current scheduler_config.json"):
+            st.json(cfg)
+
+
+def _render_sla_tab() -> None:
+    """Tab 2: SLA Thresholds."""
+    st.markdown("### 🚦 SLA Thresholds")
+    st.caption(
+        "Define maximum days-since-update for each dataset priority tier. "
+        "Saved to `data/sla_config.json`."
+    )
+
+    current_sla = _load_sla_config()
+    sliders: dict[str, int] = {}
+
+    for priority in ["HIGH", "MED", "LOW"]:
+        sliders[priority] = st.slider(
+            f"{priority} SLA (days)",
+            min_value=1,
+            max_value=90,
+            value=current_sla.get(priority, _SLA_DEFAULTS[priority]),
+            key=f"sla_{priority}",
+        )
+
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("💾 Save thresholds", type="primary"):
+            try:
+                _SLA_CONFIG.parent.mkdir(parents=True, exist_ok=True)
+                _SLA_CONFIG.write_text(json.dumps(sliders, indent=2), encoding="utf-8")
+                st.success("SLA thresholds saved to `data/sla_config.json`.")
+            except OSError as exc:
+                st.error(f"Failed to save: {exc}")
+
+    with col2:
+        if st.button("Reset to defaults"):
+            try:
+                _SLA_CONFIG.parent.mkdir(parents=True, exist_ok=True)
+                _SLA_CONFIG.write_text(
+                    json.dumps(_SLA_DEFAULTS, indent=2), encoding="utf-8"
+                )
+                st.success("SLA thresholds reset to defaults.")
+                st.rerun()
+            except OSError as exc:
+                st.error(f"Failed to reset: {exc}")
+
+    if _SLA_CONFIG.exists():
+        with st.expander("Current sla_config.json"):
+            st.json(_load_sla_config())
+
+
+def _render_alert_config_tab() -> None:
+    """Tab 3: Alert Config (Slack + ArcGIS)."""
+    st.markdown("### 🔔 Alert Configuration")
+
+    # ---- Slack section ----
+    st.markdown("#### Slack Webhook")
+    slack_webhook = st.text_input(
+        "Slack Webhook URL",
+        type="password",
+        key="slack_webhook_url",
+        value=os.getenv("SLACK_WEBHOOK_URL", ""),
+        help="Paste your Slack Incoming Webhook URL here.",
+    )
+    if st.button("Test Slack connection"):
+        url = slack_webhook.strip() or os.getenv("SLACK_WEBHOOK_URL", "").strip()
+        if not url:
+            st.warning("Enter a Slack Webhook URL first.")
+        else:
+            ok, msg = send_slack_alert(
+                webhook_url=url,
+                title="NYC DOT SIM — Connection Test",
+                message="This is a test message from the NYC DOT SIM Toolkit (Unit 14 Settings UI).",
+                severity="info",
+            )
+            if ok:
+                st.success(f"Slack test succeeded: {msg}")
+            else:
+                st.error(f"Slack test failed: {msg}")
+
+    st.divider()
+
+    # ---- ArcGIS section ----
+    st.markdown("#### ArcGIS Online")
+    arcgis_org_url = st.text_input(
+        "ArcGIS Online Org URL",
+        key="arcgis_org_url",
+        value=os.getenv("ARCGIS_ORG_URL", ""),
+        placeholder="https://your-org.maps.arcgis.com",
+    )
+    arcgis_username = st.text_input(
+        "ArcGIS Username",
+        key="arcgis_username",
+        value=os.getenv("ARCGIS_USERNAME", ""),
+    )
+    arcgis_password = st.text_input(
+        "ArcGIS Password",
+        type="password",
+        key="arcgis_password",
+    )
+    if st.button("Test ArcGIS connection"):
+        if not arcgis_org_url or not arcgis_username or not arcgis_password:
+            st.warning("Org URL, username, and password are all required.")
+        else:
+            with st.spinner("Testing ArcGIS connection…"):
+                ok, msg = test_arcgis_connection(
+                    arcgis_org_url.strip(),
+                    arcgis_username.strip(),
+                    arcgis_password,
+                )
+            if ok:
+                st.success(f"ArcGIS connection succeeded: {msg}")
+            else:
+                st.error(f"ArcGIS connection failed: {msg}")
+
+
+def _render_environment_tab() -> None:
+    """Tab 4: Environment variables reference with masked values."""
+    import pandas as pd
+
+    st.markdown("### 📋 Environment Variables")
+    st.caption(
+        "Shows key environment variables used by this application. "
+        "Values are masked for security."
+    )
+
+    rows = []
+    for entry in ENV_VARS_TABLE:
+        raw = os.getenv(entry["name"], "").strip()
+        masked = "***set***" if raw else "not set"
+        rows.append(
+            {
+                "Variable": entry["name"],
+                "Description": entry["description"],
+                "Required": "Yes" if entry["required"] else "No",
+                "Current Value": masked,
+            }
+        )
+
+    st.dataframe(
+        pd.DataFrame(rows),
+        use_container_width=True,
+        hide_index=True,
+    )
+
+    st.divider()
+    st.caption(
+        "To set these variables, add them to your `.env` file in the project root "
+        "or configure them in the **API Tokens** / **Configuration** tabs."
+    )
