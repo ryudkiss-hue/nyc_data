@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 import io
+import json
+import math
+import os
+import tempfile
 from datetime import date, timedelta
 
 import pandas as pd
@@ -40,9 +44,33 @@ except ImportError:
     pdk = None
     HAS_PYDECK = False
 
+try:
+    import numpy as np
+    from sklearn.cluster import DBSCAN
+
+    HAS_SKLEARN = True
+except ImportError:
+    HAS_SKLEARN = False
+
+try:
+    from scipy.spatial import KDTree
+    HAS_SCIPY = True
+except ImportError:
+    HAS_SCIPY = False
+
+try:
+    from pyproj import Transformer
+    HAS_PYPROJ = True
+except ImportError:
+    HAS_PYPROJ = False
+
 NYC_BOUNDS = {"lat_min": 40.477, "lat_max": 40.917, "lon_min": -74.259, "lon_max": -73.700}
 BOROUGHS = ["Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"]
 
+
+# ---------------------------------------------------------------------------
+# Normalisation helpers
+# ---------------------------------------------------------------------------
 
 def _normalize_inspection(df: pd.DataFrame) -> pd.DataFrame:
     """Map Socrata inspection columns to standard view column names."""
@@ -98,6 +126,10 @@ def _normalize_permits(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+# ---------------------------------------------------------------------------
+# Cached data loaders
+# ---------------------------------------------------------------------------
+
 @st.cache_data(ttl=86_400, show_spinner="Loading inspection data from Socrata…")
 def _load_inspections(limit: int = 25_000) -> pd.DataFrame:
     df = fetch_dataset("inspection", limit=limit)
@@ -133,6 +165,54 @@ def _load_capital_intersections(limit: int = 10_000) -> pd.DataFrame:
         return pd.DataFrame()
 
 
+@st.cache_data(ttl=86_400, show_spinner="Loading permit stipulations…")
+def _load_permit_stipulations(limit: int = 10_000) -> pd.DataFrame:
+    try:
+        return fetch_dataset("permit_stipulations", limit=limit)
+    except Exception:
+        return pd.DataFrame()
+
+
+@st.cache_data(ttl=86_400, show_spinner="Loading street closures (block level)…")
+def _load_street_closures(limit: int = 10_000) -> pd.DataFrame:
+    try:
+        df = fetch_dataset("street_closures_block", limit=limit)
+        lat_col = pick_column(df, LAT_CANDIDATES)
+        lon_col = pick_column(df, LON_CANDIDATES)
+        if lat_col and lat_col != "latitude":
+            df = df.rename(columns={lat_col: "latitude"})
+        if lon_col and lon_col != "longitude":
+            df = df.rename(columns={lon_col: "longitude"})
+        for col in ("latitude", "longitude"):
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors="coerce")
+        return df
+    except Exception:
+        return pd.DataFrame()
+
+
+@st.cache_data(ttl=86_400, show_spinner="Loading step streets…")
+def _load_step_streets(limit: int = 5_000) -> pd.DataFrame:
+    try:
+        df = fetch_dataset("u9au-h79y", limit=limit)
+        lat_col = pick_column(df, LAT_CANDIDATES)
+        lon_col = pick_column(df, LON_CANDIDATES)
+        if lat_col and lat_col != "latitude":
+            df = df.rename(columns={lat_col: "latitude"})
+        if lon_col and lon_col != "longitude":
+            df = df.rename(columns={lon_col: "longitude"})
+        for col in ("latitude", "longitude"):
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors="coerce")
+        return df
+    except Exception:
+        return pd.DataFrame()
+
+
+# ---------------------------------------------------------------------------
+# Utility helpers
+# ---------------------------------------------------------------------------
+
 def _flag_in_bounds(df: pd.DataFrame) -> pd.DataFrame:
     if "latitude" not in df.columns or "longitude" not in df.columns:
         return df
@@ -143,11 +223,70 @@ def _flag_in_bounds(df: pd.DataFrame) -> pd.DataFrame:
     return df[mask].copy()
 
 
+def _df_to_geojson(df: pd.DataFrame) -> str:
+    """Build a simple Point FeatureCollection from latitude/longitude columns."""
+    features = []
+    for _, row in df.iterrows():
+        if pd.notna(row.get("latitude")) and pd.notna(row.get("longitude")):
+            feat = {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [row["longitude"], row["latitude"]],
+                },
+                "properties": row.drop(["latitude", "longitude"]).to_dict(),
+            }
+            features.append(feat)
+    return json.dumps({"type": "FeatureCollection", "features": features})
+
+
+def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Return the great-circle distance in kilometres between two WGS84 points."""
+    R = 6371
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = (
+        math.sin(dlat / 2) ** 2
+        + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2
+    )
+    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+
+def _nearest_neighbor_route(coords: list[tuple]) -> list[int]:
+    """Greedy nearest-neighbour TSP heuristic.
+
+    Args:
+        coords: List of (lat, lon) tuples.
+
+    Returns:
+        Ordered list of indices representing the visit sequence.
+    """
+    n = len(coords)
+    if n == 0:
+        return []
+    unvisited = set(range(1, n))
+    route = [0]
+    current = 0
+    while unvisited:
+        nearest = min(
+            unvisited,
+            key=lambda j: _haversine_km(coords[current][0], coords[current][1],
+                                        coords[j][0], coords[j][1]),
+        )
+        route.append(nearest)
+        unvisited.remove(nearest)
+        current = nearest
+    return route
+
+
+# ---------------------------------------------------------------------------
+# Conflict detection (attribute-based fallback)
+# ---------------------------------------------------------------------------
+
 def _detect_spatial_conflicts(inspections: pd.DataFrame, permits: pd.DataFrame) -> pd.DataFrame:
     if inspections.empty or permits.empty:
         return pd.DataFrame()
 
-    # Join on block_id if present, otherwise fall back to borough-level match
     insp = inspections.copy()
     perm = permits.copy()
 
@@ -195,6 +334,10 @@ def _detect_spatial_conflicts(inspections: pd.DataFrame, permits: pd.DataFrame) 
                 "inspection_date": insp_date,
                 "permit_start": permit.get("start_date", ""),
                 "permit_end": permit.get("end_date", ""),
+                "insp_lat": insp_row.get("latitude"),
+                "insp_lon": insp_row.get("longitude"),
+                "perm_lat": permit.get("latitude"),
+                "perm_lon": permit.get("longitude"),
             })
 
     if not conflicts:
@@ -205,9 +348,16 @@ def _detect_spatial_conflicts(inspections: pd.DataFrame, permits: pd.DataFrame) 
     return df.sort_values("_sort").drop(columns=["_sort"]).reset_index(drop=True)
 
 
+# ---------------------------------------------------------------------------
+# Map rendering helpers
+# ---------------------------------------------------------------------------
+
 def _render_folium_map(df: pd.DataFrame, color_col: str = "condition_score") -> None:
     if not HAS_FOLIUM:
-        st.info("Install folium and streamlit-folium for interactive maps: `pip install folium streamlit-folium`")
+        st.info(
+            "Install folium and streamlit-folium for interactive maps: "
+            "`pip install folium streamlit-folium`"
+        )
         return
 
     df_valid = _flag_in_bounds(df).dropna(subset=["latitude", "longitude"])
@@ -254,8 +404,13 @@ def _render_plotly_map(df: pd.DataFrame, title: str = "Inspection Locations") ->
         st.warning("No points within NYC bounds.")
         return
 
-    color_col = next((c for c in ("condition_score", "result", "status") if c in df_valid.columns), None)
-    hover_cols = [c for c in ("borough", "defect_type", "result", "status", "street_name") if c in df_valid.columns]
+    color_col = next(
+        (c for c in ("condition_score", "result", "status") if c in df_valid.columns), None
+    )
+    hover_cols = [
+        c for c in ("borough", "defect_type", "result", "status", "street_name")
+        if c in df_valid.columns
+    ]
 
     fig = px.scatter_mapbox(
         df_valid,
@@ -277,6 +432,10 @@ def _render_pydeck_map(df: pd.DataFrame, title: str = "Inspection Locations") ->
 
     Suitable for large datasets (>10k points) where Plotly/Folium are slow.
     Requires pydeck: pip install pydeck
+
+    When condition_score is present the ScatterplotLayer radius is scaled
+    proportional to (100 - score) so worse locations appear larger —
+    effectively a 3-D severity view (Item 36).
     """
     if not HAS_PYDECK:
         st.info("Install pydeck for GPU-accelerated maps: `pip install pydeck`")
@@ -286,7 +445,6 @@ def _render_pydeck_map(df: pd.DataFrame, title: str = "Inspection Locations") ->
         st.warning("No points within NYC bounds.")
         return
 
-    # Colour by condition score: green (high) → red (low)
     def _score_color(score):
         try:
             s = float(score)
@@ -300,16 +458,21 @@ def _render_pydeck_map(df: pd.DataFrame, title: str = "Inspection Locations") ->
     score_col = "condition_score" if "condition_score" in df_valid.columns else None
     if score_col:
         df_valid["_color"] = df_valid[score_col].apply(_score_color)
+        # Item 36: radius proportional to severity (worse = bigger)
+        df_valid["_radius"] = df_valid[score_col].apply(
+            lambda s: max(30, int((100 - float(s)) * 1.5)) if pd.notna(s) else 60
+        )
+        st.caption("3D view: marker size reflects condition severity (larger = worse)")
     else:
         df_valid["_color"] = [[80, 140, 220, 180]] * len(df_valid)
+        df_valid["_radius"] = 60
 
-    # pydeck expects longitude before latitude in the position
     layer = pdk.Layer(
         "ScatterplotLayer",
         data=df_valid,
         get_position=["longitude", "latitude"],
         get_color="_color",
-        get_radius=60,
+        get_radius="_radius",
         pickable=True,
         auto_highlight=True,
     )
@@ -335,16 +498,290 @@ def _render_pydeck_map(df: pd.DataFrame, title: str = "Inspection Locations") ->
     st.caption(f"{len(df_valid):,} points rendered · {title}")
 
 
+# ---------------------------------------------------------------------------
+# Item 20 — Block-level aggregation
+# ---------------------------------------------------------------------------
+
+def _render_block_aggregation(df: pd.DataFrame) -> None:
+    """Aggregated bar chart by borough or block_id (Item 20)."""
+    st.subheader("📦 Block Aggregation")
+    if df.empty:
+        st.info("No data to aggregate.")
+        return
+
+    group_col = "block_id" if "block_id" in df.columns else "borough" if "borough" in df.columns else None
+    if group_col is None:
+        st.info("No borough or block_id column found for aggregation.")
+        return
+
+    agg: dict = {group_col: "count"}
+    if "condition_score" in df.columns:
+        agg["condition_score"] = "mean"
+
+    agg_df = df.groupby(group_col).agg(agg).rename(columns={group_col: "record_count"}).reset_index()
+    agg_df = agg_df.rename(columns={"record_count": "count"})
+
+    if not HAS_PLOTLY:
+        st.dataframe(agg_df, use_container_width=True)
+        return
+
+    fig = px.bar(
+        agg_df,
+        x=group_col,
+        y="count",
+        color="condition_score" if "condition_score" in agg_df.columns else None,
+        color_continuous_scale="RdYlGn",
+        title=f"Inspection Count by {group_col.replace('_', ' ').title()}",
+        labels={"count": "Record Count"},
+        height=420,
+    )
+    if "condition_score" in agg_df.columns:
+        fig.update_layout(coloraxis_colorbar_title="Avg Score")
+    fig.update_layout(xaxis_tickangle=-30)
+    st.plotly_chart(fig, use_container_width=True)
+
+    if "condition_score" in agg_df.columns:
+        fig2 = px.bar(
+            agg_df,
+            x=group_col,
+            y="condition_score",
+            color="condition_score",
+            color_continuous_scale="RdYlGn",
+            range_color=[0, 100],
+            title=f"Average Condition Score by {group_col.replace('_', ' ').title()}",
+            labels={"condition_score": "Avg Condition Score"},
+            height=380,
+        )
+        fig2.update_layout(xaxis_tickangle=-30)
+        st.plotly_chart(fig2, use_container_width=True)
+
+    st.dataframe(agg_df, use_container_width=True, hide_index=True)
+
+
+# ---------------------------------------------------------------------------
+# Item 23 / Item 41 — Spatial export buttons
+# ---------------------------------------------------------------------------
+
+def _export_spatial_buttons(df: pd.DataFrame, key_prefix: str) -> None:
+    """GeoJSON, GeoPackage, and CSV download buttons for spatial data (Items 23, 41)."""
+    st.markdown("**Export spatial data**")
+    col_geo, col_gpkg, col_csv = st.columns(3)
+
+    with col_geo:
+        if "the_geom" in df.columns:
+            try:
+                from socrata_toolkit.spatial.geodataframe import (
+                    HAS_GEOPANDAS,
+                    geodataframe_from_socrata,
+                    to_geojson,
+                )
+                if HAS_GEOPANDAS:
+                    with st.spinner("Building GeoJSON…"):
+                        gdf = geodataframe_from_socrata(df)
+                        geojson_str = to_geojson(gdf)
+                    st.download_button(
+                        "Export GeoJSON",
+                        geojson_str.encode(),
+                        f"{key_prefix}_export.geojson",
+                        "application/geo+json",
+                        key=f"{key_prefix}_geojson",
+                    )
+                else:
+                    st.info("Install geopandas for GeoJSON export.")
+            except Exception as err:
+                st.warning(f"GeoJSON export failed: {err}")
+        elif "latitude" in df.columns and "longitude" in df.columns:
+            geojson_str = _df_to_geojson(df)
+            st.download_button(
+                "Export GeoJSON",
+                geojson_str.encode(),
+                f"{key_prefix}_export.geojson",
+                "application/geo+json",
+                key=f"{key_prefix}_geojson",
+            )
+        else:
+            st.info("No geometry columns available for GeoJSON export.")
+
+    with col_gpkg:
+        # Item 41 — GeoPackage export
+        if "the_geom" in df.columns:
+            try:
+                from socrata_toolkit.spatial.geodataframe import (
+                    HAS_GEOPANDAS,
+                    geodataframe_from_socrata,
+                )
+                if HAS_GEOPANDAS:
+                    if st.button("Export GeoPackage (.gpkg)", key=f"{key_prefix}_gpkg_btn"):
+                        with st.spinner("Building GeoPackage…"):
+                            gdf = geodataframe_from_socrata(df)
+                            with tempfile.NamedTemporaryFile(suffix=".gpkg", delete=False) as tmp:
+                                tmp_path = tmp.name
+                            gdf.to_file(tmp_path, driver="GPKG")
+                            with open(tmp_path, "rb") as fh:
+                                gpkg_bytes = fh.read()
+                            os.unlink(tmp_path)
+                        st.download_button(
+                            "Download GeoPackage",
+                            gpkg_bytes,
+                            f"{key_prefix}_export.gpkg",
+                            "application/octet-stream",
+                            key=f"{key_prefix}_gpkg_dl",
+                        )
+                else:
+                    st.info("Install geopandas for GeoPackage export.")
+            except Exception as err:
+                st.warning(f"GeoPackage export failed: {err}")
+        else:
+            st.caption("GeoPackage requires the_geom column.")
+
+    with col_csv:
+        st.download_button(
+            "Export CSV",
+            df.to_csv(index=False).encode(),
+            f"{key_prefix}_export.csv",
+            "text/csv",
+            key=f"{key_prefix}_csv",
+        )
+
+
+# ---------------------------------------------------------------------------
+# Item 27 — Spatial time-lapse
+# ---------------------------------------------------------------------------
+
+def _render_time_lapse(df: pd.DataFrame) -> None:
+    """Animated bar chart showing inspection count by month (Item 27)."""
+    date_col = next(
+        (c for c in df.columns if any(d in c.lower() for d in ("date", "created", "open"))),
+        None,
+    )
+    if date_col is None:
+        st.info("No date column detected for time-lapse.")
+        return
+
+    df = df.copy()
+    df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
+    df = df.dropna(subset=[date_col])
+    if df.empty:
+        st.info("No valid dates found for time-lapse.")
+        return
+
+    df["_ym"] = df[date_col].dt.to_period("M").astype(str)
+    months = sorted(df["_ym"].unique().tolist())
+    if len(months) < 2:
+        st.info("Fewer than 2 months of data — time-lapse not available.")
+        return
+
+    start_idx, end_idx = st.select_slider(
+        "Month range",
+        options=list(range(len(months))),
+        value=(0, len(months) - 1),
+        format_func=lambda i: months[i],
+        key="timelapse_slider",
+    )
+    selected_months = months[start_idx: end_idx + 1]
+    df_sel = df[df["_ym"].isin(selected_months)]
+
+    if not HAS_PLOTLY:
+        st.dataframe(df_sel.groupby("_ym").size().reset_index(name="count"), use_container_width=True)
+        return
+
+    group_col = "borough" if "borough" in df_sel.columns else None
+    if group_col:
+        agg = df_sel.groupby(["_ym", group_col]).size().reset_index(name="count")
+        fig = px.bar(
+            agg,
+            x=group_col,
+            y="count",
+            animation_frame="_ym",
+            color=group_col,
+            title="Inspection Count per Month by Borough",
+            height=420,
+        )
+    else:
+        agg = df_sel.groupby("_ym").size().reset_index(name="count")
+        fig = px.bar(
+            agg,
+            x="_ym",
+            y="count",
+            animation_frame="_ym",
+            title="Inspection Count per Month",
+            height=420,
+        )
+    fig.update_layout(xaxis_tickangle=-30)
+    st.plotly_chart(fig, use_container_width=True)
+
+
+# ---------------------------------------------------------------------------
+# Item 28 — Route optimiser
+# ---------------------------------------------------------------------------
+
+def _render_route_optimizer(df: pd.DataFrame) -> None:
+    """Nearest-neighbour TSP route optimiser (Item 28)."""
+    if "latitude" not in df.columns or "longitude" not in df.columns:
+        st.info("Latitude/longitude columns required for route optimisation.")
+        return
+
+    borough_opts = ["All boroughs"]
+    if "borough" in df.columns:
+        borough_opts += sorted(df["borough"].dropna().unique().tolist())
+    boro_sel = st.selectbox("Borough filter", borough_opts, key="route_boro")
+    if boro_sel != "All boroughs" and "borough" in df.columns:
+        df_r = df[df["borough"] == boro_sel].copy()
+    else:
+        df_r = df.copy()
+
+    df_r = _flag_in_bounds(df_r).dropna(subset=["latitude", "longitude"])
+    if df_r.empty:
+        st.info("No valid locations for selected filter.")
+        return
+
+    df_r = df_r.head(50)
+    st.caption(f"Optimising route across {len(df_r)} locations (capped at 50).")
+
+    coords = list(zip(df_r["latitude"].tolist(), df_r["longitude"].tolist(), strict=False))
+    route_idx = _nearest_neighbor_route(coords)
+
+    ordered = df_r.iloc[route_idx].reset_index(drop=True)
+    ordered.index = ordered.index + 1  # 1-based stop number
+
+    # Compute total distance
+    total_km = 0.0
+    for i in range(len(route_idx) - 1):
+        c1 = coords[route_idx[i]]
+        c2 = coords[route_idx[i + 1]]
+        total_km += _haversine_km(c1[0], c1[1], c2[0], c2[1])
+
+    st.metric("Estimated total route distance", f"{total_km:.2f} km")
+
+    display_cols = [c for c in ("borough", "street_name", "block_id", "condition_score",
+                                "latitude", "longitude") if c in ordered.columns]
+    st.dataframe(ordered[display_cols] if display_cols else ordered,
+                 use_container_width=True, height=300)
+
+    st.download_button(
+        "Export route as CSV",
+        ordered.to_csv(index=True).encode(),
+        "optimised_route.csv",
+        "text/csv",
+        key="route_csv",
+    )
+
+
+# ---------------------------------------------------------------------------
+# Tab renderers
+# ---------------------------------------------------------------------------
+
 def render_gis_page() -> None:
     st.header("🗺️ GIS & Spatial Analysis")
     st.caption("Conflict detection, hotspot mapping, and spatial reporting for sidewalk inspection data.")
 
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
         "📍 Inspection Map",
         "⚠️ Conflict Detection",
         "🔥 Hotspot Analysis",
         "📊 Spatial Reports",
         "🚧 HIQA & Capital Projects",
+        "📋 Stipulations & Closures",
     ])
 
     with tab1:
@@ -357,6 +794,8 @@ def render_gis_page() -> None:
         _render_spatial_reports_tab()
     with tab5:
         _render_hiqa_capital_tab()
+    with tab6:
+        _render_stipulations_tab()
 
 
 def _get_inspection_df(key_prefix: str) -> pd.DataFrame:
@@ -368,11 +807,14 @@ def _get_inspection_df(key_prefix: str) -> pd.DataFrame:
         key=f"{key_prefix}_src",
     )
     if source == "Socrata (live)":
-        limit = st.number_input("Row limit", 1_000, 100_000, 25_000, step=5_000, key=f"{key_prefix}_lim")
+        limit = st.number_input("Row limit", 1_000, 100_000, 25_000, step=5_000,
+                                key=f"{key_prefix}_lim")
         with st.spinner("Loading from Socrata…"):
             df = _load_inspections(int(limit))
         if demo_mode_enabled():
-            st.caption("⚠️ Running in demo mode — configure SOCRATA_APP_TOKEN in Settings for live data.")
+            st.caption(
+                "⚠️ Running in demo mode — configure SOCRATA_APP_TOKEN in Settings for live data."
+            )
         return df
     else:
         up = st.file_uploader(
@@ -436,25 +878,59 @@ def _render_inspection_map_tab() -> None:
         critical = (df_filtered["condition_score"] < 30).sum()
         c3.metric("Critical (<30)", f"{critical:,}", delta=f"-{critical}", delta_color="inverse")
 
-    engine_opts = ["Plotly (recommended)", "Folium (interactive)"]
-    if HAS_PYDECK:
-        engine_opts.append("pydeck (GPU / large datasets)")
-    map_engine = st.radio("Map engine", engine_opts, horizontal=True, key="gis_engine")
-    if map_engine.startswith("Plotly"):
-        _render_plotly_map(df_filtered)
-    elif map_engine.startswith("Folium"):
-        _render_folium_map(df_filtered)
-    else:
-        _render_pydeck_map(df_filtered)
+    # Map subtabs — main map + block aggregation (Item 20) + time-lapse (Item 27)
+    map_subtab, agg_subtab, timelapse_subtab = st.tabs([
+        "🗺️ Map View", "📦 Block Aggregation", "⏱️ Time-lapse"
+    ])
 
-    with st.expander("Data Table"):
-        st.dataframe(df_filtered, use_container_width=True, height=300)
-        st.download_button(
-            "Download filtered CSV",
-            df_filtered.to_csv(index=False).encode(),
-            "inspections_filtered.csv",
-            "text/csv",
-        )
+    with map_subtab:
+        engine_opts = ["Plotly (recommended)", "Folium (interactive)"]
+        if HAS_PYDECK:
+            engine_opts.append("pydeck (GPU / large datasets)")
+        map_engine = st.radio("Map engine", engine_opts, horizontal=True, key="gis_engine")
+        if map_engine.startswith("Plotly"):
+            _render_plotly_map(df_filtered)
+        elif map_engine.startswith("Folium"):
+            _render_folium_map(df_filtered)
+        else:
+            _render_pydeck_map(df_filtered)
+
+        with st.expander("Data Table"):
+            st.dataframe(df_filtered, use_container_width=True, height=300)
+
+        # Item 37 — Spatial Statistics
+        if "the_geom" in df_filtered.columns:
+            with st.expander("📐 Spatial Statistics"):
+                try:
+                    from socrata_toolkit.spatial.geodataframe import (
+                        HAS_GEOPANDAS,
+                        geodataframe_from_socrata,
+                        spatial_stats,
+                    )
+                    if HAS_GEOPANDAS:
+                        with st.spinner("Computing spatial statistics…"):
+                            gdf = geodataframe_from_socrata(df_filtered)
+                            stats = spatial_stats(gdf)
+                        st.json(stats)
+                    else:
+                        st.info("Install geopandas for spatial statistics.")
+                except Exception as err:
+                    st.warning(f"Spatial statistics failed: {err}")
+
+        # Item 28 — Route optimiser
+        with st.expander("🗺️ Inspector Route Optimizer"):
+            _render_route_optimizer(df_filtered)
+
+    with agg_subtab:
+        _render_block_aggregation(df_filtered)
+
+    with timelapse_subtab:
+        with st.expander("⏱️ Time-lapse", expanded=True):
+            _render_time_lapse(df_filtered)
+
+    # Export buttons at bottom of tab (Item 23 / 41)
+    st.markdown("---")
+    _export_spatial_buttons(df_filtered, "insp_map")
 
 
 def _render_conflict_detection_tab() -> None:
@@ -468,9 +944,11 @@ def _render_conflict_detection_tab() -> None:
 
     with col2:
         st.markdown("**Permits / Contracts**")
-        perm_src = st.radio("Source", ["Socrata (live)", "Upload CSV"], horizontal=True, key="conf_perm_src")
+        perm_src = st.radio("Source", ["Socrata (live)", "Upload CSV"],
+                            horizontal=True, key="conf_perm_src")
         if perm_src == "Socrata (live)":
-            perm_limit = st.number_input("Row limit", 1_000, 50_000, 15_000, step=5_000, key="conf_perm_lim")
+            perm_limit = st.number_input("Row limit", 1_000, 50_000, 15_000, step=5_000,
+                                         key="conf_perm_lim")
             with st.spinner("Loading permits from Socrata…"):
                 df_perm = _load_permits(int(perm_limit))
         else:
@@ -488,12 +966,12 @@ def _render_conflict_detection_tab() -> None:
                 HAS_GEOPANDAS,
                 detect_conflicts_geopandas,
             )
-
             if HAS_GEOPANDAS:
                 use_geopandas = True
         except ImportError:
             pass
 
+    buffer_m = 50
     if use_geopandas:
         try:
             buffer_m = st.slider(
@@ -545,6 +1023,122 @@ def _render_conflict_detection_tab() -> None:
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 
+    # Item 25 — Conflict buffer visualisation
+    if use_geopandas and HAS_PLOTLY:
+        _render_conflict_buffer_map(conflicts, buffer_m)
+
+    # Item 22 — Distance to nearest permit
+    _render_nearest_permit_distances(df_insp, df_perm)
+
+    # Export buttons (Item 23 / 41)
+    st.markdown("---")
+    _export_spatial_buttons(df_insp, "conf_insp")
+
+
+def _render_conflict_buffer_map(conflicts: pd.DataFrame, buffer_m: int) -> None:
+    """Scatter_mapbox showing inspection (blue) and permit (red) points (Item 25)."""
+    if not HAS_PLOTLY:
+        return
+
+    has_insp = "insp_lat" in conflicts.columns and "insp_lon" in conflicts.columns
+    has_perm = "perm_lat" in conflicts.columns and "perm_lon" in conflicts.columns
+    if not has_insp and not has_perm:
+        return
+
+    st.markdown(f"**Conflict Map** — Buffer radius: {buffer_m} meters applied")
+
+    traces = []
+    if has_insp:
+        insp_pts = conflicts.dropna(subset=["insp_lat", "insp_lon"])
+        if not insp_pts.empty:
+            traces.append(go.Scattermapbox(
+                lat=insp_pts["insp_lat"],
+                lon=insp_pts["insp_lon"],
+                mode="markers",
+                marker={"size": 8, "color": "blue", "opacity": 0.7},
+                name="Inspection",
+                text=insp_pts.get("severity", pd.Series(dtype=str)),
+            ))
+    if has_perm:
+        perm_pts = conflicts.dropna(subset=["perm_lat", "perm_lon"])
+        if not perm_pts.empty:
+            traces.append(go.Scattermapbox(
+                lat=perm_pts["perm_lat"],
+                lon=perm_pts["perm_lon"],
+                mode="markers",
+                marker={"size": 8, "color": "red", "opacity": 0.7},
+                name="Permit",
+            ))
+
+    if not traces:
+        return
+
+    center_lat = conflicts.get("insp_lat", conflicts.get("perm_lat")).dropna().mean()
+    center_lon = conflicts.get("insp_lon", conflicts.get("perm_lon")).dropna().mean()
+
+    fig = go.Figure(data=traces)
+    fig.update_layout(
+        mapbox_style="carto-positron",
+        mapbox_zoom=11,
+        mapbox_center={"lat": float(center_lat), "lon": float(center_lon)},
+        legend_title_text="Layer",
+        margin={"r": 0, "t": 10, "l": 0, "b": 0},
+        height=480,
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+
+def _render_nearest_permit_distances(df_insp: pd.DataFrame, df_perm: pd.DataFrame) -> None:
+    """KDTree nearest-permit distance histogram (Item 22)."""
+    if not HAS_SCIPY:
+        st.info(
+            "Install scipy for nearest-permit distance analysis: `pip install scipy`"
+        )
+        return
+
+    has_insp_coords = "latitude" in df_insp.columns and "longitude" in df_insp.columns
+    has_perm_coords = "latitude" in df_perm.columns and "longitude" in df_perm.columns
+    if not has_insp_coords or not has_perm_coords:
+        return
+
+    insp_valid = df_insp.dropna(subset=["latitude", "longitude"])
+    perm_valid = df_perm.dropna(subset=["latitude", "longitude"])
+    if insp_valid.empty or perm_valid.empty:
+        return
+
+    with st.expander("📏 Distance to Nearest Permit"):
+        with st.spinner("Computing nearest-permit distances…"):
+            perm_coords = perm_valid[["latitude", "longitude"]].to_numpy()
+            tree = KDTree(perm_coords)
+            insp_coords = insp_valid[["latitude", "longitude"]].to_numpy()
+            dists_deg, _ = tree.query(insp_coords, k=1)
+            # 1 degree latitude ≈ 111 km
+            dists_km = dists_deg * 111.0
+
+        insp_result = insp_valid.copy()
+        insp_result["nearest_permit_km"] = dists_km
+
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Median distance (km)", f"{float(pd.Series(dists_km).median()):.3f}")
+        c2.metric("P90 distance (km)", f"{float(pd.Series(dists_km).quantile(0.9)):.3f}")
+        c3.metric("Max distance (km)", f"{float(pd.Series(dists_km).max()):.3f}")
+
+        if HAS_PLOTLY:
+            fig = px.histogram(
+                insp_result,
+                x="nearest_permit_km",
+                nbins=50,
+                title="Distribution of Distance to Nearest Permit",
+                labels={"nearest_permit_km": "Distance (km)"},
+                height=380,
+            )
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.dataframe(
+                insp_result[["latitude", "longitude", "nearest_permit_km"]].head(200),
+                use_container_width=True,
+            )
+
 
 def _render_hotspot_tab() -> None:
     st.subheader("🔥 Hotspot Analysis")
@@ -557,7 +1151,8 @@ def _render_hotspot_tab() -> None:
     col1, col2 = st.columns(2)
     with col1:
         threshold = st.slider(
-            "Critical condition threshold (show locations below this score)", 10, 60, 35, key="hot_thresh"
+            "Critical condition threshold (show locations below this score)", 10, 60, 35,
+            key="hot_thresh"
         )
     with col2:
         if "borough" in df.columns:
@@ -586,7 +1181,11 @@ def _render_hotspot_tab() -> None:
         return
 
     score_col = df_critical.get("condition_score") if "condition_score" in df_critical.columns else None
-    z_vals = (100 - df_critical["condition_score"]) if score_col is not None else pd.Series([50] * len(df_critical))
+    z_vals = (
+        (100 - df_critical["condition_score"])
+        if score_col is not None
+        else pd.Series([50] * len(df_critical))
+    )
 
     fig = go.Figure(go.Densitymapbox(
         lat=df_critical["latitude"],
@@ -600,7 +1199,10 @@ def _render_hotspot_tab() -> None:
     fig.update_layout(
         mapbox_style="carto-positron",
         mapbox_zoom=10,
-        mapbox_center={"lat": df_critical["latitude"].mean(), "lon": df_critical["longitude"].mean()},
+        mapbox_center={
+            "lat": df_critical["latitude"].mean(),
+            "lon": df_critical["longitude"].mean(),
+        },
         margin={"r": 0, "t": 10, "l": 0, "b": 0},
         height=520,
     )
@@ -615,7 +1217,76 @@ def _render_hotspot_tab() -> None:
         borough_counts = borough_counts.rename(columns={"latitude": "count"})
         if "condition_score" in borough_counts.columns:
             borough_counts["condition_score"] = borough_counts["condition_score"].round(1)
-        st.dataframe(borough_counts.sort_values("count", ascending=False), use_container_width=True, hide_index=True)
+        st.dataframe(
+            borough_counts.sort_values("count", ascending=False),
+            use_container_width=True,
+            hide_index=True,
+        )
+
+    # Item 21 — DBSCAN cluster analysis
+    with st.expander("🔍 DBSCAN Cluster Analysis"):
+        if not HAS_SKLEARN:
+            st.info(
+                "Install scikit-learn for DBSCAN clustering: `pip install scikit-learn`"
+            )
+        else:
+            _render_dbscan_clusters(df_critical)
+
+
+def _render_dbscan_clusters(df: pd.DataFrame) -> None:
+    """DBSCAN hotspot clustering overlay (Item 21)."""
+    if df.empty or "latitude" not in df.columns or "longitude" not in df.columns:
+        st.info("No valid coordinates for clustering.")
+        return
+
+    coords = df[["latitude", "longitude"]].to_numpy()
+    with st.spinner("Running DBSCAN clustering…"):
+        db = DBSCAN(eps=0.005, min_samples=5).fit(coords)
+    labels = db.labels_
+
+    df_c = df.copy()
+    df_c["cluster"] = labels.astype(str)
+
+    n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
+    n_noise = int((labels == -1).sum())
+    col1, col2 = st.columns(2)
+    col1.metric("Clusters found", n_clusters)
+    col2.metric("Noise points", n_noise)
+
+    if n_clusters == 0:
+        st.info("No clusters found with current density threshold (eps=0.005, min_samples=5).")
+        return
+
+    if HAS_PLOTLY:
+        # Map noise points (-1) as grey; clusters get distinct colours
+        fig = px.scatter_mapbox(
+            df_c,
+            lat="latitude",
+            lon="longitude",
+            color="cluster",
+            color_discrete_map={"-1": "#aaaaaa"},
+            hover_data=[c for c in ("borough", "condition_score") if c in df_c.columns],
+            zoom=10,
+            title="DBSCAN Clusters",
+            height=500,
+        )
+        fig.update_layout(
+            mapbox_style="carto-positron",
+            margin={"r": 0, "t": 40, "l": 0, "b": 0},
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+    # Top 5 clusters by size
+    cluster_sizes = (
+        df_c[df_c["cluster"] != "-1"]
+        .groupby("cluster")
+        .size()
+        .reset_index(name="size")
+        .sort_values("size", ascending=False)
+        .head(5)
+    )
+    st.markdown("**Top 5 clusters by size**")
+    st.dataframe(cluster_sizes, use_container_width=True, hide_index=True)
 
 
 def _render_spatial_reports_tab() -> None:
@@ -645,7 +1316,8 @@ def _render_spatial_reports_tab() -> None:
         col1, col2 = st.columns(2)
         with col1:
             boro_counts = df.groupby("borough").size().reset_index(name="count")
-            fig = px.bar(boro_counts, x="borough", y="count", color="borough", title="Inspections by Borough")
+            fig = px.bar(boro_counts, x="borough", y="count", color="borough",
+                         title="Inspections by Borough")
             fig.update_layout(showlegend=False, height=320)
             st.plotly_chart(fig, use_container_width=True)
 
@@ -662,10 +1334,17 @@ def _render_spatial_reports_tab() -> None:
 
         if "defect_type" in df.columns:
             defect_counts = (
-                df.groupby("defect_type").size().reset_index(name="count").sort_values("count", ascending=False)
+                df.groupby("defect_type").size()
+                .reset_index(name="count")
+                .sort_values("count", ascending=False)
             )
-            fig3 = px.bar(defect_counts, x="defect_type", y="count", title="Defect Type Distribution")
+            fig3 = px.bar(defect_counts, x="defect_type", y="count",
+                          title="Defect Type Distribution")
             st.plotly_chart(fig3, use_container_width=True)
+
+    # Item 38 — Coordinate converter
+    with st.expander("🔄 Coordinate Converter"):
+        _render_coordinate_converter()
 
     st.markdown("---")
     if st.button("📥 Export Spatial Report (Excel)"):
@@ -676,7 +1355,12 @@ def _render_spatial_reports_tab() -> None:
                 agg: dict = {"borough": "count"}
                 if "condition_score" in df.columns:
                     agg["condition_score"] = "mean"
-                summary = df.groupby("borough").agg(agg).rename(columns={"borough": "total_locations"}).reset_index()
+                summary = (
+                    df.groupby("borough")
+                    .agg(agg)
+                    .rename(columns={"borough": "total_locations"})
+                    .reset_index()
+                )
                 summary.to_excel(writer, sheet_name="Borough Summary", index=False)
         buf.seek(0)
         st.download_button(
@@ -687,17 +1371,55 @@ def _render_spatial_reports_tab() -> None:
         )
 
 
+def _render_coordinate_converter() -> None:
+    """WGS84 → NY State Plane + Web Mercator coordinate converter (Item 38)."""
+    st.markdown("Convert WGS84 (lat/lon) to projected coordinate systems.")
+    lat_in = st.number_input("Latitude (WGS84)", value=40.7128, format="%.6f", key="coord_lat")
+    lon_in = st.number_input("Longitude (WGS84)", value=-74.0060, format="%.6f", key="coord_lon")
+
+    if st.button("Convert", key="coord_convert"):
+        if HAS_PYPROJ:
+            try:
+                t_sp = Transformer.from_crs("EPSG:4326", "EPSG:2263", always_xy=True)
+                sp_x, sp_y = t_sp.transform(lon_in, lat_in)
+                t_merc = Transformer.from_crs("EPSG:4326", "EPSG:3857", always_xy=True)
+                merc_x, merc_y = t_merc.transform(lon_in, lat_in)
+            except Exception as err:
+                st.error(f"Projection failed: {err}")
+                return
+        else:
+            # Manual approximations
+            # NY State Plane (EPSG:2263) — simplified linear approx near NYC
+            sp_x = (lon_in + 74.0) * 308_042.0
+            sp_y = (lat_in - 40.5) * 363_660.0
+            # Web Mercator (EPSG:3857)
+            merc_x = lon_in * 20037508.34 / 180.0
+            merc_y = (
+                math.log(math.tan((90 + lat_in) * math.pi / 360.0)) / (math.pi / 180.0)
+            ) * 20037508.34 / 180.0
+            st.caption("pyproj not installed — using manual approximations (less accurate).")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("**NY State Plane (EPSG:2263) — feet**")
+            st.code(f"Easting:  {sp_x:,.2f} ft\nNorthing: {sp_y:,.2f} ft")
+        with col2:
+            st.markdown("**Web Mercator (EPSG:3857) — metres**")
+            st.code(f"X: {merc_x:,.2f} m\nY: {merc_y:,.2f} m")
+
+
 def _render_hiqa_capital_tab() -> None:
     st.subheader("🚧 HIQA Street Construction Inspections & Capital Projects")
     st.caption(
-        "Highway Inspection & Quality Assurance (HIQA) inspections of permit compliance on city streets. "
-        "Capital Reconstruction Projects — intersection-level spatial data."
+        "Highway Inspection & Quality Assurance (HIQA) inspections of permit compliance on city "
+        "streets. Capital Reconstruction Projects — intersection-level spatial data."
     )
 
     sub_hiqa, sub_cap = st.tabs(["🔍 HIQA Inspections", "🏗️ Capital Intersections"])
 
     with sub_hiqa:
-        hiqa_limit = st.number_input("Row limit", 1_000, 50_000, 10_000, step=1_000, key="hiqa_lim")
+        hiqa_limit = st.number_input("Row limit", 1_000, 50_000, 10_000, step=1_000,
+                                     key="hiqa_lim")
         df_hiqa = _load_street_construction_inspections(int(hiqa_limit))
         if df_hiqa.empty:
             st.info("No HIQA data loaded. Configure SOCRATA_APP_TOKEN in Settings.")
@@ -705,7 +1427,12 @@ def _render_hiqa_capital_tab() -> None:
             c1, c2, c3 = st.columns(3)
             c1.metric("Total inspections", f"{len(df_hiqa):,}")
             if "inspectionresulttype" in df_hiqa.columns:
-                vio = df_hiqa["inspectionresulttype"].str.upper().str.contains("FAIL|VIOL|NOV", na=False).sum()
+                vio = (
+                    df_hiqa["inspectionresulttype"]
+                    .str.upper()
+                    .str.contains("FAIL|VIOL|NOV", na=False)
+                    .sum()
+                )
                 c2.metric("Violations / NOV", int(vio))
             if "novnumber" in df_hiqa.columns:
                 c3.metric("NOV numbers issued", int(df_hiqa["novnumber"].notna().sum()))
@@ -724,10 +1451,15 @@ def _render_hiqa_capital_tab() -> None:
                 "fromstreetname", "tostreetname", "inspectiontype", "inspectionresulttype",
                 "novnumber", "novcodedescription", "defectivecuts",
             ) if c in df_hiqa.columns]
-            st.dataframe(df_hiqa[show_cols] if show_cols else df_hiqa,
-                         use_container_width=True, hide_index=True)
-            st.download_button("⬇ Export (CSV)", df_hiqa.to_csv(index=False).encode(),
-                               "hiqa_inspections.csv", mime="text/csv")
+            st.dataframe(
+                df_hiqa[show_cols] if show_cols else df_hiqa,
+                use_container_width=True,
+                hide_index=True,
+            )
+            st.download_button(
+                "⬇ Export (CSV)", df_hiqa.to_csv(index=False).encode(),
+                "hiqa_inspections.csv", mime="text/csv"
+            )
 
             if HAS_PLOTLY and "inspectionresulttype" in df_hiqa.columns:
                 result_counts = df_hiqa["inspectionresulttype"].value_counts().head(10).reset_index()
@@ -746,14 +1478,22 @@ def _render_hiqa_capital_tab() -> None:
             c1, c2, c3 = st.columns(3)
             c1.metric("Total projects", f"{len(df_cap):,}")
             if "projectsta" in df_cap.columns:
-                active = df_cap["projectsta"].str.upper().str.contains("ACTIVE|CONSTRUCT|DESIGN", na=False).sum()
+                active = (
+                    df_cap["projectsta"]
+                    .str.upper()
+                    .str.contains("ACTIVE|CONSTRUCT|DESIGN", na=False)
+                    .sum()
+                )
                 c2.metric("Active/In progress", int(active))
             if "projectcost" in df_cap.columns:
                 df_cap["projectcost"] = pd.to_numeric(df_cap["projectcost"], errors="coerce")
                 c3.metric("Total project cost", f"${df_cap['projectcost'].sum():,.0f}")
 
             if "boroughnam" in df_cap.columns:
-                boro_sel = st.multiselect("Borough filter", df_cap["boroughnam"].dropna().unique().tolist(), key="cap_boro")
+                boro_sel = st.multiselect(
+                    "Borough filter", df_cap["boroughnam"].dropna().unique().tolist(),
+                    key="cap_boro"
+                )
                 if boro_sel:
                     df_cap = df_cap[df_cap["boroughnam"].isin(boro_sel)]
 
@@ -761,10 +1501,15 @@ def _render_hiqa_capital_tab() -> None:
                 "projtitle", "boroughnam", "onstreetname", "fromstreet", "tostreetna",
                 "projectsta", "designstar", "construc_2", "projectcost", "leadagency",
             ) if c in df_cap.columns]
-            st.dataframe(df_cap[show_cols] if show_cols else df_cap,
-                         use_container_width=True, hide_index=True)
-            st.download_button("⬇ Export (CSV)", df_cap.to_csv(index=False).encode(),
-                               "capital_intersections.csv", mime="text/csv")
+            st.dataframe(
+                df_cap[show_cols] if show_cols else df_cap,
+                use_container_width=True,
+                hide_index=True,
+            )
+            st.download_button(
+                "⬇ Export (CSV)", df_cap.to_csv(index=False).encode(),
+                "capital_intersections.csv", mime="text/csv"
+            )
 
             if HAS_PLOTLY and "projectsta" in df_cap.columns:
                 status_counts = df_cap["projectsta"].value_counts().reset_index()
@@ -772,3 +1517,255 @@ def _render_hiqa_capital_tab() -> None:
                 fig = px.pie(status_counts, names="status", values="count",
                              title="Capital projects by status", hole=0.4)
                 st.plotly_chart(fig, use_container_width=True)
+
+            # Item 33 — Capital project impact radius overlay
+            _render_capital_impact_radius(df_cap)
+
+    # Item 40 — PostGIS connection settings
+    with st.expander("🗄️ PostGIS Connection"):
+        _render_postgis_settings()
+
+
+def _render_capital_impact_radius(df_cap: pd.DataFrame) -> None:
+    """Proportional-marker overlay for capital project impact radius (Item 33)."""
+    if not HAS_PLOTLY:
+        return
+
+    lat_col = pick_column(df_cap, LAT_CANDIDATES) if not df_cap.empty else None
+    lon_col = pick_column(df_cap, LON_CANDIDATES) if not df_cap.empty else None
+    # After normalisation the column may already be named "latitude"/"longitude"
+    lat_col = lat_col or ("latitude" if "latitude" in df_cap.columns else None)
+    lon_col = lon_col or ("longitude" if "longitude" in df_cap.columns else None)
+    if lat_col is None or lon_col is None:
+        return
+
+    df_pts = df_cap.dropna(subset=[lat_col, lon_col]).copy()
+    if df_pts.empty:
+        return
+
+    st.markdown("**Capital Project Impact Radius**")
+    radius_m = st.number_input(
+        "Impact radius (meters)", min_value=10, max_value=2000, value=200, step=10,
+        key="cap_impact_radius"
+    )
+
+    # Scale marker size 5–40 proportional to radius (capped for readability)
+    marker_size = max(5, min(40, int(radius_m / 10)))
+
+    hover_col = next((c for c in ("projtitle", "onstreetname") if c in df_pts.columns), None)
+    fig = px.scatter_mapbox(
+        df_pts,
+        lat=lat_col,
+        lon=lon_col,
+        size=[marker_size] * len(df_pts),
+        hover_name=hover_col,
+        hover_data=[c for c in ("projectsta", "projectcost") if c in df_pts.columns],
+        color_discrete_sequence=["#e05c00"],
+        zoom=10,
+        title=f"Capital Projects — Impact radius {radius_m} m",
+        height=480,
+    )
+    fig.update_layout(
+        mapbox_style="carto-positron",
+        margin={"r": 0, "t": 40, "l": 0, "b": 0},
+    )
+    st.plotly_chart(fig, use_container_width=True)
+    st.caption(f"Each marker represents one capital intersection. Marker size reflects the "
+               f"{radius_m} m impact radius (larger radius → bigger marker).")
+
+
+def _render_postgis_settings() -> None:
+    """PostGIS connection form (Item 40)."""
+    try:
+        from app.services.postgis import PostGISConfig, PostGISService
+        HAS_POSTGIS_SERVICE = True
+    except ImportError:
+        HAS_POSTGIS_SERVICE = False
+
+    with st.form("postgis_form"):
+        st.markdown("Configure a PostGIS connection to query spatial tables directly.")
+        host = st.text_input("Host", value="localhost", key="pg_host")
+        port = st.number_input("Port", min_value=1, max_value=65535, value=5432, key="pg_port")
+        dbname = st.text_input("Database", value="nyc_dot", key="pg_db")
+        user = st.text_input("User", value="postgres", key="pg_user")
+        password = st.text_input("Password", type="password", key="pg_pass")
+        col_test, col_list = st.columns(2)
+        test_btn = col_test.form_submit_button("Test Connection")
+        list_btn = col_list.form_submit_button("List Spatial Tables")
+
+    if test_btn or list_btn:
+        if not HAS_POSTGIS_SERVICE:
+            st.warning(
+                "PostGIS service not available. "
+                "Ensure `app/services/postgis.py` is present and psycopg2 is installed."
+            )
+            return
+        try:
+            cfg = PostGISConfig(
+                host=host, port=int(port), dbname=dbname, user=user, password=password
+            )
+            svc = PostGISService(cfg)
+            if test_btn:
+                ok = svc.test_connection()
+                if ok:
+                    st.success("✅ Connected successfully.")
+                else:
+                    st.error("❌ Connection failed.")
+            if list_btn:
+                tables = svc.list_spatial_tables()
+                if tables:
+                    st.dataframe(pd.DataFrame({"spatial_tables": tables}),
+                                 use_container_width=True)
+                else:
+                    st.info("No spatial tables found.")
+        except Exception as err:
+            st.error(f"Connection error: {err}")
+
+
+# ---------------------------------------------------------------------------
+# Item 34 / 35 — Stipulations & Closures tab
+# ---------------------------------------------------------------------------
+
+def _render_stipulations_tab() -> None:
+    """Permit stipulations, street closures, and step streets (Items 34, 35)."""
+    st.subheader("📋 Stipulations & Closures")
+    st.caption(
+        "Permit stipulations, street closures at block level, and step streets from Socrata."
+    )
+
+    row_limit = st.number_input("Row limit (per dataset)", 500, 25_000, 5_000, step=500,
+                                key="stip_limit")
+
+    # --- Stipulations ---
+    with st.spinner("Loading permit stipulations…"):
+        df_stip = _load_permit_stipulations(int(row_limit))
+
+    # --- Closures ---
+    with st.spinner("Loading street closures…"):
+        df_close = _load_street_closures(int(row_limit))
+
+    c1, c2 = st.columns(2)
+    c1.metric("Total stipulations", f"{len(df_stip):,}")
+    c2.metric("Total closures", f"{len(df_close):,}")
+
+    stip_tab, close_tab, step_tab = st.tabs([
+        "📄 Stipulations", "🚧 Closures Map", "🪜 Step Streets"
+    ])
+
+    with stip_tab:
+        if df_stip.empty:
+            st.info("No stipulation data. Configure SOCRATA_APP_TOKEN in Settings.")
+        else:
+            st.dataframe(df_stip, use_container_width=True, height=380)
+            st.download_button(
+                "⬇ Download Stipulations (CSV)",
+                df_stip.to_csv(index=False).encode(),
+                "permit_stipulations.csv",
+                "text/csv",
+                key="stip_dl",
+            )
+
+    with close_tab:
+        if df_close.empty:
+            st.info("No closure data loaded.")
+        else:
+            if HAS_PLOTLY and "latitude" in df_close.columns and "longitude" in df_close.columns:
+                df_map = _flag_in_bounds(df_close).dropna(subset=["latitude", "longitude"])
+                if not df_map.empty:
+                    hover_cols = [
+                        c for c in ("borough", "streetname", "fromstreet", "tostreet",
+                                    "closuretype", "startdate", "enddate")
+                        if c in df_map.columns
+                    ]
+                    fig = px.scatter_mapbox(
+                        df_map,
+                        lat="latitude",
+                        lon="longitude",
+                        hover_data=hover_cols,
+                        color_discrete_sequence=["#d62728"],
+                        zoom=10,
+                        title="Street Closures",
+                        height=500,
+                    )
+                    fig.update_layout(
+                        mapbox_style="carto-positron",
+                        margin={"r": 0, "t": 40, "l": 0, "b": 0},
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+                else:
+                    st.info("No geocoded closures within NYC bounds.")
+            else:
+                st.info("Plotly or lat/lon columns required for closure map.")
+
+            st.dataframe(df_close, use_container_width=True, height=300)
+            st.download_button(
+                "⬇ Download Closures (CSV)",
+                df_close.to_csv(index=False).encode(),
+                "street_closures.csv",
+                "text/csv",
+                key="close_dl",
+            )
+
+    with step_tab:
+        _render_step_streets(int(row_limit))
+
+
+def _render_step_streets(limit: int) -> None:
+    """Step streets dataset view (Item 35) — fourfour u9au-h79y."""
+    st.markdown("**Step Streets** — NYC DOT dataset `u9au-h79y`")
+    with st.spinner("Loading step streets…"):
+        df_ss = _load_step_streets(limit)
+
+    if df_ss.empty:
+        st.info("No step streets data. Configure SOCRATA_APP_TOKEN in Settings.")
+        return
+
+    # Count by borough
+    if "borough" in df_ss.columns:
+        boro_counts = df_ss["borough"].value_counts().reset_index()
+        boro_counts.columns = ["borough", "count"]
+        c1, c2 = st.columns([1, 2])
+        with c1:
+            st.markdown("**Count by Borough**")
+            st.dataframe(boro_counts, use_container_width=True, hide_index=True)
+        with c2:
+            if HAS_PLOTLY:
+                fig = px.bar(boro_counts, x="borough", y="count", color="borough",
+                             title="Step Streets by Borough", height=300)
+                fig.update_layout(showlegend=False)
+                st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.metric("Total step streets", len(df_ss))
+
+    # Map if coordinates available
+    if "latitude" in df_ss.columns and "longitude" in df_ss.columns and HAS_PLOTLY:
+        df_map = _flag_in_bounds(df_ss).dropna(subset=["latitude", "longitude"])
+        if not df_map.empty:
+            hover_cols = [
+                c for c in ("borough", "streetname", "from_street", "to_street")
+                if c in df_map.columns
+            ]
+            fig = px.scatter_mapbox(
+                df_map,
+                lat="latitude",
+                lon="longitude",
+                color="borough" if "borough" in df_map.columns else None,
+                hover_data=hover_cols,
+                zoom=10,
+                title="Step Streets Locations",
+                height=480,
+            )
+            fig.update_layout(
+                mapbox_style="carto-positron",
+                margin={"r": 0, "t": 40, "l": 0, "b": 0},
+            )
+            st.plotly_chart(fig, use_container_width=True)
+
+    st.dataframe(df_ss, use_container_width=True, height=300)
+    st.download_button(
+        "⬇ Download Step Streets (CSV)",
+        df_ss.to_csv(index=False).encode(),
+        "step_streets.csv",
+        "text/csv",
+        key="step_dl",
+    )
