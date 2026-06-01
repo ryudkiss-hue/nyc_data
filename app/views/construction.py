@@ -16,6 +16,7 @@ from app.data_loader import (
     fetch_dataset,
     pick_column,
 )
+from socrata_toolkit.core.utils import BOROUGH_LIST
 
 try:
     import plotly.express as px
@@ -24,7 +25,7 @@ try:
 except ImportError:
     _PLOTLY_AVAILABLE = False
 
-_BOROUGHS = ["Bronx", "Brooklyn", "Manhattan", "Queens", "Staten Island"]
+_BOROUGHS = sorted(BOROUGH_LIST)  # alphabetical order preserved from original
 
 _INSPECTION_COLUMNS = {
     "block_id",

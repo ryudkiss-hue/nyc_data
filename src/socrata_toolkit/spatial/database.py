@@ -27,6 +27,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
+from ..core.utils import BOROUGH_SET
+
 try:
     import psycopg
     from psycopg import sql
@@ -134,9 +136,8 @@ class SpatialSegment:
         if not 0 <= self.condition_score <= 100:
             raise ValueError(f"condition_score must be 0-100, got {self.condition_score}")
 
-        valid_boroughs = {"Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"}
-        if self.borough not in valid_boroughs:
-            raise ValueError(f"borough must be one of {valid_boroughs}")
+        if self.borough not in BOROUGH_SET:
+            raise ValueError(f"borough must be one of {BOROUGH_SET}")
 
 
 @dataclass
