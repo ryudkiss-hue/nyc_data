@@ -130,7 +130,8 @@ def _build_soql(conditions: list[dict]) -> str:
         field = c.get("field", "").strip()
         op = c.get("op", "=")
         value = c.get("value", "").strip()
-        if not field or not value:
+        no_value_ops = ("is_null", "is_not_null")
+        if not field or (not value and op not in no_value_ops):
             continue
         if op == "=":
             parts.append(f"{field} = '{value}'")
@@ -138,8 +139,26 @@ def _build_soql(conditions: list[dict]) -> str:
             parts.append(f"{field} != '{value}'")
         elif op == "contains":
             parts.append(f"upper({field}) like upper('%{value}%')")
+        elif op == "not_like":
+            parts.append(f"upper({field}) not like upper('%{value}%')")
         elif op == "starts_with":
             parts.append(f"starts_with(upper({field}), upper('{value}'))")
+        elif op == "not_starts_with":
+            parts.append(f"NOT starts_with(upper({field}), upper('{value}'))")
+        elif op == "between":
+            lo, _, hi = value.partition(",")
+            if lo.strip() and hi.strip():
+                parts.append(f"{field} between '{lo.strip()}' and '{hi.strip()}'")
+        elif op == "not_between":
+            lo, _, hi = value.partition(",")
+            if lo.strip() and hi.strip():
+                parts.append(f"{field} not between '{lo.strip()}' and '{hi.strip()}'")
+        elif op == "in":
+            vals = ", ".join(f"'{v.strip()}'" for v in value.split(",") if v.strip())
+            parts.append(f"{field} in({vals})")
+        elif op == "not_in":
+            vals = ", ".join(f"'{v.strip()}'" for v in value.split(",") if v.strip())
+            parts.append(f"{field} not in({vals})")
         elif op == "is_null":
             parts.append(f"{field} IS NULL")
         elif op == "is_not_null":
@@ -357,9 +376,11 @@ def _add_to_session(dataset_id: str, domain: str, name: str) -> None:
 def _render_soql_tab() -> None:
     st.markdown("#### SoQL Query Builder")
     st.caption(
-        "Build filter queries for any Socrata dataset. "
-        "SoQL supports `=`, `!=`, `LIKE` (via contains/starts_with), comparison operators, "
-        "and `IS NULL` / `IS NOT NULL`. No native regex — use client-side filtering in the Search tab."
+        "Full SoQL support: `=` `!=` `>` `<` `>=` `<=` `contains` `not_like` `starts_with` "
+        "`between` `in` `not_in` `is_null` `is_not_null` • `$select` `$where` `$order` "
+        "`$group` `$having` `$q` `$limit` `$offset` `DISTINCT` • "
+        "Geospatial: `within_circle` `within_box` `within_polygon` `distance_in_meters` • "
+        "Date: `date_extract_y/m/d/dow` `date_trunc_y/ym/ymd`"
     )
 
     domain_in = st.text_input(
@@ -403,7 +424,12 @@ def _render_soql_tab() -> None:
     if "_soql_conditions" not in st.session_state:
         st.session_state["_soql_conditions"] = [{"field": "", "op": "=", "value": ""}]
 
-    ops = ["=", "!=", "contains", "starts_with", ">", "<", ">=", "<=", "is_null", "is_not_null"]
+    ops = [
+        "=", "!=", ">", "<", ">=", "<=",
+        "contains", "not_like", "starts_with", "not_starts_with",
+        "between", "not_between", "in", "not_in",
+        "is_null", "is_not_null",
+    ]
 
     for i, cond in enumerate(st.session_state["_soql_conditions"]):
         c1, c2, c3, c4 = st.columns([3, 2, 3, 1])
@@ -418,8 +444,14 @@ def _render_soql_tab() -> None:
         cond["op"] = c2.selectbox("Operator", ops, index=op_i, key=f"sq_op_{i}")
 
         needs_value = cond["op"] not in ("is_null", "is_not_null")
+        no_value_hint = {"between": "low,high", "not_between": "low,high",
+                         "in": "val1,val2,val3", "not_in": "val1,val2,val3"}.get(cond["op"], "")
         if needs_value:
-            cond["value"] = c3.text_input("Value", value=cond.get("value", ""), key=f"sq_val_{i}")
+            cond["value"] = c3.text_input(
+                "Value", value=cond.get("value", ""), key=f"sq_val_{i}",
+                placeholder=no_value_hint or "",
+                help=no_value_hint if no_value_hint else None,
+            )
         else:
             c3.markdown("*(no value)*")
             cond["value"] = ""
@@ -437,29 +469,133 @@ def _render_soql_tab() -> None:
         st.rerun()
 
     # Extra SoQL clauses
-    with st.expander("Additional clauses"):
-        select_clause = st.text_input(
-            "$select", placeholder="field1, field2, count(*) as cnt",
-            help="Comma-separated fields. Leave blank for all (*).",
+    with st.expander("Additional clauses — $select, $group, $having, $q, DISTINCT"):
+        xc1, xc2 = st.columns(2)
+        select_clause = xc1.text_input(
+            "$select", placeholder="borough, count(*) as cnt, avg(condition_score) as avg_score",
+            help="Comma-separated fields or aggregate expressions. Leave blank for *.",
         )
-        order_clause = st.text_input(
+        group_clause = xc2.text_input(
+            "$group", placeholder="borough",
+            help="GROUP BY fields (comma-separated). Required when using aggregate functions in $select.",
+        )
+        having_clause = xc1.text_input(
+            "$having", placeholder="count(*) > 100",
+            help="Filter on aggregate results (applied after GROUP BY).",
+        )
+        q_clause = xc2.text_input(
+            "$q (full-text search)", placeholder="sidewalk defect",
+            help="Full-text search across all text fields in the dataset (SODA 2.x).",
+        )
+        xc3, xc4 = st.columns(2)
+        distinct_toggle = xc3.checkbox(
+            "DISTINCT", value=False,
+            help="Return only unique rows ($select distinct). Prepends DISTINCT to $select.",
+        )
+        order_clause = xc3.text_input(
             "$order", placeholder="inspection_date DESC",
-            help="Sort expression.",
+            help="Sort expression, e.g. `count(*) DESC` or `borough ASC`.",
         )
-        limit_clause = st.number_input("$limit", min_value=1, max_value=50_000, value=1_000, step=500)
-        offset_clause = st.number_input("$offset", min_value=0, value=0, step=limit_clause)
+        limit_clause = xc4.number_input("$limit", min_value=1, max_value=50_000, value=1_000, step=500)
+        offset_clause = xc4.number_input("$offset", min_value=0, value=0, step=limit_clause)
 
-    where_str = _build_soql(st.session_state["_soql_conditions"])
+    # Geospatial query helper
+    with st.expander("🌐 Geospatial query helper (within_circle / within_box)"):
+        st.caption(
+            "Generate a geospatial WHERE clause. The dataset must have a Point geometry column. "
+            "Use `within_circle(geom_col, lat, lon, radius_m)` or "
+            "`within_box(geom_col, lat_min, lon_min, lat_max, lon_max)`."
+        )
+        geo_col = st.text_input("Geometry column name", value="the_geom", key="geo_col")
+        geo_type = st.radio("Function", ["within_circle", "within_box", "distance_in_meters"], horizontal=True, key="geo_type")
+        if geo_type == "within_circle":
+            gc1, gc2, gc3 = st.columns(3)
+            gc_lat = gc1.number_input("Center latitude", value=40.7128, format="%.6f", key="gc_lat")
+            gc_lon = gc2.number_input("Center longitude", value=-74.0060, format="%.6f", key="gc_lon")
+            gc_rad = gc3.number_input("Radius (meters)", value=1000, min_value=1, key="gc_rad")
+            geo_expr = f"within_circle({geo_col}, {gc_lat}, {gc_lon}, {gc_rad})"
+        elif geo_type == "within_box":
+            gb1, gb2 = st.columns(2)
+            gb_lat1 = gb1.number_input("SW latitude", value=40.70, format="%.6f", key="gb_lat1")
+            gb_lon1 = gb1.number_input("SW longitude", value=-74.02, format="%.6f", key="gb_lon1")
+            gb_lat2 = gb2.number_input("NE latitude", value=40.73, format="%.6f", key="gb_lat2")
+            gb_lon2 = gb2.number_input("NE longitude", value=-73.97, format="%.6f", key="gb_lon2")
+            geo_expr = f"within_box({geo_col}, {gb_lat1}, {gb_lon1}, {gb_lat2}, {gb_lon2})"
+        else:
+            gd1, gd2, gd3 = st.columns(3)
+            gd_col2 = gd1.text_input("Second geometry column", value="location", key="gd_col2")
+            gd_max = gd2.number_input("Max distance (meters)", value=500, min_value=1, key="gd_max")
+            geo_expr = f"distance_in_meters({geo_col}, {gd_col2}) <= {gd_max}"
+        st.code(geo_expr, language="sql")
+        if st.button("📋 Append to WHERE conditions", key="geo_append"):
+            if "_soql_conditions" not in st.session_state:
+                st.session_state["_soql_conditions"] = []
+            st.session_state["_soql_conditions"].append({"field": "__geo__", "op": "=", "value": "", "_raw": geo_expr})
+            st.success(f"Appended: `{geo_expr}`")
+            st.rerun()
+
+    # Date function reference
+    with st.expander("📅 Date function reference"):
+        st.caption("Use these in $select, $where, or $order. Example: `date_extract_y(inspection_date) = 2024`")
+        st.markdown("""
+| Function | Returns | Example |
+|----------|---------|---------|
+| `date_extract_y(col)` | Year (int) | `date_extract_y(inspection_date) = 2024` |
+| `date_extract_m(col)` | Month 1–12 | `date_extract_m(inspection_date) = 6` |
+| `date_extract_d(col)` | Day 1–31 | `date_extract_d(inspection_date) > 15` |
+| `date_extract_dow(col)` | Day of week 0–6 | `date_extract_dow(inspection_date) = 1` |
+| `date_extract_woy(col)` | Week of year 0–51 | |
+| `date_extract_hh(col)` | Hour 0–23 | |
+| `date_trunc_y(col)` | Truncate to year | `$group=date_trunc_y(inspection_date)` |
+| `date_trunc_ym(col)` | Truncate to month | `$select=date_trunc_ym(inspection_date) as month, count(*)` |
+| `date_trunc_ymd(col)` | Truncate to day | |
+        """)
+
+    # String / numeric function reference
+    with st.expander("🔤 String & aggregate function reference"):
+        st.markdown("""
+**String:** `upper(col)` `lower(col)` `unaccent(col)` `starts_with(col, 'prefix')` `col like '%pattern%'`
+
+**Aggregate (use with $group):** `count(*)` `sum(col)` `avg(col)` `min(col)` `max(col)` `stddev_pop(col)` `stddev_samp(col)`
+
+**Numeric:** `ln(col)` `greatest(a, b)` `least(a, b)`
+
+**Conditional:** `case(condition, true_val, false_val)` `col between a and b` `col in('a','b','c')`
+
+**Geospatial:** `within_circle(geom, lat, lon, meters)` `within_box(geom, lat1, lon1, lat2, lon2)` `within_polygon(geom, wkt_polygon)` `distance_in_meters(geom1, geom2)` `intersects(geom1, geom2)`
+
+**DISTINCT:** Prefix $select value with `distinct ` or use the DISTINCT checkbox above.
+        """)
+
+    # Merge regular conditions + any raw geo expressions
+    regular_conds = [c for c in st.session_state["_soql_conditions"] if "_raw" not in c]
+    raw_parts = [c["_raw"] for c in st.session_state["_soql_conditions"] if "_raw" in c]
+    where_str = _build_soql(regular_conds)
+    if raw_parts:
+        where_str = " AND ".join(filter(None, [where_str] + raw_parts))
+
+    # Build $select with optional DISTINCT prefix
+    effective_select = select_clause
+    if distinct_toggle and effective_select:
+        effective_select = f"distinct {effective_select}"
+    elif distinct_toggle:
+        effective_select = "distinct *"
 
     # Preview the generated URL
     base_url = f"https://{domain_in}/resource/{fourfour_in}.json"
     qs_parts = []
     if where_str:
         qs_parts.append(f"$where={requests.utils.quote(where_str)}")
-    if select_clause:
-        qs_parts.append(f"$select={requests.utils.quote(select_clause)}")
+    if effective_select:
+        qs_parts.append(f"$select={requests.utils.quote(effective_select)}")
+    if group_clause:
+        qs_parts.append(f"$group={requests.utils.quote(group_clause)}")
+    if having_clause:
+        qs_parts.append(f"$having={requests.utils.quote(having_clause)}")
     if order_clause:
         qs_parts.append(f"$order={requests.utils.quote(order_clause)}")
+    if q_clause:
+        qs_parts.append(f"$q={requests.utils.quote(q_clause)}")
     qs_parts.append(f"$limit={limit_clause}&$offset={int(offset_clause)}")
     preview_url = base_url + ("?" + "&".join(qs_parts) if qs_parts else "")
 
@@ -476,10 +612,16 @@ def _render_soql_tab() -> None:
             params: dict[str, Any] = {"$limit": limit_clause, "$offset": int(offset_clause)}
             if where_str:
                 params["$where"] = where_str
-            if select_clause:
-                params["$select"] = select_clause
+            if effective_select:
+                params["$select"] = effective_select
+            if group_clause:
+                params["$group"] = group_clause
+            if having_clause:
+                params["$having"] = having_clause
             if order_clause:
                 params["$order"] = order_clause
+            if q_clause:
+                params["$q"] = q_clause
             try:
                 r = requests.get(
                     f"https://{domain_in}/resource/{fourfour_in}.json",
@@ -487,6 +629,12 @@ def _render_soql_tab() -> None:
                     headers={**_headers(), "Accept": "application/json"},
                     timeout=20,
                 )
+                if r.status_code == 429:
+                    st.error(
+                        "⚠️ Rate limited (HTTP 429). Add your Socrata App Token in "
+                        "⚙️ Settings → 🔑 API Tokens to get a dedicated request pool with no throttling."
+                    )
+                    return
                 r.raise_for_status()
                 df = pd.DataFrame(r.json())
                 st.success(f"Returned {len(df):,} rows.")
@@ -497,7 +645,6 @@ def _render_soql_tab() -> None:
                     f"{fourfour_in}_query.csv",
                     mime="text/csv",
                 )
-                # Save to session for use in other views
                 st.session_state[f"_discovery_query_{fourfour_in}"] = df
                 st.caption(f"Saved as `_discovery_query_{fourfour_in}` in session state.")
             except Exception as exc:

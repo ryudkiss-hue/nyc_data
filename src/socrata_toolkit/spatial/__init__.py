@@ -371,3 +371,31 @@ except Exception:
 
     def generate_qgis_project(*_args: Any, **_kwargs: Any) -> str:
         raise ImportError("Install qgis integration dependencies to use generate_qgis_project")
+
+
+try:
+    from .geodataframe import (
+        HAS_GEOPANDAS,
+        detect_conflicts_geopandas,
+        geodataframe_from_socrata,
+        spatial_join_socrata,
+        to_geojson,
+        to_wkt_column,
+    )
+except Exception:
+    HAS_GEOPANDAS = False
+
+    def geodataframe_from_socrata(*_args: Any, **_kwargs: Any):  # type: ignore[misc]
+        raise ImportError("Install geopandas to use geodataframe_from_socrata")
+
+    def spatial_join_socrata(*_args: Any, **_kwargs: Any):  # type: ignore[misc]
+        raise ImportError("Install geopandas to use spatial_join_socrata")
+
+    def detect_conflicts_geopandas(*_args: Any, **_kwargs: Any):  # type: ignore[misc]
+        raise ImportError("Install geopandas to use detect_conflicts_geopandas")
+
+    def to_geojson(*_args: Any, **_kwargs: Any) -> str:  # type: ignore[misc]
+        raise ImportError("Install geopandas to use to_geojson")
+
+    def to_wkt_column(*_args: Any, **_kwargs: Any):  # type: ignore[misc]
+        raise ImportError("Install geopandas to use to_wkt_column")

@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import json
 import os
+import sys
 from pathlib import Path
 
 import streamlit as st
@@ -15,6 +17,7 @@ from socrata_toolkit.core.readiness import run_readiness_checks
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _ENV_FILE = _REPO_ROOT / ".env"
+_PRESETS_FILE = _REPO_ROOT / "data" / "filter_presets.json"
 
 
 def _read_env_file() -> dict[str, str]:
@@ -67,6 +70,9 @@ def render_settings_page() -> None:
         tab_health,
         tab_cache,
         tab_logs,
+        tab_alerts,
+        tab_presets,
+        tab_impex,
     ) = st.tabs([
         "🔑 API Tokens",
         "⚙️ Configuration",
@@ -76,6 +82,9 @@ def render_settings_page() -> None:
         f"🩺 {t('tab_health')}",
         "💾 Cache",
         f"📋 {t('tab_logs')}",
+        "🔔 Alerts",
+        "📌 Filter Presets",
+        "💾 Import/Export",
     ])
 
     # ------------------------------------------------------------------
@@ -147,7 +156,6 @@ def render_settings_page() -> None:
                     st.caption(f"Verify: `{row['verify']}`")
 
             pct = round(100.0 * done / total, 1)
-            color = "normal" if pct >= 80 else ("inverse" if pct < 40 else "off")
             st.progress(done / total, text=f"Completeness: {pct}% ({done}/{total})")
             st.metric("Sign-off progress", f"{pct}%", delta=f"{done}/{total} items")
 
@@ -199,7 +207,6 @@ def render_settings_page() -> None:
             st.dataframe(df, use_container_width=True, hide_index=True)
 
         if st.button("🗑️ Clear all parquet caches", type="secondary"):
-            from pathlib import Path
             cache_dir = Path(__file__).resolve().parents[2] / "data" / "local_db" / "socrata_cache"
             cleared = 0
             if cache_dir.exists():
@@ -225,7 +232,10 @@ def render_settings_page() -> None:
             c1.caption(f"Showing last {len(rows)} events from ingest log.")
             filter_event = c2.selectbox(
                 "Filter event type",
-                ["all"] + sorted(log_df.get("event", pd.Series()).unique().tolist() if "event" in log_df.columns else []),
+                ["all"] + sorted(
+                    log_df.get("event", pd.Series()).unique().tolist()
+                    if "event" in log_df.columns else []
+                ),
             )
             if filter_event != "all" and "event" in log_df.columns:
                 log_df = log_df[log_df["event"] == filter_event]
@@ -238,9 +248,21 @@ def render_settings_page() -> None:
                 mime="text/csv",
             )
 
+    # ------------------------------------------------------------------
+    with tab_alerts:
+        _render_alerts_tab()
+
+    # ------------------------------------------------------------------
+    with tab_presets:
+        _render_filter_presets_tab()
+
+    # ------------------------------------------------------------------
+    with tab_impex:
+        _render_import_export_tab()
+
 
 # --------------------------------------------------------------------------- #
-# New tab helpers
+# Tab helpers
 # --------------------------------------------------------------------------- #
 
 def _render_api_tokens_tab() -> None:
@@ -339,7 +361,9 @@ def _render_api_tokens_tab() -> None:
 
 def _render_configuration_tab() -> None:
     st.markdown("#### Data Ingestion Configuration")
-    st.caption("These settings control how much data the app loads from Socrata and how long it caches results.")
+    st.caption(
+        "These settings control how much data the app loads from Socrata and how long it caches results."
+    )
 
     current = _read_env_file()
 
@@ -376,7 +400,7 @@ def _render_configuration_tab() -> None:
 
         st.markdown("**Discovery API defaults**")
         dc1, dc2 = st.columns(2)
-        disc_limit = dc1.number_input(
+        dc1.number_input(
             "Discovery results per page",
             min_value=10,
             max_value=100,
@@ -384,7 +408,7 @@ def _render_configuration_tab() -> None:
             step=5,
             help="Default number of results shown per search page in Data Discovery.",
         )
-        disc_domains = dc2.text_input(
+        dc2.text_input(
             "Discovery default domains",
             value=current.get("SOCRATA_DOMAIN", "data.cityofnewyork.us"),
             help="Comma-separated domains pre-filled in Discovery search.",
@@ -464,7 +488,7 @@ def _render_registry_tab() -> None:
 
     datasets = registry.get("datasets", {})
 
-    # Show as editable table
+    # Build rows
     rows = []
     for key, meta in datasets.items():
         rows.append({
@@ -477,18 +501,32 @@ def _render_registry_tab() -> None:
 
     df = pd.DataFrame(rows)
     st.markdown(f"**{len(df)} registered datasets**")
-    st.dataframe(df, use_container_width=True, hide_index=True)
+
+    # Column visibility multiselect
+    all_cols = ["key", "label", "group", "fourfour"]
+    visible_cols = st.multiselect(
+        "Visible columns", all_cols, default=all_cols, key="reg_cols"
+    )
+    display_cols = [c for c in visible_cols if c in df.columns]
+    if display_cols:
+        st.dataframe(df[display_cols], use_container_width=True, hide_index=True)
+    else:
+        st.dataframe(df, use_container_width=True, hide_index=True)
 
     st.divider()
     st.markdown("#### Add a dataset")
     with st.form("add_dataset_form"):
         ac1, ac2 = st.columns(2)
-        new_key = ac1.text_input("Registry key", placeholder="e.g. sidewalk_dismissal",
-                                  help="Snake-case identifier used in code.")
+        new_key = ac1.text_input(
+            "Registry key", placeholder="e.g. sidewalk_dismissal",
+            help="Snake-case identifier used in code.",
+        )
         new_fourfour = ac2.text_input("Socrata Dataset ID", placeholder="e.g. p4u2-3jgx")
         ac3, ac4 = st.columns(2)
         new_label = ac3.text_input("Label", placeholder="e.g. Sidewalk Dismissal")
-        new_group = ac4.selectbox("Group", ["core_smd", "accessibility", "coordination", "overlays", "other"])
+        new_group = ac4.selectbox(
+            "Group", ["core_smd", "accessibility", "coordination", "overlays", "other"]
+        )
         new_where = st.text_input(
             "Manhattan WHERE clause (optional)",
             placeholder="upper(borough) = 'MANHATTAN'",
@@ -507,8 +545,13 @@ def _render_registry_tab() -> None:
                 entry["manhattan_where"] = new_where
             registry["datasets"][new_key] = entry
             with open(datasets_yaml_path, "w") as f:
-                yaml.safe_dump(registry, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
-            st.success(f"Added `{new_key}` (`{new_fourfour}`) to registry. Restart app to use in workflows.")
+                yaml.safe_dump(
+                    registry, f, default_flow_style=False, sort_keys=False, allow_unicode=True
+                )
+            st.success(
+                f"Added `{new_key}` (`{new_fourfour}`) to registry. "
+                "Restart app to use in workflows."
+            )
             st.rerun()
 
     st.divider()
@@ -518,7 +561,9 @@ def _render_registry_tab() -> None:
         if st.button(f"🗑 Remove `{remove_key}`", type="secondary"):
             del registry["datasets"][remove_key]
             with open(datasets_yaml_path, "w") as f:
-                yaml.safe_dump(registry, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+                yaml.safe_dump(
+                    registry, f, default_flow_style=False, sort_keys=False, allow_unicode=True
+                )
             st.success(f"Removed `{remove_key}` from registry.")
             st.rerun()
 
@@ -526,3 +571,158 @@ def _render_registry_tab() -> None:
     with st.expander("Raw YAML"):
         with open(datasets_yaml_path) as f:
             st.code(f.read(), language="yaml")
+
+
+def _render_alerts_tab() -> None:
+    st.markdown("### Configure Alert Thresholds")
+
+    current = _read_env_file()
+
+    col1, col2 = st.columns(2)
+    with col1:
+        violation_threshold = st.number_input(
+            "Max open violations per borough before alert",
+            min_value=100,
+            max_value=10_000,
+            value=int(current.get("ALERT_VIOLATION_THRESHOLD", 500)),
+            key="alert_violation_threshold",
+        )
+        inspection_gap_days = st.number_input(
+            "Max days since last inspection before alert",
+            min_value=7,
+            max_value=365,
+            value=int(current.get("ALERT_INSPECTION_GAP_DAYS", 30)),
+            key="alert_inspection_gap_days",
+        )
+    with col2:
+        slack_webhook = st.text_input(
+            "Slack Webhook URL (optional)",
+            type="password",
+            value=current.get("ALERT_SLACK_WEBHOOK", ""),
+            key="slack_wh",
+        )
+        alert_email = st.text_input(
+            "Alert email address (optional)",
+            value=current.get("ALERT_EMAIL", ""),
+            key="alert_email",
+        )
+
+    if st.button("Save Alert Settings"):
+        existing = _read_env_file()
+        existing["ALERT_VIOLATION_THRESHOLD"] = str(int(violation_threshold))
+        existing["ALERT_INSPECTION_GAP_DAYS"] = str(int(inspection_gap_days))
+        if slack_webhook:
+            existing["ALERT_SLACK_WEBHOOK"] = slack_webhook
+        if alert_email:
+            existing["ALERT_EMAIL"] = alert_email
+        try:
+            # Write all managed keys including the new alert ones
+            managed = {
+                "SOCRATA_APP_TOKEN", "SOCRATA_KEY_ID", "SOCRATA_KEY_SECRET",
+                "SOCRATA_DOMAIN", "SOCRATA_DOMAIN_SECONDARY",
+                "SOCRATA_ROW_LIMIT", "SOCRATA_CACHE_TTL_SECONDS",
+                "ALERT_VIOLATION_THRESHOLD", "ALERT_INSPECTION_GAP_DAYS",
+                "ALERT_SLACK_WEBHOOK", "ALERT_EMAIL",
+            }
+            _write_env_file({k: v for k, v in existing.items() if k in managed})
+            st.success("Alert settings saved.")
+        except Exception as exc:
+            st.error(f"Failed to save alert settings: {exc}")
+
+    st.divider()
+    st.markdown("#### Test Alert")
+    if st.button("Send test Slack alert"):
+        webhook = os.getenv("ALERT_SLACK_WEBHOOK", "").strip() or slack_webhook
+        if not webhook:
+            st.warning("No Slack webhook configured.")
+        else:
+            try:
+                from app.services.alerts import send_slack_alert
+                ok, msg = send_slack_alert(
+                    webhook_url=webhook,
+                    title="NYC DOT SIM — Test Alert",
+                    message="This is a test alert from the NYC DOT SIM Toolkit settings page.",
+                    severity="info",
+                )
+                if ok:
+                    st.success(msg)
+                else:
+                    st.error(msg)
+            except Exception as exc:
+                st.error(f"Alert send failed: {exc}")
+
+
+def _render_filter_presets_tab() -> None:
+    st.markdown("### Saved Filter Presets")
+
+    presets_file = _PRESETS_FILE
+    if presets_file.exists():
+        try:
+            presets: dict = json.loads(presets_file.read_text())
+        except (json.JSONDecodeError, OSError):
+            presets = {}
+    else:
+        presets = {}
+
+    preset_name = st.text_input("Preset name", key="preset_name_input")
+    preset_value = st.text_area(
+        "Filter definition (JSON)",
+        value='{"borough": "Manhattan", "severity": "HIGH"}',
+        key="preset_value_input",
+    )
+    if st.button("Save Preset") and preset_name:
+        try:
+            presets[preset_name] = json.loads(preset_value)
+            presets_file.parent.mkdir(exist_ok=True)
+            presets_file.write_text(json.dumps(presets, indent=2))
+            st.success(f"Saved preset '{preset_name}'")
+            st.rerun()
+        except json.JSONDecodeError:
+            st.error("Invalid JSON")
+
+    if presets:
+        st.markdown("**Existing presets:**")
+        for name, val in list(presets.items()):
+            c1, c2 = st.columns([4, 1])
+            c1.code(f"{name}: {json.dumps(val)}")
+            if c2.button("Delete", key=f"del_{name}"):
+                del presets[name]
+                presets_file.write_text(json.dumps(presets, indent=2))
+                st.rerun()
+
+
+def _render_import_export_tab() -> None:
+    st.markdown("### Export/Import Settings")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Export Settings JSON"):
+            env_data = _read_env_file()
+            presets_data: dict = {}
+            if _PRESETS_FILE.exists():
+                try:
+                    presets_data = json.loads(_PRESETS_FILE.read_text())
+                except (json.JSONDecodeError, OSError):
+                    presets_data = {}
+            settings_payload = {
+                "env": env_data,
+                "presets": presets_data,
+            }
+            st.download_button(
+                "Download settings.json",
+                data=json.dumps(settings_payload, indent=2),
+                file_name="nyc_dot_settings.json",
+                mime="application/json",
+            )
+
+    with col2:
+        uploaded = st.file_uploader(
+            "Import settings.json", type="json", key="settings_import"
+        )
+        if uploaded:
+            try:
+                imported = json.load(uploaded)
+                st.json(imported)
+                st.info("Review above then manually apply to .env")
+            except Exception as exc:
+                st.error(str(exc))
