@@ -8,6 +8,8 @@ on:
   pull_request:
     branches: [main, master]
 
+permissions: read-all
+
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
