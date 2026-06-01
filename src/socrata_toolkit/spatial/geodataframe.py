@@ -182,3 +182,30 @@ def to_wkt_column(gdf: gpd.GeoDataFrame, geom_col: str = "geometry") -> pd.Serie
     if not HAS_GEOPANDAS:
         raise ImportError("geopandas is required.")
     return gdf[geom_col].apply(lambda g: g.wkt if g is not None else None)
+
+
+def spatial_stats(gdf) -> dict:
+    """Compute summary spatial statistics for a GeoDataFrame.
+
+    Args:
+        gdf: A GeoDataFrame to summarise.
+
+    Returns:
+        Dict with total_features, geometry_types, bounds, crs, and
+        optionally total_area_sq_deg when Polygon geometries are present.
+
+    Raises:
+        ImportError: if geopandas is not installed.
+    """
+    if not HAS_GEOPANDAS:
+        raise ImportError("geopandas required")
+    stats: dict = {
+        "total_features": len(gdf),
+        "geometry_types": gdf.geometry.geom_type.value_counts().to_dict(),
+        "bounds": gdf.total_bounds.tolist(),  # [minx, miny, maxx, maxy]
+        "crs": str(gdf.crs),
+    }
+    if any(gdf.geometry.geom_type == "Polygon"):
+        polys = gdf[gdf.geometry.geom_type == "Polygon"]
+        stats["total_area_sq_deg"] = float(polys.geometry.area.sum())
+    return stats
