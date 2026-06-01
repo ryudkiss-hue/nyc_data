@@ -321,8 +321,8 @@ class DmbokRequest(BaseModel):
     """DMBOK data-management scoring request."""
 
     rows: list[dict[str, Any]] = Field(default_factory=list)
-    key_columns: list[str] | None = None
-    date_column: str | None = None
+    key_columns: Optional[list[str]] = None  # noqa: UP045
+    date_column: Optional[str] = None  # noqa: UP045
 
 
 @app.post("/api/governance/dmbok")
@@ -501,8 +501,8 @@ class QualityCatalogRequest(BaseModel):
     dataset_id: str
     rows: list[dict[str, Any]] = Field(..., min_length=1)
     key_columns: list[str] = Field(default_factory=list)
-    date_column: str | None = None
-    catalog_path: str | None = None  # path to persist updated catalog JSON
+    date_column: Optional[str] = None  # noqa: UP045
+    catalog_path: Optional[str] = None  # path to persist updated catalog JSON  # noqa: UP045
 
 
 @app.post("/api/governance/quality-catalog")

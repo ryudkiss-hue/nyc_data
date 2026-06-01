@@ -12,6 +12,188 @@ from app.services import agency
 from app.ui.empty_states import render_empty_state, render_guided_tour
 from app.utils.i18n import t
 
+# ---------------------------------------------------------------------------
+# Live KPI helpers
+# ---------------------------------------------------------------------------
+
+@st.cache_data(ttl=300)
+def _fetch_live_kpi_data() -> dict:
+    """Fetch raw KPI counts from the Socrata cache/manifest.
+
+    Uses only already-cached parquet data to avoid blocking the page load.
+    Falls back to zeros if data is not available (no live Socrata call needed
+    here — the workflow loaders handle that separately).
+    """
+    import json
+    from pathlib import Path
+
+    result: dict = {
+        "pending_inspections": None,
+        "active_conflicts": None,
+        "sla_health_pct": None,
+        "cache_age_hours": None,
+    }
+
+    # Attempt to read from parquet cache (no network call)
+    cache_dir = Path(__file__).resolve().parents[2] / "data" / "local_db" / "socrata_cache"
+    manifest_path = Path(__file__).resolve().parents[2] / "data" / "cache" / "manifest.json"
+
+    # Cache age from manifest
+    if manifest_path.exists():
+        try:
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            # Use the most recently fetched dataset as a proxy for overall cache age
+            fetch_times = [
+                entry.get("fetched_at")
+                for entry in manifest.values()
+                if isinstance(entry, dict) and entry.get("fetched_at")
+            ]
+            if fetch_times:
+                most_recent = max(fetch_times)
+                fetched_dt = datetime.fromisoformat(most_recent.replace("Z", "+00:00"))
+                age_sec = (datetime.now(timezone.utc) - fetched_dt).total_seconds()
+                result["cache_age_hours"] = round(age_sec / 3600, 1)
+        except (ValueError, KeyError, OSError):
+            pass
+
+    # Attempt to read inspection parquet for pending/SLA counts
+    inspection_parquet = cache_dir / "inspection.parquet"
+    if inspection_parquet.exists():
+        try:
+            import pandas as pd
+
+            df = pd.read_parquet(inspection_parquet)
+            if not df.empty:
+                # Pending = rows where status is not closed/resolved
+                status_col = next(
+                    (c for c in df.columns if c.lower() in ("status", "inspection_status", "case_status")),
+                    None,
+                )
+                if status_col:
+                    closed_terms = {"closed", "resolved", "completed", "done"}
+                    pending_mask = ~df[status_col].astype(str).str.lower().isin(closed_terms)
+                    result["pending_inspections"] = int(pending_mask.sum())
+
+                    # SLA health: closed within grace period (proxy: closed in < 30 days)
+                    date_col = next(
+                        (c for c in df.columns if "date" in c.lower() or "created" in c.lower()),
+                        None,
+                    )
+                    closed_df = df[~pending_mask].copy()
+                    if date_col and len(closed_df) > 0:
+                        try:
+                            closed_df["_date"] = pd.to_datetime(
+                                closed_df[date_col], errors="coerce", utc=True
+                            )
+                            now_utc = pd.Timestamp.now(tz="UTC")
+                            within_sla = (
+                                (now_utc - closed_df["_date"]).dt.total_seconds() / 86400
+                            ) <= 30
+                            sla_pct = within_sla.mean() * 100 if len(closed_df) > 0 else None
+                            result["sla_health_pct"] = round(sla_pct, 1) if sla_pct is not None else None
+                        except (TypeError, AttributeError):
+                            pass
+                else:
+                    result["pending_inspections"] = len(df)
+        except (OSError, ValueError, ImportError):
+            pass
+
+    # Active conflicts from permits/work-orders parquet
+    for conflict_key in ("street_permits", "work_orders", "permits"):
+        conflict_parquet = cache_dir / f"{conflict_key}.parquet"
+        if conflict_parquet.exists():
+            try:
+                import pandas as pd
+
+                df = pd.read_parquet(conflict_parquet)
+                if not df.empty:
+                    status_col = next(
+                        (c for c in df.columns if c.lower() in ("status", "permit_status", "order_status")),
+                        None,
+                    )
+                    if status_col:
+                        active_terms = {"active", "open", "in progress", "issued", "approved"}
+                        active_mask = df[status_col].astype(str).str.lower().isin(active_terms)
+                        result["active_conflicts"] = int(active_mask.sum())
+                    else:
+                        result["active_conflicts"] = len(df)
+                    break
+            except (OSError, ValueError, ImportError):
+                pass
+
+    return result
+
+
+def _make_live_kpis_fragment():
+    """Build and return the live-KPI render function.
+
+    Wraps with ``@st.fragment(run_every=300)`` when available (Streamlit ≥ 1.33),
+    otherwise returns a plain callable.
+    """
+
+    def _render_live_kpis_inner() -> None:
+        st.markdown("#### 🔴 Live KPIs")
+        st.caption("Auto-refreshes every 5 minutes from local cache")
+
+        with st.status("Loading KPI data…", expanded=False) as status_box:
+            kpi_data = _fetch_live_kpi_data()
+            status_box.update(label="KPI data loaded", state="complete", expanded=False)
+
+        k1, k2, k3, k4 = st.columns(4)
+
+        pending = kpi_data.get("pending_inspections")
+        k1.metric(
+            "Pending Inspections",
+            f"{pending:,}" if pending is not None else "—",
+            help="Open inspections where status != Closed/Resolved (from local cache)",
+        )
+
+        conflicts = kpi_data.get("active_conflicts")
+        k2.metric(
+            "Active Conflicts",
+            f"{conflicts:,}" if conflicts is not None else "—",
+            help="Active/open work orders or permits that may overlap (from local cache)",
+        )
+
+        sla = kpi_data.get("sla_health_pct")
+        k3.metric(
+            "SLA Health %",
+            f"{sla:.1f}%" if sla is not None else "—",
+            delta="On track" if sla is not None and sla >= 80 else None,
+            delta_color="normal" if sla is not None and sla >= 80 else "off",
+            help="% of closed inspections resolved within 30-day SLA proxy (from local cache)",
+        )
+
+        cache_age = kpi_data.get("cache_age_hours")
+        if cache_age is None:
+            age_label = "No cache"
+        elif cache_age < 1:
+            age_label = "< 1h ago"
+        else:
+            age_label = f"{cache_age:.1f}h ago"
+        k4.metric(
+            "Cache Age",
+            age_label,
+            help="Hours since last Socrata fetch (from cache manifest)",
+        )
+
+        if all(v is None for v in kpi_data.values()):
+            st.caption(
+                "ℹ️ No cached data found. Run a workflow to populate KPIs."
+            )
+
+    if hasattr(st, "fragment"):
+        return st.fragment(run_every=300)(_render_live_kpis_inner)
+    return _render_live_kpis_inner
+
+
+# Build the fragment once at module import so we reuse the decorated version.
+render_live_kpis = _make_live_kpis_fragment()
+
+
+# ---------------------------------------------------------------------------
+# Home page
+# ---------------------------------------------------------------------------
 
 def _format_age(path_mtime: float) -> str:
     """Human-readable age from a file mtime."""
@@ -59,6 +241,11 @@ def render_home_page() -> None:
         delta="All checks pass" if health["score"] >= 85 else "See Settings → Health",
         delta_color="normal" if health["score"] >= 85 else "inverse",
     )
+
+    st.divider()
+
+    # ---- Live KPI tiles (fragment rerender every 5 min) ----
+    render_live_kpis()
 
     st.divider()
 

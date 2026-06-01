@@ -2,14 +2,21 @@
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import time
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
 import requests
 import streamlit as st
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
+from app.services.nl_query import HAS_ANTHROPIC, nl_to_soql, validate_soql
 
 _DISCOVERY_URL = "https://api.us.socrata.com/api/catalog/v1"
 _DEFAULT_DOMAIN = "data.cityofnewyork.us"
@@ -188,10 +195,11 @@ def render_data_discovery_page() -> None:
             icon="⚠️",
         )
 
-    tab_search, tab_builder, tab_preview = st.tabs([
+    tab_search, tab_builder, tab_preview, tab_nl = st.tabs([
         "🔎 Search & Filter",
         "🛠️ SoQL Query Builder",
         "📋 Dataset Preview",
+        "🤖 NL Query",
     ])
 
     # ------------------------------------------------------------------ #
@@ -211,6 +219,12 @@ def render_data_discovery_page() -> None:
     # ------------------------------------------------------------------ #
     with tab_preview:
         _render_preview_tab()
+
+    # ------------------------------------------------------------------ #
+    # Tab 4 — NL Query
+    # ------------------------------------------------------------------ #
+    with tab_nl:
+        _render_nl_query_tab()
 
 
 def _render_search_tab() -> None:
@@ -728,3 +742,311 @@ def _render_preview_tab() -> None:
                     f"{fourfour_p}_sample.csv",
                     mime="text/csv",
                 )
+
+
+# --------------------------------------------------------------------------- #
+# NL Query helpers
+# --------------------------------------------------------------------------- #
+
+_SAVED_QUERIES_PATH = Path("data/saved_queries.json")
+_NL_HISTORY_KEY = "nl_query_history"
+_MAX_HISTORY = 20
+
+
+def _load_saved_queries() -> list[dict[str, Any]]:
+    """Load saved queries from disk. Returns empty list on error."""
+    try:
+        if _SAVED_QUERIES_PATH.exists():
+            with _SAVED_QUERIES_PATH.open("r", encoding="utf-8") as f:
+                data = json.load(f)
+                return data if isinstance(data, list) else []
+    except (OSError, json.JSONDecodeError):
+        pass
+    return []
+
+
+def _save_query_to_disk(question: str, dataset_key: str, soql_params: dict[str, Any]) -> None:
+    """Persist a favorite query to data/saved_queries.json."""
+    _SAVED_QUERIES_PATH.parent.mkdir(parents=True, exist_ok=True)
+    existing = _load_saved_queries()
+    entry: dict[str, Any] = {
+        "question": question,
+        "dataset_key": dataset_key,
+        "soql_params": soql_params,
+        "saved_at": datetime.now(timezone.utc).isoformat(),
+    }
+    existing.append(entry)
+    with _SAVED_QUERIES_PATH.open("w", encoding="utf-8") as f:
+        json.dump(existing, f, indent=2)
+
+
+def _nl_session_with_retry() -> requests.Session:
+    """Return a requests.Session with retry logic."""
+    session = requests.Session()
+    retry = Retry(total=3, backoff_factor=0.5, status_forcelist=[429, 500, 502, 503])
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount("https://", adapter)
+    session.mount("http://", adapter)
+    return session
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def _fetch_nl_results(
+    domain: str,
+    fourfour: str,
+    select: str,
+    where: str,
+    group: str,
+    order: str,
+    limit: str,
+) -> pd.DataFrame:
+    """Fetch Socrata data using SoQL params from NL translation."""
+    url = f"https://{domain}/resource/{fourfour}.json"
+    params: dict[str, Any] = {}
+    if select:
+        params["$select"] = select
+    if where:
+        params["$where"] = where
+    if group:
+        params["$group"] = group
+    if order:
+        params["$order"] = order
+    if limit and str(limit).isdigit():
+        params["$limit"] = limit
+    else:
+        params["$limit"] = "100"
+
+    token = os.getenv("SOCRATA_APP_TOKEN", "").strip() or None
+    headers: dict[str, str] = {"Accept": "application/json"}
+    if token:
+        headers["X-App-Token"] = token
+
+    session = _nl_session_with_retry()
+    try:
+        r = session.get(url, params=params, headers=headers, timeout=20)
+        r.raise_for_status()
+        return pd.DataFrame(r.json())
+    except requests.exceptions.HTTPError as exc:
+        return pd.DataFrame({"error": [f"HTTP {exc.response.status_code}: {exc.response.text[:200]}"]})
+    except requests.exceptions.Timeout:
+        return pd.DataFrame({"error": ["Request timed out (20 s)."]})
+    except Exception as exc:
+        return pd.DataFrame({"error": [str(exc)]})
+
+
+def _get_dataset_registry_keys() -> list[str]:
+    """Return dataset keys from DATASET_REGISTRY."""
+    try:
+        from app.data_loader import DATASET_REGISTRY  # noqa: PLC0415
+        return list(DATASET_REGISTRY.keys())
+    except Exception:
+        return []
+
+
+def _get_columns_for_dataset(dataset_key: str) -> list[str]:
+    """Fetch column names for a registered dataset via Socrata metadata."""
+    try:
+        from app.data_loader import DATASET_REGISTRY  # noqa: PLC0415
+        meta = DATASET_REGISTRY.get(dataset_key, {})
+        fourfour = meta.get("fourfour", "")
+        if not fourfour:
+            return []
+        fetched = _fetch_metadata(_DEFAULT_DOMAIN, fourfour)
+        return [c["fieldName"] for c in fetched.get("columns", [])]
+    except Exception:
+        return []
+
+
+def _render_nl_query_tab() -> None:
+    st.markdown("#### 🤖 Natural Language Query")
+    st.caption(
+        "Ask a question in plain English and get results from NYC Open Data. "
+        "Powered by Claude AI — translates your question into a SoQL query automatically."
+    )
+
+    if not HAS_ANTHROPIC:
+        st.warning(
+            "Install anthropic package to use NL queries: pip install anthropic",
+            icon="⚠️",
+        )
+        return
+
+    if not os.getenv("ANTHROPIC_API_KEY", "").strip():
+        st.warning(
+            "ANTHROPIC_API_KEY environment variable is not set. "
+            "Set it to enable natural language queries.",
+            icon="⚠️",
+        )
+
+    # Initialize session state
+    if _NL_HISTORY_KEY not in st.session_state:
+        st.session_state[_NL_HISTORY_KEY] = []
+
+    # ---- Saved / favorite queries ----
+    saved_queries = _load_saved_queries()
+    prefill_question = ""
+    prefill_dataset = ""
+
+    if saved_queries:
+        with st.expander(f"⭐ Saved queries ({len(saved_queries)})", expanded=False):
+            labels = [
+                f"{q['question'][:60]} [{q['dataset_key']}]"
+                for q in saved_queries
+            ]
+            selected_fav = st.selectbox(
+                "Load a saved query",
+                options=["— select —"] + labels,
+                key="nl_fav_selectbox",
+            )
+            if selected_fav and selected_fav != "— select —":
+                idx = labels.index(selected_fav)
+                fav = saved_queries[idx]
+                prefill_question = fav["question"]
+                prefill_dataset = fav["dataset_key"]
+                st.info(
+                    f"Loaded: **{fav['question']}** on `{fav['dataset_key']}` "
+                    f"(saved {fav.get('saved_at', '')[:10]})"
+                )
+
+    # ---- Dataset selector ----
+    registry_keys = _get_dataset_registry_keys()
+    if not registry_keys:
+        registry_keys = ["inspection"]
+
+    default_ds_idx = 0
+    if prefill_dataset and prefill_dataset in registry_keys:
+        default_ds_idx = registry_keys.index(prefill_dataset)
+
+    col_ds, col_q = st.columns([2, 4])
+    selected_dataset = col_ds.selectbox(
+        "Dataset",
+        options=registry_keys,
+        index=default_ds_idx,
+        key="nl_dataset_select",
+        help="Select the dataset to query.",
+    )
+
+    # ---- Query input ----
+    question = col_q.text_input(
+        "Ask a question about your data",
+        value=prefill_question,
+        key="nl_query_input",
+        placeholder=(
+            "e.g. How many inspections per borough? "
+            "Show me the 10 most recent violations in Manhattan."
+        ),
+    )
+
+    run_col, _ = st.columns([1, 4])
+    run_query = run_col.button("▶ Run NL Query", type="primary", use_container_width=True)
+
+    if not run_query:
+        # Show query history if any
+        _render_nl_history()
+        return
+
+    if not question.strip():
+        st.warning("Enter a question to continue.")
+        return
+
+    # Fetch columns for the selected dataset
+    with st.spinner("Loading dataset columns…"):
+        columns = _get_columns_for_dataset(selected_dataset)
+
+    if not columns:
+        st.info(
+            f"Could not load columns for `{selected_dataset}`. "
+            "The query will proceed with all columns (*)."
+        )
+
+    # Translate NL → SoQL
+    try:
+        with st.spinner("Translating question to SoQL via Claude…"):
+            soql_params = nl_to_soql(
+                question=question,
+                dataset_key=selected_dataset,
+                columns=columns,
+            )
+    except RuntimeError as exc:
+        st.error(f"NL translation failed: {exc}")
+        return
+
+    # Validate
+    validation_errors = validate_soql(soql_params, columns)
+    if validation_errors:
+        st.warning("Validation issues with generated query:")
+        for err in validation_errors:
+            st.caption(f"- {err}")
+
+    # Show generated SoQL
+    with st.expander("📄 Generated SoQL params", expanded=True):
+        st.code(json.dumps(soql_params, indent=2), language="json")
+
+    # Fetch from Socrata
+    try:
+        from app.data_loader import DATASET_REGISTRY  # noqa: PLC0415
+        meta = DATASET_REGISTRY.get(selected_dataset, {})
+        domain = _DEFAULT_DOMAIN
+        fourfour = meta.get("fourfour", "")
+    except Exception:
+        domain = _DEFAULT_DOMAIN
+        fourfour = ""
+
+    if not fourfour:
+        st.error(f"No dataset ID (four-four) found for `{selected_dataset}`.")
+        return
+
+    with st.spinner("Fetching results from Socrata…"):
+        result_df = _fetch_nl_results(
+            domain=domain,
+            fourfour=fourfour,
+            select=soql_params.get("select", ""),
+            where=soql_params.get("where", ""),
+            group=soql_params.get("group", ""),
+            order=soql_params.get("order", ""),
+            limit=str(soql_params.get("limit", "100")),
+        )
+
+    if "error" in result_df.columns:
+        st.error(f"Query failed: {result_df['error'].iloc[0]}")
+        return
+
+    st.success(f"Returned **{len(result_df):,}** row(s).")
+    st.dataframe(result_df, use_container_width=True, hide_index=True)
+
+    # ---- Save to history ----
+    history_entry: dict[str, Any] = {
+        "question": question,
+        "dataset_key": selected_dataset,
+        "soql_params": soql_params,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+    history: list[dict[str, Any]] = st.session_state[_NL_HISTORY_KEY]
+    history.insert(0, history_entry)
+    st.session_state[_NL_HISTORY_KEY] = history[:_MAX_HISTORY]
+
+    # ---- Save to favorites button ----
+    if st.button("⭐ Save query", key="nl_save_fav"):
+        _save_query_to_disk(question, selected_dataset, soql_params)
+        st.success("Query saved to favorites.")
+
+    # ---- Show history ----
+    _render_nl_history()
+
+
+def _render_nl_history() -> None:
+    """Render the NL query history panel."""
+    history: list[dict[str, Any]] = st.session_state.get(_NL_HISTORY_KEY, [])
+    if not history:
+        return
+
+    with st.expander(f"🕑 Query history ({len(history)})", expanded=False):
+        for i, entry in enumerate(history):
+            ts = entry.get("timestamp", "")[:19].replace("T", " ")
+            st.markdown(
+                f"**{i + 1}.** `{entry['dataset_key']}` — {entry['question']}  "
+                f"<small>{ts} UTC</small>",
+                unsafe_allow_html=True,
+            )
+            st.code(json.dumps(entry["soql_params"], indent=2), language="json")
+            st.divider()
