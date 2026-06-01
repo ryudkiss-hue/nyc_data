@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+import importlib.util
+
 import numpy as np
 import pandas as pd
 import pytest
+
+_STREAMLIT_AVAILABLE = importlib.util.find_spec("streamlit") is not None
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -27,12 +31,12 @@ def _make_series_with_changepoint(n: int = 40, cp: int = 20) -> pd.Series:
 
 class TestDetectCusumChangepoint:
     def test_returns_none_for_short_series(self):
-        from app.views.analytics_advanced import detect_cusum_changepoint
+        from socrata_toolkit.analysis.changepoint import detect_cusum_changepoint
 
         assert detect_cusum_changepoint(pd.Series([1, 2])) is None
 
     def test_returns_int(self):
-        from app.views.analytics_advanced import detect_cusum_changepoint
+        from socrata_toolkit.analysis.changepoint import detect_cusum_changepoint
 
         series = _make_series_with_changepoint()
         result = detect_cusum_changepoint(series)
@@ -40,7 +44,7 @@ class TestDetectCusumChangepoint:
 
     def test_detects_changepoint_within_tolerance(self):
         """Detected changepoint index should be within ±5 of the true shift at index 20."""
-        from app.views.analytics_advanced import detect_cusum_changepoint
+        from socrata_toolkit.analysis.changepoint import detect_cusum_changepoint
 
         true_cp = 20
         series = _make_series_with_changepoint(n=40, cp=true_cp)
@@ -49,7 +53,7 @@ class TestDetectCusumChangepoint:
         assert abs(result - true_cp) <= 5, f"Expected cp near {true_cp}, got {result}"
 
     def test_minimum_series_length_4(self):
-        from app.views.analytics_advanced import detect_cusum_changepoint
+        from socrata_toolkit.analysis.changepoint import detect_cusum_changepoint
 
         s = pd.Series([1, 2, 3, 4])
         result = detect_cusum_changepoint(s)
@@ -57,7 +61,7 @@ class TestDetectCusumChangepoint:
 
     def test_flat_series(self):
         """Flat series should still return an int (the argmax of |CUSUM| ≈ 0)."""
-        from app.views.analytics_advanced import detect_cusum_changepoint
+        from socrata_toolkit.analysis.changepoint import detect_cusum_changepoint
 
         result = detect_cusum_changepoint(pd.Series([5.0] * 20))
         assert result is not None
@@ -68,6 +72,7 @@ class TestDetectCusumChangepoint:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.skipif(not _STREAMLIT_AVAILABLE, reason="streamlit not installed")
 class TestKMeansSklearnGuard:
     def test_has_sklearn_boolean(self):
         import app.views.analytics_advanced as mod

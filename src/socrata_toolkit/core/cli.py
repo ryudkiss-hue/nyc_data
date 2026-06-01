@@ -2606,6 +2606,16 @@ def nl_query_cmd(question: str, dataset_key: str | None) -> None:
     except anthropic.APIError as exc:
         raise click.ClickException(f"Anthropic API error: {exc}") from exc
 
+    # Guard against destructive or injected SoQL before executing
+    _FORBIDDEN_KEYWORDS = {"drop", "delete", "insert", "update", "alter", "truncate", "--", ";"}
+    query_tokens = set(soql_query.lower().split())
+    hit = query_tokens & _FORBIDDEN_KEYWORDS
+    if hit:
+        raise click.ClickException(
+            f"Generated query contains forbidden keyword(s): {', '.join(sorted(hit))}. "
+            "Refusing to execute."
+        )
+
     click.echo(f"Generated SoQL: {soql_query}")
 
     # Execute the query

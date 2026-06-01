@@ -29,7 +29,7 @@ class SpatialDependencyError(ImportError):
     """Raised when a spatial operation requires Shapely."""
 
 
-@dataclass(slots=True)
+@dataclass()
 class BoundingBox:
     """Represents a geometry bounding box."""
 
