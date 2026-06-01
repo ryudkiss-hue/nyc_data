@@ -73,6 +73,19 @@ def _load_dismissals_from_socrata(limit: int = 15_000) -> pd.DataFrame:
         return pd.DataFrame()
 
 
+@st.cache_data(ttl=86_400, show_spinner="Loading correspondences from Socrata…")
+def _load_correspondences_from_socrata(limit: int = 10_000) -> pd.DataFrame:
+    """Load Sidewalk Program Correspondences and parse date columns."""
+    try:
+        df = fetch_dataset("correspondences", limit=limit)
+        for date_col in ("date_received", "date_closed"):
+            if date_col in df.columns:
+                df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
+        return df
+    except Exception:
+        return pd.DataFrame()
+
+
 def _upload_or_note(label: str, key: str, note: str = "") -> pd.DataFrame | None:
     """File uploader widget; returns None if no file selected."""
     if note:
@@ -333,6 +346,83 @@ def _render_productivity(df: pd.DataFrame) -> None:
                           color="borough", title="Lots Inspected by Borough")
         fig_boro.update_layout(showlegend=False, height=320)
         st.plotly_chart(fig_boro, use_container_width=True)
+
+
+def _render_dismissals_correspondences() -> None:
+    st.subheader("Dismissal Inspections & Program Correspondences")
+    st.caption(
+        "Dismissals track property owners who repaired their sidewalk privately. "
+        "Correspondences track all written communications to the Sidewalk Program (SIM, CCU, BC, OSM)."
+    )
+
+    d_col, c_col = st.columns(2)
+    d_limit = d_col.number_input("Dismissal row limit", 1_000, 50_000, 10_000, step=1_000, key="dis_lim")
+    c_limit = c_col.number_input("Correspondence row limit", 1_000, 30_000, 5_000, step=1_000, key="cor_lim")
+
+    tab_dis, tab_cor = st.tabs(["📋 Dismissal Inspections", "📨 Correspondences"])
+
+    with tab_dis:
+        df_dis = _load_dismissals_from_socrata(int(d_limit))
+        if df_dis.empty:
+            st.info("No dismissal data loaded. Ensure SOCRATA_APP_TOKEN is configured in Settings.")
+        else:
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric("Total records", f"{len(df_dis):,}")
+            pass_mask = df_dis.get("pass_fail", pd.Series(dtype=str)).str.upper().eq("PASS")
+            c2.metric("Pass", int(pass_mask.sum()))
+            c3.metric("Fail", int((~pass_mask & df_dis.get("pass_fail", pd.Series(dtype=str)).notna()).sum()))
+            exp_mask = df_dis.get("expedited", pd.Series(dtype=str)).str.upper().eq("Y")
+            c4.metric("Expedited", int(exp_mask.sum()))
+
+            boroughs = ["All"] + sorted(df_dis["borough"].dropna().unique().tolist()) if "borough" in df_dis.columns else ["All"]
+            boro_filter = st.selectbox("Borough filter", boroughs, key="dis_boro")
+            view = df_dis if boro_filter == "All" else df_dis[df_dis["borough"].str.upper() == boro_filter.upper()]
+
+            show_cols = [c for c in ("borough", "block", "lot", "request_date", "inspection_date",
+                                     "pass_fail", "reason_for_failure", "homeowner_contractor",
+                                     "permit", "expedited", "violation") if c in view.columns]
+            st.dataframe(view[show_cols] if show_cols else view, use_container_width=True, hide_index=True)
+            st.download_button("⬇ Export (CSV)", view.to_csv(index=False).encode(), "dismissals.csv", mime="text/csv")
+
+            if HAS_PLOTLY and "pass_fail" in df_dis.columns:
+                pf_counts = df_dis["pass_fail"].value_counts().reset_index()
+                pf_counts.columns = ["result", "count"]
+                fig = px.pie(pf_counts, names="result", values="count",
+                             title="Pass / Fail distribution", hole=0.4)
+                st.plotly_chart(fig, use_container_width=True)
+
+    with tab_cor:
+        df_cor = _load_correspondences_from_socrata(int(c_limit))
+        if df_cor.empty:
+            st.info("No correspondence data loaded. Ensure SOCRATA_APP_TOKEN is configured in Settings.")
+        else:
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Total correspondences", f"{len(df_cor):,}")
+            open_mask = df_cor.get("date_closed", pd.Series(dtype="datetime64[ns]")).isna()
+            c2.metric("Open (no close date)", int(open_mask.sum()))
+            if "date_received" in df_cor.columns:
+                recent = df_cor["date_received"].dropna().max()
+                c3.metric("Most recent", str(recent)[:10] if pd.notna(recent) else "—")
+
+            issue_filter = "All"
+            if "issue" in df_cor.columns:
+                issues = ["All"] + sorted(df_cor["issue"].dropna().unique().tolist())[:30]
+                issue_filter = st.selectbox("Issue type filter", issues, key="cor_issue")
+
+            view = df_cor if issue_filter == "All" else df_cor[df_cor["issue"] == issue_filter]
+            show_cols = [c for c in ("date_received", "borough", "block", "lot", "issue", "class",
+                                     "referred_routed_to", "resoultion", "date_closed",
+                                     "results_of_inspection", "sim") if c in view.columns]
+            st.dataframe(view[show_cols] if show_cols else view, use_container_width=True, hide_index=True)
+            st.download_button("⬇ Export (CSV)", view.to_csv(index=False).encode(), "correspondences.csv", mime="text/csv")
+
+            if HAS_PLOTLY and "issue" in df_cor.columns:
+                top_issues = df_cor["issue"].value_counts().head(10).reset_index()
+                top_issues.columns = ["issue", "count"]
+                fig = px.bar(top_issues, x="count", y="issue", orientation="h",
+                             title="Top 10 correspondence issue types")
+                fig.update_layout(yaxis={"categoryorder": "total ascending"})
+                st.plotly_chart(fig, use_container_width=True)
 
 
 def _render_export(df_contracts: pd.DataFrame, df_productivity: pd.DataFrame) -> None:
