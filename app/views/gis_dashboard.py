@@ -19,9 +19,11 @@ from app.data_loader import (
 
 try:
     import folium
+    from folium import plugins as folium_plugins
     from streamlit_folium import st_folium  # type: ignore[import]
     HAS_FOLIUM = True
 except ImportError:
+    folium_plugins = None
     HAS_FOLIUM = False
 
 try:
@@ -30,6 +32,14 @@ try:
     HAS_PLOTLY = True
 except ImportError:
     HAS_PLOTLY = False
+
+try:
+    import geopandas as gpd
+
+    HAS_GEOPANDAS = True
+except ImportError:
+    gpd = None
+    HAS_GEOPANDAS = False
 
 NYC_BOUNDS = {"lat_min": 40.477, "lat_max": 40.917, "lon_min": -74.259, "lon_max": -73.700}
 BOROUGHS = ["Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"]
@@ -173,7 +183,141 @@ def _detect_spatial_conflicts(inspections: pd.DataFrame, permits: pd.DataFrame) 
     return df.sort_values("_sort").drop(columns=["_sort"]).reset_index(drop=True)
 
 
-def _render_folium_map(df: pd.DataFrame, color_col: str = "condition_score") -> None:
+# EPSG:2263 = NY State Plane (Long Island), feet. Used for metric distance ops.
+NY_STATE_PLANE = "EPSG:2263"
+M_TO_FT = 3.280839895
+
+
+def _detect_conflicts_geopandas(
+    inspections: pd.DataFrame,
+    permits: pd.DataFrame,
+    radius_m: float,
+) -> pd.DataFrame:
+    """Flag permits within ``radius_m`` of an inspection using GeoPandas (Items 13, 14).
+
+    Reprojects both datasets to EPSG:2263 (NY State Plane, feet) and uses
+    ``gpd.sjoin_nearest`` with ``max_distance`` to replace the manual haversine
+    point-distance approximation. Returns one row per inspection∩permit match,
+    sorted by distance.
+
+    Args:
+        inspections: Inspection DataFrame with latitude/longitude columns.
+        permits: Permit DataFrame with latitude/longitude columns.
+        radius_m: Buffer radius in meters (conflict threshold).
+
+    Returns:
+        DataFrame of conflict pairs with a ``dist_m`` distance column, or an
+        empty DataFrame if GeoPandas is unavailable or no coordinates exist.
+    """
+    if not HAS_GEOPANDAS:
+        return pd.DataFrame()
+
+    insp = inspections.dropna(subset=["latitude", "longitude"]).copy()
+    perm = permits.dropna(subset=["latitude", "longitude"]).copy()
+    if insp.empty or perm.empty:
+        return pd.DataFrame()
+
+    insp_keep = [c for c in ("borough", "street_name", "block_id", "condition_score",
+                             "inspection_date", "inspectiondate") if c in insp.columns]
+    perm_keep = [c for c in ("permit_id", "permit_type", "applicant", "start_date",
+                             "end_date") if c in perm.columns]
+
+    insp_gdf = gpd.GeoDataFrame(
+        insp[insp_keep + ["latitude", "longitude"]],
+        geometry=gpd.points_from_xy(insp["longitude"], insp["latitude"]),
+        crs="EPSG:4326",
+    ).to_crs(NY_STATE_PLANE)
+    perm_gdf = gpd.GeoDataFrame(
+        perm[perm_keep + ["latitude", "longitude"]].rename(
+            columns={"latitude": "perm_lat", "longitude": "perm_lon"}
+        ),
+        geometry=gpd.points_from_xy(perm["longitude"], perm["latitude"]),
+        crs="EPSG:4326",
+    ).to_crs(NY_STATE_PLANE)
+
+    # Distance threshold expressed in feet (the unit of EPSG:2263)
+    max_distance_ft = radius_m * M_TO_FT
+
+    joined = gpd.sjoin_nearest(
+        insp_gdf,
+        perm_gdf,
+        how="left",
+        max_distance=max_distance_ft,
+        distance_col="dist_ft",
+    )
+    # Keep only inspections that actually matched a permit within range
+    joined = joined[joined["index_right"].notna()].copy()
+    if joined.empty:
+        return pd.DataFrame()
+
+    joined["dist_m"] = joined["dist_ft"] / M_TO_FT
+
+    def _severity(d: float) -> str:
+        if d <= radius_m / 3:
+            return "HIGH"
+        if d <= 2 * radius_m / 3:
+            return "MEDIUM"
+        return "LOW"
+
+    joined["severity"] = joined["dist_m"].map(_severity)
+
+    out_cols = [
+        c for c in (
+            "borough", "street_name", "block_id", "condition_score",
+            "permit_id", "permit_type", "applicant", "severity", "dist_m",
+            "inspection_date", "start_date", "end_date",
+            "latitude", "longitude", "perm_lat", "perm_lon",
+        )
+        if c in joined.columns
+    ]
+    result = joined[out_cols].rename(
+        columns={"latitude": "insp_lat", "longitude": "insp_lon"}
+    )
+    result["dist_m"] = result["dist_m"].round(1)
+    order = {"HIGH": 0, "MEDIUM": 1, "LOW": 2}
+    result = result.sort_values(
+        ["severity", "dist_m"], key=lambda s: s.map(order) if s.name == "severity" else s
+    )
+    return result.reset_index(drop=True)
+
+
+def _base_folium_map(center_lat: float, center_lon: float, zoom_start: int = 11) -> folium.Map:
+    """Create a CartoDB-positron Folium map with MiniMap, Fullscreen, and Draw controls.
+
+    Shared by every Folium map in this dashboard so government-report basemaps
+    are consistent and every map gets an overview inset, a fullscreen toggle,
+    and an ad-hoc study-area drawing tool (Items 9, 10, 11).
+    """
+    m = folium.Map(
+        location=[center_lat, center_lon],
+        zoom_start=zoom_start,
+        tiles="CartoDB positron",
+    )
+    # Item 9 — overview inset
+    folium_plugins.MiniMap(toggle_display=True, position="bottomright").add_to(m)
+    # Item 11 — fullscreen button
+    folium_plugins.Fullscreen(position="topleft").add_to(m)
+    # Item 10 — ad-hoc polygon / circle / rectangle study-area selection (exportable)
+    folium_plugins.Draw(
+        export=True,
+        position="topleft",
+        draw_options={"polyline": False, "marker": False, "circlemarker": False},
+    ).add_to(m)
+    return m
+
+
+def _render_folium_map(
+    df: pd.DataFrame,
+    color_col: str = "condition_score",
+    permits: pd.DataFrame | None = None,
+) -> None:
+    """Interactive Folium inspection map.
+
+    Uses FastMarkerCluster for inspection points (Item 7) to stay responsive on
+    10k+ points, adds a HeatMap density overlay (Item 8), a MiniMap/Fullscreen/
+    Draw control set (Items 9-11), optional permit and violation FeatureGroups
+    toggled via LayerControl (Item 12), and the CartoDB-positron basemap.
+    """
     if not HAS_FOLIUM:
         st.info("Install folium and streamlit-folium for interactive maps: `pip install folium streamlit-folium`")
         return
@@ -185,32 +329,111 @@ def _render_folium_map(df: pd.DataFrame, color_col: str = "condition_score") -> 
 
     center_lat = df_valid["latitude"].mean()
     center_lon = df_valid["longitude"].mean()
-    m = folium.Map(location=[center_lat, center_lon], zoom_start=11, tiles="CartoDB positron")
+    m = _base_folium_map(center_lat, center_lon)
 
-    for _, row in df_valid.iterrows():
-        val = row.get(color_col, 50)
-        try:
-            val = float(val)
-        except (TypeError, ValueError):
-            val = 50
-        r = int(min(255, max(0, (100 - val) * 2.55)))
-        g = int(min(255, max(0, val * 2.55)))
-        color = f"#{r:02x}{g:02x}40"
+    # --- Inspections layer (FastMarkerCluster — Item 7) ---
+    insp_group = folium.FeatureGroup(name="Inspections", show=True)
+    insp_coords = df_valid[["latitude", "longitude"]].to_numpy().tolist()
+    folium_plugins.FastMarkerCluster(data=insp_coords).add_to(insp_group)
+    insp_group.add_to(m)
 
-        popup_lines = [f"<b>{row.get('block_id', row.get('streetname', ''))}</b>"]
-        for col in ("borough", "defect_type", "condition_score", "result", "status"):
-            if col in row and pd.notna(row[col]):
-                popup_lines.append(f"{col}: {row[col]}")
-        folium.CircleMarker(
-            location=[row["latitude"], row["longitude"]],
-            radius=5,
-            color=color,
-            fill=True,
-            fill_opacity=0.7,
-            popup=folium.Popup("<br>".join(popup_lines), max_width=200),
-        ).add_to(m)
+    # --- Inspection density heatmap (Item 8) ---
+    heat_group = folium.FeatureGroup(name="Inspection Density (heatmap)", show=False)
+    if color_col in df_valid.columns:
+        # Weight by severity (worse condition = higher weight) when available
+        weights = df_valid[color_col].apply(
+            lambda v: max(0.0, (100 - float(v)) / 100.0) if pd.notna(v) else 0.5
+        )
+        heat_data = [
+            [lat, lon, w]
+            for lat, lon, w in zip(
+                df_valid["latitude"], df_valid["longitude"], weights, strict=False
+            )
+        ]
+    else:
+        heat_data = insp_coords
+    folium_plugins.HeatMap(heat_data, radius=20, blur=15, max_zoom=13).add_to(heat_group)
+    heat_group.add_to(m)
+
+    # --- Optional permits layer (Item 12 — toggle via LayerControl) ---
+    if permits is not None and not permits.empty:
+        perm_valid = _flag_in_bounds(permits).dropna(subset=["latitude", "longitude"])
+        if not perm_valid.empty:
+            perm_group = folium.FeatureGroup(name="Permits", show=False)
+            for _, prow in perm_valid.iterrows():
+                popup_lines = [f"<b>{prow.get('permit_id', prow.get('permit_type', 'Permit'))}</b>"]
+                for col in ("borough", "permit_type", "applicant", "start_date", "end_date"):
+                    if col in prow and pd.notna(prow[col]):
+                        popup_lines.append(f"{col}: {prow[col]}")
+                folium.CircleMarker(
+                    location=[prow["latitude"], prow["longitude"]],
+                    radius=4,
+                    color="#1f77b4",
+                    fill=True,
+                    fill_opacity=0.7,
+                    popup=folium.Popup("<br>".join(popup_lines), max_width=220),
+                ).add_to(perm_group)
+            perm_group.add_to(m)
+
+    # --- Optional violations layer (subset of inspections flagged as violations) ---
+    if "result" in df_valid.columns or "status" in df_valid.columns:
+        flag_col = "result" if "result" in df_valid.columns else "status"
+        viol = df_valid[
+            df_valid[flag_col].astype(str).str.upper().str.contains(
+                "FAIL|VIOL|NOV|DEFECT", na=False
+            )
+        ]
+        if not viol.empty:
+            viol_group = folium.FeatureGroup(name="Violations", show=False)
+            for _, vrow in viol.iterrows():
+                folium.CircleMarker(
+                    location=[vrow["latitude"], vrow["longitude"]],
+                    radius=5,
+                    color="#d62728",
+                    fill=True,
+                    fill_opacity=0.8,
+                    popup=folium.Popup(str(vrow.get(flag_col, "")), max_width=200),
+                ).add_to(viol_group)
+            viol_group.add_to(m)
+
+    # Item 12 — layer toggle control
+    folium.LayerControl(collapsed=False).add_to(m)
 
     st_folium(m, width=900, height=550, returned_objects=[])
+
+
+def _render_folium_heatmap(df: pd.DataFrame) -> None:
+    """Interactive Folium HeatMap density overlay for critical locations (Item 8)."""
+    if not HAS_FOLIUM:
+        st.info("Install folium and streamlit-folium for the interactive heatmap.")
+        return
+
+    df_valid = _flag_in_bounds(df).dropna(subset=["latitude", "longitude"])
+    if df_valid.empty:
+        st.warning("No points within NYC bounds.")
+        return
+
+    m = _base_folium_map(df_valid["latitude"].mean(), df_valid["longitude"].mean(), zoom_start=10)
+
+    if "condition_score" in df_valid.columns:
+        weights = df_valid["condition_score"].apply(
+            lambda v: max(0.0, (100 - float(v)) / 100.0) if pd.notna(v) else 0.5
+        )
+        heat_data = [
+            [lat, lon, w]
+            for lat, lon, w in zip(
+                df_valid["latitude"], df_valid["longitude"], weights, strict=False
+            )
+        ]
+    else:
+        heat_data = df_valid[["latitude", "longitude"]].to_numpy().tolist()
+
+    heat_group = folium.FeatureGroup(name="Inspection Density (heatmap)", show=True)
+    folium_plugins.HeatMap(heat_data, radius=20, blur=15, max_zoom=13).add_to(heat_group)
+    heat_group.add_to(m)
+    folium.LayerControl(collapsed=False).add_to(m)
+
+    st_folium(m, width=900, height=540, returned_objects=[])
 
 
 def _render_plotly_map(df: pd.DataFrame, title: str = "Inspection Locations") -> None:
@@ -378,7 +601,32 @@ def _render_conflict_detection_tab() -> None:
         st.info("Load both datasets to detect conflicts.")
         return
 
-    conflicts = _detect_spatial_conflicts(df_insp, df_perm)
+    # Item 13 / 14 — buffer-based spatial conflict detection via GeoPandas
+    has_coords = (
+        "latitude" in df_insp.columns and "longitude" in df_insp.columns
+        and "latitude" in df_perm.columns and "longitude" in df_perm.columns
+    )
+    used_geopandas = False
+    if HAS_GEOPANDAS and has_coords:
+        radius_m = st.slider(
+            "Conflict buffer radius (meters) — flag permits within this distance of an inspection",
+            min_value=50, max_value=500, value=150, step=10, key="conf_radius",
+        )
+        with st.spinner(f"Buffering inspections by {radius_m} m and running GeoPandas sjoin_nearest…"):
+            conflicts = _detect_conflicts_geopandas(df_insp, df_perm, float(radius_m))
+        if conflicts.empty:
+            # Fall back to the attribute-based join when no spatial matches found
+            conflicts = _detect_spatial_conflicts(df_insp, df_perm)
+        else:
+            used_geopandas = True
+            st.caption(
+                f"GeoPandas sjoin_nearest (EPSG:2263, ≤{radius_m} m buffer): "
+                f"{len(conflicts):,} inspection∩permit conflict pairs."
+            )
+    else:
+        if not HAS_GEOPANDAS:
+            st.caption("Install geopandas for buffer-based spatial conflict detection. Using attribute join.")
+        conflicts = _detect_spatial_conflicts(df_insp, df_perm)
 
     if conflicts.empty:
         st.success("✅ No spatial conflicts detected between the loaded datasets.")
@@ -411,6 +659,16 @@ def _render_conflict_detection_tab() -> None:
         f"conflict_report_{date.today()}.xlsx",
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
+
+    # Item 12 — interactive conflict map: inspections + permits toggled via LayerControl
+    if used_geopandas and HAS_FOLIUM:
+        with st.expander("🗺️ Conflict Map (inspections + permits)", expanded=False):
+            st.caption(
+                "Inspections clustered (FastMarkerCluster); toggle the Permits and "
+                "Inspection Density layers via the control top-right. Use the Draw tools "
+                "to mark an ad-hoc study area."
+            )
+            _render_folium_map(df_insp, permits=df_perm)
 
 
 def _render_hotspot_tab() -> None:
@@ -452,26 +710,34 @@ def _render_hotspot_tab() -> None:
         st.info("No critical locations with current filter settings.")
         return
 
-    score_col = df_critical.get("condition_score") if "condition_score" in df_critical.columns else None
-    z_vals = (100 - df_critical["condition_score"]) if score_col is not None else pd.Series([50] * len(df_critical))
+    engine_opts = ["Plotly density"]
+    if HAS_FOLIUM:
+        engine_opts.append("Folium heatmap (interactive)")
+    heat_engine = st.radio("Hotspot engine", engine_opts, horizontal=True, key="hot_engine")
 
-    fig = go.Figure(go.Densitymapbox(
-        lat=df_critical["latitude"],
-        lon=df_critical["longitude"],
-        z=z_vals,
-        radius=20,
-        colorscale="YlOrRd",
-        showscale=True,
-        colorbar_title="Severity",
-    ))
-    fig.update_layout(
-        mapbox_style="carto-positron",
-        mapbox_zoom=10,
-        mapbox_center={"lat": df_critical["latitude"].mean(), "lon": df_critical["longitude"].mean()},
-        margin={"r": 0, "t": 10, "l": 0, "b": 0},
-        height=520,
-    )
-    st.plotly_chart(fig, use_container_width=True)
+    if heat_engine.startswith("Folium"):
+        _render_folium_heatmap(df_critical)
+    else:
+        score_col = df_critical.get("condition_score") if "condition_score" in df_critical.columns else None
+        z_vals = (100 - df_critical["condition_score"]) if score_col is not None else pd.Series([50] * len(df_critical))
+
+        fig = go.Figure(go.Densitymapbox(
+            lat=df_critical["latitude"],
+            lon=df_critical["longitude"],
+            z=z_vals,
+            radius=20,
+            colorscale="YlOrRd",
+            showscale=True,
+            colorbar_title="Severity",
+        ))
+        fig.update_layout(
+            mapbox_style="carto-positron",
+            mapbox_zoom=10,
+            mapbox_center={"lat": df_critical["latitude"].mean(), "lon": df_critical["longitude"].mean()},
+            margin={"r": 0, "t": 10, "l": 0, "b": 0},
+            height=520,
+        )
+        st.plotly_chart(fig, use_container_width=True)
 
     if "borough" in df_critical.columns:
         st.markdown("**Critical Locations by Borough**")
