@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{{ title | default("Weekly SLA Status Report") }}</title>
+  <style>
+    @page {
+      size: letter;
+      margin: 1.6cm 1.8cm;
+    }
+    body {
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      color: #1a1a1a;
+      font-size: 11px;
+      margin: 0;
+    }
+    .letterhead {
+      background: #003087;
+      color: #ffffff;
+      padding: 16px 22px;
+      border-radius: 4px;
+      margin-bottom: 16px;
+    }
+    .letterhead .agency {
+      font-size: 12px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      opacity: 0.85;
+      margin: 0;
+    }
+    .letterhead h1 {
+      font-size: 20px;
+      margin: 4px 0 0 0;
+      font-weight: 700;
+    }
+    .letterhead .meta {
+      margin-top: 6px;
+      font-size: 10px;
+      opacity: 0.9;
+    }
+    .legend {
+      margin: 10px 0 14px 0;
+      font-size: 10px;
+    }
+    .legend .chip {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 10px;
+      margin-right: 8px;
+      font-weight: 600;
+    }
+    .chip.red { background: #f8d7da; color: #842029; border: 1px solid #f1aeb5; }
+    .chip.yellow { background: #fff3cd; color: #664d03; border: 1px solid #ffe69c; }
+    .chip.green { background: #d1e7dd; color: #0f5132; border: 1px solid #a3cfbb; }
+    table.sla-table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 10px;
+    }
+    table.sla-table th {
+      background: #003087;
+      color: #ffffff;
+      padding: 6px 8px;
+      text-align: left;
+      font-weight: 600;
+    }
+    table.sla-table td {
+      border: 1px solid #d4dbe5;
+      padding: 5px 8px;
+    }
+    tr.row-red td { background: #f8d7da; }
+    tr.row-yellow td { background: #fff3cd; }
+    tr.row-green td { background: #d1e7dd; }
+    .status-badge {
+      display: inline-block;
+      padding: 1px 8px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 9px;
+      text-transform: uppercase;
+    }
+    .status-badge.red { background: #842029; color: #fff; }
+    .status-badge.yellow { background: #997404; color: #fff; }
+    .status-badge.green { background: #0f5132; color: #fff; }
+    .footer-note {
+      font-size: 9px;
+      color: #999;
+      margin-top: 22px;
+      border-top: 1px solid #e0e0e0;
+      padding-top: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="letterhead">
+    <p class="agency">New York City Department of Transportation</p>
+    <h1>{{ title | default("Weekly SLA Status Report") }}</h1>
+    <div class="meta">
+      Reporting period: {{ period | default("Current week") }} &nbsp;·&nbsp;
+      Generated: {{ generated_at | default(today) }} &nbsp;·&nbsp;
+      {{ rows | length }} item(s)
+    </div>
+  </div>
+
+  <div class="legend">
+    <span class="chip red">Breached</span>
+    <span class="chip yellow">At Risk</span>
+    <span class="chip green">On Track</span>
+  </div>
+
+  <table class="sla-table">
+    <thead>
+      <tr>
+        {% for col in columns %}
+        <th>{{ col.replace("_", " ").title() }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr class="row-{{ row._color }}">
+        {% for col in columns %}
+        <td>
+          {% if col == "status" %}
+            <span class="status-badge {{ row._color }}">{{ row.get(col, "") }}</span>
+          {% else %}
+            {{ row.get(col, "") }}
+          {% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <p class="footer-note">
+    Generated {{ generated_at | default(today) }} · NYC DOT SIM Toolkit ·
+    SLA status derived from NYC Open Data (Socrata).
+  </p>
+</body>
+</html>
