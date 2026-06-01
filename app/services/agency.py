@@ -116,18 +116,6 @@ def _check_file(name: str, path: Path, *, required: bool = True) -> dict[str, An
     }
 
 
-def _check_env(var: str) -> dict[str, Any]:
-    import os
-
-    val = os.getenv(var, "").strip()
-    return {
-        "name": f"env:{var}",
-        "ok": bool(val),
-        "detail": "(set)" if val else "(missing)",
-        "fix": f"Set {var} in .env" if not val else "",
-    }
-
-
 def system_health() -> dict[str, Any]:
     """Comprehensive system health check."""
     checks: list[dict[str, Any]] = []
