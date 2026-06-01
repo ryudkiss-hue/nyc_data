@@ -498,7 +498,7 @@ class SpatialVisualization:
         html = f"<b>Segment: {segment_id}</b><br>"
 
         for key, value in properties.items():
-            if key not in ["geometry", "segment_id"]:
+            if key not in {"geometry", "segment_id"}:
                 if isinstance(value, float):
                     html += f"{key}: {value:.2f}<br>"
                 else:

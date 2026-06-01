@@ -81,7 +81,7 @@ class SpatialGeometry:
     def __post_init__(self) -> None:
         """Validate and classify geometry type."""
         geom_name = self.geometry.geom_type
-        if geom_name not in ["Point", "LineString", "Polygon", "MultiPolygon", "MultiLineString"]:
+        if geom_name not in {"Point", "LineString", "Polygon", "MultiPolygon", "MultiLineString"}:
             raise ValueError(f"Unsupported geometry type: {geom_name}")
         self.geometry_type = geom_name
 
@@ -200,7 +200,7 @@ class SpatialMaterialZone:
         if not isinstance(self.geometry, SpatialGeometry):
             raise ValueError("geometry must be a SpatialGeometry instance")
 
-        if self.geometry.geometry_type not in ["Polygon", "MultiPolygon"]:
+        if self.geometry.geometry_type not in {"Polygon", "MultiPolygon"}:
             raise ValueError(f"Zone must be Polygon/MultiPolygon, got {self.geometry.geometry_type}")
 
 

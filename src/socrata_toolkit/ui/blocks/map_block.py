@@ -84,8 +84,8 @@ class InteractiveMapBlock:
             self.popup_select.options = columns
 
             # Auto-guess lat/lon columns
-            guess_lat = next((c for c in columns if c.lower() in ["lat", "latitude", "y"]), None)
-            guess_lon = next((c for c in columns if c.lower() in ["lon", "long", "longitude", "x"]), None)
+            guess_lat = next((c for c in columns if c.lower() in {"lat", "latitude", "y"}), None)
+            guess_lon = next((c for c in columns if c.lower() in {"lon", "long", "longitude", "x"}), None)
 
             if guess_lat:
                 self.lat_select.value = guess_lat

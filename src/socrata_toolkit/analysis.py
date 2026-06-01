@@ -1092,9 +1092,9 @@ def export_plotly_figure(fig: Any, base_filepath: str, formats: list[str] = None
         fig.write_json(out_path)
         saved_paths.append(out_path)
 
-    if any(ext in formats for ext in ["png", "pdf", "svg"]):
+    if formats & {"png", "pdf", "svg"}:
         try:
-            for ext in [f for f in formats if f in ["png", "pdf", "svg"]]:
+            for ext in (f for f in formats if f in {"png", "pdf", "svg"}):
                 out_path = f"{base_path.with_suffix('')}.{ext}"
                 fig.write_image(out_path)
                 saved_paths.append(out_path)
