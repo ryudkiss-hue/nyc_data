@@ -492,33 +492,6 @@ def fetch_datasets_parallel(
     return results
 
 
-def read_csv_chunked(file_obj: Any, chunksize: int = 50_000) -> pd.DataFrame:
-    """Read a CSV in chunks to handle files >50 MB without OOM."""
-    chunks = []
-    for chunk in pd.read_csv(file_obj, chunksize=chunksize, low_memory=False):
-        chunks.append(chunk)
-    return pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
-
-
-def check_socrata_connectivity(
-    domain: str = "data.cityofnewyork.us",
-    timeout: int = 5,
-) -> tuple[bool, str]:
-    """Ping the Socrata catalog health endpoint.
-
-    Returns ``(True, "Socrata reachable")`` on success or ``(False, <reason>)`` on failure.
-    """
-    if _SESSION is None:
-        return False, "requests library not available"
-    try:
-        r = _SESSION.get(f"https://{domain}/api/catalog/v1?limit=1", timeout=timeout)
-        if r.status_code == 200:
-            return True, "Socrata reachable"
-        return False, f"HTTP {r.status_code}"
-    except Exception as exc:
-        return False, str(exc)
-
-
 def fetch_all_datasets(*, limit: int = 50_000) -> dict[str, pd.DataFrame]:
     return fetch_datasets_for_keys(tuple(DATASET_REGISTRY.keys()), limit=limit)
 
