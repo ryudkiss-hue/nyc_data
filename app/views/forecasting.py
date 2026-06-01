@@ -24,7 +24,7 @@ except ImportError:
     HAS_PLOTLY = False
 
 try:
-    from statsmodels.tsa.seasonal import seasonal_decompose  # type: ignore[import]
+    from statsmodels.tsa.seasonal import STL, seasonal_decompose  # type: ignore[import]
     HAS_STATSMODELS = True
 except ImportError:
     HAS_STATSMODELS = False
@@ -34,6 +34,20 @@ try:
     HAS_PROPHET = True
 except ImportError:
     HAS_PROPHET = False
+
+try:
+    import openpyxl  # type: ignore[import]  # noqa: F401
+    HAS_OPENPYXL = True
+except ImportError:
+    HAS_OPENPYXL = False
+
+
+# Confidence level label -> (Prophet interval_width, normal z-score for bounds).
+_CONFIDENCE_LEVELS: dict[str, tuple[float, float]] = {
+    "80%": (0.80, 1.2816),
+    "90%": (0.90, 1.6449),
+    "95%": (0.95, 1.9600),
+}
 
 
 # ---------------------------------------------------------------------------
@@ -69,7 +83,9 @@ def _load_timeseries_from_socrata(dataset_key: str, limit: int = 50_000) -> pd.D
 # Exponential smoothing (manual — no external deps)
 # ---------------------------------------------------------------------------
 
-def _exp_smooth_forecast(series: np.ndarray, alpha: float, periods: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def _exp_smooth_forecast(
+    series: np.ndarray, alpha: float, periods: int, z_score: float = 1.96
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     smoothed = np.zeros(len(series))
     smoothed[0] = series[0]
     for i in range(1, len(series)):
@@ -78,9 +94,73 @@ def _exp_smooth_forecast(series: np.ndarray, alpha: float, periods: int) -> tupl
     forecast = np.full(periods, last)
     residuals = series - smoothed
     std_resid = np.std(residuals)
-    lower = forecast - 1.96 * std_resid
-    upper = forecast + 1.96 * std_resid
+    lower = forecast - z_score * std_resid
+    upper = forecast + z_score * std_resid
     return forecast, lower, upper
+
+
+# ---------------------------------------------------------------------------
+# NYC DOT holiday / construction-season calendar (for Prophet)
+# ---------------------------------------------------------------------------
+
+def _build_nyc_dot_holidays(start_year: int, end_year: int) -> pd.DataFrame:
+    """Return a Prophet holidays frame of NYC DOT operationally relevant dates.
+
+    Covers federal holidays that reduce field crew availability (New Year,
+    July 4th, Thanksgiving, Christmas) plus the summer construction-season
+    window (Jun–Aug) when sidewalk/ramp work volume peaks. Years are derived
+    from the fetched series range — no dates are fabricated outside it.
+    """
+    rows: list[dict[str, object]] = []
+    for year in range(start_year, end_year + 1):
+        rows.append({"holiday": "new_year", "ds": pd.Timestamp(year, 1, 1)})
+        rows.append({"holiday": "independence_day", "ds": pd.Timestamp(year, 7, 4)})
+        rows.append({"holiday": "christmas", "ds": pd.Timestamp(year, 12, 25)})
+        # Thanksgiving — 4th Thursday of November.
+        nov_first = pd.Timestamp(year, 11, 1)
+        first_thu = nov_first + pd.Timedelta(days=(3 - nov_first.dayofweek) % 7)
+        rows.append({"holiday": "thanksgiving", "ds": first_thu + pd.Timedelta(weeks=3)})
+        # Summer construction season — anchor on month starts Jun/Jul/Aug.
+        for month in (6, 7, 8):
+            rows.append({"holiday": "summer_construction_season", "ds": pd.Timestamp(year, month, 1)})
+
+    holidays = pd.DataFrame(rows)
+    holidays["ds"] = pd.to_datetime(holidays["ds"])
+    # Construction-season months carry a wider window of influence.
+    holidays["lower_window"] = 0
+    holidays["upper_window"] = np.where(
+        holidays["holiday"] == "summer_construction_season", 30, 1
+    )
+    return holidays.sort_values("ds").reset_index(drop=True)
+
+
+# ---------------------------------------------------------------------------
+# Forecast Excel export (multi-sheet, openpyxl)
+# ---------------------------------------------------------------------------
+
+def _build_forecast_excel(
+    actuals: pd.DataFrame, forecast: pd.DataFrame, metric: str, method: str
+) -> bytes:
+    """Serialise actuals + forecast (with bounds) to a multi-sheet workbook."""
+    bounds = forecast[["date", "lower", "upper"]].copy()
+    summary = pd.DataFrame(
+        {
+            "field": ["metric", "method", "forecast_periods", "generated"],
+            "value": [
+                metric,
+                method,
+                len(forecast),
+                pd.Timestamp.utcnow().strftime("%Y-%m-%d %H:%M UTC"),
+            ],
+        }
+    )
+    buffer = io.BytesIO()
+    with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+        summary.to_excel(writer, sheet_name="Summary", index=False)
+        actuals.to_excel(writer, sheet_name="Actuals", index=False)
+        forecast[["date", "forecast"]].to_excel(writer, sheet_name="Forecast", index=False)
+        bounds.to_excel(writer, sheet_name="Bounds", index=False)
+    return buffer.getvalue()
 
 
 # ---------------------------------------------------------------------------
@@ -213,6 +293,75 @@ def _render_seasonality(df: pd.DataFrame, date_col: str, metrics: list[str]) -> 
                     st.plotly_chart(fig_dec, use_container_width=True)
             except Exception as e:
                 st.info(f"Decomposition unavailable: {e}")
+
+    _render_stl_decomposition(df, date_col, metric)
+
+
+def _render_stl_decomposition(df: pd.DataFrame, date_col: str, metric: str) -> None:
+    """STL (Seasonal-Trend decomposition using LOESS) component subplots."""
+    if not HAS_STATSMODELS:
+        st.info("STL decomposition requires statsmodels. Install with `pip install statsmodels`.")
+        return
+
+    with st.expander("STL Decomposition (Seasonal-Trend via LOESS)"):
+        series = df.set_index(date_col)[metric].resample("MS").mean().dropna()
+        if len(series) < 24:
+            st.info(
+                f"STL needs at least 24 monthly observations (have {len(series)}). "
+                "Fetch a longer history to enable robust seasonal-trend decomposition."
+            )
+            return
+        try:
+            stl_result = STL(series, period=12, robust=True).fit()
+        except (ValueError, np.linalg.LinAlgError) as exc:
+            st.info(f"STL decomposition unavailable: {exc}")
+            return
+
+        components = [
+            ("Observed", series, "#54A24B"),
+            ("Trend", stl_result.trend, "#4C78A8"),
+            ("Seasonal", stl_result.seasonal, "#F58518"),
+            ("Residual", stl_result.resid, "#E45756"),
+        ]
+
+        if not HAS_PLOTLY:
+            for name, comp, _ in components:
+                st.markdown(f"**{name}**")
+                st.line_chart(comp)
+            return
+
+        from plotly.subplots import make_subplots
+
+        fig = make_subplots(
+            rows=4, cols=1, shared_xaxes=True, vertical_spacing=0.04,
+            subplot_titles=[name for name, _, _ in components],
+        )
+        for row, (name, comp, color) in enumerate(components, start=1):
+            mode = "markers" if name == "Residual" else "lines"
+            fig.add_trace(
+                go.Scatter(x=comp.index, y=comp.values, mode=mode,
+                           name=name, line=dict(color=color), marker=dict(color=color, size=4)),
+                row=row, col=1,
+            )
+        fig.update_layout(height=640, showlegend=False,
+                          title=f"{metric} — STL Decomposition (period=12 months)")
+        st.plotly_chart(fig, use_container_width=True)
+
+        seasonal_strength = max(
+            0.0,
+            1.0 - stl_result.resid.var() / (stl_result.seasonal + stl_result.resid).var(),
+        )
+        trend_strength = max(
+            0.0,
+            1.0 - stl_result.resid.var() / (stl_result.trend + stl_result.resid).var(),
+        )
+        c1, c2 = st.columns(2)
+        c1.metric("Seasonal strength", f"{seasonal_strength:.2f}")
+        c2.metric("Trend strength", f"{trend_strength:.2f}")
+        st.caption(
+            "Strength scores (0–1, Hyndman) gauge how much of the variance each component "
+            "explains. Values near 1 indicate a strong, well-defined pattern."
+        )
 
 
 def _render_forecasting(df: pd.DataFrame, date_col: str, metrics: list[str]) -> None:
