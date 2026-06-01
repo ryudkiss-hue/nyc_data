@@ -27,9 +27,18 @@ except ImportError:
 try:
     import plotly.express as px
     import plotly.graph_objects as go
+
     HAS_PLOTLY = True
 except ImportError:
     HAS_PLOTLY = False
+
+try:
+    import pydeck as pdk
+
+    HAS_PYDECK = True
+except ImportError:
+    pdk = None
+    HAS_PYDECK = False
 
 NYC_BOUNDS = {"lat_min": 40.477, "lat_max": 40.917, "lon_min": -74.259, "lon_max": -73.700}
 BOROUGHS = ["Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"]
@@ -263,6 +272,69 @@ def _render_plotly_map(df: pd.DataFrame, title: str = "Inspection Locations") ->
     st.plotly_chart(fig, use_container_width=True)
 
 
+def _render_pydeck_map(df: pd.DataFrame, title: str = "Inspection Locations") -> None:
+    """Render a high-performance deck.gl scatter map via pydeck.
+
+    Suitable for large datasets (>10k points) where Plotly/Folium are slow.
+    Requires pydeck: pip install pydeck
+    """
+    if not HAS_PYDECK:
+        st.info("Install pydeck for GPU-accelerated maps: `pip install pydeck`")
+        return
+    df_valid = _flag_in_bounds(df).dropna(subset=["latitude", "longitude"])
+    if df_valid.empty:
+        st.warning("No points within NYC bounds.")
+        return
+
+    # Colour by condition score: green (high) → red (low)
+    def _score_color(score):
+        try:
+            s = float(score)
+        except (TypeError, ValueError):
+            s = 50
+        r = int(min(255, max(0, (100 - s) * 2.55)))
+        g = int(min(255, max(0, s * 2.55)))
+        return [r, g, 60, 180]
+
+    df_valid = df_valid.copy()
+    score_col = "condition_score" if "condition_score" in df_valid.columns else None
+    if score_col:
+        df_valid["_color"] = df_valid[score_col].apply(_score_color)
+    else:
+        df_valid["_color"] = [[80, 140, 220, 180]] * len(df_valid)
+
+    # pydeck expects longitude before latitude in the position
+    layer = pdk.Layer(
+        "ScatterplotLayer",
+        data=df_valid,
+        get_position=["longitude", "latitude"],
+        get_color="_color",
+        get_radius=60,
+        pickable=True,
+        auto_highlight=True,
+    )
+    view = pdk.ViewState(
+        latitude=df_valid["latitude"].mean(),
+        longitude=df_valid["longitude"].mean(),
+        zoom=11,
+        pitch=0,
+    )
+    tooltip_fields = {
+        c: f"{{{c}}}"
+        for c in ("borough", "defect_type", "condition_score", "result", "status")
+        if c in df_valid.columns
+    }
+    tooltip_html = "<br>".join(f"<b>{k}:</b> {v}" for k, v in tooltip_fields.items())
+    deck = pdk.Deck(
+        layers=[layer],
+        initial_view_state=view,
+        tooltip={"html": tooltip_html},
+        map_style="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
+    )
+    st.pydeck_chart(deck)
+    st.caption(f"{len(df_valid):,} points rendered · {title}")
+
+
 def render_gis_page() -> None:
     st.header("🗺️ GIS & Spatial Analysis")
     st.caption("Conflict detection, hotspot mapping, and spatial reporting for sidewalk inspection data.")
@@ -364,11 +436,16 @@ def _render_inspection_map_tab() -> None:
         critical = (df_filtered["condition_score"] < 30).sum()
         c3.metric("Critical (<30)", f"{critical:,}", delta=f"-{critical}", delta_color="inverse")
 
-    map_engine = st.radio("Map engine", ["Plotly (recommended)", "Folium (interactive)"], horizontal=True, key="gis_engine")
+    engine_opts = ["Plotly (recommended)", "Folium (interactive)"]
+    if HAS_PYDECK:
+        engine_opts.append("pydeck (GPU / large datasets)")
+    map_engine = st.radio("Map engine", engine_opts, horizontal=True, key="gis_engine")
     if map_engine.startswith("Plotly"):
         _render_plotly_map(df_filtered)
-    else:
+    elif map_engine.startswith("Folium"):
         _render_folium_map(df_filtered)
+    else:
+        _render_pydeck_map(df_filtered)
 
     with st.expander("Data Table"):
         st.dataframe(df_filtered, use_container_width=True, height=300)
@@ -404,7 +481,37 @@ def _render_conflict_detection_tab() -> None:
         st.info("Load both datasets to detect conflicts.")
         return
 
-    conflicts = _detect_spatial_conflicts(df_insp, df_perm)
+    use_geopandas = False
+    if "the_geom" in df_insp.columns and "the_geom" in df_perm.columns:
+        try:
+            from socrata_toolkit.spatial.geodataframe import (
+                HAS_GEOPANDAS,
+                detect_conflicts_geopandas,
+            )
+
+            if HAS_GEOPANDAS:
+                use_geopandas = True
+        except ImportError:
+            pass
+
+    if use_geopandas:
+        try:
+            buffer_m = st.slider(
+                "Conflict buffer radius (meters)", 10, 500, 50, step=10, key="conf_buf"
+            )
+            with st.spinner("Running GeoPandas spatial join…"):
+                from socrata_toolkit.spatial.geodataframe import detect_conflicts_geopandas
+
+                conflicts = detect_conflicts_geopandas(df_insp, df_perm, buffer_meters=buffer_m)
+            if conflicts.empty:
+                st.success("✅ No spatial conflicts detected (GeoPandas sjoin).")
+                return
+            st.caption(f"GeoPandas spatial join: {len(conflicts):,} conflict pairs")
+        except Exception as geo_err:
+            st.warning(f"GeoPandas join failed ({geo_err}), falling back to attribute join.")
+            conflicts = _detect_spatial_conflicts(df_insp, df_perm)
+    else:
+        conflicts = _detect_spatial_conflicts(df_insp, df_perm)
 
     if conflicts.empty:
         st.success("✅ No spatial conflicts detected between the loaded datasets.")
