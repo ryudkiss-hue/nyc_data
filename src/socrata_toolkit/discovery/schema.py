@@ -188,7 +188,7 @@ class BreakingChangeAlert(Exception):
             ]
         )
         return (
-            f"BREAKING SCHEMA CHANGE ALERT\n"
+            "BREAKING SCHEMA CHANGE ALERT\n"
             f"Dataset: {self.dataset_id}\n"
             f"Version: {self.from_version} → {self.to_version}\n"
             f"Detected at: {self.timestamp.isoformat()}\n"
@@ -456,37 +456,30 @@ class SchemaRegistry:
                 )
                 changes.append(change)
 
-        # Detect type changes (breaking)
+        # Detect type and nullability changes for columns present in both schemas
         for col_name in current_cols:
-            if col_name in previous_cols:
-                old_dtype = previous_cols[col_name].dtype
-                new_dtype = current_cols[col_name].dtype
-                if old_dtype != new_dtype:
-                    change = SchemaChange(
-                        change_type=ChangeType.TYPE_CHANGE,
-                        field_name=col_name,
-                        old_value=old_dtype,
-                        new_value=new_dtype,
-                        is_breaking=True,
-                        description=f"Column '{col_name}' type changed: {old_dtype} → {new_dtype}",
-                    )
-                    changes.append(change)
-
-        # Detect nullability changes (breaking)
-        for col_name in current_cols:
-            if col_name in previous_cols:
-                old_nullable = previous_cols[col_name].nullable
-                new_nullable = current_cols[col_name].nullable
-                if old_nullable != new_nullable:
-                    change = SchemaChange(
-                        change_type=ChangeType.NULL_CONSTRAINT_CHANGE,
-                        field_name=col_name,
-                        old_value=old_nullable,
-                        new_value=new_nullable,
-                        is_breaking=True,
-                        description=f"Column '{col_name}' nullable: {old_nullable} → {new_nullable}",
-                    )
-                    changes.append(change)
+            if col_name not in previous_cols:
+                continue
+            old_col = previous_cols[col_name]
+            new_col = current_cols[col_name]
+            if old_col.dtype != new_col.dtype:
+                changes.append(SchemaChange(
+                    change_type=ChangeType.TYPE_CHANGE,
+                    field_name=col_name,
+                    old_value=old_col.dtype,
+                    new_value=new_col.dtype,
+                    is_breaking=True,
+                    description=f"Column '{col_name}' type changed: {old_col.dtype} → {new_col.dtype}",
+                ))
+            if old_col.nullable != new_col.nullable:
+                changes.append(SchemaChange(
+                    change_type=ChangeType.NULL_CONSTRAINT_CHANGE,
+                    field_name=col_name,
+                    old_value=old_col.nullable,
+                    new_value=new_col.nullable,
+                    is_breaking=True,
+                    description=f"Column '{col_name}' nullable: {old_col.nullable} → {new_col.nullable}",
+                ))
 
         if changes:
             logger.warning(f"Schema drift detected for {dataset_id}: {len(changes)} changes")
@@ -837,7 +830,7 @@ class BackwardCompatibilityChecker:
                 if old_nullable and not new_nullable:
                     violations.append(
                         f"WARN: Column '{col_name}' made NOT NULL "
-                        f"(may break existing pipelines)"
+                        "(may break existing pipelines)"
                     )
 
         # Rule 4: ALLOW - Adding new optional columns
@@ -851,7 +844,7 @@ class BackwardCompatibilityChecker:
             for old_name, new_name in potential_renames:
                 violations.append(
                     f"WARN: Column '{old_name}' may have been renamed to '{new_name}' "
-                    f"(strict mode warning)"
+                    "(strict mode warning)"
                 )
 
         # Determine overall compatibility

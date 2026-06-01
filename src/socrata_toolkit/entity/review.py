@@ -151,7 +151,7 @@ class ReviewWorkflow:
         return [
             self._cases[cid]
             for cid in case_ids
-            if self._cases[cid].status in [ReviewStatus.PENDING, ReviewStatus.IN_PROGRESS]
+            if self._cases[cid].status in {ReviewStatus.PENDING, ReviewStatus.IN_PROGRESS}
         ]
 
     def get_completed_cases_for_reviewer(self, reviewer: str) -> list[ReviewCase]:

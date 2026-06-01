@@ -183,270 +183,202 @@ def _stage_duckdb(profile: AnalystProfile, frames: dict[str, pd.DataFrame]) -> N
 
 
 
-def run_analyst_pack(
-
-    config_path: str | Path,
-
-    *,
-
-    dry_run: bool = False,
-
-    offline: bool | None = None,
-
+def _run_dry_run_pack(
+    profile: AnalystProfile, started_at: str
 ) -> AnalystPackResult:
-
-    """Run the full analyst workflow from a YAML profile."""
-
-    started_at = datetime.now(timezone.utc).isoformat()
-
-    profile = load_profile(config_path)
-
-    if offline is not None:
-
-        profile.offline = bool(offline)
-
-
-
-    if dry_run:
-
-        warnings: list[str] = []
-
-        source_stats: dict[str, Any] = {}
-
-        for name, src_cfg in profile.sources.items():
-
-            if profile.offline and src_cfg.type.lower() == "socrata":
-
-                warnings.append(f"{name}: skipped (offline)")
-
-                source_stats[name] = {"status": "skipped_offline"}
-
-                continue
-
-            try:
-
-                df = build_source(src_cfg).load()
-
-                warnings.append(f"{name}: {len(df)} rows")
-
-                source_stats[name] = {"rows": len(df), "status": "ok"}
-
-            except Exception as exc:
-
-                warnings.append(f"{name}: ERROR {exc}")
-
-                source_stats[name] = {"status": "failed", "error": str(exc)}
-
-        result = assemble_pack(profile, dry_run=True, sources=source_stats, warnings=warnings)
-
-        result.started_at = started_at
-
-        result.write_manifest()
-
-        return result
+    """Probe sources without writing outputs; return a manifest-only result."""
+    warnings: list[str] = []
+    source_stats: dict[str, Any] = {}
+    for name, src_cfg in profile.sources.items():
+        if profile.offline and src_cfg.type.lower() == "socrata":
+            warnings.append(f"{name}: skipped (offline)")
+            source_stats[name] = {"status": "skipped_offline"}
+            continue
+        try:
+            df = build_source(src_cfg).load()
+            warnings.append(f"{name}: {len(df)} rows")
+            source_stats[name] = {"rows": len(df), "status": "ok"}
+        except Exception as exc:
+            warnings.append(f"{name}: ERROR {exc}")
+            source_stats[name] = {"status": "failed", "error": str(exc)}
+    result = assemble_pack(profile, dry_run=True, sources=source_stats, warnings=warnings)
+    result.started_at = started_at
+    result.write_manifest()
+    return result
 
 
-
-    frames, source_stats, partial_failures, warnings = _load_sources(profile)
-
-    frames = _normalize_frames(frames)
-
-    _stage_duckdb(profile, frames)
-
-
-
-    inspections = frames.get("inspections", pd.DataFrame())
-
-    contracts = frames.get("contracts", pd.DataFrame())
-
-    permits = frames.get("permits", pd.DataFrame())
-
-
-
-    if profile.budget_codes_path:
-
-        rules = load_budget_rules(profile.budget_codes_path)
-
-        warnings.extend(validate_budget_codes(contracts, rules))
-
-
-
+def _build_construction_plan(
+    profile: AnalystProfile,
+    inspections: pd.DataFrame,
+    permits: pd.DataFrame,
+) -> tuple[pd.DataFrame, ConflictCheckResult | None, str, pd.DataFrame, str]:
+    """Prioritize construction list, detect conflicts, and compute diff."""
     construction = pd.DataFrame()
-
     conflict_result: ConflictCheckResult | None = None
-
     conflicts_md = ""
-
     conflicts_review = pd.DataFrame()
-
     construction_diff_md = ""
 
-
-
     if profile.prioritize and not inspections.empty:
-
         construction = prioritize_construction_list(inspections)
-
         if not permits.empty:
-
             conflict_result = detect_construction_conflicts(construction, permits)
-
             construction = conflict_result.clean
-
             conflicts_md = (
-
-                f"# Construction Conflicts Summary\n\n"
-
+                "# Construction Conflicts Summary\n\n"
                 f"- Total items: {conflict_result.total_items}\n"
-
                 f"- Conflicts: {conflict_result.conflict_count}\n"
-
                 f"- Conflict rate: {conflict_result.conflict_rate}%\n"
-
             )
-
             if conflict_result.summary_by_borough:
-
                 conflicts_md += "\n## By Borough\n"
-
                 for boro, cnt in conflict_result.summary_by_borough.items():
-
                     conflicts_md += f"- {boro}: {cnt}\n"
-
             conflicts_review = build_conflicts_review(conflict_result.conflicts)
 
-
-
     if profile.construction_diff and not construction.empty:
-
         day = datetime.now(timezone.utc).date().isoformat()
-
         pack_dir = Path(profile.outputs_dir) / day
-
         prev = find_previous_pack_dir(pack_dir, Path(profile.outputs_dir))
-
         prev_df = pd.DataFrame()
-
         if prev and (prev / "construction_list.xlsx").exists():
-
             prev_df = pd.read_excel(prev / "construction_list.xlsx", engine="openpyxl")
-
         _, construction_diff_md = diff_construction_lists(construction, prev_df)
 
+    return construction, conflict_result, conflicts_md, conflicts_review, construction_diff_md
 
+
+def _compute_kpi_payload(
+    profile: AnalystProfile,
+    contracts: pd.DataFrame,
+    inspections: pd.DataFrame,
+) -> tuple[dict[str, Any] | None, str | None]:
+    """Compute program KPI dashboard and write JSON sidecar. Returns (payload, path)."""
+    if not profile.program_kpi:
+        return None, None
+    kpi_df = contracts if not contracts.empty else inspections
+    if kpi_df.empty:
+        return None, None
+    dashboard = compute_program_dashboard(kpi_df)
+    td = Path(tempfile.mkdtemp(prefix="analyst_kpi_"))
+    kpi_json = td / "program_kpi.json"
+    kpi_payload: dict[str, Any] = {
+        "overall_health": dashboard.overall_health,
+        "metrics": [
+            {"name": m.name, "value": m.value, "target": m.target, "status": m.status}
+            for m in dashboard.metrics
+        ],
+    }
+    kpi_json.write_text(json.dumps(kpi_payload, indent=2), encoding="utf-8")
+    return kpi_payload, str(kpi_json)
+
+
+def _apply_role_profile(
+    profile: AnalystProfile,
+    result: AnalystPackResult,
+    inspections: pd.DataFrame,
+    construction: pd.DataFrame,
+    contracts: pd.DataFrame,
+    conflicts_md: str,
+    construction_diff_md: str,
+    kpi_payload: dict[str, Any] | None,
+    warnings: list[str],
+) -> None:
+    """Evaluate role task checklist and write role KPI artifacts into the pack."""
+    role_profile_path = resolve_role_profile_path(profile.role, profile.role_profile_path)
+    if not role_profile_path:
+        return
+    try:
+        role_profile = load_role_profile(role_profile_path)
+        tasks, task_pct = evaluate_task_checklist(role_profile, result.pack_dir, result.artifacts)
+        task_md = build_role_task_status_md(role_profile, tasks, task_pct, result.run_date)
+        role_dashboard = compute_role_kpis(
+            role_profile,
+            inspections=inspections,
+            construction=construction,
+            contracts=contracts,
+            conflicts_md=conflicts_md,
+            construction_diff_md=construction_diff_md,
+            program_kpi=kpi_payload,
+            pack_artifacts=result.artifacts,
+            task_completion_pct=task_pct,
+        )
+        merged = merge_program_and_role_kpis(kpi_payload, role_dashboard) if kpi_payload else None
+        role_arts = write_role_artifacts(result.pack_dir, role_dashboard, task_md, merged_program_kpi=merged)
+        result.artifacts.update(role_arts)
+        result.write_manifest()
+    except Exception as exc:
+        warnings.append(f"role profile: FAILED — {exc}")
+        result.warnings = warnings
+        result.write_manifest()
+
+
+def run_analyst_pack(
+    config_path: str | Path,
+    *,
+    dry_run: bool = False,
+    offline: bool | None = None,
+) -> AnalystPackResult:
+    """Run the full analyst workflow from a YAML profile."""
+    started_at = datetime.now(timezone.utc).isoformat()
+    profile = load_profile(config_path)
+    if offline is not None:
+        profile.offline = bool(offline)
+
+    if dry_run:
+        return _run_dry_run_pack(profile, started_at)
+
+    frames, source_stats, partial_failures, warnings = _load_sources(profile)
+    frames = _normalize_frames(frames)
+    _stage_duckdb(profile, frames)
+
+    inspections = frames.get("inspections", pd.DataFrame())
+    contracts = frames.get("contracts", pd.DataFrame())
+    permits = frames.get("permits", pd.DataFrame())
+
+    if profile.budget_codes_path:
+        rules = load_budget_rules(profile.budget_codes_path)
+        warnings.extend(validate_budget_codes(contracts, rules))
+
+    construction, conflict_result, conflicts_md, conflicts_review, construction_diff_md = (
+        _build_construction_plan(profile, inspections, permits)
+    )
 
     contract_report_path: str | None = None
-
     if profile.contract_report and not contracts.empty:
-
         report = generate_contract_report(contracts)
-
         td = Path(tempfile.mkdtemp(prefix="analyst_contract_"))
-
         contract_report_path = str(td / "contract_status.md")
-
         report.save(contract_report_path)
 
-
-
-    program_kpi_path: str | None = None
-
-    kpi_payload: dict[str, Any] | None = None
-
-    if profile.program_kpi:
-
-        kpi_df = contracts if not contracts.empty else inspections
-
-        if not kpi_df.empty:
-
-            dashboard = compute_program_dashboard(kpi_df)
-
-            td = Path(tempfile.mkdtemp(prefix="analyst_kpi_"))
-
-            kpi_json = td / "program_kpi.json"
-
-            kpi_payload = {
-
-                "overall_health": dashboard.overall_health,
-
-                "metrics": [
-
-                    {
-
-                        "name": m.name,
-
-                        "value": m.value,
-
-                        "target": m.target,
-
-                        "status": m.status,
-
-                    }
-
-                    for m in dashboard.metrics
-
-                ],
-
-            }
-
-            kpi_json.write_text(json.dumps(kpi_payload, indent=2), encoding="utf-8")
-
-            program_kpi_path = str(kpi_json)
-
-
+    kpi_payload, program_kpi_path = _compute_kpi_payload(profile, contracts, inspections)
 
     inquiry_dir: Path | None = None
-
     if profile.inquiry_templates and not contracts.empty:
-
         inquiry_dir = Path(tempfile.mkdtemp(prefix="analyst_inquiry_"))
-
         render_inquiry_drafts(
-
             contracts,
-
             profile.inquiry_templates_dir,
-
             inquiry_dir,
-
             contract_ids=profile.contract_ids or None,
-
         )
-
-
 
     executive_md = ""
-
     executive_html = ""
-
     if profile.executive_summary:
-
         executive_md, executive_html = build_executive_summary(
-
             construction=construction,
-
             conflict_result=conflict_result,
-
             contracts=contracts,
-
             kpi_payload=kpi_payload,
-
             run_date=datetime.now(timezone.utc).date().isoformat(),
-
             profile_name=profile.profile_name,
-
         )
 
-
-
     result = assemble_pack(
-
         profile,
-
         construction=construction,
-
         conflicts_md=conflicts_md,
-
         conflicts_review=conflicts_review,
 
         construction_diff_md=construction_diff_md or None,
@@ -543,81 +475,10 @@ def run_analyst_pack(
 
 
 
-    role_profile_path = resolve_role_profile_path(profile.role, profile.role_profile_path)
-
-    if role_profile_path:
-
-        try:
-
-            role_profile = load_role_profile(role_profile_path)
-
-            tasks, task_pct = evaluate_task_checklist(
-
-                role_profile, result.pack_dir, result.artifacts
-
-            )
-
-            task_md = build_role_task_status_md(
-
-                role_profile, tasks, task_pct, result.run_date
-
-            )
-
-            role_dashboard = compute_role_kpis(
-
-                role_profile,
-
-                inspections=inspections,
-
-                construction=construction,
-
-                contracts=contracts,
-
-                conflicts_md=conflicts_md,
-
-                construction_diff_md=construction_diff_md,
-
-                program_kpi=kpi_payload,
-
-                pack_artifacts=result.artifacts,
-
-                task_completion_pct=task_pct,
-
-            )
-
-            merged = (
-
-                merge_program_and_role_kpis(kpi_payload, role_dashboard)
-
-                if kpi_payload
-
-                else None
-
-            )
-
-            role_arts = write_role_artifacts(
-
-                result.pack_dir,
-
-                role_dashboard,
-
-                task_md,
-
-                merged_program_kpi=merged,
-
-            )
-
-            result.artifacts.update(role_arts)
-
-            result.write_manifest()
-
-        except Exception as exc:
-
-            warnings.append(f"role profile: FAILED — {exc}")
-
-            result.warnings = warnings
-
-            result.write_manifest()
+    _apply_role_profile(
+        profile, result, inspections, construction, contracts,
+        conflicts_md, construction_diff_md, kpi_payload, warnings,
+    )
 
     # Persist run state for UX ("Resume" in Dash, publish defaults, last role)
     try:
