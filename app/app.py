@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import sys
+from contextlib import contextmanager
 from pathlib import Path
 
 _REPO_ROOT = str(Path(__file__).resolve().parents[1])
@@ -11,6 +12,13 @@ if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
 import streamlit as st
+
+st.set_page_config(
+    page_title="NYC DOT SIM Toolkit",
+    page_icon="🏙️",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
 
 from app.analytics import run_all_workflows
 from app.data_loader import (
@@ -32,24 +40,19 @@ from app.views.data_discovery import render_data_discovery_page
 from app.views.forecasting import render_forecasting_page
 from app.views.gis_dashboard import render_gis_page
 
-st.set_page_config(
-    page_title="NYC DOT SIM Analyst Toolkit",
-    page_icon="🚧",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
-
 # Top-level navigation sections
 _SECTIONS = {
-    "🏠 Home":                 "home",
-    "🏗️ Construction Lists":   "construction",
-    "🗺️ GIS & Conflicts":      "gis",
-    "📋 Contract Analytics":   "contracts",
-    "📈 Forecasting":          "forecasting",
-    "⚙️ Data Workflows":       "workflows",
-    "🔍 Data Discovery":       "discovery",
-    "📤 Publish":              "publish",
-    "⚙️ Settings":             "settings",
+    "🏠 Home":                   "home",
+    "🏗️ Construction Lists":     "construction",
+    "🗺️ GIS & Conflicts":        "gis",
+    "📋 Contract Analytics":     "contracts",
+    "📈 Forecasting":            "forecasting",
+    "⚙️ Data Workflows":         "workflows",
+    "📊 Advanced Analytics":     "advanced_analytics",
+    "🔍 Data Discovery":         "discovery",
+    "📚 Data Catalog":           "data_catalog",
+    "📤 Publish":                "publish",
+    "⚙️ Settings":               "settings",
 }
 
 WORKFLOW_KEYS = {
@@ -59,6 +62,30 @@ WORKFLOW_KEYS = {
     "productivity": "🚶 Productivity & ADA Progress",
     "quality": "🩺 Data Quality Dashboard",
 }
+
+# Sidebar groupings for collapsible expanders
+_NAV_GROUPS = {
+    "📊 Core Data": ["🏠 Home", "🏗️ Construction Lists"],
+    "🗺️ Spatial": ["🗺️ GIS & Conflicts"],
+    "📈 Analytics": [
+        "📋 Contract Analytics",
+        "📈 Forecasting",
+        "⚙️ Data Workflows",
+        "📊 Advanced Analytics",
+    ],
+    "🔧 Tools": [
+        "🔍 Data Discovery",
+        "📚 Data Catalog",
+        "📤 Publish",
+        "⚙️ Settings",
+    ],
+}
+
+
+@contextmanager
+def _spinner_view():
+    with st.spinner("Loading view…"):
+        yield
 
 
 @st.cache_data(ttl=CACHE_TTL_SECONDS, show_spinner="Loading workflow datasets…")
@@ -91,19 +118,64 @@ def _sidebar_nav() -> tuple[str, dict]:
     """Render sidebar navigation. Returns (section_key, workflow_opts)."""
     with st.sidebar:
         render_language_selector()
-        st.image("https://www.nyc.gov/assets/dot/images/content/pages/about/dot_logo.gif",
-                 width=120) if False else st.markdown("### 🚧 NYC DOT · SIM")
+        st.markdown("### 🏙️ NYC DOT · SIM")
         st.markdown("**Analyst Toolkit**")
         st.caption("Sidewalk Inspection Management")
         st.divider()
 
-        section_label = st.radio(
-            "Navigation",
-            list(_SECTIONS.keys()),
-            label_visibility="collapsed",
-            key="main_nav",
-        )
-        section = _SECTIONS[section_label]
+        # Dark mode toggle
+        dark = st.toggle("🌙 Dark mode", key="dark_mode", value=False)
+        if dark:
+            st.markdown(
+                """<style>
+                .stApp { background-color: #1a1a2e; color: #e0e0e0; }
+                .stSidebar { background-color: #16213e; }
+                .stDataFrame { background-color: #1a1a2e; }
+                div[data-testid="metric-container"] {
+                    background-color: #16213e; border-radius: 8px; padding: 8px;
+                }
+                </style>""",
+                unsafe_allow_html=True,
+            )
+
+        st.divider()
+
+        # Collapsible sidebar navigation
+        selected_label: str | None = None
+
+        expand_flags = {
+            "📊 Core Data": True,
+            "🗺️ Spatial": False,
+            "📈 Analytics": False,
+            "🔧 Tools": False,
+        }
+
+        # Pre-expand the group containing the current active section
+        current_nav = st.session_state.get("main_nav_section", "home")
+        for group_name, labels in _NAV_GROUPS.items():
+            for label in labels:
+                if _SECTIONS.get(label) == current_nav:
+                    expand_flags[group_name] = True
+
+        for group_name, labels in _NAV_GROUPS.items():
+            with st.expander(group_name, expanded=expand_flags[group_name]):
+                choice = st.radio(
+                    group_name,
+                    labels,
+                    label_visibility="collapsed",
+                    key=f"nav_group_{group_name}",
+                )
+                if choice:
+                    selected_label = choice
+
+        # Determine active section from the last interacted radio
+        # Fall back to session state if nothing was freshly picked
+        if selected_label is not None:
+            section = _SECTIONS.get(selected_label, "home")
+            st.session_state["main_nav_section"] = section
+        else:
+            section = st.session_state.get("main_nav_section", "home")
+
         st.divider()
 
         wf_opts: dict = {"view_key": "qa", "row_limit": 10_000, "show_ingest": False}
@@ -112,7 +184,9 @@ def _sidebar_nav() -> tuple[str, dict]:
             wf_labels = list(WORKFLOW_KEYS.values())
             view_label = st.radio("Workflow", wf_labels, index=0, key="wf_select")
             wf_opts["view_key"] = [k for k, v in WORKFLOW_KEYS.items() if v == view_label][0]
-            wf_opts["row_limit"] = st.slider("Max rows / dataset", 1_000, 50_000, 10_000, step=1_000)
+            wf_opts["row_limit"] = st.slider(
+                "Max rows / dataset", 1_000, 50_000, 10_000, step=1_000
+            )
             if demo_mode_enabled():
                 st.info(t("demo_active"))
             if st.button(t("refresh_cache"), type="primary", use_container_width=True):
@@ -127,6 +201,18 @@ def _sidebar_nav() -> tuple[str, dict]:
             st.cache_data.clear()
             st.rerun()
 
+        # Keyboard shortcuts help
+        with st.expander("⌨️ Keyboard Shortcuts"):
+            st.markdown(
+                """
+| Key | Action |
+|-----|--------|
+| `?` | This help |
+| `r` | Refresh data |
+| `d` | Toggle dark mode |
+"""
+            )
+
         # Quick-stats footer
         st.markdown("---")
         st.caption("NYC DOT · SIM Program  \nAnalyst Toolkit v2.0")
@@ -134,10 +220,34 @@ def _sidebar_nav() -> tuple[str, dict]:
     return section, wf_opts
 
 
+def _render_onboarding() -> None:
+    """Show onboarding welcome panel on first run."""
+    if not st.session_state.get("onboarding_done"):
+        with st.sidebar.expander("👋 Welcome to NYC DOT SIM Toolkit", expanded=True):
+            st.markdown(
+                """**Quick Start:**
+- 🏠 **Home** — KPI overview and system status
+- 🗺️ **GIS** — Map inspections, detect conflicts
+- 📋 **Contracts** — Violations, dismissals, tree damage
+- 📈 **Forecasting** — Prediction and trends
+- 🔍 **Data Discovery** — Query any Socrata dataset
+- ⚙️ **Settings** — Configure API tokens and preferences
+"""
+            )
+            if st.button("Got it, let's go!", key="onboarding_btn"):
+                st.session_state["onboarding_done"] = True
+                st.rerun()
+
+
 def main() -> None:
     inject_theme()
     render_skip_link()
 
+    # Persistent filter state
+    if "filter_state" not in st.session_state:
+        st.session_state["filter_state"] = {}
+
+    _render_onboarding()
     section, wf_opts = _sidebar_nav()
 
     token = token_status()
@@ -146,39 +256,69 @@ def main() -> None:
         live_auth=bool(token["configured"] or token.get("key_pair")),
     )
 
+    # Breadcrumb caption
+    section_label = next((k for k, v in _SECTIONS.items() if v == section), section)
+    st.caption(f"📍 {section_label}")
+
     # ------------------------------------------------------------------ #
     # Route to section
     # ------------------------------------------------------------------ #
     if section == "home":
-        home.render_home_page()
+        with _spinner_view():
+            home.render_home_page()
         return
 
     if section == "construction":
-        render_construction_page()
+        with _spinner_view():
+            render_construction_page()
         return
 
     if section == "gis":
-        render_gis_page()
+        with _spinner_view():
+            render_gis_page()
         return
 
     if section == "contracts":
-        render_contracts_page()
+        with _spinner_view():
+            render_contracts_page()
         return
 
     if section == "forecasting":
-        render_forecasting_page()
+        with _spinner_view():
+            render_forecasting_page()
         return
 
     if section == "discovery":
-        render_data_discovery_page()
+        with _spinner_view():
+            render_data_discovery_page()
         return
 
     if section == "publish":
-        publish.render_publish_page()
+        with _spinner_view():
+            publish.render_publish_page()
         return
 
     if section == "settings":
-        settings.render_settings_page()
+        with _spinner_view():
+            settings.render_settings_page()
+        return
+
+    if section == "advanced_analytics":
+        with _spinner_view():
+            try:
+                from app.views.analytics_advanced import render_analytics_advanced_page
+                render_analytics_advanced_page()
+            except ImportError:
+                st.info("Advanced Analytics view is not yet available.")
+        return
+
+    if section == "data_catalog":
+        with _spinner_view():
+            try:
+                from app.views.data_catalog import render_data_catalog_page
+                render_data_catalog_page()
+            except ImportError:
+                st.info("Data Catalog view is not yet available.")
         return
 
     # ------------------------------------------------------------------ #

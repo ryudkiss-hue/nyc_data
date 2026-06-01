@@ -18,6 +18,26 @@ from typing import Any
 import pandas as pd
 import yaml
 
+try:
+    import requests
+    from requests.adapters import HTTPAdapter
+    from urllib3.util.retry import Retry as _Retry
+
+    _SESSION = requests.Session()
+    _SESSION.mount(
+        "https://",
+        HTTPAdapter(
+            max_retries=_Retry(
+                total=3,
+                backoff_factor=1,
+                status_forcelist=[500, 502, 503, 504],
+            )
+        ),
+    )
+except ImportError:  # pragma: no cover
+    requests = None  # type: ignore
+    _SESSION = None  # type: ignore
+
 from app.ingest_log import log_event
 
 warnings.filterwarnings("ignore", message=".*app_token.*", module="sodapy")
@@ -49,6 +69,27 @@ except ImportError:
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 _DATASETS_YAML = _REPO_ROOT / "config" / "datasets.yaml"
 _PARQUET_CACHE_DIR = _REPO_ROOT / "data" / "local_db" / "socrata_cache"
+
+try:
+    from app.utils.cache_manager import (
+        evict_old_cache as _evict_old_cache,
+    )
+    from app.utils.cache_manager import (
+        last_fetched_iso as _last_fetched_iso,
+    )
+    from app.utils.cache_manager import (
+        read_cache as _read_disk_cache,
+    )
+    from app.utils.cache_manager import (
+        read_stale_cache as _read_stale_cache,
+    )
+    from app.utils.cache_manager import (
+        write_cache as _write_disk_cache,
+    )
+
+    _DISK_CACHE_AVAILABLE = True
+except ImportError:  # pragma: no cover
+    _DISK_CACHE_AVAILABLE = False
 
 
 def _bootstrap_env() -> None:
@@ -197,20 +238,52 @@ def _postprocess_dataset(dataset_key: str, df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+_DELTA_COLUMN_CANDIDATES = ("updated_at", "date_modified")
+
+
+def _detect_delta_column(dataset_key: str) -> str | None:
+    """Return the name of a timestamp column suitable for delta fetching, or None.
+
+    Fetches a single row from Socrata to inspect column names. Returns
+    ``"updated_at"`` or ``"date_modified"`` if either is present; otherwise ``None``.
+    """
+    if demo_mode_enabled():
+        return None
+    meta = DATASET_REGISTRY.get(dataset_key, {})
+    try:
+        client = get_socrata_client()
+        rows = client.get(meta["fourfour"], limit=1)
+        if not rows:
+            return None
+        cols = {c.lower() for c in rows[0].keys()}
+        for candidate in _DELTA_COLUMN_CANDIDATES:
+            if candidate in cols:
+                return candidate
+    except Exception as exc:
+        logging.debug("_detect_delta_column: probe failed for %s: %s", dataset_key, exc)
+    return None
+
+
 def _fetch_live(
     dataset_key: str,
     *,
     limit: int,
     where: str | None,
+    select: str | None = None,
     retries: int = 3,
     backoff: float = 2.0,
 ) -> pd.DataFrame:
-    """Fetch from Socrata with exponential-backoff retry."""
+    """Fetch from Socrata with exponential-backoff retry.
+
+    *select*: optional ``$select`` column projection forwarded to Socrata.
+    """
     meta = DATASET_REGISTRY[dataset_key]
     client = get_socrata_client()
     kwargs: dict[str, Any] = {"limit": limit}
     if where:
         kwargs["where"] = where
+    if select:
+        kwargs["select"] = select
 
     last_exc: Exception | None = None
     for attempt in range(retries):
@@ -220,48 +293,136 @@ def _fetch_live(
             return _postprocess_dataset(dataset_key, df)
         except Exception as exc:
             last_exc = exc
+            exc_str = str(exc)
+            # 429 = Socrata throttle. Surface a clear message and back off longer.
+            if "429" in exc_str or "Too Many Requests" in exc_str:
+                wait = backoff ** (attempt + 2)  # longer wait for throttle
+                logging.warning(
+                    "Socrata rate-limited (429) on %s — no app token or abusive rate. "
+                    "Set SOCRATA_APP_TOKEN env var. Backing off %.0fs.",
+                    dataset_key, wait,
+                )
+                if attempt < retries - 1:
+                    time.sleep(wait)
+                continue
             wait = backoff ** attempt
             logging.warning(
                 "Socrata fetch attempt %d/%d failed for %s: %s — retrying in %.1fs",
-                attempt + 1,
-                retries,
-                dataset_key,
-                exc,
-                wait,
+                attempt + 1, retries, dataset_key, exc, wait,
             )
             if attempt < retries - 1:
                 time.sleep(wait)
 
+    # Surface a helpful message for 429 exhaustion
+    if last_exc and ("429" in str(last_exc) or "Too Many Requests" in str(last_exc)):
+        raise RuntimeError(
+            f"Socrata rate-limited (HTTP 429) for '{dataset_key}'. "
+            "Add SOCRATA_APP_TOKEN to your .env file (Settings → API Tokens) "
+            "to get a dedicated request pool with no throttling."
+        ) from last_exc
     raise RuntimeError(
         f"All {retries} fetch attempts failed for {dataset_key}: {last_exc}"
     ) from last_exc
 
 
 @_cache_decorator()
-def fetch_dataset(dataset_key: str, *, limit: int = 50_000, where: str | None = None) -> pd.DataFrame:
+def fetch_dataset(
+    dataset_key: str,
+    *,
+    limit: int = 50_000,
+    where: str | None = None,
+    select: str | None = None,
+) -> pd.DataFrame:
+    """Fetch a dataset from Socrata, with multi-level caching.
+
+    Layers:
+    1. L1 — ``@st.cache_data`` (handled by callers / the decorator above).
+    2. L2 — Parquet disk cache (``app/utils/cache_manager``).
+    3. Live fetch from Socrata (with delta WHERE when a previous fetch exists).
+
+    *select*: optional ``$select`` column projection (Item 13).
+    *where*: extra SoQL WHERE clause fragment (caller-supplied).
+    """
     if dataset_key not in DATASET_REGISTRY:
         raise KeyError(f"Unknown dataset_key: {dataset_key}")
     if demo_mode_enabled():
         log_event("fetch_demo", dataset=dataset_key, rows=1)
         return _demo_frame(dataset_key)
-    cached = _read_parquet_cache(dataset_key)
-    if cached is not None:
-        log_event("fetch_parquet", dataset=dataset_key, rows=len(cached))
-        return _postprocess_dataset(dataset_key, cached)
+
+    # Apply dataset-level default WHERE filter when caller doesn't supply one
+    if where is None:
+        where = DATASET_REGISTRY[dataset_key].get("default_where")
+
+    # L2: Parquet disk cache (cache_manager)
+    if _DISK_CACHE_AVAILABLE:
+        cached = _read_disk_cache(dataset_key)
+        if cached is not None:
+            log_event("fetch_parquet_l2", dataset=dataset_key, rows=len(cached))
+            return cached
+
+    # Legacy L2: old-style parquet cache (backwards compat)
+    legacy_cached = _read_parquet_cache(dataset_key)
+    if legacy_cached is not None:
+        log_event("fetch_parquet", dataset=dataset_key, rows=len(legacy_cached))
+        return _postprocess_dataset(dataset_key, legacy_cached)
+
+    # Delta fetch: if we have a prior fetch timestamp and the dataset has
+    # a known timestamp column, narrow the query to only new/updated rows.
+    effective_where = where
+    if _DISK_CACHE_AVAILABLE:
+        last_iso = _last_fetched_iso(dataset_key)
+        if last_iso is not None:
+            # Detect whether the dataset exposes an updated_at / date_modified column
+            # by checking the manifest; we probe lazily and cache the result in the
+            # registry dict (in-process only — not persisted).
+            meta = DATASET_REGISTRY[dataset_key]
+            delta_col: str | None = meta.get("_delta_col")  # type: ignore[assignment]
+            if delta_col is None and not meta.get("_delta_col_checked"):
+                delta_col = _detect_delta_column(dataset_key)
+                # Cache the probe result in the registry dict for this process
+                DATASET_REGISTRY[dataset_key]["_delta_col"] = delta_col  # type: ignore[assignment]
+                DATASET_REGISTRY[dataset_key]["_delta_col_checked"] = True  # type: ignore[assignment]
+            if delta_col:
+                delta_clause = f"{delta_col} > '{last_iso}'"
+                effective_where = (
+                    f"({effective_where}) AND {delta_clause}"
+                    if effective_where
+                    else delta_clause
+                )
+                logging.info(
+                    "fetch_dataset: delta fetch for %s using %s > %s",
+                    dataset_key, delta_col, last_iso,
+                )
+
     try:
         t0 = time.perf_counter()
-        df = _fetch_live(dataset_key, limit=limit, where=where)
+        df = _fetch_live(dataset_key, limit=limit, where=effective_where, select=select)
+        # Write to new L2 disk cache
+        if _DISK_CACHE_AVAILABLE and not df.empty and "_error" not in df.columns:
+            _write_disk_cache(dataset_key, df)
+        # Also maintain legacy cache for backwards compat
         _write_parquet_cache(dataset_key, df)
         log_event(
             "fetch_live",
             dataset=dataset_key,
             rows=len(df),
             seconds=round(time.perf_counter() - t0, 2),
-            where=where or "",
+            where=effective_where or "",
         )
         return df
     except Exception as exc:
         log_event("fetch_error", dataset=dataset_key, error=str(exc))
+        # Offline mode (Item 17): return stale cache if a live fetch fails
+        if _DISK_CACHE_AVAILABLE:
+            stale = _read_stale_cache(dataset_key)
+            if stale is not None:
+                logging.warning(
+                    "fetch_dataset: live fetch failed for %s (%s) — returning stale cache.",
+                    dataset_key, exc,
+                )
+                stale = stale.copy()
+                stale.attrs["stale"] = True
+                return stale
         raise
 
 
@@ -310,6 +471,52 @@ def fetch_datasets_for_keys(
             key, df = fut.result()
             out[key] = df
     return out
+
+
+def fetch_datasets_parallel(
+    keys: list[str],
+    *,
+    limit: int = 25_000,
+) -> dict[str, pd.DataFrame]:
+    """Fetch multiple datasets concurrently using ThreadPoolExecutor."""
+    results: dict[str, pd.DataFrame] = {}
+    with ThreadPoolExecutor(max_workers=min(len(keys), 6)) as exe:
+        future_to_key = {exe.submit(fetch_dataset, k, limit=limit): k for k in keys}
+        for fut in as_completed(future_to_key):
+            k = future_to_key[fut]
+            try:
+                results[k] = fut.result()
+            except Exception as exc:
+                logging.warning("parallel fetch %s failed: %s", k, exc)
+                results[k] = pd.DataFrame()
+    return results
+
+
+def read_csv_chunked(file_obj: Any, chunksize: int = 50_000) -> pd.DataFrame:
+    """Read a CSV in chunks to handle files >50 MB without OOM."""
+    chunks = []
+    for chunk in pd.read_csv(file_obj, chunksize=chunksize, low_memory=False):
+        chunks.append(chunk)
+    return pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
+
+
+def check_socrata_connectivity(
+    domain: str = "data.cityofnewyork.us",
+    timeout: int = 5,
+) -> tuple[bool, str]:
+    """Ping the Socrata catalog health endpoint.
+
+    Returns ``(True, "Socrata reachable")`` on success or ``(False, <reason>)`` on failure.
+    """
+    if _SESSION is None:
+        return False, "requests library not available"
+    try:
+        r = _SESSION.get(f"https://{domain}/api/catalog/v1?limit=1", timeout=timeout)
+        if r.status_code == 200:
+            return True, "Socrata reachable"
+        return False, f"HTTP {r.status_code}"
+    except Exception as exc:
+        return False, str(exc)
 
 
 def fetch_all_datasets(*, limit: int = 50_000) -> dict[str, pd.DataFrame]:
