@@ -2,7 +2,18 @@
 
 from __future__ import annotations
 
+from contextlib import contextmanager
+from typing import Generator
+
 import streamlit as st
+
+# ---------------------------------------------------------------------------
+# NYC DOT brand constants
+# ---------------------------------------------------------------------------
+NYC_BLUE = "#003087"
+NYC_ORANGE = "#FF6319"
+NYC_GREEN = "#00A859"
+SIDEBAR_WIDTH = 280
 
 AGENCY_CSS = """
 <style>
@@ -108,6 +119,32 @@ AGENCY_CSS = """
   .quality-ok { color: #00cc66; }
   .quality-info { color: #66aaff; }
 
+  /* ===== Skeleton loading placeholders ===== */
+  .mc-skeleton-row {
+    background: linear-gradient(90deg, #1e2d3d 25%, #2a3f52 50%, #1e2d3d 75%);
+    background-size: 200% 100%;
+    animation: mc-shimmer 1.4s infinite;
+    border-radius: 6px;
+    height: 1.2rem;
+    margin-bottom: 0.5rem;
+  }
+  @keyframes mc-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mc-skeleton-row { animation: none; background: #1e2d3d; }
+  }
+
+  /* ===== Empty state ===== */
+  .mc-empty-state {
+    text-align: center; padding: 2.5rem 1rem;
+    border: 2px dashed #2a3544; border-radius: 12px;
+    margin: 1rem 0;
+  }
+  .mc-empty-icon { font-size: 3rem; margin-bottom: 0.75rem; }
+  .mc-empty-msg { color: #8fa3bc; font-size: 1rem; margin-bottom: 1rem; }
+
   /* ===== Accessibility ===== */
   @media (prefers-reduced-motion: reduce) {
     .mc-bar-fill { transition: none; }
@@ -208,3 +245,52 @@ def render_quality_badge(score: float) -> str:
     if score >= 60:
         return f'<span class="mc-badge mc-badge-demo">{score:.0f}/100</span>'
     return f'<span class="mc-badge mc-badge-warn">{score:.0f}/100</span>'
+
+
+@contextmanager
+def render_skeleton_placeholder(n_rows: int = 3) -> Generator[None, None, None]:
+    """Context manager that renders skeleton loading rows, then clears them.
+
+    Usage::
+
+        with render_skeleton_placeholder(n_rows=4):
+            time.sleep(2)  # replaced by real content after yield
+        st.write("Real content here")
+    """
+    skeleton_html = "".join(
+        f'<div class="mc-skeleton-row" style="width:{90 - (i * 10) % 30}%;"></div>'
+        for i in range(n_rows)
+    )
+    placeholder = st.empty()
+    placeholder.markdown(
+        f'<div style="padding:0.5rem 0">{skeleton_html}</div>',
+        unsafe_allow_html=True,
+    )
+    try:
+        yield
+    finally:
+        placeholder.empty()
+
+
+def render_empty_state(
+    message: str = "No data loaded yet",
+    action_label: str = "Load Data",
+    action_key: str = "empty_state_action",
+) -> None:
+    """Display an icon + message empty state with an action button.
+
+    Sets ``st.session_state[action_key] = True`` when the button is clicked.
+    """
+    st.markdown(
+        f"""
+        <div class="mc-empty-state">
+          <div class="mc-empty-icon">📭</div>
+          <div class="mc-empty-msg">{message}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    col_left, col_center, col_right = st.columns([1, 2, 1])
+    with col_center:
+        if st.button(action_label, type="primary", use_container_width=True, key=action_key):
+            st.session_state[action_key] = True
