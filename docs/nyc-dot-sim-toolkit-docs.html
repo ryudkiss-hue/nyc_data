@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NYC DOT SIM Analyst Toolkit — Technical Documentation</title>
+  <style>
+    :root {
+      --blue:    #003087;
+      --blue-lt: #e8f0fa;
+      --green:   #276749;
+      --red:     #c53030;
+      --yellow:  #b7791f;
+      --grey:    #4a5568;
+      --border:  #e2e8f0;
+      --bg:      #f7fafc;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; font-size: 14px; color: #2d3748; background: #fff; }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Layout */
+    .wrapper { display: flex; min-height: 100vh; }
+    nav { width: 240px; min-width: 240px; background: var(--blue); color: #fff; padding: 24px 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+    nav h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; padding: 16px 20px 8px; color: #90cdf4; margin-top: 12px; }
+    nav h2:first-child { margin-top: 0; }
+    nav a { display: block; padding: 6px 20px; color: #bee3f8; font-size: 13px; border-left: 3px solid transparent; transition: background .15s; }
+    nav a:hover, nav a.active { background: rgba(255,255,255,.12); border-left-color: #63b3ed; color: #fff; text-decoration: none; }
+    main { flex: 1; padding: 40px 48px; max-width: 900px; }
+
+    /* Header */
+    .doc-header { border-bottom: 3px solid var(--blue); padding-bottom: 24px; margin-bottom: 40px; }
+    .doc-header h1 { font-size: 28px; color: var(--blue); }
+    .doc-header p { color: var(--grey); margin-top: 8px; font-size: 15px; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; margin: 0 2px; }
+    .badge-blue { background: var(--blue-lt); color: var(--blue); }
+    .badge-green { background: #f0fff4; color: var(--green); }
+    .badge-grey { background: #edf2f7; color: var(--grey); }
+
+    /* Sections */
+    section { margin-bottom: 56px; scroll-margin-top: 24px; }
+    h2 { font-size: 20px; color: var(--blue); border-bottom: 2px solid var(--border); padding-bottom: 8px; margin-bottom: 20px; }
+    h3 { font-size: 16px; color: #2d3748; margin: 24px 0 10px; }
+    h4 { font-size: 13px; font-weight: 600; color: var(--grey); margin: 16px 0 6px; text-transform: uppercase; letter-spacing: .5px; }
+    p { line-height: 1.6; margin-bottom: 12px; }
+    ul, ol { padding-left: 20px; margin-bottom: 12px; line-height: 1.8; }
+
+    /* Code */
+    pre { background: #1a202c; color: #e2e8f0; padding: 16px 20px; border-radius: 6px; overflow-x: auto; margin: 12px 0; font-size: 12.5px; line-height: 1.5; }
+    code { background: #edf2f7; color: #c53030; padding: 1px 5px; border-radius: 3px; font-size: 12.5px; }
+    pre code { background: none; color: inherit; padding: 0; }
+    .kw  { color: #76e4f7; }
+    .fn  { color: #fbd38d; }
+    .st  { color: #9ae6b4; }
+    .cm  { color: #718096; font-style: italic; }
+    .ty  { color: #90cdf4; }
+
+    /* API cards */
+    .fn-card { background: var(--bg); border-left: 4px solid var(--blue); border-radius: 4px; padding: 14px 18px; margin: 14px 0; }
+    .fn-card .sig { font-family: monospace; font-size: 13px; color: #1a202c; font-weight: 600; }
+    .fn-card .desc { color: var(--grey); font-size: 13px; margin-top: 6px; }
+    .fn-card .param { font-family: monospace; font-size: 12px; }
+    .fn-card .ret { font-size: 12px; color: var(--green); margin-top: 6px; }
+
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+    th { background: var(--blue); color: #fff; text-align: left; padding: 8px 12px; font-weight: 600; }
+    td { padding: 7px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    tr:nth-child(even) td { background: var(--bg); }
+
+    /* Diagrams */
+    .diagram { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin: 20px 0; overflow-x: auto; }
+    svg text { font-family: system-ui, sans-serif; }
+
+    /* Callouts */
+    .callout { padding: 12px 16px; border-radius: 4px; margin: 16px 0; border-left: 4px solid; font-size: 13px; }
+    .callout-blue { background: var(--blue-lt); border-color: var(--blue); }
+    .callout-green { background: #f0fff4; border-color: var(--green); }
+    .callout-yellow { background: #fffff0; border-color: var(--yellow); }
+
+    /* Workflow steps */
+    .steps { counter-reset: step; }
+    .step { display: flex; gap: 16px; margin: 12px 0; align-items: flex-start; }
+    .step::before { counter-increment: step; content: counter(step); min-width: 28px; height: 28px; background: var(--blue); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; margin-top: 2px; }
+    .step-body { flex: 1; }
+    .step-body strong { display: block; margin-bottom: 4px; }
+
+    /* Module chips */
+    .module-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin: 16px 0; }
+    .module-card { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px; }
+    .module-card .path { font-family: monospace; font-size: 11px; color: var(--grey); }
+    .module-card .title { font-weight: 600; font-size: 13px; margin: 4px 0; }
+    .module-card .desc { font-size: 12px; color: var(--grey); }
+
+    /* Dataset table */
+    .ds-tag { display: inline-block; padding: 1px 6px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+    .tag-core { background: #ebf8ff; color: #2b6cb0; }
+    .tag-coord { background: #f0fff4; color: #276749; }
+    .tag-overlay { background: #faf5ff; color: #6b46c1; }
+    .tag-access { background: #fff5f5; color: #c53030; }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+
+<!-- ── Sidebar Navigation ──────────────────────────────── -->
+<nav>
+  <div style="padding: 16px 20px 20px; border-bottom: 1px solid rgba(255,255,255,.15);">
+    <div style="font-size: 18px; font-weight: 700; color: #fff;">🏙️ NYC DOT SIM</div>
+    <div style="font-size: 11px; color: #90cdf4; margin-top: 2px;">Analyst Toolkit Docs</div>
+  </div>
+  <h2>Overview</h2>
+  <a href="#overview">Introduction</a>
+  <a href="#architecture">Architecture</a>
+  <a href="#quickstart">Quick Start</a>
+  <h2>Data Layer</h2>
+  <a href="#datasets">Dataset Registry</a>
+  <a href="#data-loader">data_loader.py</a>
+  <a href="#cache">Cache Manager</a>
+  <h2>Spatial</h2>
+  <a href="#geodataframe">geodataframe.py</a>
+  <a href="#postgis">PostGIS Service</a>
+  <h2>Analytics</h2>
+  <a href="#views">Dashboard Views</a>
+  <a href="#analytics-advanced">Advanced Analytics</a>
+  <h2>Output</h2>
+  <a href="#reporting">Reporting</a>
+  <a href="#alerts">Alerts &amp; Integrations</a>
+  <h2>Reference</h2>
+  <a href="#data-flow">Data Flow</a>
+  <a href="#deps">Dependencies</a>
+  <a href="#config">Configuration</a>
+</nav>
+
+<!-- ── Main Content ───────────────────────────────────── -->
+<main>
+
+<div class="doc-header">
+  <h1>NYC DOT SIM Analyst Toolkit</h1>
+  <p>Technical reference for the Sidewalk Inspection &amp; Management data platform —
+     Streamlit mission control, Socrata ingestion, geospatial analysis, and reporting.</p>
+  <div style="margin-top: 14px;">
+    <span class="badge badge-blue">Python 3.9–3.14</span>
+    <span class="badge badge-blue">Streamlit 1.x</span>
+    <span class="badge badge-green">26 Datasets</span>
+    <span class="badge badge-grey">NYC Open Data</span>
+    <span class="badge badge-grey">Socrata SODA 2.x</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ OVERVIEW ═══ -->
+<section id="overview">
+<h2>Introduction</h2>
+<p>The NYC DOT SIM Analyst Toolkit is a local-first Streamlit application for the NYC Department of Transportation's Sidewalk Inspection &amp; Management (SIM) unit. It ingests 26 datasets from NYC Open Data via the Socrata SODA API, provides interactive dashboards for inspection management, GIS conflict detection, compliance analytics, and produces publication-ready reports.</p>
+
+<div class="module-grid">
+  <div class="module-card"><div class="path">app/app.py</div><div class="title">Mission Control</div><div class="desc">Main Streamlit router — 9 sections, dark mode, onboarding, persistent state</div></div>
+  <div class="module-card"><div class="path">app/data_loader.py</div><div class="title">Data Loader</div><div class="desc">Socrata fetch, L1/L2 caching, parallel loading, offline fallback</div></div>
+  <div class="module-card"><div class="path">app/utils/cache_manager.py</div><div class="title">Cache Manager</div><div class="desc">Parquet disk cache, TTL per dataset, LRU eviction, background pre-fetch</div></div>
+  <div class="module-card"><div class="path">app/views/gis_dashboard.py</div><div class="title">GIS Dashboard</div><div class="desc">DBSCAN clustering, conflict detection, route optimizer, 6 tabs</div></div>
+  <div class="module-card"><div class="path">app/views/analytics_advanced.py</div><div class="title">Advanced Analytics</div><div class="desc">8-tab view: cohort, SLA, anomaly, segmentation, inspector scorecard</div></div>
+  <div class="module-card"><div class="path">app/views/data_catalog.py</div><div class="title">Data Catalog</div><div class="desc">Dataset freshness, API usage log, global cross-dataset search</div></div>
+  <div class="module-card"><div class="path">src/socrata_toolkit/spatial/</div><div class="title">Spatial Module</div><div class="desc">GeoPandas integration, PostGIS queries, Shapely geometry parsing</div></div>
+  <div class="module-card"><div class="path">app/utils/reporting.py</div><div class="title">Reporting</div><div class="desc">PDF (WeasyPrint), PPTX (python-pptx), Excel, SMTP email</div></div>
+  <div class="module-card"><div class="path">app/services/alerts.py</div><div class="title">Alerts &amp; Integrations</div><div class="desc">Slack webhooks, ArcGIS Online, 311 poller, DOB cross-reference</div></div>
+</div>
+</section>
+
+<!-- ════════════════════════════════════════ ARCHITECTURE ═══ -->
+<section id="architecture">
+<h2>Architecture</h2>
+
+<div class="diagram">
+<svg viewBox="0 0 820 400" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" font-size="12">
+  <!-- Socrata -->
+  <rect x="10" y="160" width="120" height="60" rx="6" fill="#ebf8ff" stroke="#2b6cb0" stroke-width="1.5"/>
+  <text x="70" y="183" text-anchor="middle" font-weight="700" fill="#2b6cb0">NYC Open Data</text>
+  <text x="70" y="199" text-anchor="middle" fill="#2b6cb0">Socrata SODA</text>
+  <text x="70" y="213" text-anchor="middle" fill="#4a5568">26 datasets</text>
+
+  <!-- Arrow: Socrata → data_loader -->
+  <line x1="130" y1="190" x2="164" y2="190" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- data_loader -->
+  <rect x="165" y="155" width="130" height="70" rx="6" fill="#fff5f5" stroke="#c53030" stroke-width="1.5"/>
+  <text x="230" y="178" text-anchor="middle" font-weight="700" fill="#c53030">data_loader.py</text>
+  <text x="230" y="194" text-anchor="middle" fill="#4a5568">fetch_dataset()</text>
+  <text x="230" y="210" text-anchor="middle" fill="#4a5568">connection pool · retries</text>
+
+  <!-- Arrow: data_loader → cache -->
+  <line x1="295" y1="168" x2="329" y2="148" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- cache_manager -->
+  <rect x="330" y="100" width="130" height="70" rx="6" fill="#fffff0" stroke="#b7791f" stroke-width="1.5"/>
+  <text x="395" y="123" text-anchor="middle" font-weight="700" fill="#b7791f">cache_manager.py</text>
+  <text x="395" y="139" text-anchor="middle" fill="#4a5568">L2 Parquet/gzip</text>
+  <text x="395" y="155" text-anchor="middle" fill="#4a5568">TTL · eviction · manifest</text>
+
+  <!-- Arrow: data_loader → views -->
+  <line x1="295" y1="190" x2="329" y2="190" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Streamlit Views box -->
+  <rect x="330" y="165" width="130" height="120" rx="6" fill="#f0fff4" stroke="#276749" stroke-width="1.5"/>
+  <text x="395" y="185" text-anchor="middle" font-weight="700" fill="#276749">Streamlit Views</text>
+  <text x="395" y="201" text-anchor="middle" fill="#4a5568">gis_dashboard</text>
+  <text x="395" y="217" text-anchor="middle" fill="#4a5568">analytics_advanced</text>
+  <text x="395" y="233" text-anchor="middle" fill="#4a5568">contracts_dashboard</text>
+  <text x="395" y="249" text-anchor="middle" fill="#4a5568">data_catalog</text>
+  <text x="395" y="265" text-anchor="middle" fill="#4a5568">forecasting · home</text>
+
+  <!-- Arrow: views → spatial -->
+  <line x1="460" y1="210" x2="494" y2="210" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- spatial -->
+  <rect x="495" y="155" width="130" height="70" rx="6" fill="#faf5ff" stroke="#6b46c1" stroke-width="1.5"/>
+  <text x="560" y="178" text-anchor="middle" font-weight="700" fill="#6b46c1">spatial/</text>
+  <text x="560" y="194" text-anchor="middle" fill="#4a5568">GeoPandas · Shapely</text>
+  <text x="560" y="210" text-anchor="middle" fill="#4a5568">DBSCAN · pydeck</text>
+
+  <!-- Arrow: views → reporting -->
+  <line x1="460" y1="240" x2="494" y2="280" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- reporting -->
+  <rect x="495" y="260" width="130" height="70" rx="6" fill="#fff5f5" stroke="#c53030" stroke-width="1.5"/>
+  <text x="560" y="283" text-anchor="middle" font-weight="700" fill="#c53030">reporting.py</text>
+  <text x="560" y="299" text-anchor="middle" fill="#4a5568">PDF · PPTX · Excel</text>
+  <text x="560" y="315" text-anchor="middle" fill="#4a5568">SMTP email</text>
+
+  <!-- Arrow: spatial → postgis -->
+  <line x1="625" y1="190" x2="659" y2="190" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- postgis -->
+  <rect x="660" y="130" width="130" height="70" rx="6" fill="#ebf8ff" stroke="#2b6cb0" stroke-width="1.5"/>
+  <text x="725" y="153" text-anchor="middle" font-weight="700" fill="#2b6cb0">postgis.py</text>
+  <text x="725" y="169" text-anchor="middle" fill="#4a5568">PostGISService</text>
+  <text x="725" y="185" text-anchor="middle" fill="#4a5568">ST_DWithin · sjoin</text>
+
+  <!-- Arrow: views → alerts -->
+  <line x1="460" y1="175" x2="659" y2="60" stroke="#4a5568" stroke-width="1.5" stroke-dasharray="4" marker-end="url(#arr)"/>
+
+  <!-- alerts -->
+  <rect x="660" y="20" width="130" height="70" rx="6" fill="#f0fff4" stroke="#276749" stroke-width="1.5"/>
+  <text x="725" y="43" text-anchor="middle" font-weight="700" fill="#276749">alerts.py</text>
+  <text x="725" y="59" text-anchor="middle" fill="#4a5568">Slack · ArcGIS Online</text>
+  <text x="725" y="75" text-anchor="middle" fill="#4a5568">311 poller · DOB API</text>
+
+  <!-- Arrow: views → postgis db -->
+  <line x1="625" y1="295" x2="659" y2="295" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Postgres -->
+  <rect x="660" y="260" width="130" height="70" rx="6" fill="#ebf8ff" stroke="#2b6cb0" stroke-width="1.5"/>
+  <text x="725" y="283" text-anchor="middle" font-weight="700" fill="#2b6cb0">PostgreSQL</text>
+  <text x="725" y="299" text-anchor="middle" fill="#4a5568">+ PostGIS</text>
+  <text x="725" y="315" text-anchor="middle" fill="#4a5568">optional enterprise</text>
+
+  <!-- Legend -->
+  <text x="10" y="360" fill="#4a5568" font-size="11">→ live call   - - → optional/async</text>
+
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#4a5568"/>
+    </marker>
+  </defs>
+</svg>
+</div>
+
+<h3>Layer Summary</h3>
+<table>
+  <thead><tr><th>Layer</th><th>Components</th><th>Responsibility</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Ingestion</strong></td><td>data_loader.py, cache_manager.py</td><td>Fetch from Socrata; L1 st.cache_data + L2 Parquet disk cache; offline fallback; delta fetch</td></tr>
+    <tr><td><strong>Spatial</strong></td><td>spatial/geodataframe.py, gis_dashboard.py</td><td>GeoPandas GeoDataFrame conversion; DBSCAN; spatial join; pydeck / Folium / Plotly maps</td></tr>
+    <tr><td><strong>Analytics</strong></td><td>analytics_advanced.py, forecasting.py</td><td>Cohort retention, SLA tracking, IsolationForest anomaly, K-Means segmentation, CUSUM</td></tr>
+    <tr><td><strong>Output</strong></td><td>reporting.py, alerts.py</td><td>PDF / PPTX / Excel export; Slack alerts; ArcGIS Online push; SMTP email</td></tr>
+    <tr><td><strong>Enterprise</strong></td><td>postgis.py</td><td>Optional PostGIS/psycopg3 connector for ST_DWithin / ST_Intersects spatial queries</td></tr>
+  </tbody>
+</table>
+</section>
+
+<!-- ═══════════════════════════════════════════ QUICKSTART ═══ -->
+<section id="quickstart">
+<h2>Quick Start</h2>
+
+<h3>Installation</h3>
+<pre><code><span class="cm"># Core app + all optional heavy deps</span>
+pip install -e ".[mission]"
+
+<span class="cm"># Minimal (no geospatial / forecasting)</span>
+pip install streamlit pandas pyyaml requests python-dotenv plotly
+
+<span class="cm"># Run the dashboard</span>
+PYTHONPATH=src streamlit run app/app.py</code></pre>
+
+<h3>Environment Variables</h3>
+<pre><code><span class="cm"># .env file in project root</span>
+SOCRATA_APP_TOKEN=&lt;your-token&gt;        <span class="cm"># avoids 429 rate limits</span>
+SOCRATA_DOMAIN=data.cityofnewyork.us  <span class="cm"># default domain</span>
+SOCRATA_DEFAULT_LIMIT=50000           <span class="cm"># rows per fetch</span>
+SOCRATA_CACHE_DIR=data/cache          <span class="cm"># Parquet cache location</span>
+DEMO_MODE=false                        <span class="cm"># set true to block all live calls</span></code></pre>
+
+<h3>Fetch Your First Dataset</h3>
+<pre><code><span class="kw">import</span> sys; sys.path.insert(0, <span class="st">"src"</span>)
+<span class="kw">from</span> app.data_loader <span class="kw">import</span> fetch_dataset
+
+<span class="cm"># Pulls from Socrata and caches to data/cache/inspection_*.parquet.gz</span>
+df = <span class="fn">fetch_dataset</span>(<span class="st">"inspection"</span>, limit=10_000)
+print(df.shape, df.columns.tolist())</code></pre>
+
+<h3>Navigation Sections</h3>
+<table>
+  <thead><tr><th>Section</th><th>View</th><th>Key Features</th></tr></thead>
+  <tbody>
+    <tr><td>🏠 Home</td><td>home.py</td><td>KPI cards, system status, Socrata connectivity check</td></tr>
+    <tr><td>🏗️ Construction Lists</td><td>construction.py</td><td>Street permits, weekly schedule, capital blocks</td></tr>
+    <tr><td>🗺️ GIS &amp; Conflicts</td><td>gis_dashboard.py</td><td>Inspection map, DBSCAN hotspots, conflict detection, route optimizer, stipulations</td></tr>
+    <tr><td>📋 Contract Analytics</td><td>contracts_dashboard.py</td><td>Violations, tree damage, dismissals, correspondences</td></tr>
+    <tr><td>📈 Forecasting</td><td>forecasting.py</td><td>Prophet forecast, confidence intervals, seasonality decomposition</td></tr>
+    <tr><td>⚙️ Data Workflows</td><td>workflows.py</td><td>QA, spatial, contract, productivity workflow groups</td></tr>
+    <tr><td>🔍 Data Discovery</td><td>data_discovery.py</td><td>SoQL query builder, full operator coverage, geospatial helpers</td></tr>
+    <tr><td>📊 Advanced Analytics</td><td>analytics_advanced.py</td><td>8-tab analytics suite (new)</td></tr>
+    <tr><td>📚 Data Catalog</td><td>data_catalog.py</td><td>Freshness monitoring, API usage log, global search (new)</td></tr>
+    <tr><td>⚙️ Settings</td><td>settings.py</td><td>API tokens, alert thresholds, filter presets, import/export</td></tr>
+  </tbody>
+</table>
+</section>
+
+<!-- ════════════════════════════════════════════ DATASETS ═══ -->
+<section id="datasets">
+<h2>Dataset Registry</h2>
+<p>All 26 datasets are declared in <code>config/datasets.yaml</code> — the single source of truth loaded into <code>DATASET_REGISTRY</code> at startup. Each entry specifies the Socrata <code>fourfour</code> identifier, group tag, display label, and optional <code>default_where</code> / <code>manhattan_where</code> filter applied automatically on every fetch.</p>
+
+<table>
+  <thead><tr><th>Key</th><th>Label</th><th>Group</th><th>Fourfour</th></tr></thead>
+  <tbody>
+    <tr><td>inspection</td><td>SMD Inspection</td><td><span class="ds-tag tag-core">core_smd</span></td><td><code>dntt-gqwq</code></td></tr>
+    <tr><td>violations</td><td>SMD Violations</td><td><span class="ds-tag tag-core">core_smd</span></td><td><code>6kbp-uz6m</code></td></tr>
+    <tr><td>built</td><td>SMD Built</td><td><span class="ds-tag tag-core">core_smd</span></td><td><code>ugc8-s3f6</code></td></tr>
+    <tr><td>lot_info</td><td>SMD Lot Info</td><td><span class="ds-tag tag-core">core_smd</span></td><td><code>i642-2fxq</code></td></tr>
+    <tr><td>reinspection</td><td>SMD ReInspection</td><td><span class="ds-tag tag-core">core_smd</span></td><td><code>gx72-kirf</code></td></tr>
+    <tr><td>tree_damage</td><td>All Tree Damage</td><td><span class="ds-tag tag-core">core_smd</span></td><td><code>j6v2-6uxq</code></td></tr>
+    <tr><td>dismissals</td><td>Sidewalk Dismissal Tracking</td><td><span class="ds-tag tag-core">core_smd</span></td><td><code>p4u2-3jgx</code></td></tr>
+    <tr><td>correspondences</td><td>Sidewalk Correspondences</td><td><span class="ds-tag tag-core">core_smd</span></td><td><code>bheb-sjfi</code></td></tr>
+    <tr><td>curb_metal_protruding</td><td>Curb Metal Protruding Data</td><td><span class="ds-tag tag-core">core_smd</span></td><td><code>i2y3-sx2e</code></td></tr>
+    <tr><td>ramp_locations</td><td>Pedestrian Ramp Locations</td><td><span class="ds-tag tag-access">accessibility</span></td><td><code>ufzp-rrqu</code></td></tr>
+    <tr><td>ramp_complaints</td><td>Ramp Complaints</td><td><span class="ds-tag tag-access">accessibility</span></td><td><code>jagj-gttd</code></td></tr>
+    <tr><td>ramp_progress</td><td>Ramp Program Progress</td><td><span class="ds-tag tag-access">accessibility</span></td><td><code>e7gc-ub6z</code></td></tr>
+    <tr><td>street_permits</td><td>Street Construction Permits</td><td><span class="ds-tag tag-coord">coordination</span></td><td><code>tqtj-sjs8</code></td></tr>
+    <tr><td>weekly_construction</td><td>Weekly Construction Schedule</td><td><span class="ds-tag tag-coord">coordination</span></td><td><code>r528-jcks</code></td></tr>
+    <tr><td>capital_blocks</td><td>Capital Reconstruction Blocks</td><td><span class="ds-tag tag-coord">coordination</span></td><td><code>jvk9-k4re</code></td></tr>
+    <tr><td>capital_intersections</td><td>Capital Reconstruction Intersections</td><td><span class="ds-tag tag-coord">coordination</span></td><td><code>97nd-ff3i</code></td></tr>
+    <tr><td>street_construction_inspections</td><td>Street Construction Inspections (HIQA)</td><td><span class="ds-tag tag-coord">coordination</span></td><td><code>ydkf-mpxb</code></td></tr>
+    <tr><td>street_closures_block</td><td>Street Closures by Block</td><td><span class="ds-tag tag-coord">coordination</span></td><td><code>i6b5-j7bu</code></td></tr>
+    <tr><td>permit_stipulations</td><td>Street Construction Permit Stipulations</td><td><span class="ds-tag tag-coord">coordination</span></td><td><code>gsgx-6efw</code></td></tr>
+    <tr><td>street_resurfacing_schedule</td><td>Street Resurfacing Schedule</td><td><span class="ds-tag tag-coord">coordination</span></td><td><code>xnfm-u3k5</code></td></tr>
+    <tr><td>street_resurfacing_inhouse</td><td>DOT In-house Street Resurfacing</td><td><span class="ds-tag tag-coord">coordination</span></td><td><code>ffaf-8mrv</code></td></tr>
+    <tr><td>step_streets</td><td>Step Streets Locations</td><td><span class="ds-tag tag-overlay">overlays</span></td><td><code>u9au-h79y</code></td></tr>
+    <tr><td>sidewalk_planimetric</td><td>Planimetric Sidewalks</td><td><span class="ds-tag tag-overlay">overlays</span></td><td><code>vfx9-tbb6</code></td></tr>
+    <tr><td>pedestrian_demand</td><td>Pedestrian Demand</td><td><span class="ds-tag tag-overlay">overlays</span></td><td><code>fwpa-qxaf</code></td></tr>
+    <tr><td>mappluto</td><td>MapPLUTO</td><td><span class="ds-tag tag-overlay">overlays</span></td><td><code>6fi9-q3ta</code></td></tr>
+    <tr><td>complaints_311</td><td>311 Sidewalk/Curb</td><td><span class="ds-tag tag-overlay">overlays</span></td><td><code>erm2-nwe9</code></td></tr>
+  </tbody>
+</table>
+
+<div class="callout callout-yellow">
+  <strong>default_where auto-filter:</strong> The <code>complaints_311</code> dataset has a <code>default_where</code> clause that automatically restricts every fetch to sidewalk/curb complaint types, preventing multi-million-row pulls.
+</div>
+</section>
+
+<!-- ════════════════════════════════════════ DATA LOADER ═══ -->
+<section id="data-loader">
+<h2>data_loader.py — API Reference</h2>
+<p>Core ingestion module. All Socrata calls go through here. Uses a module-level <code>requests.Session</code> with retry adapter (3 retries, exponential backoff on 5xx).</p>
+
+<div class="fn-card">
+  <div class="sig">fetch_dataset(dataset_key, *, limit=50_000, where=None, select=None)</div>
+  <div class="desc">Primary entry point. Checks L2 Parquet disk cache first; fetches from Socrata on miss; writes cache on success. Supports delta fetch when <code>updated_at</code> column is detected. On network failure with stale cache available, returns stale data with <code>df.attrs["stale"] = True</code>.</div>
+  <h4>Parameters</h4>
+  <div class="param"><code>dataset_key: str</code> — Registry key (e.g. <code>"inspection"</code>)<br>
+  <code>limit: int</code> — Max rows (default 50,000)<br>
+  <code>where: str | None</code> — SoQL $where clause; if None, uses <code>default_where</code> from registry<br>
+  <code>select: str | None</code> — SoQL $select for column projection</div>
+  <div class="ret">Returns: <code>pd.DataFrame</code></div>
+</div>
+
+<div class="fn-card">
+  <div class="sig">fetch_datasets_parallel(keys, *, limit=25_000)</div>
+  <div class="desc">Fetches multiple datasets concurrently via <code>ThreadPoolExecutor</code> (max 6 workers). Returns a dict of DataFrames; individual failures return empty DataFrames with warnings.</div>
+  <div class="ret">Returns: <code>dict[str, pd.DataFrame]</code></div>
+</div>
+
+<div class="fn-card">
+  <div class="sig">check_socrata_connectivity(domain="data.cityofnewyork.us", timeout=5)</div>
+  <div class="desc">Pings the Socrata catalog endpoint to verify network access before rendering.</div>
+  <div class="ret">Returns: <code>tuple[bool, str]</code> — (success, message)</div>
+</div>
+
+<div class="fn-card">
+  <div class="sig">read_csv_chunked(file_obj, chunksize=50_000)</div>
+  <div class="desc">Reads a user-uploaded CSV in chunks to avoid OOM on files &gt;50 MB. Safe to pass any file-like object (Streamlit UploadedFile, Path, etc.).</div>
+  <div class="ret">Returns: <code>pd.DataFrame</code></div>
+</div>
+
+<div class="fn-card">
+  <div class="sig">keys_for_workflow(workflow_key)</div>
+  <div class="desc">Looks up dataset keys for a named workflow group (<code>"qa"</code>, <code>"spatial"</code>, <code>"contract"</code>, <code>"productivity"</code>) from <code>config/datasets.yaml</code>.</div>
+  <div class="ret">Returns: <code>tuple[str, ...]</code></div>
+</div>
+
+<pre><code><span class="cm"># Column projection example — only pull relevant columns</span>
+df = <span class="fn">fetch_dataset</span>(
+    <span class="st">"inspection"</span>,
+    limit=50_000,
+    where=<span class="st">"upper(borough) = 'MANHATTAN'"</span>,
+    select=<span class="st">"latitude,longitude,condition_score,defect_type,borough"</span>,
+)
+
+<span class="cm"># Parallel loading of the QA workflow bundle</span>
+<span class="kw">from</span> app.data_loader <span class="kw">import</span> fetch_datasets_parallel, keys_for_workflow
+keys = <span class="fn">keys_for_workflow</span>(<span class="st">"qa"</span>)
+frames = <span class="fn">fetch_datasets_parallel</span>(keys)
+<span class="cm"># → {"lot_info": df, "mappluto": df, "complaints_311": df, ...}</span></code></pre>
+</section>
+
+<!-- ════════════════════════════════════════ CACHE MANAGER ═══ -->
+<section id="cache">
+<h2>cache_manager.py — API Reference</h2>
+<p>Multi-level disk cache for Socrata data. Each dataset is serialized to a gzip-compressed Parquet file under <code>CACHE_DIR</code> (default: <code>data/cache/</code>, overridable via <code>SOCRATA_CACHE_DIR</code> env var). A JSON manifest tracks paths, row counts, fetch timestamps, and expiry.</p>
+
+<h3>Cache TTL by Dataset</h3>
+<table>
+  <thead><tr><th>Dataset</th><th>TTL</th><th>Rationale</th></tr></thead>
+  <tbody>
+    <tr><td><code>complaints_311</code></td><td>1 hour</td><td>High-frequency 311 complaints update continuously</td></tr>
+    <tr><td><code>inspection</code>, <code>street_permits</code></td><td>4 hours</td><td>Intra-day inspection updates</td></tr>
+    <tr><td><code>violations</code></td><td>6 hours</td><td>Violation records updated daily</td></tr>
+    <tr><td><code>mappluto</code>, <code>pedestrian_demand</code></td><td>720 hours (30 d)</td><td>Stable reference data</td></tr>
+    <tr><td><em>all others</em></td><td>24 hours</td><td>Default</td></tr>
+  </tbody>
+</table>
+
+<div class="fn-card">
+  <div class="sig">write_cache(key, df) → Path</div>
+  <div class="desc">Serialize DataFrame to <code>&lt;key&gt;_&lt;timestamp&gt;.parquet.gz</code>. Updates manifest. Calls <code>evict_old_cache()</code> automatically to enforce the 1 GB cap.</div>
+</div>
+
+<div class="fn-card">
+  <div class="sig">read_cache(key, max_age_hours=None) → pd.DataFrame | None</div>
+  <div class="desc">Returns cached DataFrame if within TTL, else <code>None</code>. Uses per-dataset TTL from <code>DATASET_TTL_HOURS</code> unless overridden by <code>max_age_hours</code>.</div>
+</div>
+
+<div class="fn-card">
+  <div class="sig">read_stale_cache(key) → pd.DataFrame | None</div>
+  <div class="desc">Returns any cached file regardless of age. Used by <code>fetch_dataset()</code> for offline fallback when Socrata is unreachable.</div>
+</div>
+
+<div class="fn-card">
+  <div class="sig">evict_old_cache(max_bytes=1_073_741_824) → int</div>
+  <div class="desc">Deletes oldest <code>.parquet.gz</code> files until total directory size is under <code>max_bytes</code>. Returns bytes freed.</div>
+</div>
+
+<div class="fn-card">
+  <div class="sig">start_prefetch_scheduler(dataset_keys, interval_minutes=60)</div>
+  <div class="desc">Launches an APScheduler <code>BackgroundScheduler</code> that pre-warms the cache for the specified keys on a fixed interval. Stores the scheduler in <code>st.session_state</code> to prevent duplicates on re-renders.</div>
+</div>
+
+<pre><code><span class="kw">from</span> app.utils.cache_manager <span class="kw">import</span> write_cache, read_cache, start_prefetch_scheduler
+
+<span class="cm"># Manual cache interaction</span>
+df = <span class="fn">read_cache</span>(<span class="st">"inspection"</span>)
+<span class="kw">if</span> df <span class="kw">is</span> None:
+    df = fetch_live_data()
+    <span class="fn">write_cache</span>(<span class="st">"inspection"</span>, df)
+
+<span class="cm"># Pre-warm high-traffic datasets on app start</span>
+<span class="fn">start_prefetch_scheduler</span>(
+    [<span class="st">"inspection"</span>, <span class="st">"street_permits"</span>, <span class="st">"violations"</span>],
+    interval_minutes=<span class="ty">60</span>,
+)</code></pre>
+</section>
+
+<!-- ═══════════════════════════════════════ GEODATAFRAME ═══ -->
+<section id="geodataframe">
+<h2>spatial/geodataframe.py — API Reference</h2>
+<p>GeoPandas integration for Socrata datasets. Converts the <code>the_geom</code> column (WKT string, GeoJSON dict, or JSON-encoded GeoJSON) to a proper GeoDataFrame. All functions require <code>pip install geopandas shapely</code>; otherwise they raise <code>ImportError</code> with an install hint.</p>
+
+<div class="fn-card">
+  <div class="sig">geodataframe_from_socrata(df, geom_col="the_geom", crs="EPSG:4326", drop_null_geom=True)</div>
+  <div class="desc">Convert a Socrata DataFrame with a geometry column to a GeoDataFrame. Handles WKT (<code>POINT(...)</code>), GeoJSON dicts, and JSON-encoded GeoJSON strings. Logs the count of unparseable rows.</div>
+  <div class="ret">Returns: <code>gpd.GeoDataFrame</code></div>
+</div>
+
+<div class="fn-card">
+  <div class="sig">spatial_join_socrata(left_df, right_df, *, left_geom_col="the_geom", right_geom_col="the_geom", how="inner", predicate="intersects", crs="EPSG:4326")</div>
+  <div class="desc">Spatial join between two Socrata DataFrames via <code>gpd.sjoin()</code>. Converts both to GeoDataFrames first. Predicate options: <code>"intersects"</code>, <code>"within"</code>, <code>"contains"</code>.</div>
+  <div class="ret">Returns: <code>gpd.GeoDataFrame</code></div>
+</div>
+
+<div class="fn-card">
+  <div class="sig">detect_conflicts_geopandas(inspections, permits, *, buffer_meters=50.0, insp_geom_col="the_geom", perm_geom_col="the_geom")</div>
+  <div class="desc">Find inspection locations within <code>buffer_meters</code> of active permit areas. Reprojects to EPSG:2263 (NY State Plane, feet) for accurate metric buffering, then back to WGS84.</div>
+  <div class="ret">Returns: <code>gpd.GeoDataFrame</code> of conflicting pairs</div>
+</div>
+
+<div class="fn-card">
+  <div class="sig">spatial_stats(gdf) → dict</div>
+  <div class="desc">Summary statistics: <code>total_features</code>, <code>geometry_types</code> (value counts), <code>bounds</code> (<code>[minx, miny, maxx, maxy]</code>), <code>crs</code>, and optionally <code>total_area_sq_deg</code> for polygon layers.</div>
+</div>
+
+<pre><code><span class="kw">from</span> socrata_toolkit.spatial.geodataframe <span class="kw">import</span> (
+    geodataframe_from_socrata, detect_conflicts_geopandas, spatial_stats
+)
+
+<span class="cm"># Convert inspection DataFrame to GeoDataFrame</span>
+gdf = <span class="fn">geodataframe_from_socrata</span>(df_inspections)
+stats = <span class="fn">spatial_stats</span>(gdf)
+<span class="cm"># → {"total_features": 12430, "geometry_types": {"Point": 12430}, ...}</span>
+
+<span class="cm"># Detect conflicts within 100m of permit areas</span>
+conflicts = <span class="fn">detect_conflicts_geopandas</span>(
+    df_inspections, df_permits, buffer_meters=<span class="ty">100.0</span>
+)
+print(f<span class="st">"{len(conflicts)} spatial conflicts found"</span>)</code></pre>
+</section>
+
+<!-- ═══════════════════════════════════════════ POSTGIS ═══ -->
+<section id="postgis">
+<h2>postgis.py — PostGIS Enterprise Connector</h2>
+<p>Optional psycopg3-backed connector for organizations running NYC DOT data in a PostGIS database. Requires <code>pip install 'psycopg[binary]'</code>.</p>
+
+<div class="fn-card">
+  <div class="sig">PostGISConfig(host, port, dbname, user, password, schema="public")</div>
+  <div class="desc">Connection configuration dataclass. Exposes a <code>conninfo</code> property for the psycopg connection string.</div>
+</div>
+
+<div class="fn-card">
+  <div class="sig">PostGISService(config).test_connection() → tuple[bool, str]</div>
+  <div class="desc">Runs <code>SELECT PostGIS_Version()</code>. Returns <code>(True, "PostGIS 3.x")</code> on success.</div>
+</div>
+
+<div class="fn-card">
+  <div class="sig">.query_within_circle(table, lat, lon, radius_m, geom_col="geom", limit=10_000)</div>
+  <div class="desc">Runs <code>ST_DWithin(&lt;geom&gt;::geography, ST_SetSRID(ST_MakePoint(lon, lat), 4326)::geography, radius_m)</code> for accurate meter-based distance.</div>
+  <div class="ret">Returns: <code>SpatialQueryResult</code> with <code>.df</code> and <code>.row_count</code></div>
+</div>
+
+<div class="fn-card">
+  <div class="sig">.query_intersects(table, wkt_polygon, geom_col="geom", limit=10_000)</div>
+  <div class="desc">Returns rows whose geometry intersects the supplied WKT polygon via <code>ST_Intersects</code>.</div>
+</div>
+
+<pre><code><span class="kw">from</span> app.services.postgis <span class="kw">import</span> PostGISConfig, PostGISService
+
+cfg = <span class="fn">PostGISConfig</span>(host=<span class="st">"pghost"</span>, dbname=<span class="st">"nyc_dot"</span>, user=<span class="st">"analyst"</span>, password=<span class="st">"..."</span>)
+svc = <span class="fn">PostGISService</span>(cfg)
+ok, version = svc.<span class="fn">test_connection</span>()  <span class="cm"># → (True, "PostGIS 3.4.2")</span>
+
+<span class="cm"># 500m radius query around Union Square</span>
+result = svc.<span class="fn">query_within_circle</span>(<span class="st">"inspections"</span>, lat=<span class="ty">40.7359</span>, lon=<span class="ty">-73.9911</span>, radius_m=<span class="ty">500</span>)
+print(result.df.shape)</code></pre>
+</section>
+
+<!-- ═══════════════════════════════════════════ VIEWS ════════ -->
+<section id="views">
+<h2>Dashboard Views</h2>
+<h3>GIS &amp; Spatial (gis_dashboard.py) — 6 Tabs</h3>
+<table>
+  <thead><tr><th>Tab</th><th>Key Features</th><th>Optional Deps</th></tr></thead>
+  <tbody>
+    <tr><td>📍 Inspection Map</td><td>Plotly/Folium/pydeck map engines; borough/score/defect filters; block aggregation; time-lapse; TSP route optimizer; GeoJSON + GeoPackage export</td><td>pydeck, geopandas</td></tr>
+    <tr><td>⚠️ Conflict Detection</td><td>Attribute join (BBL/borough) or GeoPandas <code>sjoin</code> with buffer slider; nearest-permit KDTree distances; conflict buffer map overlay</td><td>scipy, geopandas</td></tr>
+    <tr><td>🔥 Hotspot Analysis</td><td>Plotly density heatmap; DBSCAN clustering with cluster profile table</td><td>scikit-learn</td></tr>
+    <tr><td>📊 Spatial Reports</td><td>Borough bar charts; coordinate converter (WGS84 ↔ EPSG:2263 ↔ EPSG:3857); Excel export</td><td>pyproj (optional)</td></tr>
+    <tr><td>🚧 HIQA &amp; Capital</td><td>HIQA inspection metrics; capital intersection impact radius; PostGIS connection UI</td><td>—</td></tr>
+    <tr><td>📋 Stipulations &amp; Closures</td><td>Permit stipulations map; street closures by block; step streets locator</td><td>—</td></tr>
+  </tbody>
+</table>
+
+<h3>Map Engine Selection</h3>
+<pre><code><span class="cm"># In _render_inspection_map_tab():</span>
+engine_opts = [<span class="st">"Plotly (recommended)"</span>, <span class="st">"Folium (interactive)"</span>]
+<span class="kw">if</span> HAS_PYDECK:
+    engine_opts.append(<span class="st">"pydeck (GPU / large datasets)"</span>)
+<span class="cm"># pydeck: ScatterplotLayer, radius scales with (100 - condition_score)</span>
+<span class="cm"># Folium: CircleMarker with color-coded fill (R=bad, G=good)</span>
+<span class="cm"># Plotly: scatter_mapbox with carto-positron basemap</span></code></pre>
+</section>
+
+<!-- ═══════════════════════════════════ ANALYTICS ADVANCED ═══ -->
+<section id="analytics-advanced">
+<h2>Advanced Analytics View (analytics_advanced.py)</h2>
+<p>8-tab analytics suite accessible from the Analytics sidebar section. All loaders use <code>@st.cache_data(ttl=86_400)</code>. Optional ML features gracefully degrade when scikit-learn is not installed.</p>
+
+<table>
+  <thead><tr><th>Tab</th><th>Analytics</th><th>Algorithms</th></tr></thead>
+  <tbody>
+    <tr><td>📈 KPI Trends</td><td>12-week sparkline, YoY bar comparison, CUSUM changepoint detection</td><td>Cumulative sum deviation; annotated Plotly chart</td></tr>
+    <tr><td>👥 Cohort Analysis</td><td>Cohort size bar chart, retention heatmap (cohort × weeks open)</td><td>Period grouping + Plotly imshow, Blues colorscale</td></tr>
+    <tr><td>🔍 Anomaly Detection</td><td>Anomaly scatter map, plain-English summary, outlier count metrics</td><td>IsolationForest (contamination=0.05) on score+lat+lon</td></tr>
+    <tr><td>🏆 Borough Rankings</td><td>Ranked horizontal bar; contractor volume + HIQA pass rate join</td><td>groupby aggregation; optional merge on applicant</td></tr>
+    <tr><td>👷 Inspector Scorecard</td><td>Per-inspector stats table and bar chart; CSV download</td><td>groupby on inspector/inspector_id column</td></tr>
+    <tr><td>⏱️ SLA Tracker</td><td>ON_TRACK / AT_RISK / BREACHED counts; aging histogram by borough</td><td>Configurable SLA targets (LOW=90d, MED=60d, HIGH=30d)</td></tr>
+    <tr><td>🔗 Cross-Dataset</td><td>Borough-level reconciliation; composite risk score bar chart</td><td>Ratio flagging; weighted composite risk = 50% violation + 50% critical rate</td></tr>
+    <tr><td>🤖 Segmentation</td><td>Defect×borough heatmap; K-Means cluster profiles; scatter_mapbox</td><td>StandardScaler + KMeans(n_clusters=5); px.imshow crosstab</td></tr>
+  </tbody>
+</table>
+
+<pre><code><span class="cm"># CUSUM changepoint detection (from analytics_advanced.py)</span>
+<span class="kw">def</span> <span class="fn">detect_cusum_changepoint</span>(series: pd.Series) -> int | None:
+    <span class="kw">if</span> len(series) < <span class="ty">4</span>:
+        <span class="kw">return</span> None
+    mu = series.<span class="fn">mean</span>()
+    cusum = (series - mu).<span class="fn">cumsum</span>()
+    <span class="kw">return</span> <span class="fn">int</span>(cusum.<span class="fn">abs</span>().<span class="fn">idxmax</span>())</code></pre>
+</section>
+
+<!-- ══════════════════════════════════════════ REPORTING ═══ -->
+<section id="reporting">
+<h2>reporting.py — API Reference</h2>
+<p>Publication-ready export utilities. WeasyPrint and python-pptx are optional; functions raise <code>ImportError</code> with install instructions when the dep is absent.</p>
+
+<div class="fn-card">
+  <div class="sig">generate_pdf_report(title, summary_text, dataframes, output_bytes=True)</div>
+  <div class="desc">Generates an HTML-templated PDF with NYC DOT branding. Tables are converted via <code>dataframe_to_html_table()</code>. Requires WeasyPrint.</div>
+  <div class="param"><code>dataframes: dict[str, pd.DataFrame]</code> — sheet name → DataFrame<br>
+  <code>output_bytes: bool</code> — <code>True</code> returns <code>bytes</code> for <code>st.download_button</code>; <code>False</code> writes to <code>data/report_&lt;date&gt;.pdf</code></div>
+  <div class="ret">Returns: <code>bytes | str</code></div>
+</div>
+
+<div class="fn-card">
+  <div class="sig">generate_pptx_report(title, slides)</div>
+  <div class="desc">Creates a PPTX deck. Each slide dict: <code>{"title": str, "content": str, "df": pd.DataFrame | None}</code>. DataFrames render as tables (first 20 rows). Requires python-pptx.</div>
+  <div class="ret">Returns: <code>bytes</code></div>
+</div>
+
+<div class="fn-card">
+  <div class="sig">generate_excel_report(sheets, summary_text="")</div>
+  <div class="desc">Multi-sheet Excel workbook via openpyxl. Sheet names truncated to 31 chars. Optional "Summary" sheet prepended when <code>summary_text</code> is provided.</div>
+  <div class="ret">Returns: <code>bytes</code></div>
+</div>
+
+<div class="fn-card">
+  <div class="sig">send_email_report(to_address, subject, body_text, attachment_bytes=None, attachment_name="report.pdf", smtp_host="localhost", smtp_port=25)</div>
+  <div class="desc">SMTP email with optional attachment. Returns <code>(True, "Email sent")</code> or <code>(False, error_message)</code>.</div>
+</div>
+
+<pre><code><span class="kw">from</span> app.utils.reporting <span class="kw">import</span> generate_excel_report, generate_pptx_report
+
+<span class="cm"># Excel: one sheet per borough</span>
+xlsx = <span class="fn">generate_excel_report</span>(
+    {<span class="st">"Manhattan"</span>: df_mhtn, <span class="st">"Brooklyn"</span>: df_bklyn, <span class="st">"Summary"</span>: df_totals},
+    summary_text=<span class="st">"Weekly SIM compliance report"</span>,
+)
+st.<span class="fn">download_button</span>(<span class="st">"Download Excel"</span>, xlsx, <span class="st">"report.xlsx"</span>)
+
+<span class="cm"># PowerPoint deck</span>
+pptx = <span class="fn">generate_pptx_report</span>(<span class="st">"SIM Weekly Review"</span>, slides=[
+    {<span class="st">"title"</span>: <span class="st">"Violation Summary"</span>, <span class="st">"content"</span>: <span class="st">"Key metrics this week"</span>, <span class="st">"df"</span>: df_violations},
+    {<span class="st">"title"</span>: <span class="st">"Borough Rankings"</span>, <span class="st">"content"</span>: <span class="st">""</span>, <span class="st">"df"</span>: df_rankings},
+])</code></pre>
+</section>
+
+<!-- ═══════════════════════════════════════════ ALERTS ═════ -->
+<section id="alerts">
+<h2>alerts.py — Integrations API Reference</h2>
+
+<div class="fn-card">
+  <div class="sig">send_slack_alert(webhook_url, title, message, severity="info", fields=None)</div>
+  <div class="desc">Posts a Block Kit message to a Slack incoming webhook. <code>severity</code>: <code>"info"</code> (green), <code>"warning"</code> (orange), <code>"critical"</code> (red). <code>fields</code>: dict of key→value pairs rendered as a 2-column section (max 10).</div>
+  <div class="ret">Returns: <code>tuple[bool, str]</code></div>
+</div>
+
+<div class="fn-card">
+  <div class="sig">push_to_arcgis_online(org_url, username, password, title, geojson_str, tags=None)</div>
+  <div class="desc">Two-step REST flow: (1) generate ArcGIS token, (2) addItem as GeoJSON type. Returns the item URL on success.</div>
+  <div class="ret">Returns: <code>tuple[bool, str]</code> — <code>(True, item_url)</code> or <code>(False, error)</code></div>
+</div>
+
+<div class="fn-card">
+  <div class="sig">poll_311_new_complaints(domain, fourfour, app_token, since_iso, limit=100)</div>
+  <div class="desc">Polls the 311 dataset for new sidewalk/curb/tree complaints after <code>since_iso</code>. Auto-applies the sidewalk/curb complaint type filter. Returns an empty list on network failure.</div>
+  <div class="ret">Returns: <code>list[dict]</code></div>
+</div>
+
+<div class="fn-card">
+  <div class="sig">fetch_dob_jobs_near_address(block, lot, boro_num="1", domain, app_token, limit=50)</div>
+  <div class="desc">Fetches active DOB Job Application Filings (<code>w9ak-ipjd</code>) for a given NYC block/lot combination for cross-referencing inspection locations with active construction.</div>
+  <div class="ret">Returns: <code>list[dict]</code></div>
+</div>
+
+<pre><code><span class="kw">from</span> app.services.alerts <span class="kw">import</span> send_slack_alert, poll_311_new_complaints
+
+<span class="cm"># Alert when borough violations exceed threshold</span>
+<span class="kw">if</span> manhattan_violations > <span class="ty">500</span>:
+    <span class="fn">send_slack_alert</span>(
+        webhook_url=os.getenv(<span class="st">"SLACK_WEBHOOK"</span>),
+        title=<span class="st">"⚠️ Manhattan Violation Threshold Exceeded"</span>,
+        message=f<span class="st">"Open violations: {manhattan_violations:,}"</span>,
+        severity=<span class="st">"warning"</span>,
+        fields={<span class="st">"Borough"</span>: <span class="st">"Manhattan"</span>, <span class="st">"Threshold"</span>: <span class="st">"500"</span>},
+    )
+
+<span class="cm"># Poll for new 311 sidewalk complaints in last hour</span>
+new = <span class="fn">poll_311_new_complaints</span>(
+    app_token=os.getenv(<span class="st">"SOCRATA_APP_TOKEN"</span>),
+    since_iso=(datetime.utcnow() - timedelta(hours=<span class="ty">1</span>)).isoformat(),
+)
+print(f<span class="st">"{len(new)} new sidewalk complaints"</span>)</code></pre>
+</section>
+
+<!-- ════════════════════════════════════════ DATA FLOW ═══════ -->
+<section id="data-flow">
+<h2>Data Flow Diagram</h2>
+<div class="diagram">
+<svg viewBox="0 0 780 260" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,sans-serif" font-size="12">
+  <!-- Phases -->
+  <text x="30" y="18" font-weight="700" fill="#003087" font-size="13">Fetch Request Lifecycle</text>
+
+  <!-- Step boxes -->
+  <!-- 1 -->
+  <rect x="10" y="35" width="100" height="50" rx="5" fill="#ebf8ff" stroke="#2b6cb0" stroke-width="1.5"/>
+  <text x="60" y="55" text-anchor="middle" font-weight="600" fill="#2b6cb0">1. View calls</text>
+  <text x="60" y="71" text-anchor="middle" fill="#2b6cb0">fetch_dataset()</text>
+  <!-- Arrow -->
+  <line x1="110" y1="60" x2="130" y2="60" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arr2)"/>
+  <!-- 2 -->
+  <rect x="131" y="35" width="110" height="50" rx="5" fill="#fffff0" stroke="#b7791f" stroke-width="1.5"/>
+  <text x="186" y="55" text-anchor="middle" font-weight="600" fill="#b7791f">2. L2 check</text>
+  <text x="186" y="71" text-anchor="middle" fill="#b7791f">read_cache(key)</text>
+  <!-- HIT branch -->
+  <line x1="186" y1="85" x2="186" y2="108" stroke="#276749" stroke-width="1.5" stroke-dasharray="4" marker-end="url(#arr2)"/>
+  <text x="192" y="102" fill="#276749" font-size="11">HIT</text>
+  <rect x="131" y="108" width="110" height="36" rx="5" fill="#f0fff4" stroke="#276749" stroke-width="1.5"/>
+  <text x="186" y="131" text-anchor="middle" fill="#276749">Return parquet df</text>
+  <!-- MISS arrow -->
+  <line x1="241" y1="60" x2="261" y2="60" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arr2)"/>
+  <text x="247" y="53" fill="#c53030" font-size="11">MISS</text>
+  <!-- 3 -->
+  <rect x="262" y="35" width="110" height="50" rx="5" fill="#fff5f5" stroke="#c53030" stroke-width="1.5"/>
+  <text x="317" y="55" text-anchor="middle" font-weight="600" fill="#c53030">3. Socrata fetch</text>
+  <text x="317" y="71" text-anchor="middle" fill="#c53030">SODA REST API</text>
+  <!-- Success -->
+  <line x1="317" y1="85" x2="317" y2="108" stroke="#276749" stroke-width="1.5" stroke-dasharray="4" marker-end="url(#arr2)"/>
+  <text x="323" y="102" fill="#276749" font-size="11">200</text>
+  <rect x="262" y="108" width="110" height="36" rx="5" fill="#f0fff4" stroke="#276749" stroke-width="1.5"/>
+  <text x="317" y="131" text-anchor="middle" fill="#276749">write_cache() → df</text>
+  <!-- Error -->
+  <line x1="372" y1="60" x2="392" y2="60" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arr2)"/>
+  <text x="376" y="53" fill="#c53030" font-size="11">ERR</text>
+  <!-- 4 -->
+  <rect x="393" y="35" width="120" height="50" rx="5" fill="#fff5f5" stroke="#c53030" stroke-width="1.5"/>
+  <text x="453" y="55" text-anchor="middle" font-weight="600" fill="#c53030">4. Stale fallback</text>
+  <text x="453" y="71" text-anchor="middle" fill="#c53030">read_stale_cache()</text>
+  <line x1="453" y1="85" x2="453" y2="108" stroke="#b7791f" stroke-width="1.5" stroke-dasharray="4" marker-end="url(#arr2)"/>
+  <rect x="393" y="108" width="120" height="36" rx="5" fill="#fffff0" stroke="#b7791f" stroke-width="1.5"/>
+  <text x="453" y="124" text-anchor="middle" fill="#b7791f">df.attrs["stale"]=True</text>
+  <text x="453" y="137" text-anchor="middle" fill="#b7791f">⚠️ offline banner</text>
+
+  <!-- Arrow 4 → 5 -->
+  <line x1="513" y1="60" x2="533" y2="60" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arr2)"/>
+  <!-- 5 -->
+  <rect x="534" y="35" width="120" height="50" rx="5" fill="#f0fff4" stroke="#276749" stroke-width="1.5"/>
+  <text x="594" y="55" text-anchor="middle" font-weight="600" fill="#276749">5. Return to view</text>
+  <text x="594" y="71" text-anchor="middle" fill="#276749">pd.DataFrame</text>
+
+  <!-- TTL note -->
+  <rect x="10" y="180" width="760" height="60" rx="5" fill="#f7fafc" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="20" y="200" font-weight="600" fill="#2d3748">Cache TTL Decision:</text>
+  <text x="20" y="218" fill="#4a5568">complaints_311: 1h  ·  inspection/street_permits: 4h  ·  violations: 6h  ·  mappluto/pedestrian_demand: 720h  ·  _default: 24h</text>
+  <text x="20" y="234" fill="#4a5568">Delta fetch: if updated_at column detected, appends  AND updated_at &gt; '&lt;last_fetched_iso&gt;'  to $where on subsequent calls</text>
+
+  <defs>
+    <marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#4a5568"/>
+    </marker>
+  </defs>
+</svg>
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════ DEPS ═══════ -->
+<section id="deps">
+<h2>Dependencies</h2>
+<table>
+  <thead><tr><th>Package</th><th>Extras tag</th><th>Used for</th></tr></thead>
+  <tbody>
+    <tr><td>streamlit ≥1.x</td><td>mission</td><td>Web UI framework</td></tr>
+    <tr><td>pandas ≥2.0</td><td>core</td><td>DataFrame operations throughout</td></tr>
+    <tr><td>plotly ≥5.0</td><td>mission</td><td>All charts; scatter_mapbox, density maps</td></tr>
+    <tr><td>folium + streamlit-folium</td><td>mission</td><td>Interactive Leaflet map option</td></tr>
+    <tr><td>pydeck ≥0.8</td><td>mission</td><td>GPU-accelerated deck.gl ScatterplotLayer</td></tr>
+    <tr><td>geopandas ≥0.14</td><td>geo / mission</td><td>GeoDataFrame, spatial joins, CRS reprojection</td></tr>
+    <tr><td>shapely ^2.0</td><td>geo / mission</td><td>WKT/GeoJSON geometry parsing</td></tr>
+    <tr><td>scikit-learn</td><td>mission (via sklearn)</td><td>DBSCAN, IsolationForest, KMeans, StandardScaler</td></tr>
+    <tr><td>scipy</td><td>—</td><td>KDTree for nearest-permit distance queries</td></tr>
+    <tr><td>pyproj</td><td>—</td><td>Coordinate transformation (EPSG:2263, EPSG:3857)</td></tr>
+    <tr><td>prophet</td><td>mission</td><td>Forecast view time-series prediction + CI bands</td></tr>
+    <tr><td>apscheduler ≥3.10</td><td>core</td><td>Background dataset pre-fetch scheduler</td></tr>
+    <tr><td>pyarrow ≥14.0</td><td>mission</td><td>Parquet serialization for L2 disk cache</td></tr>
+    <tr><td>openpyxl ≥3.0</td><td>xlsx</td><td>Excel multi-sheet report generation</td></tr>
+    <tr><td>weasyprint ≥60.0</td><td>reports</td><td>PDF report generation from HTML template</td></tr>
+    <tr><td>python-pptx ≥0.6</td><td>pptx</td><td>PowerPoint slide deck export</td></tr>
+    <tr><td>psycopg ≥3.1</td><td>postgres</td><td>PostGIS enterprise connector</td></tr>
+    <tr><td>requests ≥2.28</td><td>core</td><td>Socrata REST calls + Slack/ArcGIS webhooks</td></tr>
+    <tr><td>duckdb ≥0.9</td><td>core</td><td>In-memory aggregation pushdown</td></tr>
+  </tbody>
+</table>
+</section>
+
+<!-- ═══════════════════════════════════════════ CONFIG ═════ -->
+<section id="config">
+<h2>Configuration Reference</h2>
+<table>
+  <thead><tr><th>Variable</th><th>Default</th><th>Effect</th></tr></thead>
+  <tbody>
+    <tr><td><code>SOCRATA_APP_TOKEN</code></td><td>—</td><td>Sent as <code>X-App-Token</code> header; removes anonymous rate limit (1000 req/day → unlimited)</td></tr>
+    <tr><td><code>SOCRATA_DOMAIN</code></td><td><code>data.cityofnewyork.us</code></td><td>Socrata domain for all API calls</td></tr>
+    <tr><td><code>SOCRATA_DEFAULT_LIMIT</code></td><td><code>50000</code></td><td>Default row limit passed to <code>fetch_dataset()</code></td></tr>
+    <tr><td><code>SOCRATA_CACHE_DIR</code></td><td><code>data/cache</code></td><td>L2 Parquet cache directory</td></tr>
+    <tr><td><code>DEMO_MODE</code></td><td><code>false</code></td><td>When <code>true</code>, blocks all live Socrata calls; shows demo banner</td></tr>
+    <tr><td><code>SLACK_WEBHOOK</code></td><td>—</td><td>Incoming webhook URL for <code>send_slack_alert()</code></td></tr>
+    <tr><td><code>ALERT_VIOLATION_THRESHOLD</code></td><td><code>500</code></td><td>Borough violation count that triggers Slack alert</td></tr>
+    <tr><td><code>ALERT_EMAIL</code></td><td>—</td><td>Destination address for scheduled email reports</td></tr>
+    <tr><td><code>SMTP_HOST</code></td><td><code>localhost</code></td><td>SMTP relay for email delivery</td></tr>
+  </tbody>
+</table>
+
+<div class="callout callout-green">
+  All settings are editable at runtime via <strong>Settings → API Tokens</strong>, <strong>Settings → Configuration</strong>, and <strong>Settings → Alerts</strong> tabs — no restart required. Values persist to the <code>.env</code> file in the project root.
+</div>
+
+<h3>SoQL Quick Reference</h3>
+<pre><code><span class="cm"># Basic filter</span>
+fetch_dataset(<span class="st">"inspection"</span>, where=<span class="st">"upper(borough) = 'MANHATTAN'"</span>)
+
+<span class="cm"># Date range + column projection</span>
+fetch_dataset(<span class="st">"violations"</span>,
+    where=<span class="st">"date_issued &gt; '2025-01-01' AND date_issued &lt;= '2026-01-01'"</span>,
+    select=<span class="st">"borough,defect_type,condition_score,latitude,longitude"</span>)
+
+<span class="cm"># Geospatial: within 500m of a point (use Data Discovery SoQL builder)</span>
+<span class="cm"># $where = within_circle(the_geom, 40.7359, -73.9911, 500)</span>
+
+<span class="cm"># Aggregation</span>
+<span class="cm"># $select = borough, count(*) AS total, avg(condition_score) AS avg_score</span>
+<span class="cm"># $group  = borough</span>
+<span class="cm"># $order  = total DESC</span>
+<span class="cm"># $limit  = 5</span></code></pre>
+</section>
+
+<div style="margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--grey); font-size: 12px;">
+  NYC DOT SIM Analyst Toolkit · Documentation generated 2026-06-01 · <a href="https://github.com/ryudkiss-hue/nyc_data">ryudkiss-hue/nyc_data</a>
+</div>
+
+</main>
+</div>
+</body>
+</html>
