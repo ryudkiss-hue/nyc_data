@@ -371,3 +371,36 @@ except Exception:
 
     def generate_qgis_project(*_args: Any, **_kwargs: Any) -> str:
         raise ImportError("Install qgis integration dependencies to use generate_qgis_project")
+
+
+# ── Spatial Conflict Engine (GeoPandas) ─────────────────────────────────────
+# These require geopandas/sklearn. Guard the import so the spatial package
+# still loads (with the lightweight stubs above) when those deps are absent.
+try:
+    from .analytics import (
+        cluster_conflict_hotspots,
+        detect_conflicts,
+        find_ramp_gaps,
+        moran_i,
+        spatial_conflict_score,
+    )
+    from .visualization import export_conflicts_geojson
+except Exception:  # noqa: BLE001 - optional geospatial stack
+
+    def detect_conflicts(*_args: Any, **_kwargs: Any):  # type: ignore[misc]
+        raise ImportError("Install geopandas to use detect_conflicts")
+
+    def spatial_conflict_score(*_args: Any, **_kwargs: Any):  # type: ignore[misc]
+        raise ImportError("Install geopandas to use spatial_conflict_score")
+
+    def find_ramp_gaps(*_args: Any, **_kwargs: Any):  # type: ignore[misc]
+        raise ImportError("Install geopandas to use find_ramp_gaps")
+
+    def moran_i(*_args: Any, **_kwargs: Any):  # type: ignore[misc]
+        raise ImportError("Install geopandas to use moran_i")
+
+    def cluster_conflict_hotspots(*_args: Any, **_kwargs: Any):  # type: ignore[misc]
+        raise ImportError("Install geopandas/sklearn to use cluster_conflict_hotspots")
+
+    def export_conflicts_geojson(*_args: Any, **_kwargs: Any) -> bool:  # type: ignore[misc]
+        raise ImportError("Install geopandas to use export_conflicts_geojson")

@@ -23,6 +23,39 @@ from sklearn.preprocessing import StandardScaler  # type: ignore[import]
 
 logger = logging.getLogger(__name__)
 
+# Optional-dependency guards for the conflict engine. ``numpy``, ``scipy`` and
+# ``sklearn`` are required to import this module today, but we still expose the
+# HAS_* flags so callers can branch defensively and so the conflict helpers
+# below degrade gracefully if the import surface ever changes.
+try:
+    import numpy as _np  # noqa: F401
+
+    HAS_NUMPY = True
+except ImportError:
+    HAS_NUMPY = False
+
+try:
+    from sklearn.cluster import DBSCAN as _DBSCAN  # noqa: F401
+
+    HAS_SKLEARN = True
+except ImportError:
+    HAS_SKLEARN = False
+
+try:
+    import geopandas as gpd  # type: ignore[import]
+    from shapely.geometry import Point  # type: ignore[import]
+
+    HAS_GEOPANDAS = True
+except ImportError:
+    gpd = None  # type: ignore[assignment]
+    Point = None  # type: ignore[assignment,misc]
+    HAS_GEOPANDAS = False
+
+# Metric CRS for NYC: NY State Plane Long Island zone (US survey feet).
+# Buffering/distance in this CRS yields feet; we convert metres accordingly.
+METRIC_CRS = "EPSG:2263"
+_FEET_PER_METER = 3.28084
+
 
 @dataclass
 class Hotspot:
@@ -644,3 +677,370 @@ class SpatialAnomalyDetector:
         except Exception as e:
             logger.error(f"Error in spatial outlier detection: {e}")
             return []
+
+
+# ── Spatial Conflict Engine ─────────────────────────────────────────────────
+#
+# GeoPandas-backed helpers used by NYC DOT analysts to flag conflicts between
+# sidewalk inspections and active permits, score their severity, find missing
+# accessible-route ramps, and surface conflict hotspots. All functions guard
+# their optional dependencies and degrade gracefully when they are absent.
+
+# Default permit-type severity weights (0-1). Construction/excavation work
+# poses the greatest conflict risk to a sidewalk inspection.
+_PERMIT_TYPE_WEIGHTS = {
+    "excavation": 1.0,
+    "construction": 0.9,
+    "demolition": 0.9,
+    "building": 0.7,
+    "street opening": 0.8,
+    "sidewalk": 0.6,
+    "occupancy": 0.4,
+    "event": 0.3,
+}
+
+# Inspection-priority weights (0-1).
+_PRIORITY_WEIGHTS = {
+    "critical": 1.0,
+    "emergency": 1.0,
+    "high": 0.8,
+    "medium": 0.5,
+    "low": 0.2,
+    "routine": 0.2,
+}
+
+
+def _empty_geodataframe():
+    """Return an empty GeoDataFrame (WGS84) or None if geopandas is missing."""
+    if not HAS_GEOPANDAS:
+        return None
+    return gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
+
+
+def detect_conflicts(gdf_inspections, gdf_permits, buffer_m: float = 100):
+    """Find inspections whose buffered footprint overlaps permit areas.
+
+    Geometries are reprojected to a metric CRS (``EPSG:2263`` NY State Plane,
+    feet), each inspection is buffered by ``buffer_m`` metres, and the buffers
+    are spatially joined against the permits. A ``dist`` column holds the
+    centroid-to-centroid distance in metres between each matched pair.
+
+    Args:
+        gdf_inspections: GeoDataFrame of inspection geometries.
+        gdf_permits: GeoDataFrame of permit geometries.
+        buffer_m: Buffer radius around each inspection, in metres.
+
+    Returns:
+        GeoDataFrame of conflicting pairs in WGS84 with a ``dist`` column, or
+        an empty GeoDataFrame when there are no matches. Returns ``None`` if
+        geopandas is unavailable.
+    """
+    if not HAS_GEOPANDAS:
+        logger.warning("detect_conflicts: geopandas not installed")
+        return None
+    if gdf_inspections is None or gdf_permits is None:
+        return _empty_geodataframe()
+    if len(gdf_inspections) == 0 or len(gdf_permits) == 0:
+        return _empty_geodataframe()
+
+    try:
+        insp = gdf_inspections.copy()
+        perm = gdf_permits.copy()
+        if insp.crs is None:
+            insp = insp.set_crs("EPSG:4326")
+        if perm.crs is None:
+            perm = perm.set_crs("EPSG:4326")
+
+        insp_m = insp.to_crs(METRIC_CRS)
+        perm_m = perm.to_crs(METRIC_CRS)
+
+        # Keep original (point) centroids before buffering to compute distance.
+        insp_centroids = insp_m.geometry.centroid
+        buffer_ft = buffer_m * _FEET_PER_METER
+        insp_m = insp_m.assign(geometry=insp_m.geometry.buffer(buffer_ft))
+
+        matches = gpd.sjoin(
+            insp_m, perm_m, how="inner", predicate="intersects"
+        )
+        if len(matches) == 0:
+            return _empty_geodataframe()
+
+        # Distance (metres) from inspection centroid to matched permit centroid.
+        right_index = matches["index_right"].to_numpy()
+        perm_centroids = perm_m.geometry.centroid
+        left_centroids = insp_centroids.loc[matches.index]
+        right_centroids = perm_centroids.iloc[
+            perm_m.index.get_indexer(right_index)
+        ]
+        dist_ft = left_centroids.reset_index(drop=True).distance(
+            right_centroids.reset_index(drop=True)
+        )
+        matches = matches.assign(dist=(dist_ft.to_numpy() / _FEET_PER_METER))
+
+        return matches.to_crs("EPSG:4326")
+    except Exception as exc:  # noqa: BLE001 - degrade gracefully for analysts
+        logger.error("detect_conflicts failed: %s", exc)
+        return _empty_geodataframe()
+
+
+def spatial_conflict_score(
+    gdf,
+    *,
+    dist_col: str = "dist",
+    permit_type_col: str = "permit_type",
+    priority_col: str = "priority",
+    buffer_m: float = 100,
+):
+    """Add a composite ``conflict_score`` (0-100) severity column.
+
+    The score blends three weighted components:
+
+    * distance — closer conflicts score higher (linearly within ``buffer_m``);
+    * permit type — heavier construction/excavation work scores higher;
+    * inspection priority — higher-priority inspections score higher.
+
+    Missing columns contribute a neutral mid-weight so the function never
+    fails on partial data.
+
+    Args:
+        gdf: Conflict GeoDataFrame (typically from :func:`detect_conflicts`).
+        dist_col: Column with conflict distance in metres.
+        permit_type_col: Column with the permit type label.
+        priority_col: Column with the inspection priority label.
+        buffer_m: Distance at which the distance weight reaches zero.
+
+    Returns:
+        A copy of ``gdf`` with a ``conflict_score`` column, or the input
+        unchanged when dependencies are missing or the frame is empty.
+    """
+    if not HAS_GEOPANDAS or not HAS_NUMPY:
+        logger.warning("spatial_conflict_score: numpy/geopandas not installed")
+        return gdf
+    if gdf is None or len(gdf) == 0:
+        return gdf
+
+    try:
+        out = gdf.copy()
+        n = len(out)
+
+        # Distance weight: 1.0 at zero distance, 0.0 at >= buffer_m.
+        if dist_col in out.columns:
+            dist = np.asarray(out[dist_col], dtype="float64")
+            dist = np.nan_to_num(dist, nan=buffer_m)
+            dist_w = np.clip(1.0 - (dist / float(buffer_m)), 0.0, 1.0)
+        else:
+            dist_w = np.full(n, 0.5)
+
+        # Permit-type weight.
+        if permit_type_col in out.columns:
+            perm_w = np.array(
+                [
+                    _PERMIT_TYPE_WEIGHTS.get(str(v).strip().lower(), 0.5)
+                    for v in out[permit_type_col]
+                ],
+                dtype="float64",
+            )
+        else:
+            perm_w = np.full(n, 0.5)
+
+        # Priority weight.
+        if priority_col in out.columns:
+            prio_w = np.array(
+                [
+                    _PRIORITY_WEIGHTS.get(str(v).strip().lower(), 0.5)
+                    for v in out[priority_col]
+                ],
+                dtype="float64",
+            )
+        else:
+            prio_w = np.full(n, 0.5)
+
+        # Weighted blend: distance 50%, permit type 30%, priority 20%.
+        score = (0.5 * dist_w + 0.3 * perm_w + 0.2 * prio_w) * 100.0
+        out["conflict_score"] = np.clip(score, 0.0, 100.0).round(1)
+        return out
+    except Exception as exc:  # noqa: BLE001
+        logger.error("spatial_conflict_score failed: %s", exc)
+        return gdf
+
+
+def find_ramp_gaps(gdf_ramps, gdf_inspections, threshold_m: float = 50):
+    """Identify inspections with no accessible ramp within ``threshold_m``.
+
+    Uses a nearest-neighbour spatial join in a metric CRS to measure the
+    distance from each inspection to its closest ramp, then flags those whose
+    nearest ramp is farther than ``threshold_m`` metres (accessible-route
+    gaps).
+
+    Args:
+        gdf_ramps: GeoDataFrame of pedestrian-ramp geometries.
+        gdf_inspections: GeoDataFrame of inspection geometries.
+        threshold_m: Maximum acceptable distance to a ramp, in metres.
+
+    Returns:
+        GeoDataFrame (WGS84) of gap inspections with a ``ramp_dist`` column
+        (metres to nearest ramp), or an empty GeoDataFrame. ``None`` if
+        geopandas is unavailable.
+    """
+    if not HAS_GEOPANDAS:
+        logger.warning("find_ramp_gaps: geopandas not installed")
+        return None
+    if gdf_inspections is None or len(gdf_inspections) == 0:
+        return _empty_geodataframe()
+
+    try:
+        insp = gdf_inspections.copy()
+        if insp.crs is None:
+            insp = insp.set_crs("EPSG:4326")
+        insp_m = insp.to_crs(METRIC_CRS)
+
+        # No ramps at all → every inspection is a gap.
+        if gdf_ramps is None or len(gdf_ramps) == 0:
+            gaps = insp_m.assign(ramp_dist=float("inf"))
+            return gaps.to_crs("EPSG:4326")
+
+        ramps = gdf_ramps.copy()
+        if ramps.crs is None:
+            ramps = ramps.set_crs("EPSG:4326")
+        ramps_m = ramps.to_crs(METRIC_CRS)
+
+        joined = gpd.sjoin_nearest(
+            insp_m, ramps_m, how="left", distance_col="_ramp_dist_ft"
+        )
+        # sjoin_nearest can yield duplicate rows on ties; keep the closest.
+        joined = joined.sort_values("_ramp_dist_ft").groupby(
+            level=0, sort=False
+        ).first()
+        joined = insp_m.join(joined[["_ramp_dist_ft"]], how="left")
+        joined["ramp_dist"] = joined["_ramp_dist_ft"] / _FEET_PER_METER
+
+        threshold_ft = threshold_m * _FEET_PER_METER
+        gaps = joined[
+            joined["_ramp_dist_ft"].isna()
+            | (joined["_ramp_dist_ft"] > threshold_ft)
+        ].copy()
+        gaps = gaps.drop(columns=["_ramp_dist_ft"])
+        return gaps.to_crs("EPSG:4326")
+    except Exception as exc:  # noqa: BLE001
+        logger.error("find_ramp_gaps failed: %s", exc)
+        return _empty_geodataframe()
+
+
+def moran_i(gdf, col: str, *, max_neighbors: int = 8):
+    """Compute global Moran's I spatial autocorrelation for a numeric column.
+
+    Builds a k-nearest-neighbour, row-standardised weights matrix from feature
+    centroids using only numpy (no ``esda``/``libpysal`` dependency), then
+    evaluates the classic Moran's I statistic. Values near ``+1`` indicate
+    clustering, near ``-1`` dispersion, and near the expected value
+    ``-1/(n-1)`` randomness.
+
+    Args:
+        gdf: GeoDataFrame with point or polygon geometries.
+        col: Name of the numeric column to test.
+        max_neighbors: Number of nearest neighbours per feature.
+
+    Returns:
+        The Moran's I value as a float, or ``None`` when dependencies are
+        missing, the column is absent, or there are too few features.
+    """
+    if not HAS_GEOPANDAS or not HAS_NUMPY:
+        logger.warning("moran_i: numpy/geopandas not installed")
+        return None
+    if gdf is None or col not in getattr(gdf, "columns", []):
+        return None
+    if len(gdf) < 3:
+        return None
+
+    try:
+        values = np.asarray(gdf[col], dtype="float64")
+        mask = ~np.isnan(values)
+        if mask.sum() < 3:
+            return None
+
+        sub = gdf.loc[mask]
+        values = values[mask]
+        centroids = sub.geometry.centroid
+        coords = np.column_stack(
+            [centroids.x.to_numpy(), centroids.y.to_numpy()]
+        )
+        n = len(values)
+
+        # Pairwise distances → k-nearest-neighbour binary contiguity.
+        diff = coords[:, None, :] - coords[None, :, :]
+        dist = np.sqrt((diff ** 2).sum(axis=2))
+        np.fill_diagonal(dist, np.inf)
+
+        k = int(min(max_neighbors, n - 1))
+        if k < 1:
+            return None
+        neighbor_idx = np.argsort(dist, axis=1)[:, :k]
+
+        weights = np.zeros((n, n), dtype="float64")
+        rows = np.repeat(np.arange(n), k)
+        weights[rows, neighbor_idx.ravel()] = 1.0
+
+        # Row-standardise.
+        row_sums = weights.sum(axis=1, keepdims=True)
+        row_sums[row_sums == 0] = 1.0
+        weights = weights / row_sums
+
+        z = values - values.mean()
+        denom = (z ** 2).sum()
+        if denom == 0:
+            return 0.0
+        s0 = weights.sum()
+        if s0 == 0:
+            return 0.0
+        numer = float(z @ weights @ z)
+        return (n / s0) * (numer / denom)
+    except Exception as exc:  # noqa: BLE001
+        logger.error("moran_i failed: %s", exc)
+        return None
+
+
+def cluster_conflict_hotspots(gdf, eps_deg: float = 0.005, min_samples: int = 5):
+    """Label conflict-point clusters with DBSCAN on lon/lat coordinates.
+
+    Reduces each feature to its centroid and runs DBSCAN (great-circle
+    neighbourhoods approximated in degrees via ``eps_deg``). Noise points are
+    labelled ``-1``.
+
+    Args:
+        gdf: Conflict GeoDataFrame.
+        eps_deg: DBSCAN neighbourhood radius in degrees (~0.005 ≈ 550m).
+        min_samples: Minimum points to form a dense cluster.
+
+    Returns:
+        A copy of ``gdf`` with an integer ``cluster`` column, or the input
+        unchanged when dependencies are missing. Empty inputs gain an empty
+        ``cluster`` column.
+    """
+    if not HAS_GEOPANDAS or not HAS_SKLEARN or not HAS_NUMPY:
+        logger.warning("cluster_conflict_hotspots: numpy/sklearn/geopandas not installed")
+        return gdf
+    if gdf is None:
+        return gdf
+    if len(gdf) == 0:
+        out = gdf.copy()
+        out["cluster"] = []
+        return out
+
+    try:
+        out = gdf.copy()
+        work = out
+        if work.crs is not None and str(work.crs).upper() not in (
+            "EPSG:4326",
+            "WGS84",
+        ):
+            work = work.to_crs("EPSG:4326")
+        centroids = work.geometry.centroid
+        coords = np.column_stack(
+            [centroids.x.to_numpy(), centroids.y.to_numpy()]
+        )
+        labels = DBSCAN(eps=eps_deg, min_samples=min_samples).fit_predict(coords)
+        out["cluster"] = labels.astype(int)
+        return out
+    except Exception as exc:  # noqa: BLE001
+        logger.error("cluster_conflict_hotspots failed: %s", exc)
+        return gdf
