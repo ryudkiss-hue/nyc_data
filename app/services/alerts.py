@@ -2,12 +2,24 @@
 
 from __future__ import annotations
 
+import json
 import logging
+from pathlib import Path
 from typing import Any
 
 import requests
 
 logger = logging.getLogger(__name__)
+
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_SCHEDULER_CONFIG = _REPO_ROOT / "data" / "scheduler_config.json"
+
+try:
+    from arcgis.gis import GIS as _GIS  # type: ignore[import-untyped]
+
+    HAS_ARCGIS = True
+except ImportError:
+    HAS_ARCGIS = False
 
 
 # ---------------------------------------------------------------------------
@@ -194,3 +206,74 @@ def fetch_dob_jobs_near_address(
     except Exception as e:
         logger.warning("DOB jobs fetch failed: %s", e)
         return []
+
+
+# ---------------------------------------------------------------------------
+# Item 93 — ArcGIS Online connection test
+# ---------------------------------------------------------------------------
+
+
+def test_arcgis_connection(
+    org_url: str,
+    username: str,
+    password: str,
+) -> tuple[bool, str]:
+    """Test ArcGIS Online connection. Returns (success, message).
+
+    If the arcgis package is available (HAS_ARCGIS), uses GIS() directly.
+    Otherwise, POSTs to {org_url}/sharing/rest/generateToken via requests.
+    Handles connection errors, auth errors, and timeouts.
+    """
+    if not org_url or not username or not password:
+        return False, "org_url, username, and password are all required."
+
+    if HAS_ARCGIS:
+        try:
+            gis = _GIS(org_url, username, password)
+            me = gis.users.me
+            return True, f"Connected as {me.username} ({me.fullName})"
+        except Exception as exc:
+            return False, f"ArcGIS auth error: {exc}"
+
+    # Fallback: direct token endpoint
+    token_url = f"{org_url.rstrip('/')}/sharing/rest/generateToken"
+    try:
+        r = requests.post(
+            token_url,
+            data={
+                "username": username,
+                "password": password,
+                "referer": org_url,
+                "f": "json",
+            },
+            timeout=15,
+        )
+        r.raise_for_status()
+        data = r.json()
+        if data.get("token"):
+            return True, "Connection successful — token obtained."
+        err = data.get("error", {})
+        return False, f"Auth failed: {err.get('message', str(data))}"
+    except requests.exceptions.Timeout:
+        return False, "Connection timed out (15 s)."
+    except requests.exceptions.ConnectionError as exc:
+        return False, f"Connection error: {exc}"
+    except Exception as exc:
+        return False, f"Unexpected error: {exc}"
+
+
+# ---------------------------------------------------------------------------
+# Item 94 — Scheduler last-run helper
+# ---------------------------------------------------------------------------
+
+
+def get_last_scheduler_run() -> str:
+    """Return ISO timestamp of the last scheduler run, or 'Never' if not found."""
+    if not _SCHEDULER_CONFIG.exists():
+        return "Never"
+    try:
+        data: dict = json.loads(_SCHEDULER_CONFIG.read_text(encoding="utf-8"))
+        return data.get("last_run", "Never")
+    except (json.JSONDecodeError, OSError) as exc:
+        logger.warning("Could not read scheduler config: %s", exc)
+        return "Never"
