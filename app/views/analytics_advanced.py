@@ -1,11 +1,14 @@
 """Advanced analytics view — KPI Trends, Cohort Analysis, Anomaly Detection,
-Borough Rankings, Inspector Scorecard, SLA Tracker, Cross-Dataset, Segmentation."""
+Borough Rankings, Inspector Scorecard, SLA Tracker, Cross-Dataset, Segmentation,
+and Bayesian / SLA advanced analytics (Bayesian completion-time, SLA breach curve,
+Monte Carlo timeline, inspector benchmarking, survival curve, CI forecast)."""
 
 from __future__ import annotations
 
 import logging
 from datetime import date
 
+import numpy as np
 import pandas as pd
 import streamlit as st
 
@@ -27,6 +30,27 @@ try:
     HAS_SKLEARN = True
 except ImportError:
     HAS_SKLEARN = False
+
+try:
+    from scipy import stats as scipy_stats
+
+    HAS_SCIPY = True
+except ImportError:
+    HAS_SCIPY = False
+
+try:
+    from statsmodels.tsa.holtwinters import ExponentialSmoothing
+
+    HAS_STATSMODELS = True
+except ImportError:
+    HAS_STATSMODELS = False
+
+try:
+    from prophet import Prophet
+
+    HAS_PROPHET = True
+except ImportError:
+    HAS_PROPHET = False
 
 logger = logging.getLogger(__name__)
 
@@ -105,6 +129,102 @@ def _anomaly_summary(anomalies: int, total: int) -> str:
         "These locations have unusual combinations of condition score and geographic "
         "position compared to typical inspection sites."
     )
+
+
+# ---------------------------------------------------------------------------
+# Duration derivation (shared by Bayesian / Monte Carlo / survival analytics)
+# ---------------------------------------------------------------------------
+
+
+def _derive_durations(df: pd.DataFrame) -> pd.Series:
+    """Derive completion/turnaround durations (days) from a fetched frame.
+
+    Strategy, in priority order — never fabricates numbers:
+    1. Explicit open→close date pair (difference in days).
+    2. A single date column → days elapsed to today (age as a proxy duration).
+    3. A pre-computed numeric duration/age column.
+
+    Returns a clean Series of positive day counts (may be empty).
+    """
+    if df.empty:
+        return pd.Series(dtype="float64")
+
+    open_col = _pick_col_icontains(
+        df, "inspection_date", "open_date", "created", "issued", "start"
+    )
+    close_col = _pick_col_icontains(
+        df, "close", "completion", "completed", "resolved", "end_date", "disposition_date"
+    )
+    if open_col and close_col and open_col != close_col:
+        opened = _coerce_datetime(df, open_col)
+        closed = _coerce_datetime(df, close_col)
+        durations = (closed - opened).dt.days
+        durations = durations[durations.notna() & (durations >= 0)]
+        if not durations.empty:
+            return durations.astype("float64")
+
+    date_col = _pick_date_col(df)
+    if date_col is not None:
+        opened = _coerce_datetime(df, date_col)
+        today_ts = pd.Timestamp(_TODAY)
+        age = (today_ts - opened).dt.days
+        age = age[age.notna() & (age >= 0)]
+        if not age.empty:
+            return age.astype("float64")
+
+    num_col = _pick_col_icontains(df, "duration", "days", "age", "elapsed")
+    if num_col is not None:
+        vals = pd.to_numeric(df[num_col], errors="coerce")
+        vals = vals[vals.notna() & (vals >= 0)]
+        if not vals.empty:
+            return vals.astype("float64")
+
+    return pd.Series(dtype="float64")
+
+
+def _normal_credible_interval(
+    sample: np.ndarray, conf: float = 0.95
+) -> tuple[float, float, float]:
+    """Bayesian Normal posterior mean + credible interval via a conjugate update.
+
+    Uses a (near-)noninformative Normal-Inverse-Gamma prior so the posterior mean
+    equals the sample mean and the posterior predictive of the mean follows a
+    Student-t with (n-1) degrees of freedom (mirrors the classical t interval but
+    interpreted as a credible interval). Returns (mean, lower, upper).
+    """
+    n = sample.size
+    mean = float(np.mean(sample))
+    if n < 2:
+        return mean, mean, mean
+    sd = float(np.std(sample, ddof=1))
+    se = sd / np.sqrt(n)
+    alpha = 1.0 - conf
+    if HAS_SCIPY:
+        crit = float(scipy_stats.t.ppf(1.0 - alpha / 2.0, df=n - 1))
+    else:  # pragma: no cover - scipy expected present in mission extra
+        crit = 1.96
+    return mean, mean - crit * se, mean + crit * se
+
+
+def _km_survival(durations: np.ndarray) -> pd.DataFrame:
+    """Kaplan–Meier survival estimate (all events observed) implemented in numpy.
+
+    Each duration is treated as an observed event (close happened at that day),
+    so the estimator reduces to the empirical survival function S(t) = P(T > t).
+    Returns a frame with columns: time, at_risk, events, survival.
+    """
+    n = durations.size
+    times, counts = np.unique(durations, return_counts=True)
+    survival = 1.0
+    rows = []
+    at_risk = n
+    for t, d in zip(times, counts, strict=False):
+        survival *= (at_risk - d) / at_risk
+        rows.append(
+            {"time": float(t), "at_risk": int(at_risk), "events": int(d), "survival": survival}
+        )
+        at_risk -= d
+    return pd.DataFrame(rows)
 
 
 # ---------------------------------------------------------------------------
@@ -202,7 +322,7 @@ def _render_kpi_trends(df: pd.DataFrame) -> None:
         else:
             st.info(f"Data spans only one year ({min_year}); YoY comparison requires ≥2 years.")
 
-    # --- CUSUM trend change (item 67) ---
+    # --- CUSUM trend change (item 67, enhanced item 24) ---
     st.subheader("CUSUM Trend Change Detection")
     if not HAS_PLOTLY:
         st.info("Install plotly for CUSUM charts.")
@@ -218,9 +338,26 @@ def _render_kpi_trends(df: pd.DataFrame) -> None:
         if len(weekly_all) < 4:
             st.info("Not enough weekly data points for CUSUM analysis (need ≥4 weeks).")
         else:
-            cp_idx = detect_cusum_changepoint(weekly_all["count"])
             mu = weekly_all["count"].mean()
             weekly_all["cusum"] = (weekly_all["count"] - mu).cumsum()
+
+            # Item 24: alert threshold (multiples of the standard deviation of the
+            # cumulative deviation) flags ALL weeks whose |CUSUM| exceeds the band,
+            # not just the single global maximum.
+            cusum_std = float(weekly_all["cusum"].std(ddof=0)) or 1.0
+            threshold_k = st.slider(
+                "CUSUM alert threshold (× std of cumulative deviation)",
+                min_value=0.5,
+                max_value=4.0,
+                value=2.0,
+                step=0.5,
+                help=(
+                    "Weeks whose cumulative deviation exceeds ±k·std are flagged as "
+                    "potential change-points and auto-annotated on the chart."
+                ),
+            )
+            band = threshold_k * cusum_std
+            flagged = weekly_all[weekly_all["cusum"].abs() >= band]
 
             fig_cusum = go.Figure()
             fig_cusum.add_trace(
@@ -232,17 +369,44 @@ def _render_kpi_trends(df: pd.DataFrame) -> None:
                     line={"color": "#1f77b4"},
                 )
             )
+            # Threshold band shading.
+            fig_cusum.add_hline(
+                y=band, line_dash="dot", line_color="rgba(214,39,40,0.6)",
+                annotation_text=f"+{threshold_k:g}σ", annotation_position="top left",
+            )
+            fig_cusum.add_hline(
+                y=-band, line_dash="dot", line_color="rgba(214,39,40,0.6)",
+                annotation_text=f"-{threshold_k:g}σ", annotation_position="bottom left",
+            )
+
+            # Auto-annotate the dominant change-point plus any threshold breaches.
+            annotate_idx: set[int] = set()
+            cp_idx = detect_cusum_changepoint(weekly_all["count"])
             if cp_idx is not None and cp_idx in weekly_all.index:
-                cp_date = weekly_all.loc[cp_idx, "week"]
-                cp_val = weekly_all.loc[cp_idx, "cusum"]
+                annotate_idx.add(int(cp_idx))
+            annotate_idx.update(int(i) for i in flagged.index)
+
+            for idx in sorted(annotate_idx):
+                cp_date = weekly_all.loc[idx, "week"]
+                cp_val = weekly_all.loc[idx, "cusum"]
+                fig_cusum.add_trace(
+                    go.Scatter(
+                        x=[cp_date],
+                        y=[cp_val],
+                        mode="markers",
+                        marker={"color": "#d62728", "size": 9, "symbol": "x"},
+                        name="Change-point",
+                        showlegend=False,
+                    )
+                )
                 fig_cusum.add_annotation(
                     x=cp_date,
                     y=cp_val,
-                    text=f"Possible change detected at {pd.Timestamp(cp_date).date()}",
+                    text=f"{pd.Timestamp(cp_date).date()}",
                     showarrow=True,
                     arrowhead=2,
                     bgcolor="rgba(255,200,0,0.8)",
-                    font={"size": 11},
+                    font={"size": 10},
                 )
             fig_cusum.update_layout(
                 title="CUSUM — Cumulative Deviation from Mean Weekly Count",
@@ -252,6 +416,18 @@ def _render_kpi_trends(df: pd.DataFrame) -> None:
                 yaxis_title="Cumulative Deviation",
             )
             st.plotly_chart(fig_cusum, use_container_width=True)
+
+            if not flagged.empty:
+                first_breach = pd.Timestamp(flagged.iloc[0]["week"]).date()
+                st.warning(
+                    f"{len(flagged)} week(s) breach the ±{threshold_k:g}σ band "
+                    f"(first at {first_breach}) — a sustained shift in inspection "
+                    "volume is likely."
+                )
+            else:
+                st.success(
+                    f"No weeks exceed the ±{threshold_k:g}σ band — weekly volume is stable."
+                )
 
 
 def _render_cohort_analysis(df: pd.DataFrame) -> None:
