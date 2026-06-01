@@ -487,7 +487,9 @@ def run_analyst_pack(
 
         try:
 
-            export_construction_list(construction, str(result.pack_dir / "construction_list.xlsx"))
+            _cl_path = str(result.pack_dir / "construction_list.xlsx")
+            export_construction_list(construction, _cl_path)
+            result.artifacts["construction_list"] = _cl_path
 
         except Exception:
 
