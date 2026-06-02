@@ -468,7 +468,7 @@ class SurfaceAssessment:
         """
         for violation in self.ada_violations:
             severity = violation.get('severity')
-            if severity in [ADAFailureSeverity.CRITICAL, ADAFailureSeverity.HIGH]:
+            if severity in {ADAFailureSeverity.CRITICAL, ADAFailureSeverity.HIGH}:
                 return False
         return True
 

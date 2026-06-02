@@ -256,3 +256,59 @@ PYTHONPATH=src:. python -m streamlit run app/mission_control.py --server.port 85
 | [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) | Deployment options |
 | [FAQ.md](FAQ.md) | Common questions |
 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Error codes and logs |
+
+---
+
+## Visualization Features
+
+### Browser Charts (no install required)
+
+| Chart | How to access |
+|---|---|
+| **Trends (time series)** | Click the **Trends** tab — select dataset, X (date) and Y (numeric) columns, click Plot |
+| **Scatter plot** | Open **Profiles** tab → select a dataset → Scatter Plot panel at bottom; choose two numeric columns |
+| **Bayesian histogram** | Bayesian tab → Run ADVI Model → posterior distribution with HDI band |
+| **Prophet forecast** | Bayesian tab → Forecast section → confidence band chart |
+| **SOQL bar chart** | SOQL Builder → run any query → auto-rendered bar chart |
+| **Sparklines** | Profile tab column list → numeric columns show inline mini-chart |
+| **Mermaid ERD/Flowchart/Mindmap** | ERD tab → choose diagram type → auto-generated from cart |
+| **SVG Sparklines** | Dataset result cards show inline mini-charts |
+
+### Map Visualizations
+
+| Feature | How to access |
+|---|---|
+| **Leaflet interactive map** | Map button (top toolbar) → 4 tile layer options |
+| **Marker clustering** | Automatic when datasets have lat/lng columns |
+| **deck.gl GPU map** | Map modal → click **⚡ GPU (deck.gl)** toggle |
+| **Borough choropleth** | Map modal → Layers panel → **Borough Choropleth** button |
+| **Bounding box filter** | Map modal → Draw Filter |
+| **GeoJSON export** | Map modal → GeoJSON button |
+
+### Governance Visualizations
+
+| Feature | How to access |
+|---|---|
+| **DMBOK quality bars** | Governance tab → run assessment → DAMA-DMBOK Quality card |
+| **FAIR radar chart** | Governance tab → run assessment → FAIRness card |
+| **PII inspector + masking preview** | Governance tab → PII Inspector card → "Preview masked" per column |
+| **DCAT 3 / PROV-DM / ODRL / STAC export** | Governance tab → Standards Export panel |
+| **OGC Collections browser** | Governance tab → Standards Export → OGC Collections |
+
+### Python Backend Charts (for reports)
+
+| Module | Charts available |
+|---|---|
+| `socrata_toolkit.viz.core` | Histogram, bar, heatmap, time series, box plot, quality dashboard |
+| `socrata_toolkit.viz.plotly` | Borough bar, KPI gauge, Gantt, priority heatmap, trend, donut |
+| `socrata_toolkit.viz.map` | Folium interactive map, cluster map |
+| `socrata_toolkit.viz` | `treemap_chart()`, `animated_scatter_chart()` (via analysis module) |
+
+### Export Formats
+
+- **PPTX** — Cart sidebar → PPTX button (requires sidecar running with `python-pptx`)
+- **PNG/SVG/PDF** — Python `viz` module chart functions
+- **GeoJSON** — Map modal
+- **Markdown report** — Cart sidebar → MD
+- **Jupyter notebook** — Cart sidebar → .ipynb
+- **Governance JSON** — Governance tab → Export report

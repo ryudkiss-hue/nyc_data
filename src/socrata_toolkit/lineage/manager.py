@@ -32,8 +32,10 @@ except ImportError:
 
 try:
     import psycopg
+    from psycopg import sql as psycopg_sql
 except ImportError:
     psycopg = None  # type: ignore
+    psycopg_sql = None  # type: ignore
 
 
 # Logging setup
@@ -599,8 +601,9 @@ class LineageRegistry:
         try:
             with psycopg.connect(self.db_dsn) as conn:
                 with conn.cursor() as cur:
-                    cur.execute(f"""
-                        CREATE TABLE IF NOT EXISTS {self.table_name} (
+                    cur.execute(
+                        psycopg_sql.SQL("""
+                        CREATE TABLE IF NOT EXISTS {} (
                             id BIGSERIAL PRIMARY KEY,
                             edge_id UUID NOT NULL UNIQUE,
                             source_dataset_id VARCHAR(255) NOT NULL,
@@ -611,17 +614,26 @@ class LineageRegistry:
                             transformation_sql TEXT,
                             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
                         );
-                    """)
+                    """).format(psycopg_sql.Identifier(self.table_name))
+                    )
 
-                    cur.execute(f"""
-                        CREATE INDEX IF NOT EXISTS {self.table_name}_source_idx
-                        ON {self.table_name} (source_dataset_id);
-                    """)
+                    cur.execute(
+                        psycopg_sql.SQL("""
+                        CREATE INDEX IF NOT EXISTS {} ON {} (source_dataset_id);
+                    """).format(
+                            psycopg_sql.Identifier(f"{self.table_name}_source_idx"),
+                            psycopg_sql.Identifier(self.table_name),
+                        )
+                    )
 
-                    cur.execute(f"""
-                        CREATE INDEX IF NOT EXISTS {self.table_name}_target_idx
-                        ON {self.table_name} (target_dataset_id);
-                    """)
+                    cur.execute(
+                        psycopg_sql.SQL("""
+                        CREATE INDEX IF NOT EXISTS {} ON {} (target_dataset_id);
+                    """).format(
+                            psycopg_sql.Identifier(f"{self.table_name}_target_idx"),
+                            psycopg_sql.Identifier(self.table_name),
+                        )
+                    )
 
                     conn.commit()
                     logger.info(f"Initialized lineage registry table: {self.table_name}")
@@ -686,12 +698,12 @@ class LineageRegistry:
             with psycopg.connect(self.db_dsn) as conn:
                 with conn.cursor() as cur:
                     cur.execute(
-                        f"""
-                        INSERT INTO {self.table_name}
+                        psycopg_sql.SQL("""
+                        INSERT INTO {}
                         (edge_id, source_dataset_id, target_dataset_id,
                          source_columns, target_columns, transformation_type, transformation_sql)
                         VALUES (%s, %s, %s, %s, %s, %s, %s)
-                        """,
+                        """).format(psycopg_sql.Identifier(self.table_name)),
                         (
                             edge_id,
                             source_dataset_id,

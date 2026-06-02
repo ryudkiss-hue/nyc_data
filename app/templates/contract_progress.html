@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{{ title | default("Contract Progress Report") }}</title>
+  <style>
+    @page {
+      size: letter;
+      margin: 1.6cm 1.8cm;
+      @bottom-center {
+        content: "NYC DOT · Sidewalk Inspection & Management — Page " counter(page) " of " counter(pages);
+        font-size: 8px;
+        color: #888;
+      }
+    }
+    body {
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      color: #1a1a1a;
+      font-size: 11px;
+      margin: 0;
+    }
+    .letterhead {
+      background: #003087;
+      color: #ffffff;
+      padding: 18px 22px;
+      border-radius: 4px;
+      margin-bottom: 18px;
+    }
+    .letterhead .agency {
+      font-size: 13px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      opacity: 0.85;
+      margin: 0;
+    }
+    .letterhead h1 {
+      font-size: 22px;
+      margin: 4px 0 0 0;
+      font-weight: 700;
+    }
+    .letterhead .meta {
+      margin-top: 8px;
+      font-size: 10px;
+      opacity: 0.9;
+    }
+    h2 {
+      color: #003087;
+      border-bottom: 2px solid #003087;
+      padding-bottom: 3px;
+      margin-top: 22px;
+      font-size: 15px;
+    }
+    .summary {
+      background: #f0f4f8;
+      border-left: 4px solid #003087;
+      padding: 10px 14px;
+      margin: 12px 0;
+      border-radius: 0 4px 4px 0;
+    }
+    .kpi-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 12px 0;
+    }
+    .kpi-card {
+      flex: 1 1 30%;
+      min-width: 150px;
+      background: #ffffff;
+      border: 1px solid #d4dbe5;
+      border-top: 3px solid #003087;
+      border-radius: 4px;
+      padding: 10px 12px;
+    }
+    .kpi-card .label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #5a6b7b;
+    }
+    .kpi-card .value {
+      font-size: 20px;
+      font-weight: 700;
+      color: #003087;
+      margin-top: 2px;
+    }
+    table.report-table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 10px;
+      margin: 10px 0;
+    }
+    table.report-table td, table.report-table th {
+      border: 1px solid #d4dbe5;
+      padding: 4px 7px;
+      text-align: left;
+    }
+    table.report-table th {
+      background: #003087;
+      color: #ffffff;
+      font-weight: 600;
+    }
+    table.report-table tr:nth-child(even) td {
+      background: #f6f8fb;
+    }
+    .chart {
+      text-align: center;
+      margin: 14px 0;
+    }
+    .chart img {
+      max-width: 100%;
+      border: 1px solid #d4dbe5;
+      border-radius: 4px;
+    }
+    .narrative {
+      margin: 12px 0;
+      line-height: 1.5;
+    }
+    .footer-note {
+      font-size: 9px;
+      color: #999;
+      margin-top: 24px;
+      border-top: 1px solid #e0e0e0;
+      padding-top: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="letterhead">
+    <p class="agency">New York City Department of Transportation</p>
+    <h1>{{ title | default("Contract Progress Report") }}</h1>
+    <div class="meta">
+      {% if contract_id %}Contract: {{ contract_id }} &nbsp;·&nbsp;{% endif %}
+      {% if borough %}Borough: {{ borough }} &nbsp;·&nbsp;{% endif %}
+      Prepared: {{ generated_at | default(today) }}
+      {% if prepared_by %} &nbsp;·&nbsp; By: {{ prepared_by }}{% endif %}
+    </div>
+  </div>
+
+  {% if summary %}
+  <div class="summary">{{ summary }}</div>
+  {% endif %}
+
+  {% if kpis %}
+  <h2>Key Metrics</h2>
+  <div class="kpi-grid">
+    {% for label, value in kpis.items() %}
+    <div class="kpi-card">
+      <div class="label">{{ label }}</div>
+      <div class="value">{{ value }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if chart_img %}
+  <div class="chart">
+    <img src="data:image/png;base64,{{ chart_img }}" alt="Progress chart">
+  </div>
+  {% endif %}
+
+  {% if narrative %}
+  <h2>Progress Narrative</h2>
+  <div class="narrative">{{ narrative }}</div>
+  {% endif %}
+
+  {% if tables %}
+  {% for section in tables %}
+  <h2>{{ section.title }}</h2>
+  {{ section.html | safe }}
+  {% endfor %}
+  {% endif %}
+
+  <p class="footer-note">
+    Generated {{ generated_at | default(today) }} · NYC DOT SIM Toolkit ·
+    This report was produced programmatically from NYC Open Data (Socrata).
+  </p>
+</body>
+</html>

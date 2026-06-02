@@ -20,7 +20,6 @@ RUN pip install --no-cache-dir poetry-core && \
 COPY src/socrata_toolkit/ src/socrata_toolkit/
 COPY app/ app/
 COPY scripts/ scripts/
-COPY sql/ sql/
 COPY tests/ tests/
 COPY docs/ docs/
 COPY data/ data/
@@ -36,9 +35,12 @@ RUN mkdir -p outputs/reports outputs/charts outputs/workflows
 # Default ports: 8501 (Streamlit), 5000 (Flask API)
 EXPOSE 8501 5000
 
+RUN useradd -m appuser
+USER appuser
+
 # Health check
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-    CMD python -c "import socrata_toolkit; print('ok')" || exit 1
+    CMD curl -f http://localhost:8501/healthz || exit 1
 
 # Default: launch Streamlit dashboard
 CMD ["streamlit", "run", "app/app.py", \

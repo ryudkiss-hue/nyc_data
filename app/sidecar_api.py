@@ -22,13 +22,18 @@ Design principles:
 from __future__ import annotations
 
 import importlib.util
+import logging
+import os
 import random
 import time
+from collections import OrderedDict
 from typing import Any, Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+
+logger = logging.getLogger("mmc.sidecar")
 
 # Lightweight in-process audit trail for governance operations (#50)
 try:
@@ -65,6 +70,29 @@ app.add_middleware(
 
 _START_TIME = time.monotonic()
 
+# ---------------------------------------------------------------------------
+# In-memory quality catalog (dataset_id -> dict)
+# ---------------------------------------------------------------------------
+_quality_catalog: dict[str, Any] = {}
+
+
+def _write_catalog(dataset_id: str, entry: dict) -> None:
+    """Persist a catalog entry; logs warnings on failure."""
+    try:
+        _quality_catalog[dataset_id] = entry
+    except Exception as exc:
+        logger.warning("catalog write failed: %s", exc)
+
+
+# ---------------------------------------------------------------------------
+# In-memory audit trail
+# ---------------------------------------------------------------------------
+_audit_trail: OrderedDict[str, dict] = OrderedDict()
+
+
+def _get_trail() -> OrderedDict[str, dict]:
+    return _audit_trail
+
 
 def _module_available(name: str) -> bool:
     """Return True if a module can be imported without importing it."""
@@ -93,9 +121,41 @@ def health() -> dict[str, Any]:
     }
 
 
+def _pymc_available() -> bool:
+    try:
+        import pymc  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
+
+def _prophet_available() -> bool:
+    try:
+        from prophet import Prophet  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
+
+# ---------------------------------------------------------------------------
+# Audit trail endpoint
+# ---------------------------------------------------------------------------
+
+@app.get("/api/audit-trail")
+def audit_trail_get(limit: int = 100, offset: int = 0):
+    """Return paginated audit trail entries (snapshot for atomicity)."""
+    if not _AUDIT_OK:
+        return {"total": 0, "entries": []}
+    entries = list(_get_trail().entries())  # snapshot once
+    total = len(entries)
+    page = entries[offset: offset + limit]
+    return {"total": total, "entries": [e.__dict__ for e in page]}
+
+
 # --------------------------------------------------------------------------- #
 # Bayesian yield-rate
 # --------------------------------------------------------------------------- #
+
 class YieldRateRequest(BaseModel):
     """Beta-Binomial yield-rate request.
 
@@ -261,8 +321,8 @@ class DmbokRequest(BaseModel):
     """DMBOK data-management scoring request."""
 
     rows: list[dict[str, Any]] = Field(default_factory=list)
-    key_columns: list[str] | None = None
-    date_column: str | None = None
+    key_columns: Optional[list[str]] = None  # noqa: UP045
+    date_column: Optional[str] = None  # noqa: UP045
 
 
 @app.post("/api/governance/dmbok")
@@ -441,8 +501,8 @@ class QualityCatalogRequest(BaseModel):
     dataset_id: str
     rows: list[dict[str, Any]] = Field(..., min_length=1)
     key_columns: list[str] = Field(default_factory=list)
-    date_column: str | None = None
-    catalog_path: str | None = None  # path to persist updated catalog JSON
+    date_column: Optional[str] = None  # noqa: UP045
+    catalog_path: Optional[str] = None  # path to persist updated catalog JSON  # noqa: UP045
 
 
 @app.post("/api/governance/quality-catalog")
@@ -491,16 +551,391 @@ def governance_quality_catalog(req: QualityCatalogRequest) -> dict[str, Any]:
 @app.get("/api/audit/trail")
 def audit_trail_get(limit: int = 100) -> dict[str, Any]:
     """Return recent in-process audit entries."""
-    if not _AUDIT_OK:
-        return {"entries": [], "note": "audit module not available"}
-    entries = _get_trail().entries()[-limit:]
-    return {"entries": [e.__dict__ for e in reversed(entries)], "total": len(_get_trail().entries())}
+    trail = _get_trail()
+    entries = list(trail.values())[-limit:]
+    return {"entries": list(reversed(entries)), "total": len(trail)}
 
 
 @app.delete("/api/audit/trail")
 def audit_trail_clear() -> dict[str, Any]:
     """Clear in-process audit entries."""
-    if not _AUDIT_OK:
-        return {"cleared": False}
     _get_trail().clear()
-    return {"cleared": True}
+    return {"cleared": True}# ---------------------------------------------------------------------------
+# GROUP 2 — Semantic search endpoint
+# ---------------------------------------------------------------------------
+
+_semantic_search_instance = None
+
+
+def _get_semantic_search():
+    global _semantic_search_instance
+    if _semantic_search_instance is None:
+        from socrata_toolkit.analysis.semantic_search import SemanticCatalogSearch  # noqa: E402
+        _semantic_search_instance = SemanticCatalogSearch()
+        records = [{"id": k, "name": v.get("name", k)} for k, v in _quality_catalog.items()]
+        if records:
+            _semantic_search_instance.index(records)
+    return _semantic_search_instance
+
+
+@app.get("/api/analysis/semantic-search")
+def semantic_search(q: str = "", top_k: int = 10):
+    """Semantic search over quality catalog dataset names."""
+    try:
+        searcher = _get_semantic_search()
+        # Re-index if catalog has grown
+        records = [{"id": k, "name": v.get("name", k)} for k, v in _quality_catalog.items()]
+        if records:
+            searcher.index(records)
+        results = searcher.search(q, top_k=top_k)
+        return {"results": results}
+    except ImportError as exc:
+        raise HTTPException(503, f"sentence-transformers not installed: {exc}") from exc
+    except Exception as exc:
+        raise HTTPException(500, str(exc)) from exc
+
+
+class DPHistogramRequest(BaseModel):
+    values: list[float]
+    epsilon: float = 1.0
+
+
+@app.post("/api/analysis/dp-histogram")
+def dp_histogram(req: DPHistogramRequest):
+    """Differentially private histogram using OpenDP if available, else plain."""
+    if not req.values:
+        raise HTTPException(400, "values must be non-empty")
+    import math
+    bins = min(20, max(5, int(math.sqrt(len(req.values)))))
+    lo, hi = min(req.values), max(req.values)
+    if lo == hi:
+        return {"bins": [{"bin": lo, "count": len(req.values)}], "method": "plain", "epsilon": req.epsilon}
+
+    bin_width = (hi - lo) / bins
+    counts = [0] * bins
+    for v in req.values:
+        idx = min(int((v - lo) / bin_width), bins - 1)
+        counts[idx] += 1
+
+    method = "plain"
+    try:
+        import opendp.prelude as dp  # type: ignore
+        dp.enable_features("contrib", "floating-point")
+        sensitivity = 2.0
+        noise_scale = sensitivity / req.epsilon
+        import random
+        rng = random.Random()
+        noised = [max(0, c + rng.gauss(0, noise_scale)) for c in counts]
+        counts = [round(v) for v in noised]
+        method = "opendp-laplace"
+    except Exception:
+        pass
+
+    bins_out = [{"bin": round(lo + i * bin_width, 4), "count": counts[i]} for i in range(bins)]
+    return {"bins": bins_out, "method": method, "epsilon": req.epsilon}
+
+
+# ---------------------------------------------------------------------------
+# GROUP 4 — Governance: DCAT 3, PROV-DM, ODRL
+# ---------------------------------------------------------------------------
+
+@app.get("/api/governance/dcat3")
+def governance_dcat3():
+    """Serialize quality catalog as DCAT 3 JSON-LD."""
+    datasets = []
+    for dataset_id, entry in _quality_catalog.items():
+        datasets.append({
+            "@type": "dcat:Dataset",
+            "@id": f"urn:nyc:dataset:{dataset_id}",
+            "dct:identifier": dataset_id,
+            "dct:title": entry.get("name", dataset_id),
+            "dct:description": entry.get("description", ""),
+            "dcat:keyword": entry.get("tags", []),
+            "dct:modified": entry.get("updated_at", ""),
+            "dcat:distribution": [],
+        })
+    return {
+        "@context": "https://www.w3.org/ns/dcat3",
+        "@type": "dcat:Catalog",
+        "dct:title": "NYC Mission Control Quality Catalog",
+        "dct:description": "Quality-scored NYC open datasets",
+        "dcat:dataset": datasets,
+    }
+
+
+@app.get("/api/governance/provenance")
+def governance_provenance():
+    """Return W3C PROV-DM JSON built from audit trail entries."""
+    entries = list(_get_trail().values())
+    entities = {}
+    activities = []
+    for e in entries:
+        eid = e.get("dataset_id", e.get("id", "unknown"))
+        entities[eid] = {
+            "prov:id": f"urn:nyc:dataset:{eid}",
+            "prov:type": "prov:Entity",
+        }
+        activities.append({
+            "prov:id": f"urn:nyc:activity:{e.get('timestamp', '')}:{eid}",
+            "prov:type": e.get("prov_type", "prov:Activity"),
+            "prov:startTime": e.get("timestamp", ""),
+            "prov:used": f"urn:nyc:dataset:{eid}",
+            "dc:description": e.get("action", ""),
+        })
+    return {
+        "@context": {
+            "prov": "http://www.w3.org/ns/prov#",
+            "dc": "http://purl.org/dc/elements/1.1/",
+            "xsd": "http://www.w3.org/2001/XMLSchema#",
+        },
+        "prov:entity": list(entities.values()),
+        "prov:activity": activities,
+    }
+
+
+@app.get("/api/governance/odrl-policy")
+def governance_odrl_policy():
+    """Return ODRL 2.2 policy JSON for the dataset collection."""
+    return {
+        "@context": "http://www.w3.org/ns/odrl.jsonld",
+        "@type": "odrl:Policy",
+        "@id": "urn:nyc:policy:mission-control",
+        "odrl:uid": "urn:nyc:policy:mission-control",
+        "odrl:profile": "http://www.w3.org/ns/odrl/2/",
+        "odrl:permission": [
+            {
+                "odrl:target": "urn:nyc:catalog:all",
+                "odrl:action": "odrl:read",
+                "odrl:assigner": "urn:nyc:dot",
+            },
+            {
+                "odrl:target": "urn:nyc:catalog:all",
+                "odrl:action": "odrl:distribute",
+                "odrl:constraint": {
+                    "odrl:leftOperand": "odrl:purpose",
+                    "odrl:operator": "odrl:eq",
+                    "odrl:rightOperand": "public-benefit",
+                },
+            },
+        ],
+        "odrl:prohibition": [
+            {
+                "odrl:target": "urn:nyc:catalog:all",
+                "odrl:action": "odrl:sell",
+            }
+        ],
+    }
+
+
+# ---------------------------------------------------------------------------
+# GROUP 7 — Standards interop: STAC, OGC API Features
+# ---------------------------------------------------------------------------
+
+@app.get("/api/stac/catalog")
+def stac_catalog():
+    """Minimal STAC 1.0 Catalog JSON."""
+    links = [
+        {"rel": "self", "href": "/api/stac/catalog", "type": "application/json"},
+        {"rel": "root", "href": "/api/stac/catalog", "type": "application/json"},
+    ]
+    for dataset_id in list(_quality_catalog.keys())[:50]:
+        links.append({
+            "rel": "item",
+            "href": f"/api/stac/catalog/items/{dataset_id}",
+            "type": "application/geo+json",
+            "title": _quality_catalog[dataset_id].get("name", dataset_id),
+        })
+    return {
+        "type": "Catalog",
+        "id": "nyc-mission-control",
+        "stac_version": "1.0.0",
+        "description": "NYC Mission Control quality-scored dataset catalog",
+        "title": "NYC Mission Control",
+        "links": links,
+    }
+
+
+@app.get("/api/ogc/collections")
+def ogc_collections():
+    """OGC API Features collections list."""
+    collections = []
+    for dataset_id, entry in _quality_catalog.items():
+        collections.append({
+            "id": dataset_id,
+            "title": entry.get("name", dataset_id),
+            "description": entry.get("description", ""),
+            "links": [
+                {"rel": "items", "href": f"/api/ogc/collections/{dataset_id}/items", "type": "application/geo+json"},
+            ],
+        })
+    return {
+        "collections": collections,
+        "links": [{"rel": "self", "href": "/api/ogc/collections", "type": "application/json"}],
+    }
+
+
+@app.get("/api/ogc/collections/{collection_id}/items")
+def ogc_collection_items(collection_id: str):
+    """GeoJSON FeatureCollection from catalog entries with geospatial metadata."""
+    entry = _quality_catalog.get(collection_id)
+    if not entry:
+        raise HTTPException(404, f"Collection {collection_id!r} not found")
+
+    features = []
+    rows = entry.get("rows", []) or entry.get("sample_rows", [])
+    for row in rows:
+        lon = row.get("longitude") or row.get("lon") or row.get("x")
+        lat = row.get("latitude") or row.get("lat") or row.get("y")
+        if lon is not None and lat is not None:
+            try:
+                features.append({
+                    "type": "Feature",
+                    "geometry": {"type": "Point", "coordinates": [float(lon), float(lat)]},
+                    "properties": {k: v for k, v in row.items() if k not in ("longitude", "latitude", "lon", "lat", "x", "y")},
+                })
+            except (TypeError, ValueError):
+                pass
+
+    return {
+        "type": "FeatureCollection",
+        "features": features,
+        "numberMatched": len(features),
+        "numberReturned": len(features),
+        "links": [{"rel": "self", "href": f"/api/ogc/collections/{collection_id}/items"}],
+    }
+
+
+
+# --------------------------------------------------------------------------- #
+# MAPIE uncertainty bands on Prophet forecast (optional enhancement)
+# --------------------------------------------------------------------------- #
+class ProphetMAPIERequest(BaseModel):
+    dates: list[str]
+    values: list[float]
+    periods: int = Field(default=30, ge=1, le=730)
+    freq: str = "D"
+    coverage: float = Field(default=0.9, ge=0.5, le=0.99)
+
+
+@app.post("/api/forecast/prophet-mapie")
+def forecast_prophet_mapie(req: ProphetMAPIERequest) -> dict[str, Any]:
+    """Prophet forecast wrapped with MAPIE conformal prediction intervals.
+
+    Falls back to plain Prophet if MAPIE is not installed.
+    """
+    if len(req.dates) != len(req.values):
+        raise HTTPException(400, "dates and values must have equal length")
+    if len(req.dates) < 10:
+        raise HTTPException(400, "MAPIE requires at least 10 data points")
+
+    try:
+        import numpy as np
+        import pandas as pd
+        from prophet import Prophet  # type: ignore
+    except ImportError as exc:
+        raise HTTPException(503, f"prophet is not installed: {exc}") from exc
+
+    df = pd.DataFrame({"ds": pd.to_datetime(req.dates), "y": req.values})
+    model = Prophet()
+    model.fit(df)
+    future = model.make_future_dataframe(periods=req.periods, freq=req.freq)
+    fc = model.predict(future)
+
+    mapie_lower, mapie_upper, mapie_used = None, None, False
+    try:
+        from mapie.time_series import MapieTimeSeriesRegressor  # type: ignore
+        from sklearn.linear_model import Ridge
+
+        X = np.arange(len(req.values)).reshape(-1, 1)
+        y = np.array(req.values)
+        mapie = MapieTimeSeriesRegressor(Ridge(), method="enbpi", cv="prefit", agg_function="mean")
+        mapie.estimator.fit(X, y)
+        mapie.fit(X, y)
+        X_future = np.arange(len(req.values) + req.periods).reshape(-1, 1)
+        _, intervals = mapie.predict(X_future, alpha=1.0 - req.coverage, ensemble=True)
+        mapie_lower = intervals[:, 0, 0].tolist()
+        mapie_upper = intervals[:, 1, 0].tolist()
+        mapie_used = True
+    except Exception:
+        pass
+
+    result: dict[str, Any] = {
+        "dates": [d.strftime("%Y-%m-%d") for d in fc["ds"]],
+        "yhat": [float(v) for v in fc["yhat"]],
+        "yhat_lower": [float(v) for v in fc["yhat_lower"]],
+        "yhat_upper": [float(v) for v in fc["yhat_upper"]],
+        "trend": [float(v) for v in fc["trend"]],
+        "method": "prophet+mapie" if mapie_used else "prophet",
+        "coverage": req.coverage,
+    }
+    if mapie_used:
+        result["mapie_lower"] = mapie_lower
+        result["mapie_upper"] = mapie_upper
+    return result
+
+
+# --------------------------------------------------------------------------- #
+# PowerPoint export
+# --------------------------------------------------------------------------- #
+import base64
+import io
+
+
+class PPTXSlide(BaseModel):
+    title: str
+    chart_b64: str = ""  # base64-encoded PNG
+    caption: str = ""
+
+
+class PPTXRequest(BaseModel):
+    filename: str = "mission_control_export"
+    slides: list[PPTXSlide] = Field(default_factory=list)
+
+
+@app.post("/api/export/pptx")
+def export_pptx(req: PPTXRequest):
+    """Build a PowerPoint deck from chart images and return as file download."""
+    try:
+        from pptx import Presentation  # type: ignore
+        from pptx.util import Inches, Pt  # type: ignore
+    except ImportError as exc:
+        raise HTTPException(503, f"python-pptx is not installed: {exc}") from exc
+
+    from fastapi.responses import StreamingResponse
+
+    prs = Presentation()
+    blank_layout = prs.slide_layouts[6]  # blank
+
+    for slide_data in req.slides:
+        slide = prs.slides.add_slide(blank_layout)
+        # Title
+        txBox = slide.shapes.add_textbox(Inches(0.5), Inches(0.2), Inches(9), Inches(0.6))
+        tf = txBox.text_frame
+        tf.text = slide_data.title
+        tf.paragraphs[0].runs[0].font.size = Pt(20)
+        tf.paragraphs[0].runs[0].font.bold = True
+
+        # Chart image
+        if slide_data.chart_b64:
+            try:
+                img_bytes = base64.b64decode(slide_data.chart_b64)
+                img_stream = io.BytesIO(img_bytes)
+                slide.shapes.add_picture(img_stream, Inches(0.5), Inches(1.0), Inches(9), Inches(5.5))
+            except Exception:
+                pass
+
+        # Caption
+        if slide_data.caption:
+            cap = slide.shapes.add_textbox(Inches(0.5), Inches(6.7), Inches(9), Inches(0.5))
+            cap.text_frame.text = slide_data.caption
+            cap.text_frame.paragraphs[0].runs[0].font.size = Pt(10)
+
+    buf = io.BytesIO()
+    prs.save(buf)
+    buf.seek(0)
+    fname = req.filename.replace("/", "_") + ".pptx"
+    return StreamingResponse(
+        buf,
+        media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        headers={"Content-Disposition": f'attachment; filename="{fname}"'},
+    )

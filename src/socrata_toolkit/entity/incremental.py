@@ -349,7 +349,7 @@ class IncrementalMatcher:
             'manually_assigned': manually_assigned,
             'unmatched': sum(
                 1 for d in self._matching_decisions.values()
-                if d.decision in ['no_match', 'create_new']
+                if d.decision in {'no_match', 'create_new'}
             ),
             'queued_for_review': len(self._queued_for_review),
             'auto_assignment_rate': auto_assigned / total_decisions if total_decisions > 0 else 0.0

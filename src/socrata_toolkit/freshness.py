@@ -26,8 +26,10 @@ from enum import Enum
 
 try:
     import psycopg
+    from psycopg import sql as psycopg_sql
 except ImportError:
     psycopg = None  # type: ignore
+    psycopg_sql = None  # type: ignore
 
 
 # Logging setup
@@ -404,8 +406,8 @@ class FreshnessTracker:
             with psycopg.connect(self.db_dsn) as conn:
                 with conn.cursor() as cur:
                     # Create main freshness log table with date partitioning
-                    cur.execute(f"""
-                        CREATE TABLE IF NOT EXISTS {self.table_name} (
+                    cur.execute(psycopg_sql.SQL("""
+                        CREATE TABLE IF NOT EXISTS {} (
                             id BIGSERIAL,
                             dataset_id VARCHAR(255) NOT NULL,
                             dataset_name VARCHAR(512),
@@ -417,18 +419,22 @@ class FreshnessTracker:
                             days_stale DOUBLE PRECISION,
                             PRIMARY KEY (id, ingestion_timestamp)
                         ) PARTITION BY RANGE (ingestion_timestamp);
-                    """)
+                    """).format(psycopg_sql.Identifier(self.table_name)))
 
                     # Create indexes for fast lookups
-                    cur.execute(f"""
-                        CREATE INDEX IF NOT EXISTS {self.table_name}_dataset_id_idx
-                        ON {self.table_name} (dataset_id);
-                    """)
+                    cur.execute(psycopg_sql.SQL("""
+                        CREATE INDEX IF NOT EXISTS {} ON {} (dataset_id);
+                    """).format(
+                        psycopg_sql.Identifier(f"{self.table_name}_dataset_id_idx"),
+                        psycopg_sql.Identifier(self.table_name),
+                    ))
 
-                    cur.execute(f"""
-                        CREATE INDEX IF NOT EXISTS {self.table_name}_ingestion_timestamp_idx
-                        ON {self.table_name} (ingestion_timestamp DESC);
-                    """)
+                    cur.execute(psycopg_sql.SQL("""
+                        CREATE INDEX IF NOT EXISTS {} ON {} (ingestion_timestamp DESC);
+                    """).format(
+                        psycopg_sql.Identifier(f"{self.table_name}_ingestion_timestamp_idx"),
+                        psycopg_sql.Identifier(self.table_name),
+                    ))
 
                     conn.commit()
                     logger.info(f"Initialized freshness tracking table: {self.table_name}")

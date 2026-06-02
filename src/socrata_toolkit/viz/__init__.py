@@ -8,6 +8,11 @@ from .charts_extra import (
     plot_geospatial_compliance_map,
 )
 from .core import *
-from .dashboard import *
 from .map import *
 from .plotly import *
+
+# Expose hidden analysis-module chart functions
+try:
+    from ..analysis import animated_scatter_chart, treemap_chart
+except Exception:
+    pass

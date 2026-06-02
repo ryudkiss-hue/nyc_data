@@ -568,7 +568,7 @@ def doctor_cmd(check_db, checklist):
     if missing_opt:
         fixes.append("Install optional extras (examples): `pip install '.[postgres]'`, `pip install '.[pptx]'`, `pip install '.[spatial]'`.")
     fixes.append("If Dash pages look empty, run an Analyst Pack: `socrata analyst run --profile <path>`.")
-    fixes.append("Open Mission Control: `streamlit run app/app.py` (legacy Dash: `legacy_archive/dash_app/app.py`).")
+    fixes.append("Open Mission Control SPA: open app/static/mission_control_v2.html in a browser, or run the Electron desktop app via `cd desktop && npm start`.")
 
     import_checks: dict[str, str] = {}
     for label, modpath in [
@@ -585,8 +585,8 @@ def doctor_cmd(check_db, checklist):
     checklist = {
         "wizard_module": "ok" if __import__("importlib").util.find_spec("socrata_toolkit.install_wizard") else "missing",
         "analyst_module": "ok" if __import__("importlib").util.find_spec("socrata_toolkit.analyst") else "missing",
-        "streamlit_app": "ok"
-        if (Path(__file__).resolve().parents[3] / "app" / "app.py").exists()
+        "spa_html": "ok"
+        if (Path(__file__).resolve().parents[3] / "app" / "static" / "mission_control_v2.html").exists()
         else "missing",
     }
     payload = {
@@ -2131,6 +2131,513 @@ def db_status(db_path: str) -> None:
             click.echo(f"{name}: {count:,} rows")
     finally:
         mgr.close()
+
+
+# ============================================================================
+# Unit 7: conflict-detect, report, dataset health, cache refresh, export, nl-query
+# ============================================================================
+
+try:
+    import geopandas as _gpd  # noqa: F401
+    HAS_GEOPANDAS = True
+except ImportError:
+    HAS_GEOPANDAS = False
+
+try:
+    import weasyprint as _weasyprint  # noqa: F401
+    HAS_WEASYPRINT = True
+except ImportError:
+    HAS_WEASYPRINT = False
+
+try:
+    import anthropic as _anthropic  # noqa: F401
+    HAS_ANTHROPIC = True
+except ImportError:
+    HAS_ANTHROPIC = False
+
+
+def _load_dataset_registry() -> dict:
+    """Load datasets.yaml from the config directory."""
+    import pathlib
+
+    import yaml
+
+    config_path = pathlib.Path(__file__).resolve().parents[4] / "config" / "datasets.yaml"
+    if not config_path.exists():
+        # fallback: walk up looking for config/datasets.yaml
+        for parent in pathlib.Path(__file__).resolve().parents:
+            candidate = parent / "config" / "datasets.yaml"
+            if candidate.exists():
+                config_path = candidate
+                break
+    if not config_path.exists():
+        raise click.ClickException(f"config/datasets.yaml not found (searched from {pathlib.Path(__file__)})")
+    raw = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    return {k: dict(v) for k, v in raw["datasets"].items()}
+
+
+def _make_session():
+    """Create a requests.Session with retry logic."""
+    import requests
+    from requests.adapters import HTTPAdapter
+    from urllib3.util.retry import Retry
+
+    session = requests.Session()
+    retry = Retry(total=3, backoff_factor=0.5, status_forcelist=[429, 500, 502, 503, 504])
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount("https://", adapter)
+    session.mount("http://", adapter)
+    return session
+
+
+# ---------------------------------------------------------------------------
+# 1. conflict-detect
+# ---------------------------------------------------------------------------
+
+@main.command("conflict-detect")
+@click.option("--borough", default="MN", show_default=True, help="Borough code to filter (e.g. MN, BX, BK, QN, SI)")
+@click.option("--buffer", "buffer_dist", type=int, default=100, show_default=True, help="Buffer distance in feet for overlap detection")
+@click.option("--output", "output_path", type=click.Path(), default=None, help="Optional GeoJSON output path")
+def conflict_detect_cmd(borough: str, buffer_dist: int, output_path: str | None) -> None:
+    """Detect overlapping work zones from sidewalk inspection data by BBL/block."""
+    import os
+
+    import requests
+
+    FOURFOUR = "wjnr-3vgm"
+    base_url = f"https://data.cityofnewyork.us/resource/{FOURFOUR}.json"
+    token = os.getenv("SOCRATA_APP_TOKEN", "")
+    session = _make_session()
+    params: dict = {"$limit": 50000, "$where": f"upper(borough) = '{borough.upper()}'"}
+    if token:
+        params["$$app_token"] = token
+    try:
+        resp = session.get(base_url, params=params, timeout=60)
+        resp.raise_for_status()
+        rows = resp.json()
+    except requests.RequestException as exc:
+        raise click.ClickException(f"Socrata fetch failed: {exc}") from exc
+
+    if not rows:
+        click.echo(json.dumps({"borough": borough, "rows_fetched": 0, "conflict_count": 0}))
+        return
+
+    import pandas as pd
+
+    df = pd.DataFrame(rows)
+    # Detect BBL/block column
+    bbl_col = next((c for c in df.columns if c.lower() in ("bbl", "lot_bbl", "tax_lot", "block", "boro_block_lot")), None)
+    conflict_count = 0
+    conflicting_bbls: list = []
+    if bbl_col and bbl_col in df.columns:
+        counts = df[bbl_col].value_counts()
+        conflicting = counts[counts > 1]
+        conflict_count = int(len(conflicting))
+        conflicting_bbls = conflicting.index.tolist()
+
+    result: dict = {
+        "borough": borough,
+        "buffer_ft": buffer_dist,
+        "rows_fetched": len(rows),
+        "bbl_column_used": bbl_col,
+        "conflict_count": conflict_count,
+        "conflicting_bbls": conflicting_bbls[:50],  # cap preview
+    }
+
+    if output_path:
+        if not HAS_GEOPANDAS:
+            click.echo("Warning: geopandas not installed — writing JSON instead of GeoJSON")
+            with open(output_path, "w", encoding="utf-8") as f:
+                json.dump(result, f, indent=2)
+        else:
+            import geopandas as gpd
+
+            lat_col = next((c for c in df.columns if c.lower() in ("latitude", "lat", "y")), None)
+            lon_col = next((c for c in df.columns if c.lower() in ("longitude", "lon", "lng", "long", "x")), None)
+            if lat_col and lon_col:
+                df_conflict = df[df[bbl_col].isin(conflicting_bbls)].copy() if bbl_col else df.copy()
+                try:
+                    df_conflict[lat_col] = pd.to_numeric(df_conflict[lat_col], errors="coerce")
+                    df_conflict[lon_col] = pd.to_numeric(df_conflict[lon_col], errors="coerce")
+                    df_conflict = df_conflict.dropna(subset=[lat_col, lon_col])
+                    gdf = gpd.GeoDataFrame(
+                        df_conflict,
+                        geometry=gpd.points_from_xy(df_conflict[lon_col], df_conflict[lat_col]),
+                        crs="EPSG:4326",
+                    )
+                    gdf.to_file(output_path, driver="GeoJSON")
+                    click.echo(f"GeoJSON written to {output_path}")
+                except Exception as exc:
+                    click.echo(f"Warning: GeoJSON export failed ({exc}), writing JSON")
+                    with open(output_path, "w", encoding="utf-8") as f:
+                        json.dump(result, f, indent=2)
+            else:
+                click.echo("Warning: no lat/lon columns found, writing JSON")
+                with open(output_path, "w", encoding="utf-8") as f:
+                    json.dump(result, f, indent=2)
+
+    click.echo(json.dumps({k: v for k, v in result.items() if k != "conflicting_bbls"}, indent=2))
+    if conflicting_bbls:
+        click.echo(f"Sample conflicting BBLs: {conflicting_bbls[:10]}")
+
+
+# ---------------------------------------------------------------------------
+# 2. report (sub-group with 'contract' sub-command)
+# ---------------------------------------------------------------------------
+
+@main.group(name="report")
+def report_group() -> None:
+    """Generate analytical reports from Socrata data."""
+
+
+@report_group.command(name="contract")
+@click.option("--output", "output_path", type=click.Path(), default=None, help="Output path (PDF if weasyprint available, else .txt)")
+def report_contract_cmd(output_path: str | None) -> None:
+    """Generate a contractor performance summary from inspection data."""
+    import os
+
+    import requests
+
+    registry = _load_dataset_registry()
+    # Use street_construction_inspections as the contract/inspection dataset
+    dataset_key = "street_construction_inspections"
+    if dataset_key not in registry:
+        # fallback to violations
+        dataset_key = "violations"
+    fourfour = registry[dataset_key]["fourfour"]
+    base_url = f"https://data.cityofnewyork.us/resource/{fourfour}.json"
+    token = os.getenv("SOCRATA_APP_TOKEN", "")
+    session = _make_session()
+    params: dict = {"$limit": 50000}
+    if token:
+        params["$$app_token"] = token
+    try:
+        resp = session.get(base_url, params=params, timeout=60)
+        resp.raise_for_status()
+        rows = resp.json()
+    except requests.RequestException as exc:
+        raise click.ClickException(f"Socrata fetch failed: {exc}") from exc
+
+    import pandas as pd
+
+    df = pd.DataFrame(rows)
+
+    # Try to identify contractor column
+    contractor_col = next(
+        (c for c in df.columns if "contractor" in c.lower() or "applicant" in c.lower() or "company" in c.lower()),
+        None,
+    )
+
+    lines = [f"Contractor Performance Report — {dataset_key} ({fourfour})", "=" * 60, f"Total records: {len(df)}", ""]
+
+    if contractor_col:
+        summary = df.groupby(contractor_col).size().reset_index(name="count").sort_values("count", ascending=False).head(20)
+        lines.append(f"Top contractors by record count (column: {contractor_col}):")
+        lines.append(f"{'Contractor':<50} {'Count':>8}")
+        lines.append("-" * 60)
+        for _, row in summary.iterrows():
+            lines.append(f"{str(row[contractor_col])[:50]:<50} {row['count']:>8}")
+    else:
+        lines.append("No contractor/applicant column detected in dataset.")
+        lines.append(f"Available columns: {', '.join(df.columns.tolist()[:20])}")
+
+    report_text = "\n".join(lines)
+
+    if output_path:
+        if HAS_WEASYPRINT:
+            import weasyprint
+
+            html = f"<html><body><pre style='font-family:monospace'>{report_text}</pre></body></html>"
+            weasyprint.HTML(string=html).write_pdf(output_path)
+            click.echo(f"PDF report written to {output_path}")
+        else:
+            txt_path = output_path if output_path.endswith(".txt") else output_path + ".txt"
+            with open(txt_path, "w", encoding="utf-8") as f:
+                f.write(report_text)
+            click.echo(f"Text report written to {txt_path} (install weasyprint for PDF)")
+    else:
+        click.echo(report_text)
+
+
+# ---------------------------------------------------------------------------
+# 3. dataset health
+# ---------------------------------------------------------------------------
+
+@main.group(name="dataset")
+def dataset_group() -> None:
+    """Dataset inspection and metadata commands."""
+
+
+@dataset_group.command(name="health")
+@click.option("--key", "dataset_key", default=None, help="Specific dataset key (checks all if omitted)")
+def dataset_health_cmd(dataset_key: str | None) -> None:
+    """Report row count and last-modified status for registered datasets."""
+    import os
+
+    import requests
+
+    registry = _load_dataset_registry()
+    keys_to_check = [dataset_key] if dataset_key else list(registry.keys())
+    token = os.getenv("SOCRATA_APP_TOKEN", "")
+    session = _make_session()
+    domain = os.getenv("SOCRATA_DOMAIN", "data.cityofnewyork.us")
+
+    rows_out = []
+    for key in keys_to_check:
+        if key not in registry:
+            rows_out.append({"key": key, "fourfour": "N/A", "row_count": None, "last_modified": None, "status": "unknown_key"})
+            continue
+        fourfour = registry[key]["fourfour"]
+        row_count = None
+        last_modified = None
+        status = "ok"
+        try:
+            # Count rows
+            count_url = f"https://{domain}/resource/{fourfour}.json"
+            params: dict = {"$select": "count(*) as c", "$limit": 1}
+            if token:
+                params["$$app_token"] = token
+            r = session.get(count_url, params=params, timeout=30)
+            r.raise_for_status()
+            data = r.json()
+            row_count = int(data[0]["c"]) if data else 0
+            if row_count == 0:
+                status = "empty"
+            # Metadata for last_modified
+            meta_url = f"https://{domain}/api/views/{fourfour}.json"
+            meta_params: dict = {}
+            if token:
+                meta_params["$$app_token"] = token
+            mr = session.get(meta_url, params=meta_params, timeout=30)
+            if mr.ok:
+                meta_json = mr.json()
+                ts = meta_json.get("rowsUpdatedAt") or meta_json.get("updatedAt")
+                if ts:
+                    import datetime
+
+                    last_modified = datetime.datetime.fromtimestamp(int(ts)).isoformat()
+        except requests.RequestException as exc:
+            status = f"error: {exc}"
+        rows_out.append({"key": key, "fourfour": fourfour, "row_count": row_count, "last_modified": last_modified, "status": status})
+
+    # Print table
+    header = f"{'Key':<35} {'FourFour':<12} {'Rows':>10} {'Last Modified':<22} Status"
+    click.echo(header)
+    click.echo("-" * len(header))
+    for r in rows_out:
+        rc = str(r["row_count"]) if r["row_count"] is not None else "N/A"
+        lm = str(r["last_modified"] or "N/A")[:20]
+        click.echo(f"{r['key']:<35} {r['fourfour']:<12} {rc:>10} {lm:<22} {r['status']}")
+
+
+# ---------------------------------------------------------------------------
+# 4. cache refresh
+# ---------------------------------------------------------------------------
+
+@main.group(name="cache")
+def cache_group() -> None:
+    """Cache management commands."""
+
+
+@cache_group.command(name="refresh")
+@click.argument("key")
+def cache_refresh_cmd(key: str) -> None:
+    """Invalidate the L2 cache entry for a dataset key."""
+    import os
+    import pathlib
+
+    cache_dir_str = os.getenv("SOCRATA_CACHE_DIR", str(pathlib.Path.home() / ".socrata_cache"))
+    cache_dir = pathlib.Path(cache_dir_str)
+    if not cache_dir.exists():
+        click.echo(f"Cache directory does not exist: {cache_dir} — nothing to delete")
+        return
+    deleted: list[str] = []
+    for ext in (".parquet", ".json"):
+        for candidate in cache_dir.glob(f"*{key}*{ext}"):
+            try:
+                candidate.unlink()
+                deleted.append(str(candidate))
+            except OSError as exc:
+                click.echo(f"Warning: could not delete {candidate}: {exc}")
+    if deleted:
+        click.echo(f"Deleted {len(deleted)} cache file(s) for key '{key}':")
+        for f in deleted:
+            click.echo(f"  {f}")
+    else:
+        click.echo(f"No cache files found for key '{key}' in {cache_dir}")
+
+
+# ---------------------------------------------------------------------------
+# 5. export
+# ---------------------------------------------------------------------------
+
+@main.command(name="export")
+@click.argument("key")
+@click.option("--format", "fmt", type=click.Choice(["geojson", "parquet", "csv"]), required=True)
+@click.option("--output", "output_path", type=click.Path(), required=True)
+def export_cmd(key: str, fmt: str, output_path: str) -> None:
+    """Fetch a dataset from Socrata and export to geojson, parquet, or csv."""
+    import os
+
+    import requests
+
+    registry = _load_dataset_registry()
+    if key not in registry:
+        raise click.ClickException(f"Dataset key '{key}' not found in config/datasets.yaml")
+    fourfour = registry[key]["fourfour"]
+    domain = os.getenv("SOCRATA_DOMAIN", "data.cityofnewyork.us")
+    token = os.getenv("SOCRATA_APP_TOKEN", "")
+    session = _make_session()
+
+    if fmt == "geojson":
+        if not HAS_GEOPANDAS:
+            raise click.ClickException("geopandas is required for GeoJSON export. Install with: pip install geopandas")
+        geojson_url = f"https://{domain}/resource/{fourfour}.geojson"
+        params: dict = {"$limit": 50000}
+        if token:
+            params["$$app_token"] = token
+        try:
+            r = session.get(geojson_url, params=params, timeout=120)
+            r.raise_for_status()
+        except requests.RequestException as exc:
+            raise click.ClickException(f"Socrata GeoJSON fetch failed: {exc}") from exc
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write(r.text)
+        click.echo(f"GeoJSON written to {output_path}")
+    else:
+        base_url = f"https://{domain}/resource/{fourfour}.json"
+        params = {"$limit": 50000}
+        if token:
+            params["$$app_token"] = token
+        try:
+            r = session.get(base_url, params=params, timeout=120)
+            r.raise_for_status()
+            rows = r.json()
+        except requests.RequestException as exc:
+            raise click.ClickException(f"Socrata fetch failed: {exc}") from exc
+
+        import pandas as pd
+
+        df = pd.DataFrame(rows)
+        if fmt == "csv":
+            df.to_csv(output_path, index=False)
+            click.echo(f"CSV written to {output_path} ({len(df)} rows)")
+        elif fmt == "parquet":
+            try:
+                df.to_parquet(output_path, index=False)
+                click.echo(f"Parquet written to {output_path} ({len(df)} rows)")
+            except ImportError as exc:
+                raise click.ClickException(f"pyarrow or fastparquet required for parquet export: {exc}") from exc
+
+
+# ---------------------------------------------------------------------------
+# 6. nl-query
+# ---------------------------------------------------------------------------
+
+@main.command(name="nl-query")
+@click.argument("question")
+@click.option("--dataset", "dataset_key", default=None, help="Dataset key from config/datasets.yaml")
+def nl_query_cmd(question: str, dataset_key: str | None) -> None:
+    """Translate a natural-language question into SoQL and query Socrata."""
+    import os
+
+    import requests
+
+    if not HAS_ANTHROPIC:
+        raise click.ClickException(
+            "anthropic SDK is not installed. Install with: pip install anthropic\n"
+            "Then set ANTHROPIC_API_KEY in your environment."
+        )
+
+    api_key = os.getenv("ANTHROPIC_API_KEY")
+    if not api_key:
+        raise click.ClickException(
+            "ANTHROPIC_API_KEY environment variable is not set.\n"
+            "Obtain an API key from https://console.anthropic.com and set it:\n"
+            "  export ANTHROPIC_API_KEY=sk-ant-..."
+        )
+
+    import anthropic
+
+    registry = _load_dataset_registry()
+
+    # Pick a default dataset if none specified
+    if dataset_key is None:
+        # prefer inspection dataset
+        dataset_key = "inspection" if "inspection" in registry else next(iter(registry))
+    if dataset_key not in registry:
+        raise click.ClickException(f"Dataset key '{dataset_key}' not found in config/datasets.yaml")
+
+    fourfour = registry[dataset_key]["fourfour"]
+    domain = os.getenv("SOCRATA_DOMAIN", "data.cityofnewyork.us")
+
+    # First, fetch a sample to get column names
+    token = os.getenv("SOCRATA_APP_TOKEN", "")
+    session = _make_session()
+    sample_url = f"https://{domain}/resource/{fourfour}.json"
+    sample_params: dict = {"$limit": 1}
+    if token:
+        sample_params["$$app_token"] = token
+
+    columns_hint = ""
+    try:
+        sr = session.get(sample_url, params=sample_params, timeout=30)
+        if sr.ok and sr.json():
+            columns_hint = f" Available columns: {', '.join(sr.json()[0].keys())}."
+    except requests.RequestException:
+        pass
+
+    system_prompt = (
+        "You are a Socrata SoQL query assistant. Given a question about NYC sidewalk inspection data, "
+        "output ONLY a valid SoQL query (no explanation). "
+        "Available columns depend on dataset."
+        + columns_hint
+    )
+
+    client = anthropic.Anthropic(api_key=api_key)
+    try:
+        message = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=512,
+            system=system_prompt,
+            messages=[{"role": "user", "content": question}],
+        )
+        soql_query = message.content[0].text.strip()
+    except anthropic.APIError as exc:
+        raise click.ClickException(f"Anthropic API error: {exc}") from exc
+
+    # Guard against destructive or injected SoQL before executing
+    _FORBIDDEN_KEYWORDS = {"drop", "delete", "insert", "update", "alter", "truncate", "--", ";"}
+    query_tokens = set(soql_query.lower().split())
+    hit = query_tokens & _FORBIDDEN_KEYWORDS
+    if hit:
+        raise click.ClickException(
+            f"Generated query contains forbidden keyword(s): {', '.join(sorted(hit))}. "
+            "Refusing to execute."
+        )
+
+    click.echo(f"Generated SoQL: {soql_query}")
+
+    # Execute the query
+    base_url = f"https://{domain}/resource/{fourfour}.json"
+    params: dict = {"$query": soql_query, "$limit": 1000}
+    if token:
+        params["$$app_token"] = token
+    try:
+        resp = session.get(base_url, params=params, timeout=60)
+        resp.raise_for_status()
+        rows = resp.json()
+    except requests.RequestException as exc:
+        raise click.ClickException(f"Socrata query failed: {exc}") from exc
+
+    if not rows:
+        click.echo("(no results)")
+        return
+
+    import pandas as pd
+
+    df = pd.DataFrame(rows)
+    click.echo(df.to_string(index=False, max_rows=50))
 
 
 if __name__ == "__main__":

@@ -2,7 +2,18 @@
 
 from __future__ import annotations
 
+from collections.abc import Generator
+from contextlib import contextmanager
+
 import streamlit as st
+
+# ---------------------------------------------------------------------------
+# NYC DOT brand constants
+# ---------------------------------------------------------------------------
+NYC_BLUE = "#003087"
+NYC_ORANGE = "#FF6319"
+NYC_GREEN = "#00A859"
+SIDEBAR_WIDTH = 280
 
 AGENCY_CSS = """
 <style>
@@ -108,6 +119,32 @@ AGENCY_CSS = """
   .quality-ok { color: #00cc66; }
   .quality-info { color: #66aaff; }
 
+  /* ===== Skeleton loading placeholders ===== */
+  .mc-skeleton-row {
+    background: linear-gradient(90deg, #1e2d3d 25%, #2a3f52 50%, #1e2d3d 75%);
+    background-size: 200% 100%;
+    animation: mc-shimmer 1.4s infinite;
+    border-radius: 6px;
+    height: 1.2rem;
+    margin-bottom: 0.5rem;
+  }
+  @keyframes mc-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mc-skeleton-row { animation: none; background: #1e2d3d; }
+  }
+
+  /* ===== Empty state ===== */
+  .mc-empty-state {
+    text-align: center; padding: 2.5rem 1rem;
+    border: 2px dashed #2a3544; border-radius: 12px;
+    margin: 1rem 0;
+  }
+  .mc-empty-icon { font-size: 3rem; margin-bottom: 0.75rem; }
+  .mc-empty-msg { color: #8fa3bc; font-size: 1rem; margin-bottom: 1rem; }
+
   /* ===== Accessibility ===== */
   @media (prefers-reduced-motion: reduce) {
     .mc-bar-fill { transition: none; }
@@ -130,89 +167,6 @@ AGENCY_CSS = """
   }
   section[data-testid="stSidebar"] .stRadio > label {
     color: #c5d4e3 !important;
-  }
-
-  /* ===== Fluid typography (clamp — scales without breakpoints) ===== */
-  .mc-header h1 { font-size: clamp(1.35rem, 4vw, 1.95rem) !important; }
-  .mc-subtitle  { font-size: clamp(0.8rem, 2vw, 0.95rem) !important; }
-  .mc-section-header h3 {
-    font-size: clamp(1.05rem, 2.6vw, 1.35rem);
-    color: #e8eef4; margin: 0 0 0.15rem 0; letter-spacing: -0.3px;
-  }
-  .mc-section-sub { color: #9eb3c7; font-size: clamp(0.78rem, 1.8vw, 0.9rem); margin: 0 0 0.5rem 0; }
-  .mc-section-header { margin: 0.25rem 0 0.75rem 0; border-left: 3px solid #f4c430; padding-left: 0.65rem; }
-
-  /* ===== KPI cards (responsive auto-fit grid) ===== */
-  .mc-kpi {
-    background: linear-gradient(135deg, #16233a, #1a2840);
-    border: 1px solid #2a3a55; border-radius: 12px;
-    padding: 0.85rem 1rem; min-height: 76px;
-    transition: border-color 0.2s, transform 0.2s;
-  }
-  .mc-kpi:hover { border-color: #3a5a8a; transform: translateY(-2px); }
-  .mc-kpi-label {
-    font-size: clamp(0.68rem, 1.6vw, 0.78rem); color: #8fa3bc;
-    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.35rem;
-  }
-  .mc-kpi-value {
-    font-size: clamp(1.3rem, 3.5vw, 1.75rem); font-weight: 700; color: #e8eef4;
-    display: flex; align-items: baseline; gap: 0.5rem; line-height: 1.1;
-  }
-  .mc-kpi-delta { font-size: clamp(0.7rem, 1.6vw, 0.85rem); font-weight: 600; }
-
-  /* ===== Status pills (icon + color, never color alone) ===== */
-  .mc-pill {
-    display: inline-flex; align-items: center; gap: 4px;
-    padding: 3px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 600;
-    background: color-mix(in srgb, var(--pill) 18%, transparent);
-    color: var(--pill); border: 1px solid color-mix(in srgb, var(--pill) 45%, transparent);
-  }
-
-  /* ===== Skeleton loaders ===== */
-  .mc-skeleton { display: flex; flex-direction: column; gap: 10px; padding: 8px 0; }
-  .mc-skeleton-bar {
-    border-radius: 6px;
-    background: linear-gradient(90deg, #1a2332 25%, #243149 50%, #1a2332 75%);
-    background-size: 200% 100%; animation: mc-shimmer 1.4s infinite;
-  }
-  @keyframes mc-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-
-  /* ===== Empty states ===== */
-  .mc-empty { text-align: center; padding: 2.5rem 1rem; color: #9eb3c7; }
-  .mc-empty-icon { font-size: 2.5rem; margin-bottom: 0.5rem; opacity: 0.7; }
-  .mc-empty-title { font-size: 1.05rem; font-weight: 600; color: #c5d4e3; }
-  .mc-empty-body { font-size: 0.88rem; margin-top: 0.35rem; max-width: 460px; margin-inline: auto; }
-
-  /* ===== Touch targets (WCAG 2.5.8 — min 44px) ===== */
-  .stButton > button, .stDownloadButton > button {
-    min-height: 44px; border-radius: 8px;
-  }
-  @media (max-width: 640px) {
-    .stButton > button, .stDownloadButton > button { width: 100%; }
-    /* Horizontal-scroll tab strip on small screens (9 tabs overflow) */
-    div[data-testid="stTabs"] div[role="tablist"] {
-      overflow-x: auto; flex-wrap: nowrap; scrollbar-width: thin;
-      -webkit-overflow-scrolling: touch;
-    }
-    div[data-testid="stTabs"] button[role="tab"] { white-space: nowrap; }
-  }
-
-  /* ===== Visible focus rings (WCAG 2.4.7 / 2.4.13) ===== */
-  a:focus-visible, button:focus-visible,
-  [role="tab"]:focus-visible, input:focus-visible, select:focus-visible {
-    outline: 3px solid #f4c430 !important; outline-offset: 2px !important;
-    border-radius: 4px;
-  }
-
-  /* ===== Reduced motion ===== */
-  @media (prefers-reduced-motion: reduce) {
-    .mc-bar-fill, .mc-kpi, .mc-skeleton-bar { transition: none !important; animation: none !important; }
-  }
-  /* ===== High contrast ===== */
-  @media (prefers-contrast: high) {
-    .mc-kpi { border-color: #fff; background: #000; }
-    .mc-kpi-value, .mc-kpi-label { color: #fff !important; }
-    .mc-pill { border-width: 2px; }
   }
 </style>
 """
@@ -291,3 +245,52 @@ def render_quality_badge(score: float) -> str:
     if score >= 60:
         return f'<span class="mc-badge mc-badge-demo">{score:.0f}/100</span>'
     return f'<span class="mc-badge mc-badge-warn">{score:.0f}/100</span>'
+
+
+@contextmanager
+def render_skeleton_placeholder(n_rows: int = 3) -> Generator[None, None, None]:
+    """Context manager that renders skeleton loading rows, then clears them.
+
+    Usage::
+
+        with render_skeleton_placeholder(n_rows=4):
+            time.sleep(2)  # replaced by real content after yield
+        st.write("Real content here")
+    """
+    skeleton_html = "".join(
+        f'<div class="mc-skeleton-row" style="width:{90 - (i * 10) % 30}%;"></div>'
+        for i in range(n_rows)
+    )
+    placeholder = st.empty()
+    placeholder.markdown(
+        f'<div style="padding:0.5rem 0">{skeleton_html}</div>',
+        unsafe_allow_html=True,
+    )
+    try:
+        yield
+    finally:
+        placeholder.empty()
+
+
+def render_empty_state(
+    message: str = "No data loaded yet",
+    action_label: str = "Load Data",
+    action_key: str = "empty_state_action",
+) -> None:
+    """Display an icon + message empty state with an action button.
+
+    Sets ``st.session_state[action_key] = True`` when the button is clicked.
+    """
+    st.markdown(
+        f"""
+        <div class="mc-empty-state">
+          <div class="mc-empty-icon">📭</div>
+          <div class="mc-empty-msg">{message}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    col_left, col_center, col_right = st.columns([1, 2, 1])
+    with col_center:
+        if st.button(action_label, type="primary", use_container_width=True, key=action_key):
+            st.session_state[action_key] = True

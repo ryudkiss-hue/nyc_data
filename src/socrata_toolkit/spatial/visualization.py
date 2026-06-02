@@ -25,6 +25,14 @@ try:
 except ImportError:
     HAS_FOLIUM = False
 
+try:
+    import geopandas as gpd  # type: ignore[import]
+
+    HAS_GEOPANDAS = True
+except ImportError:
+    gpd = None  # type: ignore[assignment]
+    HAS_GEOPANDAS = False
+
 logger = logging.getLogger(__name__)
 
 # NYC bounds and default center
@@ -490,7 +498,7 @@ class SpatialVisualization:
         html = f"<b>Segment: {segment_id}</b><br>"
 
         for key, value in properties.items():
-            if key not in ["geometry", "segment_id"]:
+            if key not in {"geometry", "segment_id"}:
                 if isinstance(value, float):
                     html += f"{key}: {value:.2f}<br>"
                 else:
@@ -590,3 +598,44 @@ class MapExporter:
         except Exception as e:
             logger.error(f"Error exporting to KML: {e}")
             return False
+
+
+def export_conflicts_geojson(conflicts_gdf, path: str | Path) -> bool:
+    """Write a conflicts GeoDataFrame to GeoJSON with severity properties.
+
+    Reprojects to WGS84 (the GeoJSON standard CRS) when needed and serialises
+    all attribute columns — including any ``conflict_score``/``dist`` severity
+    fields produced by the conflict engine — as feature properties.
+
+    Args:
+        conflicts_gdf: GeoDataFrame of conflicts (e.g. from ``detect_conflicts``
+            then ``spatial_conflict_score``).
+        path: Output ``.geojson`` file path.
+
+    Returns:
+        bool: ``True`` on success, ``False`` if geopandas is missing, the input
+        is empty/invalid, or the write fails.
+    """
+    if not HAS_GEOPANDAS:
+        logger.warning("export_conflicts_geojson: geopandas not installed")
+        return False
+    if conflicts_gdf is None or len(conflicts_gdf) == 0:
+        logger.warning("export_conflicts_geojson: no conflicts to export")
+        return False
+
+    try:
+        gdf = conflicts_gdf
+        if gdf.crs is not None and str(gdf.crs).upper() not in (
+            "EPSG:4326",
+            "WGS84",
+        ):
+            gdf = gdf.to_crs("EPSG:4326")
+
+        out_path = Path(path)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        gdf.to_file(str(out_path), driver="GeoJSON")
+        logger.info("Exported %d conflicts to %s", len(gdf), out_path)
+        return True
+    except Exception as e:  # noqa: BLE001
+        logger.error("Error exporting conflicts GeoJSON: %s", e)
+        return False

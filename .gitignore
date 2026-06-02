@@ -4,6 +4,7 @@
 __pycache__/
 *.pyc
 .env
+config/.env
 airflow_app/logs/
 airflow_app/config/*.cfg
 
@@ -47,3 +48,9 @@ dist/
 !desktop/build/**
 installer/output/*.exe
 !installer/output/.gitkeep
+
+# IDE / tool configs with potential secrets
+.roo/
+
+# Claude Code internal state
+.claude/worktrees/

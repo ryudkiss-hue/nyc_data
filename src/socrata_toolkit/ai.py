@@ -88,17 +88,17 @@ class LegalPolicyEngine:
         desc_lower = defect_description.lower()
         citations = []
 
-        if any(w in desc_lower for w in ["slope", "steep", "grade"]):
+        if any(w in desc_lower for w in {"slope", "steep", "grade"}):
             citations.append(self.knowledge_base["slope"])
-        if any(w in desc_lower for w in ["width", "narrow", "clearance", "block"]):
+        if any(w in desc_lower for w in {"width", "narrow", "clearance", "block"}):
             citations.append(self.knowledge_base["width"])
-        if any(w in desc_lower for w in ["trip", "pothole", "crack", "uneven", "lip"]):
+        if any(w in desc_lower for w in {"trip", "pothole", "crack", "uneven", "lip"}):
             citations.append(self.knowledge_base["trip"])
-        if any(w in desc_lower for w in ["owner", "property", "commercial", "responsible"]):
+        if any(w in desc_lower for w in {"owner", "property", "commercial", "responsible"}):
             citations.append(self.knowledge_base["owner_responsibility"])
         if any(
             w in desc_lower
-            for w in ["tree", "root", "city", "residential", "1-family", "2-family", "3-family"]
+            for w in {"tree", "root", "city", "residential", "1-family", "2-family", "3-family"}
         ):
             citations.append(self.knowledge_base["city_responsibility"])
 
@@ -381,7 +381,7 @@ def triage_complaints(
             )
             priorities.append(
                 reply
-                if reply in [PRIORITY_CRITICAL, PRIORITY_HIGH, PRIORITY_MEDIUM, PRIORITY_LOW]
+                if reply in {PRIORITY_CRITICAL, PRIORITY_HIGH, PRIORITY_MEDIUM, PRIORITY_LOW}
                 else PRIORITY_MEDIUM
             )
         except Exception as e:
@@ -457,7 +457,7 @@ def triage_complaints_gemini(
             )
             priorities.append(
                 reply
-                if reply in [PRIORITY_CRITICAL, PRIORITY_HIGH, PRIORITY_MEDIUM, PRIORITY_LOW]
+                if reply in {PRIORITY_CRITICAL, PRIORITY_HIGH, PRIORITY_MEDIUM, PRIORITY_LOW}
                 else PRIORITY_MEDIUM
             )
         except Exception as e:

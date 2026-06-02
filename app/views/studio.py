@@ -120,7 +120,7 @@ def _column_profile(meta: dict[str, Any]) -> list[dict[str, Any]]:
                 "is_key_candidate": field in KNOWN_JOIN_KEYS
                 or field.endswith("_id")
                 or "identifier" in field,
-                "is_geo": _column_type(col) in GEO_TYPES or "location" in field or field.startswith("loc_"),
+                "is_geo": _column_type(col) in GEO_TYPES or "location" in field,
             }
         )
     return profiled
