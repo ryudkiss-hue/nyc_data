@@ -69,12 +69,14 @@ def _read_env_file() -> dict[str, str]:
 
 
 def _write_env_file(env: dict[str, str]) -> None:
-    """Write key=value pairs to .env file (preserves existing non-Socrata entries)."""
+    """Write key=value pairs to .env file (preserves existing non-managed entries)."""
     existing_lines: list[str] = []
     managed_keys = {
         "SOCRATA_APP_TOKEN", "SOCRATA_KEY_ID", "SOCRATA_KEY_SECRET",
         "SOCRATA_DOMAIN", "SOCRATA_DOMAIN_SECONDARY",
         "SOCRATA_ROW_LIMIT", "SOCRATA_CACHE_TTL_SECONDS",
+        "ANTHROPIC_API_KEY", "CLAUDE_API_KEY",
+        "SLACK_WEBHOOK_URL", "ARCGIS_ORG_URL",
     }
 
     if _ENV_FILE.exists():
@@ -331,6 +333,15 @@ def render_settings_page() -> None:
 # Tab helpers
 # --------------------------------------------------------------------------- #
 
+_MANAGED_KEYS = {
+    "SOCRATA_APP_TOKEN", "SOCRATA_KEY_ID", "SOCRATA_KEY_SECRET",
+    "SOCRATA_DOMAIN", "SOCRATA_DOMAIN_SECONDARY",
+    "SOCRATA_ROW_LIMIT", "SOCRATA_CACHE_TTL_SECONDS",
+    "ANTHROPIC_API_KEY", "CLAUDE_API_KEY",
+    "SLACK_WEBHOOK_URL", "ARCGIS_ORG_URL",
+}
+
+
 def _render_api_tokens_tab() -> None:
     st.markdown("#### Socrata / NYC Open Data API Credentials")
     st.caption(
@@ -362,27 +373,32 @@ def _render_api_tokens_tab() -> None:
             type="password",
         )
 
+        st.divider()
+        st.markdown("**Anthropic / Claude API** (natural language queries)")
+        anthropic_key = st.text_input(
+            "API Key (`ANTHROPIC_API_KEY`)",
+            value=current.get("ANTHROPIC_API_KEY", current.get("CLAUDE_API_KEY", "")),
+            type="password",
+            help="Used by `socrata nl-query` and the NL Query view. Get a key at console.anthropic.com.",
+        )
+
         save_btn = st.form_submit_button("💾 Save credentials", type="primary")
 
     if save_btn:
         new_env = dict(current)
-        if app_token:
-            new_env["SOCRATA_APP_TOKEN"] = app_token
-        elif "SOCRATA_APP_TOKEN" in new_env:
-            del new_env["SOCRATA_APP_TOKEN"]
-        if key_id:
-            new_env["SOCRATA_KEY_ID"] = key_id
-        elif "SOCRATA_KEY_ID" in new_env:
-            del new_env["SOCRATA_KEY_ID"]
-        if key_secret:
-            new_env["SOCRATA_KEY_SECRET"] = key_secret
-        elif "SOCRATA_KEY_SECRET" in new_env:
-            del new_env["SOCRATA_KEY_SECRET"]
+        for key, val in [
+            ("SOCRATA_APP_TOKEN", app_token),
+            ("SOCRATA_KEY_ID", key_id),
+            ("SOCRATA_KEY_SECRET", key_secret),
+            ("ANTHROPIC_API_KEY", anthropic_key),
+            ("CLAUDE_API_KEY", anthropic_key),
+        ]:
+            if val:
+                new_env[key] = val
+            elif key in new_env:
+                del new_env[key]
         try:
-            _write_env_file({k: v for k, v in new_env.items()
-                             if k in {"SOCRATA_APP_TOKEN", "SOCRATA_KEY_ID", "SOCRATA_KEY_SECRET",
-                                      "SOCRATA_DOMAIN", "SOCRATA_DOMAIN_SECONDARY",
-                                      "SOCRATA_ROW_LIMIT", "SOCRATA_CACHE_TTL_SECONDS"}})
+            _write_env_file({k: v for k, v in new_env.items() if k in _MANAGED_KEYS})
             st.success("Credentials saved to `.env`. Restart the app to pick up new values.")
         except Exception as exc:
             st.error(f"Failed to write .env: {exc}")
@@ -493,10 +509,7 @@ def _render_configuration_tab() -> None:
 
         existing = _read_env_file()
         existing.update(new_vals)
-        _write_env_file({k: v for k, v in existing.items()
-                         if k in {"SOCRATA_APP_TOKEN", "SOCRATA_KEY_ID", "SOCRATA_KEY_SECRET",
-                                  "SOCRATA_DOMAIN", "SOCRATA_DOMAIN_SECONDARY",
-                                  "SOCRATA_ROW_LIMIT", "SOCRATA_CACHE_TTL_SECONDS"}})
+        _write_env_file({k: v for k, v in existing.items() if k in _MANAGED_KEYS})
         st.success("Configuration saved to `.env`. Restart the app to apply.")
 
     st.divider()
@@ -682,15 +695,10 @@ def _render_alerts_tab() -> None:
         if alert_email:
             existing["ALERT_EMAIL"] = alert_email
         try:
-            # Write all managed keys including the new alert ones
-            managed = {
-                "SOCRATA_APP_TOKEN", "SOCRATA_KEY_ID", "SOCRATA_KEY_SECRET",
-                "SOCRATA_DOMAIN", "SOCRATA_DOMAIN_SECONDARY",
-                "SOCRATA_ROW_LIMIT", "SOCRATA_CACHE_TTL_SECONDS",
-                "ALERT_VIOLATION_THRESHOLD", "ALERT_INSPECTION_GAP_DAYS",
-                "ALERT_SLACK_WEBHOOK", "ALERT_EMAIL",
-            }
-            _write_env_file({k: v for k, v in existing.items() if k in managed})
+            alert_extra = {"ALERT_VIOLATION_THRESHOLD", "ALERT_INSPECTION_GAP_DAYS",
+                           "ALERT_SLACK_WEBHOOK", "ALERT_EMAIL"}
+            _write_env_file({k: v for k, v in existing.items()
+                             if k in _MANAGED_KEYS | alert_extra})
             st.success("Alert settings saved.")
         except Exception as exc:
             st.error(f"Failed to save alert settings: {exc}")
