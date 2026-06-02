@@ -65,9 +65,7 @@ jobs:
           "
 
       - name: Streamlit app import
-        env:
-          MISSION_DEMO: "1"
-        run: python -c "from app import analytics, data_loader; print('streamlit app ok', data_loader.demo_mode_enabled())"
+        run: python -c "from app import analytics, data_loader; print('streamlit app ok')"
 
   readiness:
     name: Readiness report
