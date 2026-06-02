@@ -4,6 +4,7 @@ A self-contained Streamlit application for NYC DOT Operations,
 featuring native web scraping, Socrata API ingestion, Bayesian Inference,
 Facebook Prophet forecasting, and a Gemini AI Copilot.
 """
+from __future__ import annotations
 
 import os
 import random
@@ -11,6 +12,7 @@ import time
 import warnings
 from datetime import datetime
 
+import agentql
 import arviz as az
 import folium
 import numpy as np
@@ -20,8 +22,8 @@ import pymc as pm
 import requests
 import streamlit as st
 import streamlit.components.v1 as components
-from bs4 import BeautifulSoup
 from dateutil.relativedelta import relativedelta
+from playwright.sync_api import sync_playwright
 from prophet import Prophet
 
 warnings.filterwarnings("ignore")
@@ -39,6 +41,7 @@ st.set_page_config(
 
 SOCRATA_TOKEN = os.getenv("SOCRATA_TOKEN", "")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+AGENTQL_API_KEY = os.getenv("AGENTQL_API_KEY", "")
 GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent"
 
 COLORS = {
@@ -94,44 +97,56 @@ _init_state()
 # --- DATA INGESTION ---
 # ==========================================
 
+_JOB_QUERY = """
+{
+    job_title
+    agency_name
+    is_expired
+}
+"""
+
 def scrape_historical_jids(start_jid: int, end_jid: int) -> pd.DataFrame:
     """Scrapes cityjobs.nyc.gov for expired/filled requisitions with live progress."""
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+    if AGENTQL_API_KEY:
+        os.environ.setdefault("AGENTQL_API_KEY", AGENTQL_API_KEY)
+
     scraped_data = []
     total = end_jid - start_jid + 1
-
     progress_bar = st.progress(0, text="Initializing scraper...")
     status_slot = st.empty()
 
-    for i, jid in enumerate(range(start_jid, end_jid + 1)):
-        pct = (i + 1) / total
-        progress_bar.progress(pct, text=f"Scanning JID {jid}  ({i + 1}/{total})")
-        status_slot.caption(f"📡  `GET https://cityjobs.nyc.gov/job/jid-{jid}`")
-        time.sleep(random.uniform(0.4, 0.9))
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = agentql.wrap(browser.new_page())
 
-        try:
-            resp = requests.get(
-                f"https://cityjobs.nyc.gov/job/anything-jid-{jid}",
-                headers=headers,
-                timeout=5,
-            )
-            if resp.status_code == 200:
-                soup = BeautifulSoup(resp.content, "html.parser")
-                title_elem = soup.find("h1", class_="job-title")
-                agency_elem = soup.find("span", class_="agency-name")
-                job_title = title_elem.text.strip() if title_elem else "UNKNOWN TITLE"
-                agency_name = agency_elem.text.strip() if agency_elem else "UNKNOWN AGENCY"
-                status = "Expired" if soup.find("div", class_="alert-expired") else "Active"
+        for i, jid in enumerate(range(start_jid, end_jid + 1)):
+            pct = (i + 1) / total
+            progress_bar.progress(pct, text=f"Scanning JID {jid}  ({i + 1}/{total})")
+            status_slot.caption(f"📡  `GET https://cityjobs.nyc.gov/job/jid-{jid}`")
+            time.sleep(random.uniform(0.4, 0.9))
+
+            try:
+                page.goto(
+                    f"https://cityjobs.nyc.gov/job/anything-jid-{jid}",
+                    wait_until="domcontentloaded",
+                    timeout=10000,
+                )
+                data = page.query_data(_JOB_QUERY, wait_for_network_idle=False)
+                job_title = (data.get("job_title") or "UNKNOWN TITLE").strip()
+                agency_name = (data.get("agency_name") or "UNKNOWN AGENCY").strip()
+                is_expired = bool(data.get("is_expired"))
                 scraped_data.append({
                     "job_id": str(jid),
                     "civil_service_title": job_title.upper(),
                     "agency": agency_name.upper(),
-                    "Status": status,
+                    "Status": "Expired" if is_expired else "Active",
                     "posting_date": (datetime.now() - relativedelta(months=6)).strftime("%Y-%m-%dT00:00:00"),
                     "source": "scraper",
                 })
-        except Exception:
-            continue
+            except Exception:
+                continue
+
+        browser.close()
 
     progress_bar.empty()
     status_slot.empty()

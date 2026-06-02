@@ -51,6 +51,7 @@ class ReviewStore:
         self._ensure_schema()
 
     def close(self) -> None:
+        """Close the underlying DuckDB connection, suppressing errors."""
         try:
             self.con.close()
         except Exception:
@@ -99,6 +100,7 @@ class ReviewStore:
         notes: str = "",
         meta: dict[str, Any] | None = None,
     ) -> None:
+        """Record or update a conflict decision for the given key in the store."""
         self._upsert(
             pack_date=pack_date,
             kind="conflict",
@@ -123,6 +125,7 @@ class ReviewStore:
         notes: str = "",
         meta: dict[str, Any] | None = None,
     ) -> None:
+        """Record or update an approval decision for the given key in the store."""
         self._upsert(
             pack_date=pack_date,
             kind="approval",
@@ -185,6 +188,7 @@ class ReviewStore:
         q: str | None = None,
         limit: int = 2000,
     ) -> pd.DataFrame:
+        """Query review decisions with optional filters and return a DataFrame."""
         clauses: list[str] = []
         params: list[Any] = []
         if pack_date:
@@ -217,6 +221,7 @@ class ReviewStore:
         return df
 
     def completion_pct(self, *, pack_date: str, kind: DecisionKind, total_items: int) -> float:
+        """Return the percentage of total_items that have a recorded decision."""
         if total_items <= 0:
             return 0.0
         decided = int(
@@ -253,5 +258,6 @@ class ReviewStore:
 
 
 def default_review_store(*, profile: str | None = None) -> ReviewStore:
+    """Return a ReviewStore initialised from the given profile (or the default profile)."""
     return ReviewStore(profile=profile)
 

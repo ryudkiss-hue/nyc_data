@@ -22,12 +22,12 @@
     "pack": "electron-builder --dir"
   },
   "devDependencies": {
-    "electron": "^31.0.0",
-    "electron-builder": "^25.0.0"
+    "electron": "^42.3.0",
+    "electron-builder": "^26.8.1"
   },
   "dependencies": {
-    "electron-updater": "^6.2.1",
-    "electron-store": "^8.2.0"
+    "electron-store": "^8.2.0",
+    "electron-updater": "^6.2.1"
   },
   "build": {
     "appId": "gov.nyc.dot.missioncontrol",
@@ -52,7 +52,12 @@
     ],
     "win": {
       "target": [
-        { "target": "nsis", "arch": ["x64"] }
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
       ]
     },
     "nsis": {
@@ -64,11 +69,15 @@
       "shortcutName": "Manhattan Mission Control"
     },
     "mac": {
-      "target": ["dmg"],
+      "target": [
+        "dmg"
+      ],
       "category": "public.app-category.productivity"
     },
     "linux": {
-      "target": ["AppImage"],
+      "target": [
+        "AppImage"
+      ],
       "category": "Office"
     },
     "publish": [

@@ -10,13 +10,18 @@ workflow_datasets:
     - lot_info
     - mappluto
     - complaints_311
+    - correspondences
+    - curb_metal_protruding
   spatial:
     - weekly_construction
     - street_permits
     - capital_blocks
+    - sidewalk_planimetric
   contract:
     - violations
     - tree_damage
+    - dismissals
+    - street_construction_inspections
   productivity:
     - built
     - ramp_progress
@@ -48,6 +53,16 @@ datasets:
     fourfour: j6v2-6uxq
     group: core_smd
     label: All Tree Damage
+  dismissals:
+    fourfour: p4u2-3jgx
+    group: core_smd
+    label: Sidewalk Dismissal Inspection Tracking
+    manhattan_where: "upper(borough) = 'MANHATTAN'"
+  correspondences:
+    fourfour: bheb-sjfi
+    group: core_smd
+    label: Sidewalk Correspondences
+    manhattan_where: "upper(borough) = 'MANHATTAN'"
   ramp_locations:
     fourfour: ufzp-rrqu
     group: accessibility
@@ -73,6 +88,39 @@ datasets:
     fourfour: jvk9-k4re
     group: coordination
     label: Capital Reconstruction Blocks
+  capital_intersections:
+    fourfour: 97nd-ff3i
+    group: coordination
+    label: Capital Reconstruction Projects - Intersection
+  street_construction_inspections:
+    fourfour: ydkf-mpxb
+    group: coordination
+    label: Street Construction Inspections (HIQA)
+  street_closures_block:
+    fourfour: i6b5-j7bu
+    group: coordination
+    label: Street Closures by Block
+  permit_stipulations:
+    fourfour: gsgx-6efw
+    group: coordination
+    label: Street Construction Permit Stipulations
+  curb_metal_protruding:
+    fourfour: i2y3-sx2e
+    group: core_smd
+    label: Curb Metal Protruding Data
+    manhattan_where: "upper(borough) = 'MANHATTAN'"
+  step_streets:
+    fourfour: u9au-h79y
+    group: overlays
+    label: Step Streets Locations
+  street_resurfacing_schedule:
+    fourfour: xnfm-u3k5
+    group: coordination
+    label: Street Resurfacing Schedule
+  street_resurfacing_inhouse:
+    fourfour: ffaf-8mrv
+    group: coordination
+    label: DOT In-house Street Resurfacing Projects
   sidewalk_planimetric:
     fourfour: vfx9-tbb6
     group: overlays
@@ -82,10 +130,11 @@ datasets:
     group: overlays
     label: Pedestrian Demand
   mappluto:
-    fourfour: 6fi9-q3ta
+    fourfour: 64uk-42ks
     group: overlays
     label: MapPLUTO
   complaints_311:
     fourfour: erm2-nwe9
     group: overlays
     label: 311 Sidewalk/Curb
+    default_where: "complaint_type IN ('Sidewalk Condition', 'Curb Condition', 'Damaged Tree', 'Root/Sewer/Sidewalk Condition', 'Sidewalk Cafe', 'Streetlight Condition')"

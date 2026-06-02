@@ -110,7 +110,9 @@ def sync_dataset(
                 if table_exists:
                     manager.query(f'INSERT INTO "{table_name}" SELECT * FROM temp_df')
                 else:
-                    manager.conn.execute(f'CREATE TABLE "{table_name}" AS SELECT * FROM temp_df')
+                        # Sanitize identifier: strip embedded quotes before quoting
+                    safe_table = table_name.replace('"', '')
+                    manager.conn.execute(f'CREATE TABLE "{safe_table}" AS SELECT * FROM temp_df')
 
             count += len(batch)
             if pbar:

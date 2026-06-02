@@ -379,3 +379,34 @@ tasks); `mmcCacheStats()` shows cache size; `mmcCacheClear()` empties it. See
 1. [TROUBLESHOOTING.md](TROUBLESHOOTING.md) — structured error guide  
 2. [USER_MANUAL.md](USER_MANUAL.md) — full workflows  
 3. [sop_faq.md](sop_faq.md) — DOT operational SOPs (morning brief, permit lookahead)
+
+---
+
+## Visualization & Advanced Features
+
+**How do I switch to GPU-accelerated deck.gl maps?**
+Open the Map modal (map icon in top toolbar), then click the **⚡ GPU (deck.gl)** button in the top-right corner of the map panel. deck.gl uses WebGL for 60fps rendering with millions of points. Click **🗺 Leaflet** to switch back.
+
+**What is Expert mode?**
+Click the **Simple Mode / Expert Mode** button in the bottom-right corner of the screen. Simple mode hides advanced tabs (ERD, SOQL Builder, Trends, Bayesian ML, Code Generators) to reduce complexity for new users. Expert mode reveals them all. Your preference is saved in localStorage.
+
+**How do I run queries offline with DuckDB?**
+In the SOQL Builder tab, check the **DuckDB-WASM (local)** checkbox before clicking Run. This routes the query through DuckDB running entirely in the browser — no network call to Socrata for the SQL execution step (the data still needs to be fetched once). Requires a modern browser.
+
+**How do I export governance metadata (DCAT 3, PROV-DM, ODRL, STAC)?**
+Go to the Governance tab, run an assessment, then scroll to the **Standards Export** panel at the bottom. Click any of the download buttons. The sidecar API must be running (`python app/sidecar_api.py`).
+
+**How do I view the Trends chart?**
+Click the **Trends** tab in the main tab bar. Select a dataset from your cart, choose an X column (date/time) and a Y column (numeric), then click **Plot**. The chart uses Observable Plot with a confidence band line.
+
+**How do I get a scatter plot?**
+Go to the **Profiles** tab, select a dataset from your cart. A **Scatter Plot** panel appears below the column table. Choose two numeric columns from the X/Y dropdowns and click **Plot**.
+
+**How do I export slides as PowerPoint?**
+Add datasets to your cart, run any analyses to render charts, then click the **PPTX** button in the cart sidebar. The sidecar will collect all rendered canvas charts and build a `.pptx` file. Requires `pip install python-pptx` and the sidecar running.
+
+**How do I use semantic (AI-powered) search?**
+In the Discovery tab, look for the **✦ Semantic search** input below the regular search bar. Type a natural-language query (e.g. "sidewalk inspection quality scores by borough"). Results are ranked by meaning similarity using sentence-transformers via the sidecar. Requires the sidecar running with `sentence-transformers` installed.
+
+**How do I see PII masking previews?**
+Run a governance assessment on a dataset in the Governance tab. In the PII Inspector card, each flagged column has a **Preview masked** button — click it to see 5 sample values masked (emails, phones, SSNs automatically redacted).

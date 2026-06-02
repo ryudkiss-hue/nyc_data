@@ -7,6 +7,7 @@ Includes enhanced column profiling, health scoring, and quality metrics.
 
 from __future__ import annotations
 
+import hashlib
 import logging
 from dataclasses import dataclass, field
 from datetime import timezone
@@ -283,55 +284,6 @@ def profile_all_datasets(frames: dict[str, pd.DataFrame]) -> dict[str, DatasetPr
         except Exception as exc:
             log.warning("Profile failed for %s: %s", key, exc)
     return profiles
-
-
-# ---------------------------------------------------------------------------
-# Health scoring
-# ---------------------------------------------------------------------------
-
-def dataset_health_score(df: pd.DataFrame) -> dict[str, Any]:
-    """Return a 0-100 health score with contributing factors."""
-    if df.empty:
-        return {"score": 0, "factors": {"empty": True}}
-
-    factors: dict[str, Any] = {}
-    score = 100.0
-
-    # Null rate
-    null_pct = df.isna().values.mean() * 100
-    null_penalty = min(null_pct * 0.4, 30)
-    score -= null_penalty
-    factors["null_pct"] = round(null_pct, 1)
-
-    # Duplicate rows
-    try:
-        dup_pct = df.duplicated().mean() * 100
-        dup_penalty = min(dup_pct * 0.5, 20)
-        score -= dup_penalty
-        factors["duplicate_pct"] = round(dup_pct, 1)
-    except Exception:
-        pass
-
-    # Schema richness (number of non-internal columns)
-    real_cols = [c for c in df.columns if not c.startswith("_")]
-    if len(real_cols) < 3:
-        score -= 10
-    factors["column_count"] = len(real_cols)
-
-    # Geographic data presence
-    has_geo = any(c.lower() in {"latitude", "longitude", "lat", "lon", "the_geom"} for c in df.columns)
-    factors["has_geo"] = has_geo
-
-    # Date column presence
-    has_date = bool(_detect_date_columns(df))
-    factors["has_date"] = has_date
-
-    # Row count
-    if len(df) < 10:
-        score -= 15
-    factors["row_count"] = len(df)
-
-    return {"score": round(max(0.0, score), 1), "factors": factors}
 
 
 # ---------------------------------------------------------------------------

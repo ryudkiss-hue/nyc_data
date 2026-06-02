@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import pandas as pd
 import streamlit as st
 
 from app.analytics import (
+    DatasetProfile,
     ProductivityROI,
     compare_datasets,
+    profile_dataset,
     quality_summary,
 )
 from app.data_loader import (
@@ -203,43 +207,23 @@ def view_spatial(results: dict, map_layers: dict[str, pd.DataFrame]) -> None:
             )
 
     # Map visualization
-    _LAYER_COLORS = {
-        "SMD Inspection": "#3B82F6",
-        "Street Permits": "#10B981",
-        "⚠️ Conflict":    "#EF4444",
-    }
     map_points: list[pd.DataFrame] = []
     for key, label in (("inspection", "SMD Inspection"), ("street_permits", "Street Permits")):
         layer_df = map_layers.get(key, pd.DataFrame())
         if not layer_df.empty:
             layer_df = layer_df.copy()
             layer_df["layer"] = label
-            layer_df["color"] = _LAYER_COLORS[label]
             map_points.append(layer_df)
     conflict_pts = _conflicts_map_df(conflicts)
     if not conflict_pts.empty:
         conflict_pts = conflict_pts.copy()
         conflict_pts["layer"] = "⚠️ Conflict"
-        conflict_pts["color"] = _LAYER_COLORS["⚠️ Conflict"]
         map_points.append(conflict_pts)
 
     if map_points:
-        geo_points = [
-            df for df in map_points
-            if "lat" in df.columns and "lon" in df.columns
-            and df["lat"].notna().any() and df["lon"].notna().any()
-        ]
-        if geo_points:
-            combined = pd.concat(geo_points, ignore_index=True)
-            combined = combined.dropna(subset=["lat", "lon"])
-            combined["lat"] = pd.to_numeric(combined["lat"], errors="coerce")
-            combined["lon"] = pd.to_numeric(combined["lon"], errors="coerce")
-            combined = combined.dropna(subset=["lat", "lon"])
-            if not combined.empty:
-                st.map(combined, latitude="lat", longitude="lon", color="color", size=20)
-                st.caption(f"Showing {len(combined):,} points · {len(geo_points)} layers")
-        else:
-            st.info("No geocoded points available to map.")
+        combined = pd.concat(map_points, ignore_index=True)
+        st.map(combined, latitude="lat", longitude="lon", color="layer", size=20)
+        st.caption(f"Showing {len(combined):,} points · {len([x for x in map_points if not x.empty])} layers")
     else:
         st.info("No geospatial layers loaded. Select 'Spatial' workflow and reload datasets.")
 

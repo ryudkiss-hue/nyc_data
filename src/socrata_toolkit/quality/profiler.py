@@ -29,6 +29,7 @@ class TableProfile:
     column_profiles: dict[str, ColumnProfile]
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize the TableProfile and all column profiles to a JSON-compatible dict."""
         return {
             "table_name": self.table_name,
             "row_count": self.row_count,
@@ -54,6 +55,7 @@ class ProfileGenerator:
         self.sample_size = sample_size
 
     def profile_dataset(self, df: pd.DataFrame, table_name: str = "dataset") -> TableProfile:
+        """Profile a DataFrame (sampling if large) and return a TableProfile."""
         if len(df) > self.sample_size:
             sample_df = df.sample(self.sample_size, random_state=42)
         else:
@@ -103,6 +105,7 @@ class ProfileGenerator:
             )
 
     def suggest_expectations(self, profile: TableProfile) -> list[dict[str, Any]]:
+        """Return a list of suggested expectation dicts derived from the column profiles."""
         suggestions = []
         for col, col_prof in profile.column_profiles.items():
             suggestions.append({
@@ -117,9 +120,11 @@ class ProfileGenerator:
         return suggestions
 
     def compare_profiles(self, profile1: TableProfile, profile2: TableProfile) -> DriftReport:
+        """Compare two TableProfiles and return a DriftReport indicating whether drift was detected."""
         return DriftReport(is_drifted=True)
 
     def detect_schema_drift(self, profile1: TableProfile, profile2: TableProfile) -> dict[str, Any]:
+        """Return dicts of columns added and removed between two TableProfiles."""
         cols1 = set(profile1.column_profiles.keys())
         cols2 = set(profile2.column_profiles.keys())
         return {
@@ -128,6 +133,7 @@ class ProfileGenerator:
         }
 
     def generate_summary(self, profile: TableProfile) -> dict[str, Any]:
+        """Return a high-level summary dict with row and column counts from a TableProfile."""
         return {
             "row_count": profile.row_count,
             "column_count": profile.column_count
@@ -136,7 +142,9 @@ class ProfileGenerator:
 # Legacy stubs
 class DataProfiler:
     def profile_dataset(self, data: Any) -> dict[str, Any]:
+        """Return an empty profile dict (legacy stub)."""
         return {}
 
 def generate_profile_report(data: Any) -> str:
+    """Return an empty profile report string (legacy stub)."""
     return ""

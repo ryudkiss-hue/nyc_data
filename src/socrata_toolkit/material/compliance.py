@@ -304,10 +304,10 @@ class MaterialCompliance:
                     'title': rule.title,
                     'severity': rule.failure_severity.value,
                     'description': rule.description,
-                    'remediation_required': rule.failure_severity in [
+                    'remediation_required': rule.failure_severity in {
                         ADAFailureSeverity.CRITICAL,
                         ADAFailureSeverity.HIGH,
-                    ],
+                    },
                 })
 
         # Calculate compliance score (100 - violations weighted by severity)
@@ -598,10 +598,10 @@ class MaterialCompliance:
                     return True
 
         # Heuristic-based checks based on condition
-        if rule_id == "ADA-1.5.1" and assessment.condition in [
+        if rule_id == "ADA-1.5.1" and assessment.condition in {
             SurfaceCondition.POOR,
             SurfaceCondition.CRITICAL,
-        ]:
+        }:
             return True
 
         if rule_id == "ADA-1.3.1" and assessment.condition == SurfaceCondition.CRITICAL:
