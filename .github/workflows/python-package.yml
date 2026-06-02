@@ -48,6 +48,9 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
+      env:
+        SOCRATA_APP_TOKEN: ${{ secrets.SOCRATA_APP_TOKEN }}
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       run: |
         pytest tests/ -q --tb=short \
           --ignore=tests/test_api_security.py \
