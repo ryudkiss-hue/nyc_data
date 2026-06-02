@@ -181,7 +181,7 @@ def bayesian_yield_rate(req: YieldRateRequest) -> dict[str, Any]:
         raise HTTPException(400, "observations and totals must have equal length")
     if any(o < 0 for o in req.observations) or any(t <= 0 for t in req.totals):
         raise HTTPException(400, "totals must be > 0 and observations >= 0")
-    if any(o > t for o, t in zip(req.observations, req.totals, strict=False)):
+    if any(o > t for o, t in zip(req.observations, req.totals)):
         raise HTTPException(400, "each observation must be <= its total")
 
     total_success = sum(req.observations)

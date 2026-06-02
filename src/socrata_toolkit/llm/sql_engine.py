@@ -251,7 +251,7 @@ Generate a PostgreSQL query. Return only the SQL, no markdown or explanation."""
 
                         # Fetch results
                         for row in cur.fetchall():
-                            results.append(dict(zip(columns, row, strict=False)))
+                            results.append(dict(zip(columns, row)))
 
             execution_time = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
 
