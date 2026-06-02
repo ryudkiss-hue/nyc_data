@@ -5,3 +5,4 @@ ruff>=0.1.0
 isort>=5.0
 pre-commit>=3.0
 coverage>=7.0
+openpyxl>=3.0
