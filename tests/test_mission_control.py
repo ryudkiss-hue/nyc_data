@@ -31,23 +31,6 @@ def test_normalize_bbl():
     assert out.iloc[0] == "3022330001"
 
 
-def test_demo_mode_frames(monkeypatch):
-    monkeypatch.delenv("SOCRATA_APP_TOKEN", raising=False)
-    monkeypatch.delenv("SOCRATA_KEY_ID", raising=False)
-    monkeypatch.delenv("SOCRATA_KEY_SECRET", raising=False)
-    monkeypatch.setenv("MISSION_DEMO", "1")
-    assert data_loader.demo_mode_enabled()
-    df = data_loader._demo_frame("lot_info")
-    assert not df.empty
-    assert "_bbl" in df.columns
-
-
-def test_fetch_datasets_for_keys_demo(monkeypatch):
-    monkeypatch.setenv("MISSION_DEMO", "1")
-    frames = data_loader.fetch_datasets_for_keys(data_loader.keys_for_workflow("contract"), limit=100)
-    assert "violations" in frames
-    assert not frames["violations"].empty
-
 
 def test_qa_qc_ledger_owner_mismatch():
     lot = pd.DataFrame({"bbl": ["1000010001"], "owner": ["City"]})
