@@ -40,6 +40,7 @@ from app.views.contracts_dashboard import render_contracts_page
 from app.views.data_discovery import render_data_discovery_page
 from app.views.forecasting import render_forecasting_page
 from app.views.gis_dashboard import render_gis_page
+from socrata_toolkit.analysis.changepoint import detect_cusum_changepoint
 
 # Top-level navigation sections
 _SECTIONS = {
@@ -160,6 +161,74 @@ def _load_map_layers(limit: int) -> dict:
 @st.cache_data(ttl=600, show_spinner="Running analyst workflows…")
 def _run_workflows(frames: dict) -> dict:
     return run_all_workflows(frames)
+
+
+# ---------------------------------------------------------------------------
+# Anomaly detection helpers
+# ---------------------------------------------------------------------------
+
+_ANOMALY_CANDIDATE_KEYS = ("df", "data", "workflow_df", "sample_df")
+_CUSUM_SIGMA_THRESHOLD = 3.0  # flag anomaly when peak CUSUM > 3 × std
+
+
+@st.cache_data(ttl=300)
+def _detect_sidebar_anomaly(series_values: tuple[float, ...]) -> bool:
+    """Return True if the CUSUM statistic indicates a real level-shift.
+
+    Uses a threshold of ``_CUSUM_SIGMA_THRESHOLD`` standard deviations: the
+    peak absolute CUSUM value must exceed ``k * std(series)`` to be flagged.
+    This avoids false positives on flat or low-variance data where
+    ``detect_cusum_changepoint`` always returns a (trivially maximal) index.
+
+    Accepts a tuple (hashable) so that ``@st.cache_data`` can hash the input.
+    """
+    import pandas as pd
+
+    series = pd.Series(series_values)
+    if len(series) < 10:
+        return False
+    sigma = float(series.std())
+    if sigma == 0:
+        return False
+    mu = float(series.mean())
+    cusum = (series - mu).cumsum()
+    return float(cusum.abs().max()) > _CUSUM_SIGMA_THRESHOLD * sigma
+
+
+def _maybe_render_anomaly_badge() -> None:
+    """Render a sidebar warning badge if CUSUM detects a changepoint.
+
+    Tries session-state keys in order: ``_ANOMALY_CANDIDATE_KEYS``.  Uses the
+    first DataFrame found with at least 10 rows.  Silently skips when no data
+    is loaded.
+    """
+    try:
+        import pandas as pd
+
+        frame: pd.DataFrame | None = None
+        for key in _ANOMALY_CANDIDATE_KEYS:
+            candidate = st.session_state.get(key)
+            if isinstance(candidate, pd.DataFrame) and len(candidate) >= 10:
+                frame = candidate
+                break
+
+        if frame is None:
+            return
+
+        numeric_cols = frame.select_dtypes(include="number").columns
+        if len(numeric_cols) == 0:
+            return
+
+        series = frame[numeric_cols[0]].dropna()
+        if len(series) < 10:
+            return
+
+        if _detect_sidebar_anomaly(tuple(series.tolist())):
+            st.sidebar.warning(
+                "⚠️ Anomaly detected in data — check CUSUM chart in Advanced Analytics"
+            )
+    except Exception:  # noqa: BLE001
+        pass  # Never crash the sidebar
 
 
 # ---------------------------------------------------------------------------
@@ -285,6 +354,9 @@ def _sidebar_nav() -> tuple[str, dict]:
             section = st.session_state.get("main_nav_section", "home")
 
         st.divider()
+
+        # Anomaly badge — shown when a changepoint is detected in loaded data
+        _maybe_render_anomaly_badge()
 
         # Sticky filter bar
         _render_sticky_filters(section)
