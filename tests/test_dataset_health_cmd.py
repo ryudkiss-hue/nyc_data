@@ -44,7 +44,7 @@ def test_dataset_health_sort_by_invalid() -> None:
     runner = CliRunner()
     result = runner.invoke(main, ["dataset", "health", "--sort-by", "invalid"])
     assert result.exit_code != 0
-    assert "invalid choice" in result.output.lower()
+    assert "invalid value" in result.output.lower()
 
 
 def test_dataset_health_stale_option() -> None:
