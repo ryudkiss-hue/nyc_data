@@ -2430,6 +2430,113 @@ def dataset_health_cmd(dataset_key: str | None) -> None:
         click.echo(f"{r['key']:<35} {r['fourfour']:<12} {rc:>10} {lm:<22} {r['status']}")
 
 
+@dataset_group.command(name="ramp-analysis")
+@click.option(
+    "--full-corpus",
+    is_flag=True,
+    help="Fetch all 50K+ ramps and cache for 1 week (requires SOCRATA_APP_TOKEN)",
+)
+@click.option(
+    "--sample",
+    "sample_size",
+    type=int,
+    default=100,
+    show_default=True,
+    help="Sample N corners (default: 100). Ignored if --full-corpus is set.",
+)
+@click.option(
+    "--borough",
+    "borough_filter",
+    type=str,
+    default=None,
+    help="Filter to specific borough (e.g., MN, BX, BK, QN, SI)",
+)
+@click.option(
+    "--include-ci",
+    is_flag=True,
+    default=True,
+    help="Show 95% confidence intervals (default: true)",
+)
+def dataset_ramp_analysis_cmd(
+    full_corpus: bool,
+    sample_size: int,
+    borough_filter: str | None,
+    include_ci: bool,
+) -> None:
+    """Analyze pedestrian ramp completion rates by borough.
+
+    Generates per-borough completion rates with optional 95% confidence intervals
+    and reliability assessment. Supports sample mode (default, fast) or
+    full-corpus mode (comprehensive, requires Socrata token).
+
+    Example:
+        socrata dataset ramp-analysis --sample 100
+        socrata dataset ramp-analysis --full-corpus --include-ci --borough MN
+    """
+    import os
+
+    import requests
+
+    from ..engineering.ramp_analysis import RampCompletionReportGenerator
+
+    registry = _load_dataset_registry()
+    if "ramp_progress" not in registry:
+        raise click.ClickException(
+            "Dataset key 'ramp_progress' not found in config/datasets.yaml"
+        )
+
+    fourfour = registry["ramp_progress"]["fourfour"]
+    domain = os.getenv("SOCRATA_DOMAIN", "data.cityofnewyork.us")
+    token = os.getenv("SOCRATA_APP_TOKEN", "")
+
+    # Determine fetch limit and mode
+    mode = "full-corpus" if full_corpus else "sample"
+    fetch_limit = 50000 if full_corpus else sample_size
+
+    # Fetch data
+    base_url = f"https://{domain}/resource/{fourfour}.json"
+    params: dict = {"$limit": fetch_limit}
+    if token:
+        params["$$app_token"] = token
+
+    try:
+        session = _make_session()
+        resp = session.get(base_url, params=params, timeout=120)
+        resp.raise_for_status()
+        rows = resp.json()
+    except requests.RequestException as exc:
+        raise click.ClickException(f"Socrata fetch failed: {exc}") from exc
+
+    if not rows:
+        click.echo(
+            "No ramp data found in dataset. Check borough filter and dataset availability."
+        )
+        return
+
+    # Convert to DataFrame
+    df = pd.DataFrame(rows)
+
+    # Generate report
+    try:
+        generator = RampCompletionReportGenerator()
+        report = generator.generate(
+            df=df,
+            mode=mode,
+            sample_size=sample_size if not full_corpus else None,
+            borough_filter=borough_filter,
+            include_ci=include_ci,
+        )
+    except ValueError as exc:
+        raise click.ClickException(f"Report generation failed: {exc}") from exc
+
+    # Output table
+    click.echo("\n" + report.to_table())
+
+    # Output JSON for machine consumption
+    click.echo("\n")
+    click.echo(json.dumps(report.to_dict(), indent=2))
+
+
 # ---------------------------------------------------------------------------
 # 4. cache refresh
 # ---------------------------------------------------------------------------
