@@ -951,6 +951,191 @@ def _render_sla_tab() -> None:
         with st.expander("Current sla_config.json"):
             st.json(_load_sla_config())
 
+    # ------------------------------------------------------------------
+    # SLA Compliance Monitor
+    # ------------------------------------------------------------------
+    st.divider()
+    st.markdown("### 📊 SLA Compliance Monitor")
+    st.caption(
+        "Live compliance status for data quality SLAs across the sidewalk inspections dataset. "
+        "Evaluated over the last 24 hours (1440 minutes)."
+    )
+
+    _render_sla_compliance_monitor()
+
+
+def _render_sla_compliance_monitor() -> None:
+    """Render the SLA compliance monitoring section."""
+    import pandas as pd  # noqa: PLC0415
+
+    from socrata_toolkit.quality.sla import DataQualityTracker, MetricType, Severity, SLADefinition
+
+    # Retrieve or initialise the tracker in session state
+    if "sla_tracker" not in st.session_state:
+        tracker = DataQualityTracker()
+
+        # Register one SLA per MetricType for the sidewalk_inspections dataset
+        _DEMO_SLAS: list[SLADefinition] = [
+            SLADefinition(
+                metric_name="sidewalk_inspections_completeness",
+                metric_type=MetricType.COMPLETENESS,
+                target=0.98,
+                window="daily",
+                dataset="sidewalk_inspections",
+                severity=Severity.HIGH,
+                owner="data-engineering@nyc.gov",
+            ),
+            SLADefinition(
+                metric_name="sidewalk_inspections_validity",
+                metric_type=MetricType.VALIDITY,
+                target=0.95,
+                window="daily",
+                dataset="sidewalk_inspections",
+                severity=Severity.HIGH,
+                owner="data-engineering@nyc.gov",
+            ),
+            SLADefinition(
+                metric_name="sidewalk_inspections_uniqueness",
+                metric_type=MetricType.UNIQUENESS,
+                target=0.99,
+                window="daily",
+                dataset="sidewalk_inspections",
+                severity=Severity.MEDIUM,
+                owner="data-engineering@nyc.gov",
+            ),
+            SLADefinition(
+                metric_name="sidewalk_inspections_consistency",
+                metric_type=MetricType.CONSISTENCY,
+                target=0.92,
+                window="daily",
+                dataset="sidewalk_inspections",
+                severity=Severity.MEDIUM,
+                owner="data-engineering@nyc.gov",
+            ),
+            SLADefinition(
+                metric_name="sidewalk_inspections_timeliness",
+                metric_type=MetricType.TIMELINESS,
+                target=0.90,
+                window="hourly",
+                dataset="sidewalk_inspections",
+                severity=Severity.MEDIUM,
+                owner="data-engineering@nyc.gov",
+            ),
+            SLADefinition(
+                metric_name="sidewalk_inspections_accuracy",
+                metric_type=MetricType.ACCURACY,
+                target=0.95,
+                window="daily",
+                dataset="sidewalk_inspections",
+                severity=Severity.HIGH,
+                owner="data-engineering@nyc.gov",
+            ),
+        ]
+
+        # Seed demo metric values (realistic range 0.85–0.99)
+        _DEMO_SEEDS: list[tuple[str, float, MetricType]] = [
+            ("sidewalk_inspections_completeness", 0.985, MetricType.COMPLETENESS),
+            ("sidewalk_inspections_validity", 0.962, MetricType.VALIDITY),
+            ("sidewalk_inspections_uniqueness", 0.997, MetricType.UNIQUENESS),
+            ("sidewalk_inspections_consistency", 0.883, MetricType.CONSISTENCY),
+            ("sidewalk_inspections_timeliness", 0.914, MetricType.TIMELINESS),
+            ("sidewalk_inspections_accuracy", 0.941, MetricType.ACCURACY),
+        ]
+
+        for sla in _DEMO_SLAS:
+            tracker.register_sla(sla)
+
+        for metric_name, value, metric_type in _DEMO_SEEDS:
+            tracker.record_metric(
+                metric_name=metric_name,
+                value=value,
+                dataset="sidewalk_inspections",
+                metric_type=metric_type,
+                window="daily",
+            )
+
+        st.session_state["sla_tracker"] = tracker
+    else:
+        tracker = st.session_state["sla_tracker"]
+
+    # Generate compliance report
+    report = tracker.get_sla_compliance_report(lookback_minutes=1440)
+
+    overall_pct = report.get("overall_compliance", 0.0) * 100
+    sla_results = report.get("sla_results", [])
+    total_slas = len(sla_results)
+    breach_count = sum(1 for r in sla_results if not r.get("compliant", True))
+
+    # ---- Summary metric cards ----
+    m1, m2, m3 = st.columns(3)
+    m1.metric(
+        label="Overall Compliance",
+        value=f"{overall_pct:.1f}%",
+        delta=f"{total_slas - breach_count}/{total_slas} passing",
+    )
+    m2.metric(label="Total SLAs", value=total_slas)
+    m3.metric(
+        label="Breaches",
+        value=breach_count,
+        delta=breach_count if breach_count else None,
+        delta_color="inverse",
+    )
+
+    # ---- Per-SLA status table ----
+    st.markdown("#### Per-SLA Status")
+
+    if not sla_results:
+        st.info("No SLA results available.")
+        return
+
+    rows = []
+    for result in sla_results:
+        compliant = result.get("compliant", True)
+        actual = result.get("actual", 0.0)
+        target = result.get("target", 0.0)
+        gap = actual - target
+        rows.append(
+            {
+                "SLA Name": result.get("metric_name", ""),
+                "Target": f"{target:.1%}",
+                "Actual": f"{actual:.1%}",
+                "Gap": f"{gap:+.1%}",
+                "Status": "PASS" if compliant else "FAIL",
+                "Severity": result.get("severity", "").upper(),
+                "Window": result.get("window", ""),
+            }
+        )
+
+    sla_df = pd.DataFrame(rows)
+
+    with st.expander("SLA results table", expanded=True):
+        st.dataframe(sla_df, use_container_width=True, hide_index=True)
+
+    # ---- Per-SLA colour-coded status cards ----
+    st.markdown("#### SLA Health Detail")
+    for result in sla_results:
+        compliant = result.get("compliant", True)
+        severity = result.get("severity", "low")
+        name = result.get("metric_name", "")
+        actual = result.get("actual", 0.0)
+        target = result.get("target", 0.0)
+        detail = f"**{name}** — actual: `{actual:.1%}` vs target: `{target:.1%}`"
+
+        if compliant:
+            st.success(f"PASS  {detail}")
+        elif severity == "critical":
+            st.error(f"BREACH (critical)  {detail}")
+        elif severity == "high":
+            st.error(f"BREACH (high)  {detail}")
+        else:
+            st.warning(f"BREACH ({severity})  {detail}")
+
+    # ---- Refresh button ----
+    if st.button("🔄 Refresh compliance report"):
+        # Drop cached tracker so a fresh one is seeded on rerender
+        st.session_state.pop("sla_tracker", None)
+        st.rerun()
+
 
 def _render_alert_config_tab() -> None:
     """Tab 3: Alert Config (Slack + ArcGIS)."""
