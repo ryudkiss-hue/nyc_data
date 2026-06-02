@@ -42,6 +42,7 @@ nyc_toolkit.log
 # --- Build artifacts ---
 build/
 dist/
+*.egg-info/
 !desktop/build/
 !desktop/build/**
 installer/output/*.exe
