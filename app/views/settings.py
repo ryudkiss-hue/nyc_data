@@ -1098,29 +1098,22 @@ def _render_dataset_health_tab() -> None:
 
         if entry:
             # Dataset has been cached
-            try:
-                fetched_at_str = entry.get("fetched_at", "unknown")
-                rows_count = entry.get("rows", 0)
+            rows_count = entry.get("rows", 0)
+            fetched_at_str = entry.get("fetched_at", "unknown")
 
-                # Check if fresh
-                from datetime import datetime, timezone
+            # Determine freshness status
+            status = "🟡 stale"  # Default to stale
+            try:
                 if fetched_at_str != "unknown":
-                    try:
-                        fetched_at = datetime.fromisoformat(fetched_at_str)
-                        now = datetime.now(timezone.utc)
-                        age_seconds = (now - fetched_at).total_seconds()
-                        ttl_seconds = entry.get("ttl_hours", 24) * 3600
-                        is_fresh = age_seconds < ttl_seconds
-                        status = "🟢 healthy" if is_fresh else "🟡 stale"
-                    except Exception:
-                        status = "🟡 stale"
-                        fetched_at_str = "unknown"
-                else:
-                    status = "🟡 stale"
-            except Exception as exc:
-                status = "🟡 stale"
-                rows_count = 0
-                fetched_at_str = f"error: {str(exc)[:30]}"
+                    fetched_at = datetime.datetime.fromisoformat(fetched_at_str)
+                    now = datetime.datetime.now(datetime.timezone.utc)
+                    age_seconds = (now - fetched_at).total_seconds()
+                    ttl_seconds = entry.get("ttl_hours", 24) * 3600
+                    if age_seconds < ttl_seconds:
+                        status = "🟢 healthy"
+            except (ValueError, KeyError, TypeError):
+                # Failed to parse timestamp - treat as stale
+                pass
         else:
             # No cache entry yet
             status = "🔴 empty"
