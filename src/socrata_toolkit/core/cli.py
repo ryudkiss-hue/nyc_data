@@ -2204,11 +2204,20 @@ def conflict_detect_cmd(borough: str, buffer_dist: int, output_path: str | None)
 
     import requests
 
-    FOURFOUR = "wjnr-3vgm"
+    # Use SMD Violations dataset (bblid field enables BBL-based conflict detection).
+    # Dataset wjnr-3vgm was retired; violations (6kbp-uz6m) is the current source.
+    FOURFOUR = "6kbp-uz6m"
+    _BOROUGH_CONTRACT_SUFFIX = {
+        "MN": "M", "BX": "X", "BK": "K", "QN": "Q", "SI": "I",
+    }
     base_url = f"https://data.cityofnewyork.us/resource/{FOURFOUR}.json"
     token = os.getenv("SOCRATA_APP_TOKEN", "")
     session = _make_session()
-    params: dict = {"$limit": 50000, "$where": f"upper(borough) = '{borough.upper()}'"}
+    suffix = _BOROUGH_CONTRACT_SUFFIX.get(borough.upper(), "M")
+    params: dict = {
+        "$limit": 50000,
+        "$where": f"contract like '%{suffix}'",
+    }
     if token:
         params["$$app_token"] = token
     try:
@@ -2226,7 +2235,7 @@ def conflict_detect_cmd(borough: str, buffer_dist: int, output_path: str | None)
 
     df = pd.DataFrame(rows)
     # Detect BBL/block column
-    bbl_col = next((c for c in df.columns if c.lower() in ("bbl", "lot_bbl", "tax_lot", "block", "boro_block_lot")), None)
+    bbl_col = next((c for c in df.columns if c.lower() in ("bblid", "bbl", "lot_bbl", "tax_lot", "block", "boro_block_lot")), None)
     conflict_count = 0
     conflicting_bbls: list = []
     if bbl_col and bbl_col in df.columns:
