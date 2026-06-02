@@ -516,7 +516,7 @@ def df_to_gdf(df: pd.DataFrame) -> Any:
     if lat_col and lon_col and Point is not None:
         geom = [
             Point(float(x), float(y)) if pd.notna(x) and pd.notna(y) else None
-            for x, y in zip(df[lon_col], df[lat_col], strict=False)
+            for x, y in zip(df[lon_col], df[lat_col])
         ]
         gdf = gpd.GeoDataFrame(df.copy(), geometry=geom, crs=WGS84)
         return gdf.to_crs(NYC_CRS)
