@@ -147,6 +147,21 @@ ruff check src/socrata_toolkit tests app
 black src/socrata_toolkit tests app
 ```
 
+### Local Pre-Push Testing
+
+Before pushing to main, run the CI simulation on your local Python version to catch failures early:
+
+```bash
+# Simulates GitHub Actions matrix (ruff + pytest) on current Python version
+make ci-check
+```
+
+This runs the same quality checks that GitHub Actions will run on Python 3.10, 3.11, and 3.12:
+- **Ruff linting** — Validates code style and correctness (E, F, W, I, UP, B rules)
+- **Pytest** — Runs unit and integration test suite (excluding heavy tests)
+
+The workflow matrix is defined in `.github/workflows/python-package.yml` and tests against Python 3.10, 3.11, and 3.12. The `make ci-check` target acts as a local pre-flight check on your current Python version to save CI time.
+
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full development guide.
 
 ---
