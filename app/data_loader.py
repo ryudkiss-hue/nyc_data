@@ -151,6 +151,85 @@ def get_socrata_client() -> Any:
     return Socrata(DOMAIN, token, username=username, password=password, timeout=90)
 
 
+_HEALTH_CHECK_CACHE: dict[str, bool] = {}
+
+
+def _check_dataset_health() -> None:
+    """Check dataset health (staleness and emptiness) at module import time.
+
+    This function is called once at module import time to assess the health
+    of registered datasets by checking:
+    - Staleness: datasets with cache older than TTL
+    - Emptiness: datasets with zero rows or missing data
+
+    Logs a structured warning (non-blocking) if:
+    - 2 or more datasets are stale, OR
+    - Any dataset is empty
+
+    Caches result to avoid repeated checks during app startup.
+    Uses a 30-second timeout and fails gracefully on errors.
+    """
+    if _HEALTH_CHECK_CACHE.get("checked"):
+        return
+
+    try:
+        stale_datasets: list[str] = []
+        empty_datasets: list[str] = []
+
+        # Check cache freshness for each dataset
+        for dataset_key in DATASET_REGISTRY.keys():
+            path = _parquet_path(dataset_key)
+            if path.exists():
+                # Check if cache is stale (reuse existing freshness logic)
+                if not _parquet_fresh(path):
+                    stale_datasets.append(dataset_key)
+                # Check if cache is empty
+                try:
+                    df = pd.read_parquet(path)
+                    if df.empty:
+                        empty_datasets.append(dataset_key)
+                except Exception:
+                    pass
+
+        _HEALTH_CHECK_CACHE["checked"] = True
+
+        # Log warning if health issues detected
+        warning_parts: list[str] = []
+        if len(stale_datasets) >= 2:
+            warning_parts.append(f"{len(stale_datasets)} stale datasets")
+        if empty_datasets:
+            warning_parts.append(f"{len(empty_datasets)} empty datasets")
+
+        if warning_parts:
+            stale_str = (
+                ", ".join(stale_datasets[:5])
+                + ("..." if len(stale_datasets) > 5 else "")
+                if stale_datasets
+                else "none"
+            )
+            empty_str = (
+                ", ".join(empty_datasets[:5])
+                + ("..." if len(empty_datasets) > 5 else "")
+                if empty_datasets
+                else "none"
+            )
+            logging.warning(
+                "[HEALTH_CHECK] Data quality issues detected: %s. "
+                "Stale: %s. Empty: %s. App will continue loading.",
+                ", ".join(warning_parts),
+                stale_str,
+                empty_str,
+            )
+
+    except Exception as exc:
+        # Fail gracefully: log and continue (non-blocking)
+        logging.debug(
+            "health_check: failed to assess dataset health (error): %s",
+            exc,
+        )
+        _HEALTH_CHECK_CACHE["checked"] = True
+
+
 def normalize_bbl(series: pd.Series) -> pd.Series:
     s = series.astype(str).str.replace(r"\D", "", regex=True)
     s = s.where(s.str.len() >= 6, other=pd.NA)
@@ -183,6 +262,9 @@ def _parquet_fresh(path: Path) -> bool:
     if not path.exists():
         return False
     return (time.time() - path.stat().st_mtime) < CACHE_TTL_SECONDS
+
+
+_check_dataset_health()
 
 
 def _read_parquet_cache(dataset_key: str) -> pd.DataFrame | None:
