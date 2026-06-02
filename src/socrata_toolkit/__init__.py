@@ -318,6 +318,11 @@ def _import_target(target: str):
 
 def __getattr__(name: str):
     """Lazy-load public symbols on attribute access."""
+    # Special case: _analysis_monolith for test mocking
+    if name == "_analysis_monolith":
+        from .analysis import _monolith
+        return _monolith
+
     if name in _loaded_cache:
         return _loaded_cache[name]
 
