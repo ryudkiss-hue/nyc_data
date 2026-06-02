@@ -100,6 +100,7 @@ def render_settings_page() -> None:
         tab_tokens,
         tab_config,
         tab_registry,
+        tab_governance,
         tab_ready,
         tab_complete,
         tab_health,
@@ -116,6 +117,7 @@ def render_settings_page() -> None:
         "🔑 API Tokens",
         "⚙️ Configuration",
         "📦 Dataset Registry",
+        "🏛️ Dataset Governance",
         f"🎯 {t('tab_readiness')}",
         f"✅ {t('tab_completeness')}",
         f"🩺 {t('tab_health')}",
@@ -141,6 +143,10 @@ def render_settings_page() -> None:
     # ------------------------------------------------------------------
     with tab_registry:
         _render_registry_tab()
+
+    # ------------------------------------------------------------------
+    with tab_governance:
+        _render_governance_tab()
 
     with tab_ready:
         report = run_readiness_checks()
@@ -1015,6 +1021,112 @@ def _render_alert_config_tab() -> None:
                 st.success(f"ArcGIS connection succeeded: {msg}")
             else:
                 st.error(f"ArcGIS connection failed: {msg}")
+
+
+def _render_governance_tab() -> None:
+    """Dataset Governance Status tab."""
+    import os
+
+    from socrata_toolkit.governance import registry_audit, registry_audit_summary
+
+    st.markdown("### 🏛️ Dataset Governance Status")
+    st.caption(
+        "Consolidated view of dataset governance metadata from NYC Open Data sources:\n"
+        "- LL251 Inventory (5tqd-u88y)\n"
+        "- Automated Datasets (7t2y-4fke)\n"
+        "- Dataset Removals (tm5c-buy3)"
+    )
+
+    token = os.getenv("SOCRATA_APP_TOKEN", "").strip() or None
+    domain = os.getenv("SOCRATA_DOMAIN", "data.cityofnewyork.us")
+
+    @st.cache_data(ttl=3600)
+    def _get_governance_audit(domain: str, token: str | None):
+        return registry_audit(DATASET_REGISTRY, domain=domain, token=token)
+
+    try:
+        with st.spinner("Fetching governance metadata…"):
+            metadata_list = _get_governance_audit(domain, token)
+            summary = registry_audit_summary(metadata_list)
+
+        # Summary metrics
+        col1, col2, col3, col4 = st.columns(4)
+        col1.metric("Total Datasets", summary["total_datasets"])
+        col2.metric("LL251 Compliant", summary["ll251_compliant"])
+        col3.metric("Automated", summary["automated"])
+        col4.metric("Removed Records", summary["with_removed_records"])
+
+        st.divider()
+
+        # Detailed dataset view
+        if not metadata_list:
+            st.warning("No governance metadata available.")
+        else:
+            st.markdown(f"#### {len(metadata_list)} Registered Datasets")
+
+            # Group by LL251 compliance
+            compliant = [m for m in metadata_list if m.ll251_compliant]
+            non_compliant = [m for m in metadata_list if not m.ll251_compliant]
+
+            # Display compliant datasets
+            if compliant:
+                with st.expander(
+                    f"✅ LL251 Compliant ({len(compliant)})",
+                    expanded=True
+                ):
+                    for meta in compliant:
+                        _render_dataset_card(meta)
+
+            # Display non-compliant datasets
+            if non_compliant:
+                with st.expander(
+                    f"⚠️ Not LL251 Compliant ({len(non_compliant)})",
+                    expanded=False
+                ):
+                    for meta in non_compliant:
+                        _render_dataset_card(meta)
+
+        # Refresh button
+        st.divider()
+        col1, col2 = st.columns([1, 4])
+        if col1.button("🔄 Refresh governance data"):
+            st.cache_data.clear()
+            st.rerun()
+
+    except Exception as e:
+        st.error(f"Failed to load governance metadata: {e}")
+        st.caption("Check that SOCRATA_APP_TOKEN is set and governance datasets are accessible.")
+
+
+def _render_dataset_card(meta) -> None:
+    """Render a single dataset governance card.
+
+    Args:
+        meta: DatasetGovernanceMetadata object with governance info
+    """
+    # Determine badge colors
+    ll251_badge = "✅ YES" if meta.ll251_compliant else "❌ NO"
+    automation_badge = "🤖 YES" if meta.automation_enabled else "⚠️ NO"
+
+    # Main card header with dataset name and fourfour
+    st.markdown(f"**{meta.label}** (`{meta.fourfour}`)")
+
+    # Metadata in columns
+    col1, col2, col3, col4 = st.columns(4)
+    col1.caption(f"LL251: {ll251_badge}")
+    col2.caption(f"Automation: {automation_badge}")
+    col3.caption(f"Frequency: {meta.update_frequency}")
+    col4.caption(f"Agency: {meta.agency}")
+
+    # Removed records flag if present
+    if meta.removed_records:
+        st.caption("📋 This dataset contains removed records")
+
+    # Notes if present
+    if meta.notes:
+        st.caption(f"Note: {meta.notes}")
+
+    st.divider()
 
 
 def _render_environment_tab() -> None:
