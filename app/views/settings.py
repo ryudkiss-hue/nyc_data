@@ -15,6 +15,7 @@ from app.data_loader import DATASET_REGISTRY, cache_freshness_report
 from app.services import agency
 from app.services.alerts import get_last_scheduler_run, send_slack_alert, test_arcgis_connection
 from app.ui.theme import render_quality_badge, render_readiness_bars
+from app.utils.cache_manager import cache_manifest
 from app.utils.i18n import t
 from socrata_toolkit.core.readiness import run_readiness_checks
 
@@ -103,6 +104,7 @@ def render_settings_page() -> None:
         tab_ready,
         tab_complete,
         tab_health,
+        tab_dataset_health,
         tab_cache,
         tab_logs,
         tab_alerts,
@@ -119,6 +121,7 @@ def render_settings_page() -> None:
         f"🎯 {t('tab_readiness')}",
         f"✅ {t('tab_completeness')}",
         f"🩺 {t('tab_health')}",
+        "📊 Dataset Health",
         "💾 Cache",
         f"📋 {t('tab_logs')}",
         "🔔 Alerts",
@@ -233,6 +236,10 @@ def render_settings_page() -> None:
         if st.button("🔄 Re-run health check"):
             st.cache_data.clear()
             st.rerun()
+
+    # ------------------------------------------------------------------
+    with tab_dataset_health:
+        _render_dataset_health_tab()
 
     # ------------------------------------------------------------------
     with tab_cache:
@@ -1051,3 +1058,137 @@ def _render_environment_tab() -> None:
         "To set these variables, add them to your `.env` file in the project root "
         "or configure them in the **API Tokens** / **Configuration** tabs."
     )
+
+
+def _render_dataset_health_tab() -> None:
+    """Dataset Health Dashboard: Shows all 26 datasets with health status, last update, and row count.
+
+    Health status is determined by:
+    - Green (🟢 healthy): Dataset has cached data fresher than its TTL
+    - Yellow (🟡 stale): Dataset has cached data but older than its TTL
+    - Red (🔴 empty): Dataset has no cache yet
+
+    Sorted by status (critical/empty first) and includes update frequency from registry.
+    Gracefully handles API/cache errors with diagnostic messages.
+    """
+    import pandas as pd
+
+    st.markdown("### 📊 Dataset Health Dashboard")
+    st.caption(
+        "Health status for all 26 registered datasets. 🟢 Healthy (fresh cache), "
+        "🟡 Stale (cached but old), 🔴 Empty (never loaded)."
+    )
+
+    # Load the cache manifest and dataset registry
+    try:
+        manifest = cache_manifest()
+    except Exception as exc:
+        st.error(f"Failed to load cache manifest: {exc}")
+        return
+
+    # Build dataset health rows
+    rows = []
+    for dataset_key, metadata in DATASET_REGISTRY.items():
+        fourfour = metadata.get("fourfour", "")
+        label = metadata.get("label", dataset_key)
+        group = metadata.get("group", "other")
+
+        # Get cache information if available
+        entry = manifest.get(dataset_key)
+
+        if entry:
+            # Dataset has been cached
+            try:
+                fetched_at_str = entry.get("fetched_at", "unknown")
+                rows_count = entry.get("rows", 0)
+
+                # Check if fresh
+                from datetime import datetime, timezone
+                if fetched_at_str != "unknown":
+                    try:
+                        fetched_at = datetime.fromisoformat(fetched_at_str)
+                        now = datetime.now(timezone.utc)
+                        age_seconds = (now - fetched_at).total_seconds()
+                        ttl_seconds = entry.get("ttl_hours", 24) * 3600
+                        is_fresh = age_seconds < ttl_seconds
+                        status = "🟢 healthy" if is_fresh else "🟡 stale"
+                    except Exception:
+                        status = "🟡 stale"
+                        fetched_at_str = "unknown"
+                else:
+                    status = "🟡 stale"
+            except Exception as exc:
+                status = "🟡 stale"
+                rows_count = 0
+                fetched_at_str = f"error: {str(exc)[:30]}"
+        else:
+            # No cache entry yet
+            status = "🔴 empty"
+            rows_count = 0
+            fetched_at_str = "never"
+
+        rows.append({
+            "Status": status,
+            "Dataset": label,
+            "Key": dataset_key,
+            "4x4": fourfour,
+            "Group": group,
+            "Rows": rows_count,
+            "Last Update": fetched_at_str if fetched_at_str != "unknown" else "—",
+        })
+
+    # Sort by status (critical first) then by key
+    status_order = {"🔴 empty": 0, "🟡 stale": 1, "🟢 healthy": 2}
+    rows.sort(key=lambda r: (status_order.get(r["Status"], 3), r["Key"]))
+
+    df = pd.DataFrame(rows)
+
+    # Show summary metrics
+    c1, c2, c3, c4 = st.columns(4)
+    total = len(df)
+    healthy = len(df[df["Status"] == "🟢 healthy"])
+    stale = len(df[df["Status"] == "🟡 stale"])
+    empty = len(df[df["Status"] == "🔴 empty"])
+
+    c1.metric("Total Datasets", total)
+    c2.metric("🟢 Healthy", healthy, delta=f"{healthy}/{total}")
+    c3.metric("🟡 Stale", stale, delta=f"{stale}/{total}")
+    c4.metric("🔴 Empty", empty, delta=f"{empty}/{total}")
+
+    st.divider()
+
+    # Display dataframe with styling
+    display_cols = ["Status", "Dataset", "Key", "Group", "Rows", "Last Update"]
+    st.dataframe(
+        df[display_cols],
+        use_container_width=True,
+        hide_index=True,
+    )
+
+    # Show critical items section if any empty or stale
+    critical = df[(df["Status"] == "🔴 empty") | (df["Status"] == "🟡 stale")]
+    if not critical.empty:
+        st.divider()
+        st.markdown("#### ⚠️ Datasets needing attention")
+        for _, row in critical.iterrows():
+            with st.expander(f"{row['Status']} {row['Dataset']} ({row['Key']})"):
+                st.markdown(f"**Dataset ID:** `{row['4x4']}`")
+                st.markdown(f"**Group:** {row['Group']}")
+                st.markdown(f"**Status:** {row['Status']}")
+                st.markdown(f"**Rows cached:** {row['Rows']:,}" if row['Rows'] > 0 else "**Rows cached:** 0")
+                st.caption(
+                    "This dataset has not been loaded or its cache has expired. "
+                    "Load a workflow that uses this dataset to refresh the cache."
+                )
+
+    st.divider()
+    st.markdown("#### Cache management")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("🔄 Refresh health data", type="secondary"):
+            st.cache_data.clear()
+            st.rerun()
+
+    with col2:
+        if st.button("📊 View full cache report", type="secondary"):
+            st.info("See the **Cache** tab for detailed parquet cache metrics.")
