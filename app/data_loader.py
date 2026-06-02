@@ -2,7 +2,6 @@
 Centralized Socrata ingestion for Manhattan Mission Control.
 
 Registry: config/datasets.yaml. Optional parquet cache under data/local_db/socrata_cache/.
-Demo/offline: MISSION_DEMO=1 or no Socrata credentials.
 """
 
 from __future__ import annotations
@@ -135,12 +134,7 @@ def _require_sodapy() -> None:
 
 
 def demo_mode_enabled() -> bool:
-    if os.getenv("MISSION_DEMO", "").strip().lower() in ("1", "true", "yes"):
-        return True
-    token = (os.getenv("SOCRATA_APP_TOKEN") or "").strip()
-    key_id = (os.getenv("SOCRATA_KEY_ID") or "").strip()
-    key_secret = (os.getenv("SOCRATA_KEY_SECRET") or "").strip()
-    return not token and not (key_id and key_secret)
+    return False
 
 
 def get_socrata_client() -> Any:
@@ -204,25 +198,6 @@ def _write_parquet_cache(dataset_key: str, df: pd.DataFrame) -> None:
         pass
 
 
-def _demo_frame(dataset_key: str) -> pd.DataFrame:
-    """Minimal synthetic rows so workflows run offline."""
-    bbl = "1000010001"
-    templates: dict[str, dict[str, list]] = {
-        "lot_info": {"bbl": [bbl], "owner": ["City"]},
-        "mappluto": {"bbl": [bbl], "ownername": ["Private"]},
-        "complaints_311": {"created_date": ["2020-01-01"], "bbl": [bbl]},
-        "violations": {"bbl": [bbl], "grace_pd": ["2020-01-01"]},
-        "tree_damage": {"bbl": [bbl], "agency": ["Parks"]},
-        "built": {"length": [100.0]},
-        "ramp_progress": {"latitude": [40.75], "longitude": [-73.99]},
-        "pedestrian_demand": {"latitude": [40.76], "longitude": [-73.98]},
-        "weekly_construction": {"latitude": [40.75], "longitude": [-73.99]},
-        "street_permits": {"latitude": [40.75], "longitude": [-73.99], "borough": ["MANHATTAN"]},
-        "capital_blocks": {"latitude": [40.75], "longitude": [-73.99]},
-        "inspection": {"latitude": [40.75], "longitude": [-73.99], "borough": ["MANHATTAN"]},
-    }
-    data = templates.get(dataset_key, {"note": ["demo row"]})
-    return _postprocess_dataset(dataset_key, pd.DataFrame(data))
 
 
 def _postprocess_dataset(dataset_key: str, df: pd.DataFrame) -> pd.DataFrame:
@@ -247,8 +222,6 @@ def _detect_delta_column(dataset_key: str) -> str | None:
     Fetches a single row from Socrata to inspect column names. Returns
     ``"updated_at"`` or ``"date_modified"`` if either is present; otherwise ``None``.
     """
-    if demo_mode_enabled():
-        return None
     meta = DATASET_REGISTRY.get(dataset_key, {})
     try:
         client = get_socrata_client()
@@ -345,9 +318,6 @@ def fetch_dataset(
     """
     if dataset_key not in DATASET_REGISTRY:
         raise KeyError(f"Unknown dataset_key: {dataset_key}")
-    if demo_mode_enabled():
-        log_event("fetch_demo", dataset=dataset_key, rows=1)
-        return _demo_frame(dataset_key)
 
     # Apply dataset-level default WHERE filter when caller doesn't supply one
     if where is None:
@@ -454,7 +424,7 @@ def fetch_datasets_for_keys(
     key_list = list(keys)
     if not key_list:
         return {}
-    if demo_mode_enabled() or len(key_list) == 1:
+    if len(key_list) == 1:
         return {k: fetch_dataset(k, limit=limit) for k in key_list}
 
     out: dict[str, pd.DataFrame] = {}
@@ -582,7 +552,6 @@ def token_status() -> dict[str, Any]:
         "masked": f"{token[:4]}…{token[-4:]}" if len(token) > 8 else ("(set)" if token else "(missing)"),
         "domain": DOMAIN,
         "datasets": len(DATASET_REGISTRY),
-        "demo_mode": demo_mode_enabled(),
     }
 
 
