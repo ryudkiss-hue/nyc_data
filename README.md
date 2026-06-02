@@ -107,7 +107,8 @@ All 26 datasets are defined in `config/datasets.yaml` and loaded at runtime.
 |---------|-------------|
 | `socrata conflict-detect --borough MN` | Detect spatial conflicts |
 | `socrata report contract` | Generate contract report |
-| `socrata dataset health` | Check dataset status |
+| `socrata dataset health --all --stale 7 --sort-by staleness` | Check dataset status (row count, staleness, emptiness) |
+| `socrata dataset ramp-analysis --full-corpus --borough MN` | Analyze pedestrian ramp completion rates by borough |
 | `socrata cache refresh <key>` | Refresh L2 cache |
 | `socrata export <key> --format csv` | Export dataset |
 | `socrata nl-query "<question>"` | Natural language query |

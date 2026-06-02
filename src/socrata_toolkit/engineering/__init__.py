@@ -37,4 +37,9 @@ from .dot_sidewalk import (
     compute_material_aware_kpis,
     compute_sidewalk_kpis,
 )
+from .ramp_analysis import (
+    BoroughRampStats,
+    RampCompletionReport,
+    RampCompletionReportGenerator,
+)
 

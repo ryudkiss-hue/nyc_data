@@ -2370,27 +2370,63 @@ def dataset_group() -> None:
 
 @dataset_group.command(name="health")
 @click.option("--key", "dataset_key", default=None, help="Specific dataset key (checks all if omitted)")
-def dataset_health_cmd(dataset_key: str | None) -> None:
-    """Report row count and last-modified status for registered datasets."""
+@click.option("--all", "show_all", is_flag=True, help="Show all 26 registered datasets")
+@click.option("--stale", "stale_days", type=int, default=7, help="Days threshold for staleness (default: 7)")
+@click.option("--empty", "show_empty", is_flag=True, help="Show only empty (0-row) datasets")
+@click.option("--sort-by", type=click.Choice(["staleness", "size"]), default="staleness", help="Sort results by staleness (default) or size")
+def dataset_health_cmd(
+    dataset_key: str | None,
+    show_all: bool,
+    stale_days: int,
+    show_empty: bool,
+    sort_by: str,
+) -> None:
+    """Report row count and last-modified status for registered datasets.
+
+    Examples:
+        socrata dataset health --all              # Show all datasets
+        socrata dataset health --stale 7          # Show datasets stale > 7 days (default)
+        socrata dataset health --empty            # Show only empty datasets
+        socrata dataset health --sort-by size     # Sort by row count (ascending)
+    """
     import os
+    import sys
+    from datetime import datetime
 
     import requests
 
     registry = _load_dataset_registry()
+
+    # Determine which keys to check
     keys_to_check = [dataset_key] if dataset_key else list(registry.keys())
+
     token = os.getenv("SOCRATA_APP_TOKEN", "")
     session = _make_session()
     domain = os.getenv("SOCRATA_DOMAIN", "data.cityofnewyork.us")
+    now = datetime.utcnow()
 
-    rows_out = []
+    rows_out: list[dict] = []
+    health_status_code = 0  # Start assuming all healthy (exit code 0)
+
     for key in keys_to_check:
         if key not in registry:
-            rows_out.append({"key": key, "fourfour": "N/A", "row_count": None, "last_modified": None, "status": "unknown_key"})
+            rows_out.append({
+                "key": key,
+                "fourfour": "N/A",
+                "row_count": None,
+                "last_modified": None,
+                "status": "unknown_key",
+                "stale_days": None,
+            })
             continue
+
         fourfour = registry[key]["fourfour"]
         row_count = None
         last_modified = None
+        last_modified_dt = None
         status = "ok"
+        stale_days_val: int | None = None
+
         try:
             # Count rows
             count_url = f"https://{domain}/resource/{fourfour}.json"
@@ -2401,8 +2437,11 @@ def dataset_health_cmd(dataset_key: str | None) -> None:
             r.raise_for_status()
             data = r.json()
             row_count = int(data[0]["c"]) if data else 0
+
             if row_count == 0:
                 status = "empty"
+                health_status_code = 1
+
             # Metadata for last_modified
             meta_url = f"https://{domain}/api/views/{fourfour}.json"
             meta_params: dict = {}
@@ -2413,21 +2452,183 @@ def dataset_health_cmd(dataset_key: str | None) -> None:
                 meta_json = mr.json()
                 ts = meta_json.get("rowsUpdatedAt") or meta_json.get("updatedAt")
                 if ts:
-                    import datetime
+                    last_modified_dt = datetime.utcfromtimestamp(int(ts))
+                    last_modified = last_modified_dt.isoformat()
+                    # Calculate staleness in days
+                    delta = now - last_modified_dt
+                    stale_days_val = delta.days
 
-                    last_modified = datetime.datetime.fromtimestamp(int(ts)).isoformat()
+                    # Check if stale
+                    if stale_days_val > stale_days and status == "ok":
+                        status = "stale"
+                        health_status_code = 1
         except requests.RequestException as exc:
-            status = f"error: {exc}"
-        rows_out.append({"key": key, "fourfour": fourfour, "row_count": row_count, "last_modified": last_modified, "status": status})
+            status = "error"
+            health_status_code = 1
 
-    # Print table
-    header = f"{'Key':<35} {'FourFour':<12} {'Rows':>10} {'Last Modified':<22} Status"
-    click.echo(header)
-    click.echo("-" * len(header))
-    for r in rows_out:
-        rc = str(r["row_count"]) if r["row_count"] is not None else "N/A"
-        lm = str(r["last_modified"] or "N/A")[:20]
-        click.echo(f"{r['key']:<35} {r['fourfour']:<12} {rc:>10} {lm:<22} {r['status']}")
+        rows_out.append({
+            "key": key,
+            "fourfour": fourfour,
+            "row_count": row_count,
+            "last_modified": last_modified,
+            "status": status,
+            "stale_days": stale_days_val,
+        })
+
+    # Apply filters based on options
+    filtered_rows = rows_out
+
+    if show_empty:
+        filtered_rows = [r for r in filtered_rows if r.get("row_count") == 0]
+
+    # Sort results
+    if sort_by == "staleness":
+        # Sort by stale_days descending (most stale first), None values at end
+        filtered_rows.sort(key=lambda r: (r.get("stale_days") is None, -(r.get("stale_days") or 0)))
+    elif sort_by == "size":
+        filtered_rows.sort(key=lambda r: r.get("row_count") or 0, reverse=False)
+
+    # Print table with proper formatting
+    try:
+        from tabulate import tabulate
+
+        table_data = []
+        for r in filtered_rows:
+            rc = str(r["row_count"]) if r["row_count"] is not None else "N/A"
+            lm = str(r["last_modified"] or "N/A")[:19]
+            sd = str(r["stale_days"]) if r["stale_days"] is not None else "N/A"
+            table_data.append([
+                r["key"],
+                r["fourfour"],
+                rc,
+                lm,
+                sd,
+                r["status"],
+            ])
+
+        headers = ["Key", "FourFour", "Rows", "Last Modified", "Stale (days)", "Status"]
+        click.echo(tabulate(table_data, headers=headers, tablefmt="grid"))
+    except ImportError:
+        # Fallback to manual formatting if tabulate not available
+        header = f"{'Key':<35} {'FourFour':<12} {'Rows':>10} {'Last Modified':<22} {'Stale':<8} Status"
+        click.echo(header)
+        click.echo("-" * len(header))
+        for r in filtered_rows:
+            rc = str(r["row_count"]) if r["row_count"] is not None else "N/A"
+            lm = str(r["last_modified"] or "N/A")[:20]
+            sd = str(r["stale_days"]) if r["stale_days"] is not None else "N/A"
+            click.echo(f"{r['key']:<35} {r['fourfour']:<12} {rc:>10} {lm:<22} {sd:<8} {r['status']}")
+
+    # Exit with appropriate code
+    if health_status_code != 0:
+        sys.exit(health_status_code)
+
+
+@dataset_group.command(name="ramp-analysis")
+@click.option(
+    "--full-corpus",
+    is_flag=True,
+    help="Fetch all 50K+ ramps and cache for 1 week (requires SOCRATA_APP_TOKEN)",
+)
+@click.option(
+    "--sample",
+    "sample_size",
+    type=int,
+    default=100,
+    show_default=True,
+    help="Sample N corners (default: 100). Ignored if --full-corpus is set.",
+)
+@click.option(
+    "--borough",
+    "borough_filter",
+    type=str,
+    default=None,
+    help="Filter to specific borough (e.g., MN, BX, BK, QN, SI)",
+)
+@click.option(
+    "--include-ci",
+    is_flag=True,
+    default=True,
+    help="Show 95% confidence intervals (default: true)",
+)
+def dataset_ramp_analysis_cmd(
+    full_corpus: bool,
+    sample_size: int,
+    borough_filter: str | None,
+    include_ci: bool,
+) -> None:
+    """Analyze pedestrian ramp completion rates by borough.
+
+    Generates per-borough completion rates with optional 95% confidence intervals
+    and reliability assessment. Supports sample mode (default, fast) or
+    full-corpus mode (comprehensive, requires Socrata token).
+
+    Example:
+        socrata dataset ramp-analysis --sample 100
+        socrata dataset ramp-analysis --full-corpus --include-ci --borough MN
+    """
+    import os
+
+    import requests
+
+    from ..engineering.ramp_analysis import RampCompletionReportGenerator
+
+    registry = _load_dataset_registry()
+    if "ramp_progress" not in registry:
+        raise click.ClickException(
+            "Dataset key 'ramp_progress' not found in config/datasets.yaml"
+        )
+
+    fourfour = registry["ramp_progress"]["fourfour"]
+    domain = os.getenv("SOCRATA_DOMAIN", "data.cityofnewyork.us")
+    token = os.getenv("SOCRATA_APP_TOKEN", "")
+
+    # Determine fetch limit and mode
+    mode = "full-corpus" if full_corpus else "sample"
+    fetch_limit = 50000 if full_corpus else sample_size
+
+    # Fetch data
+    base_url = f"https://{domain}/resource/{fourfour}.json"
+    params: dict = {"$limit": fetch_limit}
+    if token:
+        params["$$app_token"] = token
+
+    try:
+        session = _make_session()
+        resp = session.get(base_url, params=params, timeout=120)
+        resp.raise_for_status()
+        rows = resp.json()
+    except requests.RequestException as exc:
+        raise click.ClickException(f"Socrata fetch failed: {exc}") from exc
+
+    if not rows:
+        click.echo(
+            "No ramp data found in dataset. Check borough filter and dataset availability."
+        )
+        return
+
+    # Convert to DataFrame
+    df = pd.DataFrame(rows)
+
+    # Generate report
+    try:
+        generator = RampCompletionReportGenerator()
+        report = generator.generate(
+            df=df,
+            mode=mode,
+            sample_size=sample_size if not full_corpus else None,
+            borough_filter=borough_filter,
+            include_ci=include_ci,
+        )
+    except ValueError as exc:
+        raise click.ClickException(f"Report generation failed: {exc}") from exc
+
+    # Output table
+    click.echo("\n" + report.to_table())
+
+    # Output JSON for machine consumption
+    click.echo("\n")
+    click.echo(json.dumps(report.to_dict(), indent=2))
 
 
 # ---------------------------------------------------------------------------
