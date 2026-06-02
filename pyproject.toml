@@ -127,6 +127,7 @@ ignore = [
     "B007",   # loop variable not used in body
     "B023",   # function definition in loop
     "B904",   # exception chaining (raise X from e)
+    "B905",   # zip() without explicit strict= (strict= added in Python 3.10)
     "E701",   # multiple statements on one line
     "E722",   # bare except
 ]
