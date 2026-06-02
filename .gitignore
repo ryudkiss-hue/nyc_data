@@ -4,6 +4,8 @@
 __pycache__/
 *.pyc
 .env
+.env.local
+.env.*.local
 config/.env
 airflow_app/logs/
 airflow_app/config/*.cfg
@@ -53,3 +55,11 @@ installer/output/*.exe
 
 # Claude Code internal state
 .claude/worktrees/
+
+# --- Secrets and credentials (SECURITY) ---
+*.key
+*.pem
+*.pfx
+secrets/
+credentials.json
+google-credentials.json
