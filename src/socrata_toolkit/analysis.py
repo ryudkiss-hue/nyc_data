@@ -241,22 +241,6 @@ def parse_sim_complaints(df: pd.DataFrame, text_col: str = "description") -> pd.
     statistical methods. Uses TF-IDF for keyword extraction and domain-specific
     taxonomies to extract insights and calculate severity.
     """
-    try:
-        import sklearn.feature_extraction.text as sklearn_text
-
-        if sklearn_text is None:
-            raise ImportError
-    except ImportError:
-        logger.error(
-            "scikit-learn is not installed. Cannot perform TF-IDF keyword extraction. "
-            "Please run 'pip install scikit-learn' to enable this functionality."
-        )
-        return df
-
-    vectorizer_cls = TfidfVectorizer
-    if vectorizer_cls is None:
-        from sklearn.feature_extraction.text import TfidfVectorizer as vectorizer_cls
-
     import numpy as np
 
     out = df.copy()
@@ -295,13 +279,19 @@ def parse_sim_complaints(df: pd.DataFrame, text_col: str = "description") -> pd.
     corpus = texts[texts.str.strip() != ""]
     out["_sim_unique_keywords"] = [[] for _ in range(len(out))]  # Initialize column
 
-    if not corpus.empty:
+    has_sklearn = TfidfVectorizer is not None
+    if not has_sklearn:
+        logger.warning(
+            "scikit-learn not installed. Skipping TF-IDF keyword extraction. "
+            "Run 'pip install scikit-learn' to enable this feature."
+        )
 
+    if has_sklearn and not corpus.empty:
         def custom_tokenizer(text: str) -> list[str]:
             tokens = WORD_RE.findall(text.lower())
             return [t for t in tokens if len(t) >= 3]
 
-        vectorizer = vectorizer_cls(
+        vectorizer = TfidfVectorizer(
             tokenizer=custom_tokenizer,
             stop_words="english",
             ngram_range=(1, 2),
