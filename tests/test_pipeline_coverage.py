@@ -1,8 +1,6 @@
 """Comprehensive tests for core.pipeline module."""
 from __future__ import annotations
 
-import pytest
-
 from socrata_toolkit.core.pipeline import (
     _collect_columns_and_types,
     _sql_type,
