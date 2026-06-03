@@ -7,17 +7,17 @@ import pandas as pd
 import pytest
 
 from socrata_toolkit.quality.integration import (
-    QualityIntegration,
     QualityFramework,
+    QualityIntegration,
     QualityPipeline,
+    apply_business_rules,
+    check_sla,
     create_quality_pipeline,
-    run_all_quality_checks,
+    detect_anomalies,
     get_quality_integration,
+    run_all_quality_checks,
     set_quality_integration,
     validate_data,
-    check_sla,
-    detect_anomalies,
-    apply_business_rules,
 )
 
 

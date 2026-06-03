@@ -6,13 +6,13 @@ import pytest
 
 from socrata_toolkit.quality.validation import (
     ValidationReport,
+    validate_ada_compliance_gates,
+    validate_defect_applicability,
+    validate_geospatial_bounds,
+    validate_marking_standards,
+    validate_material_coverage,
     validate_required_columns,
     validate_schema_types,
-    validate_material_coverage,
-    validate_defect_applicability,
-    validate_ada_compliance_gates,
-    validate_marking_standards,
-    validate_geospatial_bounds,
 )
 
 
