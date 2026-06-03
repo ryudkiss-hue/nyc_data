@@ -24,7 +24,12 @@ def test_incremental_model_learn_predict():
 def test_semantic_search_index_and_query():
     pytest.importorskip("sentence_transformers", reason="sentence-transformers not installed")
     from src.socrata_toolkit.analysis.semantic_search import SemanticCatalogSearch
-    searcher = SemanticCatalogSearch()
+    try:
+        searcher = SemanticCatalogSearch()
+    except OSError as e:
+        if "couldn't connect to 'https://huggingface.co'" in str(e):
+            pytest.skip(f"Hugging Face API rate limit or network unavailable: {e}")
+        raise
     records = [
         {"name": "sidewalk inspections", "id": "a"},
         {"name": "pothole complaints", "id": "b"},
