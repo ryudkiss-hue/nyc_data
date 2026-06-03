@@ -182,17 +182,19 @@ class RampCompletionReportGenerator:
         # Validate required columns
         if "borough" not in df.columns:
             raise ValueError("DataFrame must contain 'borough' column")
-        if "status" not in df.columns and "completion_status" not in df.columns:
-            raise ValueError(
-                "DataFrame must contain 'status' or 'completion_status' column"
-            )
 
-        # Determine status column
-        status_col = (
-            "status"
-            if "status" in df.columns
-            else "completion_status"
-        )
+        # Find status column (try multiple names)
+        status_col = None
+        for col in ["status", "completion_status", "Construction_Status_Value", "construction_status",
+                    "completion_status_value", "Status", "Completion_Status"]:
+            if col in df.columns:
+                status_col = col
+                break
+
+        if status_col is None:
+            raise ValueError(
+                "DataFrame must contain 'status', 'completion_status', or 'Construction_Status_Value' column"
+            )
 
         # Apply borough filter if specified
         if borough_filter:
