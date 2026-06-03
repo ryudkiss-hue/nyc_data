@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import sys
 import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -18,6 +19,13 @@ from socrata_toolkit.analyst.sources import (
     _apply_column_map,
     build_source,
 )
+
+# Check if psycopg is available
+try:
+    import psycopg  # noqa: F401
+    HAS_PSYCOPG = True
+except ImportError:
+    HAS_PSYCOPG = False
 
 
 class TestApplyColumnMap:
@@ -226,6 +234,7 @@ class TestPostgresSource:
             result = source.load()
             assert result.empty
 
+    @pytest.mark.skipif(not HAS_PSYCOPG, reason="psycopg not installed")
     def test_postgres_source_fetch_success(self):
         config = SourceConfig(
             type="postgres",
@@ -248,6 +257,7 @@ class TestPostgresSource:
                     result = source.load()
                     assert len(result) == 2
 
+    @pytest.mark.skipif(not HAS_PSYCOPG, reason="psycopg not installed")
     def test_postgres_source_with_column_map(self):
         config = SourceConfig(
             type="postgres",
@@ -310,6 +320,7 @@ class TestGeoSource:
             assert "name" in result.columns
 
     def test_geo_source_json_fallback(self):
+        """Test GeoSource JSON fallback when geopandas is unavailable."""
         with tempfile.TemporaryDirectory() as tmpdir:
             json_file = Path(tmpdir) / "test.json"
             json_data = {
@@ -325,9 +336,29 @@ class TestGeoSource:
 
             config = SourceConfig(type="geo", path=str(json_file))
             source = GeoSource(config)
-            result = source.load()
 
-            assert len(result) >= 1
+            # Save geopandas if it's loaded, hide it during test
+            geopandas_backup = sys.modules.get("geopandas")
+            geopandas_orig = sys.modules.pop("geopandas", None)
+
+            try:
+                # Prevent geopandas from being imported
+                sys.modules["geopandas"] = None
+
+                result = source.load()
+
+                # When falling back to JSON parsing, should extract properties
+                assert len(result) >= 1
+                assert "value" in result.columns
+                assert result.iloc[0]["value"] == 10
+            finally:
+                # Restore geopandas
+                if geopandas_orig is not None:
+                    sys.modules["geopandas"] = geopandas_orig
+                elif "geopandas" in sys.modules:
+                    del sys.modules["geopandas"]
+                if geopandas_backup is not None:
+                    sys.modules["geopandas"] = geopandas_backup
 
     def test_geo_source_with_column_map(self):
         with tempfile.TemporaryDirectory() as tmpdir:
