@@ -1,8 +1,6 @@
 """Comprehensive tests for core.soql_builder module."""
 from __future__ import annotations
 
-import pytest
-
 from socrata_toolkit.core.soql_builder import SoQLBuilder
 
 

@@ -1,11 +1,9 @@
 """Comprehensive tests for analyst.roles module."""
 from __future__ import annotations
 
-import json
 import tempfile
 from pathlib import Path
 
-import pandas as pd
 import pytest
 
 from socrata_toolkit.analyst.roles import (
@@ -14,7 +12,6 @@ from socrata_toolkit.analyst.roles import (
     RoleKpiDef,
     RoleKpiSnapshot,
     RoleProfile,
-    _kpi_status,
     _parse_conflict_rate,
     _parse_diff_added,
     _parse_duty,
@@ -24,7 +21,6 @@ from socrata_toolkit.analyst.roles import (
     compute_role_kpis,
     evaluate_task_checklist,
     load_role_profile,
-    list_role_profiles,
     merge_program_and_role_kpis,
     resolve_role_profile_path,
     role_dashboard_to_dict,
@@ -100,7 +96,17 @@ class TestRoleProfile:
 
     def test_role_profile_with_duties_and_kpis(self):
         duties = [RoleDuty(id="D1", text="Review data")]
-        kpis = [RoleKpiDef(name="kpi1", description="KPI", formula="x", direction="up", target=1.0, warning_threshold=0.5, critical_threshold=0.2)]
+        kpis = [
+            RoleKpiDef(
+                name="kpi1",
+                description="KPI",
+                formula="x",
+                direction="up",
+                target=1.0,
+                warning_threshold=0.5,
+                critical_threshold=0.2,
+            )
+        ]
         profile = RoleProfile(
             role_id="analyst",
             display_name="Analyst",
@@ -196,13 +202,18 @@ kpis:
 
     def test_load_from_role_id(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            # Create a simple config/role_profiles directory for testing
             role_dir = Path(tmpdir) / "role_profiles"
             role_dir.mkdir()
             role_file = role_dir / "test_role.yaml"
-            role_file.write_text("role_id: test\ndisplay_name: Test\nunit_focus: Test focus\nduties: []\nkpis: []", encoding="utf-8")
+            role_yaml = (
+                "role_id: test\n"
+                "display_name: Test\n"
+                "unit_focus: Test focus\n"
+                "duties: []\n"
+                "kpis: []\n"
+            )
+            role_file.write_text(role_yaml, encoding="utf-8")
 
-            # Temporarily override ROLE_PROFILES_DIR (this won't work in real test, so use explicit path)
             profile = load_role_profile(role_file)
             assert profile.role_id == "test"
 
@@ -456,8 +467,18 @@ class TestBuildRoleTaskStatusMd:
             kpis=[],
         )
         tasks = [
-            {"id": "D1", "duty": "Review data", "pack_outputs": ["report.xlsx"], "complete": True},
-            {"id": "D2", "duty": "Analyze trends", "pack_outputs": ["analysis.md"], "complete": False},
+            {
+                "id": "D1",
+                "duty": "Review data",
+                "pack_outputs": ["report.xlsx"],
+                "complete": True,
+            },
+            {
+                "id": "D2",
+                "duty": "Analyze trends",
+                "pack_outputs": ["analysis.md"],
+                "complete": False,
+            },
         ]
         md = build_role_task_status_md(role, tasks, 50.0, "2024-06-03")
 
