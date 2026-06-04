@@ -11,9 +11,9 @@ from socrata_toolkit.spatial.geodataframe import (
     HAS_GEOPANDAS,
     _parse_geom_value,
     geodataframe_from_socrata,
+    spatial_stats,
     to_geojson,
     to_wkt_column,
-    spatial_stats,
 )
 
 # ---------------------------------------------------------------------------
