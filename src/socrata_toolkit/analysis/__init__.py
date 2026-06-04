@@ -134,6 +134,12 @@ def __getattr__(name: str):
         from socrata_toolkit import visualization as _viz
 
         return getattr(_viz, name)
+    if name == "dataframe_to_pdf":
+        # Defined only in viz.core; routed here to avoid the monolith's
+        # import-time circular-dependency fallback to None.
+        from socrata_toolkit.viz.core import dataframe_to_pdf as _df_to_pdf
+
+        return _df_to_pdf
     if name in _SUBMODULE_MAP:
         import importlib
         mod = importlib.import_module(_SUBMODULE_MAP[name])
