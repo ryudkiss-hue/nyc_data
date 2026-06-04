@@ -8,8 +8,8 @@ import pytest
 
 from socrata_toolkit.spatial.analytics import (
     Cluster,
-    HotspotAnalysis,
     Hotspot,
+    HotspotAnalysis,
     InterpolationAnalysis,
     NetworkAnalysis,
     SpatialAnomalyDetector,

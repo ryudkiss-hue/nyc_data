@@ -11,10 +11,10 @@ import pytest
 
 import socrata_toolkit.spatial.visualization as viz_module
 from socrata_toolkit.spatial.visualization import (
-    MapExporter,
-    MapStyle,
     NYC_BOUNDS,
     NYC_CENTER,
+    MapExporter,
+    MapStyle,
     SpatialVisualization,
     export_conflicts_geojson,
 )
@@ -497,7 +497,7 @@ class TestSpatialVisualizationExport:
     def test_export_map_html_returns_false_on_error(self):
         """export_map_html returns False when save raises an exception."""
         mock_map = MagicMock()
-        mock_map.save.side_effect = IOError("disk full")
+        mock_map.save.side_effect = OSError("disk full")
         viz = SpatialVisualization()
         result = viz.export_map_html(mock_map, "/nonexistent/path/map.html")
         assert result is False

@@ -6,7 +6,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # Optional dep guard
 # ---------------------------------------------------------------------------
@@ -29,7 +28,6 @@ from socrata_toolkit.spatial.queries import (
     SpatialAggregation,
     SpatialQuery,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

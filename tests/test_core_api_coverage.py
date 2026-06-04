@@ -7,7 +7,6 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # Guard: skip the whole module if Flask is not installed
 # ---------------------------------------------------------------------------
@@ -61,13 +60,6 @@ class TestSearchEndpoint:
 
     def test_search_returns_200(self, client):
         """Search endpoint returns HTTP 200 when client succeeds."""
-        mock_result = MagicMock()
-        mock_result.__dict__ = {"name": "Test Dataset", "fourfour": "abcd-1234"}
-
-        with patch("socrata_toolkit.core.api.create_app.<locals>.search") as mock_fn:
-            # Instead, patch SocrataClient directly
-            pass
-
         with patch("socrata_toolkit.core.client.SocrataClient.search", return_value=[]):
             resp = client.get("/api/search?q=violations")
         assert resp.status_code == 200
@@ -184,7 +176,12 @@ class TestPrioritizeEndpoint:
         """Valid rows payload returns HTTP 200 with summary and rows."""
         payload = {
             "rows": [
-                {"defect_grade": "A", "location_type": "Sidewalk", "block_or_lot": "100"},
+                {
+                    "defect_grade": "A",
+                    "location_type": "Sidewalk",
+                    "block_or_lot": "100",
+                    "description": "Cracked sidewalk flag near curb ramp",
+                },
             ]
         }
         resp = client.post("/api/prioritize", json=payload)
