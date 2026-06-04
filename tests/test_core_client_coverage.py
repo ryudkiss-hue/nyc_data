@@ -1,6 +1,8 @@
 """Comprehensive tests for core.client Socrata API wrapper.
 
-Tests SocrataClient, SocrataConfig, and data fetching with realistic synthetic data.
+Tests SocrataClient and SocrataConfig. The client uses `requests` directly
+(SODA3 POST with token, SODA2 GET fallback without) wrapped in `with_retries`,
+so tests patch `socrata_toolkit.core.client.requests`.
 """
 
 from __future__ import annotations
@@ -11,329 +13,388 @@ import pandas as pd
 import pytest
 
 
-class TestSocrataConfig:
-    """Test SocrataConfig configuration object."""
+def _mock_response(json_value):
+    """Build a mock requests.Response whose .json() returns json_value."""
+    resp = MagicMock()
+    resp.json.return_value = json_value
+    resp.status_code = 200
+    return resp
 
-    def test_socrata_config_default_domain(self):
-        """Test SocrataConfig with default domain."""
+
+def _paged_get(pages):
+    """Return a side_effect callable yielding successive pages then []."""
+    sequence = [_mock_response(p) for p in pages] + [_mock_response([])]
+    it = iter(sequence)
+
+    def _call(*args, **kwargs):
+        return next(it)
+
+    return _call
+
+
+class TestSocrataConfig:
+    """Test SocrataConfig configuration dataclass."""
+
+    def test_default_app_token_none(self):
         from socrata_toolkit.core.client import SocrataConfig
 
         config = SocrataConfig()
-        assert config.domain == "data.cityofnewyork.us"
+        assert config.app_token is None
 
-    def test_socrata_config_custom_domain(self):
-        """Test SocrataConfig with custom domain."""
+    def test_default_timeout(self):
         from socrata_toolkit.core.client import SocrataConfig
 
-        config = SocrataConfig(domain="data.example.com")
-        assert config.domain == "data.example.com"
+        config = SocrataConfig()
+        assert config.timeout == 30
 
-    def test_socrata_config_with_token(self):
-        """Test SocrataConfig with API token."""
+    def test_default_page_size(self):
+        from socrata_toolkit.core.client import SocrataConfig
+
+        config = SocrataConfig()
+        assert config.page_size == 1000
+
+    def test_with_token(self):
         from socrata_toolkit.core.client import SocrataConfig
 
         config = SocrataConfig(app_token="test_token_123")
         assert config.app_token == "test_token_123"
 
-    def test_socrata_config_timeout(self):
-        """Test SocrataConfig timeout setting."""
+    def test_custom_timeout(self):
         from socrata_toolkit.core.client import SocrataConfig
 
-        config = SocrataConfig(timeout=30)
-        assert config.timeout == 30
+        config = SocrataConfig(timeout=60)
+        assert config.timeout == 60
+
+    def test_custom_page_size(self):
+        from socrata_toolkit.core.client import SocrataConfig
+
+        config = SocrataConfig(page_size=500)
+        assert config.page_size == 500
 
 
-class TestSocrataClient:
-    """Test SocrataClient API wrapper."""
+class TestSocrataClientInit:
+    """Test SocrataClient initialization."""
 
-    def test_socrata_client_init(self):
-        """Test SocrataClient initialization."""
+    def test_init_default_config(self, monkeypatch):
         from socrata_toolkit.core.client import SocrataClient
 
-        with patch("socrata_toolkit.core.client.Socrata") as mock_socrata:
-            mock_socrata.return_value = MagicMock()
-            client = SocrataClient()
-            assert client is not None
+        monkeypatch.delenv("SOCRATA_APP_TOKEN", raising=False)
+        client = SocrataClient()
+        assert client.config is not None
 
-    def test_socrata_client_with_config(self):
-        """Test SocrataClient with custom config."""
+    def test_init_reads_env_token(self, monkeypatch):
+        from socrata_toolkit.core.client import SocrataClient
+
+        monkeypatch.setenv("SOCRATA_APP_TOKEN", "env_token_xyz")
+        client = SocrataClient()
+        assert client.config.app_token == "env_token_xyz"
+
+    def test_init_with_explicit_config(self):
         from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
-        config = SocrataConfig(domain="data.example.com")
-        with patch("socrata_toolkit.core.client.Socrata") as mock_socrata:
-            mock_socrata.return_value = MagicMock()
-            client = SocrataClient(config)
-            assert client is not None
+        config = SocrataConfig(app_token="explicit")
+        client = SocrataClient(config)
+        assert client.config.app_token == "explicit"
 
-    def test_fetch_dataframe_basic(self):
-        """Test fetching a DataFrame from Socrata."""
-        from socrata_toolkit.core.client import SocrataClient
+    def test_headers_with_token(self):
+        from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
-        with patch("socrata_toolkit.core.client.Socrata") as mock_socrata_class:
-            mock_socrata = MagicMock()
-            mock_socrata_class.return_value = mock_socrata
+        client = SocrataClient(SocrataConfig(app_token="tok"))
+        headers = client._headers()
+        assert headers["X-App-Token"] == "tok"
 
-            # Mock the API response
-            mock_socrata.get.return_value = [
-                {"id": 1, "name": "Test 1", "value": 100},
-                {"id": 2, "name": "Test 2", "value": 200},
-            ]
+    def test_headers_without_token(self):
+        from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
-            client = SocrataClient()
+        client = SocrataClient(SocrataConfig(app_token=None))
+        headers = client._headers()
+        assert "X-App-Token" not in headers
+
+
+class TestBuildSoql:
+    """Test the _build_soql query builder."""
+
+    def test_basic_select_all(self):
+        from socrata_toolkit.core.client import SocrataClient, SocrataConfig
+
+        client = SocrataClient(SocrataConfig())
+        soql = client._build_soql(limit=10, offset=0)
+        assert "SELECT *" in soql
+        assert "LIMIT 10" in soql
+        assert "OFFSET 0" in soql
+
+    def test_with_select(self):
+        from socrata_toolkit.core.client import SocrataClient, SocrataConfig
+
+        client = SocrataClient(SocrataConfig())
+        soql = client._build_soql(limit=10, offset=0, select="borough, count(*)")
+        assert "SELECT borough, count(*)" in soql
+
+    def test_with_where(self):
+        from socrata_toolkit.core.client import SocrataClient, SocrataConfig
+
+        client = SocrataClient(SocrataConfig())
+        soql = client._build_soql(limit=10, offset=0, where="borough='MANHATTAN'")
+        assert "WHERE borough='MANHATTAN'" in soql
+
+    def test_with_order(self):
+        from socrata_toolkit.core.client import SocrataClient, SocrataConfig
+
+        client = SocrataClient(SocrataConfig())
+        soql = client._build_soql(limit=10, offset=0, order="created_date DESC")
+        assert "ORDER BY created_date DESC" in soql
+
+    def test_full_query(self):
+        from socrata_toolkit.core.client import SocrataClient, SocrataConfig
+
+        client = SocrataClient(SocrataConfig())
+        soql = client._build_soql(
+            limit=50, offset=100, select="a, b", where="x>1", order="a"
+        )
+        assert "SELECT a, b" in soql
+        assert "WHERE x>1" in soql
+        assert "ORDER BY a" in soql
+        assert "LIMIT 50" in soql
+        assert "OFFSET 100" in soql
+
+
+class TestFetchDataframe:
+    """Test fetch_dataframe via SODA2/SODA3 paths."""
+
+    def test_fetch_soda2_without_token(self):
+        """Without a token, falls back to SODA2 GET."""
+        from socrata_toolkit.core.client import SocrataClient, SocrataConfig
+
+        client = SocrataClient(SocrataConfig(app_token=None))
+        page = [{"id": "1", "name": "A"}, {"id": "2", "name": "B"}]
+        with patch("socrata_toolkit.core.client.requests") as mock_requests:
+            mock_requests.get.side_effect = _paged_get([page])
+            with pytest.warns(UserWarning):
+                df = client.fetch_dataframe("data.cityofnewyork.us", "abc1-2345")
+
+        assert isinstance(df, pd.DataFrame)
+        assert len(df) == 2
+        assert list(df.columns) == ["id", "name"]
+
+    def test_fetch_soda3_with_token(self):
+        """With a token, uses SODA3 POST endpoint."""
+        from socrata_toolkit.core.client import SocrataClient, SocrataConfig
+
+        client = SocrataClient(SocrataConfig(app_token="tok"))
+        page = [{"id": "1", "value": 10}]
+        with patch("socrata_toolkit.core.client.requests") as mock_requests:
+            mock_requests.post.side_effect = _paged_get([page])
             df = client.fetch_dataframe("data.cityofnewyork.us", "abc1-2345")
 
-            assert isinstance(df, pd.DataFrame)
-            assert len(df) >= 0  # May be 0 or more depending on mock
+        assert isinstance(df, pd.DataFrame)
+        assert len(df) == 1
+        mock_requests.post.assert_called()
 
-    def test_fetch_dataframe_with_max_rows(self):
-        """Test fetching DataFrame with max_rows limit."""
-        from socrata_toolkit.core.client import SocrataClient
+    def test_fetch_empty_result(self):
+        """Empty dataset returns empty DataFrame."""
+        from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
-        with patch("socrata_toolkit.core.client.Socrata") as mock_socrata_class:
-            mock_socrata = MagicMock()
-            mock_socrata_class.return_value = mock_socrata
-            mock_socrata.get.return_value = [
-                {"id": i, "value": i * 10} for i in range(100)
-            ]
+        client = SocrataClient(SocrataConfig(app_token="tok"))
+        with patch("socrata_toolkit.core.client.requests") as mock_requests:
+            mock_requests.post.side_effect = _paged_get([])
+            df = client.fetch_dataframe("data.cityofnewyork.us", "abc1-2345")
 
-            client = SocrataClient()
-            df = client.fetch_dataframe("data.cityofnewyork.us", "abc1-2345", max_rows=50)
+        assert isinstance(df, pd.DataFrame)
+        assert len(df) == 0
 
-            assert isinstance(df, pd.DataFrame)
+    def test_fetch_with_max_rows(self):
+        """max_rows limits the number of returned rows."""
+        from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
-    def test_fetch_dataframe_with_where_filter(self):
-        """Test fetching DataFrame with WHERE filter."""
-        from socrata_toolkit.core.client import SocrataClient
+        client = SocrataClient(SocrataConfig(app_token="tok", page_size=2))
+        page = [{"id": str(i)} for i in range(2)]
+        with patch("socrata_toolkit.core.client.requests") as mock_requests:
+            mock_requests.post.side_effect = _paged_get([page])
+            df = client.fetch_dataframe("data.cityofnewyork.us", "abc1-2345", max_rows=2)
 
-        with patch("socrata_toolkit.core.client.Socrata") as mock_socrata_class:
-            mock_socrata = MagicMock()
-            mock_socrata_class.return_value = mock_socrata
-            mock_socrata.get.return_value = [
-                {"id": 1, "borough": "MANHATTAN", "status": "open"}
-            ]
+        assert len(df) == 2
 
-            client = SocrataClient()
+    def test_fetch_with_where(self):
+        """WHERE filter is passed through to the SoQL query."""
+        from socrata_toolkit.core.client import SocrataClient, SocrataConfig
+
+        client = SocrataClient(SocrataConfig(app_token="tok"))
+        page = [{"id": "1", "borough": "MANHATTAN"}]
+        with patch("socrata_toolkit.core.client.requests") as mock_requests:
+            mock_requests.post.side_effect = _paged_get([page])
             df = client.fetch_dataframe(
-                "data.cityofnewyork.us",
-                "abc1-2345",
-                where="borough='MANHATTAN'"
+                "data.cityofnewyork.us", "abc1-2345", where="borough='MANHATTAN'"
             )
 
-            assert isinstance(df, pd.DataFrame)
+        assert len(df) == 1
+        # Verify the WHERE clause made it into the POSTed query
+        call_kwargs = mock_requests.post.call_args
+        posted_query = call_kwargs.kwargs["json"]["query"]
+        assert "WHERE borough='MANHATTAN'" in posted_query
 
-    def test_fetch_dataframe_empty_result(self):
-        """Test fetching DataFrame that returns no rows."""
-        from socrata_toolkit.core.client import SocrataClient
 
-        with patch("socrata_toolkit.core.client.Socrata") as mock_socrata_class:
-            mock_socrata = MagicMock()
-            mock_socrata_class.return_value = mock_socrata
-            mock_socrata.get.return_value = []
+class TestSearch:
+    """Test dataset search."""
 
-            client = SocrataClient()
-            df = client.fetch_dataframe("data.cityofnewyork.us", "abc1-2345")
+    def test_search_returns_results(self):
+        from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
-            assert isinstance(df, pd.DataFrame)
-            assert len(df) == 0
-
-    def test_get_metadata(self):
-        """Test fetching dataset metadata."""
-        from socrata_toolkit.core.client import SocrataClient
-
-        with patch("socrata_toolkit.core.client.Socrata") as mock_socrata_class:
-            mock_socrata = MagicMock()
-            mock_socrata_class.return_value = mock_socrata
-
-            # Mock metadata response
-            mock_meta_obj = MagicMock()
-            mock_meta_obj.summary.return_value = {
-                "name": "Test Dataset",
-                "rows": 1000,
-                "columns": 10,
-            }
-            mock_socrata.get_metadata.return_value = mock_meta_obj
-
-            client = SocrataClient()
-            meta = client.get_metadata("data.cityofnewyork.us", "abc1-2345")
-
-            assert meta is not None
-
-    def test_search_datasets(self):
-        """Test searching for datasets."""
-        from socrata_toolkit.core.client import SocrataClient, SearchResult
-
+        client = SocrataClient(SocrataConfig())
+        payload = {
+            "results": [
+                {
+                    "resource": {
+                        "id": "abc1-2345",
+                        "name": "Test Dataset",
+                        "description": "desc",
+                        "tags": ["a"],
+                    },
+                    "metadata": {"domain": "data.cityofnewyork.us"},
+                }
+            ]
+        }
         with patch("socrata_toolkit.core.client.requests") as mock_requests:
-            mock_response = MagicMock()
-            mock_response.json.return_value = {
-                "results": [
-                    {
-                        "resource": {
-                            "id": "abc1-2345",
-                            "name": "Test Dataset",
-                            "description": "A test dataset",
-                        }
-                    }
-                ]
-            }
-            mock_response.status_code = 200
-            mock_requests.get.return_value = mock_response
-
-            client = SocrataClient()
+            mock_requests.get.return_value = _mock_response(payload)
             results = client.search("test", limit=10)
 
-            assert isinstance(results, list)
+        assert len(results) == 1
+        assert results[0].name == "Test Dataset"
+        assert results[0].fourfour == "abc1-2345"
 
-    def test_search_datasets_with_domain(self):
-        """Test searching datasets on specific domain."""
-        from socrata_toolkit.core.client import SocrataClient
+    def test_search_empty_results(self):
+        from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
+        client = SocrataClient(SocrataConfig())
         with patch("socrata_toolkit.core.client.requests") as mock_requests:
-            mock_response = MagicMock()
-            mock_response.json.return_value = {"results": []}
-            mock_response.status_code = 200
-            mock_requests.get.return_value = mock_response
+            mock_requests.get.return_value = _mock_response({"results": []})
+            results = client.search("nonexistent")
 
-            client = SocrataClient()
-            results = client.search("test", domain="data.example.com", limit=5)
+        assert results == []
 
-            assert isinstance(results, list)
+    def test_search_with_domain_and_category(self):
+        from socrata_toolkit.core.client import SocrataClient, SocrataConfig
+
+        client = SocrataClient(SocrataConfig())
+        with patch("socrata_toolkit.core.client.requests") as mock_requests:
+            mock_requests.get.return_value = _mock_response({"results": []})
+            client.search("q", domain="data.example.com", category="Transportation")
+            params = mock_requests.get.call_args.kwargs["params"]
+            assert params["domains"] == "data.example.com"
+            assert params["categories"] == "Transportation"
 
 
-class TestSocrataClientWithSyntheticData:
-    """Integration tests with synthetic Faker data."""
+class TestGetMetadata:
+    """Test get_metadata."""
 
-    def test_fetch_fake_inspection_data(self, fake_inspection_records):
-        """Test fetching and processing fake inspection records."""
-        from socrata_toolkit.core.client import SocrataClient
+    def test_metadata_basic(self):
+        from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
+        client = SocrataClient(SocrataConfig())
+        payload = {
+            "name": "Test Dataset",
+            "description": "A description",
+            "rowsCount": 1000,
+            "columns": [{"name": "id"}],
+        }
+        with patch("socrata_toolkit.core.client.requests") as mock_requests:
+            mock_requests.get.return_value = _mock_response(payload)
+            meta = client.get_metadata("data.cityofnewyork.us", "abc1-2345")
+
+        assert meta.name == "Test Dataset"
+        assert meta.row_count == 1000
+        assert meta.fourfour == "abc1-2345"
+
+    def test_metadata_with_license(self):
+        from socrata_toolkit.core.client import SocrataClient, SocrataConfig
+
+        client = SocrataClient(SocrataConfig())
+        payload = {
+            "name": "X",
+            "license": {"name": "CC0"},
+            "columns": [],
+        }
+        with patch("socrata_toolkit.core.client.requests") as mock_requests:
+            mock_requests.get.return_value = _mock_response(payload)
+            meta = client.get_metadata("data.cityofnewyork.us", "abc1-2345")
+
+        assert meta.license == "CC0"
+
+
+class TestFetchSince:
+    """Test fetch_since delta fetch."""
+
+    def test_fetch_since_builds_where(self):
+        from socrata_toolkit.core.client import SocrataClient, SocrataConfig
+
+        client = SocrataClient(SocrataConfig(app_token="tok"))
+        page = [{"id": "1"}]
+        with patch("socrata_toolkit.core.client.requests") as mock_requests:
+            mock_requests.post.side_effect = _paged_get([page])
+            batches = list(
+                client.fetch_since(
+                    "data.cityofnewyork.us", "abc1-2345", "updated_at", "2024-01-01T00:00:00"
+                )
+            )
+
+        assert len(batches) == 1
+        posted_query = mock_requests.post.call_args.kwargs["json"]["query"]
+        assert "updated_at > '2024-01-01T00:00:00'" in posted_query
+
+    def test_fetch_since_combines_with_existing_where(self):
+        from socrata_toolkit.core.client import SocrataClient, SocrataConfig
+
+        client = SocrataClient(SocrataConfig(app_token="tok"))
+        page = [{"id": "1"}]
+        with patch("socrata_toolkit.core.client.requests") as mock_requests:
+            mock_requests.post.side_effect = _paged_get([page])
+            list(
+                client.fetch_since(
+                    "data.cityofnewyork.us",
+                    "abc1-2345",
+                    "updated_at",
+                    "2024-01-01",
+                    where="borough='MN'",
+                )
+            )
+
+        posted_query = mock_requests.post.call_args.kwargs["json"]["query"]
+        assert "borough='MN'" in posted_query
+        assert "updated_at > '2024-01-01'" in posted_query
+
+
+class TestSyntheticDataProcessing:
+    """Validate downstream processing of synthetic Faker data."""
+
+    def test_process_fake_inspection_records(self, fake_inspection_records):
         df = pd.DataFrame(fake_inspection_records)
-
-        # Verify structure
         assert len(df) == 100
-        assert "borough" in df.columns
-        assert "status" in df.columns
-        assert "severity" in df.columns
+        assert {"borough", "status", "severity"}.issubset(df.columns)
 
-    def test_fetch_fake_violations_data(self, fake_violation_records):
-        """Test fetching and processing fake violation records."""
-        from socrata_toolkit.core.client import SocrataClient
-
-        df = pd.DataFrame(fake_violation_records)
-
-        # Verify structure
-        assert len(df) == 500
-        assert "violation_type" in df.columns
-        assert "severity" in df.columns
-        assert "date_reported" in df.columns
-
-    def test_process_large_dataset(self, fake_large_dataframe):
-        """Test processing large dataset (10K rows)."""
-        df = fake_large_dataframe
-
-        # Verify we can process without errors
-        assert len(df) == 10000
-        assert "borough" in df.columns
-
-        # Test grouping operations
-        grouped = df.groupby("borough").size()
-        assert len(grouped) > 0
-
-    def test_filter_synthetic_data(self, fake_inspection_records):
-        """Test filtering synthetic data by borough."""
+    def test_filter_by_borough(self, fake_inspection_records):
         df = pd.DataFrame(fake_inspection_records)
-
         manhattan = df[df["borough"] == "MANHATTAN"]
-        assert len(manhattan) > 0
         assert all(manhattan["borough"] == "MANHATTAN")
 
-    def test_aggregate_synthetic_data(self, fake_violation_records):
-        """Test aggregating synthetic violation data."""
+    def test_aggregate_violations(self, fake_violation_records):
         df = pd.DataFrame(fake_violation_records)
+        counts = df["violation_type"].value_counts()
+        assert counts.sum() == 500
 
-        # Count violations by type
-        violation_counts = df["violation_type"].value_counts()
-        assert len(violation_counts) > 0
-
-        # Average severity by type
-        avg_severity = df.groupby("violation_type")["severity"].mean()
-        assert len(avg_severity) > 0
-
-    def test_date_operations_on_synthetic_data(self, fake_inspection_records):
-        """Test date operations on synthetic data."""
-        df = pd.DataFrame(fake_inspection_records)
-
-        # Convert to datetime
-        df["complaint_date"] = pd.to_datetime(df["complaint_date"])
-        df["completion_date"] = pd.to_datetime(df["completion_date"])
-
-        # Filter by date range
-        recent = df[df["complaint_date"] > "2024-01-01"]
-        assert isinstance(recent, pd.DataFrame)
+    def test_large_dataset_grouping(self, fake_large_dataframe):
+        grouped = fake_large_dataframe.groupby("borough").size()
+        assert grouped.sum() == 10000
 
 
 class TestErrorHandling:
-    """Test error handling in SocrataClient."""
+    """Test error propagation."""
 
-    def test_fetch_dataframe_api_error(self):
-        """Test handling of API errors."""
-        from socrata_toolkit.core.client import SocrataClient
-
-        with patch("socrata_toolkit.core.client.Socrata") as mock_socrata_class:
-            mock_socrata = MagicMock()
-            mock_socrata_class.return_value = mock_socrata
-            mock_socrata.get.side_effect = Exception("API Error")
-
-            client = SocrataClient()
-            with pytest.raises(Exception):
-                client.fetch_dataframe("data.cityofnewyork.us", "invalid")
-
-    def test_invalid_fourfour(self):
-        """Test handling of invalid fourfour IDs."""
-        from socrata_toolkit.core.client import SocrataClient
-
-        with patch("socrata_toolkit.core.client.Socrata") as mock_socrata_class:
-            mock_socrata = MagicMock()
-            mock_socrata_class.return_value = mock_socrata
-            mock_socrata.get.return_value = []
-
-            client = SocrataClient()
-            df = client.fetch_dataframe("data.cityofnewyork.us", "invalid-fourfour")
-
-            # Should return empty DataFrame, not raise error
-            assert isinstance(df, pd.DataFrame)
-            assert len(df) == 0
-
-    def test_timeout_handling(self):
-        """Test handling of timeout errors."""
+    def test_fetch_api_error_propagates(self):
+        """Underlying request errors surface as SocrataToolkitError after retries."""
         from socrata_toolkit.core.client import SocrataClient, SocrataConfig
+        from socrata_toolkit.core.utils import SocrataToolkitError
 
-        config = SocrataConfig(timeout=1)
-
-        with patch("socrata_toolkit.core.client.Socrata") as mock_socrata_class:
-            mock_socrata = MagicMock()
-            mock_socrata_class.return_value = mock_socrata
-            mock_socrata.get.side_effect = TimeoutError("Request timeout")
-
-            client = SocrataClient(config)
-            with pytest.raises(TimeoutError):
-                client.fetch_dataframe("data.cityofnewyork.us", "abc1-2345")
-
-
-class TestClientCaching:
-    """Test client-level caching behavior."""
-
-    def test_client_caches_connections(self):
-        """Test that client maintains connection cache."""
-        from socrata_toolkit.core.client import SocrataClient
-
-        with patch("socrata_toolkit.core.client.Socrata") as mock_socrata_class:
-            mock_socrata_class.return_value = MagicMock()
-
-            client = SocrataClient()
-            # Make multiple calls
-            with patch.object(client, "fetch_dataframe", return_value=pd.DataFrame()):
-                client.fetch_dataframe("data.cityofnewyork.us", "abc1-2345")
-                client.fetch_dataframe("data.cityofnewyork.us", "xyz9-8765")
-
-            # Connection should be reused (implementation dependent)
-            assert client is not None
+        client = SocrataClient(SocrataConfig(app_token="tok"))
+        with patch("socrata_toolkit.core.client.requests") as mock_requests:
+            mock_requests.post.side_effect = RuntimeError("API Error")
+            with pytest.raises(SocrataToolkitError):
+                client.fetch_dataframe("data.cityofnewyork.us", "invalid")

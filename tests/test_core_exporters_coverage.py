@@ -134,48 +134,37 @@ class TestXLSXExporter:
 
 
 class TestPostgresExporter:
-    """Test PostgresExporter for database operations."""
+    """Test PostgresExporter for database operations.
 
-    def test_postgres_exporter_requires_psycopg(self):
-        """Test that PostgresExporter raises error without psycopg."""
-        from socrata_toolkit.core.exporters import PostgresExporter
-
-        with patch("socrata_toolkit.core.exporters.psycopg", None):
-            with pytest.raises(ImportError, match="Install postgres extras"):
-                PostgresExporter("postgresql://localhost/test")
+    psycopg is imported inside __init__, so we patch psycopg.connect directly
+    rather than a module-level attribute.
+    """
 
     def test_postgres_exporter_init_with_mock(self):
         """Test PostgresExporter initialization with mocked psycopg."""
         from socrata_toolkit.core.exporters import PostgresExporter
 
-        with patch("socrata_toolkit.core.exporters.psycopg") as mock_psycopg:
-            mock_conn = MagicMock()
-            mock_psycopg.connect.return_value = mock_conn
-
+        mock_conn = MagicMock()
+        with patch("psycopg.connect", return_value=mock_conn):
             exporter = PostgresExporter("postgresql://localhost/test")
-            assert exporter.conn == mock_conn
+            assert exporter.conn is mock_conn
 
     def test_postgres_exporter_context_manager(self):
         """Test PostgresExporter as context manager."""
         from socrata_toolkit.core.exporters import PostgresExporter
 
-        with patch("socrata_toolkit.core.exporters.psycopg") as mock_psycopg:
-            mock_conn = MagicMock()
-            mock_psycopg.connect.return_value = mock_conn
-
+        mock_conn = MagicMock()
+        with patch("psycopg.connect", return_value=mock_conn):
             with PostgresExporter("postgresql://localhost/test") as exporter:
                 assert exporter is not None
-
             mock_conn.close.assert_called_once()
 
     def test_postgres_sql_type_detection(self):
         """Test _sql_type method for type inference."""
         from socrata_toolkit.core.exporters import PostgresExporter
 
-        with patch("socrata_toolkit.core.exporters.psycopg") as mock_psycopg:
-            mock_conn = MagicMock()
-            mock_psycopg.connect.return_value = mock_conn
-
+        mock_conn = MagicMock()
+        with patch("psycopg.connect", return_value=mock_conn):
             exporter = PostgresExporter("postgresql://localhost/test")
 
             assert exporter._sql_type(True) == "BOOLEAN"
@@ -187,27 +176,22 @@ class TestPostgresExporter:
         """Test upsert with empty batch."""
         from socrata_toolkit.core.exporters import PostgresExporter
 
-        with patch("socrata_toolkit.core.exporters.psycopg") as mock_psycopg:
-            mock_conn = MagicMock()
-            mock_cursor = MagicMock()
-            mock_conn.cursor.return_value = mock_cursor
-            mock_psycopg.connect.return_value = mock_conn
-
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_conn.cursor.return_value = mock_cursor
+        with patch("psycopg.connect", return_value=mock_conn):
             exporter = PostgresExporter("postgresql://localhost/test")
             result = exporter.upsert_batches([], "test_table", "id")
-
             assert result == 0
 
     def test_postgres_upsert_single_batch(self):
         """Test upsert with single batch of records."""
         from socrata_toolkit.core.exporters import PostgresExporter
 
-        with patch("socrata_toolkit.core.exporters.psycopg") as mock_psycopg:
-            mock_conn = MagicMock()
-            mock_cursor = MagicMock()
-            mock_conn.cursor.return_value = mock_cursor
-            mock_psycopg.connect.return_value = mock_conn
-
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_conn.cursor.return_value = mock_cursor
+        with patch("psycopg.connect", return_value=mock_conn):
             exporter = PostgresExporter("postgresql://localhost/test")
             batch = [
                 {"id": 1, "name": "Alice", "age": 30},
@@ -215,20 +199,19 @@ class TestPostgresExporter:
             ]
             result = exporter.upsert_batches([batch], "test_table", "id")
 
-            assert result >= 0
-            # Verify table creation was attempted
+            assert result == 2
+            # Verify table creation + executemany were attempted
             mock_cursor.execute.assert_called()
+            mock_cursor.executemany.assert_called()
 
     def test_postgres_upsert_multiple_batches(self):
         """Test upsert with multiple batches."""
         from socrata_toolkit.core.exporters import PostgresExporter
 
-        with patch("socrata_toolkit.core.exporters.psycopg") as mock_psycopg:
-            mock_conn = MagicMock()
-            mock_cursor = MagicMock()
-            mock_conn.cursor.return_value = mock_cursor
-            mock_psycopg.connect.return_value = mock_conn
-
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_conn.cursor.return_value = mock_cursor
+        with patch("psycopg.connect", return_value=mock_conn):
             exporter = PostgresExporter("postgresql://localhost/test")
             batches = [
                 [{"id": 1, "value": 10}],
@@ -237,67 +220,122 @@ class TestPostgresExporter:
             ]
             result = exporter.upsert_batches(batches, "test_table", "id")
 
-            assert result >= 0
-            assert mock_cursor.execute.call_count > 0
+            assert result == 3
+            assert mock_cursor.executemany.call_count == 3
+
+    def test_postgres_upsert_skips_empty_inner_batch(self):
+        """Empty batches within the iterable are skipped without error."""
+        from socrata_toolkit.core.exporters import PostgresExporter
+
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_conn.cursor.return_value = mock_cursor
+        with patch("psycopg.connect", return_value=mock_conn):
+            exporter = PostgresExporter("postgresql://localhost/test")
+            result = exporter.upsert_batches([[], [{"id": 1, "value": 5}], []], "t", "id")
+            assert result == 1
+
+    def test_postgres_upsert_metadata(self):
+        """Test upserting metadata into the _socrata_metadata table."""
+        from socrata_toolkit.core.exporters import PostgresExporter
+
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_conn.cursor.return_value = mock_cursor
+        with patch("psycopg.connect", return_value=mock_conn):
+            exporter = PostgresExporter("postgresql://localhost/test")
+            mock_meta = MagicMock()
+            mock_meta.fourfour = "abc1-2345"
+            mock_meta.summary.return_value = {"name": "Test", "rows": 100}
+            exporter.upsert_metadata(mock_meta)
+            mock_cursor.execute.assert_called()
+            mock_conn.commit.assert_called()
+
+
+def _fake_pymongo(mock_client):
+    """Build a fake pymongo module exposing MongoClient and UpdateOne.
+
+    The real pymongo cannot be imported in some environments (broken
+    cryptography/_cffi_backend). MongoExporter does ``from pymongo import
+    MongoClient, UpdateOne`` inside __init__, so injecting a stub module into
+    sys.modules lets the import succeed without touching the broken package.
+    """
+    import sys
+    import types
+
+    fake = types.ModuleType("pymongo")
+    fake.MongoClient = MagicMock(return_value=mock_client)
+
+    class _UpdateOne:
+        def __init__(self, filt, update, upsert=False):
+            self.filt = filt
+            self.update = update
+            self.upsert = upsert
+
+    fake.UpdateOne = _UpdateOne
+    return patch.dict(sys.modules, {"pymongo": fake})
 
 
 class TestMongoExporter:
-    """Test MongoExporter for MongoDB operations."""
+    """Test MongoExporter for MongoDB operations.
 
-    def test_mongo_exporter_requires_pymongo(self):
-        """Test that MongoExporter raises error without pymongo."""
-        from socrata_toolkit.core.exporters import MongoExporter
-
-        with patch("socrata_toolkit.core.exporters.pymongo", None):
-            with pytest.raises(ImportError, match="Install pymongo"):
-                MongoExporter("mongodb://localhost/test_db")
+    pymongo is imported inside __init__; MongoExporter(uri, db_name) takes two
+    positional args. We inject a stub pymongo module via sys.modules.
+    """
 
     def test_mongo_exporter_init_with_mock(self):
-        """Test MongoExporter initialization with mocked pymongo."""
+        """Test MongoExporter initialization with stubbed pymongo."""
         from socrata_toolkit.core.exporters import MongoExporter
 
-        with patch("socrata_toolkit.core.exporters.pymongo") as mock_pymongo:
-            mock_client = MagicMock()
-            mock_pymongo.MongoClient.return_value = mock_client
-
-            exporter = MongoExporter("mongodb://localhost/test_db")
-            assert exporter.client is not None
+        mock_client = MagicMock()
+        with _fake_pymongo(mock_client):
+            exporter = MongoExporter("mongodb://localhost", "test_db")
+            assert exporter.client is mock_client
 
     def test_mongo_exporter_context_manager(self):
         """Test MongoExporter as context manager."""
         from socrata_toolkit.core.exporters import MongoExporter
 
-        with patch("socrata_toolkit.core.exporters.pymongo") as mock_pymongo:
-            mock_client = MagicMock()
-            mock_pymongo.MongoClient.return_value = mock_client
-
-            with MongoExporter("mongodb://localhost/test_db") as exporter:
+        mock_client = MagicMock()
+        with _fake_pymongo(mock_client):
+            with MongoExporter("mongodb://localhost", "test_db") as exporter:
                 assert exporter is not None
-
             mock_client.close.assert_called_once()
 
-    def test_mongo_upsert_documents(self):
-        """Test upserting documents to MongoDB."""
+    def test_mongo_upsert_batches(self):
+        """Test upserting batches to MongoDB via bulk_write."""
         from socrata_toolkit.core.exporters import MongoExporter
 
-        with patch("socrata_toolkit.core.exporters.pymongo") as mock_pymongo:
-            mock_client = MagicMock()
-            mock_db = MagicMock()
-            mock_collection = MagicMock()
-            mock_client.__getitem__.return_value = mock_db
-            mock_db.__getitem__.return_value = mock_collection
-            mock_pymongo.MongoClient.return_value = mock_client
-
-            exporter = MongoExporter("mongodb://localhost/test_db")
-            documents = [
+        mock_client = MagicMock()
+        mock_db = MagicMock()
+        mock_collection = MagicMock()
+        mock_client.__getitem__.return_value = mock_db
+        mock_db.__getitem__.return_value = mock_collection
+        with _fake_pymongo(mock_client):
+            exporter = MongoExporter("mongodb://localhost", "test_db")
+            batch = [
                 {"_id": 1, "name": "Alice", "age": 30},
                 {"_id": 2, "name": "Bob", "age": 25},
             ]
+            result = exporter.upsert_batches([batch], "test_collection", "_id")
 
-            exporter.upsert_documents(documents, "test_collection", "_id")
-
-            # Verify bulk write was called
+            assert result == 2
             mock_collection.bulk_write.assert_called_once()
+
+    def test_mongo_upsert_empty_batch(self):
+        """Empty batch produces no bulk_write and returns 0."""
+        from socrata_toolkit.core.exporters import MongoExporter
+
+        mock_client = MagicMock()
+        mock_db = MagicMock()
+        mock_collection = MagicMock()
+        mock_client.__getitem__.return_value = mock_db
+        mock_db.__getitem__.return_value = mock_collection
+        with _fake_pymongo(mock_client):
+            exporter = MongoExporter("mongodb://localhost", "test_db")
+            result = exporter.upsert_batches([[]], "test_collection", "_id")
+            assert result == 0
+            mock_collection.bulk_write.assert_not_called()
 
 
 class TestExporterIntegration:
