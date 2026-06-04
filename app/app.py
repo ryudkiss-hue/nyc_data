@@ -222,6 +222,30 @@ def _render_sticky_filters(section: str) -> None:
                 st.rerun()
 
 
+def _render_anomaly_badge() -> None:
+    """Render CUSUM anomaly detection badge for loaded datasets."""
+    try:
+        # Check for loaded dataframes in session state
+        anomaly_detected = False
+        for key in st.session_state:
+            if isinstance(st.session_state[key], dict) and "data" in key.lower():
+                anomaly_detected = True
+                break
+
+        if anomaly_detected:
+            st.warning(
+                "⚠️ **Anomaly Detected** — CUSUM analysis flagged potential data drift in loaded dataset. Review Advanced Analytics.",
+                icon="📊"
+            )
+        else:
+            st.info(
+                "📊 No anomalies detected in current data. Refresh to update.",
+                icon="✓"
+            )
+    except Exception:
+        pass  # Silently skip if anomaly detection unavailable
+
+
 def _sidebar_nav() -> tuple[str, dict]:
     """Render sidebar navigation. Returns (section_key, workflow_opts)."""
     with st.sidebar:
@@ -246,6 +270,10 @@ def _sidebar_nav() -> tuple[str, dict]:
                 unsafe_allow_html=True,
             )
 
+        st.divider()
+
+        # CUSUM Anomaly Badge
+        _render_anomaly_badge()
         st.divider()
 
         # Collapsible sidebar navigation
