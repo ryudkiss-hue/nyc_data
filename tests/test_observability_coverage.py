@@ -27,7 +27,6 @@ from socrata_toolkit.observability import (
 )
 from socrata_toolkit.observability.metrics import HistogramData
 
-
 # ---------------------------------------------------------------------------
 # MetricsCollector
 # ---------------------------------------------------------------------------

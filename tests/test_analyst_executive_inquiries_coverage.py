@@ -6,7 +6,6 @@ from types import SimpleNamespace
 
 import pandas as pd
 
-
 # ---------------------------------------------------------------------------
 # analyst.executive.build_executive_summary
 # ---------------------------------------------------------------------------
