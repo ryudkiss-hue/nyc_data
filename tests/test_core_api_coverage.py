@@ -61,13 +61,6 @@ class TestSearchEndpoint:
 
     def test_search_returns_200(self, client):
         """Search endpoint returns HTTP 200 when client succeeds."""
-        mock_result = MagicMock()
-        mock_result.__dict__ = {"name": "Test Dataset", "fourfour": "abcd-1234"}
-
-        with patch("socrata_toolkit.core.api.create_app.<locals>.search") as mock_fn:
-            # Instead, patch SocrataClient directly
-            pass
-
         with patch("socrata_toolkit.core.client.SocrataClient.search", return_value=[]):
             resp = client.get("/api/search?q=violations")
         assert resp.status_code == 200
