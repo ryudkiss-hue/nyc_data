@@ -138,6 +138,62 @@ class TestObservabilityGroup:
         assert result.exit_code == 0
         assert "No trace found" in result.output
 
+    def test_observability_trace_with_spans(self, runner):
+        from socrata_toolkit.observability import get_observability_manager
+
+        obs = get_observability_manager()
+        tracer = obs.get_tracer()
+        root = tracer.start_span("root")
+        root.set_attribute("dataset", "violations")
+        root.finish()
+        child = tracer.start_span("child", trace_id=root.trace_id, parent_span_id=root.span_id)
+        child.finish(error_message="boom")
+
+        result = runner.invoke(main, ["observability", "trace", root.trace_id])
+        assert result.exit_code == 0
+        assert "Spans: 2" in result.output
+        assert "@dataset=violations" in result.output
+        assert "ERROR: boom" in result.output
+
+    def test_observability_trace_json(self, runner):
+        from socrata_toolkit.observability import get_observability_manager
+
+        tracer = get_observability_manager().get_tracer()
+        span = tracer.start_span("op")
+        span.finish()
+        result = runner.invoke(main, ["observability", "trace", span.trace_id, "--json"])
+        assert result.exit_code == 0
+
+    def test_observability_status_and_metrics_with_data(self, runner):
+        from socrata_toolkit.observability import get_observability_manager
+
+        obs = get_observability_manager()
+        obs.get_metrics().increment("requests", 5)
+        obs.get_metrics().observe_histogram("latency", 12.0)
+        obs.get_logs().log("hello", level="INFO")
+        result = runner.invoke(main, ["observability", "metrics", "--format", "json"])
+        assert result.exit_code == 0
+        assert "requests" in result.output
+
+    def test_observability_sla_report_with_violations(self, runner):
+        from socrata_toolkit.observability import SLA, get_observability_manager
+
+        obs = get_observability_manager()
+        obs.get_sla().register(SLA(name="latency", target=10, actual=99, severity="high"))
+        result = runner.invoke(main, ["observability", "sla-report"])
+        assert result.exit_code == 0
+        assert "Violations" in result.output
+        assert "latency" in result.output
+
+    def test_observability_logs_with_entries(self, runner):
+        from socrata_toolkit.observability import get_observability_manager
+
+        obs = get_observability_manager()
+        obs.get_logs().log("an error happened", level="ERROR", context={"k": "v"})
+        result = runner.invoke(main, ["observability", "logs", "--level", "ERROR"])
+        assert result.exit_code == 0
+        assert "an error happened" in result.output
+
     def test_observability_metrics_output_file(self, runner, tmp_path):
         out = tmp_path / "metrics.txt"
         result = runner.invoke(main, ["observability", "metrics", "--output", str(out)])
