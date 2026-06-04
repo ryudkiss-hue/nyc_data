@@ -14,15 +14,14 @@ Claude AI integration provides dynamic, conversational guidance through each ski
 from __future__ import annotations
 
 import os
-import streamlit as st
-
-from app.utils.i18n import t
 
 try:
     import anthropic  # noqa: F401
     HAS_ANTHROPIC = True
 except ImportError:
     HAS_ANTHROPIC = False
+
+import streamlit as st
 
 
 def render_analytical_skills_page() -> None:
