@@ -92,22 +92,87 @@ class TestLineageGroup:
 # ---------------------------------------------------------------------------
 
 class TestObservabilityGroup:
+    """The observability subsystem is now shipped, so commands succeed."""
+
+    @pytest.fixture(autouse=True)
+    def _fresh_manager(self):
+        from socrata_toolkit.observability import reset_observability_manager
+
+        reset_observability_manager()
+        yield
+        reset_observability_manager()
+
     @pytest.mark.parametrize(
-        "args",
+        "args,marker",
         [
-            ["observability", "status"],
-            ["observability", "health"],
-            ["observability", "sla-report"],
-            ["observability", "logs"],
-            ["observability", "metrics"],
-            ["observability", "trace", "some-correlation-id"],
+            (["observability", "status"], "Observability Status"),
+            (["observability", "health"], "Health Check"),
+            (["observability", "health", "--detailed"], "Component Details"),
+            (["observability", "sla-report"], "SLA Compliance Report"),
+            (["observability", "logs"], "Recent Logs"),
+            (["observability", "metrics"], "Metrics Summary"),
+            (["observability", "metrics", "--format", "json"], "counters"),
+            (["observability", "metrics", "--format", "prometheus"], ""),
         ],
     )
-    def test_observability_error_path(self, runner, args):
-        """observability module is unavailable → commands raise ClickException."""
+    def test_observability_success(self, runner, args, marker):
         result = runner.invoke(main, args)
-        assert result.exit_code != 0
-        assert "Error" in result.output
+        assert result.exit_code == 0, result.output
+        if marker:
+            assert marker in result.output
+
+    def test_observability_sla_report_json(self, runner):
+        result = runner.invoke(main, ["observability", "sla-report", "--json"])
+        assert result.exit_code == 0
+
+    def test_observability_health_json(self, runner):
+        result = runner.invoke(main, ["observability", "health", "--json"])
+        assert result.exit_code == 0
+
+    def test_observability_logs_json(self, runner):
+        result = runner.invoke(main, ["observability", "logs", "--json"])
+        assert result.exit_code == 0
+
+    def test_observability_trace_missing(self, runner):
+        result = runner.invoke(main, ["observability", "trace", "nonexistent"])
+        assert result.exit_code == 0
+        assert "No trace found" in result.output
+
+    def test_observability_metrics_output_file(self, runner, tmp_path):
+        out = tmp_path / "metrics.txt"
+        result = runner.invoke(main, ["observability", "metrics", "--output", str(out)])
+        assert result.exit_code == 0
+        assert out.exists()
+
+    def test_observability_export_metrics_json(self, runner, tmp_path):
+        out = tmp_path / "m.json"
+        result = runner.invoke(
+            main, ["observability", "export", "json", "--output", str(out), "--type", "metrics"]
+        )
+        assert result.exit_code == 0
+        assert out.exists()
+
+    def test_observability_export_metrics_prometheus(self, runner, tmp_path):
+        out = tmp_path / "m.prom"
+        result = runner.invoke(
+            main, ["observability", "export", "prometheus", "--output", str(out), "--type", "metrics"]
+        )
+        assert result.exit_code == 0
+
+    def test_observability_export_logs_csv(self, runner, tmp_path):
+        out = tmp_path / "logs.csv"
+        result = runner.invoke(
+            main, ["observability", "export", "csv", "--output", str(out), "--type", "logs"]
+        )
+        assert result.exit_code == 0
+        assert out.exists()
+
+    def test_observability_export_traces_json(self, runner, tmp_path):
+        out = tmp_path / "traces.json"
+        result = runner.invoke(
+            main, ["observability", "export", "json", "--output", str(out), "--type", "traces"]
+        )
+        assert result.exit_code == 0
 
     def test_observability_export_requires_format(self, runner):
         result = runner.invoke(main, ["observability", "export"])
