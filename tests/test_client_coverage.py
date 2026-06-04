@@ -248,8 +248,8 @@ class TestSocrataClientMetadata:
     def test_get_metadata_api_error(self):
         client = SocrataClient()
         with patch("socrata_toolkit.core.client.with_retries") as mock_retries:
-            mock_retries.side_effect = Exception("API error")
-            with pytest.raises(Exception):
+            mock_retries.side_effect = RuntimeError("API error")
+            with pytest.raises(RuntimeError):
                 client.get_metadata("data.example.com", "invalid-id")
 
 
