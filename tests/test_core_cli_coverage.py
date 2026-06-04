@@ -10,8 +10,8 @@ import pytest
 from click.testing import CliRunner
 
 from socrata_toolkit.core.cli import (
-    analyze_cmd,
     alerts_cmd,
+    analyze_cmd,
     batch_search_cmd,
     conflict_cmd,
     correlations_cmd,

@@ -8,13 +8,13 @@ import pandas as pd
 import pytest
 
 from socrata_toolkit.discovery.schema import (
+    TYPE_COMPATIBILITY,
+    BackwardCompatibilityChecker,
     ChangeType,
     ColumnSchema,
     DatasetSchema,
     SchemaRegistry,
     SchemaValidator,
-    TYPE_COMPATIBILITY,
-    BackwardCompatibilityChecker,
 )
 
 
