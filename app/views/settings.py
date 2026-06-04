@@ -975,64 +975,57 @@ def _render_sla_tab() -> None:
 
 
 def _render_sla_compliance_monitor() -> None:
-    """Render real-time SLA compliance monitor with metrics and status."""
+    """Render SLA compliance monitor. Shows real data when available, else unavailable state."""
     try:
-        from datetime import datetime, timedelta, timezone
+        # Check for real SLA compliance data
+        has_compliance_data = "sla_compliance_report" in st.session_state
 
-        from socrata_toolkit.quality.sla import DataQualityTracker, SLADefinition
+        if not has_compliance_data:
+            st.info(
+                "📊 **SLA Compliance data unavailable.** "
+                "Run Quality Workflows or Data Health checks to populate real compliance metrics.",
+                icon="○"
+            )
+            return
 
-        if "sla_tracker" not in st.session_state:
-            tracker = DataQualityTracker()
-            # Seed with demo metrics for inspection dataset
-            demo_metrics = {
-                "completeness": {"current": 98.5, "target": 99.0},
-                "validity": {"current": 99.1, "target": 99.0},
-                "uniqueness": {"current": 100.0, "target": 100.0},
-                "consistency": {"current": 97.8, "target": 98.0},
-                "timeliness": {"current": 23.5, "target": 24.0},  # hours
-                "accuracy": {"current": 96.2, "target": 96.0},
-            }
-            for metric_name, values in demo_metrics.items():
-                tracker.record_metric(
-                    dataset="inspection",
-                    metric_name=metric_name,
-                    value=values["current"],
-                    target=values["target"],
-                    timestamp=datetime.now(timezone.utc),
-                )
-            st.session_state.sla_tracker = tracker
-        else:
-            tracker = st.session_state.sla_tracker
+        report = st.session_state.get("sla_compliance_report", {})
+
+        # Extract metrics from real compliance report
+        overall_compliance = report.get("overall_compliance_pct", 0)
+        breach_count = report.get("breach_count", 0)
+        total_slas = report.get("total_slas", 0)
 
         col1, col2, col3 = st.columns(3)
         with col1:
-            st.metric("Overall Compliance %", "97.6%", "+1.2%")
+            st.metric(
+                "Overall Compliance %",
+                f"{overall_compliance:.1f}%",
+                delta=None
+            )
         with col2:
-            st.metric("Total SLAs", "6", "0")
+            st.metric("Total SLAs", str(total_slas))
         with col3:
-            st.metric("Active Breaches", "1", delta=1, delta_color="inverse")
+            st.metric(
+                "Active Breaches",
+                str(breach_count),
+                delta=breach_count if breach_count > 0 else None,
+                delta_color="inverse" if breach_count > 0 else "off"
+            )
 
         st.markdown("#### Per-SLA Status")
-        sla_data = [
-            {"SLA": "Completeness", "Target": "99.0%", "Actual": "98.5%", "Gap": "-0.5%", "Status": "⚠️ At Risk", "Severity": "Low"},
-            {"SLA": "Validity", "Target": "99.0%", "Actual": "99.1%", "Gap": "+0.1%", "Status": "✅ Passing", "Severity": "None"},
-            {"SLA": "Uniqueness", "Target": "100.0%", "Actual": "100.0%", "Gap": "0.0%", "Status": "✅ Passing", "Severity": "None"},
-            {"SLA": "Consistency", "Target": "98.0%", "Actual": "97.8%", "Gap": "-0.2%", "Status": "⚠️ At Risk", "Severity": "Low"},
-            {"SLA": "Timeliness", "Target": "24h", "Actual": "23.5h", "Gap": "-0.5h", "Status": "✅ Passing", "Severity": "None"},
-            {"SLA": "Accuracy", "Target": "96.0%", "Actual": "96.2%", "Gap": "+0.2%", "Status": "✅ Passing", "Severity": "None"},
-        ]
-        st.dataframe(sla_data, use_container_width=True, hide_index=True)
+        sla_details = report.get("sla_details", [])
+        if sla_details:
+            st.dataframe(sla_details, use_container_width=True, hide_index=True)
+        else:
+            st.caption("No per-SLA details available.")
 
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("🔄 Refresh compliance report"):
-                if "sla_tracker" in st.session_state:
-                    del st.session_state.sla_tracker
-                st.rerun()
-        with col2:
-            st.caption("✅ Passing | ⚠️ At Risk | 🔴 Critical")
+        if st.button("🔄 Refresh compliance report"):
+            if "sla_compliance_report" in st.session_state:
+                del st.session_state.sla_compliance_report
+            st.rerun()
+
     except ImportError:
-        st.info("SLA compliance tracking module not available in test environment.")
+        st.info("SLA compliance tracking module not available.")
 
 
 def _render_alert_config_tab() -> None:
