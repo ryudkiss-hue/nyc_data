@@ -182,6 +182,45 @@ class TestDatasetHealthFallback:
 # _load_dataset_registry / _make_session helpers
 # ---------------------------------------------------------------------------
 
+class TestAnalyzeAndTextInsights:
+    """analyze and text-insights run real profiling over fetch_json batches."""
+
+    def test_analyze_cmd(self, runner):
+        client = MagicMock()
+        client.fetch_json.return_value = iter([[
+            {"id": 1, "borough": "MN", "value": 10},
+            {"id": 2, "borough": "BX", "value": 20},
+            {"id": 3, "borough": "MN", "value": 30},
+        ]])
+        with patch("socrata_toolkit.core.cli._client", return_value=client), \
+             patch("socrata_toolkit.core.cli.load_state", return_value=None):
+            res = runner.invoke(main, [
+                "analyze", "data.cityofnewyork.us", "abc1-2345", "--key-column", "id",
+            ])
+        assert res.exit_code == 0
+        payload = json.loads(res.output)
+        assert payload["profile"]["row_count"] == 3
+        assert "quality" in payload
+
+    def test_text_insights_cmd(self, runner, tmp_path):
+        client = MagicMock()
+        client.fetch_json.return_value = iter([[
+            {"id": 1, "description": "cracked sidewalk trip hazard near curb"},
+            {"id": 2, "description": "pothole pooling water after rain"},
+        ]])
+        out = tmp_path / "tagged.json"
+        with patch("socrata_toolkit.core.cli._client", return_value=client), \
+             patch("socrata_toolkit.core.cli.load_state", return_value=None):
+            res = runner.invoke(main, [
+                "text-insights", "data.cityofnewyork.us", "abc1-2345",
+                "--text-column", "description", "--out", str(out),
+            ])
+        assert res.exit_code == 0
+        payload = json.loads(res.output)
+        assert payload["row_count"] == 2
+        assert out.exists()
+
+
 class TestRegistryAndSession:
     def test_load_dataset_registry_real(self):
         from socrata_toolkit.core.cli import _load_dataset_registry
