@@ -966,6 +966,59 @@ def _render_sla_tab() -> None:
         with st.expander("Current sla_config.json"):
             st.json(_load_sla_config())
 
+    # ---- SLA Compliance Monitor ----
+    st.markdown("---")
+    st.markdown("### 📊 SLA Compliance Monitor")
+    st.caption("Real-time SLA breach tracking and compliance status.")
+
+    _render_sla_compliance_monitor()
+
+
+def _render_sla_compliance_monitor() -> None:
+    """Render SLA compliance monitor. Shows data when Quality Workflows populate it."""
+    # Placeholder: Quality Workflows will set this after running SLA evaluations
+    # Expected contract: st.session_state["sla_compliance_report"] = {
+    #   "overall_compliance_pct": 97.6,
+    #   "breach_count": 1,
+    #   "total_slas": 6,
+    #   "sla_details": [...]
+    # }
+    report = st.session_state.get("sla_compliance_report", None)
+
+    if report is None:
+        st.info(
+            "📊 **SLA Compliance data unavailable.** "
+            "Run Data Health workflows to compute real compliance metrics.",
+            icon="○"
+        )
+        return
+
+    # Display metrics from populated report
+    overall_compliance = report.get("overall_compliance_pct", 0)
+    breach_count = report.get("breach_count", 0)
+    total_slas = report.get("total_slas", 0)
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Overall Compliance %", f"{overall_compliance:.1f}%")
+    with col2:
+        st.metric("Total SLAs", str(total_slas))
+    with col3:
+        delta = breach_count if breach_count > 0 else None
+        st.metric(
+            "Active Breaches",
+            str(breach_count),
+            delta=delta,
+            delta_color="inverse" if delta else "off"
+        )
+
+    st.markdown("#### Per-SLA Status")
+    sla_details = report.get("sla_details", [])
+    if sla_details:
+        st.dataframe(sla_details, use_container_width=True, hide_index=True)
+    else:
+        st.caption("No per-SLA details available.")
+
 
 def _render_alert_config_tab() -> None:
     """Tab 3: Alert Config (Slack + ArcGIS)."""
