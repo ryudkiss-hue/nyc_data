@@ -165,3 +165,36 @@ class TestExportGeojson:
                 "export", "inspection", "--format", "geojson", "--output", str(tmp_path / "x.geojson"),
             ])
         assert res.exit_code != 0
+
+
+# ---------------------------------------------------------------------------
+# nlp-analyze (keyword-triage shim)
+# ---------------------------------------------------------------------------
+
+class TestNlpAnalyze:
+    def test_nlp_analyze_basic(self, runner):
+        res = runner.invoke(main, ["nlp-analyze", "--text", "trip hazard collapse"])
+        assert res.exit_code == 0
+        payload = json.loads(res.output)
+        assert payload["summary"] == "trip hazard collapse"
+        assert "priority" in payload
+
+    def test_nlp_analyze_with_translate(self, runner):
+        res = runner.invoke(main, ["nlp-analyze", "--text", "cracked sidewalk", "--translate", "es"])
+        assert res.exit_code == 0
+        payload = json.loads(res.output)
+        assert "translation" in payload
+
+    def test_nlp_analyze_object_result(self, runner):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+
+        obj = SimpleNamespace(
+            tokens=["a"], lemmas=["a"], entities=[], pos_tags=[], sentiment=0.5, summary="s"
+        )
+        with patch("socrata_toolkit.core.cli.analyze_text", return_value=obj):
+            res = runner.invoke(main, ["nlp-analyze", "--text", "x"])
+        assert res.exit_code == 0
+        payload = json.loads(res.output)
+        assert payload["tokens"] == ["a"]
+        assert payload["sentiment"] == 0.5

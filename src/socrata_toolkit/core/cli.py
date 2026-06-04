@@ -396,16 +396,25 @@ def spatial_join_cmd(left_json, right_json, left_geom_col, right_geom_col, out):
 @click.option("--translate", "translate_lang", default="")
 def nlp_analyze_cmd(text, translate_lang):
     out = analyze_text(text)
+
+    def _field(name: str, default=None):
+        # Support both the spaCy-backed object result and the keyword-triage
+        # shim's dict result (used when spaCy is not installed).
+        if isinstance(out, dict):
+            return out.get(name, default)
+        return getattr(out, name, default)
+
     payload = {
-        "tokens": out.tokens,
-        "lemmas": out.lemmas,
-        "entities": out.entities,
-        "pos_tags": out.pos_tags,
-        "sentiment": out.sentiment,
-        "summary": out.summary,
+        "tokens": _field("tokens", []),
+        "lemmas": _field("lemmas", []),
+        "entities": _field("entities", []),
+        "pos_tags": _field("pos_tags", []),
+        "sentiment": _field("sentiment"),
+        "summary": _field("summary", ""),
+        "priority": _field("priority"),
     }
     if translate_lang:
-        payload["translation"] = translate_text(text, target_lang=translate_lang)
+        payload["translation"] = translate_text(text, target=translate_lang)
     click.echo(json.dumps(payload, indent=2))
 
 
