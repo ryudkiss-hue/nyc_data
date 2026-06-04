@@ -20,3 +20,4 @@ services:
         sync: true
       - key: ANTHROPIC_API_KEY
         sync: true
+    autoDeployTrigger: commit
