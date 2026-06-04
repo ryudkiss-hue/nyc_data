@@ -301,11 +301,16 @@ def analyze_cmd(domain, fourfour, where, select, order, q, max_rows, key_column,
     df = pd.DataFrame(rows)
     profile = profile_dataframe(df)
     quality = quality_report(df, list(key_column))
+    dtypes = {
+        col["name"]: col["type"]
+        for col in getattr(profile, "columns", [])
+        if isinstance(col, dict) and "name" in col and "type" in col
+    }
     payload = {
         "profile": {
             "row_count": profile.row_count,
             "column_count": profile.column_count,
-            "dtypes": profile.dtypes,
+            "dtypes": dtypes,
             "null_counts": profile.null_counts,
             "numeric_summary": profile.numeric_summary,
         },
