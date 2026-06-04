@@ -63,7 +63,7 @@ class TestLoadPipelines:
             store_path.write_text('{"valid": "json"}', encoding="utf-8")
 
             with patch("socrata_toolkit.core.persistence._STORE", store_path):
-                with patch.object(Path, "read_text", side_effect=IOError("Read error")):
+                with patch.object(Path, "read_text", side_effect=OSError("Read error")):
                     result = load_pipelines()
                     assert result == {}
 

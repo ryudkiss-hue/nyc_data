@@ -22,6 +22,8 @@ from socrata_toolkit.quality.rules import BusinessRulesEngine
 from socrata_toolkit.quality.sla import DataQualityTracker, MetricType
 from socrata_toolkit.quality.validator import (
     QualityValidator as _QualityValidator,
+)
+from socrata_toolkit.quality.validator import (
     ValidationResult,
 )
 

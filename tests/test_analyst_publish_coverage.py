@@ -145,7 +145,8 @@ email:
             profile_file = Path(tmpdir) / "invalid.yaml"
             profile_file.write_text("[invalid yaml :")
 
-            with pytest.raises(Exception):
+            import yaml
+            with pytest.raises((yaml.YAMLError, ValueError)):
                 load_publish_profile(profile_file)
 
     def test_load_publish_profile_not_dict(self):
