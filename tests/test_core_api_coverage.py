@@ -184,7 +184,12 @@ class TestPrioritizeEndpoint:
         """Valid rows payload returns HTTP 200 with summary and rows."""
         payload = {
             "rows": [
-                {"defect_grade": "A", "location_type": "Sidewalk", "block_or_lot": "100"},
+                {
+                    "defect_grade": "A",
+                    "location_type": "Sidewalk",
+                    "block_or_lot": "100",
+                    "description": "Cracked sidewalk flag near curb ramp",
+                },
             ]
         }
         resp = client.post("/api/prioritize", json=payload)
