@@ -301,11 +301,16 @@ def analyze_cmd(domain, fourfour, where, select, order, q, max_rows, key_column,
     df = pd.DataFrame(rows)
     profile = profile_dataframe(df)
     quality = quality_report(df, list(key_column))
+    dtypes = {
+        col["name"]: col["type"]
+        for col in getattr(profile, "columns", [])
+        if isinstance(col, dict) and "name" in col and "type" in col
+    }
     payload = {
         "profile": {
             "row_count": profile.row_count,
             "column_count": profile.column_count,
-            "dtypes": profile.dtypes,
+            "dtypes": dtypes,
             "null_counts": profile.null_counts,
             "numeric_summary": profile.numeric_summary,
         },
@@ -391,16 +396,25 @@ def spatial_join_cmd(left_json, right_json, left_geom_col, right_geom_col, out):
 @click.option("--translate", "translate_lang", default="")
 def nlp_analyze_cmd(text, translate_lang):
     out = analyze_text(text)
+
+    def _field(name: str, default=None):
+        # Support both the spaCy-backed object result and the keyword-triage
+        # shim's dict result (used when spaCy is not installed).
+        if isinstance(out, dict):
+            return out.get(name, default)
+        return getattr(out, name, default)
+
     payload = {
-        "tokens": out.tokens,
-        "lemmas": out.lemmas,
-        "entities": out.entities,
-        "pos_tags": out.pos_tags,
-        "sentiment": out.sentiment,
-        "summary": out.summary,
+        "tokens": _field("tokens", []),
+        "lemmas": _field("lemmas", []),
+        "entities": _field("entities", []),
+        "pos_tags": _field("pos_tags", []),
+        "sentiment": _field("sentiment"),
+        "summary": _field("summary", ""),
+        "priority": _field("priority"),
     }
     if translate_lang:
-        payload["translation"] = translate_text(text, target_lang=translate_lang)
+        payload["translation"] = translate_text(text, target=translate_lang)
     click.echo(json.dumps(payload, indent=2))
 
 
@@ -631,7 +645,7 @@ def _default_pack_date() -> str:
 
 @review_group.command("list")
 @click.option("--pack-date", default="", help="Pack date (YYYY-MM-DD). Defaults to last run.")
-@click.option("--kind", type=click.Choice(["conflict", "approval"]), default="", help="Filter by kind")
+@click.option("--kind", type=click.Choice(["conflict", "approval"]), default=None, help="Filter by kind")
 @click.option("--status", default="", help="Filter by status")
 @click.option("--q", default="", help="Search key/notes/assignee")
 @click.option("--limit", type=int, default=2000)

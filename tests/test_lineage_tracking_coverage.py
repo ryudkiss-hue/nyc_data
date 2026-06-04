@@ -37,7 +37,6 @@ from socrata_toolkit.lineage.tracking import (
     track_transformation,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures — reset module globals before every test
 # ---------------------------------------------------------------------------

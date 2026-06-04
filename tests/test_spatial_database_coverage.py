@@ -3,10 +3,9 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from datetime import datetime
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
-
 
 # ---------------------------------------------------------------------------
 # Helpers: detect optional deps and skip when genuinely absent
@@ -26,15 +25,14 @@ shapely_required = pytest.mark.skipif(not HAS_SHAPELY, reason="shapely not insta
 # ---------------------------------------------------------------------------
 
 from socrata_toolkit.spatial.database import (
-    SRID_WGS84,
     SRID_NAD83,
+    SRID_WGS84,
     GeometryHandler,
     SpatialIndex,
     SpatialQuery,
     create_spatial_index,
     query_geographic_area,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -212,8 +210,9 @@ class TestSpatialGeometry:
     @shapely_required
     def test_invalid_geom_type_raises(self):
         """SpatialGeometry raises ValueError for unsupported geometry types."""
-        from socrata_toolkit.spatial.database import SpatialGeometry
         from shapely.geometry import GeometryCollection
+
+        from socrata_toolkit.spatial.database import SpatialGeometry
         gc = GeometryCollection()
         with pytest.raises(ValueError, match="Unsupported geometry type"):
             SpatialGeometry(gc)
@@ -462,7 +461,11 @@ class TestSpatialDatabaseConnection:
     @shapely_required
     def test_insert_segment_returns_false_on_error(self, linestring_geom):
         """insert_segment returns False when the DB raises an exception."""
-        from socrata_toolkit.spatial.database import SpatialDatabaseConnection, SpatialGeometry, SpatialSegment
+        from socrata_toolkit.spatial.database import (
+            SpatialDatabaseConnection,
+            SpatialGeometry,
+            SpatialSegment,
+        )
         db = SpatialDatabaseConnection(
             host="localhost", port=5432, database="test",
             user="user", password="password"
@@ -481,7 +484,11 @@ class TestSpatialDatabaseConnection:
     @shapely_required
     def test_insert_block_returns_false_on_error(self, polygon_geom):
         """insert_block returns False when the DB raises an exception."""
-        from socrata_toolkit.spatial.database import SpatialBlock, SpatialDatabaseConnection, SpatialGeometry
+        from socrata_toolkit.spatial.database import (
+            SpatialBlock,
+            SpatialDatabaseConnection,
+            SpatialGeometry,
+        )
         db = SpatialDatabaseConnection(
             host="localhost", port=5432, database="test",
             user="user", password="password"
@@ -498,7 +505,11 @@ class TestSpatialDatabaseConnection:
     @shapely_required
     def test_insert_inspection_returns_false_on_error(self, point_geom):
         """insert_inspection returns False when the DB raises an exception."""
-        from socrata_toolkit.spatial.database import SpatialDatabaseConnection, SpatialGeometry, SpatialInspection
+        from socrata_toolkit.spatial.database import (
+            SpatialDatabaseConnection,
+            SpatialGeometry,
+            SpatialInspection,
+        )
         db = SpatialDatabaseConnection(
             host="localhost", port=5432, database="test",
             user="user", password="password"
@@ -519,7 +530,11 @@ class TestSpatialDatabaseConnection:
     @shapely_required
     def test_insert_material_zone_returns_false_on_error(self, multipolygon_geom):
         """insert_material_zone returns False when the DB raises an exception."""
-        from socrata_toolkit.spatial.database import SpatialDatabaseConnection, SpatialGeometry, SpatialMaterialZone
+        from socrata_toolkit.spatial.database import (
+            SpatialDatabaseConnection,
+            SpatialGeometry,
+            SpatialMaterialZone,
+        )
         db = SpatialDatabaseConnection(
             host="localhost", port=5432, database="test",
             user="user", password="password"
@@ -555,7 +570,11 @@ class TestSpatialDataModel:
     @shapely_required
     def test_segment_count_increments(self, linestring_geom, mock_db_conn):
         """segments_count increases after add_segment."""
-        from socrata_toolkit.spatial.database import SpatialDataModel, SpatialGeometry, SpatialSegment
+        from socrata_toolkit.spatial.database import (
+            SpatialDataModel,
+            SpatialGeometry,
+            SpatialSegment,
+        )
         mock_db_conn.insert_segment = MagicMock(return_value=True)
         model = SpatialDataModel(mock_db_conn)
         assert model.segments_count() == 0
@@ -572,7 +591,11 @@ class TestSpatialDataModel:
     @shapely_required
     def test_get_segment_from_cache(self, linestring_geom, mock_db_conn):
         """get_segment returns cached segment without hitting the DB."""
-        from socrata_toolkit.spatial.database import SpatialDataModel, SpatialGeometry, SpatialSegment
+        from socrata_toolkit.spatial.database import (
+            SpatialDataModel,
+            SpatialGeometry,
+            SpatialSegment,
+        )
         mock_db_conn.insert_segment = MagicMock(return_value=True)
         model = SpatialDataModel(mock_db_conn)
         seg = SpatialSegment(
@@ -614,7 +637,11 @@ class TestSpatialDataModel:
     @shapely_required
     def test_inspections_count_increments(self, point_geom, mock_db_conn):
         """inspections_count increases after add_inspection."""
-        from socrata_toolkit.spatial.database import SpatialDataModel, SpatialGeometry, SpatialInspection
+        from socrata_toolkit.spatial.database import (
+            SpatialDataModel,
+            SpatialGeometry,
+            SpatialInspection,
+        )
         mock_db_conn.insert_inspection = MagicMock(return_value=True)
         model = SpatialDataModel(mock_db_conn)
         assert model.inspections_count() == 0
