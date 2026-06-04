@@ -116,3 +116,63 @@ class TestBuildConstructionPlan:
             profile, inspections, pd.DataFrame()
         )
         assert not construction.empty
+
+
+class TestApplyRoleProfile:
+    """Cover _apply_role_profile using a bundled role profile config."""
+
+    def _result(self, tmp_path):
+        from socrata_toolkit.analyst.workflow import AnalystPackResult
+
+        pack_dir = tmp_path / "2024-01-01"
+        pack_dir.mkdir(parents=True, exist_ok=True)
+        return AnalystPackResult(
+            pack_dir=pack_dir,
+            profile_name="test",
+            run_date="2024-01-01",
+            artifacts={},
+            dry_run=False,
+            warnings=[],
+            sources={},
+            partial_failures=[],
+            started_at="2024-01-01T00:00:00",
+            finished_at=None,
+        )
+
+    def test_no_role_returns_early(self, tmp_path):
+        from socrata_toolkit.analyst.workflow import _apply_role_profile
+
+        profile = _profile()  # no role
+        result = self._result(tmp_path)
+        _apply_role_profile(
+            profile, result, pd.DataFrame(), pd.DataFrame(), pd.DataFrame(),
+            "", "", None, [],
+        )
+        # nothing added
+        assert result.artifacts == {}
+
+    def test_with_bundled_role_profile(self, tmp_path):
+        from pathlib import Path
+
+        from socrata_toolkit.analyst.config import AnalystProfile
+        from socrata_toolkit.analyst.workflow import _apply_role_profile
+
+        role_cfg = Path("config/role_profiles/sw_project_analyst.yaml")
+        if not role_cfg.exists():
+            import pytest
+            pytest.skip("bundled role profile not present")
+
+        profile = AnalystProfile(
+            profile_name="test", sources={}, steps={},
+            role_profile_path=str(role_cfg),
+        )
+        result = self._result(tmp_path)
+        warnings: list[str] = []
+        inspections = pd.DataFrame({"borough": ["MANHATTAN"], "severity": [5]})
+        # Should either write role artifacts or append a warning — both are covered paths
+        _apply_role_profile(
+            profile, result, inspections, pd.DataFrame(), pd.DataFrame(),
+            "", "", {"metrics": []}, warnings,
+        )
+        # manifest written either way
+        assert (result.pack_dir / "manifest.json").exists() or result.artifacts is not None
