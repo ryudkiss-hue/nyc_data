@@ -223,38 +223,30 @@ def _render_sticky_filters(section: str) -> None:
 
 
 def _render_anomaly_badge() -> None:
-    """Render CUSUM anomaly detection badge status."""
+    """Render anomaly analysis status. Shows 'unavailable' until Advanced Analytics runs."""
     try:
-        # Check for cached anomaly results from analytics
-        has_anomaly_results = "anomaly_results" in st.session_state
-        has_cusum_analysis = "cusum_analysis" in st.session_state
+        # Placeholder: Advanced Analytics workflows will set this key after CUSUM analysis
+        # Expected contract: st.session_state["cusum_anomalies"] = [{"severity": "critical", ...}]
+        anomalies = st.session_state.get("cusum_anomalies", None)
 
-        if has_anomaly_results or has_cusum_analysis:
-            # Real anomaly data is available — show result
-            anomalies = st.session_state.get("anomaly_results", [])
+        if anomalies is not None and isinstance(anomalies, list):
             has_critical = any(
                 a.get("severity") == "critical" for a in anomalies
-                if isinstance(a, dict)
             )
             if has_critical:
                 st.warning(
-                    "🔴 **Critical Anomaly** — CUSUM detected significant drift. "
-                    "Review Advanced Analytics for investigation.",
+                    "🔴 Critical anomaly detected — review Advanced Analytics.",
                     icon="⚠️"
                 )
             else:
-                st.info(
-                    "✅ Anomaly analysis complete — no critical drift detected.",
-                    icon="📊"
-                )
+                st.info("✅ Anomalies checked — no critical drift.", icon="📊")
         else:
-            # No anomaly analysis run yet — show neutral status
             st.info(
-                "📊 Anomaly analysis unavailable. Run Advanced Analytics to detect data drift.",
+                "📊 Run Advanced Analytics to check for data anomalies.",
                 icon="○"
             )
     except Exception:
-        pass  # Silently skip if anomaly detection unavailable
+        pass
 
 
 def _sidebar_nav() -> tuple[str, dict]:
