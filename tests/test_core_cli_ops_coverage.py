@@ -266,8 +266,8 @@ class TestSpatialJoinAndDefaultPackDate:
         assert "overlap_count" in res.output
 
     def test_default_pack_date_happy(self):
-        from types import SimpleNamespace
         from pathlib import Path
+        from types import SimpleNamespace
         from unittest.mock import patch
 
         from socrata_toolkit.core.cli import _default_pack_date

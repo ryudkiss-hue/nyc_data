@@ -6,7 +6,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-
 CTX = {"pack_name": "2024-01-01", "run_date": "2024-01-01"}
 
 

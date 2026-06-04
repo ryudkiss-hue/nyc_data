@@ -7,7 +7,6 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # Guard: skip the whole module if Flask is not installed
 # ---------------------------------------------------------------------------

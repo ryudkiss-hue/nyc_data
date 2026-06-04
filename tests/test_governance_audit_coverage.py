@@ -5,9 +5,9 @@ import io
 import json
 import threading
 import time
-from datetime import datetime, timezone
-from unittest.mock import MagicMock, patch, call
 from dataclasses import asdict
+from datetime import datetime, timezone
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 
@@ -21,7 +21,6 @@ from socrata_toolkit.governance.audit import (
     audit_op,
     get_global_trail,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

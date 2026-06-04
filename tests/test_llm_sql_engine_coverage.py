@@ -17,7 +17,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # Inject stub modules for missing optional dependencies
 # ---------------------------------------------------------------------------
@@ -74,7 +73,6 @@ from socrata_toolkit.llm.sql_engine import (  # noqa: E402
     QueryOptimizer,
     SQLQueryEngine,
 )
-
 
 # ---------------------------------------------------------------------------
 # Shared fixtures

@@ -15,7 +15,6 @@ from unittest.mock import MagicMock, Mock, call, patch
 import pandas as pd
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # Helpers to build mock Socrata clients
 # ---------------------------------------------------------------------------
