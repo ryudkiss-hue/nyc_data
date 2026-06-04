@@ -223,24 +223,35 @@ def _render_sticky_filters(section: str) -> None:
 
 
 def _render_anomaly_badge() -> None:
-    """Render CUSUM anomaly detection badge for loaded datasets."""
+    """Render CUSUM anomaly detection badge status."""
     try:
-        # Check for loaded dataframes in session state
-        anomaly_detected = False
-        for key in st.session_state:
-            if isinstance(st.session_state[key], dict) and "data" in key.lower():
-                anomaly_detected = True
-                break
+        # Check for cached anomaly results from analytics
+        has_anomaly_results = "anomaly_results" in st.session_state
+        has_cusum_analysis = "cusum_analysis" in st.session_state
 
-        if anomaly_detected:
-            st.warning(
-                "⚠️ **Anomaly Detected** — CUSUM analysis flagged potential data drift in loaded dataset. Review Advanced Analytics.",
-                icon="📊"
+        if has_anomaly_results or has_cusum_analysis:
+            # Real anomaly data is available — show result
+            anomalies = st.session_state.get("anomaly_results", [])
+            has_critical = any(
+                a.get("severity") == "critical" for a in anomalies
+                if isinstance(a, dict)
             )
+            if has_critical:
+                st.warning(
+                    "🔴 **Critical Anomaly** — CUSUM detected significant drift. "
+                    "Review Advanced Analytics for investigation.",
+                    icon="⚠️"
+                )
+            else:
+                st.info(
+                    "✅ Anomaly analysis complete — no critical drift detected.",
+                    icon="📊"
+                )
         else:
+            # No anomaly analysis run yet — show neutral status
             st.info(
-                "📊 No anomalies detected in current data. Refresh to update.",
-                icon="✓"
+                "📊 Anomaly analysis unavailable. Run Advanced Analytics to detect data drift.",
+                icon="○"
             )
     except Exception:
         pass  # Silently skip if anomaly detection unavailable
