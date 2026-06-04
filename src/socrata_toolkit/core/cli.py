@@ -2443,8 +2443,8 @@ def dataset_health_cmd(
 
         try:
             # Count rows
-            count_url = f"https://{domain}/resource/{fourfour}.json"
-            params: dict = {"$select": "count(*) as c", "$limit": 1}
+            count_url = f"https://{domain}/api/v3/views/{fourfour}/query.json"
+            params: dict = {"query": "select count(*) as c"}
             if token:
                 params["$$app_token"] = token
             r = session.get(count_url, params=params, timeout=30)
