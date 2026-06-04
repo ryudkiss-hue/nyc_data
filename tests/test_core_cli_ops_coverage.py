@@ -238,3 +238,49 @@ class TestRegistryAndSession:
         session = _make_session()
         assert session.get_adapter("https://x") is not None
         assert session.get_adapter("http://x") is not None
+
+
+class TestSpatialJoinAndDefaultPackDate:
+    def test_spatial_join_cmd(self, runner, tmp_path):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+
+        import pandas as pd
+
+        left = tmp_path / "left.json"
+        right = tmp_path / "right.json"
+        out = tmp_path / "joined.json"
+        pd.DataFrame({"the_geom": ["POINT(0 0)"]}).to_json(left)
+        pd.DataFrame({"the_geom": ["POINT(0 0)"]}).to_json(right)
+
+        result = SimpleNamespace(
+            joined=pd.DataFrame({"a": [1]}), conflict_rate=0.5, overlap_count=1
+        )
+        with patch("socrata_toolkit.core.cli.spatial_intersects_join", return_value=result):
+            res = runner.invoke(main, [
+                "spatial-join", "--left-json", str(left), "--right-json", str(right),
+                "--left-geom-col", "the_geom", "--right-geom-col", "the_geom", "--out", str(out),
+            ])
+        assert res.exit_code == 0
+        assert out.exists()
+        assert "overlap_count" in res.output
+
+    def test_default_pack_date_happy(self):
+        from types import SimpleNamespace
+        from pathlib import Path
+        from unittest.mock import patch
+
+        from socrata_toolkit.core.cli import _default_pack_date
+
+        prof = SimpleNamespace(state_dir=Path("/tmp"))
+        with patch("socrata_toolkit.core.profiles.ensure_profile_exists", return_value=prof), \
+             patch("socrata_toolkit.core.state.load_state", return_value={"last_run_date": "2024-05-01"}):
+            assert _default_pack_date() == "2024-05-01"
+
+    def test_default_pack_date_exception_returns_empty(self):
+        from unittest.mock import patch
+
+        from socrata_toolkit.core.cli import _default_pack_date
+
+        with patch("socrata_toolkit.core.profiles.ensure_profile_exists", side_effect=RuntimeError("no profile")):
+            assert _default_pack_date() == ""
