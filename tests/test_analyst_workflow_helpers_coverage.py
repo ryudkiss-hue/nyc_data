@@ -176,3 +176,29 @@ class TestApplyRoleProfile:
         )
         # manifest written either way
         assert (result.pack_dir / "manifest.json").exists() or result.artifacts is not None
+
+
+class TestStageDuckdb:
+    def test_stages_nonempty_frames(self, tmp_path):
+        from socrata_toolkit.analyst.config import AnalystProfile
+        from socrata_toolkit.analyst.workflow import _stage_duckdb
+
+        profile = AnalystProfile(
+            profile_name="t", sources={}, steps={},
+            duckdb_path=str(tmp_path / "stage.duckdb"),
+        )
+        frames = {
+            "inspections": pd.DataFrame({"id": [1, 2], "borough": ["MN", "BX"]}),
+            "empty": pd.DataFrame(),
+            "weird name!": pd.DataFrame({"x": [1]}),
+        }
+        # Should not raise; stages non-empty frames, sanitizes names
+        _stage_duckdb(profile, frames)
+
+    def test_stage_duckdb_swallows_errors(self, tmp_path):
+        from socrata_toolkit.analyst.config import AnalystProfile
+        from socrata_toolkit.analyst.workflow import _stage_duckdb
+
+        # Invalid duckdb path dir that can't be created cleanly still must not raise
+        profile = AnalystProfile(profile_name="t", sources={}, steps={}, duckdb_path="/nonexistent_dir/x.duckdb")
+        _stage_duckdb(profile, {"a": pd.DataFrame({"x": [1]})})  # exception swallowed
