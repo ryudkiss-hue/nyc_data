@@ -541,8 +541,8 @@ class TestFreshnessTracker:
         metrics = tracker.export_metrics()
         lines = metrics.split("\n")
         # Should have header, compliance metric, header, and dataset metrics
-        assert len([l for l in lines if l.strip()]) >= 4
-        assert all(l.startswith("#") or l.startswith("dataset_") for l in lines if l.strip())
+        assert len([line for line in lines if line.strip()]) >= 4
+        assert all(line.startswith("#") or line.startswith("dataset_") for line in lines if line.strip())
 
     def test_freshness_tracker_multiple_datasets(self):
         """Test tracker with multiple datasets."""
