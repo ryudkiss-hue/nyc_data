@@ -320,6 +320,63 @@ class TestGetMetadata:
         assert meta.license == "CC0"
 
 
+class TestFetchGeojson:
+    """Test fetch_geojson SODA3 (token) and SODA2 (no token) paths."""
+
+    def test_fetch_geojson_soda3_with_token(self):
+        from socrata_toolkit.core.client import SocrataClient, SocrataConfig
+
+        client = SocrataClient(SocrataConfig(app_token="tok"))
+        fc_page = {"type": "FeatureCollection", "features": [{"type": "Feature", "id": 1}]}
+        with patch("socrata_toolkit.core.client.requests") as mock_requests:
+            mock_requests.post.side_effect = [
+                _mock_response(fc_page),
+                _mock_response({"features": []}),
+            ]
+            fc = client.fetch_geojson("data.cityofnewyork.us", "abc1-2345")
+
+        assert fc["type"] == "FeatureCollection"
+        assert len(fc["features"]) == 1
+        mock_requests.post.assert_called()
+
+    def test_fetch_geojson_soda2_without_token(self):
+        from socrata_toolkit.core.client import SocrataClient, SocrataConfig
+
+        client = SocrataClient(SocrataConfig(app_token=None))
+        fc_page = {"type": "FeatureCollection", "features": [{"type": "Feature", "id": 9}]}
+        with patch("socrata_toolkit.core.client.requests") as mock_requests:
+            mock_requests.get.side_effect = [
+                _mock_response(fc_page),
+                _mock_response({"features": []}),
+            ]
+            with pytest.warns(UserWarning):
+                fc = client.fetch_geojson("data.cityofnewyork.us", "abc1-2345")
+
+        assert len(fc["features"]) == 1
+        mock_requests.get.assert_called()
+
+    def test_fetch_geojson_empty(self):
+        from socrata_toolkit.core.client import SocrataClient, SocrataConfig
+
+        client = SocrataClient(SocrataConfig(app_token="tok"))
+        with patch("socrata_toolkit.core.client.requests") as mock_requests:
+            mock_requests.post.return_value = _mock_response({"features": []})
+            fc = client.fetch_geojson("data.cityofnewyork.us", "abc1-2345")
+
+        assert fc["features"] == []
+
+    def test_fetch_geojson_with_max_rows(self):
+        from socrata_toolkit.core.client import SocrataClient, SocrataConfig
+
+        client = SocrataClient(SocrataConfig(app_token="tok", page_size=1))
+        fc_page = {"features": [{"type": "Feature", "id": 1}]}
+        with patch("socrata_toolkit.core.client.requests") as mock_requests:
+            mock_requests.post.return_value = _mock_response(fc_page)
+            fc = client.fetch_geojson("data.cityofnewyork.us", "abc1-2345", max_rows=1)
+
+        assert len(fc["features"]) == 1
+
+
 class TestFetchSince:
     """Test fetch_since delta fetch."""
 

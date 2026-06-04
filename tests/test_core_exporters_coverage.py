@@ -251,6 +251,46 @@ class TestPostgresExporter:
             mock_cursor.execute.assert_called()
             mock_conn.commit.assert_called()
 
+    def test_copy_upsert_batches_fast_path(self):
+        """copy_upsert_batches uses COPY into a temp table then INSERT...SELECT."""
+        from socrata_toolkit.core.exporters import PostgresExporter
+
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_conn.cursor.return_value = mock_cursor
+        with patch("psycopg.connect", return_value=mock_conn):
+            exporter = PostgresExporter("postgresql://localhost/test")
+            batch = [{"id": 1, "v": "a"}, {"id": 2, "v": "b"}]
+            result = exporter.copy_upsert_batches([batch], "t", "id")
+            assert result == 2
+            mock_cursor.copy.assert_called()
+
+    def test_copy_upsert_batches_fallback(self):
+        """When COPY fails, copy_upsert_batches falls back to upsert_batches."""
+        from socrata_toolkit.core.exporters import PostgresExporter
+
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_conn.cursor.return_value = mock_cursor
+        mock_cursor.copy.side_effect = RuntimeError("COPY unsupported")
+        with patch("psycopg.connect", return_value=mock_conn):
+            exporter = PostgresExporter("postgresql://localhost/test")
+            batch = [{"id": 1, "v": "a"}]
+            result = exporter.copy_upsert_batches([batch], "t", "id")
+            assert result == 1
+            mock_conn.rollback.assert_called()
+
+    def test_copy_upsert_batches_skips_empty(self):
+        from socrata_toolkit.core.exporters import PostgresExporter
+
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_conn.cursor.return_value = mock_cursor
+        with patch("psycopg.connect", return_value=mock_conn):
+            exporter = PostgresExporter("postgresql://localhost/test")
+            result = exporter.copy_upsert_batches([[]], "t", "id")
+            assert result == 0
+
 
 def _fake_pymongo(mock_client):
     """Build a fake pymongo module exposing MongoClient and UpdateOne.
@@ -334,6 +374,42 @@ class TestMongoExporter:
         with _fake_pymongo(mock_client):
             exporter = MongoExporter("mongodb://localhost", "test_db")
             result = exporter.upsert_batches([[]], "test_collection", "_id")
+            assert result == 0
+            mock_collection.bulk_write.assert_not_called()
+
+    def test_mongo_upsert_geojson(self):
+        """upsert_geojson writes feature properties + geometry via bulk_write."""
+        from socrata_toolkit.core.exporters import MongoExporter
+
+        mock_client = MagicMock()
+        mock_db = MagicMock()
+        mock_collection = MagicMock()
+        mock_client.__getitem__.return_value = mock_db
+        mock_db.__getitem__.return_value = mock_collection
+        geojson = {
+            "type": "FeatureCollection",
+            "features": [
+                {"properties": {"id": "a"}, "geometry": {"type": "Point", "coordinates": [0, 0]}},
+                {"properties": {"id": "b"}, "geometry": {"type": "Point", "coordinates": [1, 1]}},
+            ],
+        }
+        with _fake_pymongo(mock_client):
+            exporter = MongoExporter("mongodb://localhost", "test_db")
+            result = exporter.upsert_geojson(geojson, "geo_col", "id")
+            assert result == 2
+            mock_collection.bulk_write.assert_called_once()
+
+    def test_mongo_upsert_geojson_empty(self):
+        from socrata_toolkit.core.exporters import MongoExporter
+
+        mock_client = MagicMock()
+        mock_db = MagicMock()
+        mock_collection = MagicMock()
+        mock_client.__getitem__.return_value = mock_db
+        mock_db.__getitem__.return_value = mock_collection
+        with _fake_pymongo(mock_client):
+            exporter = MongoExporter("mongodb://localhost", "test_db")
+            result = exporter.upsert_geojson({"features": []}, "geo_col", "id")
             assert result == 0
             mock_collection.bulk_write.assert_not_called()
 
