@@ -226,6 +226,9 @@ def _km_survival(durations: np.ndarray) -> pd.DataFrame:
 
 def _render_kpi_trends(df: pd.DataFrame) -> None:
     """Tab 1 — KPI Trends (items 48, 49, 67)."""
+    # Clear previous CUSUM anomalies to prevent stale sidebar badge state
+    st.session_state["cusum_anomalies"] = []
+
     if df.empty:
         st.info("Load data to begin")
         return

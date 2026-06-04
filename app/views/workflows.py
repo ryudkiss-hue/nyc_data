@@ -335,6 +335,9 @@ def view_quality(results: dict, frames: dict) -> None:
     st.subheader("🩺 Data Quality Dashboard")
     st.caption("Automated column profiling, null analysis, and schema health scores")
 
+    # Clear previous SLA report to prevent stale settings monitor state
+    st.session_state["sla_compliance_report"] = None
+
     profiles = results.get("profiles", {})
 
     if not profiles:
