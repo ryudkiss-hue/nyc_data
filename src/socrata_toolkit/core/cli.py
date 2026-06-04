@@ -631,7 +631,7 @@ def _default_pack_date() -> str:
 
 @review_group.command("list")
 @click.option("--pack-date", default="", help="Pack date (YYYY-MM-DD). Defaults to last run.")
-@click.option("--kind", type=click.Choice(["conflict", "approval"]), default="", help="Filter by kind")
+@click.option("--kind", type=click.Choice(["conflict", "approval"]), default=None, help="Filter by kind")
 @click.option("--status", default="", help="Filter by status")
 @click.option("--q", default="", help="Search key/notes/assignee")
 @click.option("--limit", type=int, default=2000)
