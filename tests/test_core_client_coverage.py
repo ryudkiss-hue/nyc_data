@@ -455,3 +455,51 @@ class TestErrorHandling:
             mock_requests.post.side_effect = RuntimeError("API Error")
             with pytest.raises(SocrataToolkitError):
                 client.fetch_dataframe("data.cityofnewyork.us", "invalid")
+
+
+class TestClientParamBranches:
+    """Cover search filter params and SODA2 pagination param branches."""
+
+    def test_search_all_filters(self):
+        from socrata_toolkit.core.client import SocrataClient, SocrataConfig
+
+        client = SocrataClient(SocrataConfig())
+        with patch("socrata_toolkit.core.client.requests") as mock_requests:
+            mock_requests.get.return_value = _mock_response({"results": []})
+            client.search("q", category="Transportation", tags="sidewalk", order="name")
+            params = mock_requests.get.call_args.kwargs["params"]
+            assert params["categories"] == "Transportation"
+            assert params["tags"] == "sidewalk"
+            assert params["order"] == "name"
+
+    def test_soda2_fetch_all_params_and_pagination(self):
+        from socrata_toolkit.core.client import SocrataClient, SocrataConfig
+
+        client = SocrataClient(SocrataConfig(app_token=None, page_size=2))
+        page1 = [{"id": "1"}, {"id": "2"}]
+        with patch("socrata_toolkit.core.client.requests") as mock_requests:
+            mock_requests.get.side_effect = [_mock_response(page1), _mock_response([])]
+            with pytest.warns(UserWarning):
+                df = client.fetch_dataframe(
+                    "data.cityofnewyork.us", "abc1-2345",
+                    where="x=1", select="id", order="id", q="term", max_rows=2,
+                )
+            params = mock_requests.get.call_args_list[0].kwargs["params"]
+            assert params["$where"] == "x=1"
+            assert params["$select"] == "id"
+            assert params["$order"] == "id"
+            assert params["$q"] == "term"
+        assert len(df) == 2
+
+    def test_soda2_geojson_with_where_and_pagination(self):
+        from socrata_toolkit.core.client import SocrataClient, SocrataConfig
+
+        client = SocrataClient(SocrataConfig(app_token=None, page_size=1))
+        fc = {"features": [{"type": "Feature", "id": 1}]}
+        with patch("socrata_toolkit.core.client.requests") as mock_requests:
+            mock_requests.get.side_effect = [_mock_response(fc), _mock_response({"features": []})]
+            with pytest.warns(UserWarning):
+                out = client.fetch_geojson("data.cityofnewyork.us", "abc1-2345", where="b='MN'", max_rows=5)
+            params = mock_requests.get.call_args_list[0].kwargs["params"]
+            assert params["$where"] == "b='MN'"
+        assert len(out["features"]) == 1
