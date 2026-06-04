@@ -975,57 +975,49 @@ def _render_sla_tab() -> None:
 
 
 def _render_sla_compliance_monitor() -> None:
-    """Render SLA compliance monitor. Shows real data when available, else unavailable state."""
-    try:
-        # Check for real SLA compliance data
-        has_compliance_data = "sla_compliance_report" in st.session_state
+    """Render SLA compliance monitor. Shows data when Quality Workflows populate it."""
+    # Placeholder: Quality Workflows will set this after running SLA evaluations
+    # Expected contract: st.session_state["sla_compliance_report"] = {
+    #   "overall_compliance_pct": 97.6,
+    #   "breach_count": 1,
+    #   "total_slas": 6,
+    #   "sla_details": [...]
+    # }
+    report = st.session_state.get("sla_compliance_report", None)
 
-        if not has_compliance_data:
-            st.info(
-                "📊 **SLA Compliance data unavailable.** "
-                "Run Quality Workflows or Data Health checks to populate real compliance metrics.",
-                icon="○"
-            )
-            return
+    if report is None:
+        st.info(
+            "📊 **SLA Compliance data unavailable.** "
+            "Run Data Health workflows to compute real compliance metrics.",
+            icon="○"
+        )
+        return
 
-        report = st.session_state.get("sla_compliance_report", {})
+    # Display metrics from populated report
+    overall_compliance = report.get("overall_compliance_pct", 0)
+    breach_count = report.get("breach_count", 0)
+    total_slas = report.get("total_slas", 0)
 
-        # Extract metrics from real compliance report
-        overall_compliance = report.get("overall_compliance_pct", 0)
-        breach_count = report.get("breach_count", 0)
-        total_slas = report.get("total_slas", 0)
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Overall Compliance %", f"{overall_compliance:.1f}%")
+    with col2:
+        st.metric("Total SLAs", str(total_slas))
+    with col3:
+        delta = breach_count if breach_count > 0 else None
+        st.metric(
+            "Active Breaches",
+            str(breach_count),
+            delta=delta,
+            delta_color="inverse" if delta else "off"
+        )
 
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric(
-                "Overall Compliance %",
-                f"{overall_compliance:.1f}%",
-                delta=None
-            )
-        with col2:
-            st.metric("Total SLAs", str(total_slas))
-        with col3:
-            st.metric(
-                "Active Breaches",
-                str(breach_count),
-                delta=breach_count if breach_count > 0 else None,
-                delta_color="inverse" if breach_count > 0 else "off"
-            )
-
-        st.markdown("#### Per-SLA Status")
-        sla_details = report.get("sla_details", [])
-        if sla_details:
-            st.dataframe(sla_details, use_container_width=True, hide_index=True)
-        else:
-            st.caption("No per-SLA details available.")
-
-        if st.button("🔄 Refresh compliance report"):
-            if "sla_compliance_report" in st.session_state:
-                del st.session_state.sla_compliance_report
-            st.rerun()
-
-    except ImportError:
-        st.info("SLA compliance tracking module not available.")
+    st.markdown("#### Per-SLA Status")
+    sla_details = report.get("sla_details", [])
+    if sla_details:
+        st.dataframe(sla_details, use_container_width=True, hide_index=True)
+    else:
+        st.caption("No per-SLA details available.")
 
 
 def _render_alert_config_tab() -> None:
