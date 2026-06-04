@@ -226,6 +226,9 @@ def _km_survival(durations: np.ndarray) -> pd.DataFrame:
 
 def _render_kpi_trends(df: pd.DataFrame) -> None:
     """Tab 1 — KPI Trends (items 48, 49, 67)."""
+    # Clear previous CUSUM anomalies to prevent stale sidebar badge state
+    st.session_state["cusum_anomalies"] = []
+
     if df.empty:
         st.info("Load data to begin")
         return
@@ -409,7 +412,16 @@ def _render_kpi_trends(df: pd.DataFrame) -> None:
             )
             st.plotly_chart(fig_cusum, use_container_width=True)
 
+            # Store CUSUM results in session state for sidebar anomaly badge
             if not flagged.empty:
+                st.session_state["cusum_anomalies"] = [
+                    {
+                        "week": pd.Timestamp(row["week"]).date().isoformat(),
+                        "cusum_value": float(row["cusum"]),
+                        "severity": "critical" if abs(row["cusum"]) > 2 * cusum_std else "warning",
+                    }
+                    for _, row in flagged.iterrows()
+                ]
                 first_breach = pd.Timestamp(flagged.iloc[0]["week"]).date()
                 st.warning(
                     f"{len(flagged)} week(s) breach the ±{threshold_k:g}σ band "
@@ -417,6 +429,7 @@ def _render_kpi_trends(df: pd.DataFrame) -> None:
                     "volume is likely."
                 )
             else:
+                st.session_state["cusum_anomalies"] = []
                 st.success(
                     f"No weeks exceed the ±{threshold_k:g}σ band — weekly volume is stable."
                 )

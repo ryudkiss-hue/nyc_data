@@ -35,6 +35,7 @@ from app.ui.empty_states import frames_are_empty, render_empty_state
 from app.ui.theme import inject_theme, render_agency_header, render_skip_link
 from app.utils.i18n import render_language_selector, t
 from app.views import home, publish, settings, workflows
+from app.views.analytical_skills import render_analytical_skills_page
 from app.views.construction import render_construction_page
 from app.views.contracts_dashboard import render_contracts_page
 from app.views.data_discovery import render_data_discovery_page
@@ -50,6 +51,7 @@ _SECTIONS = {
     "📈 Forecasting":            "forecasting",
     "⚙️ Data Workflows":         "workflows",
     "📊 Advanced Analytics":     "advanced_analytics",
+    "📚 Analytical Skills":      "skills",
     "🔍 Data Discovery":         "discovery",
     "📚 Data Catalog":           "data_catalog",
     "📤 Publish":                "publish",
@@ -73,6 +75,7 @@ _NAV_GROUPS = {
         "📈 Forecasting",
         "⚙️ Data Workflows",
         "📊 Advanced Analytics",
+        "📚 Analytical Skills",
     ],
     "🔧 Tools": [
         "🔍 Data Discovery",
@@ -457,6 +460,11 @@ def main() -> None:
                 render_analytics_advanced_page()
             except ImportError:
                 st.info("Advanced Analytics view is not yet available.")
+        return
+
+    if section == "skills":
+        with _spinner_view():
+            render_analytical_skills_page()
         return
 
     if section == "data_catalog":
