@@ -72,15 +72,30 @@ class TestDetectCusumChangepoint:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.skipif(not _STREAMLIT_AVAILABLE, reason="streamlit not installed")
 class TestKMeansSklearnGuard:
+    """Tests for KMeans sklearn guard — only run in Streamlit context."""
+
+    def _skip_if_no_streamlit(self):
+        """Skip if streamlit is not properly available."""
+        if not _STREAMLIT_AVAILABLE:
+            pytest.skip("streamlit not installed")
+        # Also verify that streamlit has cache_data (it might be a stub)
+        try:
+            import streamlit as st
+            if not hasattr(st, "cache_data"):
+                pytest.skip("streamlit.cache_data not available")
+        except (ImportError, AttributeError):
+            pytest.skip("streamlit not properly available")
+
     def test_has_sklearn_boolean(self):
+        self._skip_if_no_streamlit()
         import app.views.analytics_advanced as mod
 
         assert isinstance(mod.HAS_SKLEARN, bool)
 
     def test_sklearn_unavailable_flag_is_settable(self):
         """When we set HAS_SKLEARN=False the module should behave gracefully."""
+        self._skip_if_no_streamlit()
         import app.views.analytics_advanced as mod
 
         original = mod.HAS_SKLEARN
@@ -92,6 +107,7 @@ class TestKMeansSklearnGuard:
 
     def test_sklearn_flag_restored(self):
         """Ensure flag is not permanently clobbered by the guard test."""
+        self._skip_if_no_streamlit()
         import app.views.analytics_advanced as mod
 
         # After the guard test runs, HAS_SKLEARN should reflect actual availability.
