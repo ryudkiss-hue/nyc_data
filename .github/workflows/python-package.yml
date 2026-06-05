@@ -40,7 +40,7 @@ jobs:
         # numba, playwright, ...) resolve during pytest collection. This
         # mirrors nyc-toolkit-ci.yml and trades longer CI time for the
         # ability to collect/run the full app + view test suite.
-        pip install -e ".[mission]"
+        pip install -e ".[xlsx,postgres,mission]"
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
