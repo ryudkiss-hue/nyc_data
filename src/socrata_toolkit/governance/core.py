@@ -7,11 +7,11 @@ This module provides tools for:
 - Schema drift detection (comparing a DataFrame against a baseline schema)
 - Retention policy helpers (flagging stale or expired records)
 
-Quality Score Weights (documented in CLAUDE.md):
-  - Completeness: 0.35 (35%)
-  - Validity:     0.25 (25%)
-  - Consistency:  0.25 (25%)
-  - Freshness:    0.15 (15%)
+Quality Score Weights (see constants below, documented in CLAUDE.md):
+  - Completeness: QUALITY_WEIGHT_COMPLETENESS
+  - Validity:     QUALITY_WEIGHT_VALIDITY
+  - Consistency:  QUALITY_WEIGHT_CONSISTENCY
+  - Freshness:    QUALITY_WEIGHT_FRESHNESS
 
 If these values change, update CLAUDE.md section "🐍 Python API — Core Patterns"
 to keep documentation in sync with implementation.
