@@ -27,6 +27,11 @@ from datetime import date, datetime
 
 import pytest
 
+from socrata_toolkit.engineering import (
+    MaterialCategory,
+    SurfaceCondition,
+)
+
 # Import all material and standard definitions
 from socrata_toolkit.material.definitions import (
     ASPH_POROUS,
@@ -35,10 +40,6 @@ from socrata_toolkit.material.definitions import (
     CONC_STANDARD,
     MATERIAL_DEFINITIONS,
     STONE_NATURAL,
-)
-from socrata_toolkit.engineering import (
-    MaterialCategory,
-    SurfaceCondition,
 )
 from socrata_toolkit.standards.design import (
     ADA_COMPLIANCE_RULES,
