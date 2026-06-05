@@ -3,9 +3,18 @@
 This module provides tools for:
 - Data lineage tracking (recording where data came from and how it was transformed)
 - Access audit logging (who accessed what and when)
-- Data quality scoring (composite score from completeness, validity, consistency)
+- Data quality scoring (composite score from completeness, validity, consistency, freshness)
 - Schema drift detection (comparing a DataFrame against a baseline schema)
 - Retention policy helpers (flagging stale or expired records)
+
+Quality Score Weights (documented in CLAUDE.md):
+  - Completeness: 0.35 (35%)
+  - Validity:     0.25 (25%)
+  - Consistency:  0.25 (25%)
+  - Freshness:    0.15 (15%)
+
+If these values change, update CLAUDE.md section "🐍 Python API — Core Patterns"
+to keep documentation in sync with implementation.
 """
 
 from __future__ import annotations
@@ -21,6 +30,25 @@ from typing import Any
 import pandas as pd
 
 log = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Quality Score Weights (Single Source of Truth)
+# ---------------------------------------------------------------------------
+
+QUALITY_WEIGHT_COMPLETENESS = 0.35
+QUALITY_WEIGHT_VALIDITY = 0.25
+QUALITY_WEIGHT_CONSISTENCY = 0.25
+QUALITY_WEIGHT_FRESHNESS = 0.15
+
+_WEIGHT_SUM = (
+    QUALITY_WEIGHT_COMPLETENESS
+    + QUALITY_WEIGHT_VALIDITY
+    + QUALITY_WEIGHT_CONSISTENCY
+    + QUALITY_WEIGHT_FRESHNESS
+)
+assert (
+    abs(_WEIGHT_SUM - 1.0) < 0.001
+), f"Quality score weights must sum to 1.0, got {_WEIGHT_SUM}"
 
 
 # ---------------------------------------------------------------------------
@@ -281,12 +309,12 @@ def compute_quality_score(
     else:
         freshness = 100.0  # no date column: assume fresh
 
-    # Weighted overall
+    # Weighted overall (using module-level weight constants)
     overall = (
-        completeness * 0.35
-        + validity * 0.25
-        + consistency * 0.25
-        + freshness * 0.15
+        completeness * QUALITY_WEIGHT_COMPLETENESS
+        + validity * QUALITY_WEIGHT_VALIDITY
+        + consistency * QUALITY_WEIGHT_CONSISTENCY
+        + freshness * QUALITY_WEIGHT_FRESHNESS
     )
 
     return QualityScore(
