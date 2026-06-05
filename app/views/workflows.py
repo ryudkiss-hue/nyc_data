@@ -335,6 +335,9 @@ def view_quality(results: dict, frames: dict) -> None:
     st.subheader("🩺 Data Quality Dashboard")
     st.caption("Automated column profiling, null analysis, and schema health scores")
 
+    # Clear previous SLA report to prevent stale settings monitor state
+    st.session_state["sla_compliance_report"] = None
+
     profiles = results.get("profiles", {})
 
     if not profiles:
@@ -361,6 +364,27 @@ def view_quality(results: dict, frames: dict) -> None:
             "quality_scorecard.csv",
             mime="text/csv",
         )
+
+        # Store SLA compliance report in session state for sidebar SLA monitor
+        sla_details = []
+        for _, row in summary_df.iterrows():
+            score = row["quality_score"]
+            status = "✅ Passing" if score >= 90 else ("⚠️ At Risk" if score >= 70 else "🔴 Critical")
+            sla_details.append({
+                "dataset": row["dataset"],
+                "target": "90%",
+                "actual": f"{score:.1f}%",
+                "gap": f"{score - 90:+.1f}%",
+                "status": status,
+                "severity": "none" if score >= 90 else ("low" if score >= 70 else "critical"),
+            })
+
+        st.session_state["sla_compliance_report"] = {
+            "overall_compliance_pct": summary_df["quality_score"].mean(),
+            "breach_count": len(summary_df[summary_df["quality_score"] < 90]),
+            "total_slas": len(summary_df),
+            "sla_details": sla_details,
+        }
 
     # Per-dataset column profiles
     st.markdown("#### Column Profiles")

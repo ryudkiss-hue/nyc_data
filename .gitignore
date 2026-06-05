@@ -63,3 +63,4 @@ installer/output/*.exe
 secrets/
 credentials.json
 google-credentials.json
+schema_registry/

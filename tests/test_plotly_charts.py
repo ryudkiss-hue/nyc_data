@@ -6,14 +6,23 @@ try:
 except ImportError:
     HAS_PLOTLY = False
 
-from socrata_toolkit.analysis import (
+try:
+    HAS_SCIPY = True
+except ImportError:
+    HAS_SCIPY = False
+
+from socrata_toolkit.viz import (
     borough_bar_chart,
     contract_gantt,
+    correlation_heatmap,
+    hypothesis_test_results,
+    inspector_performance_boxplot,
     kpi_gauge,
     priority_heatmap,
     save_chart,
     status_donut,
     trend_line,
+    waterfall_chart,
 )
 
 
@@ -73,3 +82,53 @@ class TestPlotlyCharts:
         result = save_chart(fig, path)
         assert result == path
         assert "plotly" in open(path, encoding="utf-8").read().lower()
+
+    def test_hypothesis_test_results(self):
+        group_names = ["Borough A", "Borough B", "Borough C"]
+        p_values = [0.001, 0.05, 0.2]
+        effect_sizes = [0.8, 0.5, 0.2]
+        fig = hypothesis_test_results(group_names, p_values, effect_sizes)
+        assert fig is not None
+        assert hasattr(fig, "to_html")
+
+    def test_waterfall_chart(self):
+        categories = ["Initial", "Factor A", "Factor B", "Final"]
+        values = [100, 50, -30, 120]
+        fig = waterfall_chart(categories, values)
+        assert fig is not None
+        assert hasattr(fig, "to_html")
+
+    def test_correlation_heatmap(self):
+        df = pd.DataFrame(
+            {
+                "metric1": [1, 2, 3, 4, 5],
+                "metric2": [2, 4, 6, 8, 10],
+                "metric3": [5, 4, 3, 2, 1],
+            }
+        )
+        fig = correlation_heatmap(df)
+        assert fig is not None
+        assert hasattr(fig, "to_html")
+
+    def test_correlation_heatmap_with_selection(self):
+        df = pd.DataFrame(
+            {
+                "metric1": [1, 2, 3, 4, 5],
+                "metric2": [2, 4, 6, 8, 10],
+                "metric3": [5, 4, 3, 2, 1],
+                "text_col": ["a", "b", "c", "d", "e"],
+            }
+        )
+        fig = correlation_heatmap(df, numeric_cols=["metric1", "metric2"])
+        assert fig is not None
+
+    def test_inspector_performance_boxplot(self):
+        df = pd.DataFrame(
+            {
+                "inspector": ["A", "A", "B", "B", "C"],
+                "score": [80, 85, 70, 75, 90],
+            }
+        )
+        fig = inspector_performance_boxplot(df)
+        assert fig is not None
+        assert hasattr(fig, "to_html")
