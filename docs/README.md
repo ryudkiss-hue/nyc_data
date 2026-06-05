@@ -1,248 +1,195 @@
-# NYC Sidewalk Data Toolkit - Complete Documentation Index
+# NYC DOT SIM Analyst Toolkit — Developer Guide
 
-Welcome to the comprehensive documentation for the NYC Sidewalk Data Toolkit. This directory contains all guides, references, and manuals for the system.
+**A unified Streamlit dashboard + Python CLI + REST API for analyzing NYC sidewalk inspection & management data.**
 
-## 🎯 Getting Started (Start Here!)
+## Project At a Glance
 
-### New Users
-1. **[QUICKSTART.md](QUICKSTART.md)** - 5-minute setup guide to get the toolkit running
-2. **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Deploy to production (Docker, Kubernetes, Cloud)
-3. **[README.md](README.md)** - Project overview and architecture
+| Property | Value |
+|----------|-------|
+| **Type** | Web + CLI + Python library |
+| **Language** | Python 3.11+ |
+| **UI Framework** | Streamlit 1.30+ |
+| **Data Source** | NYC Socrata (26 open datasets) |
+| **Cache Layer** | DuckDB (columnar SQL DB) |
+| **AI Integration** | Claude API (Anthropic) |
+| **Visualizations** | 30+ charts (Plotly, Folium, Pydeck) |
 
-### For Frontend Developers
-1. **[../frontend/SETUP.md](../frontend/SETUP.md)** - React frontend setup (Node.js, npm, Vite)
-2. **[../frontend/README.md](../frontend/README.md)** - Frontend architecture, components, state management
+## Quick Start (3 ways)
 
-### For Backend Developers  
-1. **[LANGCHAIN_INTEGRATION_GUIDE.md](LANGCHAIN_INTEGRATION_GUIDE.md)** - LLM integration (chatbot, SQL queries)
-2. **[api_guide.md](api_guide.md)** - REST API documentation
+### 1. Web Dashboard
+```bash
+pip install -e ".[mission]"
+streamlit run app/app.py  # http://localhost:8501
+```
 
----
+### 2. CLI
+```bash
+socrata dataset health --all
+socrata fetch data.cityofnewyork.us dntt-gqwq --limit 100
+socrata nl-query "violations last 90 days"
+```
 
-## 📚 Feature Documentation
+### 3. Python
+```python
+from socrata_toolkit.core.client import SocrataClient, SocrataConfig
+from socrata_toolkit.analysis import quality_report
 
-### AI/LLM Features
-- **[LANGCHAIN_INTEGRATION_GUIDE.md](LANGCHAIN_INTEGRATION_GUIDE.md)** - Complete chatbot and SQL query engine guide
-  - Setup (Ollama, OpenAI, Hugging Face)
-  - Quick start examples
-  - CLI integration
-  - API integration
-  - Streamlit integration
-  - Best practices and troubleshooting
+client = SocrataClient(SocrataConfig())
+df = client.fetch_dataframe("data.cityofnewyork.us", "dntt-gqwq")
+score = quality_report(df, key_columns=["id"], date_column="created_date")
+print(f"Quality: {score.overall:.1f}/100")  # 0–100 composite
+```
 
-### Data Management
-- **[data_quality.md](data_quality.md)** - Data quality checks and validation
-- **[entity_resolution.md](entity_resolution.md)** - Entity matching and reconciliation
-- **[master_data_management.md](master_data_management.md)** - Master data management patterns
-- **[sla_configuration.md](sla_configuration.md)** - SLA setup and monitoring
+## The 11 Dashboards
 
-### Geospatial Features
-- **[geospatial.md](geospatial.md)** - Geospatial queries and analysis
-- **[spatial_architecture.md](spatial_architecture.md)** - Spatial database design
-- **[qgis_field_guide.md](qgis_field_guide.md)** - QGIS integration for field work
+| Tab | Render Function | Charts | Purpose |
+|-----|-----------------|--------|---------|
+| Home | `render_home_page()` | 3 | Overview, quick stats |
+| GIS | `render_gis_page()` | 10 | Spatial maps, conflicts |
+| Construction | `render_construction_page()` | 4 | Scope, cost, prioritization |
+| Contracts | `render_contracts_page()` | 5 | Gantt, timeline, dispatch |
+| Forecasting | `render_forecasting_page()` | 4 | Time series, Bayesian SLA |
+| Data Discovery | `render_data_discovery_page()` | — | Search, schema, lineage |
+| **Advanced Analytics** | `render_analytics_advanced_page()` | **13** | **Hypothesis testing, drill-down** |
+| Analytical Skills | `render_analytical_skills_page()` | — | 31 AI-powered frameworks |
+| Catalog | `render_data_catalog_page()` | 3 | Dataset health, SLA |
+| Publish | `render_publish_page()` | — | Export (Excel, PDF, PPTX) |
+| Settings | `render_settings_page()` | — | Config, tokens, profiles |
 
-### NYC-Specific Content
-- **[material_standards.md](material_standards.md)** - Material specifications for NYC streets
-- **[ada_compliance_reference.md](ada_compliance_reference.md)** - ADA compliance rules
-- **[nyc_street_design_reference.md](nyc_street_design_reference.md)** - NYC street design standards
-- **[domain_model.md](domain_model.md)** - NYC business domain model
+**Plus 5 Workflows**: QA/QC, Spatial, Contract, Productivity, Quality
 
-### Analytics & Reporting
-- **[observability.md](observability.md)** - System monitoring and observability
-- **[quality_sla.md](quality_sla.md)** - Data quality SLA setup
-- **[METRICS_GLOSSARY.md](METRICS_GLOSSARY.md)** - Metric definitions and calculations
+## Architecture
 
----
+```
+Socrata Data (26 datasets)
+  ↓ SocrataClient (core/client.py)
+  ↓ DuckDB Cache (data/local_db/)
+  ↓ 7 Pillars
+  ├─ Core: API, auth, DuckDB, CLI
+  ├─ Analysis: Profiling, quality, insights
+  ├─ Analyst: Workflows, publishing
+  ├─ Quality: SLA, freshness
+  ├─ Viz: 30+ charts
+  ├─ Governance: Lineage, audit
+  └─ Engineering: Domain logic
+  ↓ CLI (60+ commands)
+  ↓ Streamlit UI (11 tabs)
+  ↓ Python API
+```
 
-## 🔧 Operations & Deployment
+## Key Metrics
 
-### Deployment
-- **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Complete deployment guide
-  - Docker setup
-  - Docker Compose orchestration
-  - Kubernetes deployment
-  - Cloud deployment (AWS, Azure, GCP)
-  - SSL/TLS configuration
+- **26 Datasets**: Core SMD, accessibility, coordination, overlays
+- **30+ Charts**: Plotly, Folium, Pydeck
+- **60+ CLI Commands**: Fetch, quality, conflicts, reports, etc.
+- **212 Python Modules**: 7 pillars, 75+ features
+- **146 Test Files**: 76 unit + 70 coverage
+- **45% Coverage Gate**: `src/socrata_toolkit/{analyst,core}`
 
-- **[DOCKER_SETUP.md](DOCKER_SETUP.md)** - Docker-specific setup and commands
-- **[api_deployment.md](api_deployment.md)** - API server deployment
-- **[airflow_deployment.md](airflow_deployment.md)** - Airflow DAG deployment
+## Data Quality Scoring
 
-### Operations
-- **[OPERATIONS_MANUAL.md](OPERATIONS_MANUAL.md)** - Daily operations and maintenance
-- **[RUNBOOKS.md](RUNBOOKS.md)** - Common operational runbooks
-- **[observability_dashboard.md](observability_dashboard.md)** - Dashboard setup and usage
+Composite 0–100 from 4 weighted components:
+- **Completeness** (35%): null rate
+- **Validity** (25%): type mismatch
+- **Consistency** (25%): duplicates
+- **Freshness** (15%): age vs SLA
 
-### Database & Integration
-- **[sql_integration.md](sql_integration.md)** - SQL integration patterns
-- **[cdc_guide.md](cdc_guide.md)** - Change Data Capture setup
-- **[arcgis_integration.md](arcgis_integration.md)** - ArcGIS integration
-- **[MICROSOFT_365_INTEGRATION.md](MICROSOFT_365_INTEGRATION.md)** - M365 sync and integration
-- **[POWER_APPS_INTEGRATION.md](POWER_APPS_INTEGRATION.md)** - Power Apps integration
+Constants in `src/socrata_toolkit/governance/core.py`.
 
----
+## SLA Thresholds
 
-## 🔐 Security & Compliance
+Single source: `data/sla_config.json`
+- **HIGH** = 14 days (inspections, violations)
+- **MEDIUM** = 30 days (permits, ramps)
+- **LOW** = 60 days (reference data)
 
-- **[security.md](security.md)** - Security best practices
-- **[api_security.md](api_security.md)** - API authentication and authorization
-- **[audit_compliance.md](audit_compliance.md)** - Audit and compliance logging
-- **[SECURITY_AND_PACKAGING.md](SECURITY_AND_PACKAGING.md)** - Security hardening and packaging
+## Setup
 
----
+### Install
+```bash
+pip install -e ".[mission,viz,geo,llm,postgres,reports]"
+export SOCRATA_APP_TOKEN="your-token"  # Optional
+```
 
-## 📋 Reference & Integration
+### Code Quality
+```bash
+ruff check src/ app/ tests/
+pytest tests/ -q
+```
 
-### API Reference
-- **[api_guide.md](api_guide.md)** - REST API endpoints and usage
-- **[api_versioning.md](api_versioning.md)** - API versioning strategy
-- **[api_governance.md](api_governance.md)** - Data governance through APIs
+### Run
+```bash
+streamlit run app/app.py     # Web
+socrata --help               # CLI
+python -c "import socrata_toolkit; ..."  # Python
+```
 
-### Integration Guides
-- **[advanced_integrations.md](advanced_integrations.md)** - Advanced integration patterns
-- **[INTEGRATION_CHECKLIST.md](INTEGRATION_CHECKLIST.md)** - Integration verification checklist
-- **[INTEGRATION_QUICK_START.md](INTEGRATION_QUICK_START.md)** - Quick integration start
-- **[PHASE3_INTEGRATION_GUIDE.md](PHASE3_INTEGRATION_GUIDE.md)** - Phase 3 specific integration
+## Common Tasks
 
-### Pipelines & Workflows
-- **[pipelines.md](pipelines.md)** - Data pipeline architecture
-- **[airflow_operations.md](airflow_operations.md)** - Airflow DAG management
-- **[airflow_migration_guide.md](airflow_migration_guide.md)** - Migration to Airflow
+### Add a Chart
+```python
+# src/socrata_toolkit/viz/plotly.py
+def my_chart(df: pd.DataFrame) -> go.Figure:
+    fig = go.Figure(...)
+    return fig
 
-### CLI Usage
-- **[cli.md](cli.md)** - CLI command reference
-- **[cheatsheet.md](cheatsheet.md)** - Quick reference cheatsheet
+# app/views/analytics_advanced.py
+st.plotly_chart(my_chart(df), use_container_width=True)
 
----
+# tests/test_plotly_charts.py
+def test_my_chart(self):
+    assert my_chart(pd.DataFrame(...)) is not None
+```
 
-## 📖 Learning Resources
+### Add CLI Command
+```python
+# src/socrata_toolkit/core/cli.py
+@cli.command()
+@click.option("--dataset")
+def my_command(dataset):
+    """Description."""
+    client = SocrataClient(SocrataConfig())
+    df = client.fetch_dataframe("data.cityofnewyork.us", dataset)
+    click.echo(f"Loaded {len(df)} rows")
+```
 
-### Concepts
-- **[architecture.md](architecture.md)** - System architecture overview
-- **[lineage_architecture.md](lineage_architecture.md)** - Data lineage and DAG design
-- **[installation.md](installation.md)** - Installation guide
-- **[EXECUTABLE_PACKAGE.md](EXECUTABLE_PACKAGE.md)** - Executable package structure
+### Run Tests
+```bash
+pytest tests/ -q                         # All
+pytest tests/test_governance_weights.py  # Weights
+pytest tests/test_sla_config.py          # SLA
+pytest tests/ --cov                      # Coverage (45% target)
+```
 
-### Tutorials
-- **[QUICKSTART.md](QUICKSTART.md)** - Quick start guide
-- **[testing_ci.md](testing_ci.md)** - Testing and CI/CD setup
-- **[temporal_analytics.md](temporal_analytics.md)** - Time-based analysis tutorial
-- **[spatial_analytics.md](spatial_analytics.md)** - Geospatial analysis tutorial
+## Deployment
 
-### FAQ & Support
-- **[sop_faq.md](sop_faq.md)** - Standard operating procedures and FAQ
-- **[new-repo-bootstrap.md](new-repo-bootstrap.md)** - Creating new projects from template
+### Docker
+```bash
+docker build -f Dockerfile.mission -t nyc-sim .
+docker run -e SOCRATA_APP_TOKEN="..." -p 8501:8501 nyc-sim
+```
 
----
+### CI/CD
+- **ci.yml**: Tests + coverage
+- **validate-docs-consistency.yml**: Docs sync
+- **deploy.yml**: Build + push
+- Requires: ruff ✅ + pytest ✅ + docker ✅ + CodeQL ✅
 
-## 🔍 Finding What You Need
+## Documentation
 
-### By Role
+- **docs/README.md** (this): Quick start, tasks
+- **docs/ARCHITECTURE.md**: System design, pillars
+- **docs/DEVELOPMENT.md**: Conventions, patterns
+- **docs/API.md**: Python API reference
+- **docs/DEPLOYMENT.md**: Docker, CI/CD
+- **CLAUDE.md** (24KB): Claude Code guidance
+- **CONTRIBUTING.md**: PR workflow
+- **SECURITY.md**: Security practices
 
-**Data Analyst**
-1. Start: [QUICKSTART.md](QUICKSTART.md)
-2. Learn: [data_quality.md](data_quality.md), [spatial_analytics.md](spatial_analytics.md)
-3. Query: [api_guide.md](api_guide.md), [cli.md](cli.md)
-4. Reference: [METRICS_GLOSSARY.md](METRICS_GLOSSARY.md), [cheatsheet.md](cheatsheet.md)
+## Status
 
-**System Administrator**
-1. Start: [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)
-2. Setup: [DOCKER_SETUP.md](DOCKER_SETUP.md), [../frontend/SETUP.md](../frontend/SETUP.md)
-3. Monitor: [observability.md](observability.md), [OPERATIONS_MANUAL.md](OPERATIONS_MANUAL.md)
-4. Troubleshoot: [RUNBOOKS.md](RUNBOOKS.md)
-
-**Backend Developer**
-1. Start: [architecture.md](architecture.md), [installation.md](installation.md)
-2. Learn: [LANGCHAIN_INTEGRATION_GUIDE.md](LANGCHAIN_INTEGRATION_GUIDE.md), [api_guide.md](api_guide.md)
-3. Integrate: [advanced_integrations.md](advanced_integrations.md), [pipelines.md](pipelines.md)
-4. Deploy: [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md), [api_deployment.md](api_deployment.md)
-
-**Frontend Developer**
-1. Start: [../frontend/SETUP.md](../frontend/SETUP.md), [../frontend/README.md](../frontend/README.md)
-2. Learn: [api_guide.md](api_guide.md), [LANGCHAIN_INTEGRATION_GUIDE.md](LANGCHAIN_INTEGRATION_GUIDE.md)
-3. Deploy: [../frontend/SETUP.md#deployment](../frontend/SETUP.md)
-
-**DevOps/SRE**
-1. Start: [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)
-2. Setup: [DOCKER_SETUP.md](DOCKER_SETUP.md), [airflow_deployment.md](airflow_deployment.md)
-3. Monitor: [observability.md](observability.md), [observability_dashboard.md](observability_dashboard.md)
-4. Secure: [security.md](security.md), [audit_compliance.md](audit_compliance.md)
-
-### By Task
-
-**Install & Setup**
-- Local development: [QUICKSTART.md](QUICKSTART.md)
-- Production deployment: [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)
-- Docker setup: [DOCKER_SETUP.md](DOCKER_SETUP.md)
-- Frontend setup: [../frontend/SETUP.md](../frontend/SETUP.md)
-
-**Query Data**
-- CLI commands: [cli.md](cli.md) + [cheatsheet.md](cheatsheet.md)
-- REST API: [api_guide.md](api_guide.md)
-- Natural language: [LANGCHAIN_INTEGRATION_GUIDE.md](LANGCHAIN_INTEGRATION_GUIDE.md)
-- Spatial queries: [geospatial.md](geospatial.md)
-
-**Integrate Systems**
-- Data pipelines: [pipelines.md](pipelines.md)
-- Airflow: [airflow_operations.md](airflow_operations.md)
-- ArcGIS: [arcgis_integration.md](arcgis_integration.md)
-- Microsoft 365: [MICROSOFT_365_INTEGRATION.md](MICROSOFT_365_INTEGRATION.md)
-- Advanced: [advanced_integrations.md](advanced_integrations.md)
-
-**Monitor & Troubleshoot**
-- System health: [observability.md](observability.md)
-- Dashboard: [observability_dashboard.md](observability_dashboard.md)
-- Runbooks: [RUNBOOKS.md](RUNBOOKS.md)
-- Operations: [OPERATIONS_MANUAL.md](OPERATIONS_MANUAL.md)
-
-**Ensure Quality & Security**
-- Data quality: [data_quality.md](data_quality.md)
-- SLA setup: [sla_configuration.md](sla_configuration.md)
-- Compliance: [audit_compliance.md](audit_compliance.md)
-- Security: [security.md](security.md) + [api_security.md](api_security.md)
+✅ Production Ready | 📄 MIT License | 📅 Last Updated: 2026-06-05
 
 ---
 
-## 📊 Documentation Statistics
-
-| Category | Count | Files |
-|----------|-------|-------|
-| Getting Started | 3 | QUICKSTART, DEPLOYMENT_GUIDE, README |
-| Core Features | 15 | Data quality, entity resolution, geospatial, analytics |
-| Deployment | 6 | Docker, Kubernetes, Cloud, API, Airflow |
-| Operations | 5 | Operations manual, runbooks, observability, monitoring |
-| Integration | 8 | APIs, database, M365, Power Apps, ArcGIS, pipelines |
-| Security | 4 | Security, audit, compliance, API security |
-| Reference | 8 | CLI, cheatsheet, glossary, API docs, architecture |
-| **Total** | **49** | **Complete coverage** |
-
----
-
-## 🔗 Quick Navigation
-
-### External Resources
-- [GitHub Repository](https://github.com/ryudkiss-hue/nyc_data)
-- [Main README](../README.md)
-- [Frontend Documentation](../frontend/README.md)
-- [Project Examples](../examples/)
-
-### Important Sections
-- **Installation**: [QUICKSTART.md](QUICKSTART.md) → [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)
-- **CLI Reference**: [cli.md](cli.md) → [cheatsheet.md](cheatsheet.md)
-- **API Reference**: [api_guide.md](api_guide.md) → [LANGCHAIN_INTEGRATION_GUIDE.md](LANGCHAIN_INTEGRATION_GUIDE.md)
-- **Operations**: [OPERATIONS_MANUAL.md](OPERATIONS_MANUAL.md) → [RUNBOOKS.md](RUNBOOKS.md)
-
----
-
-## 📞 Support & Feedback
-
-For questions, issues, or documentation improvements:
-1. Check [sop_faq.md](sop_faq.md) for common questions
-2. Review [RUNBOOKS.md](RUNBOOKS.md) for operational issues
-3. Submit issues to [GitHub Issues](https://github.com/ryudkiss-hue/nyc_data/issues)
-
----
-
-**Last Updated**: 2026-05-11  
-**Version**: 3.0  
-**Status**: Complete & Production-Ready
+**For setup details, see `QUICKSTART.md`. For architecture, see `docs/ARCHITECTURE.md`.**
