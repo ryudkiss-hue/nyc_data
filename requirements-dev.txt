@@ -6,3 +6,4 @@ isort>=8.0.1
 pre-commit>=4.6.0
 coverage>=7.14.1
 faker>=40.21.0
+psycopg[binary]>=3.3.4

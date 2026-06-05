@@ -107,7 +107,7 @@ def plot_geospatial_compliance_map(
     fig = go.Figure()
     if not in_bounds_df.empty:
         fig.add_trace(
-            go.Scattermapbox(
+            go.Scattermap(
                 lat=in_bounds_df[lat_col],
                 lon=in_bounds_df[lon_col],
                 mode="markers",
@@ -117,7 +117,7 @@ def plot_geospatial_compliance_map(
         )
     if not out_bounds_df.empty:
         fig.add_trace(
-            go.Scattermapbox(
+            go.Scattermap(
                 lat=out_bounds_df[lat_col],
                 lon=out_bounds_df[lon_col],
                 mode="markers",
@@ -126,7 +126,7 @@ def plot_geospatial_compliance_map(
             )
         )
     fig.update_layout(
-        mapbox=dict(
+        map=dict(
             style="carto-darkmatter",
             zoom=9,
             center=dict(lat=40.7128, lon=-74.0060),

@@ -401,7 +401,7 @@ def apply_retention_policy(
         reference_date = datetime.now(timezone.utc)
 
     tmp = df.copy()
-    dates = pd.to_datetime(tmp[date_column], errors="coerce")
+    dates = pd.to_datetime(tmp[date_column], errors="coerce", format="mixed")
 
     # Make reference_date tz-aware if dates are tz-naive
     cutoff = pd.Timestamp(reference_date) - pd.Timedelta(days=retention_days)
