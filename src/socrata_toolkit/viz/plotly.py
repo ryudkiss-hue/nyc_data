@@ -240,6 +240,199 @@ def status_donut(
 
 
 # ---------------------------------------------------------------------------
+# Hypothesis Testing Results Visualization
+# ---------------------------------------------------------------------------
+
+def hypothesis_test_results(
+    group_names: list[str],
+    p_values: list[float],
+    effect_sizes: list[float],
+    title: str = "Hypothesis Test Results",
+) -> Any:
+    """Visualization of p-values and effect sizes across multiple tests."""
+    go, _ = _get_plotly()
+    significance_threshold = 0.05
+
+    colors = [
+        "#dc3545" if p < significance_threshold else "#6c757d" for p in p_values
+    ]
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Bar(
+            x=group_names,
+            y=p_values,
+            marker_color=colors,
+            text=[f"{p:.4f}" for p in p_values],
+            textposition="auto",
+            name="P-value",
+        )
+    )
+    fig.add_hline(
+        y=significance_threshold,
+        line_dash="dash",
+        line_color="red",
+        annotation_text="α = 0.05",
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            x=group_names,
+            y=effect_sizes,
+            mode="lines+markers",
+            name="Effect Size",
+            line=dict(color="#0d6efd", width=2),
+            marker=dict(size=8),
+            yaxis="y2",
+        )
+    )
+
+    fig.update_layout(
+        title=title,
+        xaxis_title="Group Comparison",
+        yaxis=dict(title="P-value"),
+        yaxis2=dict(title="Effect Size", overlaying="y", side="right"),
+        hovermode="x unified",
+        template="plotly_white",
+        height=400,
+    )
+    return fig
+
+
+# ---------------------------------------------------------------------------
+# Waterfall Chart (change decomposition)
+# ---------------------------------------------------------------------------
+
+def waterfall_chart(
+    categories: list[str],
+    values: list[float],
+    title: str = "Change Waterfall",
+    measure: list[str] | None = None,
+) -> Any:
+    """Waterfall chart showing cumulative effect of components."""
+    go, _ = _get_plotly()
+
+    if measure is None:
+        measure = ["relative"] * len(categories)
+        measure[0] = "absolute"
+        measure[-1] = "total"
+
+    fig = go.Figure(
+        go.Waterfall(
+            name="Value",
+            orientation="v",
+            x=categories,
+            textposition="auto",
+            text=[f"{v:+.0f}" for v in values],
+            y=values,
+            measure=measure,
+            connector={"line": {"color": "rgba(0,0,0,0.4)"}},
+        )
+    )
+
+    fig.update_layout(
+        title=title,
+        showlegend=False,
+        template="plotly_white",
+        height=400,
+        margin=dict(l=40, r=40, t=60, b=40),
+    )
+    return fig
+
+
+# ---------------------------------------------------------------------------
+# Correlation Heatmap
+# ---------------------------------------------------------------------------
+
+def correlation_heatmap(
+    df: pd.DataFrame,
+    numeric_cols: list[str] | None = None,
+    title: str = "Metric Correlation Matrix",
+) -> Any:
+    """Heatmap showing correlations between numeric columns."""
+    go, _ = _get_plotly()
+
+    if numeric_cols is None:
+        numeric_cols = df.select_dtypes(include=["number"]).columns.tolist()
+
+    if not numeric_cols:
+        fig = go.Figure()
+        fig.add_annotation(text="No numeric columns to correlate", showarrow=False)
+        return fig
+
+    df_numeric = df[numeric_cols].astype(float, errors="ignore")
+    corr_matrix = df_numeric.corr()
+
+    fig = go.Figure(
+        data=go.Heatmap(
+            z=corr_matrix.values,
+            x=corr_matrix.columns,
+            y=corr_matrix.columns,
+            colorscale="RdBu",
+            zmid=0,
+            zmin=-1,
+            zmax=1,
+            text=corr_matrix.values.round(2),
+            texttemplate="%{text}",
+            textfont={"size": 10},
+            colorbar=dict(title="Correlation"),
+        )
+    )
+
+    fig.update_layout(
+        title=title,
+        height=500,
+        width=600,
+        template="plotly_white",
+    )
+    return fig
+
+
+# ---------------------------------------------------------------------------
+# Inspector Performance Distribution (Box Plot)
+# ---------------------------------------------------------------------------
+
+def inspector_performance_boxplot(
+    df: pd.DataFrame,
+    inspector_col: str = "inspector",
+    metric_col: str = "score",
+    title: str = "Inspector Performance Distribution",
+) -> Any:
+    """Box plot showing performance distribution by inspector."""
+    go, px = _get_plotly()
+
+    if inspector_col not in df.columns or metric_col not in df.columns:
+        fig = go.Figure()
+        fig.add_annotation(text="Required columns not found", showarrow=False)
+        return fig
+
+    df_plot = df[[inspector_col, metric_col]].copy()
+    df_plot[metric_col] = pd.to_numeric(df_plot[metric_col], errors="coerce")
+    df_plot = df_plot.dropna()
+
+    if df_plot.empty:
+        fig = go.Figure()
+        fig.add_annotation(text="No valid data to display", showarrow=False)
+        return fig
+
+    fig = px.box(
+        df_plot.sort_values(inspector_col),
+        x=inspector_col,
+        y=metric_col,
+        title=title,
+        labels={inspector_col: "Inspector", metric_col: "Score"},
+    )
+
+    fig.update_layout(
+        height=400,
+        template="plotly_white",
+        margin=dict(b=100),
+        xaxis_tickangle=-45,
+    )
+    return fig
+
+
+# ---------------------------------------------------------------------------
 # Save / Export
 # ---------------------------------------------------------------------------
 

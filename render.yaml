@@ -15,6 +15,9 @@ services:
       - key: PYTHONPATH
         value: "."
       - key: MISSION_DEMO
-        value: "1"
+        value: "0"
       - key: SOCRATA_APP_TOKEN
-        sync: false
+        sync: true
+      - key: ANTHROPIC_API_KEY
+        sync: true
+    autoDeployTrigger: commit
