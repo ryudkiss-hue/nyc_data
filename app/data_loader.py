@@ -169,7 +169,7 @@ def pick_column(df: pd.DataFrame, candidates: tuple[str, ...]) -> str | None:
 
 
 def _cache_decorator():
-    if st is not None:
+    if st is not None and hasattr(st, "cache_data"):
         return st.cache_data(ttl=CACHE_TTL_SECONDS, show_spinner="Fetching from Socrata…")
     return lambda f: f
 
