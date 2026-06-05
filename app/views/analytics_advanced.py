@@ -219,7 +219,7 @@ def _km_survival(durations: np.ndarray) -> pd.DataFrame:
     survival = 1.0
     rows = []
     at_risk = n
-    for t, d in zip(times, counts, strict=False):
+    for t, d in zip(times, counts):
         survival *= (at_risk - d) / at_risk
         rows.append(
             {"time": float(t), "at_risk": int(at_risk), "events": int(d), "survival": survival}

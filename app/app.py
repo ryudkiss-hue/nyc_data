@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import sys
 from contextlib import contextmanager
 from datetime import date, timedelta
@@ -25,7 +24,6 @@ from app.analytics import run_all_workflows
 from app.data_loader import (
     CACHE_TTL_SECONDS,
     WORKFLOW_DATASETS,
-    demo_mode_enabled,
     fetch_datasets_for_keys,
     keys_for_workflow,
     load_manhattan_map_layers,
@@ -333,8 +331,6 @@ def _sidebar_nav() -> tuple[str, dict]:
             wf_opts["row_limit"] = st.slider(
                 "Max rows / dataset", 1_000, 50_000, 10_000, step=1_000
             )
-            if demo_mode_enabled():
-                st.info(t("demo_active"))
             if st.button(t("refresh_cache"), type="primary", use_container_width=True):
                 st.cache_data.clear()
                 st.rerun()
@@ -511,12 +507,12 @@ def main() -> None:
         st.stop()
     except Exception as exc:
         st.error(f"Ingestion failed: {exc}")
-        st.info("Set SOCRATA_APP_TOKEN in .env or use demo mode (Home → Load sample data).")
-        render_empty_state(on_load_demo=lambda: os.environ.setdefault("MISSION_DEMO", "1"))
+        st.info("Set SOCRATA_APP_TOKEN in your .env file to authenticate with Socrata.")
+        render_empty_state()
         st.stop()
 
     if frames_are_empty(frames):
-        render_empty_state(on_load_demo=lambda: os.environ.setdefault("MISSION_DEMO", "1"))
+        render_empty_state()
         if st.button(t("go_workflows"), key="empty_to_workflows"):
             st.cache_data.clear()
             st.rerun()
