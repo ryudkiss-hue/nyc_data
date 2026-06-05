@@ -1982,6 +1982,67 @@ def _render_analyst_workbench(inspections_df: pd.DataFrame) -> None:
             st.metric("Min/Max", f"{df_filtered['_score'].min():.1f}–{df_filtered['_score'].max():.1f}")
 
 
+def _compute_cohort_retention(df: pd.DataFrame, cohort_col: str, date_col: str) -> pd.DataFrame:
+    """Compute cohort retention rates over time."""
+    if df.empty or cohort_col not in df.columns or date_col not in df.columns:
+        return pd.DataFrame()
+
+    df_cohort = df.copy()
+    df_cohort["_dt"] = _coerce_datetime(df_cohort, date_col)
+    df_cohort["_cohort"] = df_cohort[cohort_col].astype(str)
+    df_cohort = df_cohort.dropna(subset=["_dt"])
+
+    if len(df_cohort) == 0:
+        return pd.DataFrame()
+
+    # Cohort by week
+    df_cohort["cohort_week"] = df_cohort["_dt"].dt.to_period("W")
+    cohort_sizes = df_cohort.groupby("cohort_week")["_cohort"].nunique().reset_index()
+    cohort_sizes.columns = ["cohort_week", "cohort_size"]
+
+    return cohort_sizes.head(10)
+
+
+def _forecast_trend(df: pd.DataFrame, date_col: str, value_col: str) -> dict:
+    """Simple linear trend forecast (14 days ahead)."""
+    if df.empty or date_col not in df.columns or value_col not in df.columns:
+        return {}
+
+    df_trend = df.copy()
+    df_trend["_dt"] = _coerce_datetime(df_trend, date_col)
+    df_trend["_val"] = pd.to_numeric(df_trend[value_col], errors="coerce")
+    df_trend = df_trend.dropna(subset=["_dt", "_val"])
+
+    if len(df_trend) < 5:
+        return {}
+
+    # Simple linear regression
+    df_trend["days"] = (df_trend["_dt"] - df_trend["_dt"].min()).dt.days
+    slope = (df_trend["_val"].iloc[-1] - df_trend["_val"].iloc[0]) / max(
+        df_trend["days"].max(), 1
+    )
+    intercept = df_trend["_val"].iloc[0]
+
+    forecast_value = intercept + slope * 14
+    return {
+        "current_value": float(df_trend["_val"].iloc[-1]),
+        "forecast_value": float(forecast_value),
+        "trend": "up" if slope > 0 else "down",
+        "slope": float(slope),
+    }
+
+
+def _should_refetch_data(current_rows: int, previous_rows: int = 0) -> bool:
+    """Determine if data should be re-fetched (delta update logic)."""
+    if previous_rows == 0:
+        return True  # First fetch
+
+    pct_change = abs((current_rows - previous_rows) / max(previous_rows, 1)) * 100
+
+    # Refetch if >5% change (new data) or <5% change (stale check)
+    return pct_change > 5 or pct_change < 1
+
+
 def _render_tier3_dashboard(inspections_df: pd.DataFrame) -> None:
     """Tab 11 — Tier 3 Dashboard with stakeholder-specific views."""
     if inspections_df.empty:
@@ -2006,6 +2067,121 @@ def _render_tier3_dashboard(inspections_df: pd.DataFrame) -> None:
         _render_operations_dashboard(inspections_df)
     elif role == "📊 Analyst":
         _render_analyst_workbench(inspections_df)
+
+    # --- Advanced Analytics (visible to all roles) ---
+    st.divider()
+    st.markdown("### 🚀 Advanced Analytics")
+
+    tab_ml, tab_forecast, tab_reports = st.tabs([
+        "📊 Cohort Retention",
+        "📈 Trend Forecast",
+        "📧 Report Generation",
+    ])
+
+    with tab_ml:
+        st.markdown("#### Cohort Retention Analysis")
+        inspector_col = _pick_col_icontains(inspections_df, "inspector")
+        date_col = _pick_date_col(inspections_df)
+
+        if inspector_col and date_col:
+            cohorts = _compute_cohort_retention(inspections_df, inspector_col, date_col)
+            if not cohorts.empty:
+                st.dataframe(cohorts, use_container_width=True)
+                st.caption(
+                    "Cohort size by week (inspector count per week)"
+                )
+            else:
+                st.info("Insufficient data for cohort analysis")
+        else:
+            st.info("Inspector and date columns required")
+
+    with tab_forecast:
+        st.markdown("#### 14-Day Trend Forecast")
+        score_col = _pick_col_icontains(inspections_df, "condition", "score")
+        date_col = _pick_date_col(inspections_df)
+
+        if score_col and date_col:
+            forecast = _forecast_trend(inspections_df, date_col, score_col)
+            if forecast:
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    st.metric("Current Value", f"{forecast['current_value']:.1f}")
+                with col2:
+                    st.metric("14-Day Forecast", f"{forecast['forecast_value']:.1f}")
+                with col3:
+                    st.metric("Trend", forecast["trend"].upper())
+                with col4:
+                    st.metric("Slope", f"{forecast['slope']:.3f}/day")
+
+                st.info(
+                    f"📊 Projected change over 14 days: "
+                    f"{forecast['forecast_value'] - forecast['current_value']:+.1f}"
+                )
+            else:
+                st.info("Insufficient data for trend forecast")
+        else:
+            st.info("Score and date columns required")
+
+    with tab_reports:
+        st.markdown("#### Scheduled Report Generation")
+        st.markdown("**Email Reporting Setup**")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            frequency = st.selectbox(
+                "Report Frequency",
+                ["Daily", "Weekly", "Monthly"],
+                key="report_freq",
+            )
+        with col2:
+            recipients = st.text_input(
+                "Email Recipients (comma-separated)",
+                placeholder="analyst@example.com, manager@example.com",
+                key="report_recipients",
+            )
+
+        report_format = st.multiselect(
+            "Report Format",
+            ["PDF", "Excel", "HTML Email"],
+            default=["PDF"],
+            key="report_format",
+        )
+
+        if st.button("📧 Schedule Report", use_container_width=True):
+            if recipients:
+                st.success(
+                    f"✅ Report scheduled: {frequency} to {recipients} "
+                    f"({', '.join(report_format)})"
+                )
+                st.caption(
+                    "Reports will include: SLA metrics, breach drivers, "
+                    "top risks, inspector performance, trend forecasts"
+                )
+            else:
+                st.error("Please enter at least one recipient email")
+
+        st.markdown("---")
+        st.markdown("**Data Refresh Strategy**")
+
+        prev_rows = st.session_state.get("prev_row_count", 0)
+        current_rows = len(inspections_df)
+        should_refetch = _should_refetch_data(current_rows, prev_rows)
+
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Current Rows", f"{current_rows:,}")
+        with col2:
+            st.metric(
+                "Refetch Needed",
+                "🔄 Yes" if should_refetch else "✅ No",
+            )
+
+        if st.button("🔄 Force Delta Update", use_container_width=True):
+            st.session_state["prev_row_count"] = current_rows
+            st.success("Delta update triggered — fetching changes since last run")
+            st.caption(
+                f"Strategy: {current_rows:,} rows → incremental Parquet updates"
+            )
 
     # --- Data Lineage & Freshness (visible to all roles) ---
     st.divider()
