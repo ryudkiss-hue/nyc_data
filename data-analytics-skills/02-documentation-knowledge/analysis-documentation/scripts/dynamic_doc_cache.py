@@ -379,10 +379,11 @@ def main() -> None:
         print(f"{'Key':<25} {'Generated':<22} {'Expires':<22} {'Rows':>10} {'Quality':>8}")
         print("-" * 90)
         for e in entries:
+            qs = f"{e['quality_score']:.1f}" if e['quality_score'] else '?'
             print(f"{e['key']:<25} {str(e['generated_at'])[:19]:<22} "
                   f"{str(e['expires_at'])[:19]:<22} "
                   f"{str(e['row_count'] or '?'):>10} "
-                  f"{f\"{e['quality_score']:.1f}\" if e['quality_score'] else '?':>8}")
+                  f"{qs:>8}")
         return
 
     if args.purge:
