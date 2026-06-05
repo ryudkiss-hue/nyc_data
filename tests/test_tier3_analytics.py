@@ -196,3 +196,145 @@ class TestStakeholderRoles:
 
         for role, metrics in role_metrics.items():
             assert len(metrics) >= 2, f"{role} role missing key metrics"
+
+
+class TestCohortRetention:
+    """Test cohort retention analysis."""
+
+    def test_cohort_retention_empty_data(self):
+        """Cohort analysis should handle empty data."""
+        from app.views.analytics_advanced import _compute_cohort_retention
+
+        df = pd.DataFrame()
+        result = _compute_cohort_retention(df, "cohort", "date")
+        assert result.empty
+
+    def test_cohort_retention_missing_columns(self):
+        """Cohort analysis should handle missing columns."""
+        from app.views.analytics_advanced import _compute_cohort_retention
+
+        df = pd.DataFrame({"col1": [1, 2, 3]})
+        result = _compute_cohort_retention(df, "cohort", "date")
+        assert result.empty
+
+    def test_cohort_retention_valid_data(self):
+        """Cohort analysis should work with valid data."""
+        from app.views.analytics_advanced import _compute_cohort_retention
+
+        dates = pd.date_range("2024-01-01", periods=51, freq="D")
+        df = pd.DataFrame(
+            {
+                "inspector": (["A", "B", "C"] * 17),
+                "date": dates[:51],
+            }
+        )
+
+        result = _compute_cohort_retention(df, "inspector", "date")
+        assert not result.empty
+
+
+class TestTrendForecast:
+    """Test trend forecasting."""
+
+    def test_forecast_empty_data(self):
+        """Forecast should handle empty data."""
+        from app.views.analytics_advanced import _forecast_trend
+
+        df = pd.DataFrame()
+        result = _forecast_trend(df, "date", "score")
+        assert result == {}
+
+    def test_forecast_insufficient_data(self):
+        """Forecast should require minimum data points."""
+        from app.views.analytics_advanced import _forecast_trend
+
+        df = pd.DataFrame(
+            {
+                "date": ["2024-01-01", "2024-01-02"],
+                "score": [50, 55],
+            }
+        )
+        result = _forecast_trend(df, "date", "score")
+        assert result == {}
+
+    def test_forecast_valid_data(self):
+        """Forecast should work with sufficient data."""
+        from app.views.analytics_advanced import _forecast_trend
+
+        dates = pd.date_range("2024-01-01", periods=30, freq="D")
+        df = pd.DataFrame(
+            {
+                "date": dates,
+                "score": range(30, 60),
+            }
+        )
+
+        result = _forecast_trend(df, "date", "score")
+        assert result != {}
+        assert "current_value" in result
+        assert "forecast_value" in result
+        assert "trend" in result
+        assert result["trend"] in ["up", "down"]
+
+    def test_forecast_uptrend(self):
+        """Forecast should correctly identify uptrend."""
+        from app.views.analytics_advanced import _forecast_trend
+
+        dates = pd.date_range("2024-01-01", periods=30, freq="D")
+        df = pd.DataFrame(
+            {
+                "date": dates,
+                "score": list(range(50, 80)),  # Steady increase: 50 to 79
+            }
+        )
+
+        result = _forecast_trend(df, "date", "score")
+        assert result["trend"] == "up"
+        assert result["slope"] > 0
+
+    def test_forecast_downtrend(self):
+        """Forecast should correctly identify downtrend."""
+        from app.views.analytics_advanced import _forecast_trend
+
+        dates = pd.date_range("2024-01-01", periods=30, freq="D")
+        df = pd.DataFrame(
+            {
+                "date": dates,
+                "score": list(range(80, 50, -1)),  # Steady decrease: 80 to 51
+            }
+        )
+
+        result = _forecast_trend(df, "date", "score")
+        assert result["trend"] == "down"
+        assert result["slope"] < 0
+
+
+class TestDeltaUpdate:
+    """Test delta update logic."""
+
+    def test_should_refetch_first_fetch(self):
+        """First fetch should always trigger."""
+        from app.views.analytics_advanced import _should_refetch_data
+
+        assert _should_refetch_data(100, 0) is True
+
+    def test_should_refetch_significant_change(self):
+        """Significant change (>5%) should trigger refetch."""
+        from app.views.analytics_advanced import _should_refetch_data
+
+        # 10% increase
+        assert _should_refetch_data(110, 100) is True
+
+    def test_should_not_refetch_small_change(self):
+        """Small change (<5%) should not trigger refetch."""
+        from app.views.analytics_advanced import _should_refetch_data
+
+        # 2% increase
+        assert _should_refetch_data(102, 100) is False
+
+    def test_should_refetch_stale_data(self):
+        """Stale data (<1% change) should trigger refetch."""
+        from app.views.analytics_advanced import _should_refetch_data
+
+        # No change
+        assert _should_refetch_data(100, 100) is True
