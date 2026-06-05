@@ -1,2 +1,8 @@
-# All dev dependencies are covered by requirements.txt.
-# Install the full set with: pip install -r requirements.txt
+pytest>=9.0.3
+pytest-cov>=7.1.0
+black>=26.5.1
+ruff>=0.15.16
+isort>=8.0.1
+pre-commit>=4.6.0
+coverage>=7.14.1
+faker>=40.21.0
