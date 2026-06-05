@@ -191,12 +191,19 @@ from socrata_toolkit.analysis import dataframe_to_pdf
 
 @pytest.mark.skipif(dataframe_to_pdf is None, reason="viz extras not installed")
 def test_dataframe_to_pdf_fallback(tmp_path):
+    import os
+
     df = pd.DataFrame({"a": [1, 2], "b": ["x", "y"]})
     path = dataframe_to_pdf(df, str(tmp_path / "report.pdf"), title="Test Report")
-    # Falls back to HTML without weasyprint
     assert path.endswith(".html") or path.endswith(".pdf")
-    content = open(path).read()
-    assert "Test Report" in content
+    assert os.path.getsize(path) > 0
+    if path.endswith(".html"):
+        # HTML fallback (no weasyprint): title is embedded as text
+        content = open(path, encoding="utf-8").read()
+        assert "Test Report" in content
+    else:
+        # Real PDF (weasyprint available): binary content with a PDF header
+        assert open(path, "rb").read(5) == b"%PDF-"
 
 
 # -- Messaging Bot -------------------------------------------------------------

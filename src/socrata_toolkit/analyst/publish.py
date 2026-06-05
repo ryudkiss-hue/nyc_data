@@ -99,16 +99,24 @@ def _copy_pack(pack_dir: Path, dest_root: str, *, dry_run: bool) -> PublishActio
             detail=f"Would copy pack to {dest}",
             meta={"source": str(pack_dir), "dest": str(dest)},
         )
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    if dest.exists():
-        shutil.rmtree(dest)
-    shutil.copytree(pack_dir, dest)
-    return PublishAction(
-        kind="file_copy",
-        ok=True,
-        detail=f"Copied pack to {dest}",
-        meta={"source": str(pack_dir), "dest": str(dest)},
-    )
+    try:
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        if dest.exists():
+            shutil.rmtree(dest)
+        shutil.copytree(pack_dir, dest)
+        return PublishAction(
+            kind="file_copy",
+            ok=True,
+            detail=f"Copied pack to {dest}",
+            meta={"source": str(pack_dir), "dest": str(dest)},
+        )
+    except Exception as exc:
+        return PublishAction(
+            kind="file_copy",
+            ok=False,
+            detail=f"Copy failed: {exc}",
+            meta={"source": str(pack_dir), "dest": str(dest)},
+        )
 
 
 def _export_bi(pack_dir: Path, dest_root: str, include: list[str] | None, *, dry_run: bool) -> PublishAction:
