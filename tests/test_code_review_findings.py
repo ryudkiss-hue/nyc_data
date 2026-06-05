@@ -5,9 +5,10 @@ These tests reproduce the issues identified in code-review-report.md
 to confirm they are real problems before implementation.
 """
 
-import pytest
-import pandas as pd
 from datetime import datetime, timedelta
+
+import pandas as pd
+import pytest
 
 
 class TestCriticalFinding1_SoQLSyntax:
@@ -101,8 +102,9 @@ class TestCriticalFinding2_SpatialIntersectsJoin:
         """
         Verify that calling spatial_intersects_join with only 2 params raises TypeError.
         """
-        from socrata_toolkit.spatial.core import spatial_intersects_join
         import inspect
+
+        from socrata_toolkit.spatial.core import spatial_intersects_join
 
         # Get the function signature
         sig = inspect.signature(spatial_intersects_join)
@@ -163,7 +165,7 @@ class TestCriticalFinding2_SpatialIntersectsJoin:
             )
             # If we get here, the call succeeded
             assert result is not None, "spatial_intersects_join should return a result"
-            print(f"[PASS] Calling with 4 params works correctly")
+            print("[PASS] Calling with 4 params works correctly")
         except TypeError as e:
             pytest.fail(f"Call with all required params should work, but got: {e}")
 
@@ -180,7 +182,7 @@ class TestDocumentationAccuracy:
         import re
 
         # Read CLAUDE.md
-        with open("CLAUDE.md", "r") as f:
+        with open("CLAUDE.md") as f:
             claude_content = f.read()
 
         # Find all code blocks with SoQL
@@ -197,8 +199,9 @@ class TestDocumentationAccuracy:
         """
         Verify that documented function signatures match actual implementations.
         """
-        from socrata_toolkit.spatial.core import spatial_intersects_join
         import inspect
+
+        from socrata_toolkit.spatial.core import spatial_intersects_join
 
         # Get actual signature
         actual_sig = str(inspect.signature(spatial_intersects_join))
@@ -232,7 +235,7 @@ class TestDocumentationImpact:
             for file in files:
                 if file.endswith(".py"):
                     filepath = os.path.join(root, file)
-                    with open(filepath, "r") as f:
+                    with open(filepath) as f:
                         content = f.read()
                         if "CLAUDE.md" in content or "from CLAUDE" in content:
                             found_references += 1
@@ -256,7 +259,7 @@ class TestDocumentationImpact:
         found_validation = False
         for ci_file in ci_files:
             if os.path.exists(ci_file):
-                with open(ci_file, "r") as f:
+                with open(ci_file) as f:
                     content = f.read()
                     if "doctest" in content or "markdown" in content or "example" in content:
                         found_validation = True
