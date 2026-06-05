@@ -64,3 +64,8 @@ secrets/
 credentials.json
 google-credentials.json
 schema_registry/
+
+# Generated reports
+data_quality_report.html
+data_quality_report.pdf
+*.pdf
