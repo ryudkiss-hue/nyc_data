@@ -536,8 +536,8 @@ When given an analytical task, follow this sequence:
 |---|---|
 | "Show ramp completion by borough" | Fetch `ramp_progress`, run `compute_borough_completion_rates()`, return table with rate + 95% CI + reliability per borough |
 | "Are any datasets going stale?" | `socrata dataset health --all --sort-by staleness` — highlight anything >SLA threshold |
-| "Violations last 30 days in Manhattan" | Fetch `violations` with `$where=upper(borough)='MANHATTAN' AND created_date>'<30d ago>'&$select=count(*)` |
-| "Find construction conflicts near inspections" | `socrata conflict-detect --borough MN --buffer 50` or `spatial_intersects_join(street_permits, inspection)` |
+| "Violations last 30 days in Manhattan" | Fetch `violations` with `$where=upper(borough)='MANHATTAN' AND created_date > '2026-05-06T00:00:00'` (use ISO 8601 timestamps, not relative dates) |
+| "Find construction conflicts near inspections" | `socrata conflict-detect --borough MN --buffer 50` or `spatial_intersects_join(street_permits, inspection, "the_geom", "the_geom")` |
 | "Quality score for inspection dataset" | Fetch 10K rows, `compute_quality_score(key_columns=["objectid"], date_column="created_date")` |
 | "Translate: how many tree damage reports per borough?" | `nl_to_soql(question, "tree_damage", columns)` → validate → show SoQL → offer to execute |
 
