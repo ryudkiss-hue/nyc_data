@@ -41,7 +41,7 @@ New capabilities shipped in v0.4.0 (2026-06-01):
 
 ## 📚 Glossary
 
-**SLA** — Service Level Agreement. A threshold for data freshness (e.g., "HIGH=14 days" means the data should be updated within 14 days).
+**SLA** — Service Level Agreement. A threshold for data freshness. HIGH=14d, MED=30d, LOW=60d (means the data should be updated within 14, 30, or 60 days respectively).
 
 **SIM** — Sidewalk Inspection & Management. NYC DOT's program for tracking sidewalk quality through structured inspections.
 
