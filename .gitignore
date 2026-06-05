@@ -71,6 +71,8 @@ data_quality_report.pdf
 *.pdf
 nyc_311_quality_report.html
 inspection_live_output.txt
+*_analysis.html
+ecosystem_metrics.json
 
 # Generated CSV exports
 nyc_311_complaints_sample.csv
