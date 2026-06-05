@@ -78,6 +78,7 @@ class TestGovernanceWeights:
     def test_weights_used_in_compute_quality_score(self):
         """compute_quality_score should use the module-level weight constants."""
         import pandas as pd
+
         from socrata_toolkit.governance.core import compute_quality_score
 
         df = pd.DataFrame(

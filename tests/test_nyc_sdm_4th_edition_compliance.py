@@ -27,13 +27,19 @@ from datetime import date, datetime
 
 import pytest
 
-# Import all material and standard definitions
 from socrata_toolkit.engineering import (
-    ASPH_STANDARD,
-    CONC_STANDARD,
-    MATERIAL_DEFINITIONS,
     MaterialCategory,
     SurfaceCondition,
+)
+
+# Import all material and standard definitions
+from socrata_toolkit.material.definitions import (
+    ASPH_POROUS,
+    ASPH_STANDARD,
+    CONC_POROUS,
+    CONC_STANDARD,
+    MATERIAL_DEFINITIONS,
+    STONE_NATURAL,
 )
 from socrata_toolkit.standards.design import (
     ADA_COMPLIANCE_RULES,
@@ -180,36 +186,31 @@ class TestSection4MaterialsAndFinishes:
 
     def test_section_4_3_permeable_asphalt(self):
         """Section 4.3: Permeable/Porous Asphalt (green infrastructure)."""
-        # Look for permeable asphalt in material definitions
-        porous_asph = MATERIAL_DEFINITIONS.get("ASPH_POROUS")
+        spec = ASPH_POROUS
 
-        if porous_asph:
-            spec = porous_asph
-            design = spec.design_standards
-            assert design["thickness_inches"] == 2.5, "SDM 4.3: Porous asphalt = 2.5 inches"
-            assert design["porosity_percent"] == 18.0, "SDM 4.3: Porosity = 18% air voids"
+        design = spec.design_standards
+        assert design["thickness_inches"] == 2.5, "SDM 4.3: Porous asphalt = 2.5 inches"
+        assert design["air_voids_percent"] == 18.0, "SDM 4.3: Air voids = 18%"
 
-            # Infiltration rate (critical for permeable surfaces)
-            assert design["infiltration_in_hr"] == 360, (
-                "SDM 4.3: Infiltration = 360 in/hr (excellent for stormwater)"
-            )
+        # Infiltration rate (critical for permeable surfaces)
+        assert design["infiltration_rate_in_per_hour"] == 360, (
+            "SDM 4.3: Infiltration = 360 in/hr (excellent for stormwater)"
+        )
 
-            # Maintenance is more frequent for permeable surfaces
-            assert spec.maintenance_schedule.routine_interval_years <= 3, (
-                "SDM 4.3: Permeable asphalt needs frequent maintenance (vacuum sweep)"
-            )
+        # Maintenance is more frequent for permeable surfaces
+        assert spec.maintenance_schedule.routine_interval_years == 2, (
+            "SDM 4.3: Permeable asphalt needs frequent maintenance (every 2 years routine)"
+        )
 
     def test_section_4_3_pervious_concrete(self):
         """Section 4.3: Pervious (porous) concrete."""
-        porous_conc = MATERIAL_DEFINITIONS.get("CONC_POROUS")
+        spec = CONC_POROUS
 
-        if porous_conc:
-            spec = porous_conc
-            design = spec.design_standards
-            assert design["thickness_inches"] == 4.0
-            assert design["infiltration_in_hr"] == 480, (
-                "SDM 4.3: Pervious concrete = 480 in/hr (better than porous asphalt)"
-            )
+        design = spec.design_standards
+        assert design["thickness_inches"] == 4.0
+        assert design["infiltration_rate_in_per_hour"] == 480, (
+            "SDM 4.3: Pervious concrete = 480 in/hr (better than porous asphalt)"
+        )
 
     # ────────────────────────────────────────────────────────────────────────
     # Section 4.4: Specialized Surfaces
@@ -238,7 +239,7 @@ class TestSection4MaterialsAndFinishes:
 
         if brick:
             spec = brick
-            assert spec.category == MaterialCategory.SPECIALTY
+            assert spec.category == MaterialCategory.BRICK_STONE
             design = spec.design_standards
             if "brick_length_inches" in design:
                 assert design["brick_length_inches"] == 7.625
@@ -262,7 +263,7 @@ class TestSection4MaterialsAndFinishes:
             assert design["dome_diameter_inches"] == 0.9, (
                 "SDM 4.5 / ADA: Dome diameter = 0.9 inches"
             )
-            assert design["spacing_inches"] == 1.6, (
+            assert design["center_to_center_spacing_inches"] == 1.6, (
                 "SDM 4.5 / ADA: Center-to-center spacing = 1.6 inches"
             )
 
@@ -303,19 +304,17 @@ class TestSection5WidthClearanceSlopes:
         assert rule is not None
 
         params = rule.parameters
-        assert params["max_slope_percent"] == 5.0, (
+        assert params["max_longitudinal_slope_percent"] == 5.0, (
             "SDM 5.2: Maximum longitudinal slope = 5% (1:20)"
         )
-
-        # Ratio should be 1:20
-        assert params["max_slope_ratio"] == (1 / 20) or params["max_slope_percent"] == 5.0
 
     def test_section_5_3_cross_slope(self):
         """
         Section 5.3: Cross Slope (perpendicular)
         Reference: SDM Section 5.3, ADA CFR 36.303(c)
         """
-        rule = get_rule("ADA-1.2.3")
+        # Cross slope is part of ADA-1.2.1 (route width) and ADA-1.2.2 (slope)
+        rule = get_rule("ADA-1.2.2")
         assert rule is not None
 
         params = rule.parameters
@@ -328,28 +327,21 @@ class TestSection5WidthClearanceSlopes:
         Section 5.5: Changes in Level (vertical transitions)
         Reference: SDM Section 5.5, ADA CFR 36.305(b)
         """
-        # Three categories of vertical change handling
+        # All changes in level are covered by ADA-1.6.1
+        rule = get_rule("ADA-1.6.1")
+        assert rule is not None
 
-        # ≤ 0.25 inch: Vertical allowed
-        rule_1 = get_rule("ADA-1.6.1")
-        assert rule_1 is not None
-        assert rule_1.parameters["max_vertical_without_bevel_inches"] == 0.25, (
+        params = rule.parameters
+
+        # ≤ 0.25 inch: Vertical allowed (no bevel needed)
+        assert params["max_vertical_change_no_bevel_inches"] == 0.25, (
             "SDM 5.5: Changes ≤ 0.25\" are vertical (no bevel needed)"
         )
 
-        # 0.25-0.5 inch: Bevel required (1:2 = 50% slope)
-        rule_2 = get_rule("ADA-1.6.2")
-        if rule_2:  # May be combined with ADA-1.6.1
-            assert rule_2.parameters["max_bevel_slope"] == 0.5, (
-                "SDM 5.5: Changes 0.25-0.5\" require bevel (max 1:2 = 50%)"
-            )
-
-        # > 0.5 inch: Curb ramp required (max 1:12 = 8.33%)
-        rule_3 = get_rule("ADA-1.6.3")
-        if rule_3:
-            assert rule_3.parameters["max_ramp_slope_percent"] == 8.33 or (
-                rule_3.parameters["max_ramp_slope_ratio"] == (1 / 12)
-            ), "SDM 5.5: Changes > 0.5\" require ramp (max 1:12 = 8.33%)"
+        # 0.25-0.5 inch: Bevel required (max 1:2 = 50% slope)
+        assert params["max_change_requiring_bevel_inches"] == 0.5, (
+            "SDM 5.5: Changes 0.25-0.5\" require bevel (max 1:2 = 50%)"
+        )
 
 
 # ============================================================================
@@ -381,7 +373,7 @@ class TestSection6SurfacePerformance:
         )
 
         # New installations higher standard
-        assert params["min_bpn_new_installation"] == 65, (
+        assert params["min_bpn_new_surface"] == 65, (
             "SDM 6.1: New installations = 65 BPN minimum"
         )
 
@@ -417,12 +409,12 @@ class TestSection6SurfacePerformance:
         params = rule.parameters
 
         # No holes > 0.25 inch
-        assert params["max_hole_diameter_inches"] == 0.25, (
+        assert params["max_hole_opening_inches"] == 0.25, (
             "SDM 6.2: Surface holes must not exceed 0.25 inches"
         )
 
         # No movement > 0.5 inch under load
-        assert params["max_vertical_movement_inches"] == 0.5, (
+        assert params["max_vertical_displacement_inches"] == 0.5, (
             "SDM 6.2: Vertical movement under load ≤ 0.5 inches"
         )
 
@@ -446,8 +438,7 @@ class TestADAFederalComplianceRequirements:
         """Verify all required ADA CFR 36 rules are implemented."""
         required_rules = [
             "ADA-1.2.1",  # Width (36.303(c))
-            "ADA-1.2.2",  # Longitudinal slope (36.303(c))
-            "ADA-1.2.3",  # Cross slope (36.303(c))
+            "ADA-1.2.2",  # Slope (36.303(c)) - includes longitudinal and cross slope
             "ADA-1.3.1",  # Slip resistance (36.305(c))
             "ADA-1.5.1",  # Firmness and stability (36.305(b))
             "ADA-1.6.1",  # Changes in level (36.305(b))
@@ -463,13 +454,10 @@ class TestADAFederalComplianceRequirements:
         width_rule = get_rule("ADA-1.2.1")
         assert width_rule.parameters["min_clear_width_feet"] == 4.0
 
-        # Slope: 36.303(c)(2)
+        # Slope: 36.303(c)(2) - includes longitudinal and cross slope
         slope_rule = get_rule("ADA-1.2.2")
-        assert slope_rule.parameters["max_slope_percent"] == 5.0
-
-        # Cross slope: 36.303(c)(3)
-        cross_rule = get_rule("ADA-1.2.3")
-        assert cross_rule.parameters["max_cross_slope_percent"] == 2.0
+        assert slope_rule.parameters["max_longitudinal_slope_percent"] == 5.0
+        assert slope_rule.parameters["max_cross_slope_percent"] == 2.0
 
     def test_ada_cfr_36_305_ground_surfaces(self):
         """ADA CFR 36.305: Ground and Floor Surfaces."""
@@ -502,7 +490,7 @@ class TestLocalLaw60Compliance:
 
         # Local Law 60 uses 1 inch threshold for enforcement, but ADA is 0.5"
         params = rule.parameters
-        assert params["max_vertical_movement_inches"] == 0.5, (
+        assert params["max_vertical_displacement_inches"] == 0.5, (
             "ADA standard: vertical change ≤ 0.5 inches"
         )
         # Note: Local Law 60 enforcement is 1+ inch, but ADA is stricter
