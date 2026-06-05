@@ -39,6 +39,24 @@ New capabilities shipped in v0.4.0 (2026-06-01):
 
 ---
 
+## 📚 Glossary
+
+**SLA** — Service Level Agreement. A threshold for data freshness (e.g., "HIGH=14 days" means the data should be updated within 14 days).
+
+**SIM** — Sidewalk Inspection & Management. NYC DOT's program for tracking sidewalk quality through structured inspections.
+
+**SOQL** — Socrata Query Language. SQL-like query language used by the Socrata open data API. Documentation: https://dev.socrata.com/docs/queries/
+
+**Wilson Score Confidence Interval** — A statistical method for computing confidence intervals for proportions/rates when sample sizes are small. More accurate than normal approximation for n<1000. [Reference](https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval#Wilson_score_interval)
+
+**CDC** — Change Data Capture. Pattern for tracking row-level changes (inserts, updates, deletes) in a dataset over time.
+
+**TSP** — Traveling Salesman Problem. Classic optimization problem: find shortest route visiting all locations. Used in GIS analysis for route planning.
+
+**DuckDB** — In-process SQL database optimized for analytical queries on Parquet files. Used here for L2 caching of Socrata data.
+
+---
+
 ## 📚 Data Analytics Skills Library
 
 **31 portable skills** for structured analytical workflows, organized across 6 categories. These activate on-demand in Claude Code sessions.
@@ -292,7 +310,19 @@ CLI:           python -m socrata_toolkit.core.cli  (alias: socrata)
 | `PG_DSN` | PostgreSQL DSN for upsert targets | none |
 | `SLACK_WEBHOOK_URL` | Slack webhook for operational alerts | none |
 
-Config files (in `data/`): `scheduler_config.json`, `sla_config.json` (HIGH=14d, MED=30d, LOW=60d), `filter_presets.json`
+**Config files (in `data/`):** `scheduler_config.json`, `filter_presets.json`
+
+**SLA Configuration:** Create or modify `data/sla_config.json` to define service level thresholds (default values shown below):
+
+```json
+{
+  "HIGH": 14,
+  "MEDIUM": 30,
+  "LOW": 60
+}
+```
+
+SLA enforcement is configured in `src/socrata_toolkit/quality/sla.py` and `src/socrata_toolkit/observability/sla.py`. To enable local SLA tracking with DuckDB, set `DUCKDB_PATH` environment variable (e.g., `data/local_db/nyc_mission_control.duckdb`). SLAs measure dataset freshness in days — values exceeding thresholds trigger alerts via observability module (W4).
 
 ---
 
@@ -303,13 +333,13 @@ All datasets live on `data.cityofnewyork.us`. Reference by key.
 **core_smd** — primary inspection data
 | Key | Fourfour | Rows | Notes |
 |---|---|---|---|
-| `inspection` | dntt-gqwq | ~398K | Updates daily |
-| `violations` | 6kbp-uz6m | ~312K | Updates daily |
+| `inspection` | dntt-gqwq | ~398K (as of 2026-06-05) | Updates daily |
+| `violations` | 6kbp-uz6m | ~312K (as of 2026-06-05) | Updates daily |
 | `built` | ugc8-s3f6 | ~105K | |
 | `lot_info` | i642-2fxq | ~1.2M | |
 | `reinspection` | gx72-kirf | ~36K | |
 | `tree_damage` | j6v2-6uxq | ~17K | |
-| `dismissals` | p4u2-3jgx | ~85K | Updates daily |
+| `dismissals` | p4u2-3jgx | ~85K (as of 2026-06-05) | Updates daily |
 | `correspondences` | bheb-sjfi | ~30K | |
 | `curb_metal_protruding` | i2y3-sx2e | ~23K | |
 
@@ -317,8 +347,8 @@ All datasets live on `data.cityofnewyork.us`. Reference by key.
 | Key | Fourfour | Rows | Notes |
 |---|---|---|---|
 | `ramp_locations` | ufzp-rrqu | ~217K | Stale since 2021 |
-| `ramp_complaints` | jagj-gttd | ~6K | Updates daily |
-| `ramp_progress` | e7gc-ub6z | ~187K | Updates daily |
+| `ramp_complaints` | jagj-gttd | ~6K (as of 2026-06-05) | Updates daily |
+| `ramp_progress` | e7gc-ub6z | ~187K (as of 2026-06-05) | Updates daily |
 
 **coordination** — permits and construction
 | Key | Fourfour | Rows | Notes |
@@ -342,76 +372,60 @@ All datasets live on `data.cityofnewyork.us`. Reference by key.
 | `mappluto` | 64uk-42ks | ~858K |
 | `complaints_311` | erm2-nwe9 | ~21.3M |
 
+_Row counts are approximate. For current counts, run: `socrata dataset health --key <key>`_
+
 ---
 
-## 🐍 Python API — Import Patterns
+## ⚠️ Known Dataset Issues
+
+Problematic datasets that require awareness when planning analysis. These are tracked separately from the registry to enable automated refresh of issue status without manual documentation updates.
+
+| Key | Fourfour | Status | Last Verified | Notes |
+|---|---|---|---|---|
+| `ramp_locations` | ufzp-rrqu | Stale | 2021-01-01 | No updates since 2021. Consider using `ramp_progress` or `ramp_complaints` instead for current ramp data. |
+| `weekly_construction` | r528-jcks | Stale | 2017-01-01 | Archived dataset with no updates since 2017. Use `street_construction_inspections` or `street_permits` for active construction data. |
+| `capital_blocks` | jvk9-k4re | Empty | 2026-06-05 | Dataset contains 0 rows. Use `capital_intersections` (~7.8K rows) instead. |
+| `permit_stipulations` | gsgx-6efw | Error | 2026-06-05 | API returns HTTP 403 (Forbidden). Requires investigation of data permissions or schema changes. Contact NYC Open Data support. |
+
+**How to use this section:**
+- Before using any dataset listed here, check if a more recent workaround exists
+- File a ticket to NYC Open Data if an issue is resolved
+- Update `Last Verified` date when confirming status (keep current, don't leave stale verification dates)
+
+---
+
+## 🐍 Python API — Core Patterns
+
+**3 essential examples covering the most common use cases:**
 
 ```python
-# Fetch live data
+# 1. Fetch live data (most common)
 from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 client = SocrataClient(SocrataConfig())
 df = client.fetch_dataframe("data.cityofnewyork.us", "<fourfour>", max_rows=50000)
 meta = client.get_metadata("data.cityofnewyork.us", "<fourfour>")
 
-# Quality scoring — 0–100 composite (35% completeness, 25% validity, 25% consistency, 15% freshness)
+# 2. Compute quality metrics (0–100 composite: 35% completeness, 25% validity, 25% consistency, 15% freshness)
 from socrata_toolkit.governance import compute_quality_score
 score = compute_quality_score(df, key_columns=["id"], date_column="created_date", freshness_days_threshold=30)
 # → score.overall, score.completeness, score.validity, score.consistency, score.freshness
 
-# Schema drift
-from socrata_toolkit.governance import detect_schema_drift, snapshot_schema
-diff = detect_schema_drift(df_new, snapshot_schema(df_old))
-# → diff.added_columns, diff.removed_columns, diff.type_changes, diff.is_compatible
-
-# Data profiling
-from socrata_toolkit.analysis import profile_dataframe, quality_report
-profile = profile_dataframe(df)
-
-# Ramp analysis — per-borough completion rates with 95% Wilson Score CI
-from socrata_toolkit.analyst.ramp_analysis import compute_borough_completion_rates
-rates = compute_borough_completion_rates(df, borough_col="borough",
-    total_col="total_complaints", resolved_col="resolved_complaints")
-# → per-borough dict + rates["comparison_table"] + rates["overall_completion_rate"]
-
-# Ramp report generator
-from socrata_toolkit.engineering.ramp_analysis import RampCompletionReportGenerator
-report = RampCompletionReportGenerator().generate(df, mode="full-corpus", include_ci=True)
-print(report.to_table())
-
-# NL → SoQL translation
-from app.services.nl_query import nl_to_soql, validate_soql
-params = nl_to_soql("How many violations per borough last 90 days?", "violations", columns)
-errors = validate_soql(params, valid_columns=columns)
-
-# Spatial conflict detection
+# 3. Spatial analysis (intersection detection, conflict reporting)
 from socrata_toolkit.spatial.core import spatial_intersects_join
 result = spatial_intersects_join(left_df, right_df, "the_geom", "the_geom")
 # → result.joined, result.conflict_rate, result.overlap_count
-
-# Outlier detection
-from socrata_toolkit.analysis import detect_all_outliers
-reports = detect_all_outliers(df, method="iqr")  # or "zscore"
-
-# Governance audit trail
-from socrata_toolkit.governance import AuditLogger, create_lineage
-logger = AuditLogger()
-logger.log_event(actor="agent", action="query", resource="violations", details={})
-lineage = create_lineage(dataset_id="violations", run_id="run-001")
-lineage.add_step("fetch", source="socrata", action="fetch", row_count_in=0, row_count_out=312674)
-
-# DuckDB L2 cache queries
-from socrata_toolkit.core.duckdb_store import query_parquet_cache
-df = query_parquet_cache("SELECT borough, count(*) FROM violations GROUP BY borough")
-
-# Visualizations — returns ChartResult with .path or .base64_png
-from socrata_toolkit.viz import histogram, bar_chart, correlation_heatmap, time_series_chart
-fig = bar_chart(df, column="borough", title="Violations by Borough")
-
-# Alerts
-from socrata_toolkit.alerts.manager import AlertManager, Alert, CLINotifier
-manager = AlertManager(notifiers=[CLINotifier()])
-manager.emit(Alert(severity="high", message="Dataset stale >14 days", payload={"key": "built"}))
 ```
+
+**For additional patterns**, see docstrings in source modules:
+- **Schema drift** — `socrata_toolkit.governance.core.detect_schema_drift()`, `snapshot_schema()`
+- **Data profiling** — `socrata_toolkit.analysis.core.profile_dataframe()`
+- **Ramp analysis** — `socrata_toolkit.analyst.ramp_analysis.compute_borough_completion_rates()`
+- **NL → SoQL** — `app.services.nl_query.nl_to_soql()`, `validate_soql()`
+- **Outlier detection** — `socrata_toolkit.analysis.core.detect_all_outliers()`
+- **Audit trails** — `socrata_toolkit.governance.core.AuditLogger`, `create_lineage()`
+- **DuckDB caching** — `socrata_toolkit.core.duckdb_store.query_parquet_cache()`
+- **Visualizations** — `socrata_toolkit.viz` (histogram, bar_chart, correlation_heatmap, time_series_chart)
+- **Alerts** — `socrata_toolkit.alerts.manager.AlertManager`, `Alert`, `CLINotifier`
 
 ---
 
