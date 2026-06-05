@@ -69,3 +69,4 @@ schema_registry/
 data_quality_report.html
 data_quality_report.pdf
 *.pdf
+nyc_311_quality_report.html
