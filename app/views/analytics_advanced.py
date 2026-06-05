@@ -1133,16 +1133,168 @@ def _render_segmentation(df: pd.DataFrame) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Tier 1 Dashboard: Hypothesis Testing, Waterfall, Correlation, Cross-Filter
+# ---------------------------------------------------------------------------
+
+
+def _render_tier1_dashboard(inspections_df: pd.DataFrame) -> None:
+    """Tab 9 — Tier 1 Dashboard with statistical testing and decomposition."""
+    if inspections_df.empty:
+        st.info("Load data to begin")
+        return
+
+    if not HAS_PLOTLY:
+        st.info("Install plotly for dashboard charts.")
+        return
+
+    st.subheader("📊 Tier 1 Dashboard: Statistical Analysis & Decomposition")
+
+    # --- Section 1: Hypothesis Testing ---
+    st.markdown("### 1️⃣ Hypothesis Testing: Borough Comparison")
+
+    borough_col = _pick_col_icontains(inspections_df, "borough")
+    score_col = _pick_col_icontains(inspections_df, "condition", "score")
+    date_col = _pick_date_col(inspections_df)
+
+    if borough_col and score_col and HAS_SCIPY:
+        df_test = inspections_df.copy()
+        df_test["_borough"] = df_test[borough_col].astype(str).str.upper()
+        df_test["_score"] = pd.to_numeric(df_test[score_col], errors="coerce")
+
+        borough_groups = [
+            df_test[df_test["_borough"] == b]["_score"].dropna().values
+            for b in df_test["_borough"].unique()[:5]
+        ]
+        borough_names = sorted(df_test["_borough"].unique())[:5]
+
+        if all(len(g) > 1 for g in borough_groups):
+            f_stat, p_value = scipy_stats.f_oneway(*borough_groups)
+
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric("F-Statistic", f"{f_stat:.4f}")
+            with col2:
+                sig = "✅ Significant" if p_value < 0.05 else "❌ Not Significant"
+                st.metric("P-Value", f"{p_value:.4f}", sig)
+
+            effect_sizes = [g.std() / df_test["_score"].std() if df_test["_score"].std() > 0 else 0 for g in borough_groups]
+            p_values = [p_value] * len(borough_names)
+
+            from socrata_toolkit.viz import hypothesis_test_results
+
+            fig_hyp = hypothesis_test_results(
+                borough_names,
+                p_values,
+                effect_sizes,
+                title="P-values & Effect Sizes by Borough",
+            )
+            st.plotly_chart(fig_hyp, use_container_width=True)
+
+    # --- Section 2: Waterfall Chart (SLA Breach Drivers) ---
+    st.markdown("### 2️⃣ SLA Breach Decomposition")
+
+    from socrata_toolkit.viz import waterfall_chart
+
+    if date_col and score_col:
+        df_waterfall = inspections_df.copy()
+        df_waterfall["_dt"] = _coerce_datetime(df_waterfall, date_col)
+        df_waterfall["_score"] = pd.to_numeric(df_waterfall[score_col], errors="coerce")
+        df_waterfall["_is_critical"] = df_waterfall["_score"] < 30
+
+        recent = df_waterfall[df_waterfall["_dt"] >= (df_waterfall["_dt"].max() - pd.Timedelta(days=30))]
+
+        breach_factors = {
+            "Critical Inspections": recent["_is_critical"].sum() * -5,
+            "Low Score Impact": (recent["_score"] < 50).sum() * -3,
+            "Inspection Volume": len(recent) * 2,
+            "Coverage Bonus": recent["_borough"].nunique() if "_borough" in recent.columns else 5,
+        }
+
+        fig_waterfall = waterfall_chart(
+            list(breach_factors.keys()),
+            list(breach_factors.values()),
+            title="SLA Breach Impact Drivers (30-day window)",
+        )
+        st.plotly_chart(fig_waterfall, use_container_width=True)
+
+    # --- Section 3: Correlation Heatmap ---
+    st.markdown("### 3️⃣ Metric Correlations")
+
+    from socrata_toolkit.viz import correlation_heatmap
+
+    numeric_cols = inspections_df.select_dtypes(include=["number"]).columns.tolist()
+    if numeric_cols:
+        selected_cols = st.multiselect(
+            "Select metrics to correlate",
+            numeric_cols,
+            default=numeric_cols[:min(5, len(numeric_cols))],
+        )
+        if selected_cols and len(selected_cols) > 1:
+            fig_corr = correlation_heatmap(
+                inspections_df,
+                selected_cols,
+                title="Correlation Matrix: Selected Metrics",
+            )
+            st.plotly_chart(fig_corr, use_container_width=True)
+
+    # --- Section 4: Cross-Filtering & Inspector Performance ---
+    st.markdown("### 4️⃣ Cross-Filtering: Inspector Performance by Borough")
+
+    inspector_col = _pick_col_icontains(inspections_df, "inspector")
+    if inspector_col and borough_col and score_col:
+        df_filter = inspections_df.copy()
+        df_filter["_inspector"] = df_filter[inspector_col].astype(str)
+        df_filter["_borough"] = df_filter[borough_col].astype(str).str.upper()
+        df_filter["_score"] = pd.to_numeric(df_filter[score_col], errors="coerce")
+
+        boroughs = sorted(df_filter["_borough"].unique())
+        selected_borough = st.selectbox(
+            "Filter by Borough",
+            ["All"] + boroughs,
+            key="tier1_borough_filter",
+        )
+
+        if selected_borough != "All":
+            df_filter = df_filter[df_filter["_borough"] == selected_borough]
+
+        inspector_agg = (
+            df_filter.groupby("_inspector")
+            .agg(
+                inspections=("_inspector", "count"),
+                avg_score=("_score", "mean"),
+                critical_count=("_score", lambda x: (x < 30).sum()),
+            )
+            .reset_index()
+            .rename(columns={"_inspector": "inspector"})
+            .sort_values("inspections", ascending=False)
+            .head(15)
+        )
+
+        st.dataframe(inspector_agg, use_container_width=True)
+
+        from socrata_toolkit.viz import inspector_performance_boxplot
+
+        if len(df_filter) > 0:
+            fig_box = inspector_performance_boxplot(
+                df_filter,
+                inspector_col="_inspector",
+                metric_col="_score",
+                title=f"Score Distribution by Inspector ({selected_borough})",
+            )
+            st.plotly_chart(fig_box, use_container_width=True)
+
+
+# ---------------------------------------------------------------------------
 # Main entry point
 # ---------------------------------------------------------------------------
 
 
 def render_analytics_advanced_page() -> None:
-    """Render the Advanced Analytics page with 8 analysis tabs."""
+    """Render the Advanced Analytics page with 9 analysis tabs."""
     st.title("Advanced Analytics")
     st.caption(
         "Deep-dive analytics: trends, cohorts, anomalies, rankings, SLA tracking, "
-        "and ML segmentation."
+        "statistical testing, and ML segmentation."
     )
 
     if demo_mode_enabled():
@@ -1170,7 +1322,7 @@ def render_analytics_advanced_page() -> None:
         except Exception as exc:
             st.error(f"Failed to load inspections: {exc}")
 
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
         "📈 KPI Trends",
         "👥 Cohort Analysis",
         "🔍 Anomaly Detection",
@@ -1179,6 +1331,7 @@ def render_analytics_advanced_page() -> None:
         "⏱️ SLA Tracker",
         "🔗 Cross-Dataset",
         "🤖 Segmentation",
+        "📊 Tier 1 Dashboard",
     ])
 
     with tab1:
@@ -1204,3 +1357,6 @@ def render_analytics_advanced_page() -> None:
 
     with tab8:
         _render_segmentation(inspections_df)
+
+    with tab9:
+        _render_tier1_dashboard(inspections_df)
