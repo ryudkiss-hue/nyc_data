@@ -119,6 +119,7 @@ All 26 datasets are defined in `config/datasets.yaml` and loaded at runtime.
 
 | Variable | Description | Required |
 |----------|-------------|---------|
+| `SOCRATA_ALLOWED_KEY_HASHES` | Comma-separated SHA-256 hashes for API key validation | Yes (for API) |
 | `SOCRATA_APP_TOKEN` | Socrata API token | No |
 | `ANTHROPIC_API_KEY` | Claude API key for NL queries | No |
 | `SLACK_WEBHOOK_URL` | Slack alerts webhook | No |
