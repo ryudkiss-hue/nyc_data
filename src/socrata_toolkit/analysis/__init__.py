@@ -45,6 +45,18 @@ parse_sim_complaints = _monolith.parse_sim_complaints
 
 _VIZ_MAP_NAMES = frozenset({"create_map", "save_map", "cluster_map", "heatmap_map"})
 
+# Matplotlib chart helpers live in the full-featured ``visualization`` module
+# (they support path=/horizontal= kwargs and include box_plot/quality_dashboard),
+# which supersedes the trimmed versions in the analysis monolith.
+_VIZ_FULL_NAMES = frozenset({
+    "histogram",
+    "bar_chart",
+    "box_plot",
+    "correlation_heatmap",
+    "time_series_chart",
+    "quality_dashboard",
+})
+
 # Submodule routing for symbols not in the analysis.py monolith
 _SUBMODULE_MAP: dict[str, str] = {
     # sla_tracking
@@ -118,6 +130,16 @@ def __getattr__(name: str):
         from socrata_toolkit.viz import map as _viz_map
 
         return getattr(_viz_map, name)
+    if name in _VIZ_FULL_NAMES:
+        from socrata_toolkit import visualization as _viz
+
+        return getattr(_viz, name)
+    if name == "dataframe_to_pdf":
+        # Defined only in viz.core; routed here to avoid the monolith's
+        # import-time circular-dependency fallback to None.
+        from socrata_toolkit.viz.core import dataframe_to_pdf as _df_to_pdf
+
+        return _df_to_pdf
     if name in _SUBMODULE_MAP:
         import importlib
         mod = importlib.import_module(_SUBMODULE_MAP[name])

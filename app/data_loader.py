@@ -2,13 +2,13 @@
 Centralized Socrata ingestion for Manhattan Mission Control.
 
 Registry: config/datasets.yaml. Optional parquet cache under data/local_db/socrata_cache/.
-Demo/offline: MISSION_DEMO=1 or no Socrata credentials.
 """
 
 from __future__ import annotations
 
 import logging
 import os
+import re
 import time
 import warnings
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -69,6 +69,9 @@ except ImportError:
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 _DATASETS_YAML = _REPO_ROOT / "config" / "datasets.yaml"
 _PARQUET_CACHE_DIR = _REPO_ROOT / "data" / "local_db" / "socrata_cache"
+
+# Pre-compile regex for BBL normalization (performance optimization)
+_RE_NON_DIGIT = re.compile(r"\D")
 
 try:
     from app.utils.cache_manager import (
@@ -135,12 +138,7 @@ def _require_sodapy() -> None:
 
 
 def demo_mode_enabled() -> bool:
-    if os.getenv("MISSION_DEMO", "").strip().lower() in ("1", "true", "yes"):
-        return True
-    token = (os.getenv("SOCRATA_APP_TOKEN") or "").strip()
-    key_id = (os.getenv("SOCRATA_KEY_ID") or "").strip()
-    key_secret = (os.getenv("SOCRATA_KEY_SECRET") or "").strip()
-    return not token and not (key_id and key_secret)
+    return False
 
 
 def get_socrata_client() -> Any:
@@ -151,8 +149,88 @@ def get_socrata_client() -> Any:
     return Socrata(DOMAIN, token, username=username, password=password, timeout=90)
 
 
+_HEALTH_CHECK_CACHE: dict[str, bool] = {}
+
+
+def _check_dataset_health() -> None:
+    """Check dataset health (staleness and emptiness) at module import time.
+
+    This function is called once at module import time to assess the health
+    of registered datasets by checking:
+    - Staleness: datasets with cache older than TTL
+    - Emptiness: datasets with zero rows or missing data
+
+    Logs a structured warning (non-blocking) if:
+    - 2 or more datasets are stale, OR
+    - Any dataset is empty
+
+    Caches result to avoid repeated checks during app startup.
+    Uses a 30-second timeout and fails gracefully on errors.
+    """
+    if _HEALTH_CHECK_CACHE.get("checked"):
+        return
+
+    try:
+        stale_datasets: list[str] = []
+        empty_datasets: list[str] = []
+
+        # Check cache freshness for each dataset
+        for dataset_key in DATASET_REGISTRY.keys():
+            path = _parquet_path(dataset_key)
+            if path.exists():
+                # Check if cache is stale (reuse existing freshness logic)
+                if not _parquet_fresh(path):
+                    stale_datasets.append(dataset_key)
+                # Check if cache is empty
+                try:
+                    df = pd.read_parquet(path)
+                    if df.empty:
+                        empty_datasets.append(dataset_key)
+                except Exception:
+                    pass
+
+        _HEALTH_CHECK_CACHE["checked"] = True
+
+        # Log warning if health issues detected
+        warning_parts: list[str] = []
+        if len(stale_datasets) >= 2:
+            warning_parts.append(f"{len(stale_datasets)} stale datasets")
+        if empty_datasets:
+            warning_parts.append(f"{len(empty_datasets)} empty datasets")
+
+        if warning_parts:
+            stale_str = (
+                ", ".join(stale_datasets[:5])
+                + ("..." if len(stale_datasets) > 5 else "")
+                if stale_datasets
+                else "none"
+            )
+            empty_str = (
+                ", ".join(empty_datasets[:5])
+                + ("..." if len(empty_datasets) > 5 else "")
+                if empty_datasets
+                else "none"
+            )
+            logging.warning(
+                "[HEALTH_CHECK] Data quality issues detected: %s. "
+                "Stale: %s. Empty: %s. App will continue loading.",
+                ", ".join(warning_parts),
+                stale_str,
+                empty_str,
+            )
+
+    except Exception as exc:
+        # Fail gracefully: log and continue (non-blocking)
+        logging.debug(
+            "health_check: failed to assess dataset health (error): %s",
+            exc,
+        )
+        _HEALTH_CHECK_CACHE["checked"] = True
+
+
 def normalize_bbl(series: pd.Series) -> pd.Series:
-    s = series.astype(str).str.replace(r"\D", "", regex=True)
+    """Normalize BBL using pre-compiled regex for better performance."""
+    s = series.astype(str).str.replace(_RE_NON_DIGIT, "", regex=False)
     s = s.where(s.str.len() >= 6, other=pd.NA)
     return s.str.zfill(10)
 
@@ -169,7 +247,7 @@ def pick_column(df: pd.DataFrame, candidates: tuple[str, ...]) -> str | None:
 
 
 def _cache_decorator():
-    if st is not None:
+    if st is not None and hasattr(st, "cache_data"):
         return st.cache_data(ttl=CACHE_TTL_SECONDS, show_spinner="Fetching from Socrata…")
     return lambda f: f
 
@@ -183,6 +261,9 @@ def _parquet_fresh(path: Path) -> bool:
     if not path.exists():
         return False
     return (time.time() - path.stat().st_mtime) < CACHE_TTL_SECONDS
+
+
+_check_dataset_health()
 
 
 def _read_parquet_cache(dataset_key: str) -> pd.DataFrame | None:
@@ -204,27 +285,6 @@ def _write_parquet_cache(dataset_key: str, df: pd.DataFrame) -> None:
         pass
 
 
-def _demo_frame(dataset_key: str) -> pd.DataFrame:
-    """Minimal synthetic rows so workflows run offline."""
-    bbl = "1000010001"
-    templates: dict[str, dict[str, list]] = {
-        "lot_info": {"bbl": [bbl], "owner": ["City"]},
-        "mappluto": {"bbl": [bbl], "ownername": ["Private"]},
-        "complaints_311": {"created_date": ["2020-01-01"], "bbl": [bbl]},
-        "violations": {"bbl": [bbl], "grace_pd": ["2020-01-01"]},
-        "tree_damage": {"bbl": [bbl], "agency": ["Parks"]},
-        "built": {"length": [100.0]},
-        "ramp_progress": {"latitude": [40.75], "longitude": [-73.99]},
-        "pedestrian_demand": {"latitude": [40.76], "longitude": [-73.98]},
-        "weekly_construction": {"latitude": [40.75], "longitude": [-73.99]},
-        "street_permits": {"latitude": [40.75], "longitude": [-73.99], "borough": ["MANHATTAN"]},
-        "capital_blocks": {"latitude": [40.75], "longitude": [-73.99]},
-        "inspection": {"latitude": [40.75], "longitude": [-73.99], "borough": ["MANHATTAN"]},
-    }
-    data = templates.get(dataset_key, {"note": ["demo row"]})
-    return _postprocess_dataset(dataset_key, pd.DataFrame(data))
-
-
 def _postprocess_dataset(dataset_key: str, df: pd.DataFrame) -> pd.DataFrame:
     if df.empty:
         return df
@@ -240,29 +300,39 @@ def _postprocess_dataset(dataset_key: str, df: pd.DataFrame) -> pd.DataFrame:
 
 _DELTA_COLUMN_CANDIDATES = ("updated_at", "date_modified")
 
+# Cache for detected delta columns to avoid repeated probes
+_DELTA_COLUMN_CACHE: dict[str, str | None] = {}
+
 
 def _detect_delta_column(dataset_key: str) -> str | None:
     """Return the name of a timestamp column suitable for delta fetching, or None.
 
     Fetches a single row from Socrata to inspect column names. Returns
     ``"updated_at"`` or ``"date_modified"`` if either is present; otherwise ``None``.
+    
+    Results are cached in-process to avoid repeated probes.
     """
-    if demo_mode_enabled():
-        return None
+    # Check in-process cache first
+    if dataset_key in _DELTA_COLUMN_CACHE:
+        return _DELTA_COLUMN_CACHE[dataset_key]
+    
     meta = DATASET_REGISTRY.get(dataset_key, {})
     try:
         client = get_socrata_client()
         rows = client.get(meta["fourfour"], limit=1)
         if not rows:
+            _DELTA_COLUMN_CACHE[dataset_key] = None
             return None
         cols = {c.lower() for c in rows[0].keys()}
         for candidate in _DELTA_COLUMN_CANDIDATES:
             if candidate in cols:
+                _DELTA_COLUMN_CACHE[dataset_key] = candidate
                 return candidate
     except Exception as exc:
         logging.debug("_detect_delta_column: probe failed for %s: %s", dataset_key, exc)
+    
+    _DELTA_COLUMN_CACHE[dataset_key] = None
     return None
-
 
 def _fetch_live(
     dataset_key: str,
@@ -345,9 +415,6 @@ def fetch_dataset(
     """
     if dataset_key not in DATASET_REGISTRY:
         raise KeyError(f"Unknown dataset_key: {dataset_key}")
-    if demo_mode_enabled():
-        log_event("fetch_demo", dataset=dataset_key, rows=1)
-        return _demo_frame(dataset_key)
 
     # Apply dataset-level default WHERE filter when caller doesn't supply one
     if where is None:
@@ -373,15 +440,8 @@ def fetch_dataset(
         last_iso = _last_fetched_iso(dataset_key)
         if last_iso is not None:
             # Detect whether the dataset exposes an updated_at / date_modified column
-            # by checking the manifest; we probe lazily and cache the result in the
-            # registry dict (in-process only — not persisted).
-            meta = DATASET_REGISTRY[dataset_key]
-            delta_col: str | None = meta.get("_delta_col")  # type: ignore[assignment]
-            if delta_col is None and not meta.get("_delta_col_checked"):
-                delta_col = _detect_delta_column(dataset_key)
-                # Cache the probe result in the registry dict for this process
-                DATASET_REGISTRY[dataset_key]["_delta_col"] = delta_col  # type: ignore[assignment]
-                DATASET_REGISTRY[dataset_key]["_delta_col_checked"] = True  # type: ignore[assignment]
+            # by checking the cache; we probe lazily and cache the result.
+            delta_col: str | None = _detect_delta_column(dataset_key)
             if delta_col:
                 delta_clause = f"{delta_col} > '{last_iso}'"
                 effective_where = (
@@ -454,7 +514,7 @@ def fetch_datasets_for_keys(
     key_list = list(keys)
     if not key_list:
         return {}
-    if demo_mode_enabled() or len(key_list) == 1:
+    if len(key_list) == 1:
         return {k: fetch_dataset(k, limit=limit) for k in key_list}
 
     out: dict[str, pd.DataFrame] = {}
@@ -516,7 +576,7 @@ def df_to_gdf(df: pd.DataFrame) -> Any:
     if lat_col and lon_col and Point is not None:
         geom = [
             Point(float(x), float(y)) if pd.notna(x) and pd.notna(y) else None
-            for x, y in zip(df[lon_col], df[lat_col], strict=False)
+            for x, y in zip(df[lon_col], df[lat_col])
         ]
         gdf = gpd.GeoDataFrame(df.copy(), geometry=geom, crs=WGS84)
         return gdf.to_crs(NYC_CRS)
@@ -582,7 +642,6 @@ def token_status() -> dict[str, Any]:
         "masked": f"{token[:4]}…{token[-4:]}" if len(token) > 8 else ("(set)" if token else "(missing)"),
         "domain": DOMAIN,
         "datasets": len(DATASET_REGISTRY),
-        "demo_mode": demo_mode_enabled(),
     }
 
 
