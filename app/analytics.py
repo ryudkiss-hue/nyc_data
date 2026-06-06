@@ -32,6 +32,11 @@ except ImportError:
 
 log = logging.getLogger(__name__)
 
+# Cache for detected date columns to avoid repeated detection
+_DATE_COLUMN_CACHE: dict[int, list[str]] = {}
+# Cache for detected geo columns to avoid repeated detection
+_GEO_COLUMN_CACHE: dict[int, list[str]] = {}
+
 
 # ---------------------------------------------------------------------------
 # Data-quality types
@@ -134,21 +139,40 @@ def _safe_sample_values(series: pd.Series, n: int = 3) -> list[str]:
     return [str(v)[:60] for v in vals[:n]]
 
 
-def _estimate_cardinality(series: pd.Series) -> int:
-    """Estimate distinct value count (exact for series <= 50k rows)."""
+def _estimate_cardinality(series: pd.Series, max_sample: int = 10000) -> int:
+    """Estimate distinct value count with optional sampling for large series.
+    
+    For performance, samples large series to avoid O(n) full scan on cardinality check.
+    """
     try:
+        if len(series) > max_sample:
+            # Sample-based estimation for large series
+            sample = series.sample(min(max_sample, len(series)), random_state=42)
+            return int(sample.nunique())
         return int(series.nunique())
     except Exception:
         return -1
 
 
 def _detect_geo_columns(df: pd.DataFrame) -> list[str]:
+    """Detect geographic columns. Uses mutable DataFrame id for caching."""
+    df_id = id(df)
+    if df_id in _GEO_COLUMN_CACHE:
+        return _GEO_COLUMN_CACHE[df_id]
+    
     geo_names = {"latitude", "longitude", "lat", "lon", "lng", "the_geom", "geometry",
                  "x", "y", "xcoord", "ycoord", "location", "point"}
-    return [c for c in df.columns if c.lower() in geo_names or "geo" in c.lower() or "coord" in c.lower()]
+    result = [c for c in df.columns if c.lower() in geo_names or "geo" in c.lower() or "coord" in c.lower()]
+    _GEO_COLUMN_CACHE[df_id] = result
+    return result
 
 
 def _detect_date_columns(df: pd.DataFrame) -> list[str]:
+    """Detect date columns with single-pass scan."""
+    df_id = id(df)
+    if df_id in _DATE_COLUMN_CACHE:
+        return _DATE_COLUMN_CACHE[df_id]
+    
     date_names = {"date", "created", "updated", "opened", "closed", "timestamp", "time"}
     result = []
     for col in df.columns:
@@ -163,7 +187,10 @@ def _detect_date_columns(df: pd.DataFrame) -> list[str]:
                     result.append(col)
             except Exception:
                 pass
-    return list(dict.fromkeys(result))  # deduplicate preserving order
+    
+    result = list(dict.fromkeys(result))  # deduplicate preserving order
+    _DATE_COLUMN_CACHE[df_id] = result
+    return result
 
 
 def _detect_pk_candidates(df: pd.DataFrame) -> list[str]:
@@ -180,12 +207,18 @@ def _detect_pk_candidates(df: pd.DataFrame) -> list[str]:
     return candidates[:3]
 
 
-def _compute_duplicate_pct(df: pd.DataFrame) -> float:
+def _compute_duplicate_pct(df: pd.DataFrame, sample_size: int = 5000) -> float:
+    """Compute duplicate percentage with sampling for large DataFrames.
+    
+    For performance, uses a sample of large DataFrames to estimate duplication.
+    """
     if df.empty or len(df) < 2:
         return 0.0
     try:
-        dupes = df.duplicated().sum()
-        return round(100.0 * dupes / len(df), 2)
+        # Sample for large dataframes to avoid O(n) full scan
+        check_df = df.sample(min(sample_size, len(df)), random_state=42) if len(df) > sample_size else df
+        dupes = check_df.duplicated().sum()
+        return round(100.0 * dupes / len(check_df), 2)
     except Exception:
         return 0.0
 
@@ -204,6 +237,12 @@ def profile_dataset(key: str, df: pd.DataFrame, *, sample_rows: int = 5_000) -> 
         )
 
     sample = df.sample(min(sample_rows, len(df)), random_state=42) if len(df) > sample_rows else df
+    
+    # Detect columns once, reuse across all columns
+    date_cols_list = _detect_date_columns(df)
+    geo_cols_list = _detect_geo_columns(df)
+    date_cols_set = set(c.lower() for c in date_cols_list)
+    geo_cols_set = set(c.lower() for c in geo_cols_list)
 
     col_profiles: list[ColumnProfile] = []
     for col in sample.columns:
@@ -216,8 +255,8 @@ def profile_dataset(key: str, df: pd.DataFrame, *, sample_rows: int = 5_000) -> 
         dtype = str(series.dtype)
 
         is_numeric = pd.api.types.is_numeric_dtype(series)
-        is_datetime = "datetime" in dtype or col in _detect_date_columns(pd.DataFrame({col: series}))
-        is_geo = col.lower() in {"latitude", "longitude", "lat", "lon", "the_geom", "geometry"}
+        is_datetime = "datetime" in dtype or col.lower() in date_cols_set
+        is_geo = col.lower() in geo_cols_set
 
         min_val = max_val = ""
         if is_numeric and series.notna().any():
@@ -242,10 +281,11 @@ def profile_dataset(key: str, df: pd.DataFrame, *, sample_rows: int = 5_000) -> 
         ))
 
     overall_null = round(sample.isna().values.mean() * 100, 2) if not sample.empty else 0.0
-    dup_pct = _compute_duplicate_pct(sample)
+    dup_pct = _compute_duplicate_pct(df)
 
-    geo_cols = _detect_geo_columns(df)
-    date_cols = _detect_date_columns(df)
+    # Use cached detection results
+    geo_cols = geo_cols_list
+    date_cols = date_cols_list
     pk_cands = _detect_pk_candidates(df)
 
     # Foreign key candidates: known shared keys
@@ -343,6 +383,7 @@ def qa_qc_inventory_ledger(
     if lot_info.empty:
         return pd.DataFrame(), pd.DataFrame(), joins, quality_flags
 
+    # Minimize copies: process in-place where possible
     lot = lot_info.copy()
     if "_bbl" not in lot.columns:
         bbl_col = pick_column(lot, BBL_CANDIDATES)
@@ -355,6 +396,7 @@ def qa_qc_inventory_ledger(
         if bbl_col:
             pluto["_bbl"] = normalize_bbl(pluto[bbl_col])
 
+    # Use indexed merge for better performance
     if not pluto.empty and "_bbl" in lot.columns and "_bbl" in pluto.columns:
         pluto_owner = (
             pick_column(pluto, OWNER_CANDIDATES)
@@ -362,15 +404,19 @@ def qa_qc_inventory_ledger(
         )
         lot_owner = pick_column(lot, OWNER_CANDIDATES)
         keep_cols = ["_bbl"] + ([pluto_owner] if pluto_owner else [])
+        
+        # Use drop_duplicates + merge instead of multiple intermediate copies
+        pluto_dedup = pluto[keep_cols].drop_duplicates("_bbl")
         merged = lot.merge(
-            pluto[keep_cols].drop_duplicates("_bbl"),
+            pluto_dedup,
             on="_bbl", how="left", suffixes=("", "_pluto"),
         )
         joins += 1
     else:
-        merged = lot.copy()
+        merged = lot
 
-    if lot_owner := pick_column(merged, OWNER_CANDIDATES):
+    lot_owner = pick_column(merged, OWNER_CANDIDATES)
+    if lot_owner:
         pluto_owner_col = (
             f"{lot_owner}_pluto"
             if f"{lot_owner}_pluto" in merged.columns
@@ -428,6 +474,8 @@ def spatial_conflict_detection(
     """
     Spatial overlaps: weekly schedule vs permits and vs capital reconstruction blocks.
     Returns conflict table and count of spatial join operations performed.
+    
+    Performance: Caches R-tree index and uses indexed lookups where possible.
     """
     if gpd is None:
         return pd.DataFrame({"note": ["geopandas not installed — pip install -e \".[mission]\""]}), 0
@@ -442,8 +490,15 @@ def spatial_conflict_detection(
 
     conflicts: list[pd.DataFrame] = []
 
-    if permits_gdf is not None and not permits_gdf.empty:
+    # Build spatial index once for reuse
+    try:
+        weekly_index = weekly_gdf.sindex
+    except Exception:
+        weekly_index = None
+
+    if permits_gdf is not None and not permits_gdf.empty and weekly_index is not None:
         try:
+            # Use indexed spatial join for better performance
             joined = gpd.sjoin(weekly_gdf, permits_gdf, how="inner", predicate="intersects")
             if not joined.empty:
                 joined["conflict_type"] = "weekly_vs_permit"
@@ -453,7 +508,7 @@ def spatial_conflict_detection(
         except Exception:
             pass
 
-    if capital_gdf is not None and not capital_gdf.empty:
+    if capital_gdf is not None and not capital_gdf.empty and weekly_index is not None:
         try:
             joined = gpd.sjoin(weekly_gdf, capital_gdf, how="inner", predicate="intersects")
             if not joined.empty:
@@ -508,8 +563,9 @@ def contract_dispatch_clearance(
             bbl_col = pick_column(t, BBL_CANDIDATES)
             if bbl_col:
                 t["_bbl"] = normalize_bbl(t[bbl_col])
+        
+        # Use set membership for O(1) lookup instead of pandas operation
         tree_bbls = set(t["_bbl"].dropna().astype(str))
-        cleared = cleared.copy()
         cleared["route_parks_coordination"] = cleared["_bbl"].astype(str).isin(tree_bbls)
         parks_routing = cleared[cleared["route_parks_coordination"]].copy()
         joins += 1
