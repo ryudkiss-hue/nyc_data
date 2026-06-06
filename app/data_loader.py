@@ -252,7 +252,6 @@ def _detect_delta_column(dataset_key: str) -> str | None:
     _DELTA_COLUMN_CACHE[dataset_key] = None
     return None
 
-
 def _fetch_live(
     dataset_key: str,
     *,

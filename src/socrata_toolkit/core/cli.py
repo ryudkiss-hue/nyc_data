@@ -2218,6 +2218,8 @@ def conflict_detect_cmd(borough: str, buffer_dist: int, output_path: str | None)
 
     import requests
 
+    # Use SMD Violations dataset (bblid field enables BBL-based conflict detection).
+    # Dataset wjnr-3vgm was retired; violations (6kbp-uz6m) is the current source.
     # wjnr-3vgm was retired; use SMD Violations (6kbp-uz6m) which has bblid.
     FOURFOUR = "6kbp-uz6m"
     _BOROUGH_CONTRACT_SUFFIX = {
