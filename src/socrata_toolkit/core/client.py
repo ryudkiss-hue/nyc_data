@@ -64,6 +64,7 @@ class SocrataClient:
         if order:
             params["order"] = order
         resp = with_retries(lambda: requests.get("https://api.us.socrata.com/api/catalog/v1", params=params, headers=self._headers(), timeout=self.config.timeout))
+        resp.raise_for_status()
         results = []
         for item in resp.json().get("results", []):
             resource = item.get("resource", {})
@@ -83,6 +84,7 @@ class SocrataClient:
     def get_metadata(self, domain: str, fourfour: str) -> DatasetMetadata:
         url = f"https://{domain}/api/views/{fourfour}.json"
         resp = with_retries(lambda: requests.get(url, headers=self._headers(), timeout=self.config.timeout))
+        resp.raise_for_status()
         payload = resp.json()
         return DatasetMetadata(
             domain=domain,
@@ -113,17 +115,19 @@ class SocrataClient:
         parts.append(f"OFFSET {offset}")
         return " ".join(parts)
 
-    def fetch_json(self, domain: str, fourfour: str, where: str | None = None, select: str | None = None, order: str | None = None, q: str | None = None, max_rows: int | None = None) -> Generator[list[dict[str, Any]], None, None]:
-        # Stream JSON pages via the SODA3 POST endpoint. The method yields
-        # lists of dicts (a page) so callers can process data in chunks
-        # without requiring large amounts of RAM.
+    def fetch_json(self, domain: str, fourfour: str, where: str | None = None, select: str | None = None, order: str | None = None, max_rows: int | None = None) -> Generator[list[dict[str, Any]], None, None]:
+        """Stream JSON pages via the SODA3 POST endpoint.
+        
+        The method yields lists of dicts (a page) so callers can process data in chunks
+        without requiring large amounts of RAM.
+        """
         if not self.config.app_token:
             import warnings as _warnings
             _warnings.warn(
                 "No SOCRATA_APP_TOKEN set; falling back to SODA2 GET for unauthenticated access.",
                 stacklevel=2,
             )
-            yield from self._fetch_json_soda2(domain, fourfour, where=where, select=select, order=order, q=q, max_rows=max_rows)
+            yield from self._fetch_json_soda2(domain, fourfour, where=where, select=select, order=order, max_rows=max_rows)
             return
 
         offset = 0
@@ -133,6 +137,7 @@ class SocrataClient:
             limit = self.config.page_size if remaining is None else min(self.config.page_size, remaining)
             soql = self._build_soql(limit, offset, select=select, where=where, order=order)
             resp = with_retries(lambda: requests.post(url, json={"query": soql}, headers=self._headers(), timeout=self.config.timeout))
+            resp.raise_for_status()
             batch = resp.json()
             if not batch:
                 break
@@ -145,7 +150,7 @@ class SocrataClient:
                 if remaining <= 0:
                     break
 
-    def _fetch_json_soda2(self, domain: str, fourfour: str, where: str | None = None, select: str | None = None, order: str | None = None, q: str | None = None, max_rows: int | None = None) -> Generator[list[dict[str, Any]], None, None]:
+    def _fetch_json_soda2(self, domain: str, fourfour: str, where: str | None = None, select: str | None = None, order: str | None = None, max_rows: int | None = None) -> Generator[list[dict[str, Any]], None, None]:
         """SODA2 GET fallback (used when no app token is available)."""
         offset = 0
         remaining = max_rows
@@ -158,10 +163,9 @@ class SocrataClient:
                 params["$select"] = select
             if order:
                 params["$order"] = order
-            if q:
-                params["$q"] = q
             url = f"https://{domain}/resource/{fourfour}.json"
             resp = with_retries(lambda: requests.get(url, params=params, headers=self._headers(), timeout=self.config.timeout))
+            resp.raise_for_status()
             batch = resp.json()
             if not batch:
                 break
@@ -194,6 +198,7 @@ class SocrataClient:
                 limit = self.config.page_size if remaining is None else min(self.config.page_size, remaining)
                 soql = self._build_soql(limit, offset, where=where)
                 resp = with_retries(lambda: requests.post(url, json={"query": soql}, headers=self._headers(), timeout=self.config.timeout))
+                resp.raise_for_status()
                 fc = resp.json()
                 batch = fc.get("features", [])
                 if not batch:
@@ -219,6 +224,7 @@ class SocrataClient:
                     params["$where"] = where
                 url_soda2 = f"https://{domain}/resource/{fourfour}.geojson"
                 resp = with_retries(lambda: requests.get(url_soda2, params=params, headers=self._headers(), timeout=self.config.timeout))
+                resp.raise_for_status()
                 fc = resp.json()
                 batch = fc.get("features", [])
                 if not batch:
@@ -234,14 +240,18 @@ class SocrataClient:
         # Return a merged FeatureCollection for downstream exporters
         return {"type": "FeatureCollection", "features": features}
 
-    def fetch_since(self, domain: str, fourfour: str, updated_col: str, since: str, **kwargs: Any):
+    def fetch_since(self, domain: str, fourfour: str, updated_col: str, since: str, **kwargs: Any) -> Generator[list[dict[str, Any]], None, None]:
         """Convenience generator: fetch rows where `updated_col` > `since`.
 
         `since` should be a string formatted for SoQL, e.g. '2024-01-01T00:00:00'.
         Additional kwargs are passed to `fetch_json`.
+        
+        Note: Automatically escapes special characters in `since` to prevent SoQL injection.
         """
         where = kwargs.pop("where", None)
-        clause = f"{updated_col} > '{since}'"
+        # Escape single quotes in the since value to prevent SoQL injection
+        escaped_since = since.replace("'", "''")
+        clause = f"{updated_col} > '{escaped_since}'"
         if where:
             where = f"({where}) AND ({clause})"
         else:
