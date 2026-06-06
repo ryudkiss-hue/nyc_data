@@ -5,6 +5,10 @@ from __future__ import annotations
 import requests
 
 from .compliance import *  # noqa: F403
+from .dataset_governance import (  # noqa: F401
+    cross_reference,
+    registry_audit,
+)
 
 get = requests.get  # tests monkeypatch socrata_toolkit.governance.get
 # Lineage DAG (tests import from governance)
@@ -32,4 +36,9 @@ from .audit import (  # noqa: F401
     ChangeType,
     audit_op,
     get_global_trail,
+)
+from .registry_audit import (  # noqa: F401
+    DatasetGovernanceMetadata,
+    registry_audit,
+    registry_audit_summary,
 )

@@ -107,7 +107,8 @@ All 26 datasets are defined in `config/datasets.yaml` and loaded at runtime.
 |---------|-------------|
 | `socrata conflict-detect --borough MN` | Detect spatial conflicts |
 | `socrata report contract` | Generate contract report |
-| `socrata dataset health` | Check dataset status |
+| `socrata dataset health --all --stale 7 --sort-by staleness` | Check dataset status (row count, staleness, emptiness) |
+| `socrata dataset ramp-analysis --full-corpus --borough MN` | Analyze pedestrian ramp completion rates by borough |
 | `socrata cache refresh <key>` | Refresh L2 cache |
 | `socrata export <key> --format csv` | Export dataset |
 | `socrata nl-query "<question>"` | Natural language query |
@@ -146,6 +147,21 @@ ruff check src/socrata_toolkit tests app
 # Format
 black src/socrata_toolkit tests app
 ```
+
+### Local Pre-Push Testing
+
+Before pushing to main, run the CI simulation on your local Python version to catch failures early:
+
+```bash
+# Simulates GitHub Actions matrix (ruff + pytest) on current Python version
+make ci-check
+```
+
+This runs the same quality checks that GitHub Actions will run on Python 3.10, 3.11, and 3.12:
+- **Ruff linting** — Validates code style and correctness (E, F, W, I, UP, B rules)
+- **Pytest** — Runs unit and integration test suite (excluding heavy tests)
+
+The workflow matrix is defined in `.github/workflows/python-package.yml` and tests against Python 3.10, 3.11, and 3.12. The `make ci-check` target acts as a local pre-flight check on your current Python version to save CI time.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full development guide.
 
