@@ -257,7 +257,7 @@ def quality_dashboard(
         ax.barh(missing.index.astype(str), missing.values, color=colors)
         ax.set_xlabel("Missing Values")
         # add percentage labels
-        for i, (v, col) in enumerate(zip(missing.values, missing.index, strict=False)):
+        for i, (v, col) in enumerate(zip(missing.values, missing.index)):
             pct = v / df.shape[0] * 100
             ax.text(v + 0.5, i, f"{pct:.1f}%", va="center", fontsize=8)
     else:

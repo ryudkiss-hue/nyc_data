@@ -593,7 +593,7 @@ def _render_landing():
         ("🧮", "Bayesian MCMC Engine", "PyMC Poisson regression finds the OMB review lag and yield multiplier."),
         ("🤖", "AI Copilot", "Gemini-powered assistant pre-loaded with your pipeline results."),
     ]
-    for col, (icon, title, desc) in zip([c1, c2, c3, c4], cards, strict=False):
+    for col, (icon, title, desc) in zip([c1, c2, c3, c4], cards):
         col.markdown(
             f"""<div style="border:1px solid #e2e8f0; border-radius:12px; padding:1.1rem; height:130px;">
             <div style="font-size:1.6rem;">{icon}</div>
@@ -685,7 +685,7 @@ def _render_copilot(results: dict | None, target_agency: str, target_title: str)
         ("Forecast Anomalies", "Interpret the 12-month hire forecast and flag any anomalies."),
     ]
     cols = st.columns(len(chips))
-    for col, (label, query) in zip(cols, chips, strict=False):
+    for col, (label, query) in zip(cols, chips):
         if col.button(label, key=f"chip_{label}", use_container_width=True):
             st.session_state.copilot_messages.append({"role": "user", "content": query})
             with st.spinner("Contacting Gemini..."):

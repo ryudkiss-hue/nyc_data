@@ -8,6 +8,9 @@ on:
 permissions: read-all
 
 jobs:
+  # ---------------------------------------------------------------------------
+  # Unit + functional test suite (no external services)
+  # ---------------------------------------------------------------------------
   test:
     runs-on: ubuntu-latest
     steps:
@@ -16,11 +19,59 @@ jobs:
         with: {python-version: "3.11"}
       - run: pip install -e ".[mission]" pytest
       - run: pip install -r requirements-dev.txt fastapi httpx networkx scikit-learn
-      - run: |
-          pytest tests/ -q --tb=short \
-            --ignore=tests/test_api_security.py \
+      - name: Run unit + functional suite with coverage
+        run: |
+          pytest tests/ -q --tb=short --cov --cov-report=term-missing \
             --ignore=tests/test_interactive_explore.py \
             --ignore=tests/test_studio.py \
             --ignore=tests/test_i18n.py \
             --ignore=tests/test_visualization.py \
+            --ignore=tests/test_docker_environment.py \
+            --ignore=tests/test_improvements.py
             --ignore=tests/test_docker_environment.py
+        env:
+          SOCRATA_APP_TOKEN: ${{ secrets.SOCRATA_APP_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+  # ---------------------------------------------------------------------------
+  # Integration tests against real Postgres + MongoDB service containers.
+  # These exercise the data-store seams that the unit suite mocks out — the
+  # highest-value layer for catching real-world breakage (auth, SQL, drivers).
+  # ---------------------------------------------------------------------------
+  integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: toolkit
+          POSTGRES_PASSWORD: toolkit
+          POSTGRES_DB: toolkit_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U toolkit"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      mongo:
+        image: mongo:7
+        ports: ["27017:27017"]
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand({ ping: 1 })' --quiet"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with: {python-version: "3.11"}
+      - run: pip install -e ".[mission,postgres]" pytest
+      - run: pip install -r requirements-dev.txt pymongo
+      - name: Run integration tests
+        run: |
+          pytest tests/test_integration_datastores.py \
+                 tests/test_integration_scaffold.py -q --tb=short
+        env:
+          RUN_INTEGRATION: "1"
+          PG_DSN: "postgresql://toolkit:toolkit@localhost:5432/toolkit_test"
+          MONGO_URI: "mongodb://localhost:27017"

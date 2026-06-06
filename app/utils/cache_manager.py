@@ -37,6 +37,7 @@ DATASET_TTL_HOURS: dict[str, float] = {
     "violations": 6.0,
     "mappluto": 720.0,          # 30 days
     "pedestrian_demand": 720.0,
+    "ramp_full_corpus": 168.0,  # 1 week
     "_default": 24.0,
 }
 
@@ -260,6 +261,27 @@ def start_prefetch_scheduler(dataset_keys: list[str], interval_minutes: int = 60
 
     if st is not None:
         st.session_state["_prefetch_scheduler"] = scheduler
+
+
+# ---------------------------------------------------------------------------
+# Ramp Analysis Caching (Full-Corpus)
+# ---------------------------------------------------------------------------
+
+def cache_ramp_corpus(df: pd.DataFrame) -> Path:
+    """Cache the full ramp analysis corpus as gzip-compressed Parquet.
+
+    *df* is serialized with a TTL of 168 hours (1 week).
+    Returns the path written.
+    """
+    return write_cache("ramp_full_corpus", df)
+
+
+def get_cached_ramp_corpus() -> pd.DataFrame | None:
+    """Return the cached ramp analysis corpus if fresh, else None.
+
+    Returns None on cache miss or TTL expiry.
+    """
+    return read_cache("ramp_full_corpus")
 
 
 # Expose CACHE_DIR env-var override so deployments can redirect the cache location

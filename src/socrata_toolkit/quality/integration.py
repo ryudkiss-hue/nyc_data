@@ -20,7 +20,12 @@ from socrata_toolkit.quality.anomalies import AnomalyDetector
 from socrata_toolkit.quality.expectations import ExpectationSuite
 from socrata_toolkit.quality.rules import BusinessRulesEngine
 from socrata_toolkit.quality.sla import DataQualityTracker, MetricType
-from socrata_toolkit.quality.validator import QualityValidator, ValidationResult
+from socrata_toolkit.quality.validator import (
+    QualityValidator as _QualityValidator,
+)
+from socrata_toolkit.quality.validator import (
+    ValidationResult,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +61,7 @@ class QualityIntegration:
             anomaly_detector: Anomaly detector
             rules_engine: Business rules engine
         """
-        self.validator = QualityValidator()
+        self.validator = _QualityValidator()
         self.default_suite = default_suite
         self.tracker = tracker or DataQualityTracker()
         self.anomaly_detector = anomaly_detector or AnomalyDetector()
@@ -163,15 +168,13 @@ class QualityIntegration:
         from socrata_toolkit.quality.validator import ValidationStatus
 
         return ValidationResult(
-            status=ValidationStatus.PASS,
-            timestamp=pd.Timestamp.utcnow(),
-            dataset=dataset_name,
+            table_name=dataset_name,
             row_count=len(df),
             column_count=len(df.columns),
-            results_by_expectation={},
+            status=ValidationStatus.PASS,
+            passed_expectations=[],
             failed_expectations=[],
-            warning_expectations=[],
-            metrics={"stage": stage},
+            pass_rate=1.0,
         )
 
 
@@ -201,10 +204,10 @@ def validate_data(
 
             # Validate result if it's a DataFrame
             if isinstance(result, pd.DataFrame) and suite:
-                validator = QualityValidator(fail_fast=fail_on_error)
+                validator = _QualityValidator(fail_fast=fail_on_error)
                 validation = validator.validate(result, suite, func.__name__)
 
-                if fail_on_error and not validation.is_critical_failure:
+                if fail_on_error and len(validation.failed_expectations) > 0:
                     logger.error(f"Validation failed in {func.__name__}")
                     raise ValueError(f"Data validation failed: {validation.failed_expectations}")
 
@@ -319,9 +322,7 @@ def apply_business_rules(
     return decorator
 
 
-class QualityValidator:
-    """Alias for backward compatibility."""
-    pass
+QualityValidator = _QualityValidator
 
 
 # Global integration instance

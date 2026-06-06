@@ -1,7 +1,7 @@
 # NYC DOT Sidewalk Toolkit -- Complete Build & Deployment Automation
 # Run any target with: make <target>
 
-.PHONY: help install setup test lint format docker run dev deploy clean
+.PHONY: help install setup test lint format docker run dev deploy clean ci-check
 
 # Detect OS
 UNAME_S := $(shell uname -s)
@@ -50,6 +50,18 @@ test-quick: ## 🧪 Run tests with minimal output
 
 test-cov: ## 📊 Run tests with coverage report
 	python -m pytest tests/ --cov=socrata_toolkit --cov-report=term-missing
+
+ci-check: ## 🚀 Pre-push CI simulation (local Python version)
+	@echo "Running pre-push CI checks on local Python version..."
+	python -m ruff check src/socrata_toolkit/ tests/ app/
+	python -m pytest tests/ -q --tb=short \
+		--ignore=tests/test_api_security.py \
+		--ignore=tests/test_interactive_explore.py \
+		--ignore=tests/test_docker_environment.py \
+		--ignore=tests/test_visualization.py \
+		--ignore=tests/test_improvements.py \
+		--ignore=tests/test_analysis.py
+	@echo "✓ Pre-push CI checks passed"
 
 lint: ## 🔍 Check code quality with ruff
 	python -m ruff check socrata_toolkit/ tests/

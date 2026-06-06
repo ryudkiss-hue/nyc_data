@@ -960,7 +960,11 @@ def moran_i(gdf, col: str, *, max_neighbors: int = 8):
 
         sub = gdf.loc[mask]
         values = values[mask]
-        centroids = sub.geometry.centroid
+        centroids = (
+            sub.geometry.to_crs(epsg=3857).centroid.to_crs(sub.crs)
+            if sub.crs is not None and sub.crs.is_geographic
+            else sub.geometry.centroid
+        )
         coords = np.column_stack(
             [centroids.x.to_numpy(), centroids.y.to_numpy()]
         )
@@ -1034,7 +1038,11 @@ def cluster_conflict_hotspots(gdf, eps_deg: float = 0.005, min_samples: int = 5)
             "WGS84",
         ):
             work = work.to_crs("EPSG:4326")
-        centroids = work.geometry.centroid
+        centroids = (
+            work.geometry.to_crs(epsg=3857).centroid.to_crs(work.crs)
+            if work.crs is not None and work.crs.is_geographic
+            else work.geometry.centroid
+        )
         coords = np.column_stack(
             [centroids.x.to_numpy(), centroids.y.to_numpy()]
         )

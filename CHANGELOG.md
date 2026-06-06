@@ -8,6 +8,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - 6 analyst CLI commands (`conflict-detect`, `report`, `dataset health`, `cache refresh`, `export`, `nl-query`)
+- `socrata dataset health` command with filtering (`--all`, `--stale DAYS`, `--empty`) and sorting (`--sort-by staleness|size`)
+- `socrata dataset ramp-analysis` command for borough-level pedestrian ramp completion analysis with 95% confidence intervals
 - Advanced Analytics view with 13 charts (CUSUM, Bayesian CI, KMeans, survival curves, Moran's I autocorrelation, etc.)
 - GIS Dashboard with 10 charts (DBSCAN, TSP, conflict buffers, animated bar, etc.)
 - Spatial conflict detection engine with Moran's I autocorrelation
