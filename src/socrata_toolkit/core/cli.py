@@ -2451,11 +2451,11 @@ def dataset_health_cmd(
 
         try:
             # Count rows
-            count_url = f"https://{domain}/resource/{fourfour}.json"
-            params: dict = {"$select": "count(*) as c", "$limit": 1}
+            count_url = f"https://{domain}/api/v3/views/{fourfour}/query.json"
+            headers = {}
             if token:
-                params["$$app_token"] = token
-            r = session.get(count_url, params=params, timeout=30)
+                headers["X-App-Token"] = token
+            r = session.post(count_url, json={"query": "select count(*) as c"}, headers=headers, timeout=30)
             r.raise_for_status()
             data = r.json()
             row_count = int(data[0]["c"]) if data else 0
