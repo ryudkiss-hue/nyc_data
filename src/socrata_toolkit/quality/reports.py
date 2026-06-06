@@ -431,7 +431,7 @@ class QualityReportGenerator:
             html += f"<th>{key}</th>"
         html += "</tr>"
 
-        for value_list in zip(*data.values(), strict=False):
+        for value_list in zip(*data.values()):
             html += "<tr>"
             for val in value_list:
                 html += f"<td>{val}</td>"

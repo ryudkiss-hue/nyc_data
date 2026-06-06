@@ -1,0 +1,32 @@
+{
+  "name": "NYC DOT SIM Toolkit",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+  "postCreateCommand": "pip install -e '.[mission]' && pip install -r requirements-dev.txt",
+  "forwardPorts": [8501],
+  "portsAttributes": {
+    "8501": {
+      "label": "Streamlit Dashboard",
+      "onAutoForward": "openBrowser"
+    }
+  },
+  "secrets": {
+    "SOCRATA_APP_TOKEN": {},
+    "ANTHROPIC_API_KEY": {}
+  },
+  "remoteEnv": {
+    "PYTHONPATH": "src:.",
+    "SOCRATA_APP_TOKEN": "${localEnv:SOCRATA_APP_TOKEN}",
+    "ANTHROPIC_API_KEY": "${localEnv:ANTHROPIC_API_KEY}"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python"
+      }
+    }
+  }
+}

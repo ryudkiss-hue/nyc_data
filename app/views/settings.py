@@ -15,6 +15,7 @@ from app.data_loader import DATASET_REGISTRY, cache_freshness_report
 from app.services import agency
 from app.services.alerts import get_last_scheduler_run, send_slack_alert, test_arcgis_connection
 from app.ui.theme import render_quality_badge, render_readiness_bars
+from app.utils.cache_manager import cache_manifest
 from app.utils.i18n import t
 from socrata_toolkit.core.readiness import run_readiness_checks
 
@@ -68,12 +69,14 @@ def _read_env_file() -> dict[str, str]:
 
 
 def _write_env_file(env: dict[str, str]) -> None:
-    """Write key=value pairs to .env file (preserves existing non-Socrata entries)."""
+    """Write key=value pairs to .env file (preserves existing non-managed entries)."""
     existing_lines: list[str] = []
     managed_keys = {
         "SOCRATA_APP_TOKEN", "SOCRATA_KEY_ID", "SOCRATA_KEY_SECRET",
         "SOCRATA_DOMAIN", "SOCRATA_DOMAIN_SECONDARY",
         "SOCRATA_ROW_LIMIT", "SOCRATA_CACHE_TTL_SECONDS",
+        "ANTHROPIC_API_KEY", "CLAUDE_API_KEY",
+        "SLACK_WEBHOOK_URL", "ARCGIS_ORG_URL",
     }
 
     if _ENV_FILE.exists():
@@ -103,6 +106,7 @@ def render_settings_page() -> None:
         tab_ready,
         tab_complete,
         tab_health,
+        tab_dataset_health,
         tab_cache,
         tab_logs,
         tab_alerts,
@@ -119,6 +123,7 @@ def render_settings_page() -> None:
         f"🎯 {t('tab_readiness')}",
         f"✅ {t('tab_completeness')}",
         f"🩺 {t('tab_health')}",
+        "📊 Dataset Health",
         "💾 Cache",
         f"📋 {t('tab_logs')}",
         "🔔 Alerts",
@@ -235,6 +240,10 @@ def render_settings_page() -> None:
             st.rerun()
 
     # ------------------------------------------------------------------
+    with tab_dataset_health:
+        _render_dataset_health_tab()
+
+    # ------------------------------------------------------------------
     with tab_cache:
         st.caption("Parquet cache status for Socrata datasets.")
         df = cache_freshness_report()
@@ -324,6 +333,15 @@ def render_settings_page() -> None:
 # Tab helpers
 # --------------------------------------------------------------------------- #
 
+_MANAGED_KEYS = {
+    "SOCRATA_APP_TOKEN", "SOCRATA_KEY_ID", "SOCRATA_KEY_SECRET",
+    "SOCRATA_DOMAIN", "SOCRATA_DOMAIN_SECONDARY",
+    "SOCRATA_ROW_LIMIT", "SOCRATA_CACHE_TTL_SECONDS",
+    "ANTHROPIC_API_KEY", "CLAUDE_API_KEY",
+    "SLACK_WEBHOOK_URL", "ARCGIS_ORG_URL",
+}
+
+
 def _render_api_tokens_tab() -> None:
     st.markdown("#### Socrata / NYC Open Data API Credentials")
     st.caption(
@@ -355,27 +373,32 @@ def _render_api_tokens_tab() -> None:
             type="password",
         )
 
+        st.divider()
+        st.markdown("**Anthropic / Claude API** (natural language queries)")
+        anthropic_key = st.text_input(
+            "API Key (`ANTHROPIC_API_KEY`)",
+            value=current.get("ANTHROPIC_API_KEY", current.get("CLAUDE_API_KEY", "")),
+            type="password",
+            help="Used by `socrata nl-query` and the NL Query view. Get a key at console.anthropic.com.",
+        )
+
         save_btn = st.form_submit_button("💾 Save credentials", type="primary")
 
     if save_btn:
         new_env = dict(current)
-        if app_token:
-            new_env["SOCRATA_APP_TOKEN"] = app_token
-        elif "SOCRATA_APP_TOKEN" in new_env:
-            del new_env["SOCRATA_APP_TOKEN"]
-        if key_id:
-            new_env["SOCRATA_KEY_ID"] = key_id
-        elif "SOCRATA_KEY_ID" in new_env:
-            del new_env["SOCRATA_KEY_ID"]
-        if key_secret:
-            new_env["SOCRATA_KEY_SECRET"] = key_secret
-        elif "SOCRATA_KEY_SECRET" in new_env:
-            del new_env["SOCRATA_KEY_SECRET"]
+        for key, val in [
+            ("SOCRATA_APP_TOKEN", app_token),
+            ("SOCRATA_KEY_ID", key_id),
+            ("SOCRATA_KEY_SECRET", key_secret),
+            ("ANTHROPIC_API_KEY", anthropic_key),
+            ("CLAUDE_API_KEY", anthropic_key),
+        ]:
+            if val:
+                new_env[key] = val
+            elif key in new_env:
+                del new_env[key]
         try:
-            _write_env_file({k: v for k, v in new_env.items()
-                             if k in {"SOCRATA_APP_TOKEN", "SOCRATA_KEY_ID", "SOCRATA_KEY_SECRET",
-                                      "SOCRATA_DOMAIN", "SOCRATA_DOMAIN_SECONDARY",
-                                      "SOCRATA_ROW_LIMIT", "SOCRATA_CACHE_TTL_SECONDS"}})
+            _write_env_file({k: v for k, v in new_env.items() if k in _MANAGED_KEYS})
             st.success("Credentials saved to `.env`. Restart the app to pick up new values.")
         except Exception as exc:
             st.error(f"Failed to write .env: {exc}")
@@ -486,10 +509,7 @@ def _render_configuration_tab() -> None:
 
         existing = _read_env_file()
         existing.update(new_vals)
-        _write_env_file({k: v for k, v in existing.items()
-                         if k in {"SOCRATA_APP_TOKEN", "SOCRATA_KEY_ID", "SOCRATA_KEY_SECRET",
-                                  "SOCRATA_DOMAIN", "SOCRATA_DOMAIN_SECONDARY",
-                                  "SOCRATA_ROW_LIMIT", "SOCRATA_CACHE_TTL_SECONDS"}})
+        _write_env_file({k: v for k, v in existing.items() if k in _MANAGED_KEYS})
         st.success("Configuration saved to `.env`. Restart the app to apply.")
 
     st.divider()
@@ -675,15 +695,10 @@ def _render_alerts_tab() -> None:
         if alert_email:
             existing["ALERT_EMAIL"] = alert_email
         try:
-            # Write all managed keys including the new alert ones
-            managed = {
-                "SOCRATA_APP_TOKEN", "SOCRATA_KEY_ID", "SOCRATA_KEY_SECRET",
-                "SOCRATA_DOMAIN", "SOCRATA_DOMAIN_SECONDARY",
-                "SOCRATA_ROW_LIMIT", "SOCRATA_CACHE_TTL_SECONDS",
-                "ALERT_VIOLATION_THRESHOLD", "ALERT_INSPECTION_GAP_DAYS",
-                "ALERT_SLACK_WEBHOOK", "ALERT_EMAIL",
-            }
-            _write_env_file({k: v for k, v in existing.items() if k in managed})
+            alert_extra = {"ALERT_VIOLATION_THRESHOLD", "ALERT_INSPECTION_GAP_DAYS",
+                           "ALERT_SLACK_WEBHOOK", "ALERT_EMAIL"}
+            _write_env_file({k: v for k, v in existing.items()
+                             if k in _MANAGED_KEYS | alert_extra})
             st.success("Alert settings saved.")
         except Exception as exc:
             st.error(f"Failed to save alert settings: {exc}")
@@ -951,6 +966,59 @@ def _render_sla_tab() -> None:
         with st.expander("Current sla_config.json"):
             st.json(_load_sla_config())
 
+    # ---- SLA Compliance Monitor ----
+    st.markdown("---")
+    st.markdown("### 📊 SLA Compliance Monitor")
+    st.caption("Real-time SLA breach tracking and compliance status.")
+
+    _render_sla_compliance_monitor()
+
+
+def _render_sla_compliance_monitor() -> None:
+    """Render SLA compliance monitor. Shows data when Quality Workflows populate it."""
+    # Placeholder: Quality Workflows will set this after running SLA evaluations
+    # Expected contract: st.session_state["sla_compliance_report"] = {
+    #   "overall_compliance_pct": 97.6,
+    #   "breach_count": 1,
+    #   "total_slas": 6,
+    #   "sla_details": [...]
+    # }
+    report = st.session_state.get("sla_compliance_report", None)
+
+    if report is None:
+        st.info(
+            "📊 **SLA Compliance data unavailable.** "
+            "Run Data Health workflows to compute real compliance metrics.",
+            icon="○"
+        )
+        return
+
+    # Display metrics from populated report
+    overall_compliance = report.get("overall_compliance_pct", 0)
+    breach_count = report.get("breach_count", 0)
+    total_slas = report.get("total_slas", 0)
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Overall Compliance %", f"{overall_compliance:.1f}%")
+    with col2:
+        st.metric("Total SLAs", str(total_slas))
+    with col3:
+        delta = breach_count if breach_count > 0 else None
+        st.metric(
+            "Active Breaches",
+            str(breach_count),
+            delta=delta,
+            delta_color="inverse" if delta else "off"
+        )
+
+    st.markdown("#### Per-SLA Status")
+    sla_details = report.get("sla_details", [])
+    if sla_details:
+        st.dataframe(sla_details, use_container_width=True, hide_index=True)
+    else:
+        st.caption("No per-SLA details available.")
+
 
 def _render_alert_config_tab() -> None:
     """Tab 3: Alert Config (Slack + ArcGIS)."""
@@ -1051,3 +1119,130 @@ def _render_environment_tab() -> None:
         "To set these variables, add them to your `.env` file in the project root "
         "or configure them in the **API Tokens** / **Configuration** tabs."
     )
+
+
+def _render_dataset_health_tab() -> None:
+    """Dataset Health Dashboard: Shows all 26 datasets with health status, last update, and row count.
+
+    Health status is determined by:
+    - Green (🟢 healthy): Dataset has cached data fresher than its TTL
+    - Yellow (🟡 stale): Dataset has cached data but older than its TTL
+    - Red (🔴 empty): Dataset has no cache yet
+
+    Sorted by status (critical/empty first) and includes update frequency from registry.
+    Gracefully handles API/cache errors with diagnostic messages.
+    """
+    import pandas as pd
+
+    st.markdown("### 📊 Dataset Health Dashboard")
+    st.caption(
+        "Health status for all 26 registered datasets. 🟢 Healthy (fresh cache), "
+        "🟡 Stale (cached but old), 🔴 Empty (never loaded)."
+    )
+
+    # Load the cache manifest and dataset registry
+    try:
+        manifest = cache_manifest()
+    except Exception as exc:
+        st.error(f"Failed to load cache manifest: {exc}")
+        return
+
+    # Build dataset health rows
+    rows = []
+    for dataset_key, metadata in DATASET_REGISTRY.items():
+        fourfour = metadata.get("fourfour", "")
+        label = metadata.get("label", dataset_key)
+        group = metadata.get("group", "other")
+
+        # Get cache information if available
+        entry = manifest.get(dataset_key)
+
+        if entry:
+            # Dataset has been cached
+            rows_count = entry.get("rows", 0)
+            fetched_at_str = entry.get("fetched_at", "unknown")
+
+            # Determine freshness status
+            status = "🟡 stale"  # Default to stale
+            try:
+                if fetched_at_str != "unknown":
+                    fetched_at = datetime.datetime.fromisoformat(fetched_at_str)
+                    now = datetime.datetime.now(datetime.timezone.utc)
+                    age_seconds = (now - fetched_at).total_seconds()
+                    ttl_seconds = entry.get("ttl_hours", 24) * 3600
+                    if age_seconds < ttl_seconds:
+                        status = "🟢 healthy"
+            except (ValueError, KeyError, TypeError):
+                # Failed to parse timestamp - treat as stale
+                pass
+        else:
+            # No cache entry yet
+            status = "🔴 empty"
+            rows_count = 0
+            fetched_at_str = "never"
+
+        rows.append({
+            "Status": status,
+            "Dataset": label,
+            "Key": dataset_key,
+            "4x4": fourfour,
+            "Group": group,
+            "Rows": rows_count,
+            "Last Update": fetched_at_str if fetched_at_str != "unknown" else "—",
+        })
+
+    # Sort by status (critical first) then by key
+    status_order = {"🔴 empty": 0, "🟡 stale": 1, "🟢 healthy": 2}
+    rows.sort(key=lambda r: (status_order.get(r["Status"], 3), r["Key"]))
+
+    df = pd.DataFrame(rows)
+
+    # Show summary metrics
+    c1, c2, c3, c4 = st.columns(4)
+    total = len(df)
+    healthy = len(df[df["Status"] == "🟢 healthy"])
+    stale = len(df[df["Status"] == "🟡 stale"])
+    empty = len(df[df["Status"] == "🔴 empty"])
+
+    c1.metric("Total Datasets", total)
+    c2.metric("🟢 Healthy", healthy, delta=f"{healthy}/{total}")
+    c3.metric("🟡 Stale", stale, delta=f"{stale}/{total}")
+    c4.metric("🔴 Empty", empty, delta=f"{empty}/{total}")
+
+    st.divider()
+
+    # Display dataframe with styling
+    display_cols = ["Status", "Dataset", "Key", "Group", "Rows", "Last Update"]
+    st.dataframe(
+        df[display_cols],
+        use_container_width=True,
+        hide_index=True,
+    )
+
+    # Show critical items section if any empty or stale
+    critical = df[(df["Status"] == "🔴 empty") | (df["Status"] == "🟡 stale")]
+    if not critical.empty:
+        st.divider()
+        st.markdown("#### ⚠️ Datasets needing attention")
+        for _, row in critical.iterrows():
+            with st.expander(f"{row['Status']} {row['Dataset']} ({row['Key']})"):
+                st.markdown(f"**Dataset ID:** `{row['4x4']}`")
+                st.markdown(f"**Group:** {row['Group']}")
+                st.markdown(f"**Status:** {row['Status']}")
+                st.markdown(f"**Rows cached:** {row['Rows']:,}" if row['Rows'] > 0 else "**Rows cached:** 0")
+                st.caption(
+                    "This dataset has not been loaded or its cache has expired. "
+                    "Load a workflow that uses this dataset to refresh the cache."
+                )
+
+    st.divider()
+    st.markdown("#### Cache management")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("🔄 Refresh health data", type="secondary"):
+            st.cache_data.clear()
+            st.rerun()
+
+    with col2:
+        if st.button("📊 View full cache report", type="secondary"):
+            st.info("See the **Cache** tab for detailed parquet cache metrics.")
