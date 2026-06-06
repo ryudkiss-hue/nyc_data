@@ -33,108 +33,238 @@ datasets:
     group: core_smd
     label: SMD Inspection
     manhattan_where: "upper(borough) = 'MANHATTAN'"
+    ll251_compliant: true
+    automation: true
+    update_frequency: Daily
+    removed_records: false
+    agency: DOT
   violations:
     fourfour: 6kbp-uz6m
     group: core_smd
     label: SMD Violations
+    ll251_compliant: true
+    automation: true
+    update_frequency: Daily
+    removed_records: false
+    agency: DOT
   built:
     fourfour: ugc8-s3f6
     group: core_smd
     label: SMD Built
+    ll251_compliant: true
+    automation: true
+    update_frequency: Daily
+    removed_records: false
+    agency: DOT
   lot_info:
     fourfour: i642-2fxq
     group: core_smd
     label: SMD Lot Info
+    ll251_compliant: true
+    automation: true
+    update_frequency: Daily
+    removed_records: false
+    agency: DOT
   reinspection:
     fourfour: gx72-kirf
     group: core_smd
     label: SMD ReInspection
+    ll251_compliant: true
+    automation: true
+    update_frequency: Daily
+    removed_records: false
+    agency: DOT
   tree_damage:
     fourfour: j6v2-6uxq
     group: core_smd
     label: All Tree Damage
+    ll251_compliant: true
+    automation: true
+    update_frequency: Daily
+    removed_records: false
+    agency: DOT
   dismissals:
     fourfour: p4u2-3jgx
     group: core_smd
     label: Sidewalk Dismissal Inspection Tracking
     manhattan_where: "upper(borough) = 'MANHATTAN'"
+    ll251_compliant: true
+    automation: true
+    update_frequency: Daily
+    removed_records: false
+    agency: DOT
   correspondences:
     fourfour: bheb-sjfi
     group: core_smd
     label: Sidewalk Correspondences
     manhattan_where: "upper(borough) = 'MANHATTAN'"
+    ll251_compliant: true
+    automation: true
+    update_frequency: Daily
+    removed_records: false
+    agency: DOT
   ramp_locations:
     fourfour: ufzp-rrqu
     group: accessibility
     label: Pedestrian Ramp Locations
+    ll251_compliant: true
+    automation: true
+    update_frequency: Daily
+    removed_records: false
+    agency: DOT
   ramp_complaints:
     fourfour: jagj-gttd
     group: accessibility
     label: Ramp Complaints
+    ll251_compliant: true
+    automation: true
+    update_frequency: Daily
+    removed_records: false
+    agency: DOT
   ramp_progress:
     fourfour: e7gc-ub6z
     group: accessibility
     label: Ramp Program Progress
+    ll251_compliant: true
+    automation: true
+    update_frequency: Daily
+    removed_records: false
+    agency: DOT
   street_permits:
     fourfour: tqtj-sjs8
     group: coordination
     label: Street Construction Permits
     manhattan_where: "upper(borough) = 'MANHATTAN' OR upper(permittee_s_borough) = 'MANHATTAN'"
+    ll251_compliant: true
+    automation: true
+    update_frequency: Daily
+    removed_records: false
+    agency: DOT
   weekly_construction:
     fourfour: r528-jcks
     group: coordination
     label: Weekly Construction Schedule
+    ll251_compliant: true
+    automation: true
+    update_frequency: Daily
+    removed_records: false
+    agency: DOT
   capital_blocks:
     fourfour: jvk9-k4re
     group: coordination
     label: Capital Reconstruction Blocks
+    ll251_compliant: true
+    automation: true
+    update_frequency: Daily
+    removed_records: false
+    agency: DOT
   capital_intersections:
     fourfour: 97nd-ff3i
     group: coordination
     label: Capital Reconstruction Projects - Intersection
+    ll251_compliant: true
+    automation: true
+    update_frequency: Daily
+    removed_records: false
+    agency: DOT
   street_construction_inspections:
     fourfour: ydkf-mpxb
     group: coordination
     label: Street Construction Inspections (HIQA)
+    ll251_compliant: true
+    automation: true
+    update_frequency: Daily
+    removed_records: false
+    agency: DOT
   street_closures_block:
     fourfour: i6b5-j7bu
     group: coordination
     label: Street Closures by Block
+    ll251_compliant: true
+    automation: true
+    update_frequency: Daily
+    removed_records: false
+    agency: DOT
   permit_stipulations:
     fourfour: gsgx-6efw
     group: coordination
     label: Street Construction Permit Stipulations
+    ll251_compliant: true
+    automation: true
+    update_frequency: Daily
+    removed_records: false
+    agency: DOT
   curb_metal_protruding:
     fourfour: i2y3-sx2e
     group: core_smd
     label: Curb Metal Protruding Data
     manhattan_where: "upper(borough) = 'MANHATTAN'"
+    ll251_compliant: true
+    automation: true
+    update_frequency: Daily
+    removed_records: false
+    agency: DOT
   step_streets:
     fourfour: u9au-h79y
     group: overlays
     label: Step Streets Locations
+    ll251_compliant: true
+    automation: true
+    update_frequency: Daily
+    removed_records: false
+    agency: DOT
   street_resurfacing_schedule:
     fourfour: xnfm-u3k5
     group: coordination
     label: Street Resurfacing Schedule
+    ll251_compliant: true
+    automation: true
+    update_frequency: Daily
+    removed_records: false
+    agency: DOT
   street_resurfacing_inhouse:
     fourfour: ffaf-8mrv
     group: coordination
     label: DOT In-house Street Resurfacing Projects
+    ll251_compliant: true
+    automation: true
+    update_frequency: Daily
+    removed_records: false
+    agency: DOT
   sidewalk_planimetric:
     fourfour: vfx9-tbb6
     group: overlays
     label: Planimetric Sidewalks
+    ll251_compliant: false
+    automation: null
+    update_frequency: null
+    removed_records: null
+    agency: DOITT
   pedestrian_demand:
     fourfour: fwpa-qxaf
     group: overlays
     label: Pedestrian Demand
+    ll251_compliant: true
+    automation: true
+    update_frequency: Daily
+    removed_records: false
+    agency: DOT
   mappluto:
     fourfour: 64uk-42ks
     group: overlays
     label: MapPLUTO
+    ll251_compliant: false
+    automation: null
+    update_frequency: null
+    removed_records: null
+    agency: DCP
   complaints_311:
     fourfour: erm2-nwe9
     group: overlays
     label: 311 Sidewalk/Curb
     default_where: "complaint_type IN ('Sidewalk Condition', 'Curb Condition', 'Damaged Tree', 'Root/Sewer/Sidewalk Condition', 'Sidewalk Cafe', 'Streetlight Condition')"
+    ll251_compliant: false
+    automation: null
+    update_frequency: null
+    removed_records: null
+    agency: DOITT
