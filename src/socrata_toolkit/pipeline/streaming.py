@@ -200,13 +200,6 @@ def stream_pipeline(
                             psycopg_sql.SQL(", ").join([psycopg_sql.Placeholder()] * len(cols)),
                             psycopg_sql.Identifier(conflict_col)
                         )
-                else:
-                    stmt = psycopg_sql.SQL("INSERT INTO {} ({}) VALUES ({})").format(
-                        psycopg_sql.Identifier(table_name),
-                        psycopg_sql.SQL(", ").join(map(psycopg_sql.Identifier, cols)),
-                        psycopg_sql.SQL(", ").join([psycopg_sql.Placeholder()] * len(cols))
-                    )
-
                 values = [tuple(row.get(c) for c in cols) for row in batch]
                 cur.executemany(stmt, values)
 
@@ -234,6 +227,21 @@ def stream_pipeline(
                     progress_callback(fetched, total)
                 except Exception:
                     pass
+
+        # Final End-of-Cycle Reconciliation Audit (Mandated by Unified Mandate)
+        # Compare local streamed count vs total expected from Socrata metadata
+        reconciliation_ok = True
+        if total is not None and not max_rows:
+            if fetched < total:
+                logger.critical(f"End-of-Cycle Reconciliation Failed: Local count ({fetched}) < Remote count ({total}). Data loss detected.")
+                reconciliation_ok = False
+            else:
+                logger.info(f"Reconciliation Successful: Full stream validated ({fetched}/{total} rows).")
+        elif max_rows:
+            logger.info(f"Reconciliation: Processed {fetched} rows (capped at {max_rows}).")
+
+        if not reconciliation_ok:
+             return {"error": "Reconciliation Failed", "rows": fetched}
 
         # finalize: commit Postgres and close resources
         if pg_writer is not None:

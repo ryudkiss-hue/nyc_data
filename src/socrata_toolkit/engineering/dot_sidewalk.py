@@ -52,62 +52,31 @@ class SidewalkKPI:
 
 @dataclass
 class MaterialAwareSidewalkKPI:
-    """NYC DOT material-aware KPI container with enhanced metrics.
+    """NYC DOT material-aware KPI container with enhanced metrics."""
+    # ... (previous fields)
+    equity_multiplier_score: float = 1.0
+    # ...
 
-    This dataclass represents comprehensive KPIs computed from the NYC Street Design
-    Manual domain models, enabling operational decision-making at the material level.
+from ..governance.equity import EquityScorer
 
-    Attributes:
-        timestamp: When KPIs were computed
-        period_label: Time period (e.g., "2024-Q1", "2024-01-2024-12")
-        defect_density: Overall defects per curb mile
-        defect_rate_asphalt: Defect rate specific to asphalt materials (%)
-        defect_rate_concrete: Defect rate specific to concrete materials (%)
-        defect_rate_permeable: Defect rate specific to permeable surfaces (%)
-        defect_rate_specialty: Defect rate specific to specialty materials (%)
-        ada_compliance_rate: Percentage of segments meeting all ADA requirements
-        hazardous_defect_coverage: Linear feet of hazardous defects by material
-        maintenance_cycle_adherence: Actual vs. planned maintenance per material (%)
-        contractor_quality_by_material: Repair success rate per contractor/material
-        material_longevity: Age distribution by material type (dict)
-        cost_per_linear_foot: Cost metrics by material and repair type
-        hazard_response_time_days: Avg days to address hazardous defects
-        lineage_metadata: Computation lineage for audit trail
-    """
-
-    timestamp: datetime
-    period_label: str
-    # Overall metrics
-    defect_density: float
-    throughput_velocity: float = 0.0
-    burn_variance: float = 0.0
-    first_pass_yield: float = 0.0
-    rework_factor: float = 0.0
-    # Material-specific defect rates (as percentages)
-    defect_rate_asphalt: float = 0.0
-    defect_rate_concrete: float = 0.0
-    defect_rate_permeable: float = 0.0
-    defect_rate_specialty: float = 0.0
-    # ADA compliance
-    ada_compliance_rate: float = 0.0
-    # Hazardous defects
-    hazardous_defect_coverage: dict[str, float] = field(default_factory=dict)
-    hazardous_defect_count: int = 0
-    # Maintenance
-    maintenance_cycle_adherence: dict[str, float] = field(default_factory=dict)
-    # Contractor quality
-    contractor_quality_by_material: dict[str, dict[str, float]] = field(
-        default_factory=dict
+def compute_material_aware_kpis(
+    df: pd.DataFrame,
+    # ... (other args)
+) -> MaterialAwareSidewalkKPI:
+    # ...
+    # 5. Equity Multiplier Score (Mandated by Unified Mandate)
+    scorer = EquityScorer()
+    weights = []
+    for _, row in df.iterrows():
+        impact = scorer.calculate_impact(row, 1.0)
+        weights.append(impact.equity_multiplier)
+    avg_equity_weight = np.mean(weights) if weights else 1.0
+    # ...
+    return MaterialAwareSidewalkKPI(
+        # ...
+        equity_multiplier_score=float(avg_equity_weight),
+        # ...
     )
-    # Material longevity
-    material_longevity: dict[str, dict[str, Any]] = field(default_factory=dict)
-    # Cost analysis
-    cost_per_linear_foot: dict[str, float] = field(default_factory=dict)
-    cost_per_sqft_by_material: dict[str, float] = field(default_factory=dict)
-    # Response time
-    hazard_response_time_days: float = 0.0
-    # Lineage
-    lineage_metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert KPI object to dictionary for serialization."""

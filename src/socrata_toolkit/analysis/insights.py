@@ -14,6 +14,7 @@ from .metrics import compute_borough_metrics, compute_sla_trends
 from .profiling import profile_dataframe
 from ..core import DTYPE_NUM
 from ..engineering.pavement import NYSDOTPavementEngine, PavementType, evaluate_pavement_safety_risk
+from ..governance.equity import EquityScorer
 from ..material.standards_v4 import run_vision_zero_audit
 
 logger = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ class InsightsEngine:
     """
     Elite Statistical & Engineering Analytical Engine.
     Performs deep quantitative analysis including anomaly detection, drift monitoring,
-    NYSDOT pavement audits, and NYC SDM 4th Ed geometric compliance.
+    NYSDOT pavement audits, and NYC SDM 4th Ed geometric & equity compliance.
     """
     def __init__(self, df: pd.DataFrame, baseline_df: pd.DataFrame | None = None):
         self.df = df
@@ -41,13 +42,29 @@ class InsightsEngine:
         insights = []
         recs = []
         
-        # 1. NYC Street Design Manual (4th Ed) Geometric Audit
+        # 1. Socio-Economic Equity Audit (NYC SDM 4th Ed Mandate)
+        equity_scorer = EquityScorer()
+        high_need_equity = 0
+        for _, row in self.df.iterrows():
+            # Base condition need (high index = bad condition)
+            base_need = 1.0 if prof.quality_score < 70 else 0.5
+            impact = equity_scorer.calculate_impact(row, base_need)
+            if impact.is_priority_area and base_need > 0.8:
+                high_need_equity += 1
+        
+        if high_need_equity > 0:
+            insights.append(Insight("equity", f"Detected {high_need_equity} critical repair needs within historically underinvested Priority Investment Areas.", "high"))
+            recs.append(Recommendation("high", "Prioritize capital allocation to identified high-need equity zones as per Mayor's Mandate."))
+
+        # 2. NYC Street Design Manual (4th Ed) Geometric Audit
         # Check for geometric columns
         lw_col = next((c for c in self.df.columns if c.lower() in ("lane_width", "travel_lane_width")), None)
         cr_col = next((c for c in self.df.columns if c.lower() in ("corner_radius", "curb_radius")), None)
         cp_col = next((c for c in self.df.columns if c.lower() in ("clear_path", "sidewalk_width", "path_width")), None)
 
         vz_scores = []
+        violation_counts = {"lane_width": 0, "corner_radius": 0, "clear_path": 0}
+        
         if any([lw_col, cr_col, cp_col]):
             for _, row in self.df.iterrows():
                 audit = run_vision_zero_audit(
@@ -57,11 +74,19 @@ class InsightsEngine:
                 )
                 vz_scores.append(audit.vision_zero_score)
                 if not audit.is_compliant:
-                    # Log aggregate violation logic for the report summary
-                    pass
+                    for v in audit.violations:
+                        if "Lane width" in v: violation_counts["lane_width"] += 1
+                        if "Corner radius" in v: violation_counts["corner_radius"] += 1
+                        if "clear path" in v: violation_counts["clear_path"] += 1
             
             avg_vz_score = np.mean(vz_scores)
             insights.append(Insight("design", f"Vision Zero Geometric Compliance Score: {avg_vz_score:.2%}.", "medium" if avg_vz_score > 0.8 else "high"))
+            
+            # Add detailed violation counts to report metadata or summaries
+            for v_type, count in violation_counts.items():
+                if count > 0:
+                    insights.append(Insight("design", f"Detected {count} instances of {v_type.replace('_', ' ')} violations.", "medium"))
+
             if avg_vz_score < 0.9:
                 recs.append(Recommendation("high", "Audit non-compliant segments for Vision Zero geometric remediation (lane narrowing/radii reduction)."))
 

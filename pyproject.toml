@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "socrata_toolkit"
-version = "0.4.0"
-description = "NYC DOT Sidewalk Inspection & Management Toolkit"
-authors = ["Richard Yudkiss ryudkiss@gmail.com"]
+version = "0.5.0"
+description = "Elite NYC DOT SIM Analyst Toolkit & Engineering Engine"
+authors = ["Richard Yudkiss <ryudkiss@gmail.com>"]
 readme = "README.md"
 license = "MIT"
 packages = [
@@ -11,7 +11,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.15"
+python = ">=3.9,<3.12"
 python-dotenv = ">=1.0.0"
 
 requests = ">=2.28"
@@ -19,12 +19,14 @@ pandas = ">=2.0,<3.0"
 pyyaml = ">=6.0"
 click = ">=8.0"
 numpy = ">=1.24,<3.0"
+scipy = ">=1.10.0"
 duckdb = ">=0.9.0"
 tenacity = ">=8.0"
 apscheduler = ">=3.10"
 duckdb-engine = ">=0.9.0"
-pyinstaller = {version = ">=6.0", optional = true}
 pydantic = ">=2.0"
+pymc = ">=5.0"
+arviz = ">=0.16"
 openpyxl = ">=3.0"
 sodapy = {version = ">=2.2.0", optional = true}
 pyarrow = {version = ">=14.0", optional = true}
@@ -46,8 +48,6 @@ weasyprint = {version = ">=60.0", optional = true}
 python-pptx = {version = ">=0.6.23", optional = true}
 folium = {version = ">=0.14", optional = true}
 pydeck = {version = ">=0.8", optional = true}
-pymc = {version = ">=5.0", optional = true}
-arviz = {version = ">=0.16", optional = true}
 prophet = {version = ">=1.1", optional = true}
 beautifulsoup4 = {version = ">=4.11", optional = true}
 river = {version = ">=0.21", optional = true}
@@ -74,7 +74,7 @@ viz = ["matplotlib", "plotly"]
 geo = ["shapely", "geopandas"]
 reports = ["plotly", "weasyprint"]
 ui = ["streamlit"]
-mission = ["streamlit", "sodapy", "geopandas", "shapely", "plotly", "pyarrow", "folium", "pydeck", "pymc", "arviz", "prophet", "beautifulsoup4", "river", "mapie", "dowhy", "sentence-transformers", "numba", "opendp", "agentql", "playwright", "openpyxl", "python-pptx", "networkx", "fastapi", "uvicorn"]
+mission = ["streamlit", "sodapy", "geopandas", "shapely", "plotly", "pyarrow", "folium", "pydeck", "prophet", "beautifulsoup4", "river", "mapie", "dowhy", "sentence-transformers", "numba", "opendp", "agentql", "playwright", "openpyxl", "python-pptx", "networkx", "fastapi", "uvicorn"]
 pptx = ["python-pptx"]
 exe = ["pyinstaller"]
 desktop = ["pywebview"]
