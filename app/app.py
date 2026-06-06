@@ -33,6 +33,7 @@ from app.ui.empty_states import frames_are_empty, render_empty_state
 from app.ui.theme import inject_theme, render_agency_header, render_skip_link
 from app.utils.i18n import render_language_selector, t
 from app.views import home, publish, settings, workflows
+from app.views.analytical_skills import render_analytical_skills_page
 from app.views.construction import render_construction_page
 from app.views.contracts_dashboard import render_contracts_page
 from app.views.data_discovery import render_data_discovery_page
@@ -48,6 +49,7 @@ _SECTIONS = {
     "📈 Forecasting":            "forecasting",
     "⚙️ Data Workflows":         "workflows",
     "📊 Advanced Analytics":     "advanced_analytics",
+    "📚 Analytical Skills":      "skills",
     "🔍 Data Discovery":         "discovery",
     "📚 Data Catalog":           "data_catalog",
     "📤 Publish":                "publish",
@@ -71,6 +73,7 @@ _NAV_GROUPS = {
         "📈 Forecasting",
         "⚙️ Data Workflows",
         "📊 Advanced Analytics",
+        "📚 Analytical Skills",
     ],
     "🔧 Tools": [
         "🔍 Data Discovery",
@@ -220,6 +223,33 @@ def _render_sticky_filters(section: str) -> None:
                 st.rerun()
 
 
+def _render_anomaly_badge() -> None:
+    """Render anomaly analysis status. Shows 'unavailable' until Advanced Analytics runs."""
+    try:
+        # Placeholder: Advanced Analytics workflows will set this key after CUSUM analysis
+        # Expected contract: st.session_state["cusum_anomalies"] = [{"severity": "critical", ...}]
+        anomalies = st.session_state.get("cusum_anomalies", None)
+
+        if anomalies is not None and isinstance(anomalies, list):
+            has_critical = any(
+                a.get("severity") == "critical" for a in anomalies
+            )
+            if has_critical:
+                st.warning(
+                    "🔴 Critical anomaly detected — review Advanced Analytics.",
+                    icon="⚠️"
+                )
+            else:
+                st.info("✅ Anomalies checked — no critical drift.", icon="📊")
+        else:
+            st.info(
+                "📊 Run Advanced Analytics to check for data anomalies.",
+                icon="○"
+            )
+    except Exception:
+        pass
+
+
 def _sidebar_nav() -> tuple[str, dict]:
     """Render sidebar navigation. Returns (section_key, workflow_opts)."""
     with st.sidebar:
@@ -244,6 +274,10 @@ def _sidebar_nav() -> tuple[str, dict]:
                 unsafe_allow_html=True,
             )
 
+        st.divider()
+
+        # CUSUM Anomaly Badge
+        _render_anomaly_badge()
         st.divider()
 
         # Collapsible sidebar navigation
@@ -422,6 +456,11 @@ def main() -> None:
                 render_analytics_advanced_page()
             except ImportError:
                 st.info("Advanced Analytics view is not yet available.")
+        return
+
+    if section == "skills":
+        with _spinner_view():
+            render_analytical_skills_page()
         return
 
     if section == "data_catalog":

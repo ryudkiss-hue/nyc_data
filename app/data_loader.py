@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import time
 import warnings
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -68,6 +69,9 @@ except ImportError:
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 _DATASETS_YAML = _REPO_ROOT / "config" / "datasets.yaml"
 _PARQUET_CACHE_DIR = _REPO_ROOT / "data" / "local_db" / "socrata_cache"
+
+# Pre-compile regex for BBL normalization (performance optimization)
+_RE_NON_DIGIT = re.compile(r"\D")
 
 try:
     from app.utils.cache_manager import (
@@ -146,7 +150,8 @@ def get_socrata_client() -> Any:
 
 
 def normalize_bbl(series: pd.Series) -> pd.Series:
-    s = series.astype(str).str.replace(r"\D", "", regex=True)
+    """Normalize BBL using pre-compiled regex for better performance."""
+    s = series.astype(str).str.replace(_RE_NON_DIGIT, "", regex=False)
     s = s.where(s.str.len() >= 6, other=pd.NA)
     return s.str.zfill(10)
 
@@ -163,7 +168,7 @@ def pick_column(df: pd.DataFrame, candidates: tuple[str, ...]) -> str | None:
 
 
 def _cache_decorator():
-    if st is not None:
+    if st is not None and hasattr(st, "cache_data"):
         return st.cache_data(ttl=CACHE_TTL_SECONDS, show_spinner="Fetching from Socrata…")
     return lambda f: f
 
@@ -198,8 +203,6 @@ def _write_parquet_cache(dataset_key: str, df: pd.DataFrame) -> None:
         pass
 
 
-
-
 def _postprocess_dataset(dataset_key: str, df: pd.DataFrame) -> pd.DataFrame:
     if df.empty:
         return df
@@ -215,27 +218,39 @@ def _postprocess_dataset(dataset_key: str, df: pd.DataFrame) -> pd.DataFrame:
 
 _DELTA_COLUMN_CANDIDATES = ("updated_at", "date_modified")
 
+# Cache for detected delta columns to avoid repeated probes
+_DELTA_COLUMN_CACHE: dict[str, str | None] = {}
+
 
 def _detect_delta_column(dataset_key: str) -> str | None:
     """Return the name of a timestamp column suitable for delta fetching, or None.
 
     Fetches a single row from Socrata to inspect column names. Returns
     ``"updated_at"`` or ``"date_modified"`` if either is present; otherwise ``None``.
+    
+    Results are cached in-process to avoid repeated probes.
     """
+    # Check in-process cache first
+    if dataset_key in _DELTA_COLUMN_CACHE:
+        return _DELTA_COLUMN_CACHE[dataset_key]
+    
     meta = DATASET_REGISTRY.get(dataset_key, {})
     try:
         client = get_socrata_client()
         rows = client.get(meta["fourfour"], limit=1)
         if not rows:
+            _DELTA_COLUMN_CACHE[dataset_key] = None
             return None
         cols = {c.lower() for c in rows[0].keys()}
         for candidate in _DELTA_COLUMN_CANDIDATES:
             if candidate in cols:
+                _DELTA_COLUMN_CACHE[dataset_key] = candidate
                 return candidate
     except Exception as exc:
         logging.debug("_detect_delta_column: probe failed for %s: %s", dataset_key, exc)
+    
+    _DELTA_COLUMN_CACHE[dataset_key] = None
     return None
-
 
 def _fetch_live(
     dataset_key: str,
@@ -343,15 +358,8 @@ def fetch_dataset(
         last_iso = _last_fetched_iso(dataset_key)
         if last_iso is not None:
             # Detect whether the dataset exposes an updated_at / date_modified column
-            # by checking the manifest; we probe lazily and cache the result in the
-            # registry dict (in-process only — not persisted).
-            meta = DATASET_REGISTRY[dataset_key]
-            delta_col: str | None = meta.get("_delta_col")  # type: ignore[assignment]
-            if delta_col is None and not meta.get("_delta_col_checked"):
-                delta_col = _detect_delta_column(dataset_key)
-                # Cache the probe result in the registry dict for this process
-                DATASET_REGISTRY[dataset_key]["_delta_col"] = delta_col  # type: ignore[assignment]
-                DATASET_REGISTRY[dataset_key]["_delta_col_checked"] = True  # type: ignore[assignment]
+            # by checking the cache; we probe lazily and cache the result.
+            delta_col: str | None = _detect_delta_column(dataset_key)
             if delta_col:
                 delta_clause = f"{delta_col} > '{last_iso}'"
                 effective_where = (

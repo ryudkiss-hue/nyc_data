@@ -241,22 +241,6 @@ def parse_sim_complaints(df: pd.DataFrame, text_col: str = "description") -> pd.
     statistical methods. Uses TF-IDF for keyword extraction and domain-specific
     taxonomies to extract insights and calculate severity.
     """
-    try:
-        import sklearn.feature_extraction.text as sklearn_text
-
-        if sklearn_text is None:
-            raise ImportError
-    except ImportError:
-        logger.error(
-            "scikit-learn is not installed. Cannot perform TF-IDF keyword extraction. "
-            "Please run 'pip install scikit-learn' to enable this functionality."
-        )
-        return df
-
-    vectorizer_cls = TfidfVectorizer
-    if vectorizer_cls is None:
-        from sklearn.feature_extraction.text import TfidfVectorizer as vectorizer_cls
-
     import numpy as np
 
     out = df.copy()
@@ -295,44 +279,61 @@ def parse_sim_complaints(df: pd.DataFrame, text_col: str = "description") -> pd.
     corpus = texts[texts.str.strip() != ""]
     out["_sim_unique_keywords"] = [[] for _ in range(len(out))]  # Initialize column
 
-    if not corpus.empty:
+    has_sklearn = TfidfVectorizer is not None
+    if not has_sklearn:
+        logger.warning(
+            "scikit-learn not installed. Skipping TF-IDF keyword extraction. "
+            "Run 'pip install scikit-learn' to enable this feature."
+        )
 
+    if has_sklearn and not corpus.empty:
         def custom_tokenizer(text: str) -> list[str]:
             tokens = WORD_RE.findall(text.lower())
             return [t for t in tokens if len(t) >= 3]
 
-        vectorizer = vectorizer_cls(
-            tokenizer=custom_tokenizer,
-            stop_words="english",
-            ngram_range=(1, 2),
-            max_df=0.85,
-            min_df=1 if len(corpus) < 5 else 2,
-        )
-        tfidf_matrix = vectorizer.fit_transform(corpus)
-        doc_matrix = (
-            tfidf_matrix.toarray()
-            if hasattr(tfidf_matrix, "toarray")
-            else np.asarray(tfidf_matrix)
-        )
-        if doc_matrix.ndim == 1:
-            doc_matrix = doc_matrix.reshape(0, 0) if doc_matrix.size == 0 else doc_matrix.reshape(1, -1)
-        feature_names = np.array(vectorizer.get_feature_names_out())
-
-        top_n = 3
-        keywords_for_corpus: list[list[str]] = []
-        for i in range(len(corpus)):
-            if doc_matrix.ndim >= 2 and i < doc_matrix.shape[0]:
-                doc_scores = np.asarray(doc_matrix[i]).flatten()
-                relevant_indices = [idx for idx in doc_scores.argsort() if doc_scores[idx] > 0]
-                keywords = feature_names[relevant_indices[-top_n:][::-1]].tolist()
-            else:
-                keywords = []
-            keywords_for_corpus.append(keywords)
-
-        if len(keywords_for_corpus) == len(corpus):
-            out.loc[corpus.index, "_sim_unique_keywords"] = pd.Series(
-                keywords_for_corpus, index=corpus.index
+        # max_df as a proportion can drop below min_df for very small or
+        # low-diversity corpora, which makes TfidfVectorizer raise. Keyword
+        # extraction is an optional enrichment, so guard it and degrade to the
+        # already-initialized empty keyword lists rather than failing the whole
+        # parse.
+        try:
+            n_docs = len(corpus)
+            vectorizer = TfidfVectorizer(
+                tokenizer=custom_tokenizer,
+                stop_words="english",
+                ngram_range=(1, 2),
+                max_df=1.0 if n_docs < 10 else 0.85,
+                min_df=1 if n_docs < 5 else 2,
             )
+            tfidf_matrix = vectorizer.fit_transform(corpus)
+            doc_matrix = (
+                tfidf_matrix.toarray()
+                if hasattr(tfidf_matrix, "toarray")
+                else np.asarray(tfidf_matrix)
+            )
+            if doc_matrix.ndim == 1:
+                doc_matrix = doc_matrix.reshape(0, 0) if doc_matrix.size == 0 else doc_matrix.reshape(1, -1)
+            feature_names = np.array(vectorizer.get_feature_names_out())
+
+            top_n = 3
+            keywords_for_corpus: list[list[str]] = []
+            for i in range(len(corpus)):
+                if doc_matrix.ndim >= 2 and i < doc_matrix.shape[0]:
+                    doc_scores = np.asarray(doc_matrix[i]).flatten()
+                    relevant_indices = [idx for idx in doc_scores.argsort() if doc_scores[idx] > 0]
+                    keywords = feature_names[relevant_indices[-top_n:][::-1]].tolist()
+                else:
+                    keywords = []
+                keywords_for_corpus.append(keywords)
+
+            if len(keywords_for_corpus) == len(corpus):
+                out.loc[corpus.index, "_sim_unique_keywords"] = pd.Series(
+                    keywords_for_corpus, index=corpus.index
+                )
+        except ValueError as exc:
+            # e.g. "max_df corresponds to < documents than min_df" or
+            # "After pruning, no terms remain" on degenerate corpora.
+            logger.warning("TF-IDF keyword extraction skipped (degenerate corpus): %s", exc)
 
     # 3. Categorization
     def get_primary_cat(flags: list[str]) -> str:
