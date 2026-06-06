@@ -1,11 +1,19 @@
-"""Data quality validation module for enforcing data quality rules."""
+from __future__ import annotations
+
 import time
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
 import pandas as pd
+import numpy as np
+
+from ..analysis.profiling import profile_dataframe
+from ..analysis.inference import check_normality
+
+logger = logging.getLogger(__name__)
 
 __all__ = ["QualityValidator", "ValidationStatus", "ValidationResult", "ValidationResultsAggregator", "run_validation"]
 
@@ -16,13 +24,21 @@ class ValidationStatus(str, Enum):
     ERROR = "ERROR"
 
 @dataclass
+class Evidence:
+    """Factual evidence for a validation outcome."""
+    key: str
+    value: Any
+    threshold: Any
+    message: str
+
+@dataclass
 class ValidationResult:
-    """Result of a data quality validation run."""
+    """Result of a data quality validation run conforming to the Four Moments."""
     table_name: str = "unknown"
     row_count: int = 0
     column_count: int = 0
-    passed_expectations: list[Any] = field(default_factory=list)
-    failed_expectations: list[Any] = field(default_factory=list)
+    passed_expectations: list[Evidence] = field(default_factory=list)
+    failed_expectations: list[Evidence] = field(default_factory=list)
     status: ValidationStatus = ValidationStatus.PASS
     pass_rate: float = 1.0
     is_critical_failure: bool = False
@@ -43,42 +59,64 @@ class ValidationResult:
         }
 
 class QualityValidator:
-    """Validates data against quality rules."""
+    """
+    Elite Data Quality Validator.
+    Integrates Four Moments characterization, normality testing, and evidence-based reporting.
+    """
 
     def __init__(self, fail_fast: bool = False) -> None:
-        """Initialize the QualityValidator."""
         self.fail_fast = fail_fast
 
-    def validate(self, df: pd.DataFrame, suite: Any, table_name: str = "dataset") -> ValidationResult:
-        """Validate data and return validation results."""
+    def validate(self, df: pd.DataFrame, table_name: str = "dataset") -> ValidationResult:
+        """Perform mandate-compliant data validation."""
         start_time = time.time()
+        
+        if df.empty:
+             return ValidationResult(status=ValidationStatus.ERROR, table_name=table_name)
 
-        # Call the validate method on the suite object
-        suite_result = suite.validate(df)
+        prof = profile_dataframe(df)
+        passed, failed = [], []
 
-        total = suite_result.passed_count + suite_result.failed_count
-        pass_rate = suite_result.passed_count / total if total > 0 else 1.0
+        # 1. Integrity Audit: Completeness
+        completeness = prof.quality_score
+        ev = Evidence("quality_score", completeness, 75, f"Overall quality score is {completeness}/100.")
+        if completeness >= 75: passed.append(ev)
+        else: failed.append(ev)
 
+        # 2. Scientific Audit: Characterization of Moments
+        for col, moments in prof.moments.items():
+            # Skewness Audit (3rd Moment)
+            if abs(moments["skewness"]) > 3.0:
+                failed.append(Evidence(f"{col}_skew", moments["skewness"], 3.0, f"Extreme skewness detected in '{col}'."))
+            
+            # Kurtosis Audit (4th Moment - Fat Tail)
+            if moments["kurtosis"] > 10.0:
+                failed.append(Evidence(f"{col}_kurtosis", moments["kurtosis"], 10.0, f"Extreme kurtosis (fat-tail risk) in '{col}'."))
+
+        # 3. Validity Audit: Normality check for parametric assumptions
+        num_cols = df.select_dtypes(include=[np.number]).columns
+        for col in num_cols:
+            is_normal = check_normality(df[col])
+            if not is_normal and len(df[col].dropna()) > 30:
+                failed.append(Evidence(f"{col}_normality", False, True, f"Column '{col}' failed Shapiro-Wilk normality test; parametric OLS may be invalid."))
+
+        total = len(passed) + len(failed)
+        pass_rate = len(passed) / total if total > 0 else 1.0
+        
         status = ValidationStatus.PASS
-        if suite_result.failed_count > 0:
-            status = ValidationStatus.FAIL
-        elif suite_result.overall_status == "WARN":
-            status = ValidationStatus.WARN
+        if any(f.key.endswith("_kurtosis") for f in failed): status = ValidationStatus.FAIL # Critical risks
+        elif failed: status = ValidationStatus.WARN
 
-        res = ValidationResult(
+        return ValidationResult(
             table_name=table_name,
             row_count=len(df),
             column_count=len(df.columns),
+            passed_expectations=passed,
+            failed_expectations=failed,
             status=status,
             pass_rate=pass_rate,
             execution_time=time.time() - start_time
         )
-
-        if suite_result.failed_count > 0:
-            # Populate failed_expectations with dummy values if suite doesn't provide details
-            res.failed_expectations = [f"Failed expectation {i+1}" for i in range(suite_result.failed_count)]
-
-        return res
 
 class ValidationResultsAggregator:
     def __init__(self):

@@ -230,6 +230,8 @@ def identify_hotspots(
 # Equity Analysis
 # ---------------------------------------------------------------------------
 
+from ..governance.equity import EquityScorer
+
 def equity_analysis(
     inspections_df: pd.DataFrame,
     resource_df: pd.DataFrame | None = None,
@@ -237,54 +239,43 @@ def equity_analysis(
     status_col: str = "status",
     spend_col: str = "actual_spend",
 ) -> list[EquityScore]:
-    """Analyze repair equity across boroughs.
-
-    Computes a need index (based on pending repairs relative to sidewalk
-    miles) and a resource index (based on spending). The equity gap is
-    the difference: positive values indicate underserved boroughs.
-
-    Args:
-        inspections_df: Inspection/complaint data.
-        resource_df: (Optional) Spending data. If None, uses inspections_df.
-
-    Returns:
-        List of EquityScore, one per borough.
+    """
+    Elite Borough Equity Analysis.
+    Integrates socio-economic weighting as mandated by NYC SDM 4th Ed.
     """
     if borough_col not in inspections_df.columns:
         return []
 
     resource = resource_df if resource_df is not None else inspections_df
-
+    scorer = EquityScorer()
+    
     results = []
-    need_counts: dict[str, float] = {}
-    resource_amounts: dict[str, float] = {}
-
     for borough in BOROUGHS:
         boro_data = inspections_df[inspections_df[borough_col].str.upper() == borough]
-        backlog = int((boro_data[status_col] == "Pending Repair").sum()) if status_col in boro_data.columns else len(boro_data)
+        if boro_data.empty:
+            continue
+            
+        # Calculate weighted need using the Mandate's EquityScorer
+        total_weighted_need = 0.0
+        for _, row in boro_data.iterrows():
+            # Base need is 1.0 for a pending repair
+            is_pending = row.get(status_col) == "Pending Repair"
+            base_need = 1.0 if is_pending else 0.1
+            impact = scorer.calculate_impact(row, base_need)
+            total_weighted_need += impact.score_weighted
+            
         miles = BOROUGH_SIDEWALK_MILES.get(borough, 1.0)
-        need_counts[borough] = backlog / miles
+        weighted_need_per_mile = total_weighted_need / miles
 
         boro_resource = resource[resource[borough_col].str.upper() == borough] if borough_col in resource.columns else pd.DataFrame()
         spend = float(boro_resource[spend_col].fillna(0).sum()) if spend_col in boro_resource.columns else 0.0
-        resource_amounts[borough] = spend
-
-    # Normalize to 0-1
-    max_need = max(need_counts.values()) or 1.0
-    max_resource = max(resource_amounts.values()) or 1.0
-
-    for borough in BOROUGHS:
-        need_idx = need_counts.get(borough, 0) / max_need
-        resource_idx = resource_amounts.get(borough, 0) / max_resource
-        miles = BOROUGH_SIDEWALK_MILES.get(borough, 1.0)
-        backlog_per_mile = need_counts.get(borough, 0)
-
+        
         results.append(EquityScore(
             borough=borough,
-            need_index=round(need_idx, 4),
-            resource_index=round(resource_idx, 4),
-            equity_gap=round(need_idx - resource_idx, 4),
-            backlog_per_mile=round(backlog_per_mile, 4),
+            need_index=round(total_weighted_need, 2),
+            resource_index=round(spend, 2),
+            equity_gap=round(weighted_need_per_mile, 4), # Simplified gap for borough comparison
+            backlog_per_mile=round(weighted_need_per_mile, 4),
         ))
 
     return sorted(results, key=lambda e: e.equity_gap, reverse=True)
