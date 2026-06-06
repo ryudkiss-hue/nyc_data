@@ -45,6 +45,7 @@ nyc_toolkit.log
 # --- Build artifacts ---
 build/
 dist/
+*.egg-info/
 !desktop/build/
 !desktop/build/**
 installer/output/*.exe
@@ -64,3 +65,20 @@ secrets/
 credentials.json
 google-credentials.json
 schema_registry/
+
+# Generated reports and analysis outputs
+*.pdf
+*.html
+*_analysis.html
+*_report.html
+data_quality_report.html
+data_quality_report.pdf
+nyc_311_quality_report.html
+ecosystem_metrics.json
+inspection_live_output.txt
+
+# Generated CSV exports
+*.csv
+nyc_311_complaints_sample.csv
+nyc_inspection_records_sample.csv
+data_quality_metrics_summary.csv

@@ -35,9 +35,9 @@ def metric_status_pie_chart(summary: DashboardSummary, title: str | None = None)
     labels = ["Green (On Target)", "Yellow (Warning)", "Red (Alert)"]
     values = [summary.green_count, summary.yellow_count, summary.red_count]
     colors = [COLOR_GREEN, COLOR_YELLOW, COLOR_RED]
-    non_zero_labels = [label for label, val in zip(labels, values, strict=False) if val > 0]
+    non_zero_labels = [label for label, val in zip(labels, values) if val > 0]
     non_zero_values = [val for val in values if val > 0]
-    non_zero_colors = [color for color, val in zip(colors, values, strict=False) if val > 0]
+    non_zero_colors = [color for color, val in zip(colors, values) if val > 0]
     if not non_zero_values:
         fig = go.Figure()
         fig.add_annotation(text="No metric data to display", showarrow=False)

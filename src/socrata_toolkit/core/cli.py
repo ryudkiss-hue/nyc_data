@@ -2218,11 +2218,21 @@ def conflict_detect_cmd(borough: str, buffer_dist: int, output_path: str | None)
 
     import requests
 
-    FOURFOUR = "wjnr-3vgm"
+    # Use SMD Violations dataset (bblid field enables BBL-based conflict detection).
+    # Dataset wjnr-3vgm was retired; violations (6kbp-uz6m) is the current source.
+    # wjnr-3vgm was retired; use SMD Violations (6kbp-uz6m) which has bblid.
+    FOURFOUR = "6kbp-uz6m"
+    _BOROUGH_CONTRACT_SUFFIX = {
+        "MN": "M", "BX": "X", "BK": "K", "QN": "Q", "SI": "I",
+    }
     base_url = f"https://data.cityofnewyork.us/resource/{FOURFOUR}.json"
     token = os.getenv("SOCRATA_APP_TOKEN", "")
     session = _make_session()
-    params: dict = {"$limit": 50000, "$where": f"upper(borough) = '{borough.upper()}'"}
+    suffix = _BOROUGH_CONTRACT_SUFFIX.get(borough.upper(), "M")
+    params: dict = {
+        "$limit": 50000,
+        "$where": f"contract like '%{suffix}'",
+    }
     if token:
         params["$$app_token"] = token
     try:
@@ -2240,7 +2250,7 @@ def conflict_detect_cmd(borough: str, buffer_dist: int, output_path: str | None)
 
     df = pd.DataFrame(rows)
     # Detect BBL/block column
-    bbl_col = next((c for c in df.columns if c.lower() in ("bbl", "lot_bbl", "tax_lot", "block", "boro_block_lot")), None)
+    bbl_col = next((c for c in df.columns if c.lower() in ("bblid", "bbl", "lot_bbl", "tax_lot", "block", "boro_block_lot")), None)
     conflict_count = 0
     conflicting_bbls: list = []
     if bbl_col and bbl_col in df.columns:
@@ -2443,11 +2453,11 @@ def dataset_health_cmd(
 
         try:
             # Count rows
-            count_url = f"https://{domain}/resource/{fourfour}.json"
-            params: dict = {"$select": "count(*) as c", "$limit": 1}
+            count_url = f"https://{domain}/api/v3/views/{fourfour}/query.json"
+            headers = {}
             if token:
-                params["$$app_token"] = token
-            r = session.get(count_url, params=params, timeout=30)
+                headers["X-App-Token"] = token
+            r = session.post(count_url, json={"query": "select count(*) as c"}, headers=headers, timeout=30)
             r.raise_for_status()
             data = r.json()
             row_count = int(data[0]["c"]) if data else 0

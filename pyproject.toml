@@ -59,6 +59,9 @@ opendp = {version = ">=0.9", optional = true}
 agentql = {version = ">=1.19.0", optional = true}
 playwright = {version = ">=1.40", optional = true}
 python-dateutil = {version = ">=2.8"}
+networkx = {version = ">=3.0"}
+fastapi = {version = ">=0.100", optional = true}
+uvicorn = {version = ">=0.20", optional = true}
 
 [tool.poetry.extras]
 # Default install: pip install -e .  (core analyst + Dash workflow)
@@ -71,7 +74,7 @@ viz = ["matplotlib", "plotly"]
 geo = ["shapely", "geopandas"]
 reports = ["plotly", "weasyprint"]
 ui = ["streamlit"]
-mission = ["streamlit", "sodapy", "geopandas", "shapely", "plotly", "pyarrow", "folium", "pydeck", "pymc", "arviz", "prophet", "beautifulsoup4", "river", "mapie", "dowhy", "sentence-transformers", "numba", "opendp", "agentql", "playwright", "openpyxl", "python-pptx"]
+mission = ["streamlit", "sodapy", "geopandas", "shapely", "plotly", "pyarrow", "folium", "pydeck", "pymc", "arviz", "prophet", "beautifulsoup4", "river", "mapie", "dowhy", "sentence-transformers", "numba", "opendp", "agentql", "playwright", "openpyxl", "python-pptx", "networkx", "fastapi", "uvicorn"]
 pptx = ["python-pptx"]
 exe = ["pyinstaller"]
 desktop = ["pywebview"]
@@ -131,6 +134,7 @@ ignore = [
     "B007",   # loop variable not used in body
     "B023",   # function definition in loop
     "B904",   # exception chaining (raise X from e)
+    "B905",   # zip() without explicit strict= (strict= added in Python 3.10)
     "E701",   # multiple statements on one line
     "E722",   # bare except
 ]

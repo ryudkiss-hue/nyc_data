@@ -526,7 +526,7 @@ def _render_folium_map(
         heat_data = [
             [lat, lon, w]
             for lat, lon, w in zip(
-                df_valid["latitude"], df_valid["longitude"], weights, strict=False
+                df_valid["latitude"], df_valid["longitude"], weights
             )
         ]
     else:
@@ -601,7 +601,7 @@ def _render_folium_heatmap(df: pd.DataFrame) -> None:
         heat_data = [
             [lat, lon, w]
             for lat, lon, w in zip(
-                df_valid["latitude"], df_valid["longitude"], weights, strict=False
+                df_valid["latitude"], df_valid["longitude"], weights
             )
         ]
     else:
@@ -958,7 +958,7 @@ def _render_route_optimizer(df: pd.DataFrame) -> None:
     df_r = df_r.head(50)
     st.caption(f"Optimising route across {len(df_r)} locations (capped at 50).")
 
-    coords = list(zip(df_r["latitude"].tolist(), df_r["longitude"].tolist(), strict=False))
+    coords = list(zip(df_r["latitude"].tolist(), df_r["longitude"].tolist()))
     route_idx = _nearest_neighbor_route(coords)
 
     ordered = df_r.iloc[route_idx].reset_index(drop=True)
