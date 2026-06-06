@@ -5,6 +5,10 @@ from __future__ import annotations
 import requests
 
 from .compliance import *  # noqa: F403
+from .dataset_governance import (  # noqa: F401
+    cross_reference,
+    registry_audit,
+)
 
 get = requests.get  # tests monkeypatch socrata_toolkit.governance.get
 # Lineage DAG (tests import from governance)

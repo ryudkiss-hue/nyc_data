@@ -1,0 +1,21 @@
+{
+  "description": "SLA thresholds for dataset freshness monitoring. Single source of truth for SLA configuration.",
+  "documentation": "See CLAUDE.md section '🔒 Safety and Data Policy' for SLA semantics and usage.",
+  "sla_thresholds": {
+    "HIGH": {
+      "days": 14,
+      "description": "Critical datasets (inspections, violations). Alert if >14 days old."
+    },
+    "MEDIUM": {
+      "days": 30,
+      "description": "Important datasets (permits, ramps). Alert if >30 days old."
+    },
+    "LOW": {
+      "days": 60,
+      "description": "Reference datasets (mappluto, boundaries). Alert if >60 days old."
+    }
+  },
+  "version": "1.0",
+  "last_updated": "2026-06-05",
+  "note": "If these values change, update CLAUDE.md and tests/test_sla_config.py to keep all references in sync."
+}

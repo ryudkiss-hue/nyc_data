@@ -1,0 +1,73 @@
+============================= test session starts ==============================
+platform linux -- Python 3.11.15, pytest-9.0.3, pluggy-1.6.0 -- /usr/local/bin/python
+cachedir: .pytest_cache
+rootdir: /home/user/nyc_data
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collecting ... collected 759 items / 5 errors / 6 skipped
+
+==================================== ERRORS ====================================
+______________ ERROR collecting tests/test_docker_environment.py _______________
+ImportError while importing test module '/home/user/nyc_data/tests/test_docker_environment.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_docker_environment.py:10: in <module>
+    import psycopg as psycopg2
+E   ModuleNotFoundError: No module named 'psycopg'
+_____________________ ERROR collecting tests/test_i18n.py ______________________
+ImportError while importing test module '/home/user/nyc_data/tests/test_i18n.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_i18n.py:5: in <module>
+    from app.utils.i18n import TRANSLATIONS, t
+app/utils/i18n.py:5: in <module>
+    import streamlit as st
+E   ModuleNotFoundError: No module named 'streamlit'
+_________________ ERROR collecting tests/test_ramp_analysis.py _________________
+ImportError while importing test module '/home/user/nyc_data/tests/test_ramp_analysis.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_ramp_analysis.py:6: in <module>
+    from socrata_toolkit.analyst.ramp_analysis import compute_borough_completion_rates
+src/socrata_toolkit/analyst/ramp_analysis.py:24: in <module>
+    from scipy import stats
+E   ModuleNotFoundError: No module named 'scipy'
+____________________ ERROR collecting tests/test_spatial.py ____________________
+ImportError while importing test module '/home/user/nyc_data/tests/test_spatial.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_spatial.py:23: in <module>
+    from shapely.geometry import LineString, Point, Polygon
+E   ModuleNotFoundError: No module named 'shapely'
+____________________ ERROR collecting tests/test_studio.py _____________________
+ImportError while importing test module '/home/user/nyc_data/tests/test_studio.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_studio.py:5: in <module>
+    from app.views import studio
+app/views/studio.py:13: in <module>
+    import streamlit as st
+E   ModuleNotFoundError: No module named 'streamlit'
+=========================== short test summary info ============================
+ERROR tests/test_docker_environment.py
+ERROR tests/test_i18n.py
+ERROR tests/test_ramp_analysis.py
+ERROR tests/test_spatial.py
+ERROR tests/test_studio.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 5 errors during collection !!!!!!!!!!!!!!!!!!!!
+========================= 6 skipped, 5 errors in 2.63s =========================

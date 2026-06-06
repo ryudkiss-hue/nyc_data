@@ -1,0 +1,10 @@
+services:
+  manhattanmissioncontrol:
+    image: manhattanmissioncontrol
+    build:
+      context: desktop
+      dockerfile: ./Dockerfile
+    environment:
+      NODE_ENV: production
+    ports:
+      - 8501:8501

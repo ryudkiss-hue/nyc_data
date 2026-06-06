@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import sys
 from contextlib import contextmanager
 from datetime import date, timedelta
@@ -25,7 +24,6 @@ from app.analytics import run_all_workflows
 from app.data_loader import (
     CACHE_TTL_SECONDS,
     WORKFLOW_DATASETS,
-    demo_mode_enabled,
     fetch_datasets_for_keys,
     keys_for_workflow,
     load_manhattan_map_layers,
@@ -35,6 +33,7 @@ from app.ui.empty_states import frames_are_empty, render_empty_state
 from app.ui.theme import inject_theme, render_agency_header, render_skip_link
 from app.utils.i18n import render_language_selector, t
 from app.views import home, publish, settings, workflows
+from app.views.analytical_skills import render_analytical_skills_page
 from app.views.construction import render_construction_page
 from app.views.contracts_dashboard import render_contracts_page
 from app.views.data_discovery import render_data_discovery_page
@@ -50,6 +49,7 @@ _SECTIONS = {
     "📈 Forecasting":            "forecasting",
     "⚙️ Data Workflows":         "workflows",
     "📊 Advanced Analytics":     "advanced_analytics",
+    "📚 Analytical Skills":      "skills",
     "🔍 Data Discovery":         "discovery",
     "📚 Data Catalog":           "data_catalog",
     "📤 Publish":                "publish",
@@ -73,6 +73,7 @@ _NAV_GROUPS = {
         "📈 Forecasting",
         "⚙️ Data Workflows",
         "📊 Advanced Analytics",
+        "📚 Analytical Skills",
     ],
     "🔧 Tools": [
         "🔍 Data Discovery",
@@ -222,6 +223,33 @@ def _render_sticky_filters(section: str) -> None:
                 st.rerun()
 
 
+def _render_anomaly_badge() -> None:
+    """Render anomaly analysis status. Shows 'unavailable' until Advanced Analytics runs."""
+    try:
+        # Placeholder: Advanced Analytics workflows will set this key after CUSUM analysis
+        # Expected contract: st.session_state["cusum_anomalies"] = [{"severity": "critical", ...}]
+        anomalies = st.session_state.get("cusum_anomalies", None)
+
+        if anomalies is not None and isinstance(anomalies, list):
+            has_critical = any(
+                a.get("severity") == "critical" for a in anomalies
+            )
+            if has_critical:
+                st.warning(
+                    "🔴 Critical anomaly detected — review Advanced Analytics.",
+                    icon="⚠️"
+                )
+            else:
+                st.info("✅ Anomalies checked — no critical drift.", icon="📊")
+        else:
+            st.info(
+                "📊 Run Advanced Analytics to check for data anomalies.",
+                icon="○"
+            )
+    except Exception:
+        pass
+
+
 def _sidebar_nav() -> tuple[str, dict]:
     """Render sidebar navigation. Returns (section_key, workflow_opts)."""
     with st.sidebar:
@@ -246,6 +274,10 @@ def _sidebar_nav() -> tuple[str, dict]:
                 unsafe_allow_html=True,
             )
 
+        st.divider()
+
+        # CUSUM Anomaly Badge
+        _render_anomaly_badge()
         st.divider()
 
         # Collapsible sidebar navigation
@@ -299,8 +331,6 @@ def _sidebar_nav() -> tuple[str, dict]:
             wf_opts["row_limit"] = st.slider(
                 "Max rows / dataset", 1_000, 50_000, 10_000, step=1_000
             )
-            if demo_mode_enabled():
-                st.info(t("demo_active"))
             if st.button(t("refresh_cache"), type="primary", use_container_width=True):
                 st.cache_data.clear()
                 st.rerun()
@@ -428,6 +458,11 @@ def main() -> None:
                 st.info("Advanced Analytics view is not yet available.")
         return
 
+    if section == "skills":
+        with _spinner_view():
+            render_analytical_skills_page()
+        return
+
     if section == "data_catalog":
         with _spinner_view():
             try:
@@ -472,12 +507,12 @@ def main() -> None:
         st.stop()
     except Exception as exc:
         st.error(f"Ingestion failed: {exc}")
-        st.info("Set SOCRATA_APP_TOKEN in .env or use demo mode (Home → Load sample data).")
-        render_empty_state(on_load_demo=lambda: os.environ.setdefault("MISSION_DEMO", "1"))
+        st.info("Set SOCRATA_APP_TOKEN in your .env file to authenticate with Socrata.")
+        render_empty_state()
         st.stop()
 
     if frames_are_empty(frames):
-        render_empty_state(on_load_demo=lambda: os.environ.setdefault("MISSION_DEMO", "1"))
+        render_empty_state()
         if st.button(t("go_workflows"), key="empty_to_workflows"):
             st.cache_data.clear()
             st.rerun()
