@@ -159,31 +159,31 @@ def scrape_historical_jids(start_jid: int, end_jid: int) -> pd.DataFrame:
     return df
 
 
+from socrata_toolkit import SocrataClient, SocrataConfig
+
+# ... (Configuration and State Bootstrap) ...
+
+def _init_client() -> SocrataClient:
+    return SocrataClient(SocrataConfig(app_token=SOCRATA_TOKEN))
+
 @st.cache_data(show_spinner=False, ttl=3600)
 def fetch_socrata_data(url: str, params: dict) -> pd.DataFrame:
-    """Paginates through Socrata API to bypass the 50k row limit."""
-    headers = {"X-App-Token": SOCRATA_TOKEN} if SOCRATA_TOKEN else {}
-    all_data, offset = [], 0
-    limit = params.get("$limit", 50000)
-    if "$order" not in params:
-        params["$order"] = ":id"
-
-    try:
-        while True:
-            params["$offset"] = offset
-            resp = requests.get(url, headers=headers, params=params, timeout=15)
-            resp.raise_for_status()
-            chunk = resp.json()
-            if not chunk:
-                break
-            all_data.extend(chunk)
-            offset += limit
-            if len(all_data) >= 200000:
-                break
-        return pd.DataFrame(all_data)
-    except Exception as e:
-        st.error(f"Socrata API error: {e}")
-        return pd.DataFrame()
+    """Uses the toolkit's SocrataClient to fetch data with pagination."""
+    # Extract domain and fourfour from URL
+    # Example: https://data.cityofnewyork.us/resource/kpav-sd4t.json
+    parts = url.split("/")
+    domain = parts[2]
+    fourfour = parts[-1].replace(".json", "")
+    
+    client = _init_client()
+    return client.fetch_dataframe(
+        domain=domain,
+        fourfour=fourfour,
+        where=params.get("$where"),
+        select=params.get("$select"),
+        order=params.get("$order"),
+        max_rows=params.get("$limit")
+    )
 
 # ==========================================
 # --- MATHEMATICAL ENGINE ---
@@ -235,31 +235,27 @@ def run_apex_math(df_jobs: pd.DataFrame, df_payroll: pd.DataFrame, max_lag: int 
         [(k, v) for k, v in correlations.items()], columns=["Lag_Months", "Correlation"]
     )
 
-    # 3. Bayesian inference (cloud-safe: cores=1)
+    # 3. Bayesian inference (using elite core toolkit)
     predictor = df_ts["Postings_Smoothed"].shift(best_lag).fillna(0).values
     target = df_ts["Starts"].values
 
+    from socrata_toolkit.analysis.bayesian import BayesianRegressionEngine
+    
     try:
-        with pm.Model():
-            alpha = pm.Normal("Baseline_Log", mu=0, sigma=5)
-            beta = pm.Normal("Yield_Log", mu=0, sigma=5)
-            mu = pm.math.exp(alpha + beta * predictor)
-            pm.Poisson("Y_obs", mu=mu, observed=target)
-            trace = pm.sample(
-                1000, tune=1000, target_accept=0.9,
-                cores=1, chains=2, return_inferencedata=True, progressbar=False,
-            )
+        res = BayesianRegressionEngine.run_poisson_regression(predictor, target)
+        if not res.converged:
+            st.warning(f"⚠️ Bayesian model convergence issues (R-hat={res.r_hat_max:.3f}). Results may be unstable.")
+        
+        beta_mean = float(res.summary.loc["Predictor_Effect", "mean"])
+        beta_hdi_lo, beta_hdi_hi = res.hdi_intervals["Predictor_Effect"]
+        
+        effective_yield = float(np.exp(beta_mean))
+        yield_lo = float(np.exp(beta_hdi_lo))
+        yield_hi = float(np.exp(beta_hdi_hi))
+        
     except Exception as e:
-        st.error(f"PyMC sampling failed: {e}")
+        st.error(f"Bayesian sampling failed: {e}")
         return None
-
-    summary = az.summary(trace, var_names=["Yield_Log"])
-    beta_mean = float(summary.loc["Yield_Log", "mean"])
-    beta_hdi_lo = float(summary.loc["Yield_Log", "hdi_3%"])
-    beta_hdi_hi = float(summary.loc["Yield_Log", "hdi_97%"])
-    effective_yield = float(np.exp(beta_mean))
-    yield_lo = float(np.exp(beta_hdi_lo))
-    yield_hi = float(np.exp(beta_hdi_hi))
 
     # 4. Prophet forecast with confidence interval
     df_prophet = (

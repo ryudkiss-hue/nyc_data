@@ -1,4 +1,4 @@
-"""Engineering pillar: construction, contracts, costs, borough analytics, materials."""
+"""Engineering pillar: construction, contracts, costs, borough analytics, materials, and infrastructure management."""
 
 from __future__ import annotations
 
@@ -36,6 +36,20 @@ from .dot_sidewalk import (
     SidewalkKPI,
     compute_material_aware_kpis,
     compute_sidewalk_kpis,
+)
+from .infrastructure import (
+    AssetCondition,
+    LifeCycleCostAnalysis,
+    MROptimization,
+    MarkovDeteriorationModel,
+    evaluate_system_resiliency,
+)
+from .pavement import (
+    NYSDOTPavementEngine,
+    PavementDesignParameters,
+    PavementType,
+    SurfaceRating,
+    evaluate_pavement_safety_risk,
 )
 from .ramp_analysis import (
     BoroughRampStats,

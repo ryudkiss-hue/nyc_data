@@ -138,48 +138,77 @@ def stream_pipeline(
             # Postgres incremental upsert using simple executemany
             if pg_writer is not None:
                 cur = pg_writer["cur"]
-                # Sanitize identifiers by removing quotes to prevent SQL injection issues
-                table = pg_writer["table"].replace('"', '')
-                conflict = pg_writer["conflict"].replace('"', '') if pg_writer["conflict"] else None
+                table_name = pg_writer["table"]
+                conflict_col = pg_writer["conflict"]
 
                 if not pg_writer["initialized"]:
                     cols = list(batch[0].keys())
-                    defs = ", ".join(f'"{c.replace(chr(34), "")}" TEXT' for c in cols)
+                    
+                    # Construct CREATE TABLE with proper identifiers
+                    col_defs = []
+                    for c in cols:
+                        col_defs.append(psycopg_sql.SQL("{} TEXT").format(psycopg_sql.Identifier(c)))
+                    
                     cur.execute(
                         psycopg_sql.SQL("CREATE TABLE IF NOT EXISTS {} ({})").format(
-                            psycopg_sql.Identifier(table),
-                            psycopg_sql.SQL(defs),
+                            psycopg_sql.Identifier(table_name),
+                            psycopg_sql.SQL(", ").join(col_defs)
                         )
                     )
-                    if conflict and conflict in cols:
-                        # FIX: Changed UNIQUE_INDEX to UNIQUE INDEX
+                    
+                    if conflict_col and conflict_col in cols:
+                        index_name = f"{table_name}_{conflict_col}_idx"
                         cur.execute(
-                            psycopg_sql.SQL(
-                                "CREATE UNIQUE INDEX IF NOT EXISTS {} ON {} ({})"
-                            ).format(
-                                psycopg_sql.Identifier(f"{table}_{conflict}_idx"),
-                                psycopg_sql.Identifier(table),
-                                psycopg_sql.Identifier(conflict),
+                            psycopg_sql.SQL("CREATE UNIQUE INDEX IF NOT EXISTS {} ON {} ({})").format(
+                                psycopg_sql.Identifier(index_name),
+                                psycopg_sql.Identifier(table_name),
+                                psycopg_sql.Identifier(conflict_col)
                             )
                         )
                     pg_writer["initialized"] = True
 
                 cols = list(batch[0].keys())
-                placeholders = ",".join(["%s"] * len(cols))
-                col_list = ", ".join(f'"{c.replace(chr(34), "")}"' for c in cols)
-
-                if conflict:
-                    updates = ", ".join(f'"{c.replace(chr(34), "")}" = EXCLUDED."{c.replace(chr(34), "")}"' for c in cols if c != conflict)
-                    if updates:
-                        sql = f'INSERT INTO "{table}" ({col_list}) VALUES ({placeholders}) ON CONFLICT ("{conflict}") DO UPDATE SET {updates}'
+                
+                # Construct INSERT statement with ON CONFLICT
+                if conflict_col:
+                    update_parts = []
+                    for c in cols:
+                        if c != conflict_col:
+                            update_parts.append(
+                                psycopg_sql.SQL("{} = EXCLUDED.{}").format(
+                                    psycopg_sql.Identifier(c),
+                                    psycopg_sql.Identifier(c)
+                                )
+                            )
+                    
+                    if update_parts:
+                        stmt = psycopg_sql.SQL(
+                            "INSERT INTO {} ({}) VALUES ({}) ON CONFLICT ({}) DO UPDATE SET {}"
+                        ).format(
+                            psycopg_sql.Identifier(table_name),
+                            psycopg_sql.SQL(", ").join(map(psycopg_sql.Identifier, cols)),
+                            psycopg_sql.SQL(", ").join([psycopg_sql.Placeholder()] * len(cols)),
+                            psycopg_sql.Identifier(conflict_col),
+                            psycopg_sql.SQL(", ").join(update_parts)
+                        )
                     else:
-                        sql = f'INSERT INTO "{table}" ({col_list}) VALUES ({placeholders}) ON CONFLICT ("{conflict}") DO NOTHING'
+                        stmt = psycopg_sql.SQL(
+                            "INSERT INTO {} ({}) VALUES ({}) ON CONFLICT ({}) DO NOTHING"
+                        ).format(
+                            psycopg_sql.Identifier(table_name),
+                            psycopg_sql.SQL(", ").join(map(psycopg_sql.Identifier, cols)),
+                            psycopg_sql.SQL(", ").join([psycopg_sql.Placeholder()] * len(cols)),
+                            psycopg_sql.Identifier(conflict_col)
+                        )
                 else:
-                    # Fallback if no conflict key provided
-                    sql = f'INSERT INTO "{table}" ({col_list}) VALUES ({placeholders})'
+                    stmt = psycopg_sql.SQL("INSERT INTO {} ({}) VALUES ({})").format(
+                        psycopg_sql.Identifier(table_name),
+                        psycopg_sql.SQL(", ").join(map(psycopg_sql.Identifier, cols)),
+                        psycopg_sql.SQL(", ").join([psycopg_sql.Placeholder()] * len(cols))
+                    )
 
                 values = [tuple(row.get(c) for c in cols) for row in batch]
-                cur.executemany(sql, values)
+                cur.executemany(stmt, values)
 
             # Mongo bulk upsert
             if mongo_client is not None:
