@@ -111,7 +111,7 @@ class SocrataClient:
         parts.append(f"OFFSET {offset}")
         return " ".join(parts)
 
-    def fetch_json(self, domain: str, fourfour: str, where: str | None = None, select: str | None = None, order: str | None = None, max_rows: int | str | None = None, version: str | None = None) -> Generator[list[dict[str, Any]], None, None]:
+    def fetch_json(self, domain: str, fourfour: str, where: str | None = None, select: str | None = None, order: str | None = None, q: str | None = None, max_rows: int | str | None = None, version: str | None = None) -> Generator[list[dict[str, Any]], None, None]:
         """Stream JSON pages via the SODA3 POST endpoint or SODA2 GET fallback."""
         v = version or self.config.soda_version
         
@@ -126,7 +126,7 @@ class SocrataClient:
             if not self.config.app_token and v.startswith("3"):
                 import warnings as _warnings
                 _warnings.warn("SODA3 requires authentication; falling back to SODA2.", stacklevel=2)
-            yield from self._fetch_json_soda2(domain, fourfour, where=where, select=select, order=order, max_rows=max_rows)
+            yield from self._fetch_json_soda2(domain, fourfour, where=where, select=select, order=order, q=q, max_rows=max_rows)
             return
 
         # SODA3 POST path
@@ -138,9 +138,12 @@ class SocrataClient:
             limit = self.config.page_size if remaining is None else min(self.config.page_size, remaining)
             soql = self._build_soql(limit, offset, select=select, where=where, order=order)
             payload = {
-                "query": soql,
-                "options": {"orderingSpecifier": "preserve" if order else "discard"}
+                "query": soql
             }
+            # SODA3 doesn't have a direct 'q' param in SoQL the same way SODA2 does, 
+            # usually it's handled via full-text search functions in SoQL if needed,
+            # but for compatibility we'll skip it in SODA3 for now or log a warning.
+            
             resp = with_retries(lambda: requests.post(url, json=payload, headers=self._headers(), timeout=self.config.timeout))
             resp.raise_for_status()
             batch = resp.json()
@@ -152,7 +155,7 @@ class SocrataClient:
                 remaining -= got
                 if remaining <= 0: break
 
-    def _fetch_json_soda2(self, domain: str, fourfour: str, where: str | None = None, select: str | None = None, order: str | None = None, max_rows: int | str | None = None) -> Generator[list[dict[str, Any]], None, None]:
+    def _fetch_json_soda2(self, domain: str, fourfour: str, where: str | None = None, select: str | None = None, order: str | None = None, q: str | None = None, max_rows: int | str | None = None) -> Generator[list[dict[str, Any]], None, None]:
         """SODA2 GET fallback."""
         offset = 0
         remaining = int(max_rows) if max_rows is not None else None
@@ -162,6 +165,7 @@ class SocrataClient:
             if where: params["$where"] = where
             if select: params["$select"] = select
             if order: params["$order"] = order
+            if q: params["$q"] = q
             url = f"https://{domain}/resource/{fourfour}.json"
             resp = with_retries(lambda: requests.get(url, params=params, headers=self._headers(), timeout=self.config.timeout))
             resp.raise_for_status()
@@ -203,6 +207,9 @@ class SocrataClient:
                     remaining -= got
                     if remaining <= 0: break
         else:
+            if not self.config.app_token and v.startswith("3"):
+                import warnings as _warnings
+                _warnings.warn("SODA3 requires authentication; falling back to SODA2.", stacklevel=2)
             while True:
                 limit = self.config.page_size if remaining is None else min(self.config.page_size, remaining)
                 params: dict[str, Any] = {"$limit": limit, "$offset": offset}

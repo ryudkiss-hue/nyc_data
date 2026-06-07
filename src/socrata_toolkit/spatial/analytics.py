@@ -443,8 +443,6 @@ class HotspotAnalysis:
             logger.error(f"Error in cluster_segments: {e}")
             return []
 
-from ..governance.equity import EquityScorer
-
     def detect_hotspots(
         self,
         coordinates: list[tuple[float, float]],
@@ -456,6 +454,7 @@ from ..governance.equity import EquityScorer
         """
         Detect hotspots as areas with poor condition, weighted by equity impact.
         """
+        from ..governance.equity import EquityScorer
         try:
             if len(coordinates) < 3:
                 return []

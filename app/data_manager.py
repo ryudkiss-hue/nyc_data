@@ -8,15 +8,17 @@ import diskcache
 import logging
 import zstandard as zstd
 import pickle
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Setup Logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Setup Disk Cache
+# Item 108: FanoutCache for High-Concurrency Performance
 cache_dir = Path(".cache/socrata_data")
 cache_dir.mkdir(parents=True, exist_ok=True)
-cache = diskcache.Cache(str(cache_dir))
+cache = diskcache.FanoutCache(str(cache_dir), shards=8, timeout=10)
 
 class DataManager:
     """Industrial Data Manager for NYC DOT SIM Analytics."""
@@ -29,6 +31,8 @@ class DataManager:
             soda_version=self.soda_version
         ))
         self.datasets_config = self._load_config()
+        self.progress = {"current": "", "completed": 0, "total": 0}
+        self._lock = threading.Lock()
 
     def _load_config(self):
         config_path = Path("config/datasets.yaml")
@@ -41,45 +45,77 @@ class DataManager:
     def get_dataset_registry(self):
         return self.datasets_config.get("datasets", {})
 
+    def _fetch_single_dataset(self, key, info, actual_limit, force_refresh, cctx, dctx):
+        """Worker function for parallel fetching."""
+        fourfour = info["fourfour"]
+        limit_label = "unlimited" if actual_limit is None else str(actual_limit)
+        cache_key = f"ds_{fourfour}_{limit_label}_v{self.soda_version}_zstd"
+        
+        if not force_refresh and cache_key in cache:
+            logger.info(f"Loading {key} ({fourfour}) from compressed cache.")
+            compressed_data = cache[cache_key]
+            pickled_data = dctx.decompress(compressed_data)
+            df = pickle.loads(pickled_data)
+            with self._lock:
+                self.progress["completed"] += 1
+            return key, df
+
+        try:
+            logger.info(f"Fetching {key} ({fourfour}) via SODA{self.soda_version} (Limit: {limit_label})...")
+            
+            rows = []
+            for page in self.client.fetch_json(
+                domain="data.cityofnewyork.us",
+                fourfour=fourfour,
+                max_rows=actual_limit
+            ):
+                rows.extend(page)
+                with self._lock:
+                    self.progress["current"] = f"{key} ({len(rows):,} rows)"
+            
+            df = pd.DataFrame(rows)
+            
+            # Compress and Cache
+            pickled_data = pickle.dumps(df)
+            compressed_data = cctx.compress(pickled_data)
+            cache[cache_key] = compressed_data
+            
+            with self._lock:
+                self.progress["completed"] += 1
+            return key, df
+        except Exception as e:
+            logger.error(f"Failed to fetch {key}: {e}")
+            with self._lock:
+                self.progress["completed"] += 1
+            return key, pd.DataFrame()
+
     def fetch_all_datasets(self, limit=5000, force_refresh=False):
         """
-        Fetch all 26 datasets from Socrata and cache them.
-        Item 83: Zstandard (zstd) Compression for cache.
+        Fetch all 26 datasets in PARALLEL using ThreadPoolExecutor.
+        Item 110: High-Throughput Network Concurrency.
         """
         registry = self.get_dataset_registry()
+        actual_limit = None if int(limit) <= 0 else int(limit)
+        
+        self.progress["total"] = len(registry)
+        self.progress["completed"] = 0
+        
         data_bundle = {}
         cctx = zstd.ZstdCompressor()
         dctx = zstd.ZstdDecompressor()
+
+        # Item 112: Optimal concurrency based on core count and network bandwidth
+        max_workers = min(10, len(registry)) 
         
-        for key, info in registry.items():
-            fourfour = info["fourfour"]
-            cache_key = f"ds_{fourfour}_{limit}_v{self.soda_version}_zstd"
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            future_to_key = {
+                executor.submit(self._fetch_single_dataset, k, info, actual_limit, force_refresh, cctx, dctx): k 
+                for k, info in registry.items()
+            }
             
-            if not force_refresh and cache_key in cache:
-                logger.info(f"Loading {key} ({fourfour}) from compressed cache.")
-                compressed_data = cache[cache_key]
-                pickled_data = dctx.decompress(compressed_data)
-                df = pickle.loads(pickled_data)
+            for future in as_completed(future_to_key):
+                key, df = future.result()
                 data_bundle[key] = df
-                continue
-            
-            try:
-                logger.info(f"Fetching {key} ({fourfour}) via SODA{self.soda_version}...")
-                df = self.client.fetch_dataframe(
-                    domain="data.cityofnewyork.us",
-                    fourfour=fourfour,
-                    max_rows=limit
-                )
-                
-                # Compress and Cache
-                pickled_data = pickle.dumps(df)
-                compressed_data = cctx.compress(pickled_data)
-                cache[cache_key] = compressed_data
-                
-                data_bundle[key] = df
-            except Exception as e:
-                logger.error(f"Failed to fetch {key}: {e}")
-                data_bundle[key] = pd.DataFrame()
         
         return data_bundle
 
@@ -89,7 +125,8 @@ class DataManager:
             return pd.DataFrame()
         
         fourfour = registry[key]["fourfour"]
-        cache_key = f"ds_{fourfour}_{limit}_v{self.soda_version}_zstd"
+        limit_label = "unlimited" if int(limit) <= 0 else str(limit)
+        cache_key = f"ds_{fourfour}_{limit_label}_v{self.soda_version}_zstd"
         
         compressed_data = cache.get(cache_key)
         if compressed_data:

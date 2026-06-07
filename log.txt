@@ -1,0 +1,11 @@
+g++ not available, if using conda: `conda install gxx`
+Dash is running on http://127.0.0.1:8050/
+
+ * Serving Flask app 'dash_app'
+ * Debug mode: on
+g++ not available, if using conda: `conda install gxx`
+g++ not available, if using conda: `conda install gxx`
+g++ not available, if using conda: `conda install gxx`
+g++ not available, if using conda: `conda install gxx`
+g++ not available, if using conda: `conda install gxx`
+g++ not available, if using conda: `conda install gxx`
