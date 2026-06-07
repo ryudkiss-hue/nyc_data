@@ -51,16 +51,22 @@ The **NYC DOT Socrata Toolkit** is an elite engineering engine and analytical pl
 ## Quickstart
 
 ```bash
+# 1. Install toolkit
 pip install -e ".[mission]"
-streamlit run app/app.py
 
-# CLI:
-socrata --help
+# 2. Run Full-Scale Ingestion (No Limits)
+# This performs a Deep Sync of all 26 databases into DuckDB.
+python scripts/total_recall.py
+
+# 3. Launch Dash Workstation
+python app/dash_app.py
+
+# 4. Use the CLI
 socrata dataset health
 socrata nl-query "How many inspections per borough?" --dataset sidewalk_inspections
 ```
 
-Open **http://localhost:8501** — demo mode loads automatically (no token needed).
+Open **http://localhost:8012** for the Dash interface.
 
 **With live data:** add `SOCRATA_APP_TOKEN=your_token` to a `.env` file.
 
@@ -82,7 +88,7 @@ All 26 datasets are defined in `config/datasets.yaml` and loaded at runtime.
 | `correspondences` | Sidewalk Correspondences | bheb-sjfi | core_smd |
 | `curb_metal_protruding` | Curb Metal Protruding Data | i2y3-sx2e | core_smd |
 | `ramp_locations` | Pedestrian Ramp Locations | ufzp-rrqu | accessibility |
-| `ramp_complaints` | Ramp Complaints | jagj-gttd | accessibility |
+| `ramp_complaints" | Ramp Complaints | jagj-gttd | accessibility |
 | `ramp_progress` | Ramp Program Progress | e7gc-ub6z | accessibility |
 | `street_permits` | Street Construction Permits | tqtj-sjs8 | coordination |
 | `weekly_construction` | Weekly Construction Schedule | r528-jcks | coordination |
@@ -90,10 +96,10 @@ All 26 datasets are defined in `config/datasets.yaml` and loaded at runtime.
 | `capital_intersections` | Capital Reconstruction Projects - Intersection | 97nd-ff3i | coordination |
 | `street_construction_inspections` | Street Construction Inspections (HIQA) | ydkf-mpxb | coordination |
 | `street_closures_block` | Street Closures by Block | i6b5-j7bu | coordination |
-| `permit_stipulations` | Street Construction Permit Stipulations | gsgx-6efw | coordination |
+| `permit_stipulations" | Street Construction Permit Stipulations | gsgx-6efw | coordination |
 | `street_resurfacing_schedule` | Street Resurfacing Schedule | xnfm-u3k5 | coordination |
 | `street_resurfacing_inhouse` | DOT In-house Street Resurfacing Projects | ffaf-8mrv | coordination |
-| `step_streets` | Step Streets Locations | u9au-h79y | overlays |
+| `step_streets" | Step Streets Locations | u9au-h79y | overlays |
 | `sidewalk_planimetric` | Planimetric Sidewalks | vfx9-tbb6 | overlays |
 | `pedestrian_demand` | Pedestrian Demand | fwpa-qxaf | overlays |
 | `mappluto` | MapPLUTO | 6fi9-q3ta | overlays |
