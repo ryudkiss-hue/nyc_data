@@ -42,6 +42,7 @@ After setup completes, you have:
 
 | Service | URL | Username | Password |
 |---------|-----|----------|----------|
+| **Turbo-Stream Dash** | http://localhost:8012 | - | - |
 | **Airflow Orchestrator** | http://localhost:8080 | airflow | airflow |
 | **Streamlit Dashboard** | http://localhost:8501 | - | - |
 | **PostgreSQL Database** | localhost:5432 | dot_user | (see .env.socrata) |

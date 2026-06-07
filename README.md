@@ -129,6 +129,15 @@ All 26 datasets are defined in `config/datasets.yaml` and loaded at runtime.
 
 ## Docker
 
+### Turbo-Stream Dash (Recommended)
+The new high-performance platform with FastAPI/ASGI and hot-reloading:
+
+```bash
+docker compose up -d dash-app
+```
+Access at **http://localhost:8012**. Changes to your code are reflected automatically.
+
+### Mission Control (Legacy)
 ```bash
 docker build -f Dockerfile.mission -t mission-control .
 docker run -p 8501:8501 --env-file .env mission-control
