@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "socrata_toolkit"
+name = "nyc-dot-socrata-toolkit"
 version = "0.5.0"
-description = "Elite NYC DOT SIM Analyst Toolkit & Engineering Engine"
+description = "NYC DOT Socrata Toolkit — Elite Engineering Engine for Municipal Data"
 authors = ["Richard Yudkiss <ryudkiss@gmail.com>"]
 readme = "README.md"
 license = "MIT"

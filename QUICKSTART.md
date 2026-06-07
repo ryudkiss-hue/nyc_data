@@ -1,4 +1,4 @@
-# NYC DOT Sidewalk Toolkit - Quick Start Guide
+# NYC DOT Socrata Toolkit - Quick Start Guide
 
 Get up and running in 5 minutes.
 

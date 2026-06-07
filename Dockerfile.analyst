@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 
-LABEL maintainer="NYC DOT Sidewalk Toolkit"
+LABEL maintainer="NYC DOT Socrata Toolkit"
 LABEL description="Analyst autopilot runner and setup wizard"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \

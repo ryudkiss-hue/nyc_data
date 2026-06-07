@@ -1,7 +1,7 @@
 FROM python:3.11-slim
 
-LABEL maintainer="NYC DOT Sidewalk Toolkit"
-LABEL description="Full-stack NYC DOT Sidewalk Inspection & Management Toolkit"
+LABEL maintainer="NYC DOT Socrata Toolkit"
+LABEL description="Full-stack NYC DOT Socrata Toolkit — Municipal Data Ingestion & Analytics"
 
 # System dependencies for geospatial, PDF, and build tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
