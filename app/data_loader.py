@@ -399,7 +399,7 @@ def _fetch_live(
 def fetch_dataset(
     dataset_key: str,
     *,
-    limit: int = 50_000,
+    limit: int | None = 50_000,
     where: str | None = None,
     select: str | None = None,
 ) -> pd.DataFrame:
@@ -410,11 +410,15 @@ def fetch_dataset(
     2. L2 — Parquet disk cache (``app/utils/cache_manager``).
     3. Live fetch from Socrata (with delta WHERE when a previous fetch exists).
 
+    *limit*: number of rows to fetch. Use -1 or None for ALL rows (Total Recall mode).
     *select*: optional ``$select`` column projection (Item 13).
     *where*: extra SoQL WHERE clause fragment (caller-supplied).
     """
     if dataset_key not in DATASET_REGISTRY:
         raise KeyError(f"Unknown dataset_key: {dataset_key}")
+
+    # Handle "unlimited" flag
+    effective_limit = None if limit in (None, -1) else limit
 
     # Apply dataset-level default WHERE filter when caller doesn't supply one
     if where is None:
@@ -456,7 +460,7 @@ def fetch_dataset(
 
     try:
         t0 = time.perf_counter()
-        df = _fetch_live(dataset_key, limit=limit, where=effective_where, select=select)
+        df = _fetch_live(dataset_key, limit=effective_limit, where=effective_where, select=select)
         # Write to new L2 disk cache
         if _DISK_CACHE_AVAILABLE and not df.empty and "_error" not in df.columns:
             _write_disk_cache(dataset_key, df)
