@@ -24,6 +24,7 @@ htmlcov/
 
 # --- Generated outputs/state ---
 node_modules/
+.cache/
 data/local_db/
 data/local_db/socrata_cache/
 # Local archive bulk (keep dash_app for CI import tests)

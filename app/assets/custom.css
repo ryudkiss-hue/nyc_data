@@ -1,0 +1,90 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* --- Project Powerhouse: Transcendent Glassmorphism --- */
+
+:root {
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --nyc-navy: #0033A0;
+    --mission-cyan: #22D3EE;
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.3);
+}
+
+html, body, [class*="css"] {
+    font-family: 'Inter', sans-serif !important;
+    letter-spacing: -0.01em;
+    color: #000000 !important;
+    background-color: #F8FAFC !important;
+}
+
+/* Transcendent AppShell: Advanced Glassmorphism */
+.mantine-AppShell-navbar {
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border-right: 1px solid var(--glass-border) !important;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.05);
+}
+
+.mantine-AppShell-header {
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 2px solid #000000 !important;
+    z-index: 1000;
+}
+
+/* Elite KPI Cards: Depth & Micro-interactions */
+.mantine-Paper-root {
+    background: rgba(255, 255, 255, 0.85) !important;
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 16px !important;
+    transition: var(--transition-smooth) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+}
+
+.mantine-Paper-root:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 32px -8px rgba(0, 0, 0, 0.12), 0 12px 12px -8px rgba(0, 0, 0, 0.06) !important;
+    border-color: var(--mission-cyan) !important;
+    background: #FFFFFF !important;
+}
+
+/* Global Command Bar: Interactive Glow */
+#global-boro-filter, #global-cat-filter, #global-date-filter {
+    border-radius: 10px !important;
+    border: 1px solid #E2E8F0 !important;
+    background: #FFFFFF !important;
+    transition: var(--transition-smooth);
+}
+
+#global-boro-filter:hover, #global-cat-filter:hover {
+    border-color: var(--mission-cyan) !important;
+    box-shadow: 0 0 10px rgba(34, 211, 238, 0.15);
+}
+
+/* Sidebar Navigation: Active States */
+.mantine-NavLink-root[data-active="true"] {
+    background: rgba(0, 51, 160, 0.08) !important;
+    border-left: 4px solid var(--mission-cyan) !important;
+    border-radius: 0 8px 8px 0;
+}
+
+/* Industrial Typography */
+h1, h2, h3, h4 {
+    letter-spacing: -0.03em !important;
+    font-weight: 800 !important;
+}
+
+/* Modern Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+
+/* Dashboard Pulse: Status Glow */
+.status-glow {
+    box-shadow: 0 0 12px #10B98144;
+    border: 1px solid #10B98188;
+}

@@ -19,7 +19,172 @@ from ..material.standards_v4 import run_vision_zero_audit
 
 logger = logging.getLogger(__name__)
 
-# ... (Insight and Recommendation classes remain the same) ...
+@dataclass
+class Insight:
+    category: str
+    text: str
+    priority: str = "medium"
+
+@dataclass
+class Recommendation:
+    priority: str
+    text: str
+
+@dataclass
+class InsightsReport:
+    data_health: str
+    summary: list[str]
+    key_metrics: dict[str, Any]
+    insights: list[Insight] = field(default_factory=list)
+    borough_insights: dict[str, Any] = field(default_factory=dict)
+    recommendations: list[Recommendation] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    title: str = "NYC DOT Data Insights Report"
+    generated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"))
+
+    def to_markdown(self) -> str:
+        md = f"# 🗽 {self.title}\n\n"
+        md += f"**Status:** {self.data_health.upper()} | **Generated:** {self.generated_at}\n\n"
+        
+        if self.warnings:
+            md += "### ⚠️ Data Limitations Notice\n"
+            for w in self.warnings:
+                md += f"- {w}\n"
+            md += "\n"
+
+        md += "## 📊 Key Metrics\n"
+        for k, v in self.key_metrics.items():
+            md += f"- **{k}:** {v}\n"
+        
+        md += "\n## 🔍 Critical Insights\n"
+        for i in sorted(self.insights, key=lambda x: x.priority == "high", reverse=True):
+            icon = "🔴" if i.priority == "high" else "🟡"
+            md += f"- {icon} **[{i.category.upper()}]** {i.text}\n"
+            
+        md += "\n## 🛠️ Recommendations\n"
+        for r in self.recommendations:
+            md += f"- {r.text}\n"
+            
+        return md
+
+    def to_json(self) -> str:
+        return json.dumps({
+            "title": self.title,
+            "generated_at": self.generated_at,
+            "data_health": self.data_health,
+            "warnings": self.warnings,
+            "summary": self.summary,
+            "key_metrics": self.key_metrics,
+            "insights": [i.__dict__ for i in self.insights],
+            "recommendations": [r.__dict__ for r in self.recommendations],
+        }, indent=2, default=str)
+
+    def to_html(self) -> str:
+        warnings_html = ""
+        if self.warnings:
+            warnings_list = "".join(f"<li>{w}</li>" for w in self.warnings)
+            warnings_html = f"""
+            <div class="alert-box" role="alert" aria-live="assertive">
+                <h2>⚠️ Data Limitations Notice</h2>
+                <ul>{warnings_list}</ul>
+            </div>
+            """
+
+        metrics_html = '<dl class="data-grid">' + "".join(
+            f'<div class="data-item"><dt>{k}</dt><dd>{v}</dd></div>' for k, v in self.key_metrics.items()
+        ) + "</dl>"
+
+        insights_html = "<ul>" + "".join(
+            f"<li><strong>[{i.category.upper()}]</strong> {i.text} ({i.priority} priority)</li>" for i in self.insights
+        ) + "</ul>"
+
+        recs_html = "<ul>" + "".join(
+            f"<li>{r.text}</li>" for r in self.recommendations
+        ) + "</ul>"
+
+        return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{self.title}</title>
+    <style>
+        :root {{
+            --primary: #0033A0;
+            --text-main: #1A1A1A;
+            --bg-light: #F4F6F9;
+            --border: #D1D5DB;
+            --alert-bg: #FFF3CD;
+            --alert-text: #856404;
+            --alert-border: #FFEEBA;
+        }}
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: var(--text-main);
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+            background-color: #FFFFFF;
+        }}
+        header {{ border-bottom: 3px solid var(--primary); margin-bottom: 2rem; padding-bottom: 1rem; }}
+        h1 {{ color: var(--primary); font-size: 2.25rem; margin-bottom: 0.5rem; }}
+        .meta-info {{ color: #4B5563; font-size: 0.95rem; font-weight: 500; }}
+        .alert-box {{ background-color: var(--alert-bg); color: var(--alert-text); border: 1px solid var(--alert-border); border-radius: 6px; padding: 1rem 1.5rem; margin-bottom: 2rem; }}
+        .alert-box h2 {{ margin-top: 0; font-size: 1.1rem; color: var(--alert-text); border: none; }}
+        section {{ margin-bottom: 2.5rem; }}
+        h2 {{ color: var(--primary); border-bottom: 1px solid var(--border); padding-bottom: 0.3rem; margin-top: 2rem; }}
+        .data-grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; margin: 1.5rem 0; padding: 0; }}
+        .data-item {{ background: var(--bg-light); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; }}
+        dt {{ font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: #4B5563; margin-bottom: 0.25rem; font-weight: 700; }}
+        dd {{ font-size: 1.25rem; font-weight: 600; margin: 0; color: var(--text-main); }}
+        ul {{ padding-left: 1.5rem; }}
+        li {{ margin-bottom: 0.5rem; }}
+        @media (max-width: 600px) {{ .data-grid {{ grid-template-columns: 1fr; }} body {{ padding: 1rem; }} }}
+    </style>
+</head>
+<body>
+    <header>
+        <h1>{self.title}</h1>
+        <div class="meta-info">
+            <span aria-label="Generated Timestamp">Report Generated: {self.generated_at}</span><br>
+            <span>Department: NYC DOT Operations</span><br>
+            <span>Data Health Status: <strong>{self.data_health.upper()}</strong></span>
+        </div>
+    </header>
+    <main>
+        {warnings_html}
+        <section aria-labelledby="sec-metrics">
+            <h2 id="sec-metrics">Key Metrics</h2>
+            {metrics_html}
+        </section>
+        <section aria-labelledby="sec-insights">
+            <h2 id="sec-insights">Critical Insights</h2>
+            {insights_html}
+        </section>
+        <section aria-labelledby="sec-recs">
+            <h2 id="sec-recs">Recommendations</h2>
+            {recs_html}
+        </section>
+    </main>
+</body>
+</html>"""
+
+    def save(self, path: str) -> str:
+        p = Path(path)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        ext = p.suffix.lower()
+        if ext == ".json":
+            p.write_text(self.to_json(), encoding="utf-8")
+        elif ext == ".html":
+            p.write_text(self.to_html(), encoding="utf-8")
+        else:
+            p.write_text(self.to_markdown(), encoding="utf-8")
+        return str(p)
+
+def smart_recommendations(report: InsightsReport) -> list[str]:
+    """Extractive helper to get critical action items."""
+    return [r.text for r in report.recommendations if r.priority == "high"]
 
 class InsightsEngine:
     """
