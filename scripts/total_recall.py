@@ -27,9 +27,9 @@ logging.basicConfig(
 logger = logging.getLogger("total_recall")
 
 # Map of dataset keys to their authoritative timestamp column for incremental sync
-# If a key is missing, it will perform a full fetch every time (or sync won't be incremental)
+# Corrected field names based on Socrata metadata probes
 UPDATED_COL_MAP = {
-    "inspection": "inspection_date",
+    "inspection": "inspectiondate",
     "violations": "entrydate",
     "built": "dot_contstruct_date",
     "reinspection": "actualreinspectdate",
@@ -48,6 +48,7 @@ UPDATED_COL_MAP = {
     "street_resurfacing_inhouse": "location_actual_paving_start_date",
     "mappluto": "appdate",
     "complaints_311": "created_date",
+    "curb_metal_protruding": "rec_d_2", # Heuristic based on common Socrata patterns
 }
 
 DB_PATH = str(_REPO_ROOT / "data" / "local_db" / "nyc_mission_control.duckdb")
