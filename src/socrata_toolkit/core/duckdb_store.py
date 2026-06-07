@@ -163,13 +163,15 @@ class DuckDBRepository:
     def upsert_dataframe(self, df: pd.DataFrame, conflict_column: str) -> int:
         if df.empty:
             return 0
-        # Sanitize identifiers: strip embedded double-quotes before quoting
+        # Sanitize identifiers
         table_name = self.table_name.replace('"', '')
         conflict_col = conflict_column.replace('"', '')
         temp_view = f"temp_view_{table_name}"
         self.manager.conn.register(temp_view, df)
+        
         tables = self.manager.conn.execute("SHOW TABLES").fetchall()
         table_exists = any(t[0] == table_name for t in tables)
+        
         if not table_exists:
             self.manager.conn.execute(
                 f'CREATE TABLE "{table_name}" AS SELECT * FROM "{temp_view}"'
@@ -179,13 +181,24 @@ class DuckDBRepository:
                 f'ON "{table_name}" ("{conflict_col}")'
             )
             return len(df)
+            
+        # Ensure all columns in DF exist in Table (Schema Evolution)
+        existing_cols = [c[1] for c in self.manager.conn.execute(f'PRAGMA table_info("{table_name}")').fetchall()]
+        for col in df.columns:
+            if col not in existing_cols:
+                logger.info("Adding missing column %s to table %s", col, table_name)
+                self.manager.conn.execute(f'ALTER TABLE "{table_name}" ADD COLUMN "{col.replace(chr(34), "")}" VARCHAR;')
+                # Note: DuckDB might need a specific type if it can't infer, but usually VARCHAR is safe for Socrata data.
+        
         columns = df.columns.tolist()
         update_set = ", ".join(
             f'"{col.replace(chr(34), "")}" = EXCLUDED."{col.replace(chr(34), "")}"'
             for col in columns if col != conflict_column
         )
+        
+        # Use BY NAME to handle column count/order mismatch
         sql = (
-            f'INSERT INTO "{table_name}" SELECT * FROM "{temp_view}" '
+            f'INSERT INTO "{table_name}" BY NAME SELECT * FROM "{temp_view}" '
             f'ON CONFLICT ("{conflict_col}") DO UPDATE SET {update_set}'
         )
         self.manager.conn.execute(sql)

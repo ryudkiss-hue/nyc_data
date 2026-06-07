@@ -43,7 +43,13 @@ Mandatory validation of:
     - **Single Source of Truth:** `DATASETS.md` is the official technical reference for all integrated endpoints. All chart labels and reports MUST use the nomenclature verified in this directory.
     - **Automated Discovery:** Any new Socrata dataset must be integrated using the `scripts/discover_socrata.py` agential workflow. Direct manual edits to `datasets.yaml` without an accompanying metadata scan are forbidden.
     - **Integrity Baseline:** All new datasets must pass the 360-degree integrity scan (Four Moments, Skewness, Kurtosis) before being promoted to the primary Executive Dashboard.
-    - **Total Recall Mode:** The toolkit supports full-scale ingestion of every single record for all registered datasets. Use `python scripts/total_recall.py` to perform a Deep Sync of all 26 databases into the local DuckDB store, bypassing all row limits using SODA3 pagination.
+- **Total Recall Mode:** The toolkit supports full-scale ingestion of every single record for all registered datasets. Use `python scripts/total_recall.py` to perform a Deep Sync of all 26 databases into the local DuckDB store, bypassing all row limits using SODA3 pagination.
+
+## 7. Engineering Mandates: Robust Ingestion & Schema Evolution
+- **SODA3 Query Verification**: Never assume a timestamp column exists. Before performing an incremental sync, utilize a pre-flight GET probe to verify column existence to prevent `400 Bad Request` failures on the SODA3 POST endpoint.
+- **DuckDB Schema Resilience**: All bulk ingestion must utilize the `INSERT INTO ... BY NAME` pattern. Ingestion logic must implement automated schema evolution (`ALTER TABLE ... ADD COLUMN`) to handle sparse JSON batches where columns may be absent from specific pagination chunks.
+- **Background Persistence**: Heavy ingestion tasks (>100k rows) should be decoupled from the primary web/CLI process and executed as background background processes with dedicated file logging.
+
 - **Code Integrity & Anti-Truncation:** 
     - **Never** use `write_file` to overwrite large existing modules (e.g., `main.py`) if there is any risk of system-level output truncation. 
     - Always prefer surgical **`replace`** calls to maintain 100% fidelity of the surrounding logic.

@@ -160,15 +160,17 @@ USER
 
 ### Fetch Flow
 ```
-User: socrata fetch <fourfour> --limit 100
+User: socrata fetch <fourfour> --limit -1
   ↓
-SocrataClient.fetch_dataframe()
-  ↓ If data in DuckDB cache && fresh:
-  DuckDB L2 Cache → Return Parquet
-  ↓ Else:
-  Socrata SODA API → Paginate (50K chunks)
+SocrataClient.fetch_json() [SODA3]
+  ↓ Pre-flight Probe: 
+  Verify updated_col exists via GET probe.
+  ↓ If Valid & Incremental:
+  SELECT * FROM ... WHERE updated_col > last_sync
   ↓
-DuckDB Store.upsert() → Save to Parquet
+DuckDB Store.upsert_dataframe()
+  ├─ Detect new columns → ALTER TABLE
+  └─ INSERT INTO ... BY NAME (Handles sparse batches)
   ↓
 Return DataFrame
 ```
@@ -254,10 +256,10 @@ Values verified by `tests/test_governance_weights.py`.
 ## Key Decisions
 
 ### DuckDB for Caching
-- Faster than refetching Socrata API
-- Column-oriented (analytics-friendly)
-- Schema drift detection built-in
-- Parquet format (portable, efficient)
+- **High-Performance**: Faster than refetching Socrata API.
+- **Column-Oriented**: Ideal for analytical aggregations.
+- **Schema Evolution**: Automatically handles inconsistent JSON batches (missing columns) using `ALTER TABLE ... ADD COLUMN` and `INSERT INTO ... BY NAME`.
+- **SODA3 Ready**: Optimized for the latest SODA3 `query.json` POST endpoint with robust column probing.
 
 ### 7 Pillars
 - Semi-independent: can import selectively

@@ -2,6 +2,7 @@
 
 ## Development Setup
 
+### Local Installation
 1. Clone and install:
 
 ```bash
@@ -10,18 +11,20 @@ pip install -e ".[mission]"
 pip install -r requirements-dev.txt
 ```
 
-2. Run tests:
+### Dockerized Development (Recommended)
+The toolkit supports a high-performance Docker workflow with hot-reloading:
 
 ```bash
-python -m pytest tests/ -q --tb=short
+docker compose up -d dash-app
 ```
+Access the Dash UI at **http://localhost:8012**. Any changes you save to the source code will automatically restart the app inside the container.
 
-3. Lint:
-
+## Data Ingestion (Total Recall)
+To perform a full sync of all municipal datasets:
 ```bash
-ruff check src/socrata_toolkit tests app
-black src/socrata_toolkit tests app
+python scripts/total_recall.py
 ```
+See `docs/TOTAL_RECALL_GUIDE.md` for technical implementation details on SODA3 and DuckDB schema evolution.
 
 ## Data Policy (CRITICAL)
 

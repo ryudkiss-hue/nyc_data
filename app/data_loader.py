@@ -94,6 +94,46 @@ try:
 except ImportError:  # pragma: no cover
     _DISK_CACHE_AVAILABLE = False
 
+try:
+    from socrata_toolkit.core.duckdb_store import DuckDBManager, DuckDBRepository
+    _DUCKDB_AVAILABLE = True
+except ImportError:
+    _DUCKDB_AVAILABLE = False
+
+_DUCKDB_PATH = str(_REPO_ROOT / "data" / "local_db" / "nyc_mission_control.duckdb")
+
+def _read_duckdb_cache(dataset_key: str, limit: int | None = None) -> pd.DataFrame | None:
+    if not _DUCKDB_AVAILABLE:
+        return None
+    try:
+        manager = DuckDBManager(_DUCKDB_PATH)
+        repo = DuckDBRepository(manager, dataset_key)
+        df = repo.fetch_all(limit=limit or 1_000_000)
+        manager.close()
+        if not df.empty:
+            return _postprocess_dataset(dataset_key, df)
+    except Exception as exc:
+        logging.debug("DuckDB read failed for %s: %s", dataset_key, exc)
+    return None
+
+def _write_duckdb_cache(dataset_key: str, df: pd.DataFrame) -> None:
+    if not _DUCKDB_AVAILABLE or df.empty or "_error" in df.columns:
+        return
+    try:
+        from socrata_toolkit.core import COL_ID, COL_AT_ID
+        manager = DuckDBManager(_DUCKDB_PATH)
+        repo = DuckDBRepository(manager, dataset_key)
+        # Identify PK
+        pk = COL_ID if COL_ID in df.columns else (COL_AT_ID if COL_AT_ID in df.columns else None)
+        if pk:
+            repo.upsert_dataframe(df, pk)
+        else:
+            # Fallback to simple insert if no PK
+            manager.conn.register("temp_df", df)
+            manager.query(f'INSERT INTO "{dataset_key}" BY NAME SELECT * FROM temp_df')
+        manager.close()
+    except Exception as exc:
+        logging.debug("DuckDB write failed for %s: %s", dataset_key, exc)
 
 def _bootstrap_env() -> None:
     if load_dotenv is None:
@@ -424,6 +464,13 @@ def fetch_dataset(
     if where is None:
         where = DATASET_REGISTRY[dataset_key].get("default_where")
 
+    # L1.5: DuckDB cache (Total Recall store)
+    if _DUCKDB_AVAILABLE:
+        duck_cached = _read_duckdb_cache(dataset_key, limit=effective_limit)
+        if duck_cached is not None:
+            log_event("fetch_duckdb", dataset=dataset_key, rows=len(duck_cached))
+            return duck_cached
+
     # L2: Parquet disk cache (cache_manager)
     if _DISK_CACHE_AVAILABLE:
         cached = _read_disk_cache(dataset_key)
@@ -461,6 +508,8 @@ def fetch_dataset(
     try:
         t0 = time.perf_counter()
         df = _fetch_live(dataset_key, limit=effective_limit, where=effective_where, select=select)
+        # Write to new DuckDB store (L1.5)
+        _write_duckdb_cache(dataset_key, df)
         # Write to new L2 disk cache
         if _DISK_CACHE_AVAILABLE and not df.empty and "_error" not in df.columns:
             _write_disk_cache(dataset_key, df)
