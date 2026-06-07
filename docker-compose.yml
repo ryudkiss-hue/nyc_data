@@ -47,8 +47,10 @@ services:
     environment:
       PG_DSN: postgresql://${DB_USER:-nyc_analyst}:${DB_PASS:-secure_password}@postgres:5432/${DB_NAME:-nyc_data}
     volumes:
+      - .:/app
       - .cache/socrata_data:/app/.cache/socrata_data
       - .cache/serverside_data:/app/.cache/serverside_data
+    command: uvicorn app.dash_app:server --host 0.0.0.0 --port 8012 --reload
     depends_on:
       postgres:
         condition: service_healthy
