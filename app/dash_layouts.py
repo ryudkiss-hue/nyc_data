@@ -42,7 +42,7 @@ def visualization_asset(chart_id, title, description, summary):
                             dmc.Switch(label="Show Target Line", size="xs", checked=True),
                             dmc.Switch(label="Enable Log Scale", size="xs"),
                         ], gap="lg", mt="sm"),
-                        dcc.Graph(id=chart_id, config={'displayModeBar': True}),
+                        dcc.Graph(id={"type": "visualization-graph", "index": chart_id}, config={'displayModeBar': True}),
                         dmc.Text("Source: NYC Open Data · Standard Error: ±1.2%", size="xs", c="gray", ta="right")
                     ])
                 ]),
@@ -88,12 +88,12 @@ def visualization_asset(chart_id, title, description, summary):
                                 dmc.Text(summary, size="sm", style={"lineHeight": "1.6"})
                             ]),
                             dmc.Divider(),
-                            dmc.Text("STATISTICAL FINDINGS", fw=700, size="sm"),
-                            dmc.List([
-                                dmc.ListItem("P-Value: < 0.001 (Highly Significant)"),
-                                dmc.ListItem("R-Squared: 0.84"),
-                                dmc.ListItem("Outliers Detected: 3 (Sigma > 2.5)"),
-                                dmc.ListItem("Confidence Interval: 94% HDI"),
+                            dmc.Text("STATISTICAL FINDINGS (THE FOUR MOMENTS)", fw=700, size="sm"),
+                            dmc.List(id={"type": "statistical-moments", "index": chart_id}, children=[
+                                dmc.ListItem("Mean: PENDING"),
+                                dmc.ListItem("Variance: PENDING"),
+                                dmc.ListItem("Skewness: PENDING"),
+                                dmc.ListItem("Kurtosis: PENDING"),
                             ], size="sm")
                         ])
                     ])
@@ -132,38 +132,43 @@ def visualization_asset(chart_id, title, description, summary):
 def render_header():
     return dmc.AppShellHeader(
         children=[
-            dmc.Group(
-                children=[
-                    dmc.Group([
-                        dmc.Text("MANHATTAN MISSION CONTROL v7.0", size="xl", fw=900, c="black"),
-                        dmc.Badge("ELITE POWERHOUSE", color="indigo", variant="filled"),
-                    ]),
-                    # Global Command Bar
-                    dmc.Group([
-                        dmc.Select(
-                            id="global-boro-filter",
-                            placeholder="Borough",
-                            data=["ALL", "MANHATTAN", "BROOKLYN", "QUEENS", "BRONX", "STATEN ISLAND"],
-                            value="ALL", w=140, size="xs"
-                        ),
-                        dmc.Select(
-                            id="global-cat-filter",
-                            placeholder="Category",
-                            data=["ALL", "CORE SMD", "ACCESSIBILITY", "COORDINATION", "OVERLAYS"],
-                            value="ALL", w=140, size="xs"
-                        ),
-                        dmc.ActionIcon(DashIconify(icon="mdi:theme-light-dark"), variant="outline", id="btn-toggle-theme", color="dark", size="sm"),
-                        dmc.Button("JUPYTER", id="btn-jupyter-export", variant="light", color="indigo", size="xs", leftSection=DashIconify(icon="mdi:notebook")),
-                    ], gap="xs"),
-                    dmc.Group([
-                        dmc.Badge("INDUSTRIAL", color="blue", variant="outline"),
-                        dmc.Badge("MANDATE 100%", color="green"),
-                    ]),
-                ],
-                justify="space-between", px="md", h="100%"
-            )
+            dmc.Stack([
+                dmc.Group(
+                    children=[
+                        dmc.Group([
+                            dmc.Text("MANHATTAN MISSION CONTROL v8.0-ALPHA", size="xl", fw=900, c="black"),
+                            dmc.Badge("TURBO-STREAM", color="orange", variant="filled"),
+                            dmc.Badge("FASTAPI ENABLED", color="cyan"),
+                        ]),
+                        # Global Command Bar
+                        dmc.Group([
+                            dmc.Select(
+                                id="global-boro-filter",
+                                placeholder="Borough",
+                                data=["ALL", "MANHATTAN", "BROOKLYN", "QUEENS", "BRONX", "STATEN ISLAND"],
+                                value="ALL", w=140, size="xs"
+                            ),
+                            dmc.ActionIcon(DashIconify(icon="mdi:theme-light-dark"), variant="outline", id="btn-toggle-theme", color="dark", size="sm"),
+                            dmc.Button("JUPYTER", id="btn-jupyter-export", variant="light", color="indigo", size="xs", leftSection=DashIconify(icon="mdi:notebook")),
+                        ], gap="xs"),
+                    ],
+                    justify="space-between", px="md", pt="xs"
+                ),
+                # Item 120: Mantine 8.0 Marquee for Live Telemetry
+                dmc.Marquee(
+                    pauseOnHover=True,
+                    gap="xl",
+                    children=[
+                        dmc.Text("SYSTEM STATUS: OPTIMIZED", size="xs", fw=700, c="green"),
+                        dmc.Text("ENGINE: FASTAPI/ASGI", size="xs", fw=700, c="blue"),
+                        dmc.Text("MODE: TOTAL RECALL UNLIMITED", size="xs", fw=700, c="orange"),
+                        dmc.Text("CACHING: FANOUT-SHARDED", size="xs", fw=700, c="indigo"),
+                        dmc.Text("SECURITY: CSP-NONCE ACTIVE", size="xs", fw=700, c="red"),
+                    ]
+                )
+            ], gap=0)
         ],
-        style={"borderBottom": "3px solid #000000"}
+        style={"borderBottom": "3px solid #000000", "height": "90px"}
     )
 
 def render_sidebar():
@@ -208,7 +213,9 @@ def render_sidebar():
                                 ]
                             ),
                             dmc.Divider(label="Forensic Audit", labelPosition="center", mt="md"),
-                            dmc.ScrollArea(h=100, children=[html.Div(id="audit-log-terminal", style={"padding": "4px"})])
+                            dmc.ScrollArea(h=100, children=[html.Div(id="audit-log-terminal", style={"padding": "4px"})]),
+                            dmc.Divider(label="Engine Status", labelPosition="center", mt="md"),
+                            dmc.ScrollArea(h=100, children=[html.Div(id="debug-terminal", style={"padding": "4px", "fontFamily": "monospace", "fontSize": "10px"})])
                         ]
                     )
                 ]
@@ -434,7 +441,11 @@ def layout_nlp():
             dmc.Text("NLP & CITIZEN SENTIMENT ANALYTICS", fw=900, size="xl", mb="lg", c="black"),
             dmc.Paper(withBorder=True, p="lg", mb="lg", children=[
                 dmc.Text("VOICE NOTE TRANSCRIPTION (ITEM 50)", fw=700, mb="sm"),
-                dmc.FileInput(label="Upload Inspector Audio (.wav/mp3)", placeholder="Select file", id="audio-upload", w=300),
+                dcc.Upload(
+                    id="audio-upload",
+                    children=dmc.Button("Select Audio File (.wav/mp3)", variant="outline", w=300),
+                    multiple=False
+                ),
                 dmc.Button("TRANSCRIBE & TRIAGE", mt="md", variant="light")
             ]),
             visualization_asset("viz-nlp-sentiment-heat", "Citizen Frustration Heatmap", "Spatial sentiment analysis.", "Heatmap of negative 311 sentiment."),
@@ -460,9 +471,9 @@ def layout_settings():
                     dmc.Text("SODA VERSIONING", fw=700, size="sm"),
                     dmc.SegmentedControl(id="set-soda-version", value="3.0", data=[{"value": "2.1", "label": "SODA 2.1"}, {"value": "3.0", "label": "SODA 3.0"}], fullWidth=True),
                     dmc.TextInput(id="set-socrata-token", label="Socrata Token", placeholder="TfrAwqroXIrKRPwPvWpEZnkcT"),
-                    dmc.NumberInput(id="set-row-limit", label="Record Limit", value=5000),
+                    dmc.NumberInput(id="set-row-limit", label="Record Limit", value=0, description="Enter 0 for 'Total Recall' Unlimited Streaming mode."),
                     dmc.TextInput(id="set-slack-webhook", label="Slack Notification Webhook (Item 99)", placeholder="https://hooks.slack.com/services/..."),
-                    dmc.Button("INITIALIZE & LOAD ALL DATASETS", id="btn-initialize-all", fullWidth=True, mt="xl", color="blue", size="lg")
+                    dmc.Button("INITIALIZE & LOAD ALL DATASETS", id={"type": "init-btn", "index": "main"}, fullWidth=True, mt="xl", color="blue", size="lg")
                 ])
             ])
         ]
