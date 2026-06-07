@@ -39,3 +39,11 @@ Mandatory validation of:
 - **Metadata:** Automated inclusion of Source ID, Timestamp (UTC), Toolkit Version, and Filter Parameters.
 - **Accessibility (Section 508):** WCAG 2.1 AA compliant semantic HTML, redundant encoding (labels + color), and high contrast.
 - **Quantitative Integrity:** Display **Data Reliability/Completeness Scores**. Use `Data Unavailable` or `N/A`, never `0` for missingness. Perform end-of-cycle reconciliation against source record counts.
+- **Data Governance & Discovery:**
+    - **Single Source of Truth:** `DATASETS.md` is the official technical reference for all integrated endpoints. All chart labels and reports MUST use the nomenclature verified in this directory.
+    - **Automated Discovery:** Any new Socrata dataset must be integrated using the `scripts/discover_socrata.py` agential workflow. Direct manual edits to `datasets.yaml` without an accompanying metadata scan are forbidden.
+    - **Integrity Baseline:** All new datasets must pass the 360-degree integrity scan (Four Moments, Skewness, Kurtosis) before being promoted to the primary Executive Dashboard.
+- **Code Integrity & Anti-Truncation:** 
+    - **Never** use `write_file` to overwrite large existing modules (e.g., `main.py`) if there is any risk of system-level output truncation. 
+    - Always prefer surgical **`replace`** calls to maintain 100% fidelity of the surrounding logic.
+    - Any use of placeholders like `...` or `[rest of code]` in a file write is a violation of the **"No Mocking" Mandate**.

@@ -252,7 +252,46 @@ class MaterialSpecification:
     """NYC SDM 4th Ed classification (Standard, Distinctive, Historic, Pilot)"""
 
     description: str = ""
-    # ... (other fields) ...
+    """Detailed description and use cases"""
+
+    design_standards: dict[str, Any] = field(default_factory=dict)
+    """Design specifications (thickness, compaction, binder grade, etc.)."""
+
+    maintenance_schedule: MaintenanceSchedule = field(default_factory=MaintenanceSchedule)
+    """Maintenance intervals and lifecycle"""
+
+    lifecycle_years: int = 20
+    """Expected lifespan in years under normal conditions"""
+
+    environmental_factors: dict[str, str] = field(default_factory=dict)
+    """Environmental challenges (e.g., {'freeze_thaw': 'Critical'})"""
+
+    cost_per_sqft: float = 0.0
+    """Installation cost in USD per square foot"""
+
+    lifecycle_cost_per_sqft: float = 0.0
+    """Total cost of ownership per square foot"""
+
+    sustainability_score: float = 0.0
+    """0-100 score based on recycled content, durability, infiltration"""
+
+    carbon_footprint_kg_per_sqft: float = 0.0
+    """Lifecycle carbon emissions in kg CO2e per square foot"""
+
+    applicable_ada_rules: list[str] = field(default_factory=list)
+    """Which ADA rule IDs apply to this material"""
+
+    maintenance_procedures: dict[str, str] = field(default_factory=dict)
+    """Maintenance activity descriptions"""
+
+    nyc_code_references: list[str] = field(default_factory=list)
+    """NYC Administrative Code citations"""
+
+    industry_standards: list[str] = field(default_factory=list)
+    """ASTM, ACI, NAPA standard references"""
+
+    notes: str = ""
+    """Additional notes or special considerations"""
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
