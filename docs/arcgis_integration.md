@@ -2,7 +2,7 @@
 
 ## Overview
 
-The NYC DOT Sidewalk Toolkit integrates seamlessly with ArcGIS Online and ArcGIS Enterprise for:
+The NYC DOT Socrata Toolkit integrates seamlessly with ArcGIS Online and ArcGIS Enterprise for:
 - Querying authoritative NYC reference data (streets, districts, zones)
 - Publishing sidewalk data as feature services
 - Synchronizing data with city-wide GIS systems

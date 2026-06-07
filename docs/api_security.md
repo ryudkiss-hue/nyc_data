@@ -2,7 +2,8 @@
 
 ## Overview
 
-The NYC DOT Sidewalk Toolkit implements production-grade API security with multiple authentication methods, fine-grained authorization, rate limiting, and comprehensive data governance.
+The NYC DOT Socrata Toolkit implements production-grade API security with multiple authentication 
+ methods, fine-grained authorization, rate limiting, and comprehensive data governance.
 
 ## Key Features
 

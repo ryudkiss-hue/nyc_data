@@ -1,4 +1,4 @@
-"""NYC DOT SIM Analyst Toolkit — Streamlit desktop application."""
+"""NYC DOT Socrata Toolkit — Streamlit mission control dashboard (Legacy)."""
 
 from __future__ import annotations
 
@@ -254,9 +254,9 @@ def _sidebar_nav() -> tuple[str, dict]:
     """Render sidebar navigation. Returns (section_key, workflow_opts)."""
     with st.sidebar:
         render_language_selector()
-        st.markdown("### 🏙️ NYC DOT · SIM")
-        st.markdown("**Analyst Toolkit**")
-        st.caption("Sidewalk Inspection Management")
+        st.markdown("### 🏙️ NYC DOT SOCRATA")
+        st.markdown("**Toolkit**")
+        st.caption("Municipal Data Engineering")
         st.divider()
 
         # Dark mode toggle

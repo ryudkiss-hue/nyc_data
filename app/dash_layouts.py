@@ -136,7 +136,7 @@ def render_header():
                 dmc.Group(
                     children=[
                         dmc.Group([
-                            dmc.Text("MANHATTAN MISSION CONTROL v8.0-ALPHA", size="xl", fw=900, c="black"),
+                            dmc.Text("NYC DOT SOCRATA TOOLKIT v8.0-ALPHA", size="xl", fw=900, c="black"),
                             dmc.Badge("TURBO-STREAM", color="orange", variant="filled"),
                             dmc.Badge("FASTAPI ENABLED", color="cyan"),
                         ]),

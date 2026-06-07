@@ -1,4 +1,4 @@
-# Primary CI for NYC DOT Sidewalk Toolkit (Streamlit Mission Control + analyst CLI).
+# Primary CI for NYC DOT Socrata Toolkit (Turbo-Stream Dash + analyst CLI).
 
 name: NYC Toolkit CI
 

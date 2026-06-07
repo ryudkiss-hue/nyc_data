@@ -1,6 +1,6 @@
-# Agency runbook — Manhattan Mission Control
+# Agency runbook — NYC DOT Socrata Toolkit
 
-Operational guide for NYC DOT SIM analysts and release owners targeting **95+ readiness**.
+Operational guide for NYC DOT Socrata Toolkit analysts and release owners targeting **95+ readiness**.
 
 ## Daily operations
 

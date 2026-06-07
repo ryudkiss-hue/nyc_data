@@ -1,11 +1,11 @@
-# NYC DOT SIM Analyst Toolkit
+# NYC DOT Socrata Toolkit
 
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-blue?style=flat-square&logo=python)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 [![30+ Visualizations](https://img.shields.io/badge/Visualizations-30%2B-orange?style=flat-square)](app/)
 [![75+ Features](https://img.shields.io/badge/Features-75%2B-purple?style=flat-square)](src/socrata_toolkit/)
 
-A unified Streamlit Mission Control dashboard and Python CLI toolkit for NYC DOT analysts. It ingests live Socrata open data, runs Bayesian SLA forecasting, performs spatial conflict detection, and surfaces 30+ interactive visualizations — all backed by a DuckDB L2 cache and a natural-language query interface powered by the Claude API.
+The **NYC DOT Socrata Toolkit** is an elite engineering engine and analytical platform for municipal data. It ingests live Socrata open data, runs Bayesian SLA forecasting, performs spatial conflict detection, and surfaces 30+ interactive visualizations — all backed by a high-performance FastAPI/Dash backend and a DuckDB L2 cache.
 
 ---
 
@@ -13,7 +13,7 @@ A unified Streamlit Mission Control dashboard and Python CLI toolkit for NYC DOT
 
 | Feature | Status |
 |---------|--------|
-| Streamlit Mission Control | ✅ |
+| Turbo-Stream Dash (FastAPI) | ✅ |
 | GIS Dashboard (10 charts) | ✅ |
 | Advanced Analytics (13 charts) | ✅ |
 | Spatial Conflict Detection | ✅ |
@@ -23,7 +23,7 @@ A unified Streamlit Mission Control dashboard and Python CLI toolkit for NYC DOT
 | Nightly Prefetch Scheduler | ✅ |
 | NL Query (Claude API) | ✅ |
 | PDF/Excel/PPTX Reports | ✅ |
-| CLI Analyst Commands | ✅ |
+| CLI Toolkit Commands | ✅ |
 | Data Quality Scorecard | ✅ |
 
 ---
@@ -32,11 +32,11 @@ A unified Streamlit Mission Control dashboard and Python CLI toolkit for NYC DOT
 
 ```
 ┌─────────────────────────────────────────────┐
-│           NYC DOT SIM Analyst Toolkit        │
+│             NYC DOT Socrata Toolkit          │
 ├──────────────┬──────────────┬────────────────┤
-│  Streamlit   │  CLI Toolkit │  Python API    │
-│  Mission     │  socrata     │  socrata_      │
-│  Control     │  commands    │  toolkit       │
+│ Turbo-Stream │  CLI Toolkit │  Python API    │
+│ Dash App     │  socrata     │  socrata_      │
+│ (FastAPI)    │  commands    │  toolkit       │
 ├──────────────┴──────────────┴────────────────┤
 │              Data Layer                      │
 │  ┌──────────────┐    ┌───────────────────┐   │

@@ -1,5 +1,5 @@
 """
-SIM analyst workflows, data quality, and Productivity ROI telemetry.
+Socrata toolkit workflows, data quality, and Productivity ROI telemetry.
 
 Maps four operational views to cross-dataset logic on the ingestion matrix.
 Includes enhanced column profiling, health scoring, and quality metrics.

@@ -1,6 +1,8 @@
-# AWS Deployment Guide - NYC Sidewalk Toolkit
+# AWS Deployment Guide - NYC DOT Socrata Toolkit
 
-Complete guide for deploying the NYC Sidewalk Toolkit to AWS with production-grade infrastructure.
+Complete guide for deploying the NYC DOT Socrata Toolkit to AWS with production-grade 
+infrastructure.
+
 
 ## Architecture Overview
 
