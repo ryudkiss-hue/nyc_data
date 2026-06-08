@@ -1,0 +1,8 @@
+{
+  "track_id": "skill_integration_20260608",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-06-07T20:30:00Z",
+  "updated_at": "2026-06-07T20:30:00Z",
+  "description": "Hardcode AI agent skills (analysis, management, visualization) utilities and functionality into the app and implement."
+}
