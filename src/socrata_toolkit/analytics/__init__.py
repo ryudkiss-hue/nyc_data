@@ -49,6 +49,37 @@ class AnalysisResult:
             "timestamp": self.timestamp
         }
 
+def log_analysis_result(manager: Any, result: AnalysisResult) -> None:
+    """
+    Persists an AnalysisResult to the DuckDB analysis_history table.
+    
+    Args:
+        manager (DuckDBManager): Active database manager.
+        result (AnalysisResult): The result to log.
+    """
+    import json
+    
+    # Ensure history table exists
+    manager.conn.execute("""
+        CREATE TABLE IF NOT EXISTS analysis_history (
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            skill_name VARCHAR,
+            success BOOLEAN,
+            table_name VARCHAR,
+            data JSON,
+            metadata JSON
+        )
+    """)
+    
+    # Extract table_name from metadata if present
+    table_name = result.metadata.get("table_name") or result.metadata.get("dataset_key") or "N/A"
+    
+    manager.conn.execute(
+        "INSERT INTO analysis_history (skill_name, success, table_name, data, metadata) VALUES (?, ?, ?, ?, ?)",
+        [result.skill_name, result.success, table_name, json.dumps(result.data), json.dumps(result.metadata)]
+    )
+    logger.info("Logged %s result for %s to analysis_history", result.skill_name, table_name)
+
 class BaseSkill(ABC):
     """
     Abstract base class for all hardcoded analytical skills.
