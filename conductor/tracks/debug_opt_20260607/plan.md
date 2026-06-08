@@ -1,6 +1,6 @@
 # Implementation Plan - Comprehensive Debugging and Optimization
 
-## Phase 1: Diagnostic Audit & Ingestion Stability
+## Phase 1: Diagnostic Audit & Ingestion Stability [checkpoint: 3070db2]
 - [x] Task: Write failing tests for SODA3 type casting and batch ingestion errors. [c43955b]
 - [x] Task: Implement strict type casting in `socrata_toolkit.core.client` and resolve `400 Bad Request` errors. [6349e1d]
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Diagnostic Audit & Ingestion Stability' (Protocol in workflow.md) [db40f4e]
