@@ -6,7 +6,7 @@
     - [ ] Define `BaseSkill` abstract class with metadata and logging hooks
     - [ ] Implement `AnalysisResult` data structure for unified reporting
     - [ ] **Logging/Docs**: Implement structured logging for skill initialization and add detailed Docstrings (Google style)
-- [ ] Task: Implement Data Quality & Integrity Skills
+- [x] Task: Implement Data Quality & Integrity Skills [fb5a8ef]
     - [ ] Create `DataQualityAudit` class (null checks, outlier detection, Four Moments)
     - [ ] Create `SchemaMapper` (DuckDB schema to Socrata metadata mapping)
     - [ ] Create `MetricReconciliation` (comparative analysis logic)
