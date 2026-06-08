@@ -159,5 +159,24 @@ def sync_dataset(
 
     if pbar is not None:
         pbar.close()
+
+    # --- Post-Sync Analytics Integration (Phase 2) ---
+    try:
+        if count > 0:
+            logger.info("Triggering post-sync DataQualityAudit for %s", table_name)
+            # We need to fetch the synced data to audit it
+            # For efficiency, we just query the recently synced rows or sample the table
+            full_df = repo.fetch_all(limit=10000) # Sample 10k rows
+            
+            from ..analytics.quality import DataQualityAudit
+            from ..analytics import log_analysis_result
+            
+            audit = DataQualityAudit()
+            audit_result = audit.run(df=full_df, table_name=table_name)
+            
+            log_analysis_result(manager, audit_result)
+    except Exception as analytics_err:
+        logger.warning("Post-sync analytics failed for %s: %s", table_name, analytics_err)
+
     manager.close()
     return count
