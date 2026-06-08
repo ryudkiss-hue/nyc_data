@@ -48,6 +48,9 @@ Mandatory validation of:
 ## 7. Engineering Mandates: Robust Ingestion & Schema Evolution
 - **SODA3 Query Verification**: Never assume a timestamp column exists. Before performing an incremental sync, utilize a pre-flight GET probe to verify column existence to prevent `400 Bad Request` failures on the SODA3 POST endpoint.
 - **DuckDB Schema Resilience**: All bulk ingestion must utilize the `INSERT INTO ... BY NAME` pattern. Ingestion logic must implement automated schema evolution (`ALTER TABLE ... ADD COLUMN`) to handle sparse JSON batches where columns may be absent from specific pagination chunks.
+- **Schema Documentation & Drift Logging**:
+    - **Definitive Schema**: `DATASETS.md` must be regularly updated with full field descriptions and types using `scripts/generate_schema_docs.py`.
+    - **Drift Tracking**: All schema evolution events (new columns, type shifts) must be logged to `data/logs/schema_drift.csv` and `docs/SCHEMA_DRIFT.md` using the `socrata_toolkit.core.drift_logger` utility.
 - **Background Persistence**: Heavy ingestion tasks (>100k rows) should be decoupled from the primary web/CLI process and executed as background background processes with dedicated file logging.
 
 - **Code Integrity & Anti-Truncation:** 
