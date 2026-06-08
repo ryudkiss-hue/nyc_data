@@ -36,8 +36,11 @@ from dash_layouts import (
     layout_stats, layout_gis, layout_engineering, 
     layout_sql_tools, layout_nlp, layout_settings, 
     layout_tutorials, layout_copilot, render_header, render_sidebar,
-    layout_labor
+    layout_labor, layout_toolbox
 )
+
+# Import Analytics Service
+from services.analytics_service import run_dataset_audit, get_analysis_history, synthesize_executive_summary
 
 # ==========================================
 # --- CONFIGURATION & PERFORMANCE ---
@@ -267,7 +270,79 @@ def render_page_content(pathname):
     elif pathname == "/tutorials": return layout_tutorials()
     elif pathname == "/settings": return layout_settings()
     elif pathname == "/copilot": return layout_copilot()
+    elif pathname == "/toolbox": return layout_toolbox()
     return dmc.Text("404: Not Found", c="red")
+
+# --- ANALYTICAL TOOLBOX CALLBACKS ---
+
+@callback(
+    Output("audit-results-container", "children"),
+    Input("btn-run-audit", "n_clicks"),
+    State("audit-dataset-select", "value"),
+    prevent_initial_call=True
+)
+def handle_toolbox_audit(n_clicks, dataset_key):
+    if not n_clicks: return no_update
+    
+    result = run_dataset_audit(dm.manager, dataset_key)
+    
+    if not result["success"]:
+        return dmc.Alert(result["error"], title="Audit Failed", color="red")
+        
+    # Render results
+    moments = result["data"].get("four_moments", {})
+    return dmc.Stack([
+        dmc.Text(f"Audit completed at {result['timestamp']}", size="xs", c="gray"),
+        dmc.Group([
+            dmc.Badge(f"{len(moments)} Columns Audited", color="blue"),
+            dmc.Badge(f"{len(result['data'].get('outliers', {}))} Outliers Found", color="orange")
+        ]),
+        dmc.Code(json.dumps(result["data"], indent=2), block=True)
+    ])
+
+@callback(
+    Output("summary-output-container", "children"),
+    Input("btn-gen-summary", "n_clicks"),
+    State("summary-input", "value"),
+    prevent_initial_call=True
+)
+def handle_toolbox_summary(n_clicks, raw_input):
+    if not n_clicks: return no_update
+    summary = synthesize_executive_summary(raw_input)
+    return dmc.TypographyStylesProvider(children=dcc.Markdown(summary))
+
+@callback(
+    Output("analysis-history-table", "children"),
+    Input("url", "pathname"),
+    prevent_initial_call=False
+)
+def refresh_analysis_history(pathname):
+    if pathname != "/toolbox": return no_update
+    
+    history = get_analysis_history(dm.manager)
+    if not history:
+        return [html.Thead(html.Tr([html.Th("No history found")]))]
+        
+    rows = []
+    for entry in history:
+        rows.append(html.Tr([
+            html.Td(entry["timestamp"]),
+            html.Td(entry["skill_name"]),
+            html.Td(entry["table_name"]),
+            html.Td(dmc.Badge("SUCCESS" if entry["success"] else "FAILED", color="green" if entry["success"] else "red"))
+        ]))
+        
+    return [
+        html.Thead(
+            html.Tr([
+                html.Th("Timestamp"),
+                html.Th("Skill"),
+                html.Th("Dataset"),
+                html.Th("Status"),
+            ])
+        ),
+        html.Tbody(rows)
+    ]
 
 @callback(
     Output("audit-log-terminal", "children", allow_duplicate=True),
@@ -383,11 +458,11 @@ def update_copilot_chat(n_clicks, user_text, history, model):
     return history
 
 @callback(
-    [Output(f"nav-{id}", "active") for id in ["dash", "const", "labor", "reports", "stats", "geo", "eng", "sql", "nlp", "tutorials", "settings", "copilot"]],
+    [Output(f"nav-{id}", "active") for id in ["dash", "const", "labor", "reports", "stats", "geo", "eng", "sql", "nlp", "tutorials", "settings", "toolbox", "copilot"]],
     Input("url", "pathname")
 )
 def update_nav_active(pathname):
-    paths = ["/", "/const", "/labor", "/reports", "/stats", "/geo", "/eng", "/sql", "/nlp", "/tutorials", "/settings", "/copilot"]
+    paths = ["/", "/const", "/labor", "/reports", "/stats", "/geo", "/eng", "/sql", "/nlp", "/tutorials", "/settings", "/toolbox", "/copilot"]
     return [pathname == p for p in paths]
 
 # --- ELITE GOVERNANCE & EXPORT ---
