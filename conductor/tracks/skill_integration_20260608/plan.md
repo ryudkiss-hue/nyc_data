@@ -18,18 +18,18 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Core Analytics Framework' (Protocol in workflow.md) [20f2d81]
     - [ ] **Reactive**: Resolve any environmental or legacy errors discovered during infrastructure setup.
 
-## Phase 2: Integration & Automations
+## Phase 2: Integration & Automations [checkpoint: 26268dd]
 - [x] Task: Integrate Analytics into Sync Pipeline [2713194]
-    - [ ] Update `src/socrata_toolkit/pipeline/sync.py` to trigger `DataQualityAudit`
-    - [ ] Implement `analysis_history` table in DuckDB
-    - [ ] Log quality scores during `total_recall` execution
-    - [ ] **Logging/Docs**: Implement telemetry for pipeline analytical overhead; update `docs/TOTAL_RECALL_GUIDE.md`
+    - [x] Update `src/socrata_toolkit/pipeline/sync.py` to trigger `DataQualityAudit`
+    - [x] Implement `analysis_history` table in DuckDB
+    - [x] Log quality scores during `total_recall` execution
+    - [x] **Logging/Docs**: Implement telemetry for pipeline analytical overhead; update `docs/TOTAL_RECALL_GUIDE.md`
 - [x] Task: Standardized Accessibility Utility [8e0edbf]
-    - [ ] Create `src/socrata_toolkit/viz/accessibility.py`
-    - [ ] Implement WCAG 2.1 AA color palette injection for Plotly
-    - [ ] Create utility for automated text-based summaries for charts
-    - [ ] **Logging/Docs**: Log accessibility violations handled; update `docs/ada_compliance_reference.md`
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Integration & Automations' (Protocol in workflow.md)
+    - [x] Create `src/socrata_toolkit/viz/accessibility.py`
+    - [x] Implement WCAG 2.1 AA color palette injection for Plotly
+    - [x] Create utility for automated text-based summaries for charts
+    - [x] **Logging/Docs**: Log accessibility violations handled; update `docs/ada_compliance_reference.md`
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Integration & Automations' (Protocol in workflow.md) [26268dd]
 
 ## Phase 3: Dash UI & Toolbox
 - [ ] Task: Create Analytical Toolbox View
