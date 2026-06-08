@@ -11,38 +11,38 @@ DATA LAYER
   DuckDB L2 Cache (Parquet in data/local_db/)
     ↓ delta refresh, schema drift detection
 
-PROCESSING LAYER (Elite Analyst Framework)
+PROCESSING LAYER (7 Pillars)
   ┌──────────────────────────────────────────┐
   │ 1. Core                                  │
-  │    API client, DuckDB, Hardened Auth     │
+  │    API client, DuckDB persistence, CLI   │
   │                                          │
-  │ 2. Analysis (Mandate Aligned)            │
-  │    Four Moments, Bayesian MCMC, Inference│
+  │ 2. Analysis                              │
+  │    Profiling, quality, anomalies         │
   │                                          │
   │ 3. Analyst                               │
-  │    Workflows, Docusaurus-Ready Reports   │
+  │    Workflows, publishing, roles          │
   │                                          │
   │ 4. Quality                               │
-  │    Normality Audits, Evidence Tracking   │
+  │    SLA tracking, freshness, validation   │
   │                                          │
   │ 5. Visualization                         │
-  │    Accessible Plotly/Folium (WCAG 2.1)   │
+  │    30+ chart types (Plotly, Folium)      │
   │                                          │
   │ 6. Governance                            │
-  │    Equity Weighting, Pipeline Reconcile  │
+  │    Lineage, audit, schema drift          │
   │                                          │
-  │ 7. Engineering (CMU & NYSDOT Standard)   │
-  │    Markov Chains, LCCA, Vision Zero Audit│
+  │ 7. Engineering                           │
+  │    Domain logic (contracts, budgets)     │
   └──────────────────────────────────────────┘
 
 INTERFACE LAYER
   ↓ CLI (socrata, 60+ commands)
-  ↓ Streamlit UI (Manhattan Mission Control)
+  ↓ Streamlit UI (11 tabs + 5 workflows)
   ↓ Python API (import socrata_toolkit.*)
-  ↓ REST API (FastAPI)
+  ↓ REST API (optional Flask/FastAPI)
 
 USER
-  Analysts, Managers, Civil Engineers
+  Analysts, Managers, Engineers
 ```
 
 ## Pillar Details
@@ -52,30 +52,46 @@ USER
 
 - **SocrataClient** (`client.py`): Wrapper around Socrata SODA API
   - `fetch_dataframe()`: Download JSON/GeoJSON/XLSX
-  - Hardened SQL injection protection using `psycopg.sql`.
+  - `get_metadata()`: Dataset properties, schema
+  - Automatic pagination (50K rows per request)
+  - Retry with exponential backoff (tenacity)
 
-### 2. Analysis (Elite Scientific Mandate)
+- **SocrataConfig** (`config.py`): Configuration loader
+  - Reads `config/datasets.yaml`, environment variables
+  - SLA thresholds from `data/sla_config.json`
+
+- **DuckDB Store** (`duckdb_store.py`): L2 cache
+  - Parquet files in `data/local_db/`
+  - Incremental updates (delta refresh)
+  - Schema drift detection
+  - Fallback when API down
+
+- **CLI** (`cli.py`): 113KB Click application (60+ commands)
+  - `dataset health`: Check freshness
+  - `fetch`: Download data
+  - `quality-score`: Compute QS
+  - `conflict-detect`: Spatial conflicts
+  - `nl-query`: Natural language → SOQL
+
+### 2. Analysis (Insights, Quality, Metrics)
 **Files**: `src/socrata_toolkit/analysis/`
 
-- **Scientific Profiling** (`profiling.py`): Characterization of the **Four Moments** (Expected Value, Variance, Skewness, Kurtosis).
-- **Inference Engine** (`inference.py`): Formal hypothesis testing (t-tests, Chi-square) and normality audits.
-- **Bayesian MCMC** (`bayesian.py`): Stochastic inference using NUTS sampling and Gelman-Rubin convergence diagnostics ($\hat{R}$ < 1.05).
-- **Insights Engine** (`insights.py`): Automated synthesis of anomalies, drift, and engineering triggers.
+- **profile_dataframe()** (`core.py`): Column-level profiling
+  - Null rates, cardinality, type inference
+  - Execution time, memory
 
-### 7. Engineering (Infrastructure & Street Design)
-**Files**: `src/socrata_toolkit/engineering/`
+- **quality_report()** (`core.py`): Data quality scoring
+  - Composite 0–100 from 4 weighted components
+  - Weights (0.35, 0.25, 0.25, 0.15) from constants
+  - Returns QualityScore(overall, completeness, validity, consistency, freshness)
 
-- **Infrastructure Management** (`infrastructure.py`): 
-  - **Markov Chains**: Stochastic deterioration forecasting.
-  - **LCCA/NPV**: Life-Cycle Cost Analysis with Monte Carlo risk simulation.
-- **Pavement Engineering** (`pavement.py`): NYSDOT ESAL models, Surface Rating triggers, and FHWA IRI user-cost penalties.
-- **Street Design Audit** (`standards_v4.py`): Automated Vision Zero geometric compliance for NYC SDM 4th Edition (2024).
+- **detect_anomalies()** (`core.py`): Outlier detection
+  - IQR method, Z-score, IsolationForest (sklearn)
+  - Per-column anomaly flags
 
-### 6. Governance (Ethics & Integrity)
-**Files**: `src/socrata_toolkit/governance/`
-
-- **Equity Scorer** (`equity.py`): 2.0x socio-economic multiplier for historically underinvested neighborhoods.
-- **Pipeline Reconciliation** (`pipeline/streaming.py`): 100% data integrity validation against remote metadata.
+- **compute_borough_metrics()** (`core.py`): Borough-level KPIs
+  - Aggregation by geographic region
+  - SLA compliance per borough
 
 ### 3. Analyst (Workflows, Publishing)
 **Files**: `src/socrata_toolkit/analyst/`
@@ -160,17 +176,15 @@ USER
 
 ### Fetch Flow
 ```
-User: socrata fetch <fourfour> --limit -1
+User: socrata fetch <fourfour> --limit 100
   ↓
-SocrataClient.fetch_json() [SODA3]
-  ↓ Pre-flight Probe: 
-  Verify updated_col exists via GET probe.
-  ↓ If Valid & Incremental:
-  SELECT * FROM ... WHERE updated_col > last_sync
+SocrataClient.fetch_dataframe()
+  ↓ If data in DuckDB cache && fresh:
+  DuckDB L2 Cache → Return Parquet
+  ↓ Else:
+  Socrata SODA API → Paginate (50K chunks)
   ↓
-DuckDB Store.upsert_dataframe()
-  ├─ Detect new columns → ALTER TABLE
-  └─ INSERT INTO ... BY NAME (Handles sparse batches)
+DuckDB Store.upsert() → Save to Parquet
   ↓
 Return DataFrame
 ```
@@ -256,10 +270,10 @@ Values verified by `tests/test_governance_weights.py`.
 ## Key Decisions
 
 ### DuckDB for Caching
-- **High-Performance**: Faster than refetching Socrata API.
-- **Column-Oriented**: Ideal for analytical aggregations.
-- **Schema Evolution**: Automatically handles inconsistent JSON batches (missing columns) using `ALTER TABLE ... ADD COLUMN` and `INSERT INTO ... BY NAME`.
-- **SODA3 Ready**: Optimized for the latest SODA3 `query.json` POST endpoint with robust column probing.
+- Faster than refetching Socrata API
+- Column-oriented (analytics-friendly)
+- Schema drift detection built-in
+- Parquet format (portable, efficient)
 
 ### 7 Pillars
 - Semi-independent: can import selectively
