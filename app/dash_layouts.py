@@ -151,22 +151,11 @@ def render_header():
                             dmc.ActionIcon(DashIconify(icon="mdi:theme-light-dark"), variant="outline", id="btn-toggle-theme", color="dark", size="sm"),
                             dmc.Button("JUPYTER", id="btn-jupyter-export", variant="light", color="indigo", size="xs", leftSection=DashIconify(icon="mdi:notebook")),
                         ], gap="xs"),
-                    ],
-                    justify="space-between", px="md", pt="xs"
-                ),
-                # Item 120: Mantine 8.0 Marquee for Live Telemetry
-                dmc.Marquee(
-                    pauseOnHover=True,
-                    gap="xl",
-                    children=[
-                        dmc.Text("SYSTEM STATUS: OPTIMIZED", size="xs", fw=700, c="green"),
-                        dmc.Text("ENGINE: FASTAPI/ASGI", size="xs", fw=700, c="blue"),
-                        dmc.Text("MODE: TOTAL RECALL UNLIMITED", size="xs", fw=700, c="orange"),
-                        dmc.Text("CACHING: FANOUT-SHARDED", size="xs", fw=700, c="indigo"),
-                        dmc.Text("SECURITY: CSP-NONCE ACTIVE", size="xs", fw=700, c="red"),
-                    ]
-                )
-            ], gap=0)
+                        ],
+                        justify="space-between", px="md", pt="xs"
+                        ),
+                        ], gap=0)
+
         ],
         style={"borderBottom": "3px solid #000000", "height": "90px"}
     )
@@ -195,6 +184,7 @@ def render_sidebar():
                             dmc.NavLink(id="nav-nlp", label="NLP Analytics", leftSection=DashIconify(icon="mdi:robot-confused"), href="/nlp"),
                             dmc.NavLink(id="nav-tutorials", label="Center of Excellence", leftSection=DashIconify(icon="mdi:book-open-page-variant"), href="/tutorials"),
                             dmc.NavLink(id="nav-settings", label="Engine Configuration", leftSection=DashIconify(icon="mdi:cog"), href="/settings"),
+                            dmc.NavLink(id="nav-toolbox", label="Analytical Toolbox", leftSection=DashIconify(icon="mdi:toolbox-outline"), href="/toolbox"),
                             dmc.NavLink(id="nav-copilot", label="Analyst AI", leftSection=DashIconify(icon="mdi:robot-happy"), href="/copilot"),
                             
                             dmc.Divider(label="Worker Queue", labelPosition="center", mt="md"),
@@ -514,5 +504,65 @@ def layout_copilot():
                 dmc.ScrollArea(h=400, children=[html.Div(id="copilot-history")]),
                 dmc.Group([dmc.TextInput(id="copilot-input", style={"flex": 1}), dmc.Button("SEND", id="btn-copilot-send")], mt="md")
             ])
+        ]
+    )
+
+def layout_toolbox():
+    return dmc.Container(
+        fluid=True, pt="md",
+        children=[
+            dmc.Text("ANALYTICAL TOOLBOX", fw=900, size="xl", mb="lg", c="black"),
+            dmc.SimpleGrid(cols=2, spacing="lg", children=[
+                # Interactive Quality Audit Wizard
+                dmc.Paper(
+                    withBorder=True, p="lg", radius="md", shadow="sm",
+                    children=[
+                        dmc.Group([
+                            DashIconify(icon="mdi:shield-check", width=30, color="green"),
+                            dmc.Text("Quality Audit Wizard", fw=700, size="lg"),
+                        ], mb="md"),
+                        dmc.Select(
+                            id="audit-dataset-select",
+                            label="Select Dataset for Audit",
+                            data=["built", "inspection", "violations", "lot_info"],
+                            value="built", mb="md"
+                        ),
+                        dmc.Button("RUN EMPIRICAL AUDIT", id="btn-run-audit", fullWidth=True, color="green"),
+                        dmc.Divider(my="lg"),
+                        html.Div(id="audit-results-container")
+                    ]
+                ),
+                # Executive Summary Generator
+                dmc.Paper(
+                    withBorder=True, p="lg", radius="md", shadow="sm",
+                    children=[
+                        dmc.Group([
+                            DashIconify(icon="mdi:file-document-edit", width=30, color="blue"),
+                            dmc.Text("Executive Summary Hub", fw=700, size="lg"),
+                        ], mb="md"),
+                        dmc.Textarea(
+                            id="summary-input",
+                            label="Input Analysis Findings",
+                            placeholder="Paste your raw analytical data here...",
+                            h=150, mb="md"
+                        ),
+                        dmc.Button("SYNTHESIZE EXECUTIVE BRIEF", id="btn-gen-summary", fullWidth=True),
+                        dmc.Divider(my="lg"),
+                        dmc.ScrollArea(h=200, children=[html.Div(id="summary-output-container")])
+                    ]
+                )
+            ]),
+            dmc.Space(h="xl"),
+            # Analysis History View
+            dmc.Paper(
+                withBorder=True, p="lg", radius="md", shadow="sm",
+                children=[
+                    dmc.Group([
+                        DashIconify(icon="mdi:history", width=30, color="indigo"),
+                        dmc.Text("Analysis Forensic History", fw=700, size="lg"),
+                    ], mb="md"),
+                    dmc.Table(id="analysis-history-table")
+                ]
+            )
         ]
     )

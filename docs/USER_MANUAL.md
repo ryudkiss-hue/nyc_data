@@ -106,6 +106,26 @@ Preferences persist per toolkit profile (`TOOLKIT_PROFILE`, default `default`).
 
 Golden column headers for Excel sources: `config/templates/*_headers.txt`.
 
+## Analytical Toolbox (v0.5.0+)
+
+The Analytical Toolbox is a specialized workbench for ad-hoc dataset validation and executive synthesis, accessible via the sidebar in the Mission Control UI.
+
+### 1. Quality Audit Wizard
+Run empirical statistical sweeps on any locally cached dataset to ensure integrity before promotion to executive dashboards.
+- **Select Dataset**: Choose from the list of 26 registered datasets (e.g., `built`, `inspection`).
+- **Run Audit**: Triggers a 'Four Moments' calculation (Mean, Variance, Skewness, Kurtosis) and Z-score outlier detection.
+- **Results**: Displays a JSON payload of findings and persists the result to the forensic history.
+
+### 2. Executive Summary Hub
+Synthesize complex analytical findings into decision-ready briefings using the integrated AI synthesis engine.
+- **Input**: Paste raw data, audit findings, or field notes.
+- **Synthesize**: Generates a formatted Markdown brief suitable for senior leadership.
+
+### 3. Analysis Forensic History
+A persistent record of all analytical events triggered via the pipeline or the toolbox UI. This provides a chain-of-custody for data integrity decisions.
+
+---
+
 ## Analyst pack outputs
 
 Each run writes `outputs/analyst_pack/{YYYY-MM-DD}/`:
