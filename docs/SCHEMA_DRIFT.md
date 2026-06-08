@@ -15,3 +15,8 @@ This log tracks all instances of schema evolution, column additions, and data ty
 | 2026-06-08T00:01:17.747167+00:00 | `built` | **COLUMN_ADDED** | `noneofdefectbystreettree` | Automatically added to DuckDB table via schema evolution. |
 | 2026-06-08T00:01:17.748096+00:00 | `built` | **COLUMN_ADDED** | `totalsqftsdwrepairedstre` | Automatically added to DuckDB table via schema evolution. |
 | 2026-06-08T00:01:17.749007+00:00 | `built` | **COLUMN_ADDED** | `totallfcurbrepairedstree` | Automatically added to DuckDB table via schema evolution. |
+| 2026-06-08T00:37:15.123173+00:00 | `street_permits` | **COLUMN_ADDED** | `permitnumberofzones` | Automatically added to DuckDB table via schema evolution. |
+| 2026-06-08T00:37:15.128085+00:00 | `street_permits` | **COLUMN_ADDED** | `permitlinearfeet` | Automatically added to DuckDB table via schema evolution. |
+| 2026-06-08T00:37:15.130823+00:00 | `street_permits` | **COLUMN_ADDED** | `permittotalsqfeet` | Automatically added to DuckDB table via schema evolution. |
+| 2026-06-08T00:37:15.133229+00:00 | `street_permits` | **COLUMN_ADDED** | `permitestimatednumberofcuts` | Automatically added to DuckDB table via schema evolution. |
+| 2026-06-08T00:37:15.135386+00:00 | `street_permits` | **COLUMN_ADDED** | `emergencyissuedate` | Automatically added to DuckDB table via schema evolution. |
