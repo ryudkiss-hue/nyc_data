@@ -186,15 +186,15 @@ def _generate_doc(dataset_key: str, cfg: dict) -> tuple[str, int | None, float |
 
     lines = [
         f"# Dataset Documentation: `{dataset_key}`",
-        f"",
+        "",
         f"**Fourfour:** `{fourfour}`  ",
         f"**Domain:** {domain}  ",
         f"**Generated:** {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}",
-        f"",
-        f"## Description",
-        f"",
+        "",
+        "## Description",
+        "",
         description,
-        f"",
+        "",
     ]
 
     row_count: int | None = None
@@ -234,8 +234,8 @@ def _generate_doc(dataset_key: str, cfg: dict) -> tuple[str, int | None, float |
                 lines += [
                     "## Quality Score",
                     "",
-                    f"| Dimension | Score |",
-                    f"|---|---|",
+                    "| Dimension | Score |",
+                    "|---|---|",
                     f"| **Overall** | {qs.overall:.1f} |",
                     f"| Completeness | {qs.completeness:.1f} |",
                     f"| Validity | {qs.validity:.1f} |",
@@ -248,11 +248,11 @@ def _generate_doc(dataset_key: str, cfg: dict) -> tuple[str, int | None, float |
             lines += [
                 "## Sample Queries",
                 "",
-                f"```python",
-                f"from socrata_toolkit.core.client import SocrataClient, SocrataConfig",
-                f"client = SocrataClient(SocrataConfig())",
+                "```python",
+                "from socrata_toolkit.core.client import SocrataClient, SocrataConfig",
+                "client = SocrataClient(SocrataConfig())",
                 f'df = client.fetch_dataframe("{domain}", "{fourfour}", max_rows=1000)',
-                f"```",
+                "```",
                 "",
             ]
 

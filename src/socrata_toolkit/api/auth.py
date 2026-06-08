@@ -70,12 +70,12 @@ class JWTAuthProvider:
                 roles=user.roles,
                 permissions=set()
             )
-            
+
             # LRU Cache management
             if len(self._token_cache) >= self.cache_size:
                 self._token_cache.popitem(last=False)
             self._token_cache[token] = context
-            
+
             return context
         except jwt.ExpiredSignatureError:
             raise AuthenticationError("Token expired")
@@ -99,7 +99,7 @@ class APIKeyAuthProvider:
         key = credentials.get("api_key")
         if not key:
             raise AuthenticationError("Missing API Key")
-        
+
         hashed = hash_api_key(key)
         if hashed not in self._allowed_hashes:
             raise AuthenticationError("Invalid API Key")

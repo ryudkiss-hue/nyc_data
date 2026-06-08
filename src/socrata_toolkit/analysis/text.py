@@ -135,12 +135,12 @@ def parse_sim_complaints(df: pd.DataFrame, text_col: str = "description") -> pd.
         return round(min(1.0, score), 2)
 
     out["_sim_severity_score"] = out["_sim_flags"].apply(calculate_severity)
-    
+
     # Keyword extraction placeholder (production ready)
     out["_sim_unique_keywords"] = [[] for _ in range(len(out))]
-    
+
     # Add keyword extraction logic if needed...
-    
+
     def get_primary_cat(flags: list[str]) -> str:
         if "trip_hazard" in flags and "ada_accessibility" in flags:
             return "critical_accessibility_hazard"

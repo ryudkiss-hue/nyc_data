@@ -31,12 +31,12 @@ def run_t_test(group_a: pd.Series, group_b: pd.Series, alpha: float = 0.05) -> T
     a = group_a.dropna()
     b = group_b.dropna()
     t_stat, p_val = stats.ttest_ind(a, b, equal_var=False)
-    
+
     mean_diff = a.mean() - b.mean()
     # Simplified CI calculation
     se = np.sqrt(a.var()/len(a) + b.var()/len(b))
     ci = (mean_diff - 1.96 * se, mean_diff + 1.96 * se)
-    
+
     return TTestResult(
         t_stat=float(t_stat),
         p_value=float(p_val),
@@ -49,7 +49,7 @@ def run_chi_square(df: pd.DataFrame, col_x: str, col_y: str, alpha: float = 0.05
     """Perform a Chi-square test of independence for categorical variables."""
     contingency = pd.crosstab(df[col_x], df[col_y])
     chi2, p, dof, expected = stats.chi2_contingency(contingency)
-    
+
     return ChiSquareResult(
         chi2=float(chi2),
         p_value=float(p),

@@ -22,10 +22,11 @@ Standards: Python 3.9+, type hints, comprehensive docstrings, operational loggin
 from __future__ import annotations
 
 import logging
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
 logger = logging.getLogger(__name__)
@@ -53,30 +54,24 @@ class SidewalkKPI:
 @dataclass
 class MaterialAwareSidewalkKPI:
     """NYC DOT material-aware KPI container with enhanced metrics."""
-    # ... (previous fields)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    period_label: str = "all-time"
+    defect_density: float = 0.0
+    defect_rate_asphalt: float = 0.0
+    defect_rate_concrete: float = 0.0
+    defect_rate_permeable: float = 0.0
+    defect_rate_specialty: float = 0.0
+    ada_compliance_rate: float = 0.0
+    hazardous_defect_coverage: dict[str, float] = field(default_factory=dict)
+    hazardous_defect_count: int = 0
+    maintenance_cycle_adherence: dict[str, float] = field(default_factory=dict)
+    contractor_quality_by_material: dict[str, dict[str, float]] = field(default_factory=dict)
+    material_longevity: dict[str, dict[str, Any]] = field(default_factory=dict)
+    cost_per_linear_foot: dict[str, float] = field(default_factory=dict)
+    cost_per_sqft_by_material: dict[str, float] = field(default_factory=dict)
+    hazard_response_time_days: float = 0.0
+    lineage_metadata: dict[str, Any] = field(default_factory=dict)
     equity_multiplier_score: float = 1.0
-    # ...
-
-from ..governance.equity import EquityScorer
-
-def compute_material_aware_kpis(
-    df: pd.DataFrame,
-    # ... (other args)
-) -> MaterialAwareSidewalkKPI:
-    # ...
-    # 5. Equity Multiplier Score (Mandated by Unified Mandate)
-    scorer = EquityScorer()
-    weights = []
-    for _, row in df.iterrows():
-        impact = scorer.calculate_impact(row, 1.0)
-        weights.append(impact.equity_multiplier)
-    avg_equity_weight = np.mean(weights) if weights else 1.0
-    # ...
-    return MaterialAwareSidewalkKPI(
-        # ...
-        equity_multiplier_score=float(avg_equity_weight),
-        # ...
-    )
 
     def to_dict(self) -> dict[str, Any]:
         """Convert KPI object to dictionary for serialization."""

@@ -232,6 +232,7 @@ def identify_hotspots(
 
 from ..governance.equity import EquityScorer
 
+
 def equity_analysis(
     inspections_df: pd.DataFrame,
     resource_df: pd.DataFrame | None = None,
@@ -248,13 +249,13 @@ def equity_analysis(
 
     resource = resource_df if resource_df is not None else inspections_df
     scorer = EquityScorer()
-    
+
     results = []
     for borough in BOROUGHS:
         boro_data = inspections_df[inspections_df[borough_col].str.upper() == borough]
         if boro_data.empty:
             continue
-            
+
         # Calculate weighted need using the Mandate's EquityScorer
         total_weighted_need = 0.0
         for _, row in boro_data.iterrows():
@@ -263,13 +264,13 @@ def equity_analysis(
             base_need = 1.0 if is_pending else 0.1
             impact = scorer.calculate_impact(row, base_need)
             total_weighted_need += impact.score_weighted
-            
+
         miles = BOROUGH_SIDEWALK_MILES.get(borough, 1.0)
         weighted_need_per_mile = total_weighted_need / miles
 
         boro_resource = resource[resource[borough_col].str.upper() == borough] if borough_col in resource.columns else pd.DataFrame()
         spend = float(boro_resource[spend_col].fillna(0).sum()) if spend_col in boro_resource.columns else 0.0
-        
+
         results.append(EquityScore(
             borough=borough,
             need_index=round(total_weighted_need, 2),

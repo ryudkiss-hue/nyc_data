@@ -15,7 +15,8 @@ import logging
 from dataclasses import dataclass
 from typing import Any
 
-import numpy as np  # type: ignore[import]
+import numpy as np
+import pandas as pd  # type: ignore[import]
 from scipy.spatial.distance import cdist  # type: ignore[import]
 from scipy.stats import gaussian_kde  # type: ignore[import]
 from sklearn.cluster import DBSCAN, KMeans  # type: ignore[import]
@@ -482,14 +483,14 @@ class HotspotAnalysis:
             for cluster in clusters:
                 # Calculate base severity
                 avg_val = cluster.average_value
-                
+
                 # Apply equity multiplier if enabled
                 multiplier = 1.0
                 if equity_scorer:
                     # heuristic: use centroid to check for priority zones
                     impact = equity_scorer.calculate_impact(pd.Series({"lat": cluster.centroid_y, "lon": cluster.centroid_x}), 1.0)
                     multiplier = impact.equity_multiplier
-                
+
                 weighted_severity_score = (100 - avg_val) * multiplier
 
                 if weighted_severity_score > 80: severity = "critical"

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import logging
 import json
+import logging
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -53,7 +53,7 @@ class Report:
             "---",
             ""
         ]
-        
+
         if self.warnings:
             lines.append("### ⚠️ Data Limitations Notice")
             for w in self.warnings:
@@ -85,7 +85,7 @@ class Report:
     def to_html(self) -> str:
         """Render the report as a highly accessible, styled HTML document for public administration."""
         sections_html = ""
-        
+
         warnings_html = ""
         if self.warnings:
             warnings_list = "".join(f"<li>{w}</li>" for w in self.warnings)
@@ -367,9 +367,9 @@ def generate_inquiry_response(
 
     if df.empty:
         report.add_warning("The query returned an empty result set. No matching records found.")
-    
+
     details = ", ".join(f"{k} = {v}" for k, v in kwargs.items()) if kwargs else "General Query"
-    
+
     report.add_section(
         "Inquiry Synopsis",
         "This document serves as the automated data retrieval response for the requested parameters.",

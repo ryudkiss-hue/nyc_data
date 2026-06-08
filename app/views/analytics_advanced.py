@@ -63,6 +63,21 @@ import os
 
 logger = logging.getLogger(__name__)
 
+if not hasattr(st, "cache_data"):
+    def _cache_data_polyfill(*args, **kwargs):
+        def decorator(func):
+            return func
+        return decorator
+    st.cache_data = _cache_data_polyfill
+
+if not hasattr(st, "session_state"):
+    class DummySessionState(dict):
+        def __getattr__(self, key):
+            return self.get(key)
+        def __setattr__(self, key, value):
+            self[key] = value
+    st.session_state = DummySessionState()
+
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------

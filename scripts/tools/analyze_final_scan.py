@@ -26,12 +26,12 @@ print("=" * 70)
 for rule, count in sorted_errors[:10]:
     print(f"{rule}: {count}")
 
-print(f"\nWARNING CATEGORIES (Top 10):")
+print("\nWARNING CATEGORIES (Top 10):")
 print("=" * 70)
 for rule, count in sorted_warnings[:10]:
     print(f"{rule}: {count}")
 
-print(f"\nSUMMARY:")
+print("\nSUMMARY:")
 print("=" * 70)
 print(f"Total Errors: {sum(ct for _, ct in error_types.items())}")
 print(f"Total Warnings: {sum(ct for _, ct in warning_types.items())}")
@@ -50,7 +50,7 @@ report_arg = sum(
     if "Argument" in rule or "argument" in rule or "Call" in rule or "call" in rule
 )
 
-print(f"\nKEY METRICS:")
+print("\nKEY METRICS:")
 print("=" * 70)
 print(f"reportAttributeAccessIssue: {report_attr}")
 print(f"reportUndefinedVariable: {report_undefined}")

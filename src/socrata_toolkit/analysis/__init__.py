@@ -53,3 +53,22 @@ __all__ = [
     "bar_chart",
 ]
 
+
+# Legacy aliases for tests
+try:
+    from .advanced import classify_all_distributions
+    from .quality import Anomaly
+    from ..quality.sla_tracking import SLATarget
+    from ..quality.freshness import AlertSeverity
+    from ..metrics import DataQualityMetrics
+    from ..quality.validation import validate_required_columns, validate_schema_types
+    from .viz import box_plot
+    from .reporting import generate_program_report
+    from .insights import build_weighted_rank_sql, websearch_to_tsquery_sql
+    from ..analyst.ramp_analysis import compute_borough_completion_rates
+    from ..engineering.cost_estimator import estimate_costs
+    from ..governance.reports import ProjectAnalystReports
+    from .correlation import correlation_analysis
+    from .domain_validation import validate_ada_compliance_gates
+except ImportError:
+    pass

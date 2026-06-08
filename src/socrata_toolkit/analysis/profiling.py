@@ -20,7 +20,7 @@ class DataProfile:
     quality_score: int
     warnings: list[str]
     numeric_summary: dict[str, Any]
-    moments: dict[str, dict[str, float]]  # Map of column -> {mean, var, skew, kurt}
+    moments: dict[str, dict[str, float]] = __import__("dataclasses").field(default_factory=dict)  # Map of column -> {mean, var, skew, kurt}
 
 def profile_dataframe(df: pd.DataFrame) -> DataProfile:
     """Produce a comprehensive profile characterization of the dataframe."""
@@ -36,7 +36,7 @@ def profile_dataframe(df: pd.DataFrame) -> DataProfile:
     cols = []
     warnings = []
     moments = {}
-    
+
     numeric_df = df.select_dtypes(include=DTYPE_NUM)
     for col in df.columns:
         col_str = str(col)
@@ -53,7 +53,7 @@ def profile_dataframe(df: pd.DataFrame) -> DataProfile:
                     "skewness": float(series.skew()),
                     "kurtosis": float(series.kurt())
                 }
-                
+
                 # Check for 3rd and 4th moment issues
                 if abs(moments[col_str]["skewness"]) > 2:
                     warnings.append(f"Column '{col_str}' has significant skewness ({moments[col_str]['skewness']:.2f}).")
@@ -63,7 +63,7 @@ def profile_dataframe(df: pd.DataFrame) -> DataProfile:
         is_date_object = "date" in col_str.lower() and str(dtypes[col]) in ("object", "string")
         if null_pct > 10 and not is_date_object:
             warnings.append(f"Column '{col_str}' has high missing values ({null_pct}%).")
-        
+
         try:
             sample_val = df[col_str].dropna().iloc[0] if not df[col_str].dropna().empty else ""
             sample = str(sample_val)[:50]

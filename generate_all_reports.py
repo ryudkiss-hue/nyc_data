@@ -1,19 +1,21 @@
 import os
 import sys
-import pandas as pd
 from pathlib import Path
+
+import pandas as pd
 
 # Ensure toolkit is in path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "src")))
 
-from socrata_toolkit.core.client import SocrataClient, SocrataConfig
+from socrata_toolkit.analysis.insights import generate_insights
 from socrata_toolkit.analysis.reporting import (
     generate_contract_report,
+    generate_inquiry_response,
     generate_program_report,
-    generate_inquiry_response
 )
+from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 from socrata_toolkit.program_metrics import compute_program_dashboard
-from socrata_toolkit.analysis.insights import generate_insights
+
 
 def fetch_data(domain, fourfour, limit=5000):
     print(f"Fetching live data from {domain}/{fourfour}...")
@@ -23,7 +25,7 @@ def fetch_data(domain, fourfour, limit=5000):
 def run():
     desktop_dir = Path(os.path.expanduser("~")) / "Desktop" / "NYC_DOT_Reports"
     desktop_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # 1. Contract Report
     # We use Weekly Construction Schedule (r528-jcks)
     df_const = fetch_data("data.cityofnewyork.us", "r528-jcks", limit=1000)
@@ -51,7 +53,7 @@ def run():
         df_insp["curb_miles"] = 0.5  # Standardized unit
         df_insp["total_inspections"] = 1
         df_insp["first_pass"] = df_insp["inspection_type"].apply(lambda x: 1 if "Pass" in str(x) else 0)
-    
+
     dashboard = compute_program_dashboard(df_insp)
     prog_rep = generate_program_report(dashboard)
     prog_rep.save(str(desktop_dir / "Program_KPI_Report.html"))
@@ -77,7 +79,7 @@ def run():
         for col in ["number_of_positions", "salary_range_from", "salary_range_to"]:
             if col in df_jobs.columns:
                 df_jobs[col] = pd.to_numeric(df_jobs[col], errors="coerce")
-                
+
     insights_rep = generate_insights(df_jobs)
     insights_rep.save(str(desktop_dir / "Data_Insights_Report.html"))
     insights_rep.save(str(desktop_dir / "Data_Insights_Report.md"))

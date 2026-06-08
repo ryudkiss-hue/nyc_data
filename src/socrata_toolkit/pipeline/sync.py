@@ -71,8 +71,6 @@ def sync_dataset(
     total_to_fetch = None
     if tqdm:
         try:
-            import requests
-
             count_params = {"$select": "count(*)"}
             if where:
                 count_params["$where"] = where
@@ -131,7 +129,7 @@ def sync_dataset(
                             logger.info("Adding missing column %s to table %s", col, table_name)
                             manager.conn.execute(f'ALTER TABLE "{table_name}" ADD COLUMN "{col}" VARCHAR;')
                             log_column_added(table_name, col)
-                    
+
                     manager.query(f'INSERT INTO "{table_name}" BY NAME SELECT * FROM temp_df')
                 else:
                     # Sanitize identifier: strip embedded quotes before quoting
@@ -167,13 +165,13 @@ def sync_dataset(
             # We need to fetch the synced data to audit it
             # For efficiency, we just query the recently synced rows or sample the table
             full_df = repo.fetch_all(limit=10000) # Sample 10k rows
-            
-            from ..analytics.quality import DataQualityAudit
+
             from ..analytics import log_analysis_result
-            
+            from ..analytics.quality import DataQualityAudit
+
             audit = DataQualityAudit()
             audit_result = audit.run(df=full_df, table_name=table_name)
-            
+
             log_analysis_result(manager, audit_result)
     except Exception as analytics_err:
         logger.warning("Post-sync analytics failed for %s: %s", table_name, analytics_err)

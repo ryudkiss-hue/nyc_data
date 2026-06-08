@@ -1,7 +1,9 @@
+from dataclasses import dataclass
+from typing import Any, Dict, List
+
 import numpy as np
 import pandas as pd
-from dataclasses import dataclass
-from typing import Dict, List, Any
+
 
 @dataclass
 class SimulationResult:
@@ -23,11 +25,11 @@ class MonteCarloEstimator:
         # Assume a skewed normal distribution for infrastructure overruns
         # (Usually biased towards overspending)
         simulations = np.random.lognormal(
-            mean=np.log(base_cost), 
-            sigma=variance_pct, 
+            mean=np.log(base_cost),
+            sigma=variance_pct,
             size=iterations
         )
-        
+
         return SimulationResult(
             mean_cost=float(np.mean(simulations)),
             std_dev=float(np.std(simulations)),
@@ -37,7 +39,7 @@ class MonteCarloEstimator:
         )
 
     @staticmethod
-    def calculate_npv(annual_costs: List[float], discount_rate: float = 0.03) -> float:
+    def calculate_npv(annual_costs: list[float], discount_rate: float = 0.03) -> float:
         """Calculates Net Present Value for LCCA."""
         npv = 0
         for t, cost in enumerate(annual_costs):

@@ -124,8 +124,9 @@ class SpatialVisualization:
                 color = self._score_to_color(condition_score, style)
 
                 # Handle different geometry types
-                geom_type = geometry.get("type")
-                coords = geometry.get("coordinates", [])
+                geom = feature.get("geometry", {})
+                geom_type = geom.get("type")
+                coords = geom.get("coordinates", [])
 
                 if geom_type == "LineString" and coords:
                     # Swap coordinates from [lon, lat] to [lat, lon] for Folium

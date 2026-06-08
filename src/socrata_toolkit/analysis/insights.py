@@ -1,21 +1,21 @@
-import math
-import logging
 import json
+import logging
+import math
 from dataclasses import dataclass, field
-from typing import Any
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
-from .inference import run_chi_square, run_t_test, check_normality
-from .metrics import compute_borough_metrics, compute_sla_trends
-from .profiling import profile_dataframe
 from ..core import DTYPE_NUM
 from ..engineering.pavement import NYSDOTPavementEngine, PavementType, evaluate_pavement_safety_risk
 from ..governance.equity import EquityScorer
 from ..material.standards_v4 import run_vision_zero_audit
+from .inference import check_normality, run_chi_square, run_t_test
+from .metrics import compute_borough_metrics, compute_sla_trends
+from .profiling import profile_dataframe
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +45,7 @@ class InsightsReport:
     def to_markdown(self) -> str:
         md = f"# 🗽 {self.title}\n\n"
         md += f"**Status:** {self.data_health.upper()} | **Generated:** {self.generated_at}\n\n"
-        
+
         if self.warnings:
             md += "### ⚠️ Data Limitations Notice\n"
             for w in self.warnings:
@@ -55,16 +55,16 @@ class InsightsReport:
         md += "## 📊 Key Metrics\n"
         for k, v in self.key_metrics.items():
             md += f"- **{k}:** {v}\n"
-        
+
         md += "\n## 🔍 Critical Insights\n"
         for i in sorted(self.insights, key=lambda x: x.priority == "high", reverse=True):
             icon = "🔴" if i.priority == "high" else "🟡"
             md += f"- {icon} **[{i.category.upper()}]** {i.text}\n"
-            
+
         md += "\n## 🛠️ Recommendations\n"
         for r in self.recommendations:
             md += f"- {r.text}\n"
-            
+
         return md
 
     def to_json(self) -> str:
@@ -206,7 +206,7 @@ class InsightsEngine:
         prof = profile_dataframe(self.df)
         insights = []
         recs = []
-        
+
         # 1. Socio-Economic Equity Audit (NYC SDM 4th Ed Mandate)
         equity_scorer = EquityScorer()
         high_need_equity = 0
@@ -216,7 +216,7 @@ class InsightsEngine:
             impact = equity_scorer.calculate_impact(row, base_need)
             if impact.is_priority_area and base_need > 0.8:
                 high_need_equity += 1
-        
+
         if high_need_equity > 0:
             insights.append(Insight("equity", f"Detected {high_need_equity} critical repair needs within historically underinvested Priority Investment Areas.", "high"))
             recs.append(Recommendation("high", "Prioritize capital allocation to identified high-need equity zones as per Mayor's Mandate."))
@@ -229,7 +229,7 @@ class InsightsEngine:
 
         vz_scores = []
         violation_counts = {"lane_width": 0, "corner_radius": 0, "clear_path": 0}
-        
+
         if any([lw_col, cr_col, cp_col]):
             for _, row in self.df.iterrows():
                 audit = run_vision_zero_audit(
@@ -243,10 +243,10 @@ class InsightsEngine:
                         if "Lane width" in v: violation_counts["lane_width"] += 1
                         if "Corner radius" in v: violation_counts["corner_radius"] += 1
                         if "clear path" in v: violation_counts["clear_path"] += 1
-            
+
             avg_vz_score = np.mean(vz_scores)
             insights.append(Insight("design", f"Vision Zero Geometric Compliance Score: {avg_vz_score:.2%}.", "medium" if avg_vz_score > 0.8 else "high"))
-            
+
             # Add detailed violation counts to report metadata or summaries
             for v_type, count in violation_counts.items():
                 if count > 0:
@@ -258,7 +258,7 @@ class InsightsEngine:
         # 2. NYSDOT Infrastructure Engineering Audit
         # ... (rest of the logic) ...
         cols = [c.lower() for c in self.df.columns]
-        
+
         # Surface Rating (SR) Logic
         sr_col = next((c for c in self.df.columns if c.lower() in ("surface_rating", "pavement_rating", "sr")), None)
         if sr_col:
@@ -288,7 +288,7 @@ class InsightsEngine:
         # 2. Formal Inference: Group Differences (t-tests)
         cat_cols = self.df.select_dtypes(include=['object', 'category']).columns
         num_cols = self.df.select_dtypes(include=DTYPE_NUM).columns
-        
+
         for c_col in cat_cols:
             if self.df[c_col].nunique() == 2: # Binary group comparison
                 groups = list(self.df[c_col].dropna().unique())

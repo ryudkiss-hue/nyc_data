@@ -1,17 +1,17 @@
 from __future__ import annotations
 
-import time
 import logging
+import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
-from ..analysis.profiling import profile_dataframe
 from ..analysis.inference import check_normality
+from ..analysis.profiling import profile_dataframe
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +70,7 @@ class QualityValidator:
     def validate(self, df: pd.DataFrame, table_name: str = "dataset") -> ValidationResult:
         """Perform mandate-compliant data validation."""
         start_time = time.time()
-        
+
         if df.empty:
              return ValidationResult(status=ValidationStatus.ERROR, table_name=table_name)
 
@@ -88,7 +88,7 @@ class QualityValidator:
             # Skewness Audit (3rd Moment)
             if abs(moments["skewness"]) > 3.0:
                 failed.append(Evidence(f"{col}_skew", moments["skewness"], 3.0, f"Extreme skewness detected in '{col}'."))
-            
+
             # Kurtosis Audit (4th Moment - Fat Tail)
             if moments["kurtosis"] > 10.0:
                 failed.append(Evidence(f"{col}_kurtosis", moments["kurtosis"], 10.0, f"Extreme kurtosis (fat-tail risk) in '{col}'."))
@@ -102,7 +102,7 @@ class QualityValidator:
 
         total = len(passed) + len(failed)
         pass_rate = len(passed) / total if total > 0 else 1.0
-        
+
         status = ValidationStatus.PASS
         if any(f.key.endswith("_kurtosis") for f in failed): status = ValidationStatus.FAIL # Critical risks
         elif failed: status = ValidationStatus.WARN

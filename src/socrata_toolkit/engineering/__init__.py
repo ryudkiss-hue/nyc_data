@@ -40,8 +40,8 @@ from .dot_sidewalk import (
 from .infrastructure import (
     AssetCondition,
     LifeCycleCostAnalysis,
-    MROptimization,
     MarkovDeteriorationModel,
+    MROptimization,
     evaluate_system_resiliency,
 )
 from .pavement import (

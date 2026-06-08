@@ -1,11 +1,14 @@
+from typing import Any, Dict, List
+
+import numpy as np
+import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import pandas as pd
-import numpy as np
-from socrata_toolkit.analysis.ensemble import EnsembleForecaster
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LinearRegression
-from typing import Dict, Any, List
+
+from socrata_toolkit.analysis.ensemble import EnsembleForecaster
+
 
 class VisualizationEngine:
     """Industrial Visualization Engine for 40+ NYC DOT SIM Charts."""
@@ -28,7 +31,7 @@ class VisualizationEngine:
         return df.columns[0] if not df.empty else None
 
     @staticmethod
-    def calculate_four_moments(series: pd.Series) -> Dict[str, float]:
+    def calculate_four_moments(series: pd.Series) -> dict[str, float]:
         """
         Calculate the Four Moments of Data Quality:
         1. Expected Value (Mean)
@@ -38,7 +41,7 @@ class VisualizationEngine:
         """
         if series is None or series.empty:
             return {"mean": 0, "variance": 0, "skewness": 0, "kurtosis": 0}
-        
+
         # Ensure numeric
         s = pd.to_numeric(series, errors='coerce').dropna()
         if s.empty:
@@ -68,16 +71,16 @@ class VisualizationEngine:
     def chart_inspections_boro(data_bundle):
         df = VisualizationEngine._safe_df(data_bundle.get("inspection"))
         if df.empty: return go.Figure()
-        
+
         boro_col = VisualizationEngine._find_col(df, ["borough", "boro", "boroname"])
         if (not boro_col or boro_col not in df.columns) and "cb" in df.columns:
             df["derived_boro"] = df["cb"].astype(str).str[0].map({
                 "1": "MANHATTAN", "2": "BRONX", "3": "BROOKLYN", "4": "QUEENS", "5": "STATEN ISLAND"
             })
             boro_col = "derived_boro"
-        
+
         if not boro_col: return go.Figure()
-        
+
         counts = df.groupby(boro_col).size().reset_index(name="count")
         fig = px.bar(counts, x=boro_col, y="count", color=boro_col,
                       color_discrete_sequence=px.colors.qualitative.Prism)
@@ -97,7 +100,7 @@ class VisualizationEngine:
         if df.empty: return go.Figure()
         date_col = VisualizationEngine._find_col(df, ["date", "dot_contstruct_date", "entrydate", "dbo_date"])
         val_col = VisualizationEngine._find_col(df, ["sqft", "totalsqftsidewalkrepaired", "totalcosttoconstruct"])
-        
+
         df[date_col] = pd.to_datetime(df[date_col], errors='coerce')
         df = df.dropna(subset=[date_col]).sort_values(date_col)
         fig = px.line(df, x=date_col, y=val_col, markers=True)
@@ -262,7 +265,7 @@ class VisualizationEngine:
         for radius, label, color in [(0.5, "5 min", "green"), (1.0, "10 min", "yellow"), (1.5, "15 min", "red")]:
             x = radius * np.cos(theta)
             y = radius * np.sin(theta)
-            fig.add_trace(go.Scatter(x=x, y=y, name=label, fill='toself', fillcolor=f"rgba(0,0,0,0)", line=dict(color=color)))
+            fig.add_trace(go.Scatter(x=x, y=y, name=label, fill='toself', fillcolor="rgba(0,0,0,0)", line=dict(color=color)))
         fig.update_layout(title="Pedestrian Catchment Isochrones (Walkability)", showlegend=True, template="simple_white")
         return fig
 
@@ -337,6 +340,6 @@ class VisualizationEngine:
         if requested_keys is None:
             # Legacy fallback: compute everything (deprecated)
             return {k: v() for k, v in all_chart_map.items()}
-        
+
         # Compute ONLY requested charts
         return {k: all_chart_map[k]() for k in requested_keys if k in all_chart_map}

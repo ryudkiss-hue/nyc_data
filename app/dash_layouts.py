@@ -1,9 +1,9 @@
 import dash_mantine_components as dmc
-from dash_iconify import DashIconify
-from dash import dcc, html, callback, Output, Input, State, no_update
-import pandas as pd
 import numpy as np
+import pandas as pd
 import plotly.graph_objects as go
+from dash import Input, Output, State, callback, dcc, html, no_update
+from dash_iconify import DashIconify
 
 # ==========================================
 # --- ELITE ASSET WRAPPER ---
@@ -26,7 +26,7 @@ def visualization_asset(chart_id, title, description, summary):
                 dmc.Badge("PRODUCTION READY", color="blue", variant="light")
             ], justify="space-between", mb="xs"),
             dmc.Text(description, size="sm", c="gray", mb="md"),
-            
+
             dmc.Tabs([
                 dmc.TabsList([
                     dmc.TabsTab("Visual", value="visual", leftSection=DashIconify(icon="mdi:chart-bar")),
@@ -34,7 +34,7 @@ def visualization_asset(chart_id, title, description, summary):
                     dmc.TabsTab("Raw Data", value="data", leftSection=DashIconify(icon="mdi:table")),
                     dmc.TabsTab("Export Powerhouse", value="export", leftSection=DashIconify(icon="mdi:export")),
                 ], id={"type": "asset-tabs", "index": chart_id}),
-                
+
                 # --- Tab: Visual ---
                 dmc.TabsPanel(value="visual", children=[
                     dmc.Stack([
@@ -46,7 +46,7 @@ def visualization_asset(chart_id, title, description, summary):
                         dmc.Text("Source: NYC Open Data · Standard Error: ±1.2%", size="xs", c="gray", ta="right")
                     ])
                 ]),
-                
+
                 # --- Tab: Insights ---
                 dmc.TabsPanel(value="insights", children=[
                     dmc.ScrollArea(h=300, children=[
@@ -98,7 +98,7 @@ def visualization_asset(chart_id, title, description, summary):
                         ])
                     ])
                 ]),
-                
+
                 # --- Tab: Raw Data ---
                 dmc.TabsPanel(value="data", children=[
                     dmc.Paper(mt="md", withBorder=True, p="xs", children=[
@@ -106,7 +106,7 @@ def visualization_asset(chart_id, title, description, summary):
                         html.Div(id={"type": "grid-container", "index": chart_id}, style={"maxHeight": "300px", "overflow": "auto"})
                     ])
                 ]),
-                
+
                 # --- Tab: Export ---
                 dmc.TabsPanel(value="export", children=[
                     dmc.SimpleGrid(cols=3, spacing="sm", mt="md", children=[
@@ -186,7 +186,7 @@ def render_sidebar():
                             dmc.NavLink(id="nav-settings", label="Engine Configuration", leftSection=DashIconify(icon="mdi:cog"), href="/settings"),
                             dmc.NavLink(id="nav-toolbox", label="Analytical Toolbox", leftSection=DashIconify(icon="mdi:toolbox-outline"), href="/toolbox"),
                             dmc.NavLink(id="nav-copilot", label="Analyst AI", leftSection=DashIconify(icon="mdi:robot-happy"), href="/copilot"),
-                            
+
                             dmc.Divider(label="Worker Queue", labelPosition="center", mt="md"),
                             dmc.Paper(
                                 p="sm", withBorder=True, bg="rgba(0,0,0,0.02)",
@@ -338,7 +338,7 @@ def layout_gis():
                     dmc.Switch(label="Isochrone Overlay", id="toggle-isochrones", color="indigo", size="sm", checked=False),
                 ], gap="xl")
             ], justify="space-between", mb="lg"),
-            
+
             dmc.Grid([
                 dmc.GridCol(span=9, children=[
                     visualization_asset("viz-ramp-heatmap", "3D Pedestrian Ramp Density", "Accessibility infrastructure clusters.", "Brooklyn high-density ADA ramp hotspots.")
@@ -350,7 +350,7 @@ def layout_gis():
                             dmc.Text("STREET VIEW PREVIEW", fw=700, mb="sm"),
                             dmc.Text("Item 32: Split-pane Physical Audit", size="xs", c="gray", mb="md"),
                             dmc.Paper(
-                                h=400, bg="rgba(0,0,0,0.05)", 
+                                h=400, bg="rgba(0,0,0,0.05)",
                                 children=[dmc.Center(dmc.Text("Street View Container (Edge Security Bypass Mode)", size="xs", c="gray"))],
                                 style={"borderRadius": "8px"}
                             )
