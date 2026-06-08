@@ -19,7 +19,7 @@
     - [ ] **Reactive**: Resolve any environmental or legacy errors discovered during infrastructure setup.
 
 ## Phase 2: Integration & Automations
-- [ ] Task: Integrate Analytics into Sync Pipeline
+- [x] Task: Integrate Analytics into Sync Pipeline [2713194]
     - [ ] Update `src/socrata_toolkit/pipeline/sync.py` to trigger `DataQualityAudit`
     - [ ] Implement `analysis_history` table in DuckDB
     - [ ] Log quality scores during `total_recall` execution
