@@ -127,8 +127,10 @@ def sync_dataset(
                     existing_cols = [c[1] for c in manager.conn.execute(f'PRAGMA table_info("{table_name}")').fetchall()]
                     for col in df_batch.columns:
                         if col not in existing_cols:
+                            from ..core.drift_logger import log_column_added
                             logger.info("Adding missing column %s to table %s", col, table_name)
                             manager.conn.execute(f'ALTER TABLE "{table_name}" ADD COLUMN "{col}" VARCHAR;')
+                            log_column_added(table_name, col)
                     
                     manager.query(f'INSERT INTO "{table_name}" BY NAME SELECT * FROM temp_df')
                 else:

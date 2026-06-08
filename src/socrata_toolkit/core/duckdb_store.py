@@ -186,9 +186,10 @@ class DuckDBRepository:
         existing_cols = [c[1] for c in self.manager.conn.execute(f'PRAGMA table_info("{table_name}")').fetchall()]
         for col in df.columns:
             if col not in existing_cols:
+                from .drift_logger import log_column_added
                 logger.info("Adding missing column %s to table %s", col, table_name)
                 self.manager.conn.execute(f'ALTER TABLE "{table_name}" ADD COLUMN "{col.replace(chr(34), "")}" VARCHAR;')
-                # Note: DuckDB might need a specific type if it can't infer, but usually VARCHAR is safe for Socrata data.
+                log_column_added(table_name, col)
         
         columns = df.columns.tolist()
         update_set = ", ".join(
