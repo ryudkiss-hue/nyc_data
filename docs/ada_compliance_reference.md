@@ -359,5 +359,23 @@ All material specifications in NYC Street Design Manual must meet these ADA mini
 ---
 
 **Document Version:** 1.0  
-**Last Updated:** May 2026  
+**Last Updated:** June 2026  
 **Authority:** 28 CFR 36, NYC Local Law 60, NYC Admin Code Title 34
+
+---
+
+## Digital Accessibility (Section 508 / WCAG 2.1 AA)
+
+Starting with v0.5.0, the toolkit extends physical ADA mandates into the digital domain for all analytical visualizations.
+
+### 1. Color Contrast (WCAG 1.4.3)
+- **Requirement**: Contrast ratio of at least 4.5:1 for normal text and 3:1 for large text/graphics.
+- **Implementation**: `src/socrata_toolkit/viz/accessibility.py` injects a high-contrast palette (#003366, #198754, #FD7E14) into all Plotly figures.
+
+### 2. Non-Text Content (WCAG 1.1.1)
+- **Requirement**: Provide text alternatives for any non-text content.
+- **Implementation**: The `generate_chart_summary` utility automatically extracts trace data and generates natural language descriptions of chart trends and distributions for screen readers.
+
+### 3. Redundant Coding (WCAG 1.4.1)
+- **Requirement**: Color is not used as the only visual means of conveying information.
+- **Implementation**: Dashboards must use both color and text/symbol labels for status indicators (e.g., 'Pass/Fail' text alongside Green/Red indicators).

@@ -19,7 +19,7 @@ from .metrics import (
     flag_sla_violations,
 )
 from .profiling import DataProfile, profile_dataframe, quality_report
-from .reporting import Report, generate_contract_report, generate_inquiry_response
+from .reporting import DashboardSummary, Report, generate_contract_report, generate_inquiry_response
 from .text import (
     extract_patterns,
     extract_term_frequencies,
@@ -42,6 +42,7 @@ __all__ = [
     "flag_sla_violations",
     "compute_freshness_score",
     "Report",
+    "DashboardSummary",
     "generate_contract_report",
     "generate_inquiry_response",
     "InsightsEngine",
