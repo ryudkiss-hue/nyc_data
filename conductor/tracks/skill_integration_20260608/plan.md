@@ -24,7 +24,7 @@
     - [ ] Implement `analysis_history` table in DuckDB
     - [ ] Log quality scores during `total_recall` execution
     - [ ] **Logging/Docs**: Implement telemetry for pipeline analytical overhead; update `docs/TOTAL_RECALL_GUIDE.md`
-- [ ] Task: Standardized Accessibility Utility
+- [x] Task: Standardized Accessibility Utility [8e0edbf]
     - [ ] Create `src/socrata_toolkit/viz/accessibility.py`
     - [ ] Implement WCAG 2.1 AA color palette injection for Plotly
     - [ ] Create utility for automated text-based summaries for charts
