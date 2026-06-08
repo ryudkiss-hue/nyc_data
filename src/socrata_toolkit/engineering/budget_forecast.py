@@ -1,6 +1,6 @@
 """Budget Forecasting for DOT Sidewalk Toolkit (Elite Engine).
 
-Advanced stochastic forecasting for spend and completion using 
+Advanced stochastic forecasting for spend and completion using
 Life-Cycle Cost Analysis (LCCA) and Monte Carlo simulations.
 """
 
@@ -45,7 +45,7 @@ class EliteBudgetForecaster:
         # Calculate initial basis from historicals
         mean_unit_cost = df["actual_spend"].mean() if "actual_spend" in df.columns else 15000
         std_unit_cost = df["actual_spend"].std() if "actual_spend" in df.columns else 2500
-        
+
         # Perform Monte Carlo simulation for risk-adjusted NPV
         mc_results = self.lcca.monte_carlo_lcca(
             initial_cost_mean=mean_unit_cost * len(df),
@@ -53,11 +53,11 @@ class EliteBudgetForecaster:
             life_years=target_years,
             iterations=2000
         )
-        
+
         recs = []
         if mc_results["p95_npv"] > mc_results["mean_npv"] * 1.3:
             recs.append("High fiscal volatility detected; increase contingency reserves.")
-        
+
         # Build deterministic projection for the 'mean' case for reporting
         projection = []
         for yr in range(1, target_years + 1):

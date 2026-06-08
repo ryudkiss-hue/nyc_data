@@ -3,17 +3,17 @@ TOTAL RECALL: Full-Scale Socrata Ingestion Script.
 Ingests every single record for all 26 datasets into the local DuckDB store.
 """
 
+import logging
 import os
 import sys
-import logging
 from pathlib import Path
 
 # Add project root to sys.path
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_REPO_ROOT))
 
-from src.socrata_toolkit.pipeline.sync import sync_dataset
 from app.data_loader import DATASET_REGISTRY
+from src.socrata_toolkit.pipeline.sync import sync_dataset
 
 # Configure logging
 logging.basicConfig(
@@ -57,18 +57,18 @@ TOKEN = os.getenv("SOCRATA_APP_TOKEN", "").strip()
 def run_total_recall():
     logger.info("Starting TOTAL RECALL — Full scale municipal data ingestion.")
     logger.info(f"Target Database: {DB_PATH}")
-    
+
     if not TOKEN:
         logger.warning("No SOCRATA_APP_TOKEN found. Ingestion will be slow and subject to heavy rate limits.")
-    
+
     total_rows = 0
     success_count = 0
-    
+
     for key, meta in DATASET_REGISTRY.items():
         fourfour = meta["fourfour"]
         label = meta["label"]
         updated_col = UPDATED_COL_MAP.get(key, "created_at") # Fallback to a common Socrata name
-        
+
         logger.info(f"--- Syncing {key} ({label}) [{fourfour}] ---")
         try:
             # sync_dataset handles pagination (unlimited) and incremental logic
@@ -87,7 +87,7 @@ def run_total_recall():
             logger.error(f"Failed to sync {key}: {e}")
 
     logger.info("====================================================")
-    logger.info(f"TOTAL RECALL COMPLETE.")
+    logger.info("TOTAL RECALL COMPLETE.")
     logger.info(f"Datasets processed: {success_count}/{len(DATASET_REGISTRY)}")
     logger.info(f"Total new rows ingested: {total_rows:,}")
     logger.info("====================================================")

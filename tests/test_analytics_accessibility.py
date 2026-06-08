@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-import pytest
 import pandas as pd
+import pytest
+
 from socrata_toolkit.viz.accessibility import apply_wcag_palette, generate_chart_summary
 from socrata_toolkit.viz.plotly import borough_bar_chart
+
 
 @pytest.fixture
 def sample_fig():

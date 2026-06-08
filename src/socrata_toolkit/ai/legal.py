@@ -1,7 +1,9 @@
 import os
-import pandas as pd
 from datetime import datetime
 from pathlib import Path
+
+import pandas as pd
+
 
 class LegalPolicyEngine:
     """Automated Legal Memo Generator citing NYC Administrative Code."""
@@ -13,7 +15,7 @@ class LegalPolicyEngine:
         Fulfills Item 47: Automated Legal Memo Generator.
         """
         date_str = datetime.now().strftime("%B %d, %Y")
-        
+
         memo = f"""
 NEW YORK CITY DEPARTMENT OF TRANSPORTATION
 SIDEWALK INSPECTION AND MANAGEMENT (SIM) DIVISION

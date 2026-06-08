@@ -5,7 +5,9 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 import pytest
-from socrata_toolkit.analytics.advanced import TimeSeriesForecasting, Segmentation
+
+from socrata_toolkit.analytics.advanced import Segmentation, TimeSeriesForecasting
+
 
 @pytest.fixture
 def time_series_df():
@@ -18,7 +20,7 @@ class TestTimeSeriesForecasting:
     def test_forecasting_execution(self, time_series_df):
         skill = TimeSeriesForecasting()
         result = skill.run(df=time_series_df, date_col="date", value_col="value", periods=10)
-        
+
         assert result.success is True
         assert "forecast" in result.data
         assert len(result.data["forecast"]) == 10
@@ -33,7 +35,7 @@ class TestSegmentation:
         })
         skill = Segmentation()
         result = skill.run(df=df, n_clusters=3)
-        
+
         assert result.success is True
         assert "clusters" in result.data
         assert len(result.data["clusters"]) == 6

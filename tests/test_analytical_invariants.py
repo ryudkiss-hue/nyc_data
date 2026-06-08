@@ -24,66 +24,78 @@ class TestCompletionRateInvariants:
         boroughs = RNG.choice(["MN", "BX", "BK", "QN", "SI"], size=RNG.integers(1, 6), replace=False)
         rows = []
         for b in boroughs:
-            for _ in range(int(RNG.integers(1, 20))):
-                total = int(RNG.integers(1, 500))
-                resolved = int(RNG.integers(0, total + 1))
-                rows.append({"borough": b, "total_complaints": total, "resolved_complaints": resolved})
+            total = int(RNG.integers(1, 500))
+            resolved = int(RNG.integers(0, total + 1))
+            for _ in range(resolved):
+                rows.append({"borough": b, "status": "complete"})
+            for _ in range(total - resolved):
+                rows.append({"borough": b, "status": "incomplete"})
         return pd.DataFrame(rows)
 
     def test_rate_and_ci_bounds_hold_for_random_inputs(self):
-        from socrata_toolkit.analyst.ramp_analysis import compute_borough_completion_rates
+        from socrata_toolkit.engineering.ramp_analysis import RampCompletionReportGenerator
 
         for _ in range(200):
             df = self._random_df()
-            result = compute_borough_completion_rates(df)
-            for key, stats in result.items():
-                if not (isinstance(stats, dict) and "completion_rate" in stats):
-                    continue
-                rate = stats["completion_rate"]
-                lo, hi = stats["ci_lower"], stats["ci_upper"]
+            generator = RampCompletionReportGenerator()
+            report = generator.generate(df, mode="full-corpus", include_ci=True)
+            for stat in report.borough_stats:
+                rate = stat.completion_rate
+                lo, hi = stat.ci_lower, stat.ci_upper
                 # rate is a valid proportion
-                assert 0.0 <= rate <= 1.0, f"rate {rate} out of [0,1] for {key}"
+                assert 0.0 <= rate <= 1.0, f"rate {rate} out of [0,1] for {stat.borough}"
                 # CI bounds are valid proportions and ordered
-                assert 0.0 <= lo <= hi <= 1.0, f"CI [{lo},{hi}] invalid for {key}"
+                assert 0.0 <= lo <= hi <= 1.0, f"CI [{lo},{hi}] invalid for {stat.borough}"
                 # the point estimate lies within its own CI
                 assert lo - 1e-9 <= rate <= hi + 1e-9, f"rate {rate} outside CI [{lo},{hi}]"
-                # rate equals resolved/total (the reported rate is rounded)
-                assert stats["resolved_count"] <= stats["total_count"]
-                expected = stats["resolved_count"] / stats["total_count"]
-                assert abs(rate - expected) < 1e-2  # tolerance for rounding of the reported rate
+                # rate equals resolved/total
+                assert stat.completed_ramps <= stat.total_ramps
+                expected = stat.completed_ramps / stat.total_ramps
+                assert abs(rate - expected) < 1e-2
 
     def test_overall_rate_in_unit_interval(self):
-        from socrata_toolkit.analyst.ramp_analysis import compute_borough_completion_rates
+        from socrata_toolkit.engineering.ramp_analysis import RampCompletionReportGenerator
 
         for _ in range(50):
             df = self._random_df()
-            result = compute_borough_completion_rates(df)
-            assert 0.0 <= result["overall_completion_rate"] <= 1.0
+            generator = RampCompletionReportGenerator()
+            report = generator.generate(df, mode="full-corpus", include_ci=True)
+            assert 0.0 <= report.overall_completion_rate <= 1.0
 
     def test_all_resolved_gives_rate_one(self):
-        from socrata_toolkit.analyst.ramp_analysis import compute_borough_completion_rates
+        from socrata_toolkit.engineering.ramp_analysis import RampCompletionReportGenerator
 
-        df = pd.DataFrame({"borough": ["MN"] * 5, "total_complaints": [10] * 5, "resolved_complaints": [10] * 5})
-        result = compute_borough_completion_rates(df)
-        assert result["MN"]["completion_rate"] == 1.0
+        df = pd.DataFrame({"borough": ["MN"] * 10, "status": ["complete"] * 10})
+        generator = RampCompletionReportGenerator()
+        report = generator.generate(df, mode="full-corpus", include_ci=True)
+        assert report.borough_stats[0].completion_rate == 1.0
 
     def test_none_resolved_gives_rate_zero(self):
-        from socrata_toolkit.analyst.ramp_analysis import compute_borough_completion_rates
+        from socrata_toolkit.engineering.ramp_analysis import RampCompletionReportGenerator
 
-        df = pd.DataFrame({"borough": ["BX"] * 5, "total_complaints": [10] * 5, "resolved_complaints": [0] * 5})
-        result = compute_borough_completion_rates(df)
-        assert result["BX"]["completion_rate"] == 0.0
+        df = pd.DataFrame({"borough": ["BX"] * 10, "status": ["incomplete"] * 10})
+        generator = RampCompletionReportGenerator()
+        report = generator.generate(df, mode="full-corpus", include_ci=True)
+        assert report.borough_stats[0].completion_rate == 0.0
 
     def test_more_data_tightens_ci(self):
-        """Wilson CI width should shrink as sample size grows (same rate)."""
-        from socrata_toolkit.analyst.ramp_analysis import compute_borough_completion_rates
+        """CI width should shrink as sample size grows (same rate)."""
+        from socrata_toolkit.engineering.ramp_analysis import RampCompletionReportGenerator
 
-        small = pd.DataFrame({"borough": ["MN"], "total_complaints": [10], "resolved_complaints": [7]})
-        large = pd.DataFrame({"borough": ["MN"], "total_complaints": [10000], "resolved_complaints": [7000]})
-        w_small = compute_borough_completion_rates(small)["MN"]
-        w_large = compute_borough_completion_rates(large)["MN"]
-        width_small = w_small["ci_upper"] - w_small["ci_lower"]
-        width_large = w_large["ci_upper"] - w_large["ci_lower"]
+        # small sample
+        small = pd.DataFrame([{"borough": "MN", "status": "complete"}] * 7 + [{"borough": "MN", "status": "incomplete"}] * 3)
+        # large sample
+        large = pd.DataFrame([{"borough": "MN", "status": "complete"}] * 7000 + [{"borough": "MN", "status": "incomplete"}] * 3000)
+        
+        generator = RampCompletionReportGenerator()
+        small_report = generator.generate(small, mode="full-corpus", include_ci=True)
+        large_report = generator.generate(large, mode="full-corpus", include_ci=True)
+        
+        w_small = small_report.borough_stats[0]
+        w_large = large_report.borough_stats[0]
+        
+        width_small = w_small.ci_upper - w_small.ci_lower
+        width_large = w_large.ci_upper - w_large.ci_lower
         assert width_large < width_small
 
 

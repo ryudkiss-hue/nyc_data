@@ -47,7 +47,7 @@ def run_vision_zero_audit(lane_width: float, corner_radius: float, clear_path: f
     if lane_width > max_allowed_width:
         violations.append(f"Lane width ({lane_width}') exceeds standard ({max_allowed_width}').")
         score_penalty += 0.2
-    
+
     # Corner Radius Audit
     if corner_radius > StreetGeometricStandard.CORNER_RADIUS_MAX:
         violations.append(f"Corner radius ({corner_radius}') exceeds safety maximum (15').")

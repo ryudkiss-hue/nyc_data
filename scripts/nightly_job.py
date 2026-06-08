@@ -8,10 +8,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, cast
 
+from socrata_toolkit.sql.conflict import PostGISConflictResolver
+
 from socrata_toolkit.alerts import Alert, AlertManager, CLINotifier, EmailNotifier
 from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 from socrata_toolkit.core.exporters import PostgresExporter
-from socrata_toolkit.sql.conflict import PostGISConflictResolver
 
 
 def load_config(path: Path | None = None) -> dict[str, Any]:

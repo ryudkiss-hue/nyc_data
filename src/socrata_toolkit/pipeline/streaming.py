@@ -143,19 +143,19 @@ def stream_pipeline(
 
                 if not pg_writer["initialized"]:
                     cols = list(batch[0].keys())
-                    
+
                     # Construct CREATE TABLE with proper identifiers
                     col_defs = []
                     for c in cols:
                         col_defs.append(psycopg_sql.SQL("{} TEXT").format(psycopg_sql.Identifier(c)))
-                    
+
                     cur.execute(
                         psycopg_sql.SQL("CREATE TABLE IF NOT EXISTS {} ({})").format(
                             psycopg_sql.Identifier(table_name),
                             psycopg_sql.SQL(", ").join(col_defs)
                         )
                     )
-                    
+
                     if conflict_col and conflict_col in cols:
                         index_name = f"{table_name}_{conflict_col}_idx"
                         cur.execute(
@@ -168,7 +168,7 @@ def stream_pipeline(
                     pg_writer["initialized"] = True
 
                 cols = list(batch[0].keys())
-                
+
                 # Construct INSERT statement with ON CONFLICT
                 if conflict_col:
                     update_parts = []
@@ -180,7 +180,7 @@ def stream_pipeline(
                                     psycopg_sql.Identifier(c)
                                 )
                             )
-                    
+
                     if update_parts:
                         stmt = psycopg_sql.SQL(
                             "INSERT INTO {} ({}) VALUES ({}) ON CONFLICT ({}) DO UPDATE SET {}"

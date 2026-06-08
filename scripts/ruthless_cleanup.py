@@ -2,6 +2,7 @@ import os
 import shutil
 from pathlib import Path
 
+
 def ruthless_cleanup():
     root = Path(".").resolve()
     archive = root / "legacy_archive"
@@ -27,8 +28,8 @@ def ruthless_cleanup():
     # 2. Archive all non-essential folders
     # This leaves ONLY the gold-standard Python/Streamlit structure
     essential_folders = {
-        "app", "src", "tests", "data", "docs", "scripts", 
-        "legacy_archive", ".git", ".venv", ".github", 
+        "app", "src", "tests", "data", "docs", "scripts",
+        "legacy_archive", ".git", ".venv", ".github",
         ".vscode", ".roo", ".pytest_cache"
     }
 
@@ -42,7 +43,7 @@ def ruthless_cleanup():
 
     # 3. Archive loose clutter in root
     essential_files = {
-        ".env", ".env.example", ".env.socrata", ".gitignore", ".dockerignore", 
+        ".env", ".env.example", ".env.socrata", ".gitignore", ".dockerignore",
         ".gitattributes", ".pre-commit-config.yaml", "pyrightconfig.json",
         "pyproject.toml", "poetry.lock", "requirements.txt", "requirements-dev.txt",
         "README.md", "QUICKSTART.md", "CHANGELOG.md", "CONTRIBUTING.md", "Makefile"

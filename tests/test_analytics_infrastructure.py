@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import pytest
-from socrata_toolkit.analytics import BaseSkill, AnalysisResult
+
+from socrata_toolkit.analytics import AnalysisResult, BaseSkill
+
 
 class MockSkill(BaseSkill):
     """A concrete implementation of BaseSkill for testing."""

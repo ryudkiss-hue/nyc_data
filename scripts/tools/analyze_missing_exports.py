@@ -259,7 +259,7 @@ def main():
         json.dump(report, f, indent=2)
 
     print("\n" + "=" * 80)
-    print(f"Detailed report saved to: missing_exports_analysis.json")
+    print("Detailed report saved to: missing_exports_analysis.json")
     print("=" * 80)
 
 

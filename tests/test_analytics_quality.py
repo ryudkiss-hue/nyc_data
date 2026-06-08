@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import pandas as pd
 import pytest
+
 from socrata_toolkit.analytics.quality import DataQualityAudit
+
 
 @pytest.fixture
 def sample_df():
@@ -22,17 +24,17 @@ class TestDataQualityAudit:
     def test_audit_execution(self, sample_df):
         skill = DataQualityAudit()
         result = skill.run(df=sample_df, table_name="test_table")
-        
+
         assert result.success is True
         assert "four_moments" in result.data
         assert "score" in result.data["four_moments"]
-        
+
         moments = result.data["four_moments"]["score"]
         assert "mean" in moments
         assert "variance" in moments
         assert "skewness" in moments
         assert "kurtosis" in moments
-        
+
         assert result.data["null_counts"]["null_col"] == 1
 
     def test_outlier_detection(self, sample_df):
@@ -55,14 +57,14 @@ class TestMetricReconciliation:
     def test_reconciliation_basic(self, sample_df):
         from socrata_toolkit.analytics.quality import MetricReconciliation
         from socrata_toolkit.core.duckdb_store import DuckDBManager, DuckDBRepository
-        
+
         # Setup a dummy table in DuckDB
         manager = DuckDBManager(db_path=":memory:") # Use memory for tests
         repo = DuckDBRepository(manager, "built")
         repo.upsert_dataframe(sample_df, "BBLID") # built expects BBLID
-        
+
         # We need to mock the registry load in the skill to use the memory DB
-        # This is tricky without dependency injection. 
+        # This is tricky without dependency injection.
         # For now, we'll just test that the skill handles the call.
         skill = MetricReconciliation()
         # This will likely fail to find the table in the DEFAULT db_path

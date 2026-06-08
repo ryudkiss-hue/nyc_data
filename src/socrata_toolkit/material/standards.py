@@ -230,6 +230,7 @@ class MaintenanceSchedule:
 
 from .standards_v4 import MaterialTier
 
+
 @dataclass
 class MaterialSpecification:
     """Complete specification for a NYC street design material.
@@ -247,7 +248,7 @@ class MaterialSpecification:
 
     name: str
     """Full name (e.g., 'Hot Mix Asphalt, 12.5mm SuperPave')"""
-    
+
     tier: MaterialTier = MaterialTier.STANDARD
     """NYC SDM 4th Ed classification (Standard, Distinctive, Historic, Pilot)"""
 

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import pandas as pd
+
 from .metrics import compute_borough_metrics, compute_sla_trends
 from .profiling import profile_dataframe
 

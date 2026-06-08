@@ -3,9 +3,9 @@ Schema Drift Logging Utility.
 Tracks and logs instances where municipal data schemas evolve or deviate from expected baselines.
 """
 
-import os
 import csv
 import logging
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -27,7 +27,7 @@ def log_drift(dataset_key: str, event_type: str, column_name: str, details: str 
     """Logs a schema drift event to both CSV and Markdown."""
     _ensure_logs()
     now = datetime.now(timezone.utc).isoformat()
-    
+
     # Log to CSV
     try:
         with open(DRIFT_CSV, "a", newline="", encoding="utf-8") as f:

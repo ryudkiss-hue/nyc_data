@@ -4,12 +4,15 @@ A unified, premium Streamlit application for NYC DOT SIM Project Analysts.
 """
 from __future__ import annotations
 
+import json
 import os
 import random
+import sys
+import threading
 import time
 import warnings
-import json
 from datetime import datetime
+from pathlib import Path
 
 import agentql
 import arviz as az
@@ -25,10 +28,6 @@ import streamlit.components.v1 as components
 from dateutil.relativedelta import relativedelta
 from playwright.sync_api import sync_playwright
 from prophet import Prophet
-
-from pathlib import Path
-import sys
-import threading
 from streamlit.runtime.scriptrunner import add_script_run_ctx, get_script_run_ctx
 
 # Aggressively remove ghost environment paths
@@ -46,11 +45,15 @@ keys_to_delete = [k for k in sys.modules if k.startswith("socrata_toolkit")]
 for k in keys_to_delete:
     del sys.modules[k]
 
-from socrata_toolkit import SocrataClient, SocrataConfig, BayesianRegressionEngine
-from socrata_toolkit.quality.validator import QualityValidator
-from socrata_toolkit.engineering.pavement import NYSDOTPavementEngine, PavementDesignParameters, PavementType
-from socrata_toolkit.governance.equity import EquityScorer
+from socrata_toolkit import BayesianRegressionEngine, SocrataClient, SocrataConfig
 from socrata_toolkit.engineering.infrastructure import MarkovDeteriorationModel
+from socrata_toolkit.engineering.pavement import (
+    NYSDOTPavementEngine,
+    PavementDesignParameters,
+    PavementType,
+)
+from socrata_toolkit.governance.equity import EquityScorer
+from socrata_toolkit.quality.validator import QualityValidator
 
 warnings.filterwarnings("ignore")
 
@@ -78,7 +81,7 @@ COLORS = {
     "card_bg": "rgba(30, 41, 59, 0.7)", # Frosted Slate
     "text": "#F8FAF8",         # Off-White
     "text_muted": "#94A3B8",   # Slate 400
-    "border": "rgba(255, 255, 255, 0.1)", 
+    "border": "rgba(255, 255, 255, 0.1)",
     "confidence": "rgba(34, 211, 238, 0.1)",
 }
 
@@ -95,13 +98,13 @@ def inject_custom_css():
     st.markdown(f"""
         <style>
             @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-            
+
             :root {{
                 --transition-fast: all 0.2s ease-out;
             }}
 
-            html, body, [class*="css"]  {{ 
-                font-family: 'Inter', sans-serif !important; 
+            html, body, [class*="css"]  {{
+                font-family: 'Inter', sans-serif !important;
                 color: {COLORS['text']};
             }}
 
@@ -111,18 +114,18 @@ def inject_custom_css():
             header {{visibility: hidden;}}
 
             /* Breathable Layout */
-            .block-container {{ 
+            .block-container {{
                 padding: clamp(2rem, 5vw, 4rem);
-                max-width: 1400px; 
+                max-width: 1400px;
             }}
 
             /* Elite Dark Mode KPI Cards */
-            .kpi-card {{ 
+            .kpi-card {{
                 background: {COLORS['card_bg']};
                 backdrop-filter: blur(8px);
-                border: 1px solid {COLORS['border']}; 
-                border-radius: 12px; 
-                padding: 1.5rem; 
+                border: 1px solid {COLORS['border']};
+                border-radius: 12px;
+                padding: 1.5rem;
                 box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
                 transition: var(--transition-fast);
                 min-height: 120px;
@@ -130,32 +133,32 @@ def inject_custom_css():
                 flex-direction: column;
                 justify-content: center;
             }}
-            .kpi-card:hover {{ 
-                transform: translateY(-4px) scale(1.02); 
+            .kpi-card:hover {{
+                transform: translateY(-4px) scale(1.02);
                 border-color: {COLORS['primary']};
                 box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.3);
             }}
-            .kpi-label {{ 
-                font-size: 0.75rem; 
-                font-weight: 600; 
-                color: {COLORS['text_muted']}; 
-                text-transform: uppercase; 
+            .kpi-label {{
+                font-size: 0.75rem;
+                font-weight: 600;
+                color: {COLORS['text_muted']};
+                text-transform: uppercase;
                 letter-spacing: 0.05em;
-                margin-bottom: 0.25rem; 
+                margin-bottom: 0.25rem;
             }}
-            .kpi-value {{ 
-                font-size: 2rem; 
-                font-weight: 800; 
-                color: {COLORS['primary']}; 
+            .kpi-value {{
+                font-size: 2rem;
+                font-weight: 800;
+                color: {COLORS['primary']};
                 line-height: 1.1;
             }}
-            
+
             /* Sidebar Refinement */
-            [data-testid="stSidebar"] {{ 
+            [data-testid="stSidebar"] {{
                 background-color: #0B1120 !important;
-                border-right: 1px solid {COLORS['border']}; 
+                border-right: 1px solid {COLORS['border']};
             }}
-            
+
             /* Global Scrollbar */
             ::-webkit-scrollbar {{ width: 6px; }}
             ::-webkit-scrollbar-thumb {{ background: {COLORS['surface']}; border-radius: 10px; }}
@@ -174,6 +177,20 @@ def inject_custom_css():
 
 # ... (rest of session state and data ingestion functions remain identical) ...
 
+def _init_state():
+    if "data_loaded" not in st.session_state:
+        st.session_state.data_loaded = False
+    if "theme" not in st.session_state:
+        st.session_state.theme = "light"
+
+def render_kpi_card(title: str, value: str, tooltip: str = ""):
+    st.markdown(f'''
+    <div class="kpi-card" title="{tooltip}">
+        <div class="kpi-label">{title}</div>
+        <div class="kpi-value">{value}</div>
+    </div>
+    ''', unsafe_allow_html=True)
+
 def main():
     _init_state()
     inject_custom_css()
@@ -182,7 +199,7 @@ def main():
         st.markdown(f"<h2 style='color:{COLORS['primary']}; margin:0;'>🗽 Mission Control</h2>", unsafe_allow_html=True)
         st.caption("Bayesian Analytics Engine v3.1")
         st.write("")
-        
+
         nav_selection = st.radio("Navigation", [
             "🏠 Executive Dashboard",
             "🗺️ Geospatial Intelligence",
@@ -191,7 +208,7 @@ def main():
             "⚙️ Settings & Pipeline",
             "🤖 AI Copilot"
         ], label_visibility="collapsed")
-        
+
         st.divider()
 
     # ==========================================
@@ -201,17 +218,17 @@ def main():
     if not st.session_state.pipeline_run and nav_selection != "⚙️ Settings & Pipeline":
         st.markdown(f"<h1 style='text-align:center; font-size:3.5rem; font-weight:800; color:{COLORS['primary']}; padding-top: 4rem;'>Manhattan Mission Control</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align:center; font-size:1.2rem; color:#94A3B8; margin-bottom: 3rem;'>Unified Bayesian Intelligence & Infrastructure Management Hub</p>", unsafe_allow_html=True)
-        
+
         st.divider()
-        
+
         kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
         with kpi_col1: render_kpi_card("Active Datasets", "26", tooltip="Live SODA2 Endpoints")
         with kpi_col2: render_kpi_card("System Health", "Optimal", tooltip="All Services Online")
         with kpi_col3: render_kpi_card("Pipeline", "Standby", tooltip="Awaiting Initialization")
-        
+
         st.write("")
         st.write("")
-        
+
         # Placeholder container for future analysis
         with st.container():
             st.markdown("<div style='height: 100px;'></div>", unsafe_allow_html=True) # Spacer

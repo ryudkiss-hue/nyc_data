@@ -3,10 +3,12 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from typing import Any
 
 import pandas as pd
 
 from ..core import COL_CLOSED, COL_COMPLAINT, COL_CREATED, COL_REPAIR
+
 
 @dataclass
 class SLAMetrics:

@@ -21,7 +21,7 @@ _lazy_map: dict[str, str] = {
     "SchemaValidator": "core:SchemaValidator",
     "search_nyc_datasets": "core:search_nyc_datasets",
     "SoQLBuilder": "core:SoQLBuilder",
-    
+
     # analysis (Pillar: analysis - Refactored)
     "DataProfile": "analysis:DataProfile",
     "profile_dataframe": "analysis:profile_dataframe",
@@ -37,7 +37,7 @@ _lazy_map: dict[str, str] = {
     "compute_sla_trends": "analysis:compute_sla_trends",
     "flag_sla_violations": "analysis:flag_sla_violations",
     "Report": "analysis:Report",
-    
+
     # engineering (Pillar: engineering)
     "AssetCondition": "engineering:AssetCondition",
     "MarkovDeteriorationModel": "engineering:MarkovDeteriorationModel",
@@ -45,7 +45,7 @@ _lazy_map: dict[str, str] = {
     "NYSDOTPavementEngine": "engineering:NYSDOTPavementEngine",
     "GeometricAuditResult": "material:GeometricAuditResult",
     "run_vision_zero_audit": "material:run_vision_zero_audit",
-    
+
     # ... (other mappings remain consistent)
 }
 

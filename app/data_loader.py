@@ -120,7 +120,7 @@ def _write_duckdb_cache(dataset_key: str, df: pd.DataFrame) -> None:
     if not _DUCKDB_AVAILABLE or df.empty or "_error" in df.columns:
         return
     try:
-        from socrata_toolkit.core import COL_ID, COL_AT_ID
+        from socrata_toolkit.core import COL_AT_ID, COL_ID
         manager = DuckDBManager(_DUCKDB_PATH)
         repo = DuckDBRepository(manager, dataset_key)
         # Identify PK
@@ -270,7 +270,7 @@ def _check_dataset_health() -> None:
 
 def normalize_bbl(series: pd.Series) -> pd.Series:
     """Normalize BBL using pre-compiled regex for better performance."""
-    s = series.astype(str).str.replace(_RE_NON_DIGIT, "", regex=False)
+    s = series.astype(str).str.replace(_RE_NON_DIGIT, "", regex=True)
     s = s.where(s.str.len() >= 6, other=pd.NA)
     return s.str.zfill(10)
 
@@ -349,13 +349,13 @@ def _detect_delta_column(dataset_key: str) -> str | None:
 
     Fetches a single row from Socrata to inspect column names. Returns
     ``"updated_at"`` or ``"date_modified"`` if either is present; otherwise ``None``.
-    
+
     Results are cached in-process to avoid repeated probes.
     """
     # Check in-process cache first
     if dataset_key in _DELTA_COLUMN_CACHE:
         return _DELTA_COLUMN_CACHE[dataset_key]
-    
+
     meta = DATASET_REGISTRY.get(dataset_key, {})
     try:
         client = get_socrata_client()
@@ -370,7 +370,7 @@ def _detect_delta_column(dataset_key: str) -> str | None:
                 return candidate
     except Exception as exc:
         logging.debug("_detect_delta_column: probe failed for %s: %s", dataset_key, exc)
-    
+
     _DELTA_COLUMN_CACHE[dataset_key] = None
     return None
 

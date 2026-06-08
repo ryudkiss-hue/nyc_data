@@ -22,7 +22,6 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-
 # ── Key taxonomy ──────────────────────────────────────────────────────────────
 
 class KeyRole(str, Enum):

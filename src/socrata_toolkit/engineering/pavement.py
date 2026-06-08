@@ -66,14 +66,14 @@ class NYSDOTPavementEngine:
             r = params.growth_rate
             n = params.design_life_years
             growth_factor = ((1 + r)**n - 1) / r
-            
+
         esal = (
-            params.aadt * 
-            (params.truck_percent / 100.0) * 
-            params.truck_factor * 
-            growth_factor * 
-            params.directional_factor * 
-            params.lane_factor * 
+            params.aadt *
+            (params.truck_percent / 100.0) *
+            params.truck_factor *
+            growth_factor *
+            params.directional_factor *
+            params.lane_factor *
             365
         )
         return float(esal)
@@ -89,7 +89,7 @@ class NYSDOTPavementEngine:
             a, b = 0.015, 0.6
         else:
             a, b = 0.025, 0.7
-            
+
         iri_t = iri_initial + a * (cumulative_esal / 1e6)**b
         return float(iri_t)
 
@@ -100,11 +100,11 @@ class NYSDOTPavementEngine:
         Derived from FHWA-RD-02-057.
         """
         delta_iri = max(0.0, iri - baseline_iri)
-        
+
         # Heuristic: 1.0 m/km increase in IRI -> 1.5% fuel increase, 10% maintenance increase
         fuel_increase_pct = delta_iri * 1.5
         maintenance_increase_pct = delta_iri * 10.0
-        
+
         return {
             "iri": iri,
             "fuel_cost_increase_factor": 1.0 + (fuel_increase_pct / 100.0),
@@ -118,14 +118,14 @@ class NYSDOTPavementEngine:
         Provides specific NYSDOT M&R strategy and typical actions.
         """
         strategy = SurfaceRating.get_strategy(sr)
-        
+
         actions = {
             "PREVENTIVE_MAINTENANCE": ["Crack Sealing", "Microsurfacing", "6.3mm Polymer Overlay"],
             "CORRECTIVE_MAINTENANCE": ["Mill and Fill (1.5-2\")", "Localized Patching"],
             "REHABILITATION": ["Thick HMA Overlay", "Rubblization", "Base Repair"],
             "RECONSTRUCTION": ["Full Depth Replacement", "Subgrade Stabilization"]
         }
-        
+
         return {
             "surface_rating": sr,
             "strategy": strategy,
@@ -139,8 +139,8 @@ def evaluate_pavement_safety_risk(iri: float, rut_depth_mm: float = 0.0) -> floa
     """
     # IRI risk: tire hop and braking distance
     iri_risk = min(0.5, (max(0.0, iri - 1.5) / 4.0) * 0.5)
-    
+
     # Rut risk: hydroplaning/birdbaths
     rut_risk = min(0.5, (rut_depth_mm / 25.0) * 0.5)
-    
+
     return float(iri_risk + rut_risk)

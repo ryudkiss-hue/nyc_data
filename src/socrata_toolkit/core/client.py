@@ -114,7 +114,7 @@ class SocrataClient:
     def fetch_json(self, domain: str, fourfour: str, where: str | None = None, select: str | None = None, order: str | None = None, q: str | None = None, max_rows: int | str | None = None, version: str | None = None) -> Generator[list[dict[str, Any]], None, None]:
         """Stream JSON pages via the SODA3 POST endpoint or SODA2 GET fallback."""
         v = version or self.config.soda_version
-        
+
         # Strictly cast max_rows to int if it's a string
         if max_rows is not None:
             try:
@@ -133,17 +133,17 @@ class SocrataClient:
         offset = 0
         remaining = max_rows
         url = f"https://{domain}/api/v3/views/{fourfour}/query.json"
-        
+
         while True:
             limit = self.config.page_size if remaining is None else min(self.config.page_size, remaining)
             soql = self._build_soql(limit, offset, select=select, where=where, order=order)
             payload = {
                 "query": soql
             }
-            # SODA3 doesn't have a direct 'q' param in SoQL the same way SODA2 does, 
+            # SODA3 doesn't have a direct 'q' param in SoQL the same way SODA2 does,
             # usually it's handled via full-text search functions in SoQL if needed,
             # but for compatibility we'll skip it in SODA3 for now or log a warning.
-            
+
             resp = with_retries(lambda: requests.post(url, json=payload, headers=self._headers(), timeout=self.config.timeout))
             resp.raise_for_status()
             batch = resp.json()

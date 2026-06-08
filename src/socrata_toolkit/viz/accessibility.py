@@ -25,10 +25,10 @@ WCAG_PALETTE = [
 def apply_wcag_palette(fig: Any) -> Any:
     """
     Applies a WCAG compliant color palette to a Plotly figure.
-    
+
     Args:
         fig: A Plotly Figure object.
-        
+
     Returns:
         The updated figure.
     """
@@ -44,17 +44,17 @@ def generate_chart_summary(fig: Any) -> str:
     """
     Generates a text-based summary of the data within a Plotly chart.
     Provides redundancy for screen readers.
-    
+
     Args:
         fig: A Plotly Figure object.
-        
+
     Returns:
         A natural language summary of the chart data.
     """
     try:
         title = fig.layout.title.text or "Untitled Chart"
         summary = [f"Summary for '{title}':"]
-        
+
         for i, trace in enumerate(fig.data):
             trace_name = trace.name or f"Trace {i+1}"
             if hasattr(trace, "x") and hasattr(trace, "y"):
@@ -65,11 +65,11 @@ def generate_chart_summary(fig: Any) -> str:
             elif hasattr(trace, "values") and hasattr(trace, "labels"):
                 labels = list(trace.labels)
                 values = list(trace.values)
-                data_points = [f"{l}: {v}" for l, v in zip(labels, values)]
+                data_points = [f"{lbl}: {val}" for lbl, val in zip(labels, values)]
                 summary.append(f"- {trace_name} (Pie/Donut) distribution: {', '.join(data_points)}")
-        
+
         return " ".join(summary)
-        
+
     except Exception as e:
         logger.error("Failed to generate chart summary: %s", e)
         return "Chart summary unavailable."

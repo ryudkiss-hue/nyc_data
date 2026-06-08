@@ -26,12 +26,12 @@ class BayesianRegressionEngine:
     Elite Bayesian Inference Engine using Markov Chain Monte Carlo (MCMC).
     Specialized for NYC DOT operational modeling (e.g., hiring yields, failure rates).
     """
-    
+
     @staticmethod
     def run_poisson_regression(
-        predictor: np.ndarray, 
-        observed: np.ndarray, 
-        draws: int = 1000, 
+        predictor: np.ndarray,
+        observed: np.ndarray,
+        draws: int = 1000,
         tune: int = 1000,
         chains: int = 2
     ) -> BayesianInferenceResult:
@@ -43,30 +43,30 @@ class BayesianRegressionEngine:
             # 1. Prior Justification: Weakly informative priors for operational stability
             alpha = pm.Normal("Intercept", mu=0, sigma=10)
             beta = pm.Normal("Predictor_Effect", mu=0, sigma=10)
-            
+
             # 2. Stochastic Model Logic
             mu = pm.math.exp(alpha + beta * predictor)
-            
+
             # 3. Likelihood
             pm.Poisson("Y_obs", mu=mu, observed=observed)
-            
+
             # 4. MCMC Sampling (NUTS)
             trace = pm.sample(
-                draws=draws, 
-                tune=tune, 
-                chains=chains, 
-                target_accept=0.9, 
-                return_inferencedata=True, 
+                draws=draws,
+                tune=tune,
+                chains=chains,
+                target_accept=0.9,
+                return_inferencedata=True,
                 progressbar=False,
                 random_seed=42
             )
-            
+
         # 5. Convergence Diagnostics (Mandated by GEMINI.md)
         summary = az.summary(trace)
         r_hat_max = float(summary["r_hat"].max())
         ess_min = float(summary["ess_bulk"].min())
         converged = r_hat_max < 1.05
-        
+
         if not converged:
             logger.warning(f"MCMC Chain did not reach convergence benchmark (R-hat={r_hat_max:.4f}).")
 
@@ -88,12 +88,12 @@ class BayesianRegressionEngine:
 
 def quantify_hiring_yield(postings: pd.Series, hires: pd.Series) -> BayesianInferenceResult:
     """
-    Domain-specific application: Uses Bayesian MCMC to find the yield multiplier 
+    Domain-specific application: Uses Bayesian MCMC to find the yield multiplier
     between job postings and actual payroll starts.
     """
     # Pre-processing for statistical significance
     p_arr = postings.fillna(0).values
     h_arr = hires.fillna(0).values
-    
+
     engine = BayesianRegressionEngine()
     return engine.run_poisson_regression(p_arr, h_arr)

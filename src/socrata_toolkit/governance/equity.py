@@ -39,7 +39,7 @@ class EquityScorer:
 
         # 1. Geospatial Lookup (if GDF provided)
         # ... logic for spatial join ...
-        
+
         # 2. Heuristic fallback (using Borough and Neighborhood identifiers if present)
         # Neighborhoods with historical underinvestment receive a 2.0x priority boost.
         priority_neighborhoods = ["BROWNSVILLE", "EAST NEW YORK", "MOTT HAVEN", "HUNTS POINT"]
@@ -68,7 +68,7 @@ def apply_equity_weighting(df: pd.DataFrame, score_col: str = "condition_index")
         base = float(row.get(score_col, 50))
         impact = scorer.calculate_impact(row, base)
         weights.append(impact.score_weighted)
-    
+
     out = df.copy()
     out["_equity_weighted_priority"] = weights
     return out.sort_values("_equity_weighted_priority", ascending=False)

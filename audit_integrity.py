@@ -1,10 +1,11 @@
+import json
 import os
 import sys
 from pathlib import Path
-import yaml
-import json
+
 import pandas as pd
 import requests
+import yaml
 
 # Set up path resolution
 _src_path = str((Path(__file__).resolve().parent / "src").absolute())
@@ -22,13 +23,13 @@ except ImportError:
 
 def run_audit():
     print("🚀 Initializing 360-Degree Data Integrity Scan...")
-    
+
     # 1. Load Dataset Configuration
     config_path = Path("config/datasets.yaml")
-    with open(config_path, "r") as f:
+    with open(config_path) as f:
         full_cfg = yaml.safe_load(f)
     datasets = full_cfg.get("datasets", {})
-    
+
     audit_results = []
     token = os.getenv("SOCRATA_TOKEN", "")
     client = SocrataClient(SocrataConfig(app_token=token))
@@ -39,10 +40,10 @@ def run_audit():
         fourfour = info["fourfour"]
         label = info["label"]
         print(f"🔍 Auditing: {label} ({fourfour})...")
-        
+
         status = "OK"
         details = {}
-        
+
         try:
             # A. Existence & Metadata Check
             meta_url = f"https://data.cityofnewyork.us/api/views/{fourfour}.json"
@@ -55,14 +56,14 @@ def run_audit():
                 details["columns"] = [col["name"] for col in meta.get("columns", [])]
                 details["row_count"] = meta.get("numberOfRows", "Unknown")
                 details["last_updated"] = meta.get("rowsUpdatedAt", "Unknown")
-                
+
                 # B. Integrity Check (Sample Fetch)
                 df = client.fetch_dataframe(
                     domain="data.cityofnewyork.us",
                     fourfour=fourfour,
                     max_rows=100
                 )
-                
+
                 if df.empty:
                     status = "WARN (Empty Sample)"
                 else:
@@ -82,7 +83,7 @@ def run_audit():
         except Exception as e:
             status = "ERROR"
             details = {"error": str(e)}
-        
+
         audit_results.append({
             "key": key,
             "fourfour": fourfour,
@@ -95,7 +96,7 @@ def run_audit():
     report_path = Path("final_comprehensive_scan.json")
     with open(report_path, "w") as f:
         json.dump(audit_results, f, indent=2, default=str)
-    
+
     print(f"✅ Audit Complete. Results saved to {report_path.absolute()}")
 
 if __name__ == "__main__":

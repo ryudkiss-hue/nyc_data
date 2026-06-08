@@ -141,7 +141,7 @@ def _safe_sample_values(series: pd.Series, n: int = 3) -> list[str]:
 
 def _estimate_cardinality(series: pd.Series, max_sample: int = 10000) -> int:
     """Estimate distinct value count with optional sampling for large series.
-    
+
     For performance, samples large series to avoid O(n) full scan on cardinality check.
     """
     try:
@@ -159,7 +159,7 @@ def _detect_geo_columns(df: pd.DataFrame) -> list[str]:
     df_id = id(df)
     if df_id in _GEO_COLUMN_CACHE:
         return _GEO_COLUMN_CACHE[df_id]
-    
+
     geo_names = {"latitude", "longitude", "lat", "lon", "lng", "the_geom", "geometry",
                  "x", "y", "xcoord", "ycoord", "location", "point"}
     result = [c for c in df.columns if c.lower() in geo_names or "geo" in c.lower() or "coord" in c.lower()]
@@ -172,7 +172,7 @@ def _detect_date_columns(df: pd.DataFrame) -> list[str]:
     df_id = id(df)
     if df_id in _DATE_COLUMN_CACHE:
         return _DATE_COLUMN_CACHE[df_id]
-    
+
     date_names = {"date", "created", "updated", "opened", "closed", "timestamp", "time"}
     result = []
     for col in df.columns:
@@ -187,7 +187,7 @@ def _detect_date_columns(df: pd.DataFrame) -> list[str]:
                     result.append(col)
             except Exception:
                 pass
-    
+
     result = list(dict.fromkeys(result))  # deduplicate preserving order
     _DATE_COLUMN_CACHE[df_id] = result
     return result
@@ -209,7 +209,7 @@ def _detect_pk_candidates(df: pd.DataFrame) -> list[str]:
 
 def _compute_duplicate_pct(df: pd.DataFrame, sample_size: int = 5000) -> float:
     """Compute duplicate percentage with sampling for large DataFrames.
-    
+
     For performance, uses a sample of large DataFrames to estimate duplication.
     """
     if df.empty or len(df) < 2:
@@ -237,7 +237,7 @@ def profile_dataset(key: str, df: pd.DataFrame, *, sample_rows: int = 5_000) -> 
         )
 
     sample = df.sample(min(sample_rows, len(df)), random_state=42) if len(df) > sample_rows else df
-    
+
     # Detect columns once, reuse across all columns
     date_cols_list = _detect_date_columns(df)
     geo_cols_list = _detect_geo_columns(df)
@@ -404,7 +404,7 @@ def qa_qc_inventory_ledger(
         )
         lot_owner = pick_column(lot, OWNER_CANDIDATES)
         keep_cols = ["_bbl"] + ([pluto_owner] if pluto_owner else [])
-        
+
         # Use drop_duplicates + merge instead of multiple intermediate copies
         pluto_dedup = pluto[keep_cols].drop_duplicates("_bbl")
         merged = lot.merge(
@@ -474,7 +474,7 @@ def spatial_conflict_detection(
     """
     Spatial overlaps: weekly schedule vs permits and vs capital reconstruction blocks.
     Returns conflict table and count of spatial join operations performed.
-    
+
     Performance: Caches R-tree index and uses indexed lookups where possible.
     """
     if gpd is None:
@@ -563,7 +563,7 @@ def contract_dispatch_clearance(
             bbl_col = pick_column(t, BBL_CANDIDATES)
             if bbl_col:
                 t["_bbl"] = normalize_bbl(t[bbl_col])
-        
+
         # Use set membership for O(1) lookup instead of pandas operation
         tree_bbls = set(t["_bbl"].dropna().astype(str))
         cleared["route_parks_coordination"] = cleared["_bbl"].astype(str).isin(tree_bbls)

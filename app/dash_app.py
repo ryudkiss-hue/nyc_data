@@ -1,9 +1,10 @@
+import json
 import os
-from pathlib import Path
 import sys
 import threading
-import json
 from datetime import datetime
+from pathlib import Path
+
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -16,31 +17,55 @@ for p in [_app_path, _src_path]:
     if p not in sys.path:
         sys.path.insert(0, p)
 
+import logging
+
 import dash
-from dash import dcc, html, Input, Output, State, callback, no_update
 import dash_mantine_components as dmc
-from dash_iconify import DashIconify
-import pandas as pd
 import numpy as np
+import pandas as pd
 import plotly.graph_objects as go
-from dash_extensions.enrich import DashProxy, Serverside, ServersideOutputTransform, FileSystemBackend
-from fastapi import FastAPI
 import uvicorn
 
-# Import our specialized analytical engines
-from socrata_toolkit import SocrataClient, SocrataConfig, BayesianRegressionEngine
-from data_manager import DataManager
-from viz_engine import VisualizationEngine
-from dash_layouts import (
-    layout_dashboard, layout_construction, layout_reports, 
-    layout_stats, layout_gis, layout_engineering, 
-    layout_sql_tools, layout_nlp, layout_settings, 
-    layout_tutorials, layout_copilot, render_header, render_sidebar,
-    layout_labor, layout_toolbox
+logger = logging.getLogger(__name__)
+
+from dash import Input, Output, State, callback, dcc, html, no_update
+from dash_extensions.enrich import (
+    DashProxy,
+    FileSystemBackend,
+    Serverside,
+    ServersideOutputTransform,
 )
+from dash_iconify import DashIconify
+from dash_layouts import (
+    layout_construction,
+    layout_copilot,
+    layout_dashboard,
+    layout_engineering,
+    layout_gis,
+    layout_labor,
+    layout_nlp,
+    layout_reports,
+    layout_settings,
+    layout_sql_tools,
+    layout_stats,
+    layout_toolbox,
+    layout_tutorials,
+    render_header,
+    render_sidebar,
+)
+from data_manager import DataManager
+from fastapi import FastAPI
 
 # Import Analytics Service
-from services.analytics_service import run_dataset_audit, get_analysis_history, synthesize_executive_summary
+from services.analytics_service import (
+    get_analysis_history,
+    run_dataset_audit,
+    synthesize_executive_summary,
+)
+from viz_engine import VisualizationEngine
+
+# Import our specialized analytical engines
+from socrata_toolkit import BayesianRegressionEngine, SocrataClient, SocrataConfig
 
 # ==========================================
 # --- CONFIGURATION & PERFORMANCE ---
@@ -54,7 +79,7 @@ _cache_dir.mkdir(parents=True, exist_ok=True)
 app = DashProxy(
     __name__,
     backend="fastapi",
-    transforms=[], 
+    transforms=[],
     external_stylesheets=[
         "https://unpkg.com/@mantine/core@8.0.0-alpha.1/styles.css", # Mantine 8.0 Alpha Styles
         "https://unpkg.com/@mantine/dates@8.0.0-alpha.1/styles.css",
@@ -68,12 +93,24 @@ app = DashProxy(
 # Access underlying FastAPI server for high-performance extensions
 server = app.server
 
+@server.middleware("http")
+async def log_exceptions(request, call_next):
+    try:
+        return await call_next(request)
+    except Exception as e:
+        import traceback
+        logger.error("GLOBAL EXCEPTION: %s", e)
+        logger.error(traceback.format_exc())
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=500, content={"error": str(e), "traceback": traceback.format_exc()})
+
 @server.get("/api/v1/health")
 async def health_check():
     return {"status": "optimized", "engine": "FastAPI", "mode": "Turbo-Stream"}
 
 # Item 118: Explicit Security Hardening via FastAPI Middleware
 from fastapi.middleware.cors import CORSMiddleware
+
 server.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -187,12 +224,12 @@ def run_ingestion_background(token, limit, version):
 def initialize_pipeline(n_clicks, token, limit, version):
     if not n_clicks or not any(n_clicks):
         return no_update, [False] * len(n_clicks)
-    
+
     # Item 102: Industrial Streaming Logic
     # 0 or negative = Unlimited 'Total Recall' mode
     val = int(limit or 5000)
     actual_limit = -1 if val <= 0 else val
-    
+
     limit_display = "UNLIMITED (Streamed)" if actual_limit == -1 else f"{actual_limit:,} rows"
     print(f"CALLBACK: Triggering background ingestion (Mode: {limit_display})")
 
@@ -200,7 +237,7 @@ def initialize_pipeline(n_clicks, token, limit, version):
     thread = threading.Thread(target=run_ingestion_background, args=(token, actual_limit, version))
     thread.daemon = True
     thread.start()
-    
+
     return no_update, [True] * len(n_clicks)
 
 @callback(
@@ -222,10 +259,10 @@ def poll_ingestion_engine(n, already_loaded):
                 return False, False, dmc.Notification(title="Ingestion Failed", message=ingestion_status["error"], color="red", action="show")
             if ingestion_status["finished"]:
                 print("POLLER: Ingestion finished detected. Updating store.")
-                ingestion_status["finished"] = False 
+                ingestion_status["finished"] = False
                 return True, False, dmc.Notification(title="Ingestion Complete", message="26 datasets loaded successfully.", color="green", action="show")
         return no_update, False, no_update
-    
+
     # Progress Feedback Logic
     if dm and hasattr(dm, "progress"):
         p = dm.progress
@@ -283,12 +320,12 @@ def render_page_content(pathname):
 )
 def handle_toolbox_audit(n_clicks, dataset_key):
     if not n_clicks: return no_update
-    
+
     result = run_dataset_audit(dm.manager, dataset_key)
-    
+
     if not result["success"]:
         return dmc.Alert(result["error"], title="Audit Failed", color="red")
-        
+
     # Render results
     moments = result["data"].get("four_moments", {})
     return dmc.Stack([
@@ -318,11 +355,11 @@ def handle_toolbox_summary(n_clicks, raw_input):
 )
 def refresh_analysis_history(pathname):
     if pathname != "/toolbox": return no_update
-    
+
     history = get_analysis_history(dm.manager)
     if not history:
         return [html.Thead(html.Tr([html.Th("No history found")]))]
-        
+
     rows = []
     for entry in history:
         rows.append(html.Tr([
@@ -331,7 +368,7 @@ def refresh_analysis_history(pathname):
             html.Td(entry["table_name"]),
             html.Td(dmc.Badge("SUCCESS" if entry["success"] else "FAILED", color="green" if entry["success"] else "red"))
         ]))
-        
+
     return [
         html.Thead(
             html.Tr([
@@ -367,17 +404,17 @@ def heartbeat_callback(path, current_log):
 )
 def populate_dynamic_graphs(data_loaded, boro, pathname, graph_ids, current_log):
     if current_log is None: current_log = []
-    
+
     if not data_loaded:
         entry = dmc.Text(f"[{datetime.now().strftime('%H:%M:%S')}] PENDING: Data not loaded.", size="xs", c="orange")
         current_log.insert(0, entry)
-        return [[go.Figure()] * len(graph_ids), 
+        return [[go.Figure()] * len(graph_ids),
                 [[dmc.ListItem("PENDING")] * 4] * len(graph_ids),
                 current_log]
-    
+
     # Item: Adaptive Page Population
     data_bundle = dm.fetch_all_datasets(force_refresh=False)
-    
+
     # Global Filter Logic
     filtered_bundle = {}
     for key, df in data_bundle.items():
@@ -401,19 +438,19 @@ def populate_dynamic_graphs(data_loaded, boro, pathname, graph_ids, current_log)
         requested_keys.append(k)
 
     charts = VisualizationEngine.get_all_charts(filtered_bundle, registry, requested_keys=requested_keys)
-    
+
     # Map graph IDs to chart figures and calculate moments
     figures = []
     moments_lists = []
     for k in requested_keys:
         figures.append(charts.get(k, go.Figure()))
-        
+
         # Calculate Four Moments for the relevant dataset
         ds_key = "inspection" # Default
         if k in ["built", "velocity"]: ds_key = "built"
         elif k == "violations": ds_key = "violations"
         elif k in ["lot", "mappluto"]: ds_key = "lot_info"
-        
+
         df = filtered_bundle.get(ds_key, pd.DataFrame())
         if not df.empty:
             # Pick the most relevant numeric column
@@ -433,7 +470,7 @@ def populate_dynamic_graphs(data_loaded, boro, pathname, graph_ids, current_log)
 
     entry = dmc.Text(f"[{datetime.now().strftime('%H:%M:%S')}] SUCCESS: Populated {len(figures)} assets on {pathname}", size="xs", c="green")
     current_log.insert(0, entry)
-    
+
     return [figures, moments_lists, current_log]
 
 # --- AI Copilot Callback ---
@@ -448,11 +485,11 @@ def populate_dynamic_graphs(data_loaded, boro, pathname, graph_ids, current_log)
 def update_copilot_chat(n_clicks, user_text, history, model):
     if not user_text: return no_update
     if history is None: history = []
-    
+
     new_user_msg = dmc.Alert(user_text, title=f"You ({model})", color="gray", mt="xs")
     bot_reply = f"System analysis complete using {model}. Identified latent friction surge in Manhattan."
     new_bot_msg = dmc.Alert(bot_reply, title="SIM AI Analyst", color="blue", mt="xs")
-    
+
     history.append(new_user_msg)
     history.append(new_bot_msg)
     return history
@@ -479,7 +516,7 @@ def export_jupyter_notebook(n_clicks, data_loaded):
     output_path.parent.mkdir(exist_ok=True)
     with open(output_path, "w") as f:
         json.dump({"cells": [], "metadata": {}, "nbformat": 4, "nbformat_minor": 5}, f)
-        
+
     return dmc.Notification(title="Jupyter Export Complete", message=f"Generated at {output_path.absolute()}", color="indigo", action="show")
 
 @callback(
@@ -505,15 +542,15 @@ def handle_asset_export(n_clicks):
     if not ctx.triggered or not any(n_clicks): return no_update, no_update
     triggered_id = json.loads(ctx.triggered[0]["prop_id"].split(".")[0])
     export_type, chart_id = triggered_id["index"].split("-", 1)
-    
+
     # Item 98: Context-Aware Export Routing
     target_ds = "inspection"
     if "built" in chart_id or "velocity" in chart_id: target_ds = "built"
     elif "violation" in chart_id: target_ds = "violations"
     elif "lot" in chart_id or "mappluto" in chart_id: target_ds = "lot_info"
-    
+
     df = dm.get_cached_dataset(target_ds)
-    
+
     if export_type == "csv":
         return dcc.send_data_frame(df.to_csv, f"{chart_id}_export.csv"), no_update
     elif export_type == "md":
@@ -522,7 +559,7 @@ def handle_asset_export(n_clicks):
     elif export_type == "py":
         content = f"import pandas as pd\n# Autogenerated Snippet for {chart_id}\ndf = pd.read_csv('{chart_id}_export.csv')\nprint(df.describe())"
         return dict(content=content, filename=f"{chart_id}_script.py"), no_update
-    
+
     # Unsupported types: Provide feedback instead of silent failure
     msg = f"Export type '{export_type.upper()}' is currently in developmental staging."
     return no_update, dmc.Notification(title="Export Alert", message=msg, color="orange", action="show")
