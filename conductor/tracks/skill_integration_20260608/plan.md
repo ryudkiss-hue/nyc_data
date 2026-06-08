@@ -11,7 +11,7 @@
     - [ ] Create `SchemaMapper` (DuckDB schema to Socrata metadata mapping)
     - [ ] Create `MetricReconciliation` (comparative analysis logic)
     - [ ] **Logging/Docs**: Log audit thresholds and reconciliation deltas; generate `docs/modules/analytics_quality.md`
-- [ ] Task: Implement Advanced Analytics Skills
+- [x] Task: Implement Advanced Analytics Skills [5502c49]
     - [ ] Create `TimeSeriesForecasting` (integrating Scipy/Statsmodels)
     - [ ] Create `Segmentation` (clustering/pivoting logic)
     - [ ] **Logging/Docs**: Log model convergence and cluster metrics; generate `docs/modules/analytics_advanced.md`
