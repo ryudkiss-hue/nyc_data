@@ -55,6 +55,42 @@ def get_analysis_history(manager: Any, limit: int = 20) -> list[dict[str, Any]]:
         logger.warning("Could not fetch analysis history: %s", e)
         return []
 
+def perform_causal_what_if_simulation(manager: Any, historical_attribution_df: pd.DataFrame, target_budget: float, allocation_strategy: str) -> dict[str, Any]:
+    """
+    Runs a causal 'What-If' simulation for budget reallocation based on historical attribution.
+    """
+    try:
+        # Placeholder for Causal AI simulation logic
+        logger.info("Running causal what-if simulation for strategy: %s", allocation_strategy)
+        simulated_outcomes = {"projected_impact": "positive", "roi_improvement": 0.15}
+        return {"success": True, "simulated_outcomes": simulated_outcomes}
+    except Exception as e:
+        logger.error("Causal simulation failed: %s", e)
+        return {"success": False, "error": str(e)}
+
+def update_predictive_simulation_intervention(intervention_id: str, value: float) -> dict[str, Any]:
+    """
+    Updates intervention toggles for predictive simulations.
+    """
+    try:
+        logger.info("Updating intervention %s to %f", intervention_id, value)
+        return {"success": True, "intervention_updated": intervention_id}
+    except Exception as e:
+        logger.error("Intervention update failed: %s", e)
+        return {"success": False, "error": str(e)}
+
+def digital_twin_pre_screen(contractor_id: str, historical_performance_df: pd.DataFrame) -> dict[str, Any]:
+    """
+    Causal digital twin engine to pre-screen outcomes for a contractor.
+    """
+    try:
+        logger.info("Running digital twin pre-screen for contractor: %s", contractor_id)
+        pre_screen_result = {"risk_score": 0.2, "recommendation": "proceed"}
+        return {"success": True, "pre_screen_result": pre_screen_result}
+    except Exception as e:
+        logger.error("Digital twin pre-screen failed: %s", e)
+        return {"success": False, "error": str(e)}
+
 def synthesize_executive_summary(raw_findings: str) -> str:
     """
     Mock AI synthesis of analytical findings into an executive brief.

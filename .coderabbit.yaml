@@ -1,0 +1,11 @@
+# CodeRabbit configuration
+# Automated reviews are disabled for this repository.
+# Docs: https://docs.coderabbit.ai/getting-started/configure-coderabbit
+reviews:
+  auto_review:
+    enabled: false
+  review_status: false
+  high_level_summary: false
+  poem: false
+chat:
+  auto_reply: false

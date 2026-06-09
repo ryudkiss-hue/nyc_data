@@ -9,14 +9,14 @@ from dash_iconify import DashIconify
 # --- ELITE ASSET WRAPPER ---
 # ==========================================
 
-def visualization_asset(chart_id, title, description, summary):
+def visualization_asset(chart_id, title, description, summary, tier="1"):
     """
     Creates a compartmentalized, multi-tab analytical asset.
     Includes secondary and tertiary nested structures for:
     Visual | Insights | Data | Export
     """
     return dmc.Paper(
-        withBorder=True, p="md", radius="lg", shadow="sm", mb="xl",
+        withBorder=True, p="md", radius="lg", shadow="sm", mb="xl", className=f"viz-tier-{tier} viz-container",
         children=[
             dmc.Group([
                 dmc.Group([
@@ -131,17 +131,28 @@ def visualization_asset(chart_id, title, description, summary):
 
 def render_header():
     return dmc.AppShellHeader(
+        **{"aria-label": "NYC DOT Socrata Toolkit Header"},
         children=[
             dmc.Stack([
                 dmc.Group(
                     children=[
                         dmc.Group([
-                            dmc.Text("NYC DOT SOCRATA TOOLKIT v8.0-ALPHA", size="xl", fw=900, c="black"),
+                            dmc.Text("NYC DOT SOCRATA TOOLKIT v8.0-ALPHA", size="xl", fw=900, c="black", id="toolkit-brand"),
                             dmc.Badge("TURBO-STREAM", color="orange", variant="filled"),
                             dmc.Badge("FASTAPI ENABLED", color="cyan"),
                         ]),
                         # Global Command Bar
                         dmc.Group([
+                            dmc.Select(
+                                id="global-tier-filter",
+                                placeholder="Relevance Tier",
+                                data=[
+                                    {"value": "ALL", "label": "ALL TIERS"},
+                                    {"value": "1", "label": "Tier 1: Core SIM"},
+                                    {"value": "2", "label": "Tier 2: SIM-Adjacent"}
+                                ],
+                                value="ALL", w=160, size="xs"
+                            ),
                             dmc.Select(
                                 id="global-boro-filter",
                                 placeholder="Borough",
@@ -162,6 +173,7 @@ def render_header():
 
 def render_sidebar():
     return dmc.AppShellNavbar(
+        **{"aria-label": "Mission Control Navigation"},
         children=[
             dmc.ScrollArea(
                 children=[
@@ -341,7 +353,7 @@ def layout_gis():
 
             dmc.Grid([
                 dmc.GridCol(span=9, children=[
-                    visualization_asset("viz-ramp-heatmap", "3D Pedestrian Ramp Density", "Accessibility infrastructure clusters.", "Brooklyn high-density ADA ramp hotspots.")
+                    visualization_asset("viz-ramp-heatmap", "3D Pedestrian Ramp Density", "Accessibility infrastructure clusters.", "Brooklyn high-density ADA ramp hotspots.", tier="2")
                 ]),
                 dmc.GridCol(span=3, children=[
                     dmc.Paper(
@@ -358,10 +370,10 @@ def layout_gis():
                     )
                 ])
             ]),
-            visualization_asset("isochrone", "Pedestrian Catchment Isochrones", "Item 33: Walkability distance analysis for accessibility.", "5/10/15 minute pedestrian accessibility envelopes."),
+            visualization_asset("isochrone", "Pedestrian Catchment Isochrones", "Item 33: Walkability distance analysis for accessibility.", "5/10/15 minute pedestrian accessibility envelopes.", tier="2"),
             dmc.SimpleGrid(cols=2, spacing="lg", children=[
-                visualization_asset("viz-curb-metal", "Protruding Curb Metal", "Specific steel defect tracking.", "High severity clusters in Lower Manhattan."),
-                visualization_asset("viz-planimetric", "Planimetric Sidewalk Density", "Physical area distribution.", "Normative area size peaks at 400 sqft.")
+                visualization_asset("viz-curb-metal", "Protruding Curb Metal", "Specific steel defect tracking.", "High severity clusters in Lower Manhattan.", tier="2"),
+                visualization_asset("viz-planimetric", "Planimetric Sidewalk Density", "Physical area distribution.", "Distribution of sidewalk planimetric area by zone.", tier="2")
             ])
         ]
     )
@@ -400,7 +412,7 @@ def layout_engineering():
                 ])
             ]),
             dmc.SimpleGrid(cols=2, spacing="lg", children=[
-                visualization_asset("equity", "Socio-Economic Equity Multipliers", "Item 68: Prioritization boost map.", "Areas with 2.0x equity weight application."),
+                visualization_asset("equity", "Socio-Economic Equity Multipliers", "Item 68: Prioritization boost map.", "Equity-weighted prioritization across areas.", tier="2"),
                 visualization_asset("budget_mc", "Monte Carlo Budget Risk", "Item 19/62: Probabilistic project cost outcomes.", "95% confidence interval for construction variance.")
             ]),
             dmc.SimpleGrid(cols=2, spacing="lg", children=[
@@ -459,9 +471,9 @@ def layout_settings():
             dmc.Paper(withBorder=True, p="xl", radius="lg", children=[
                 dmc.Stack([
                     dmc.Text("SODA VERSIONING", fw=700, size="sm"),
-                    dmc.SegmentedControl(id="set-soda-version", value="3.0", data=[{"value": "2.1", "label": "SODA 2.1"}, {"value": "3.0", "label": "SODA 3.0"}], fullWidth=True),
-                    dmc.TextInput(id="set-socrata-token", label="Socrata Token", placeholder="TfrAwqroXIrKRPwPvWpEZnkcT"),
-                    dmc.NumberInput(id="set-row-limit", label="Record Limit", value=0, description="Enter 0 for 'Total Recall' Unlimited Streaming mode."),
+                    dmc.SegmentedControl(id={"type": "config-input", "index": "version"}, value="3.0", data=[{"value": "2.1", "label": "SODA 2.1"}, {"value": "3.0", "label": "SODA 3.0"}], fullWidth=True),
+                    dmc.TextInput(id={"type": "config-input", "index": "token"}, label="Socrata Token", placeholder="***set***"),
+                    dmc.NumberInput(id={"type": "config-input", "index": "limit"}, label="Record Limit", value=0, description="Enter 0 for 'Total Recall' Unlimited Streaming mode."),
                     dmc.TextInput(id="set-slack-webhook", label="Slack Notification Webhook (Item 99)", placeholder="https://hooks.slack.com/services/..."),
                     dmc.Button("INITIALIZE & LOAD ALL DATASETS", id={"type": "init-btn", "index": "main"}, fullWidth=True, mt="xl", color="blue", size="lg")
                 ])

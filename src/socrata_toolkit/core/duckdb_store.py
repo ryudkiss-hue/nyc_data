@@ -137,9 +137,11 @@ class DuckDBManager:
         if self._conn is None:
             logger.info("Connecting to DuckDB at %s", self.db_path)
             self._conn = duckdb.connect(self.db_path)
+            # Item 6: Disable insertion order for performance
+            self._conn.execute("SET preserve_insertion_order = false;")
             try:
                 self._conn.execute("INSTALL spatial;")
-                self._conn.execute("LOAD spatial;")
+                self._conn.load_extension("spatial;")
             except Exception as exc:
                 logger.warning("Could not load DuckDB spatial extension: %s", exc)
         return self._conn
@@ -150,7 +152,30 @@ class DuckDBManager:
             self._conn = None
 
     def query(self, sql: str, *args: object):
+        """Execute a query and log performance."""
+        # Item 4: Execution Auditing (Basic logging)
+        logger.info(f"Executing Query: {sql[:100]}...")
         return self.conn.execute(sql, *args)
+
+    def debug_query(self, sql: str, *args: object):
+        """Item 4: Execution Auditing with EXPLAIN ANALYZE."""
+        explain_sql = f"EXPLAIN ANALYZE {sql}"
+        result = self.conn.execute(explain_sql, *args).fetchall()
+        logger.info(f"Query Plan: {result}")
+        return self.conn.execute(sql, *args)
+
+    def create_table_as(self, table_name: str, sql: str):
+        """Item 5: Intermediate Query Caching."""
+        logger.info(f"Caching query result to table: {table_name}")
+        self.conn.execute(f"CREATE TABLE IF NOT EXISTS {table_name} AS {sql}")
+
+    def get_partitioned_parquet_files(self, key: str, cache_dir: str | Path | None = None) -> list[Path]:
+        """Item 2: Helper for Partitioned Parquet."""
+        base = Path(cache_dir) if cache_dir is not None else _default_cache_dir()
+        if not base.exists():
+            return []
+        return sorted(list(base.glob(f"{key}_*.parquet")))
+
 
 
 class DuckDBRepository:
@@ -182,14 +207,13 @@ class DuckDBRepository:
             )
             return len(df)
 
-        # Ensure all columns in DF exist in Table (Schema Evolution)
+        # Phase 1.4: Schema Evolution Guards (Add missing columns dynamically)
         existing_cols = [c[1] for c in self.manager.conn.execute(f'PRAGMA table_info("{table_name}")').fetchall()]
         for col in df.columns:
             if col not in existing_cols:
-                from .drift_logger import log_column_added
-                logger.info("Adding missing column %s to table %s", col, table_name)
+                logger.info(f"Schema Evolution: Adding missing column '{col}' to table '{table_name}'")
+                # Default to VARCHAR for maximum safety against future type drift
                 self.manager.conn.execute(f'ALTER TABLE "{table_name}" ADD COLUMN "{col.replace(chr(34), "")}" VARCHAR;')
-                log_column_added(table_name, col)
 
         columns = df.columns.tolist()
         update_set = ", ".join(

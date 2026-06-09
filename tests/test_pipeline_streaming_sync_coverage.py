@@ -20,10 +20,18 @@ import pytest
 # ---------------------------------------------------------------------------
 
 
-def _mock_client(batches: list[list[dict]], row_count: int = 10) -> MagicMock:
-    """Build a mock SocrataClient that streams pre-defined batches."""
+def _mock_client(batches: list[list[dict]], row_count: int | None = None) -> MagicMock:
+    """Build a mock SocrataClient that streams pre-defined batches.
+
+    By default the reported remote ``row_count`` matches the total number of
+    rows across ``batches`` so the live pipeline's end-of-cycle reconciliation
+    audit (local count vs remote count) succeeds. Pass ``row_count`` explicitly
+    to simulate a specific remote total (e.g. for dry-run estimate checks).
+    """
     client = MagicMock()
     meta = MagicMock()
+    if row_count is None:
+        row_count = sum(len(b) for b in batches)
     meta.row_count = row_count
     client.get_metadata.return_value = meta
     client.fetch_json.return_value = iter(batches)
