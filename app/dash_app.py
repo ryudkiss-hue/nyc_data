@@ -18,6 +18,7 @@ for p in [_app_path, _src_path]:
         sys.path.insert(0, p)
 
 # Item 42: Bulletproof environment configuration for High-Performance Bayesian Engine
+# Use an environment variable for the Mingw64 bin path to ensure portability
 MINGW_BIN = os.getenv("MINGW_BIN_PATH", r"C:\msys64\mingw64\bin")
 os.environ["PATH"] = f"{MINGW_BIN};" + os.environ.get("PATH", "")
 os.environ["PYTENSOR_FLAGS"] = f"cxx={os.path.join(MINGW_BIN, 'g++.exe')},gcc_version_str=14.1.0"
@@ -27,7 +28,7 @@ import dash
 import dash_mantine_components as dmc
 import pandas as pd
 import uvicorn
-from dash import dcc, html
+from dash import dcc, html, Input, Output, State, callback, no_update
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -46,6 +47,14 @@ logger = logging.getLogger(__name__)
 # ==========================================
 # --- CONFIGURATION & PERFORMANCE ---
 # ==========================================
+
+# Item 76: FileSystemBackend for Industrial Serverside State
+_cache_dir = Path(".cache/serverside_data")
+_cache_dir.mkdir(parents=True, exist_ok=True)
+
+# Item: Industrial "Enterprise" Cache (Manual Serverside Offloading)
+import diskcache
+_serverside_cache = diskcache.Cache(".cache/serverside_manual")
 
 # Native Dash 4.2.0 "The Freedom Update"
 app = dash.Dash(
@@ -66,6 +75,7 @@ server = app.server
 async def health_check():
     return {"status": "optimized", "engine": "FastAPI (Dash 4.2 Native)", "mode": "Enterprise"}
 
+# Item 118: Industrial Security via FastAPI Middleware
 server.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -120,4 +130,5 @@ register_export_callbacks(app, dm)
 register_copilot_callbacks(app)
 
 if __name__ == "__main__":
+    # Item 125: High-Performance ASGI Server (Uvicorn)
     uvicorn.run(server, host="127.0.0.1", port=8011, log_level="debug")
