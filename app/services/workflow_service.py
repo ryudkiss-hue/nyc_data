@@ -20,6 +20,9 @@ class WorkflowStrategy(ABC):
 class QAQCStrategy(WorkflowStrategy):
     """Strategy for quality assurance and control."""
     def execute(self, frames: dict[str, pd.DataFrame]) -> dict[str, Any]:
+        for _key in ("lot_info", "mappluto", "complaints_311"):
+            if frames.get(_key, pd.DataFrame()).empty:
+                logger.warning("QAQC: required input '%s' is empty or missing; results may be incomplete", _key)
         ledger, stale, joins, flags = qa_qc_inventory_ledger(
             frames.get("lot_info", pd.DataFrame()),
             frames.get("mappluto", pd.DataFrame()),

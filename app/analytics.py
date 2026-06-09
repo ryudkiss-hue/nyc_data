@@ -27,6 +27,14 @@ _RE_NON_DIGIT = re.compile(r"\D")
 _GEO_COLUMN_CACHE: dict[str, Any] = {}
 _DATE_COLUMN_CACHE: dict[str, Any] = {}
 
+# Strict identifier validation to prevent SQL injection via interpolated table/column names
+_SQL_IDENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def _safe_sql_identifier(name: str | None) -> bool:
+    """Return True only for safe SQL identifiers (letters, digits, underscore)."""
+    return bool(name) and bool(_SQL_IDENT_RE.match(name))
+
 def normalize_bbl(series: pd.Series) -> pd.Series:
     """Industrial-grade vectorized BBL normalization."""
     # Convert to string and strip non-digits using pre-compiled regex
@@ -220,11 +228,11 @@ def _estimate_cardinality(series: pd.Series, max_sample: int = 5000, dataset_key
     """Estimate distinct value count. Prioritizes DuckDB SQL for performance."""
     from app.data_loader import _DUCKDB_AVAILABLE, _DUCKDB_PATH
     
-    if _DUCKDB_AVAILABLE and dataset_key and col_name:
+    if _DUCKDB_AVAILABLE and _safe_sql_identifier(dataset_key) and _safe_sql_identifier(col_name):
         try:
             from socrata_toolkit.core.duckdb_store import DuckDBManager
             manager = DuckDBManager(_DUCKDB_PATH)
-            # Use SQL for exact count on cached data
+            # Use SQL for exact count on cached data (identifiers validated above)
             res = manager.query(f'SELECT count(DISTINCT "{col_name}") FROM "{dataset_key}"').fetchone()
             count = int(res[0]) if res else -1
             manager.close()
@@ -302,11 +310,11 @@ def _compute_duplicate_pct(df: pd.DataFrame, sample_size: int = 5000, dataset_ke
     """Compute duplicate percentage. Prioritizes DuckDB SQL for performance."""
     from app.data_loader import _DUCKDB_AVAILABLE, _DUCKDB_PATH
     
-    if _DUCKDB_AVAILABLE and dataset_key:
+    if _DUCKDB_AVAILABLE and _safe_sql_identifier(dataset_key):
         try:
             from socrata_toolkit.core.duckdb_store import DuckDBManager
             manager = DuckDBManager(_DUCKDB_PATH)
-            # DuckDB SQL for exact duplicate detection
+            # DuckDB SQL for exact duplicate detection (identifier validated above)
             res = manager.query(f'SELECT count(*) FROM "{dataset_key}"').fetchone()
             total = int(res[0]) if res else 0
             res_u = manager.query(f'SELECT count(*) FROM (SELECT DISTINCT * FROM "{dataset_key}")').fetchone()

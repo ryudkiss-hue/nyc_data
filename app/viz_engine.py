@@ -117,14 +117,21 @@ class VisualizationEngine:
 
     @staticmethod
     def chart_reinspection_gauge(data_bundle) -> Tuple[go.Figure, str]:
-        success_rate = np.random.uniform(75, 98)
+        df = VisualizationEngine._safe_df(data_bundle.get("reinspection"))
+        if df.empty:
+            return go.Figure(), "No re-inspection data available to compute pass rate."
+        status_col = VisualizationEngine._find_col(df, ["result", "status", "outcome", "disposition", "pass"])
+        if not status_col:
+            return go.Figure(), "Re-inspection outcome column not found; cannot compute pass rate from available data."
+        passed = df[status_col].astype(str).str.contains("pass|clos|complete|approv|resolv", case=False, na=False)
+        success_rate = float(passed.mean() * 100)
         fig = go.Figure(go.Indicator(
             mode="gauge+number+delta", value=success_rate,
             delta={'reference': 85},
             gauge={'axis': {'range': [0, 100]}, 'bar': {'color': "#10B981"}, 'threshold': {'line': {'color': "red", 'width': 4}, 'thickness': 0.75, 'value': 85}}
         ))
         fig.update_layout(title="Re-inspection Pass Rate (%)", height=300)
-        insight = f"**Results:** Current compliance is tracking at {success_rate:.1f}%. The industrial baseline threshold is set at 85.0% (red marker).\n\n**Next Steps:** If delta is negative, immediately issue corrective action orders (CARs) to the underperforming contractor consortiums."
+        insight = f"**Results:** Pass rate computed from {len(df):,} re-inspection records is {success_rate:.1f}% (n={len(df)}). Baseline threshold is 85.0% (red marker).\n\n**Next Steps:** If below threshold, issue corrective action orders (CARs) to underperforming contractor consortiums."
         return fig, insight
 
     @staticmethod
@@ -162,13 +169,29 @@ class VisualizationEngine:
 
     @staticmethod
     def chart_freshness(data_bundle, registry) -> Tuple[go.Figure, str]:
-        rows = [{"dataset": k, "freshness": np.random.randint(80, 100)} for k in data_bundle.keys()]
+        rows = []
+        for k, v in data_bundle.items():
+            df_k = VisualizationEngine._safe_df(v)
+            if df_k.empty:
+                continue
+            date_col = VisualizationEngine._find_col(df_k, ["updated", "modified", "created", "date"])
+            if not date_col:
+                continue
+            try:
+                last = pd.to_datetime(df_k[date_col], errors="coerce").max()
+                if pd.isna(last):
+                    continue
+                age_days = (pd.Timestamp.now() - last).days
+                rows.append({"dataset": k, "freshness": max(0.0, 100.0 - float(age_days))})
+            except Exception:
+                continue
         df = pd.DataFrame(rows)
-        if df.empty: return go.Figure(), "No SLA data."
+        if df.empty:
+            return go.Figure(), "No dataset freshness metadata (date columns) available to compute SLA scores."
         fig = px.bar(df, x="dataset", y="freshness", color="freshness", color_continuous_scale="RdYlGn")
-        fig.add_hline(y=95.0, line_dash="dash", line_color="black", annotation_text="95% SLA Target")
-        fig = VisualizationEngine._apply_standard_layout(fig, "Socrata API Sync Freshness (SLA)", "Dataset Identifier", "Freshness Score (%)")
-        insight = "**Results:** Displays the cache validity of the internal DuckDB datastore vs SODA3 endpoints. The dashed line is the 95% SLA target.\n\n**Next Steps:** Any dataset falling into the yellow/red zone (sub-95%) should trigger an immediate manual `force_refresh` or a check of the Socrata API gateway status."
+        fig.add_hline(y=95.0, line_dash="dash", line_color="black", annotation_text="95-pt SLA Target")
+        fig = VisualizationEngine._apply_standard_layout(fig, "Dataset Sync Freshness (SLA)", "Dataset Identifier", "Freshness (100 - days since last record)")
+        insight = "**Results:** Freshness is derived from the most recent record date in each loaded dataset (100 − days since last update). The dashed line is the 95-point SLA target.\n\n**Next Steps:** Any dataset in the yellow/red zone should trigger a manual `force_refresh` or a Socrata API gateway check."
         return fig, insight
 
     @staticmethod
@@ -184,10 +207,11 @@ class VisualizationEngine:
 
     @staticmethod
     def chart_lag_corr(data_bundle) -> Tuple[go.Figure, str]:
-        fig = px.bar(x=list(range(13)), y=np.random.uniform(0.2, 0.85, 13), error_y=np.random.uniform(0.05, 0.15, 13))
-        fig = VisualizationEngine._apply_standard_layout(fig, "Hiring Lag Cross-Correlation with Error Margins", "Lag Period (Months)", "Pearson Correlation Coefficient (r)")
-        insight = "**Results:** Error bars represent the 95% confidence interval of the correlation coefficient at each lag step.\n\n**Next Steps:** Target the specific lag month with the highest statistically significant correlation for proactive budget deployments."
-        return fig, insight
+        return (
+            go.Figure(),
+            "Hiring-lag cross-correlation requires aligned hiring and outcome time series, which are "
+            "not available in the current data bundle. Load paired monthly series to enable this analysis.",
+        )
 
     @staticmethod
     def chart_ps_burn(data_bundle) -> Tuple[go.Figure, str]:
@@ -203,9 +227,19 @@ class VisualizationEngine:
 
     @staticmethod
     def chart_lifecycle(data_bundle) -> Tuple[go.Figure, str]:
-        fig = go.Figure(go.Funnel(y=["1. 311 Complaint", "2. HIQA Inspection", "3. Violation Issued", "4. Contractor Repair"], x=[1000, 850, 420, 310]))
+        stages = [
+            ("1. 311 Complaint", "complaints_311"),
+            ("2. HIQA Inspection", "inspection"),
+            ("3. Violation Issued", "violations"),
+            ("4. Contractor Repair", "built"),
+        ]
+        labels = [label for label, _ in stages]
+        counts = [int(len(VisualizationEngine._safe_df(data_bundle.get(key)))) for _, key in stages]
+        if sum(counts) == 0:
+            return go.Figure(), "No lifecycle volume data available to build the conversion funnel."
+        fig = go.Figure(go.Funnel(y=labels, x=counts))
         fig = VisualizationEngine._apply_standard_layout(fig, "End-to-End SIM Lifecycle Conversion Funnel", "Process Stage", "Retained Record Volume")
-        insight = "**Results:** The funnel visualizes the attrition rate of municipal data. A massive drop-off between Complaint and Inspection indicates triage efficiency, while a drop between Violation and Repair indicates contractor bottlenecks.\n\n**Next Steps:** Perform a root-cause analysis on the 26% attrition rate at the final repair stage."
+        insight = "**Results:** Funnel built from actual loaded record counts per stage (no synthetic values). Stage-to-stage drop-offs reveal triage efficiency and contractor bottlenecks.\n\n**Next Steps:** Perform a root-cause analysis on the largest attrition step."
         return fig, insight
 
     @staticmethod

@@ -67,6 +67,7 @@ fastapi = {version = ">=0.100", optional = true}
 uvicorn = {version = ">=0.20", optional = true}
 dash = {version = ">=2.14", optional = true}
 dash-mantine-components = {version = ">=0.14", optional = true}
+dash-iconify = {version = ">=0.1.2", optional = true}
 diskcache = {version = ">=5.6", optional = true}
 
 [tool.poetry.extras]
@@ -80,7 +81,7 @@ viz = ["matplotlib", "plotly"]
 geo = ["shapely", "geopandas"]
 reports = ["plotly", "weasyprint"]
 ui = ["streamlit"]
-mission = ["streamlit", "sodapy", "geopandas", "shapely", "plotly", "pyarrow", "folium", "pydeck", "prophet", "beautifulsoup4", "river", "mapie", "dowhy", "sentence-transformers", "numba", "opendp", "agentql", "playwright", "openpyxl", "python-pptx", "networkx", "fastapi", "uvicorn", "dash", "dash-mantine-components", "diskcache"]
+mission = ["streamlit", "sodapy", "geopandas", "shapely", "plotly", "pyarrow", "folium", "pydeck", "prophet", "beautifulsoup4", "river", "mapie", "dowhy", "sentence-transformers", "numba", "opendp", "agentql", "playwright", "openpyxl", "python-pptx", "networkx", "fastapi", "uvicorn", "dash", "dash-mantine-components", "dash-iconify", "diskcache"]
 pptx = ["python-pptx"]
 exe = ["pyinstaller"]
 desktop = ["pywebview"]

@@ -57,9 +57,8 @@ def predict_homeowner_default(
     # Identify target variable: Did the city end up repairing it? (Mocked for robust pipeline)
     target_col = next((c for c in df.columns if 'city_do_it' in c.lower() or 'default' in c.lower()), None)
     if not target_col:
-        # Synthesize target for demonstration of pipeline
-        df['target_default'] = np.where(np.random.rand(len(df)) > 0.7, 1, 0)
-        target_col = 'target_default'
+        # No real outcome label available — refuse to fabricate labels (data-integrity policy)
+        return df, {"error": "No real default/repair-outcome label column found; refusing to train on synthetic labels. Provide a 'city_do_it' or 'default' column."}
         
     # Select features (Assessed Value, Year Built, Lot Area)
     features = [c for c in df.columns if any(k in c.lower() for k in ['assess', 'year', 'area', 'sqft'])]
@@ -125,6 +124,7 @@ def nlp_triage_severe_hazards(complaints_311_df: pd.DataFrame) -> pd.DataFrame:
     ]
     
     df = complaints_311_df.copy()
+    log.info("AUDIT: accessing %d complaint text records for NLP hazard scoring", len(df))
     df[text_col] = df[text_col].fillna('')
     
     # Calculate Hazard Score based on TF-IDF weighting (simulated via regex for speed)
@@ -159,7 +159,11 @@ def spatial_tree_damage_conflict(
     # Assuming geodataframes or coordinate columns exist
     log.info("Executing DQ-04: Spatial Parks Coordination Engine")
     
-    # For robust demonstration, we verify columns and return an annotated df
+    if tree_damage_df.empty:
+        log.warning("DQ-04: tree_damage dataset is empty; returning empty result without analysis")
+        return tree_damage_df.copy()
+
+    # Verify columns and return an annotated df
     df = tree_damage_df.copy()
     if 'bbl' in df.columns.str.lower():
         df['inter_agency_blocked'] = True
@@ -182,13 +186,25 @@ def dismissal_root_cause_analysis(
     if dismissals_df.empty:
         return {"error": "No dismissal data"}
         
-    # Simulated output for the visualization engine
+    # Derive failure modes from real dismissal records where a defect/cause column exists
+    cause_col = next(
+        (c for c in dismissals_df.columns
+         if any(k in c.lower() for k in ['defect', 'reason', 'cause', 'type', 'category'])),
+        None,
+    )
+    failure_modes = []
+    if cause_col:
+        breakdown = (dismissals_df[cause_col].value_counts(normalize=True) * 100).round(1)
+        failure_modes = [
+            {"defect_type": str(idx), "dismissal_rate": f"{rate}%"}
+            for idx, rate in breakdown.head(5).items()
+        ]
     return {
-        "total_dismissals_analyzed": len(dismissals_df),
-        "primary_failure_modes": [
-            {"defect_type": "Hardware (Utility Cover)", "dismissal_rate": "42%", "cause": "Misattributed to homeowner instead of ConEd"},
-            {"defect_type": "Tree Root (Parks)", "dismissal_rate": "38%", "cause": "Failure to cite Parks Dept jurisdiction"},
-            {"defect_type": "Trip Hazard < 0.5 inches", "dismissal_rate": "15%", "cause": "Below legal threshold for citation"}
-        ],
-        "operational_recommendation": "Deploy targeted retraining for HIQA inspectors regarding jurisdiction of hardware vault covers (ConEdison vs. Property Owner) to recover up to 42% of lost violation revenue."
+        "total_dismissals_analyzed": int(len(dismissals_df)),
+        "primary_failure_modes": failure_modes,
+        "operational_recommendation": (
+            "Enrich dismissal records with categorized cause/defect codes to enable root-cause analysis."
+            if not failure_modes
+            else "Target HIQA retraining on the highest-rate dismissal categories shown above."
+        ),
     }
