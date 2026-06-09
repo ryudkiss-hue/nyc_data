@@ -929,6 +929,19 @@ def render_contracts_page() -> None:
     )
     st.markdown("---")
 
+    # --- Contract data (upload only — no matching Socrata dataset) ---
+    st.sidebar.markdown("**Contract Data**")
+    st.sidebar.caption(
+        "Upload a contracts CSV/Excel with columns: contract_id, contractor, borough, "
+        "awarded_value, spent_to_date, percent_complete, planned_start, planned_end, status"
+    )
+    up_c = st.sidebar.file_uploader("Contracts CSV / Excel", type=["csv", "xlsx"], key="up_contracts")
+    if up_c:
+        df_contracts = pd.read_excel(up_c) if up_c.name.endswith(".xlsx") else pd.read_csv(up_c)
+    else:
+        df_contracts = pd.DataFrame()
+        st.sidebar.info("No contract data loaded. Upload a file to begin.")
+
     # --- New Layout: Level 1 - Core Metrics (KPI Hierarchy) ---
     st.markdown("### 📊 Level 1: Core KPI Metrics")
     kpi_cont = st.container(border=True)
@@ -967,19 +980,6 @@ def render_contracts_page() -> None:
         "📋 Dismissals & Correspondences",
         "📥 Export & Reports",
     ])
-
-    # --- Contract data (upload only — no matching Socrata dataset) ---
-    st.sidebar.markdown("**Contract Data**")
-    st.sidebar.caption(
-        "Upload a contracts CSV/Excel with columns: contract_id, contractor, borough, "
-        "awarded_value, spent_to_date, percent_complete, planned_start, planned_end, status"
-    )
-    up_c = st.sidebar.file_uploader("Contracts CSV / Excel", type=["csv", "xlsx"], key="up_contracts")
-    if up_c:
-        df_contracts = pd.read_excel(up_c) if up_c.name.endswith(".xlsx") else pd.read_csv(up_c)
-    else:
-        df_contracts = pd.DataFrame()
-        st.sidebar.info("No contract data loaded. Upload a file to begin.")
 
     # --- Productivity data (Socrata or upload) ---
     st.sidebar.markdown("**Productivity Data**")

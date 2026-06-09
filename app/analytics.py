@@ -18,8 +18,14 @@ from functools import lru_cache
 
 import pandas as pd
 
+from app.services.roi_service import ProductivityROI
+
 # Pre-compile regex for BBL normalization (performance optimization)
 _RE_NON_DIGIT = re.compile(r"\D")
+
+# Module-level memoization caches for column-type detection
+_GEO_COLUMN_CACHE: dict[str, Any] = {}
+_DATE_COLUMN_CACHE: dict[str, Any] = {}
 
 def normalize_bbl(series: pd.Series) -> pd.Series:
     """Industrial-grade vectorized BBL normalization."""
