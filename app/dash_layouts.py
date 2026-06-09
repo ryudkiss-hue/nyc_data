@@ -9,14 +9,14 @@ from dash_iconify import DashIconify
 # --- ELITE ASSET WRAPPER ---
 # ==========================================
 
-def visualization_asset(chart_id, title, description, summary):
+def visualization_asset(chart_id, title, description, summary, tier="1"):
     """
     Creates a compartmentalized, multi-tab analytical asset.
     Includes secondary and tertiary nested structures for:
     Visual | Insights | Data | Export
     """
     return dmc.Paper(
-        withBorder=True, p="md", radius="lg", shadow="sm", mb="xl",
+        withBorder=True, p="md", radius="lg", shadow="sm", mb="xl", className=f"viz-tier-{tier} viz-container",
         children=[
             dmc.Group([
                 dmc.Group([
@@ -131,17 +131,28 @@ def visualization_asset(chart_id, title, description, summary):
 
 def render_header():
     return dmc.AppShellHeader(
+        **{"aria-label": "NYC DOT Socrata Toolkit Header"},
         children=[
             dmc.Stack([
                 dmc.Group(
                     children=[
                         dmc.Group([
-                            dmc.Text("NYC DOT SOCRATA TOOLKIT v8.0-ALPHA", size="xl", fw=900, c="black"),
+                            dmc.Text("NYC DOT SOCRATA TOOLKIT v8.0-ALPHA", size="xl", fw=900, c="black", id="toolkit-brand"),
                             dmc.Badge("TURBO-STREAM", color="orange", variant="filled"),
                             dmc.Badge("FASTAPI ENABLED", color="cyan"),
                         ]),
                         # Global Command Bar
                         dmc.Group([
+                            dmc.Select(
+                                id="global-tier-filter",
+                                placeholder="Relevance Tier",
+                                data=[
+                                    {"value": "ALL", "label": "ALL TIERS"},
+                                    {"value": "1", "label": "Tier 1: Core SIM"},
+                                    {"value": "2", "label": "Tier 2: SIM-Adjacent"}
+                                ],
+                                value="ALL", w=160, size="xs"
+                            ),
                             dmc.Select(
                                 id="global-boro-filter",
                                 placeholder="Borough",
@@ -162,6 +173,7 @@ def render_header():
 
 def render_sidebar():
     return dmc.AppShellNavbar(
+        **{"aria-label": "Mission Control Navigation"},
         children=[
             dmc.ScrollArea(
                 children=[
@@ -341,7 +353,7 @@ def layout_gis():
 
             dmc.Grid([
                 dmc.GridCol(span=9, children=[
-                    visualization_asset("viz-ramp-heatmap", "3D Pedestrian Ramp Density", "Accessibility infrastructure clusters.", "Brooklyn high-density ADA ramp hotspots.")
+                    visualization_asset("viz-ramp-heatmap", "3D Pedestrian Ramp Density", "Accessibility infrastructure clusters.", "Brooklyn high-density ADA ramp hotspots.", tier="2")
                 ]),
                 dmc.GridCol(span=3, children=[
                     dmc.Paper(
@@ -358,10 +370,10 @@ def layout_gis():
                     )
                 ])
             ]),
-            visualization_asset("isochrone", "Pedestrian Catchment Isochrones", "Item 33: Walkability distance analysis for accessibility.", "5/10/15 minute pedestrian accessibility envelopes."),
+            visualization_asset("isochrone", "Pedestrian Catchment Isochrones", "Item 33: Walkability distance analysis for accessibility.", "5/10/15 minute pedestrian accessibility envelopes.", tier="2"),
             dmc.SimpleGrid(cols=2, spacing="lg", children=[
-                visualization_asset("viz-curb-metal", "Protruding Curb Metal", "Specific steel defect tracking.", "High severity clusters in Lower Manhattan."),
-                visualization_asset("viz-planimetric", "Planimetric Sidewalk Density", "Physical area distribution.", "Normative area size peaks at 400 sqft.")
+                visualization_asset("viz-curb-metal", "Protruding Curb Metal", "Specific steel defect tracking.", "High severity clusters in Lower Manhattan.", tier="2"),
+                visualization_asset("viz-planimetric", "Planimetric Sidewalk Density", "Physical area distribution.", "Normative area size peaks at 400 sqft.", tier="2")
             ])
         ]
     )
@@ -400,7 +412,7 @@ def layout_engineering():
                 ])
             ]),
             dmc.SimpleGrid(cols=2, spacing="lg", children=[
-                visualization_asset("equity", "Socio-Economic Equity Multipliers", "Item 68: Prioritization boost map.", "Areas with 2.0x equity weight application."),
+                visualization_asset("equity", "Socio-Economic Equity Multipliers", "Item 68: Prioritization boost map.", "Areas with 2.0x equity weight application.", tier="2"),
                 visualization_asset("budget_mc", "Monte Carlo Budget Risk", "Item 19/62: Probabilistic project cost outcomes.", "95% confidence interval for construction variance.")
             ]),
             dmc.SimpleGrid(cols=2, spacing="lg", children=[
