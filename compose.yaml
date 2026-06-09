@@ -1,10 +1,74 @@
 services:
-  manhattanmissioncontrol:
-    image: manhattanmissioncontrol
-    build:
-      context: desktop
-      dockerfile: ./Dockerfile
+  postgres:
+    image: postgis/postgis:15-3.3
     environment:
-      NODE_ENV: production
+      POSTGRES_USER: ${DB_USER:-nyc_analyst}
+      POSTGRES_PASSWORD: ${DB_PASS:-secure_password}
+      POSTGRES_DB: ${DB_NAME:-nyc_data}
     ports:
-      - 8501:8501
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-nyc_analyst} -d ${DB_NAME:-nyc_data}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  mission-control:
+    build:
+      context: .
+      target: mission
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    environment:
+      MISSION_DEMO: ${MISSION_DEMO:-0}
+      PG_DSN: postgresql://${DB_USER:-nyc_analyst}:${DB_PASS:-secure_password}@postgres:5432/${DB_NAME:-nyc_data}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  dash-app:
+    build:
+      context: .
+      target: turbo
+    ports:
+      - "8012:8012"
+    env_file:
+      - .env
+    environment:
+      PG_DSN: postgresql://${DB_USER:-nyc_analyst}:${DB_PASS:-secure_password}@postgres:5432/${DB_NAME:-nyc_data}
+    volumes:
+      - .:/app
+      - .cache/socrata_data:/app/.cache/socrata_data
+      - .cache/serverside_data:/app/.cache/serverside_data
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  analyst-runner:
+    build:
+      context: .
+      target: analyst
+    profiles: ["batch"]
+    env_file:
+      - .env
+    environment:
+      ANALYST_PROFILE: config/analyst_profile.example.yaml
+      PG_DSN: postgresql://${DB_USER:-nyc_analyst}:${DB_PASS:-secure_password}@postgres:5432/${DB_NAME:-nyc_data}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    profiles: ["observability"]
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+
+volumes:
+  pgdata:

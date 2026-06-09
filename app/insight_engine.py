@@ -70,8 +70,6 @@ class StaticInsightEngine:
             raw_text = StaticInsightEngine._map_velocity(stats, verbosity, reading_level)
         elif chart_id == "viz-violations-trend":
             raw_text = StaticInsightEngine._map_violations(stats, verbosity, reading_level)
-        elif chart_id == "viz-causal-hiring":
-            raw_text = StaticInsightEngine.analyze_causality(df)
         elif chart_id == "viz-feature-importance":
             raw_text = StaticInsightEngine.analyze_feature_importance(data_bundle)
         elif chart_id == "viz-pavement-decay":
@@ -127,36 +125,6 @@ class StaticInsightEngine:
             f"High-fidelity frequency analysis identifies a significant positive skew ({skew:.2f}) and kurtosis ({kurt:.2f}). "
             "This confirms that routine defects form the long tail of the city-wide workload, while hazards "
             "remain localized outliers. This pattern validates the use of Poisson models for resource planning."
-        )
-
-    @staticmethod
-    def analyze_causality(df: pd.DataFrame) -> str:
-        """
-        Item 22: Bayesian Network Analysis to identify policy-driven hiring surges.
-        Identifies causal links between policy interventions and hiring volume.
-        """
-        # Simulated Bayesian Network Inference
-        # In a full implementation, we'd use pgmpy or similar
-        # Here we perform a causal strength estimation using conditional probabilities
-        if "policy_change" not in df.columns:
-            # Create a mock policy column for demonstration if not present
-            df = df.copy()
-            df["policy_change"] = np.random.choice([0, 1], size=len(df))
-
-        # Calculate P(Surge | Policy) vs P(Surge | No Policy)
-        # Surge defined as hiring > 75th percentile
-        threshold = df["Postings"].quantile(0.75) if "Postings" in df.columns else 10
-        df["is_surge"] = (df["Postings"] > threshold).astype(int) if "Postings" in df.columns else np.random.randint(0, 2, len(df))
-
-        p_surge_given_policy = df[df["policy_change"] == 1]["is_surge"].mean()
-        p_surge_given_no_policy = df[df["policy_change"] == 0]["is_surge"].mean()
-
-        causal_lift = p_surge_given_policy / (p_surge_given_no_policy + 1e-9)
-
-        return (
-            f"Causal Inference Engine (Bayesian Network) Report: "
-            f"Identified a {causal_lift:.2f}x causal lift in hiring surges associated with recent DOT policy interventions. "
-            f"Posterior probability of policy-driven surge is {p_surge_given_policy:.2f} compared to baseline {p_surge_given_no_policy:.2f}."
         )
 
     @staticmethod

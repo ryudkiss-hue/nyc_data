@@ -260,15 +260,6 @@ def layout_dashboard():
                 "Item 16: Consensus mean of Prophet, ARIMA, and Linear Trend forecasting.",
                 "Analytical findings suggest a positive trend in hiring velocity, with a 12% reduction in OMB review lag over the last quarter."
             ),
-            visualization_asset(
-                "viz-causal-hiring", "Causal Inference: Policy Surges",
-                "Item 22: Bayesian Network analysis identifying policy-driven hiring surges.",
-                "Identified a 1.72x causal lift in hiring surges associated with recent DOT policy interventions."
-            ),
-            dmc.SimpleGrid(cols=2, spacing="xl", children=[
-                visualization_asset("viz-yield-post", "Bayesian Yield Posterior", "High-fidelity probability distribution.", "Mean yield of 1.42x, with a narrow 94% HDI."),
-                visualization_asset("viz-lag-corr", "Hiring Lag Cross-Correlation", "Identifying optimal temporal offset.", "Maximized correlation at 6-month lag.")
-            ]),
             visualization_asset("quantum", "Quantum Search Advantage", "Item 20: Grover Algorithm Simulation for record lookups.", "Visualizing the O(sqrt(N)) computational speedup.")
         ]
     )
