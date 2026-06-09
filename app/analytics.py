@@ -225,7 +225,7 @@ def _safe_sample_values(series: pd.Series, n: int = 3) -> list[str]:
 
 
 def _estimate_cardinality(series: pd.Series, max_sample: int = 5000, dataset_key: str | None = None, col_name: str | None = None) -> int:
-    """Estimate distinct value count. Prioritizes DuckDB SQL for performance."""
+    """Estimate distinct value count. Prioritizes DuckDB SQL for performance, otherwise uses sampling."""
     from app.data_loader import _DUCKDB_AVAILABLE, _DUCKDB_PATH
     
     if _DUCKDB_AVAILABLE and _safe_sql_identifier(dataset_key) and _safe_sql_identifier(col_name):
@@ -833,7 +833,7 @@ def productivity_ada_dashboard(
 # ---------------------------------------------------------------------------
 
 def run_all_workflows(frames: dict[str, pd.DataFrame]) -> dict[str, Any]:
-    """Execute all workflows using Strategy Pattern. Optimized for scalability."""
+    """Execute all workflows using Strategy Pattern. Optimized for scalability and memory safety."""
     from app.services.workflow_service import WorkflowOrchestrator
     
     orchestrator = WorkflowOrchestrator()
@@ -857,6 +857,9 @@ def run_all_workflows(frames: dict[str, pd.DataFrame]) -> dict[str, Any]:
         quality_flags=qa["flags"] + len(spatial["conflicts"]),
         datasets_profiled=len(profiles),
     )
+
+    import gc
+    gc.collect() # Aggressive GC after heavy processing
 
     return {
         "ledger": qa["ledger"],
