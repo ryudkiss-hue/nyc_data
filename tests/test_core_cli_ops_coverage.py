@@ -165,8 +165,9 @@ class TestDatasetHealthFallback:
 
         reg = {"inspection": {"fourfour": "dntt-gqwq"}}
         session = MagicMock()
+        # SODA3 count via session.post; metadata via session.get.
+        session.post.return_value = _resp([{"c": "100"}])
         session.get.side_effect = [
-            _resp([{"c": "100"}]),
             _resp({"rowsUpdatedAt": int(datetime.utcnow().timestamp())}),
         ]
         # Force the `from tabulate import tabulate` inside the command to fail.

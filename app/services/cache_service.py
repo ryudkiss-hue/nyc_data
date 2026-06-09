@@ -50,8 +50,11 @@ class CacheService:
     def hset_metadata(self, key: str, field: str, value: Any) -> bool:
         """Store metadata in a hash (uses Redis ziplist optimization)."""
         try:
-            # Metadata is stored as serialized strings in a hash field
-            return self.client.hset(key, field, str(value))
+            # Metadata is stored as serialized strings in a hash field.
+            # redis hset returns the number of newly added fields (an int);
+            # normalize to a bool to honor the declared return type.
+            self.client.hset(key, field, str(value))
+            return True
         except Exception as e:
             logger.error("Metadata hset failed for %s:%s: %s", key, field, e)
             return False
