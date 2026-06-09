@@ -20,3 +20,9 @@ This log tracks all instances of schema evolution, column additions, and data ty
 | 2026-06-08T00:37:15.130823+00:00 | `street_permits` | **COLUMN_ADDED** | `permittotalsqfeet` | Automatically added to DuckDB table via schema evolution. |
 | 2026-06-08T00:37:15.133229+00:00 | `street_permits` | **COLUMN_ADDED** | `permitestimatednumberofcuts` | Automatically added to DuckDB table via schema evolution. |
 | 2026-06-08T00:37:15.135386+00:00 | `street_permits` | **COLUMN_ADDED** | `emergencyissuedate` | Automatically added to DuckDB table via schema evolution. |
+| 2026-06-09T03:07:40.569880+00:00 | `evolution_test` | **COLUMN_ADDED** | `val2` | Automatically added to DuckDB table via schema evolution. |
+| 2026-06-09T03:07:41.097812+00:00 | `type_safety_test` | **COLUMN_ADDED** | `drift_col` | Automatically added to DuckDB table via schema evolution. |
+| 2026-06-09T03:36:41.761924+00:00 | `evolution_test` | **COLUMN_ADDED** | `val2` | Automatically added to DuckDB table via schema evolution. |
+| 2026-06-09T03:36:42.200877+00:00 | `type_safety_test` | **COLUMN_ADDED** | `drift_col` | Automatically added to DuckDB table via schema evolution. |
+| 2026-06-09T03:58:57.366863+00:00 | `evolution_test` | **COLUMN_ADDED** | `val2` | Automatically added to DuckDB table via schema evolution. |
+| 2026-06-09T03:58:57.872597+00:00 | `type_safety_test` | **COLUMN_ADDED** | `drift_col` | Automatically added to DuckDB table via schema evolution. |
