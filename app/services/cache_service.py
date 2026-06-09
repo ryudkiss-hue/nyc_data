@@ -55,6 +55,7 @@ class CacheService:
             # normalize to a bool to honor the declared return type.
             self.client.hset(key, field, str(value))
             return True
+
         except Exception as e:
             logger.error("Metadata hset failed for %s:%s: %s", key, field, e)
             return False
