@@ -1,11 +1,15 @@
+import importlib.util
 import sys
 from unittest.mock import MagicMock
 
-# Stub heavy dependencies before imports to avoid collection errors
-sys.modules["prophet"] = MagicMock()
-sys.modules["geopandas"] = MagicMock()
-sys.modules["shapely"] = MagicMock()
-sys.modules["shapely.geometry"] = MagicMock()
+# Stub heavy optional dependencies ONLY when they are not installed, so the
+# callback modules can be imported without them. Never clobber a real module
+# already present in sys.modules — doing so leaks MagicMock stand-ins into
+# every test collected afterwards (e.g. the spatial suite), breaking real
+# geometry/GeoDataFrame assertions.
+for _mod in ("prophet", "geopandas", "shapely", "shapely.geometry"):
+    if importlib.util.find_spec(_mod) is None and _mod not in sys.modules:
+        sys.modules[_mod] = MagicMock()
 
 import dash
 import pytest
