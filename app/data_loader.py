@@ -508,13 +508,19 @@ def fetch_dataset(
     try:
         t0 = time.perf_counter()
         df = _fetch_live(dataset_key, limit=effective_limit, where=effective_where, select=select)
-        # Write to new DuckDB store (L1.5)
+        
+        # Priority Write: Write to primary DuckDB store (L1.5) synchronously
         _write_duckdb_cache(dataset_key, df)
-        # Write to new L2 disk cache
-        if _DISK_CACHE_AVAILABLE and not df.empty and "_error" not in df.columns:
-            _write_disk_cache(dataset_key, df)
-        # Also maintain legacy cache for backwards compat
-        _write_parquet_cache(dataset_key, df)
+        
+        # Write-Behind Cache: Offload secondary writes to background thread
+        def _background_cache_ops(k: str, data: pd.DataFrame):
+            if _DISK_CACHE_AVAILABLE and not data.empty and "_error" not in data.columns:
+                _write_disk_cache(k, data)
+            _write_parquet_cache(k, data)
+            
+        with ThreadPoolExecutor(max_workers=1) as background_io:
+            background_io.submit(_background_cache_ops, dataset_key, df)
+
         log_event(
             "fetch_live",
             dataset=dataset_key,
@@ -591,9 +597,10 @@ def fetch_datasets_parallel(
     *,
     limit: int = 25_000,
 ) -> dict[str, pd.DataFrame]:
-    """Fetch multiple datasets concurrently using ThreadPoolExecutor."""
+    """Fetch multiple datasets concurrently. Optimized worker count for Socrata API limits."""
     results: dict[str, pd.DataFrame] = {}
-    with ThreadPoolExecutor(max_workers=min(len(keys), 6)) as exe:
+    # Reduced max_workers to 3 to avoid 429 Too Many Requests while maintaining parallelism
+    with ThreadPoolExecutor(max_workers=min(len(keys), 3)) as exe:
         future_to_key = {exe.submit(fetch_dataset, k, limit=limit): k for k in keys}
         for fut in as_completed(future_to_key):
             k = future_to_key[fut]

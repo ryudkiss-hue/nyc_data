@@ -9,9 +9,11 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import json
 from dataclasses import dataclass, field
 from datetime import timezone
 from typing import Any
+from functools import lru_cache
 
 import pandas as pd
 
@@ -32,10 +34,41 @@ except ImportError:
 
 log = logging.getLogger(__name__)
 
-# Cache for detected date columns to avoid repeated detection
-_DATE_COLUMN_CACHE: dict[int, list[str]] = {}
-# Cache for detected geo columns to avoid repeated detection
-_GEO_COLUMN_CACHE: dict[int, list[str]] = {}
+# LRU Cache for column detection to prevent memory leaks in long sessions
+@lru_cache(max_size=128)
+def _get_cached_geo_cols(schema_hash: str, columns_tuple: tuple[str, ...]) -> list[str]:
+    """
+    Detect and cache geospatial column names based on common naming patterns.
+    
+    Args:
+        schema_hash: A unique hash of the dataframe schema.
+        columns_tuple: A tuple of column names.
+        
+    Returns:
+        A list of identified geospatial column names.
+    """
+    geo_names = {"latitude", "longitude", "lat", "lon", "lng", "the_geom", "geometry",
+                 "x", "y", "xcoord", "ycoord", "location", "point"}
+    return [c for c in columns_tuple if c.lower() in geo_names or "geo" in c.lower() or "coord" in c.lower()]
+
+@lru_cache(max_size=128)
+def _get_cached_date_cols(schema_hash: str, columns_tuple: tuple[str, ...]) -> list[str]:
+    """
+    Detect and cache date/time column names based on common naming patterns.
+    
+    Args:
+        schema_hash: A unique hash of the dataframe schema.
+        columns_tuple: A tuple of column names.
+        
+    Returns:
+        A list of identified date/time column names.
+    """
+    date_names = {"date", "created", "updated", "opened", "closed", "timestamp", "time"}
+    result = []
+    for col in columns_tuple:
+        if any(d in col.lower() for d in date_names):
+            result.append(col)
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -139,11 +172,8 @@ def _safe_sample_values(series: pd.Series, n: int = 3) -> list[str]:
     return [str(v)[:60] for v in vals[:n]]
 
 
-def _estimate_cardinality(series: pd.Series, max_sample: int = 10000) -> int:
-    """Estimate distinct value count with optional sampling for large series.
-
-    For performance, samples large series to avoid O(n) full scan on cardinality check.
-    """
+def _estimate_cardinality(series: pd.Series, max_sample: int = 5000) -> int:
+    """Estimate distinct value count with sampling for large series. Optimized for performance."""
     try:
         if len(series) > max_sample:
             # Sample-based estimation for large series
@@ -228,7 +258,7 @@ def _compute_duplicate_pct(df: pd.DataFrame, sample_size: int = 5000) -> float:
 # ---------------------------------------------------------------------------
 
 def profile_dataset(key: str, df: pd.DataFrame, *, sample_rows: int = 5_000) -> DatasetProfile:
-    """Compute a full DatasetProfile for a DataFrame."""
+    """Compute a full DatasetProfile for a DataFrame. Optimized with schema memoization."""
     if df.empty:
         return DatasetProfile(
             key=key, row_count=0, col_count=0, columns=[],
@@ -236,11 +266,16 @@ def profile_dataset(key: str, df: pd.DataFrame, *, sample_rows: int = 5_000) -> 
             overall_null_pct=0.0, duplicate_row_pct=0.0, quality_score=0.0,
         )
 
+    # Use a fast hash of the columns and shape for schema memoization
+    schema_hash = hashlib.md5(f"{list(df.columns)}-{df.shape[1]}".encode()).hexdigest()
+    columns_tuple = tuple(df.columns)
+    
+    # Check LRU caches for pre-detected columns
+    date_cols_list = _get_cached_date_cols(schema_hash, columns_tuple)
+    geo_cols_list = _get_cached_geo_cols(schema_hash, columns_tuple)
+    
     sample = df.sample(min(sample_rows, len(df)), random_state=42) if len(df) > sample_rows else df
 
-    # Detect columns once, reuse across all columns
-    date_cols_list = _detect_date_columns(df)
-    geo_cols_list = _detect_geo_columns(df)
     date_cols_set = set(c.lower() for c in date_cols_list)
     geo_cols_set = set(c.lower() for c in geo_cols_list)
 
@@ -298,6 +333,9 @@ def profile_dataset(key: str, df: pd.DataFrame, *, sample_rows: int = 5_000) -> 
     dup_penalty = min(dup_pct * 0.5, 20)
     quality = max(0.0, avg_col_score - dup_penalty)
 
+    # Clean up large intermediate sample before returning
+    del sample
+    
     return DatasetProfile(
         key=key,
         row_count=len(df),
@@ -534,6 +572,7 @@ def contract_dispatch_clearance(
 ) -> tuple[pd.DataFrame, pd.DataFrame, int]:
     """
     Violations past grace period (city-contract clearance) + Parks routing from tree damage.
+    Optimized with set-based pre-filtering for O(1) lookups.
     """
     joins = 0
     cleared = pd.DataFrame()
@@ -564,9 +603,9 @@ def contract_dispatch_clearance(
             if bbl_col:
                 t["_bbl"] = normalize_bbl(t[bbl_col])
 
-        # Use set membership for O(1) lookup instead of pandas operation
-        tree_bbls = set(t["_bbl"].dropna().astype(str))
-        cleared["route_parks_coordination"] = cleared["_bbl"].astype(str).isin(tree_bbls)
+        # O(1) set lookup optimization
+        tree_bbl_set = set(t["_bbl"].dropna().astype(str))
+        cleared["route_parks_coordination"] = [str(b) in tree_bbl_set for b in cleared["_bbl"]]
         parks_routing = cleared[cleared["route_parks_coordination"]].copy()
         joins += 1
     elif not tree_damage.empty:
@@ -649,22 +688,25 @@ def productivity_ada_dashboard(
 # ---------------------------------------------------------------------------
 
 def run_all_workflows(frames: dict[str, pd.DataFrame]) -> dict[str, Any]:
-    """Execute four views, aggregate ROI inputs, and run dataset profiles."""
-    # Run workflows
+    """Execute four views, aggregate ROI inputs, and run dataset profiles. Optimized for memory safety."""
+    # Run workflows sequentially to minimize peak memory
     ledger, stale_311, qa_joins, qa_quality_flags = qa_qc_inventory_ledger(
         frames.get("lot_info", pd.DataFrame()),
         frames.get("mappluto", pd.DataFrame()),
         frames.get("complaints_311", pd.DataFrame()),
     )
+    
     conflicts, spatial_joins = spatial_conflict_detection(
         frames.get("weekly_construction", pd.DataFrame()),
         frames.get("street_permits", pd.DataFrame()),
         frames.get("capital_blocks", pd.DataFrame()),
     )
+    
     cleared, parks, contract_joins = contract_dispatch_clearance(
         frames.get("violations", pd.DataFrame()),
         frames.get("tree_damage", pd.DataFrame()),
     )
+    
     productivity = productivity_ada_dashboard(
         frames.get("built", pd.DataFrame()),
         frames.get("ramp_progress", pd.DataFrame()),
@@ -693,6 +735,9 @@ def run_all_workflows(frames: dict[str, pd.DataFrame]) -> dict[str, Any]:
         quality_flags=total_quality_flags,
         datasets_profiled=len(profiles),
     )
+
+    import gc
+    gc.collect() # Aggressive GC after heavy processing
 
     return {
         "ledger": ledger,

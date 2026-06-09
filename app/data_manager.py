@@ -62,6 +62,7 @@ class DataManager:
             compressed_data = cache[cache_key]
             pickled_data = dctx.decompress(compressed_data)
             df = pickle.loads(pickled_data)
+            # Item: Atomic progress update
             with self._lock:
                 self.progress["completed"] += 1
             return key, df
@@ -76,7 +77,8 @@ class DataManager:
                 max_rows=actual_limit
             ):
                 rows.extend(page)
-                with self._lock:
+                # Item: Throttle progress updates to avoid lock contention
+                if len(rows) % 1000 == 0:
                     self.progress["current"] = f"{key} ({len(rows):,} rows)"
 
             df = pd.DataFrame(rows)

@@ -459,9 +459,9 @@ def layout_settings():
             dmc.Paper(withBorder=True, p="xl", radius="lg", children=[
                 dmc.Stack([
                     dmc.Text("SODA VERSIONING", fw=700, size="sm"),
-                    dmc.SegmentedControl(id="set-soda-version", value="3.0", data=[{"value": "2.1", "label": "SODA 2.1"}, {"value": "3.0", "label": "SODA 3.0"}], fullWidth=True),
-                    dmc.TextInput(id="set-socrata-token", label="Socrata Token", placeholder="TfrAwqroXIrKRPwPvWpEZnkcT"),
-                    dmc.NumberInput(id="set-row-limit", label="Record Limit", value=0, description="Enter 0 for 'Total Recall' Unlimited Streaming mode."),
+                    dmc.SegmentedControl(id={"type": "config-input", "index": "version"}, value="3.0", data=[{"value": "2.1", "label": "SODA 2.1"}, {"value": "3.0", "label": "SODA 3.0"}], fullWidth=True),
+                    dmc.TextInput(id={"type": "config-input", "index": "token"}, label="Socrata Token", placeholder="TfrAwqroXIrKRPwPvWpEZnkcT"),
+                    dmc.NumberInput(id={"type": "config-input", "index": "limit"}, label="Record Limit", value=0, description="Enter 0 for 'Total Recall' Unlimited Streaming mode."),
                     dmc.TextInput(id="set-slack-webhook", label="Slack Notification Webhook (Item 99)", placeholder="https://hooks.slack.com/services/..."),
                     dmc.Button("INITIALIZE & LOAD ALL DATASETS", id={"type": "init-btn", "index": "main"}, fullWidth=True, mt="xl", color="blue", size="lg")
                 ])

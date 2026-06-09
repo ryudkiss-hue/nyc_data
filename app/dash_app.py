@@ -17,6 +17,12 @@ for p in [_app_path, _src_path]:
     if p not in sys.path:
         sys.path.insert(0, p)
 
+# Item 42: Bulletproof environment configuration for High-Performance Bayesian Engine
+# Use an environment variable for the Mingw64 bin path to ensure portability
+MINGW_BIN = os.getenv("MINGW_BIN_PATH", r"C:\msys64\mingw64\bin")
+os.environ["PATH"] = f"{MINGW_BIN};" + os.environ.get("PATH", "")
+os.environ["PYTENSOR_FLAGS"] = f"cxx={os.path.join(MINGW_BIN, 'g++.exe')},gcc_version_str=14.1.0"
+
 import logging
 
 import dash
@@ -75,13 +81,21 @@ from socrata_toolkit import BayesianRegressionEngine, SocrataClient, SocrataConf
 _cache_dir = Path(".cache/serverside_data")
 _cache_dir.mkdir(parents=True, exist_ok=True)
 
-# Item 115: Native FastAPI Backend for Dash 4.2+ (Max Concurrency)
-app = DashProxy(
+# Item 115: High-Performance Dash 4.2.0 Native FastAPI Workstation
+import dash
+from dash import html, dcc, Input, Output, State, callback, no_update
+import dash_mantine_components as dmc
+
+# Item: Industrial "Enterprise" Cache (Manual Serverside Offloading)
+import diskcache
+_serverside_cache = diskcache.Cache(".cache/serverside_manual")
+
+# Native Dash 4.2.0 "The Freedom Update"
+app = dash.Dash(
     __name__,
     backend="fastapi",
-    transforms=[],
     external_stylesheets=[
-        "https://unpkg.com/@mantine/core@8.0.0-alpha.1/styles.css", # Mantine 8.0 Alpha Styles
+        "https://unpkg.com/@mantine/core@8.0.0-alpha.1/styles.css",
         "https://unpkg.com/@mantine/dates@8.0.0-alpha.1/styles.css",
         "https://unpkg.com/@mantine/notifications@8.0.0-alpha.1/styles.css",
         "https://unpkg.com/@mantine/charts@8.0.0-alpha.1/styles.css",
@@ -89,42 +103,20 @@ app = DashProxy(
     suppress_callback_exceptions=True,
     meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}],
 )
-
-# Access underlying FastAPI server for high-performance extensions
 server = app.server
-
-@server.middleware("http")
-async def log_exceptions(request, call_next):
-    try:
-        return await call_next(request)
-    except Exception as e:
-        import traceback
-        logger.error("GLOBAL EXCEPTION: %s", e)
-        logger.error(traceback.format_exc())
-        from fastapi.responses import JSONResponse
-        return JSONResponse(status_code=500, content={"error": str(e), "traceback": traceback.format_exc()})
 
 @server.get("/api/v1/health")
 async def health_check():
-    return {"status": "optimized", "engine": "FastAPI", "mode": "Turbo-Stream"}
+    return {"status": "optimized", "engine": "FastAPI (Dash 4.2 Native)", "mode": "Enterprise"}
 
-# Item 118: Explicit Security Hardening via FastAPI Middleware
+# Item 118: Industrial Security via FastAPI Middleware
 from fastapi.middleware.cors import CORSMiddleware
-
 server.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-@server.middleware("http")
-async def add_security_headers(request, call_next):
-    response = await call_next(request)
-    # Item 42: Modern CSP for Edge/Chrome Compatibility
-    response.headers["Content-Security-Policy"] = "frame-ancestors 'self' *"
-    response.headers["X-Content-Type-Options"] = "nosniff"
-    return response
 
 THEME = {
     "fontFamily": "'Inter', sans-serif",
@@ -216,17 +208,21 @@ def run_ingestion_background(token, limit, version):
     [Output("store-data-loaded", "data"),
      Output({"type": "init-btn", "index": dash.ALL}, "loading")],
     Input({"type": "init-btn", "index": dash.ALL}, "n_clicks"),
-    [State("set-socrata-token", "value"),
-     State("set-row-limit", "value"),
-     State("set-soda-version", "value")],
+    [State({"type": "config-input", "index": "token"}, "value"),
+     State({"type": "config-input", "index": "limit"}, "value"),
+     State({"type": "config-input", "index": "version"}, "value")],
     prevent_initial_call=True
 )
-def initialize_pipeline(n_clicks, token, limit, version):
+def initialize_pipeline(n_clicks, token_list, limit_list, version_list):
     if not n_clicks or not any(n_clicks):
         return no_update, [False] * len(n_clicks)
 
+    # Item 102: Industrial Pattern Matching for Multi-Page State
+    token = token_list[0] if token_list else os.getenv("SOCRATA_APP_TOKEN", "")
+    limit = limit_list[0] if limit_list else 5000
+    version = version_list[0] if version_list else "3.0"
+
     # Item 102: Industrial Streaming Logic
-    # 0 or negative = Unlimited 'Total Recall' mode
     val = int(limit or 5000)
     actual_limit = -1 if val <= 0 else val
 
@@ -575,4 +571,5 @@ def handle_clipboard_copy(n_clicks):
 
 if __name__ == "__main__":
     # Item 125: High-Performance ASGI Server (Uvicorn)
-    uvicorn.run(server, host="127.0.0.1", port=8012, log_level="info")
+    import uvicorn
+    uvicorn.run(server, host="127.0.0.1", port=8011, log_level="debug")

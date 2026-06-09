@@ -384,9 +384,9 @@ class RelationshipGraph:
                 direction="outgoing"
             )
 
-            for entity_id, _, _ in related:
-                if entity_id not in visited:
-                    to_visit.append(entity_id)
+            for target_id, _, _ in related:
+                if target_id not in visited:
+                    to_visit.append(target_id)
 
         visited.discard(entity_id)  # Don't include source
         return visited
