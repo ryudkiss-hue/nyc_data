@@ -125,6 +125,7 @@ class VisualizationEngine:
             return go.Figure(), "Re-inspection outcome column not found; cannot compute pass rate from available data."
         passed = df[status_col].astype(str).str.contains("pass|clos|complete|approv|resolv", case=False, na=False)
         success_rate = float(passed.mean() * 100)
+
         fig = go.Figure(go.Indicator(
             mode="gauge+number+delta", value=success_rate,
             delta={'reference': 85},

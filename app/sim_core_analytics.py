@@ -59,6 +59,7 @@ def predict_homeowner_default(
     if not target_col:
         # No real outcome label available — refuse to fabricate labels (data-integrity policy)
         return df, {"error": "No real default/repair-outcome label column found; refusing to train on synthetic labels. Provide a 'city_do_it' or 'default' column."}
+
         
     # Select features (Assessed Value, Year Built, Lot Area)
     features = [c for c in df.columns if any(k in c.lower() for k in ['assess', 'year', 'area', 'sqft'])]
@@ -164,6 +165,7 @@ def spatial_tree_damage_conflict(
         return tree_damage_df.copy()
 
     # Verify columns and return an annotated df
+
     df = tree_damage_df.copy()
     if 'bbl' in df.columns.str.lower():
         df['inter_agency_blocked'] = True
@@ -207,4 +209,5 @@ def dismissal_root_cause_analysis(
             if not failure_modes
             else "Target HIQA retraining on the highest-rate dismissal categories shown above."
         ),
+
     }

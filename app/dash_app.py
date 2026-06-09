@@ -18,7 +18,6 @@ for p in [_app_path, _src_path]:
         sys.path.insert(0, p)
 
 # Item 42: Bulletproof environment configuration for High-Performance Bayesian Engine
-# Use an environment variable for the Mingw64 bin path to ensure portability
 MINGW_BIN = os.getenv("MINGW_BIN_PATH", r"C:\msys64\mingw64\bin")
 os.environ["PATH"] = f"{MINGW_BIN};" + os.environ.get("PATH", "")
 os.environ["PYTENSOR_FLAGS"] = f"cxx={os.path.join(MINGW_BIN, 'g++.exe')},gcc_version_str=14.1.0"
