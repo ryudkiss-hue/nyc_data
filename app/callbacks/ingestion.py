@@ -9,6 +9,8 @@ from app.data_manager import DataManager
 ingestion_status = {"active": False, "progress": 0, "error": None, "finished": False}
 
 def run_ingestion_background(token, limit, version):
+    global ingestion_status
+
     ingestion_status["active"] = True
     ingestion_status["error"] = None
     ingestion_status["finished"] = False
