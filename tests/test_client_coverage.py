@@ -53,7 +53,10 @@ class TestSocrataClientInit:
         config = SocrataConfig(app_token=None)
         client = SocrataClient(config)
         headers = client._headers()
-        assert headers == {}
+        # Without a token, no auth header is sent, but the client still
+        # declares the JSON content type for the Socrata API.
+        assert "X-App-Token" not in headers
+        assert headers.get("Content-Type") == "application/json"
 
     def test_client_headers_with_token(self):
         config = SocrataConfig(app_token="my_token")

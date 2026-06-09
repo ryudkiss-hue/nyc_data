@@ -57,3 +57,9 @@ Mandatory validation of:
     - **Never** use `write_file` to overwrite large existing modules (e.g., `main.py`) if there is any risk of system-level output truncation. 
     - Always prefer surgical **`replace`** calls to maintain 100% fidelity of the surrounding logic.
     - Any use of placeholders like `...` or `[rest of code]` in a file write is a violation of the **"No Mocking" Mandate**.
+
+
+## 8. Performance Standards (Speed Pack)
+- **Context Discipline**: Avoid full-file reads. Use targeted line ranges via `read_file(start_line, end_line)` to minimize context window bloat.
+- **Tool Parallelism**: Execute independent research and implementation tasks in parallel turns.
+- **Write Efficiency**: The `fileWriteLineLimit` for this project is optimized at 100+ lines to ensure industrial-grade code updates are completed in minimal steps.

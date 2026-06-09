@@ -51,24 +51,45 @@ __all__ = [
     "smart_recommendations",
     "histogram",
     "bar_chart",
+    "classify_all_distributions",
+    "correlation_analysis",
+    "detect_all_outliers",
 ]
 
 
-# Legacy aliases for tests
-try:
-    from .advanced import classify_all_distributions
-    from .quality import Anomaly
-    from ..quality.sla_tracking import SLATarget
-    from ..quality.freshness import AlertSeverity
-    from ..metrics import DataQualityMetrics
-    from ..quality.validation import validate_required_columns, validate_schema_types
-    from .viz import box_plot
-    from .reporting import generate_program_report
-    from .insights import build_weighted_rank_sql, websearch_to_tsquery_sql
-    from ..analyst.ramp_analysis import compute_borough_completion_rates
-    from ..engineering.cost_estimator import estimate_costs
-    from ..governance.reports import ProjectAnalystReports
-    from .correlation import correlation_analysis
-    from .domain_validation import validate_ada_compliance_gates
-except ImportError:
-    pass
+# Re-export advanced analysis helpers from the top-level analysis_advanced
+# module so that `socrata_toolkit.analysis.correlation_analysis` and the
+# `socrata_toolkit.analysis.advanced` shim resolve correctly.
+from ..analysis_advanced import (
+    classify_all_distributions,
+    correlation_analysis,
+    detect_all_outliers,
+)
+
+# Legacy aliases for tests. Each import is independent so that a single
+# unavailable optional symbol does not suppress the rest (a shared try/except
+# would silently skip every alias after the first failing import).
+def _legacy_import(module: str, *names: str) -> None:
+    import importlib
+
+    try:
+        mod = importlib.import_module(module, __name__)
+    except Exception:
+        return
+    for name in names:
+        if hasattr(mod, name):
+            globals()[name] = getattr(mod, name)
+
+
+_legacy_import(".quality", "Anomaly")
+_legacy_import("..quality.sla_tracking", "SLATarget")
+_legacy_import("..quality.freshness", "AlertSeverity")
+_legacy_import("..metrics", "DataQualityMetrics")
+_legacy_import("..quality.validation", "validate_required_columns", "validate_schema_types")
+_legacy_import(".viz", "box_plot")
+_legacy_import(".reporting", "generate_program_report")
+_legacy_import(".insights", "build_weighted_rank_sql", "websearch_to_tsquery_sql")
+_legacy_import("..analyst.ramp_analysis", "compute_borough_completion_rates")
+_legacy_import("..engineering.cost_estimator", "estimate_costs")
+_legacy_import("..reports.analyst", "ProjectAnalystReports")
+_legacy_import(".domain_validation", "validate_ada_compliance_gates")

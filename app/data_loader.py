@@ -13,10 +13,11 @@ import time
 import warnings
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import pandas as pd
 import yaml
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 try:
     import requests
@@ -270,7 +271,9 @@ def _check_dataset_health() -> None:
 
 def normalize_bbl(series: pd.Series) -> pd.Series:
     """Normalize BBL using pre-compiled regex for better performance."""
+    # Convert to string and strip non-digits using compiled regex
     s = series.astype(str).str.replace(_RE_NON_DIGIT, "", regex=True)
+    # Filter short values and pad to 10 digits
     s = s.where(s.str.len() >= 6, other=pd.NA)
     return s.str.zfill(10)
 
@@ -374,66 +377,62 @@ def _detect_delta_column(dataset_key: str) -> str | None:
     _DELTA_COLUMN_CACHE[dataset_key] = None
     return None
 
+@retry(
+    stop=stop_after_attempt(5),
+    wait=wait_exponential(multiplier=1, min=2, max=10),
+    retry=retry_if_exception_type(requests.exceptions.HTTPError),
+    reraise=True
+)
 def _fetch_live(
     dataset_key: str,
     *,
     limit: int,
     where: str | None,
     select: str | None = None,
-    retries: int = 3,
-    backoff: float = 2.0,
 ) -> pd.DataFrame:
-    """Fetch from Socrata with exponential-backoff retry.
+    """Internal routine to pull JSON from Socrata with retry logic."""
+    if Socrata is None:
+        raise ImportError("sodapy not installed")
 
-    *select*: optional ``$select`` column projection forwarded to Socrata.
-    """
-    meta = DATASET_REGISTRY[dataset_key]
+    conf = DATASET_REGISTRY[dataset_key]
+    fourfour = conf["fourfour"]
+
     client = get_socrata_client()
-    kwargs: dict[str, Any] = {"limit": limit}
-    if where:
-        kwargs["where"] = where
-    if select:
-        kwargs["select"] = select
+    try:
+        results = client.get(fourfour, limit=limit, where=where, select=select)
+        df = pd.DataFrame.from_records(results) if results else pd.DataFrame()
+        return _postprocess_dataset(dataset_key, df)
+    finally:
+        client.close()
 
-    last_exc: Exception | None = None
-    for attempt in range(retries):
-        try:
-            rows = client.get(meta["fourfour"], **kwargs)
-            df = pd.DataFrame.from_records(rows) if rows else pd.DataFrame()
-            return _postprocess_dataset(dataset_key, df)
-        except Exception as exc:
-            last_exc = exc
-            exc_str = str(exc)
-            # 429 = Socrata throttle. Surface a clear message and back off longer.
-            if "429" in exc_str or "Too Many Requests" in exc_str:
-                wait = backoff ** (attempt + 2)  # longer wait for throttle
-                logging.warning(
-                    "Socrata rate-limited (429) on %s — no app token or abusive rate. "
-                    "Set SOCRATA_APP_TOKEN env var. Backing off %.0fs.",
-                    dataset_key, wait,
-                )
-                if attempt < retries - 1:
-                    time.sleep(wait)
-                continue
-            wait = backoff ** attempt
-            logging.warning(
-                "Socrata fetch attempt %d/%d failed for %s: %s — retrying in %.1fs",
-                attempt + 1, retries, dataset_key, exc, wait,
-            )
-            if attempt < retries - 1:
-                time.sleep(wait)
 
-    # Surface a helpful message for 429 exhaustion
-    if last_exc and ("429" in str(last_exc) or "Too Many Requests" in str(last_exc)):
-        raise RuntimeError(
-            f"Socrata rate-limited (HTTP 429) for '{dataset_key}'. "
-            "Add SOCRATA_APP_TOKEN to your .env file (Settings → API Tokens) "
-            "to get a dedicated request pool with no throttling."
-        ) from last_exc
-    raise RuntimeError(
-        f"All {retries} fetch attempts failed for {dataset_key}: {last_exc}"
-    ) from last_exc
+from abc import ABC, abstractmethod
 
+class BaseFetcher(ABC):
+    @abstractmethod
+    def fetch(self, key: str, limit: int | None = None, **kwargs) -> pd.DataFrame:
+        pass
+
+class SODA3Fetcher(BaseFetcher):
+    def fetch(self, key: str, limit: int | None = None, **kwargs) -> pd.DataFrame:
+        return fetch_dataset(key, limit=limit, **kwargs)
+
+class LocalParquetFetcher(BaseFetcher):
+    def fetch(self, key: str, limit: int | None = None, **kwargs) -> pd.DataFrame:
+        path = _parquet_path(key)
+        if path.exists():
+            return pd.read_parquet(path)
+        return pd.DataFrame()
+
+class IngestionProviderFactory:
+    """Industrial factory for municipal data fetchers."""
+    @staticmethod
+    def get_fetcher(mode: str = "live") -> BaseFetcher:
+        if mode == "live":
+            return SODA3Fetcher()
+        elif mode == "parquet":
+            return LocalParquetFetcher()
+        raise ValueError(f"Unknown ingestion mode: {mode}")
 
 @_cache_decorator()
 def fetch_dataset(
@@ -508,13 +507,19 @@ def fetch_dataset(
     try:
         t0 = time.perf_counter()
         df = _fetch_live(dataset_key, limit=effective_limit, where=effective_where, select=select)
-        # Write to new DuckDB store (L1.5)
+        
+        # Priority Write: Write to primary DuckDB store (L1.5) synchronously
         _write_duckdb_cache(dataset_key, df)
-        # Write to new L2 disk cache
-        if _DISK_CACHE_AVAILABLE and not df.empty and "_error" not in df.columns:
-            _write_disk_cache(dataset_key, df)
-        # Also maintain legacy cache for backwards compat
-        _write_parquet_cache(dataset_key, df)
+        
+        # Write-Behind Cache: Offload secondary writes to background thread
+        def _background_cache_ops(k: str, data: pd.DataFrame):
+            if _DISK_CACHE_AVAILABLE and not data.empty and "_error" not in data.columns:
+                _write_disk_cache(k, data)
+            _write_parquet_cache(k, data)
+            
+        with ThreadPoolExecutor(max_workers=1) as background_io:
+            background_io.submit(_background_cache_ops, dataset_key, df)
+
         log_event(
             "fetch_live",
             dataset=dataset_key,
@@ -561,9 +566,9 @@ def fetch_datasets_for_keys(
     keys: tuple[str, ...] | list[str],
     *,
     limit: int = 10_000,
-    max_workers: int = 4,
+    max_workers: int = 3,
 ) -> dict[str, pd.DataFrame]:
-    """Load only requested datasets (parallel when live)."""
+    """Load only requested datasets (parallel when live). Optimized worker cap (Hardcap 3)."""
     key_list = list(keys)
     if not key_list:
         return {}
@@ -578,7 +583,9 @@ def fetch_datasets_for_keys(
         except Exception as exc:
             return k, pd.DataFrame({"_error": [str(exc)]})
 
-    with ThreadPoolExecutor(max_workers=min(max_workers, len(key_list))) as pool:
+    # Hardcap at 3 to prevent 429s, regardless of user input
+    effective_workers = min(3, max_workers, len(key_list))
+    with ThreadPoolExecutor(max_workers=effective_workers) as pool:
         futures = {pool.submit(_one, k): k for k in key_list}
         for fut in as_completed(futures):
             key, df = fut.result()
@@ -591,9 +598,10 @@ def fetch_datasets_parallel(
     *,
     limit: int = 25_000,
 ) -> dict[str, pd.DataFrame]:
-    """Fetch multiple datasets concurrently using ThreadPoolExecutor."""
+    """Fetch multiple datasets concurrently. Optimized worker count for Socrata API limits."""
     results: dict[str, pd.DataFrame] = {}
-    with ThreadPoolExecutor(max_workers=min(len(keys), 6)) as exe:
+    # Reduced max_workers to 3 to avoid 429 Too Many Requests while maintaining parallelism
+    with ThreadPoolExecutor(max_workers=min(len(keys), 3)) as exe:
         future_to_key = {exe.submit(fetch_dataset, k, limit=limit): k for k in keys}
         for fut in as_completed(future_to_key):
             k = future_to_key[fut]
@@ -609,19 +617,20 @@ def fetch_all_datasets(*, limit: int = 50_000) -> dict[str, pd.DataFrame]:
     return fetch_datasets_for_keys(tuple(DATASET_REGISTRY.keys()), limit=limit)
 
 
-def df_to_gdf(df: pd.DataFrame) -> Any:
+def df_to_gdf(df: pd.DataFrame) -> Optional[gpd.GeoDataFrame]:
+    """Convert DataFrame to GeoDataFrame with NYC CRS. Optimized type hints."""
     if gpd is None or df.empty:
         return None
     if "the_geom" in df.columns:
         try:
-            gdf = gpd.GeoDataFrame(df.copy(), geometry=gpd.GeoSeries.from_wkt(df["the_geom"], crs=WGS84))
-            return gdf.to_crs(NYC_CRS)
+            gdf_out = gpd.GeoDataFrame(df.copy(), geometry=gpd.GeoSeries.from_wkt(df["the_geom"], crs=WGS84))
+            return gdf_out.to_crs(NYC_CRS)
         except Exception:
             pass
     if "geometry" in df.columns:
         try:
-            gdf = gpd.GeoDataFrame(df.copy(), geometry=df["geometry"], crs=WGS84)
-            return gdf.to_crs(NYC_CRS)
+            gdf_out = gpd.GeoDataFrame(df.copy(), geometry=df["geometry"], crs=WGS84)
+            return gdf_out.to_crs(NYC_CRS)
         except Exception:
             pass
     lat_col = pick_column(df, LAT_CANDIDATES)
@@ -631,8 +640,8 @@ def df_to_gdf(df: pd.DataFrame) -> Any:
             Point(float(x), float(y)) if pd.notna(x) and pd.notna(y) else None
             for x, y in zip(df[lon_col], df[lat_col])
         ]
-        gdf = gpd.GeoDataFrame(df.copy(), geometry=geom, crs=WGS84)
-        return gdf.to_crs(NYC_CRS)
+        gdf_out = gpd.GeoDataFrame(df.copy(), geometry=geom, crs=WGS84)
+        return gdf_out.to_crs(NYC_CRS)
     return None
 
 

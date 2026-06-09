@@ -42,8 +42,9 @@ class TestDatasetHealth:
     def test_health_ok(self, runner):
         now_ts = int(datetime.utcnow().timestamp())
         session = MagicMock()
+        # SODA3 count is fetched via session.post; metadata via session.get.
+        session.post.return_value = _resp([{"c": "100"}])
         session.get.side_effect = [
-            _resp([{"c": "100"}]),                       # count
             _resp({"rowsUpdatedAt": now_ts}),            # metadata (fresh)
         ]
         with patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=REGISTRY), \
@@ -55,8 +56,8 @@ class TestDatasetHealth:
 
     def test_health_empty_dataset_exits_nonzero(self, runner):
         session = MagicMock()
+        session.post.return_value = _resp([{"c": "0"}])    # count = 0 -> empty
         session.get.side_effect = [
-            _resp([{"c": "0"}]),                          # count = 0 -> empty
             _resp({"rowsUpdatedAt": int(datetime.utcnow().timestamp())}),
         ]
         with patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=REGISTRY), \
@@ -68,8 +69,8 @@ class TestDatasetHealth:
     def test_health_stale_dataset_exits_nonzero(self, runner):
         old_ts = int(datetime(2017, 1, 1).timestamp())
         session = MagicMock()
+        session.post.return_value = _resp([{"c": "50"}])
         session.get.side_effect = [
-            _resp([{"c": "50"}]),
             _resp({"rowsUpdatedAt": old_ts}),            # very old -> stale
         ]
         with patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=REGISTRY), \
@@ -111,8 +112,8 @@ class TestDatasetHealth:
 
     def test_health_sort_by_size(self, runner):
         session = MagicMock()
+        session.post.return_value = _resp([{"c": "100"}])
         session.get.side_effect = [
-            _resp([{"c": "100"}]),
             _resp({"rowsUpdatedAt": int(datetime.utcnow().timestamp())}),
         ]
         with patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=REGISTRY), \
