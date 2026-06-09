@@ -196,14 +196,12 @@ class VisualizationEngine:
 
     @staticmethod
     def chart_yield_post(data_bundle) -> Tuple[go.Figure, str]:
-        x = np.linspace(0.5, 2.5, 200)
-        y = np.exp(-(x-1.42)**2/0.03)
-        fig = px.line(x=x, y=y)
-        fig.add_vrect(x0=1.35, x1=1.49, fillcolor="rgba(16,185,129,0.2)", line_width=0, annotation_text="94% HDI")
-        fig.add_vline(x=1.42, line_dash="dot", line_color="#0F172A", annotation_text="MAP Estimate")
-        fig = VisualizationEngine._apply_standard_layout(fig, "Bayesian Contractor Yield Posterior Density", "Yield Multiplier (Outputs / Inputs)", "Probability Density")
-        insight = "**Results:** The 94% Highest Density Interval (green shade) mathematically bounds the true performance of the contractor. A Maximum a Posteriori (MAP) estimate > 1.0 indicates high efficiency.\n\n**Next Steps:** Use the lower bound of the HDI (1.35x) for conservative budgetary forecasting."
-        return fig, insight
+        return (
+            go.Figure(),
+            "Contractor yield posterior requires a fitted Bayesian model over observed "
+            "output/input ratios, which is not available in the current data bundle. "
+            "Wire in a fitted posterior (e.g. via the bayesian analysis module) to enable this chart.",
+        )
 
     @staticmethod
     def chart_lag_corr(data_bundle) -> Tuple[go.Figure, str]:
@@ -215,14 +213,25 @@ class VisualizationEngine:
 
     @staticmethod
     def chart_ps_burn(data_bundle) -> Tuple[go.Figure, str]:
-        codes = ["SIM-420", "SIM-101", "ADMIN-99"]
+        df = VisualizationEngine._safe_df(data_bundle.get("budget"))
+        if df.empty:
+            return (
+                go.Figure(),
+                "Personnel Services burn-rate requires a budget dataset (expended vs. remaining "
+                "allocation by code), which is not available in the current data bundle.",
+            )
+        code_col = VisualizationEngine._find_col(df, ["code", "budget_code", "account"])
+        spent_col = VisualizationEngine._find_col(df, ["expended", "spent", "actual"])
+        remain_col = VisualizationEngine._find_col(df, ["remaining", "allocation", "available"])
+        if not (code_col and spent_col and remain_col):
+            return go.Figure(), "Budget dataset present but missing expended/remaining columns; cannot compute burn rate."
         fig = go.Figure(data=[
-            go.Bar(name='Capital Expended', x=codes, y=[250, 480, 120], marker_color="#EF4444"),
-            go.Bar(name='Remaining Allocation', x=codes, y=[50, 20, 80], marker_color="#10B981")
+            go.Bar(name='Capital Expended', x=df[code_col], y=df[spent_col], marker_color="#EF4444"),
+            go.Bar(name='Remaining Allocation', x=df[code_col], y=df[remain_col], marker_color="#10B981")
         ])
         fig.update_layout(barmode='stack')
-        fig = VisualizationEngine._apply_standard_layout(fig, "Personnel Services Burn Rate", "Budget Code", "Capital Value ($k)")
-        insight = "**Results:** Stacked bar charts enforce a part-to-whole visual hierarchy, immediately exposing heavily depleted budget codes.\n\n**Next Steps:** SIM-101 is critically depleted. Reallocate funds from ADMIN-99 to avoid a Q4 operational halt."
+        fig = VisualizationEngine._apply_standard_layout(fig, "Personnel Services Burn Rate", "Budget Code", "Capital Value")
+        insight = "**Results:** Stacked bars show expended vs. remaining allocation per budget code, computed from the loaded budget dataset.\n\n**Next Steps:** Prioritize reallocation toward the most-depleted codes."
         return fig, insight
 
     @staticmethod
