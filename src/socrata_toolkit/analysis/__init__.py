@@ -51,12 +51,23 @@ __all__ = [
     "smart_recommendations",
     "histogram",
     "bar_chart",
+    "classify_all_distributions",
+    "correlation_analysis",
+    "detect_all_outliers",
 ]
 
 
+# Re-export advanced analysis helpers from the top-level analysis_advanced
+# module so that `socrata_toolkit.analysis.correlation_analysis` and the
+# `socrata_toolkit.analysis.advanced` shim resolve correctly.
+from ..analysis_advanced import (
+    classify_all_distributions,
+    correlation_analysis,
+    detect_all_outliers,
+)
+
 # Legacy aliases for tests
 try:
-    from .advanced import classify_all_distributions
     from .quality import Anomaly
     from ..quality.sla_tracking import SLATarget
     from ..quality.freshness import AlertSeverity
@@ -68,7 +79,6 @@ try:
     from ..analyst.ramp_analysis import compute_borough_completion_rates
     from ..engineering.cost_estimator import estimate_costs
     from ..governance.reports import ProjectAnalystReports
-    from .correlation import correlation_analysis
     from .domain_validation import validate_ada_compliance_gates
 except ImportError:
     pass
