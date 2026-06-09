@@ -71,7 +71,7 @@ class BayesianRegressionEngine:
             logger.warning(f"MCMC Chain did not reach convergence benchmark (R-hat={r_hat_max:.4f}).")
 
         # 6. Uncertainty Quantification (94% HDI)
-        hdi = az.hdi(trace, prob=0.94)
+        hdi = az.hdi(trace, hdi_prob=0.94)
         hdi_dict = {}
         for var in ["Intercept", "Predictor_Effect"]:
             vals = hdi[var].values
