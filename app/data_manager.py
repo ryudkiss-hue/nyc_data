@@ -29,11 +29,11 @@ from app.data_loader import IngestionProviderFactory
 class DataManager:
     """Industrial Data Manager for NYC DOT SIM Analytics."""
 
-    def __init__(self, token=None, soda_version="3.0", db_path=None):
+    def __init__(self, token=None, soda_version="3.0", db_path=None, read_only=False):
         self.token = token or os.getenv("SOCRATA_APP_TOKEN", "")
         self.soda_version = soda_version
         self.db_path = db_path or os.getenv("DUCKDB_PATH", "data/local_db/nyc_mission_control.duckdb")
-        self.manager = DuckDBManager(self.db_path)
+        self.manager = DuckDBManager(self.db_path, read_only=read_only)
         self.factory = IngestionProviderFactory()
         self.datasets_config = self._load_config()
         self.progress = {"current": "", "completed": 0, "total": 0}
@@ -96,7 +96,7 @@ class DataManager:
                 self.progress["completed"] += 1
             return key, pd.DataFrame()
 
-    def fetch_all_datasets(self, limit=5000, force_refresh=False):
+    def fetch_all_datasets(self, limit=-1, force_refresh=False):
         """
         Fetch all datasets using Ingestion Factory.
         Item 110: High-Throughput Network Concurrency with Worker Cap.
@@ -136,7 +136,7 @@ class DataManager:
 
         return data_bundle
 
-    def get_cached_dataset(self, key, limit=5000):
+    def get_cached_dataset(self, key, limit=-1):
         registry = self.get_dataset_registry()
         if key not in registry:
             return pd.DataFrame()

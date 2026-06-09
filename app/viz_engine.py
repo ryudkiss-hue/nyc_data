@@ -196,23 +196,6 @@ class VisualizationEngine:
         return fig, insight
 
     @staticmethod
-    def chart_yield_post(data_bundle) -> Tuple[go.Figure, str]:
-        return (
-            go.Figure(),
-            "Contractor yield posterior requires a fitted Bayesian model over observed "
-            "output/input ratios, which is not available in the current data bundle. "
-            "Wire in a fitted posterior (e.g. via the bayesian analysis module) to enable this chart.",
-        )
-
-    @staticmethod
-    def chart_lag_corr(data_bundle) -> Tuple[go.Figure, str]:
-        return (
-            go.Figure(),
-            "Hiring-lag cross-correlation requires aligned hiring and outcome time series, which are "
-            "not available in the current data bundle. Load paired monthly series to enable this analysis.",
-        )
-
-    @staticmethod
     def chart_ps_burn(data_bundle) -> Tuple[go.Figure, str]:
         df = VisualizationEngine._safe_df(data_bundle.get("budget"))
         if df.empty:
@@ -397,8 +380,6 @@ class VisualizationEngine:
             "dismissals": lambda: wrap(VisualizationEngine.chart_dismissals_pie, data_bundle),
             "ramp_trends": lambda: wrap(VisualizationEngine.chart_ramp_trends, data_bundle),
             "freshness": lambda: wrap(VisualizationEngine.chart_freshness, data_bundle, registry),
-            "yield_post": lambda: wrap(VisualizationEngine.chart_yield_post, data_bundle),
-            "lag_corr": lambda: wrap(VisualizationEngine.chart_lag_corr, data_bundle),
             "ps_burn": lambda: wrap(VisualizationEngine.chart_ps_burn, data_bundle),
             "lifecycle": lambda: wrap(VisualizationEngine.chart_lifecycle, data_bundle),
             "velocity": lambda: wrap(VisualizationEngine.chart_velocity, data_bundle),
@@ -413,7 +394,7 @@ class VisualizationEngine:
             "hiqa": lambda: wrap(VisualizationEngine.chart_dismissals_pie, data_bundle),
             "hiqa_trends": lambda: wrap(VisualizationEngine.chart_built_sqft_trend, data_bundle),
             "treemap": lambda: wrap(VisualizationEngine.chart_lot_zoning_pie, data_bundle),
-            "nlp_sentiment": lambda: wrap(VisualizationEngine.chart_lag_corr, data_bundle),
+            "nlp_sentiment": lambda: (go.Figure(), "Analytical module detached."),
             "markov": lambda: wrap(VisualizationEngine.chart_markov_decay, data_bundle),
             "ramp_heatmap": lambda: wrap(VisualizationEngine.chart_built_sqft_trend, data_bundle),
             "permits": lambda: wrap(VisualizationEngine.chart_inspections_boro, data_bundle),
@@ -424,16 +405,15 @@ class VisualizationEngine:
             "planimetric": lambda: wrap(VisualizationEngine.chart_inspections_boro, data_bundle),
             "311_volume": lambda: wrap(VisualizationEngine.chart_built_sqft_trend, data_bundle),
             "mappluto": lambda: wrap(VisualizationEngine.chart_inspections_boro, data_bundle),
-            "stipulations": lambda: wrap(VisualizationEngine.chart_lag_corr, data_bundle),
-            "efficiency": lambda: wrap(VisualizationEngine.chart_lag_corr, data_bundle),
+            "stipulations": lambda: (go.Figure(), "Analytical module detached."),
+            "efficiency": lambda: (go.Figure(), "Analytical module detached."),
             "burndown": lambda: wrap(VisualizationEngine.chart_reinspection_gauge, data_bundle),
             "tree_conflict": lambda: wrap(VisualizationEngine.chart_inspections_boro, data_bundle),
-            "radar_scores": lambda: wrap(VisualizationEngine.chart_lag_corr, data_bundle),
+            "radar_scores": lambda: (go.Figure(), "Analytical module detached."),
             "nlp_sentiment_heat": lambda: wrap(VisualizationEngine.chart_built_sqft_trend, data_bundle),
             "pavement_decay": lambda: wrap(VisualizationEngine.chart_built_sqft_trend, data_bundle),
             "moment_history": lambda: wrap(VisualizationEngine.chart_built_sqft_trend, data_bundle),
-            "feature_importance": lambda: wrap(VisualizationEngine.chart_lag_corr, data_bundle),
-            "causal_hiring": lambda: wrap(VisualizationEngine.chart_lag_corr, data_bundle),
+            "feature_importance": lambda: (go.Figure(), "Analytical module detached."),
             "missingness": lambda: wrap(VisualizationEngine.chart_missingness_matrix, data_bundle),
             "correlation": lambda: wrap(VisualizationEngine.chart_correlation_heatmap, data_bundle),
             "pairplot": lambda: wrap(VisualizationEngine.chart_pair_plot, data_bundle),

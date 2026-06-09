@@ -88,7 +88,7 @@ THEME = {
     "defaultRadius": "md",
 }
 
-dm = DataManager()
+dm = DataManager(read_only=True)
 
 # ==========================================
 # --- APP CORE LAYOUT ---

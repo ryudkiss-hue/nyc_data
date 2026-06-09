@@ -118,38 +118,14 @@ def register_analytics_callbacks(app, dm_instance):
             filtered_bundle[key] = temp_df
 
         requested_keys = []
-        requires_bayesian = False
         for g_id in graph_ids:
             k = g_id['index'].replace("viz-", "").replace("-", "_")
             if k == "weekly_heat": k = "built"
             elif k == "mappluto_far": k = "mappluto"
             elif k == "311_treemap": k = "treemap"
-            elif k == "bayesian_yield": 
-                requires_bayesian = True
-                k = "bayesian_yield"
             requested_keys.append(k)
 
-        # Offload Bayesian to prevent UI lockup (Phase 1.3)
-        if requires_bayesian:
-            import threading
-            def run_bayesian_worker(data, req_keys, reg):
-                global _bayesian_cache
-                _bayesian_cache = VisualizationEngine.get_all_charts(data, reg, requested_keys=req_keys)
-            
-            # Simple simulation of background dispatch
-            if not hasattr(dash, "_bayesian_cache"):
-                dash._bayesian_cache = {}
-                thread = threading.Thread(target=run_bayesian_worker, args=(filtered_bundle, requested_keys, registry))
-                thread.daemon = True
-                thread.start()
-                entry = dmc.Text(f"[{datetime.now().strftime('%H:%M:%S')}] DISPATCHED: Bayesian Model sent to background worker.", size="xs", c="blue")
-                current_log.insert(0, entry)
-                return [[go.Figure()] * len(graph_ids), [[dmc.ListItem("Computing...")] * 4] * len(graph_ids), current_log]
-            
-            # If done
-            charts = dash._bayesian_cache
-        else:
-            charts = VisualizationEngine.get_all_charts(filtered_bundle, registry, requested_keys=requested_keys)
+        charts = VisualizationEngine.get_all_charts(filtered_bundle, registry, requested_keys=requested_keys)
             
         figures, moments_lists, insights = [], [], []
         for k in requested_keys:

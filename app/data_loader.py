@@ -109,7 +109,8 @@ def _read_duckdb_cache(dataset_key: str, limit: int | None = None) -> pd.DataFra
     try:
         manager = DuckDBManager(_DUCKDB_PATH)
         repo = DuckDBRepository(manager, dataset_key)
-        df = repo.fetch_all(limit=limit or 1_000_000)
+        effective_limit = None if limit in (None, -1) else limit
+        df = repo.fetch_all(limit=effective_limit)
         manager.close()
         if not df.empty:
             return _postprocess_dataset(dataset_key, df)
@@ -135,6 +136,52 @@ def _write_duckdb_cache(dataset_key: str, df: pd.DataFrame) -> None:
         manager.close()
     except Exception as exc:
         logging.debug("DuckDB write failed for %s: %s", dataset_key, exc)
+
+
+def _get_duckdb_watermark(dataset_key: str) -> tuple[str | None, str | None]:
+    """Query DuckDB for the maximum timestamp among DATE_CANDIDATES."""
+    if not _DUCKDB_AVAILABLE:
+        return None, None
+    try:
+        manager = DuckDBManager(_DUCKDB_PATH)
+        # Check if table exists
+        tables = manager.query("SHOW TABLES").df()
+        if tables.empty or dataset_key not in tables["name"].values:
+            manager.close()
+            return None, None
+
+        # Get columns to find the best DATE_CANDIDATE
+        cols_df = manager.query(f"DESCRIBE \"{dataset_key}\"").df()
+        cols_lower = [c.lower() for c in cols_df["column_name"].tolist()]
+
+        target_col = None
+        for cand in DATE_CANDIDATES:
+            if cand.lower() in cols_lower:
+                target_col = next(
+                    c for c in cols_df["column_name"] if c.lower() == cand.lower()
+                )
+                break
+
+        if not target_col:
+            manager.close()
+            return None, None
+
+        # Get max date
+        res = manager.query(
+            f'SELECT MAX("{target_col}") as max_val FROM "{dataset_key}"'
+        ).df()
+        manager.close()
+
+        if not res.empty and pd.notna(res.iloc[0]["max_val"]):
+            val = res.iloc[0]["max_val"]
+            # Socrata ISO 8601 formatting
+            if hasattr(val, "isoformat"):
+                return target_col, val.isoformat()
+            return target_col, str(val)
+    except Exception as exc:
+        logging.debug("DuckDB watermark check failed for %s: %s", dataset_key, exc)
+    return None, None
+
 
 def _bootstrap_env() -> None:
     if load_dotenv is None:
@@ -438,7 +485,7 @@ class IngestionProviderFactory:
 def fetch_dataset(
     dataset_key: str,
     *,
-    limit: int | None = 50_000,
+    limit: int | None = -1,
     where: str | None = None,
     select: str | None = None,
 ) -> pd.DataFrame:
@@ -446,8 +493,9 @@ def fetch_dataset(
 
     Layers:
     1. L1 — ``@st.cache_data`` (handled by callers / the decorator above).
-    2. L2 — Parquet disk cache (``app/utils/cache_manager``).
-    3. Live fetch from Socrata (with delta WHERE when a previous fetch exists).
+    2. L1.5 — DuckDB "Total Recall" store with Watermark Delta-Fetching.
+    3. L2 — Parquet disk cache (``app/utils/cache_manager``).
+    4. Live fetch from Socrata (with delta WHERE from DuckDB watermark).
 
     *limit*: number of rows to fetch. Use -1 or None for ALL rows (Total Recall mode).
     *select*: optional ``$select`` column projection (Item 13).
@@ -463,12 +511,14 @@ def fetch_dataset(
     if where is None:
         where = DATASET_REGISTRY[dataset_key].get("default_where")
 
-    # L1.5: DuckDB cache (Total Recall store)
+    # L1.5: DuckDB cache check - return immediately if fresh
     if _DUCKDB_AVAILABLE:
-        duck_cached = _read_duckdb_cache(dataset_key, limit=effective_limit)
-        if duck_cached is not None:
-            log_event("fetch_duckdb", dataset=dataset_key, rows=len(duck_cached))
-            return duck_cached
+        # Respect TTL for DuckDB cache hit (using parquet freshness as proxy)
+        if _parquet_fresh(_parquet_path(dataset_key)):
+            duck_cached = _read_duckdb_cache(dataset_key, limit=effective_limit)
+            if duck_cached is not None:
+                log_event("fetch_duckdb", dataset=dataset_key, rows=len(duck_cached))
+                return duck_cached
 
     # L2: Parquet disk cache (cache_manager)
     if _DISK_CACHE_AVAILABLE:
@@ -483,47 +533,54 @@ def fetch_dataset(
         log_event("fetch_parquet", dataset=dataset_key, rows=len(legacy_cached))
         return _postprocess_dataset(dataset_key, legacy_cached)
 
-    # Delta fetch: if we have a prior fetch timestamp and the dataset has
-    # a known timestamp column, narrow the query to only new/updated rows.
+    # Delta fetch: DuckDB Watermark Strategy (Item 2)
     effective_where = where
-    if _DISK_CACHE_AVAILABLE:
-        last_iso = _last_fetched_iso(dataset_key)
-        if last_iso is not None:
-            # Detect whether the dataset exposes an updated_at / date_modified column
-            # by checking the cache; we probe lazily and cache the result.
-            delta_col: str | None = _detect_delta_column(dataset_key)
-            if delta_col:
-                delta_clause = f"{delta_col} > '{last_iso}'"
-                effective_where = (
-                    f"({effective_where}) AND {delta_clause}"
-                    if effective_where
-                    else delta_clause
-                )
-                logging.info(
-                    "fetch_dataset: delta fetch for %s using %s > %s",
-                    dataset_key, delta_col, last_iso,
-                )
+    if _DUCKDB_AVAILABLE:
+        delta_col, max_val = _get_duckdb_watermark(dataset_key)
+        if delta_col and max_val:
+            delta_clause = f"{delta_col} > '{max_val}'"
+            effective_where = (
+                f"({effective_where}) AND {delta_clause}"
+                if effective_where
+                else delta_clause
+            )
+            logging.info(
+                "fetch_dataset: watermark delta fetch for %s using %s > %s",
+                dataset_key,
+                delta_col,
+                max_val,
+            )
 
     try:
         t0 = time.perf_counter()
-        df = _fetch_live(dataset_key, limit=effective_limit, where=effective_where, select=select)
-        
+        df = _fetch_live(
+            dataset_key, limit=effective_limit, where=effective_where, select=select
+        )
+        new_rows_count = len(df)
+
         # Priority Write: Write to primary DuckDB store (L1.5) synchronously
         _write_duckdb_cache(dataset_key, df)
-        
+
+        # Unified Store: Always return full dataset from DuckDB after sync
+        if _DUCKDB_AVAILABLE:
+            full_df = _read_duckdb_cache(dataset_key, limit=effective_limit)
+            if full_df is not None:
+                df = full_df
+
         # Write-Behind Cache: Offload secondary writes to background thread
+        # We write the FULL df (potentially from DuckDB) to ensure L2 consistency
         def _background_cache_ops(k: str, data: pd.DataFrame):
             if _DISK_CACHE_AVAILABLE and not data.empty and "_error" not in data.columns:
                 _write_disk_cache(k, data)
             _write_parquet_cache(k, data)
-            
+
         with ThreadPoolExecutor(max_workers=1) as background_io:
             background_io.submit(_background_cache_ops, dataset_key, df)
 
         log_event(
             "fetch_live",
             dataset=dataset_key,
-            rows=len(df),
+            rows=new_rows_count,
             seconds=round(time.perf_counter() - t0, 2),
             where=effective_where or "",
         )
