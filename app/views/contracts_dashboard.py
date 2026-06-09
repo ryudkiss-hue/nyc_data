@@ -921,14 +921,6 @@ def render_contracts_page() -> None:
     st.header("📋 Contract Analytics & Budget Tracker")
     st.caption("Contract progress, budget performance, productivity tracking, and reporting for SIM Program.")
 
-    # --- New Layout: Executive Summary ---
-    st.markdown("### 🏛️ Executive Summary")
-    st.text(
-        "This dashboard provides a comprehensive view of the SIM Program's contract budget and schedule health, "
-        "highlighting high-risk contracts and operational hotspots for strategic intervention."
-    )
-    st.markdown("---")
-
     # --- Contract data (upload only — no matching Socrata dataset) ---
     st.sidebar.markdown("**Contract Data**")
     st.sidebar.caption(
@@ -941,6 +933,14 @@ def render_contracts_page() -> None:
     else:
         df_contracts = pd.DataFrame()
         st.sidebar.info("No contract data loaded. Upload a file to begin.")
+
+    # --- New Layout: Executive Summary ---
+    st.markdown("### 🏛️ Executive Summary")
+    st.text(
+        "This dashboard provides a comprehensive view of the SIM Program's contract budget and schedule health, "
+        "highlighting high-risk contracts and operational hotspots for strategic intervention."
+    )
+    st.markdown("---")
 
     # --- New Layout: Level 1 - Core Metrics (KPI Hierarchy) ---
     st.markdown("### 📊 Level 1: Core KPI Metrics")

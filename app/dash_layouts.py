@@ -373,7 +373,7 @@ def layout_gis():
             visualization_asset("isochrone", "Pedestrian Catchment Isochrones", "Item 33: Walkability distance analysis for accessibility.", "5/10/15 minute pedestrian accessibility envelopes.", tier="2"),
             dmc.SimpleGrid(cols=2, spacing="lg", children=[
                 visualization_asset("viz-curb-metal", "Protruding Curb Metal", "Specific steel defect tracking.", "High severity clusters in Lower Manhattan.", tier="2"),
-                visualization_asset("viz-planimetric", "Planimetric Sidewalk Density", "Physical area distribution.", "Distribution of sidewalk planimetric area by zone.", tier="2")
+                visualization_asset("viz-planimetric", "Planimetric Sidewalk Density", "Physical area distribution.", "Normative area size peaks at 400 sqft.", tier="2")
             ])
         ]
     )
@@ -412,7 +412,7 @@ def layout_engineering():
                 ])
             ]),
             dmc.SimpleGrid(cols=2, spacing="lg", children=[
-                visualization_asset("equity", "Socio-Economic Equity Multipliers", "Item 68: Prioritization boost map.", "Equity-weighted prioritization across areas.", tier="2"),
+                visualization_asset("equity", "Socio-Economic Equity Multipliers", "Item 68: Prioritization boost map.", "Areas with 2.0x equity weight application.", tier="2"),
                 visualization_asset("budget_mc", "Monte Carlo Budget Risk", "Item 19/62: Probabilistic project cost outcomes.", "95% confidence interval for construction variance.")
             ]),
             dmc.SimpleGrid(cols=2, spacing="lg", children=[
