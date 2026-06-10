@@ -1,6 +1,0 @@
-contract_id,contractor,borough,planned_sqft,actual_sqft,planned_spend,actual_spend,earned_value,start_date,end_date,planned_end_date,actual_end_date,days_worked,status,linear_feet,first_pass,total_inspections,rework_spend,pct_complete,built_linear_feet,curb_miles,violations,days,actual_spend_monthly
-C-2024-001,Acme Sidewalks Inc,MANHATTAN,5000,3500,250000,180000,175000,2024-01-01,2025-06-30,2025-06-30,,120,in_progress,1500,85,100,8000,70.0,1500,3.2,15,120,15000
-C-2024-002,Brooklyn Paving Co,BROOKLYN,8000,6000,400000,320000,310000,2024-02-15,2025-09-30,2025-09-30,,180,in_progress,2800,140,160,15000,75.0,2800,5.1,22,180,17778
-C-2024-003,Queens Construction LLC,QUEENS,3000,3000,150000,145000,150000,2024-03-01,2024-12-31,2024-12-31,2024-12-20,90,complete,1200,70,80,3000,100.0,1200,2.0,8,90,16111
-C-2024-004,Bronx Builders Corp,BRONX,6000,2500,300000,150000,130000,2024-04-01,2025-12-31,2025-12-31,,100,in_progress,1000,50,70,12000,41.7,1000,2.5,18,100,15000
-C-2024-005,Island Works Inc,STATEN ISLAND,2000,1800,100000,85000,90000,2024-05-01,2025-03-31,2025-03-31,2025-03-15,80,complete,800,60,65,2000,90.0,800,1.5,5,80,10625
