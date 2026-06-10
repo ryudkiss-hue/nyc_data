@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .exporters import MongoExporter, PostgresExporter, XLSXExporter
+from .exporters import DuckDBExporter, MongoExporter, PostgresExporter, XLSXExporter
 
 
 def _sql_type(value: Any) -> str:
@@ -105,5 +105,22 @@ def run_from_rows(rows: list[dict[str, Any]], targets: dict, dry_run: bool = Tru
         if not dry_run:
             XLSXExporter().write(rows, xl.get("path", "socrata_backup.xlsx"))
             report["targets"]["xlsx"]["written"] = True
+
+    # DuckDB / MotherDuck
+    ddb = targets.get("duckdb")
+    if ddb and ddb.get("enabled"):
+        report["targets"]["duckdb"] = {"count": len(rows)}
+        if not dry_run:
+            with DuckDBExporter(
+                db_path=ddb.get("db_path"),
+                motherduck_token=ddb.get("motherduck_token"),
+                database=ddb.get("database", "main"),
+            ) as ddbe:
+                total = ddb_rows = ddbe.upsert_batches(
+                    [rows],
+                    table=ddb.get("table", "socrata_data"),
+                    conflict_column=ddb.get("conflict_column"),
+                )
+            report["targets"]["duckdb"]["rows_upserted"] = total
 
     return report

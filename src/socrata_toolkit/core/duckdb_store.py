@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
+import uuid
 from pathlib import Path
 
 import duckdb
@@ -126,20 +127,49 @@ def query_parquet_cache(
 
 
 class DuckDBManager:
-    """Manages DuckDB local file connection and extensions."""
+    """Manages DuckDB local file connection, MotherDuck integration, and extensions."""
 
-    def __init__(self, db_path: str | None = None, read_only: bool | None = None):
-        self.db_path = db_path or os.getenv("DUCKDB_PATH", "data/local_db/nyc_mission_control.duckdb")
+    def __init__(
+        self,
+        db_path: str | None = None,
+        read_only: bool | None = None,
+        motherduck_token: str | None = None,
+    ):
+        self.db_path = db_path or os.getenv(
+            "DUCKDB_PATH", "data/local_db/nyc_mission_control.duckdb"
+        )
         self.read_only = read_only
+        self.motherduck_token = motherduck_token or os.getenv("MOTHERDUCK_TOKEN")
         self._conn: duckdb.DuckDBPyConnection | None = None
 
     @property
     def conn(self) -> duckdb.DuckDBPyConnection:
         if self._conn is None:
-            logger.info("Connecting to DuckDB at %s", self.db_path)
+            connection_path = self.db_path
+            # If token provided but path is not md:, we still connect to local
+            # and allow manual ATTACH 'md:' later.
+            # If path is 'md:', it connects to MotherDuck directly.
+
+            logger.info("Connecting to DuckDB at %s", connection_path)
             # Use read_only if requested via environment or default to False
-            is_read_only = self.read_only if self.read_only is not None else (os.getenv("DUCKDB_READ_ONLY", "false").lower() == "true")
-            self._conn = duckdb.connect(self.db_path, read_only=is_read_only)
+            is_read_only = (
+                self.read_only
+                if self.read_only is not None
+                else (os.getenv("DUCKDB_READ_ONLY", "false").lower() == "true")
+            )
+
+            # DuckDB 0.10+ handles 'md:' natively if token is in env or config
+            if self.motherduck_token and not connection_path.startswith("md:"):
+                # We connect to local but will enable MD extension
+                self._conn = duckdb.connect(connection_path, read_only=is_read_only)
+                try:
+                    self._conn.execute(f"SET motherduck_token='{self.motherduck_token}';")
+                    self._conn.execute("INSTALL motherduck;")
+                    self._conn.execute("LOAD motherduck;")
+                except Exception as exc:
+                    logger.warning("Could not initialize MotherDuck extension: %s", exc)
+            else:
+                self._conn = duckdb.connect(connection_path, read_only=is_read_only)
 
             # Item 6: Disable insertion order for performance
             self._conn.execute("SET preserve_insertion_order = false;")
@@ -152,6 +182,40 @@ class DuckDBManager:
             except Exception as exc:
                 logger.warning("Could not load DuckDB spatial extension: %s", exc)
         return self._conn
+
+    def attach_motherduck(self, alias: str = "md"):
+        """Attach MotherDuck cloud database to the current local session."""
+        logger.info("Attaching MotherDuck as '%s'", alias)
+        self.conn.execute(f"ATTACH 'md:' AS {alias}")
+
+    def publish_to_motherduck(
+        self, table_name: str, remote_name: str, database: str = "my_db"
+    ):
+        """Item 7: Data Bridging - Push local table/view to MotherDuck.
+
+        Example: publish_to_motherduck('local_cache', 'nyc_data_share')
+        """
+        logger.info("Publishing '%s' to MotherDuck as '%s'", table_name, remote_name)
+        # Ensure MD is attached
+        try:
+            self.attach_motherduck("md_publish")
+        except Exception:
+            pass  # Already attached or error
+
+        self.conn.execute(
+            f"CREATE TABLE IF NOT EXISTS md_publish.{database}.{remote_name} AS SELECT * FROM {table_name}"
+        )
+
+    def query_ducklake(self, sql: str, *args: object):
+        """Execute a 'DuckLake' query that joins local L2 Parquet caches with MD.
+
+        This helper ensures MotherDuck is attached and runs the query.
+        """
+        try:
+            self.attach_motherduck()
+        except Exception:
+            pass
+        return self.query(sql, *args)
 
     def close(self) -> None:
         if self._conn:
@@ -188,11 +252,20 @@ class DuckDBManager:
 
 
 class DuckDBRepository:
-    """Repository for DuckDB bulk upserts with Spatial awareness."""
+    """Repository for DuckDB bulk upserts with Spatial awareness.
 
-    def __init__(self, manager: DuckDBManager, table_name: str):
+    Supports 'DuckLake' architecture by allowing targeting of different
+    attached databases (e.g., 'main' for local, 'md' for MotherDuck).
+    """
+
+    def __init__(self, manager: DuckDBManager, table_name: str, database: str = "main"):
         self.manager = manager
-        self.table_name = table_name
+        self.table_name = table_name.replace('"', "")
+        self.database = database.replace('"', "")
+
+    @property
+    def qualified_name(self) -> str:
+        return f'"{self.database}"."{self.table_name}"'
 
     def _detect_spatial_cols(self, df: pd.DataFrame) -> dict[str, str]:
         """Identify potential spatial columns and their types (lat/lon vs WKT)."""
@@ -206,8 +279,13 @@ class DuckDBRepository:
                 break
 
         # Lat/Lon Detection
-        lat_cand = next((cols[c] for c in ("latitude", "lat", "y", "ycoord") if c in cols), None)
-        lon_cand = next((cols[c] for c in ("longitude", "lon", "lng", "long", "x", "xcoord") if c in cols), None)
+        lat_cand = next(
+            (cols[c] for c in ("latitude", "lat", "y", "ycoord") if c in cols), None
+        )
+        lon_cand = next(
+            (cols[c] for c in ("longitude", "lon", "lng", "long", "x", "xcoord") if c in cols),
+            None,
+        )
 
         if lat_cand and lon_cand:
             spatial_map["lat"] = lat_cand
@@ -219,60 +297,93 @@ class DuckDBRepository:
         if df.empty:
             return 0
 
-        table_name = self.table_name.replace('"', '')
-        conflict_col = conflict_column.replace('"', '')
-        temp_view = f"temp_view_{table_name}"
+        conflict_col = conflict_column.replace('"', "")
+        temp_view = f"temp_view_{self.table_name}_{uuid.uuid4().hex[:8]}"
         self.manager.conn.register(temp_view, df)
 
         # Detect spatial columns to create native GEOMETRY
         spatial_info = self._detect_spatial_cols(df)
         geom_expr = "NULL"
         if "wkt" in spatial_info:
-            geom_expr = f"ST_GeomFromText(\"{spatial_info['wkt']}\")"
+            geom_expr = f'ST_GeomFromText("{spatial_info["wkt"]}")'
         elif "lat" in spatial_info and "lon" in spatial_info:
             # Note: NYC uses EPSG:2263 or WGS84 (4326). We default to 4326 for ingestion.
-            geom_expr = f"ST_Point(CAST(\"{spatial_info['lon']}\" AS DOUBLE), CAST(\"{spatial_info['lat']}\" AS DOUBLE))"
+            geom_expr = (
+                f"ST_Point(CAST(\"{spatial_info['lon']}\" AS DOUBLE), "
+                f"CAST(\"{spatial_info['lat']}\" AS DOUBLE))"
+            )
 
-        tables = self.manager.conn.execute("SHOW TABLES").fetchall()
-        table_exists = any(t[0] == table_name for t in tables)
+        # Check if table exists in the target database
+        tables = self.manager.conn.execute(
+            f"SELECT table_name FROM information_schema.tables "
+            f"WHERE table_schema = 'main' AND table_catalog = '{self.database}' "
+            f"AND table_name = '{self.table_name}'"
+        ).fetchall()
+        table_exists = len(tables) > 0
 
         if not table_exists:
-            # Create table with an explicit GEOMETRY column derived from detected spatial sources
+            # Create table with an explicit GEOMETRY column
             sql_create = f"""
-                CREATE TABLE "{table_name}" AS
+                CREATE TABLE {self.qualified_name} AS
                 SELECT *,
                 ({geom_expr}) AS native_geom
                 FROM "{temp_view}"
             """
             self.manager.conn.execute(sql_create)
-            self.manager.conn.execute(
-                f'CREATE UNIQUE INDEX IF NOT EXISTS "idx_{table_name}_{conflict_col}" '
-                f'ON "{table_name}" ("{conflict_col}")'
-            )
+            # Create index if not in MotherDuck (MD doesn't support local indexes in the same way)
+            if self.database == "main":
+                self.manager.conn.execute(
+                    f'CREATE UNIQUE INDEX IF NOT EXISTS "idx_{self.table_name}_{conflict_col}" '
+                    f"ON {self.qualified_name} (\"{conflict_col}\")"
+                )
             return len(df)
 
         # Schema Evolution: Ensure native_geom exists
-        existing_cols = [c[1] for c in self.manager.conn.execute(f'PRAGMA table_info("{table_name}")').fetchall()]
+        existing_cols = [
+            c[1]
+            for c in self.manager.conn.execute(
+                f'PRAGMA table_info("{self.table_name}")'
+            ).fetchall()
+        ]
+        # Note: PRAGMA table_info might need the database prefix if not 'main'
+        if self.database != "main":
+             existing_cols = [
+                c[1]
+                for c in self.manager.conn.execute(
+                    f"SELECT column_name FROM information_schema.columns "
+                    f"WHERE table_name = '{self.table_name}' AND table_catalog = '{self.database}'"
+                ).fetchall()
+            ]
+
         if "native_geom" not in existing_cols:
-            logger.info(f"Spatial Migration: Adding 'native_geom' column to '{table_name}'")
-            self.manager.conn.execute(f'ALTER TABLE "{table_name}" ADD COLUMN native_geom GEOMETRY;')
+            logger.info(
+                "Spatial Migration: Adding 'native_geom' column to %s", self.qualified_name
+            )
+            self.manager.conn.execute(
+                f"ALTER TABLE {self.qualified_name} ADD COLUMN native_geom GEOMETRY;"
+            )
 
         # Standard column evolution
         for col in df.columns:
             if col not in existing_cols and col != "native_geom":
-                self.manager.conn.execute(f'ALTER TABLE "{table_name}" ADD COLUMN "{col.replace(chr(34), "")}" VARCHAR;')
+                self.manager.conn.execute(
+                    f'ALTER TABLE {self.qualified_name} ADD COLUMN "{col.replace(chr(34), "")}" VARCHAR;'
+                )
 
         columns = df.columns.tolist()
         update_set_parts = [
             f'"{col.replace(chr(34), "")}" = EXCLUDED."{col.replace(chr(34), "")}"'
-            for col in columns if col != conflict_column
+            for col in columns
+            if col != conflict_column
         ]
         # Always update native_geom during upsert
-        update_set_parts.append(f'native_geom = ({geom_expr})')
+        update_set_parts.append(f"native_geom = ({geom_expr})")
         update_set = ", ".join(update_set_parts)
 
+        # MotherDuck might not support ON CONFLICT in all versions/modes yet
+        # Fallback to DELETE + INSERT if needed, but for now use ON CONFLICT
         sql_upsert = f"""
-            INSERT INTO "{table_name}" BY NAME
+            INSERT INTO {self.qualified_name} BY NAME
             SELECT *, ({geom_expr}) AS native_geom FROM "{temp_view}"
             ON CONFLICT ("{conflict_col}") DO UPDATE SET {update_set}
         """
@@ -280,16 +391,14 @@ class DuckDBRepository:
         return len(df)
 
     def fetch_all(self, limit: int | None = None) -> pd.DataFrame:
-        safe_table = self.table_name.replace('"', '')
         if limit is None or limit == -1:
-            return self.manager.conn.execute(
-                f'SELECT * FROM "{safe_table}"'
-            ).df()
+            return self.manager.conn.execute(f"SELECT * FROM {self.qualified_name}").df()
         return self.manager.conn.execute(
-            f'SELECT * FROM "{safe_table}" LIMIT ?', [limit]
+            f"SELECT * FROM {self.qualified_name} LIMIT ?", [limit]
         ).df()
 
     def count(self) -> int:
-        safe_table = self.table_name.replace('"', '')
-        row = self.manager.conn.execute(f'SELECT COUNT(*) FROM "{safe_table}"').fetchone()
+        row = self.manager.conn.execute(
+            f"SELECT COUNT(*) FROM {self.qualified_name}"
+        ).fetchone()
         return int(row[0]) if row else 0

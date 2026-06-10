@@ -36,6 +36,42 @@ class XLSXExporter:
                 pd.DataFrame(meta.column_dict()).to_excel(writer, sheet_name="Column Dictionary", index=False)
 
 
+class DuckDBExporter:
+    """Exporter for local DuckDB or MotherDuck cloud databases."""
+
+    def __init__(
+        self,
+        db_path: str | None = None,
+        motherduck_token: str | None = None,
+        database: str = "main",
+    ):
+        from .duckdb_store import DuckDBManager
+
+        self.manager = DuckDBManager(db_path=db_path, motherduck_token=motherduck_token)
+        self.database = database
+
+    def __enter__(self) -> DuckDBExporter:
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> None:
+        self.manager.close()
+
+    def upsert_batches(
+        self, batches: Iterable[list[dict[str, Any]]], table: str, conflict_column: str
+    ) -> int:
+        """Upsert batches into DuckDB/MotherDuck."""
+        from .duckdb_store import DuckDBRepository
+
+        repo = DuckDBRepository(self.manager, table, database=self.database)
+        total = 0
+        for batch in batches:
+            if not batch:
+                continue
+            df = pd.DataFrame(batch)
+            total += repo.upsert_dataframe(df, conflict_column)
+        return total
+
+
 class PostgresExporter:
     def __init__(self, dsn: str):
         try:
