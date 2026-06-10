@@ -5,17 +5,16 @@ Uses APScheduler for background job orchestration with persistent job store.
 Integrates with DuckDB for state persistence and Slack for notifications.
 """
 
-from datetime import datetime, timedelta
-from typing import Callable, Dict, List, Optional
-import logging
 import json
+import logging
 from pathlib import Path
+from typing import Callable, Optional
 
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
-from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
-from apscheduler.triggers.cron import CronTrigger
 import pytz
+from apscheduler.executors.pool import ProcessPoolExecutor, ThreadPoolExecutor
+from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
 
 logger = logging.getLogger(__name__)
 
@@ -34,12 +33,12 @@ class PipelineScheduler:
         self.scheduler = None
         self.config = self._load_config()
 
-    def _load_config(self) -> Dict:
+    def _load_config(self) -> dict:
         """Load scheduler configuration from data/scheduler_config.json."""
         config_path = Path("data/scheduler_config.json")
 
         if config_path.exists():
-            with open(config_path, 'r') as f:
+            with open(config_path) as f:
                 return json.load(f)
 
         # Default configuration
@@ -69,7 +68,7 @@ class PipelineScheduler:
     def initialize(self):
         """Initialize scheduler with job store and executors."""
         jobstores = {
-            'default': SQLAlchemyJobStore(url=f'sqlite:///data/scheduler_jobs.db')
+            'default': SQLAlchemyJobStore(url='sqlite:///data/scheduler_jobs.db')
         }
 
         executors = {
@@ -118,7 +117,7 @@ class PipelineScheduler:
             logger.error(f"Failed to schedule job {job_id}: {e}")
             raise
 
-    def schedule_jobs_from_config(self, job_registry: Dict[str, Callable]):
+    def schedule_jobs_from_config(self, job_registry: dict[str, Callable]):
         """
         Schedule all jobs from configuration file.
 
@@ -170,7 +169,7 @@ class PipelineScheduler:
             self.scheduler.resume_job(job_id)
             logger.info(f"Job {job_id} resumed")
 
-    def get_jobs(self) -> List[Dict]:
+    def get_jobs(self) -> list[dict]:
         """Get list of all scheduled jobs with status."""
         if not self.scheduler:
             return []
@@ -188,7 +187,7 @@ class PipelineScheduler:
 
         return jobs
 
-    def save_config(self, config: Optional[Dict] = None):
+    def save_config(self, config: Optional[dict] = None):
         """Save scheduler configuration to file."""
         if config:
             self.config = config
@@ -210,13 +209,24 @@ class ScheduleRunner:
         self.conn = conn
 
     def run_load_raw_data(self):
-        """Execute raw data loading routine."""
+        """Execute raw data loading routine (one load per registered dataset)."""
         logger.info("Starting raw data load routine...")
         try:
-            from socrata_toolkit.core.duckdb_pipeline import load_raw_from_socrata
-            result = load_raw_from_socrata()
-            logger.info(f"Raw data load completed: {result}")
-            return result
+            from socrata_toolkit.core.duckdb_pipeline import (
+                SOCRATA_DATASETS,
+                load_raw_from_socrata,
+            )
+
+            results = {key: load_raw_from_socrata(key) for key in SOCRATA_DATASETS}
+            for key, result in results.items():
+                logger.info(f"  {key}: {result.get('status')}")
+            failed = [k for k, r in results.items() if r.get("status") == "error"]
+            if failed:
+                self._send_alert(
+                    f"Raw data load errors for: {', '.join(failed)}", severity="HIGH"
+                )
+            logger.info(f"Raw data load completed: {len(results)} datasets")
+            return results
         except Exception as e:
             logger.error(f"Raw data load failed: {e}")
             self._send_alert(f"Raw data load failed: {e}", severity="HIGH")
@@ -226,7 +236,11 @@ class ScheduleRunner:
         """Execute staging transformation routine."""
         logger.info("Starting staging transformation routine...")
         try:
-            from socrata_toolkit.core.duckdb_pipeline import stage_inspections, stage_permits, stage_ramps
+            from socrata_toolkit.core.duckdb_pipeline import (
+                stage_inspections,
+                stage_permits,
+                stage_ramps,
+            )
 
             results = {
                 'inspections': stage_inspections(),
@@ -245,9 +259,11 @@ class ScheduleRunner:
         logger.info("Starting analytics materialization routine...")
         try:
             from socrata_toolkit.core.duckdb_analytics_models import (
-                create_borough_summary, create_time_series_snapshots,
-                create_material_analysis_mart, create_clustering_features,
-                create_geo_animation_mart
+                create_borough_summary,
+                create_clustering_features,
+                create_geo_animation_mart,
+                create_material_analysis_mart,
+                create_time_series_snapshots,
             )
 
             results = {
