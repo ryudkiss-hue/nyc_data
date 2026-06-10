@@ -14,16 +14,10 @@ from .integration import (
 )
 from .logs import LogEntry, LogStore
 from .metrics import HistogramData, MetricsCollector
-from .monitoring import (
-    Alert,
-    AlertManager,
-    AlertSeverity,
-    AlertStatus,
-    Monitoring,
-    MonitoringResult,
-)
 from .sla import SLA, SLATracker
 from .tracing import Span, Tracer
+
+from socrata_toolkit.alerts.manager import Alert, AlertManager, AlertSeverity, AlertStatus
 
 __all__ = [
     "ObservabilityManager",
@@ -43,6 +37,4 @@ __all__ = [
     "AlertManager",
     "AlertSeverity",
     "AlertStatus",
-    "Monitoring",
-    "MonitoringResult",
 ]
