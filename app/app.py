@@ -38,6 +38,7 @@ from app.views import home, publish, settings, workflows
 from app.views.construction import render_construction_page
 from app.views.contracts_dashboard import render_contracts_page
 from app.views.data_discovery import render_data_discovery_page
+from app.views.data_quality_dashboard import render_data_quality_page
 from app.views.forecasting import render_forecasting_page
 from app.views.gis_dashboard import render_gis_page
 
@@ -50,6 +51,7 @@ _SECTIONS = {
     "📈 Forecasting":            "forecasting",
     "⚙️ Data Workflows":         "workflows",
     "📊 Advanced Analytics":     "advanced_analytics",
+    "🩺 Data Quality":           "data_quality",
     "🔍 Data Discovery":         "discovery",
     "📚 Data Catalog":           "data_catalog",
     "📤 Publish":                "publish",
@@ -75,6 +77,7 @@ _NAV_GROUPS = {
         "📊 Advanced Analytics",
     ],
     "🔧 Tools": [
+        "🩺 Data Quality",
         "🔍 Data Discovery",
         "📚 Data Catalog",
         "📤 Publish",
@@ -426,6 +429,11 @@ def main() -> None:
                 render_analytics_advanced_page()
             except ImportError:
                 st.info("Advanced Analytics view is not yet available.")
+        return
+
+    if section == "data_quality":
+        with _spinner_view():
+            render_data_quality_page()
         return
 
     if section == "data_catalog":
