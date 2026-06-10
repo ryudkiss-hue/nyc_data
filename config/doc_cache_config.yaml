@@ -1,0 +1,37 @@
+# Analysis Documentation Cache Configuration
+# Controls how /analysis-documentation generates, stores, and refreshes docs.
+#
+# invalidation_strategy options:
+#   ttl          — expire after ttl_hours regardless of data changes
+#   content_hash — expire when dataset last_modified changes (requires metadata fetch)
+#   both         — expire on whichever comes first
+
+doc_cache:
+  enabled: true
+
+  # Storage
+  backend: duckdb                        # "duckdb" or "json"
+  cache_path: data/cache/doc_cache.duckdb
+  max_entries: 200                       # LRU eviction above this limit
+
+  # Freshness
+  invalidation_strategy: both
+  ttl_hours: 24
+
+  # Background refresh — regenerate stale docs before they expire
+  auto_refresh:
+    enabled: false
+    refresh_before_expiry_hours: 2       # start refresh this many hours before TTL
+    cron: "0 6 * * *"                    # 06:00 UTC daily (APScheduler format)
+
+  # What gets included in generated docs
+  content:
+    include_quality_score: true
+    include_row_count: true
+    include_freshness: true
+    include_schema: true
+    include_sample_queries: true
+    max_sample_rows: 5
+
+  # Logging
+  audit_log: true                        # emit AuditLogger events on cache hits/misses

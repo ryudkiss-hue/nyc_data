@@ -41,21 +41,21 @@ try:
     total_errors = len([d for d in generalDiagnostics if d.get("severity") == "error"])
     total_warnings = len([d for d in generalDiagnostics if d.get("severity") == "warning"])
 
-    print(f"=== PYRIGHT SCAN RESULTS ===\n")
+    print("=== PYRIGHT SCAN RESULTS ===\n")
     print(f"Total Errors: {total_errors}")
     print(f"Total Warnings: {total_warnings}")
 
-    print(f"\n=== ERROR BREAKDOWN ===")
+    print("\n=== ERROR BREAKDOWN ===")
     for rule, count in sorted(error_counts.items(), key=lambda x: x[1], reverse=True):
         print(f"  {rule}: {count}")
 
-    print(f"\n=== CRITICAL ERRORS (Blocking) ===")
+    print("\n=== CRITICAL ERRORS (Blocking) ===")
     total_critical = sum(critical_errors.values())
     print(f"  Total Critical: {total_critical}")
     for rule, count in sorted(critical_errors.items(), key=lambda x: x[1], reverse=True):
         print(f"    {rule}: {count}")
 
-    print(f"\n=== WARNING BREAKDOWN ===")
+    print("\n=== WARNING BREAKDOWN ===")
     for rule, count in sorted(warning_counts.items(), key=lambda x: x[1], reverse=True):
         print(f"  {rule}: {count}")
 
@@ -68,15 +68,15 @@ try:
         else ((total_errors - baseline) / baseline * 100)
     )
 
-    print(f"\n=== BASELINE COMPARISON ===")
+    print("\n=== BASELINE COMPARISON ===")
     print(f"  Original Baseline: {baseline} errors")
     print(f"  Current Errors: {total_errors} errors")
     print(f"  Net Change: {net_change:+d} ({improvement_pct:+.1f}%)")
 
     if total_errors <= baseline:
-        print(f"  Status: ✅ IMPROVEMENT")
+        print("  Status: ✅ IMPROVEMENT")
     else:
-        print(f"  Status: ❌ REGRESSION")
+        print("  Status: ❌ REGRESSION")
 
 except json.JSONDecodeError as e:
     print(f"JSON Parse Error: {e}")

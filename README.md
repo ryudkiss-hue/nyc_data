@@ -1,11 +1,11 @@
-# NYC DOT SIM Analyst Toolkit
+# NYC DOT Socrata Toolkit
 
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-blue?style=flat-square&logo=python)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 [![30+ Visualizations](https://img.shields.io/badge/Visualizations-30%2B-orange?style=flat-square)](app/)
 [![75+ Features](https://img.shields.io/badge/Features-75%2B-purple?style=flat-square)](src/socrata_toolkit/)
 
-A unified Streamlit Mission Control dashboard and Python CLI toolkit for NYC DOT analysts. It ingests live Socrata open data, runs Bayesian SLA forecasting, performs spatial conflict detection, and surfaces 30+ interactive visualizations — all backed by a DuckDB L2 cache and a natural-language query interface powered by the Claude API.
+The **NYC DOT Socrata Toolkit** is an elite engineering engine and analytical platform for municipal data. It ingests live Socrata open data, runs Bayesian SLA forecasting, performs spatial conflict detection, and surfaces 30+ interactive visualizations — all backed by a high-performance FastAPI/Dash backend and a DuckDB L2 cache.
 
 ---
 
@@ -13,7 +13,7 @@ A unified Streamlit Mission Control dashboard and Python CLI toolkit for NYC DOT
 
 | Feature | Status |
 |---------|--------|
-| Streamlit Mission Control | ✅ |
+| Turbo-Stream Dash (FastAPI) | ✅ |
 | GIS Dashboard (10 charts) | ✅ |
 | Advanced Analytics (13 charts) | ✅ |
 | Spatial Conflict Detection | ✅ |
@@ -23,7 +23,7 @@ A unified Streamlit Mission Control dashboard and Python CLI toolkit for NYC DOT
 | Nightly Prefetch Scheduler | ✅ |
 | NL Query (Claude API) | ✅ |
 | PDF/Excel/PPTX Reports | ✅ |
-| CLI Analyst Commands | ✅ |
+| CLI Toolkit Commands | ✅ |
 | Data Quality Scorecard | ✅ |
 
 ---
@@ -32,11 +32,11 @@ A unified Streamlit Mission Control dashboard and Python CLI toolkit for NYC DOT
 
 ```
 ┌─────────────────────────────────────────────┐
-│           NYC DOT SIM Analyst Toolkit        │
+│             NYC DOT Socrata Toolkit          │
 ├──────────────┬──────────────┬────────────────┤
-│  Streamlit   │  CLI Toolkit │  Python API    │
-│  Mission     │  socrata     │  socrata_      │
-│  Control     │  commands    │  toolkit       │
+│ Turbo-Stream │  CLI Toolkit │  Python API    │
+│ Dash App     │  socrata     │  socrata_      │
+│ (FastAPI)    │  commands    │  toolkit       │
 ├──────────────┴──────────────┴────────────────┤
 │              Data Layer                      │
 │  ┌──────────────┐    ┌───────────────────┐   │
@@ -51,16 +51,22 @@ A unified Streamlit Mission Control dashboard and Python CLI toolkit for NYC DOT
 ## Quickstart
 
 ```bash
+# 1. Install toolkit
 pip install -e ".[mission]"
-streamlit run app/app.py
 
-# CLI:
-socrata --help
+# 2. Run Full-Scale Ingestion (No Limits)
+# This performs a Deep Sync of all 26 databases into DuckDB.
+python scripts/total_recall.py
+
+# 3. Launch Dash Workstation
+python app/dash_app.py
+
+# 4. Use the CLI
 socrata dataset health
 socrata nl-query "How many inspections per borough?" --dataset sidewalk_inspections
 ```
 
-Open **http://localhost:8501** — demo mode loads automatically (no token needed).
+Open **http://localhost:8012** for the Dash interface.
 
 **With live data:** add `SOCRATA_APP_TOKEN=your_token` to a `.env` file.
 
@@ -82,7 +88,7 @@ All 26 datasets are defined in `config/datasets.yaml` and loaded at runtime.
 | `correspondences` | Sidewalk Correspondences | bheb-sjfi | core_smd |
 | `curb_metal_protruding` | Curb Metal Protruding Data | i2y3-sx2e | core_smd |
 | `ramp_locations` | Pedestrian Ramp Locations | ufzp-rrqu | accessibility |
-| `ramp_complaints` | Ramp Complaints | jagj-gttd | accessibility |
+| `ramp_complaints" | Ramp Complaints | jagj-gttd | accessibility |
 | `ramp_progress` | Ramp Program Progress | e7gc-ub6z | accessibility |
 | `street_permits` | Street Construction Permits | tqtj-sjs8 | coordination |
 | `weekly_construction` | Weekly Construction Schedule | r528-jcks | coordination |
@@ -90,10 +96,10 @@ All 26 datasets are defined in `config/datasets.yaml` and loaded at runtime.
 | `capital_intersections` | Capital Reconstruction Projects - Intersection | 97nd-ff3i | coordination |
 | `street_construction_inspections` | Street Construction Inspections (HIQA) | ydkf-mpxb | coordination |
 | `street_closures_block` | Street Closures by Block | i6b5-j7bu | coordination |
-| `permit_stipulations` | Street Construction Permit Stipulations | gsgx-6efw | coordination |
+| `permit_stipulations" | Street Construction Permit Stipulations | gsgx-6efw | coordination |
 | `street_resurfacing_schedule` | Street Resurfacing Schedule | xnfm-u3k5 | coordination |
 | `street_resurfacing_inhouse` | DOT In-house Street Resurfacing Projects | ffaf-8mrv | coordination |
-| `step_streets` | Step Streets Locations | u9au-h79y | overlays |
+| `step_streets" | Step Streets Locations | u9au-h79y | overlays |
 | `sidewalk_planimetric` | Planimetric Sidewalks | vfx9-tbb6 | overlays |
 | `pedestrian_demand` | Pedestrian Demand | fwpa-qxaf | overlays |
 | `mappluto` | MapPLUTO | 6fi9-q3ta | overlays |
@@ -119,6 +125,7 @@ All 26 datasets are defined in `config/datasets.yaml` and loaded at runtime.
 
 | Variable | Description | Required |
 |----------|-------------|---------|
+| `SOCRATA_ALLOWED_KEY_HASHES` | Comma-separated SHA-256 hashes for API key validation | Yes (for API) |
 | `SOCRATA_APP_TOKEN` | Socrata API token | No |
 | `ANTHROPIC_API_KEY` | Claude API key for NL queries | No |
 | `SLACK_WEBHOOK_URL` | Slack alerts webhook | No |
@@ -128,6 +135,15 @@ All 26 datasets are defined in `config/datasets.yaml` and loaded at runtime.
 
 ## Docker
 
+### Turbo-Stream Dash (Recommended)
+The new high-performance platform with FastAPI/ASGI and hot-reloading:
+
+```bash
+docker compose up -d dash-app
+```
+Access at **http://localhost:8012**. Changes to your code are reflected automatically.
+
+### Mission Control (Legacy)
 ```bash
 docker build -f Dockerfile.mission -t mission-control .
 docker run -p 8501:8501 --env-file .env mission-control

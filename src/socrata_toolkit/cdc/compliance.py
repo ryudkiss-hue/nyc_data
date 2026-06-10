@@ -406,11 +406,10 @@ class CDCReconciler:
         try:
             with self._get_connection() as conn:
                 with conn.cursor() as cur:
-                    cur.execute(
-                        f"""SELECT COUNT(DISTINCT business_key)
-                           FROM {sql.Identifier(table)}
-                           WHERE is_current = TRUE"""
-                    )
+                    query = sql.SQL(
+                        "SELECT COUNT(DISTINCT business_key) FROM {} WHERE is_current = TRUE"
+                    ).format(sql.Identifier(table))
+                    cur.execute(query)
                     actual_count = cur.fetchone()[0]
 
             if actual_count != expected_count:

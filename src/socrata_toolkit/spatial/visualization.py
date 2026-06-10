@@ -98,16 +98,23 @@ class SpatialVisualization:
         try:
             style = style or MapStyle()
 
-            # Create base map
+            # Create base map with accessibility metadata
             m = folium.Map(
                 location=NYC_CENTER,
                 zoom_start=12,
-                tiles='OpenStreetMap'
+                tiles='OpenStreetMap',
+                control_scale=True
             )
+
+            # Add accessibility container for Screen Readers
+            acc_summary = f"Interactive Map: {title}. Visualizing sidewalk conditions across NYC using color-coded segments."
+            acc_html = f'<div id="map-accessibility" role="region" aria-label="{acc_summary}" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;">{acc_summary}</div>'
+            m.get_root().html.add_child(folium.Element(acc_html))
 
             # Add segments colored by condition
             for feature in features:
-                geometry = feature.get("geometry", {})
+                # ... (feature processing) ...
+
                 properties = feature.get("properties", {})
 
                 condition_score = properties.get("condition_score", 50)
@@ -117,8 +124,9 @@ class SpatialVisualization:
                 color = self._score_to_color(condition_score, style)
 
                 # Handle different geometry types
-                geom_type = geometry.get("type")
-                coords = geometry.get("coordinates", [])
+                geom = feature.get("geometry", {})
+                geom_type = geom.get("type")
+                coords = geom.get("coordinates", [])
 
                 if geom_type == "LineString" and coords:
                     # Swap coordinates from [lon, lat] to [lat, lon] for Folium

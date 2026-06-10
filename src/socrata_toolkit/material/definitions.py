@@ -123,16 +123,20 @@ METAL_MAINTENANCE = MaintenanceSchedule(
 # MATERIAL SPECIFICATIONS - All standard NYC sidewalk materials
 # ============================================================================
 
+from .standards_v4 import MaterialTier
+
 # HOT MIX ASPHALT (ASPHALT_STANDARD)
 ASPH_STANDARD = MaterialSpecification(
     material_id="ASPH-NYC-001",
     category=MaterialCategory.ASPHALT,
     name="Hot Mix Asphalt (HMA), 12.5mm SuperPave",
+    tier=MaterialTier.STANDARD,
     description=(
         "Standard hot mix asphalt with 12.5mm nominal maximum aggregate size, "
         "SuperPave design, widely used for NYC sidewalks. Most common sidewalk surface. "
         "Good value, proven performance in NYC climate."
     ),
+    # ... (other fields remain the same)
     design_standards={
         "thickness_inches": 2.0,
         "compaction_percent": 96,

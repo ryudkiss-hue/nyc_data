@@ -73,28 +73,34 @@ class AlertManager:
         for s in list(self.subscribers):
             try:
                 s.notify(alert)
-            except Exception: # pylint: disable=broad-exception-caught
-                pass
+            except Exception as exc: # pylint: disable=broad-exception-caught
+                log.error(f"Failed to dispatch alert to subscriber {s}: {exc}")
 
     def _worker(self) -> None:
         while not self._stop:
-            time.sleep(self.batch_interval)
-            with self.lock:
-                batch, self._batch = self._batch, []
-            if not batch:
-                continue
-            for alert in batch:
-                self._dispatch(alert)
+            try:
+                time.sleep(self.batch_interval)
+                with self.lock:
+                    batch, self._batch = self._batch, []
+                if not batch:
+                    continue
+                for alert in batch:
+                    self._dispatch(alert)
+            except Exception as exc:
+                log.error(f"AlertManager worker thread error: {exc}")
 
     def shutdown(self) -> None:
         """Stop background thread and flush."""
-        self._stop = True
-        if self.batch_mode and getattr(self, "_thread", None):
-            self._thread.join(timeout=1.0)
-        with self.lock:
-            batch, self._batch = self._batch, []
-        for alert in batch:
-            self._dispatch(alert)
+        try:
+            self._stop = True
+            if self.batch_mode and getattr(self, "_thread", None):
+                self._thread.join(timeout=1.0)
+            with self.lock:
+                batch, self._batch = self._batch, []
+            for alert in batch:
+                self._dispatch(alert)
+        except Exception as exc:
+            log.error(f"Error during AlertManager shutdown: {exc}")
 
 class CLINotifier:
     """Prints alerts to the console."""

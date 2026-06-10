@@ -276,3 +276,104 @@ class TestDuckDBManagerEdgeCases:
             manager.close()
             manager.close()
             assert manager._conn is None
+
+
+# ---------------------------------------------------------------------------
+# get_bundle_dir
+# ---------------------------------------------------------------------------
+
+class TestGetBundleDir:
+    def test_normal_returns_cwd(self):
+        import os
+
+        from socrata_toolkit.core.duckdb_store import get_bundle_dir
+
+        assert get_bundle_dir() == os.getcwd()
+
+    def test_frozen_returns_meipass(self):
+        import sys
+
+        from socrata_toolkit.core import duckdb_store
+
+        with patch.object(sys, "frozen", True, create=True), \
+             patch.object(sys, "_MEIPASS", "/bundle/path", create=True):
+            assert duckdb_store.get_bundle_dir() == "/bundle/path"
+
+
+# ---------------------------------------------------------------------------
+# query_parquet_cache — bare key and raw SQL execution paths
+# ---------------------------------------------------------------------------
+
+class TestQueryParquetCacheExecution:
+    def test_empty_raises_value_error(self):
+        with pytest.raises(ValueError):
+            query_parquet_cache("   ")
+
+    def test_bare_key_no_file_raises(self, tmp_path):
+        with pytest.raises(FileNotFoundError):
+            query_parquet_cache("violations", cache_dir=tmp_path)
+
+    def test_bare_key_with_parquet(self, tmp_path):
+        df = pd.DataFrame({"id": [1, 2, 3], "borough": ["MN", "BX", "BK"]})
+        df.to_parquet(tmp_path / "violations_20240101.parquet")
+        result = query_parquet_cache("violations", cache_dir=tmp_path)
+        assert len(result) == 3
+        assert set(result["borough"]) == {"MN", "BX", "BK"}
+
+    def test_raw_sql_execution(self, tmp_path):
+        df = pd.DataFrame({"id": [1, 2], "v": [10, 20]})
+        pq = tmp_path / "data.parquet"
+        df.to_parquet(pq)
+        sql = f"SELECT v FROM read_parquet('{pq}') WHERE id = 1"
+        result = query_parquet_cache(sql)
+        assert result["v"].tolist() == [10]
+
+
+# ---------------------------------------------------------------------------
+# DuckDBRepository
+# ---------------------------------------------------------------------------
+
+class TestDuckDBRepository:
+    def _repo(self, table="t"):
+        from socrata_toolkit.core.duckdb_store import DuckDBManager, DuckDBRepository
+
+        manager = DuckDBManager(":memory:")
+        return DuckDBRepository(manager, table), manager
+
+    def test_upsert_empty_returns_zero(self):
+        repo, mgr = self._repo()
+        assert repo.upsert_dataframe(pd.DataFrame(), "id") == 0
+        mgr.close()
+
+    def test_upsert_creates_table(self):
+        repo, mgr = self._repo()
+        df = pd.DataFrame({"id": [1, 2], "name": ["a", "b"]})
+        n = repo.upsert_dataframe(df, "id")
+        assert n == 2
+        assert repo.count() == 2
+        mgr.close()
+
+    def test_upsert_updates_existing(self):
+        repo, mgr = self._repo()
+        repo.upsert_dataframe(pd.DataFrame({"id": [1, 2], "name": ["a", "b"]}), "id")
+        # upsert overlapping id with new value + a new row
+        n = repo.upsert_dataframe(pd.DataFrame({"id": [2, 3], "name": ["B", "c"]}), "id")
+        assert n == 2
+        out = repo.fetch_all()
+        assert repo.count() == 3
+        names = dict(zip(out["id"], out["name"]))
+        assert names[2] == "B"  # updated
+        mgr.close()
+
+    def test_fetch_all_with_limit(self):
+        repo, mgr = self._repo()
+        repo.upsert_dataframe(pd.DataFrame({"id": list(range(10)), "v": list(range(10))}), "id")
+        out = repo.fetch_all(limit=3)
+        assert len(out) == 3
+        mgr.close()
+
+    def test_count_empty_table(self):
+        repo, mgr = self._repo()
+        repo.upsert_dataframe(pd.DataFrame({"id": [1], "v": [1]}), "id")
+        assert repo.count() == 1
+        mgr.close()

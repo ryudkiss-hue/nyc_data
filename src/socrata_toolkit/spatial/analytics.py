@@ -15,7 +15,8 @@ import logging
 from dataclasses import dataclass
 from typing import Any
 
-import numpy as np  # type: ignore[import]
+import numpy as np
+import pandas as pd  # type: ignore[import]
 from scipy.spatial.distance import cdist  # type: ignore[import]
 from scipy.stats import gaussian_kde  # type: ignore[import]
 from sklearn.cluster import DBSCAN, KMeans  # type: ignore[import]
@@ -449,19 +450,12 @@ class HotspotAnalysis:
         values: list[float],
         threshold: float = 60.0,
         radius_degrees: float = 0.01,
+        apply_equity: bool = True
     ) -> list[Hotspot]:
         """
-        Detect hotspots as areas with poor condition.
-
-        Args:
-            coordinates: List of (lon, lat) coordinates
-            values: Condition scores (0-100)
-            threshold: Condition score threshold for hotspot
-            radius_degrees: Radius for spatial grouping
-
-        Returns:
-            List of detected Hotspot objects
+        Detect hotspots as areas with poor condition, weighted by equity impact.
         """
+        from ..governance.equity import EquityScorer
         try:
             if len(coordinates) < 3:
                 return []
@@ -484,29 +478,37 @@ class HotspotAnalysis:
                 min_samples=3,
             )
 
+            equity_scorer = EquityScorer() if apply_equity else None
             hotspots = []
             for cluster in clusters:
-                # Calculate severity based on average condition
-                if cluster.average_value < 30:
-                    severity = "critical"
-                elif cluster.average_value < 50:
-                    severity = "high"
-                elif cluster.average_value < 70:
-                    severity = "medium"
-                else:
-                    severity = "low"
+                # Calculate base severity
+                avg_val = cluster.average_value
+
+                # Apply equity multiplier if enabled
+                multiplier = 1.0
+                if equity_scorer:
+                    # heuristic: use centroid to check for priority zones
+                    impact = equity_scorer.calculate_impact(pd.Series({"lat": cluster.centroid_y, "lon": cluster.centroid_x}), 1.0)
+                    multiplier = impact.equity_multiplier
+
+                weighted_severity_score = (100 - avg_val) * multiplier
+
+                if weighted_severity_score > 80: severity = "critical"
+                elif weighted_severity_score > 60: severity = "high"
+                elif weighted_severity_score > 40: severity = "medium"
+                else: severity = "low"
 
                 hotspot = Hotspot(
                     centroid_x=cluster.centroid_x,
                     centroid_y=cluster.centroid_y,
                     density=cluster.size / (np.pi * radius_degrees ** 2),
                     segment_count=cluster.size,
-                    average_condition=cluster.average_value,
+                    average_condition=avg_val,
                     severity=severity,
                 )
                 hotspots.append(hotspot)
 
-            logger.info(f"Detected {len(hotspots)} hotspots")
+            logger.info(f"Detected {len(hotspots)} hotspots (Equity-Weighting: {apply_equity})")
             return hotspots
 
         except Exception as e:
@@ -960,7 +962,11 @@ def moran_i(gdf, col: str, *, max_neighbors: int = 8):
 
         sub = gdf.loc[mask]
         values = values[mask]
-        centroids = sub.geometry.centroid
+        centroids = (
+            sub.geometry.to_crs(epsg=3857).centroid.to_crs(sub.crs)
+            if sub.crs is not None and sub.crs.is_geographic
+            else sub.geometry.centroid
+        )
         coords = np.column_stack(
             [centroids.x.to_numpy(), centroids.y.to_numpy()]
         )
@@ -1034,7 +1040,11 @@ def cluster_conflict_hotspots(gdf, eps_deg: float = 0.005, min_samples: int = 5)
             "WGS84",
         ):
             work = work.to_crs("EPSG:4326")
-        centroids = work.geometry.centroid
+        centroids = (
+            work.geometry.to_crs(epsg=3857).centroid.to_crs(work.crs)
+            if work.crs is not None and work.crs.is_geographic
+            else work.geometry.centroid
+        )
         coords = np.column_stack(
             [centroids.x.to_numpy(), centroids.y.to_numpy()]
         )

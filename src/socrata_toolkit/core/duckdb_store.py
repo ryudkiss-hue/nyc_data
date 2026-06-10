@@ -128,71 +128,163 @@ def query_parquet_cache(
 class DuckDBManager:
     """Manages DuckDB local file connection and extensions."""
 
-    def __init__(self, db_path: str | None = None):
+    def __init__(self, db_path: str | None = None, read_only: bool | None = None):
         self.db_path = db_path or os.getenv("DUCKDB_PATH", "data/local_db/nyc_mission_control.duckdb")
+        self.read_only = read_only
         self._conn: duckdb.DuckDBPyConnection | None = None
 
     @property
     def conn(self) -> duckdb.DuckDBPyConnection:
         if self._conn is None:
             logger.info("Connecting to DuckDB at %s", self.db_path)
-            self._conn = duckdb.connect(self.db_path)
+            # Use read_only if requested via environment or default to False
+            is_read_only = self.read_only if self.read_only is not None else (os.getenv("DUCKDB_READ_ONLY", "false").lower() == "true")
+            self._conn = duckdb.connect(self.db_path, read_only=is_read_only)
+
+            # Item 6: Disable insertion order for performance
+            self._conn.execute("SET preserve_insertion_order = false;")
+
+            # Initialize Spatial Extension
             try:
                 self._conn.execute("INSTALL spatial;")
                 self._conn.execute("LOAD spatial;")
+                logger.info("DuckDB spatial extension loaded successfully.")
             except Exception as exc:
                 logger.warning("Could not load DuckDB spatial extension: %s", exc)
         return self._conn
 
     def close(self) -> None:
         if self._conn:
-            self._conn.close()
+            try:
+                self._conn.close()
+            except Exception:
+                pass
             self._conn = None
 
     def query(self, sql: str, *args: object):
+        """Execute a query and log performance."""
+        logger.info(f"Executing Query: {sql[:100]}...")
         return self.conn.execute(sql, *args)
+
+    def debug_query(self, sql: str, *args: object):
+        """Item 4: Execution Auditing with EXPLAIN ANALYZE."""
+        explain_sql = f"EXPLAIN ANALYZE {sql}"
+        result = self.conn.execute(explain_sql, *args).fetchall()
+        logger.info(f"Query Plan: {result}")
+        return self.conn.execute(sql, *args)
+
+    def create_table_as(self, table_name: str, sql: str):
+        """Item 5: Intermediate Query Caching."""
+        logger.info(f"Caching query result to table: {table_name}")
+        self.conn.execute(f"CREATE TABLE IF NOT EXISTS {table_name} AS {sql}")
+
+    def get_partitioned_parquet_files(self, key: str, cache_dir: str | Path | None = None) -> list[Path]:
+        """Item 2: Helper for Partitioned Parquet."""
+        base = Path(cache_dir) if cache_dir is not None else _default_cache_dir()
+        if not base.exists():
+            return []
+        return sorted(list(base.glob(f"{key}_*.parquet")))
+
 
 
 class DuckDBRepository:
-    """Repository for DuckDB bulk upserts."""
+    """Repository for DuckDB bulk upserts with Spatial awareness."""
 
     def __init__(self, manager: DuckDBManager, table_name: str):
         self.manager = manager
         self.table_name = table_name
 
+    def _detect_spatial_cols(self, df: pd.DataFrame) -> dict[str, str]:
+        """Identify potential spatial columns and their types (lat/lon vs WKT)."""
+        cols = {c.lower(): c for c in df.columns}
+        spatial_map = {}
+
+        # WKT Detection
+        for wkt_cand in ("the_geom", "geometry", "location_wkt", "wkt"):
+            if wkt_cand in cols:
+                spatial_map["wkt"] = cols[wkt_cand]
+                break
+
+        # Lat/Lon Detection
+        lat_cand = next((cols[c] for c in ("latitude", "lat", "y", "ycoord") if c in cols), None)
+        lon_cand = next((cols[c] for c in ("longitude", "lon", "lng", "long", "x", "xcoord") if c in cols), None)
+
+        if lat_cand and lon_cand:
+            spatial_map["lat"] = lat_cand
+            spatial_map["lon"] = lon_cand
+
+        return spatial_map
+
     def upsert_dataframe(self, df: pd.DataFrame, conflict_column: str) -> int:
         if df.empty:
             return 0
-        # Sanitize identifiers: strip embedded double-quotes before quoting
+
         table_name = self.table_name.replace('"', '')
         conflict_col = conflict_column.replace('"', '')
         temp_view = f"temp_view_{table_name}"
         self.manager.conn.register(temp_view, df)
+
+        # Detect spatial columns to create native GEOMETRY
+        spatial_info = self._detect_spatial_cols(df)
+        geom_expr = "NULL"
+        if "wkt" in spatial_info:
+            geom_expr = f"ST_GeomFromText(\"{spatial_info['wkt']}\")"
+        elif "lat" in spatial_info and "lon" in spatial_info:
+            # Note: NYC uses EPSG:2263 or WGS84 (4326). We default to 4326 for ingestion.
+            geom_expr = f"ST_Point(CAST(\"{spatial_info['lon']}\" AS DOUBLE), CAST(\"{spatial_info['lat']}\" AS DOUBLE))"
+
         tables = self.manager.conn.execute("SHOW TABLES").fetchall()
         table_exists = any(t[0] == table_name for t in tables)
+
         if not table_exists:
-            self.manager.conn.execute(
-                f'CREATE TABLE "{table_name}" AS SELECT * FROM "{temp_view}"'
-            )
+            # Create table with an explicit GEOMETRY column derived from detected spatial sources
+            sql_create = f"""
+                CREATE TABLE "{table_name}" AS
+                SELECT *,
+                ({geom_expr}) AS native_geom
+                FROM "{temp_view}"
+            """
+            self.manager.conn.execute(sql_create)
             self.manager.conn.execute(
                 f'CREATE UNIQUE INDEX IF NOT EXISTS "idx_{table_name}_{conflict_col}" '
                 f'ON "{table_name}" ("{conflict_col}")'
             )
             return len(df)
+
+        # Schema Evolution: Ensure native_geom exists
+        existing_cols = [c[1] for c in self.manager.conn.execute(f'PRAGMA table_info("{table_name}")').fetchall()]
+        if "native_geom" not in existing_cols:
+            logger.info(f"Spatial Migration: Adding 'native_geom' column to '{table_name}'")
+            self.manager.conn.execute(f'ALTER TABLE "{table_name}" ADD COLUMN native_geom GEOMETRY;')
+
+        # Standard column evolution
+        for col in df.columns:
+            if col not in existing_cols and col != "native_geom":
+                self.manager.conn.execute(f'ALTER TABLE "{table_name}" ADD COLUMN "{col.replace(chr(34), "")}" VARCHAR;')
+
         columns = df.columns.tolist()
-        update_set = ", ".join(
+        update_set_parts = [
             f'"{col.replace(chr(34), "")}" = EXCLUDED."{col.replace(chr(34), "")}"'
             for col in columns if col != conflict_column
-        )
-        sql = (
-            f'INSERT INTO "{table_name}" SELECT * FROM "{temp_view}" '
-            f'ON CONFLICT ("{conflict_col}") DO UPDATE SET {update_set}'
-        )
-        self.manager.conn.execute(sql)
+        ]
+        # Always update native_geom during upsert
+        update_set_parts.append(f'native_geom = ({geom_expr})')
+        update_set = ", ".join(update_set_parts)
+
+        sql_upsert = f"""
+            INSERT INTO "{table_name}" BY NAME
+            SELECT *, ({geom_expr}) AS native_geom FROM "{temp_view}"
+            ON CONFLICT ("{conflict_col}") DO UPDATE SET {update_set}
+        """
+        self.manager.conn.execute(sql_upsert)
         return len(df)
 
-    def fetch_all(self, limit: int = 1000) -> pd.DataFrame:
+    def fetch_all(self, limit: int | None = None) -> pd.DataFrame:
         safe_table = self.table_name.replace('"', '')
+        if limit is None or limit == -1:
+            return self.manager.conn.execute(
+                f'SELECT * FROM "{safe_table}"'
+            ).df()
         return self.manager.conn.execute(
             f'SELECT * FROM "{safe_table}" LIMIT ?', [limit]
         ).df()

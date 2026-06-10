@@ -1,4 +1,4 @@
-# NYC DOT Sidewalk Toolkit -- Complete Build & Deployment Automation
+# NYC DOT Socrata Toolkit -- Complete Build & Deployment Automation
 # Run any target with: make <target>
 
 .PHONY: help install setup test lint format docker run dev deploy clean ci-check

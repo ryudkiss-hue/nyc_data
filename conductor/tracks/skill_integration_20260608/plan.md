@@ -1,0 +1,45 @@
+# Implementation Plan: Skill Integration Engine
+
+## Phase 1: Core Analytics Framework (Infrastructure) [checkpoint: 20f2d81]
+- [x] Task: Scaffold the `analytics` package and base classes [0115b6b]
+    - [ ] Create `src/socrata_toolkit/analytics/` directory and `__init__.py`
+    - [ ] Define `BaseSkill` abstract class with metadata and logging hooks
+    - [ ] Implement `AnalysisResult` data structure for unified reporting
+    - [ ] **Logging/Docs**: Implement structured logging for skill initialization and add detailed Docstrings (Google style)
+- [x] Task: Implement Data Quality & Integrity Skills [fb5a8ef]
+    - [ ] Create `DataQualityAudit` class (null checks, outlier detection, Four Moments)
+    - [ ] Create `SchemaMapper` (DuckDB schema to Socrata metadata mapping)
+    - [ ] Create `MetricReconciliation` (comparative analysis logic)
+    - [ ] **Logging/Docs**: Log audit thresholds and reconciliation deltas; generate `docs/modules/analytics_quality.md`
+- [x] Task: Implement Advanced Analytics Skills [5502c49]
+    - [ ] Create `TimeSeriesForecasting` (integrating Scipy/Statsmodels)
+    - [ ] Create `Segmentation` (clustering/pivoting logic)
+    - [ ] **Logging/Docs**: Log model convergence and cluster metrics; generate `docs/modules/analytics_advanced.md`
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Core Analytics Framework' (Protocol in workflow.md) [20f2d81]
+    - [ ] **Reactive**: Resolve any environmental or legacy errors discovered during infrastructure setup.
+
+## Phase 2: Integration & Automations [checkpoint: 26268dd]
+- [x] Task: Integrate Analytics into Sync Pipeline [2713194]
+    - [x] Update `src/socrata_toolkit/pipeline/sync.py` to trigger `DataQualityAudit`
+    - [x] Implement `analysis_history` table in DuckDB
+    - [x] Log quality scores during `total_recall` execution
+    - [x] **Logging/Docs**: Implement telemetry for pipeline analytical overhead; update `docs/TOTAL_RECALL_GUIDE.md`
+- [x] Task: Standardized Accessibility Utility [8e0edbf]
+    - [x] Create `src/socrata_toolkit/viz/accessibility.py`
+    - [x] Implement WCAG 2.1 AA color palette injection for Plotly
+    - [x] Create utility for automated text-based summaries for charts
+    - [x] **Logging/Docs**: Log accessibility violations handled; update `docs/ada_compliance_reference.md`
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Integration & Automations' (Protocol in workflow.md) [26268dd]
+
+## Phase 3: Dash UI & Toolbox [checkpoint: bdc25d9]
+- [x] Task: Create Analytical Toolbox View [3024993]
+    - [x] Create `app/views/toolbox.py` using Mantine components
+    - [x] Implement interactive wizard for `DataQualityAudit`
+    - [x] Implement "Executive Summary" generator UI
+    - [x] **Logging/Docs**: Log UI interaction paths; generate user guide in `docs/USER_MANUAL.md`
+- [x] Task: Final Quality Gate and Report Validation [bdc25d9]
+    - [x] Run full-scale sync with automated quality checks
+    - [x] Generate Section 508 compliant PDF/Excel reports
+    - [x] Verify 100% test coverage for new analytics modules
+    - [x] **Logging/Docs**: Conduct full documentation audit and ensure all code is internally documented.
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Dash UI & Toolbox' (Protocol in workflow.md) [bdc25d9]

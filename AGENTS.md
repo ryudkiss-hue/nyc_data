@@ -4,7 +4,9 @@
 
 ### Overview
 
-**NYC DOT Sidewalk Toolkit** (`socrata_toolkit` v0.3.0) — Python toolkit for sidewalk inspection, open data analytics, and agency operations. The primary interface is **Manhattan Mission Control**, a unified 8-tab Streamlit dashboard (`app/mission_control.py`) served on port 8501.
+**NYC DOT Socrata Toolkit** (`socrata_toolkit` v0.3.0) — Python toolkit for municipal data ingestion,
+analytics, and agency operations. The primary interface is the **Turbo-Stream Dash Platform**, a unified analytical dashboard
+(`app/dash_app.py`) served on port 8012.
 
 ### Running the Application
 

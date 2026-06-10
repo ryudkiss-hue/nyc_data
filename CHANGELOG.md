@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.5.0] - 2026-06-06
+
+### Added
+- **Architectural Refactor:** Decomposed the 66KB `analysis.py` monolith into a modular `socrata_toolkit.analysis` package (`profiling`, `text`, `metrics`, `reporting`, `insights`, `viz`).
+- **Elite Insights Engine:** Production-ready `InsightsEngine` with automated z-score anomaly detection, statistical drift monitoring, and temporal trend analysis.
+- **Security Hardening:** Implemented `psycopg.sql` identifier parameterization in `stream_pipeline` to eliminate SQL injection risks.
+- **Production Auth:** Refactored `APIKeyAuthProvider` with SHA-256 hash validation and added an LRU cache to `JWTAuthProvider` to prevent memory exhaustion.
+- **Documentation Sync:** Transitioned to Docusaurus-compatible documentation structure.
+
+### Changed
+- **Code Consolidation:** Refactored Streamlit app (`app/main.py`) to utilize core `SocrataClient`, removing 100+ lines of redundant fetching logic.
+- **API Consistency:** Unified environment variable usage across the toolkit and application.
+
+### Removed
+- **Legacy Monolith:** Deleted the `src/socrata_toolkit/analysis.py` file.
+- **Mock Logic:** Eradicated all `pass` statements and hardcoded result stubs in the analysis and insights modules.
+
 ## [0.4.0] - 2026-06-01
 
 ### Added
