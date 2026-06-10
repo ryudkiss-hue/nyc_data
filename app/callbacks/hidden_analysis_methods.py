@@ -19,12 +19,10 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-from dash import Input, Output, State, callback, dcc, html, no_update
-from scipy import stats as scipy_stats
+from dash import Input, Output, dcc
 from shapely.geometry import Point
 
 from socrata_toolkit.analysis_advanced import (
-    classify_all_distributions,
     classify_distribution,
 )
 from socrata_toolkit.spatial.analytics import SpatialAnomalyDetector, moran_i
@@ -259,7 +257,7 @@ def register_morans_i_callbacks(app, dm_instance):
             metadata = dmc.Group(
                 [
                     dmc.Badge(f"n = {n:,}", color="blue", variant="light"),
-                    dmc.Badge(f"k = 8 neighbors", color="blue", variant="light"),
+                    dmc.Badge("k = 8 neighbors", color="blue", variant="light"),
                     dmc.Badge("Method: k-NN", color="blue", variant="light"),
                 ],
                 size="sm",
@@ -474,7 +472,7 @@ def register_anomaly_detection_callbacks(app, dm_instance):
             if len(df_clean) < k + 1:
                 return (
                     create_error_figure(f"Insufficient data (need >{k} rows)"),
-                    dmc.Badge(f"0 anomalies", color="gray"),
+                    dmc.Badge("0 anomalies", color="gray"),
                     [],
                 )
 

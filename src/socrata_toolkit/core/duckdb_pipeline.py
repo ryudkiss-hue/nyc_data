@@ -13,11 +13,11 @@ Usage:
     pipeline.materialize_analytics()
 """
 
-import duckdb
-from typing import Dict, List, Optional, Tuple
 import logging
-from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime
+from typing import Dict, List
+
+import duckdb
 
 logger = logging.getLogger(__name__)
 

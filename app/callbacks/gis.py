@@ -7,7 +7,6 @@ Week 1-3 Phase 1 GIS Pilot implementation.
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 import pandas as pd
 import plotly.graph_objects as go
