@@ -176,7 +176,9 @@ def _dedup_subquery(
         return f"SELECT DISTINCT * FROM {raw_table}", (
             "no natural key column found; fell back to SELECT DISTINCT *"
         )
-    order_clause = f'ORDER BY "{date_col}" DESC' if date_col else "ORDER BY 1"
+    order_clause = (
+        f'ORDER BY "{date_col}" DESC NULLS LAST' if date_col else "ORDER BY 1"
+    )
     sql = (
         "SELECT * EXCLUDE (_rn) FROM ("
         f'SELECT *, ROW_NUMBER() OVER (PARTITION BY "{key_col}" {order_clause}) AS _rn '
@@ -294,7 +296,11 @@ def stage_ramps() -> dict:
 
 
 class DuckDBPipeline:
-    """Orchestrate raw → staging → analytics ELT workflow."""
+    """Orchestrate raw → staging → analytics ELT workflow.
+
+    Deprecated: prefer the module-level pipeline functions
+    (load_raw_from_socrata, stage_*, analytics create_*).
+    """
 
     def __init__(self, db_path: str):
         """Initialize pipeline with DuckDB connection.
