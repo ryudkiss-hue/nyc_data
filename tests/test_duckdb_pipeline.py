@@ -41,6 +41,9 @@ def test_module_contract_importable():
         get_duckdb_connection,
         initialize_database,
         load_raw_from_socrata,
+        stage_inspections,
+        stage_permits,
+        stage_ramps,
     )
 
     assert SOCRATA_DATASETS["inspection"] == "dntt-gqwq"
@@ -106,3 +109,174 @@ def test_load_raw_api_failure_returns_error(db):
     assert result["status"] == "error"
     assert "Socrata API 503" in result["error"]
     assert result["table"] == "raw.ramp_progress"
+
+
+# ---------------------------------------------------------------------------
+# Task 3: staging transformations
+# ---------------------------------------------------------------------------
+
+
+def _load_raw(conn, name, df):
+    conn.execute("CREATE SCHEMA IF NOT EXISTS raw")
+    conn.register("_fixture_df", df)
+    conn.execute(f"CREATE OR REPLACE TABLE raw.{name} AS SELECT * FROM _fixture_df")
+    conn.unregister("_fixture_df")
+
+
+@pytest.fixture
+def raw_inspections_df():
+    return pd.DataFrame(
+        {
+            "objectid": [1, 1, 2, 3],
+            "block_id": ["BLK-1", "BLK-1", "BLK-2", "BLK-3"],
+            "condition": ["fair", "good", "poor", "good"],
+            "created_date": ["2026-01-01", "2026-02-01", "2026-01-15", "2026-01-20"],
+        }
+    )
+
+
+@pytest.fixture
+def raw_violations_df():
+    return pd.DataFrame(
+        {
+            "objectid": [10, 11, 12],
+            "block_id": ["BLK-1", "BLK-1", "BLK-2"],
+            "created_date": ["2026-01-05", "2026-01-06", "2026-01-07"],
+        }
+    )
+
+
+def test_stage_inspections_deduplicates(db, raw_inspections_df, raw_violations_df):
+    dp.initialize_database()
+    _load_raw(db, "inspection", raw_inspections_df)
+    _load_raw(db, "violations", raw_violations_df)
+    result = dp.stage_inspections()
+    assert result["status"] == "success"
+    assert result["table"] == "staging.inspections"
+    assert result["row_count_raw"] == 4
+    assert result["row_count_staged"] == 3
+    assert result["row_count_staged"] < result["row_count_raw"]
+    assert result["dedup_loss_pct"] == pytest.approx(25.0)
+    # most recent record kept for objectid=1
+    cond = db.execute(
+        "SELECT condition FROM staging.inspections WHERE objectid = 1"
+    ).fetchone()[0]
+    assert cond == "good"
+
+
+def test_stage_inspections_joins_violations(db, raw_inspections_df, raw_violations_df):
+    dp.initialize_database()
+    _load_raw(db, "inspection", raw_inspections_df)
+    _load_raw(db, "violations", raw_violations_df)
+    result = dp.stage_inspections()
+    assert result["status"] == "success"
+    counts = dict(
+        db.execute(
+            "SELECT block_id, violation_count FROM staging.inspections"
+        ).fetchall()
+    )
+    assert counts == {"BLK-1": 2, "BLK-2": 1, "BLK-3": 0}
+
+
+def test_stage_permits(db):
+    dp.initialize_database()
+    permits = pd.DataFrame(
+        {
+            "permit_number": ["P-1", "P-1", "P-2"],
+            "status": ["pending", "issued", "issued"],
+            "permit_issue_date": ["2026-01-01", "2026-03-01", "2026-02-01"],
+        }
+    )
+    _load_raw(db, "permits", permits)
+    result = dp.stage_permits()
+    assert result["status"] == "success"
+    assert result["table"] == "staging.permits"
+    assert result["row_count_raw"] == 3
+    assert result["row_count_staged"] == 2
+    status = db.execute(
+        "SELECT status FROM staging.permits WHERE permit_number = 'P-1'"
+    ).fetchone()[0]
+    assert status == "issued"
+
+
+def test_stage_ramps(db):
+    dp.initialize_database()
+    ramps = pd.DataFrame(
+        {
+            "ramp_id": ["R-1", "R-1", "R-2", "R-3"],
+            "ramp_status": ["in_progress", "complete", "complete", "in_progress"],
+            "status_date": ["2026-01-01", "2026-04-01", "2026-02-01", "2026-03-01"],
+        }
+    )
+    _load_raw(db, "ramp_progress", ramps)
+    result = dp.stage_ramps()
+    assert result["status"] == "success"
+    assert result["table"] == "staging.ramps"
+    assert result["row_count_raw"] == 4
+    assert result["row_count_staged"] == 3
+    status = db.execute(
+        "SELECT ramp_status FROM staging.ramps WHERE ramp_id = 'R-1'"
+    ).fetchone()[0]
+    assert status == "complete"
+
+
+def test_stage_missing_raw_table_returns_error(db):
+    dp.initialize_database()
+    for func, table in [
+        (dp.stage_inspections, "staging.inspections"),
+        (dp.stage_permits, "staging.permits"),
+        (dp.stage_ramps, "staging.ramps"),
+    ]:
+        result = func()
+        assert result["status"] == "error"
+        assert result["table"] == table
+        assert "error" in result
+
+
+def test_stage_idempotent(db, raw_inspections_df, raw_violations_df):
+    dp.initialize_database()
+    _load_raw(db, "inspection", raw_inspections_df)
+    _load_raw(db, "violations", raw_violations_df)
+    first = dp.stage_inspections()
+    second = dp.stage_inspections()
+    assert first["status"] == second["status"] == "success"
+    assert first["row_count_staged"] == second["row_count_staged"] == 3
+    count = db.execute("SELECT COUNT(*) FROM staging.inspections").fetchone()[0]
+    assert count == 3
+
+
+# ---------------------------------------------------------------------------
+# Task 3: scheduler call-site fixes
+# ---------------------------------------------------------------------------
+
+
+def test_scheduler_run_load_raw_data_loops_all_datasets():
+    from socrata_toolkit.core.scheduler import ScheduleRunner
+
+    runner = ScheduleRunner()
+    with patch.object(dp, "load_raw_from_socrata") as mock_load:
+        mock_load.return_value = {"status": "success", "row_count": 1}
+        results = runner.run_load_raw_data()
+    assert mock_load.call_count == len(dp.SOCRATA_DATASETS)
+    called_keys = {call.args[0] for call in mock_load.call_args_list}
+    assert called_keys == set(dp.SOCRATA_DATASETS)
+    assert set(results) == set(dp.SOCRATA_DATASETS)
+
+
+def test_scheduler_run_stage_data_calls_stage_functions():
+    from socrata_toolkit.core.scheduler import ScheduleRunner
+
+    runner = ScheduleRunner()
+    with (
+        patch.object(dp, "stage_inspections") as m_insp,
+        patch.object(dp, "stage_permits") as m_perm,
+        patch.object(dp, "stage_ramps") as m_ramp,
+    ):
+        m_insp.return_value = {"status": "success", "table": "staging.inspections"}
+        m_perm.return_value = {"status": "success", "table": "staging.permits"}
+        m_ramp.return_value = {"status": "success", "table": "staging.ramps"}
+        results = runner.run_stage_data()
+    m_insp.assert_called_once_with()
+    m_perm.assert_called_once_with()
+    m_ramp.assert_called_once_with()
+    assert set(results) == {"inspections", "permits", "ramps"}

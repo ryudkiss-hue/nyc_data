@@ -14,6 +14,7 @@ Usage:
 """
 
 import logging
+import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -37,6 +38,7 @@ DEFAULT_DB_PATH = "data/local_db/nyc_mission_control.duckdb"
 
 _connection: Optional[duckdb.DuckDBPyConnection] = None
 _connection_path: Optional[str] = None
+_connection_lock = threading.Lock()
 
 
 def get_duckdb_connection(db_path: str = DEFAULT_DB_PATH) -> duckdb.DuckDBPyConnection:
@@ -44,33 +46,36 @@ def get_duckdb_connection(db_path: str = DEFAULT_DB_PATH) -> duckdb.DuckDBPyConn
 
     Creates parent directories if needed. If db_path differs from the cached
     connection's path (e.g. tests passing ':memory:' or a tmp path), the old
-    connection is closed and a new one is opened.
+    connection is closed and a new one is opened. Thread-safe: the singleton
+    mutation is guarded by a lock (APScheduler workers + Streamlit threads).
     """
     global _connection, _connection_path
-    if _connection is not None and _connection_path == db_path:
+    with _connection_lock:
+        if _connection is not None and _connection_path == db_path:
+            return _connection
+        if _connection is not None:
+            try:
+                _connection.close()
+            except Exception:
+                pass
+        if db_path != ":memory:":
+            Path(db_path).parent.mkdir(parents=True, exist_ok=True)
+        _connection = duckdb.connect(db_path)
+        _connection_path = db_path
         return _connection
-    if _connection is not None:
-        try:
-            _connection.close()
-        except Exception:
-            pass
-    if db_path != ":memory:":
-        Path(db_path).parent.mkdir(parents=True, exist_ok=True)
-    _connection = duckdb.connect(db_path)
-    _connection_path = db_path
-    return _connection
 
 
 def reset_connection() -> None:
     """Close and clear the module-level connection (used by tests)."""
     global _connection, _connection_path
-    if _connection is not None:
-        try:
-            _connection.close()
-        except Exception:
-            pass
-    _connection = None
-    _connection_path = None
+    with _connection_lock:
+        if _connection is not None:
+            try:
+                _connection.close()
+            except Exception:
+                pass
+        _connection = None
+        _connection_path = None
 
 
 def initialize_database() -> dict:
@@ -82,7 +87,7 @@ def initialize_database() -> dict:
     return {"status": "initialized", "schemas": schemas}
 
 
-def load_raw_from_socrata(dataset_key: str, max_rows: int = None) -> dict:
+def load_raw_from_socrata(dataset_key: str, max_rows: int | None = None) -> dict:
     """Fetch a dataset from data.cityofnewyork.us into raw.<dataset_key>.
 
     Idempotent: drops and recreates the target table on each call.
@@ -120,6 +125,172 @@ def load_raw_from_socrata(dataset_key: str, max_rows: int = None) -> dict:
     except Exception as e:
         logger.error(f"Failed to load {dataset_key} ({fourfour}): {e}")
         return {"status": "error", "error": str(e), "table": table}
+
+
+# Candidate columns per dataset — real Socrata schemas vary, so staging SQL is
+# built defensively from whatever columns actually exist in the raw table.
+_INSPECTION_KEY_CANDIDATES = ["objectid", "object_id", "id"]
+_INSPECTION_DATE_CANDIDATES = ["created_date", "inspection_date", ":updated_at"]
+_PERMIT_KEY_CANDIDATES = ["permit_number", "permitnumber", "permit_id", "objectid", "id"]
+_PERMIT_DATE_CANDIDATES = [
+    "permit_issue_date",
+    "issue_date",
+    "permit_date",
+    "created_date",
+    ":updated_at",
+]
+_RAMP_KEY_CANDIDATES = ["ramp_id", "rampid", "objectid", "id"]
+_RAMP_DATE_CANDIDATES = [
+    "status_date",
+    "completion_date",
+    "installation_date",
+    "created_date",
+    ":updated_at",
+]
+_VIOLATION_JOIN_CANDIDATES = ["block_id", "location", "bbl", "borough_block_lot"]
+
+
+def _existing_columns(conn: duckdb.DuckDBPyConnection, table: str) -> set[str]:
+    """Return the set of column names for a table (raises if table is missing)."""
+    return {row[0] for row in conn.execute(f"DESCRIBE {table}").fetchall()}
+
+
+def _table_exists(conn: duckdb.DuckDBPyConnection, schema: str, name: str) -> bool:
+    row = conn.execute(
+        "SELECT COUNT(*) FROM information_schema.tables "
+        "WHERE table_schema = ? AND table_name = ?",
+        [schema, name],
+    ).fetchone()
+    return bool(row[0])
+
+
+def _pick_column(columns: set[str], candidates: list[str]) -> Optional[str]:
+    return next((c for c in candidates if c in columns), None)
+
+
+def _dedup_subquery(
+    raw_table: str, key_col: Optional[str], date_col: Optional[str]
+) -> tuple[str, Optional[str]]:
+    """Build a dedup SELECT for raw_table; returns (sql, note)."""
+    if key_col is None:
+        return f"SELECT DISTINCT * FROM {raw_table}", (
+            "no natural key column found; fell back to SELECT DISTINCT *"
+        )
+    order_clause = f'ORDER BY "{date_col}" DESC' if date_col else "ORDER BY 1"
+    sql = (
+        "SELECT * EXCLUDE (_rn) FROM ("
+        f'SELECT *, ROW_NUMBER() OVER (PARTITION BY "{key_col}" {order_clause}) AS _rn '
+        f"FROM {raw_table}) WHERE _rn = 1"
+    )
+    return sql, None
+
+
+def _stage_table(
+    raw_table: str,
+    staging_table: str,
+    key_candidates: list[str],
+    date_candidates: list[str],
+) -> dict:
+    """Generic staging: dedup raw_table into staging_table (idempotent)."""
+    try:
+        conn = get_duckdb_connection(_connection_path or DEFAULT_DB_PATH)
+        conn.execute("CREATE SCHEMA IF NOT EXISTS staging")
+        columns = _existing_columns(conn, raw_table)
+        raw_count = conn.execute(f"SELECT COUNT(*) FROM {raw_table}").fetchone()[0]
+        key_col = _pick_column(columns, key_candidates)
+        date_col = _pick_column(columns, date_candidates)
+        dedup_sql, note = _dedup_subquery(raw_table, key_col, date_col)
+        conn.execute(f"DROP TABLE IF EXISTS {staging_table}")
+        conn.execute(f"CREATE TABLE {staging_table} AS {dedup_sql}")
+        staged_count = conn.execute(
+            f"SELECT COUNT(*) FROM {staging_table}"
+        ).fetchone()[0]
+        result = {
+            "status": "success",
+            "table": staging_table,
+            "row_count_raw": raw_count,
+            "row_count_staged": staged_count,
+            "dedup_loss_pct": round((raw_count - staged_count) / raw_count * 100, 2)
+            if raw_count
+            else 0.0,
+        }
+        if note:
+            result["note"] = note
+        logger.info(
+            f"Staged {staging_table}: {raw_count} raw -> {staged_count} staged "
+            f"(key={key_col}, date={date_col})"
+        )
+        return result
+    except Exception as e:
+        logger.error(f"Failed to stage {staging_table} from {raw_table}: {e}")
+        return {"status": "error", "error": str(e), "table": staging_table}
+
+
+def stage_inspections() -> dict:
+    """Stage raw.inspection into staging.inspections.
+
+    Deduplicates on the natural key (most recent record kept) and LEFT JOINs
+    raw.violations to compute violation_count per block/location.
+    """
+    result = _stage_table(
+        "raw.inspection",
+        "staging.inspections",
+        _INSPECTION_KEY_CANDIDATES,
+        _INSPECTION_DATE_CANDIDATES,
+    )
+    if result["status"] != "success":
+        return result
+    try:
+        conn = get_duckdb_connection(_connection_path or DEFAULT_DB_PATH)
+        join_col = None
+        if _table_exists(conn, "raw", "violations"):
+            insp_cols = _existing_columns(conn, "staging.inspections")
+            viol_cols = _existing_columns(conn, "raw.violations")
+            join_col = _pick_column(insp_cols & viol_cols, _VIOLATION_JOIN_CANDIDATES)
+        if join_col:
+            conn.execute(
+                "CREATE OR REPLACE TABLE staging._inspections_tmp AS "
+                "SELECT i.*, COALESCE(v._vc, 0) AS violation_count "
+                "FROM staging.inspections i "
+                f'LEFT JOIN (SELECT "{join_col}", COUNT(*) AS _vc '
+                f'FROM raw.violations GROUP BY "{join_col}") v '
+                f'USING ("{join_col}")'
+            )
+        else:
+            conn.execute(
+                "CREATE OR REPLACE TABLE staging._inspections_tmp AS "
+                "SELECT i.*, 0 AS violation_count FROM staging.inspections i"
+            )
+            result["note"] = (
+                "raw.violations missing or no shared join column; "
+                "violation_count defaulted to 0"
+            )
+        conn.execute("DROP TABLE staging.inspections")
+        conn.execute("ALTER TABLE staging._inspections_tmp RENAME TO inspections")
+        return result
+    except Exception as e:
+        logger.error(f"Failed to join violations into staging.inspections: {e}")
+        return {"status": "error", "error": str(e), "table": "staging.inspections"}
+
+
+def stage_permits() -> dict:
+    """Stage raw.permits into staging.permits (dedup on permit key)."""
+    return _stage_table(
+        "raw.permits",
+        "staging.permits",
+        _PERMIT_KEY_CANDIDATES,
+        _PERMIT_DATE_CANDIDATES,
+    )
+
+
+def stage_ramps() -> dict:
+    """Stage raw.ramp_progress into staging.ramps (dedup on ramp key)."""
+    return _stage_table(
+        "raw.ramp_progress",
+        "staging.ramps",
+        _RAMP_KEY_CANDIDATES,
+        _RAMP_DATE_CANDIDATES,
+    )
 
 
 class DuckDBPipeline:
