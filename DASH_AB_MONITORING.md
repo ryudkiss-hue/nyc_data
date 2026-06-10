@@ -1,8 +1,8 @@
-# Dash Pilot A/B Test Monitoring (Week 1)
+# Dash GIS Production Deployment Monitoring (Week 1)
 
-**Purpose:** Real-time performance tracking for Dash vs Streamlit GIS views  
+**Purpose:** Real-time performance tracking and health monitoring for 100% Dash production deployment  
 **Duration:** June 11-14, 2026 (continuous, 24/7)  
-**Review Points:** 9am, 4pm daily + go/no-go decisions
+**Review Points:** 9am, 4pm daily + operational assessments
 
 ---
 
