@@ -1,0 +1,84 @@
+{
+  "jobs": {
+    "load_raw_data": {
+      "enabled": true,
+      "cron": "0 2 * * *",
+      "timezone": "UTC",
+      "description": "Load raw data from Socrata (nightly at 2am UTC)"
+    },
+    "stage_data": {
+      "enabled": true,
+      "cron": "0 3 * * *",
+      "timezone": "UTC",
+      "description": "Run staging transformations (nightly at 3am UTC)"
+    },
+    "materialize_analytics": {
+      "enabled": true,
+      "cron": "0 4 * * *",
+      "timezone": "UTC",
+      "description": "Materialize analytics views (nightly at 4am UTC)"
+    },
+    "validate_all": {
+      "enabled": true,
+      "cron": "0 5 * * *",
+      "timezone": "UTC",
+      "description": "Run comprehensive validation checks (nightly at 5am UTC)"
+    },
+    "reconciliation_check": {
+      "enabled": true,
+      "cron": "0 6 * * *",
+      "timezone": "UTC",
+      "description": "Run reconciliation checks (nightly at 6am UTC)"
+    },
+    "domain_validation": {
+      "enabled": true,
+      "cron": "0 7 * * *",
+      "timezone": "UTC",
+      "description": "Run domain business rule validation (nightly at 7am UTC)"
+    },
+    "conflict_detection": {
+      "enabled": true,
+      "cron": "0 8 * * *",
+      "timezone": "UTC",
+      "description": "Run spatial conflict detection (nightly at 8am UTC)"
+    },
+    "alert_check": {
+      "enabled": true,
+      "cron": "*/30 * * * *",
+      "timezone": "UTC",
+      "description": "Check monitoring alerts and thresholds (every 30 minutes)"
+    }
+  },
+  "executors": {
+    "default": {
+      "type": "threadpool",
+      "max_workers": 4,
+      "description": "Thread pool for I/O-bound tasks"
+    },
+    "processpool": {
+      "type": "processpool",
+      "max_workers": 2,
+      "description": "Process pool for CPU-bound tasks"
+    }
+  },
+  "notifications": {
+    "slack_enabled": false,
+    "slack_webhook_url": "",
+    "email_enabled": false,
+    "email_recipients": [],
+    "high_severity_pagerduty": false,
+    "pagerduty_integration_key": ""
+  },
+  "logging": {
+    "level": "INFO",
+    "file": "logs/scheduler.log",
+    "max_size_mb": 100,
+    "backup_count": 5
+  },
+  "performance": {
+    "max_concurrent_jobs": 4,
+    "job_timeout_seconds": 3600,
+    "retry_count": 3,
+    "retry_delay_seconds": 300
+  }
+}
