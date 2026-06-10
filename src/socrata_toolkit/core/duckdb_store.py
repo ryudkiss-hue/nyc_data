@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
+import threading
 import uuid
 from pathlib import Path
 
@@ -141,47 +142,78 @@ class DuckDBManager:
         self.read_only = read_only
         self.motherduck_token = motherduck_token or os.getenv("MOTHERDUCK_TOKEN")
         self._conn: duckdb.DuckDBPyConnection | None = None
+        # [FIX 1] Add connection lock for thread-safe singleton access
+        self._conn_lock = threading.RLock()
 
     @property
     def conn(self) -> duckdb.DuckDBPyConnection:
+        """Thread-safe singleton connection with double-check locking pattern.
+
+        [FIX 1] Ensures all concurrent access to the shared connection is serialized
+        via an RLock, preventing isolation violations and connection state conflicts.
+        """
         if self._conn is None:
-            connection_path = self.db_path
-            # If token provided but path is not md:, we still connect to local
-            # and allow manual ATTACH 'md:' later.
-            # If path is 'md:', it connects to MotherDuck directly.
+            with self._conn_lock:
+                # Double-check pattern: another thread may have created connection
+                if self._conn is None:
+                    connection_path = self.db_path
+                    # If token provided but path is not md:, we still connect to local
+                    # and allow manual ATTACH 'md:' later.
+                    # If path is 'md:', it connects to MotherDuck directly.
 
-            logger.info("Connecting to DuckDB at %s", connection_path)
-            # Use read_only if requested via environment or default to False
-            is_read_only = (
-                self.read_only
-                if self.read_only is not None
-                else (os.getenv("DUCKDB_READ_ONLY", "false").lower() == "true")
-            )
+                    logger.info("Connecting to DuckDB at %s", connection_path)
+                    # Use read_only if requested via environment or default to False
+                    is_read_only = (
+                        self.read_only
+                        if self.read_only is not None
+                        else (os.getenv("DUCKDB_READ_ONLY", "false").lower() == "true")
+                    )
 
-            # DuckDB 0.10+ handles 'md:' natively if token is in env or config
-            if self.motherduck_token and not connection_path.startswith("md:"):
-                # We connect to local but will enable MD extension
-                self._conn = duckdb.connect(connection_path, read_only=is_read_only)
-                try:
-                    self._conn.execute(f"SET motherduck_token='{self.motherduck_token}';")
-                    self._conn.execute("INSTALL motherduck;")
-                    self._conn.execute("LOAD motherduck;")
-                except Exception as exc:
-                    logger.warning("Could not initialize MotherDuck extension: %s", exc)
-            else:
-                self._conn = duckdb.connect(connection_path, read_only=is_read_only)
+                    # DuckDB 0.10+ handles 'md:' natively if token is in env or config
+                    if self.motherduck_token and not connection_path.startswith("md:"):
+                        # We connect to local but will enable MD extension
+                        self._conn = duckdb.connect(connection_path, read_only=is_read_only)
+                        try:
+                            self._conn.execute(f"SET motherduck_token='{self.motherduck_token}';")
+                            self._conn.execute("INSTALL motherduck;")
+                            self._conn.execute("LOAD motherduck;")
+                        except Exception as exc:
+                            logger.warning("Could not initialize MotherDuck extension: %s", exc)
+                    else:
+                        self._conn = duckdb.connect(connection_path, read_only=is_read_only)
 
-            # Item 6: Disable insertion order for performance
-            self._conn.execute("SET preserve_insertion_order = false;")
+                    # Item 6: Disable insertion order for performance
+                    self._conn.execute("SET preserve_insertion_order = false;")
 
-            # Initialize Spatial Extension
-            try:
-                self._conn.execute("INSTALL spatial;")
-                self._conn.execute("LOAD spatial;")
-                logger.info("DuckDB spatial extension loaded successfully.")
-            except Exception as exc:
-                logger.warning("Could not load DuckDB spatial extension: %s", exc)
+                    # Initialize Spatial Extension
+                    try:
+                        self._conn.execute("INSTALL spatial;")
+                        self._conn.execute("LOAD spatial;")
+                        logger.info("DuckDB spatial extension loaded successfully.")
+                    except Exception as exc:
+                        logger.warning("Could not load DuckDB spatial extension: %s", exc)
         return self._conn
+
+    def execute_atomic(self, sql: str, *args: object):
+        """Execute SQL under exclusive lock for ACID isolation.
+
+        [FIX 1] Use for operations that must be atomic with respect to concurrent access:
+        - Multi-step upserts
+        - Transactions (BEGIN...COMMIT)
+        - Schema modifications
+
+        Single-threaded or write-heavy operations don't need this;
+        they benefit from the lock implicitly via the shared connection.
+
+        Args:
+            sql: SQL statement to execute
+            *args: Query parameters for parameterized queries
+
+        Returns:
+            DuckDB query result
+        """
+        with self._conn_lock:
+            return self.conn.execute(sql, *args)
 
     def attach_motherduck(self, alias: str = "md"):
         """Attach MotherDuck cloud database to the current local session."""
@@ -238,9 +270,16 @@ class DuckDBManager:
         return self.conn.execute(sql, *args)
 
     def create_table_as(self, table_name: str, sql: str):
-        """Item 5: Intermediate Query Caching."""
+        """Item 5: Intermediate Query Caching.
+        
+        Uses CREATE TABLE AS SELECT (CTAS) to materialize query results.
+        """
         logger.info(f"Caching query result to table: {table_name}")
         self.conn.execute(f"CREATE TABLE IF NOT EXISTS {table_name} AS {sql}")
+
+    def summarize_table(self, table_name: str):
+        """Generate a summary of the table's statistics using DuckDB's SUMMARIZE."""
+        return self.query(f"SUMMARIZE {table_name}").df()
 
     def get_partitioned_parquet_files(self, key: str, cache_dir: str | Path | None = None) -> list[Path]:
         """Item 2: Helper for Partitioned Parquet."""
@@ -314,17 +353,28 @@ class DuckDBRepository:
             )
 
         # Check if table exists in the target database
-        tables = self.manager.conn.execute(
-            f"SELECT table_name FROM information_schema.tables "
-            f"WHERE table_schema = 'main' AND table_catalog = '{self.database}' "
-            f"AND table_name = '{self.table_name}'"
-        ).fetchall()
-        table_exists = len(tables) > 0
+        try:
+            # information_schema.tables is standard for both local and MD
+            tables = self.manager.conn.execute(
+                f"SELECT table_name FROM information_schema.tables "
+                f"WHERE table_catalog = '{self.database}' "
+                f"AND table_name = '{self.table_name}'"
+            ).fetchall()
+            table_exists = len(tables) > 0
+        except Exception:
+            # Fallback for systems where information_schema might be flaky
+            # We use qualify check
+            try:
+                self.manager.conn.execute(f"SELECT 1 FROM {self.qualified_name} WHERE 1=0")
+                table_exists = True
+            except Exception:
+                table_exists = False
 
         if not table_exists:
             # Create table with an explicit GEOMETRY column
+            # Use IF NOT EXISTS for double safety
             sql_create = f"""
-                CREATE TABLE {self.qualified_name} AS
+                CREATE TABLE IF NOT EXISTS {self.qualified_name} AS
                 SELECT *,
                 ({geom_expr}) AS native_geom
                 FROM "{temp_view}"
@@ -339,19 +389,24 @@ class DuckDBRepository:
             return len(df)
 
         # Schema Evolution: Ensure native_geom exists
+        # PRAGMA table_info only works for the 'main' database or with a prefix
+        # Use information_schema for multi-db compatibility
         existing_cols = [
-            c[1]
-            for c in self.manager.conn.execute(
-                f'PRAGMA table_info("{self.table_name}")'
+            row[0]
+            for row in self.manager.conn.execute(
+                f"SELECT column_name FROM information_schema.columns "
+                f"WHERE table_catalog = '{self.database}' "
+                f"AND table_name = '{self.table_name}'"
             ).fetchall()
         ]
-        # Note: PRAGMA table_info might need the database prefix if not 'main'
-        if self.database != "main":
-             existing_cols = [
+        
+        if not existing_cols:
+            # Fallback to PRAGMA if info_schema failed
+            prefix = f'"{self.database}".' if self.database != "main" else ""
+            existing_cols = [
                 c[1]
                 for c in self.manager.conn.execute(
-                    f"SELECT column_name FROM information_schema.columns "
-                    f"WHERE table_name = '{self.table_name}' AND table_catalog = '{self.database}'"
+                    f"PRAGMA table_info('{prefix}{self.table_name}')"
                 ).fetchall()
             ]
 

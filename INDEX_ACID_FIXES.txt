@@ -1,0 +1,295 @@
+================================================================================
+NYC DOT SOCRATA TOOLKIT - ACID RELIABILITY FIXES
+Complete Implementation Plan Package
+================================================================================
+
+LOCATION: C:\Users\ryudk\nyc_data\
+
+FILES IN THIS PACKAGE:
+================================================================================
+
+1. README_ACID_FIXES.md (Overview & Guide)
+   Size: ~8 KB
+   Purpose: Package overview, quick start guide, FAQ
+   Read first if: You're new to this package
+   Time: 5-10 min
+
+2. ACID_RELIABILITY_IMPLEMENTATION_PLAN.md (Main Technical Document)
+   Size: ~36 KB
+   Purpose: Full plan with problem analysis, solutions, testing, effort estimates
+   Read second for: Understanding the "why" and design approach
+   Contains:
+     - Detailed ACID violation analysis
+     - Solution design with pseudocode
+     - Files to modify (line numbers)
+     - Testing strategy per fix
+     - Effort estimates (2-4.5 hours each)
+     - Monitoring and validation
+     - Rollback procedures
+   Time: 1-2 hours
+
+3. ACID_FIXES_QUICK_REFERENCE.txt (One-Page Summary)
+   Size: ~9 KB
+   Purpose: Quick lookup reference, implementation checklist
+   Use for: Team discussions, quick lookups during implementation
+   Contains:
+     - Problem summary per fix
+     - Key code snippets
+     - Files affected
+     - Testing strategy checklist
+     - Implementation order
+   Time: 10-15 min
+
+4. ACID_FIXES_IMPLEMENTATION_CODE.py (Copy-Paste Code)
+   Size: ~31 KB
+   Purpose: Ready-to-use implementation code for all 4 fixes
+   Use when: Implementing—copy code directly into your files
+   Contains:
+     - [FIX 1] DuckDB Connection Pooling (threading.RLock)
+     - [FIX 2] Transactional Writes (BEGIN...COMMIT)
+     - [FIX 3] Session Persistence (DuckDBSessionStore)
+     - [FIX 4] Manifest Locking (fcntl/msvcrt)
+     - Full test suite (pytest-compatible)
+   Time: Reference during implementation (30-60 min per fix)
+
+5. INDEX_ACID_FIXES.txt (This File)
+   Size: ~3 KB
+   Purpose: Navigation guide for the package
+
+TOTAL PACKAGE SIZE: ~77 KB
+================================================================================
+
+THE 4 FIXES AT A GLANCE:
+================================================================================
+
+Fix 1: DuckDB Connection Pooling
+  Problem: Multiple connections, no thread safety → ISOLATION violation
+  Solution: Single connection + threading.RLock
+  File: src/socrata_toolkit/core/duckdb_store.py
+  Effort: 2 hours
+  Criticality: HIGH (foundation for Fix 2)
+
+Fix 2: Transactional Writes (DuckDB → L2 Parquet)
+  Problem: Async writes → ATOMICITY violation
+  Solution: BEGIN...COMMIT + atomic rename
+  File: app/utils/cache_manager.py
+  Effort: 4 hours
+  Criticality: HIGH (main data integrity issue)
+
+Fix 3: Session State Persistence
+  Problem: session_state lost on refresh → DURABILITY violation
+  Solution: DuckDB-backed session store
+  File: app/services/cache_service.py (new)
+  Effort: 4.5 hours
+  Criticality: MEDIUM (user experience)
+
+Fix 4: Manifest Locking
+  Problem: Concurrent read-modify-write → CONSISTENCY violation
+  Solution: fcntl/msvcrt file locks + atomic rename
+  File: app/utils/cache_manager.py
+  Effort: 3 hours
+  Criticality: HIGH (metadata integrity)
+
+TOTAL EFFORT: ~13.5 hours
+================================================================================
+
+RECOMMENDED READING ORDER:
+================================================================================
+
+For Everyone (15 min):
+  1. This file (INDEX_ACID_FIXES.txt)
+  2. README_ACID_FIXES.md summary section
+
+For Decision-Makers (30 min):
+  1. README_ACID_FIXES.md (all)
+  2. Summary Table in ACID_RELIABILITY_IMPLEMENTATION_PLAN.md
+
+For Implementers (2-3 hours):
+  1. README_ACID_FIXES.md (read all)
+  2. ACID_FIXES_QUICK_REFERENCE.txt (bookmark for quick lookup)
+  3. Read each fix section in ACID_RELIABILITY_IMPLEMENTATION_PLAN.md (1 fix at a time)
+  4. Copy code from ACID_FIXES_IMPLEMENTATION_CODE.py during implementation
+  5. Run provided tests and verify
+
+For Code Reviewers (1-2 hours):
+  1. ACID_RELIABILITY_IMPLEMENTATION_PLAN.md (design sections only)
+  2. ACID_FIXES_IMPLEMENTATION_CODE.py (test cases)
+  3. Check implementation against pseudocode
+
+================================================================================
+
+IMPLEMENTATION CHECKLIST:
+================================================================================
+
+Pre-Implementation:
+  [ ] Read all documents (README → Plan → Code)
+  [ ] Review with team
+  [ ] Create branch: fix/acid-reliability-layer
+  [ ] Set up test environment
+
+Per-Fix Cycle:
+  [ ] Read fix section in ACID_RELIABILITY_IMPLEMENTATION_PLAN.md
+  [ ] Copy code from ACID_FIXES_IMPLEMENTATION_CODE.py
+  [ ] Implement changes in your codebase
+  [ ] Run unit tests (in ACID_FIXES_IMPLEMENTATION_CODE.py)
+  [ ] Run full test suite: pytest tests/ -v
+  [ ] Manual verification (Streamlit app, concurrent load)
+  [ ] Code review (2+ reviewers)
+  [ ] Merge to main
+
+Post-Implementation:
+  [ ] Monitor metrics in staging
+  [ ] Validate in production
+  [ ] Communicate to team
+  [ ] Update runbooks
+
+================================================================================
+
+QUICK START (For Implementers):
+================================================================================
+
+Step 1: Read Overview (5 min)
+  $ cat README_ACID_FIXES.md
+
+Step 2: Understand the 4 Fixes (30 min)
+  $ head -50 ACID_RELIABILITY_IMPLEMENTATION_PLAN.md  # Read summary
+  $ grep -A 10 "Summary Table" ACID_RELIABILITY_IMPLEMENTATION_PLAN.md
+
+Step 3: Choose Implementation Order
+  Recommended: Week 1 (Fixes 1+4) → Week 2 (Fix 2) → Week 3 (Fix 3)
+  Reason: Fixes 1+4 are foundation; Fix 2 requires Fix 1
+
+Step 4: Implement First Fix (2 hours for Fix 1)
+  $ # Read Fix 1 section in ACID_RELIABILITY_IMPLEMENTATION_PLAN.md
+  $ # Copy [FIX 1] code from ACID_FIXES_IMPLEMENTATION_CODE.py
+  $ # Paste into src/socrata_toolkit/core/duckdb_store.py
+  $ # Run tests: pytest tests/test_acid_fixes.py::test_duckdb_manager_concurrent_access -v
+  $ # Code review
+
+Step 5: Repeat for Fixes 2, 3, 4
+
+Step 6: Validate Full Suite
+  $ pytest tests/ -v
+  $ # Manual testing with Streamlit app
+
+================================================================================
+
+KEY FILE LOCATIONS:
+================================================================================
+
+Implementation Files (modify these):
+  - src/socrata_toolkit/core/duckdb_store.py (Fix 1)
+  - app/utils/cache_manager.py (Fixes 2, 4)
+  - app/services/cache_service.py (Fix 3, new file)
+  - app/main.py (Fix 3 integration)
+
+Test Files (create/update these):
+  - tests/test_duckdb_store_coverage.py (Fix 1 tests)
+  - tests/test_cache_manager.py (Fix 2, 4 tests)
+  - tests/test_session_persistence.py (Fix 3 tests, new file)
+
+Reference Files (in this repo):
+  - C:\Users\ryudk\nyc_data\ACID_RELIABILITY_IMPLEMENTATION_PLAN.md
+  - C:\Users\ryudk\nyc_data\ACID_FIXES_QUICK_REFERENCE.txt
+  - C:\Users\ryudk\nyc_data\ACID_FIXES_IMPLEMENTATION_CODE.py
+
+================================================================================
+
+TROUBLESHOOTING:
+================================================================================
+
+"I don't understand why we need Fix X"
+  → Read the "Problem" section of that fix in ACID_RELIABILITY_IMPLEMENTATION_PLAN.md
+
+"I need the code now"
+  → Go to ACID_FIXES_IMPLEMENTATION_CODE.py and copy [FIX N] section
+
+"What's the minimal change I can make?"
+  → Read the "Solution" section in main plan—it shows exact line numbers and changes
+
+"How do I test this?"
+  → See "Testing Strategy" section for each fix, and copy test code from ACID_FIXES_IMPLEMENTATION_CODE.py
+
+"Can I skip a fix?"
+  → Read FAQ in README_ACID_FIXES.md—each fix addresses a specific ACID property
+
+"How long will this take?"
+  → See effort estimate for each fix (2-4.5 hours)
+  → Plan 3 weeks (1 week per 1-2 fixes)
+
+"What if something breaks?"
+  → See "Rollback Plan" section in main document for each fix
+
+================================================================================
+
+DOCUMENT STATS:
+================================================================================
+
+Total Package Size: ~77 KB
+Total Read Time: 2-3 hours (full) or 15 min (quick)
+Implementation Time: ~13.5 hours
+Team Effort: 1-2 people, 3 weeks recommended
+
+Covered Issues:
+  ✅ Atomicity (DuckDB writes sync but Parquet async)
+  ✅ Consistency (DuckDB ↔ Parquet skew, manifest corruption)
+  ✅ Isolation (Multiple connections without pooling)
+  ✅ Durability (Async L2 writes, session_state loss)
+
+Lines of Code Added: ~500-700 (excluding tests)
+Test Cases Provided: 12+
+Files to Modify: 4 (3 existing + 1 new)
+
+================================================================================
+
+GETTING HELP:
+================================================================================
+
+Question Type          Where to Look
+--------------------- -----------------------------------------------
+Why is this needed?    README_ACID_FIXES.md (Overview section)
+What's the solution?   ACID_RELIABILITY_IMPLEMENTATION_PLAN.md (Solution section per fix)
+Show me the code       ACID_FIXES_IMPLEMENTATION_CODE.py ([FIX N] sections)
+How do I test it?      ACID_RELIABILITY_IMPLEMENTATION_PLAN.md (Testing Strategy per fix)
+Implementation order   README_ACID_FIXES.md or QUICK_REFERENCE.txt
+What if it breaks?     ACID_RELIABILITY_IMPLEMENTATION_PLAN.md (Rollback Plan)
+Effort estimate        Summary Table in ACID_RELIABILITY_IMPLEMENTATION_PLAN.md
+
+================================================================================
+
+VERSION INFORMATION:
+================================================================================
+
+Package Version: 1.0
+Created: 2026-06-10
+Status: Ready for Implementation
+Last Updated: 2026-06-10
+
+Python Version Required: 3.9+
+DuckDB Version: 0.10+ (tested with 1.0+)
+Dependencies: pandas, duckdb, streamlit, psycopg (optional)
+
+Database: DuckDB 0.10+ (no schema migration needed)
+OS Support: Windows, Linux, macOS
+
+================================================================================
+
+NEXT STEPS:
+================================================================================
+
+1. [ ] Read README_ACID_FIXES.md (5-10 min)
+2. [ ] Read ACID_RELIABILITY_IMPLEMENTATION_PLAN.md (1-2 hours)
+3. [ ] Assign implementer(s)
+4. [ ] Create feature branch
+5. [ ] Start with Fix 1
+6. [ ] Follow implementation checklist above
+7. [ ] Deploy with monitoring enabled
+
+Good luck! 🚀
+
+================================================================================
+
+Made with ❤️ by Claude Code (Anthropic)
+For technical questions, see references in main document.
+
+Package location: C:\Users\ryudk\nyc_data\
