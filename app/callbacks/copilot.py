@@ -1,5 +1,6 @@
-from dash import Input, Output, State, callback, no_update
 import dash_mantine_components as dmc
+from dash import Input, Output, State, callback, no_update
+
 
 def register_copilot_callbacks(app):
     @app.callback(

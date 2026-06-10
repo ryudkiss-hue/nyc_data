@@ -1,6 +1,6 @@
 import dash
-from dash import html
 import uvicorn
+from dash import html
 from fastapi import FastAPI
 
 dash_app = dash.Dash(__name__)

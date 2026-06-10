@@ -8,13 +8,13 @@ Includes enhanced column profiling, health scoring, and quality metrics.
 from __future__ import annotations
 
 import hashlib
-import logging
 import json
+import logging
 import re
 from dataclasses import dataclass, field
 from datetime import timezone
-from typing import Any
 from functools import lru_cache
+from typing import Any
 
 import pandas as pd
 
@@ -64,11 +64,11 @@ log = logging.getLogger(__name__)
 def _get_cached_geo_cols(schema_hash: str, columns_tuple: tuple[str, ...]) -> list[str]:
     """
     Detect and cache geospatial column names based on common naming patterns.
-    
+
     Args:
         schema_hash: A unique hash of the dataframe schema.
         columns_tuple: A tuple of column names.
-        
+
     Returns:
         A list of identified geospatial column names.
     """
@@ -80,11 +80,11 @@ def _get_cached_geo_cols(schema_hash: str, columns_tuple: tuple[str, ...]) -> li
 def _get_cached_date_cols(schema_hash: str, columns_tuple: tuple[str, ...]) -> list[str]:
     """
     Detect and cache date/time column names based on common naming patterns.
-    
+
     Args:
         schema_hash: A unique hash of the dataframe schema.
         columns_tuple: A tuple of column names.
-        
+
     Returns:
         A list of identified date/time column names.
     """
@@ -96,9 +96,8 @@ def _get_cached_date_cols(schema_hash: str, columns_tuple: tuple[str, ...]) -> l
     return result
 
 
-from pydantic import BaseModel, Field
-
 import numpy as np
+from pydantic import BaseModel, Field
 from scipy import stats
 
 # ---------------------------------------------------------------------------
@@ -115,10 +114,10 @@ class AnomalyDetector:
         # Seasonal Median (using rolling median as proxy for seasonal baseline)
         median = series.rolling(window=self.window, center=True).median()
         deviation = (series - median).abs()
-        
+
         # Z-Score
         z_scores = stats.zscore(series, nan_policy='omit')
-        
+
         results = pd.DataFrame({
             'value': series,
             'median_baseline': median,
@@ -134,29 +133,29 @@ class SeverityStateMachine:
     def __init__(self):
         self.state = "ok"
         self.history = []
-        
+
     def update(self, is_anomaly: bool) -> str:
         self.history.append(is_anomaly)
         if len(self.history) > 7: self.history.pop(0)
-        
+
         anomaly_count = sum(self.history)
-        
+
         if anomaly_count >= 5: self.state = "critical"
         elif anomaly_count >= 2: self.state = "warn"
         else: self.state = "ok"
-        
+
         return self.state
 
 def process_hiqa_inspection_stream(series: pd.Series) -> pd.DataFrame:
     """Processes HIQA inspection stream with anomaly detection and severity escalation."""
     detector = AnomalyDetector()
     state_machine = SeverityStateMachine()
-    
+
     anomalies = detector.detect(series)
-    
+
     # Apply state machine
     anomalies['severity'] = [state_machine.update(is_anom) for is_anom in anomalies['is_anomaly']]
-    
+
     return anomalies
 
 # ---------------------------------------------------------------------------
@@ -227,7 +226,7 @@ def _safe_sample_values(series: pd.Series, n: int = 3) -> list[str]:
 def _estimate_cardinality(series: pd.Series, max_sample: int = 5000, dataset_key: str | None = None, col_name: str | None = None) -> int:
     """Estimate distinct value count. Prioritizes DuckDB SQL for performance, otherwise uses sampling."""
     from app.data_loader import _DUCKDB_AVAILABLE, _DUCKDB_PATH
-    
+
     if _DUCKDB_AVAILABLE and _safe_sql_identifier(dataset_key) and _safe_sql_identifier(col_name):
         try:
             from socrata_toolkit.core.duckdb_store import DuckDBManager
@@ -309,7 +308,7 @@ def _detect_pk_candidates(df: pd.DataFrame) -> list[str]:
 def _compute_duplicate_pct(df: pd.DataFrame, sample_size: int = 5000, dataset_key: str | None = None) -> float:
     """Compute duplicate percentage. Prioritizes DuckDB SQL for performance."""
     from app.data_loader import _DUCKDB_AVAILABLE, _DUCKDB_PATH
-    
+
     if _DUCKDB_AVAILABLE and _safe_sql_identifier(dataset_key):
         try:
             from socrata_toolkit.core.duckdb_store import DuckDBManager
@@ -320,7 +319,7 @@ def _compute_duplicate_pct(df: pd.DataFrame, sample_size: int = 5000, dataset_ke
             res_u = manager.query(f'SELECT count(*) FROM (SELECT DISTINCT * FROM "{dataset_key}")').fetchone()
             unique = int(res_u[0]) if res_u else total
             manager.close()
-            
+
             if total > 0:
                 return round(100.0 * (total - unique) / total, 2)
             return 0.0
@@ -354,11 +353,11 @@ def profile_dataset(key: str, df: pd.DataFrame, *, sample_rows: int = 5_000) -> 
     # Use a fast hash of the columns and shape for schema memoization
     schema_hash = hashlib.md5(f"{list(df.columns)}-{df.shape[1]}".encode()).hexdigest()
     columns_tuple = tuple(df.columns)
-    
+
     # Check LRU caches for pre-detected columns
     date_cols_list = _get_cached_date_cols(schema_hash, columns_tuple)
     geo_cols_list = _get_cached_geo_cols(schema_hash, columns_tuple)
-    
+
     sample = df.sample(min(sample_rows, len(df)), random_state=42) if len(df) > sample_rows else df
 
     date_cols_set = set(c.lower() for c in date_cols_list)
@@ -368,7 +367,7 @@ def profile_dataset(key: str, df: pd.DataFrame, *, sample_rows: int = 5_000) -> 
     for col in sample.columns:
         if col.startswith("_"):
             continue  # skip internal columns
-        
+
         series = sample[col]
         null_pct = round(series.isna().mean() * 100, 2)
         cardinality = _estimate_cardinality(series, dataset_key=key, col_name=col)
@@ -393,7 +392,7 @@ def profile_dataset(key: str, df: pd.DataFrame, *, sample_rows: int = 5_000) -> 
                     parsed = series
                 else:
                     parsed = pd.to_datetime(series, errors="coerce")
-                
+
                 min_val = str(parsed.min())[:10]
                 max_val = str(parsed.max())[:10]
             except Exception:
@@ -426,7 +425,7 @@ def profile_dataset(key: str, df: pd.DataFrame, *, sample_rows: int = 5_000) -> 
 
     # Clean up large intermediate sample before returning
     del sample
-    
+
     return DatasetProfile(
         key=key,
         row_count=len(df),
@@ -445,12 +444,12 @@ def profile_dataset(key: str, df: pd.DataFrame, *, sample_rows: int = 5_000) -> 
 def profile_all_datasets(frames: dict[str, pd.DataFrame]) -> dict[str, DatasetProfile]:
     """Profile all loaded datasets concurrently using ThreadPoolExecutor."""
     profiles: dict[str, DatasetProfile] = {}
-    
+
     from concurrent.futures import ThreadPoolExecutor, as_completed
-    
+
     # Filter valid frames
     valid_frames = {k: v for k, v in frames.items() if not v.empty and "_error" not in v.columns}
-    
+
     with ThreadPoolExecutor(max_workers=min(len(valid_frames) or 1, 4)) as executor:
         future_to_key = {executor.submit(profile_dataset, key, df): key for key, df in valid_frames.items()}
         for future in as_completed(future_to_key):
@@ -459,7 +458,7 @@ def profile_all_datasets(frames: dict[str, pd.DataFrame]) -> dict[str, DatasetPr
                 profiles[key] = future.result()
             except Exception as exc:
                 log.warning("Profile failed for %s: %s", key, exc)
-                
+
     return profiles
 
 
@@ -619,23 +618,23 @@ def spatial_conflict_detection(
     when datasets exceed 10,000 rows. Falls back to Geopandas if extensions fail.
     """
     joins = 0
-    
+
     if weekly_construction.empty:
         return pd.DataFrame(), joins
-        
+
     from app.data_loader import _DUCKDB_AVAILABLE, _DUCKDB_PATH
-    
+
     # Pushdown Strategy if DuckDB spatial is available and datasets are large
     if _DUCKDB_AVAILABLE and len(street_permits) > 10000:
         try:
             from socrata_toolkit.core.duckdb_store import DuckDBManager
             mgr = DuckDBManager(_DUCKDB_PATH)
-            
+
             # Register temp views
             mgr.conn.register("tmp_weekly", weekly_construction)
             mgr.conn.register("tmp_permits", street_permits)
-            
-            # We assume geometries are present in WKT or Well-Known Binary form. 
+
+            # We assume geometries are present in WKT or Well-Known Binary form.
             # In a true deployment, the 'geom' column would be cast to DuckDB GEOMETRY.
             # Using basic bbox / intersect logic (conceptual pushdown wrapper)
             conflicts_query = """
@@ -643,12 +642,12 @@ def spatial_conflict_detection(
                 FROM tmp_weekly w
                 JOIN tmp_permits p ON ST_Intersects(ST_GeomFromText(w.geometry), ST_GeomFromText(p.geometry))
             """
-            
+
             # Due to mock data lacking valid 'geometry' columns in our tests, we catch errors and fallback
             # but log the attempt.
             res_df = mgr.conn.execute(conflicts_query).df()
             mgr.close()
-            
+
             if not res_df.empty:
                 res_df["conflict_id"] = range(1, len(res_df) + 1)
                 res_df["detected_at"] = pd.Timestamp.now(tz=timezone.utc).isoformat()
@@ -835,10 +834,10 @@ def productivity_ada_dashboard(
 def run_all_workflows(frames: dict[str, pd.DataFrame]) -> dict[str, Any]:
     """Execute all workflows using Strategy Pattern. Optimized for scalability and memory safety."""
     from app.services.workflow_service import WorkflowOrchestrator
-    
+
     orchestrator = WorkflowOrchestrator()
     workflow_results = orchestrator.run_all(frames)
-    
+
     qa = workflow_results["qa"]
     spatial = workflow_results["spatial"]
     contract = workflow_results["contract"]

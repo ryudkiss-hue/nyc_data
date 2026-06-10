@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Tuple
+
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -7,6 +8,7 @@ from sklearn.decomposition import PCA
 from sklearn.linear_model import LinearRegression
 
 from socrata_toolkit.analysis.ensemble import EnsembleForecaster
+
 
 class VisualizationEngine:
     """Industrial Visualization Engine for 40+ NYC DOT SIM Charts with Integrated Narratives."""
@@ -48,7 +50,7 @@ class VisualizationEngine:
         return fig
 
     @staticmethod
-    def chart_inspections_boro(data_bundle) -> Tuple[go.Figure, str]:
+    def chart_inspections_boro(data_bundle) -> tuple[go.Figure, str]:
         df = VisualizationEngine._safe_df(data_bundle.get("inspection"))
         if df.empty: return go.Figure(), "No inspection data available."
         boro_col = VisualizationEngine._find_col(df, ["borough", "boro", "boroname"])
@@ -61,7 +63,7 @@ class VisualizationEngine:
         # Accessible palette
         fig = px.bar(counts, x=boro_col, y="count", color=boro_col, text_auto='.2s', color_discrete_sequence=px.colors.qualitative.Bold)
         fig = VisualizationEngine._apply_standard_layout(fig, "Brooklyn and Queens Dominate Inspection Volume", "Borough", "Inspection Volume (Count)")
-        
+
         # S-DIKW Narrative Arc
         insight = (
             f"**Data:** {len(df):,} total inspection records analyzed.\n\n"
@@ -72,14 +74,14 @@ class VisualizationEngine:
         return fig, insight
 
     @staticmethod
-    def chart_violation_severity(data_bundle) -> Tuple[go.Figure, str]:
+    def chart_violation_severity(data_bundle) -> tuple[go.Figure, str]:
         df = VisualizationEngine._safe_df(data_bundle.get("violations"))
         if df.empty: return go.Figure(), "No violation data available."
         col = VisualizationEngine._find_col(df, ["severity", "hazard", "trip_haz", "status", "flag"])
         # Accessible palette
-        fig = px.histogram(df, x=col, color=col, nbins=20, marginal="box", color_discrete_sequence=px.colors.qualitative.Bold) 
+        fig = px.histogram(df, x=col, color=col, nbins=20, marginal="box", color_discrete_sequence=px.colors.qualitative.Bold)
         fig = VisualizationEngine._apply_standard_layout(fig, "Heavy Backlog of Severe Hazards Identified", "Hazard Level Classification", "Frequency of Occurrence")
-        
+
         # S-DIKW Narrative Arc
         insight = (
             f"**Data:** {len(df):,} violation records analyzed.\n\n"
@@ -90,7 +92,7 @@ class VisualizationEngine:
         return fig, insight
 
     @staticmethod
-    def chart_built_sqft_trend(data_bundle) -> Tuple[go.Figure, str]:
+    def chart_built_sqft_trend(data_bundle) -> tuple[go.Figure, str]:
         df = VisualizationEngine._safe_df(data_bundle.get("built"))
         if df.empty: return go.Figure(), "No construction data available."
         date_col = VisualizationEngine._find_col(df, ["date", "dot_contstruct_date", "entrydate", "dbo_date"])
@@ -106,7 +108,7 @@ class VisualizationEngine:
         return fig, insight
 
     @staticmethod
-    def chart_lot_zoning_pie(data_bundle) -> Tuple[go.Figure, str]:
+    def chart_lot_zoning_pie(data_bundle) -> tuple[go.Figure, str]:
         df = VisualizationEngine._safe_df(data_bundle.get("lot_info"))
         if df.empty: return go.Figure(), "No lot info available."
         col = VisualizationEngine._find_col(df, ["borough", "boro", "borocode", "zipcode"])
@@ -116,7 +118,7 @@ class VisualizationEngine:
         return fig, insight
 
     @staticmethod
-    def chart_reinspection_gauge(data_bundle) -> Tuple[go.Figure, str]:
+    def chart_reinspection_gauge(data_bundle) -> tuple[go.Figure, str]:
         df = VisualizationEngine._safe_df(data_bundle.get("reinspection"))
         if df.empty:
             return go.Figure(), "No re-inspection data available to compute pass rate."
@@ -136,7 +138,7 @@ class VisualizationEngine:
         return fig, insight
 
     @staticmethod
-    def chart_tree_damage_species(data_bundle) -> Tuple[go.Figure, str]:
+    def chart_tree_damage_species(data_bundle) -> tuple[go.Figure, str]:
         df = VisualizationEngine._safe_df(data_bundle.get("tree_damage"))
         if df.empty: return go.Figure(), "No tree damage data."
         x_col = VisualizationEngine._find_col(df, ["atd_number", "atdid", "siteid"])
@@ -147,7 +149,7 @@ class VisualizationEngine:
         return fig, insight
 
     @staticmethod
-    def chart_dismissals_pie(data_bundle) -> Tuple[go.Figure, str]:
+    def chart_dismissals_pie(data_bundle) -> tuple[go.Figure, str]:
         df = VisualizationEngine._safe_df(data_bundle.get("dismissals"))
         if df.empty: return go.Figure(), "No dismissal tracking data."
         col = VisualizationEngine._find_col(df, ["borough", "boro", "borocode"])
@@ -157,7 +159,7 @@ class VisualizationEngine:
         return fig, insight
 
     @staticmethod
-    def chart_ramp_trends(data_bundle) -> Tuple[go.Figure, str]:
+    def chart_ramp_trends(data_bundle) -> tuple[go.Figure, str]:
         df = VisualizationEngine._safe_df(data_bundle.get("ramp_complaints"))
         if df.empty: return go.Figure(), "No ramp complaints."
         date_col = VisualizationEngine._find_col(df, ["complaint_date", "date"])
@@ -169,7 +171,7 @@ class VisualizationEngine:
         return fig, insight
 
     @staticmethod
-    def chart_freshness(data_bundle, registry) -> Tuple[go.Figure, str]:
+    def chart_freshness(data_bundle, registry) -> tuple[go.Figure, str]:
         rows = []
         for k, v in data_bundle.items():
             df_k = VisualizationEngine._safe_df(v)
@@ -196,7 +198,7 @@ class VisualizationEngine:
         return fig, insight
 
     @staticmethod
-    def chart_ps_burn(data_bundle) -> Tuple[go.Figure, str]:
+    def chart_ps_burn(data_bundle) -> tuple[go.Figure, str]:
         df = VisualizationEngine._safe_df(data_bundle.get("budget"))
         if df.empty:
             return (
@@ -219,7 +221,7 @@ class VisualizationEngine:
         return fig, insight
 
     @staticmethod
-    def chart_lifecycle(data_bundle) -> Tuple[go.Figure, str]:
+    def chart_lifecycle(data_bundle) -> tuple[go.Figure, str]:
         stages = [
             ("1. 311 Complaint", "complaints_311"),
             ("2. HIQA Inspection", "inspection"),
@@ -236,7 +238,7 @@ class VisualizationEngine:
         return fig, insight
 
     @staticmethod
-    def chart_velocity(data_bundle) -> Tuple[go.Figure, str]:
+    def chart_velocity(data_bundle) -> tuple[go.Figure, str]:
         df = VisualizationEngine._safe_df(data_bundle.get("built"))
         if df.empty: return go.Figure(), "No historical data for velocity forecasting."
         date_col = VisualizationEngine._find_col(df, ["dot_contstruct_date", "date", "entrydate"])
@@ -248,7 +250,7 @@ class VisualizationEngine:
         try: forecast = EnsembleForecaster.run_consensus_forecast(df_ts)
         except: forecast = pd.DataFrame()
         if forecast.empty: return VisualizationEngine.chart_built_sqft_trend(data_bundle)
-        
+
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=df_ts.index, y=df_ts["Postings"], name="Historical Truth", mode="lines", line=dict(color="#0F172A", width=2)))
         fig.add_trace(go.Scatter(x=forecast["ds"], y=forecast["ensemble_mean"], name="Ensemble Consensus", mode="lines", line=dict(color="#3B82F6", dash="dash", width=3)))
@@ -263,7 +265,7 @@ class VisualizationEngine:
         return fig, insight
 
     @staticmethod
-    def chart_manifold_3d(data_bundle) -> Tuple[go.Figure, str]:
+    def chart_manifold_3d(data_bundle) -> tuple[go.Figure, str]:
         df = VisualizationEngine._safe_df(data_bundle.get("lot_info"))
         if df.empty: return go.Figure(), "No manifold data available."
         numeric_df = df.select_dtypes(include=[np.number]).dropna(axis=1, how='all').dropna()
@@ -283,7 +285,7 @@ class VisualizationEngine:
         return fig, insight
 
     @staticmethod
-    def chart_grover_speedup(data_bundle) -> Tuple[go.Figure, str]:
+    def chart_grover_speedup(data_bundle) -> tuple[go.Figure, str]:
         n_records = 1000000
         classical = np.arange(0, n_records, 10000)
         quantum = np.sqrt(classical)
@@ -295,7 +297,7 @@ class VisualizationEngine:
         return fig, insight
 
     @staticmethod
-    def chart_budget_monte_carlo(base_cost: float, variance: float = 0.15) -> Tuple[go.Figure, str]:
+    def chart_budget_monte_carlo(base_cost: float, variance: float = 0.15) -> tuple[go.Figure, str]:
         try:
             from socrata_toolkit.engineering.cost_estimator import MonteCarloEstimator
             res = MonteCarloEstimator.run_budget_simulation(base_cost, variance)
@@ -309,7 +311,7 @@ class VisualizationEngine:
             return go.Figure(), "Monte Carlo engine failure."
 
     @staticmethod
-    def chart_isochrone_walkability() -> Tuple[go.Figure, str]:
+    def chart_isochrone_walkability() -> tuple[go.Figure, str]:
         theta = np.linspace(0, 2*np.pi, 100)
         fig = go.Figure()
         for radius, label, color in [(0.5, "5 min", "#10B981"), (1.0, "10 min", "#F59E0B"), (1.5, "15 min", "#EF4444")]:
@@ -319,7 +321,7 @@ class VisualizationEngine:
         return fig, insight
 
     @staticmethod
-    def chart_equity_multiplier() -> Tuple[go.Figure, str]:
+    def chart_equity_multiplier() -> tuple[go.Figure, str]:
         boros = ["MANHATTAN", "BROOKLYN", "QUEENS", "BRONX", "STATEN ISLAND"]
         multipliers = [1.0, 2.0, 1.5, 2.0, 1.0]
         fig = px.bar(x=boros, y=multipliers, color=boros, color_discrete_sequence=px.colors.qualitative.Prism)
@@ -329,15 +331,15 @@ class VisualizationEngine:
         return fig, insight
 
     @staticmethod
-    def chart_spatial_conflicts_deck(data_bundle) -> Tuple[go.Figure, str]:
+    def chart_spatial_conflicts_deck(data_bundle) -> tuple[go.Figure, str]:
         """Phase 2: Deck.gl integration for High-Density Spatial Data."""
         df = VisualizationEngine._safe_df(data_bundle.get("street_permits"))
         if df.empty: return go.Figure(), "No permit spatial data."
         fig = px.scatter_mapbox(
-            df.head(1000), 
+            df.head(1000),
             lat="latitude" if "latitude" in df.columns else None,
             lon="longitude" if "longitude" in df.columns else None,
-            zoom=10, 
+            zoom=10,
             color_discrete_sequence=["#EF4444"],
             opacity=0.6,
             title="High-Density Spatial Conflict Engine (Deck.gl Fallback)"
@@ -347,12 +349,12 @@ class VisualizationEngine:
         return fig, insight
 
     @staticmethod
-    def chart_markov_decay(data_bundle) -> Tuple[go.Figure, str]:
+    def chart_markov_decay(data_bundle) -> tuple[go.Figure, str]:
         """Phase 3: Markov Decay Visualizer (3D Surface)."""
         x = np.linspace(0, 20, 21)
         y = np.linspace(1, 5, 5)
         X, Y = np.meshgrid(x, y)
-        Z = np.exp(-(X/5) * (Y-1)) 
+        Z = np.exp(-(X/5) * (Y-1))
         fig = go.Figure(data=[go.Surface(z=Z, x=X, y=Y, colorscale='Magma', opacity=0.9)])
         fig.update_layout(
             title=dict(text='Markov Chain Transition Probability Matrix (Deterioration)', font=dict(size=18)),
@@ -363,7 +365,7 @@ class VisualizationEngine:
         return fig, insight
 
     @staticmethod
-    def get_all_charts(data_bundle, registry, requested_keys=None) -> Dict[str, Tuple[go.Figure, str]]:
+    def get_all_charts(data_bundle, registry, requested_keys=None) -> dict[str, tuple[go.Figure, str]]:
         def wrap(fn, *args):
             try: return fn(*args)
             except Exception as e:

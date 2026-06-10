@@ -1,8 +1,10 @@
 import os
 import threading
+
 import dash
-from dash import Input, Output, State, callback, no_update
 import dash_mantine_components as dmc
+from dash import Input, Output, State, callback, no_update
+
 from app.data_manager import DataManager
 
 # Global state for ingestion tracking (Shared across module)
@@ -15,16 +17,16 @@ def run_ingestion_background(token, limit, version):
     ingestion_status["error"] = None
     ingestion_status["finished"] = False
     try:
-        # Note: dm is expected to be a global or passed in. 
+        # Note: dm is expected to be a global or passed in.
         # For simple decomposition, we'll assume DataManager is re-instantiated or uses a shared cache.
         dm = DataManager(token=token, soda_version=version)
         dm.fetch_all_datasets(limit=limit, force_refresh=True)
-        
+
         # Link CMMS alerts to contractor records and SLA tracking
         cmms_data = [] # In real scenario, fetch or get CMMS alerts
         contractor_records = [] # In real scenario, fetch or get contractor records
         dm.link_cmms_to_contractor(cmms_data, contractor_records)
-        
+
         ingestion_status["finished"] = True
     except Exception as e:
         ingestion_status["error"] = str(e)

@@ -1,12 +1,14 @@
 import logging
-import pandas as pd
-from typing import Any
 from abc import ABC, abstractmethod
+from typing import Any
+
+import pandas as pd
+
 from app.analytics import (
-    qa_qc_inventory_ledger,
-    spatial_conflict_detection,
     contract_dispatch_clearance,
     productivity_ada_dashboard,
+    qa_qc_inventory_ledger,
+    spatial_conflict_detection,
 )
 
 logger = logging.getLogger(__name__)
@@ -62,7 +64,7 @@ class ProductivityStrategy(WorkflowStrategy):
 
 class WorkflowOrchestrator:
     """Service for event aggregation and multi-agency operational workflow modeling."""
-    
+
     def __init__(self):
         self.strategies = {
             "qa": QAQCStrategy(),

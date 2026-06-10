@@ -1,9 +1,11 @@
 import json
 from datetime import datetime
 from pathlib import Path
+
 import dash
-from dash import Input, Output, State, callback, no_update, dcc
 import dash_mantine_components as dmc
+from dash import Input, Output, State, callback, dcc, no_update
+
 from app.services.export_service import ExportRegistry
 
 export_registry = ExportRegistry()
@@ -54,7 +56,7 @@ def register_export_callbacks(app, dm_instance):
 
         df = dm_instance.get_cached_dataset(target_ds)
         result = export_registry.export(export_type, df, chart_id)
-        
+
         if result:
             if isinstance(result, dcc.Download): # dcc.send_data_frame
                 return result, no_update

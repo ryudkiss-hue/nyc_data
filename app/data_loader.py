@@ -17,7 +17,7 @@ from typing import Any, Optional
 
 import pandas as pd
 import yaml
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 try:
     import requests
@@ -455,6 +455,7 @@ def _fetch_live(
 
 from abc import ABC, abstractmethod
 
+
 class BaseFetcher(ABC):
     @abstractmethod
     def fetch(self, key: str, limit: int | None = None, **kwargs) -> pd.DataFrame:
@@ -674,7 +675,7 @@ def fetch_all_datasets(*, limit: int = 50_000) -> dict[str, pd.DataFrame]:
     return fetch_datasets_for_keys(tuple(DATASET_REGISTRY.keys()), limit=limit)
 
 
-def df_to_gdf(df: pd.DataFrame) -> Optional[gpd.GeoDataFrame]:
+def df_to_gdf(df: pd.DataFrame) -> gpd.GeoDataFrame | None:
     """Convert DataFrame to GeoDataFrame with NYC CRS. Optimized type hints."""
     if gpd is None or df.empty:
         return None
