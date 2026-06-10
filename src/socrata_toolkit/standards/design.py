@@ -48,7 +48,7 @@ ADA_RULE_1_2_1 = ADAComplianceRule(
         MaterialCategory.COMPOSITE,
     ],
     validation_method="measurement",
-    failure_severity=ADAFailureSeverity.HIGH,
+    failure_severity=ADAFailureSeverity.CRITICAL,
     references=[
         "28 CFR 36.303 - Accessible Routes",
         "ADA Standards Section 301 - General",

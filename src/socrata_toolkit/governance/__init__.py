@@ -37,3 +37,8 @@ from .audit import (  # noqa: F401
     audit_op,
     get_global_trail,
 )
+from .registry_audit import (  # noqa: F401
+    DatasetGovernanceMetadata,
+    registry_audit,
+    registry_audit_summary,
+)

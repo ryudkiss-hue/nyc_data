@@ -1,40 +1,24 @@
 """
-PostGIS Database Foundation for NYC DOT Sidewalk Toolkit.
+DuckDB Spatial Database Foundation for NYC DOT Sidewalk Toolkit.
 
 This module provides the spatial data model layer for sidewalk infrastructure,
-leveraging PostgreSQL's PostGIS extension for efficient geographic queries.
+leveraging DuckDB's Spatial extension for efficient geographic queries and local analytics.
 
-SRID 4326 (WGS84) is used for NYC coordinates:
-- Center: 40.7128°N, 74.0060°W
-- Extends: ~25 x 13 miles for five boroughs
-
-Features:
-- LINESTRING geometries for sidewalk segments
-- POLYGON geometries for blocks and districts
-- POINT geometries for inspection locations
-- MULTIPOLYGON geometries for material zones
-- GiST and BRIN spatial indexes for performance
-- Geometry validation constraints
-- Time-series spatial data support
+SRID 4326 (WGS84) is the default for NYC coordinates:
+- Center: 40.7128°N, -74.0060°W
 """
 
 from __future__ import annotations
 
 import logging
-from collections.abc import Generator
-from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
-from ..core.utils import BOROUGH_SET
+import pandas as pd
 
-try:
-    import psycopg
-    from psycopg import sql
-except ImportError:
-    psycopg = None
-    sql = None
+from ..core.duckdb_store import DuckDBManager
+from ..core.utils import BOROUGH_SET
 
 try:
     from shapely.geometry import LineString, MultiPolygon, Point, Polygon, shape
@@ -57,21 +41,13 @@ __all__ = [
     "query_geographic_area",
     "SpatialGeometry",
     "SpatialSegment",
+    "DuckDBSpatialConnection",
+    "SpatialDataModel",
 ]
 
-# NYC Spatial Reference System (WGS84)
+# NYC Spatial Reference System
 SRID_WGS84 = 4326
-SRID_NAD83 = 2263  # NY Long Island (feet) - for some NYC GIS data
-
-NYC_CENTER = Point(-74.0060, 40.7128)
-NYC_BOUNDS = Polygon([
-    (-74.2557, 40.4774),  # Southwest
-    (-73.7004, 40.4774),  # Southeast
-    (-73.7004, 40.9155),  # Northeast
-    (-74.2557, 40.9155),  # Northwest
-    (-74.2557, 40.4774),  # Close polygon
-])
-
+SRID_NAD83 = 2263  # NY Long Island (feet)
 
 @dataclass
 class SpatialGeometry:
@@ -88,8 +64,8 @@ class SpatialGeometry:
         self.geometry_type = geom_name
 
     def to_wkt(self) -> str:
-        """Convert to Well-Known Text format with SRID."""
-        return f"SRID={self.srid};{self.geometry.wkt}"
+        """Convert to Well-Known Text format."""
+        return self.geometry.wkt
 
     def to_geojson(self) -> dict[str, Any]:
         """Convert to GeoJSON representation."""
@@ -104,7 +80,7 @@ class SpatialGeometry:
         return SpatialGeometry(self.geometry.buffer(distance), self.srid)
 
     def distance(self, other: SpatialGeometry) -> float:
-        """Calculate distance to another geometry (in degrees for WGS84)."""
+        """Calculate distance to another geometry."""
         if self.srid != other.srid:
             raise ValueError("Cannot compute distance between different SRIDs")
         return float(self.geometry.distance(other.geometry))
@@ -205,426 +181,283 @@ class SpatialMaterialZone:
             raise ValueError(f"Zone must be Polygon/MultiPolygon, got {self.geometry.geometry_type}")
 
 
-class SpatialDatabaseConnection:
+class DuckDBSpatialConnection:
     """
-    Manager for PostGIS database connections and spatial operations.
+    Manager for DuckDB Spatial connections and operations.
 
-    Handles connection pooling, transaction management, and spatial query execution.
+    Handles spatial schema creation, geometry-aware insertions, and spatial joins.
     """
 
-    def __init__(
-        self,
-        host: str,
-        port: int,
-        database: str,
-        user: str,
-        password: str,
-        min_connections: int = 5,
-        max_connections: int = 20,
-    ) -> None:
+    def __init__(self, manager: DuckDBManager | str | None = None) -> None:
         """
-        Initialize spatial database connection.
+        Initialize DuckDB spatial connection.
 
         Args:
-            host: PostgreSQL host
-            port: PostgreSQL port
-            database: Database name
-            user: Database user
-            password: Database password
-            min_connections: Minimum connection pool size
-            max_connections: Maximum connection pool size
+            manager: DuckDBManager instance or path to database file.
         """
-        self.conninfo = f"postgresql://{user}:{password}@{host}:{port}/{database}"
-        self.min_connections = min_connections
-        self.max_connections = max_connections
-        self._connection = None
-        self._in_transaction = False
+        if isinstance(manager, str):
+            self.manager = DuckDBManager(manager)
+        elif manager is None:
+            self.manager = DuckDBManager()
+        else:
+            self.manager = manager
 
-        logger.info(f"Initialized spatial database connection to {host}:{port}/{database}")
-
-    @contextmanager
-    def get_connection(self) -> Generator[psycopg.Connection, None, None]:
-        """
-        Context manager for database connections.
-
-        Yields:
-            psycopg.Connection: Active database connection
-        """
-        conn = None
-        try:
-            conn = psycopg.connect(self.conninfo)
-            yield conn
-            conn.commit()
-        except Exception as e:
-            if conn:
-                conn.rollback()
-            logger.error(f"Database connection error: {e}")
-            raise
-        finally:
-            if conn:
-                conn.close()
-
-    def check_postgis_enabled(self) -> bool:
-        """
-        Verify PostGIS extension is installed and enabled.
-
-        Returns:
-            bool: True if PostGIS is available
-        """
-        try:
-            with self.get_connection() as conn:
-                cur = conn.cursor()
-                cur.execute("SELECT EXISTS(SELECT 1 FROM pg_extension WHERE extname='postgis')")
-                result = cur.fetchone()
-                is_enabled = result[0] if result else False
-
-            if is_enabled:
-                logger.info("PostGIS extension verified")
-            else:
-                logger.warning("PostGIS extension not found")
-
-            return is_enabled
-        except Exception as e:
-            logger.error(f"Error checking PostGIS: {e}")
-            return False
+        logger.info("Initialized DuckDB Spatial connection")
 
     def create_spatial_tables(self) -> None:
-        """
-        Create spatial tables for sidewalk segments, blocks, inspections, and material zones.
+        """Create spatial tables for sidewalk infrastructure."""
+        # Sidewalk segments table
+        self.manager.conn.execute("""
+            CREATE TABLE IF NOT EXISTS sidewalk_segments (
+                segment_id VARCHAR PRIMARY KEY,
+                geometry GEOMETRY NOT NULL,
+                material_type VARCHAR,
+                condition_score DOUBLE,
+                borough VARCHAR,
+                block_id VARCHAR,
+                district VARCHAR,
+                council_district VARCHAR,
+                length_meters DOUBLE,
+                last_inspection TIMESTAMP,
+                defects INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
 
-        Note: This is a convenience method. Use SQL migrations for production.
-        """
-        with self.get_connection() as conn:
-            cur = conn.cursor()
+        # Blocks table
+        self.manager.conn.execute("""
+            CREATE TABLE IF NOT EXISTS blocks (
+                block_id VARCHAR PRIMARY KEY,
+                geometry GEOMETRY NOT NULL,
+                borough VARCHAR,
+                district VARCHAR,
+                council_district VARCHAR,
+                area_square_meters DOUBLE,
+                segments_count INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
 
-            # Sidewalk segments table
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS sidewalk_segments (
-                    segment_id VARCHAR(50) PRIMARY KEY,
-                    geometry GEOMETRY(LINESTRING, 4326) NOT NULL,
-                    material_type VARCHAR(50),
-                    condition_score FLOAT CHECK (condition_score >= 0 AND condition_score <= 100),
-                    borough VARCHAR(50),
-                    block_id VARCHAR(50),
-                    district VARCHAR(50),
-                    council_district VARCHAR(50),
-                    length_meters FLOAT,
-                    last_inspection TIMESTAMP,
-                    defects INT DEFAULT 0,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
+        # Inspections table
+        self.manager.conn.execute("""
+            CREATE TABLE IF NOT EXISTS inspections (
+                inspection_id VARCHAR PRIMARY KEY,
+                geometry GEOMETRY NOT NULL,
+                segment_id VARCHAR,
+                inspector_id VARCHAR,
+                timestamp TIMESTAMP NOT NULL,
+                defect_type VARCHAR,
+                severity VARCHAR,
+                photo_url VARCHAR,
+                gps_accuracy_meters DOUBLE DEFAULT 5.0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
 
-            # Spatial index on segments
-            cur.execute("""
-                CREATE INDEX IF NOT EXISTS idx_segments_geom
-                ON sidewalk_segments USING GIST(geometry)
-            """)
+        # Material zones table
+        self.manager.conn.execute("""
+            CREATE TABLE IF NOT EXISTS material_zones (
+                zone_id VARCHAR PRIMARY KEY,
+                geometry GEOMETRY NOT NULL,
+                material_type VARCHAR,
+                area_square_meters DOUBLE,
+                segment_count INTEGER DEFAULT 0,
+                average_condition DOUBLE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
 
-            # BRIN index for time-series spatial queries
-            cur.execute("""
-                CREATE INDEX IF NOT EXISTS idx_segments_time_geom
-                ON sidewalk_segments USING BRIN(last_inspection, geometry)
-            """)
-
-            # Blocks table
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS blocks (
-                    block_id VARCHAR(50) PRIMARY KEY,
-                    geometry GEOMETRY(POLYGON, 4326) NOT NULL,
-                    borough VARCHAR(50),
-                    district VARCHAR(50),
-                    council_district VARCHAR(50),
-                    area_square_meters FLOAT,
-                    segments_count INT DEFAULT 0,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-
-            cur.execute("""
-                CREATE INDEX IF NOT EXISTS idx_blocks_geom
-                ON blocks USING GIST(geometry)
-            """)
-
-            # Inspections table
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS inspections (
-                    inspection_id VARCHAR(50) PRIMARY KEY,
-                    geometry GEOMETRY(POINT, 4326) NOT NULL,
-                    segment_id VARCHAR(50) REFERENCES sidewalk_segments(segment_id),
-                    inspector_id VARCHAR(50),
-                    timestamp TIMESTAMP NOT NULL,
-                    defect_type VARCHAR(100),
-                    severity VARCHAR(20),
-                    photo_url TEXT,
-                    gps_accuracy_meters FLOAT DEFAULT 5.0,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-
-            cur.execute("""
-                CREATE INDEX IF NOT EXISTS idx_inspections_geom
-                ON inspections USING GIST(geometry)
-            """)
-
-            cur.execute("""
-                CREATE INDEX IF NOT EXISTS idx_inspections_timestamp
-                ON inspections(timestamp)
-            """)
-
-            # Material zones table
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS material_zones (
-                    zone_id VARCHAR(50) PRIMARY KEY,
-                    geometry GEOMETRY(MULTIPOLYGON, 4326) NOT NULL,
-                    material_type VARCHAR(50),
-                    area_square_meters FLOAT,
-                    segment_count INT DEFAULT 0,
-                    average_condition FLOAT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-
-            cur.execute("""
-                CREATE INDEX IF NOT EXISTS idx_material_zones_geom
-                ON material_zones USING GIST(geometry)
-            """)
-
-            logger.info("Spatial tables created successfully")
+        logger.info("DuckDB spatial tables created successfully")
 
     def insert_segment(self, segment: SpatialSegment) -> bool:
-        """
-        Insert a sidewalk segment into the database.
-
-        Args:
-            segment: SpatialSegment instance
-
-        Returns:
-            bool: True if insertion successful
-        """
+        """Insert a sidewalk segment."""
         try:
-            with self.get_connection() as conn:
-                cur = conn.cursor()
-                cur.execute(
-                    sql.SQL("""
-                        INSERT INTO sidewalk_segments
-                        (segment_id, geometry, material_type, condition_score,
-                         borough, block_id, district, council_district,
-                         length_meters, last_inspection, defects)
-                        VALUES (%s, ST_GeomFromText(%s, %s), %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        ON CONFLICT (segment_id) DO UPDATE SET
-                            geometry = EXCLUDED.geometry,
-                            condition_score = EXCLUDED.condition_score,
-                            updated_at = CURRENT_TIMESTAMP
-                    """),
-                    (
-                        segment.segment_id,
-                        segment.geometry.geometry.wkt,
-                        segment.geometry.srid,
-                        segment.material_type,
-                        segment.condition_score,
-                        segment.borough,
-                        segment.block_id,
-                        segment.district,
-                        segment.council_district,
-                        segment.length_meters,
-                        segment.last_inspection,
-                        segment.defects,
-                    )
+            self.manager.conn.execute(
+                """
+                INSERT INTO sidewalk_segments
+                (segment_id, geometry, material_type, condition_score,
+                 borough, block_id, district, council_district,
+                 length_meters, last_inspection, defects)
+                VALUES (?, ST_GeomFromText(?), ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT (segment_id) DO UPDATE SET
+                    geometry = EXCLUDED.geometry,
+                    condition_score = EXCLUDED.condition_score,
+                    updated_at = CURRENT_TIMESTAMP
+                """,
+                (
+                    segment.segment_id,
+                    segment.geometry.to_wkt(),
+                    segment.material_type,
+                    segment.condition_score,
+                    segment.borough,
+                    segment.block_id,
+                    segment.district,
+                    segment.council_district,
+                    segment.length_meters,
+                    segment.last_inspection,
+                    segment.defects,
                 )
-                return True
+            )
+            return True
         except Exception as e:
             logger.error(f"Error inserting segment {segment.segment_id}: {e}")
             return False
 
     def insert_block(self, block: SpatialBlock) -> bool:
-        """
-        Insert a block into the database.
-
-        Args:
-            block: SpatialBlock instance
-
-        Returns:
-            bool: True if insertion successful
-        """
+        """Insert a block."""
         try:
-            with self.get_connection() as conn:
-                cur = conn.cursor()
-                cur.execute(
-                    """
-                    INSERT INTO blocks
-                    (block_id, geometry, borough, district, council_district,
-                     area_square_meters, segments_count)
-                    VALUES (%s, ST_GeomFromText(%s, %s), %s, %s, %s, %s, %s)
-                    ON CONFLICT (block_id) DO UPDATE SET
-                        geometry = EXCLUDED.geometry,
-                        updated_at = CURRENT_TIMESTAMP
-                    """,
-                    (
-                        block.block_id,
-                        block.geometry.geometry.wkt,
-                        block.geometry.srid,
-                        block.borough,
-                        block.district,
-                        block.council_district,
-                        block.area_square_meters,
-                        block.segments_count,
-                    )
+            self.manager.conn.execute(
+                """
+                INSERT INTO blocks
+                (block_id, geometry, borough, district, council_district,
+                 area_square_meters, segments_count)
+                VALUES (?, ST_GeomFromText(?), ?, ?, ?, ?, ?)
+                ON CONFLICT (block_id) DO UPDATE SET
+                    geometry = EXCLUDED.geometry
+                """,
+                (
+                    block.block_id,
+                    block.geometry.to_wkt(),
+                    block.borough,
+                    block.district,
+                    block.council_district,
+                    block.area_square_meters,
+                    block.segments_count,
                 )
-                return True
+            )
+            return True
         except Exception as e:
             logger.error(f"Error inserting block {block.block_id}: {e}")
             return False
 
     def insert_inspection(self, inspection: SpatialInspection) -> bool:
-        """
-        Insert an inspection record into the database.
-
-        Args:
-            inspection: SpatialInspection instance
-
-        Returns:
-            bool: True if insertion successful
-        """
+        """Insert an inspection record."""
         try:
-            with self.get_connection() as conn:
-                cur = conn.cursor()
-                cur.execute(
-                    """
-                    INSERT INTO inspections
-                    (inspection_id, geometry, segment_id, inspector_id,
-                     timestamp, defect_type, severity, photo_url, gps_accuracy_meters)
-                    VALUES (%s, ST_GeomFromText(%s, %s), %s, %s, %s, %s, %s, %s, %s)
-                    """,
-                    (
-                        inspection.inspection_id,
-                        inspection.geometry.geometry.wkt,
-                        inspection.geometry.srid,
-                        inspection.segment_id,
-                        inspection.inspector_id,
-                        inspection.timestamp,
-                        inspection.defect_type,
-                        inspection.severity,
-                        inspection.photo_url,
-                        inspection.gps_accuracy_meters,
-                    )
+            self.manager.conn.execute(
+                """
+                INSERT INTO inspections
+                (inspection_id, geometry, segment_id, inspector_id,
+                 timestamp, defect_type, severity, photo_url, gps_accuracy_meters)
+                VALUES (?, ST_GeomFromText(?), ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT (inspection_id) DO NOTHING
+                """,
+                (
+                    inspection.inspection_id,
+                    inspection.geometry.to_wkt(),
+                    inspection.segment_id,
+                    inspection.inspector_id,
+                    inspection.timestamp,
+                    inspection.defect_type,
+                    inspection.severity,
+                    inspection.photo_url,
+                    inspection.gps_accuracy_meters,
                 )
-                return True
+            )
+            return True
         except Exception as e:
             logger.error(f"Error inserting inspection {inspection.inspection_id}: {e}")
             return False
 
     def insert_material_zone(self, zone: SpatialMaterialZone) -> bool:
-        """
-        Insert a material zone into the database.
-
-        Args:
-            zone: SpatialMaterialZone instance
-
-        Returns:
-            bool: True if insertion successful
-        """
+        """Insert a material zone."""
         try:
-            with self.get_connection() as conn:
-                cur = conn.cursor()
-                cur.execute(
-                    """
-                    INSERT INTO material_zones
-                    (zone_id, geometry, material_type, area_square_meters,
-                     segment_count, average_condition)
-                    VALUES (%s, ST_GeomFromText(%s, %s), %s, %s, %s, %s)
-                    ON CONFLICT (zone_id) DO UPDATE SET
-                        geometry = EXCLUDED.geometry,
-                        average_condition = EXCLUDED.average_condition
-                    """,
-                    (
-                        zone.zone_id,
-                        zone.geometry.geometry.wkt,
-                        zone.geometry.srid,
-                        zone.material_type,
-                        zone.area_square_meters,
-                        zone.segment_count,
-                        zone.average_condition,
-                    )
+            self.manager.conn.execute(
+                """
+                INSERT INTO material_zones
+                (zone_id, geometry, material_type, area_square_meters,
+                 segment_count, average_condition)
+                VALUES (?, ST_GeomFromText(?), ?, ?, ?, ?)
+                ON CONFLICT (zone_id) DO UPDATE SET
+                    geometry = EXCLUDED.geometry,
+                    average_condition = EXCLUDED.average_condition
+                """,
+                (
+                    zone.zone_id,
+                    zone.geometry.to_wkt(),
+                    zone.material_type,
+                    zone.area_square_meters,
+                    zone.segment_count,
+                    zone.average_condition,
                 )
-                return True
+            )
+            return True
         except Exception as e:
             logger.error(f"Error inserting material zone {zone.zone_id}: {e}")
             return False
 
+    def find_conflicts(self, buffer_meters: float) -> pd.DataFrame:
+        """
+        Find conflicts between sidewalk segments and inspections.
+
+        Uses ST_Intersects with a buffer on segments to identify inspections
+        that fall within the specified proximity.
+        """
+        # Conversion for 4326 (WGS84) if necessary - 1m approx 0.000009 degrees
+        # For simplicity in this implementation, we use the buffer directly.
+        # In production with 4326, we'd use a more precise distance calculation.
+        conv = 0.000009
+        buffer_val = buffer_meters * conv
+
+        query = """
+            SELECT
+                s.segment_id,
+                i.inspection_id,
+                i.defect_type,
+                i.severity,
+                ST_Distance(s.geometry, i.geometry) as raw_distance
+            FROM sidewalk_segments s
+            JOIN inspections i ON ST_Intersects(ST_Buffer(s.geometry, ?), i.geometry)
+        """
+        return self.manager.conn.execute(query, [buffer_val]).df()
+
     def get_segment(self, segment_id: str) -> SpatialSegment | None:
-        """
-        Retrieve a segment by ID.
-
-        Args:
-            segment_id: Segment identifier
-
-        Returns:
-            SpatialSegment or None if not found
-        """
+        """Retrieve a segment by ID."""
         try:
-            with self.get_connection() as conn:
-                cur = conn.cursor()
-                cur.execute(
-                    """
-                    SELECT segment_id, ST_AsText(geometry), material_type,
-                           condition_score, borough, block_id, district,
-                           council_district, length_meters, last_inspection, defects
-                    FROM sidewalk_segments
-                    WHERE segment_id = %s
-                    """,
-                    (segment_id,)
-                )
-                row = cur.fetchone()
+            res = self.manager.conn.execute(
+                """
+                SELECT segment_id, ST_AsText(geometry), material_type,
+                       condition_score, borough, block_id, district,
+                       council_district, length_meters, last_inspection, defects
+                FROM sidewalk_segments
+                WHERE segment_id = ?
+                """,
+                [segment_id]
+            ).fetchone()
 
-                if row:
-                    return SpatialSegment(
-                        segment_id=row[0],
-                        geometry=SpatialGeometry(
-                            LineString.from_wkt(row[1]),
-                            srid=SRID_WGS84
-                        ),
-                        material_type=row[2],
-                        condition_score=row[3],
-                        borough=row[4],
-                        block_id=row[5],
-                        district=row[6],
-                        council_district=row[7],
-                        length_meters=row[8],
-                        last_inspection=row[9],
-                        defects=row[10] or 0,
-                    )
+            if res:
+                from shapely.wkt import loads
+                return SpatialSegment(
+                    segment_id=res[0],
+                    geometry=SpatialGeometry(loads(res[1])),
+                    material_type=res[2],
+                    condition_score=res[3],
+                    borough=res[4],
+                    block_id=res[5],
+                    district=res[6],
+                    council_district=res[7],
+                    length_meters=res[8],
+                    last_inspection=res[9],
+                    defects=res[10] or 0,
+                )
         except Exception as e:
             logger.error(f"Error retrieving segment {segment_id}: {e}")
-
         return None
-
-    def vacuum_and_analyze(self) -> None:
-        """Perform VACUUM and ANALYZE for query optimization."""
-        try:
-            with self.get_connection() as conn:
-                cur = conn.cursor()
-                cur.execute("VACUUM ANALYZE")
-                logger.info("VACUUM and ANALYZE completed")
-        except Exception as e:
-            logger.error(f"Error during VACUUM: {e}")
 
 
 class SpatialDataModel:
     """
     High-level spatial data model for NYC sidewalk infrastructure.
 
-    Provides type-safe abstractions for spatial entities and manages
-    persistence to PostGIS database.
+    Manages persistence to DuckDB Spatial database.
     """
 
-    def __init__(self, db_connection: SpatialDatabaseConnection) -> None:
+    def __init__(self, db_connection: DuckDBSpatialConnection) -> None:
         """
         Initialize spatial data model.
 
         Args:
-            db_connection: SpatialDatabaseConnection instance
+            db_connection: DuckDBSpatialConnection instance
         """
         self.db = db_connection
         self._segments: dict[str, SpatialSegment] = {}
@@ -633,166 +466,64 @@ class SpatialDataModel:
         self._zones: dict[str, SpatialMaterialZone] = {}
 
     def add_segment(self, segment: SpatialSegment) -> bool:
-        """Add segment to model and persist to database."""
+        """Add segment and persist to database."""
         self._segments[segment.segment_id] = segment
         return self.db.insert_segment(segment)
 
     def add_block(self, block: SpatialBlock) -> bool:
-        """Add block to model and persist to database."""
+        """Add block and persist to database."""
         self._blocks[block.block_id] = block
         return self.db.insert_block(block)
 
     def add_inspection(self, inspection: SpatialInspection) -> bool:
-        """Add inspection to model and persist to database."""
+        """Add inspection and persist to database."""
         self._inspections[inspection.inspection_id] = inspection
         return self.db.insert_inspection(inspection)
 
     def add_material_zone(self, zone: SpatialMaterialZone) -> bool:
-        """Add material zone to model and persist to database."""
+        """Add material zone and persist to database."""
         self._zones[zone.zone_id] = zone
         return self.db.insert_material_zone(zone)
-
-    def get_segment(self, segment_id: str) -> SpatialSegment | None:
-        """Retrieve segment from cache or database."""
-        if segment_id in self._segments:
-            return self._segments[segment_id]
-        return self.db.get_segment(segment_id)
-
-    def segments_count(self) -> int:
-        """Get total number of segments."""
-        return len(self._segments)
-
-    def blocks_count(self) -> int:
-        """Get total number of blocks."""
-        return len(self._blocks)
-
-    def inspections_count(self) -> int:
-        """Get total number of inspections."""
-        return len(self._inspections)
 
 
 @dataclass
 class SpatialQuery:
-    """Query parameters for spatial searches.
-
-    Encapsulates search criteria for geographic area queries.
-    """
+    """Query parameters for spatial searches."""
     bounds: tuple[float, float, float, float] | None = None
-    """Bounding box (min_lon, min_lat, max_lon, max_lat)"""
-
     center: tuple[float, float] | None = None
-    """Center point (lon, lat)"""
-
     radius: float | None = None
-    """Search radius in meters"""
-
     filter_type: str = "intersect"
-    """Filter type: 'intersect', 'contains', 'within'"""
 
 
 class SpatialIndex:
-    """Spatial index for efficient geographic queries."""
+    """Spatial index abstraction."""
 
     def __init__(self) -> None:
-        """Initialize the spatial index."""
         self._index = {}
 
     def build_index(self, data: list) -> bool:
-        """Build the spatial index from data.
-
-        Args:
-            data: List of spatial objects to index
-
-        Returns:
-            True if index built successfully, False otherwise
-        """
         self._index = {str(i): item for i, item in enumerate(data)}
         return True
 
     def query_by_bounds(self, bounds: tuple[float, float, float, float]) -> list:
-        """Query objects within bounding box.
-
-        Args:
-            bounds: Bounding box (min_lon, min_lat, max_lon, max_lat)
-
-        Returns:
-            List of objects within bounds
-        """
-        return list(self._index.values())
-
-    def query_by_distance(self, center: tuple[float, float], radius: float) -> list:
-        """Query objects within distance radius.
-
-        Args:
-            center: Center point (lon, lat)
-            radius: Distance in meters
-
-        Returns:
-            List of objects within distance
-        """
         return list(self._index.values())
 
 
 class GeometryHandler:
-    """Handler for geometry validation and conversion."""
+    """Handler for geometry validation."""
 
     def validate_geometry(self, geometry: Any) -> bool:
-        """Validate geometry object.
-
-        Args:
-            geometry: Geometry object to validate
-
-        Returns:
-            True if geometry is valid, False otherwise
-        """
         return True
 
     def convert_format(self, geometry: Any, target_format: str) -> Any:
-        """Convert geometry to different format.
-
-        Args:
-            geometry: Geometry to convert
-            target_format: Target format (wkt, geojson, ewkt, etc.)
-
-        Returns:
-            Geometry in target format
-        """
-        return geometry
-
-    def buffer(self, geometry: Any, distance: float) -> Any:
-        """Create buffer zone around geometry.
-
-        Args:
-            geometry: Geometry to buffer
-            distance: Buffer distance
-
-        Returns:
-            Buffered geometry
-        """
         return geometry
 
 
 def create_spatial_index(data: list) -> SpatialIndex:
-    """Create a spatial index from data.
-
-    Args:
-        data: List of spatial objects
-
-    Returns:
-        Initialized SpatialIndex
-    """
     index = SpatialIndex()
     index.build_index(data)
     return index
 
 
 def query_geographic_area(query: SpatialQuery) -> list:
-    """Query geographic area with spatial criteria.
-
-    Args:
-        query: SpatialQuery with search parameters
-
-    Returns:
-        List of objects matching the query
-    """
     return []

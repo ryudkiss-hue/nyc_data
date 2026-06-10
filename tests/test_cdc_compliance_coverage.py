@@ -14,7 +14,6 @@ from socrata_toolkit.cdc.compliance import (
     ReconciliationResult,
 )
 
-
 # ---------------------------------------------------------------------------
 # Dataclass tests — no DB required
 # ---------------------------------------------------------------------------

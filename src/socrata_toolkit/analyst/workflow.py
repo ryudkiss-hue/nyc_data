@@ -175,9 +175,9 @@ def _stage_duckdb(profile: AnalystProfile, frames: dict[str, pd.DataFrame]) -> N
 
         mgr.close()
 
-    except Exception:
-
-        pass
+    except Exception as exc:
+        import logging
+        logging.getLogger(__name__).error(f"DuckDB Staging Failed: {exc}")
 
 
 
@@ -421,7 +421,9 @@ def run_analyst_pack(
 
         try:
 
-            export_construction_list(construction, str(result.pack_dir / "construction_list.xlsx"))
+            _cl_path = str(result.pack_dir / "construction_list.xlsx")
+            export_construction_list(construction, _cl_path)
+            result.artifacts["construction_list"] = _cl_path
 
         except Exception:
 

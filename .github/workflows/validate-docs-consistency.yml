@@ -1,0 +1,100 @@
+name: Validate Documentation Consistency
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'CLAUDE.md'
+      - 'data/sla_config.json'
+      - 'src/socrata_toolkit/governance/core.py'
+      - 'tests/test_governance_weights.py'
+      - 'tests/test_sla_config.py'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'CLAUDE.md'
+      - 'data/sla_config.json'
+      - 'src/socrata_toolkit/governance/core.py'
+      - 'tests/test_governance_weights.py'
+      - 'tests/test_sla_config.py'
+
+jobs:
+  validate-consistency:
+    runs-on: ubuntu-latest
+    name: Check documentation & code consistency
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Test governance weights are constants
+        run: |
+          python -m pytest tests/test_governance_weights.py -v
+
+      - name: Test SLA config is valid and consistent
+        run: |
+          python -m pytest tests/test_sla_config.py -v
+
+      - name: Validate SLA config JSON
+        run: |
+          python -c "import json; json.load(open('data/sla_config.json')); print('✅ SLA config JSON is valid')"
+
+      - name: Check for hardcoded quality weights
+        run: |
+          # Ensure no hardcoded 0.35, 0.25, 0.25, 0.15 in governance code
+          if grep -r "0\.35\|0\.25\|0\.15" src/socrata_toolkit/governance/core.py | grep -v "QUALITY_WEIGHT"; then
+            echo "❌ Found hardcoded quality weights in governance/core.py"
+            echo "   Use QUALITY_WEIGHT_* constants instead"
+            exit 1
+          fi
+          echo "✅ No hardcoded quality weights found"
+
+      - name: Check SLA thresholds in CLAUDE.md match config
+        run: |
+          python -c "
+          import json
+
+          # Load config
+          with open('data/sla_config.json') as f:
+              config = json.load(f)
+
+          high = config['sla_thresholds']['HIGH']['days']
+          medium = config['sla_thresholds']['MEDIUM']['days']
+          low = config['sla_thresholds']['LOW']['days']
+
+          # Load CLAUDE.md
+          with open('CLAUDE.md') as f:
+              claude = f.read()
+
+          # Check references (loose match)
+          if str(high) not in claude:
+              print(f'❌ HIGH SLA threshold ({high}) not found in CLAUDE.md')
+              exit(1)
+          if str(medium) not in claude:
+              print(f'❌ MEDIUM SLA threshold ({medium}) not found in CLAUDE.md')
+              exit(1)
+          if str(low) not in claude:
+              print(f'❌ LOW SLA threshold ({low}) not found in CLAUDE.md')
+              exit(1)
+
+          print(f'✅ All SLA thresholds referenced in CLAUDE.md')
+          print(f'   HIGH={high}d, MEDIUM={medium}d, LOW={low}d')
+          "
+
+      - name: Report validation results
+        if: success()
+        run: |
+          echo "✅ All documentation consistency checks passed"
+          echo "   - Governance weights: verified constants"
+          echo "   - SLA thresholds: verified consistency"
+          echo "   - No hardcoded values: verified"

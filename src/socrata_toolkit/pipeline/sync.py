@@ -6,6 +6,7 @@ import logging
 from typing import TYPE_CHECKING
 
 import pandas as pd
+import requests
 
 from ..core import (
     COL_AT_ID,
@@ -50,14 +51,26 @@ def sync_dataset(
     except Exception:
         logger.info("Initializing table %s for first-time sync.", table_name)
 
-    where = f"{updated_col} > '{last_updated}'" if last_updated else None
-    order = f"{updated_col} ASC"
+    # Probe for updated_col existence (prevents 400 Bad Request if guessed wrong)
+    try:
+        probe_url = f"https://{domain}/resource/{fourfour}.json?$select={updated_col}&$limit=1"
+        resp = requests.get(probe_url, headers=client._headers(), timeout=10)
+        if resp.status_code != 200:
+            logger.warning("Column %s not found in %s. Falling back to non-incremental sync.", updated_col, fourfour)
+            updated_col = None
+    except Exception:
+        updated_col = None
+
+    if updated_col:
+        where = f"{updated_col} > '{last_updated}'" if last_updated else None
+        order = f"{updated_col} ASC"
+    else:
+        where = None
+        order = None
 
     total_to_fetch = None
     if tqdm:
         try:
-            import requests
-
             count_params = {"$select": "count(*)"}
             if where:
                 count_params["$where"] = where
@@ -108,14 +121,23 @@ def sync_dataset(
                 table_exists = any(t[0] == table_name for t in existing_tables)
                 manager.conn.register("temp_df", df_batch)
                 if table_exists:
-                    manager.query(f'INSERT INTO "{table_name}" SELECT * FROM temp_df')
+                    # Schema Evolution for non-PK tables
+                    existing_cols = [c[1] for c in manager.conn.execute(f'PRAGMA table_info("{table_name}")').fetchall()]
+                    for col in df_batch.columns:
+                        if col not in existing_cols:
+                            from ..core.drift_logger import log_column_added
+                            logger.info("Adding missing column %s to table %s", col, table_name)
+                            manager.conn.execute(f'ALTER TABLE "{table_name}" ADD COLUMN "{col}" VARCHAR;')
+                            log_column_added(table_name, col)
+
+                    manager.query(f'INSERT INTO "{table_name}" BY NAME SELECT * FROM temp_df')
                 else:
-                        # Sanitize identifier: strip embedded quotes before quoting
+                    # Sanitize identifier: strip embedded quotes before quoting
                     safe_table = table_name.replace('"', '')
                     manager.conn.execute(f'CREATE TABLE "{safe_table}" AS SELECT * FROM temp_df')
 
             count += len(batch)
-            if pbar:
+            if pbar is not None:
                 pbar.update(len(batch))
                 rate = pbar.format_dict.get("rate")
                 if rate:
@@ -128,12 +150,31 @@ def sync_dataset(
 
     except (Exception, KeyboardInterrupt) as e:
         logger.exception("Sync fetch failed: %s", e)
-        if pbar:
+        if pbar is not None:
             pbar.close()
         manager.close()
         return count
 
-    if pbar:
+    if pbar is not None:
         pbar.close()
+
+    # --- Post-Sync Analytics Integration (Phase 2) ---
+    try:
+        if count > 0:
+            logger.info("Triggering post-sync DataQualityAudit for %s", table_name)
+            # We need to fetch the synced data to audit it
+            # For efficiency, we just query the recently synced rows or sample the table
+            full_df = repo.fetch_all(limit=10000) # Sample 10k rows
+
+            from ..analytics import log_analysis_result
+            from ..analytics.quality import DataQualityAudit
+
+            audit = DataQualityAudit()
+            audit_result = audit.run(df=full_df, table_name=table_name)
+
+            log_analysis_result(manager, audit_result)
+    except Exception as analytics_err:
+        logger.warning("Post-sync analytics failed for %s: %s", table_name, analytics_err)
+
     manager.close()
     return count

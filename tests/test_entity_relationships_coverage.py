@@ -9,7 +9,6 @@ from socrata_toolkit.entity.relationships import (
     RelationshipType,
 )
 
-
 # ---------------------------------------------------------------------------
 # RelationshipType enum
 # ---------------------------------------------------------------------------

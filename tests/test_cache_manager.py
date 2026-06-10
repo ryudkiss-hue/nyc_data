@@ -204,3 +204,64 @@ class TestCacheManifest:
         entry = cache_manager.cache_manifest()["inspection"]
         for field in ("path", "rows", "fetched_at", "expires_at", "ttl_hours"):
             assert field in entry, f"Missing field '{field}' in manifest entry"
+
+
+# ---------------------------------------------------------------------------
+# Ramp analysis caching
+# ---------------------------------------------------------------------------
+
+
+class TestRampAnalysisCaching:
+    def test_cache_ramp_corpus(self, cache_manager):
+        """Test caching a large ramp corpus DataFrame."""
+        # Create a large sample DataFrame (50k rows)
+        df = pd.DataFrame({
+            "corner_id": range(50000),
+            "borough": ["MN"] * 50000,
+            "total_complaints": [10] * 50000,
+            "resolved_complaints": [8] * 50000,
+        })
+        path = cache_manager.cache_ramp_corpus(df)
+        assert path.exists()
+        assert "ramp_full_corpus" in str(path)
+
+    def test_get_cached_ramp_corpus_hit(self, cache_manager):
+        """Test retrieving a cached ramp corpus."""
+        df = pd.DataFrame({
+            "corner_id": range(100),
+            "borough": ["BROOKLYN"] * 100,
+            "total_complaints": [5] * 100,
+            "resolved_complaints": [4] * 100,
+        })
+        cache_manager.cache_ramp_corpus(df)
+        cached = cache_manager.get_cached_ramp_corpus()
+        assert cached is not None
+        assert len(cached) == 100
+        assert list(cached.columns) == ["corner_id", "borough", "total_complaints", "resolved_complaints"]
+
+    def test_get_cached_ramp_corpus_miss(self, cache_manager):
+        """Test cache miss returns None."""
+        result = cache_manager.get_cached_ramp_corpus()
+        assert result is None
+
+    def test_ramp_corpus_ttl_168_hours(self, cache_manager):
+        """Test that ramp_full_corpus uses 168-hour TTL."""
+        df = pd.DataFrame({"corner_id": [1, 2, 3], "borough": ["MN", "BK", "QN"]})
+        cache_manager.cache_ramp_corpus(df)
+        manifest = cache_manager.cache_manifest()
+        entry = manifest["ramp_full_corpus"]
+        assert entry["ttl_hours"] == 168.0
+
+    def test_ramp_corpus_expires_with_ttl(self, cache_manager):
+        """Test that expired ramp corpus returns None."""
+        df = pd.DataFrame({"corner_id": [1, 2, 3], "borough": ["MN", "BK", "QN"]})
+        cache_manager.cache_ramp_corpus(df)
+
+        # Manually expire the cache
+        manifest = cache_manager.cache_manifest()
+        manifest["ramp_full_corpus"]["expires_at"] = "2000-01-01T00:00:00+00:00"
+        cache_manager._save_manifest(manifest)
+
+        # Should return None
+        result = cache_manager.get_cached_ramp_corpus()
+        assert result is None

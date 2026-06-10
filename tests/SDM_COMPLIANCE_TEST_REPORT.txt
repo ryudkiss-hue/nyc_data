@@ -1,0 +1,163 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║        NYC STREET DESIGN MANUAL 4th EDITION COMPLIANCE TEST REPORT             ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+TEST EXECUTION SUMMARY
+──────────────────────────────────────────────────────────────────────────────────
+Total Tests:        29
+Passed:             14 ✅
+Failed:             15 ⚠️
+Success Rate:       48%
+
+TEST RESULTS BY CATEGORY
+──────────────────────────────────────────────────────────────────────────────────
+
+✅ PASSING (14 tests)
+──────────────────────────────────────────────────────────────────────────────────
+✓ Section 4.1 Hot Mix Asphalt - Standard (all design specs verified)
+✓ Section 4.1 Asphalt Maintenance Activities
+✓ Section 4.1 Asphalt Climate Adjustment
+✓ Section 4.2 Portland Cement Concrete (all design specs verified)
+✓ Section 4.2 Concrete longer lifecycle than asphalt
+✓ Section 4.4 Natural Stone/Bluestone (basic checks)
+✓ Section 5.1 Accessible Route Width (4 feet minimum)
+✓ Section 6.1 CFR 36.305(b) Ground Surfaces
+✓ Material Definitions Loaded
+✓ Material Maintenance Frequency
+✓ ADA Rules Severity Classification
+✓ Metadata Documentation
+✓ Sections Documented
+✓ Source Documentation Framework
+
+
+⚠️  FAILING (15 tests) — THESE INDICATE GAPS TO FILL
+──────────────────────────────────────────────────────────────────────────────────
+
+MATERIAL SPECIFICATION GAPS:
+├─ ⚠️ Section 4.3 Permeable Asphalt
+│  └─ Missing: porosity_percent, infiltration_in_hr in design_standards
+│
+├─ ⚠️ Section 4.3 Pervious Concrete
+│  └─ Missing: infiltration_in_hr in design_standards
+│
+├─ ⚠️ Section 4.4 Clay Brick Pavers
+│  └─ Issue: Category is "brick_stone" not "specialty"
+│  └─ Missing: brick dimensions in design_standards
+│
+└─ ⚠️ Section 4.5 ADA Truncated Domes
+   └─ Missing: spacing_inches in design_standards
+
+ADA COMPLIANCE RULE GAPS:
+├─ ⚠️ Section 5.2 Longitudinal Slope
+│  └─ Missing: max_slope_percent parameter
+│
+├─ ⚠️ Section 5.3 Cross Slope
+│  └─ Rule ADA-1.2.3 not found (not defined)
+│
+├─ ⚠️ Section 5.5 Changes in Level
+│  └─ Missing: max_vertical_without_bevel_inches
+│  └─ Rules ADA-1.6.2, ADA-1.6.3 not found
+│
+├─ ⚠️ Section 6.1 Slip Resistance
+│  └─ Missing: min_bpn_new_installation parameter
+│  └─ Missing: material-specific BPN values
+│
+└─ ⚠️ Section 6.2 Surface Firmness
+   └─ Missing: max_hole_diameter_inches, max_vertical_movement_inches
+
+SEVERITY CLASSIFICATION GAPS:
+├─ ⚠️ ADA Rules Missing CRITICAL Severity
+│  └─ Width (ADA-1.2.1) should be CRITICAL but is not marked
+│
+└─ ⚠️ Required Rules Not Found
+   └─ ADA-1.2.2 (Slope), ADA-1.2.3 (Cross Slope)
+
+REFERENCE ISSUES:
+└─ ⚠️ STONE_NATURAL constant not exported
+   └─ Need to make available in engineering module
+
+
+ACTION ITEMS
+──────────────────────────────────────────────────────────────────────────────────
+
+HIGH PRIORITY (Core Material Specs):
+[ ] Add infiltration_in_hr to permeable/pervious specs
+[ ] Add slip resistance values (BPN) to all materials
+[ ] Fix brick category from "brick_stone" to "specialty"
+[ ] Export missing material constants (STONE_NATURAL, BRICK_CLAY, etc.)
+
+MEDIUM PRIORITY (ADA Rule Definitions):
+[ ] Create ADA-1.2.2 (Longitudinal Slope) rule with max_slope_percent
+[ ] Create ADA-1.2.3 (Cross Slope) rule with max_cross_slope_percent
+[ ] Create ADA-1.6.2 (Bevel) rule with max_bevel_slope
+[ ] Create ADA-1.6.3 (Ramp) rule with max_ramp_slope_percent
+[ ] Add missing parameters to slip resistance rule
+
+LOW PRIORITY (Severity Classification):
+[ ] Mark Width (ADA-1.2.1) as CRITICAL instead of HIGH
+[ ] Review all ADA rule severities against CFR 36
+
+
+NEXT STEPS
+──────────────────────────────────────────────────────────────────────────────────
+
+1. VERIFY MANUAL SPECS
+   Download 4th Edition from https://www.nycstreetdesign.info/
+   Cross-check each failing test against official manual:
+
+   For each "FAILING" test:
+   ├─ Section 4.3 (Pages ?): Verify infiltration rates
+   ├─ Section 4.4 (Pages ?): Verify brick dimensions and category
+   ├─ Section 5.2-5.5 (Pages ?): Verify slope and change thresholds
+   ├─ Section 6.1 (Pages ?): Verify slip resistance by material
+   └─ Section 6.2 (Pages ?): Verify surface firmness thresholds
+
+2. UPDATE MATERIAL DEFINITIONS
+   File: src/socrata_toolkit/material/definitions.py
+   ├─ Add missing design_standards fields
+   ├─ Fix material categories
+   └─ Add material exports to src/socrata_toolkit/engineering/__init__.py
+
+3. CREATE MISSING ADA RULES
+   File: src/socrata_toolkit/standards/design.py
+   ├─ Create ADA-1.2.2, ADA-1.2.3
+   ├─ Create ADA-1.6.2, ADA-1.6.3
+   └─ Add missing parameters
+
+4. RUN TESTS AGAIN
+   pytest tests/test_nyc_sdm_4th_edition_compliance.py -v
+   Expected result: All 29 tests passing
+
+5. COMMIT WITH REFERENCES
+   [SDM-COMPLIANCE] Add complete 4th Edition spec validation
+   - Verified against: NYC SDM 4th Ed, Sections 4-6
+   - Manual pages: [list verified pages]
+   - All 29 compliance tests passing
+
+
+HOW TO USE THIS REPORT
+──────────────────────────────────────────────────────────────────────────────────
+
+1. EACH FAILING TEST IS A TODO
+   Each "⚠️" above represents work to be done. The test name tells you exactly
+   what spec to verify and update.
+
+2. TEST = SPECIFICATION DOCUMENTATION
+   These tests serve as:
+   ├─ Verification checklist (cross-reference manual each quarter)
+   ├─ Implementation guide (what fields/values are needed)
+   └─ Audit trail (what was verified and when)
+
+3. RUN TESTS QUARTERLY
+   bash scripts/verify_sdm_compliance.sh
+
+   If tests fail → Found a spec divergence → Update or investigate
+
+
+COMPLIANCE AUDIT TRAIL
+──────────────────────────────────────────────────────────────────────────────────
+Test File:          tests/test_nyc_sdm_4th_edition_compliance.py
+Manual Reference:   https://www.nycstreetdesign.info/ (4th Edition)
+Generated:          2024-06-05
+Maintenance Guide:  docs/sdm_compliance_maintenance_guide.md
+Status:             ⚠️ IN PROGRESS - Specs need verification and completion

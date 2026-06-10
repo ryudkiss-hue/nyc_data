@@ -1,4 +1,4 @@
-# NYC DOT Sidewalk Toolkit — analyst profile (example)
+# NYC DOT Socrata Toolkit — analyst profile (example)
 # Copy to config/analyst_profile.yaml (the wizard does this for you).
 # Run: socrata analyst run --profile config/analyst_profile.yaml
 

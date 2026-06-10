@@ -21,13 +21,14 @@ does not prevent the class from being instantiated.
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
-from unittest.mock import MagicMock, patch, call
-
-import pytest
 
 # Patch psycopg before importing the module under test
 import sys
+from datetime import datetime, timezone
+from unittest.mock import MagicMock, call, patch
+
+import pytest
+
 _psycopg_mock = MagicMock()
 sys.modules.setdefault("psycopg", _psycopg_mock)
 
@@ -40,7 +41,6 @@ from socrata_toolkit.lineage.core import (  # noqa: E402
     NodeType,
     TransformationNode,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers to build mock cursors / connections

@@ -228,6 +228,9 @@ class MaintenanceSchedule:
     """Maintenance activities mapped to intervals"""
 
 
+from .standards_v4 import MaterialTier
+
+
 @dataclass
 class MaterialSpecification:
     """Complete specification for a NYC street design material.
@@ -235,13 +238,6 @@ class MaterialSpecification:
     Encompasses design standards, maintenance cycles, lifecycle costs, environmental
     factors, and applicable regulatory requirements. Based on NYC Street Design Manual
     and industry standards (ASCE, ACI, NAPA).
-
-    Example:
-        >>> spec = MATERIAL_DEFINITIONS['ASPH_STANDARD']
-        >>> print(spec.name)
-        'Hot Mix Asphalt (HMA), 12.5mm SuperPave'
-        >>> print(f"Lifecycle: {spec.lifecycle_years} years")
-        >>> print(f"Maintenance: Seal every {spec.maintenance_schedule.routine_interval_years} years")
     """
 
     material_id: str
@@ -253,39 +249,41 @@ class MaterialSpecification:
     name: str
     """Full name (e.g., 'Hot Mix Asphalt, 12.5mm SuperPave')"""
 
-    description: str
+    tier: MaterialTier = MaterialTier.STANDARD
+    """NYC SDM 4th Ed classification (Standard, Distinctive, Historic, Pilot)"""
+
+    description: str = ""
     """Detailed description and use cases"""
 
-    design_standards: dict[str, Any]
-    """Design specifications (thickness, compaction, binder grade, etc.).
-    Example: {'thickness_inches': 2, 'compaction_percent': 96, 'binder_grade': 'PG58-28'}"""
+    design_standards: dict[str, Any] = field(default_factory=dict)
+    """Design specifications (thickness, compaction, binder grade, etc.)."""
 
-    maintenance_schedule: MaintenanceSchedule
+    maintenance_schedule: MaintenanceSchedule = field(default_factory=MaintenanceSchedule)
     """Maintenance intervals and lifecycle"""
 
-    lifecycle_years: int
+    lifecycle_years: int = 20
     """Expected lifespan in years under normal conditions"""
 
-    environmental_factors: dict[str, str]
-    """Environmental challenges (e.g., {'freeze_thaw': 'Critical', 'salt_exposure': 'High'})"""
+    environmental_factors: dict[str, str] = field(default_factory=dict)
+    """Environmental challenges (e.g., {'freeze_thaw': 'Critical'})"""
 
-    cost_per_sqft: float
+    cost_per_sqft: float = 0.0
     """Installation cost in USD per square foot"""
 
-    lifecycle_cost_per_sqft: float
-    """Total cost of ownership per square foot (installation + maintenance + replacement)"""
+    lifecycle_cost_per_sqft: float = 0.0
+    """Total cost of ownership per square foot"""
 
-    sustainability_score: float
+    sustainability_score: float = 0.0
     """0-100 score based on recycled content, durability, infiltration"""
 
-    carbon_footprint_kg_per_sqft: float
+    carbon_footprint_kg_per_sqft: float = 0.0
     """Lifecycle carbon emissions in kg CO2e per square foot"""
 
-    applicable_ada_rules: list[str]
+    applicable_ada_rules: list[str] = field(default_factory=list)
     """Which ADA rule IDs apply to this material"""
 
-    maintenance_procedures: dict[str, str]
-    """Maintenance activity descriptions (e.g., {'seal_coat': 'Hot asphalt emulsion applied...'})"""
+    maintenance_procedures: dict[str, str] = field(default_factory=dict)
+    """Maintenance activity descriptions"""
 
     nyc_code_references: list[str] = field(default_factory=list)
     """NYC Administrative Code citations"""
@@ -300,6 +298,7 @@ class MaterialSpecification:
         """Convert to dictionary for serialization."""
         data = asdict(self)
         data['category'] = self.category.value
+        data['tier'] = self.tier.value
         data['maintenance_schedule'] = asdict(self.maintenance_schedule)
         return data
 

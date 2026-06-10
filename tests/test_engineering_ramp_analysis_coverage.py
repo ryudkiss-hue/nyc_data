@@ -15,7 +15,6 @@ from socrata_toolkit.engineering.ramp_analysis import (
     RampCompletionReportGenerator,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------

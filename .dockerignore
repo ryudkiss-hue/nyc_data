@@ -24,3 +24,8 @@ airflow_app/config/__pycache__
 *.sqlite3
 *.wal
 material_costs_cache.json
+.cache/
+outputs/
+reports/
+*.ipynb
+*.log

@@ -921,14 +921,6 @@ def render_contracts_page() -> None:
     st.header("📋 Contract Analytics & Budget Tracker")
     st.caption("Contract progress, budget performance, productivity tracking, and reporting for SIM Program.")
 
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "📈 Contract Progress",
-        "💰 Budget Analysis",
-        "🏃 Productivity",
-        "📋 Dismissals & Correspondences",
-        "📥 Export & Reports",
-    ])
-
     # --- Contract data (upload only — no matching Socrata dataset) ---
     st.sidebar.markdown("**Contract Data**")
     st.sidebar.caption(
@@ -941,6 +933,53 @@ def render_contracts_page() -> None:
     else:
         df_contracts = pd.DataFrame()
         st.sidebar.info("No contract data loaded. Upload a file to begin.")
+
+    # --- New Layout: Executive Summary ---
+    st.markdown("### 🏛️ Executive Summary")
+    st.text(
+        "This dashboard provides a comprehensive view of the SIM Program's contract budget and schedule health, "
+        "highlighting high-risk contracts and operational hotspots for strategic intervention."
+    )
+    st.markdown("---")
+
+    # --- New Layout: Level 1 - Core Metrics (KPI Hierarchy) ---
+    st.markdown("### 📊 Level 1: Core KPI Metrics")
+    kpi_cont = st.container(border=True)
+    with kpi_cont:
+        c1, c2, c3, c4 = st.columns(4)
+        if not df_contracts.empty:
+            today = pd.Timestamp.today()
+            total = len(df_contracts)
+            total_awarded = df_contracts["awarded_value"].sum() if "awarded_value" in df_contracts.columns else 0
+            avg_pct = df_contracts["percent_complete"].mean() if "percent_complete" in df_contracts.columns else 0
+            behind = 0
+            if {"planned_end", "percent_complete"}.issubset(df_contracts.columns):
+                mask = (pd.to_datetime(df_contracts["planned_end"], errors="coerce") < today) & (df_contracts["percent_complete"] < 100)
+                behind = int(mask.sum())
+            c1.metric("Active Contracts", total)
+            c2.metric("Total Awarded", f"${total_awarded:,.0f}")
+            c3.metric("Avg Completion", f"{avg_pct:.1f}%")
+            c4.metric("Behind Schedule", behind)
+        else:
+            c1.metric("Active Contracts", "—")
+            c2.metric("Total Awarded", "—")
+            c3.metric("Avg Completion", "—")
+            c4.metric("Behind Schedule", "—")
+
+    # --- New Layout: Level 2 - Diagnostics ---
+    st.markdown("### 🔍 Level 2: Diagnostic Insights")
+    diag_cont = st.container()
+    with diag_cont:
+        st.info("Select a tab below for deeper diagnostic drill-downs.")
+    st.divider()
+
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "📈 Contract Progress",
+        "💰 Budget Analysis",
+        "🏃 Productivity",
+        "📋 Dismissals & Correspondences",
+        "📥 Export & Reports",
+    ])
 
     # --- Productivity data (Socrata or upload) ---
     st.sidebar.markdown("**Productivity Data**")
