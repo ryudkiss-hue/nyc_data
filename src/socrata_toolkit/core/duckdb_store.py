@@ -399,7 +399,7 @@ class DuckDBRepository:
                 f"AND table_name = '{self.table_name}'"
             ).fetchall()
         ]
-        
+
         if not existing_cols:
             # Fallback to PRAGMA if info_schema failed
             prefix = f'"{self.database}".' if self.database != "main" else ""

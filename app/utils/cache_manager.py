@@ -81,7 +81,7 @@ def _ttl_for(key: str) -> float:
 # [FIX 2] Transaction management helpers
 # ---------------------------------------------------------------------------
 
-def _get_tx_manager() -> "DuckDBManager":
+def _get_tx_manager() -> DuckDBManager:
     """Lazy singleton for transaction management.
 
     Returns a shared DuckDBManager instance for transactional writes.
@@ -95,7 +95,7 @@ def _get_tx_manager() -> "DuckDBManager":
     return _tx_manager
 
 
-def init_cache_audit_table(manager: "DuckDBManager | None" = None) -> None:
+def init_cache_audit_table(manager: DuckDBManager | None = None) -> None:
     """Create cache_audit table if it doesn't exist.
 
     [FIX 2] Call this once during app initialization to set up the audit log.
@@ -259,7 +259,7 @@ def _save_manifest_locked(manifest: dict[str, Any], lock_file: Any) -> None:
     try:
         # Atomic rename (OS-level atomicity, no partial state)
         Path(temp_path).replace(_MANIFEST_PATH)
-    except Exception as exc:
+    except Exception:
         # Clean up temp if rename fails
         try:
             Path(temp_path).unlink()
@@ -315,7 +315,7 @@ def cache_manifest(timeout: float = _MANIFEST_READ_TIMEOUT) -> dict[str, Any]:
                 return json.loads(_MANIFEST_PATH.read_text(encoding="utf-8"))
             else:
                 return {}
-        except (json.JSONDecodeError, IOError) as exc:
+        except (OSError, json.JSONDecodeError) as exc:
             # File is being written or corrupt, retry
             last_error = exc
             if time.time() - start_time > timeout:
@@ -372,7 +372,7 @@ def update_manifest(key: str, path: Path, rows: int, ttl_hours: float) -> None:
 def write_cache_atomic(
     key: str,
     df: pd.DataFrame,
-    manager: "DuckDBManager | None" = None,
+    manager: DuckDBManager | None = None,
 ) -> Path:
     """Write cache with transactional guarantee (all-or-nothing semantics).
 
@@ -418,7 +418,7 @@ def write_cache_atomic(
         # This can still fail (disk full, permission denied)
         try:
             df.to_parquet(temp_dest, index=False, compression="gzip")
-        except Exception as exc:
+        except Exception:
             # Cleanup temp file before rolling back
             if temp_dest.exists():
                 try:
@@ -431,7 +431,7 @@ def write_cache_atomic(
         # This succeeds or fails atomically; no partial state
         try:
             temp_dest.replace(dest)
-        except Exception as exc:
+        except Exception:
             # Cleanup temp file
             if temp_dest.exists():
                 try:

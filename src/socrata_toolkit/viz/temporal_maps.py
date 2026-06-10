@@ -27,7 +27,6 @@ from __future__ import annotations
 
 from typing import Any
 
-import numpy as np
 import pandas as pd
 
 __all__ = [
@@ -40,8 +39,8 @@ __all__ = [
 def _get_plotly():
     """Lazy import plotly."""
     try:
-        import plotly.graph_objects as go
         import plotly.express as px
+        import plotly.graph_objects as go
 
         return go, px
     except ImportError as exc:
