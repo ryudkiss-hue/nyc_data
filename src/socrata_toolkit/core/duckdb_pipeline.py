@@ -216,10 +216,12 @@ def _stage_table(
     staging_table: str,
     key_candidates: list[str],
     date_candidates: list[str],
+    conn: Optional[duckdb.DuckDBPyConnection] = None,
 ) -> dict:
     """Generic staging: dedup raw_table into staging_table (idempotent)."""
     try:
-        conn = get_duckdb_connection(_connection_path or DEFAULT_DB_PATH)
+        if conn is None:
+            conn = get_duckdb_connection(_connection_path or DEFAULT_DB_PATH)
         conn.execute("CREATE SCHEMA IF NOT EXISTS staging")
         columns = _existing_columns(conn, raw_table)
         raw_count = conn.execute(f"SELECT COUNT(*) FROM {raw_table}").fetchone()[0]
@@ -317,6 +319,59 @@ def stage_ramps() -> dict:
         _RAMP_KEY_CANDIDATES,
         _RAMP_DATE_CANDIDATES,
     )
+
+
+def stage_dataset(dataset_key: str, conn: Optional[duckdb.DuckDBPyConnection] = None) -> int:
+    """Generic staging for any dataset using config-driven column discovery.
+
+    Reads dataset_config.json to find key_candidates and date_candidates,
+    then uses DuckDB DESCRIBE to verify columns exist, and deduplicates
+    the raw table into staging. Works for all 26 datasets without hardcoding.
+
+    Args:
+        dataset_key: Key in SOCRATA_DATASETS (e.g., 'inspection', 'street_permits')
+        conn: Optional DuckDB connection. If None, uses the module-level connection.
+
+    Returns:
+        Row count in staging table after dedup.
+
+    Raises:
+        FileNotFoundError: If dataset_config.json not found.
+        ValueError: If no primary key column found.
+        Exception: If DuckDB operations fail.
+    """
+    import json
+
+    if conn is None:
+        conn = get_duckdb_connection(_connection_path or DEFAULT_DB_PATH)
+
+    # Load config
+    config_path = Path("data/dataset_config.json")
+    if not config_path.exists():
+        config_path = Path(__file__).parent.parent.parent.parent / "data" / "dataset_config.json"
+    with open(config_path) as f:
+        config = json.load(f)
+
+    if dataset_key not in config:
+        raise ValueError(f"Dataset {dataset_key} not found in config")
+
+    ds_config = config[dataset_key]
+    key_candidates = ds_config.get("key_candidates", [])
+    date_candidates = ds_config.get("date_candidates", [])
+
+    # Stage using existing _stage_table logic
+    result = _stage_table(
+        f"raw.{dataset_key}",
+        f"staging.{dataset_key}",
+        key_candidates,
+        date_candidates,
+        conn=conn,
+    )
+
+    if result["status"] != "success":
+        raise Exception(f"Failed to stage {dataset_key}: {result.get('error')}")
+
+    return result["row_count_staged"]
 
 
 class DuckDBPipeline:
