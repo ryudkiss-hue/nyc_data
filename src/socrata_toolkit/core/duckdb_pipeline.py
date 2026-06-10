@@ -15,11 +15,111 @@ Usage:
 
 import logging
 from datetime import datetime
-from typing import Dict, List
+from pathlib import Path
+from typing import Optional
 
 import duckdb
 
+from socrata_toolkit.core.client import SocrataClient, SocrataConfig
+
 logger = logging.getLogger(__name__)
+
+SOCRATA_DOMAIN = "data.cityofnewyork.us"
+
+SOCRATA_DATASETS = {
+    "inspection": "dntt-gqwq",
+    "violations": "6kbp-uz6m",
+    "permits": "tqtj-sjs8",
+    "ramp_progress": "e7gc-ub6z",
+}
+
+DEFAULT_DB_PATH = "data/local_db/nyc_mission_control.duckdb"
+
+_connection: Optional[duckdb.DuckDBPyConnection] = None
+_connection_path: Optional[str] = None
+
+
+def get_duckdb_connection(db_path: str = DEFAULT_DB_PATH) -> duckdb.DuckDBPyConnection:
+    """Get or create the module-level DuckDB connection.
+
+    Creates parent directories if needed. If db_path differs from the cached
+    connection's path (e.g. tests passing ':memory:' or a tmp path), the old
+    connection is closed and a new one is opened.
+    """
+    global _connection, _connection_path
+    if _connection is not None and _connection_path == db_path:
+        return _connection
+    if _connection is not None:
+        try:
+            _connection.close()
+        except Exception:
+            pass
+    if db_path != ":memory:":
+        Path(db_path).parent.mkdir(parents=True, exist_ok=True)
+    _connection = duckdb.connect(db_path)
+    _connection_path = db_path
+    return _connection
+
+
+def reset_connection() -> None:
+    """Close and clear the module-level connection (used by tests)."""
+    global _connection, _connection_path
+    if _connection is not None:
+        try:
+            _connection.close()
+        except Exception:
+            pass
+    _connection = None
+    _connection_path = None
+
+
+def initialize_database() -> dict:
+    """Create the raw, staging, and analytics schemas if they don't exist."""
+    conn = get_duckdb_connection(_connection_path or DEFAULT_DB_PATH)
+    schemas = ["raw", "staging", "analytics"]
+    for schema in schemas:
+        conn.execute(f"CREATE SCHEMA IF NOT EXISTS {schema}")
+    return {"status": "initialized", "schemas": schemas}
+
+
+def load_raw_from_socrata(dataset_key: str, max_rows: int = None) -> dict:
+    """Fetch a dataset from data.cityofnewyork.us into raw.<dataset_key>.
+
+    Idempotent: drops and recreates the target table on each call.
+
+    Returns {"status": "success", "table": ..., "row_count": N, "fourfour": ...}
+    on success, or {"status": "error", "error": ..., "table": ...} on API or
+    load failure. Raises ValueError for an unknown dataset_key.
+    """
+    if dataset_key not in SOCRATA_DATASETS:
+        raise ValueError(
+            f"Unknown dataset_key '{dataset_key}'. "
+            f"Valid keys: {sorted(SOCRATA_DATASETS)}"
+        )
+    fourfour = SOCRATA_DATASETS[dataset_key]
+    table = f"raw.{dataset_key}"
+    try:
+        client = SocrataClient(SocrataConfig())
+        df = client.fetch_dataframe(SOCRATA_DOMAIN, fourfour, max_rows=max_rows)
+        conn = get_duckdb_connection(_connection_path or DEFAULT_DB_PATH)
+        conn.execute("CREATE SCHEMA IF NOT EXISTS raw")
+        conn.register("_raw_load_df", df)
+        try:
+            conn.execute(f"DROP TABLE IF EXISTS {table}")
+            conn.execute(f"CREATE TABLE {table} AS SELECT * FROM _raw_load_df")
+        finally:
+            conn.unregister("_raw_load_df")
+        row_count = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+        logger.info(f"Loaded {row_count} rows into {table} ({fourfour})")
+        return {
+            "status": "success",
+            "table": table,
+            "row_count": row_count,
+            "fourfour": fourfour,
+        }
+    except Exception as e:
+        logger.error(f"Failed to load {dataset_key} ({fourfour}): {e}")
+        return {"status": "error", "error": str(e), "table": table}
 
 
 class DuckDBPipeline:
@@ -44,7 +144,7 @@ class DuckDBPipeline:
             except Exception as e:
                 logger.warning(f"Could not create schema {schema}: {e}")
 
-    def load_raw_from_socrata(self, dataset_keys: List[str]) -> Dict:
+    def load_raw_from_socrata(self, dataset_keys: list[str]) -> dict:
         """Load raw data from Socrata into raw schema (idempotent).
 
         Args:
@@ -68,7 +168,7 @@ class DuckDBPipeline:
 
         return results
 
-    def stage_inspections(self) -> Dict:
+    def stage_inspections(self) -> dict:
         """Stage inspection data: dedupe, join violations, compute metrics.
 
         Returns:
@@ -107,7 +207,7 @@ class DuckDBPipeline:
             logger.error(f"Failed to stage inspections: {e}")
             return {"status": "error", "error": str(e)}
 
-    def stage_permits(self) -> Dict:
+    def stage_permits(self) -> dict:
         """Stage permit data: dedupe, flatten hierarchy, add metrics.
 
         Returns:
@@ -138,7 +238,7 @@ class DuckDBPipeline:
             logger.error(f"Failed to stage permits: {e}")
             return {"status": "error", "error": str(e)}
 
-    def stage_ramps(self) -> Dict:
+    def stage_ramps(self) -> dict:
         """Stage ramp data: dedupe, join complaints, compute accessibility.
 
         Returns:
@@ -175,7 +275,7 @@ class DuckDBPipeline:
             logger.error(f"Failed to stage ramps: {e}")
             return {"status": "error", "error": str(e)}
 
-    def stage_all(self) -> Dict:
+    def stage_all(self) -> dict:
         """Execute all staging transformations.
 
         Returns:
@@ -190,7 +290,7 @@ class DuckDBPipeline:
         logger.info("Staging complete!")
         return results
 
-    def materialize_analytics(self) -> Dict:
+    def materialize_analytics(self) -> dict:
         """Create analytics-ready views and marts.
 
         Returns:
@@ -203,7 +303,7 @@ class DuckDBPipeline:
         logger.info("Analytics materialization complete!")
         return results
 
-    def validate_all(self) -> Dict:
+    def validate_all(self) -> dict:
         """Run validation checks on all stages.
 
         Returns:
@@ -216,7 +316,7 @@ class DuckDBPipeline:
         logger.info("Validation complete!")
         return results
 
-    def run_full_pipeline(self, socrata_keys: List[str] = None) -> Dict:
+    def run_full_pipeline(self, socrata_keys: list[str] = None) -> dict:
         """Execute complete ELT pipeline end-to-end.
 
         Args:
