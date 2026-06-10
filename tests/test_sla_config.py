@@ -18,7 +18,7 @@ class TestSLAConfig:
         assert (
             config_path.exists()
         ), f"SLA config not found at {config_path}. Required for tests."
-        with open(config_path) as f:
+        with open(config_path, encoding="utf-8") as f:
             return json.load(f)
 
     def test_sla_config_is_valid_json(self, sla_config):
@@ -83,7 +83,7 @@ class TestSLAConfig:
         from pathlib import Path
 
         claude_md_path = Path(__file__).parent.parent / "CLAUDE.md"
-        with open(claude_md_path) as f:
+        with open(claude_md_path, encoding="utf-8") as f:
             content = f.read()
 
         # Check that CLAUDE.md references the correct SLA values

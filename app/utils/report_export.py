@@ -113,7 +113,7 @@ def build_pdf_report(title: str, sections: dict[str, list[dict]]) -> bytes | Non
     """
     try:
         import weasyprint  # noqa: PLC0415
-    except ImportError:
+    except (ImportError, OSError):
         return None
 
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")

@@ -176,7 +176,8 @@ def _get_duckdb_watermark(dataset_key: str) -> tuple[str | None, str | None]:
             val = res.iloc[0]["max_val"]
             # Socrata ISO 8601 formatting
             if hasattr(val, "isoformat"):
-                return target_col, val.isoformat()
+                # Socrata Floating Timestamps don't support microseconds well
+                return target_col, val.isoformat(timespec="seconds")
             return target_col, str(val)
     except Exception as exc:
         logging.debug("DuckDB watermark check failed for %s: %s", dataset_key, exc)

@@ -6,7 +6,7 @@ Bridges the Dash UI with the socrata_toolkit.analytics package.
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
 import pandas as pd
 

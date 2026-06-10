@@ -200,8 +200,17 @@ class CompositeMatch(MatchingStrategy):
 
 class SemanticMatch(MatchingStrategy):
     def score(self, record1: dict[str, Any], record2: dict[str, Any]) -> float:
-        """Return a semantic similarity score between two records (stub, always 0.0)."""
-        return 0.0
+        """Return a semantic similarity score between two records using fuzzy string matching on common keys."""
+        from difflib import SequenceMatcher
+        
+        scores = []
+        common_keys = set(record1.keys()) & set(record2.keys())
+        for key in common_keys:
+            v1, v2 = record1[key], record2[key]
+            if isinstance(v1, str) and isinstance(v2, str) and v1 and v2:
+                scores.append(SequenceMatcher(None, v1, v2).ratio())
+        
+        return sum(scores) / len(scores) if scores else 0.0
 
 class EntityMatcher:
     def match_entities(self, source: list[dict[str, Any]], target: list[dict[str, Any]]) -> list[dict[str, Any]]:

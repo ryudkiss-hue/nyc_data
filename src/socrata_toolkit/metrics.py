@@ -20,7 +20,7 @@ from __future__ import annotations
 import logging
 import threading
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Logging setup
 logger = logging.getLogger(__name__)
@@ -48,7 +48,7 @@ class MetricPoint:
     name: str
     value: float
     labels: dict[str, str] = field(default_factory=dict)
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_prometheus_line(self) -> str:
         """Format metric as Prometheus text format line.

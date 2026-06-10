@@ -118,17 +118,20 @@ class SpatialQuery:
             params.append(limit)
 
             query_str = "".join(query_parts)
-            res = self.db.manager.conn.execute(query_str, params).fetchall()
+            with self.db.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(query_str, params)
+                res = cursor.fetchall()
 
             results = []
             for row in res:
                 results.append(
                     ProximityResult(
-                        segment_id=row[0],
-                        distance_meters=row[1],
-                        material_type=row[2],
-                        condition_score=row[3],
-                        borough=row[4],
+                        segment_id=str(row[0]),
+                        distance_meters=float(row[1]),
+                        material_type=str(row[2]),
+                        condition_score=float(row[3]),
+                        borough=str(row[4]),
                     )
                 )
 
@@ -171,9 +174,12 @@ class SpatialQuery:
                 params.append(material_type)
 
             query_str = "".join(query_parts)
-            res = self.db.manager.conn.execute(query_str, params).fetchall()
+            with self.db.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(query_str, params)
+                res = cursor.fetchall()
 
-            segment_ids = [row[0] for row in res]
+            segment_ids = [str(row[0]) for row in res]
             logger.info(f"Found {len(segment_ids)} segments in polygon")
             return segment_ids
 
@@ -192,17 +198,20 @@ class SpatialQuery:
             List of adjacent block IDs
         """
         try:
-            res = self.db.manager.conn.execute(
-                """
-                SELECT b2.block_id
-                FROM blocks b1
-                JOIN blocks b2 ON ST_Touches(b1.geometry, b2.geometry)
-                WHERE b1.block_id = ? AND b2.block_id != ?
-                """,
-                [block_id, block_id]
-            ).fetchall()
+            with self.db.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    """
+                    SELECT b2.block_id
+                    FROM blocks b1
+                    JOIN blocks b2 ON ST_Touches(b1.geometry, b2.geometry)
+                    WHERE b1.block_id = ? AND b2.block_id != ?
+                    """,
+                    [block_id, block_id]
+                )
+                res = cursor.fetchall()
 
-            adjacent = [row[0] for row in res]
+            adjacent = [str(row[0]) for row in res]
             logger.info(f"Block {block_id} has {len(adjacent)} adjacent blocks")
             return adjacent
 
@@ -243,15 +252,18 @@ class SpatialQuery:
             query_parts.append("GROUP BY district")
 
             query_str = "".join(query_parts)
-            res = self.db.manager.conn.execute(query_str, params).fetchall()
+            with self.db.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(query_str, params)
+                res = cursor.fetchall()
 
             zones = []
             for row in res:
                 zones.append({
-                    "district": row[0],
-                    "segment_count": row[1],
-                    "average_condition": row[2],
-                    "geometry_wkt": row[3],
+                    "district": str(row[0]),
+                    "segment_count": int(row[1]),
+                    "average_condition": float(row[2]),
+                    "geometry_wkt": str(row[3]),
                 })
 
             logger.info(f"Found {len(zones)} zones for material {material_type}")
@@ -278,7 +290,10 @@ class SpatialQuery:
                     (SELECT geometry FROM sidewalk_segments WHERE segment_id = ?)
                 ) * {self.deg_to_m} as distance_m
             """
-            res = self.db.manager.conn.execute(query, [segment_id_1, segment_id_2]).fetchone()
+            with self.db.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(query, [segment_id_1, segment_id_2])
+                res = cursor.fetchone()
 
             if res:
                 return float(res[0])
@@ -298,7 +313,10 @@ class SpatialQuery:
                 FROM blocks
                 WHERE block_id = ?
             """
-            res = self.db.manager.conn.execute(query, [block_id]).fetchone()
+            with self.db.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(query, [block_id])
+                res = cursor.fetchone()
 
             if res:
                 return float(res[0])
@@ -318,7 +336,10 @@ class SpatialQuery:
                 FROM sidewalk_segments
                 WHERE segment_id = ?
             """
-            res = self.db.manager.conn.execute(query, [segment_id]).fetchone()
+            with self.db.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(query, [segment_id])
+                res = cursor.fetchone()
 
             if res:
                 return float(res[0])
@@ -343,10 +364,13 @@ class SpatialQuery:
                 FROM sidewalk_segments
                 WHERE segment_id = ?
             """
-            res = self.db.manager.conn.execute(query, [dist_deg, segment_id]).fetchone()
+            with self.db.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(query, [dist_deg, segment_id])
+                res = cursor.fetchone()
 
             if res:
-                return res[0]
+                return str(res[0])
 
         except Exception as e:
             logger.error(f"Error buffering segment: {e}")
@@ -363,15 +387,19 @@ class SpatialQuery:
         """
         try:
             # Get start and end geometries
-            start_row = self.db.manager.conn.execute(
-                "SELECT ST_AsText(geometry) FROM sidewalk_segments WHERE segment_id = ?",
-                [start_segment_id]
-            ).fetchone()
+            with self.db.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "SELECT ST_AsText(geometry) FROM sidewalk_segments WHERE segment_id = ?",
+                    [start_segment_id]
+                )
+                start_row = cursor.fetchone()
 
-            end_row = self.db.manager.conn.execute(
-                "SELECT ST_AsText(geometry) FROM sidewalk_segments WHERE segment_id = ?",
-                [end_segment_id]
-            ).fetchone()
+                cursor.execute(
+                    "SELECT ST_AsText(geometry) FROM sidewalk_segments WHERE segment_id = ?",
+                    [end_segment_id]
+                )
+                end_row = cursor.fetchone()
 
             if not start_row or not end_row:
                 return []
@@ -392,10 +420,13 @@ class SpatialQuery:
                     ORDER BY dist ASC
                     LIMIT 1
                 """
-                res = self.db.manager.conn.execute(query, [current_id]).fetchone()
+                with self.db.get_connection() as conn:
+                    cursor = conn.cursor()
+                    cursor.execute(query, [current_id])
+                    res = cursor.fetchone()
 
                 if res:
-                    current_id = res[0]
+                    current_id = str(res[0])
                     path.append(current_id)
                     visited.add(current_id)
                 else:
@@ -440,16 +471,19 @@ class SpatialQuery:
                 ORDER BY total_length DESC
             """
 
-            res = self.db.manager.conn.execute(query).fetchall()
+            with self.db.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(query)
+                res = cursor.fetchall()
 
             results = []
             for row in res:
                 results.append(
                     SpatialAggregation(
                         category=str(row[0]),
-                        segment_count=row[1],
-                        average_condition=row[2] or 0.0,
-                        total_length_meters=row[3] or 0.0,
+                        segment_count=int(row[1]),
+                        average_condition=float(row[2]) if row[2] is not None else 0.0,
+                        total_length_meters=float(row[3]) if row[3] is not None else 0.0,
                     )
                 )
 
@@ -482,7 +516,10 @@ class SpatialQuery:
                     ?
                 )
             """
-            res = self.db.manager.conn.execute(query, [poly_wkt, buff_deg, poly_wkt, buff_deg]).fetchone()
+            with self.db.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(query, [poly_wkt, buff_deg, poly_wkt, buff_deg])
+                res = cursor.fetchone()
 
             if res and res[1] > 0:
                 return float(res[0]) / float(res[1])
@@ -518,14 +555,17 @@ class SpatialQuery:
                 params.append(material_type)
 
             query_str = "".join(query_parts)
-            res = self.db.manager.conn.execute(query_str, params).fetchone()
+            with self.db.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(query_str, params)
+                res = cursor.fetchone()
 
             if res:
                 return {
-                    "min": res[0] or 0.0,
-                    "max": res[1] or 0.0,
-                    "average": res[2] or 0.0,
-                    "median": res[3] or 0.0,
+                    "min": float(res[0]) if res[0] is not None else 0.0,
+                    "max": float(res[1]) if res[1] is not None else 0.0,
+                    "average": float(res[2]) if res[2] is not None else 0.0,
+                    "median": float(res[3]) if res[3] is not None else 0.0,
                 }
 
         except Exception as e:

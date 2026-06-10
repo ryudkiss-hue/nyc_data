@@ -8,7 +8,7 @@ so we patch those in ``socrata_toolkit.core.cli`` and feed mock HTTP responses.
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -40,7 +40,7 @@ REGISTRY = {"inspection": {"fourfour": "dntt-gqwq"}}
 
 class TestDatasetHealth:
     def test_health_ok(self, runner):
-        now_ts = int(datetime.utcnow().timestamp())
+        now_ts = int(datetime.now(timezone.utc).timestamp())
         session = MagicMock()
         # SODA3 count is fetched via session.post; metadata via session.get.
         session.post.return_value = _resp([{"c": "100"}])
@@ -58,7 +58,7 @@ class TestDatasetHealth:
         session = MagicMock()
         session.post.return_value = _resp([{"c": "0"}])    # count = 0 -> empty
         session.get.side_effect = [
-            _resp({"rowsUpdatedAt": int(datetime.utcnow().timestamp())}),
+            _resp({"rowsUpdatedAt": int(datetime.now(timezone.utc).timestamp())}),
         ]
         with patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=REGISTRY), \
              patch("socrata_toolkit.core.cli._make_session", return_value=session):
@@ -102,7 +102,7 @@ class TestDatasetHealth:
         session = MagicMock()
         session.get.side_effect = [
             _resp([{"c": "0"}]),
-            _resp({"rowsUpdatedAt": int(datetime.utcnow().timestamp())}),
+            _resp({"rowsUpdatedAt": int(datetime.now(timezone.utc).timestamp())}),
         ]
         with patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=REGISTRY), \
              patch("socrata_toolkit.core.cli._make_session", return_value=session):
@@ -114,7 +114,7 @@ class TestDatasetHealth:
         session = MagicMock()
         session.post.return_value = _resp([{"c": "100"}])
         session.get.side_effect = [
-            _resp({"rowsUpdatedAt": int(datetime.utcnow().timestamp())}),
+            _resp({"rowsUpdatedAt": int(datetime.now(timezone.utc).timestamp())}),
         ]
         with patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=REGISTRY), \
              patch("socrata_toolkit.core.cli._make_session", return_value=session):

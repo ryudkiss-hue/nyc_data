@@ -147,7 +147,20 @@ class QualityExpectation:
     name: str
     rules: dict[str, Any]
     def validate(self, data: Any) -> bool:
-        """Return True if data satisfies the expectation rules (stub, always True)."""
+        """Return True if data satisfies the expectation rules."""
+        if not hasattr(data, "columns"):  # Basic check for DataFrame-like object
+            return True
+            
+        import pandas as pd
+        for col, rule in self.rules.items():
+            if col not in data.columns:
+                return False
+            if rule == "not_null":
+                if data[col].isnull().any():
+                    return False
+            elif rule == "numeric":
+                if not pd.api.types.is_numeric_dtype(data[col]):
+                    return False
         return True
 
 def define_expectation(name: str, rules: dict[str, Any]) -> QualityExpectation:
