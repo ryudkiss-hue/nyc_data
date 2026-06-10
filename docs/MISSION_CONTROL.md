@@ -2,7 +2,7 @@
 
 **NYC DOT SIM — Open Data Explorer + Agency Analytics Platform**
 
-A unified 8-tab Streamlit application for NYC DOT analysts. Ingests 16+ NYC Open Data datasets via Socrata, runs Bayesian hiring analytics and Prophet forecasting, visualizes spatial patterns, and provides an AI Copilot backed by Gemini, OpenAI, or Ollama.
+A unified 7-tab Streamlit application for NYC DOT analysts. Ingests NYC Open Data datasets via Socrata, runs Bayesian and Prophet forecasting models, visualizes spatial patterns, and provides an AI Copilot backed by Gemini, OpenAI, or Ollama.
 
 ---
 
@@ -33,7 +33,7 @@ PYTHONPATH=src:. python -m streamlit run app/mission_control.py
 
 | File | Role |
 |------|------|
-| `app/mission_control.py` | Streamlit entry point, 8-tab layout |
+| `app/mission_control.py` | Streamlit entry point, 7-tab layout |
 | `app/data_loader.py` | Centralized Socrata / DuckDB loader used by all tabs |
 | `config/datasets.yaml` | Socrata dataset registry (16+ NYC DOT datasets) |
 | `src/socrata_toolkit/core/client.py` | `SocrataClient` — paginated, auth |
@@ -43,53 +43,45 @@ PYTHONPATH=src:. python -m streamlit run app/mission_control.py
 
 ---
 
-## 8-Tab Feature Reference
+## 7-Tab Feature Reference
 
 ### 1. Home
 Dataset status cards showing load state for each configured dataset. **Load All Datasets** button triggers bulk ingestion. Audit trail of recent ingest events pulled from `outputs/logs/ingest.jsonl`.
 
-### 2. Apex Engine
-Hiring analytics pipeline:
-- Scrape Job IDs (JIDs) from NYC jobs data
-- Bayesian ADVI yield-rate model (PyMC, ~50 MB RAM on Render free tier)
-- Prophet 12-month forecast with confidence bands
-- Lag correlation chart (hiring lag vs. fill rate)
-- Folium choropleth map of hiring activity by borough
-
-### 3. Agency Workflows
+### 2. Agency Workflows
 Multi-view workflow panel for agency operations:
 - QA/QC & Inventory Ledger
 - Spatial Conflict Detection
 - Contract & Dispatch Clearance
 - Productivity & ADA Progress
 
-### 4. Data Quality
+### 3. Data Quality
 Per-dataset health scoring dashboard:
 - Null and duplicate profiling
 - SLA freshness indicator: green (<7 days), amber (<30 days), red (>30 days)
 - Anomaly detection flags
 - CSV export of quality report
 
-### 5. Spatial Analytics
+### 4. Spatial Analytics
 - Borough bar charts
 - Plotly Scattermapbox point-density map
 - Folium bubble map
 - Conflict detection between permit and inspection geometries
 
-### 6. Governance
+### 5. Governance
 - Plotly lineage DAG (dataset dependency graph)
 - Dataset registry table (from `config/datasets.yaml`)
 - Ingest audit log viewer
 - SLA compliance summary
 
-### 7. AI Copilot
+### 6. AI Copilot
 Multi-backend conversational assistant:
 - Backends: **Gemini** (`GEMINI_API_KEY`), **OpenAI** (`OPENAI_API_KEY`), **Ollama** (`OLLAMA_HOST`)
 - Context-hydrated with live pipeline results from the current session
 - Quick-action chips for common analyst queries
 - Falls back gracefully if no backend is configured
 
-### 8. Settings & Quality
+### 7. Settings & Quality
 - Readiness score (0–100)
 - Completeness checklist
 - System health panel (dependency versions, cache sizes, token status)
@@ -224,7 +216,7 @@ Run with `PYTHONPATH=src:.` or use `python main.py` (the shim sets this automati
 
 ### Bayesian sampling fails / out of memory
 
-The Apex Engine uses ADVI by default (low memory). If you see OOM errors, check that PyMC and ArviZ are installed (`pip install -e ".[mission]"`) and that you have at least 512 MB free RAM.
+The Bayesian forecasting engine uses ADVI by default (low memory). If you see OOM errors, check that PyMC and ArviZ are installed (`pip install -e ".[mission]"`) and that you have at least 512 MB free RAM.
 
 ### Socrata rate limit / 429 errors
 

@@ -106,21 +106,25 @@ _DUCKDB_PATH = str(_REPO_ROOT / "data" / "local_db" / "nyc_mission_control.duckd
 def _read_duckdb_cache(dataset_key: str, limit: int | None = None) -> pd.DataFrame | None:
     if not _DUCKDB_AVAILABLE:
         return None
+    manager = None
     try:
         manager = DuckDBManager(_DUCKDB_PATH)
         repo = DuckDBRepository(manager, dataset_key)
         effective_limit = None if limit in (None, -1) else limit
         df = repo.fetch_all(limit=effective_limit)
-        manager.close()
         if not df.empty:
             return _postprocess_dataset(dataset_key, df)
     except Exception as exc:
         logging.debug("DuckDB read failed for %s: %s", dataset_key, exc)
+    finally:
+        if manager is not None:
+            manager.close()
     return None
 
 def _write_duckdb_cache(dataset_key: str, df: pd.DataFrame) -> None:
     if not _DUCKDB_AVAILABLE or df.empty or "_error" in df.columns:
         return
+    manager = None
     try:
         from socrata_toolkit.core import COL_AT_ID, COL_ID
         manager = DuckDBManager(_DUCKDB_PATH)
@@ -133,21 +137,23 @@ def _write_duckdb_cache(dataset_key: str, df: pd.DataFrame) -> None:
             # Fallback to simple insert if no PK
             manager.conn.register("temp_df", df)
             manager.query(f'INSERT INTO "{dataset_key}" BY NAME SELECT * FROM temp_df')
-        manager.close()
     except Exception as exc:
         logging.debug("DuckDB write failed for %s: %s", dataset_key, exc)
+    finally:
+        if manager is not None:
+            manager.close()
 
 
 def _get_duckdb_watermark(dataset_key: str) -> tuple[str | None, str | None]:
     """Query DuckDB for the maximum timestamp among DATE_CANDIDATES."""
     if not _DUCKDB_AVAILABLE:
         return None, None
+    manager = None
     try:
         manager = DuckDBManager(_DUCKDB_PATH)
         # Check if table exists
         tables = manager.query("SHOW TABLES").df()
         if tables.empty or dataset_key not in tables["name"].values:
-            manager.close()
             return None, None
 
         # Get columns to find the best DATE_CANDIDATE
@@ -163,14 +169,12 @@ def _get_duckdb_watermark(dataset_key: str) -> tuple[str | None, str | None]:
                 break
 
         if not target_col:
-            manager.close()
             return None, None
 
         # Get max date
         res = manager.query(
             f'SELECT MAX("{target_col}") as max_val FROM "{dataset_key}"'
         ).df()
-        manager.close()
 
         if not res.empty and pd.notna(res.iloc[0]["max_val"]):
             val = res.iloc[0]["max_val"]
@@ -180,6 +184,9 @@ def _get_duckdb_watermark(dataset_key: str) -> tuple[str | None, str | None]:
             return target_col, str(val)
     except Exception as exc:
         logging.debug("DuckDB watermark check failed for %s: %s", dataset_key, exc)
+    finally:
+        if manager is not None:
+            manager.close()
     return None, None
 
 
@@ -536,17 +543,22 @@ def fetch_dataset(
 
     # Delta fetch: DuckDB Watermark Strategy (Item 2)
     effective_where = where
+    delta_applied = False
     if _DUCKDB_AVAILABLE:
         delta_col, max_val = _get_duckdb_watermark(dataset_key)
         if delta_col and max_val:
-            delta_clause = f"{delta_col} > '{max_val}'"
+            # ">=" (not ">") so rows sharing the exact boundary timestamp are not
+            # permanently skipped; keyed upserts dedup the re-fetched boundary rows.
+            safe_max = str(max_val).replace("'", "''")
+            delta_clause = f"{delta_col} >= '{safe_max}'"
             effective_where = (
                 f"({effective_where}) AND {delta_clause}"
                 if effective_where
                 else delta_clause
             )
+            delta_applied = True
             logging.info(
-                "fetch_dataset: watermark delta fetch for %s using %s > %s",
+                "fetch_dataset: watermark delta fetch for %s using %s >= %s",
                 dataset_key,
                 delta_col,
                 max_val,
@@ -562,8 +574,10 @@ def fetch_dataset(
         # Priority Write: Write to primary DuckDB store (L1.5) synchronously
         _write_duckdb_cache(dataset_key, df)
 
-        # Unified Store: Always return full dataset from DuckDB after sync
-        if _DUCKDB_AVAILABLE:
+        # Unified Store: only re-read the merged table when a delta fetch returned a
+        # partial set. On a cold/full fetch df is already complete, so re-reading the
+        # whole table (potentially millions of rows) would be pure waste.
+        if _DUCKDB_AVAILABLE and delta_applied:
             full_df = _read_duckdb_cache(dataset_key, limit=effective_limit)
             if full_df is not None:
                 df = full_df

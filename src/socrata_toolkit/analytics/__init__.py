@@ -8,7 +8,7 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
-from typing import Any, Dict
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -19,8 +19,8 @@ class AnalysisResult:
     Attributes:
         skill_name (str): Name of the skill that generated the result.
         success (bool): Whether the analysis completed without errors.
-        data (Dict[str, Any]): The primary analytical output (e.g., metrics, cluster maps).
-        metadata (Dict[str, Any]): Additional context (e.g., version, execution time).
+        data (dict[str, Any]): The primary analytical output (e.g., metrics, cluster maps).
+        metadata (dict[str, Any]): Additional context (e.g., version, execution time).
         timestamp (str): ISO formatted UTC timestamp of completion.
     """
 

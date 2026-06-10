@@ -33,8 +33,7 @@ PYTHONPATH=src:. python -m streamlit run app/mission_control.py --server.port 85
 ### Repository Layout
 
 ```
-app/mission_control.py   ← entry point (8-tab Streamlit app)
-app/views/apex.py        ← Bayesian hiring analytics tab
+app/mission_control.py   ← entry point (7-tab Streamlit app)
 app/views/quality_dashboard.py
 app/views/governance.py
 app/views/spatial_analytics.py

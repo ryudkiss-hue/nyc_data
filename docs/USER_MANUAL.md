@@ -79,7 +79,6 @@ Open http://localhost:8501. Mission Control is the unified 8-tab Streamlit app f
 | Tab | What it does |
 |-----|-------------|
 | **Home** | Dataset status cards, Load All Datasets button, audit trail |
-| **Apex Engine** | Hiring analytics: JID scraper, Bayesian ADVI yield model, Prophet 12-month forecast, lag correlation, Folium map |
 | **Agency Workflows** | QA/spatial/contract/productivity views |
 | **Data Quality** | Per-dataset health scores, null/duplicate profiling, SLA freshness (green <7d, amber <30d, red >30d), anomaly detection, CSV export |
 | **Spatial Analytics** | Borough bar charts, Plotly Scattermapbox, Folium bubble map, conflict detection |
