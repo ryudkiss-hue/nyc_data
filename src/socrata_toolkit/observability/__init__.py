@@ -14,6 +14,14 @@ from .integration import (
 )
 from .logs import LogEntry, LogStore
 from .metrics import HistogramData, MetricsCollector
+from .monitoring import (
+    Alert,
+    AlertManager,
+    AlertSeverity,
+    AlertStatus,
+    Monitoring,
+    MonitoringResult,
+)
 from .sla import SLA, SLATracker
 from .tracing import Span, Tracer
 
@@ -31,4 +39,10 @@ __all__ = [
     "ComponentHealth",
     "SLA",
     "SLATracker",
+    "Alert",
+    "AlertManager",
+    "AlertSeverity",
+    "AlertStatus",
+    "Monitoring",
+    "MonitoringResult",
 ]

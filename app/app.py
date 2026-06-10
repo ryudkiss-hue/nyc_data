@@ -36,16 +36,19 @@ from app.ui.theme import inject_theme, render_agency_header, render_skip_link
 from app.utils.i18n import render_language_selector, t
 from app.views import home, publish, settings, workflows
 from app.views.construction import render_construction_page
+from app.views.construction_planning_dashboard import render_construction_planning_page
 from app.views.contracts_dashboard import render_contracts_page
 from app.views.data_discovery import render_data_discovery_page
 from app.views.data_quality_dashboard import render_data_quality_page
 from app.views.forecasting import render_forecasting_page
 from app.views.gis_dashboard import render_gis_page
+from app.views.operational_status import render_operational_status_page
 
 # Top-level navigation sections
 _SECTIONS = {
     "🏠 Home":                   "home",
     "🏗️ Construction Lists":     "construction",
+    "📋 Construction Planning":  "construction_planning",
     "🗺️ GIS & Conflicts":        "gis",
     "📋 Contract Analytics":     "contracts",
     "📈 Forecasting":            "forecasting",
@@ -55,6 +58,7 @@ _SECTIONS = {
     "🔍 Data Discovery":         "discovery",
     "📚 Data Catalog":           "data_catalog",
     "📤 Publish":                "publish",
+    "📊 Operational Status":     "operational_status",
     "⚙️ Settings":               "settings",
 }
 
@@ -68,7 +72,7 @@ WORKFLOW_KEYS = {
 
 # Sidebar groupings for collapsible expanders
 _NAV_GROUPS = {
-    "📊 Core Data": ["🏠 Home", "🏗️ Construction Lists"],
+    "📊 Core Data": ["🏠 Home", "🏗️ Construction Lists", "📋 Construction Planning"],
     "🗺️ Spatial": ["🗺️ GIS & Conflicts"],
     "📈 Analytics": [
         "📋 Contract Analytics",
@@ -81,6 +85,7 @@ _NAV_GROUPS = {
         "🔍 Data Discovery",
         "📚 Data Catalog",
         "📤 Publish",
+        "📊 Operational Status",
         "⚙️ Settings",
     ],
 }
@@ -391,6 +396,11 @@ def main() -> None:
             render_construction_page()
         return
 
+    if section == "construction_planning":
+        with _spinner_view():
+            render_construction_planning_page()
+        return
+
     if section == "gis":
         with _spinner_view():
             render_gis_page()
@@ -414,6 +424,11 @@ def main() -> None:
     if section == "publish":
         with _spinner_view():
             publish.render_publish_page()
+        return
+
+    if section == "operational_status":
+        with _spinner_view():
+            render_operational_status_page()
         return
 
     if section == "settings":
