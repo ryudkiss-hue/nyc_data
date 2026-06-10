@@ -442,3 +442,17 @@ except Exception:  # noqa: BLE001 - optional geospatial stack
 
     def export_conflicts_geojson(*_args: Any, **_kwargs: Any) -> bool:  # type: ignore[misc]
         raise ImportError("Install geopandas to use export_conflicts_geojson")
+
+
+# ── GIS Conflict Detection for Construction Planning ─────────────────────────
+from .conflict_detection import (
+    SpatialConflict,
+    detect_spatial_conflicts,
+    summarize_conflicts_by_severity,
+)
+
+__all__ = [
+    "SpatialConflict",
+    "detect_spatial_conflicts",
+    "summarize_conflicts_by_severity",
+]

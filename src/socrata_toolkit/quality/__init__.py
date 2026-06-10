@@ -20,6 +20,14 @@ from socrata_toolkit.quality.rules import (
     validate_expectations,
     validate_schema,
 )
+from socrata_toolkit.quality.domain_rules import (
+    DomainRuleResult,
+    summarize_domain_rule_results,
+    validate_all_domain_rules,
+    validate_borough_coverage_distribution,
+    validate_material_lifespan_rule,
+    validate_permit_inspection_relationship,
+)
 from socrata_toolkit.quality.sla_tracking import (
     SLAMetrics,
     SLATarget,
@@ -46,6 +54,13 @@ __all__ = [
     "quality_scorecard",
     "validate_expectations",
     "validate_schema",
+    # Domain Rules
+    "DomainRuleResult",
+    "summarize_domain_rule_results",
+    "validate_all_domain_rules",
+    "validate_borough_coverage_distribution",
+    "validate_material_lifespan_rule",
+    "validate_permit_inspection_relationship",
     # SLA tracking
     "SLAMetrics",
     "SLATarget",
