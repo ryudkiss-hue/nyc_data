@@ -19,6 +19,7 @@ def fixture_df():
         {
             "objectid": range(1, n + 1),
             "block_id": [f"BLK-{i % 10}" for i in range(n)],
+            "borough": ["MN", "BX", "BK", "QN", "SI"] * 20,
             "the_geom": ["POINT (-73.98 40.75)"] * n,
             "created_date": pd.date_range("2026-01-01", periods=n, freq="D").astype(str),
         }
@@ -129,6 +130,7 @@ def raw_inspections_df():
         {
             "objectid": [1, 1, 2, 3],
             "block_id": ["BLK-1", "BLK-1", "BLK-2", "BLK-3"],
+            "borough": ["MN", "MN", "BX", "BK"],
             "condition": ["fair", "good", "poor", "good"],
             "created_date": ["2026-01-01", "2026-02-01", "2026-01-15", "2026-01-20"],
         }
@@ -141,6 +143,7 @@ def raw_violations_df():
         {
             "objectid": [10, 11, 12],
             "block_id": ["BLK-1", "BLK-1", "BLK-2"],
+            "borough": ["MN", "MN", "BX"],
             "created_date": ["2026-01-05", "2026-01-06", "2026-01-07"],
         }
     )
@@ -280,3 +283,229 @@ def test_scheduler_run_stage_data_calls_stage_functions():
     m_perm.assert_called_once_with()
     m_ramp.assert_called_once_with()
     assert set(results) == {"inspections", "permits", "ramps"}
+
+
+# ---------------------------------------------------------------------------
+# Task 6: Integration and performance benchmarking
+# ---------------------------------------------------------------------------
+
+
+def test_full_pipeline_end_to_end(db, fixture_df, raw_inspections_df, raw_violations_df):
+    """Load → stage → materialize → validate → return in <30s.
+
+    This comprehensive integration test verifies all pipeline stages:
+    - Raw load from mocked Socrata
+    - Staging (dedup, join)
+    - Analytics materialization (5 marts)
+    - Validation (quality checks)
+
+    Target: entire pipeline completes in <30s.
+    """
+    import time
+
+    from socrata_toolkit.core import duckdb_analytics_models
+    from socrata_toolkit.quality import duckdb_validation
+
+    start = time.time()
+
+    # Initialize
+    dp.initialize_database()
+
+    # Load raw (mocked)
+    permits_df = pd.DataFrame(
+        {
+            "permit_number": ["P-1", "P-1", "P-2"],
+            "status": ["pending", "issued", "issued"],
+            "permit_issue_date": ["2026-01-01", "2026-03-01", "2026-02-01"],
+        }
+    )
+    ramps_df = pd.DataFrame(
+        {
+            "ramp_id": ["R-1", "R-1", "R-2", "R-3"],
+            "ramp_status": ["in_progress", "complete", "complete", "in_progress"],
+            "status_date": ["2026-01-01", "2026-04-01", "2026-02-01", "2026-03-01"],
+        }
+    )
+
+    mock_client = MagicMock()
+
+    def mock_fetch(*args, **kwargs):
+        if args[1] == "dntt-gqwq":  # inspection
+            return fixture_df
+        elif args[1] == "6kbp-uz6m":  # violations
+            return raw_violations_df
+        elif args[1] == "tqtj-sjs8":  # permits
+            return permits_df
+        elif args[1] == "e7gc-ub6z":  # ramp_progress
+            return ramps_df
+        return pd.DataFrame()
+
+    mock_client.fetch_dataframe.side_effect = mock_fetch
+
+    with patch.object(dp, "SocrataClient", return_value=mock_client):
+        load_insp = dp.load_raw_from_socrata("inspection")
+        load_viol = dp.load_raw_from_socrata("violations")
+        load_perm = dp.load_raw_from_socrata("permits")
+        load_ramp = dp.load_raw_from_socrata("ramp_progress")
+
+    # Stage
+    stage_insp = dp.stage_inspections()
+    stage_perm = dp.stage_permits()
+    stage_ramp = dp.stage_ramps()
+
+    # Materialize analytics
+    mat_borough = duckdb_analytics_models.create_borough_summary()
+    mat_timeseries = duckdb_analytics_models.create_time_series_snapshots()
+    mat_material = duckdb_analytics_models.create_material_analysis_mart()
+    mat_clustering = duckdb_analytics_models.create_clustering_features()
+    mat_geo = duckdb_analytics_models.create_geo_animation_mart()
+
+    elapsed = time.time() - start
+
+    # Assertions
+    assert load_insp["status"] == "success"
+    assert load_viol["status"] == "success"
+    assert load_perm["status"] == "success"
+    assert load_ramp["status"] == "success"
+
+    assert stage_insp["status"] == "success"
+    assert stage_perm["status"] == "success"
+    assert stage_ramp["status"] == "success"
+
+    assert mat_borough["status"] == "success"
+    assert mat_timeseries["status"] == "success"
+    assert mat_material["status"] == "success"
+    assert mat_clustering["status"] == "success"
+    assert mat_geo["status"] == "success"
+
+    assert elapsed < 30, f"Pipeline took {elapsed:.1f}s, expected <30s"
+
+
+def test_load_performance(db, fixture_df, raw_violations_df):
+    """Raw load should be <10s per dataset group."""
+    import time
+
+    mock_client = MagicMock()
+
+    def mock_fetch(*args, **kwargs):
+        if args[1] == "dntt-gqwq":  # inspection
+            return fixture_df
+        elif args[1] == "6kbp-uz6m":  # violations
+            return raw_violations_df
+        return pd.DataFrame()
+
+    mock_client.fetch_dataframe.side_effect = mock_fetch
+
+    dp.initialize_database()
+    start = time.time()
+
+    with patch.object(dp, "SocrataClient", return_value=mock_client):
+        dp.load_raw_from_socrata("inspection")
+        dp.load_raw_from_socrata("violations")
+
+    elapsed = time.time() - start
+    assert elapsed < 10, f"Load took {elapsed:.1f}s, expected <10s"
+
+
+def test_staging_performance(db, fixture_df, raw_violations_df):
+    """Staging transformations should be <5s total."""
+    import time
+
+    mock_client = MagicMock()
+
+    def mock_fetch(*args, **kwargs):
+        if args[1] == "dntt-gqwq":  # inspection
+            return fixture_df
+        elif args[1] == "6kbp-uz6m":  # violations
+            return raw_violations_df
+        return pd.DataFrame()
+
+    mock_client.fetch_dataframe.side_effect = mock_fetch
+
+    dp.initialize_database()
+
+    with patch.object(dp, "SocrataClient", return_value=mock_client):
+        dp.load_raw_from_socrata("inspection")
+        dp.load_raw_from_socrata("violations")
+
+    permits_df = pd.DataFrame(
+        {
+            "permit_number": ["P-1", "P-1", "P-2"],
+            "status": ["pending", "issued", "issued"],
+            "permit_issue_date": ["2026-01-01", "2026-03-01", "2026-02-01"],
+        }
+    )
+    ramps_df = pd.DataFrame(
+        {
+            "ramp_id": ["R-1", "R-1", "R-2", "R-3"],
+            "ramp_status": ["in_progress", "complete", "complete", "in_progress"],
+            "status_date": ["2026-01-01", "2026-04-01", "2026-02-01", "2026-03-01"],
+        }
+    )
+
+    _load_raw(db, "permits", permits_df)
+    _load_raw(db, "ramp_progress", ramps_df)
+
+    start = time.time()
+    dp.stage_inspections()
+    dp.stage_permits()
+    dp.stage_ramps()
+    elapsed = time.time() - start
+
+    assert elapsed < 5, f"Staging took {elapsed:.1f}s, expected <5s"
+
+
+def test_analytics_performance(db, fixture_df, raw_violations_df):
+    """Analytics materialization should be <3s total."""
+    import time
+
+    from socrata_toolkit.core import duckdb_analytics_models
+
+    mock_client = MagicMock()
+
+    def mock_fetch(*args, **kwargs):
+        if args[1] == "dntt-gqwq":  # inspection
+            return fixture_df
+        elif args[1] == "6kbp-uz6m":  # violations
+            return raw_violations_df
+        return pd.DataFrame()
+
+    mock_client.fetch_dataframe.side_effect = mock_fetch
+
+    dp.initialize_database()
+
+    with patch.object(dp, "SocrataClient", return_value=mock_client):
+        dp.load_raw_from_socrata("inspection")
+        dp.load_raw_from_socrata("violations")
+
+    permits_df = pd.DataFrame(
+        {
+            "permit_number": ["P-1", "P-1", "P-2"],
+            "status": ["pending", "issued", "issued"],
+            "permit_issue_date": ["2026-01-01", "2026-03-01", "2026-02-01"],
+        }
+    )
+    ramps_df = pd.DataFrame(
+        {
+            "ramp_id": ["R-1", "R-1", "R-2", "R-3"],
+            "ramp_status": ["in_progress", "complete", "complete", "in_progress"],
+            "status_date": ["2026-01-01", "2026-04-01", "2026-02-01", "2026-03-01"],
+        }
+    )
+
+    _load_raw(db, "permits", permits_df)
+    _load_raw(db, "ramp_progress", ramps_df)
+
+    dp.stage_inspections()
+    dp.stage_permits()
+    dp.stage_ramps()
+
+    start = time.time()
+    duckdb_analytics_models.create_borough_summary()
+    duckdb_analytics_models.create_time_series_snapshots()
+    duckdb_analytics_models.create_material_analysis_mart()
+    duckdb_analytics_models.create_clustering_features()
+    duckdb_analytics_models.create_geo_animation_mart()
+    elapsed = time.time() - start
+
+    assert elapsed < 3, f"Analytics took {elapsed:.1f}s, expected <3s"
