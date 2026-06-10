@@ -28,10 +28,34 @@ logger = logging.getLogger(__name__)
 SOCRATA_DOMAIN = "data.cityofnewyork.us"
 
 SOCRATA_DATASETS = {
+    # Core SIM (already present)
     "inspection": "dntt-gqwq",
     "violations": "6kbp-uz6m",
     "permits": "tqtj-sjs8",
     "ramp_progress": "e7gc-ub6z",
+
+    # Add 22 more
+    "built": "ugc8-s3f6",
+    "lot_info": "i642-2fxq",
+    "reinspection": "gx72-kirf",
+    "tree_damage": "j6v2-6uxq",
+    "dismissals": "p4u2-3jgx",
+    "correspondences": "bheb-sjfi",
+    "curb_metal_protruding": "i2y3-sx2e",
+    "ramp_locations": "ufzp-rrqu",
+    "ramp_complaints": "jagj-gttd",
+    "weekly_construction": "r528-jcks",
+    "capital_blocks": "jvk9-k4re",
+    "capital_intersections": "97nd-ff3i",
+    "street_construction_inspections": "ydkf-mpxb",
+    "street_closures_block": "i6b5-j7bu",
+    "street_resurfacing_schedule": "xnfm-u3k5",
+    "street_resurfacing_inhouse": "ffaf-8mrv",
+    "step_streets": "u9au-h79y",
+    "sidewalk_planimetric": "vfx9-tbb6",
+    "pedestrian_demand": "fwpa-qxaf",
+    "mappluto": "64uk-42ks",
+    "complaints_311": "erm2-nwe9",
 }
 
 DEFAULT_DB_PATH = "data/local_db/nyc_mission_control.duckdb"
