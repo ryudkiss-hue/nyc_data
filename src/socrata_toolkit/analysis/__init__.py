@@ -66,6 +66,7 @@ from ..analysis_advanced import (
     detect_all_outliers,
 )
 
+
 # Legacy aliases for tests. Each import is independent so that a single
 # unavailable optional symbol does not suppress the rest (a shared try/except
 # would silently skip every alias after the first failing import).

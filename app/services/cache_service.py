@@ -30,7 +30,7 @@ class CacheService:
             data = self.client.get(key)
             if not data:
                 return None
-            
+
             decompressed = self.zstd_decompressor.decompress(data)
             return msgpack.unpackb(decompressed)
         except Exception as e:

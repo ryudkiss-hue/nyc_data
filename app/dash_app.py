@@ -23,23 +23,40 @@ os.environ["PATH"] = f"{MINGW_BIN};" + os.environ.get("PATH", "")
 os.environ["PYTENSOR_FLAGS"] = f"cxx={os.path.join(MINGW_BIN, 'g++.exe')},gcc_version_str=14.1.0"
 
 import logging
+
 import dash
 import dash_mantine_components as dmc
 import pandas as pd
 import uvicorn
-from dash import dcc, html, Input, Output, State, callback, no_update
+from dash import Input, Output, State, callback, dcc, html, no_update
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.dash_layouts import render_header, render_sidebar
-from app.data_manager import DataManager
+from app.callbacks.analytics import register_analytics_callbacks
+from app.callbacks.copilot import register_copilot_callbacks
+from app.callbacks.export import register_export_callbacks
+from app.callbacks.ingestion import register_ingestion_callbacks
 
 # Import Modular Callbacks
 from app.callbacks.navigation import register_navigation_callbacks
-from app.callbacks.ingestion import register_ingestion_callbacks
-from app.callbacks.analytics import register_analytics_callbacks
-from app.callbacks.export import register_export_callbacks
-from app.callbacks.copilot import register_copilot_callbacks
+from app.dash_layouts import (
+    layout_construction,
+    layout_copilot,
+    layout_dashboard,
+    layout_engineering,
+    layout_gis,
+    layout_labor,
+    layout_nlp,
+    layout_reports,
+    layout_settings,
+    layout_sql_tools,
+    layout_stats,
+    layout_toolbox,
+    layout_tutorials,
+    render_header,
+    render_sidebar,
+)
+from app.data_manager import DataManager
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +70,7 @@ _cache_dir.mkdir(parents=True, exist_ok=True)
 
 # Item: Industrial "Enterprise" Cache (Manual Serverside Offloading)
 import diskcache
+
 _serverside_cache = diskcache.Cache(".cache/serverside_manual")
 
 # Native Dash 4.2.0 "The Freedom Update"
@@ -120,6 +138,43 @@ app.layout = dmc.MantineProvider(
         )
     ]
 )
+
+# --- ROUTING ENGINE ---
+def render_page_content(pathname):
+    if pathname == "/":
+        return layout_dashboard()
+    elif pathname == "/const":
+        return layout_construction()
+    elif pathname == "/labor":
+        return layout_labor()
+    elif pathname == "/reports":
+        return layout_reports()
+    elif pathname == "/stats":
+        return layout_stats()
+    elif pathname == "/geo":
+        return layout_gis()
+    elif pathname == "/eng":
+        return layout_engineering()
+    elif pathname == "/sql":
+        return layout_sql_tools()
+    elif pathname == "/nlp":
+        return layout_nlp()
+    elif pathname == "/settings":
+        return layout_settings()
+    elif pathname == "/tutorials":
+        return layout_tutorials()
+    elif pathname == "/toolbox":
+        return layout_toolbox()
+    elif pathname == "/copilot":
+        return layout_copilot()
+    return dmc.Center(dmc.Text("404: Mission target not found.", size="xl", fw=700, c="red"))
+
+@app.callback(
+    Output("page-content", "children"),
+    Input("url", "pathname")
+)
+def display_page(pathname):
+    return render_page_content(pathname)
 
 # --- REGISTER CALLBACKS ---
 register_navigation_callbacks(app)

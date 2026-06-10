@@ -140,10 +140,10 @@ class DuckDBManager:
             # Use read_only if requested via environment or default to False
             is_read_only = self.read_only if self.read_only is not None else (os.getenv("DUCKDB_READ_ONLY", "false").lower() == "true")
             self._conn = duckdb.connect(self.db_path, read_only=is_read_only)
-            
+
             # Item 6: Disable insertion order for performance
             self._conn.execute("SET preserve_insertion_order = false;")
-            
+
             # Initialize Spatial Extension
             try:
                 self._conn.execute("INSTALL spatial;")
@@ -198,27 +198,27 @@ class DuckDBRepository:
         """Identify potential spatial columns and their types (lat/lon vs WKT)."""
         cols = {c.lower(): c for c in df.columns}
         spatial_map = {}
-        
+
         # WKT Detection
         for wkt_cand in ("the_geom", "geometry", "location_wkt", "wkt"):
             if wkt_cand in cols:
                 spatial_map["wkt"] = cols[wkt_cand]
                 break
-        
+
         # Lat/Lon Detection
         lat_cand = next((cols[c] for c in ("latitude", "lat", "y", "ycoord") if c in cols), None)
         lon_cand = next((cols[c] for c in ("longitude", "lon", "lng", "long", "x", "xcoord") if c in cols), None)
-        
+
         if lat_cand and lon_cand:
             spatial_map["lat"] = lat_cand
             spatial_map["lon"] = lon_cand
-            
+
         return spatial_map
 
     def upsert_dataframe(self, df: pd.DataFrame, conflict_column: str) -> int:
         if df.empty:
             return 0
-            
+
         table_name = self.table_name.replace('"', '')
         conflict_col = conflict_column.replace('"', '')
         temp_view = f"temp_view_{table_name}"
@@ -239,9 +239,9 @@ class DuckDBRepository:
         if not table_exists:
             # Create table with an explicit GEOMETRY column derived from detected spatial sources
             sql_create = f"""
-                CREATE TABLE "{table_name}" AS 
-                SELECT *, 
-                ({geom_expr}) AS native_geom 
+                CREATE TABLE "{table_name}" AS
+                SELECT *,
+                ({geom_expr}) AS native_geom
                 FROM "{temp_view}"
             """
             self.manager.conn.execute(sql_create)
@@ -272,8 +272,8 @@ class DuckDBRepository:
         update_set = ", ".join(update_set_parts)
 
         sql_upsert = f"""
-            INSERT INTO "{table_name}" BY NAME 
-            SELECT *, ({geom_expr}) AS native_geom FROM "{temp_view}" 
+            INSERT INTO "{table_name}" BY NAME
+            SELECT *, ({geom_expr}) AS native_geom FROM "{temp_view}"
             ON CONFLICT ("{conflict_col}") DO UPDATE SET {update_set}
         """
         self.manager.conn.execute(sql_upsert)

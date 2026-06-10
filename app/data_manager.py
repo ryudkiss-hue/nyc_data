@@ -26,6 +26,7 @@ cache = diskcache.FanoutCache(str(cache_dir), shards=8, timeout=10)
 
 from app.data_loader import IngestionProviderFactory
 
+
 class DataManager:
     """Industrial Data Manager for NYC DOT SIM Analytics."""
 

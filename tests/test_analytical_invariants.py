@@ -86,14 +86,14 @@ class TestCompletionRateInvariants:
         small = pd.DataFrame([{"borough": "MN", "status": "complete"}] * 7 + [{"borough": "MN", "status": "incomplete"}] * 3)
         # large sample
         large = pd.DataFrame([{"borough": "MN", "status": "complete"}] * 7000 + [{"borough": "MN", "status": "incomplete"}] * 3000)
-        
+
         generator = RampCompletionReportGenerator()
         small_report = generator.generate(small, mode="full-corpus", include_ci=True)
         large_report = generator.generate(large, mode="full-corpus", include_ci=True)
-        
+
         w_small = small_report.borough_stats[0]
         w_large = large_report.borough_stats[0]
-        
+
         width_small = w_small.ci_upper - w_small.ci_lower
         width_large = w_large.ci_upper - w_large.ci_lower
         assert width_large < width_small

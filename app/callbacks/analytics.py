@@ -1,17 +1,20 @@
 import json
 from datetime import datetime
+
 import dash
-from dash import Input, Output, State, callback, html, dcc, no_update
 import dash_mantine_components as dmc
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-from app.viz_engine import VisualizationEngine
+from dash import Input, Output, State, callback, dcc, html, no_update
+
 from app.services.analytics_service import (
     get_analysis_history,
     run_dataset_audit,
     synthesize_executive_summary,
 )
+from app.viz_engine import VisualizationEngine
+
 
 # --- SSE Multiplexing Support ---
 def sse_event_formatter(data, event_id=None, comment=None):
@@ -105,7 +108,7 @@ def register_analytics_callbacks(app, dm_instance):
 
         data_bundle = dm_instance.fetch_all_datasets(force_refresh=False)
         registry = dm_instance.get_dataset_registry()
-        
+
         filtered_bundle = {}
         for key, df in data_bundle.items():
             if df.empty:
@@ -126,7 +129,7 @@ def register_analytics_callbacks(app, dm_instance):
             requested_keys.append(k)
 
         charts = VisualizationEngine.get_all_charts(filtered_bundle, registry, requested_keys=requested_keys)
-            
+
         figures, moments_lists, insights = [], [], []
         for k in requested_keys:
             # Unpack tuple returned by new VisualizationEngine
@@ -135,10 +138,10 @@ def register_analytics_callbacks(app, dm_instance):
                 fig, insight_text = res
             else:
                 fig, insight_text = res, "Legacy format detected."
-                
+
             figures.append(fig)
             insights.append(dcc.Markdown(insight_text))
-            
+
             ds_key = "inspection"
             if k in ["built", "velocity"]: ds_key = "built"
             elif k == "violations": ds_key = "violations"

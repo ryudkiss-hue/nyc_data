@@ -201,7 +201,7 @@ class DuckDBSpatialConnection:
             self.manager = DuckDBManager()
         else:
             self.manager = manager
-        
+
         logger.info("Initialized DuckDB Spatial connection")
 
     def create_spatial_tables(self) -> None:
@@ -389,21 +389,21 @@ class DuckDBSpatialConnection:
     def find_conflicts(self, buffer_meters: float) -> pd.DataFrame:
         """
         Find conflicts between sidewalk segments and inspections.
-        
-        Uses ST_Intersects with a buffer on segments to identify inspections 
+
+        Uses ST_Intersects with a buffer on segments to identify inspections
         that fall within the specified proximity.
         """
         # Conversion for 4326 (WGS84) if necessary - 1m approx 0.000009 degrees
         # For simplicity in this implementation, we use the buffer directly.
         # In production with 4326, we'd use a more precise distance calculation.
-        conv = 0.000009 
+        conv = 0.000009
         buffer_val = buffer_meters * conv
-        
+
         query = """
-            SELECT 
-                s.segment_id, 
-                i.inspection_id, 
-                i.defect_type, 
+            SELECT
+                s.segment_id,
+                i.inspection_id,
+                i.defect_type,
                 i.severity,
                 ST_Distance(s.geometry, i.geometry) as raw_distance
             FROM sidewalk_segments s

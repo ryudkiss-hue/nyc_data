@@ -22,7 +22,7 @@ Standards: Python 3.9+, type hints, comprehensive docstrings, operational loggin
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 

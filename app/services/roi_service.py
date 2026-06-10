@@ -1,6 +1,9 @@
 from __future__ import annotations
+
 from typing import Any
+
 from pydantic import BaseModel, Field
+
 
 class ProductivityROI(BaseModel):
     """Telemetry for manual-step elimination and time reclaimed. High-fidelity Pydantic model."""
@@ -34,7 +37,7 @@ class AssetLifecycleROI(BaseModel):
 
 class ROIAggregator:
     """Industrial-grade ROI computation engine."""
-    
+
     @staticmethod
     def compute(
         *,
@@ -54,7 +57,7 @@ class ROIAggregator:
         sc = max(0, spatial_conflicts_checked)
         cc = max(0, contracts_cleared)
         qf = max(0, quality_flags)
-        
+
         minutes = (lv * 3) + (sc * 15) + (cc * 5) + (qf * 2)
         return ProductivityROI(
             joins_automated=max(0, joins_automated),

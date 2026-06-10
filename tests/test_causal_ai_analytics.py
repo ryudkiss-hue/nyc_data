@@ -1,11 +1,13 @@
 
 import pandas as pd
 import pytest
+
 from app.services.analytics_service import (
+    digital_twin_pre_screen,
     perform_causal_what_if_simulation,
     update_predictive_simulation_intervention,
-    digital_twin_pre_screen
 )
+
 
 def test_causal_what_if_simulation():
     # Mocking manager and data

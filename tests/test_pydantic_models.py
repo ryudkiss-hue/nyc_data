@@ -1,23 +1,25 @@
 import pytest
+
 from app.analytics import ColumnProfile, DatasetProfile
 from app.services.roi_service import ProductivityROI, ROIAggregator
+
 
 def test_column_profile_quality_score():
     """Verify quality score calculation for columns."""
     # Healthy column
     c1 = ColumnProfile(name="c1", dtype="float", null_pct=0, cardinality=100)
     assert c1.quality_score() == 100.0
-    
+
     # Null penalty
     c2 = ColumnProfile(name="c2", dtype="float", null_pct=50, cardinality=50)
     # 100 - (50 * 0.5) = 75
     assert c2.quality_score() == 75.0
-    
+
     # Constant column penalty
     c3 = ColumnProfile(name="c3", dtype="str", null_pct=0, cardinality=1)
     # 100 - 20 = 80
     assert c3.quality_score() == 80.0
-    
+
     # All-null penalty
     c4 = ColumnProfile(name="c4", dtype="str", null_pct=100, cardinality=0)
     # 100 - (100 * 0.5) - 50 = 0
@@ -34,7 +36,7 @@ def test_roi_aggregator_logic():
         quality_flags=10,         # 10 * 2 = 20 min
         datasets_profiled=5
     )
-    
+
     # Total minutes = 30 + 30 + 20 + 20 = 100 min
     # Hours = 100 / 60 = 1.67
     assert roi.hours_reclaimed == 1.67
@@ -44,11 +46,11 @@ def test_roi_aggregator_logic():
 def test_dataset_profile_pydantic_validation():
     """Verify Pydantic models reject invalid structures."""
     from pydantic import ValidationError
-    
+
     with pytest.raises(ValidationError):
         # Missing required fields
         DatasetProfile(key="test")
-    
+
     # Valid minimal profile
     dp = DatasetProfile(
         key="test",
