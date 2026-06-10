@@ -258,7 +258,7 @@ def layout_dashboard():
             visualization_asset(
                 "viz-velocity", "Administrative Velocity (Ensemble Consensus)",
                 "Item 16: Consensus mean of Prophet, ARIMA, and Linear Trend forecasting.",
-                "Analytical findings suggest a positive trend in hiring velocity, with a 12% reduction in OMB review lag over the last quarter."
+                "Ensemble forecast of inspection/processing throughput across the selected window."
             ),
             visualization_asset("quantum", "Quantum Search Advantage", "Item 20: Grover Algorithm Simulation for record lookups.", "Visualizing the O(sqrt(N)) computational speedup.")
         ]

@@ -1,5 +1,4 @@
 import logging
-from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -40,7 +39,7 @@ class StaticInsightEngine:
         df: pd.DataFrame,
         verbosity: str = "verbose",
         reading_level: str = "executive",
-        data_bundle: Optional[dict[str, pd.DataFrame]] = None
+        data_bundle: dict[str, pd.DataFrame] | None = None
     ) -> str:
         """
         Main entry point for deterministic insights.
@@ -89,21 +88,19 @@ class StaticInsightEngine:
 
         if level == "standard": # 8th Grade Level
             if verbosity == "concise":
-                return f"Hiring speed is looking good. We are seeing about {mean_val:.1f} new people starting each month."
+                return f"Processing speed is looking good. We are completing about {mean_val:.1f} records each month."
             return (
-                f"We looked at how fast the Department of Transportation is hiring new workers. Most of the time, the process is smooth. "
-                f"Right now, about {mean_val:.1f} people start their jobs every month. There is a small delay when the "
-                "Office of Management and Budget reviews the paperwork. Our math checks (R-hat and ESS) show the prediction is reliable."
+                f"We looked at how fast the Department of Transportation is processing records. Most of the time, the workflow is smooth. "
+                f"Right now, about {mean_val:.1f} records are completed every month. Our math checks (R-hat and ESS) show the prediction is reliable."
             )
 
         # Executive Level
         if verbosity == "concise":
             return f"Administrative velocity is stable. Mean monthly throughput is {mean_val:.1f} units. R-hat: {r_hat:.3f}."
         return (
-            f"A longitudinal audit of the recruitment lifecycle indicates a stable trajectory. "
+            f"A longitudinal audit of the processing lifecycle indicates a stable trajectory. "
             f"With a calculated expected value of {mean_val:.2f} and a standard deviation of {stats.get('std', 0):.2f}, the pipeline exhibits healthy characteristics. "
-            f"NUTS diagnostics confirm convergence with R-hat={r_hat:.3f} and ESS={ess}. "
-            "However, latent friction in the OMB review phase remains the primary driver of cycle-time variance."
+            f"NUTS diagnostics confirm convergence with R-hat={r_hat:.3f} and ESS={ess}."
         )
 
     @staticmethod
@@ -128,7 +125,7 @@ class StaticInsightEngine:
         )
 
     @staticmethod
-    def analyze_feature_importance(data_bundle: Optional[dict[str, pd.DataFrame]]) -> str:
+    def analyze_feature_importance(data_bundle: dict[str, pd.DataFrame] | None) -> str:
         """
         Item 23: Feature Importance Ranking across datasets using RandomForest.
         """

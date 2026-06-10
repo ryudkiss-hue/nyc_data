@@ -28,6 +28,10 @@ def _escape_sql_literal(value: str) -> str:
     return value.replace("'", "''")
 
 
+# INSTALL only hits the network/disk once per process; LOAD is cheap per-connection.
+_SPATIAL_INSTALLED = False
+
+
 def _default_cache_dir() -> Path:
     """Return the on-disk L2 cache directory used by Mission Control.
 
@@ -144,9 +148,12 @@ class DuckDBManager:
             # Item 6: Disable insertion order for performance
             self._conn.execute("SET preserve_insertion_order = false;")
 
-            # Initialize Spatial Extension
+            # Initialize Spatial Extension (INSTALL once per process, LOAD per connection)
+            global _SPATIAL_INSTALLED
             try:
-                self._conn.execute("INSTALL spatial;")
+                if not _SPATIAL_INSTALLED:
+                    self._conn.execute("INSTALL spatial;")
+                    _SPATIAL_INSTALLED = True
                 self._conn.execute("LOAD spatial;")
                 logger.info("DuckDB spatial extension loaded successfully.")
             except Exception as exc:
@@ -257,7 +264,10 @@ class DuckDBRepository:
             logger.info(f"Spatial Migration: Adding 'native_geom' column to '{table_name}'")
             self.manager.conn.execute(f'ALTER TABLE "{table_name}" ADD COLUMN native_geom GEOMETRY;')
 
-        # Standard column evolution
+        # Standard column evolution: late-arriving columns default to VARCHAR. This is
+        # intentional for messy municipal data — a column that looks numeric today may
+        # arrive as a string in a future batch, and VARCHAR absorbs both without
+        # breaking ingestion (see test_type_safety_on_evolution).
         for col in df.columns:
             if col not in existing_cols and col != "native_geom":
                 self.manager.conn.execute(f'ALTER TABLE "{table_name}" ADD COLUMN "{col.replace(chr(34), "")}" VARCHAR;')
@@ -267,8 +277,11 @@ class DuckDBRepository:
             f'"{col.replace(chr(34), "")}" = EXCLUDED."{col.replace(chr(34), "")}"'
             for col in columns if col != conflict_column
         ]
-        # Always update native_geom during upsert
-        update_set_parts.append(f'native_geom = ({geom_expr})')
+        # Update native_geom only when this batch actually carries geometry source
+        # columns; otherwise a projected/partial fetch would overwrite existing
+        # geometry with NULL.
+        if geom_expr != "NULL":
+            update_set_parts.append(f'native_geom = ({geom_expr})')
         update_set = ", ".join(update_set_parts)
 
         sql_upsert = f"""

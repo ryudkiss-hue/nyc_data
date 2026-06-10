@@ -8,7 +8,6 @@ from __future__ import annotations
 from .bayesian import (
     BayesianInferenceResult,
     BayesianRegressionEngine,
-    quantify_hiring_yield,
 )
 from .insights import InsightsEngine, InsightsReport, generate_insights, smart_recommendations
 from .metrics import (

@@ -485,6 +485,24 @@ class SpatialDataModel:
         self._zones[zone.zone_id] = zone
         return self.db.insert_material_zone(zone)
 
+    def get_segment(self, segment_id: str) -> SpatialSegment | None:
+        """Return a segment from the in-memory cache, falling back to the DB."""
+        if segment_id in self._segments:
+            return self._segments[segment_id]
+        return self.db.get_segment(segment_id)
+
+    def segments_count(self) -> int:
+        """Number of segments held in the in-memory model."""
+        return len(self._segments)
+
+    def blocks_count(self) -> int:
+        """Number of blocks held in the in-memory model."""
+        return len(self._blocks)
+
+    def inspections_count(self) -> int:
+        """Number of inspections held in the in-memory model."""
+        return len(self._inspections)
+
 
 @dataclass
 class SpatialQuery:
@@ -508,6 +526,9 @@ class SpatialIndex:
     def query_by_bounds(self, bounds: tuple[float, float, float, float]) -> list:
         return list(self._index.values())
 
+    def query_by_distance(self, center: tuple[float, float], radius: float) -> list:
+        return list(self._index.values())
+
 
 class GeometryHandler:
     """Handler for geometry validation."""
@@ -516,6 +537,9 @@ class GeometryHandler:
         return True
 
     def convert_format(self, geometry: Any, target_format: str) -> Any:
+        return geometry
+
+    def buffer(self, geometry: Any, distance: float) -> Any:
         return geometry
 
 
