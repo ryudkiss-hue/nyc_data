@@ -9,6 +9,11 @@ from .bayesian import (
     BayesianInferenceResult,
     BayesianRegressionEngine,
 )
+from .confidence_intervals import (
+    bootstrap_confidence_interval,
+    mean_confidence_interval,
+    wilson_score_confidence_interval,
+)
 from .insights import InsightsEngine, InsightsReport, generate_insights, smart_recommendations
 from .metrics import (
     compute_borough_metrics,
@@ -53,6 +58,9 @@ __all__ = [
     "classify_all_distributions",
     "correlation_analysis",
     "detect_all_outliers",
+    "wilson_score_confidence_interval",
+    "bootstrap_confidence_interval",
+    "mean_confidence_interval",
 ]
 
 

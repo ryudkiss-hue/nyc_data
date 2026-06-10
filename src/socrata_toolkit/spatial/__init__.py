@@ -450,9 +450,3 @@ from .conflict_detection import (
     detect_spatial_conflicts,
     summarize_conflicts_by_severity,
 )
-
-__all__ = [
-    "SpatialConflict",
-    "detect_spatial_conflicts",
-    "summarize_conflicts_by_severity",
-]
