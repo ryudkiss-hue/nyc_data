@@ -24,7 +24,7 @@ class BayesianInferenceResult:
 class BayesianRegressionEngine:
     """
     Elite Bayesian Inference Engine using Markov Chain Monte Carlo (MCMC).
-    Specialized for NYC DOT operational modeling (e.g., hiring yields, failure rates).
+    Specialized for NYC DOT operational modeling (e.g., defect rates, SLA breach rates).
     """
 
     @staticmethod
@@ -85,15 +85,3 @@ class BayesianRegressionEngine:
             converged=converged,
             trace=trace
         )
-
-def quantify_hiring_yield(postings: pd.Series, hires: pd.Series) -> BayesianInferenceResult:
-    """
-    Domain-specific application: Uses Bayesian MCMC to find the yield multiplier
-    between job postings and actual payroll starts.
-    """
-    # Pre-processing for statistical significance
-    p_arr = postings.fillna(0).values
-    h_arr = hires.fillna(0).values
-
-    engine = BayesianRegressionEngine()
-    return engine.run_poisson_regression(p_arr, h_arr)

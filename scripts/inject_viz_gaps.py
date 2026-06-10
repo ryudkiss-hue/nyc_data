@@ -127,7 +127,7 @@ MAP_INJECTIONS = [
 ]
 
 def update_viz_engine():
-    with open(VIZ_ENGINE_PATH, "r", encoding="utf-8") as f:
+    with open(VIZ_ENGINE_PATH, encoding="utf-8") as f:
         content = f.read()
 
     # Inject new methods
@@ -136,7 +136,7 @@ def update_viz_engine():
         content = content.replace(target_str, NEW_METHODS + target_str)
 
     # Inject map keys
-    map_target = '            "causal_hiring": lambda: wrap(VisualizationEngine.chart_lag_corr, data_bundle),'
+    map_target = '            "inspections": lambda: wrap(VisualizationEngine.chart_inspections_boro, data_bundle),'
     if map_target in content and '"missingness"' not in content:
         injected_map = map_target + "\\n            " + "\\n            ".join(MAP_INJECTIONS)
         content = content.replace(map_target, injected_map)
@@ -146,7 +146,7 @@ def update_viz_engine():
 
 
 def update_dash_layouts():
-    with open(DASH_LAYOUTS_PATH, "r", encoding="utf-8") as f:
+    with open(DASH_LAYOUTS_PATH, encoding="utf-8") as f:
         content = f.read()
 
     # 1. Dashboard -> Add annotated_surge

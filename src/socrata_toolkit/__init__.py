@@ -31,7 +31,6 @@ _lazy_map: dict[str, str] = {
     "generate_insights": "analysis:generate_insights",
     "BayesianRegressionEngine": "analysis:BayesianRegressionEngine",
     "BayesianInferenceResult": "analysis:BayesianInferenceResult",
-    "quantify_hiring_yield": "analysis:quantify_hiring_yield",
     "compute_sla_metrics": "analysis:compute_sla_metrics",
     "compute_borough_metrics": "analysis:compute_borough_metrics",
     "compute_sla_trends": "analysis:compute_sla_trends",
