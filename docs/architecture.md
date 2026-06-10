@@ -2,41 +2,46 @@
 
 ## 1. High-Level Design
 
-The toolkit follows a **local-first, DuckDB-driven** architecture designed for high-performance spatial analysis and rigorous data governance.
+The toolkit follows a **hybrid DuckLake architecture**, integrating local DuckDB L2 caches with MotherDuck for cloud persistence, collaborative sharing, and industrial-grade data engineering.
 
 ```
 DATA LAYER
-  NYC Socrata (26 datasets) → DuckDB L2 Cache (Parquet) → Spatial Extensions
+  NYC Socrata (26 datasets) → DuckDB L2 Cache (Parquet) → MotherDuck (DuckLake)
 
 PROCESSING LAYER (7 Pillars)
-  1. Core: API client, DuckDB persistence, CLI (Click)
-  2. Analysis: Profiling (Four Moments), Anomaly detection
-  3. Analyst: Weekly packs, role-based workflows, publishing
+  1. Core: SODA3 Client, DuckLake Manager, DuckDBRepository
+  2. Analysis: Profiling (Four Moments), Bayesian MCMC (PyMC)
+  3. Analyst: Weekly packs, MotherDuck Data Shares, Role-based workflows
   4. Quality: SLA tracking, Freshness, Validation rules
-  5. Visualization: 30+ chart types (Plotly, Folium, Pydeck)
+  5. Visualization: Plotly Dash (Enterprise), Streamlit (Mission Control)
   6. Governance: Data Lineage (NetworkX), Audit logs, Schema Drift
   7. Engineering: Contract analytics, Budget forecasting
 
 INTERFACE LAYER
   ↓ CLI (socrata tool)
   ↓ Streamlit Mission Control (Port 8501)
+  ↓ Dash Workstation (Port 8011)
   ↓ REST API (FastAPI, Port 8000)
 ```
 
 ---
 
-## 2. Spatial Foundation (DuckDB Spatial)
+## 2. DuckLake & MotherDuck Integration
 
-The project leverages **DuckDB Spatial** for high-speed geographic queries, replacing legacy PostGIS requirements for local analysis.
+The project leverages a **DuckLake** pattern to bridge high-performance local analysis with cloud-scale persistence.
 
-### Coordinate Systems
-- **Primary**: WGS84 (SRID 4326) for web mapping.
-- **Secondary**: NAD83 NY Long Island (SRID 2263) for feet-based engineering metrics.
+### Hybrid Execution
+- **Local (Hot)**: L2 Parquet caches for ultra-fast, feet-on-the-ground spatial analysis.
+- **Cloud (Cold/Shared)**: MotherDuck persistence for executive reporting, cross-agency coordination, and long-term trend analysis.
+- **Bridging**: The `DuckDBManager` supports transparent `ATTACH 'md:'` operations and `publish_to_motherduck()` data promotion flows.
 
-### Key Spatial Tables
-- `sidewalk_segments`: LineString geometries with condition scores.
-- `inspections`: Point-based defect records.
-- `blocks`: Polygon boundaries for spatial aggregation.
+### Spatial Foundation (Native DuckDB Spatial)
+The project utilizes native DuckDB `GEOMETRY` types, replacing legacy WKT/Lat-Lon strings with high-speed geographic objects.
+
+- **Automated Detection**: Ingestion pipelines detect spatial columns and convert to native `GEOMETRY` during upserts.
+- **Coordinate Systems**: 
+    - **WGS84 (4326)**: Default for ingestion and web mapping.
+    - **NAD83 NY Long Island (2263)**: For precision feet-based engineering metrics.
 
 ---
 
