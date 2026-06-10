@@ -4,8 +4,8 @@ Checks: Count validation, Freshness, Uniqueness, Business logic, Referential int
 """
 
 import logging
+from datetime import datetime
 from typing import Dict, List
-from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
