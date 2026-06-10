@@ -1330,7 +1330,7 @@ def compliance_group(ctx):
 def compliance_check(material_id, condition, json_out):
     """Check compliance for a material type."""
     try:
-        from datetime import datetime
+        from datetime import datetime, timezone
 
         from socrata_toolkit.material.compliance import MaterialCompliance
         from socrata_toolkit.material.definitions import get_material_by_id
@@ -1344,7 +1344,7 @@ def compliance_check(material_id, condition, json_out):
         assessment = SurfaceAssessment(
             location_id="test-location",
             material=spec,
-            last_inspected=datetime.now(),
+            last_inspected=datetime.now(timezone.utc),
             condition=SurfaceCondition(condition),
         )
 
@@ -2160,7 +2160,7 @@ except ImportError:
 try:
     import weasyprint as _weasyprint  # noqa: F401
     HAS_WEASYPRINT = True
-except ImportError:
+except (ImportError, OSError):
     HAS_WEASYPRINT = False
 
 try:
@@ -2415,7 +2415,7 @@ def dataset_health_cmd(
     """
     import os
     import sys
-    from datetime import datetime
+    from datetime import datetime, timezone
 
     import requests
 
@@ -2427,7 +2427,7 @@ def dataset_health_cmd(
     token = os.getenv("SOCRATA_APP_TOKEN", "")
     session = _make_session()
     domain = os.getenv("SOCRATA_DOMAIN", "data.cityofnewyork.us")
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     rows_out: list[dict] = []
     health_status_code = 0  # Start assuming all healthy (exit code 0)
@@ -2476,7 +2476,7 @@ def dataset_health_cmd(
                 meta_json = mr.json()
                 ts = meta_json.get("rowsUpdatedAt") or meta_json.get("updatedAt")
                 if ts:
-                    last_modified_dt = datetime.utcfromtimestamp(int(ts))
+                    last_modified_dt = datetime.fromtimestamp(int(ts), timezone.utc)
                     last_modified = last_modified_dt.isoformat()
                     # Calculate staleness in days
                     delta = now - last_modified_dt

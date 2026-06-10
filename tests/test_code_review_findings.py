@@ -63,17 +63,17 @@ class TestCriticalFinding1_SoQLSyntax:
 
         client = SocrataClient(SocrataConfig())
 
-        # Generate a valid ISO 8601 timestamp from 30 days ago
-        thirty_days_ago = (datetime.now() - timedelta(days=30)).isoformat()
+        # Generate a valid ISO 8601 timestamp from 30 days ago (seconds precision only)
+        thirty_days_ago = (datetime.now() - timedelta(days=30)).isoformat(timespec="seconds")
 
-        # The corrected query
+        # The corrected query - using 311 Complaints which has 'Borough' and 'Created Date'
         valid_where = f"upper(borough)='MANHATTAN' AND created_date > '{thirty_days_ago}'"
 
         # This should work without raising an exception
         try:
             result = client.fetch_dataframe(
                 domain="data.cityofnewyork.us",
-                fourfour="6kbp-uz6m",
+                fourfour="erm2-nwe9", # 311 complaints
                 where=valid_where,
                 max_rows=1  # API uses max_rows, not limit
             )
@@ -182,7 +182,7 @@ class TestDocumentationAccuracy:
         import re
 
         # Read CLAUDE.md
-        with open("CLAUDE.md") as f:
+        with open("CLAUDE.md", encoding="utf-8") as f:
             claude_content = f.read()
 
         # Find all code blocks with SoQL
@@ -207,7 +207,7 @@ class TestDocumentationAccuracy:
         actual_sig = str(inspect.signature(spatial_intersects_join))
 
         # Expected from documentation
-        documented_params = ['left_df', 'right_df', 'left_geom_col', 'right_geom_col']
+        documented_params = ['left', 'right', 'left_geom_col', 'right_geom_col']
 
         # Verify all documented params exist
         for param in documented_params:
@@ -235,7 +235,7 @@ class TestDocumentationImpact:
             for file in files:
                 if file.endswith(".py"):
                     filepath = os.path.join(root, file)
-                    with open(filepath) as f:
+                    with open(filepath, encoding="utf-8") as f:
                         content = f.read()
                         if "CLAUDE.md" in content or "from CLAUDE" in content:
                             found_references += 1
@@ -259,7 +259,7 @@ class TestDocumentationImpact:
         found_validation = False
         for ci_file in ci_files:
             if os.path.exists(ci_file):
-                with open(ci_file) as f:
+                with open(ci_file, encoding="utf-8") as f:
                     content = f.read()
                     if "doctest" in content or "markdown" in content or "example" in content:
                         found_validation = True

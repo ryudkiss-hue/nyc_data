@@ -139,7 +139,7 @@ class TestDefaultCacheDir:
         test_path = "/custom/cache/path"
         with patch.dict("os.environ", {"SOCRATA_CACHE_DIR": test_path}):
             cache_dir = _default_cache_dir()
-            assert str(cache_dir) == test_path
+            assert Path(cache_dir) == Path(test_path)
 
     def test_default_cache_dir_with_whitespace_env(self):
         with patch.dict("os.environ", {"SOCRATA_CACHE_DIR": "   "}, clear=False):

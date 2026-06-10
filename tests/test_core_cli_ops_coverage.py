@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import sys
+from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -168,7 +169,7 @@ class TestDatasetHealthFallback:
         # SODA3 count via session.post; metadata via session.get.
         session.post.return_value = _resp([{"c": "100"}])
         session.get.side_effect = [
-            _resp({"rowsUpdatedAt": int(datetime.utcnow().timestamp())}),
+            _resp({"rowsUpdatedAt": int(datetime.now(timezone.utc).timestamp())}),
         ]
         # Force the `from tabulate import tabulate` inside the command to fail.
         with patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=reg), \

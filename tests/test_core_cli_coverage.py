@@ -1130,5 +1130,7 @@ class TestAlertsCommandExtended:
 
     def test_alerts_persist_without_pg_dsn_errors(self, cli_runner):
         """Alerts --persist without --pg-dsn raises error."""
-        result = cli_runner.invoke(alerts_cmd, ["--persist"])
+        # Ensure PG_DSN is not inherited from the environment
+        result = cli_runner.invoke(alerts_cmd, ["--persist"], env={"PG_DSN": ""})
         assert result.exit_code != 0
+        assert "pg-dsn is required" in result.output

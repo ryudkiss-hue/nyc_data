@@ -251,6 +251,9 @@ def equity_analysis(
     scorer = EquityScorer()
 
     results = []
+    total_weighted_needs = []
+    total_spends = []
+
     for borough in BOROUGHS:
         boro_data = inspections_df[inspections_df[borough_col].str.upper() == borough]
         if boro_data.empty:
@@ -265,18 +268,37 @@ def equity_analysis(
             impact = scorer.calculate_impact(row, base_need)
             total_weighted_need += impact.score_weighted
 
-        miles = BOROUGH_SIDEWALK_MILES.get(borough, 1.0)
-        weighted_need_per_mile = total_weighted_need / miles
+        total_weighted_needs.append(total_weighted_need)
 
         boro_resource = resource[resource[borough_col].str.upper() == borough] if borough_col in resource.columns else pd.DataFrame()
         spend = float(boro_resource[spend_col].fillna(0).sum()) if spend_col in boro_resource.columns else 0.0
+        total_spends.append(spend)
 
-        results.append(EquityScore(
+        results.append({
+            "borough": borough,
+            "raw_need": total_weighted_need,
+            "raw_resource": spend,
+        })
+
+    # Normalize
+    max_need = max(total_weighted_needs) if total_weighted_needs else 1.0
+    max_resource = max(total_spends) if total_spends else 1.0
+
+    final_results = []
+    for r in results:
+        borough = r["borough"]
+        need_idx = r["raw_need"] / max_need if max_need > 0 else 0.0
+        res_idx = r["raw_resource"] / max_resource if max_resource > 0 else 0.0
+
+        miles = BOROUGH_SIDEWALK_MILES.get(borough, 1.0)
+        weighted_need_per_mile = r["raw_need"] / miles
+
+        final_results.append(EquityScore(
             borough=borough,
-            need_index=round(total_weighted_need, 2),
-            resource_index=round(spend, 2),
-            equity_gap=round(weighted_need_per_mile, 4), # Simplified gap for borough comparison
-            backlog_per_mile=round(weighted_need_per_mile, 4),
+            need_index=round(float(need_idx), 2),
+            resource_index=round(float(res_idx), 2),
+            equity_gap=round(float(need_idx - res_idx), 4),
+            backlog_per_mile=round(float(weighted_need_per_mile), 4),
         ))
 
-    return sorted(results, key=lambda e: e.equity_gap, reverse=True)
+    return sorted(final_results, key=lambda e: e.equity_gap, reverse=True)
