@@ -313,7 +313,7 @@ class DuckDBSpatialConnection:
         """Insert a sidewalk segment."""
         try:
             with self.get_connection() as conn:
-            conn.execute(
+                conn.execute(
                 """
                 INSERT INTO sidewalk_segments
                 (segment_id, geometry, material_type, condition_score,
@@ -348,7 +348,7 @@ class DuckDBSpatialConnection:
         """Insert a block."""
         try:
             with self.get_connection() as conn:
-            conn.execute(
+                conn.execute(
                 """
                 INSERT INTO blocks
                 (block_id, geometry, borough, district, council_district,
@@ -376,7 +376,7 @@ class DuckDBSpatialConnection:
         """Insert an inspection record."""
         try:
             with self.get_connection() as conn:
-            conn.execute(
+                conn.execute(
                 """
                 INSERT INTO inspections
                 (inspection_id, geometry, segment_id, inspector_id,
@@ -405,7 +405,7 @@ class DuckDBSpatialConnection:
         """Insert a material zone."""
         try:
             with self.get_connection() as conn:
-            conn.execute(
+                conn.execute(
                 """
                 INSERT INTO material_zones
                 (zone_id, geometry, material_type, area_square_meters,
