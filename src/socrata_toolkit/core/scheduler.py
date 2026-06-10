@@ -176,13 +176,15 @@ class PipelineScheduler:
 
         jobs = []
         for job in self.scheduler.get_jobs():
+            next_run = getattr(job, 'next_run_time', None)
+            pending = getattr(job, 'pending', False)
             jobs.append({
                 'id': job.id,
                 'name': job.name,
                 'func': str(job.func),
                 'trigger': str(job.trigger),
-                'next_run_time': str(job.next_run_time),
-                'pending': job.pending
+                'next_run_time': str(next_run) if next_run else "pending",
+                'pending': pending
             })
 
         return jobs

@@ -127,8 +127,10 @@ def main():
 if __name__ == "__main__":
     # Setup logging
     logger = setup_logging({
-        "level": "INFO",
-        "file": "logs/scheduler.log"
+        "logging": {
+            "level": "INFO",
+            "file": "logs/scheduler.log"
+        }
     })
 
     main()
