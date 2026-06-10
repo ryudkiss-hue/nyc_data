@@ -163,12 +163,13 @@ class TestSpatialGeometry:
         assert sg.srid == SRID_NAD83
 
     @shapely_required
-    def test_to_wkt_contains_srid(self, point_geom):
-        """to_wkt() output starts with 'SRID=<n>;'."""
+    def test_to_wkt_returns_bare_wkt(self, point_geom):
+        """to_wkt() returns standard WKT (no SRID prefix) for DuckDB ST_GeomFromText."""
         from socrata_toolkit.spatial.database import SpatialGeometry
         sg = SpatialGeometry(point_geom)
         wkt = sg.to_wkt()
-        assert wkt.startswith(f"SRID={SRID_WGS84};")
+        assert wkt.upper().startswith("POINT")
+        assert "SRID" not in wkt.upper()
 
     @shapely_required
     def test_to_geojson_returns_feature(self, point_geom):
@@ -420,56 +421,29 @@ class TestQueryGeographicArea:
 
 
 # ---------------------------------------------------------------------------
-# SpatialDatabaseConnection — mocked DB tests
+# DuckDBSpatialConnection — error-handling tests with a failing manager
 # ---------------------------------------------------------------------------
 
-class TestSpatialDatabaseConnection:
-    """Tests for SpatialDatabaseConnection using mocked psycopg."""
+class TestDuckDBSpatialConnection:
+    """Tests for DuckDBSpatialConnection error handling.
 
-    def _make_db(self):
-        """Construct a SpatialDatabaseConnection with mocked psycopg."""
-        from socrata_toolkit.spatial.database import SpatialDatabaseConnection
-        with patch("socrata_toolkit.spatial.database.psycopg") as mock_psycopg:
-            db = SpatialDatabaseConnection(
-                host="localhost", port=5432, database="test",
-                user="user", password="password"
-            )
-            db._mock_psycopg = mock_psycopg
-        return db
+    The migration replaced the psycopg/PostGIS-backed SpatialDatabaseConnection
+    with an in-process DuckDB connection. These tests drive the error paths by
+    supplying a manager whose connection raises on execute.
+    """
 
-    def test_init_stores_conninfo(self):
-        """SpatialDatabaseConnection stores connection string on init."""
-        from socrata_toolkit.spatial.database import SpatialDatabaseConnection
-        db = SpatialDatabaseConnection(
-            host="localhost", port=5432, database="test_db",
-            user="alice", password="secret"
-        )
-        assert "localhost" in db.conninfo
-        assert "test_db" in db.conninfo
-
-    def test_check_postgis_enabled_returns_false_on_error(self):
-        """check_postgis_enabled returns False when a DB error is raised."""
-        from socrata_toolkit.spatial.database import SpatialDatabaseConnection
-        db = SpatialDatabaseConnection(
-            host="localhost", port=5432, database="test",
-            user="user", password="password"
-        )
-        with patch.object(db, "get_connection", side_effect=Exception("connection refused")):
-            result = db.check_postgis_enabled()
-        assert result is False
+    def _make_failing_db(self):
+        """Construct a DuckDBSpatialConnection whose manager raises on execute."""
+        from socrata_toolkit.spatial.database import DuckDBSpatialConnection
+        manager = MagicMock()
+        manager.conn.execute.side_effect = Exception("db error")
+        return DuckDBSpatialConnection(manager)
 
     @shapely_required
     def test_insert_segment_returns_false_on_error(self, linestring_geom):
         """insert_segment returns False when the DB raises an exception."""
-        from socrata_toolkit.spatial.database import (
-            SpatialDatabaseConnection,
-            SpatialGeometry,
-            SpatialSegment,
-        )
-        db = SpatialDatabaseConnection(
-            host="localhost", port=5432, database="test",
-            user="user", password="password"
-        )
+        from socrata_toolkit.spatial.database import SpatialGeometry, SpatialSegment
+        db = self._make_failing_db()
         seg = SpatialSegment(
             segment_id="seg-100",
             geometry=SpatialGeometry(linestring_geom),
@@ -477,43 +451,25 @@ class TestSpatialDatabaseConnection:
             condition_score=70.0,
             borough="Manhattan",
         )
-        with patch.object(db, "get_connection", side_effect=Exception("db error")):
-            result = db.insert_segment(seg)
-        assert result is False
+        assert db.insert_segment(seg) is False
 
     @shapely_required
     def test_insert_block_returns_false_on_error(self, polygon_geom):
         """insert_block returns False when the DB raises an exception."""
-        from socrata_toolkit.spatial.database import (
-            SpatialBlock,
-            SpatialDatabaseConnection,
-            SpatialGeometry,
-        )
-        db = SpatialDatabaseConnection(
-            host="localhost", port=5432, database="test",
-            user="user", password="password"
-        )
+        from socrata_toolkit.spatial.database import SpatialBlock, SpatialGeometry
+        db = self._make_failing_db()
         block = SpatialBlock(
             block_id="blk-001",
             geometry=SpatialGeometry(polygon_geom),
             borough="Brooklyn",
         )
-        with patch.object(db, "get_connection", side_effect=Exception("db error")):
-            result = db.insert_block(block)
-        assert result is False
+        assert db.insert_block(block) is False
 
     @shapely_required
     def test_insert_inspection_returns_false_on_error(self, point_geom):
         """insert_inspection returns False when the DB raises an exception."""
-        from socrata_toolkit.spatial.database import (
-            SpatialDatabaseConnection,
-            SpatialGeometry,
-            SpatialInspection,
-        )
-        db = SpatialDatabaseConnection(
-            host="localhost", port=5432, database="test",
-            user="user", password="password"
-        )
+        from socrata_toolkit.spatial.database import SpatialGeometry, SpatialInspection
+        db = self._make_failing_db()
         insp = SpatialInspection(
             inspection_id="insp-001",
             geometry=SpatialGeometry(point_geom),
@@ -523,41 +479,30 @@ class TestSpatialDatabaseConnection:
             defect_type="crack",
             severity="high",
         )
-        with patch.object(db, "get_connection", side_effect=Exception("db error")):
-            result = db.insert_inspection(insp)
-        assert result is False
+        assert db.insert_inspection(insp) is False
 
     @shapely_required
     def test_insert_material_zone_returns_false_on_error(self, multipolygon_geom):
         """insert_material_zone returns False when the DB raises an exception."""
-        from socrata_toolkit.spatial.database import (
-            SpatialDatabaseConnection,
-            SpatialGeometry,
-            SpatialMaterialZone,
-        )
-        db = SpatialDatabaseConnection(
-            host="localhost", port=5432, database="test",
-            user="user", password="password"
-        )
+        from socrata_toolkit.spatial.database import SpatialGeometry, SpatialMaterialZone
+        db = self._make_failing_db()
         zone = SpatialMaterialZone(
             zone_id="zone-001",
             geometry=SpatialGeometry(multipolygon_geom),
             material_type="asphalt",
         )
-        with patch.object(db, "get_connection", side_effect=Exception("db error")):
-            result = db.insert_material_zone(zone)
-        assert result is False
+        assert db.insert_material_zone(zone) is False
 
     def test_get_segment_returns_none_on_error(self):
         """get_segment returns None when the DB raises an exception."""
-        from socrata_toolkit.spatial.database import SpatialDatabaseConnection
-        db = SpatialDatabaseConnection(
-            host="localhost", port=5432, database="test",
-            user="user", password="password"
-        )
-        with patch.object(db, "get_connection", side_effect=Exception("db error")):
-            result = db.get_segment("seg-999")
-        assert result is None
+        db = self._make_failing_db()
+        assert db.get_segment("seg-999") is None
+
+    def test_str_manager_is_wrapped(self):
+        """A string path is wrapped in a DuckDBManager rather than used directly."""
+        from socrata_toolkit.spatial.database import DuckDBManager, DuckDBSpatialConnection
+        db = DuckDBSpatialConnection(":memory:")
+        assert isinstance(db.manager, DuckDBManager)
 
 
 # ---------------------------------------------------------------------------

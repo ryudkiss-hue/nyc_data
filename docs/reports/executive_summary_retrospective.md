@@ -30,7 +30,7 @@ The SIM division has experienced a significant surge in capital funding and cont
 | **13** | **Inspections by Borough (`inspections`)** | Regional Demand Tracking | High-density volume analysis for resource reallocation. |
 | **14** | **API Sync Freshness (`freshness`)** | Data Integrity & SLA Compliance | Real-time audit of L2 cache vs. SODA3 endpoints. |
 | **15** | **Markov Decay Surface (`markov`)** | Asset Lifecycle Management | Predictive trigger for proactive resurfacing contracts. |
-| **16** | **Lag Cross-Correlation (`lag_corr`)** | Operational Efficiency Studies | Identifies temporal relationships in hiring/spending. |
+| **16** | **Lag Cross-Correlation (`lag_corr`)** | Operational Efficiency Studies | Identifies temporal relationships in inspections/spending. |
 | **17** | **Tax Lot Zoning Pie (`lot`)** | Urban Phenotype Composition | Correlates residential density with pedestrian risk. |
 | **18** | **3D PCA Manifold (`manifold_3d`)** | Advanced Anomaly Detection | Identifies systemic zoning code violation clusters. |
 | **19** | **Violation Dismissal Pie (`dismissals`)** | HIQA Training & Calibration | Feedback loop for overly aggressive initial inspections. |

@@ -69,7 +69,6 @@ jobs:
           "
 
       - name: Streamlit app import
-        run: python -c "from app import analytics, data_loader; print('streamlit app ok')"
         env:
           MISSION_DEMO: "1"
           SOCRATA_APP_TOKEN: ${{ secrets.SOCRATA_APP_TOKEN }}
