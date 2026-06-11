@@ -1,0 +1,395 @@
+{
+  "timestamp": "2026-06-11T00:29:24.093573",
+  "total_datasets": 24,
+  "managers": [
+    {
+      "role": "Ramp Program Manager",
+      "datasets": {
+        "ramp_progress": {
+          "fourfour": "e7gc-ub6z",
+          "name": "Pedestrian Ramp - Program Progress",
+          "description": "New York City Department of Transportation (NYC DOT) has developed a program dedicated to upgrading and installing pedestrian ramps and is committed to making our pedestrian space safe and accessible ",
+          "rows": 1356,
+          "workflows": [
+            "ramp-progress",
+            "forecasting",
+            "impact-assessment"
+          ]
+        },
+        "ramp_complaints": {
+          "fourfour": "jagj-gttd",
+          "name": "Pedestrian Ramp Complaints",
+          "description": "This dataset tracks corner and pedestrian ramp complaints and their temporary repair status. Temporary repairs may include but are not limited to the use of asphalt on corners and pedestrian ramps.",
+          "rows": 815,
+          "workflows": [
+            "complaint-response",
+            "sentiment-tracking"
+          ]
+        },
+        "ramp_locations": {
+          "fourfour": "ufzp-rrqu",
+          "name": "Pedestrian Ramp Locations",
+          "description": "Pedestrian ramps provide access on and off streets and sidewalks and are an essential tool for all pedestrians. This data is a comprehensive list of all pedestrian ramps throughout New York City.\r\n\r\nP",
+          "rows": 5813,
+          "workflows": [
+            "hotspot-analysis",
+            "resource-allocation"
+          ]
+        },
+        "complaints_311": {
+          "fourfour": "erm2-nwe9",
+          "name": "311 Service Requests from 2020 to Present",
+          "description": "<b>NOTE:</b> Learn more about the latest changes to this dataset: https://opendata.cityofnewyork.us/311-service-requests-from-2010-to-present-updates/\n\n311 responds to thousands of inquiries, comments",
+          "rows": 1242856,
+          "workflows": [
+            "dataset-health",
+            "sla-compliance"
+          ]
+        }
+      },
+      "workflows": [
+        "ramp-progress",
+        "complaint-response",
+        "forecasting",
+        "impact-assessment",
+        "hotspot-analysis"
+      ]
+    },
+    {
+      "role": "Operations Manager (Inspections)",
+      "datasets": {
+        "inspection": {
+          "fourfour": "dntt-gqwq",
+          "name": "Sidewalk Management Database - Inspection",
+          "description": "Sidewalk Management System is used to track and organize inspections, violations and the status of New York City sidewalks Identifies locations where DOT inspectors performed sidewalk inspections for ",
+          "rows": 3000,
+          "workflows": [
+            "dataset-health",
+            "sla-compliance"
+          ]
+        },
+        "violations": {
+          "fourfour": "6kbp-uz6m",
+          "name": "Sidewalk Management Database - Violations",
+          "description": "Sidewalk Management System is used to track and organize inspections, violations and the status of New York City sidewalks. Identifies a Notice of Violation has been issued for a sidewalk defect.\nFor ",
+          "rows": 18618,
+          "workflows": [
+            "dataset-health",
+            "sla-compliance"
+          ]
+        },
+        "dismissals": {
+          "fourfour": "p4u2-3jgx",
+          "name": "Sidewalk Dismissal Inspection Tracking",
+          "description": "Tracks dismissal inspection requests and results from property owners who repairs their sidewalk privately.",
+          "rows": 12714,
+          "workflows": [
+            "dismissal-analysis",
+            "appeal-tracking"
+          ]
+        },
+        "correspondences": {
+          "fourfour": "bheb-sjfi",
+          "name": "Sidewalk Correspondences",
+          "description": "Tracks all written correspondences to the Sidewalk Program.",
+          "rows": 3786,
+          "workflows": []
+        },
+        "reinspection": {
+          "fourfour": "gx72-kirf",
+          "name": "Sidewalk Management Database - ReInspection",
+          "description": "Sidewalk Management System is used to track and organize inspections, violations and the status of New York City sidewalks.\nA reinspection can be requested by the property owner if they do not agree w",
+          "rows": 963,
+          "workflows": []
+        },
+        "complaints_311": {
+          "fourfour": "erm2-nwe9",
+          "name": "311 Service Requests from 2020 to Present",
+          "description": "<b>NOTE:</b> Learn more about the latest changes to this dataset: https://opendata.cityofnewyork.us/311-service-requests-from-2010-to-present-updates/\n\n311 responds to thousands of inquiries, comments",
+          "rows": 1242856,
+          "workflows": [
+            "dataset-health",
+            "sla-compliance"
+          ]
+        }
+      },
+      "workflows": [
+        "violations-triage",
+        "velocity-analysis",
+        "inspector-performance",
+        "dismissal-analysis",
+        "appeal-tracking",
+        "correspondence-audit",
+        "dataset-health",
+        "sla-compliance"
+      ]
+    },
+    {
+      "role": "Project Manager (Construction)",
+      "datasets": {
+        "street_permits": {
+          "fourfour": "tqtj-sjs8",
+          "name": "Street Construction Permits (2022 - Present)",
+          "description": "DOT issues over 150 different types of sidewalk and roadway construction permits to utilities, contractors, government agencies and homeowners. Permits cover activities such as street openings, sidewa",
+          "rows": 50629,
+          "workflows": [
+            "conflict-detect",
+            "resource-allocation"
+          ]
+        },
+        "street_construction_inspections": {
+          "fourfour": "ydkf-mpxb",
+          "name": "Street Construction Inspections and Corrective Action Requests",
+          "description": "DOT's Highway Inspection & Quality Assurance (HIQA) enforces the laws and rules that govern the way utilities, plumbers, contractors, other governmental agencies, and property owners perform work on t",
+          "rows": 12280,
+          "workflows": [
+            "conflict-detect"
+          ]
+        },
+        "street_closures_block": {
+          "fourfour": "i6b5-j7bu",
+          "name": "Street Closures due to Construction Activities by Block",
+          "description": "DOT Street Closure data identifies locations in the New York City Street Closure map where a street is subject to a full closure, restricting through traffic, for the purpose of conducting constructio",
+          "rows": 50725,
+          "workflows": []
+        },
+        "capital_intersections": {
+          "fourfour": "97nd-ff3i",
+          "name": "Street and Highway Capital Reconstruction Projects - Intersection",
+          "description": "This data is a spatial representation of street construction projects. Street and Highway capital projects are major street reconstruction projects, ranging from general street resurfacing projects to",
+          "rows": 4156,
+          "workflows": []
+        },
+        "inspection": {
+          "fourfour": "dntt-gqwq",
+          "name": "Sidewalk Management Database - Inspection",
+          "description": "Sidewalk Management System is used to track and organize inspections, violations and the status of New York City sidewalks Identifies locations where DOT inspectors performed sidewalk inspections for ",
+          "rows": 3000,
+          "workflows": [
+            "dataset-health",
+            "sla-compliance"
+          ]
+        },
+        "violations": {
+          "fourfour": "6kbp-uz6m",
+          "name": "Sidewalk Management Database - Violations",
+          "description": "Sidewalk Management System is used to track and organize inspections, violations and the status of New York City sidewalks. Identifies a Notice of Violation has been issued for a sidewalk defect.\nFor ",
+          "rows": 18618,
+          "workflows": [
+            "dataset-health",
+            "sla-compliance"
+          ]
+        }
+      },
+      "workflows": [
+        "conflict-detect",
+        "resource-allocation",
+        "hotspot-analysis",
+        "dataset-health",
+        "sla-compliance"
+      ]
+    }
+  ],
+  "all_datasets": {
+    "capital_blocks": {
+      "fourfour": "jvk9-k4re",
+      "name": "Street and Highway Capital Reconstruction Projects - Block",
+      "description": "This data is a spatial representation of street construction projects. Street and Highway capital projects are major street reconstruction projects, ranging from general street resurfacing projects to",
+      "rows": 4930,
+      "workflows": []
+    },
+    "capital_intersections": {
+      "fourfour": "97nd-ff3i",
+      "name": "Street and Highway Capital Reconstruction Projects - Intersection",
+      "description": "This data is a spatial representation of street construction projects. Street and Highway capital projects are major street reconstruction projects, ranging from general street resurfacing projects to",
+      "rows": 4156,
+      "workflows": []
+    },
+    "complaints_311": {
+      "fourfour": "erm2-nwe9",
+      "name": "311 Service Requests from 2020 to Present",
+      "description": "<b>NOTE:</b> Learn more about the latest changes to this dataset: https://opendata.cityofnewyork.us/311-service-requests-from-2010-to-present-updates/\n\n311 responds to thousands of inquiries, comments",
+      "rows": 1242856,
+      "workflows": [
+        "dataset-health",
+        "sla-compliance"
+      ]
+    },
+    "correspondences": {
+      "fourfour": "bheb-sjfi",
+      "name": "Sidewalk Correspondences",
+      "description": "Tracks all written correspondences to the Sidewalk Program.",
+      "rows": 3786,
+      "workflows": []
+    },
+    "curb_metal_protruding": {
+      "fourfour": "i2y3-sx2e",
+      "name": "Curb Metal Protruding Data",
+      "description": "This database tracks all correspondence and repairs on steel that protrudes from a sidewalk curb.",
+      "rows": 1395,
+      "workflows": []
+    },
+    "dismissals": {
+      "fourfour": "p4u2-3jgx",
+      "name": "Sidewalk Dismissal Inspection Tracking",
+      "description": "Tracks dismissal inspection requests and results from property owners who repairs their sidewalk privately.",
+      "rows": 12714,
+      "workflows": [
+        "dismissal-analysis",
+        "appeal-tracking"
+      ]
+    },
+    "inspection": {
+      "fourfour": "dntt-gqwq",
+      "name": "Sidewalk Management Database - Inspection",
+      "description": "Sidewalk Management System is used to track and organize inspections, violations and the status of New York City sidewalks Identifies locations where DOT inspectors performed sidewalk inspections for ",
+      "rows": 3000,
+      "workflows": [
+        "dataset-health",
+        "sla-compliance"
+      ]
+    },
+    "mappluto": {
+      "fourfour": "64uk-42ks",
+      "name": "Primary Land Use Tax Lot Output (PLUTO)",
+      "description": "Extensive land use and geographic data at the tax lot level in comma-separated values (CSV) file format. The PLUTO files contain more than seventy fields derived from data maintained by city agencies.",
+      "rows": 91914,
+      "workflows": []
+    },
+    "pedestrian_demand": {
+      "fourfour": "fwpa-qxaf",
+      "name": "Pedestrian Mobility Plan Pedestrian Demand",
+      "description": "Based on citywide data sources for pedestrian generators, NYC DOT developed a holistic, data-driven framework to categorize streets based on pedestrian needs. The plan aims to improve pedestrian comfo",
+      "rows": 10533,
+      "workflows": []
+    },
+    "permit_stipulations": {
+      "fourfour": "gsgx-6efw",
+      "name": "Street Construction Permits - Stipulations (2020 - Present)",
+      "description": "DOT issues over 150 different types of sidewalk and roadway construction permits to utilities, contractors, government agencies and homeowners. Permits cover activities such as street openings, sidewa",
+      "rows": 4978,
+      "workflows": []
+    },
+    "ramp_complaints": {
+      "fourfour": "jagj-gttd",
+      "name": "Pedestrian Ramp Complaints",
+      "description": "This dataset tracks corner and pedestrian ramp complaints and their temporary repair status. Temporary repairs may include but are not limited to the use of asphalt on corners and pedestrian ramps.",
+      "rows": 815,
+      "workflows": [
+        "complaint-response",
+        "sentiment-tracking"
+      ]
+    },
+    "ramp_locations": {
+      "fourfour": "ufzp-rrqu",
+      "name": "Pedestrian Ramp Locations",
+      "description": "Pedestrian ramps provide access on and off streets and sidewalks and are an essential tool for all pedestrians. This data is a comprehensive list of all pedestrian ramps throughout New York City.\r\n\r\nP",
+      "rows": 5813,
+      "workflows": [
+        "hotspot-analysis",
+        "resource-allocation"
+      ]
+    },
+    "ramp_progress": {
+      "fourfour": "e7gc-ub6z",
+      "name": "Pedestrian Ramp - Program Progress",
+      "description": "New York City Department of Transportation (NYC DOT) has developed a program dedicated to upgrading and installing pedestrian ramps and is committed to making our pedestrian space safe and accessible ",
+      "rows": 1356,
+      "workflows": [
+        "ramp-progress",
+        "forecasting",
+        "impact-assessment"
+      ]
+    },
+    "reinspection": {
+      "fourfour": "gx72-kirf",
+      "name": "Sidewalk Management Database - ReInspection",
+      "description": "Sidewalk Management System is used to track and organize inspections, violations and the status of New York City sidewalks.\nA reinspection can be requested by the property owner if they do not agree w",
+      "rows": 963,
+      "workflows": []
+    },
+    "sidewalk_planimetric": {
+      "fourfour": "vfx9-tbb6",
+      "name": "NYC Planimetric Database: Sidewalk",
+      "description": "Planimetric basemap polygon layer containing sidewalk features. \r\nPlease see the following link for additional documentation- https://github.com/CityOfNewYork/nyc-planimetrics/blob/master/Capture_Rule",
+      "rows": 36369,
+      "workflows": []
+    },
+    "step_streets": {
+      "fourfour": "u9au-h79y",
+      "name": "Step Streets Locations",
+      "description": "Step Street are steps that were built, instead of a typical roadway, on a mapped street that has a huge grade difference.  They were built to avoid very steep roadway and provide access for public use",
+      "rows": 6281,
+      "workflows": []
+    },
+    "street_closures_block": {
+      "fourfour": "i6b5-j7bu",
+      "name": "Street Closures due to Construction Activities by Block",
+      "description": "DOT Street Closure data identifies locations in the New York City Street Closure map where a street is subject to a full closure, restricting through traffic, for the purpose of conducting constructio",
+      "rows": 50725,
+      "workflows": []
+    },
+    "street_construction_inspections": {
+      "fourfour": "ydkf-mpxb",
+      "name": "Street Construction Inspections and Corrective Action Requests",
+      "description": "DOT's Highway Inspection & Quality Assurance (HIQA) enforces the laws and rules that govern the way utilities, plumbers, contractors, other governmental agencies, and property owners perform work on t",
+      "rows": 12280,
+      "workflows": [
+        "conflict-detect"
+      ]
+    },
+    "street_permits": {
+      "fourfour": "tqtj-sjs8",
+      "name": "Street Construction Permits (2022 - Present)",
+      "description": "DOT issues over 150 different types of sidewalk and roadway construction permits to utilities, contractors, government agencies and homeowners. Permits cover activities such as street openings, sidewa",
+      "rows": 50629,
+      "workflows": [
+        "conflict-detect",
+        "resource-allocation"
+      ]
+    },
+    "street_resurfacing_inhouse": {
+      "fourfour": "ffaf-8mrv",
+      "name": "DOT In-house Street Resurfacing Projects",
+      "description": "List of all New York City Department of Transportation (NYC DOT) in-house street paving and milling projects for a street block or at an intersection. For information, please the DOT website: https://",
+      "rows": 1965,
+      "workflows": []
+    },
+    "street_resurfacing_schedule": {
+      "fourfour": "xnfm-u3k5",
+      "name": "Street Resurfacing Schedule",
+      "description": "DOT issues a list of streets where crews will be doing milling or resurfacing work each week.* \n*Schedules are subject to change due to inclement weather or equipment issues.\nFor more information, vis",
+      "rows": 15215,
+      "workflows": []
+    },
+    "tree_damage": {
+      "fourfour": "j6v2-6uxq",
+      "name": "Sidewalk Management Database - All Tree Damage (ATD)",
+      "description": "Sidewalk Management System is used to track and organize inspections, violations and the status of New York City sidewalks.\nTracks properties where all sidewalk defects on the tax lot are due to trees",
+      "rows": 828,
+      "workflows": []
+    },
+    "violations": {
+      "fourfour": "6kbp-uz6m",
+      "name": "Sidewalk Management Database - Violations",
+      "description": "Sidewalk Management System is used to track and organize inspections, violations and the status of New York City sidewalks. Identifies a Notice of Violation has been issued for a sidewalk defect.\nFor ",
+      "rows": 18618,
+      "workflows": [
+        "dataset-health",
+        "sla-compliance"
+      ]
+    },
+    "weekly_construction": {
+      "fourfour": "r528-jcks",
+      "name": "Sidewalk Weekly Construction Schedule",
+      "description": "Sidewalk schedule to install, maintain and repair sidewalks, curbs and pedestrian ramps.\nhttps://www.nyc.gov/html/dot/html/motorist/resurfintro.shtml",
+      "rows": 3978,
+      "workflows": []
+    }
+  },
+  "freshness_summary": {
+    "fresh": 0,
+    "stale": 0,
+    "unknown": 24
+  }
+}
