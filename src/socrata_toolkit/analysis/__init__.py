@@ -1,14 +1,21 @@
-"""
-Analysis package (Refactored).
-Provides production-ready data profiling, text analytics, SLA tracking, and insights generation.
-"""
+"""Analysis package - Production-ready data profiling, analytics, and insights."""
 
 from __future__ import annotations
 
 from .bayesian import BayesianInferenceResult, BayesianRegressionEngine
-from .confidence_intervals import bootstrap_confidence_interval, mean_confidence_interval, wilson_score_confidence_interval
+from .confidence_intervals import (
+    bootstrap_confidence_interval,
+    mean_confidence_interval,
+    wilson_score_confidence_interval,
+)
 from .insights import InsightsEngine, InsightsReport, generate_insights, smart_recommendations
-from .metrics import compute_borough_metrics, compute_freshness_score, compute_sla_metrics, compute_sla_trends, flag_sla_violations
+from .metrics import (
+    compute_borough_metrics,
+    compute_freshness_score,
+    compute_sla_metrics,
+    compute_sla_trends,
+    flag_sla_violations,
+)
 from .profiling import DataProfile, profile_dataframe, quality_report
 from .reporting import DashboardSummary, Report, generate_contract_report, generate_inquiry_response
 from .text import extract_patterns, extract_term_frequencies, generate_text_insights, parse_sim_complaints
@@ -43,12 +50,10 @@ __all__ = [
     "wilson_score_confidence_interval",
     "bootstrap_confidence_interval",
     "mean_confidence_interval",
+    "BayesianInferenceResult",
+    "BayesianRegressionEngine",
 ]
 
-
-# Re-export advanced analysis helpers from the top-level analysis_advanced
-# module so that `socrata_toolkit.analysis.correlation_analysis` and the
-# `socrata_toolkit.analysis.advanced` shim resolve correctly.
 from ..analysis_advanced import (
     classify_all_distributions,
     correlation_analysis,
@@ -56,19 +61,16 @@ from ..analysis_advanced import (
 )
 
 
-# Legacy aliases for tests. Each import is independent so that a single
-# unavailable optional symbol does not suppress the rest (a shared try/except
-# would silently skip every alias after the first failing import).
 def _legacy_import(module: str, *names: str) -> None:
+    """Import optional legacy modules without failing if unavailable."""
     import importlib
-
     try:
         mod = importlib.import_module(module, __name__)
+        for name in names:
+            if hasattr(mod, name):
+                globals()[name] = getattr(mod, name)
     except Exception:
-        return
-    for name in names:
-        if hasattr(mod, name):
-            globals()[name] = getattr(mod, name)
+        pass
 
 
 _legacy_import(".quality", "Anomaly")
