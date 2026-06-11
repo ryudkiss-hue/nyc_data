@@ -10,6 +10,7 @@ from .client import MotherDuckClient
 from .connector import MotherDuckConnection
 from .ingestion import InspectionDataLoader
 from .schema import SchemaManager
+from .serving import ServingViewsBuilder
 from .staging import StagingTransformer
 
 __all__ = [
@@ -20,4 +21,5 @@ __all__ = [
     "InspectionDataLoader",
     "StagingTransformer",
     "AnalyticsBuilder",
+    "ServingViewsBuilder",
 ]
