@@ -68,12 +68,11 @@ app.layout = dbc.Container(
         dbc.Row([
             dbc.Col([
                 html.Hr(className="mt-5"),
-                html.P(
+                html.P([
                     "Data: NYC Open Data (Socrata) | Updated: 2026-06-11 | "
-                    "Phase 1 Complete | Cache: DuckDB | "
+                    "Phase 1 Complete | Cache: DuckDB | ",
                     html.A("GitHub", href="https://github.com/ryudkiss-hue/nyc_data", target="_blank"),
-                    className="text-muted small"
-                )
+                ], className="text-muted small")
             ], width=12)
         ]),
     ],
