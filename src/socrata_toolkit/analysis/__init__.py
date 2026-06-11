@@ -1,8 +1,18 @@
-"""Analysis package - Production-ready data profiling, analytics, and insights."""
+"""
+Analysis package (Refactored).
+Provides production-ready data profiling, text analytics, SLA tracking, and insights generation.
+"""
 
 from __future__ import annotations
 
-from .bayesian import BayesianInferenceResult, BayesianRegressionEngine
+try:
+    from .bayesian import (
+        BayesianInferenceResult,
+        BayesianRegressionEngine,
+    )
+except ImportError:
+    BayesianInferenceResult = None  # type: ignore[assignment,misc]
+    BayesianRegressionEngine = None  # type: ignore[assignment,misc]
 from .confidence_intervals import (
     bootstrap_confidence_interval,
     mean_confidence_interval,
@@ -18,8 +28,65 @@ from .metrics import (
 )
 from .profiling import DataProfile, profile_dataframe, quality_report
 from .reporting import DashboardSummary, Report, generate_contract_report, generate_inquiry_response
-from .text import extract_patterns, extract_term_frequencies, generate_text_insights, parse_sim_complaints
+from .text import (
+    extract_patterns,
+    extract_term_frequencies,
+    generate_text_insights,
+    parse_sim_complaints,
+)
 from .viz import bar_chart, histogram
+from .dataset_health import (
+    DatasetHealthClassifier,
+    DatasetHealthMetrics,
+    DatasetHealthReport,
+    HealthStatus,
+    Severity,
+)
+try:
+    from .dataset_health_workflow import (
+        DatasetHealthWorkflow,
+        run_dataset_health_workflow,
+    )
+except ImportError:
+    DatasetHealthWorkflow = None  # type: ignore[assignment,misc]
+    run_dataset_health_workflow = None  # type: ignore[assignment]
+from .sla_status import (
+    SLAStatusClassifier,
+    SLAMetricSnapshot,
+    SLAStatusRecord,
+    SLAComplianceReport,
+    ComplianceStatus,
+    SLATier,
+    RootCause,
+    TrendDirection,
+)
+try:
+    from .sla_compliance_workflow import (
+        run_sla_compliance_workflow,
+        build_sla_compliance_graph,
+    )
+except ImportError:
+    run_sla_compliance_workflow = None  # type: ignore[assignment]
+    build_sla_compliance_graph = None  # type: ignore[assignment]
+from .legal_hold_classifier import (
+    LegalHoldClassifier,
+    LegalHoldMetrics,
+    LegalHoldReport,
+    AuditTrailMetrics,
+    RecordType,
+    Sensitivity,
+    RetentionRequirement,
+)
+try:
+    from .legal_hold_workflow import (
+        LegalHoldWorkflow,
+        run_legal_hold_workflow,
+        build_legal_hold_graph,
+    )
+except ImportError:
+    LegalHoldWorkflow = None  # type: ignore[assignment,misc]
+    run_legal_hold_workflow = None  # type: ignore[assignment]
+    build_legal_hold_graph = None  # type: ignore[assignment]
 
 __all__ = [
     "profile_dataframe",
@@ -50,6 +117,41 @@ __all__ = [
     "wilson_score_confidence_interval",
     "bootstrap_confidence_interval",
     "mean_confidence_interval",
+    "RampStatus",
+    "BlockerType",
+    "RampStatusClassifier",
+    "RampClassificationResult",
+    "BoroughRampStats",
+    "RampProgressState",
+    "create_ramp_workflow",
+    "run_ramp_workflow",
+    "DatasetHealthClassifier",
+    "DatasetHealthMetrics",
+    "DatasetHealthReport",
+    "HealthStatus",
+    "Severity",
+    "DatasetHealthWorkflow",
+    "run_dataset_health_workflow",
+    "SLAStatusClassifier",
+    "SLAMetricSnapshot",
+    "SLAStatusRecord",
+    "SLAComplianceReport",
+    "ComplianceStatus",
+    "SLATier",
+    "RootCause",
+    "TrendDirection",
+    "run_sla_compliance_workflow",
+    "build_sla_compliance_graph",
+    "LegalHoldClassifier",
+    "LegalHoldMetrics",
+    "LegalHoldReport",
+    "AuditTrailMetrics",
+    "RecordType",
+    "Sensitivity",
+    "RetentionRequirement",
+    "LegalHoldWorkflow",
+    "run_legal_hold_workflow",
+    "build_legal_hold_graph",
     "BayesianInferenceResult",
     "BayesianRegressionEngine",
     "list_available_visualizations",
@@ -57,6 +159,10 @@ __all__ = [
     "box_plot",
 ]
 
+
+# Re-export advanced analysis helpers from the top-level analysis_advanced
+# module so that `socrata_toolkit.analysis.correlation_analysis` and the
+# `socrata_toolkit.analysis.advanced` shim resolve correctly.
 from ..analysis_advanced import (
     classify_all_distributions,
     correlation_analysis,
@@ -64,16 +170,19 @@ from ..analysis_advanced import (
 )
 
 
+# Legacy aliases for tests. Each import is independent so that a single
+# unavailable optional symbol does not suppress the rest (a shared try/except
+# would silently skip every alias after the first failing import).
 def _legacy_import(module: str, *names: str) -> None:
-    """Import optional legacy modules without failing if unavailable."""
     import importlib
+
     try:
         mod = importlib.import_module(module, __name__)
-        for name in names:
-            if hasattr(mod, name):
-                globals()[name] = getattr(mod, name)
     except Exception:
-        pass
+        return
+    for name in names:
+        if hasattr(mod, name):
+            globals()[name] = getattr(mod, name)
 
 
 _legacy_import(".quality", "Anomaly")
@@ -81,10 +190,72 @@ _legacy_import("..quality.sla_tracking", "SLATarget")
 _legacy_import("..quality.freshness", "AlertSeverity")
 _legacy_import("..metrics", "DataQualityMetrics")
 _legacy_import("..quality.validation", "validate_required_columns", "validate_schema_types")
-_legacy_import("..viz.core", "box_plot")
+_legacy_import(".viz", "box_plot")
 _legacy_import(".reporting", "generate_program_report")
 _legacy_import(".insights", "build_weighted_rank_sql", "websearch_to_tsquery_sql")
 _legacy_import("..analyst.ramp_analysis", "compute_borough_completion_rates")
 _legacy_import("..engineering.cost_estimator", "estimate_costs")
 _legacy_import("..reports.analyst", "ProjectAnalystReports")
 _legacy_import(".domain_validation", "validate_ada_compliance_gates")
+
+
+# Lazy imports for optional NLP/LLM dependencies (spacy, langgraph, langchain)
+def __getattr__(name: str):
+    """Lazy-load optional analysis modules."""
+    if name in ("RampStatus", "BlockerType", "RampStatusClassifier", "RampClassificationResult"):
+        from .ramp_status import (
+            BlockerType,
+            RampClassificationResult,
+            RampStatus,
+            RampStatusClassifier,
+        )
+        return {
+            "RampStatus": RampStatus,
+            "BlockerType": BlockerType,
+            "RampStatusClassifier": RampStatusClassifier,
+            "RampClassificationResult": RampClassificationResult,
+        }[name]
+    elif name in ("BoroughRampStats", "RampProgressState", "create_ramp_workflow", "run_ramp_workflow"):
+        from .ramp_progress_workflow import (
+            BoroughRampStats,
+            RampProgressState,
+            create_ramp_workflow,
+            run_ramp_workflow,
+        )
+        return {
+            "BoroughRampStats": BoroughRampStats,
+            "RampProgressState": RampProgressState,
+            "create_ramp_workflow": create_ramp_workflow,
+            "run_ramp_workflow": run_ramp_workflow,
+        }[name]
+    elif name in ("VelocityClassifier", "VelocityMetrics", "VelocityClassification", "PerformanceTier", "MetricType", "AnomalyType"):
+        from .velocity_classifier import (
+            AnomalyType,
+            MetricType,
+            PerformanceTier,
+            VelocityClassification,
+            VelocityClassifier,
+            VelocityMetrics,
+        )
+        return {
+            "VelocityClassifier": VelocityClassifier,
+            "VelocityMetrics": VelocityMetrics,
+            "VelocityClassification": VelocityClassification,
+            "PerformanceTier": PerformanceTier,
+            "MetricType": MetricType,
+            "AnomalyType": AnomalyType,
+        }[name]
+    elif name in ("run_velocity_analysis", "build_velocity_analysis_graph", "VelocityAnalysisContext", "VelocityState"):
+        from .velocity_analysis_workflow import (
+            VelocityAnalysisContext,
+            VelocityState,
+            build_velocity_analysis_graph,
+            run_velocity_analysis,
+        )
+        return {
+            "run_velocity_analysis": run_velocity_analysis,
+            "build_velocity_analysis_graph": build_velocity_analysis_graph,
+            "VelocityAnalysisContext": VelocityAnalysisContext,
+            "VelocityState": VelocityState,
+        }[name]
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
