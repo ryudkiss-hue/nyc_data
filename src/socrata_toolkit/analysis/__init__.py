@@ -5,10 +5,14 @@ Provides production-ready data profiling, text analytics, SLA tracking, and insi
 
 from __future__ import annotations
 
-from .bayesian import (
-    BayesianInferenceResult,
-    BayesianRegressionEngine,
-)
+try:
+    from .bayesian import (
+        BayesianInferenceResult,
+        BayesianRegressionEngine,
+    )
+except ImportError:
+    BayesianInferenceResult = None  # type: ignore[assignment,misc]
+    BayesianRegressionEngine = None  # type: ignore[assignment,misc]
 from .confidence_intervals import (
     bootstrap_confidence_interval,
     mean_confidence_interval,
@@ -31,7 +35,6 @@ from .text import (
     parse_sim_complaints,
 )
 from .viz import bar_chart, histogram
-<<<<<<< HEAD
 from .dataset_health import (
     DatasetHealthClassifier,
     DatasetHealthMetrics,
@@ -39,10 +42,14 @@ from .dataset_health import (
     HealthStatus,
     Severity,
 )
-from .dataset_health_workflow import (
-    DatasetHealthWorkflow,
-    run_dataset_health_workflow,
-)
+try:
+    from .dataset_health_workflow import (
+        DatasetHealthWorkflow,
+        run_dataset_health_workflow,
+    )
+except ImportError:
+    DatasetHealthWorkflow = None  # type: ignore[assignment,misc]
+    run_dataset_health_workflow = None  # type: ignore[assignment]
 from .sla_status import (
     SLAStatusClassifier,
     SLAMetricSnapshot,
@@ -53,10 +60,14 @@ from .sla_status import (
     RootCause,
     TrendDirection,
 )
-from .sla_compliance_workflow import (
-    run_sla_compliance_workflow,
-    build_sla_compliance_graph,
-=======
+try:
+    from .sla_compliance_workflow import (
+        run_sla_compliance_workflow,
+        build_sla_compliance_graph,
+    )
+except ImportError:
+    run_sla_compliance_workflow = None  # type: ignore[assignment]
+    build_sla_compliance_graph = None  # type: ignore[assignment]
 from .legal_hold_classifier import (
     LegalHoldClassifier,
     LegalHoldMetrics,
@@ -65,14 +76,17 @@ from .legal_hold_classifier import (
     RecordType,
     Sensitivity,
     RetentionRequirement,
-    ComplianceStatus,
 )
-from .legal_hold_workflow import (
-    LegalHoldWorkflow,
-    run_legal_hold_workflow,
-    build_legal_hold_graph,
->>>>>>> worktree-verify-live-data
-)
+try:
+    from .legal_hold_workflow import (
+        LegalHoldWorkflow,
+        run_legal_hold_workflow,
+        build_legal_hold_graph,
+    )
+except ImportError:
+    LegalHoldWorkflow = None  # type: ignore[assignment,misc]
+    run_legal_hold_workflow = None  # type: ignore[assignment]
+    build_legal_hold_graph = None  # type: ignore[assignment]
 
 __all__ = [
     "profile_dataframe",
@@ -103,7 +117,6 @@ __all__ = [
     "wilson_score_confidence_interval",
     "bootstrap_confidence_interval",
     "mean_confidence_interval",
-<<<<<<< HEAD
     "RampStatus",
     "BlockerType",
     "RampStatusClassifier",
@@ -129,7 +142,6 @@ __all__ = [
     "TrendDirection",
     "run_sla_compliance_workflow",
     "build_sla_compliance_graph",
-=======
     "LegalHoldClassifier",
     "LegalHoldMetrics",
     "LegalHoldReport",
@@ -137,11 +149,9 @@ __all__ = [
     "RecordType",
     "Sensitivity",
     "RetentionRequirement",
-    "ComplianceStatus",
     "LegalHoldWorkflow",
     "run_legal_hold_workflow",
     "build_legal_hold_graph",
->>>>>>> worktree-verify-live-data
 ]
 
 
