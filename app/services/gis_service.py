@@ -143,9 +143,22 @@ class GISService:
         )
 
         fig.update_layout(
-            margin={"r": 0, "t": 40, "l": 0, "b": 0},
+            margin={"r": 0, "t": 40, "l": 0, "b": 50},
             hovermode="closest",
         )
+
+        # Add data source annotation
+        fig.add_annotation(
+            text="Data: NYC Open Data (Socrata) | Map: OpenStreetMap contributors",
+            xref="paper",
+            yref="paper",
+            x=0.01,
+            y=-0.08,
+            showarrow=False,
+            font=dict(size=8, color="gray"),
+            xanchor="left",
+        )
+
         return fig
 
     @staticmethod
@@ -199,9 +212,22 @@ class GISService:
             color_continuous_scale="Viridis",
         )
         fig.update_layout(
-            margin={"r": 0, "t": 40, "l": 0, "b": 0},
+            margin={"r": 0, "t": 40, "l": 0, "b": 50},
             hovermode="closest",
         )
+
+        # Add data source annotation
+        fig.add_annotation(
+            text="Data: Socrata API | Map: OpenStreetMap contributors",
+            xref="paper",
+            yref="paper",
+            x=0.01,
+            y=-0.08,
+            showarrow=False,
+            font=dict(size=8, color="gray"),
+            xanchor="left",
+        )
+
         return fig
 
     @staticmethod

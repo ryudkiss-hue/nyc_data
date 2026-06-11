@@ -329,7 +329,9 @@ def register_distribution_callbacks(app, dm_instance):
                     )
                     fig.update_layout(
                         height=250,
-                        title=col,
+                        title=f"Distribution: {col}",
+                        xaxis_title="Value",
+                        yaxis_title="Frequency",
                         showlegend=False,
                         margin=dict(l=30, r=30, t=40, b=30),
                     )
@@ -893,7 +895,7 @@ def register_bootstrap_callbacks(app, dm_instance):
                         mode="gauge+number+delta",
                         value=rate,
                         domain={"x": [0, 1], "y": [0, 1]},
-                        title={"text": "Completion Rate"},
+                        title={"text": "Completion Rate (95% CI Band)"},
                         gauge={
                             "axis": {"range": [0, 100]},
                             "bar": {"color": "darkblue"},
