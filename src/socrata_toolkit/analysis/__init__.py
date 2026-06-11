@@ -19,7 +19,7 @@ from .metrics import (
 from .profiling import DataProfile, profile_dataframe, quality_report
 from .reporting import DashboardSummary, Report, generate_contract_report, generate_inquiry_response
 from .text import extract_patterns, extract_term_frequencies, generate_text_insights, parse_sim_complaints
-from .viz import bar_chart, histogram
+from .viz import bar_chart, histogram, box_plot
 
 __all__ = [
     "profile_dataframe",
@@ -52,6 +52,9 @@ __all__ = [
     "mean_confidence_interval",
     "BayesianInferenceResult",
     "BayesianRegressionEngine",
+    "list_available_visualizations",
+    "validate_ada_compliance_gates",
+    "box_plot",
 ]
 
 from ..analysis_advanced import (
