@@ -21,6 +21,19 @@
         "code-operations-skills@mhattingpete-claude-skills": true
     },
     "permissions": {
-        "allow": ["Skill"]
+        "allow": ["Skill", "Bash(black *)", "Bash(ruff *)"]
+    },
+    "hooks": {
+        "PostToolUse": [
+            {
+                "matcher": "Write|Edit",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "FILE=$(jq -r '.tool_input.file_path // .tool_response.filePath' 2>/dev/null); if [[ \"$FILE\" == *.py ]]; then black --quiet \"$FILE\" 2>/dev/null || true; fi"
+                    }
+                ]
+            }
+        ]
     }
 }
