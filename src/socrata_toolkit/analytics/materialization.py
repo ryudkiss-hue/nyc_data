@@ -14,6 +14,7 @@ from typing import Dict, Any, List, Tuple
 from datetime import datetime, timedelta
 from dataclasses import dataclass
 import json
+import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -366,6 +367,43 @@ class AnalyticsMaterializer:
 
         return results
 
+    async def materialize_all_async(
+        self,
+        violation_df: Any,
+        ramp_df: Any,
+        permit_df: Any,
+        quality_df: Any,
+        spatial_df: Any,
+    ) -> Dict[str, List[KPIResult]]:
+        """
+        Materialize all KPI categories in parallel (async).
+
+        Returns:
+            Dictionary mapping category to KPI results
+        """
+        # Run all 5 KPI computations in parallel
+        violations, ramps, permits, quality, spatial = await asyncio.gather(
+            asyncio.to_thread(self.materialize_violation_kpis, violation_df),
+            asyncio.to_thread(self.materialize_ramp_kpis, ramp_df),
+            asyncio.to_thread(self.materialize_permit_kpis, permit_df),
+            asyncio.to_thread(self.materialize_quality_kpis, quality_df),
+            asyncio.to_thread(self.materialize_spatial_kpis, spatial_df),
+        )
+
+        all_results = {
+            "violations": violations,
+            "ramps": ramps,
+            "permits": permits,
+            "quality": quality,
+            "spatial": spatial,
+        }
+
+        total_kpis = sum(len(v) for v in all_results.values())
+        logger.info(f"Materialized {total_kpis} KPIs across 5 categories (async parallel)")
+
+        self.kpis_computed = all_results
+        return all_results
+
     def materialize_all(
         self,
         violation_df: Any,
@@ -375,11 +413,14 @@ class AnalyticsMaterializer:
         spatial_df: Any,
     ) -> Dict[str, List[KPIResult]]:
         """
-        Materialize all KPI categories.
+        Materialize all KPI categories (synchronous wrapper).
+
+        For async usage, call materialize_all_async() directly.
 
         Returns:
             Dictionary mapping category to KPI results
         """
+        # Fallback: sequential computation if async not available
         all_results = {
             "violations": self.materialize_violation_kpis(violation_df),
             "ramps": self.materialize_ramp_kpis(ramp_df),
@@ -389,7 +430,7 @@ class AnalyticsMaterializer:
         }
 
         total_kpis = sum(len(v) for v in all_results.values())
-        logger.info(f"Materialized {total_kpis} KPIs across 5 categories")
+        logger.info(f"Materialized {total_kpis} KPIs across 5 categories (sequential)")
 
         self.kpis_computed = all_results
         return all_results
