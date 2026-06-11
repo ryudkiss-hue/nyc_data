@@ -8,6 +8,7 @@ from .analytics import AnalyticsBuilder
 from .cache import CloudCacheManager
 from .client import MotherDuckClient
 from .connector import MotherDuckConnection
+from .export_iceberg import IcebergExporter
 from .ingestion import InspectionDataLoader
 from .schema import SchemaManager
 from .serving import ServingViewsBuilder
@@ -22,4 +23,5 @@ __all__ = [
     "StagingTransformer",
     "AnalyticsBuilder",
     "ServingViewsBuilder",
+    "IcebergExporter",
 ]
