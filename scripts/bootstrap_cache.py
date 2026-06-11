@@ -130,11 +130,11 @@ def get_date_field(dataset_name):
     """Identify date field for incremental fetch."""
     date_fields = {
         "violations": "violation_issue_date",
-        "inspection": "inspection_date",
+        "inspection": "Inspection Date",  # Actual: uses spaces
         "dismissals": "violation_issue_date",
         "complaints_311": "created_date",
-        "ramp_progress": "startdate",
-        "ramp_complaints": "date_received",
+        "ramp_progress": "Construction_End_Date",  # Actual: uses underscores
+        "ramp_complaints": "Complaint_Date",  # Actual: uses underscores
         "street_permits": "issued_date",
         "street_construction_inspections": "inspection_date",
         "street_closures_block": "closure_date",
@@ -143,7 +143,7 @@ def get_date_field(dataset_name):
         "correspondences": "date_received",
         "curb_metal_protruding": "insp",
         "tree_damage": "report_date",
-        "reinspection": "reinspection_date",
+        "reinspection": "RequestReinspectionDate",  # Actual: camelCase
     }
     return date_fields.get(dataset_name)
 

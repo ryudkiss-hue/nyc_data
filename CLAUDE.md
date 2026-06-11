@@ -4,10 +4,10 @@ Guidance for Claude Code when working with this repository.
 
 ## What this project is
 
-NYC DOT Sidewalk Inspection & Management Toolkit — a Streamlit-based application for analyzing SIM unit data from NYC Open Data, with a Python CLI toolkit for analysts and a desktop/web interface.
+NYC DOT Sidewalk Inspection & Management Toolkit — Plotly/Dash interactive platform (v0.4.0+) for analyzing SIM unit data from NYC Open Data, with a Python CLI toolkit for analysts and legacy Streamlit support.
 
 **Key components:**
-- `app/` — Streamlit Mission Control dashboard (app/app.py)
+- `app/` — Plotly/Dash dashboards + legacy Streamlit Mission Control (app/app.py)
 - `src/socrata_toolkit/` — Core Python library for analysis, data quality, lineage tracking, governance
 - `data-analytics-skills/` — 31 portable AI-powered analytical skills (see below)
 - `tests/` — Test suite (pytest)
@@ -167,7 +167,15 @@ See `data-analytics-skills/QUICKSTART.md` for:
 
 ## 🔧 Running the App
 
-### Streamlit (Mission Control)
+### Plotly/Dash Dashboards (Production Platform)
+```bash
+python src/socrata_toolkit/dashboards/executive_dashboard.py
+# Runs on http://127.0.0.1:8050
+```
+
+Requires: `pip install -e ".[dash]"` (includes plotly, dash, folium, geospatial, forecasting, etc.)
+
+### Streamlit Mission Control (Legacy Support)
 ```bash
 streamlit run app/app.py
 ```
@@ -244,7 +252,7 @@ black src/socrata_toolkit tests app
 6. Push and create PR (draft OK)
 
 **Common tasks:**
-- **Add a visualization:** Create chart function in `src/socrata_toolkit/viz/` or inline in `app/main.py`, then call `st.plotly_chart()` in the appropriate view
+- **Add a visualization:** Create chart function in `src/socrata_toolkit/viz/` using `get_unit_label()` from `units.py` for axes labels, ensuring all charts include units (count, USD, days, %, etc.). See `DATA_DICTIONARY.md` for standard unit labels per column.
 - **Add a quality rule:** Implement in `src/socrata_toolkit/quality/rules.py`
 - **Add a new view:** Create file in `app/views/`, define `render_*_page()` function, register in `app/app.py` router
 - **Customize a skill:** Add `references/` folder inside skill with company-specific context (schema.md, metric_definitions.md, etc.)
@@ -287,7 +295,7 @@ You help DOT analysts, engineers, and program managers:
 - Generate borough-level ramp completion reports with confidence intervals
 - Run NL-to-SoQL query translation for non-technical users
 - Produce PDF/Excel/PPTX reports and governance audit trails
-- Configure and operate the Streamlit Mission Control dashboard
+- Configure and operate Plotly/Dash dashboards and legacy Streamlit Mission Control
 
 You always use live data unless explicitly told otherwise. You never fabricate data values or statistics. If a dataset is unavailable or a query fails, say so and suggest a fallback.
 
@@ -426,7 +434,7 @@ result = spatial_intersects_join(left_df, right_df, "the_geom", "the_geom")
 - **Outlier detection** — `socrata_toolkit.analysis.core.detect_all_outliers()`
 - **Audit trails** — `socrata_toolkit.governance.core.AuditLogger`, `create_lineage()`
 - **DuckDB caching** — `socrata_toolkit.core.duckdb_store.query_parquet_cache()`
-- **Visualizations** — `socrata_toolkit.viz` (histogram, bar_chart, correlation_heatmap, time_series_chart)
+- **Visualizations** — `socrata_toolkit.viz` with standardized units support. All charts must include explicit units on axes (see `units.py`). Reference `DATA_DICTIONARY.md` for the authoritative unit specifications for each column.
 - **Alerts** — `socrata_toolkit.alerts.manager.AlertManager`, `Alert`, `CLINotifier`
 
 ---
