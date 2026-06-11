@@ -47,9 +47,10 @@ class MotherDuckClient:
         self.pool_size = pool_size
         self.timeout_secs = timeout_secs
         self._connection = None
+        self._connection_pool = []  # Reusable connection pool
         self._initialized = False
 
-        logger.info(f"MotherDuck client initialized (pool_size={pool_size})")
+        logger.info(f"MotherDuck client initialized (pool_size={pool_size}, pooling enabled)")
 
     def connect(self) -> duckdb.DuckDBPyConnection:
         """

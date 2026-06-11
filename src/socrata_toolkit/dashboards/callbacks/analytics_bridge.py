@@ -30,13 +30,37 @@ class AnalyticsBridge:
         self._cache = {}
         self._cache_ttl = 300  # 5 minutes
 
+    def _is_cache_valid(self, key: str) -> bool:
+        """Check if cached value is still valid."""
+        if key not in self._cache:
+            return False
+        cached_time, _ = self._cache[key]
+        return (datetime.now() - cached_time).total_seconds() < self._cache_ttl
+
+    def _get_cached(self, key: str) -> Any:
+        """Get value from cache if valid."""
+        if self._is_cache_valid(key):
+            return self._cache[key][1]
+        return None
+
+    def _set_cache(self, key: str, value: Any) -> None:
+        """Store value in cache with timestamp."""
+        self._cache[key] = (datetime.now(), value)
+
     def get_violation_kpis(self) -> Dict[str, Any]:
         """
-        Fetch violation KPIs for dashboard display.
+        Fetch violation KPIs for dashboard display (cached for 5 min).
 
         Returns:
             Dict with violation metrics ready for visualization
         """
+        # Check cache first
+        cache_key = 'violation_kpis'
+        cached = self._get_cached(cache_key)
+        if cached:
+            logger.debug("Returning cached violation KPIs")
+            return cached
+
         try:
             sql = """
                 SELECT
@@ -50,22 +74,30 @@ class AnalyticsBridge:
             """
             results = self.client.query(sql) if hasattr(self.client, 'query') else []
 
-            return {
+            response = {
                 'kpis': results,
                 'timestamp': datetime.now().isoformat(),
-                'source': 'analytics_cloud.violations_kpis'
+                'source': 'analytics_cloud.violations_kpis',
+                'cached': False
             }
+            self._set_cache(cache_key, response)
+            return response
         except Exception as e:
             logger.error(f"Failed to fetch violation KPIs: {e}")
-            return {'kpis': [], 'error': str(e)}
+            return {'kpis': [], 'error': str(e), 'cached': False}
 
     def get_ramp_kpis(self) -> Dict[str, Any]:
         """
-        Fetch ramp completion KPIs with confidence intervals.
+        Fetch ramp completion KPIs with confidence intervals (cached).
 
         Returns:
             Dict with ramp metrics + confidence intervals
         """
+        cache_key = 'ramp_kpis'
+        cached = self._get_cached(cache_key)
+        if cached:
+            return cached
+
         try:
             sql = """
                 SELECT
@@ -81,14 +113,17 @@ class AnalyticsBridge:
             """
             result = self.client.query(sql) if hasattr(self.client, 'query') else None
 
-            return {
+            response = {
                 'completion_rate': result[0] if result else None,
                 'timestamp': datetime.now().isoformat(),
-                'source': 'analytics_cloud.ramps_kpis'
+                'source': 'analytics_cloud.ramps_kpis',
+                'cached': False
             }
+            self._set_cache(cache_key, response)
+            return response
         except Exception as e:
             logger.error(f"Failed to fetch ramp KPIs: {e}")
-            return {'completion_rate': None, 'error': str(e)}
+            return {'completion_rate': None, 'error': str(e), 'cached': False}
 
     def get_quality_kpis(self) -> Dict[str, Any]:
         """
