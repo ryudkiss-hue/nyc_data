@@ -31,6 +31,7 @@ from .text import (
     parse_sim_complaints,
 )
 from .viz import bar_chart, histogram
+<<<<<<< HEAD
 from .dataset_health import (
     DatasetHealthClassifier,
     DatasetHealthMetrics,
@@ -55,6 +56,22 @@ from .sla_status import (
 from .sla_compliance_workflow import (
     run_sla_compliance_workflow,
     build_sla_compliance_graph,
+=======
+from .legal_hold_classifier import (
+    LegalHoldClassifier,
+    LegalHoldMetrics,
+    LegalHoldReport,
+    AuditTrailMetrics,
+    RecordType,
+    Sensitivity,
+    RetentionRequirement,
+    ComplianceStatus,
+)
+from .legal_hold_workflow import (
+    LegalHoldWorkflow,
+    run_legal_hold_workflow,
+    build_legal_hold_graph,
+>>>>>>> worktree-verify-live-data
 )
 
 __all__ = [
@@ -86,6 +103,7 @@ __all__ = [
     "wilson_score_confidence_interval",
     "bootstrap_confidence_interval",
     "mean_confidence_interval",
+<<<<<<< HEAD
     "RampStatus",
     "BlockerType",
     "RampStatusClassifier",
@@ -111,6 +129,19 @@ __all__ = [
     "TrendDirection",
     "run_sla_compliance_workflow",
     "build_sla_compliance_graph",
+=======
+    "LegalHoldClassifier",
+    "LegalHoldMetrics",
+    "LegalHoldReport",
+    "AuditTrailMetrics",
+    "RecordType",
+    "Sensitivity",
+    "RetentionRequirement",
+    "ComplianceStatus",
+    "LegalHoldWorkflow",
+    "run_legal_hold_workflow",
+    "build_legal_hold_graph",
+>>>>>>> worktree-verify-live-data
 ]
 
 
