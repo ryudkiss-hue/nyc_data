@@ -5,47 +5,14 @@ Provides production-ready data profiling, text analytics, SLA tracking, and insi
 
 from __future__ import annotations
 
-from .bayesian import (
-    BayesianInferenceResult,
-    BayesianRegressionEngine,
-)
-from .confidence_intervals import (
-    bootstrap_confidence_interval,
-    mean_confidence_interval,
-    wilson_score_confidence_interval,
-)
+from .bayesian import BayesianInferenceResult, BayesianRegressionEngine
+from .confidence_intervals import bootstrap_confidence_interval, mean_confidence_interval, wilson_score_confidence_interval
 from .insights import InsightsEngine, InsightsReport, generate_insights, smart_recommendations
-from .metrics import (
-    compute_borough_metrics,
-    compute_freshness_score,
-    compute_sla_metrics,
-    compute_sla_trends,
-    flag_sla_violations,
-)
+from .metrics import compute_borough_metrics, compute_freshness_score, compute_sla_metrics, compute_sla_trends, flag_sla_violations
 from .profiling import DataProfile, profile_dataframe, quality_report
 from .reporting import DashboardSummary, Report, generate_contract_report, generate_inquiry_response
-from .text import (
-    extract_patterns,
-    extract_term_frequencies,
-    generate_text_insights,
-    parse_sim_complaints,
-)
+from .text import extract_patterns, extract_term_frequencies, generate_text_insights, parse_sim_complaints
 from .viz import bar_chart, histogram
-from .legal_hold_classifier import (
-    LegalHoldClassifier,
-    LegalHoldMetrics,
-    LegalHoldReport,
-    AuditTrailMetrics,
-    RecordType,
-    Sensitivity,
-    RetentionRequirement,
-    ComplianceStatus,
-)
-from .legal_hold_workflow import (
-    LegalHoldWorkflow,
-    run_legal_hold_workflow,
-    build_legal_hold_graph,
-)
 
 __all__ = [
     "profile_dataframe",
@@ -76,17 +43,6 @@ __all__ = [
     "wilson_score_confidence_interval",
     "bootstrap_confidence_interval",
     "mean_confidence_interval",
-    "LegalHoldClassifier",
-    "LegalHoldMetrics",
-    "LegalHoldReport",
-    "AuditTrailMetrics",
-    "RecordType",
-    "Sensitivity",
-    "RetentionRequirement",
-    "ComplianceStatus",
-    "LegalHoldWorkflow",
-    "run_legal_hold_workflow",
-    "build_legal_hold_graph",
 ]
 
 
