@@ -1,0 +1,298 @@
+erDiagram
+    CAPITAL_BLOCKS {
+        FMSAgencyID number
+        FMSID text
+        LeadAgency text
+        Managing Agency number
+        ProjTitle text
+        ProjectDescription text
+        ProjectID number
+        ProjectType text
+        ProjectTypeCode text
+        the_geom multiline
+        ... (17 more columns)
+    }
+    CAPITAL_INTERSECTIONS {
+        FMSAgencyID number
+        FMSID text
+        LeadAgency text
+        Managing Agency number
+        ProjTitle text
+        ProjectDescription text
+        ProjectID number
+        ProjectType text
+        ProjectTypeCode text
+        the_geom multipoint
+        ... (20 more columns)
+    }
+    COMPLAINTS_311 {
+        Additional Details text
+        Agency text
+        Agency Name text
+        Closed Date calendar_date
+        Created Date calendar_date
+        Incident Zip text
+        Location Type text
+        Problem (formerly Complaint Type) text
+        Problem Detail (formerly Descriptor) text
+        Unique Key text
+        ... (38 more columns)
+    }
+    CORRESPONDENCES {
+        Block text
+        Borough text
+        CCU text
+        Class text
+        Community Board text
+        Date Received calendar_date
+        Lot text
+        OSM text
+        SIM text
+        Violation text
+        ... (17 more columns)
+    }
+    CURB_METAL_PROTRUDING {
+        311 text
+        CB text
+        Closed text
+        File text
+        I/F/O text
+        On Street text
+        Ref to Other text
+        SC Cut text
+        SR . text
+        Steel Curb text
+        ... (7 more columns)
+    }
+    DISMISSALS {
+        Block number
+        Borocode number
+        Community Board number
+        Homeowner_Contractor text
+        Lot number
+        Permit# text
+        Request_Date calendar_date
+        SR# text
+        Site_Street_Address text
+        Violation# number
+        ... (19 more columns)
+    }
+    INSPECTION {
+        Cancel text
+        Capital Project Conflict Flag text
+        Capital Project Conflict(s) text
+        City Do It text
+        Inspection Date calendar_date
+        Inspection ID text
+        Is 311 Inspection text
+        Material ID text
+        No Violation Found text
+        Owner Will Do It text
+        ... (7 more columns)
+    }
+    MAPPLUTO {
+        Tax block number
+        Tax lot number
+        borough text
+        cb2010 number
+        census tract 2010 number
+        community board number
+        council district number
+        firecomp text
+        postcode number
+        schooldist number
+        ... (98 more columns)
+    }
+    PEDESTRIAN_DEMAND {
+        AssemDist text
+        BoroCD text
+        BoroCode text
+        BoroName text
+        CongDist text
+        CounDist text
+        StSenDist text
+        segmentid text
+        street text
+        the_geom multiline
+        ... (10 more columns)
+    }
+    PERMIT_STIPULATIONS {
+        CreatedOn calendar_date
+        PermitNumber text
+        StipulationFullText text
+        StipulationID text
+    }
+    RAMP_COMPLAINTS {
+        Block number
+        Borough text
+        CMT_Corner_ID number
+        Community_District number
+        Complaint_Date calendar_date
+        Complaint_ID text
+        Lot number
+        Street_Name1 text
+        Street_Name2 text
+        Temp_Repair_Feasible text
+        ... (5 more columns)
+    }
+    RAMP_LOCATIONS {
+        Borough number
+        CURB_REVEAL number
+        CornerID number
+        GeoCyclora calendar_date
+        RAMP_RUNNING_SLOPE_TOTAL number
+        RampID number
+        Ramp_OnStreet text
+        StName1 text
+        StName2 text
+        the_geom point
+        ... (19 more columns)
+    }
+    RAMP_PROGRESS {
+        Borough text
+        Community Districts number
+        Construction_End_Date text
+        Construction_Status_Value text
+        Construction_Type text
+        CornerID number
+        OBJECTID number
+        Street_Name1 text
+        Street_Name2 text
+        the_geom point
+        ... (3 more columns)
+    }
+    REINSPECTION {
+        ActualReinspectDate calendar_date
+        DamageID text
+        DamageTypeCode text
+        ReinspectSqFT number
+        ReinspectionID number
+        RequestReinspection text
+        RequestReinspectionDate calendar_date
+        ResponseDate calendar_date
+    }
+    SIDEWALK_PLANIMETRIC {
+    }
+    STEP_STREETS {
+        Boro/CB text
+        From text
+        On-street text
+        To text
+    }
+    STREET_CLOSURES_BLOCK {
+        BOROUGH_CODE text
+        FROMSTREETNAME text
+        OFT number
+        ONSTREETNAME text
+        SEGMENTID number
+        TOSTREETNAME text
+        UNIQUEID text
+        WORK_END_DATE calendar_date
+        WORK_START_DATE calendar_date
+        the_geom multiline
+        ... (1 more columns)
+    }
+    STREET_CONSTRUCTION_INSPECTIONS {
+        FromStreetName text
+        InspectionDate date
+        InspectionID number
+        InspectionType text
+        OnstreetName text
+        PermitNumber text
+        PermitType text
+        PermitteeName text
+        SpecificLocation text
+        ToStreetName text
+        ... (17 more columns)
+    }
+    STREET_PERMITS {
+        ApplicationTrackingID text
+        ApplicationTypeShortDesc text
+        PermitNumber text
+        PermitSeriesID text
+        PermitSeriesShortDesc text
+        PermitStatusID text
+        PermitStatusShortDesc text
+        PermitTypeDesc text
+        PermitTypeID text
+        SequenceNumber text
+        ... (29 more columns)
+    }
+    STREET_RESURFACING_INHOUSE {
+        Borough Code text
+        Location Community Board number
+        Location From Street text
+        Location On Street text
+        Location To Street text
+        OFT Code text
+        Project ID text
+        Project Speed Bumps number
+        Project Status text
+        Project Type text
+        ... (11 more columns)
+    }
+    STREET_RESURFACING_SCHEDULE {
+        Area text
+        Borough Name text
+        Community Board number
+        Date calendar_date
+        Day text
+        From Street Name text
+        On Street Name text
+        To Street Name text
+        Work Schedule Project Location ID number
+        Work Type text
+        ... (6 more columns)
+    }
+    TREE_DAMAGE {
+        ATDID number
+        ATDIssueDate calendar_date
+        ATD_NUMBER text
+        BBLID number
+        CB number
+        HOUSE_NUM text
+        Inspect_date calendar_date
+        InspectionId number
+        ReInspectionId number
+        ViolationId number
+        ... (3 more columns)
+    }
+    VIOLATIONS {
+        BROKEN text
+        CB number
+        CERTI_DATE calendar_date
+        CONTRACT text
+        EntryDate calendar_date
+        FLAG text
+        FRSTNAME text
+        GRACE_PD number
+        HARDWARE text
+        HOUSE_NUM text
+        ... (17 more columns)
+    }
+    WEEKLY_CONSTRUCTION {
+        Borough text
+        CB text
+        Contract No text
+        Location text
+    }
+    CAPITAL_BLOCKS ||--o{ CAPITAL_INTERSECTIONS : "the_geom"
+    CAPITAL_BLOCKS ||--o{ PEDESTRIAN_DEMAND : "the_geom"
+    CAPITAL_BLOCKS ||--o{ RAMP_LOCATIONS : "the_geom"
+    CAPITAL_BLOCKS ||--o{ RAMP_PROGRESS : "the_geom"
+    CAPITAL_BLOCKS ||--o{ STREET_CLOSURES_BLOCK : "the_geom"
+    CAPITAL_BLOCKS ||--o{ CAPITAL_INTERSECTIONS : "ProjectID"
+    CAPITAL_BLOCKS ||--o{ CAPITAL_INTERSECTIONS : "ProjTitle"
+    CAPITAL_BLOCKS ||--o{ CAPITAL_INTERSECTIONS : "FMSID"
+    CAPITAL_BLOCKS ||--o{ CAPITAL_INTERSECTIONS : "FMSAgencyID"
+    CAPITAL_BLOCKS ||--o{ CAPITAL_INTERSECTIONS : "LeadAgency"
+    CAPITAL_BLOCKS ||--o{ CAPITAL_INTERSECTIONS : "Managing Agency"
+    CAPITAL_BLOCKS ||--o{ CAPITAL_INTERSECTIONS : "ProjectDescription"
+    CAPITAL_BLOCKS ||--o{ CAPITAL_INTERSECTIONS : "ProjectTypeCode"
+    CAPITAL_BLOCKS ||--o{ CAPITAL_INTERSECTIONS : "ProjectType"
+    CAPITAL_BLOCKS ||--o{ CAPITAL_INTERSECTIONS : "ProjectStatus"
+    CAPITAL_BLOCKS ||--o{ CAPITAL_INTERSECTIONS : "ConstructionFY"
+    CAPITAL_BLOCKS ||--o{ CAPITAL_INTERSECTIONS : "DesignStartDate"
+    CAPITAL_BLOCKS ||--o{ CAPITAL_INTERSECTIONS : "ConstructionEndDate"
+    CAPITAL_BLOCKS ||--o{ CAPITAL_INTERSECTIONS : "CurrentFunding"
+    CAPITAL_BLOCKS ||--o{ CAPITAL_INTERSECTIONS : "ProjectCost"

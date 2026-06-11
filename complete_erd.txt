@@ -1,0 +1,749 @@
+====================================================================================================
+ENTITY RELATIONSHIP DIAGRAM - NYC DOT DATASETS
+====================================================================================================
+
+## ENTITIES (24 Datasets)
+
+
+### CAPITAL_BLOCKS
+Fourfour: jvk9-k4re
+Rows: 4,930
+Columns: 27
+
+Columns:
+  • BoroughName                              text                 
+  • ConstructionEndDate                      calendar_date        [DATE]
+  • ConstructionFY                           number               
+  • CurrentFunding                           number               
+  • DesignFY                                 number               
+  • DesignStartDate                          calendar_date        [DATE]
+  • FMSAgencyID                              number               [PK]
+  • FMSID                                    text                 [PK]
+  • FromStreetName                           text                 
+  • LeadAgency                               text                 
+  • LocationGeometry.STLength()              number               [GEO]
+  • Managing Agency                          number               
+  • OFTCode                                  text                 
+  • OnStreetName                             text                 
+  • OtherScope                               text                 
+  • OversallScope                            text                 
+  • ProjTitle                                text                 
+  • ProjectCost                              number               
+  • ProjectDescription                       text                 
+  • ProjectID                                number               [PK]
+  • ProjectJustification                     text                 
+  • ProjectStatus                            text                 
+  • ProjectType                              text                 
+  • ProjectTypeCode                          text                 
+  • SafetyScope                              text                 
+  • ToStreetName                             text                 
+  • the_geom                                 multiline            [GEO]
+
+### CAPITAL_INTERSECTIONS
+Fourfour: 97nd-ff3i
+Rows: 4,156
+Columns: 30
+
+Columns:
+  • BoroughName                              text                 
+  • ConstructionEndDate                      calendar_date        [DATE]
+  • ConstructionFY                           number               
+  • CurrentFunding                           number               
+  • DesignFY                                 number               
+  • DesignStartDate                          calendar_date        [DATE]
+  • FMSAgencyID                              number               [PK]
+  • FMSID                                    text                 [PK]
+  • FromStreetName                           text                 
+  • Latitude                                 number               
+  • LeadAgency                               text                 
+  • Longitude                                number               
+  • Managing Agency                          number               
+  • OFTCode                                  text                 
+  • OnStreetName                             text                 
+  • OtherScope                               text                 
+  • OversallScope                            text                 
+  • ProjTitle                                text                 
+  • ProjectCost                              number               
+  • ProjectDescription                       text                 
+  • ProjectID                                number               [PK]
+  • ProjectJustification                     text                 
+  • ProjectStatus                            text                 
+  • ProjectType                              text                 
+  • ProjectTypeCode                          text                 
+  • SafetyScope                              text                 
+  • ToStreetName                             text                 
+  • the_geom                                 multipoint           [GEO]
+  • x                                        text                 
+  • y                                        text                 
+
+### COMPLAINTS_311
+Fourfour: erm2-nwe9
+Rows: 1,242,856
+Columns: 48
+
+Columns:
+  • Additional Details                       text                 
+  • Address Type                             text                 
+  • Agency                                   text                 
+  • Agency Name                              text                 
+  • BBL                                      text                 
+  • Borough                                  text                 
+  • Borough Boundaries                       number               
+  • Bridge Highway Direction                 text                 [PK]
+  • Bridge Highway Name                      text                 [PK]
+  • Bridge Highway Segment                   text                 [PK]
+  • City                                     text                 
+  • City Council Districts                   number               
+  • Closed Date                              calendar_date        [DATE]
+  • Community Board                          text                 
+  • Community Districts                      number               
+  • Council District                         text                 
+  • Created Date                             calendar_date        [DATE]
+  • Cross Street 1                           text                 
+  • Cross Street 2                           text                 
+  • Due Date                                 calendar_date        [DATE]
+  • Facility Type                            text                 
+  • Incident Address                         text                 [PK]
+  • Incident Zip                             text                 [PK]
+  • Intersection Street 1                    text                 
+  • Intersection Street 2                    text                 
+  • Landmark                                 text                 
+  • Latitude                                 number               
+  • Location                                 point                [GEO]
+  • Location Type                            text                 [GEO]
+  • Longitude                                number               
+  • Open Data Channel Type                   text                 
+  • Park Borough                             text                 
+  • Park Facility Name                       text                 
+  • Police Precinct                          text                 
+  • Police Precincts                         number               
+  • Problem (formerly Complaint Type)        text                 
+  • Problem Detail (formerly Descriptor)     text                 
+  • Resolution Action Updated Date           calendar_date        [DATE]
+  • Resolution Description                   text                 
+  • Road Ramp                                text                 
+  • Status                                   text                 
+  • Street Name                              text                 
+  • Taxi Company Borough                     text                 
+  • Taxi Pick Up Location                    text                 [GEO]
+  • Unique Key                               text                 
+  • Vehicle Type                             text                 
+  • X Coordinate (State Plane)               number               
+  • Y Coordinate (State Plane)               number               
+
+### CORRESPONDENCES
+Fourfour: bheb-sjfi
+Rows: 3,786
+Columns: 27
+
+Columns:
+  • Address                                  text                 
+  • BBL                                      number               
+  • BC                                       text                 
+  • BIN                                      number               
+  • Block                                    text                 
+  • Borough                                  text                 
+  • CCU                                      text                 
+  • Census Tract                             number               
+  • Class                                    text                 
+  • Community Board                          text                 
+  • Council District                         number               
+  • Cross Streets                            text                 
+  • Date Closed                              calendar_date        [DATE]
+  • Date Received                            calendar_date        [DATE]
+  • Issue                                    text                 
+  • Latitude                                 number               
+  • Longitude                                number               
+  • Lot                                      text                 
+  • NTA                                      text                 
+  • OSM                                      text                 
+  • Other Log                                text                 
+  • Postcode                                 number               
+  • Referred/Routed To                       text                 
+  • Resoultion                               text                 
+  • Results of Inspection                    text                 
+  • SIM                                      text                 
+  • Violation                                text                 
+
+### CURB_METAL_PROTRUDING
+Fourfour: i2y3-sx2e
+Rows: 1,395
+Columns: 17
+
+Columns:
+  • 311                                      text                 
+  • Borough                                  text                 
+  • CB                                       text                 
+  • Closed                                   text                 
+  • Cross St .1                              text                 
+  • Cross St .2                              text                 
+  • File                                     text                 
+  • I/F/O                                    text                 
+  • Insp                                     calendar_date        
+  • Lin ft                                   text                 
+  • On Street                                text                 
+  • Rec'd 2                                  calendar_date        
+  • Ref to Other                             text                 
+  • SC Cut                                   text                 
+  • SR .                                     text                 
+  • Sq ft                                    text                 
+  • Steel Curb                               text                 
+
+### DISMISSALS
+Fourfour: p4u2-3jgx
+Rows: 12,716
+Columns: 29
+
+Columns:
+  • Assigned_Date                            calendar_date        [DATE]
+  • Attempt#                                 number               
+  • BBL                                      number               
+  • BIN                                      number               
+  • Block                                    number               
+  • Borocode                                 number               
+  • Borough                                  text                 
+  • CAR_Needed_(Y/N)                         text                 
+  • Census Tract (2020)                      number               
+  • Community Board                          number               
+  • Council District                         number               
+  • Date_results_are_mailed                  calendar_date        [DATE]
+  • Expedited                                text                 
+  • Homeowner_Contractor                     text                 
+  • Inspection_Date                          calendar_date        [DATE]
+  • Latitude                                 number               
+  • Longitude                                number               
+  • Lot                                      number               
+  • Neighborhood Tabulation Area (NTA) (2020) text                 
+  • Pass/Fail                                text                 
+  • Permit#                                  text                 
+  • Postcode                                 number               
+  • Reason_for_Failure                       text                 
+  • Request_Date                             calendar_date        [DATE]
+  • SR#                                      text                 
+  • Site_Street_Address                      text                 
+  • VDD                                      calendar_date        
+  • Violation#                               number               
+  • Violation_Issue_Date                     calendar_date        [DATE]
+
+### INSPECTION
+Fourfour: dntt-gqwq
+Rows: 3,000
+Columns: 17
+
+Columns:
+  • Cancel                                   text                 
+  • Capital Project Conflict Flag            text                 
+  • Capital Project Conflict(s)              text                 
+  • City Do It                               text                 
+  • Correspondence                           text                 
+  • Curb311                                  text                 
+  • Damage ID                                text                 [PK]
+  • Damage Type Code                         text                 
+  • Inspection Date                          calendar_date        [DATE]
+  • Inspection ID                            text                 [PK]
+  • Is 311 Inspection                        text                 
+  • Material ID                              text                 [PK]
+  • No Violation Found                       text                 
+  • Other                                    text                 
+  • Owner Will Do It                         text                 
+  • Pickup Sidewalk                          text                 [PK]
+  • Pickup curb                              text                 
+
+### MAPPLUTO
+Fourfour: 64uk-42ks
+Rows: 91,914
+Columns: 108
+
+Columns:
+  • BBL                                      number               
+  • Tax block                                number               
+  • Tax lot                                  number               
+  • address                                  text                 
+  • affresfar                                number               
+  • appbbl                                   number               
+  • appdate                                  calendar_date        [DATE]
+  • areasource                               number               
+  • assessland                               number               
+  • assesstot                                number               
+  • basempdate                               text                 [DATE]
+  • bct2020                                  text                 
+  • bctcb2020                                text                 
+  • bldgarea                                 number               
+  • bldgclass                                text                 
+  • bldgdepth                                number               
+  • bldgfront                                number               
+  • borocode                                 number               
+  • borough                                  text                 
+  • bsmtcode                                 number               
+  • builtfar                                 number               
+  • cb2010                                   number               
+  • census tract 2010                        number               
+  • comarea                                  number               
+  • commfar                                  number               
+  • community board                          number               
+  • condono                                  number               
+  • council district                         number               
+  • dcasdate                                 text                 [DATE]
+  • dcpedited                                text                 
+  • easements                                number               
+  • edesigdate                               text                 [DATE]
+  • edesignum                                text                 
+  • exempttot                                number               
+  • ext                                      text                 
+  • facilfar                                 number               
+  • factryarea                               number               
+  • firecomp                                 text                 
+  • firm07_flag                              number               
+  • garagearea                               number               
+  • geom                                     text                 
+  • healtharea                               number               
+  • healthcenterdistrict                     number               
+  • histdist                                 text                 
+  • irrlotcode                               checkbox             
+  • landmark                                 text                 
+  • landmkdate                               text                 [DATE]
+  • landuse                                  number               
+  • latitude                                 number               
+  • longitude                                number               
+  • lotarea                                  number               
+  • lotdepth                                 number               
+  • lotfront                                 number               
+  • lottype                                  number               
+  • ltdheight                                text                 
+  • masdate                                  text                 [DATE]
+  • mihopt1                                  checkbox             
+  • mihopt2                                  checkbox             
+  • mihopt3                                  checkbox             
+  • mihopt4                                  checkbox             
+  • mnffar                                   number               
+  • notes                                    text                 
+  • numbldgs                                 number               
+  • numfloors                                number               
+  • officearea                               number               
+  • otherarea                                number               
+  • overlay1                                 text                 
+  • overlay2                                 text                 
+  • ownername                                text                 
+  • ownertype                                text                 
+  • pfirm15_flag                             number               
+  • plutomapid                               number               [PK]
+  • policeprct                               number               
+  • polidate                                 text                 [PK] [DATE]
+  • postcode                                 number               
+  • proxcode                                 number               
+  • resarea                                  number               
+  • residfar                                 number               [PK]
+  • retailarea                               number               
+  • rpaddate                                 text                 [DATE]
+  • sanborn                                  text                 
+  • sanitboro                                number               
+  • sanitdistrict                            number               
+  • sanitsub                                 text                 
+  • schooldist                               number               
+  • spdist1                                  text                 
+  • spdist2                                  text                 
+  • spdist3                                  text                 
+  • splitzone                                checkbox             
+  • strgearea                                number               
+  • taxmap                                   number               
+  • tract2010                                number               
+  • transitzone                              text                 
+  • unitsres                                 number               
+  • unitstotal                               number               
+  • version                                  text                 
+  • xcoord                                   number               
+  • ycoord                                   number               
+  • yearalter1                               number               
+  • yearalter2                               number               
+  • yearbuilt                                number               
+  • zmcode                                   checkbox             
+  • zonedist1                                text                 
+  • zonedist2                                text                 
+  • zonedist3                                text                 
+  • zonedist4                                text                 
+  • zonemap                                  text                 
+  • zoningdate                               text                 [DATE]
+
+### PEDESTRIAN_DEMAND
+Fourfour: fwpa-qxaf
+Rows: 10,533
+Columns: 20
+
+Columns:
+  • AssemDist                                text                 
+  • Boro                                     text                 
+  • BoroCD                                   text                 
+  • BoroCode                                 text                 
+  • BoroName                                 text                 
+  • Category                                 text                 
+  • CongDist                                 text                 
+  • CounDist                                 text                 
+  • FEMAFldT                                 text                 
+  • FEMAFldz                                 text                 
+  • HrcEvac                                  text                 
+  • NTA2020                                  text                 
+  • NTAName                                  text                 
+  • PMP_ID                                   number               [PK]
+  • Rank                                     number               
+  • SHAPE_Leng                               number               
+  • StSenDist                                text                 
+  • segmentid                                text                 [PK]
+  • street                                   text                 
+  • the_geom                                 multiline            [GEO]
+
+### PERMIT_STIPULATIONS
+Fourfour: gsgx-6efw
+Rows: 4,978
+Columns: 4
+
+Columns:
+  • CreatedOn                                calendar_date        
+  • PermitNumber                             text                 
+  • StipulationFullText                      text                 
+  • StipulationID                            text                 [PK]
+
+### RAMP_COMPLAINTS
+Fourfour: jagj-gttd
+Rows: 815
+Columns: 15
+
+Columns:
+  • Block                                    number               
+  • Borough                                  text                 
+  • BulkComplaint                            text                 
+  • CMT_Corner_ID                            number               [PK]
+  • Community_District                       number               
+  • Complaint_Date                           calendar_date        [DATE]
+  • Complaint_ID                             text                 [PK]
+  • Date_Second_Temp_Repair                  calendar_date        [DATE]
+  • Lot                                      number               
+  • Second_Temp_Repair_Needed                text                 
+  • Street_Name1                             text                 
+  • Street_Name2                             text                 
+  • Temp_Repair_Date                         calendar_date        [DATE]
+  • Temp_Repair_Feasible                     text                 
+  • Temp_Repair_Type                         text                 
+
+### RAMP_LOCATIONS
+Fourfour: ufzp-rrqu
+Rows: 5,813
+Columns: 29
+
+Columns:
+  • Borough                                  number               
+  • Borough Boundaries                       number               
+  • COUNTER_SLOPE                            number               
+  • CURB_REVEAL                              number               
+  • City Council Districts                   number               
+  • Community Districts                      number               
+  • CornerID                                 number               [PK]
+  • DWS_CONDITIONS                           text                 
+  • GUTTER_SLOPE                             number               
+  • GeoCyclora                               calendar_date        
+  • LND_CROSS_SLOPE                          number               
+  • LND_LENGTH                               number               
+  • LND_WIDTH                                number               [PK]
+  • OBSTACLES_LANDING                        text                 
+  • OBSTACLES_RAMP                           text                 
+  • PONDING                                  text                 
+  • Police Precincts                         number               
+  • RAMP_CROSS_SLOPE                         number               
+  • RAMP_LEFT_FLARE                          number               
+  • RAMP_LENGTH                              number               
+  • RAMP_RIGHT_FLARE                         number               
+  • RAMP_RUNNING_SLOPE_TOTAL                 number               
+  • RAMP_WIDTH                               number               [PK]
+  • RampID                                   number               [PK]
+  • Ramp_OnStreet                            text                 
+  • StName1                                  text                 
+  • StName2                                  text                 
+  • Zip Codes                                number               
+  • the_geom                                 point                [GEO]
+
+### RAMP_PROGRESS
+Fourfour: e7gc-ub6z
+Rows: 1,356
+Columns: 13
+
+Columns:
+  • Borough                                  text                 
+  • Borough Boundaries                       number               
+  • City Council Districts                   number               
+  • Community Districts                      number               
+  • Construction_End_Date                    text                 [DATE]
+  • Construction_Status_Value                text                 
+  • Construction_Type                        text                 
+  • CornerID                                 number               [PK]
+  • OBJECTID                                 number               [PK]
+  • Police Precincts                         number               
+  • Street_Name1                             text                 
+  • Street_Name2                             text                 
+  • the_geom                                 point                [GEO]
+
+### REINSPECTION
+Fourfour: gx72-kirf
+Rows: 963
+Columns: 8
+
+Columns:
+  • ActualReinspectDate                      calendar_date        [DATE]
+  • DamageID                                 text                 [PK]
+  • DamageTypeCode                           text                 
+  • ReinspectSqFT                            number               
+  • ReinspectionID                           number               [PK]
+  • RequestReinspection                      text                 
+  • RequestReinspectionDate                  calendar_date        [DATE]
+  • ResponseDate                             calendar_date        [DATE]
+
+### SIDEWALK_PLANIMETRIC
+Fourfour: vfx9-tbb6
+Rows: 36,371
+Columns: 0
+
+Columns:
+
+### STEP_STREETS
+Fourfour: u9au-h79y
+Rows: 6,281
+Columns: 4
+
+Columns:
+  • Boro/CB                                  text                 
+  • From                                     text                 
+  • On-street                                text                 
+  • To                                       text                 
+
+### STREET_CLOSURES_BLOCK
+Fourfour: i6b5-j7bu
+Rows: 50,735
+Columns: 11
+
+Columns:
+  • BOROUGH_CODE                             text                 
+  • FROMSTREETNAME                           text                 
+  • OFT                                      number               
+  • ONSTREETNAME                             text                 
+  • PURPOSE                                  text                 
+  • SEGMENTID                                number               [PK]
+  • TOSTREETNAME                             text                 
+  • UNIQUEID                                 text                 [PK]
+  • WORK_END_DATE                            calendar_date        [DATE]
+  • WORK_START_DATE                          calendar_date        [DATE]
+  • the_geom                                 multiline            [GEO]
+
+### STREET_CONSTRUCTION_INSPECTIONS
+Fourfour: ydkf-mpxb
+Rows: 12,280
+Columns: 27
+
+Columns:
+  • CARComments                              text                 
+  • CARNumber                                text                 
+  • CreatedOn                                date                 
+  • CrossStreetName                          text                 
+  • CurbStreetName                           text                 
+  • DefectiveCuts                            number               
+  • DetailsofViolation                       text                 
+  • FeetFromCrossStreet                      number               
+  • FeetFromCurb                             number               
+  • FromStreetName                           text                 
+  • InspectionDate                           date                 [DATE]
+  • InspectionID                             number               [PK]
+  • InspectionRemarks                        text                 
+  • InspectionResultType                     text                 
+  • InspectionType                           text                 
+  • LaneOfCut                                text                 
+  • ModifiedOn                               calendar_date        
+  • NOVCode                                  text                 
+  • NOVCodeDescription                       text                 
+  • NOVNumber                                text                 
+  • OnstreetName                             text                 
+  • PermitNumber                             text                 
+  • PermitType                               text                 
+  • PermitteeName                            text                 
+  • SpecificLocation                         text                 [GEO]
+  • ToStreetName                             text                 
+  • TrafficFlow                              text                 
+
+### STREET_PERMITS
+Fourfour: tqtj-sjs8
+Rows: 50,633
+Columns: 39
+
+Columns:
+  • ApplicationTrackingID                    text                 [PK]
+  • ApplicationTypeShortDesc                 text                 
+  • BoroughName                              text                 
+  • CreatedOn                                calendar_date        
+  • EmergencyIssueDate                       calendar_date        [DATE]
+  • EquipmentTypeDesc                        text                 
+  • FromStreetName                           text                 
+  • IssuedWorkEndDate                        calendar_date        [DATE]
+  • IssuedWorkStartDate                      calendar_date        [DATE]
+  • LocationGeometry                         text                 [GEO]
+  • ModifiedOn                               calendar_date        
+  • NextPermitNumber                         text                 
+  • NumberOfContainers                       number               
+  • NumberOfMiniContainers                   number               
+  • OFTCode                                  text                 
+  • OnStreetName                             text                 
+  • PavementShortDesc                        text                 
+  • PermitEstimatedNumberOfCuts              number               
+  • PermitHouseNumber                        text                 
+  • PermitIssueDate                          calendar_date        [DATE]
+  • PermitLinearFeet                         number               
+  • PermitLocationComments                   text                 [GEO]
+  • PermitNumber                             text                 
+  • PermitNumberOfZones                      number               
+  • PermitPurposeComments                    text                 
+  • PermitSeriesID                           text                 [PK]
+  • PermitSeriesShortDesc                    text                 
+  • PermitStatusID                           text                 [PK]
+  • PermitStatusShortDesc                    text                 
+  • PermitTotalSqFeet                        number               
+  • PermitTypeDesc                           text                 
+  • PermitTypeID                             text                 [PK]
+  • PermitteeName                            text                 
+  • PreviousPermitNumber                     text                 
+  • SequenceNumber                           text                 
+  • SideWalkShortDesc                        text                 [PK]
+  • SpecificStipulations                     text                 
+  • ToStreetName                             text                 
+  • WKT                                      text                 
+
+### STREET_RESURFACING_INHOUSE
+Fourfour: ffaf-8mrv
+Rows: 1,965
+Columns: 21
+
+Columns:
+  • Borough Code                             text                 
+  • Location Actual Lane Miles Paved         number               [GEO]
+  • Location Actual Milling End Date         calendar_date        [GEO] [DATE]
+  • Location Actual Milling Start Date       calendar_date        [GEO] [DATE]
+  • Location Actual Paving End Date          calendar_date        [GEO] [DATE]
+  • Location Actual Paving Square Yard       number               [GEO]
+  • Location Actual Paving Start Date        calendar_date        [GEO] [DATE]
+  • Location Actual Protect Until            calendar_date        [GEO]
+  • Location Community Board                 number               [GEO]
+  • Location From Street                     text                 [GEO]
+  • Location Node ID                         text                 [PK] [GEO]
+  • Location On Street                       text                 [GEO]
+  • Location Segment ID                      number               [PK] [GEO]
+  • Location Status                          text                 [GEO]
+  • Location To Street                       text                 [GEO]
+  • Location WKT                             text                 [GEO]
+  • OFT Code                                 text                 
+  • Project ID                               text                 [PK]
+  • Project Speed Bumps                      number               
+  • Project Status                           text                 
+  • Project Type                             text                 
+
+### STREET_RESURFACING_SCHEDULE
+Fourfour: xnfm-u3k5
+Rows: 15,216
+Columns: 16
+
+Columns:
+  • Area                                     text                 
+  • Borough Name                             text                 
+  • Community Board                          number               
+  • Crew Type                                text                 
+  • Date                                     calendar_date        [DATE]
+  • Day                                      text                 
+  • From Street Name                         text                 
+  • Location Node ID                         number               [PK] [GEO]
+  • Location Segment ID                      number               [PK] [GEO]
+  • Location WKT                             text                 [GEO]
+  • OFTCode                                  text                 
+  • On Street Name                           text                 
+  • Shift Type                               text                 
+  • To Street Name                           text                 
+  • Work Schedule Project Location ID        number               [PK] [GEO]
+  • Work Type                                text                 
+
+### TREE_DAMAGE
+Fourfour: j6v2-6uxq
+Rows: 828
+Columns: 13
+
+Columns:
+  • ATDDismissed                             text                 
+  • ATDDismissedOn                           calendar_date        
+  • ATDID                                    number               [PK]
+  • ATDIssueDate                             calendar_date        [DATE]
+  • ATD_NUMBER                               text                 
+  • BBLID                                    number               [PK]
+  • CB                                       number               
+  • HOUSE_NUM                                text                 
+  • Inspect_date                             calendar_date        [DATE]
+  • InspectionId                             number               [PK]
+  • ONSTNAME                                 text                 
+  • ReInspectionId                           number               [PK]
+  • ViolationId                              number               [PK]
+
+### VIOLATIONS
+Fourfour: 6kbp-uz6m
+Rows: 18,618
+Columns: 27
+
+Columns:
+  • BBLID                                    number               [PK]
+  • BROKEN                                   text                 
+  • CB                                       number               
+  • CERTI_DATE                               calendar_date        [DATE]
+  • CONTRACT                                 text                 
+  • EntryDate                                calendar_date        [DATE]
+  • FLAG                                     text                 
+  • FRSTNAME                                 text                 
+  • GRACE_PD                                 number               
+  • HARDWARE                                 text                 
+  • HOUSE_NUM                                text                 
+  • INTEGRITY                                text                 
+  • ONFRTOCODE                               text                 
+  • ONSTNAME                                 text                 
+  • OTHER_DEF                                text                 
+  • PATCHWORK                                text                 
+  • POST_DATE                                calendar_date        [DATE]
+  • SLOPE                                    text                 
+  • SQ_FEET                                  number               
+  • SWV_Number                               number               
+  • SW_MISSING                               text                 
+  • TOSTNAME                                 text                 
+  • TRIP_HAZ                                 text                 
+  • UNDERMINED                               text                 
+  • VDismissDate                             calendar_date        [DATE]
+  • VIssueDate                               calendar_date        [DATE]
+  • ViolationID                              number               [PK]
+
+### WEEKLY_CONSTRUCTION
+Fourfour: r528-jcks
+Rows: 3,978
+Columns: 4
+
+Columns:
+  • Borough                                  text                 
+  • CB                                       text                 
+  • Contract No                              text                 
+  • Location                                 text                 [GEO]
+
+
+====================================================================================================
+DATASET SUMMARY
+====================================================================================================
+
+Total Datasets: 24
+Total Rows: 1,586,116
+Total Columns: 554
+Avg Rows/Dataset: 66,088
+Avg Columns/Dataset: 23
+
+Column Types:
+  • text                           312 columns
+  • number                         175 columns
+  • calendar_date                   51 columns
+  • checkbox                         7 columns
+  • multiline                        3 columns
+  • point                            3 columns
+  • date                             2 columns
+  • multipoint                       1 columns
