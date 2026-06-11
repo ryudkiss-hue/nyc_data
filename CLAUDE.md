@@ -244,7 +244,7 @@ black src/socrata_toolkit tests app
 6. Push and create PR (draft OK)
 
 **Common tasks:**
-- **Add a visualization:** Create chart function in `src/socrata_toolkit/viz/` or inline in `app/main.py`, then call `st.plotly_chart()` in the appropriate view
+- **Add a visualization:** Create chart function in `src/socrata_toolkit/viz/` using `get_unit_label()` from `units.py` for axes labels, ensuring all charts include units (count, USD, days, %, etc.). See `DATA_DICTIONARY.md` for standard unit labels per column.
 - **Add a quality rule:** Implement in `src/socrata_toolkit/quality/rules.py`
 - **Add a new view:** Create file in `app/views/`, define `render_*_page()` function, register in `app/app.py` router
 - **Customize a skill:** Add `references/` folder inside skill with company-specific context (schema.md, metric_definitions.md, etc.)
@@ -426,7 +426,7 @@ result = spatial_intersects_join(left_df, right_df, "the_geom", "the_geom")
 - **Outlier detection** — `socrata_toolkit.analysis.core.detect_all_outliers()`
 - **Audit trails** — `socrata_toolkit.governance.core.AuditLogger`, `create_lineage()`
 - **DuckDB caching** — `socrata_toolkit.core.duckdb_store.query_parquet_cache()`
-- **Visualizations** — `socrata_toolkit.viz` (histogram, bar_chart, correlation_heatmap, time_series_chart)
+- **Visualizations** — `socrata_toolkit.viz` with standardized units support. All charts must include explicit units on axes (see `units.py`). Reference `DATA_DICTIONARY.md` for the authoritative unit specifications for each column.
 - **Alerts** — `socrata_toolkit.alerts.manager.AlertManager`, `Alert`, `CLINotifier`
 
 ---
