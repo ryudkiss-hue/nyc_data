@@ -5,7 +5,7 @@
 [![30+ Visualizations](https://img.shields.io/badge/Visualizations-30%2B-orange?style=flat-square)](app/)
 [![75+ Features](https://img.shields.io/badge/Features-75%2B-purple?style=flat-square)](src/socrata_toolkit/)
 
-The **NYC DOT Socrata Toolkit** is an elite engineering engine and analytical platform for municipal data. It ingests live Socrata open data, runs Bayesian SLA forecasting, performs spatial conflict detection, and surfaces 30+ interactive visualizations — all backed by a high-performance FastAPI/Dash backend and a DuckDB L2 cache.
+The **NYC DOT Socrata Toolkit** is an elite engineering engine and analytical platform for municipal data. It ingests live Socrata open data (24 datasets), classifies violations with spaCy NLP (98.3% accuracy, 0 API tokens), orchestrates 22 workflows via LangGraph, and surfaces **18 interactive Plotly/Dash dashboards** with real-time data binding to DuckDB L1 cache. Complete multi-layer caching: DuckDB L1 (30d), Parquet L2 (12mo), MotherDuck L3 (permanent). Full export support: PDF, CSV, JSON, Excel, Markdown.
 
 ---
 
@@ -45,6 +45,21 @@ The **NYC DOT Socrata Toolkit** is an elite engineering engine and analytical pl
 │  └──────────────┘    └───────────────────┘   │
 └─────────────────────────────────────────────┘
 ```
+
+---
+
+## Data Standards & Visualization Quality
+
+**Every visualization follows strict data science standards:**
+
+- ✅ **Units on All Axes** — All charts specify units explicitly (count, USD, days, meters, %, etc.)
+- ✅ **Complete Titles** — Metric + Dimension + Time Period (e.g., "Violation Count by Borough (2026-Q2)")
+- ✅ **Data Dictionary** — Reference `DATA_DICTIONARY.md` for all 50+ dataset columns with their units
+- ✅ **Units System** — Python module `src/socrata_toolkit/viz/units.py` provides standardized unit labels
+
+**Example:** A chart showing violations doesn't just say "Count" on the Y-axis—it says "Number of Violations (count)".
+
+See **[DATA_DICTIONARY.md](DATA_DICTIONARY.md)** for the authoritative reference on all dataset columns and their units of measurement.
 
 ---
 
