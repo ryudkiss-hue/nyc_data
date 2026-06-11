@@ -4,6 +4,7 @@ MotherDuck Cloud Integration for NYC DOT SIM Workflows.
 L3 permanent cache with 12-month retention, delta sync, and analytics materialization.
 """
 
+from .analytics import AnalyticsBuilder
 from .cache import CloudCacheManager
 from .client import MotherDuckClient
 from .connector import MotherDuckConnection
@@ -18,4 +19,5 @@ __all__ = [
     "MotherDuckConnection",
     "InspectionDataLoader",
     "StagingTransformer",
+    "AnalyticsBuilder",
 ]
