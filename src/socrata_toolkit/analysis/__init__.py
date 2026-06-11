@@ -31,6 +31,21 @@ from .text import (
     parse_sim_complaints,
 )
 from .viz import bar_chart, histogram
+from .legal_hold_classifier import (
+    LegalHoldClassifier,
+    LegalHoldMetrics,
+    LegalHoldReport,
+    AuditTrailMetrics,
+    RecordType,
+    Sensitivity,
+    RetentionRequirement,
+    ComplianceStatus,
+)
+from .legal_hold_workflow import (
+    LegalHoldWorkflow,
+    run_legal_hold_workflow,
+    build_legal_hold_graph,
+)
 
 __all__ = [
     "profile_dataframe",
@@ -61,6 +76,17 @@ __all__ = [
     "wilson_score_confidence_interval",
     "bootstrap_confidence_interval",
     "mean_confidence_interval",
+    "LegalHoldClassifier",
+    "LegalHoldMetrics",
+    "LegalHoldReport",
+    "AuditTrailMetrics",
+    "RecordType",
+    "Sensitivity",
+    "RetentionRequirement",
+    "ComplianceStatus",
+    "LegalHoldWorkflow",
+    "run_legal_hold_workflow",
+    "build_legal_hold_graph",
 ]
 
 
