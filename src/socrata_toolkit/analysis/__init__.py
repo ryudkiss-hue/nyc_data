@@ -19,7 +19,7 @@ from .metrics import (
 from .profiling import DataProfile, profile_dataframe, quality_report
 from .reporting import DashboardSummary, Report, generate_contract_report, generate_inquiry_response
 from .text import extract_patterns, extract_term_frequencies, generate_text_insights, parse_sim_complaints
-from .viz import bar_chart, histogram, box_plot
+from .viz import bar_chart, histogram
 
 __all__ = [
     "profile_dataframe",
@@ -81,7 +81,7 @@ _legacy_import("..quality.sla_tracking", "SLATarget")
 _legacy_import("..quality.freshness", "AlertSeverity")
 _legacy_import("..metrics", "DataQualityMetrics")
 _legacy_import("..quality.validation", "validate_required_columns", "validate_schema_types")
-_legacy_import(".viz", "box_plot")
+_legacy_import("..viz.core", "box_plot")
 _legacy_import(".reporting", "generate_program_report")
 _legacy_import(".insights", "build_weighted_rank_sql", "websearch_to_tsquery_sql")
 _legacy_import("..analyst.ramp_analysis", "compute_borough_completion_rates")

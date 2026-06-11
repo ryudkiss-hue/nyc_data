@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from app.views import studio
+# from app.views import studio  # TODO: studio module not found
 
 
 def _cart():
