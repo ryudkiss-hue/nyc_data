@@ -21,7 +21,6 @@ except Exception:  # pragma: no cover - optional dependency
     shape = None
     unary_union = None
 
-
 @dataclass
 class SpatialIndex:
     """A minimal in-memory spatial index backed by a list of GeoJSON-like features.
@@ -60,7 +59,6 @@ class SpatialJoinResult:
     conflict_rate: float
     overlap_count: int
 
-
 def _to_geom(value: Any):
     try:
         from shapely import wkt
@@ -80,7 +78,6 @@ def _to_geom(value: Any):
 
         return shape(json.loads(value))
     return wkt.loads(value)
-
 
 def spatial_intersects_join(left: pd.DataFrame, right: pd.DataFrame, left_geom_col: str, right_geom_col: str) -> SpatialJoinResult:
     left_cp = left.copy()

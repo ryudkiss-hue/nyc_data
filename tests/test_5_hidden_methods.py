@@ -27,11 +27,9 @@ from socrata_toolkit.analysis_advanced import (
 )
 from socrata_toolkit.spatial.analytics import SpatialAnomalyDetector, moran_i
 
-
 # ==========================================
 # FIXTURES
 # ==========================================
-
 
 @pytest.fixture
 def sample_inspection_data():
@@ -51,7 +49,6 @@ def sample_inspection_data():
         ),
     })
 
-
 @pytest.fixture
 def sample_geodataframe(sample_inspection_data):
     """Create sample GeoDataFrame."""
@@ -67,7 +64,6 @@ def sample_geodataframe(sample_inspection_data):
         crs="EPSG:4326",
     )
     return gdf
-
 
 @pytest.fixture
 def clustered_data():
@@ -85,11 +81,9 @@ def clustered_data():
 
     return coords, values
 
-
 # ==========================================
 # METHOD 1: MORAN'S I TESTS
 # ==========================================
-
 
 class TestMoransI:
     """Tests for Moran's I spatial autocorrelation."""
@@ -133,11 +127,9 @@ class TestMoransI:
         result = moran_i(sample_geodataframe, "constant")
         assert result == 0.0, "Should return 0 for constant values"
 
-
 # ==========================================
 # METHOD 2: DISTRIBUTION CLASSIFICATION TESTS
 # ==========================================
-
 
 class TestDistributionClassification:
     """Tests for distribution shape classification."""
@@ -188,11 +180,9 @@ class TestDistributionClassification:
         assert result.unique_ratio <= 0.5  # Allow up to 50% for small datasets
         assert result.classification in ["right_skewed", "sparse"]
 
-
 # ==========================================
 # METHOD 3: ANOMALY DETECTION TESTS
 # ==========================================
-
 
 class TestAnomalyDetection:
     """Tests for spatial anomaly detection."""
@@ -252,11 +242,9 @@ class TestAnomalyDetection:
         )
         assert len(anomalies) > 0
 
-
 # ==========================================
 # METHOD 4: SEASONAL DECOMPOSITION TESTS
 # ==========================================
-
 
 class TestSeasonalDecomposition:
     """Tests for time series decomposition."""
@@ -317,11 +305,9 @@ class TestSeasonalDecomposition:
             assert "error" not in result
             assert len(result["original"]) == 365
 
-
 # ==========================================
 # METHOD 5: BOOTSTRAP CONFIDENCE INTERVALS TESTS
 # ==========================================
-
 
 class TestBootstrapCI:
     """Tests for bootstrap confidence intervals."""
@@ -382,11 +368,9 @@ class TestBootstrapCI:
         point, lower, upper = bootstrap_confidence_interval(data)
         assert point == 2.0
 
-
 # ==========================================
 # INTEGRATION TESTS
 # ==========================================
-
 
 class TestIntegration:
     """Integration tests for all methods."""
@@ -454,11 +438,9 @@ class TestIntegration:
         ci = bootstrap_confidence_interval(nan_data)
         assert ci[0] == 0.0
 
-
 # ==========================================
 # PERFORMANCE TESTS
 # ==========================================
-
 
 class TestPerformance:
     """Performance tests to ensure <500ms latency."""
@@ -517,7 +499,6 @@ class TestPerformance:
         # Allow 1.5s for 1000 resamples on Windows systems
         assert elapsed < 1.5, f"Took {elapsed:.3f}s, target <1.5s"
         assert len(ci) == 3
-
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

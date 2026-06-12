@@ -8,11 +8,10 @@ import json
 import logging
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from uuid import uuid4
 
 logger = logging.getLogger(__name__)
-
 
 @dataclass
 class AuditEntry:
@@ -34,9 +33,8 @@ class AuditEntry:
     run_id: str
     status: str
     rows_affected: int
-    details: Dict[str, Any]
+    details: dict[str, Any]
     audit_id: str = field(default_factory=lambda: str(uuid4()))
-
 
 class AuditLogger:
     """Captures and manages audit logs for data validation operations.
@@ -52,7 +50,7 @@ class AuditLogger:
             run_id: Optional run identifier. If not provided, a new UUID is generated.
         """
         self.run_id = run_id or str(uuid4())
-        self.entries: List[AuditEntry] = []
+        self.entries: list[AuditEntry] = []
         logger.info(f"AuditLogger initialized with run_id={self.run_id}")
 
     def log_check(
@@ -61,7 +59,7 @@ class AuditLogger:
         table_name: str,
         status: str,
         rows_affected: int = 0,
-        details: Optional[Dict[str, Any]] = None
+        details: Optional[dict[str, Any]] = None
     ) -> AuditEntry:
         """Log a single validation check result.
 
@@ -104,7 +102,7 @@ class AuditLogger:
         entries_dicts = [asdict(entry) for entry in self.entries]
         return json.dumps(entries_dicts, indent=2, default=str)
 
-    def to_dict_list(self) -> List[Dict[str, Any]]:
+    def to_dict_list(self) -> list[dict[str, Any]]:
         """Export all audit entries as list of dictionaries.
 
         Returns:
@@ -169,7 +167,7 @@ class AuditLogger:
             logger.error(f"Failed to save audit logs to DuckDB: {e}")
             return False
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         """Get a summary of audit log statistics.
 
         Returns:
@@ -196,7 +194,7 @@ class AuditLogger:
             }
         }
 
-    def filter_by_status(self, status: str) -> List[AuditEntry]:
+    def filter_by_status(self, status: str) -> list[AuditEntry]:
         """Get all entries with a specific status.
 
         Args:
@@ -207,7 +205,7 @@ class AuditLogger:
         """
         return [entry for entry in self.entries if entry.status == status]
 
-    def filter_by_check_type(self, check_type: str) -> List[AuditEntry]:
+    def filter_by_check_type(self, check_type: str) -> list[AuditEntry]:
         """Get all entries for a specific check type.
 
         Args:
@@ -218,7 +216,7 @@ class AuditLogger:
         """
         return [entry for entry in self.entries if entry.check_type == check_type]
 
-    def filter_by_table(self, table_name: str) -> List[AuditEntry]:
+    def filter_by_table(self, table_name: str) -> list[AuditEntry]:
         """Get all entries for a specific table.
 
         Args:

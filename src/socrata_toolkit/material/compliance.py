@@ -34,7 +34,6 @@ class ComplianceStatus(str, Enum):
     PARTIAL_COMPLIANCE = "partial_compliance"
     UNKNOWN = "unknown"
 
-
 @dataclass
 class ADAComplianceCheckResult:
     """Result of ADA compliance check for a single assessment.
@@ -73,7 +72,6 @@ class ADAComplianceCheckResult:
         data['urgency'] = self.urgency.value
         return data
 
-
 @dataclass
 class MaintenanceScheduleCheckResult:
     """Result of maintenance schedule compliance check.
@@ -108,7 +106,6 @@ class MaintenanceScheduleCheckResult:
         data['urgency'] = self.urgency.value
         return data
 
-
 @dataclass
 class LifecycleRecommendation:
     """Material lifecycle stage and replacement recommendation.
@@ -136,7 +133,6 @@ class LifecycleRecommendation:
     replacement_recommended: bool = False
     condition_vs_age: str = "normal"  # 'better_than_expected', 'normal', 'worse_than_expected'
     notes: str = ""
-
 
 @dataclass
 class ComplianceReport:
@@ -203,7 +199,6 @@ class ComplianceReport:
             'days_until_urgent_action': self.days_until_urgent_action,
             'report_generated_at': self.report_generated_at.isoformat(),
         }
-
 
 class MaterialCompliance:
     """Compliance checking engine for surface assessments.
@@ -611,6 +606,5 @@ class MaterialCompliance:
             return True
 
         return False
-
 
 logger.info("Material Compliance checking engine initialized")

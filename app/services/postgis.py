@@ -24,7 +24,6 @@ except ImportError:
     psycopg = None  # type: ignore[assignment]
     HAS_PSYCOPG = False
 
-
 @dataclass
 class PostGISConfig:
     """Connection configuration for a PostGIS database."""
@@ -45,7 +44,6 @@ class PostGISConfig:
             f"connect_timeout={self.connect_timeout}"
         )
 
-
 @dataclass
 class SpatialQueryResult:
     """Result of a PostGIS spatial query."""
@@ -54,7 +52,6 @@ class SpatialQueryResult:
     row_count: int
     query: str
     warnings: list[str] = field(default_factory=list)
-
 
 class PostGISService:
     """Thin wrapper around psycopg for running PostGIS spatial queries.

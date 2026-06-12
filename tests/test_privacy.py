@@ -22,7 +22,6 @@ from socrata_toolkit.privacy import (
 VALID_CARD = "4111111111111111"
 INVALID_CARD = "4111111111111112"
 
-
 @pytest.fixture
 def pii_df() -> pd.DataFrame:
     return pd.DataFrame(
@@ -36,10 +35,8 @@ def pii_df() -> pd.DataFrame:
         }
     )
 
-
 def _by_col(signals: list[PiiSignal]) -> dict[str, PiiSignal]:
     return {s.column: s for s in signals}
-
 
 # --------------------------------------------------------------------------- #
 # Luhn
@@ -48,12 +45,10 @@ def test_luhn_accepts_valid():
     assert luhn_check(VALID_CARD) is True
     assert luhn_check("4111 1111 1111 1111") is True
 
-
 def test_luhn_rejects_invalid():
     assert luhn_check(INVALID_CARD) is False
     assert luhn_check("1234567890123456") is False
     assert luhn_check("123") is False  # too short
-
 
 # --------------------------------------------------------------------------- #
 # Scanner
@@ -79,12 +74,10 @@ def test_scanner_flags_kinds_and_severities(pii_df):
     # plain count column should not be flagged as PII
     assert "count_widgets" not in signals
 
-
 def test_scanner_confidence_in_range(pii_df):
     for s in scan_dataframe(pii_df):
         assert 0.0 <= s.confidence <= 1.0
         assert s.evidence
-
 
 def test_scanner_value_confirmation_beats_name_only():
     # value-confirmed email should score higher than a bare name-only signal
@@ -97,13 +90,11 @@ def test_scanner_value_confirmation_beats_name_only():
     sig = _by_col(scan_dataframe(df))
     assert sig["email"].confidence > sig["last_name"].confidence
 
-
 def test_scanner_entropy_identifier():
     df = pd.DataFrame({"token_blob": [f"id-{i:06d}-xyz" for i in range(20)]})
     sig = _by_col(scan_dataframe(df))
     assert "token_blob" in sig
     assert sig["token_blob"].kind == "identifier"
-
 
 # --------------------------------------------------------------------------- #
 # Masking
@@ -112,7 +103,6 @@ def test_redact():
     out = redact(pd.Series(["secret", "data", None]))
     assert out.tolist()[:2] == ["***", "***"]
     assert pd.isna(out.tolist()[2])
-
 
 def test_hash_token_deterministic():
     s = pd.Series(["alice", "bob"])
@@ -124,24 +114,20 @@ def test_hash_token_deterministic():
     c = hash_token(s, salt="other")
     assert c.tolist() != a.tolist()
 
-
 def test_bucket_numeric():
     out = bucket_numeric(pd.Series([0, 5, 10, 50, 100]), bins=5)
     assert all(isinstance(v, str) and v.startswith("[") for v in out)
     # determinism
     assert out.tolist() == bucket_numeric(pd.Series([0, 5, 10, 50, 100]), bins=5).tolist()
 
-
 def test_truncate_geo():
     out = truncate_geo(pd.Series([40.748817, -73.985428]), precision=2)
     assert out.tolist() == [40.75, -73.99]
-
 
 def test_partial_mask():
     out = partial_mask(pd.Series(["123456789", "ab"]), keep=4)
     assert out.tolist()[0] == "*****6789"
     assert out.tolist()[1] == "ab"  # shorter than keep -> unchanged
-
 
 def test_recommend_strategy():
     assert recommend_strategy(PiiSignal("c", "ssn", 0.9, [], "critical")) == "hash_token"
@@ -149,7 +135,6 @@ def test_recommend_strategy():
     assert recommend_strategy(PiiSignal("c", "email", 0.9, [], "high")) == "partial_mask"
     assert recommend_strategy(PiiSignal("c", "geo", 0.5, [], "medium")) == "truncate_geo"
     assert recommend_strategy(PiiSignal("c", "name", 0.5, [], "medium")) == "redact"
-
 
 # --------------------------------------------------------------------------- #
 # DMBOK scoring
@@ -166,13 +151,11 @@ def test_dmbok_six_dimensions_in_range(pii_df):
         assert 0.0 <= d.score <= 100.0
     assert 0.0 <= report.overall <= 100.0
 
-
 def test_dmbok_perfect_completeness():
     df = pd.DataFrame({"a": [1, 2, 3], "b": ["x", "y", "z"]})
     report = score_dataframe(df)
     comp = next(d for d in report.dimensions if d.dimension == "completeness")
     assert comp.score == 100.0
-
 
 def test_dmbok_nulls_lower_completeness():
     df = pd.DataFrame({"a": [1, None, 3], "b": [None, None, "z"]})
@@ -180,13 +163,11 @@ def test_dmbok_nulls_lower_completeness():
     comp = next(d for d in report.dimensions if d.dimension == "completeness")
     assert comp.score < 100.0
 
-
 def test_dmbok_uniqueness_with_duplicates():
     df = pd.DataFrame({"id": [1, 1, 2, 3], "v": ["a", "a", "b", "c"]})
     report = score_dataframe(df, key_columns=["id"])
     uniq = next(d for d in report.dimensions if d.dimension == "uniqueness")
     assert uniq.score < 100.0
-
 
 def test_dmbok_timeliness_recent_vs_old():
     recent = pd.DataFrame({"d": ["2026-05-01", "2026-05-20"]})
@@ -196,7 +177,6 @@ def test_dmbok_timeliness_recent_vs_old():
     t_recent = next(d for d in r_recent.dimensions if d.dimension == "timeliness")
     t_old = next(d for d in r_old.dimensions if d.dimension == "timeliness")
     assert t_recent.score > t_old.score
-
 
 def test_dmbok_consistency_negative_counts():
     df = pd.DataFrame({"count_items": [1, -5, 3, -2]})

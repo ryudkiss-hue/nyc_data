@@ -20,7 +20,6 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-
 class MetricType(Enum):
     """Types of quality metrics tracked."""
     COMPLETENESS = "completeness"  # % non-null values
@@ -30,14 +29,12 @@ class MetricType(Enum):
     TIMELINESS = "timeliness"  # % data within acceptable age
     ACCURACY = "accuracy"  # % values matching reference data
 
-
 class Severity(Enum):
     """Severity levels for SLA breaches."""
     CRITICAL = "critical"
     HIGH = "high"
     MEDIUM = "medium"
     LOW = "low"
-
 
 class TrendDirection(Enum):
     """Direction of trend over time."""
@@ -46,12 +43,10 @@ class TrendDirection(Enum):
     DEGRADING = "degrading"
     INSUFFICIENT_DATA = "insufficient_data"
 
-
 class MaterializationMode(Enum):
     """How SLA violations affect data materialization."""
     HARD = "hard"  # Block materialization on failure
     SOFT = "soft"  # Warn but continue
-
 
 @dataclass
 class MetricPoint:
@@ -79,7 +74,6 @@ class MetricPoint:
             "metric_type": self.metric_type.value,
             "window": self.window,
         }
-
 
 @dataclass
 class SLADefinition:
@@ -141,7 +135,6 @@ class SLADefinition:
             created_at=datetime.fromisoformat(data.get("created_at", datetime.now(timezone.utc).isoformat())),
         )
 
-
 @dataclass
 class SLABreach:
     """Represents a breach of an SLA.
@@ -174,7 +167,6 @@ class SLABreach:
             "status": self.status,
         }
 
-
 @dataclass
 class SLATrend:
     """Trend analysis for an SLA metric.
@@ -193,7 +185,6 @@ class SLATrend:
     previous_value: float | None
     slope: float
     confidence: float
-
 
 class DataQualityTracker:
     """Tracks quality metrics over time and evaluates SLAs.
@@ -498,7 +489,6 @@ class DataQualityTracker:
 
         logger.info(f"Cleared {removed_count} old metric points")
         return removed_count
-
 
 def create_standard_slas() -> list[SLADefinition]:
     """Create standard pre-built SLAs for common datasets.

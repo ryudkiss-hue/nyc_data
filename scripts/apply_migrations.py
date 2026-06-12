@@ -16,7 +16,6 @@ except ImportError:
     def load_env():
         return {"PG_DSN": os.getenv("PG_DSN")}
 
-
 def main():
     """Main migration logic."""
     env = load_env()
@@ -42,7 +41,6 @@ def main():
             log.info("Migration applied.")
     except Exception as e:  # pylint: disable=broad-exception-caught
         log.error("Migration failed: %s", e)
-
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

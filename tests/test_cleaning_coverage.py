@@ -76,7 +76,6 @@ class TestStandardizeBoroughs:
         out = standardize_boroughs(df, "boro")
         assert out["boro"].tolist() == ["MANHATTAN", "BRONX"]
 
-
 # ---------------------------------------------------------------------------
 # standardize_postcodes
 # ---------------------------------------------------------------------------
@@ -116,7 +115,6 @@ class TestStandardizePostcodes:
         df = self._df(["10001-9999"])
         _ = standardize_postcodes(df, "zip")
         assert df["zip"].iloc[0] == "10001-9999"
-
 
 # ---------------------------------------------------------------------------
 # standardize_bbl
@@ -165,7 +163,6 @@ class TestStandardizeBBL:
         _ = standardize_bbl(df, "boro", "block", "lot")
         assert "bbl" not in df.columns
 
-
 # ---------------------------------------------------------------------------
 # clean_column_names
 # ---------------------------------------------------------------------------
@@ -213,7 +210,6 @@ class TestCleanColumnNames:
         _ = clean_column_names(df)
         assert "First Name" in df.columns
 
-
 # ---------------------------------------------------------------------------
 # infer_and_convert_types
 # ---------------------------------------------------------------------------
@@ -250,7 +246,6 @@ class TestInferAndConvertTypes:
         df = pd.DataFrame({"count": ["1", "2"]})
         _ = infer_and_convert_types(df)
         assert df["count"].dtype == object
-
 
 # ---------------------------------------------------------------------------
 # remove_outliers

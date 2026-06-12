@@ -17,7 +17,6 @@ from socrata_toolkit.discovery.schema import (
     SchemaValidator,
 )
 
-
 class TestChangeTypeEnum:
     """Tests for ChangeType enum."""
 
@@ -38,7 +37,6 @@ class TestChangeTypeEnum:
 
     def test_change_type_position(self):
         assert ChangeType.POSITION_CHANGE.value == "position_change"
-
 
 class TestColumnSchema:
     """Tests for ColumnSchema dataclass."""
@@ -68,7 +66,6 @@ class TestColumnSchema:
     def test_column_schema_nullable_true(self):
         col = ColumnSchema("data", "float64", True, 2)
         assert col.nullable is True
-
 
 class TestDatasetSchema:
     """Tests for DatasetSchema dataclass."""
@@ -121,7 +118,6 @@ class TestDatasetSchema:
         )
         assert schema.metadata == {}
 
-
 class TestTypeCompatibility:
     """Tests for TYPE_COMPATIBILITY matrix."""
 
@@ -145,7 +141,6 @@ class TestTypeCompatibility:
     def test_datetime_compatible_types(self):
         assert "datetime64[ns]" in TYPE_COMPATIBILITY["datetime64[ns]"]
         assert "object" in TYPE_COMPATIBILITY["datetime64[ns]"]
-
 
 class TestSchemaValidator:
     """Tests for SchemaValidator class."""
@@ -184,7 +179,6 @@ class TestSchemaValidator:
             result = validator.validate(df)
             assert result is not None
 
-
 class TestSchemaRegistry:
     """Tests for SchemaRegistry class."""
 
@@ -194,7 +188,6 @@ class TestSchemaRegistry:
         # Check if it has expected methods
         assert hasattr(registry, '__init__')
 
-
 class TestBackwardCompatibilityChecker:
     """Tests for BackwardCompatibilityChecker class."""
 
@@ -202,7 +195,6 @@ class TestBackwardCompatibilityChecker:
         checker = BackwardCompatibilityChecker()
         assert checker is not None
         assert hasattr(checker, '__init__')
-
 
 class TestSchemaFromDataFrame:
     """Tests for schema extraction from DataFrames."""

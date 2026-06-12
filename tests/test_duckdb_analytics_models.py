@@ -16,7 +16,6 @@ ALL_CREATE_FUNCS = [
     am.create_geo_animation_mart,
 ]
 
-
 @pytest.fixture
 def db(tmp_path):
     """Isolated DuckDB database per test; resets module-level singleton."""
@@ -26,12 +25,10 @@ def db(tmp_path):
     yield conn
     dp.reset_connection()
 
-
 def _stage(conn, df, name="inspections"):
     conn.register("_fixture_df", df)
     conn.execute(f"CREATE OR REPLACE TABLE staging.{name} AS SELECT * FROM _fixture_df")
     conn.unregister("_fixture_df")
-
 
 def _inspections_df(**overrides):
     base = {
@@ -52,12 +49,10 @@ def _inspections_df(**overrides):
     base.update(overrides)
     return pd.DataFrame(base)
 
-
 @pytest.fixture
 def staged(db):
     _stage(db, _inspections_df())
     return db
-
 
 def test_borough_summary_aggregates(staged):
     result = am.create_borough_summary()
@@ -77,13 +72,11 @@ def test_borough_summary_aggregates(staged):
     )
     assert violations == {"MANHATTAN": 2, "BROOKLYN": 4, "QUEENS": 0}
 
-
 def test_borough_summary_missing_borough_column_errors(db):
     _stage(db, _inspections_df().drop(columns=["borough"]))
     result = am.create_borough_summary()
     assert result["status"] == "error"
     assert "borough" in result["error"]
-
 
 def test_time_series_snapshots_month_buckets(staged):
     result = am.create_time_series_snapshots()
@@ -97,7 +90,6 @@ def test_time_series_snapshots_month_buckets(staged):
     ]
     assert months == ["2026-01-01", "2026-02-01", "2026-03-01"]
 
-
 def test_material_analysis_mart_with_material(staged):
     result = am.create_material_analysis_mart()
     assert result["status"] == "success"
@@ -109,7 +101,6 @@ def test_material_analysis_mart_with_material(staged):
     )
     assert rows == {"concrete": 3, "asphalt": 2}
 
-
 def test_material_analysis_mart_without_material(db):
     _stage(db, _inspections_df().drop(columns=["material_type"]))
     result = am.create_material_analysis_mart()
@@ -120,7 +111,6 @@ def test_material_analysis_mart_without_material(db):
         "SELECT COUNT(*) FROM analytics.material_analysis_mart"
     ).fetchone()[0]
     assert count == 0
-
 
 def test_clustering_features_numeric_matrix(staged):
     result = am.create_clustering_features()
@@ -136,7 +126,6 @@ def test_clustering_features_numeric_matrix(staged):
     ).fetchone()[0]
     assert total == 6
 
-
 def test_clustering_features_geom_only_defers_extraction(db):
     df = _inspections_df().drop(columns=["latitude", "longitude"])
     df["the_geom"] = ["POINT (-73.98 40.75)"] * 5
@@ -151,7 +140,6 @@ def test_clustering_features_geom_only_defers_extraction(db):
     assert "geom" in cols
     assert "latitude" not in cols
 
-
 def test_geo_animation_mart_with_lat_lon(staged):
     result = am.create_geo_animation_mart()
     assert result["status"] == "success"
@@ -163,7 +151,6 @@ def test_geo_animation_mart_with_lat_lon(staged):
     assert row[0] == pytest.approx(40.655)
     assert row[1] == 2
 
-
 def test_geo_animation_mart_without_geo_columns(db):
     _stage(db, _inspections_df().drop(columns=["latitude", "longitude"]))
     result = am.create_geo_animation_mart()
@@ -171,13 +158,11 @@ def test_geo_animation_mart_without_geo_columns(db):
     assert result["row_count"] == 0
     assert "note" in result
 
-
 def test_all_functions_error_when_staging_missing(db):
     for func in ALL_CREATE_FUNCS:
         result = func()
         assert result["status"] == "error", func.__name__
         assert "staging.inspections" in result["error"]
-
 
 def test_idempotency_each_create_runs_twice(staged):
     for func in ALL_CREATE_FUNCS:
@@ -186,7 +171,6 @@ def test_idempotency_each_create_runs_twice(staged):
         assert first["status"] == "success", func.__name__
         assert second["status"] == "success", func.__name__
         assert first["row_count"] == second["row_count"]
-
 
 def test_refresh_all_analytics_views(staged):
     results = am.refresh_all_analytics_views()
@@ -198,7 +182,6 @@ def test_refresh_all_analytics_views(staged):
         "geo_animation_mart",
     }
     assert all(r["status"] == "success" for r in results.values())
-
 
 def test_scheduler_run_materialize_analytics_contract():
     from socrata_toolkit.core.scheduler import ScheduleRunner

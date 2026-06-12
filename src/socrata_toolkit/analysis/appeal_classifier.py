@@ -11,17 +11,17 @@ Key classifications:
   - Trend: IMPROVING, STABLE, DEGRADING
 """
 
+import logging
+from dataclasses import dataclass
+from enum import Enum
+from typing import Optional
+
+import pandas as pd
 import spacy
 from spacy.language import Language
 from spacy.tokens import Doc
-import pandas as pd
-from typing import List, Dict, Tuple, Optional
-from dataclasses import dataclass
-from enum import Enum
-import logging
 
 logger = logging.getLogger(__name__)
-
 
 class AppealResolution(Enum):
     """Outcome of appeal/reinspection."""
@@ -29,7 +29,6 @@ class AppealResolution(Enum):
     OVERTURNED = "overturned"  # Original decision reversed
     MODIFIED = "modified"  # Partial modification to original finding
     INCONCLUSIVE = "inconclusive"  # No clear resolution
-
 
 class AppealReason(Enum):
     """Reason for appeal reversal or modification."""
@@ -39,7 +38,6 @@ class AppealReason(Enum):
     ADMINISTRATIVE = "administrative"  # Clerical/process issue
     INSUFFICIENT_EVIDENCE = "insufficient_evidence"  # Lack of documentation
 
-
 class InspectorConsistency(Enum):
     """Inspector performance consistency signal."""
     NORMAL = "normal"  # Consistent with peer group
@@ -47,14 +45,12 @@ class InspectorConsistency(Enum):
     OUTLIER_LOW = "outlier_low"  # Unusually low overturn rate
     UNRELIABLE = "unreliable"  # Extreme variance
 
-
 class PerformanceTrend(Enum):
     """Inspector performance trend over time."""
     IMPROVING = "improving"  # Fewer overturns over time
     STABLE = "stable"  # Consistent performance
     DEGRADING = "degrading"  # More overturns over time
     INSUFFICIENT_DATA = "insufficient_data"  # <5 appeals in period
-
 
 @dataclass
 class AppealClassificationResult:
@@ -65,10 +61,9 @@ class AppealClassificationResult:
     reason: AppealReason
     reason_confidence: float  # 0-100
     consistency_signal: InspectorConsistency
-    keywords_matched: List[str]
-    extracted_entities: List[Tuple[str, str]]  # (text, label)
-    details: Dict  # Additional context
-
+    keywords_matched: list[str]
+    extracted_entities: list[tuple[str, str]]  # (text, label)
+    details: dict  # Additional context
 
 @dataclass
 class InspectorAppealStats:
@@ -81,12 +76,11 @@ class InspectorAppealStats:
     overturn_rate: float  # 0-1 (overturned / appeals)
     modification_rate: float  # 0-1 (modified / appeals)
     upheld_rate: float  # 0-1 (upheld / appeals)
-    appeal_count_by_reason: Dict[str, int]
+    appeal_count_by_reason: dict[str, int]
     recent_trend: PerformanceTrend
     reliability: str  # "high" | "medium" | "low" (based on sample size)
     coaching_needed: bool
     coaching_reason: Optional[str]
-
 
 class AppealOutcomeClassifier:
     """Classify appeal outcomes, reasons, and inspector consistency signals."""
@@ -198,7 +192,7 @@ class AppealOutcomeClassifier:
             details=details
         )
 
-    def _classify_resolution(self, text_lower: str) -> Tuple[AppealResolution, float]:
+    def _classify_resolution(self, text_lower: str) -> tuple[AppealResolution, float]:
         """Determine appeal resolution (upheld/overturned/modified)."""
         scores = {}
 
@@ -218,7 +212,7 @@ class AppealOutcomeClassifier:
 
         return primary_resolution, confidence
 
-    def _classify_reason(self, text_lower: str) -> Tuple[AppealReason, float]:
+    def _classify_reason(self, text_lower: str) -> tuple[AppealReason, float]:
         """Determine appeal reason (procedural_error/new_evidence/etc)."""
         scores = {}
 
@@ -237,7 +231,7 @@ class AppealOutcomeClassifier:
 
         return primary_reason, confidence
 
-    def _extract_matched_keywords(self, text_lower: str) -> List[str]:
+    def _extract_matched_keywords(self, text_lower: str) -> list[str]:
         """Extract all matched keywords from text."""
         matched = []
         for resolution_config in self.RESOLUTION_KEYWORDS.values():
@@ -246,10 +240,9 @@ class AppealOutcomeClassifier:
             matched.extend([kw for kw in reason_config["keywords"] if kw in text_lower])
         return list(set(matched))
 
-    def batch_classify(self, texts: List[str]) -> List[AppealClassificationResult]:
+    def batch_classify(self, texts: list[str]) -> list[AppealClassificationResult]:
         """Classify multiple appeal texts."""
         return [self.classify(text) for text in texts]
-
 
 class InspectorAppealAnalyzer:
     """
@@ -272,7 +265,7 @@ class InspectorAppealAnalyzer:
         inspector_name_col: str = "inspector_name",
         outcome_col: str = "appeal_decision",
         date_col: str = "created_date",
-    ) -> Dict[str, InspectorAppealStats]:
+    ) -> dict[str, InspectorAppealStats]:
         """
         Compute appeal statistics by inspector.
 
@@ -380,9 +373,9 @@ class InspectorAppealAnalyzer:
 
     def identify_outliers(
         self,
-        inspector_stats: Dict[str, InspectorAppealStats],
+        inspector_stats: dict[str, InspectorAppealStats],
         overturn_threshold: float = 0.25,
-    ) -> List[InspectorAppealStats]:
+    ) -> list[InspectorAppealStats]:
         """
         Identify inspectors with concerning overturn rates or trends.
 
@@ -411,7 +404,7 @@ class InspectorAppealAnalyzer:
         self,
         appeals_df: pd.DataFrame,
         outcome_col: str = "appeal_decision",
-    ) -> Dict[str, any]:
+    ) -> dict[str, any]:
         """
         Identify systemic process issues across all appeals.
 

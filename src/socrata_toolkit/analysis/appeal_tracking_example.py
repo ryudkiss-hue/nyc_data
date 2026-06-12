@@ -11,19 +11,18 @@ Examples:
   4. Systemic issue detection
 """
 
-import pandas as pd
 from datetime import datetime, timedelta
-from typing import List, Dict
+
+import pandas as pd
 
 from socrata_toolkit.analysis.appeal_classifier import (
     AppealOutcomeClassifier,
-    InspectorAppealAnalyzer,
     AppealResolution,
+    InspectorAppealAnalyzer,
 )
 from socrata_toolkit.analysis.appeal_tracking_workflow import (
     create_appeal_tracking_workflow,
 )
-
 
 # ============================================================================
 # EXAMPLE 1: Quick Classifier Test
@@ -59,7 +58,6 @@ def example_1_classifier_test():
         print(f"  Reason: {result.reason.value} (confidence: {result.reason_confidence:.0f}%)")
         print(f"  Keywords: {', '.join(result.keywords_matched[:3])}")
         print()
-
 
 # ============================================================================
 # EXAMPLE 2: Inspector Performance Analysis
@@ -147,12 +145,11 @@ def example_2_inspector_analysis():
 
     # Systemic issues
     systemic = analyzer.compute_systemic_issues(df)
-    print(f"\nSystemic Issues:")
+    print("\nSystemic Issues:")
     print(f"  Overall Reversal Rate: {systemic['overall_reversal_rate']:.1%}")
-    print(f"  Recommended Improvements:")
+    print("  Recommended Improvements:")
     for improvement in systemic.get("recommended_improvements", []):
         print(f"    • {improvement}")
-
 
 # ============================================================================
 # EXAMPLE 3: Full Workflow Execution
@@ -203,7 +200,6 @@ def example_3_full_workflow():
     print("  Note: Full execution requires live Socrata API connection")
     print("  Use: result = workflow.invoke(initial_state)")
 
-
 # ============================================================================
 # EXAMPLE 4: CLI Integration
 # ============================================================================
@@ -237,7 +233,6 @@ Report output includes:
   - Coaching recommendations
   - Actionable next steps
 """)
-
 
 # ============================================================================
 # EXAMPLE 5: API Integration
@@ -276,7 +271,6 @@ with open("appeal_report.json", "w") as f:
 """
 
     print(example_code)
-
 
 # ============================================================================
 # MAIN

@@ -23,10 +23,9 @@ Example:
 import logging
 import math
 from dataclasses import dataclass
-from typing import Dict, Optional, Tuple, List
+from typing import Optional
 
 logger = logging.getLogger(__name__)
-
 
 @dataclass
 class MetricDefinition:
@@ -44,7 +43,6 @@ class MetricDefinition:
     sla_direction: str = "higher_is_better"  # "higher_is_better" or "lower_is_better"
     sample_size_min: int = 1  # Minimum sample size for validity
     confidence_level: float = 0.95  # CI confidence level (default 95%)
-
 
 class WilsonScoreCI:
     """Compute Wilson Score confidence interval for binomial proportions.
@@ -78,7 +76,7 @@ class WilsonScoreCI:
         }
         return z_values.get(confidence_level, 1.96)  # Default to 95%
 
-    def compute(self) -> Tuple[float, float]:
+    def compute(self) -> tuple[float, float]:
         """Compute Wilson Score confidence interval.
 
         Returns:
@@ -98,7 +96,6 @@ class WilsonScoreCI:
         upper = min(1.0, center + margin)
 
         return lower, upper
-
 
 class MetricComputation:
     """Compute a metric value and optional confidence interval."""
@@ -135,7 +132,7 @@ class MetricComputation:
             return 0.0
         return 100.0 * self.numerator / self.denominator
 
-    def compute_ci(self) -> Tuple[float, float]:
+    def compute_ci(self) -> tuple[float, float]:
         """Compute confidence interval as percentages.
 
         Returns:
@@ -154,12 +151,11 @@ class MetricComputation:
         """Check if computation is statistically valid."""
         return self.sample_size >= min_sample_size
 
-
 class MetricsRegistry:
     """Central registry of all metric definitions."""
 
     def __init__(self):
-        self._metrics: Dict[str, MetricDefinition] = {}
+        self._metrics: dict[str, MetricDefinition] = {}
 
     def register(self, metric: MetricDefinition):
         """Register a metric definition.
@@ -180,7 +176,7 @@ class MetricsRegistry:
             raise KeyError(f"Metric not found: {metric_id}")
         return self._metrics[metric_id]
 
-    def list_metrics(self) -> List[MetricDefinition]:
+    def list_metrics(self) -> list[MetricDefinition]:
         """List all registered metrics."""
         return list(self._metrics.values())
 
@@ -203,7 +199,6 @@ class MetricsRegistry:
             return value >= metric.sla_threshold
         else:  # lower_is_better
             return value <= metric.sla_threshold
-
 
 def create_default_registry() -> MetricsRegistry:
     """Create registry with 12 core NYC DOT metrics."""

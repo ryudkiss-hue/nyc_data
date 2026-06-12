@@ -30,13 +30,13 @@ import json
 import logging
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, TypedDict
+from typing import Any, Optional, TypedDict
 
 import pandas as pd
 
 try:
-    from langgraph.graph import END, START, StateGraph
     from langchain_anthropic import ChatAnthropic
+    from langgraph.graph import END, START, StateGraph
     HAS_LANGGRAPH = True
 except ImportError:
     HAS_LANGGRAPH = False
@@ -49,11 +49,9 @@ from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
 logger = logging.getLogger(__name__)
 
-
 # ============================================================================
 # STATE DEFINITIONS
 # ============================================================================
-
 
 @dataclass
 class BoroughComplaintStats:
@@ -80,40 +78,38 @@ class BoroughComplaintStats:
     critical_issues_count: int  # Abandoned + severely delayed
 
     # Top categories by volume
-    top_categories: List[str]
-
+    top_categories: list[str]
 
 class ComplaintResponseState(TypedDict):
     """LangGraph state for complaint response workflow."""
     # Input context
-    context: Optional[Dict[str, Any]]
+    context: dict[str, Any] | None
     fourfour_complaints: str
     fourfour_inspections: str
     max_rows: int
-    borough_filter: Optional[str]
+    borough_filter: str | None
 
     # Fetched data
-    complaints_df: Optional[pd.DataFrame]
-    inspections_df: Optional[pd.DataFrame]
-    joined_df: Optional[pd.DataFrame]
+    complaints_df: pd.DataFrame | None
+    inspections_df: pd.DataFrame | None
+    joined_df: pd.DataFrame | None
     total_complaints: int
 
     # Classification results
-    classification_summary: Dict  # Status breakdown
-    borough_stats: Dict[str, BoroughComplaintStats]
-    category_distribution: Dict[str, int]  # By category
-    urgency_distribution: Dict[str, int]  # By urgency
-    bottleneck_analysis: Dict  # Queues, delays, gaps
+    classification_summary: dict  # Status breakdown
+    borough_stats: dict[str, BoroughComplaintStats]
+    category_distribution: dict[str, int]  # By category
+    urgency_distribution: dict[str, int]  # By urgency
+    bottleneck_analysis: dict  # Queues, delays, gaps
 
     # Claude analysis
     claude_analysis: str  # Bottleneck diagnosis
-    optimization_recommendations: List[str]
+    optimization_recommendations: list[str]
     next_action: str  # "optimize_dispatch" | "increase_resources" | "investigate_category" | "end"
 
     # Output
-    final_report: Dict
-    execution_log: List[Dict]
-
+    final_report: dict
+    execution_log: list[dict]
 
 def create_complaint_response_workflow():
     """Create and return the complaint response analysis workflow."""
@@ -142,11 +138,9 @@ def create_complaint_response_workflow():
 
     return workflow.compile()
 
-
 # ============================================================================
 # NODE FUNCTIONS
 # ============================================================================
-
 
 def fetch_data_node(state: ComplaintResponseState) -> ComplaintResponseState:
     """Fetch complaints and inspections datasets."""
@@ -185,7 +179,6 @@ def fetch_data_node(state: ComplaintResponseState) -> ComplaintResponseState:
 
     return state
 
-
 def classify_complaints_node(state: ComplaintResponseState) -> ComplaintResponseState:
     """Classify complaints by category, urgency, status, and time adequacy."""
     logger.info("Classifying complaints...")
@@ -223,7 +216,6 @@ def classify_complaints_node(state: ComplaintResponseState) -> ComplaintResponse
     state["_classifications"] = classifications
 
     return state
-
 
 def compute_metrics_node(state: ComplaintResponseState) -> ComplaintResponseState:
     """Compute borough-level and category-level metrics."""
@@ -340,7 +332,6 @@ def compute_metrics_node(state: ComplaintResponseState) -> ComplaintResponseStat
 
     return state
 
-
 def identify_bottlenecks_node(state: ComplaintResponseState) -> ComplaintResponseState:
     """Identify bottlenecks in complaint response pipeline."""
     logger.info("Analyzing bottlenecks...")
@@ -392,7 +383,6 @@ def identify_bottlenecks_node(state: ComplaintResponseState) -> ComplaintRespons
 
     return state
 
-
 def claude_analysis_node(state: ComplaintResponseState) -> ComplaintResponseState:
     """Use Claude to analyze bottlenecks and recommend optimizations."""
     logger.info("Running Claude analysis...")
@@ -417,7 +407,7 @@ Borough Breakdown:
             context += f"  - Avg response time: {stats.avg_days_to_inspection:.1f} days\n"
 
         bottlenecks = state.get("bottleneck_analysis", {})
-        context += f"\n\nIdentified Bottlenecks:\n"
+        context += "\n\nIdentified Bottlenecks:\n"
         context += f"- Inspection queue delays: {len(bottlenecks.get('inspection_queue_delays', []))} boroughs\n"
         context += f"- Repair delays: {len(bottlenecks.get('repair_delays', []))} boroughs\n"
         context += f"- High abandonment: {len(bottlenecks.get('high_abandon_boroughs', []))} boroughs\n"
@@ -454,7 +444,6 @@ Keep response to 300 tokens."""
 
     return state
 
-
 def generate_report_node(state: ComplaintResponseState) -> ComplaintResponseState:
     """Generate final structured report."""
     logger.info("Generating final report...")
@@ -490,11 +479,9 @@ def generate_report_node(state: ComplaintResponseState) -> ComplaintResponseStat
     state["final_report"] = report
     return state
 
-
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
-
 
 def _join_complaints_inspections(
     complaints: pd.DataFrame, inspections: pd.DataFrame
@@ -512,9 +499,8 @@ def _join_complaints_inspections(
     )
     return joined
 
-
 def _extract_complaint_metrics(
-    complaint_row: pd.Series, joined_df: Optional[pd.DataFrame] = None
+    complaint_row: pd.Series, joined_df: pd.DataFrame | None = None
 ) -> ComplaintMetrics:
     """Extract ComplaintMetrics from a complaint row."""
     complaint_id = str(complaint_row.get("unique_id", complaint_row.get("id", "UNKNOWN")))
@@ -567,8 +553,7 @@ def _extract_complaint_metrics(
         is_reopened=is_reopened,
     )
 
-
-def _extract_recommendations(analysis: str) -> List[str]:
+def _extract_recommendations(analysis: str) -> list[str]:
     """Extract bullet-point recommendations from Claude analysis."""
     recommendations = []
     lines = analysis.split("\n")
@@ -577,7 +562,6 @@ def _extract_recommendations(analysis: str) -> List[str]:
         if line.startswith("-") or line.startswith("•"):
             recommendations.append(line.lstrip("-•").strip())
     return recommendations[:5]  # Top 5
-
 
 def _median(values: list[float]) -> float:
     """Compute median of a list."""

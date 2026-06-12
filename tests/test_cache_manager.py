@@ -14,7 +14,6 @@ import pytest
 # Fixtures
 # ---------------------------------------------------------------------------
 
-
 @pytest.fixture()
 def sample_df() -> pd.DataFrame:
     return pd.DataFrame(
@@ -25,7 +24,6 @@ def sample_df() -> pd.DataFrame:
             "address": ["123 Broadway", "456 Atlantic Ave", "789 Northern Blvd"],
         }
     )
-
 
 @pytest.fixture()
 def cache_manager(tmp_path: Path):
@@ -43,11 +41,9 @@ def cache_manager(tmp_path: Path):
     cm.CACHE_DIR = original_cache_dir
     cm._MANIFEST_PATH = original_manifest_path
 
-
 # ---------------------------------------------------------------------------
 # Write and read
 # ---------------------------------------------------------------------------
-
 
 class TestWriteAndReadCache:
     def test_write_and_read_cache(self, cache_manager, sample_df):
@@ -73,11 +69,9 @@ class TestWriteAndReadCache:
         assert "inspection" in manifest
         assert manifest["inspection"]["rows"] == len(sample_df)
 
-
 # ---------------------------------------------------------------------------
 # TTL expiry
 # ---------------------------------------------------------------------------
-
 
 class TestTTLExpiry:
     def test_ttl_expiry_returns_none(self, cache_manager, sample_df):
@@ -100,11 +94,9 @@ class TestTTLExpiry:
         result = cache_manager.read_cache(key)
         assert result is not None
 
-
 # ---------------------------------------------------------------------------
 # Stale fallback
 # ---------------------------------------------------------------------------
-
 
 class TestStaleFallback:
     def test_stale_fallback_returns_stale_data(self, cache_manager, sample_df):
@@ -129,11 +121,9 @@ class TestStaleFallback:
         result = cache_manager.read_stale_cache("no_such_dataset")
         assert result is None
 
-
 # ---------------------------------------------------------------------------
 # Eviction
 # ---------------------------------------------------------------------------
-
 
 class TestEviction:
     def test_eviction_removes_oldest_files(self, cache_manager, sample_df):
@@ -159,11 +149,9 @@ class TestEviction:
         freed = cache_manager.evict_old_cache(max_bytes=10 * 1024 * 1024)  # 10 MB
         assert freed == 0
 
-
 # ---------------------------------------------------------------------------
 # last_fetched_iso
 # ---------------------------------------------------------------------------
-
 
 class TestLastFetchedIso:
     def test_returns_iso_string(self, cache_manager, sample_df):
@@ -177,11 +165,9 @@ class TestLastFetchedIso:
     def test_returns_none_for_missing_key(self, cache_manager):
         assert cache_manager.last_fetched_iso("not_cached") is None
 
-
 # ---------------------------------------------------------------------------
 # cache_manifest
 # ---------------------------------------------------------------------------
-
 
 class TestCacheManifest:
     def test_cache_manifest_returns_dict(self, cache_manager):
@@ -205,11 +191,9 @@ class TestCacheManifest:
         for field in ("path", "rows", "fetched_at", "expires_at", "ttl_hours"):
             assert field in entry, f"Missing field '{field}' in manifest entry"
 
-
 # ---------------------------------------------------------------------------
 # Ramp analysis caching
 # ---------------------------------------------------------------------------
-
 
 class TestRampAnalysisCaching:
     def test_cache_ramp_corpus(self, cache_manager):

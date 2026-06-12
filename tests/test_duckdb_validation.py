@@ -34,12 +34,10 @@ from socrata_toolkit.quality.duckdb_validation import (
 # Store connection for passing to validation functions
 _test_conn = None
 
-
 @pytest.fixture
 def tmp_db_path(tmp_path):
     """Create a temporary DuckDB path."""
     return str(tmp_path / "test.duckdb")
-
 
 @pytest.fixture
 def db_setup(tmp_db_path):
@@ -49,7 +47,6 @@ def db_setup(tmp_db_path):
     dp.initialize_database()
     yield conn
     dp.reset_connection()
-
 
     def test_validate_raw_counts_pass(self, db_setup):
         """Test validate_raw_counts with valid row counts within tolerance."""
@@ -139,7 +136,6 @@ def db_setup(tmp_db_path):
         assert result["status"] == "FAIL"
         inspection_status = result["details"]["tables"].get("inspection", {}).get("status")
         assert inspection_status == "FAIL"
-
 
 class TestValidateStagingDedup:
     """Test validate_staging_dedup function."""
@@ -254,7 +250,6 @@ class TestValidateStagingDedup:
             t.get("reason") == "table_missing" for t in result["details"]["tables"].values()
         )
 
-
 class TestValidateStagingDataTypes:
     """Test validate_staging_data_types function."""
 
@@ -305,7 +300,6 @@ class TestValidateStagingDataTypes:
         # Just ensure we detected the mismatches
         if result["details"]["mismatches"]:
             assert result["status"] == "FAIL"
-
 
 class TestValidateAnalyticsPopulated:
     """Test validate_analytics_populated function."""
@@ -401,7 +395,6 @@ class TestValidateAnalyticsPopulated:
         borough_status = result["details"]["tables"].get("borough_summary", {})
         assert borough_status.get("row_count") == 0
 
-
 class TestValidateStagingToAnalyticsLineage:
     """Test validate_staging_to_analytics_lineage function."""
 
@@ -483,7 +476,6 @@ class TestValidateStagingToAnalyticsLineage:
         assert check1["name"] == "staging.inspections -> analytics.borough_summary"
         # With only 1 borough, should be FAIL (need min 4)
         assert check1["status"] in ["FAIL", "WARNING"]
-
 
 class TestValidateDataFreshness:
     """Test validate_data_freshness function."""
@@ -585,7 +577,6 @@ class TestValidateDataFreshness:
 
         assert result["status"] == "FAIL"
         assert result["details"]["reason"] == "table_missing"
-
 
 class TestAuditLoggingIntegration:
     """Test that validation checks integrate with audit logging."""

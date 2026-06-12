@@ -73,7 +73,6 @@ DEFAULT_PRIORITY_WEIGHTS: dict[str, float] = {
     "complaint_count": 0.10,
 }
 
-
 # ---------------------------------------------------------------------------
 # Data Classes
 # ---------------------------------------------------------------------------
@@ -92,7 +91,6 @@ class ConstructionItem:
     estimated_sqft: float = 0.0
     notes: str = ""
 
-
 @dataclass
 class ConflictCheckResult:
     """Results from running conflict detection on a construction list."""
@@ -102,7 +100,6 @@ class ConflictCheckResult:
     clean: pd.DataFrame
     conflicts: pd.DataFrame
     summary_by_borough: dict[str, int]
-
 
 @dataclass
 class ConstructionListSummary:
@@ -114,7 +111,6 @@ class ConstructionListSummary:
     total_estimated_sqft: float
     avg_priority_score: float
     high_priority_count: int  # score >= 0.7
-
 
 # ---------------------------------------------------------------------------
 # Priority Scoring
@@ -172,7 +168,6 @@ def compute_priority_score(
     )
     return round(min(max(score, 0.0), 1.0), 4)
 
-
 def prioritize_construction_list(
     df: pd.DataFrame,
     weights: dict[str, float] | None = None,
@@ -197,7 +192,6 @@ def prioritize_construction_list(
         axis=1,
     )
     return out.sort_values("_priority_score", ascending=False).reset_index(drop=True)
-
 
 # ---------------------------------------------------------------------------
 # Conflict Detection
@@ -259,7 +253,6 @@ def detect_construction_conflicts(
         summary_by_borough=summary_by_borough,
     )
 
-
 # ---------------------------------------------------------------------------
 # Scope and ADA Helpers
 # ---------------------------------------------------------------------------
@@ -295,7 +288,6 @@ def classify_scope(
     out[scope_col] = out[description_col].fillna("").apply(_classify)
     return out
 
-
 def flag_ada_locations(
     df: pd.DataFrame,
     description_col: str = "description",
@@ -319,7 +311,6 @@ def flag_ada_locations(
 
     out[ada_col] = out.apply(_is_ada, axis=1)
     return out
-
 
 # ---------------------------------------------------------------------------
 # Summary and Export
@@ -357,7 +348,6 @@ def summarize_construction_list(
         avg_priority_score=round(avg_priority, 4),
         high_priority_count=high_priority,
     )
-
 
 def export_construction_list(
     df: pd.DataFrame,
@@ -417,7 +407,6 @@ def export_construction_list(
         df.to_csv(path, index=False)
 
     return str(p)
-
 
 def _export_geojson(df: pd.DataFrame, path: str) -> None:
     """Export DataFrame as GeoJSON FeatureCollection."""

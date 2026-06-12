@@ -18,12 +18,12 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass, asdict, field
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Optional
 
 import pandas as pd
-from langgraph.graph import StateGraph, END
+from langgraph.graph import END, StateGraph
 
 try:
     from langchain_anthropic import ChatAnthropic
@@ -32,18 +32,17 @@ try:
 except ImportError:
     HAS_LANGCHAIN = False
 
-from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 from socrata_toolkit.analysis.sla_status import (
-    SLAStatusClassifier,
-    SLAMetricSnapshot,
-    SLAStatusRecord,
-    SLAComplianceReport,
     ComplianceStatus,
+    SLAComplianceReport,
+    SLAMetricSnapshot,
+    SLAStatusClassifier,
+    SLAStatusRecord,
     SLATier,
 )
+from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
 logger = logging.getLogger(__name__)
-
 
 # ============================================================================
 # WORKFLOW STATE
@@ -72,7 +71,7 @@ class SLAComplianceState(dict):
     action_items: list[str] = field(default_factory=list)
 
     # Final report
-    compliance_report: Optional[SLAComplianceReport] = None
+    compliance_report: SLAComplianceReport | None = None
     execution_log: list[dict[str, Any]] = field(default_factory=list)
 
     def __init__(self):
@@ -93,7 +92,6 @@ class SLAComplianceState(dict):
             "execution_log": [],
         })
 
-
 # ============================================================================
 # WORKFLOW NODES
 # ============================================================================
@@ -105,7 +103,7 @@ def _load_dataset_config() -> dict[str, dict[str, str]]:
 
     config_path = "data/dataset_config.json"
     if os.path.exists(config_path):
-        with open(config_path, "r") as f:
+        with open(config_path) as f:
             return json.load(f)
 
     # Fallback: hardcoded 26-dataset registry from CLAUDE.md
@@ -138,7 +136,6 @@ def _load_dataset_config() -> dict[str, dict[str, str]]:
         "mappluto": {"fourfour": "64uk-42ks"},
         "complaints_311": {"fourfour": "erm2-nwe9"},
     }
-
 
 def fetch_dataset_metadata(state: SLAComplianceState) -> dict[str, Any]:
     """
@@ -195,7 +192,6 @@ def fetch_dataset_metadata(state: SLAComplianceState) -> dict[str, Any]:
     logger.info(f"[FETCH] Completed: {len(metadata)} datasets fetched, {len(errors)} errors")
     return state
 
-
 def classify_sla_status(state: SLAComplianceState) -> dict[str, Any]:
     """
     Node 2: Classify each dataset against SLA tier.
@@ -214,7 +210,6 @@ def classify_sla_status(state: SLAComplianceState) -> dict[str, Any]:
     logger.info("[CLASSIFY] Classifying datasets against SLA tiers")
 
     classifier = SLAStatusClassifier(at_risk_threshold_pct=0.80)
-    registry = DatasetRegistry()
 
     # Map dataset_key → SLA tier from config
     sla_tier_map = {
@@ -321,7 +316,6 @@ def classify_sla_status(state: SLAComplianceState) -> dict[str, Any]:
 
     logger.info(f"[CLASSIFY] Completed: {summary}")
     return state
-
 
 def analyze_with_claude(state: SLAComplianceState) -> dict[str, Any]:
     """
@@ -431,7 +425,6 @@ Please provide a concise analysis (2-3 paragraphs) focused on operational insigh
 
     return state
 
-
 def generate_report(state: SLAComplianceState) -> dict[str, Any]:
     """
     Node 4: Compile final report and action items.
@@ -505,7 +498,6 @@ def generate_report(state: SLAComplianceState) -> dict[str, Any]:
     logger.info(f"[REPORT] Generated with {len(action_items)} action items")
     return state
 
-
 def save_report(state: SLAComplianceState) -> dict[str, Any]:
     """
     Node 5: Optionally save report to disk.
@@ -552,7 +544,6 @@ def save_report(state: SLAComplianceState) -> dict[str, Any]:
 
     return state
 
-
 # ============================================================================
 # GRAPH ASSEMBLY
 # ============================================================================
@@ -583,7 +574,6 @@ def build_sla_compliance_graph() -> StateGraph:
     graph.set_entry_point("fetch_metadata")
 
     return graph
-
 
 def run_sla_compliance_workflow(
     include_full_corpus: bool = False,
@@ -631,7 +621,6 @@ def run_sla_compliance_workflow(
     logger.info("=" * 70)
 
     return final_state["compliance_report"]
-
 
 if __name__ == "__main__":
     logging.basicConfig(

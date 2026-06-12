@@ -18,7 +18,6 @@ import pytest
 
 # ============ FIX 1: DuckDB Connection Pooling Tests ============
 
-
 class TestDuckDBConnectionPooling:
     """Tests for Fix 1: DuckDB connection pooling with thread safety."""
 
@@ -110,9 +109,7 @@ class TestDuckDBConnectionPooling:
         # Verify no negative reads
         assert all(v >= 0 for v in read_values), "Should not see negative counts"
 
-
 # ============ FIX 2: Transactional Writes Tests ============
-
 
 class TestTransactionalWrites:
     """Tests for Fix 2: Transactional DuckDB → L2 Parquet writes."""
@@ -225,9 +222,7 @@ class TestTransactionalWrites:
                 temp_files = list(tmp_path.glob("*.tmp"))
                 assert len(temp_files) == 0, "Temp files should be cleaned up"
 
-
 # ============ FIX 3: Session Persistence Tests ============
-
 
 class TestSessionPersistence:
     """Tests for Fix 3: DuckDB-backed session state persistence."""
@@ -328,9 +323,7 @@ class TestSessionPersistence:
         loaded = store.load_state()
         assert len(loaded) == 0, "Session should be deleted"
 
-
 # ============ FIX 4: Manifest File Locking Tests ============
-
 
 class TestManifestFileLocking:
     """Tests for Fix 4: File locking and atomic manifest updates."""
@@ -431,7 +424,6 @@ class TestManifestFileLocking:
                 # Reader should eventually get result
                 result = future.result(timeout=2.0)
                 assert isinstance(result, dict)
-
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

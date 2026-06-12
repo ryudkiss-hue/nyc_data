@@ -93,7 +93,6 @@ _NAV_GROUPS = {
 _BOROUGH_OPTIONS = ["Manhattan", "Brooklyn", "Queens", "The Bronx", "Staten Island"]
 _STATUS_OPTIONS = ["Open", "In Progress", "Closed", "Pending Review"]
 
-
 # ---------------------------------------------------------------------------
 # Fragment-wrapped chart sections
 # ---------------------------------------------------------------------------
@@ -111,7 +110,6 @@ def _make_roi_chart_fragment():
         return st.fragment(_render_roi_chart_inner)
     return _render_roi_chart_inner
 
-
 def _make_ingestion_matrix_fragment():
     """Return an @st.fragment-decorated ingestion matrix renderer (or plain fn)."""
 
@@ -127,11 +125,9 @@ def _make_ingestion_matrix_fragment():
         return st.fragment(_render_ingestion_matrix_inner)
     return _render_ingestion_matrix_inner
 
-
 # Build fragment callables once at module level
 _render_roi_chart = _make_roi_chart_fragment()
 _render_ingestion_matrix = _make_ingestion_matrix_fragment()
-
 
 # ---------------------------------------------------------------------------
 # Cached data loaders
@@ -142,7 +138,6 @@ def _spinner_view():
     with st.spinner("Loading view…"):
         yield
 
-
 @st.cache_data(ttl=CACHE_TTL_SECONDS, show_spinner="Loading workflow datasets…")
 def _load_workflow_frames(workflow_key: str, limit: int) -> dict:
     if workflow_key == "quality":
@@ -152,23 +147,19 @@ def _load_workflow_frames(workflow_key: str, limit: int) -> dict:
         return fetch_datasets_for_keys(tuple(dict.fromkeys(all_keys)), limit=limit)
     return fetch_datasets_for_keys(keys_for_workflow(workflow_key), limit=limit)
 
-
 @st.cache_data(ttl=CACHE_TTL_SECONDS, show_spinner="Loading full ingestion matrix…")
 def _load_all_frames(limit: int) -> dict:
     from app.data_loader import DATASET_REGISTRY
 
     return fetch_datasets_for_keys(tuple(DATASET_REGISTRY.keys()), limit=limit)
 
-
 @st.cache_data(ttl=CACHE_TTL_SECONDS, show_spinner="Loading Manhattan map layers…")
 def _load_map_layers(limit: int) -> dict:
     return load_manhattan_map_layers(limit=limit)
 
-
 @st.cache_data(ttl=600, show_spinner="Running analyst workflows…")
 def _run_workflows(frames: dict) -> dict:
     return run_all_workflows(frames)
-
 
 # ---------------------------------------------------------------------------
 # Sidebar
@@ -183,7 +174,6 @@ def _init_filter_defaults() -> None:
         st.session_state["filter_date_range"] = (today - timedelta(days=90), today)
     if "filter_status" not in st.session_state:
         st.session_state["filter_status"] = []
-
 
 def _render_sticky_filters(section: str) -> None:
     """Render persistent data filters in the sidebar."""
@@ -228,7 +218,6 @@ def _render_sticky_filters(section: str) -> None:
                 )
                 st.session_state["filter_status"] = []
                 st.rerun()
-
 
 def _sidebar_nav() -> tuple[str, dict]:
     """Render sidebar navigation. Returns (section_key, workflow_opts)."""
@@ -339,7 +328,6 @@ def _sidebar_nav() -> tuple[str, dict]:
 
     return section, wf_opts
 
-
 def _render_onboarding() -> None:
     """Show onboarding welcome panel on first run."""
     if not st.session_state.get("onboarding_done"):
@@ -357,7 +345,6 @@ def _render_onboarding() -> None:
             if st.button("Got it, let's go!", key="onboarding_btn"):
                 st.session_state["onboarding_done"] = True
                 st.rerun()
-
 
 def main() -> None:
     inject_theme()
@@ -529,7 +516,6 @@ def main() -> None:
     if not show_ingest and view_key != "quality":
         # Fragment-wrapped ingestion matrix (rerenders independently)
         _render_ingestion_matrix(frames)
-
 
 if __name__ == "__main__":
     main()

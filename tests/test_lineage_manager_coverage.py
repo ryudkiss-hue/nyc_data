@@ -33,7 +33,6 @@ def simple_graph() -> LineageGraph:
                TransformationType.AGGREGATION)
     return g
 
-
 @pytest.fixture()
 def minimal_edge() -> LineageEdge:
     """A single LineageEdge for serialisation tests."""
@@ -45,7 +44,6 @@ def minimal_edge() -> LineageEdge:
         target_columns=["col_b"],
         transformation_type=TransformationType.COPY,
     )
-
 
 # ---------------------------------------------------------------------------
 # TransformationType
@@ -65,7 +63,6 @@ class TestTransformationType:
         for member in TransformationType:
             assert isinstance(member.value, str)
             assert member.value == member.value.lower()
-
 
 # ---------------------------------------------------------------------------
 # LineageEdge
@@ -107,7 +104,6 @@ class TestLineageEdge:
     def test_edge_without_sql_has_none(self, minimal_edge: LineageEdge):
         """transformation_sql defaults to None."""
         assert minimal_edge.transformation_sql is None
-
 
 # ---------------------------------------------------------------------------
 # ColumnLineage
@@ -151,7 +147,6 @@ class TestColumnLineage:
             upstream_columns=[],
         )
         assert cl.lineage_depth == 0
-
 
 # ---------------------------------------------------------------------------
 # LineageGraph — add_edge and basic structure
@@ -210,7 +205,6 @@ class TestLineageGraphAddEdge:
         eid = g.add_edge("a", "b", [], [], transformation_sql="SELECT 1")
         assert g.edges[eid].transformation_sql == "SELECT 1"
 
-
 # ---------------------------------------------------------------------------
 # LineageGraph — upstream / downstream traversal
 # ---------------------------------------------------------------------------
@@ -252,7 +246,6 @@ class TestLineageGraphTraversal:
         """Querying a non-existent table should return an empty list."""
         g = LineageGraph()
         assert g.get_upstream_tables("ghost") == []
-
 
 # ---------------------------------------------------------------------------
 # LineageGraph — column lineage tracing
@@ -303,7 +296,6 @@ class TestLineageGraphColumnLineage:
         cl_x = g.trace_column_lineage("target", "x")
         assert cl_x is not None and cl_x.lineage_depth == 1
 
-
 # ---------------------------------------------------------------------------
 # LineageGraph — detect_cycles
 # ---------------------------------------------------------------------------
@@ -319,7 +311,6 @@ class TestLineageGraphDetectCycles:
         """An empty graph must not report any cycles."""
         g = LineageGraph()
         assert g.detect_cycles() == []
-
 
 # ---------------------------------------------------------------------------
 # LineageGraph — serialisation
@@ -372,7 +363,6 @@ class TestLineageGraphSerialisation:
             assert "upstream" in entry
             assert "downstream" in entry
             assert "transformation" in entry
-
 
 # ---------------------------------------------------------------------------
 # LineageRegistry (no-DB path)

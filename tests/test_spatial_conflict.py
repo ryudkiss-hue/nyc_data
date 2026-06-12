@@ -17,14 +17,12 @@ from shapely.geometry import Point, Polygon  # noqa: E402
 # Fixtures
 # ---------------------------------------------------------------------------
 
-
 def _make_inspection_df(lons, lats, **extra_cols):
     """Create a plain DataFrame with WKT the_geom column (as expected by detect_conflicts_geopandas)."""
     geom_wkt = [f"POINT ({lon} {lat})" for lon, lat in zip(lons, lats)]
     data = {"the_geom": geom_wkt}
     data.update(extra_cols)
     return pd.DataFrame(data)
-
 
 @pytest.fixture()
 def overlapping_gdf():
@@ -43,7 +41,6 @@ def overlapping_gdf():
     )
     return inspections, permits
 
-
 @pytest.fixture()
 def non_overlapping_gdf():
     """Two DataFrames with WKT the_geom with points far apart — no overlap."""
@@ -58,7 +55,6 @@ def non_overlapping_gdf():
         permit_id=["PRM-100"],
     )
     return inspections, permits
-
 
 @pytest.fixture()
 def spatial_point_gdf():
@@ -77,11 +73,9 @@ def spatial_point_gdf():
     )
     return gdf
 
-
 # ---------------------------------------------------------------------------
 # detect_conflicts tests
 # ---------------------------------------------------------------------------
-
 
 class TestDetectConflictsBasic:
     def test_detect_conflicts_returns_geodataframe(self, overlapping_gdf):
@@ -106,11 +100,9 @@ class TestDetectConflictsBasic:
         conflicts = detect_conflicts_geopandas(inspections, permits, buffer_meters=1.0)
         assert len(conflicts) == 0, "Expected zero conflicts for non-overlapping geometries"
 
-
 # ---------------------------------------------------------------------------
 # Moran's I range test (using a lightweight numpy implementation)
 # ---------------------------------------------------------------------------
-
 
 class TestMoranIRange:
     def _simple_moran_i(self, values, coords) -> float:
@@ -148,11 +140,9 @@ class TestMoranIRange:
         i_stat = self._simple_moran_i(values, coords)
         assert -1.0 <= i_stat <= 1.0, f"Moran's I={i_stat} outside [-1, 1]"
 
-
 # ---------------------------------------------------------------------------
 # Cluster conflict hotspots
 # ---------------------------------------------------------------------------
-
 
 class TestClusterConflictHotspots:
     def test_cluster_hotspots_returns_cluster_id_column(self, spatial_point_gdf):

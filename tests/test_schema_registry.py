@@ -22,7 +22,6 @@ from socrata_toolkit.core import (
     SchemaValidator,
 )
 
-
 class TestColumnSchema:
     """Tests for ColumnSchema dataclass."""
 
@@ -40,7 +39,6 @@ class TestColumnSchema:
         assert col.nullable is False
         assert col.position == 0
         assert col.sample_value == "25"
-
 
 class TestDatasetSchema:
     """Tests for DatasetSchema dataclass."""
@@ -86,7 +84,6 @@ class TestDatasetSchema:
         assert schema2.version == schema.version
         assert len(schema2.columns) == len(schema.columns)
 
-
 class TestSchemaChange:
     """Tests for SchemaChange dataclass."""
 
@@ -127,7 +124,6 @@ class TestSchemaChange:
             description="Column added",
         )
         assert change.is_breaking is False
-
 
 class TestBreakingChangeAlert:
     """Tests for BreakingChangeAlert exception."""
@@ -205,7 +201,6 @@ class TestBreakingChangeAlert:
         assert "sidewalk-data" in alert_str
         assert "amount" in alert_str
         assert "Type changed" in alert_str
-
 
 class TestSchemaRegistry:
     """Tests for SchemaRegistry class."""
@@ -442,7 +437,6 @@ class TestSchemaRegistry:
         assert changelog[0]["from"] == 1
         assert changelog[0]["to"] == 2
 
-
 class TestSchemaValidator:
     """Tests for SchemaValidator class."""
 
@@ -529,7 +523,6 @@ class TestSchemaValidator:
         valid_count, errors = validator.validate_batch(records)
         assert valid_count == 1
         assert len(errors) > 0
-
 
 class TestBackwardCompatibilityChecker:
     """Tests for BackwardCompatibilityChecker class."""

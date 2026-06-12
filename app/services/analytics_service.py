@@ -1,11 +1,12 @@
 """Analytics service layer with KPI caching + connection pooling optimizations."""
 
 import logging
-from typing import Optional, Dict, Tuple
-import pandas as pd
-import geopandas as gpd
-from datetime import datetime, timedelta
 import time
+from datetime import datetime, timedelta
+from typing import Optional
+
+import geopandas as gpd
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +87,7 @@ _connection_pool = ConnectionPool(pool_size=4)
 # DATA FETCH HELPERS
 # ============================================================================
 
-def get_dataset(filters: Optional[Dict] = None, dataset_key: str = 'inspection') -> pd.DataFrame:
+def get_dataset(filters: Optional[dict] = None, dataset_key: str = 'inspection') -> pd.DataFrame:
     """
     Fetch dataset with optional filters.
 
@@ -121,7 +122,7 @@ def get_dataset(filters: Optional[Dict] = None, dataset_key: str = 'inspection')
         logger.error(f"Error fetching dataset: {e}")
         return pd.DataFrame()
 
-def get_spatial_data(filters: Optional[Dict] = None, dataset_key: str = 'inspection') -> gpd.GeoDataFrame:
+def get_spatial_data(filters: Optional[dict] = None, dataset_key: str = 'inspection') -> gpd.GeoDataFrame:
     """
     Fetch spatial data with geometry column.
 
@@ -151,7 +152,7 @@ def get_spatial_data(filters: Optional[Dict] = None, dataset_key: str = 'inspect
         return gpd.GeoDataFrame()
 
 def get_timeseries_data(dataset_key: str, date_col: str, value_col: str,
-                       filters: Optional[Dict] = None) -> pd.DataFrame:
+                       filters: Optional[dict] = None) -> pd.DataFrame:
     """
     Fetch time series data for temporal analysis.
 
@@ -199,7 +200,7 @@ def get_timeseries_data(dataset_key: str, date_col: str, value_col: str,
 # KPI HELPERS
 # ============================================================================
 
-def get_kpi_metrics(filters: Optional[Dict] = None) -> Dict[str, Tuple[float, float, float]]:
+def get_kpi_metrics(filters: Optional[dict] = None) -> dict[str, tuple[float, float, float]]:
     """
     Get KPI values with bootstrap confidence intervals.
     Uses 5-minute cache to reduce database queries by ~95%.
@@ -218,8 +219,9 @@ def get_kpi_metrics(filters: Optional[Dict] = None) -> Dict[str, Tuple[float, fl
         return cached_copy
 
     try:
-        from socrata_toolkit.governance import compute_quality_score
         from scipy import stats
+
+        from socrata_toolkit.governance import compute_quality_score
 
         # Fetch inspection data
         df = get_dataset(filters, 'inspection')
@@ -255,7 +257,7 @@ def get_kpi_metrics(filters: Optional[Dict] = None) -> Dict[str, Tuple[float, fl
         _cache_manager._set_cache(cache_key, mock_metrics)
         return {**mock_metrics, '_cached': False}
 
-def _get_mock_kpis() -> Dict[str, Tuple[float, float, float]]:
+def _get_mock_kpis() -> dict[str, tuple[float, float, float]]:
     """Return mock KPI values when real data unavailable."""
     return {
         'completion_rate': (87.4, 85.2, 89.1),
@@ -268,7 +270,7 @@ def _get_mock_kpis() -> Dict[str, Tuple[float, float, float]]:
 # VALIDATION HELPERS
 # ============================================================================
 
-def validate_filters(filters: Optional[Dict]) -> bool:
+def validate_filters(filters: Optional[dict]) -> bool:
     """Validate filter dictionary structure."""
     if not filters or not isinstance(filters, dict):
         return False

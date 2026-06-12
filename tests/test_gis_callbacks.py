@@ -9,11 +9,9 @@ import numpy as np
 import plotly.graph_objects as go
 from app.services.gis_service import gis_service
 
-
 # =============================================================================
 # FIXTURES
 # =============================================================================
-
 
 @pytest.fixture
 def sample_inspection_data():
@@ -26,7 +24,6 @@ def sample_inspection_data():
         "street_name": ["5th Ave", "Broadway", "Main St", "Flatbush Ave", "Queens Blvd"],
         "inspection_date": pd.date_range("2024-01-01", periods=5),
     })
-
 
 @pytest.fixture
 def sample_permit_data():
@@ -42,17 +39,14 @@ def sample_permit_data():
         "block_id": [1001, 1002],
     })
 
-
 @pytest.fixture
 def empty_dataframe():
     """Empty DataFrame for error handling tests."""
     return pd.DataFrame()
 
-
 # =============================================================================
 # TESTS: GIS SERVICE - CONDITION MAP
 # =============================================================================
-
 
 class TestConditionMap:
     """Tests for condition map visualization."""
@@ -90,11 +84,9 @@ class TestConditionMap:
         assert isinstance(fig, go.Figure)
         # Should only have 2 valid points in data
 
-
 # =============================================================================
 # TESTS: GIS SERVICE - HOTSPOT ANALYSIS
 # =============================================================================
-
 
 class TestHotspotAnalysis:
     """Tests for hotspot KDE heatmap."""
@@ -122,11 +114,9 @@ class TestHotspotAnalysis:
 
         assert isinstance(fig, go.Figure)
 
-
 # =============================================================================
 # TESTS: GIS SERVICE - CONFLICT DETECTION
 # =============================================================================
-
 
 class TestConflictDetection:
     """Tests for spatial conflict detection."""
@@ -177,11 +167,9 @@ class TestConflictDetection:
             fig = gis_service.create_conflict_map(conflicts)
             assert isinstance(fig, go.Figure)
 
-
 # =============================================================================
 # TESTS: GIS SERVICE - BOROUGH AGGREGATION
 # =============================================================================
-
 
 class TestBoroughAggregation:
     """Tests for borough-level aggregation."""
@@ -216,11 +204,9 @@ class TestBoroughAggregation:
 
         assert isinstance(fig, go.Figure)
 
-
 # =============================================================================
 # TESTS: GIS SERVICE - DBSCAN CLUSTERING
 # =============================================================================
-
 
 class TestDBSCANClustering:
     """Tests for DBSCAN spatial clustering."""
@@ -261,11 +247,9 @@ class TestDBSCANClustering:
 
         assert isinstance(fig, go.Figure)
 
-
 # =============================================================================
 # TESTS: GIS SERVICE - UTILITY FUNCTIONS
 # =============================================================================
-
 
 class TestUtilityFunctions:
     """Tests for utility functions."""
@@ -298,11 +282,9 @@ class TestUtilityFunctions:
 
         assert df_filtered.equals(df)  # Should return unchanged
 
-
 # =============================================================================
 # TESTS: INTEGRATION - FILTER WORKFLOW
 # =============================================================================
-
 
 class TestFilterWorkflow:
     """Integration tests for filter callbacks."""
@@ -349,11 +331,9 @@ class TestFilterWorkflow:
 
         assert len(df) == 1
 
-
 # =============================================================================
 # PERFORMANCE TESTS
 # =============================================================================
-
 
 class TestPerformance:
     """Performance baseline tests."""

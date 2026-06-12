@@ -25,7 +25,6 @@ SOURCE_RE = re.compile(
     re.MULTILINE,
 )
 
-
 def _iss_source_paths() -> list[Path]:
     text = ISS_FILE.read_text(encoding="utf-8")
     paths: list[Path] = []
@@ -43,18 +42,14 @@ def _iss_source_paths() -> list[Path]:
         paths.append(REPO_ROOT / raw)
     return paths
 
-
 def test_iss_file_exists() -> None:
     assert ISS_FILE.is_file(), f"Missing Inno Setup script: {ISS_FILE}"
-
 
 def test_build_installer_script_exists() -> None:
     assert BUILD_SCRIPT.is_file()
 
-
 def test_iss_install_txt_in_script_folder() -> None:
     assert "INSTALL.txt" in ISS_FILE.read_text(encoding="utf-8")
-
 
 def test_iss_referenced_paths_exist() -> None:
     missing: list[str] = []
@@ -70,7 +65,6 @@ def test_iss_referenced_paths_exist() -> None:
         missing.append(str(path.relative_to(REPO_ROOT)))
     assert not missing, f"ISS references missing paths: {missing}"
 
-
 def test_helper_scripts_exist() -> None:
     for name in (
         "register_scheduled_task.ps1",
@@ -79,10 +73,8 @@ def test_helper_scripts_exist() -> None:
     ):
         assert (REPO_ROOT / "scripts" / name).is_file()
 
-
 def test_install_txt_exists() -> None:
     assert (REPO_ROOT / "installer" / "INSTALL.txt").is_file()
-
 
 def test_build_installer_ps1_contents() -> None:
     text = BUILD_SCRIPT.read_text(encoding="utf-8")
@@ -91,7 +83,6 @@ def test_build_installer_ps1_contents() -> None:
     assert "Find-InnoCompiler" in text
     assert "jrsoftware.org" in text
     assert "NYC-DOT-Sidewalk-Toolkit-Setup.exe" in text
-
 
 @pytest.mark.skipif(os.getenv("INNO_SETUP") != "1", reason="Set INNO_SETUP=1 to compile installer")
 def test_build_installer_produces_setup_exe() -> None:

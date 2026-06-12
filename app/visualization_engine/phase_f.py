@@ -9,7 +9,6 @@ Data source: app_queries.v_phase_f_bootstrap_ci
 All charts include summary statistics below.
 """
 import logging
-from typing import Tuple
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -20,7 +19,6 @@ from socrata_toolkit.motherduck.connector import MotherDuckConnection
 from .statistics_display import StatisticsPanel
 
 logger = logging.getLogger(__name__)
-
 
 class PhaseFVisualizations:
     """Renders all 17 Phase F visualizations (bootstrap CI & SLA gauges).
@@ -60,7 +58,7 @@ class PhaseFVisualizations:
         logger.info(f"Fetched {len(self.data)} rows from Phase F view")
         return self.data
 
-    def render_main_sla_gauge(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_main_sla_gauge(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render main SLA probability gauge (borough average).
 
         Returns:
@@ -129,7 +127,7 @@ class PhaseFVisualizations:
 
         return fig, stats
 
-    def render_borough_sla_gauge(self, borough: str) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_borough_sla_gauge(self, borough: str) -> tuple[go.Figure, StatisticsPanel]:
         """Render SLA gauge for a specific borough.
 
         Args:
@@ -207,7 +205,7 @@ class PhaseFVisualizations:
 
         return fig, stats
 
-    def render_ci_visualization(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_ci_visualization(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render confidence interval visualization with error bars.
 
         Returns:
@@ -262,7 +260,7 @@ class PhaseFVisualizations:
 
         return fig, stats
 
-    def render_risk_level_indicator(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_risk_level_indicator(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render indicator showing percentage at each risk level.
 
         Returns:
@@ -315,7 +313,7 @@ class PhaseFVisualizations:
 
         return fig, stats
 
-    def render_ci_width_comparison(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_ci_width_comparison(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render comparison of confidence interval widths.
 
         Returns:
@@ -363,7 +361,7 @@ class PhaseFVisualizations:
 
         return fig, stats
 
-    def render_probability_distribution(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_probability_distribution(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render histogram of SLA probabilities.
 
         Returns:
@@ -408,7 +406,7 @@ class PhaseFVisualizations:
 
         return fig, stats
 
-    def render_point_estimate_comparison(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_point_estimate_comparison(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render comparison of point estimates across boroughs.
 
         Returns:
@@ -479,7 +477,7 @@ class PhaseFVisualizations:
         logger.info(f"Rendered {len(charts)} Phase F visualizations")
         return charts
 
-    def _render_risk_level_pie(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def _render_risk_level_pie(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render pie chart of risk level distribution.
 
         Returns:
@@ -515,7 +513,7 @@ class PhaseFVisualizations:
 
         return fig, stats
 
-    def _render_sla_vs_ci_scatter(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def _render_sla_vs_ci_scatter(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render scatter plot of SLA probability vs CI width.
 
         Returns:
@@ -564,7 +562,7 @@ class PhaseFVisualizations:
 
         return fig, stats
 
-    def _render_cumulative_probability(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def _render_cumulative_probability(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render cumulative probability curve.
 
         Returns:
@@ -608,7 +606,7 @@ class PhaseFVisualizations:
 
         return fig, stats
 
-    def _render_risk_heatmap(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def _render_risk_heatmap(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render heatmap of risk metrics.
 
         Returns:
@@ -653,7 +651,7 @@ class PhaseFVisualizations:
 
         return fig, stats
 
-    def _render_bootstrap_summary(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def _render_bootstrap_summary(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render bootstrap summary statistics.
 
         Returns:
@@ -699,7 +697,7 @@ class PhaseFVisualizations:
 
         return fig, stats
 
-    def _render_investment_justification(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def _render_investment_justification(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render investment justification chart (gap analysis).
 
         Returns:

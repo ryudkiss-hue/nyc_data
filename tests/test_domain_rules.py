@@ -21,11 +21,9 @@ from socrata_toolkit.quality.domain_rules import (
     validate_permit_inspection_relationship,
 )
 
-
 # ============================================================================
 # FIXTURES - Test Data Setup
 # ============================================================================
-
 
 @pytest.fixture
 def inspection_data_material():
@@ -60,7 +58,6 @@ def inspection_data_material():
         }
     )
 
-
 @pytest.fixture
 def inspection_data_borough_manhattan_heavy():
     """Create inspection data with Manhattan representing 40% (PASS case)."""
@@ -79,7 +76,6 @@ def inspection_data_borough_manhattan_heavy():
             "lifespan_years": [18.0] * 100,
         }
     )
-
 
 @pytest.fixture
 def inspection_data_borough_manhattan_low():
@@ -100,7 +96,6 @@ def inspection_data_borough_manhattan_low():
         }
     )
 
-
 @pytest.fixture
 def inspection_data_borough_manhattan_warning():
     """Create inspection data with Manhattan at 32% (WARNING case)."""
@@ -120,7 +115,6 @@ def inspection_data_borough_manhattan_warning():
         }
     )
 
-
 @pytest.fixture
 def permits_data():
     """Create sample permits data."""
@@ -135,7 +129,6 @@ def permits_data():
         }
     )
 
-
 @pytest.fixture
 def inspections_data():
     """Create sample inspections data with dates within permit range."""
@@ -148,7 +141,6 @@ def inspections_data():
             "longitude": [-74.0060, -73.9496, -73.9855],
         }
     )
-
 
 @pytest.fixture
 def inspections_data_misaligned():
@@ -167,7 +159,6 @@ def inspections_data_misaligned():
             "longitude": [-74.0060, -73.9496, -73.9855, -73.7949],
         }
     )
-
 
 @pytest.fixture
 def material_data_condition_score():
@@ -202,7 +193,6 @@ def material_data_condition_score():
         }
     )
 
-
 @pytest.fixture
 def material_data_with_nulls():
     """Create material data with missing values."""
@@ -236,11 +226,9 @@ def material_data_with_nulls():
         }
     )
 
-
 # ============================================================================
 # TESTS - Material Lifespan Rule
 # ============================================================================
-
 
 def test_material_lifespan_pass(inspection_data_material):
     """Test material_lifespan_rule with passing data (concrete > asphalt)."""
@@ -253,7 +241,6 @@ def test_material_lifespan_pass(inspection_data_material):
     assert "Concrete avg: 18.2" in result.details
     assert "Asphalt avg: 11.0" in result.details
     assert result.fix_recommendation is None
-
 
 def test_material_lifespan_fail_reversed_data():
     """Test material_lifespan_rule with failing data (asphalt > concrete)."""
@@ -272,7 +259,6 @@ def test_material_lifespan_fail_reversed_data():
     assert result.rows_affected > 0
     assert "Review asphalt records" in result.fix_recommendation
 
-
 def test_material_lifespan_condition_score(material_data_condition_score):
     """Test material_lifespan_rule with condition_score column."""
     result = validate_material_lifespan_rule(material_data_condition_score)
@@ -280,7 +266,6 @@ def test_material_lifespan_condition_score(material_data_condition_score):
     assert result.status == "PASS"
     assert "Concrete avg: 86.7" in result.details
     assert "Asphalt avg: 63.7" in result.details
-
 
 def test_material_lifespan_missing_column():
     """Test material_lifespan_rule with missing lifespan/age column."""
@@ -298,7 +283,6 @@ def test_material_lifespan_missing_column():
     assert "No lifespan/age column found" in result.details
     assert "Add a lifespan or age column" in result.fix_recommendation
 
-
 def test_material_lifespan_no_material_data():
     """Test material_lifespan_rule with no concrete/asphalt data."""
     df = pd.DataFrame(
@@ -315,7 +299,6 @@ def test_material_lifespan_no_material_data():
     assert result.status == "WARNING"
     assert "No concrete or asphalt records found" in result.details
 
-
 def test_material_lifespan_with_nulls(material_data_with_nulls):
     """Test material_lifespan_rule with null values."""
     result = validate_material_lifespan_rule(material_data_with_nulls)
@@ -323,11 +306,9 @@ def test_material_lifespan_with_nulls(material_data_with_nulls):
     # Should handle nulls gracefully
     assert result.status in ["PASS", "FAIL", "WARNING"]
 
-
 # ============================================================================
 # TESTS - Borough Coverage Distribution Rule
 # ============================================================================
-
 
 def test_borough_coverage_pass(inspection_data_borough_manhattan_heavy):
     """Test borough_coverage_rule with passing data (40% Manhattan)."""
@@ -338,7 +319,6 @@ def test_borough_coverage_pass(inspection_data_borough_manhattan_heavy):
     assert "40.0%" in result.details
     assert result.fix_recommendation is None
 
-
 def test_borough_coverage_warning(inspection_data_borough_manhattan_warning):
     """Test borough_coverage_rule with warning data (32% Manhattan)."""
     result = validate_borough_coverage_distribution(inspection_data_borough_manhattan_warning)
@@ -346,7 +326,6 @@ def test_borough_coverage_warning(inspection_data_borough_manhattan_warning):
     assert result.status == "WARNING"
     assert "32.0%" in result.details
     assert "Monitor Manhattan coverage trend" in result.fix_recommendation
-
 
 def test_borough_coverage_fail(inspection_data_borough_manhattan_low):
     """Test borough_coverage_rule with failing data (20% Manhattan)."""
@@ -356,7 +335,6 @@ def test_borough_coverage_fail(inspection_data_borough_manhattan_low):
     assert "20.0%" in result.details
     assert "Investigate potential data collection bias" in result.fix_recommendation
     assert result.rows_affected > 0
-
 
 def test_borough_coverage_missing_column():
     """Test borough_coverage_rule with missing borough column."""
@@ -372,7 +350,6 @@ def test_borough_coverage_missing_column():
     assert result.status == "WARNING"
     assert "No 'borough' column found" in result.details
 
-
 def test_borough_coverage_all_manhattan():
     """Test borough_coverage_rule with all Manhattan records (100%)."""
     df = pd.DataFrame(
@@ -386,7 +363,6 @@ def test_borough_coverage_all_manhattan():
 
     assert result.status == "FAIL"
     assert "100.0%" in result.details
-
 
 def test_borough_coverage_no_manhattan():
     """Test borough_coverage_rule with no Manhattan records (0%)."""
@@ -406,11 +382,9 @@ def test_borough_coverage_no_manhattan():
     assert result.status == "FAIL"
     assert "0.0%" in result.details
 
-
 # ============================================================================
 # TESTS - Permit-Inspection Relationship Rule
 # ============================================================================
-
 
 def test_permit_inspection_pass(permits_data, inspections_data):
     """Test permit_inspection_rule with well-aligned data."""
@@ -420,14 +394,12 @@ def test_permit_inspection_pass(permits_data, inspections_data):
     assert result.rule_name == "permit_inspection_relationship"
     assert "0 Borough mismatches" in result.details
 
-
 def test_permit_inspection_misaligned(permits_data, inspections_data_misaligned):
     """Test permit_inspection_rule with misaligned dates."""
     result = validate_permit_inspection_relationship(permits_data, inspections_data_misaligned)
 
     assert result.status in ["WARNING", "FAIL"]
     assert result.rows_affected > 0
-
 
 def test_permit_inspection_missing_columns():
     """Test permit_inspection_rule with missing required columns."""
@@ -439,7 +411,6 @@ def test_permit_inspection_missing_columns():
     assert result.status == "WARNING"
     assert "Missing columns" in result.details
 
-
 def test_permit_inspection_empty_dataframes():
     """Test permit_inspection_rule with empty DataFrames."""
     permits = pd.DataFrame()
@@ -449,7 +420,6 @@ def test_permit_inspection_empty_dataframes():
 
     assert result.status == "PASS"  # Empty data = no violations
     assert "empty" in result.details.lower()
-
 
 def test_permit_inspection_null_dates(permits_data):
     """Test permit_inspection_rule with invalid dates."""
@@ -467,11 +437,9 @@ def test_permit_inspection_null_dates(permits_data):
 
     assert result.status in ["WARNING", "PASS"]
 
-
 # ============================================================================
 # TESTS - Rule Orchestration
 # ============================================================================
-
 
 def test_validate_all_domain_rules(inspection_data_material):
     """Test validate_all_domain_rules orchestrator."""
@@ -482,7 +450,6 @@ def test_validate_all_domain_rules(inspection_data_material):
     assert all(isinstance(r, DomainRuleResult) for r in results)
     assert any(r.rule_name == "material_lifespan_rule" for r in results)
     assert any(r.rule_name == "borough_coverage_distribution" for r in results)
-
 
 def test_validate_all_domain_rules_with_permits(
     inspection_data_material, permits_data, inspections_data
@@ -496,7 +463,6 @@ def test_validate_all_domain_rules_with_permits(
 
     assert len(results) >= 3  # material + borough + permit-inspection
     assert any(r.rule_name == "permit_inspection_relationship" for r in results)
-
 
 def test_summarize_domain_rule_results(inspection_data_material):
     """Test summarize_domain_rule_results utility."""
@@ -512,18 +478,15 @@ def test_summarize_domain_rule_results(inspection_data_material):
     assert summary["total_rules"] == len(results)
     assert summary["passed"] + summary["warnings"] + summary["failures"] == len(results)
 
-
 # ============================================================================
 # TESTS - Edge Cases
 # ============================================================================
-
 
 def test_domain_rule_empty_dataframe():
     """Test rules with empty DataFrame."""
     df = pd.DataFrame()
     result = validate_material_lifespan_rule(df)
     assert result.status in ["WARNING", "PASS"]
-
 
 def test_domain_rule_single_row():
     """Test rules with single-row DataFrame."""
@@ -537,7 +500,6 @@ def test_domain_rule_single_row():
     )
     result = validate_material_lifespan_rule(df)
     assert result.status in ["WARNING", "PASS", "FAIL"]
-
 
 def test_borough_large_dataset():
     """Test borough coverage with large dataset (1000 rows)."""
@@ -556,11 +518,9 @@ def test_borough_large_dataset():
     assert result.status == "PASS"
     assert "40.0%" in result.details
 
-
 # ============================================================================
 # TESTS - Data Quality Integration
 # ============================================================================
-
 
 def test_domain_rules_with_realistic_inspection_data():
     """Test domain rules with realistic NYC inspection data structure."""
@@ -598,11 +558,9 @@ def test_domain_rules_with_realistic_inspection_data():
     assert results[1].rule_name == "borough_coverage_distribution"
     assert results[1].status == "PASS"
 
-
 # ============================================================================
 # TESTS - Exception Handling
 # ============================================================================
-
 
 def test_material_lifespan_exception_handling(inspection_data_material):
     """Test exception handling in material_lifespan_rule."""
@@ -616,7 +574,6 @@ def test_material_lifespan_exception_handling(inspection_data_material):
     assert result.status == "WARNING"
     assert "error" in result.details.lower()
 
-
 def test_borough_coverage_exception_handling(inspection_data_borough_manhattan_heavy):
     """Test exception handling in borough_coverage_rule."""
     df = inspection_data_borough_manhattan_heavy.copy()
@@ -626,7 +583,6 @@ def test_borough_coverage_exception_handling(inspection_data_borough_manhattan_h
 
     # Should handle gracefully
     assert result.status in ["WARNING", "PASS"]
-
 
 def test_permit_inspection_exception_handling(permits_data):
     """Test exception handling in permit_inspection_rule."""

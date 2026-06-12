@@ -6,7 +6,6 @@ from socrata_toolkit.motherduck.connector import MotherDuckConnection
 from socrata_toolkit.motherduck.ingestion import InspectionDataLoader
 from socrata_toolkit.motherduck.staging import StagingTransformer
 
-
 @pytest.fixture
 def motherduck_conn():
     """Fixture providing a local DuckDB connection (no MotherDuck token needed)."""
@@ -14,18 +13,15 @@ def motherduck_conn():
     yield conn
     conn.close()
 
-
 @pytest.fixture
 def data_loader(motherduck_conn):
     """Fixture providing an InspectionDataLoader instance."""
     return InspectionDataLoader(motherduck_conn)
 
-
 @pytest.fixture
 def staging_transformer(motherduck_conn):
     """Fixture providing a StagingTransformer instance."""
     return StagingTransformer(motherduck_conn)
-
 
 class TestStagingSchemaCreation:
     """Tests for staging schema and table creation."""
@@ -143,7 +139,6 @@ class TestStagingSchemaCreation:
 
         for col in expected_columns:
             assert col in column_names, f"Column '{col}' not found in timeseries_prepared"
-
 
 class TestInspectionCleanTransformation:
     """Tests for inspection_clean staging table transformations."""
@@ -339,7 +334,6 @@ class TestInspectionCleanTransformation:
         assert result[0][2] == 3, "inspection_month should be 3 (March)"
         assert result[0][3] == 2026, "inspection_year should be 2026"
 
-
 class TestSpatialEnrichedTransformation:
     """Tests for spatial_enriched staging table transformations."""
 
@@ -434,7 +428,6 @@ class TestSpatialEnrichedTransformation:
         assert all("-" in loc_id for loc_id in location_ids), "location_id should contain hyphens"
         assert any("MN" in loc_id for loc_id in location_ids), "Should have MN borough"
         assert any("BK" in loc_id for loc_id in location_ids), "Should have BK borough"
-
 
 class TestTimeseriesPreparedTransformation:
     """Tests for timeseries_prepared staging table transformations."""

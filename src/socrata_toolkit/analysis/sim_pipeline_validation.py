@@ -18,21 +18,20 @@ import hashlib
 import json
 import logging
 from datetime import datetime
-from typing import Dict, List, Any, Tuple
+from typing import Any
 
-import pandas as pd
 import duckdb
+import pandas as pd
 
-from socrata_toolkit.core.client import SocrataClient, SocrataConfig
-from socrata_toolkit.analysis.sim_workflows_complete import (
-    run_sim_workflow,
-    UnifiedClassifier,
-    WORKFLOW_REGISTRY,
-)
 from socrata_toolkit.analysis.nlp_classifier import TextClassifierPipeline
+from socrata_toolkit.analysis.sim_workflows_complete import (
+    WORKFLOW_REGISTRY,
+    UnifiedClassifier,
+    run_sim_workflow,
+)
+from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
 logger = logging.getLogger(__name__)
-
 
 # ============================================================================
 # STAGE 1: RAW INGESTION
@@ -46,7 +45,7 @@ class RawStage:
         self.conn.execute("CREATE SCHEMA IF NOT EXISTS raw")
         self.ingested_tables = {}
 
-    def ingest_dataset(self, key: str, fourfour: str, limit: int = 500) -> Dict:
+    def ingest_dataset(self, key: str, fourfour: str, limit: int = 500) -> dict:
         """Fetch from Socrata and land in raw schema."""
         logger.info(f"[RAW] Ingesting {key}")
 
@@ -78,7 +77,6 @@ class RawStage:
         """Verify all rows landed."""
         return all(v["rows"] > 0 for v in self.ingested_tables.values())
 
-
 # ============================================================================
 # STAGE 2: STAGING (Classify)
 # ============================================================================
@@ -92,7 +90,7 @@ class StagingStage:
         self.classified_tables = {}
         self.classifier_pipeline = TextClassifierPipeline()
 
-    def classify_violations(self, source_table: str) -> Dict:
+    def classify_violations(self, source_table: str) -> dict:
         """Classify violations dataset."""
         logger.info("[STAGING] Classifying violations")
 
@@ -119,7 +117,7 @@ class StagingStage:
         logger.info(f"[STAGING] ✓ violations: {len(enriched)} rows, {null_count} nulls")
         return self.classified_tables["violations"]
 
-    def classify_complaints(self, source_table: str) -> Dict:
+    def classify_complaints(self, source_table: str) -> dict:
         """Classify 311 complaints."""
         logger.info("[STAGING] Classifying complaints")
 
@@ -152,7 +150,6 @@ class StagingStage:
             for v in self.classified_tables.values()
         )
 
-
 # ============================================================================
 # STAGE 3: ANALYTICS (Run Workflows)
 # ============================================================================
@@ -165,7 +162,7 @@ class AnalyticsStage:
         self.conn.execute("CREATE SCHEMA IF NOT EXISTS analytics")
         self.workflow_results = {}
 
-    def run_sample_workflows(self) -> Dict:
+    def run_sample_workflows(self) -> dict:
         """Run key workflows as samples."""
         sample_workflows = [
             "violations-triage",
@@ -194,7 +191,7 @@ class AnalyticsStage:
 
         return self.workflow_results
 
-    def materialize_results(self) -> Dict:
+    def materialize_results(self) -> dict:
         """Store workflow results in analytics schema."""
         table_name = "analytics.workflow_results"
         self.conn.execute(f"DROP TABLE IF EXISTS {table_name}")
@@ -219,7 +216,6 @@ class AnalyticsStage:
             "failed": sum(1 for r in self.workflow_results.values() if r.get("status") == "error"),
         }
 
-
 # ============================================================================
 # STAGE 4: VERIFICATION
 # ============================================================================
@@ -238,7 +234,7 @@ class VerificationStage:
         self.analytics = analytics
         self.checks = {}
 
-    def verify_accuracy(self) -> Dict:
+    def verify_accuracy(self) -> dict:
         """Check classification accuracy with spot checks."""
         logger.info("[VERIFY] Accuracy checks")
 
@@ -257,7 +253,7 @@ class VerificationStage:
         logger.info(f"[VERIFY] Accuracy: {all(checks.values())} - {checks}")
         return checks
 
-    def verify_seamlessness(self) -> Dict:
+    def verify_seamlessness(self) -> dict:
         """Check for data loss across pipeline."""
         logger.info("[VERIFY] Seamlessness checks")
 
@@ -276,7 +272,7 @@ class VerificationStage:
         logger.info(f"[VERIFY] Seamlessness: {all(checks.values())} - {checks}")
         return checks
 
-    def verify_reliability(self) -> Dict:
+    def verify_reliability(self) -> dict:
         """Check determinism by rerunning sample workflow."""
         logger.info("[VERIFY] Reliability checks")
 
@@ -299,7 +295,7 @@ class VerificationStage:
         logger.info(f"[VERIFY] Reliability: {all(checks.values())} - {checks}")
         return checks
 
-    def generate_report(self) -> Dict:
+    def generate_report(self) -> dict:
         """Generate comprehensive verification report."""
         return {
             "timestamp": datetime.now().isoformat(),
@@ -315,12 +311,11 @@ class VerificationStage:
             ),
         }
 
-
 # ============================================================================
 # MAIN: RUN FULL PIPELINE
 # ============================================================================
 
-def run_full_validation_pipeline() -> Dict:
+def run_full_validation_pipeline() -> dict:
     """Execute complete pipeline validation."""
     logger.info("=" * 70)
     logger.info("SIM WORKFLOWS VALIDATION PIPELINE")
@@ -357,7 +352,6 @@ def run_full_validation_pipeline() -> Dict:
     logger.info("\n" + "=" * 70)
 
     return report
-
 
 if __name__ == "__main__":
     logging.basicConfig(

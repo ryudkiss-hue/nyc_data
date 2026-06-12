@@ -78,7 +78,6 @@ _VALUE_PATTERNS: dict[str, re.Pattern[str]] = {
 
 _CARD_CANDIDATE = re.compile(r"^[\d \-]{13,23}$")
 
-
 @dataclass
 class PiiSignal:
     """A detected PII signal for a single column.
@@ -96,7 +95,6 @@ class PiiSignal:
     confidence: float
     evidence: list[str] = field(default_factory=list)
     severity: str = "low"
-
 
 def luhn_check(number: str) -> bool:
     """Validate a candidate credit-card number with the Luhn algorithm.
@@ -123,11 +121,9 @@ def luhn_check(number: str) -> bool:
         total += d
     return total % 10 == 0
 
-
 def _clean_values(series: pd.Series) -> list[str]:
     """Return non-null values as stripped strings."""
     return [str(v).strip() for v in series.dropna().tolist() if str(v).strip()]
-
 
 def _value_match_ratio(values: list[str], kind: str) -> float:
     """Fraction of values matching the regex/format for ``kind``."""
@@ -149,7 +145,6 @@ def _value_match_ratio(values: list[str], kind: str) -> float:
         return sum(1 for v in values if ok(v)) / len(values)
     return sum(1 for v in values if pattern.match(v)) / len(values)
 
-
 def _name_signal(column: str) -> list[tuple[str, str]]:
     """Return (kind, evidence) tuples for column-name matches."""
     col = column.strip().lower()
@@ -158,7 +153,6 @@ def _name_signal(column: str) -> list[tuple[str, str]]:
         if pattern.search(col):
             out.append((kind, f"column name matches {kind} heuristic"))
     return out
-
 
 def _uniqueness_signal(series: pd.Series, values: list[str]) -> float:
     """High-cardinality near-unique string columns -> identifier likelihood.
@@ -171,7 +165,6 @@ def _uniqueness_signal(series: pd.Series, values: list[str]) -> float:
         return 0.0
     distinct = series.dropna().nunique()
     return distinct / n
-
 
 def scan_dataframe(df: pd.DataFrame) -> list[PiiSignal]:
     """Scan a DataFrame and return one :class:`PiiSignal` per flagged column.

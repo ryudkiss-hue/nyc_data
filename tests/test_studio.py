@@ -4,7 +4,6 @@ import json
 
 # from app.views import studio  # TODO: studio module not found
 
-
 def _cart():
     return {
         "abcd-1234": {
@@ -38,7 +37,6 @@ def _cart():
         },
     }
 
-
 def test_infer_relationships_uses_shared_civic_keys():
     relationships = studio._infer_relationships(_cart())
 
@@ -52,7 +50,6 @@ def test_infer_relationships_uses_shared_civic_keys():
         }
     ]
 
-
 def test_extract_points_from_multiple_socrata_shapes():
     points = studio._extract_points_from_records(
         [
@@ -65,7 +62,6 @@ def test_extract_points_from_multiple_socrata_shapes():
 
     assert len(points) == 3
     assert set(points.columns) == {"lat", "lon"}
-
 
 def test_pipeline_and_export_generators_include_cart_context():
     cart = _cart()
@@ -83,7 +79,6 @@ def test_pipeline_and_export_generators_include_cart_context():
     assert "fourfour: abcd-1234" in dbt
     assert notebook["nbformat"] == 4
     assert "Generated from the extraction cart" in "".join(notebook["cells"][0]["source"])
-
 
 def test_identifier_and_dictionary_helpers_are_safe():
     assert studio._normalise_identifier("A weird-id!") == "a_weird_id"

@@ -119,7 +119,6 @@ UNITS = {
     'contractor': 'Contractor Name',
 }
 
-
 def get_unit_label(column_name: str, default: str = '') -> str:
     """
     Get the standardized unit label for a column.
@@ -143,7 +142,6 @@ def get_unit_label(column_name: str, default: str = '') -> str:
     """
     normalized = column_name.lower().strip()
     return UNITS.get(normalized, default or column_name.replace('_', ' ').title())
-
 
 def apply_units_to_axes(fig, x_col: str = None, y_col: str = None, z_col: str = None):
     """
@@ -178,7 +176,6 @@ def apply_units_to_axes(fig, x_col: str = None, y_col: str = None, z_col: str = 
         fig.update_layout(**updates)
 
     return fig
-
 
 # Common axis pairs for quick reference
 AXIS_PAIRS = {

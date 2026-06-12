@@ -5,12 +5,10 @@ import json
 from pathlib import Path
 from socrata_toolkit.core.duckdb_pipeline import stage_dataset
 
-
 @pytest.fixture
 def db():
     """In-memory DuckDB connection for testing."""
     return duckdb.connect(":memory:")
-
 
 @pytest.fixture
 def setup_test_data(db):
@@ -51,7 +49,6 @@ def setup_test_data(db):
 
     return db, datasets
 
-
 def test_stage_inspection_discovery(setup_test_data):
     """Test stage_dataset('inspection') loads and deduplicates correctly."""
     db, _ = setup_test_data
@@ -66,7 +63,6 @@ def test_stage_inspection_discovery(setup_test_data):
     ).fetchall()
     assert any(t[0] == "inspection" for t in tables), "staging.inspection not found"
 
-
 def test_stage_violations_column_discovery(setup_test_data):
     """Test stage_dataset works with auto-discovered columns."""
     db, _ = setup_test_data
@@ -80,7 +76,6 @@ def test_stage_violations_column_discovery(setup_test_data):
         "SELECT COUNT(*) FROM staging.violations"
     ).fetchone()[0]
     assert result == row_count, "Row count mismatch"
-
 
 def test_stage_ramp_progress_dedup(setup_test_data):
     """Test stage_dataset works with ramp_progress dataset."""
@@ -97,7 +92,6 @@ def test_stage_ramp_progress_dedup(setup_test_data):
     ).fetchone()[0]
     assert result > 0, "Staging table should not be empty"
 
-
 def test_stage_permits_multiple_datasets(setup_test_data):
     """Test stage_dataset works with permits dataset."""
     db, _ = setup_test_data
@@ -111,7 +105,6 @@ def test_stage_permits_multiple_datasets(setup_test_data):
         "SELECT table_name FROM information_schema.tables WHERE table_schema = 'staging'"
     ).fetchall()
     assert any(t[0] == "permits" for t in tables), "staging.permits not found"
-
 
 def test_stage_ramp_complaints_discovery(setup_test_data):
     """Test stage_dataset with ramp_complaints dataset."""

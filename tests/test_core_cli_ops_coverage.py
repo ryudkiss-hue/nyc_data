@@ -16,11 +16,9 @@ from click.testing import CliRunner
 
 from socrata_toolkit.core.cli import main
 
-
 @pytest.fixture
 def runner():
     return CliRunner()
-
 
 def _resp(json_value):
     r = MagicMock()
@@ -28,7 +26,6 @@ def _resp(json_value):
     r.ok = True
     r.raise_for_status = MagicMock()
     return r
-
 
 # ---------------------------------------------------------------------------
 # toolkit_search
@@ -52,7 +49,6 @@ class TestToolkitSearch:
         res = runner.invoke(main, ["toolkit-search"])
         assert res.exit_code == 2
 
-
 # ---------------------------------------------------------------------------
 # sync
 # ---------------------------------------------------------------------------
@@ -69,7 +65,6 @@ class TestSync:
     def test_sync_requires_table(self, runner):
         res = runner.invoke(main, ["sync", "-i", "dntt-gqwq"])
         assert res.exit_code == 2
-
 
 # ---------------------------------------------------------------------------
 # db-status
@@ -99,7 +94,6 @@ class TestDbStatus:
             res = runner.invoke(main, ["db-status"])
         assert res.exit_code == 0
 
-
 # ---------------------------------------------------------------------------
 # setup / wizard
 # ---------------------------------------------------------------------------
@@ -119,7 +113,6 @@ class TestSetupWizard:
             res = runner.invoke(main, ["wizard", "--non-interactive"])
         assert res.exit_code == 0
         rw.assert_called_once()
-
 
 # ---------------------------------------------------------------------------
 # conflict-detect GeoJSON export (geopandas path)
@@ -155,7 +148,6 @@ class TestConflictDetectGeoJSON:
         assert out.exists()
         assert "no lat/lon" in res.output
 
-
 # ---------------------------------------------------------------------------
 # dataset health manual-format fallback (tabulate missing)
 # ---------------------------------------------------------------------------
@@ -178,7 +170,6 @@ class TestDatasetHealthFallback:
             res = runner.invoke(main, ["dataset", "health", "--key", "inspection"])
         assert res.exit_code == 0
         assert "inspection" in res.output
-
 
 # ---------------------------------------------------------------------------
 # _load_dataset_registry / _make_session helpers
@@ -222,7 +213,6 @@ class TestAnalyzeAndTextInsights:
         assert payload["row_count"] == 2
         assert out.exists()
 
-
 class TestRegistryAndSession:
     def test_load_dataset_registry_real(self):
         from socrata_toolkit.core.cli import _load_dataset_registry
@@ -240,7 +230,6 @@ class TestRegistryAndSession:
         session = _make_session()
         assert session.get_adapter("https://x") is not None
         assert session.get_adapter("http://x") is not None
-
 
 class TestSpatialJoinAndDefaultPackDate:
     def test_spatial_join_cmd(self, runner, tmp_path):

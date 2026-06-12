@@ -29,7 +29,6 @@ class ReportSection:
     content: str
     data: dict[str, Any] | None = None
 
-
 @dataclass
 class Report:
     """A complete generated report conforming to WCAG 2.1 AA accessibility standards."""
@@ -234,7 +233,6 @@ class Report:
             p.write_text(self.to_markdown(), encoding="utf-8")
         return str(p)
 
-
 def generate_contract_report(
     df: pd.DataFrame,
     contract_id_col: str = "contract_id",
@@ -312,7 +310,6 @@ def generate_contract_report(
 
     return report
 
-
 def generate_program_report(dashboard: Any) -> Report:
     """Generate a program KPI report from a ProgramDashboard."""
     report = Report(
@@ -352,7 +349,6 @@ def generate_program_report(dashboard: Any) -> Report:
         report.add_section("Budget Code Allocations", "Utilization rates across active funding lines:", bc_data)
 
     return report
-
 
 def generate_inquiry_response(
     inquiry_type: str,

@@ -9,7 +9,6 @@ import pytest
 from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 from socrata_toolkit.core.models import DatasetMetadata
 
-
 class TestSocrataConfig:
     """Tests for SocrataConfig dataclass."""
 
@@ -33,7 +32,6 @@ class TestSocrataConfig:
         assert config.app_token == "token123"
         assert config.timeout == 60
         assert config.page_size == 5000
-
 
 class TestSocrataClientInit:
     """Tests for SocrataClient initialization."""
@@ -64,7 +62,6 @@ class TestSocrataClientInit:
         headers = client._headers()
         assert headers["X-App-Token"] == "my_token"
 
-
 class TestSocrataClientWithEnv:
     """Tests for environment variable handling."""
 
@@ -83,7 +80,6 @@ class TestSocrataClientWithEnv:
         config = SocrataConfig(page_size=500)
         client = SocrataClient(config)
         assert client.config.page_size == 500
-
 
 class TestSocrataClientBuildSoql:
     """Tests for _build_soql helper method."""
@@ -122,7 +118,6 @@ class TestSocrataClientBuildSoql:
         assert "ORDER BY" in query
         assert "LIMIT 50" in query
         assert "OFFSET 10" in query
-
 
 class TestSocrataClientDataFrameConversion:
     """Tests for DataFrame conversion logic."""
@@ -164,7 +159,6 @@ class TestSocrataClientDataFrameConversion:
             df = client.fetch_dataframe("data.example.com", "dataset-id")
             assert isinstance(df, pd.DataFrame)
             assert len(df) == 3
-
 
 class TestSocrataClientSearch:
     """Tests for search method with proper mocking."""
@@ -223,7 +217,6 @@ class TestSocrataClientSearch:
             results = client.search(query="nonexistent")
             assert len(results) == 0
 
-
 class TestSocrataClientMetadata:
     """Tests for get_metadata method."""
 
@@ -254,7 +247,4 @@ class TestSocrataClientMetadata:
             mock_retries.side_effect = RuntimeError("API error")
             with pytest.raises(RuntimeError):
                 client.get_metadata("data.example.com", "invalid-id")
-
-
-
 

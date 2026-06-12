@@ -18,7 +18,12 @@ from .metrics import (
 )
 from .profiling import DataProfile, profile_dataframe, quality_report
 from .reporting import DashboardSummary, Report, generate_contract_report, generate_inquiry_response
-from .text import extract_patterns, extract_term_frequencies, generate_text_insights, parse_sim_complaints
+from .text import (
+    extract_patterns,
+    extract_term_frequencies,
+    generate_text_insights,
+    parse_sim_complaints,
+)
 from .viz import bar_chart, histogram
 
 __all__ = [
@@ -74,7 +79,6 @@ def _legacy_import(module: str, *names: str) -> None:
                 globals()[name] = getattr(mod, name)
     except Exception:
         pass
-
 
 _legacy_import(".quality", "Anomaly")
 _legacy_import("..quality.sla_tracking", "SLATarget")

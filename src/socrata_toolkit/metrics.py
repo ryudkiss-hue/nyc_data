@@ -33,7 +33,6 @@ except ImportError:
     HAS_PROMETHEUS = False
     logger.warning("prometheus_client not installed; metrics will be collected in-memory only")
 
-
 @dataclass
 class MetricPoint:
     """Single metric data point with timestamp and labels.
@@ -71,7 +70,6 @@ class MetricPoint:
 
         labels_str = ",".join(f'{k}="{v}"' for k, v in self.labels.items())
         return f"{self.name}{{{labels_str}}} {self.value}"
-
 
 class MetricsRegistry:
     """Central registry for metrics collection and export.
@@ -235,7 +233,6 @@ class MetricsRegistry:
                 ]
             }
 
-
 class MockCounter:
     """Mock counter for when prometheus_client is not available."""
 
@@ -281,7 +278,6 @@ class MockCounter:
         label_str = ",".join(f"{k}={v}" for k, v in sorted(getattr(self, "_labels", {}).items()))
         return f"{self.name}#{label_str}"
 
-
 class MockGauge:
     """Mock gauge for when prometheus_client is not available."""
 
@@ -324,7 +320,6 @@ class MockGauge:
         """Create unique key for this metric instance."""
         label_str = ",".join(f"{k}={v}" for k, v in sorted(getattr(self, "_labels", {}).items()))
         return f"{self.name}#{label_str}"
-
 
 class MockHistogram:
     """Mock histogram for when prometheus_client is not available."""
@@ -374,7 +369,6 @@ class MockHistogram:
         """Create unique key for this metric instance."""
         label_str = ",".join(f"{k}={v}" for k, v in sorted(getattr(self, "_labels", {}).items()))
         return f"{self.name}#{label_str}"
-
 
 @dataclass
 class PipelineMetrics:
@@ -479,7 +473,6 @@ class PipelineMetrics:
         self.validation_failures_total.labels(dataset_id=dataset_id, rule_name=rule_name).inc()
         logger.warning(f"Recorded validation failure: {dataset_id} ({rule_name})")
 
-
 @dataclass
 class DataQualityMetrics:
     """Data quality scorecard metrics.
@@ -582,11 +575,9 @@ class DataQualityMetrics:
         self.referential_integrity_pct.labels(dataset_id=dataset_id, fk=fk_name).set(integrity_pct)
         logger.debug(f"Recorded referential integrity: {dataset_id}.{fk_name} = {integrity_pct:.2f}%")
 
-
 # Global metrics registry singleton
 _global_registry: MetricsRegistry | None = None
 _registry_lock = threading.Lock()
-
 
 def get_global_registry() -> MetricsRegistry:
     """Get or create global metrics registry singleton.
@@ -605,7 +596,6 @@ def get_global_registry() -> MetricsRegistry:
             if _global_registry is None:
                 _global_registry = MetricsRegistry()
     return _global_registry
-
 
 def reset_global_registry() -> None:
     """Reset global metrics registry (useful for testing).

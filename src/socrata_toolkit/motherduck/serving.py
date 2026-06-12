@@ -18,7 +18,6 @@ from socrata_toolkit.motherduck.connector import MotherDuckConnection
 
 logger = logging.getLogger(__name__)
 
-
 class ServingViewsBuilder:
     """Builds serving views for Dash callbacks from analytics tables.
 

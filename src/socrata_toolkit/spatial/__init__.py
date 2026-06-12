@@ -26,10 +26,8 @@ except ImportError:
     load_wkt = None
     SHAPELY_AVAILABLE = False
 
-
 class SpatialDependencyError(ImportError):
     """Raised when a spatial operation requires Shapely."""
-
 
 @dataclass()
 class BoundingBox:
@@ -44,19 +42,16 @@ class BoundingBox:
         """Return the bounding box as a (min_x, min_y, max_x, max_y) tuple."""
         return (self.min_x, self.min_y, self.max_x, self.max_y)
 
-
 def require_shapely() -> None:
     """Raise SpatialDependencyError if Shapely is not installed."""
     if not SHAPELY_AVAILABLE:
         raise SpatialDependencyError("Shapely is required for spatial operations.")
-
 
 def is_geojson_geometry(value: Any) -> bool:
     """Return True if value looks like a GeoJSON geometry dict."""
     if not isinstance(value, dict):
         return False
     return isinstance(value.get("type"), str) and value.get("coordinates") is not None
-
 
 def parse_geojson_geometry(geometry: dict[str, Any]) -> BaseGeometry:
     """Parse a GeoJSON geometry dict into a Shapely geometry object."""
@@ -65,7 +60,6 @@ def parse_geojson_geometry(geometry: dict[str, Any]) -> BaseGeometry:
         raise ValueError("Invalid GeoJSON geometry.")
     return shapely_shape(geometry)
 
-
 def parse_wkt_geometry(wkt_value: str) -> BaseGeometry:
     """Parse a WKT string into a Shapely geometry object."""
     require_shapely()
@@ -73,28 +67,23 @@ def parse_wkt_geometry(wkt_value: str) -> BaseGeometry:
         raise ValueError("WKT value must be a string.")
     return load_wkt(wkt_value)
 
-
 def geometry_bounds(geometry: BaseGeometry) -> BoundingBox:
     """Return the axis-aligned bounding box of a Shapely geometry."""
     min_x, min_y, max_x, max_y = geometry.bounds
     return BoundingBox(min_x=min_x, min_y=min_y, max_x=max_x, max_y=max_y)
 
-
 def geometry_area(geometry: BaseGeometry) -> float:
     """Return the area of a Shapely geometry as a float."""
     return float(geometry.area)
-
 
 def geometry_length(geometry: BaseGeometry) -> float:
     """Return the length of a Shapely geometry as a float."""
     return float(geometry.length)
 
-
 def geometry_centroid(geometry: BaseGeometry) -> tuple[float, float]:
     """Return the (x, y) centroid coordinates of a Shapely geometry."""
     centroid = geometry.centroid
     return (float(centroid.x), float(centroid.y))
-
 
 def union_geometries(geometries: Sequence[BaseGeometry]) -> BaseGeometry:
     """Merge a sequence of Shapely geometries into a single unioned geometry."""
@@ -103,11 +92,9 @@ def union_geometries(geometries: Sequence[BaseGeometry]) -> BaseGeometry:
         raise ValueError("No geometries supplied.")
     return unary_union(geometries)
 
-
 def validate_geometry(geometry: BaseGeometry) -> bool:
     """Return True if the geometry is valid and non-empty."""
     return bool(geometry.is_valid and not geometry.is_empty)
-
 
 def spatial_join_candidates(
     left_geometries: Iterable[BaseGeometry],
@@ -123,11 +110,9 @@ def spatial_join_candidates(
                 matches.append((left_index, right_index))
     return matches
 
-
 # ── Spatial Models ────────────────────────────────────────────────────────────
 
 SRID_WGS84 = 4326
-
 
 @dataclass
 class SpatialGeometry:
@@ -162,7 +147,6 @@ class SpatialGeometry:
         """Return the minimum distance between this geometry and another."""
         return float(self.geometry.distance(other.geometry))
 
-
 @dataclass
 class SpatialSegment:
     segment_id: str
@@ -179,13 +163,11 @@ class SpatialSegment:
         if self.geometry.geometry_type != "LineString":
             raise ValueError("Segment geometry must be a LineString")
 
-
 @dataclass
 class SpatialBlock:
     block_id: str
     geometry: SpatialGeometry
     borough: str
-
 
 @dataclass
 class SpatialInspection:
@@ -201,7 +183,6 @@ class SpatialInspection:
         if self.severity not in {"low", "medium", "high", "critical"}:
             raise ValueError("Invalid severity")
 
-
 class SpatialQuery:
     def __init__(self, connection: Any):
         self.connection = connection
@@ -210,16 +191,13 @@ class SpatialQuery:
         """Return segments within radius_meters of the given point."""
         return []
 
-
 # ── ArcGIS Integration ────────────────────────────────────────────────────────
-
 
 @dataclass
 class ArcGISCredential:
     username: str
     password: str
     organization_url: str
-
 
 class ArcGISConnector:
     def __init__(self, credential: ArcGISCredential):
@@ -249,9 +227,7 @@ class ArcGISConnector:
             self.token = None
             return False
 
-
 # ── Field Package & QGIS ──────────────────────────────────────────────────────
-
 
 class FieldPackageBuilder:
     def __init__(self, inspector_id: str, bounds: dict[str, float]):
@@ -261,7 +237,6 @@ class FieldPackageBuilder:
     def create_package(self, segments: list, blocks: list, output_dir: str) -> str:
         """Build a GeoPackage field package and return its file path."""
         return str(Path(output_dir) / "field_package.gpkg")
-
 
 class FieldSession:
     def __init__(self, session_id: str, inspector_id: str, area_name: str, geopackage_path: Path):
@@ -293,7 +268,6 @@ class FieldSession:
         Result = namedtuple("Result", ["inspector_id", "location_count"])
         return Result(self.inspector_id, len(self.locations))
 
-
 class GeoPackageBuilder:
     def __init__(self, path: Path):
         self.path = path
@@ -304,9 +278,7 @@ class GeoPackageBuilder:
         self.path.write_bytes(b"")
         return self.path.exists()
 
-
 # ── Spatial Analytics & Metrics ────────────────────────────────────────────────
-
 
 class HotspotAnalysis:
     def __init__(self):
@@ -324,12 +296,10 @@ class HotspotAnalysis:
         """Identify high-density hotspot locations from coordinate-value pairs."""
         return []
 
-
 class InterpolationAnalysis:
     def inverse_distance_weighted(self, points, values, queries, **kwargs):
         """Estimate values at query locations using inverse-distance weighting."""
         return [sum(values) / len(values)] if values else []
-
 
 class NetworkAnalysis:
     def __init__(self):
@@ -342,7 +312,6 @@ class NetworkAnalysis:
     def find_shortest_route(self, start, end):
         """Return the shortest path node list between start and end in the network."""
         return []
-
 
 class SpatialMetricsCollector:
     def __init__(self):
@@ -363,7 +332,6 @@ class SpatialMetricsCollector:
     def export_metrics_json(self):
         """Serialize collected spatial metrics to a JSON-serialisable dict."""
         return {"timestamp": "now", "coverage": {}}
-
 
 class SpatialQualityScorer:
     @staticmethod
@@ -391,17 +359,14 @@ class SpatialQualityScorer:
         """Return the unweighted mean of all supplied named quality dimension scores."""
         return sum(kwargs.values()) / len(kwargs)
 
-
 class SpatialVisualization:
     def __init__(self):
         self.maps = {}
-
 
 class QGISCompatibilityManager:
     def __init__(self):
         self.wms_service = None
         self.wfs_service = None
-
 
 try:
     from ..qgis_integration import generate_qgis_project
@@ -409,7 +374,6 @@ except Exception:
 
     def generate_qgis_project(*_args: Any, **_kwargs: Any) -> str:
         raise ImportError("Install qgis integration dependencies to use generate_qgis_project")
-
 
 # ── Spatial Conflict Engine (GeoPandas) ─────────────────────────────────────
 # These require geopandas/sklearn. Guard the import so the spatial package
@@ -442,7 +406,6 @@ except Exception:  # noqa: BLE001 - optional geospatial stack
 
     def export_conflicts_geojson(*_args: Any, **_kwargs: Any) -> bool:  # type: ignore[misc]
         raise ImportError("Install geopandas to use export_conflicts_geojson")
-
 
 # ── GIS Conflict Detection for Construction Planning ─────────────────────────
 from .conflict_detection import (

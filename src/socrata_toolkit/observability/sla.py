@@ -34,7 +34,6 @@ class SLA:
             "severity": self.severity,
         }
 
-
 class SLATracker:
     """Tracks a set of SLAs and produces a compliance report."""
 

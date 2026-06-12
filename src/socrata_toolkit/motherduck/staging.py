@@ -19,7 +19,6 @@ from socrata_toolkit.motherduck.connector import MotherDuckConnection
 
 logger = logging.getLogger(__name__)
 
-
 class StagingTransformer:
     """Staging transformation layer for NYC DOT inspection data.
 

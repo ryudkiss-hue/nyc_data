@@ -19,11 +19,11 @@ import json
 import logging
 from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional, TypedDict
+from typing import Any, Optional, TypedDict
 
 import pandas as pd
-from langgraph.graph import END, StateGraph
 from langchain_anthropic import ChatAnthropic
+from langgraph.graph import END, StateGraph
 
 from socrata_toolkit.analysis.dismissal_classifier import (
     DismissalCategory,
@@ -34,11 +34,9 @@ from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
 logger = logging.getLogger(__name__)
 
-
 # ============================================================================
 # STATE DEFINITIONS
 # ============================================================================
-
 
 @dataclass
 class InspectorDismissalStats:
@@ -51,30 +49,29 @@ class InspectorDismissalStats:
     suspicious_rate: float
     avg_suspicion_score: float
     flagged_for_review: bool
-    common_defect_types: List[str]
-
+    common_defect_types: list[str]
 
 class DismissalAnalysisState(TypedDict):
     """LangGraph state for dismissal analysis workflow."""
     # Input context
-    context: Optional[Dict[str, Any]]
+    context: dict[str, Any] | None
     dismissals_fourfour: str
     violations_fourfour: str
     max_rows: int
-    borough_filter: Optional[str]
+    borough_filter: str | None
 
     # Fetched data
-    dismissals_df: Optional[pd.DataFrame]
-    violations_df: Optional[pd.DataFrame]
-    joined_df: Optional[pd.DataFrame]
+    dismissals_df: pd.DataFrame | None
+    violations_df: pd.DataFrame | None
+    joined_df: pd.DataFrame | None
     total_records: int
 
     # Classification results
-    classifications: List[DismissalClassification]
-    classification_summary: Dict  # Category breakdown
-    inspector_stats: Dict[str, InspectorDismissalStats]  # By inspector_id
-    flagged_dismissals: List[Dict]  # High-suspicion cases
-    defect_pattern_analysis: Dict  # Defect type clustering
+    classifications: list[DismissalClassification]
+    classification_summary: dict  # Category breakdown
+    inspector_stats: dict[str, InspectorDismissalStats]  # By inspector_id
+    flagged_dismissals: list[dict]  # High-suspicion cases
+    defect_pattern_analysis: dict  # Defect type clustering
 
     # Claude assessments
     claude_pattern_assessment: str  # Initial read on patterns
@@ -82,9 +79,8 @@ class DismissalAnalysisState(TypedDict):
     suspicious_case_summary: str  # Which cases to investigate
 
     # Output
-    final_report: Dict
-    execution_log: List[Dict]
-
+    final_report: dict
+    execution_log: list[dict]
 
 def create_dismissal_workflow():
     """Create and return the dismissal analysis workflow."""
@@ -106,11 +102,9 @@ def create_dismissal_workflow():
 
     return workflow.compile()
 
-
 # ============================================================================
 # WORKFLOW NODES
 # ============================================================================
-
 
 def fetch_data_node(state: DismissalAnalysisState) -> DismissalAnalysisState:
     """Fetch dismissals and violations datasets from Socrata."""
@@ -172,7 +166,6 @@ def fetch_data_node(state: DismissalAnalysisState) -> DismissalAnalysisState:
 
     logger.info(f"[FETCH] Fetched {len(dismissals_df)} dismissals, {len(violations_df)} violations")
     return state
-
 
 def classify_dismissals_node(state: DismissalAnalysisState) -> DismissalAnalysisState:
     """Classify each dismissal reason with DismissalReasonClassifier."""
@@ -246,7 +239,6 @@ def classify_dismissals_node(state: DismissalAnalysisState) -> DismissalAnalysis
     logger.info(f"[CLASSIFY] Classified {len(classifications)} dismissals")
     return state
 
-
 def analyze_patterns_node(state: DismissalAnalysisState) -> DismissalAnalysisState:
     """Analyze dismissal patterns by inspector, defect type, and borough."""
     logger.info("[ANALYZE] Starting pattern analysis")
@@ -261,7 +253,7 @@ def analyze_patterns_node(state: DismissalAnalysisState) -> DismissalAnalysisSta
         return state
 
     # Build inspector statistics
-    inspector_stats: Dict[str, InspectorDismissalStats] = {}
+    inspector_stats: dict[str, InspectorDismissalStats] = {}
     for cls in classifications:
         if not cls.inspector_id:
             continue
@@ -353,7 +345,6 @@ def analyze_patterns_node(state: DismissalAnalysisState) -> DismissalAnalysisSta
     )
     return state
 
-
 def claude_assess_node(state: DismissalAnalysisState) -> DismissalAnalysisState:
     """Use Claude to assess patterns and recommend coaching."""
     logger.info("[CLAUDE] Starting Claude assessment")
@@ -437,7 +428,6 @@ Keep response to ~350 tokens focused on actionable insights.
     logger.info("[CLAUDE] Assessment complete")
     return state
 
-
 def generate_report_node(state: DismissalAnalysisState) -> DismissalAnalysisState:
     """Generate final structured JSON report."""
     logger.info("[REPORT] Generating final report")
@@ -476,18 +466,16 @@ def generate_report_node(state: DismissalAnalysisState) -> DismissalAnalysisStat
     logger.info("[REPORT] Report generated successfully")
     return state
 
-
 # ============================================================================
 # EXECUTION HELPER
 # ============================================================================
-
 
 def run_dismissal_workflow(
     dismissals_fourfour: str = "p4u2-3jgx",
     violations_fourfour: str = "6kbp-uz6m",
     max_rows: int = 1000,
-    borough_filter: Optional[str] = None,
-) -> Dict[str, Any]:
+    borough_filter: str | None = None,
+) -> dict[str, Any]:
     """
     Run the dismissal analysis workflow.
 
@@ -530,7 +518,6 @@ def run_dismissal_workflow(
 
     logger.info("[COMPLETE] Dismissal Analysis Workflow")
     return result["final_report"]
-
 
 if __name__ == "__main__":
     # Example execution

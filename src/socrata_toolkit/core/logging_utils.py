@@ -17,7 +17,6 @@ def get_logger(name: str = "socrata_toolkit") -> logging.Logger:
         logger.setLevel(logging.INFO)
     return logger
 
-
 def write_run_report(path: str, payload: dict[str, Any]) -> None:
     out = Path(path)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -26,7 +25,6 @@ def write_run_report(path: str, payload: dict[str, Any]) -> None:
         **payload,
     }
     out.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-
 
 def redact_secrets(value: str) -> str:
     for key in ["password", "token", "secret", "apikey", "api_key"]:

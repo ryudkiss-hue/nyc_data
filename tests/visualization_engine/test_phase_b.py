@@ -7,7 +7,6 @@ import plotly.graph_objects as go
 from app.visualization_engine.phase_b import PhaseBVisualizations
 from app.visualization_engine.statistics_display import StatisticsPanel
 
-
 @pytest.fixture
 def phase_b_viz(mock_connection, phase_b_test_data):
     """Create Phase B visualizations instance with mocked connection.
@@ -22,7 +21,6 @@ def phase_b_viz(mock_connection, phase_b_test_data):
     viz = PhaseBVisualizations(mock_connection)
     mock_connection.fetch_dataframe.return_value = phase_b_test_data
     return viz
-
 
 class TestPhaseBVisualizationBasics:
     """Test basic functionality of Phase B visualizations."""
@@ -102,7 +100,6 @@ class TestPhaseBVisualizationBasics:
         assert all(isinstance(v[0], go.Figure) for v in charts.values())
         assert all(isinstance(v[1], StatisticsPanel) for v in charts.values())
 
-
 class TestPhaseBStatistics:
     """Test statistics calculation in Phase B visualizations."""
 
@@ -136,7 +133,6 @@ class TestPhaseBStatistics:
         assert "mean_value" in stats_dict
         assert "last_timestamp" in stats_dict
 
-
 class TestPhaseBDataValidation:
     """Test data validation in Phase B visualizations."""
 
@@ -156,7 +152,6 @@ class TestPhaseBDataValidation:
         for borough in boroughs:
             fig, stats = phase_b_viz.render_borough_gauge(borough)
             assert isinstance(fig, go.Figure)
-
 
 class TestPhaseBChartCharacteristics:
     """Test specific characteristics of Phase B charts."""

@@ -3,7 +3,6 @@ import pytest
 
 from app.analytics import normalize_bbl
 
-
 def test_normalize_bbl_vectorized():
     """Verify high-performance BBL normalization logic."""
     series = pd.Series([

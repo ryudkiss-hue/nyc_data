@@ -7,7 +7,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 def build_executable(*, setup_only: bool = False) -> Path:
     """Compile NYC DOT Toolkit into dist/nyc-dot-toolkit.exe (or platform binary)."""
     print("--- Building NYC DOT Toolkit standalone executable ---")
@@ -54,7 +53,6 @@ def build_executable(*, setup_only: bool = False) -> Path:
         size_mb = out.stat().st_size / (1024 * 1024)
         print(f"Approximate size: {size_mb:.1f} MB")
     return out
-
 
 if __name__ == "__main__":
     build_executable()

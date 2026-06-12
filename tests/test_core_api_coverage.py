@@ -13,9 +13,7 @@ import pytest
 
 flask = pytest.importorskip("flask", reason="flask not installed")
 
-
 from socrata_toolkit.core.api import create_app  # noqa: E402 — must come after guard
-
 
 @pytest.fixture()
 def client():
@@ -24,7 +22,6 @@ def client():
     app.config["TESTING"] = True
     with app.test_client() as c:
         yield c
-
 
 # ---------------------------------------------------------------------------
 # /api/health
@@ -50,7 +47,6 @@ class TestHealthEndpoint:
         data = resp.get_json()
         assert "version" in data
 
-
 # ---------------------------------------------------------------------------
 # /api/search
 # ---------------------------------------------------------------------------
@@ -75,7 +71,6 @@ class TestSearchEndpoint:
         with patch("socrata_toolkit.core.client.SocrataClient.search", return_value=[]):
             resp = client.get("/api/search")
         assert resp.status_code == 200
-
 
 # ---------------------------------------------------------------------------
 # /api/analyze  (POST)
@@ -119,7 +114,6 @@ class TestAnalyzeEndpoint:
         data = resp.get_json()
         assert data["row_count"] == 3
 
-
 # ---------------------------------------------------------------------------
 # /api/quality-score  (POST)
 # ---------------------------------------------------------------------------
@@ -159,7 +153,6 @@ class TestQualityScoreEndpoint:
         data = resp.get_json()
         assert 0 <= data["overall"] <= 100
 
-
 # ---------------------------------------------------------------------------
 # /api/prioritize  (POST)
 # ---------------------------------------------------------------------------
@@ -190,7 +183,6 @@ class TestPrioritizeEndpoint:
         assert "summary" in data
         assert "rows" in data
 
-
 # ---------------------------------------------------------------------------
 # /api/board  (GET)
 # ---------------------------------------------------------------------------
@@ -213,7 +205,6 @@ class TestBoardEndpoint:
         assert "stats" in data
         assert "tasks" in data
 
-
 # ---------------------------------------------------------------------------
 # /api/kpis  (GET)
 # ---------------------------------------------------------------------------
@@ -229,7 +220,6 @@ class TestKPIsEndpoint:
         data = resp.get_json()
         assert data["health"] == "unknown"
         assert data["metrics"] == []
-
 
 # ---------------------------------------------------------------------------
 # create_app factory

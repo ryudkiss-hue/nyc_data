@@ -31,7 +31,6 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-
 class HealthStatus(Enum):
     """Health status classification."""
     HEALTHY = "healthy"
@@ -39,14 +38,12 @@ class HealthStatus(Enum):
     SCHEMA_DRIFT = "schema_drift"
     EMPTY_OR_ERROR = "empty_or_error"
 
-
 class Severity(Enum):
     """Severity levels for escalation."""
     CRITICAL = "critical"  # 0-20
     HIGH = "high"          # 21-50
     MEDIUM = "medium"      # 51-70
     LOW = "low"            # 71-100
-
 
 @dataclass
 class DatasetHealthMetrics:
@@ -60,7 +57,6 @@ class DatasetHealthMetrics:
     is_accessible: bool
     error_message: str | None = None
     fetch_timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-
 
 @dataclass
 class DatasetHealthReport:
@@ -92,7 +88,6 @@ class DatasetHealthReport:
             "recommendations": self.recommendations,
             "metadata": self.metadata,
         }
-
 
 class DatasetHealthClassifier:
     """Classify dataset health and generate remediation guidance.

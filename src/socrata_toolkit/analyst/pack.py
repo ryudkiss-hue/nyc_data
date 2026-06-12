@@ -1,7 +1,5 @@
 """Assemble Analyst Pack output folder."""
 
-
-
 from __future__ import annotations
 
 import json
@@ -29,8 +27,6 @@ def _dataframe_to_excel(df: pd.DataFrame, path: Path) -> None:
             ws.append(list(row))
         wb.save(path)
 
-
-
 from .. import __version__
 from .config import AnalystProfile
 
@@ -40,8 +36,6 @@ from .config import AnalystProfile
 class AnalystPackResult:
 
     """Paths and metadata for a completed analyst pack run."""
-
-
 
     pack_dir: Path
 
@@ -63,13 +57,9 @@ class AnalystPackResult:
 
     finished_at: str = ""
 
-
-
     def manifest_path(self) -> Path:
 
         return self.pack_dir / "manifest.json"
-
-
 
     def write_manifest(self) -> None:
 
@@ -99,10 +89,6 @@ class AnalystPackResult:
 
         self.pack_dir.mkdir(parents=True, exist_ok=True)
         self.manifest_path().write_text(json.dumps(payload, indent=2), encoding="utf-8")
-
-
-
-
 
 def assemble_pack(
 
@@ -152,8 +138,6 @@ def assemble_pack(
 
         pack_dir.mkdir(parents=True, exist_ok=True)
 
-
-
     result = AnalystPackResult(
 
         pack_dir=pack_dir,
@@ -174,15 +158,11 @@ def assemble_pack(
 
     )
 
-
-
     if dry_run:
 
         result.warnings.append("Dry run — no files written")
 
         return result
-
-
 
     if construction is not None and not construction.empty:
 
@@ -192,8 +172,6 @@ def assemble_pack(
 
         result.artifacts["construction_list"] = str(xlsx)
 
-
-
     if conflicts_md:
 
         path = pack_dir / "conflicts_summary.md"
@@ -201,8 +179,6 @@ def assemble_pack(
         path.write_text(conflicts_md, encoding="utf-8")
 
         result.artifacts["conflicts_summary"] = str(path)
-
-
 
     if construction_diff_md:
 
@@ -212,8 +188,6 @@ def assemble_pack(
 
         result.artifacts["construction_list_diff"] = str(path)
 
-
-
     if conflicts_review is not None and not conflicts_review.empty:
 
         xlsx = pack_dir / "conflicts_review.xlsx"
@@ -221,8 +195,6 @@ def assemble_pack(
         _dataframe_to_excel(conflicts_review, xlsx)
 
         result.artifacts["conflicts_review"] = str(xlsx)
-
-
 
     if executive_md:
 
@@ -240,8 +212,6 @@ def assemble_pack(
 
         result.artifacts["executive_summary"] = str(html_path)
 
-
-
     if contract_report_path and Path(contract_report_path).exists():
 
         dest = pack_dir / "contract_status.md"
@@ -250,8 +220,6 @@ def assemble_pack(
 
         result.artifacts["contract_status"] = str(dest)
 
-
-
     if program_kpi_path and Path(program_kpi_path).exists():
 
         dest = pack_dir / "program_kpi.json"
@@ -259,8 +227,6 @@ def assemble_pack(
         dest.write_text(Path(program_kpi_path).read_text(encoding="utf-8"), encoding="utf-8")
 
         result.artifacts["program_kpi"] = str(dest)
-
-
 
     if inquiry_dir and inquiry_dir.exists():
 
@@ -275,8 +241,6 @@ def assemble_pack(
                 (out_inq / f.name).write_text(f.read_text(encoding="utf-8"), encoding="utf-8")
 
         result.artifacts["inquiry_drafts"] = str(out_inq)
-
-
 
     result.finished_at = datetime.now(timezone.utc).isoformat()
 

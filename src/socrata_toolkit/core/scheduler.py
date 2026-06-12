@@ -18,7 +18,6 @@ from apscheduler.triggers.cron import CronTrigger
 
 logger = logging.getLogger(__name__)
 
-
 class PipelineScheduler:
     """Orchestrate automated data pipeline, validation, and monitoring tasks."""
 
@@ -202,7 +201,6 @@ class PipelineScheduler:
 
         logger.info(f"Scheduler config saved to {config_path}")
 
-
 class ScheduleRunner:
     """Execute scheduled pipeline routines with error handling and logging."""
 
@@ -357,7 +355,6 @@ class ScheduleRunner:
         logger.warning(f"[{severity}] {message}")
         # Slack notification would go here if configured
         # Email notification would go here if configured
-
 
 def create_default_scheduler() -> PipelineScheduler:
     """Create and initialize default scheduler."""

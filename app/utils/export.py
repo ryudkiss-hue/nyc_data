@@ -18,11 +18,9 @@ def to_csv_bytes(df: pd.DataFrame) -> bytes:
     """UTF-8 CSV bytes."""
     return df.to_csv(index=False).encode("utf-8")
 
-
 def to_json_bytes(df: pd.DataFrame, *, orient: str = "records") -> bytes:
     """Pretty JSON bytes."""
     return df.to_json(orient=orient, indent=2, date_format="iso").encode("utf-8")
-
 
 def to_excel_bytes(frames: dict[str, pd.DataFrame]) -> bytes | None:
     """Multi-sheet Excel workbook. Returns None if no engine is available."""
@@ -45,7 +43,6 @@ def to_excel_bytes(frames: dict[str, pd.DataFrame]) -> bytes | None:
     buffer.seek(0)
     return buffer.getvalue()
 
-
 def to_zip_bundle(frames: dict[str, pd.DataFrame], *, fmt: str = "csv") -> bytes:
     """ZIP archive of multiple datasets, one file each (csv or json)."""
     buffer = io.BytesIO()
@@ -65,7 +62,6 @@ def to_zip_bundle(frames: dict[str, pd.DataFrame], *, fmt: str = "csv") -> bytes
         zf.writestr("manifest.json", json.dumps(manifest, indent=2))
     buffer.seek(0)
     return buffer.getvalue()
-
 
 def summary_table(frames: dict[str, pd.DataFrame]) -> pd.DataFrame:
     """One-row-per-dataset summary for the export picker."""

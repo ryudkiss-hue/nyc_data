@@ -25,7 +25,6 @@ class PerformanceTier(str, Enum):
     MEDIUM = "MEDIUM"
     LOW = "LOW"
 
-
 class MetricType(str, Enum):
     """Metric category for classification."""
     VELOCITY = "VELOCITY"           # Inspections/week
@@ -33,14 +32,12 @@ class MetricType(str, Enum):
     ACCURACY = "ACCURACY"           # Reopened %, accuracy ratio
     EFFICIENCY = "EFFICIENCY"       # Time-to-close, consistency
 
-
 class AnomalyType(str, Enum):
     """Anomaly classification for time-series patterns."""
     SUDDEN_DROP = "SUDDEN_DROP"
     PLATEAU = "PLATEAU"
     ACCELERATING = "ACCELERATING"
     NORMAL = "NORMAL"
-
 
 @dataclass
 class VelocityMetrics:
@@ -73,7 +70,6 @@ class VelocityMetrics:
     # Metadata
     data_quality_flag: str = ""  # "LOW", "MEDIUM", "HIGH"
     sample_size: int = 0
-
 
 @dataclass
 class VelocityClassification:
@@ -120,7 +116,6 @@ class VelocityClassification:
             "flagged_issues": self.flagged_issues,
             "coaching_focus": self.coaching_focus,
         }
-
 
 class VelocityClassifier:
     """

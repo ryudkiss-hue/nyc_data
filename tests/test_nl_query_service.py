@@ -4,7 +4,6 @@ import pytest
 
 from app.services.nl_query import parse_complaint_to_json, triage_complaint
 
-
 @patch("app.services.nl_query._call_llm")
 def test_parse_complaint_to_json(mock_call_llm):
     mock_call_llm.return_value = {

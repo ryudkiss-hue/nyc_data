@@ -51,13 +51,11 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-
 class Operation(Enum):
     """CDC operation type."""
     INSERT = "INSERT"
     UPDATE = "UPDATE"
     DELETE = "DELETE"
-
 
 @dataclass
 class CDCEvent:
@@ -112,7 +110,6 @@ class CDCEvent:
             "metadata": self.metadata or {},
         }
 
-
 @dataclass
 class ProcessingResult:
     """Result of CDC event processing.
@@ -130,7 +127,6 @@ class ProcessingResult:
     scd_record_id: str | None = None
     error: str | None = None
 
-
 @dataclass
 class OrderingReport:
     """Report on event ordering validation.
@@ -143,7 +139,6 @@ class OrderingReport:
     valid: bool
     issues: list[str]
     stats: dict[str, Any]
-
 
 class CDCStorage:
     """Persistent storage for CDC events in PostgreSQL.
@@ -372,7 +367,6 @@ class CDCStorage:
                         )
                     )
                 return events
-
 
 class CDCProcessor:
     """Main CDC processor for handling change events.

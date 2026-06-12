@@ -25,7 +25,6 @@ from app.data_loader import (
 
 _URGENCY_COLORS = {"critical": "🔴", "urgent": "🟠", "normal": "🟡", "ok": "🟢"}
 
-
 # ---------------------------------------------------------------------------
 # ROI Header
 # ---------------------------------------------------------------------------
@@ -72,7 +71,6 @@ def render_roi_header(roi: ProductivityROI | None) -> None:
         f"{roi.quality_flags:,}",
         help="Total data quality issues detected across all workflows",
     )
-
 
 # ---------------------------------------------------------------------------
 # QA / QC Ledger
@@ -157,7 +155,6 @@ def view_qa(results: dict) -> None:
                 mime="text/csv",
             )
 
-
 # ---------------------------------------------------------------------------
 # Spatial Conflict Detection
 # ---------------------------------------------------------------------------
@@ -177,7 +174,6 @@ def _conflicts_map_df(conflicts: pd.DataFrame) -> pd.DataFrame:
         except Exception:
             pass
     return mapped
-
 
 def view_spatial(results: dict, map_layers: dict[str, pd.DataFrame]) -> None:
     st.subheader("🗺️ Spatial Conflict Detection")
@@ -239,7 +235,6 @@ def view_spatial(results: dict, map_layers: dict[str, pd.DataFrame]) -> None:
             mime="text/csv",
         )
 
-
 # ---------------------------------------------------------------------------
 # Contract & Dispatch Clearance
 # ---------------------------------------------------------------------------
@@ -291,7 +286,6 @@ def view_contract(results: dict) -> None:
                 mime="text/csv",
             )
 
-
 # ---------------------------------------------------------------------------
 # Productivity & ADA Progress
 # ---------------------------------------------------------------------------
@@ -325,7 +319,6 @@ def view_productivity(results: dict) -> None:
         st.info(
             "Load **ramp_progress** and **pedestrian_demand** datasets for the demand×supply spatial index."
         )
-
 
 # ---------------------------------------------------------------------------
 # Data Quality View
@@ -434,7 +427,6 @@ def view_quality(results: dict, frames: dict) -> None:
                     f"Only in {ds_a}: {len(cmp_df[cmp_df[f'in_{ds_b}'] == '—'])} · "
                     f"Only in {ds_b}: {len(cmp_df[cmp_df[f'in_{ds_a}'] == '—'])}"
                 )
-
 
 # ---------------------------------------------------------------------------
 # Ingestion Matrix

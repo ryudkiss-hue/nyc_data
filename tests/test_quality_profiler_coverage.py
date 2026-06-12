@@ -13,7 +13,6 @@ from socrata_toolkit.quality.profiler import (
     generate_profile_report,
 )
 
-
 class TestDataType:
     """Tests for DataType enum."""
 
@@ -41,7 +40,6 @@ class TestDataType:
         """Test DataType enum comparison."""
         assert DataType.NUMERIC != DataType.STRING
 
-
 class TestColumnProfile:
     """Tests for ColumnProfile dataclass."""
 
@@ -60,7 +58,6 @@ class TestColumnProfile:
         assert prof.min_value is None
         assert prof.max_value is None
         assert prof.cardinality == 0
-
 
 class TestTableProfile:
     """Tests for TableProfile dataclass."""
@@ -106,7 +103,6 @@ class TestTableProfile:
         result = prof.to_dict()
         assert result["column_profiles"]["created_at"]["data_type"] == "datetime"
 
-
 class TestDriftReport:
     """Tests for DriftReport dataclass."""
 
@@ -128,7 +124,6 @@ class TestDriftReport:
         report = DriftReport()
         assert report.is_drifted is False
         assert report.drift_details == {}
-
 
 class TestProfileGenerator:
     """Tests for ProfileGenerator class."""
@@ -312,7 +307,6 @@ class TestProfileGenerator:
         assert summary["row_count"] == 1000
         assert summary["column_count"] == 2
 
-
 class TestDataProfilerLegacy:
     """Tests for legacy DataProfiler class."""
 
@@ -322,7 +316,6 @@ class TestDataProfilerLegacy:
         result = profiler.profile_dataset({"key": "value"})
         assert isinstance(result, dict)
         assert result == {}
-
 
 class TestGenerateProfileReportLegacy:
     """Tests for legacy generate_profile_report function."""

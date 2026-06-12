@@ -7,7 +7,6 @@ import pytest
 
 from socrata_toolkit.analytics.quality import DataQualityAudit
 
-
 @pytest.fixture
 def sample_df():
     # Need larger N for Z-score > 3

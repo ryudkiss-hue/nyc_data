@@ -28,6 +28,8 @@ from datetime import datetime, timezone
 from typing import Any, TypedDict
 from uuid import uuid4
 
+from ..core.client import SocrataClient, SocrataConfig
+from ..governance.audit_logger import AuditLogger
 from .legal_hold_classifier import (
     AuditTrailMetrics,
     ComplianceStatus,
@@ -37,17 +39,14 @@ from .legal_hold_classifier import (
     RecordType,
     Sensitivity,
 )
-from ..core.client import SocrataClient, SocrataConfig
-from ..governance.audit_logger import AuditLogger
 
 logger = logging.getLogger(__name__)
 
 try:
-    from langgraph.graph import StateGraph, START, END
+    from langgraph.graph import END, START, StateGraph
     HAS_LANGGRAPH = True
 except ImportError:
     HAS_LANGGRAPH = False
-
 
 class LegalHoldState(TypedDict):
     """Workflow state: passed through each node."""
@@ -67,7 +66,6 @@ class LegalHoldState(TypedDict):
     compliance_certificate: dict[str, Any]
     error_log: list[str]
     audit_logger: AuditLogger | None
-
 
 class LegalHoldWorkflow:
     """Orchestrate legal hold and compliance verification via LangGraph.
@@ -496,7 +494,6 @@ Provide concise, actionable guidance (~300 tokens)."""
             "fallback_mode": True,
         }
 
-
 def build_legal_hold_graph() -> StateGraph:
     """Build and return the LangGraph graph (for standalone use).
 
@@ -508,7 +505,6 @@ def build_legal_hold_graph() -> StateGraph:
 
     workflow = LegalHoldWorkflow()
     return workflow.compiled
-
 
 def run_legal_hold_workflow(
     domain: str = "data.cityofnewyork.us",

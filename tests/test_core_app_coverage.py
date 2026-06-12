@@ -19,7 +19,6 @@ from socrata_toolkit.core.app import (
     safe_read_table,
 )
 
-
 class TestLoadEnv:
     """Tests for load_env function."""
 
@@ -57,7 +56,6 @@ class TestLoadEnv:
             result = load_env()
             assert isinstance(result, dict)
 
-
 class TestGetEngine:
     """Tests for get_engine function."""
 
@@ -87,7 +85,6 @@ class TestGetEngine:
             result = get_engine("postgresql://localhost/test")
             assert result is None
 
-
 class TestListTables:
     """Tests for list_tables function."""
 
@@ -112,7 +109,6 @@ class TestListTables:
         with patch("pandas.read_sql_query", return_value=expected_df):
             result = list_tables(mock_engine)
             assert len(result) == 0
-
 
 class TestCandidateSidewalkTables:
     """Tests for candidate_sidewalk_tables function."""
@@ -173,7 +169,6 @@ class TestCandidateSidewalkTables:
         with patch("socrata_toolkit.core.app.list_tables", return_value=mock_tables):
             result = candidate_sidewalk_tables(mock_engine)
             assert result.count("inspections") == 1
-
 
 class TestSafeReadTable:
     """Tests for safe_read_table function."""
@@ -248,7 +243,6 @@ class TestSafeReadTable:
             with patch("pandas.read_sql_query", side_effect=read_sql_side_effect):
                 result = safe_read_table(mock_engine, "test_table")
                 assert len(result) == 2
-
 
 class TestFindLatlonColumns:
     """Tests for find_latlon_columns function."""
@@ -335,7 +329,6 @@ class TestFindLatlonColumns:
         })
         result = find_latlon_columns(df)
         assert result is None
-
 
 class TestComputeKpisFromDf:
     """Tests for compute_kpis_from_df function."""

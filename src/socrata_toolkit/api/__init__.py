@@ -18,16 +18,13 @@ app = FastAPI(title="Socrata Toolkit API", version="0.3.0")
 # In-memory storage or DB path
 DB_PATH = "nyc_dash.db"
 
-
 @app.get("/")
 def read_root():
     return {"name": "Socrata Toolkit API", "status": "active"}
 
-
 @app.get("/health")
 def health_check():
     return {"status": "healthy"}
-
 
 @app.get("/tables")
 def list_tables():
@@ -37,7 +34,6 @@ def list_tables():
         return {"tables": [t[0] for t in tables]}
     finally:
         mgr.close()
-
 
 @app.get("/data/{table}")
 def get_table_data(table: str, limit: int = 100):
@@ -49,7 +45,6 @@ def get_table_data(table: str, limit: int = 100):
         raise HTTPException(status_code=404, detail=f"Table {table} not found or query failed: {e}")
     finally:
         mgr.close()
-
 
 @app.post("/analyze/costs")
 def analyze_costs(data: list[dict[str, Any]]):
@@ -68,7 +63,6 @@ def analyze_costs(data: list[dict[str, Any]]):
         "records": df_with_costs.to_dict(orient="records"),
     }
 
-
 @app.post("/analyze/quality")
 def analyze_quality(data: list[dict[str, Any]]):
     df = pd.DataFrame(data)
@@ -78,7 +72,6 @@ def analyze_quality(data: list[dict[str, Any]]):
         "completeness": score.completeness,
         "consistency": score.consistency,
     }
-
 
 if __name__ == "__main__":
     import uvicorn

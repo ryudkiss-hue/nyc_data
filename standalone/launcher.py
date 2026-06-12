@@ -39,11 +39,9 @@ ENTRY_BG = "#1a2332"
 BTN_ACTIVE = "#c9a020"
 FONT_FAMILY = "Segoe UI"
 
-
 def make_font(size: int = 10, bold: bool = False) -> tuple:
     weight = "bold" if bold else "normal"
     return (FONT_FAMILY, size, weight)
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -62,12 +60,10 @@ def read_env() -> dict[str, str]:
                 values[k.strip()] = v.strip()
     return values
 
-
 def write_env(values: dict[str, str]) -> None:
     ENV_DIR.mkdir(parents=True, exist_ok=True)
     lines = [f"{k}={v}" for k, v in values.items()]
     ENV_FILE.write_text("\n".join(lines) + "\n", encoding="utf-8")
-
 
 def wait_for_health(timeout: int = 30) -> bool:
     """Poll /_stcore/health until 200 OK or timeout."""
@@ -84,7 +80,6 @@ def wait_for_health(timeout: int = 30) -> bool:
             pass
         time.sleep(1)
     return False
-
 
 # ---------------------------------------------------------------------------
 # Main launcher window
@@ -179,7 +174,6 @@ class Launcher(tk.Tk):
         self.stop_server()
         self.destroy()
 
-
 # ---------------------------------------------------------------------------
 # Page 0 — Welcome
 # ---------------------------------------------------------------------------
@@ -247,7 +241,6 @@ class WelcomePage(tk.Frame):
         )
         btn.pack(pady=(0, 40))
 
-
 # ---------------------------------------------------------------------------
 # Page 1 — Configuration
 # ---------------------------------------------------------------------------
@@ -258,7 +251,6 @@ FIELDS = [
     ("OPENAI_API_KEY", "OpenAI API Key", True),
     ("OLLAMA_HOST", "Ollama Host", False),
 ]
-
 
 class ConfigPage(tk.Frame):
     def __init__(self, parent: tk.Frame, app: Launcher) -> None:
@@ -408,7 +400,6 @@ class ConfigPage(tk.Frame):
             values["FORCE_DEMO_MODE"] = "1"
         write_env(values)
         self._app.go_to_install()
-
 
 # ---------------------------------------------------------------------------
 # Page 2 — Install & Launch
@@ -601,7 +592,6 @@ class InstallPage(tk.Frame):
         self._btn_continue.config(state=tk.NORMAL)
         self._app.go_to_running()
 
-
 # ---------------------------------------------------------------------------
 # Page 3 — Running
 # ---------------------------------------------------------------------------
@@ -735,7 +725,6 @@ class RunningPage(tk.Frame):
         messagebox.showinfo("Stopped", "The Streamlit server has been stopped.")
         self._app.go_to_welcome()
 
-
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
@@ -744,7 +733,6 @@ def main() -> None:
     app = Launcher()
     app.protocol("WM_DELETE_WINDOW", app.on_closing)
     app.mainloop()
-
 
 if __name__ == "__main__":
     main()
