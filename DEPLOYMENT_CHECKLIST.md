@@ -190,21 +190,34 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def run_nightly_pipeline():
-    """Run complete nightly analytics pipeline."""
+    """Run complete nightly analytics pipeline (all processes in sequence)."""
     logger.info("🌙 Starting nightly KPI analytics pipeline...")
     
     try:
-        # Metrics computation
         engine = KPIStatisticsEngine(motherduck_token=os.getenv('MOTHERDUCK_TOKEN'))
         engine.connect()
+        
+        # Step 1: Core metrics computation (4:00 PM)
+        logger.info("Computing core 60+ metrics...")
         result = engine.compute_all_metrics()
-        engine.close()
         
         if result.status == 'FAILED':
             logger.error(f"Metrics computation failed: {result.error_message}")
+            engine.close()
             return False
         
-        # Validation
+        # Step 2: Advanced metrics (normality, variance, seasonal, autocorr) (4:05 PM)
+        logger.info("Computing advanced statistical metrics...")
+        adv_result = engine.update_advanced_metrics_batch()
+        logger.info(f"Advanced metrics: {adv_result['computed']}/{adv_result['total']} computed")
+        
+        # Step 3: Time series metrics (stationarity, ARIMA, VAR) (4:10 PM)
+        logger.info("Computing time series metrics (ARIMA, stationarity, VAR)...")
+        ts_result = engine.compute_weekly_timeseries_metrics()
+        logger.info(f"Time series metrics: {ts_result['stationarity']} stationarity, {ts_result['arima']} ARIMA, {ts_result['var']} VAR")
+        
+        # Step 4: Validation (all layers)
+        logger.info("Running validation checks...")
         conn = duckdb.connect('md:', config={'motherduck_token': os.getenv('MOTHERDUCK_TOKEN')})
         validator = KPIValidator(conn)
         report = validator.validate_all()
@@ -212,16 +225,19 @@ def run_nightly_pipeline():
         if not report.all_passed:
             logger.error("Data validation failed")
             conn.close()
+            engine.close()
             return False
         
-        # Monitoring
+        # Step 5: Monitoring & Alerts
+        logger.info("Running monitoring checks...")
         monitor = KPIMonitor(conn, os.getenv('SLACK_WEBHOOK_URL'))
         alerts = monitor.monitor_all()
         monitor.log_monitoring_result(alerts)
         
         conn.close()
+        engine.close()
         
-        logger.info("✅ Nightly pipeline complete!")
+        logger.info("✅ Nightly pipeline complete (core + advanced + time series)!")
         return True
         
     except Exception as e:
@@ -229,10 +245,15 @@ def run_nightly_pipeline():
         return False
 
 if __name__ == "__main__":
-    # Schedule for 3:30 AM daily
-    schedule.every().day.at("03:30").do(run_nightly_pipeline)
+    # Schedule for 4:00 PM daily (all steps run sequentially)
+    schedule.every().day.at("16:00").do(run_nightly_pipeline)
     
-    logger.info("Scheduler started. Waiting for scheduled tasks...")
+    logger.info("Scheduler started. Daily pipeline runs at 4:00 PM.")
+    logger.info("  4:00 PM - Core metrics (60+)")
+    logger.info("  4:05 PM - Advanced metrics (normality, variance, seasonal)")
+    logger.info("  4:10 PM - Time series metrics (ARIMA, stationarity, VAR)")
+    logger.info("  4:15 PM - Validation & monitoring")
+    
     while True:
         schedule.run_pending()
         time.sleep(60)
@@ -272,50 +293,47 @@ engine.close()
 echo "✅ Advanced metrics update complete!"
 ```
 
-### Time Series Enhancements (Recommended)
+### Time Series & Advanced Metrics (Integrated Daily)
 
-Advanced time series capabilities available if statsmodels installed:
+All advanced metrics computation (stationarity, ARIMA, VAR, normality tests, seasonal analysis) runs as part of the core daily pipeline.
 
+**Requirements:**
 ```bash
-pip install statsmodels
+pip install statsmodels scipy
 ```
 
-Adds:
-- Stationarity testing (ADF, KPSS)
-- ARIMA/SARIMAX forecasting
-- VAR multivariate analysis
-- Granger causality detection
+**Daily execution (all steps run in sequence):**
 
-**Daily execution integrated with nightly pipeline:**
-
-Computation runs daily (4:05 PM) after core metrics complete, as part of nightly scheduler:
-
-```python
-# In APScheduler (src/socrata_toolkit/motherduck/scheduler.py)
-schedule.every().day.at("16:05").do(engine.compute_all_metrics)      # Nightly core metrics
-schedule.every().day.at("16:05").do(engine.update_advanced_metrics_batch)  # Advanced metrics
-schedule.every().day.at("16:10").do(engine.compute_weekly_timeseries_metrics)  # Time series
+```
+4:00 PM - Core metrics computation (60+ metrics, 90 rows)
+4:05 PM - Advanced metrics (normality tests, Levene, Cohen's d, STL, Ljung-Box, robust regression)
+4:10 PM - Time series metrics (ADF/KPSS stationarity, ARIMA forecasting, VAR multivariate)
+4:15 PM - Validation & monitoring (8 checks, Slack alerts)
 ```
 
-Graceful degradation: if statsmodels unavailable, skips with warning (nightly core metrics unaffected).
+**Features:**
+- Stationarity testing (ADF, KPSS) with automatic differencing detection
+- ARIMA/SARIMAX forecasting with 95% confidence intervals
+- VAR multivariate analysis with Granger causality testing
+- Graceful degradation: if statsmodels/scipy unavailable, skips with warning (core metrics unaffected)
 
-Column additions to `analytics.kpi_statistics_by_borough`:
-- adf_p_value, adf_is_stationary (stationarity)
-- kpss_p_value, kpss_is_stationary (stationarity)
-- arima_order, arima_aic, forecast_value, forecast_ci_lower, forecast_ci_upper (ARIMA)
-- var_lag_order, var_aic (multivariate)
+**Schema:**
+11 new columns added to `analytics.kpi_statistics_by_borough`:
+- `adf_p_value`, `adf_is_stationary` (stationarity)
+- `kpss_p_value`, `kpss_is_stationary` (stationarity)
+- `arima_order`, `arima_aic` (ARIMA model)
+- `forecast_value`, `forecast_ci_lower`, `forecast_ci_upper` (95% CI forecast)
+- `var_lag_order`, `var_aic` (multivariate)
 
-**Cron schedule (daily with all other processes):**
+**Cron schedule (single daily entry):**
 
 ```bash
 crontab -e
-# Add single entry for nightly execution at 4:00 PM (16:00)
+# Add single entry for complete nightly pipeline at 4:00 PM
 0 16 * * * /path/to/run_nightly_pipeline.sh >> /var/log/kpi_pipeline.log 2>&1
-# Nightly script automatically calls:
-#   - compute_all_metrics() at 4:00 PM
-#   - update_advanced_metrics_batch() at 4:05 PM  
-#   - compute_weekly_timeseries_metrics() at 4:10 PM
 ```
+
+The nightly script calls `run_nightly_pipeline()` which executes all steps in sequence (core → advanced → time series → validation).
 
 ---
 
