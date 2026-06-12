@@ -72,3 +72,9 @@ def forecast_completion(df: pd.DataFrame, progress_col: str = "completion_rate")
         return {"estimated_days": 0, "confidence": 0.0}
     avg_progress = df[progress_col].mean()
     return {"estimated_days": int(100 / avg_progress) if avg_progress > 0 else 0, "confidence": 0.85}
+
+def forecast_workload(df: pd.DataFrame, workload_col: str = "workload") -> dict:
+    """Forecast workload distribution."""
+    if df.empty or workload_col not in df.columns:
+        return {"total_workload": 0, "distribution": {}}
+    return {"total_workload": float(df[workload_col].sum()), "distribution": {}}
