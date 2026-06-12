@@ -13,13 +13,16 @@ NYC DOT Sidewalk Inspection & Management Toolkit — Plotly/Dash interactive pla
 - `tests/` — Test suite (pytest)
 - `scripts/` — Utility scripts
 
-**Current visualizations:** 30 across the app:
+**Current visualizations:** 65+ across the app:
 - 3 Plotly charts (velocity, lag, forecast) in mission control
 - 2 Streamlit maps (spatial workflows, studio view)
 - 1 scatter chart (workflows view)
 - 13 Advanced Analytics charts (CUSUM, Bayesian CI, KMeans, survival curves, etc.)
 - 10 GIS Dashboard charts (DBSCAN, TSP, conflict buffers, animated bar, etc.)
 - 1 quality scorecard chart
+- **NEW** 8 multi-dimensional charts (`viz/advanced_multidim.py`): parallel coordinates, SPLOM, clustermap, Sankey, radar, crossfilter, funnel, bubble
+- **NEW** 6 statistical charts (`viz/statistical_viz.py`): CUSUM control chart, Bayesian posterior strip, Moran's I scatter, ridge plot, changepoint overlay, HDI violin
+- **NEW** 6 D3.js components (`viz/d3_components.py`): chord diagram, force network, treemap, stream graph, hex-bin density map, packed hierarchy
 
 ---
 
@@ -336,7 +339,7 @@ SLA enforcement is configured in `src/socrata_toolkit/quality/sla.py` and `src/s
 
 ---
 
-## 📦 Dataset Registry (26 Datasets)
+## 📦 Dataset Registry (51 Datasets)
 
 All datasets live on `data.cityofnewyork.us`. Reference by key.
 
@@ -352,26 +355,66 @@ All datasets live on `data.cityofnewyork.us`. Reference by key.
 | `dismissals` | p4u2-3jgx | ~85K (as of 2026-06-05) | Updates daily |
 | `correspondences` | bheb-sjfi | ~30K | |
 | `curb_metal_protruding` | i2y3-sx2e | ~23K | |
+| `encroachments_defacements` | kyvb-rbwd | — | DOT tracking of encroachments + 311 complaint-driven defacement responses; updates 2026-06-01 |
 
 **accessibility** — ramp program
 | Key | Fourfour | Rows | Notes |
 |---|---|---|---|
-| `ramp_locations` | ufzp-rrqu | ~217K | Stale since 2021 |
+| `ramp_locations` | ufzp-rrqu | ~217K | ⚠️ Stale since 2021 |
 | `ramp_complaints` | jagj-gttd | ~6K (as of 2026-06-05) | Updates daily |
 | `ramp_progress` | e7gc-ub6z | ~187K (as of 2026-06-05) | Updates daily |
+| `mbpo_ramp_report` | 8kic-uvpz | ~248 | MBPO survey of ramps near accessible subway stations; stale 2021 |
+| `accessible_pedestrian_signals` | umfn-twbz | — | APS device locations (audio/visual signals for blind pedestrians); updated 2026-05-15 |
+| `lpi_signals` | mqt5-ctec | — | Leading Pedestrian Interval signals (Vision Zero); updated 2026-06-01 |
+| `exclusive_pedestrian_signals` | 8kuj-2n3u | — | Barnes Dance (all-walk phase) intersection locations; updated 2026-04-03 |
 
 **coordination** — permits and construction
 | Key | Fourfour | Rows | Notes |
 |---|---|---|---|
 | `street_permits` | tqtj-sjs8 | ~3.6M | |
+| `street_permits_historical` | c9sj-fmsg | — | DOT street/sidewalk permits 2013–2021 (archived) |
 | `weekly_construction` | r528-jcks | ~75 | ⚠️ Stale since 2017 |
 | `capital_blocks` | jvk9-k4re | 0 | ⚠️ Empty |
 | `capital_intersections` | 97nd-ff3i | ~7.8K | |
+| `capital_blocks_map` | si9g-fztb | — | Spatial map layer for capital reconstruction projects (blocks) |
+| `capital_intersections_map` | 3zy2-a8eg | — | Spatial map layer for capital reconstruction projects (intersections) |
 | `street_construction_inspections` | ydkf-mpxb | ~11.5M | |
 | `street_closures_block` | i6b5-j7bu | ~4.3K | |
-| `permit_stipulations` | gsgx-6efw | — | ⚠️ API error |
+| `permit_stipulations` | gsgx-6efw | — | ⚠️ API error (403) |
 | `street_resurfacing_schedule` | xnfm-u3k5 | ~309K | |
 | `street_resurfacing_inhouse` | ffaf-8mrv | ~602K | |
+| `concrete_repair_schedule` | 78sp-6jhj | — | Weekly concrete/hardware repair & installation schedule; updated 2026-03-03 |
+| `bridge_hold_stipulations` | ge3f-inui | — | Locations with Bridge Hold permit stipulations; updated 2026-06-11 |
+| `holiday_construction_embargo` | bbj7-8idq | — | Street blocks under construction embargo (Nov–Dec); updated 2026-03-23 |
+| `dob_permit_issuance` | ipu4-2q9a | — | DOB construction/demolition permits (use to correlate with street disruption); updated daily |
+
+**pavement_quality** — road surface condition and protection
+| Key | Fourfour | Rows | Notes |
+|---|---|---|---|
+| `street_pavement_ratings` | 6yyb-pb25 | — | Block-level pavement condition ratings (1–10 scale); updated 2026-06-01. Cross-reference with sidewalk condition_score. |
+| `street_pavement_ratings_map` | h933-akrx | — | Map layer companion to `street_pavement_ratings` |
+| `protected_streets_block` | wyih-3nzf | — | All currently protected streets (block-level); updated 2026-06-08. Important for conflict-detect (can't repair during protection window) |
+| `protected_streets_intersection` | bryy-vqd9 | — | Protected streets at intersection level |
+| `protected_streets_segments` | 9p9k-tusd | — | Protected streets as segment features (2024) |
+| `pothole_workorders` | x9wy-ing4 | — | Closed street pothole work orders with date + location; updated 2026-05-29 |
+
+**vision_zero** — pedestrian safety and KSI metrics
+| Key | Fourfour | Rows | Notes |
+|---|---|---|---|
+| `vzv_priority_corridors` | kdda-2wcy | — | Pedestrian KSI per-mile corridor rankings by borough; updated 2026-06-01 |
+| `vzv_priority_zones` | n4hs-fahn | — | Pedestrian KSI density area rankings; updated 2026-06-01 |
+| `vzv_priority_intersections` | 2nj7-jxah | — | Top intersections by pedestrian KSI; updated 2026-06-01 |
+| `vzv_street_improvement_corridors` | wqhs-q6wd | — | SIP corridor engineering improvements (signals, markings, concrete); updated 2026-06-01 |
+| `vzv_street_improvement_intersections` | 79sh-heg3 | — | SIP intersection engineering improvements; updated 2026-06-01 |
+| `vzv_enhanced_crossings` | bssx-36gg | — | High-visibility crosswalk locations; updated 2026-06-01 |
+| `motor_vehicle_collisions` | h9gi-nx95 | — | Crash event records; updated daily. Useful for correlating with sidewalk damage patterns near high-crash corridors. |
+
+**traffic_counts** — volume and pedestrian flow
+| Key | Fourfour | Rows | Notes |
+|---|---|---|---|
+| `automated_traffic_counts` | 7ym2-wayt | — | ATR sample volume counts at bridge/street locations; updated 2026-03-20 |
+| `pedestrian_counts_biannual` | 2de2-6x2h | — | Bi-annual pedestrian volume index per corridor; updated 2026-04-21 |
+| `traffic_signal_studies` | w76s-c5u4 | — | Traffic Operations Division signal study requests; updated 2026-06-01 |
 
 **overlays** — context layers
 | Key | Fourfour | Rows |
@@ -381,8 +424,11 @@ All datasets live on `data.cityofnewyork.us`. Reference by key.
 | `pedestrian_demand` | fwpa-qxaf | ~127K |
 | `mappluto` | 64uk-42ks | ~858K |
 | `complaints_311` | erm2-nwe9 | ~21.3M |
+| `planimetric_curbs` | ikvd-dex8 | — | All curb features within street right-of-way; updated 2024-04-25 |
+| `planimetric_pavement_edge` | vs44-rznx | — | Pavement edge planimetric basemap layer; updated 2025-12-10 |
+| `street_tree_census_2015` | uvpi-gqnh | — | 2015 TreesCount! census (683K street trees with species, condition, location); cross-reference with `tree_damage` |
 
-_Row counts are approximate. For current counts, run: `socrata dataset health --key <key>`_
+_Row counts are approximate or unknown (—). For current counts, run: `socrata dataset health --key <key>`_
 
 ---
 
