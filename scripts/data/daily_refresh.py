@@ -105,30 +105,59 @@ def daily_refresh():
             logger.info(f"  {len(df)} new records")
             total_new += len(df)
 
-            # Append to raw schema. Tables have no PK constraints so plain
-            # INSERT is used; INSERT OR REPLACE would require UNIQUE keys.
+            # Upsert into raw schema.  If the table doesn't exist yet (e.g.
+            # bootstrap timed out for this dataset), create it.  Use BY NAME
+            # so column-count mismatches (Socrata omits null cols) are safe.
             raw_table = f"raw.{dataset_name}"
             conn.register(f"{dataset_name}_new", df)
-            conn.execute(f"INSERT INTO {raw_table} SELECT * FROM {dataset_name}_new")
-
-            # spaCy classification for text-heavy datasets
-            if dataset_name in CLASSIFICATION_DATASETS:
-                classifier_type = CLASSIFICATION_DATASETS[dataset_name]
-
-                if classifier_type == "violations":
-                    classified_df = pipeline.classify_violations_dataframe(df)
-                elif classifier_type == "complaints":
-                    classified_df = pipeline.classify_complaints_dataframe(df)
-                else:
-                    classified_df = df
-
-                staging_table = f"staging.{dataset_name}"
-                conn.register(f"{dataset_name}_classified", classified_df)
+            exists = conn.execute(
+                "SELECT COUNT(*) FROM duckdb_tables() "
+                f"WHERE schema_name='raw' AND table_name='{dataset_name}'"
+            ).fetchone()[0]
+            if exists:
                 conn.execute(
-                    f"INSERT INTO {staging_table} SELECT * FROM {dataset_name}_classified"
+                    f"INSERT INTO {raw_table} BY NAME "
+                    f"SELECT * FROM {dataset_name}_new"
                 )
+            else:
+                conn.execute(
+                    f"CREATE TABLE {raw_table} AS "
+                    f"SELECT * FROM {dataset_name}_new"
+                )
+                logger.info(f"  (created new table {raw_table})")
 
-            successful += 1
+            successful += 1  # raw insert succeeded
+
+            # spaCy classification (best-effort — failure doesn't roll back insert)
+            if dataset_name in CLASSIFICATION_DATASETS:
+                try:
+                    classifier_type = CLASSIFICATION_DATASETS[dataset_name]
+
+                    if classifier_type == "violations":
+                        classified_df = pipeline.classify_violations_dataframe(df)
+                    elif classifier_type == "complaints":
+                        classified_df = pipeline.classify_complaints_dataframe(df)
+                    else:
+                        classified_df = df
+
+                    staging_table = f"staging.{dataset_name}"
+                    conn.register(f"{dataset_name}_classified", classified_df)
+                    s_exists = conn.execute(
+                        "SELECT COUNT(*) FROM duckdb_tables() "
+                        f"WHERE schema_name='staging' AND table_name='{dataset_name}'"
+                    ).fetchone()[0]
+                    if s_exists:
+                        conn.execute(
+                            f"INSERT INTO {staging_table} BY NAME "
+                            f"SELECT * FROM {dataset_name}_classified"
+                        )
+                    else:
+                        conn.execute(
+                            f"CREATE TABLE {staging_table} AS "
+                            f"SELECT * FROM {dataset_name}_classified"
+                        )
+                except Exception as cls_err:
+                    logger.warning(f"  ⚠ Classification skipped: {cls_err}")
 
         except Exception as e:
             logger.error(f"  ✗ Error: {e}")
