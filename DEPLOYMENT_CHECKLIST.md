@@ -286,11 +286,15 @@ Adds:
 - VAR multivariate analysis
 - Granger causality detection
 
-Computation runs weekly (Sunday 11:02 PM) as part of `compute_weekly_timeseries_metrics()`.
+**Daily execution integrated with nightly pipeline:**
 
-Enable in scheduler:
+Computation runs daily (4:05 PM) after core metrics complete, as part of nightly scheduler:
+
 ```python
-schedule.every().sunday.at("23:02").do(engine.compute_weekly_timeseries_metrics)
+# In APScheduler (src/socrata_toolkit/motherduck/scheduler.py)
+schedule.every().day.at("16:05").do(engine.compute_all_metrics)      # Nightly core metrics
+schedule.every().day.at("16:05").do(engine.update_advanced_metrics_batch)  # Advanced metrics
+schedule.every().day.at("16:10").do(engine.compute_weekly_timeseries_metrics)  # Time series
 ```
 
 Graceful degradation: if statsmodels unavailable, skips with warning (nightly core metrics unaffected).
@@ -301,12 +305,16 @@ Column additions to `analytics.kpi_statistics_by_borough`:
 - arima_order, arima_aic, forecast_value, forecast_ci_lower, forecast_ci_upper (ARIMA)
 - var_lag_order, var_aic (multivariate)
 
-Schedule with cron (Sunday 11 PM):
+**Cron schedule (daily with all other processes):**
+
 ```bash
 crontab -e
-# Add:
-0 23 * * 0 /path/to/run_weekly_advanced_metrics.sh >> /var/log/kpi_advanced.log 2>&1
-0 2 * * 0 /path/to/run_weekly_timeseries.sh >> /var/log/kpi_timeseries.log 2>&1
+# Add single entry for nightly execution at 4:00 PM (16:00)
+0 16 * * * /path/to/run_nightly_pipeline.sh >> /var/log/kpi_pipeline.log 2>&1
+# Nightly script automatically calls:
+#   - compute_all_metrics() at 4:00 PM
+#   - update_advanced_metrics_batch() at 4:05 PM  
+#   - compute_weekly_timeseries_metrics() at 4:10 PM
 ```
 
 ---
