@@ -18,6 +18,42 @@ from .plotly import (
     waterfall_chart,
 )
 
+# Multi-dimensional + crossfilter charts
+from .advanced_multidim import (
+    bubble_chart,
+    clustermap,
+    crossfilter_layout,
+    inspection_funnel,
+    parallel_coordinates,
+    radar_chart,
+    sankey_flow,
+    scatter_plot_matrix,
+)
+
+# Statistical visualization layer
+from .statistical_viz import (
+    bayesian_posterior_strip,
+    changepoint_overlay,
+    cusum_control_chart,
+    hdi_violin,
+    moran_scatter_plot,
+    ridge_plot,
+)
+
+# D3.js / d3blocks components (return HTML strings)
+from .d3_components import (
+    chord_diagram,
+    df_to_hierarchy,
+    force_network,
+    hex_binmap,
+    sankey_flow as sankey_d3,
+    stream_graph,
+    treemap_d3,
+)
+
+# Chart Finder — intelligent recommendation engine
+from .chart_finder import ChartFinder, ChartRecommendation
+
 
 # Deferred imports to avoid circular dependency issues
 def __getattr__(name: str):
