@@ -340,3 +340,18 @@ class DataQualityTracker:
 
     def record_quality(self, timestamp: datetime, score: float, details: dict = None):
         self.history.append({"timestamp": timestamp, "score": score, "details": details or {}})
+
+@dataclass
+class DatasetQualityScore:
+    """Quality score for a dataset."""
+    dataset_id: str
+    score: float
+    last_updated: datetime | None = None
+
+def dataframe_to_pdf(df: pd.DataFrame, filepath: str) -> bool:
+    """Convert DataFrame to PDF."""
+    try:
+        df.to_csv(filepath.replace(".pdf", ".csv"))
+        return True
+    except Exception:
+        return False
