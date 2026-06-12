@@ -190,7 +190,7 @@ def _legacy_import(module: str, *names: str) -> None:
 
 _legacy_import("..quality.anomalies", "Anomaly")
 _legacy_import("..quality.sla_tracking", "SLATarget")
-_legacy_import("..quality.freshness", "AlertSeverity")
+_legacy_import("..alerts.manager", "AlertSeverity")
 _legacy_import("..metrics", "DataQualityMetrics")
 _legacy_import("..quality.validation", "validate_required_columns", "validate_schema_types")
 _legacy_import(".viz", "box_plot")
