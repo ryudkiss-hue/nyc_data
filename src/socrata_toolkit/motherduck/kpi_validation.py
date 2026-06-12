@@ -396,6 +396,53 @@ class KPIValidator:
                 severity="ERROR"
             )
 
+    def check_stationarity_coverage(self) -> ValidationResult:
+        """Check that time series metrics are present (weekly computation)."""
+        try:
+            result = self.conn.execute(
+                """
+                SELECT
+                  COUNT(CASE WHEN adf_p_value IS NOT NULL THEN 1 END) as ts_computed,
+                  COUNT(*) as total
+                FROM analytics.kpi_statistics_by_borough
+                """
+            ).fetchone()
+
+            ts_computed, total = result
+
+            if ts_computed == 0:
+                return ValidationResult(
+                    check_name="timeseries_coverage",
+                    passed=True,
+                    message="No time series metrics yet (computed weekly)",
+                    severity="INFO"
+                )
+
+            coverage = ts_computed / total if total > 0 else 0
+
+            if coverage < 0.8:
+                return ValidationResult(
+                    check_name="timeseries_coverage",
+                    passed=False,
+                    message=f"Time series metrics only {coverage*100:.1f}% complete",
+                    severity="WARNING"
+                )
+
+            return ValidationResult(
+                check_name="timeseries_coverage",
+                passed=True,
+                message=f"Time series metrics {coverage*100:.1f}% computed ✓",
+                severity="INFO"
+            )
+
+        except Exception as e:
+            return ValidationResult(
+                check_name="timeseries_coverage",
+                passed=False,
+                message=f"Stationarity check failed: {str(e)}",
+                severity="ERROR"
+            )
+
     def _get_row_breakdown(self) -> str:
         """Get breakdown of rows by KPI and borough."""
         try:
