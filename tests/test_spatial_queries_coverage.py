@@ -18,7 +18,6 @@ except ImportError:
 
 shapely_required = pytest.mark.skipif(not HAS_SHAPELY, reason="shapely not installed")
 
-
 # ---------------------------------------------------------------------------
 # Import the module under test
 # ---------------------------------------------------------------------------
@@ -51,14 +50,12 @@ def mock_db() -> MagicMock:
     db.get_connection = _get_connection
     return db
 
-
 @pytest.fixture
 def nyc_point():
     """Return a Point at NYC center."""
     if not HAS_SHAPELY:
         pytest.skip("shapely not installed")
     return Point(-74.0060, 40.7128)
-
 
 @pytest.fixture
 def manhattan_polygon():
@@ -72,7 +69,6 @@ def manhattan_polygon():
         (-74.02, 40.78),
         (-74.02, 40.70),
     ])
-
 
 # ---------------------------------------------------------------------------
 # ProximityResult dataclass
@@ -95,7 +91,6 @@ class TestProximityResult:
         assert pr.material_type == "concrete"
         assert pr.condition_score == 80.0
         assert pr.borough == "Manhattan"
-
 
 # ---------------------------------------------------------------------------
 # SpatialAggregation dataclass
@@ -138,7 +133,6 @@ class TestSpatialAggregation:
             borough="Brooklyn",
         )
         assert sa.borough == "Brooklyn"
-
 
 # ---------------------------------------------------------------------------
 # SpatialQuery.find_nearby_segments
@@ -202,7 +196,6 @@ class TestFindNearbySegments:
         results = query.find_nearby_segments(nyc_point, 500, limit=5)
         assert isinstance(results, list)
 
-
 # ---------------------------------------------------------------------------
 # SpatialQuery.find_segments_in_polygon
 # ---------------------------------------------------------------------------
@@ -251,7 +244,6 @@ class TestFindSegmentsInPolygon:
         results = query.find_segments_in_polygon(manhattan_polygon, material_type="asphalt")
         assert isinstance(results, list)
 
-
 # ---------------------------------------------------------------------------
 # SpatialQuery.find_adjacent_blocks
 # ---------------------------------------------------------------------------
@@ -289,7 +281,6 @@ class TestFindAdjacentBlocks:
         query = SpatialQuery(bad_db)
         results = query.find_adjacent_blocks("blk-999")
         assert results == []
-
 
 # ---------------------------------------------------------------------------
 # SpatialQuery.find_material_zones
@@ -338,7 +329,6 @@ class TestFindMaterialZones:
         query = SpatialQuery(bad_db)
         results = query.find_material_zones("concrete")
         assert results == []
-
 
 # ---------------------------------------------------------------------------
 # SpatialQuery.measure_distance / area / length / buffer
@@ -459,7 +449,6 @@ class TestMeasurements:
         bad_db.get_connection = MagicMock(side_effect=Exception("error"))
         assert SpatialQuery(bad_db).buffer_segment("seg-001", 50) is None
 
-
 # ---------------------------------------------------------------------------
 # SpatialQuery aggregations
 # ---------------------------------------------------------------------------
@@ -513,7 +502,6 @@ class TestAggregations:
         bad_db.get_connection = MagicMock(side_effect=Exception("error"))
         query = SpatialQuery(bad_db)
         assert query.segments_by_borough() == []
-
 
 # ---------------------------------------------------------------------------
 # SpatialQuery.condition_statistics
@@ -574,7 +562,6 @@ class TestConditionStatistics:
         result = query.condition_statistics()
         assert result == {"min": 0.0, "max": 0.0, "average": 0.0, "median": 0.0}
 
-
 # ---------------------------------------------------------------------------
 # SpatialQuery.inspection_density
 # ---------------------------------------------------------------------------
@@ -615,7 +602,6 @@ class TestInspectionDensity:
         query = SpatialQuery(bad_db)
         result = query.inspection_density(manhattan_polygon)
         assert result == 0.0
-
 
 # ---------------------------------------------------------------------------
 # SpatialQuery.shortest_path

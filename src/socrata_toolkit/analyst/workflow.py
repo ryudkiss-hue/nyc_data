@@ -1,7 +1,5 @@
 """Analyst Autopilot workflow orchestration."""
 
-
-
 from __future__ import annotations
 
 import json
@@ -79,10 +77,6 @@ def _normalize_frames(frames: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame
 
     return out
 
-
-
-
-
 def _load_sources(
 
     profile: AnalystProfile,
@@ -98,8 +92,6 @@ def _load_sources(
     partial_failures: list[dict[str, str]] = []
 
     warnings: list[str] = []
-
-
 
     for name, src_cfg in profile.sources.items():
 
@@ -139,21 +131,13 @@ def _load_sources(
 
             warnings.append(f"{name}: FAILED — {exc}")
 
-
-
     return frames, source_stats, partial_failures, warnings
-
-
-
-
 
 def _stage_duckdb(profile: AnalystProfile, frames: dict[str, pd.DataFrame]) -> None:
 
     try:
 
         from ..core import DuckDBManager
-
-
 
         mgr = DuckDBManager(profile.duckdb_path)
 
@@ -179,10 +163,6 @@ def _stage_duckdb(profile: AnalystProfile, frames: dict[str, pd.DataFrame]) -> N
         import logging
         logging.getLogger(__name__).error(f"DuckDB Staging Failed: {exc}")
 
-
-
-
-
 def _run_dry_run_pack(
     profile: AnalystProfile, started_at: str
 ) -> AnalystPackResult:
@@ -205,7 +185,6 @@ def _run_dry_run_pack(
     result.started_at = started_at
     result.write_manifest()
     return result
-
 
 def _build_construction_plan(
     profile: AnalystProfile,
@@ -247,7 +226,6 @@ def _build_construction_plan(
 
     return construction, conflict_result, conflicts_md, conflicts_review, construction_diff_md
 
-
 def _compute_kpi_payload(
     profile: AnalystProfile,
     contracts: pd.DataFrame,
@@ -271,7 +249,6 @@ def _compute_kpi_payload(
     }
     kpi_json.write_text(json.dumps(kpi_payload, indent=2), encoding="utf-8")
     return kpi_payload, str(kpi_json)
-
 
 def _apply_role_profile(
     profile: AnalystProfile,
@@ -311,7 +288,6 @@ def _apply_role_profile(
         warnings.append(f"role profile: FAILED — {exc}")
         result.warnings = warnings
         result.write_manifest()
-
 
 def run_analyst_pack(
     config_path: str | Path,
@@ -415,8 +391,6 @@ def run_analyst_pack(
     except Exception:
         pass
 
-
-
     if not construction.empty:
 
         try:
@@ -428,8 +402,6 @@ def run_analyst_pack(
         except Exception:
 
             pass
-
-
 
     if not contracts.empty:
 
@@ -474,8 +446,6 @@ def run_analyst_pack(
         except Exception:
 
             pass
-
-
 
     _apply_role_profile(
         profile, result, inspections, construction, contracts,

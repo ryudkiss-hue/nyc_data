@@ -14,7 +14,6 @@ from socrata_toolkit.analysis.confidence_intervals import (
     wilson_score_confidence_interval,
 )
 
-
 class TestWilsonScoreConfidenceInterval:
     """Tests for Wilson Score CI (proportion-based)."""
 
@@ -117,7 +116,6 @@ class TestWilsonScoreConfidenceInterval:
 
         with pytest.raises(ValueError, match="confidence_level must be"):
             wilson_score_confidence_interval(50, 100, confidence_level=0.0)
-
 
 class TestBootstrapConfidenceInterval:
     """Tests for bootstrap CI (non-parametric)."""
@@ -256,7 +254,6 @@ class TestBootstrapConfidenceInterval:
             result_list["bootstrap_samples"], result_array["bootstrap_samples"]
         )
 
-
 class TestMeanConfidenceInterval:
     """Tests for t-test CI (parametric, continuous)."""
 
@@ -368,7 +365,6 @@ class TestMeanConfidenceInterval:
         assert result_list["lower_bound"] == result_array["lower_bound"]
         assert result_list["upper_bound"] == result_array["upper_bound"]
 
-
 class TestConsistentDictStructure:
     """Tests that all CI methods return consistent dict structures."""
 
@@ -424,7 +420,6 @@ class TestConsistentDictStructure:
             <= m_result["point_estimate"]
             <= m_result["upper_bound"]
         )
-
 
 class TestIntegrationScenarios:
     """Integration tests with realistic NYC DOT data scenarios."""

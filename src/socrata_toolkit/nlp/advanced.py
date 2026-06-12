@@ -19,11 +19,9 @@ def _priority_from_text(text: str) -> str:
         return "medium"
     return "low"
 
-
 def analyze_text(text: str, **_kwargs: Any) -> dict[str, Any]:
     priority = _priority_from_text(text)
     return {"priority": priority, "summary": (text or "")[:200]}
-
 
 def translate_text(text: str, target: str = "en", **_kwargs: Any) -> str:
     return text

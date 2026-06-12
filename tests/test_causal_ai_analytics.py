@@ -8,7 +8,6 @@ from app.services.analytics_service import (
     update_predictive_simulation_intervention,
 )
 
-
 def test_causal_what_if_simulation():
     # Mocking manager and data
     manager = None

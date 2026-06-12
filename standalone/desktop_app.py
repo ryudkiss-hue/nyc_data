@@ -43,7 +43,6 @@ ENV_FILE = ENV_DIR / ".env"
 
 WINDOW_TITLE = "NYC DOT SIM Analyst Toolkit"
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -56,7 +55,6 @@ def _free_port(preferred: int = 8501) -> int:
         except OSError:
             s.bind(("127.0.0.1", 0))
             return s.getsockname()[1]
-
 
 def _resolve_python() -> str:
     """Find a Python interpreter that can run Streamlit.
@@ -74,7 +72,6 @@ def _resolve_python() -> str:
     # Last resort — let the exe try (will error clearly if it can't)
     return sys.executable
 
-
 def _load_env() -> dict[str, str]:
     """Read key=value pairs from the per-user env file."""
     env: dict[str, str] = {}
@@ -85,7 +82,6 @@ def _load_env() -> dict[str, str]:
                 k, _, v = line.partition("=")
                 env[k.strip()] = v.strip()
     return env
-
 
 def _wait_for_health(url: str, timeout: float = 45.0) -> bool:
     """Poll Streamlit's health endpoint until it responds or we time out."""
@@ -98,7 +94,6 @@ def _wait_for_health(url: str, timeout: float = 45.0) -> bool:
         except (urllib.error.URLError, ConnectionError, OSError):
             time.sleep(0.5)
     return False
-
 
 # ---------------------------------------------------------------------------
 # Server lifecycle
@@ -157,7 +152,6 @@ class StreamlitServer:
                 self.proc.wait(timeout=8)
             except subprocess.TimeoutExpired:
                 self.proc.kill()
-
 
 # ---------------------------------------------------------------------------
 # Entry point
@@ -222,7 +216,6 @@ def main() -> int:
     finally:
         server.stop()
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

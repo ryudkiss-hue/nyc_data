@@ -10,7 +10,6 @@ from datetime import datetime, timedelta
 import pandas as pd
 import pytest
 
-
 class TestCriticalFinding1_SoQLSyntax:
     """
     Finding #1: Invalid SoQL date syntax in CLAUDE.md line 539
@@ -83,7 +82,6 @@ class TestCriticalFinding1_SoQLSyntax:
             print(f"[PASS] Valid ISO timestamp query works: {thirty_days_ago}")
         except Exception as e:
             pytest.fail(f"Valid ISO timestamp query failed: {e}")
-
 
 class TestCriticalFinding2_SpatialIntersectsJoin:
     """
@@ -169,7 +167,6 @@ class TestCriticalFinding2_SpatialIntersectsJoin:
         except TypeError as e:
             pytest.fail(f"Call with all required params should work, but got: {e}")
 
-
 class TestDocumentationAccuracy:
     """
     Meta-tests to verify documentation consistency.
@@ -213,7 +210,6 @@ class TestDocumentationAccuracy:
         for param in documented_params:
             assert param in actual_sig, \
                 f"Documented parameter '{param}' not found in actual signature: {actual_sig}"
-
 
 class TestDocumentationImpact:
     """
@@ -268,7 +264,6 @@ class TestDocumentationImpact:
         if not found_validation:
             print("[WARN] Warning: No CI validation found for documentation examples. "
                   "This explains why these issues weren't caught automatically.")
-
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "-s"])

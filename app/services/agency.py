@@ -17,10 +17,8 @@ _ANALYST_EXAMPLE = _REPO / "config" / "analyst_profile.example.yaml"
 _COMPLETENESS = _REPO / "docs" / "COMPLETENESS.md"
 _INGEST_LOG = _REPO / "outputs" / "logs" / "ingest.jsonl"
 
-
 def repo_root() -> Path:
     return _REPO
-
 
 def list_pack_dirs(limit: int = 20) -> list[Path]:
     if not _PACK_ROOT.exists():
@@ -29,11 +27,9 @@ def list_pack_dirs(limit: int = 20) -> list[Path]:
     dirs.sort(key=lambda p: p.stat().st_mtime, reverse=True)
     return dirs[:limit]
 
-
 def latest_pack_dir() -> Path | None:
     packs = list_pack_dirs(1)
     return packs[0] if packs else None
-
 
 def run_analyst_pack(*, profile_path: str | Path, offline: bool = False) -> dict[str, Any]:
     from socrata_toolkit.analyst.workflow import run_analyst_pack as _run
@@ -48,7 +44,6 @@ def run_analyst_pack(*, profile_path: str | Path, offline: bool = False) -> dict
         "partial_failures": list(result.partial_failures),
     }
 
-
 def publish_pack_ui(
     *,
     pack_dir: str | Path,
@@ -59,7 +54,6 @@ def publish_pack_ui(
 
     report = publish_pack(pack_dir=pack_dir, profile_path=profile_path, dry_run=dry_run)
     return report.to_dict()
-
 
 def load_completeness_items() -> list[dict[str, str]]:
     """Parse COMPLETENESS.md table rows into checklist items."""
@@ -79,7 +73,6 @@ def load_completeness_items() -> list[dict[str, str]]:
             })
     return items
 
-
 def tail_ingest_log(lines: int = 30) -> list[dict[str, Any]]:
     if not _INGEST_LOG.exists():
         return []
@@ -90,7 +83,6 @@ def tail_ingest_log(lines: int = 30) -> list[dict[str, Any]]:
         except json.JSONDecodeError:
             continue
     return list(reversed(rows))  # most recent first
-
 
 def _check_package(name: str) -> dict[str, Any]:
     """Check if a Python package is importable and get its version."""
@@ -105,7 +97,6 @@ def _check_package(name: str) -> dict[str, Any]:
             "fix": f'pip install -e ".[mission]" or pip install {name}',
         }
 
-
 def _check_file(name: str, path: Path, *, required: bool = True) -> dict[str, Any]:
     exists = path.exists()
     return {
@@ -114,7 +105,6 @@ def _check_file(name: str, path: Path, *, required: bool = True) -> dict[str, An
         "detail": str(path) if exists else f"Not found: {path}",
         "fix": f"Create {path}" if not exists and required else "",
     }
-
 
 def system_health() -> dict[str, Any]:
     """Comprehensive system health check."""
@@ -193,7 +183,6 @@ def system_health() -> dict[str, Any]:
         "python_version": py_version,
     }
 
-
 def onboarding_steps() -> list[str]:
     return [
         'Install dependencies: `pip install -e ".[mission]"`',
@@ -205,7 +194,6 @@ def onboarding_steps() -> list[str]:
         "Publish outputs: Publish & Pack → dry-run first, then live",
         "Sign off: Settings → Completeness checklist",
     ]
-
 
 def ingest_log_summary() -> dict[str, Any]:
     """Aggregate stats from the ingest log."""

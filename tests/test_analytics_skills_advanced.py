@@ -8,7 +8,6 @@ import pytest
 
 from socrata_toolkit.analytics.advanced import Segmentation, TimeSeriesForecasting
 
-
 @pytest.fixture
 def time_series_df():
     dates = pd.date_range(start="2023-01-01", periods=100, freq="D")

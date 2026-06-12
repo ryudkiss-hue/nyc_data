@@ -24,7 +24,6 @@ from socrata_toolkit.spatial.conflict_detection import (
 # Fixtures
 # =============================================================================
 
-
 @pytest.fixture()
 def sample_permits_df():
     """Create sample active permits DataFrame."""
@@ -37,7 +36,6 @@ def sample_permits_df():
         }
     )
 
-
 @pytest.fixture()
 def sample_inspections_df():
     """Create sample scheduled inspections DataFrame."""
@@ -49,7 +47,6 @@ def sample_inspections_df():
             "inspection_status": ["Scheduled", "Scheduled", "Completed"],
         }
     )
-
 
 @pytest.fixture()
 def overlapping_permits_inspections():
@@ -73,7 +70,6 @@ def overlapping_permits_inspections():
     )
     return permits, inspections
 
-
 @pytest.fixture()
 def far_apart_permits_inspections():
     """Create permits and inspections that are far apart (no conflicts)."""
@@ -95,7 +91,6 @@ def far_apart_permits_inspections():
         }
     )
     return permits, inspections
-
 
 @pytest.fixture()
 def mixed_severity_permits_inspections():
@@ -123,11 +118,9 @@ def mixed_severity_permits_inspections():
     )
     return permits, inspections
 
-
 # =============================================================================
 # SpatialConflict dataclass tests
 # =============================================================================
-
 
 class TestSpatialConflict:
     """Tests for SpatialConflict dataclass."""
@@ -182,11 +175,9 @@ class TestSpatialConflict:
                 recommendation="Test",
             )
 
-
 # =============================================================================
 # Distance Calculation Tests
 # =============================================================================
-
 
 class TestDistanceCalculation:
     """Tests for accurate distance calculations."""
@@ -278,11 +269,9 @@ class TestDistanceCalculation:
         for i in range(len(conflicts) - 1):
             assert conflicts[i].distance_meters <= conflicts[i + 1].distance_meters
 
-
 # =============================================================================
 # Severity Classification Tests
 # =============================================================================
-
 
 class TestSeverityClassification:
     """Tests for conflict severity classification."""
@@ -365,11 +354,9 @@ class TestSeverityClassification:
         assert conflicts[0].severity == "LOW"
         assert "CAUTION" in conflicts[0].recommendation
 
-
 # =============================================================================
 # Conflict Detection Tests
 # =============================================================================
-
 
 class TestDetectConstructionInspectionConflict:
     """Tests for detecting construction-inspection conflicts."""
@@ -436,11 +423,9 @@ class TestDetectConstructionInspectionConflict:
         assert all(pd.notna(c.permit_lat) and pd.notna(c.permit_lon) for c in conflicts)
         assert all(pd.notna(c.inspection_lat) and pd.notna(c.inspection_lon) for c in conflicts)
 
-
 # =============================================================================
 # Buffer Distance Tests
 # =============================================================================
-
 
 class TestBufferDistance:
     """Tests for buffer distance parameter."""
@@ -499,11 +484,9 @@ class TestBufferDistance:
         # Should use default 50m and detect conflict
         assert len(conflicts) == 1
 
-
 # =============================================================================
 # Conflict Summary Tests
 # =============================================================================
-
 
 class TestSummarizeConflictsBySeverity:
     """Tests for conflict severity summarization."""
@@ -599,11 +582,9 @@ class TestSummarizeConflictsBySeverity:
 
         assert summary == {"HIGH": 3, "MEDIUM": 0, "LOW": 0}
 
-
 # =============================================================================
 # Input Validation Tests
 # =============================================================================
-
 
 class TestInputValidation:
     """Tests for input validation and error handling."""
@@ -685,11 +666,9 @@ class TestInputValidation:
         # Should work without raising error
         assert isinstance(conflicts, list)
 
-
 # =============================================================================
 # Edge Case Tests
 # =============================================================================
-
 
 class TestEdgeCases:
     """Tests for edge cases and boundary conditions."""
@@ -810,7 +789,6 @@ class TestEdgeCases:
         conflicts = detect_spatial_conflicts(permits, inspections)
 
         assert len(conflicts) == 0
-
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])

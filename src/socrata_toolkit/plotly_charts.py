@@ -36,7 +36,6 @@ def _get_plotly():
     except ImportError as exc:
         raise ImportError("Install plotly: pip install plotly") from exc
 
-
 # ---------------------------------------------------------------------------
 # Borough Bar Chart
 # ---------------------------------------------------------------------------
@@ -71,7 +70,6 @@ def borough_bar_chart(
         template="plotly_white",
     )
     return fig
-
 
 # ---------------------------------------------------------------------------
 # KPI Gauge
@@ -112,7 +110,6 @@ def kpi_gauge(
     fig.update_layout(height=300)
     return fig
 
-
 # ---------------------------------------------------------------------------
 # Contract Gantt Chart
 # ---------------------------------------------------------------------------
@@ -147,7 +144,6 @@ def contract_gantt(
     fig.update_layout(template="plotly_white")
     return fig
 
-
 # ---------------------------------------------------------------------------
 # Priority Heatmap
 # ---------------------------------------------------------------------------
@@ -173,7 +169,6 @@ def priority_heatmap(
         template="plotly_white",
     )
     return fig
-
 
 # ---------------------------------------------------------------------------
 # Trend Line
@@ -209,7 +204,6 @@ def trend_line(
     fig.update_layout(template="plotly_white")
     return fig
 
-
 # ---------------------------------------------------------------------------
 # Donut Chart (status distribution)
 # ---------------------------------------------------------------------------
@@ -237,7 +231,6 @@ def status_donut(
     ))
     fig.update_layout(title=title or "Status Distribution", template="plotly_white")
     return fig
-
 
 # ---------------------------------------------------------------------------
 # Save / Export

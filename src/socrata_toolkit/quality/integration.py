@@ -39,7 +39,6 @@ __all__ = [
     "set_quality_integration",
 ]
 
-
 class QualityIntegration:
     """Integrates quality validation into pipelines and operations.
 
@@ -177,7 +176,6 @@ class QualityIntegration:
             pass_rate=1.0,
         )
 
-
 def validate_data(
     suite: ExpectationSuite | None = None,
     fail_on_error: bool = False,
@@ -222,7 +220,6 @@ def validate_data(
 
     return decorator
 
-
 def check_sla(
     metric_name: str,
     tracker: DataQualityTracker | None = None,
@@ -260,7 +257,6 @@ def check_sla(
 
     return decorator
 
-
 def detect_anomalies(
     detector: AnomalyDetector | None = None,
 ) -> Callable:
@@ -286,7 +282,6 @@ def detect_anomalies(
         return wrapper
 
     return decorator
-
 
 def apply_business_rules(
     rules_engine: BusinessRulesEngine | None = None,
@@ -321,13 +316,10 @@ def apply_business_rules(
 
     return decorator
 
-
 QualityValidator = _QualityValidator
-
 
 # Global integration instance
 _global_integration: QualityIntegration | None = None
-
 
 class QualityFramework:
     """Framework for managing quality checks and validation."""
@@ -346,7 +338,6 @@ class QualityFramework:
             Dictionary with check results
         """
         return {"status": "success", "checks_passed": 0}
-
 
 class QualityPipeline:
     """Pipeline for executing quality checks in sequence."""
@@ -375,7 +366,6 @@ class QualityPipeline:
         """
         return {"executed": len(self._checks), "passed": 0}
 
-
 def create_quality_pipeline() -> QualityPipeline:
     """Create a new quality pipeline.
 
@@ -383,7 +373,6 @@ def create_quality_pipeline() -> QualityPipeline:
         QualityPipeline instance
     """
     return QualityPipeline()
-
 
 def run_all_quality_checks(data: Any) -> dict:
     """Run all quality checks on data.
@@ -396,7 +385,6 @@ def run_all_quality_checks(data: Any) -> dict:
     """
     return {"total_checks": 0, "passed": 0, "failed": 0}
 
-
 def get_quality_integration() -> QualityIntegration:
     """Get or create global quality integration instance.
 
@@ -407,7 +395,6 @@ def get_quality_integration() -> QualityIntegration:
     if _global_integration is None:
         _global_integration = QualityIntegration()
     return _global_integration
-
 
 def set_quality_integration(integration: QualityIntegration) -> None:
     """Set global quality integration instance.

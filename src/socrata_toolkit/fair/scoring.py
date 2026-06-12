@@ -13,7 +13,6 @@ from .model import FairDataset, FairnessScore
 _RICH_DESCRIPTION_CHARS = 50
 _MIN_KEYWORDS = 3
 
-
 def _findable(ds: FairDataset, gaps: list[str]) -> float:
     """Findable: metadata is discoverable and uniquely identified.
 
@@ -41,7 +40,6 @@ def _findable(ds: FairDataset, gaps: list[str]) -> float:
     else:
         gaps.append("Findable: no domain/topic set")
     return score
-
 
 def _accessible(ds: FairDataset, gaps: list[str]) -> float:
     """Accessible: data is retrievable via a standard, open protocol.
@@ -71,7 +69,6 @@ def _accessible(ds: FairDataset, gaps: list[str]) -> float:
         gaps.append("Accessible: no landing_page")
     return score
 
-
 def _interoperable(ds: FairDataset, gaps: list[str]) -> float:
     """Interoperable: uses standard formats and shared vocabularies.
 
@@ -100,7 +97,6 @@ def _interoperable(ds: FairDataset, gaps: list[str]) -> float:
         gaps.append("Interoperable: schema_fields missing or untyped")
     return score
 
-
 def _reusable(ds: FairDataset, gaps: list[str]) -> float:
     """Reusable: clear license, provenance, and usage guidance.
 
@@ -128,7 +124,6 @@ def _reusable(ds: FairDataset, gaps: list[str]) -> float:
     else:
         gaps.append("Reusable: no citation provided")
     return score
-
 
 def score_fairness(ds: FairDataset) -> FairnessScore:
     """Score a dataset against the FAIR rubric.

@@ -6,7 +6,6 @@ import pytest
 from app.analytics import _compute_duplicate_pct, _estimate_cardinality
 from socrata_toolkit.core.duckdb_store import DuckDBManager
 
-
 @pytest.fixture
 def test_duckdb(tmp_path):
     """Setup a temporary DuckDB for pushdown tests."""

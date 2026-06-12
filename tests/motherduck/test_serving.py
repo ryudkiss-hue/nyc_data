@@ -13,13 +13,11 @@ import pytest
 from socrata_toolkit.motherduck.connector import MotherDuckConnection
 from socrata_toolkit.motherduck.serving import ServingViewsBuilder
 
-
 @pytest.fixture
 def md_connection():
     """Create a MotherDuck connection for testing."""
     conn = MotherDuckConnection(database_path=":memory:")
     return conn
-
 
 @pytest.fixture
 def setup_analytics_tables(md_connection):
@@ -181,7 +179,6 @@ def setup_analytics_tables(md_connection):
 
     return md_connection
 
-
 class TestServingViewsCreation:
     """Test that all serving views are created."""
 
@@ -206,7 +203,6 @@ class TestServingViewsCreation:
             )
             assert len(result) > 0, f"View {view_name} not found in app_queries schema"
             assert result[0][0] == 'VIEW', f"{view_name} is not a VIEW table type"
-
 
 class TestPhaseB:
     """Test v_phase_b_results view."""
@@ -247,7 +243,6 @@ class TestPhaseB:
         boroughs = df['borough'].tolist()
         assert boroughs == sorted(boroughs), "Results should be ordered by borough"
 
-
 class TestPhaseC:
     """Test v_phase_c_results view."""
 
@@ -286,7 +281,6 @@ class TestPhaseC:
 
         result = conn.fetch_all("SELECT COUNT(*) FROM app_queries.v_phase_c_results")
         assert result[0][0] == 5, f"Expected 5 rows, got {result[0][0]}"
-
 
 class TestPhaseD:
     """Test v_phase_d_results view."""
@@ -327,7 +321,6 @@ class TestPhaseD:
             borough_data = df[df['borough'] == borough]['priority_rank'].tolist()
             assert borough_data == sorted(borough_data), f"Rank not ascending for borough {borough}"
 
-
 class TestPhaseE:
     """Test v_phase_e_decomposition view."""
 
@@ -366,7 +359,6 @@ class TestPhaseE:
         # Dates should be descending
         assert dates == sorted(dates, reverse=True), "Dates should be descending"
 
-
 class TestPhaseF:
     """Test v_phase_f_bootstrap_ci view."""
 
@@ -403,7 +395,6 @@ class TestPhaseF:
 
         result = conn.fetch_all("SELECT COUNT(*) FROM app_queries.v_phase_f_bootstrap_ci")
         assert result[0][0] == 5, f"Expected 5 rows, got {result[0][0]}"
-
 
 class TestKPIDashboard:
     """Test v_kpi_dashboard view."""
@@ -453,7 +444,6 @@ class TestKPIDashboard:
         expected = df.sort_values(['borough', 'kpi_name']).reset_index(drop=True)
         actual = df.reset_index(drop=True)
         assert actual.equals(expected), "Results should be ordered by borough, then kpi_name"
-
 
 # Import pandas for type checking in tests
 try:

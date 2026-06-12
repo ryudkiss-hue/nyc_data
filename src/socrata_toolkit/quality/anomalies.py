@@ -18,7 +18,6 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-
 class AnomalySeverity(Enum):
     """Severity of detected anomaly."""
     CRITICAL = "critical"
@@ -26,7 +25,6 @@ class AnomalySeverity(Enum):
     MEDIUM = "medium"
     LOW = "low"
     INFO = "info"
-
 
 @dataclass
 class Anomaly:
@@ -64,7 +62,6 @@ class Anomaly:
             "explanation": self.explanation,
         }
 
-
 @dataclass
 class AnomalyReport:
     """Report of detected anomalies.
@@ -97,7 +94,6 @@ class AnomalyReport:
             "anomalies": [a.to_dict() for a in self.anomalies],
             "suggested_actions": self.suggested_actions,
         }
-
 
 class AnomalyDetector:
     """Detects statistical anomalies in quality metrics.

@@ -5,7 +5,6 @@ import pytest
 
 from socrata_toolkit.core.duckdb_store import DuckDBManager, DuckDBRepository
 
-
 @pytest.fixture
 def temp_mgr(tmp_path):
     """Providing a fresh memory/temp DuckDB for each test."""

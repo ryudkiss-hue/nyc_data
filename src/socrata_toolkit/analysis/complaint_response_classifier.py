@@ -33,14 +33,12 @@ class ComplaintCategory(str, Enum):
     DEBRIS = "DEBRIS"
     OTHER = "OTHER"
 
-
 class ComplaintUrgency(str, Enum):
     """Urgency tier based on severity and risk."""
     EMERGENCY = "EMERGENCY"  # Imminent safety risk
     HIGH = "HIGH"            # Significant problem, high impact
     MEDIUM = "MEDIUM"        # Moderate problem
     LOW = "LOW"              # Minor issue, low risk
-
 
 class ResponseStatus(str, Enum):
     """Lifecycle status of complaint response."""
@@ -49,14 +47,12 @@ class ResponseStatus(str, Enum):
     DELAYED = "DELAYED"      # Past SLA, still open
     ABANDONED = "ABANDONED"  # No action taken, exceeded threshold
 
-
 class TimeAdequacy(str, Enum):
     """Assessment of response timing vs. SLA."""
     FAST = "FAST"            # Resolved well before SLA
     ON_TIME = "ON_TIME"      # Resolved within SLA
     SLOW = "SLOW"            # Resolved after SLA (< 150% SLA)
     VERY_SLOW = "VERY_SLOW"  # Resolved > 150% of SLA or abandoned
-
 
 @dataclass
 class ComplaintMetrics:
@@ -80,7 +76,6 @@ class ComplaintMetrics:
     # Metadata
     data_quality_flag: str = ""  # "LOW", "MEDIUM", "HIGH"
     sample_size: int = 0
-
 
 @dataclass
 class ComplaintResponseClassification:
@@ -127,7 +122,6 @@ class ComplaintResponseClassification:
             "next_action": self.next_action,
             "sla_target_days": self.sla_target_days,
         }
-
 
 class ComplaintResponseClassifier:
     """

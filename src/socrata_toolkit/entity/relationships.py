@@ -32,7 +32,6 @@ class RelationshipType(str, Enum):
     REFERENCES = "references"  # A references B
     DERIVED_FROM = "derived_from"  # A is derived from B
 
-
 @dataclass
 class EntityRelationship:
     """
@@ -51,7 +50,6 @@ class EntityRelationship:
     def __repr__(self) -> str:
         return (f"EntityRelationship({self.source_entity_id} "
                 f"{self.relationship_type.value} {self.target_entity_id})")
-
 
 class RelationshipGraph:
     """

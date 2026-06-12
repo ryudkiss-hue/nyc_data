@@ -35,7 +35,6 @@ class ColumnProfile:
     mean_value: float | None = None
     description: str = ""
 
-
 @dataclass
 class DataDictionary:
     """Complete data dictionary for a dataset."""
@@ -77,7 +76,6 @@ class DataDictionary:
         else:
             p.write_text(self.to_markdown(), encoding="utf-8")
         return str(p)
-
 
 def generate_data_dictionary(
     df: pd.DataFrame,

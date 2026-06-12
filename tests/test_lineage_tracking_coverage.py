@@ -50,12 +50,10 @@ def _reset_globals():
     tracking_mod._lineage_nodes.clear()
     tracking_mod._lineage_persistence = None
 
-
 @pytest.fixture()
 def mock_persistence():
     """A MagicMock that acts as a LineagePersistence instance."""
     return MagicMock()
-
 
 # ---------------------------------------------------------------------------
 # set_global_persistence
@@ -80,7 +78,6 @@ class TestSetGlobalPersistence:
         """Passing None is a valid way to unset the global persistence."""
         set_global_persistence(None)
         assert tracking_mod._lineage_persistence is None
-
 
 # ---------------------------------------------------------------------------
 # track_transformation decorator
@@ -197,7 +194,6 @@ class TestTrackTransformation:
         assert "daily" in node.tags
         assert "production" in node.tags
 
-
 # ---------------------------------------------------------------------------
 # lineage_context context manager
 # ---------------------------------------------------------------------------
@@ -255,7 +251,6 @@ class TestLineageContext:
         assert "raw" in saved_node.input_datasets
         assert "summary" in saved_node.output_datasets
 
-
 # ---------------------------------------------------------------------------
 # register_ingestion_node
 # ---------------------------------------------------------------------------
@@ -300,7 +295,6 @@ class TestRegisterIngestionNode:
         register_ingestion_node("ds", "Dataset")
         mock_persistence.save_node.assert_called_once()
 
-
 # ---------------------------------------------------------------------------
 # register_sink_node
 # ---------------------------------------------------------------------------
@@ -334,7 +328,6 @@ class TestRegisterSinkNode:
         node = register_sink_node("dw", "DW", "parquet", [])
         assert node.node_id in tracking_mod._lineage_nodes
 
-
 # ---------------------------------------------------------------------------
 # register_validation_node
 # ---------------------------------------------------------------------------
@@ -367,7 +360,6 @@ class TestRegisterValidationNode:
         rules = {"null_threshold": 0.05}
         node = register_validation_node("v", "V", "d", rules=rules)
         assert node.configuration.get("rules") == rules
-
 
 # ---------------------------------------------------------------------------
 # get_tracked_node / get_all_tracked_nodes

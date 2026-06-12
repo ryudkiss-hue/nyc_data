@@ -15,7 +15,6 @@ DecisionKind = Literal["conflict", "approval"]
 ConflictStatus = Literal["resolved", "defer", "needs_coordination"]
 ApprovalStatus = Literal["approved", "hold"]
 
-
 @dataclass(frozen=True)
 class ReviewDecision:
     pack_date: str
@@ -27,7 +26,6 @@ class ReviewDecision:
     notes: str
     reason: str
     updated_at: str
-
 
 class ReviewStore:
     """Lightweight local decisions store (DuckDB)."""
@@ -255,7 +253,6 @@ class ReviewStore:
             lines.append(f"- {row['kind']} / {row['status']}: {int(row['count'])}")
         md.write_text("\n".join(lines) + "\n", encoding="utf-8")
         return {"decisions_export": str(xlsx), "decisions_summary": str(md)}
-
 
 def default_review_store(*, profile: str | None = None) -> ReviewStore:
     """Return a ReviewStore initialised from the given profile (or the default profile)."""

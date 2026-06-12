@@ -33,7 +33,6 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-
 class ProjectAnalystReports:
     """Generate reports for Project Analysts from governance data.
 

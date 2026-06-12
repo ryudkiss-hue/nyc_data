@@ -14,7 +14,6 @@ from socrata_toolkit.motherduck.connector import MotherDuckConnection
 from socrata_toolkit.motherduck.ingestion import InspectionDataLoader
 from socrata_toolkit.motherduck.staging import StagingTransformer
 
-
 @pytest.fixture
 def motherduck_conn():
     """Fixture providing a local DuckDB connection (no MotherDuck token needed)."""
@@ -22,24 +21,20 @@ def motherduck_conn():
     yield conn
     conn.close()
 
-
 @pytest.fixture
 def data_loader(motherduck_conn):
     """Fixture providing an InspectionDataLoader instance."""
     return InspectionDataLoader(motherduck_conn)
-
 
 @pytest.fixture
 def staging_transformer(motherduck_conn):
     """Fixture providing a StagingTransformer instance."""
     return StagingTransformer(motherduck_conn)
 
-
 @pytest.fixture
 def analytics_builder(motherduck_conn):
     """Fixture providing an AnalyticsBuilder instance."""
     return AnalyticsBuilder(motherduck_conn)
-
 
 class TestAnalyticsSchemaCreation:
     """Tests for analytics schema and phase table creation."""
@@ -239,7 +234,6 @@ class TestAnalyticsSchemaCreation:
             )
             assert len(result) > 0, f"Phase table '{phase_table}' should exist"
 
-
 class TestKPIMetricsTableCreation:
     """Tests for KPI metrics table creation."""
 
@@ -269,7 +263,6 @@ class TestKPIMetricsTableCreation:
 
         for col in expected_columns:
             assert col in column_names, f"Column '{col}' not found in kpi_metrics"
-
 
 class TestAnalyticsDataBuild:
     """Tests for analytics data building and calculation."""

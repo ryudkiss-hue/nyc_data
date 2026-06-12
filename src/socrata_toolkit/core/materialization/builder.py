@@ -1,12 +1,11 @@
 """Base builder class for all mart materialization patterns."""
 import logging
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional
+from typing import Optional
 
 import duckdb
 
 logger = logging.getLogger(__name__)
-
 
 class MartBuilder(ABC):
     """Abstract base class for all mart builders.

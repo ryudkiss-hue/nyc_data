@@ -188,7 +188,6 @@ if TYPE_CHECKING:
         violin_plot,
     )
 
-
 def _import_target(target: str):
     """Import a target string like 'module:attr' or 'module' and return the attribute/module."""
     if ":" in target:
@@ -197,7 +196,6 @@ def _import_target(target: str):
         module_name, attr = target, None
     module = import_module(f".{module_name}", package=__name__)
     return getattr(module, attr) if attr else module
-
 
 def __getattr__(name: str):
     """Lazy-load public symbols on attribute access."""
@@ -228,10 +226,8 @@ def __getattr__(name: str):
     globals()[name] = obj
     return obj
 
-
 def available_exports() -> list[str]:
     """Return the list of public symbols that are defined in __all__."""
     return list(__all__)
-
 
 """Visualization and charting components for the NYC DOT Toolkit."""

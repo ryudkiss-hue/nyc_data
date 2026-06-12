@@ -7,7 +7,6 @@ import yaml
 
 from socrata_toolkit.analyst.publish import load_publish_profile, publish_pack
 
-
 def _make_pack(tmp_path: Path) -> Path:
     pack = tmp_path / "outputs" / "analyst_pack" / "2099-01-01"
     pack.mkdir(parents=True, exist_ok=True)
@@ -19,14 +18,12 @@ def _make_pack(tmp_path: Path) -> Path:
     (pack / "program_kpi.json").write_text(json.dumps({"overall_health": "green"}), encoding="utf-8")
     return pack
 
-
 def test_load_publish_profile(tmp_path: Path):
     p = tmp_path / "publish.yaml"
     p.write_text("profile_name: demo\nfile_copy:\n  enabled: true\n  dest_root: X:/share\n", encoding="utf-8")
     data = load_publish_profile(p)
     assert data["profile_name"] == "demo"
     assert data["file_copy"]["enabled"] is True
-
 
 def test_publish_dry_run_generates_report(tmp_path: Path):
     pack = _make_pack(tmp_path)

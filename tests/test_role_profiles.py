@@ -18,14 +18,12 @@ from socrata_toolkit.analyst.roles import (
 FIXTURES = Path(__file__).parent / "fixtures" / "analyst"
 ROLES_DIR = Path(__file__).resolve().parents[1] / "config" / "role_profiles"
 
-
 @pytest.fixture(scope="module", autouse=True)
 def _ensure_fixtures():
     if not (FIXTURES / "inspections.xlsx").exists():
         from tests.fixtures.analyst.generate_fixtures import write_fixtures
 
         write_fixtures()
-
 
 def test_role_profiles_load():
     profiles = list_role_profiles(ROLES_DIR)
@@ -38,7 +36,6 @@ def test_role_profiles_load():
     assert len(sw.duties) >= 5
     assert len(sw.kpis) >= 4
     assert any(k.name == "high_priority_backlog" for k in sw.kpis)
-
 
 def test_compute_role_kpis_sw_project_analyst():
     role = load_role_profile("sw_project_analyst")
@@ -55,7 +52,6 @@ def test_compute_role_kpis_sw_project_analyst():
     assert "ifa_report_ready" in names
     assert "conflict_rate_pct" in names
     assert "administrative_review_coverage" in names
-
 
 @pytest.fixture
 def sw_role_profile(tmp_path) -> Path:
@@ -94,7 +90,6 @@ def sw_role_profile(tmp_path) -> Path:
     path = tmp_path / "profile_sw_role.yaml"
     path.write_text(yaml.dump(profile), encoding="utf-8")
     return path
-
 
 def test_analyst_pack_includes_role_kpis(sw_role_profile):
     result = run_analyst_pack(sw_role_profile, dry_run=False)

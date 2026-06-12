@@ -10,7 +10,6 @@ from socrata_toolkit.core.semantic_layer import (
     WilsonScoreCI,
 )
 
-
 class TestMetricDefinition:
     """Test metric definition and metadata."""
 
@@ -66,7 +65,6 @@ class TestMetricDefinition:
         assert metric.id == "conflict_density"
         assert metric.sla_direction == "lower_is_better"
 
-
 class TestMetricsRegistry:
     """Test metric registration and lookup."""
 
@@ -117,7 +115,6 @@ class TestMetricsRegistry:
         assert len(metrics) == 2
         assert "m1" in [m.id for m in metrics]
 
-
 class TestMetricComputation:
     """Test computing metrics from data."""
 
@@ -154,7 +151,6 @@ class TestMetricComputation:
         assert ci_lower > 0
         assert ci_upper <= 100
         assert ci_lower < value < ci_upper
-
 
 class TestWilsonScoreCI:
     """Test Wilson Score confidence interval computation."""
@@ -199,7 +195,6 @@ class TestWilsonScoreCI:
 
         assert lower == 0
         assert 0 < upper < 0.1
-
 
 class TestMetricReuse:
     """Test metric reuse across multiple datasets."""

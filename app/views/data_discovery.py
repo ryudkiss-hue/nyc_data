@@ -32,7 +32,6 @@ _NYC_CATEGORIES = [
     "Social Services", "Transportation",
 ]
 
-
 # --------------------------------------------------------------------------- #
 # Discovery API helpers
 # --------------------------------------------------------------------------- #
@@ -43,7 +42,6 @@ def _headers() -> dict[str, str]:
     if token:
         h["X-App-Token"] = token
     return h
-
 
 @st.cache_data(ttl=300, show_spinner=False)
 def _search_catalog(
@@ -78,7 +76,6 @@ def _search_catalog(
     except Exception as exc:
         return {"error": str(exc)}
 
-
 @st.cache_data(ttl=600, show_spinner=False)
 def _fetch_metadata(domain: str, fourfour: str) -> dict[str, Any]:
     url = f"https://{domain}/api/views/{fourfour}.json"
@@ -88,7 +85,6 @@ def _fetch_metadata(domain: str, fourfour: str) -> dict[str, Any]:
         return r.json()
     except Exception as exc:
         return {"error": str(exc)}
-
 
 @st.cache_data(ttl=300, show_spinner=False)
 def _fetch_sample(domain: str, fourfour: str, limit: int = 25) -> pd.DataFrame:
@@ -104,7 +100,6 @@ def _fetch_sample(domain: str, fourfour: str, limit: int = 25) -> pd.DataFrame:
         return pd.DataFrame(r.json())
     except Exception as exc:
         return pd.DataFrame({"error": [str(exc)]})
-
 
 def _results_to_df(results: list[dict]) -> pd.DataFrame:
     rows = []
@@ -124,7 +119,6 @@ def _results_to_df(results: list[dict]) -> pd.DataFrame:
             "link": link,
         })
     return pd.DataFrame(rows)
-
 
 # --------------------------------------------------------------------------- #
 # SoQL query builder helper
@@ -173,7 +167,6 @@ def _build_soql(conditions: list[dict]) -> str:
         elif op in (">", "<", ">=", "<="):
             parts.append(f"{field} {op} '{value}'")
     return " AND ".join(parts)
-
 
 # --------------------------------------------------------------------------- #
 # Main page renderer
@@ -225,7 +218,6 @@ def render_data_discovery_page() -> None:
     # ------------------------------------------------------------------ #
     with tab_nl:
         _render_nl_query_tab()
-
 
 def _render_search_tab() -> None:
     with st.form("discovery_search_form"):
@@ -371,7 +363,6 @@ def _render_search_tab() -> None:
                     st.session_state["_discovery_added"] = []
                     st.rerun()
 
-
 def _add_to_session(dataset_id: str, domain: str, name: str) -> None:
     if "_discovery_added" not in st.session_state:
         st.session_state["_discovery_added"] = []
@@ -385,7 +376,6 @@ def _add_to_session(dataset_id: str, domain: str, name: str) -> None:
         st.success(f"Added `{dataset_id}` to session.", icon="✅")
     else:
         st.info(f"`{dataset_id}` is already in your session.")
-
 
 def _render_soql_tab() -> None:
     st.markdown("#### SoQL Query Builder")
@@ -664,7 +654,6 @@ def _render_soql_tab() -> None:
             except Exception as exc:
                 st.error(f"Query failed: {exc}")
 
-
 def _show_quick_ids() -> None:
     """Show the registered dataset IDs for quick copy."""
     from app.data_loader import DATASET_REGISTRY
@@ -675,7 +664,6 @@ def _show_quick_ids() -> None:
     if rows:
         st.markdown("**Registered datasets (quick-copy IDs):**")
         st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
-
 
 def _render_preview_tab() -> None:
     st.markdown("#### Dataset Preview")
@@ -743,7 +731,6 @@ def _render_preview_tab() -> None:
                     mime="text/csv",
                 )
 
-
 # --------------------------------------------------------------------------- #
 # NL Query helpers
 # --------------------------------------------------------------------------- #
@@ -751,7 +738,6 @@ def _render_preview_tab() -> None:
 _SAVED_QUERIES_PATH = Path("data/saved_queries.json")
 _NL_HISTORY_KEY = "nl_query_history"
 _MAX_HISTORY = 20
-
 
 def _load_saved_queries() -> list[dict[str, Any]]:
     """Load saved queries from disk. Returns empty list on error."""
@@ -763,7 +749,6 @@ def _load_saved_queries() -> list[dict[str, Any]]:
     except (OSError, json.JSONDecodeError):
         pass
     return []
-
 
 def _save_query_to_disk(question: str, dataset_key: str, soql_params: dict[str, Any]) -> None:
     """Persist a favorite query to data/saved_queries.json."""
@@ -779,7 +764,6 @@ def _save_query_to_disk(question: str, dataset_key: str, soql_params: dict[str, 
     with _SAVED_QUERIES_PATH.open("w", encoding="utf-8") as f:
         json.dump(existing, f, indent=2)
 
-
 def _nl_session_with_retry() -> requests.Session:
     """Return a requests.Session with retry logic."""
     session = requests.Session()
@@ -788,7 +772,6 @@ def _nl_session_with_retry() -> requests.Session:
     session.mount("https://", adapter)
     session.mount("http://", adapter)
     return session
-
 
 @st.cache_data(ttl=300, show_spinner=False)
 def _fetch_nl_results(
@@ -833,7 +816,6 @@ def _fetch_nl_results(
     except Exception as exc:
         return pd.DataFrame({"error": [str(exc)]})
 
-
 def _get_dataset_registry_keys() -> list[str]:
     """Return dataset keys from DATASET_REGISTRY."""
     try:
@@ -841,7 +823,6 @@ def _get_dataset_registry_keys() -> list[str]:
         return list(DATASET_REGISTRY.keys())
     except Exception:
         return []
-
 
 def _get_columns_for_dataset(dataset_key: str) -> list[str]:
     """Fetch column names for a registered dataset via Socrata metadata."""
@@ -855,7 +836,6 @@ def _get_columns_for_dataset(dataset_key: str) -> list[str]:
         return [c["fieldName"] for c in fetched.get("columns", [])]
     except Exception:
         return []
-
 
 def _render_nl_query_tab() -> None:
     st.markdown("#### 🤖 Natural Language Query")
@@ -1032,7 +1012,6 @@ def _render_nl_query_tab() -> None:
 
     # ---- Show history ----
     _render_nl_history()
-
 
 def _render_nl_history() -> None:
     """Render the NL query history panel."""

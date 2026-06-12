@@ -8,16 +8,13 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 def _app_root() -> Path:
     if getattr(sys, "frozen", False):
         return Path(sys.executable).resolve().parent
     return Path(__file__).resolve().parents[1]
 
-
 def _parse_flag(args: list[str], flag: str) -> bool:
     return flag in args
-
 
 def _parse_option(args: list[str], flag: str) -> str | None:
     for i, a in enumerate(args):
@@ -26,7 +23,6 @@ def _parse_option(args: list[str], flag: str) -> str | None:
         if a.startswith(f"{flag}="):
             return a.split("=", 1)[1]
     return None
-
 
 def _run_dash() -> None:
     """Start Streamlit Mission Control, legacy Dash, or open Getting Started."""
@@ -61,7 +57,6 @@ def _run_dash() -> None:
         return
     raise SystemExit(1)
 
-
 def _run_wizard(args: list[str]) -> None:
     from socrata_toolkit.install_wizard import _print_summary, run_wizard
 
@@ -74,7 +69,6 @@ def _run_wizard(args: list[str]) -> None:
         force_profile=_parse_flag(args, "--force-profile"),
     )
     _print_summary(summary)
-
 
 def main() -> None:
     args = sys.argv[1:]
@@ -107,7 +101,6 @@ def main() -> None:
 
     sys.argv = ["socrata"] + args
     cli_main()
-
 
 if __name__ == "__main__":
     main()

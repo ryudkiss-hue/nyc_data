@@ -22,7 +22,6 @@ from __future__ import annotations
 # This file is the Streamlit entry point. It uses lazy imports so the
 # module can be imported without streamlit for testing/linting.
 
-
 def main() -> None:
     """Launch the Streamlit dashboard."""
     import streamlit as st
@@ -87,7 +86,6 @@ def main() -> None:
     elif page == "Settings":
         _page_settings(st)
 
-
 # ---------------------------------------------------------------------------
 # Page: Program Dashboard
 # ---------------------------------------------------------------------------
@@ -147,7 +145,6 @@ def _page_dashboard(st) -> None:
         if not table.empty:
             st.dataframe(table, use_container_width=True)
 
-
 def _show_demo_dashboard(st) -> None:
     """Show a demo dashboard with sample data."""
     st.subheader("Demo Dashboard")
@@ -164,7 +161,6 @@ def _show_demo_dashboard(st) -> None:
             st.markdown(f'<div class="status-{status}">', unsafe_allow_html=True)
             st.metric(name, value)
             st.markdown("</div>", unsafe_allow_html=True)
-
 
 # ---------------------------------------------------------------------------
 # Page: Task Board
@@ -292,7 +288,6 @@ def _page_task_board(st) -> None:
 
             st.markdown("</div>", unsafe_allow_html=True)
 
-
 # ---------------------------------------------------------------------------
 # Page: Construction Lists
 # ---------------------------------------------------------------------------
@@ -348,7 +343,6 @@ def _page_construction(st) -> None:
         scols[1].metric("ADA Required", summary.ada_count)
         scols[2].metric("High Priority", summary.high_priority_count)
         scols[3].metric("Avg Priority", f"{summary.avg_priority_score:.2f}")
-
 
 # ---------------------------------------------------------------------------
 # Page: Contract Analytics
@@ -410,7 +404,6 @@ def _page_contracts(st) -> None:
         except Exception as e:
             st.warning(f"Could not analyze productivity: {e}")
 
-
 # ---------------------------------------------------------------------------
 # Page: Data Explorer
 # ---------------------------------------------------------------------------
@@ -455,7 +448,6 @@ def _page_explorer(st) -> None:
             qcols[1].metric("Completeness", f"{score.completeness:.1f}%")
             qcols[2].metric("Validity", f"{score.validity:.1f}%")
             qcols[3].metric("Consistency", f"{score.consistency:.1f}%")
-
 
 # ---------------------------------------------------------------------------
 # Page: Reports
@@ -513,7 +505,6 @@ def _page_reports(st) -> None:
             report = generate_inquiry_response(inquiry_type, st.session_state["explorer_data"], **kwargs)
             st.markdown(report.to_markdown())
 
-
 # ---------------------------------------------------------------------------
 # Page: Settings
 # ---------------------------------------------------------------------------
@@ -547,7 +538,6 @@ def _page_settings(st) -> None:
             for mod, status in checks.items():
                 color = "green" if status == "installed" else "red"
                 st.markdown(f'<span style="color:{color}">{"[OK]" if status == "installed" else "[MISSING]"}</span> {mod}', unsafe_allow_html=True)
-
 
 if __name__ == "__main__":
     main()

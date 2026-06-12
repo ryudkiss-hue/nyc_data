@@ -14,7 +14,6 @@ from socrata_toolkit.analysis import (
     FreshnessTracker,
 )
 
-
 class TestDatasetFreshness:
     """Tests for DatasetFreshness class."""
 
@@ -74,7 +73,6 @@ class TestDatasetFreshness:
         )
         hours_left = df.hours_until_sla_violation()
         assert 17 < hours_left < 19  # Allow for timing variations
-
 
 class TestFreshnessAlert:
     """Tests for FreshnessAlert class."""
@@ -167,7 +165,6 @@ class TestFreshnessAlert:
         assert pd_event["event_action"] == "trigger"
         assert pd_event["payload"]["severity"] == "critical"
         assert "dataset_id" in pd_event["payload"]["custom_details"]
-
 
 class TestFreshnessTracker:
     """Tests for FreshnessTracker class."""

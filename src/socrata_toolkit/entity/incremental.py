@@ -33,7 +33,6 @@ class MatchDecision(str, Enum):
     UNMATCHED = "unmatched"
     MANUAL_OVERRIDE = "manual_override"
 
-
 @dataclass
 class MatchingResult:
     """Result of matching a new record."""
@@ -46,7 +45,6 @@ class MatchingResult:
     user: str | None = None
     notes: str = ""
 
-
 @dataclass
 class MatchingDecision:
     """User decision on a matching case."""
@@ -58,7 +56,6 @@ class MatchingDecision:
     confidence: float = 1.0
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     notes: str = ""
-
 
 class IncrementalMatcher:
     """

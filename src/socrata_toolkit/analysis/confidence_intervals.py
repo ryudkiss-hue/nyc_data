@@ -9,7 +9,7 @@ This module provides statistically rigorous uncertainty quantification methods:
 All methods return consistent dict structures with bounds, standard error, and metadata.
 """
 
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any, Callable, Optional, Union
 
 import numpy as np
 from scipy import stats
@@ -95,7 +95,6 @@ def wilson_score_confidence_interval(
         "confidence_level": confidence_level,
         "sample_size": total,
     }
-
 
 def bootstrap_confidence_interval(
     data: Union[np.ndarray, list],
@@ -184,7 +183,6 @@ def bootstrap_confidence_interval(
         "n_bootstrap": n_bootstrap,
         "bootstrap_samples": bootstrap_stats,
     }
-
 
 def mean_confidence_interval(
     data: Union[np.ndarray, list],

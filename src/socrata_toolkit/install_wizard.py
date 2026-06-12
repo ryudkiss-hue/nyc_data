@@ -23,7 +23,6 @@ ENV_KEYS = (
     "DUCKDB_PATH",
 )
 
-
 def detect_os() -> str:
     """Return a short OS label (windows, linux, darwin, other)."""
     name = sys.platform
@@ -35,7 +34,6 @@ def detect_os() -> str:
         return "linux"
     return "other"
 
-
 def project_root(start: Path | None = None) -> Path:
     """Resolve repository root (directory containing pyproject.toml)."""
     cur = (start or Path.cwd()).resolve()
@@ -44,10 +42,8 @@ def project_root(start: Path | None = None) -> Path:
             return candidate
     return cur
 
-
 def _example_profile_path(root: Path) -> Path:
     return root / "config" / "analyst_profile.example.yaml"
-
 
 def _default_answers(root: Path) -> dict[str, str]:
     prof = os.getenv("TOOLKIT_PROFILE", "") or "default"
@@ -62,7 +58,6 @@ def _default_answers(root: Path) -> dict[str, str]:
         "ANALYST_PROFILE": os.getenv("ANALYST_PROFILE", str(prof_dir / "analyst_profile.yaml")),
         "DUCKDB_PATH": os.getenv("DUCKDB_PATH", str(root / "data" / "local_db" / "nyc_mission_control.duckdb")),
     }
-
 
 def _prompt_values(root: Path, defaults: dict[str, str]) -> dict[str, str]:
     click.echo(f"\nDetected OS: {detect_os()} ({platform.system()} {platform.release()})")
@@ -105,7 +100,6 @@ def _prompt_values(root: Path, defaults: dict[str, str]) -> dict[str, str]:
         "DUCKDB_PATH": str(Path(duckdb).resolve()),
     }
 
-
 def _answers_from_env(root: Path) -> dict[str, str]:
     """Non-interactive mode: read wizard inputs from environment."""
     defaults = _default_answers(root)
@@ -121,7 +115,6 @@ def _answers_from_env(root: Path) -> dict[str, str]:
         )
         raise click.Abort()
     return out
-
 
 def write_env_file(root: Path, values: dict[str, str], env_path: Path | None = None) -> Path:
     """Write .env in project root with toolkit variables."""
@@ -145,13 +138,11 @@ def write_env_file(root: Path, values: dict[str, str], env_path: Path | None = N
     dest.write_text("\n".join(lines), encoding="utf-8")
     return dest
 
-
 def ensure_directories(values: dict[str, str]) -> None:
     for key in ("DATA_DIR", "OUTPUT_DIR"):
         Path(values[key]).mkdir(parents=True, exist_ok=True)
     pack = Path(values["OUTPUT_DIR"]) / "analyst_pack"
     pack.mkdir(parents=True, exist_ok=True)
-
 
 def write_analyst_profile(
     root: Path,
@@ -183,7 +174,6 @@ def write_analyst_profile(
     dest.write_text(yaml.dump(data, default_flow_style=False, sort_keys=False), encoding="utf-8")
     return dest
 
-
 def test_socrata(token: str, domain: str) -> tuple[bool, str]:
     if not token:
         return False, "No SOCRATA_APP_TOKEN provided"
@@ -203,7 +193,6 @@ def test_socrata(token: str, domain: str) -> tuple[bool, str]:
     except Exception as exc:
         return False, str(exc)
 
-
 def test_postgres(dsn: str) -> tuple[bool, str]:
     if not dsn:
         return True, "skipped (no PG_DSN)"
@@ -216,7 +205,6 @@ def test_postgres(dsn: str) -> tuple[bool, str]:
         return True, "PostgreSQL connection OK"
     except Exception as exc:
         return False, str(exc)
-
 
 def test_duckdb_writable(path: str) -> tuple[bool, str]:
     try:
@@ -231,7 +219,6 @@ def test_duckdb_writable(path: str) -> tuple[bool, str]:
     except Exception as exc:
         return False, str(exc)
 
-
 def run_connectivity_checks(values: dict[str, str], *, skip: bool = False) -> dict[str, Any]:
     if skip:
         return {"skipped": True}
@@ -243,7 +230,6 @@ def run_connectivity_checks(values: dict[str, str], *, skip: bool = False) -> di
     ok, msg = test_duckdb_writable(values.get("DUCKDB_PATH", "data/local_db/nyc_mission_control.duckdb"))
     results["duckdb"] = {"ok": ok, "message": msg}
     return results
-
 
 def run_wizard(
     *,
@@ -341,7 +327,6 @@ def run_wizard(
     }
     return summary
 
-
 def _print_summary(summary: dict[str, Any]) -> None:
     click.echo("\n--- Setup complete ---")
     click.echo(f"  .env written: {summary['env_file']}")
@@ -356,7 +341,6 @@ def _print_summary(summary: dict[str, Any]) -> None:
             continue
         status = click.style("OK", fg="green") if result.get("ok") else click.style("FAIL", fg="red")
         click.echo(f"  {name}: {status} — {result.get('message', '')}")
-
 
 @click.command()
 @click.option("--non-interactive", is_flag=True, help="Read settings from environment variables")
@@ -381,7 +365,6 @@ def main(non_interactive: bool, env_file: str | None, skip_checks: bool, force_p
         failed = [k for k, v in checks.items() if isinstance(v, dict) and not v.get("ok")]
         if failed and not skip_checks:
             raise SystemExit(1)
-
 
 if __name__ == "__main__":
     main()

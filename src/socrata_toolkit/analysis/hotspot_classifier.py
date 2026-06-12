@@ -20,13 +20,11 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-
 class HotspotType(str, Enum):
     """Hotspot classification by data source."""
     VIOLATION = "VIOLATION"
     COMPLAINT = "COMPLAINT"
     COMBINED = "COMBINED"
-
 
 class DensityLevel(str, Enum):
     """Density classification (events per sq km)."""
@@ -34,20 +32,17 @@ class DensityLevel(str, Enum):
     MEDIUM = "MEDIUM"
     HIGH = "HIGH"
 
-
 class Trend(str, Enum):
     """Temporal trend classification."""
     GROWING = "GROWING"
     STABLE = "STABLE"
     SHRINKING = "SHRINKING"
 
-
 class ResourceAllocation(str, Enum):
     """Resource efficiency classification."""
     OVER_RESOURCED = "OVER_RESOURCED"
     OPTIMIZED = "OPTIMIZED"
     UNDER_RESOURCED = "UNDER_RESOURCED"
-
 
 @dataclass
 class HotspotMetrics:
@@ -63,7 +58,6 @@ class HotspotMetrics:
     trend_pct_change: float
     estimated_personnel: int
     resource_efficiency: float
-
 
 @dataclass
 class HotspotClassifier:
@@ -96,7 +90,6 @@ class HotspotClassifier:
             "trend": self.trend.value,
             "resource_allocation": self.resource_allocation.value,
         }
-
 
 class HotspotClassificationEngine:
     """Classify hotspots using multi-dimensional analysis.
@@ -325,7 +318,6 @@ class HotspotClassificationEngine:
         for idx, classifier in enumerate(sorted_list, start=1):
             classifier.priority_rank = idx
         return sorted_list
-
 
 def classify_hotspots_from_dataframe(
     violations_df: pd.DataFrame | None = None,

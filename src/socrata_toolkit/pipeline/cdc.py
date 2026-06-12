@@ -27,7 +27,6 @@ class FieldChange:
     old_value: Any
     new_value: Any
 
-
 @dataclass
 class ChangeReport:
     """Results from comparing two data snapshots."""
@@ -43,7 +42,6 @@ class ChangeReport:
     added_df: pd.DataFrame
     removed_df: pd.DataFrame
     modified_df: pd.DataFrame
-
 
 def detect_changes(
     old_df: pd.DataFrame,
@@ -123,14 +121,12 @@ def detect_changes(
         modified_df=modified_df,
     )
 
-
 def _values_differ(a: Any, b: Any) -> bool:
     if pd.isna(a) and pd.isna(b):
         return False
     if pd.isna(a) or pd.isna(b):
         return True
     return str(a) != str(b)
-
 
 def detect_status_changes(
     old_df: pd.DataFrame,

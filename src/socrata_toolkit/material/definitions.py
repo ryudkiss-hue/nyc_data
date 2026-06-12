@@ -26,7 +26,6 @@ from socrata_toolkit.material.standards import (
 
 logger = logging.getLogger(__name__)
 
-
 # ============================================================================
 # MAINTENANCE SCHEDULES - Material-specific maintenance cycles
 # ============================================================================
@@ -117,7 +116,6 @@ METAL_MAINTENANCE = MaintenanceSchedule(
         "full_replacement": "Full replacement at year 15 or if structural integrity compromised",
     }
 )
-
 
 # ============================================================================
 # MATERIAL SPECIFICATIONS - All standard NYC sidewalk materials
@@ -696,7 +694,6 @@ RUBBER_MATS = MaterialSpecification(
     notes="Recycled content material growing in NYC. Used in accessibility zones."
 )
 
-
 # ============================================================================
 # MATERIAL DEFINITIONS REGISTRY - Complete dictionary for lookup
 # ============================================================================
@@ -724,7 +721,6 @@ MATERIAL_DEFINITIONS_BY_ID: dict[str, MaterialSpecification] = {
     spec.material_id: spec for spec in MATERIAL_DEFINITIONS.values()
 }
 
-
 def get_material_by_id(material_id: str) -> MaterialSpecification | None:
     """Retrieve material specification by material ID.
 
@@ -736,7 +732,6 @@ def get_material_by_id(material_id: str) -> MaterialSpecification | None:
     """
     return MATERIAL_DEFINITIONS_BY_ID.get(material_id)
 
-
 def get_material_by_category(category: MaterialCategory) -> list[MaterialSpecification]:
     """Get all materials in a specific category.
 
@@ -747,7 +742,6 @@ def get_material_by_category(category: MaterialCategory) -> list[MaterialSpecifi
         List of MaterialSpecification objects
     """
     return [spec for spec in MATERIAL_DEFINITIONS.values() if spec.category == category]
-
 
 def get_materials_by_lifecycle_cost_range(
     min_cost: float, max_cost: float
@@ -768,7 +762,6 @@ def get_materials_by_lifecycle_cost_range(
         for spec in MATERIAL_DEFINITIONS.values()
         if min_cost <= spec.lifecycle_cost_per_sqft <= max_cost
     ]
-
 
 logger.info(
     f"Loaded {len(MATERIAL_DEFINITIONS)} standard NYC material specifications"

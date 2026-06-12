@@ -10,7 +10,6 @@ import pytest
 
 from socrata_toolkit.motherduck.connector import MotherDuckConnection
 
-
 class TestMotherDuckConnectionInitialization:
     """Test MotherDuck connection initialization with various configurations."""
 
@@ -68,7 +67,6 @@ class TestMotherDuckConnectionInitialization:
         assert "llm-haiku-4-5" in conn.user_agent
         conn.close()
 
-
 class TestDuckDBFallbackConnection:
     """Test DuckDB fallback when MotherDuck token is unavailable."""
 
@@ -108,7 +106,6 @@ class TestDuckDBFallbackConnection:
         conn.close()
         # After close, connection should not be usable
         # (implementation may vary based on DuckDB behavior)
-
 
 class TestConnectionMethods:
     """Test core connection methods: execute, fetch_all, fetch_df, create_schema."""
@@ -191,7 +188,6 @@ class TestConnectionMethods:
         assert len(df) == 0
         conn.close()
 
-
 class TestConnectionErrorHandling:
     """Test error handling in connection layer."""
 
@@ -219,7 +215,6 @@ class TestConnectionErrorHandling:
             pass
 
         conn.close()
-
 
 class TestConnectionIntegration:
     """Integration tests for realistic workflows."""

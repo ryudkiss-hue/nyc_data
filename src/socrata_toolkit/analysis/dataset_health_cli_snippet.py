@@ -21,7 +21,6 @@ from ..analysis.dataset_health_workflow import run_dataset_health_workflow
 
 logger = logging.getLogger(__name__)
 
-
 # ----- Integration Snippet: Add to cli.py after @dataset_group -----
 
 # Option 1: Extend existing dataset health command (Recommended)
@@ -108,7 +107,6 @@ def dataset_health_cmd(
     # ... [rest of existing dataset_health_cmd implementation]
 '''
 
-
 # Option 2: Create separate workflow command (Alternative)
 
 CLI_EXTENSION_2 = '''
@@ -151,7 +149,6 @@ def dataset_health_workflow_cmd(output_path: str | None, fmt: str) -> None:
     else:
         click.echo(output)
 
-
 def _format_health_report_markdown(report: dict) -> str:
     """Format health report as Markdown."""
     lines = [
@@ -183,7 +180,6 @@ def _format_health_report_markdown(report: dict) -> str:
 
     return "\\n".join(lines)
 
-
 def _format_health_report_table(report: dict) -> str:
     """Format health report as ASCII table."""
     lines = [
@@ -209,7 +205,6 @@ def _format_health_report_table(report: dict) -> str:
 
     return "\\n".join(lines)
 '''
-
 
 # Option 3: Integration test / demo
 
@@ -250,7 +245,6 @@ def test_dataset_health_workflow():
     print(f"  - {len(report['datasets'])} datasets classified")
     print(f"  - {len(report.get('critical_alerts', []))} critical alerts")
 '''
-
 
 if __name__ == "__main__":
     # Quick demo

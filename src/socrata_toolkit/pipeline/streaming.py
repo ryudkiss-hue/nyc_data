@@ -27,7 +27,6 @@ try:
 except ImportError:
     CDCEvent = None  # type: ignore
 
-
 def stream_pipeline(
     client,
     domain: str,

@@ -20,7 +20,6 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-
 class RuleSeverity(Enum):
     """Severity of rule violations."""
     CRITICAL = "critical"
@@ -28,12 +27,10 @@ class RuleSeverity(Enum):
     MEDIUM = "medium"
     LOW = "low"
 
-
 class RuleMode(Enum):
     """How rules are enforced."""
     HARD = "hard"  # Block on violation
     SOFT = "soft"  # Warn only
-
 
 @dataclass
 class RuleViolation:
@@ -67,7 +64,6 @@ class RuleViolation:
             "suggested_remediation": self.suggested_remediation,
             "timestamp": self.timestamp.isoformat(),
         }
-
 
 @dataclass
 class RuleViolations:
@@ -104,7 +100,6 @@ class RuleViolations:
             "can_proceed": self.can_proceed,
             "violations": [v.to_dict() for v in self.violations],
         }
-
 
 class QualityRule:
     """Base class for quality rules.
@@ -175,7 +170,6 @@ class QualityRule:
                 violation_count=0,
                 suggested_remediation=f"Rule evaluation failed: {str(e)}",
             )
-
 
 class BusinessRulesEngine:
     """Engine for applying business rules to data.
@@ -274,7 +268,6 @@ class BusinessRulesEngine:
 
         return by_severity
 
-
 # ============================================================================
 # Dataset Expectations & Scorecard
 # ============================================================================
@@ -311,7 +304,6 @@ DATASET_EXPECTATIONS: dict[str, dict] = {
         "status_values": [],
     },
 }
-
 
 def validate_expectations(key: str, df: pd.DataFrame) -> list[dict]:
     """Validate a DataFrame against DATASET_EXPECTATIONS for the given key.
@@ -388,7 +380,6 @@ def validate_expectations(key: str, df: pd.DataFrame) -> list[dict]:
 
     return violations
 
-
 def validate_schema(df: pd.DataFrame, expected_cols: list[str]) -> dict:
     """Compare DataFrame columns against an expected schema.
 
@@ -406,7 +397,6 @@ def validate_schema(df: pd.DataFrame, expected_cols: list[str]) -> dict:
         "extra": sorted(actual - expected),
         "matched": sorted(actual & expected),
     }
-
 
 def build_data_dictionary(df: pd.DataFrame) -> pd.DataFrame:
     """Build a data dictionary describing each column in a DataFrame.
@@ -451,7 +441,6 @@ def build_data_dictionary(df: pd.DataFrame) -> pd.DataFrame:
         )
 
     return pd.DataFrame(rows)
-
 
 def quality_scorecard(df: pd.DataFrame) -> dict:
     """Compute a 0-100 quality score with weighted component breakdown.
@@ -559,7 +548,6 @@ def quality_scorecard(df: pd.DataFrame) -> dict:
         "timeliness": timeliness,
         "issues": issues,
     }
-
 
 # NYC DOT Domain-Specific Rules
 
@@ -709,7 +697,6 @@ def create_sidewalk_rules() -> BusinessRulesEngine:
     ))
 
     return engine
-
 
 def create_311_complaints_rules() -> BusinessRulesEngine:
     """Create business rules for 311 complaints data.

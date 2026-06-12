@@ -15,7 +15,6 @@ from socrata_toolkit.core.enhanced_lineage import (
     ReportNode,
 )
 
-
 class TestLineageEvent:
     """Test individual lineage events."""
 
@@ -93,7 +92,6 @@ class TestLineageEvent:
         assert event.event_type == "export"
         assert event.metadata["format"] == "pdf"
 
-
 class TestLineageTracker:
     """Test lineage tracking and recording."""
 
@@ -170,7 +168,6 @@ class TestLineageTracker:
         assert downstream[0].target == "staging.inspection"
         assert downstream[-1].target == "reports/sidewalk_repair_matrix.pdf"
 
-
 class TestLineageDAG:
     """Test DAG construction and visualization."""
 
@@ -219,7 +216,6 @@ class TestLineageDAG:
         assert "edges" in parsed
         # Nodes: inspection, raw.inspection, analytics.sidewalk_repair_matrix
         assert len(parsed["nodes"]) == 3
-
 
 class TestLineageIntegration:
     """Integration tests for complete workflows."""

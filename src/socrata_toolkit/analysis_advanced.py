@@ -33,7 +33,6 @@ class OutlierReport:
     upper_bound: float | None
     outlier_indices: list[int]
 
-
 def detect_outliers_iqr(
     df: pd.DataFrame,
     column: str,
@@ -61,7 +60,6 @@ def detect_outliers_iqr(
         upper_bound=upper,
         outlier_indices=indices,
     )
-
 
 def detect_outliers_zscore(
     df: pd.DataFrame,
@@ -95,7 +93,6 @@ def detect_outliers_zscore(
         outlier_indices=indices,
     )
 
-
 def detect_all_outliers(
     df: pd.DataFrame,
     method: str = "iqr",
@@ -108,7 +105,6 @@ def detect_all_outliers(
         reports.append(fn(df, col, **kwargs))
     return reports
 
-
 # ---------------------------------------------------------------------------
 # Correlation Analysis
 # ---------------------------------------------------------------------------
@@ -119,7 +115,6 @@ class CorrelationResult:
     pairs: list[dict[str, Any]]
     method: str
     threshold: float
-
 
 def correlation_analysis(
     df: pd.DataFrame,
@@ -157,7 +152,6 @@ def correlation_analysis(
     pairs.sort(key=lambda p: abs(p["correlation"]), reverse=True)
     return CorrelationResult(pairs=pairs, method=method, threshold=threshold)
 
-
 def _strength_label(r: float) -> str:
     if r >= 0.9:
         return "very_strong"
@@ -168,7 +162,6 @@ def _strength_label(r: float) -> str:
     if r >= 0.3:
         return "weak"
     return "negligible"
-
 
 # ---------------------------------------------------------------------------
 # Time Series Helpers
@@ -187,7 +180,6 @@ class TimeSeriesSummary:
     mean: float
     std: float
     monthly_counts: dict[str, int]
-
 
 def time_series_summary(
     df: pd.DataFrame,
@@ -248,7 +240,6 @@ def time_series_summary(
         monthly_counts=monthly_counts,
     )
 
-
 # ---------------------------------------------------------------------------
 # Distribution Classification
 # ---------------------------------------------------------------------------
@@ -262,7 +253,6 @@ class DistributionInfo:
     classification: str  # "normal", "right_skewed", "left_skewed", "heavy_tailed", "uniform", "sparse"
     unique_ratio: float
     sample_size: int
-
 
 def classify_distribution(df: pd.DataFrame, column: str) -> DistributionInfo:
     """Classify the distribution shape of a numeric column."""
@@ -302,11 +292,9 @@ def classify_distribution(df: pd.DataFrame, column: str) -> DistributionInfo:
         sample_size=n,
     )
 
-
 def classify_all_distributions(df: pd.DataFrame) -> list[DistributionInfo]:
     """Classify distributions for all numeric columns."""
     return [classify_distribution(df, col) for col in df.select_dtypes(include="number").columns]
-
 
 # ---------------------------------------------------------------------------
 # Anomaly Flagging
@@ -319,7 +307,6 @@ class AnomalyReport:
     flagged_rows: int
     flagged_pct: float
     column_reports: list[OutlierReport]
-
 
 def flag_anomalies(
     df: pd.DataFrame,

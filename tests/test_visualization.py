@@ -18,7 +18,6 @@ from socrata_toolkit.analysis import (
     time_series_chart,
 )
 
-
 @pytest.mark.skipif(not HAS_MPL, reason="matplotlib not installed")
 class TestVisualization:
     def test_histogram_returns_base64(self):

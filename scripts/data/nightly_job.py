@@ -14,7 +14,6 @@ from socrata_toolkit.alerts import Alert, AlertManager, CLINotifier, EmailNotifi
 from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 from socrata_toolkit.core.exporters import PostgresExporter
 
-
 def load_config(path: Path | None = None) -> dict[str, Any]:
     """Loads configuration from environment or JSON file."""
     if path is None:
@@ -26,7 +25,6 @@ def load_config(path: Path | None = None) -> dict[str, Any]:
     with open(path, encoding="utf-8") as f:
         config_data = json.load(f)
         return cast(dict[str, Any], config_data)
-
 
 def run_nightly(config_path: str | None = None) -> None:
     """Runs the nightly ingest and conflict resolution sequence."""
@@ -94,7 +92,6 @@ def run_nightly(config_path: str | None = None) -> None:
             message=f"Nightly ingest complete ({len(rows)} rows)",
         )
     )
-
 
 if __name__ == "__main__":
     run_nightly()

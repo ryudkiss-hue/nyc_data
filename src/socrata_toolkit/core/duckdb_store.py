@@ -14,12 +14,10 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-
 def get_bundle_dir() -> str:
     if getattr(sys, "frozen", False):
         return sys._MEIPASS  # type: ignore[attr-defined]
     return os.getcwd()
-
 
 # ---------------------------------------------------------------------------
 # Parquet cache querying (Item 34)
@@ -28,7 +26,6 @@ def get_bundle_dir() -> str:
 def _escape_sql_literal(value: str) -> str:
     """Escape single quotes so *value* is safe inside a SQL string literal."""
     return value.replace("'", "''")
-
 
 def _default_cache_dir() -> Path:
     """Return the on-disk L2 cache directory used by Mission Control.
@@ -42,7 +39,6 @@ def _default_cache_dir() -> Path:
     # This file lives at src/socrata_toolkit/core/ — repo root is parents[3].
     repo_root = Path(__file__).resolve().parents[3]
     return repo_root / "data" / "cache"
-
 
 def _latest_parquet_for_key(key: str, cache_dir: str | Path | None) -> Path | None:
     """Return the newest cached Parquet file for *key*, or ``None`` if none exist.
@@ -62,7 +58,6 @@ def _latest_parquet_for_key(key: str, cache_dir: str | Path | None) -> Path | No
         key=lambda p: p.stat().st_mtime,
     )
     return candidates[-1] if candidates else None
-
 
 def query_parquet_cache(
     sql_or_key: str,
@@ -125,7 +120,6 @@ def query_parquet_cache(
         return duckdb.query(sql).to_df()
     except duckdb.Error as exc:  # pragma: no cover - depends on caller SQL
         raise RuntimeError(f"query_parquet_cache: DuckDB query failed: {exc}") from exc
-
 
 class DuckDBManager:
     """Manages DuckDB local file connection, MotherDuck integration, and extensions."""
@@ -287,8 +281,6 @@ class DuckDBManager:
         if not base.exists():
             return []
         return sorted(list(base.glob(f"{key}_*.parquet")))
-
-
 
 class DuckDBRepository:
     """Repository for DuckDB bulk upserts with Spatial awareness.

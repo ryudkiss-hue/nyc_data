@@ -17,7 +17,6 @@ def load_budget_rules(path: str | Path | None) -> dict[str, Any]:
         return {}
     return yaml.safe_load(p.read_text(encoding="utf-8")) or {}
 
-
 def validate_budget_codes(
     contracts: pd.DataFrame,
     rules: dict[str, Any],

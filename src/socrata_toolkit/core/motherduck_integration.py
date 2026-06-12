@@ -14,12 +14,15 @@ import logging
 import os
 import re
 from dataclasses import dataclass
+<<<<<<< HEAD
+from typing import Optional
+=======
 from typing import Dict, List, Optional
+>>>>>>> main
 
 import duckdb
 
 logger = logging.getLogger(__name__)
-
 
 @dataclass
 class CompatibilityIssue:
@@ -28,7 +31,6 @@ class CompatibilityIssue:
     severity: str  # "warning" | "error"
     reason: str
     suggestion: str
-
 
 class MotherDuckValidator:
     """Validate SQL for MotherDuck compatibility.
@@ -114,7 +116,6 @@ class MotherDuckValidator:
         issues = self.validate(sql)
         return not any(issue.severity == "error" for issue in issues)
 
-
 class DuckDBConnection:
     """Wrapper for local DuckDB connection."""
 
@@ -156,7 +157,6 @@ class DuckDBConnection:
         """Close connection."""
         if self.conn:
             self.conn.close()
-
 
 class MotherDuckConnection:
     """Wrapper for MotherDuck cloud connection.
@@ -224,7 +224,6 @@ class MotherDuckConnection:
         """Close connection."""
         if self.conn:
             self.conn.close()
-
 
 def get_connection(use_motherduck: bool = True) -> DuckDBConnection | MotherDuckConnection:
     """Get DuckDB or MotherDuck connection based on configuration.

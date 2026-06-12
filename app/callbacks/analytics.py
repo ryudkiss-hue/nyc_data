@@ -6,14 +6,15 @@ Pattern: Each method returns tuple[go.Figure, str] with data insight + narrative
 """
 
 import logging
-import plotly.graph_objects as go
-import plotly.express as px
-from typing import Dict, Tuple, Optional
-import pandas as pd
-import numpy as np
+from typing import Optional
 
-from app.callbacks.decorators import timer_callback, memoize_with_ttl
-from app.services.analytics_service import get_spatial_data, get_dataset, validate_filters
+import numpy as np
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+
+from app.callbacks.decorators import memoize_with_ttl, timer_callback
+from app.services.analytics_service import get_dataset, get_spatial_data, validate_filters
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +48,7 @@ class AnalyticsEngine:
     @staticmethod
     @timer_callback
     @memoize_with_ttl(seconds=600)
-    def chart_morans_i(data_bundle: Dict) -> Tuple[go.Figure, str]:
+    def chart_morans_i(data_bundle: dict) -> tuple[go.Figure, str]:
         """
         Compute Moran's I spatial autocorrelation statistic.
 
@@ -64,8 +65,8 @@ class AnalyticsEngine:
 
             # Import spatial analysis
             try:
-                from libpysal.weights import KNN
                 from esda import Moran
+                from libpysal.weights import KNN
             except ImportError:
                 logger.error("libpysal/esda not installed")
                 return go.Figure(), "Spatial analysis libraries (libpysal/esda) not installed."
@@ -139,7 +140,7 @@ class AnalyticsEngine:
     @staticmethod
     @timer_callback
     @memoize_with_ttl(seconds=600)
-    def chart_distribution_classification(data_bundle: Dict) -> Tuple[go.Figure, str]:
+    def chart_distribution_classification(data_bundle: dict) -> tuple[go.Figure, str]:
         """
         Classify distributions of numeric columns.
 
@@ -183,7 +184,7 @@ class AnalyticsEngine:
     @staticmethod
     @timer_callback
     @memoize_with_ttl(seconds=300)
-    def chart_anomaly_detection(data_bundle: Dict) -> Tuple[go.Figure, str]:
+    def chart_anomaly_detection(data_bundle: dict) -> tuple[go.Figure, str]:
         """
         Detect spatial outliers using k-nearest neighbors.
 
@@ -250,7 +251,7 @@ class AnalyticsEngine:
     @staticmethod
     @timer_callback
     @memoize_with_ttl(seconds=900)
-    def chart_seasonal_decomposition(data_bundle: Dict) -> Tuple[go.Figure, str]:
+    def chart_seasonal_decomposition(data_bundle: dict) -> tuple[go.Figure, str]:
         """
         Decompose time series into trend, seasonal, residual components.
 
@@ -317,7 +318,7 @@ class AnalyticsEngine:
     @staticmethod
     @timer_callback
     @memoize_with_ttl(seconds=600)
-    def chart_bootstrap_ci(data_bundle: Dict) -> Tuple[go.Figure, str]:
+    def chart_bootstrap_ci(data_bundle: dict) -> tuple[go.Figure, str]:
         """
         Compute bootstrap confidence interval for KPI metrics.
 
@@ -372,7 +373,7 @@ class AnalyticsEngine:
 
 @timer_callback
 @memoize_with_ttl(seconds=600)
-def classify_all_distributions(filters: Dict, limit: int = 8) -> pd.DataFrame:
+def classify_all_distributions(filters: dict, limit: int = 8) -> pd.DataFrame:
     """
     Classify distributions of numeric columns.
 

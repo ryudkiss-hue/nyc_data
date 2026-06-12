@@ -16,11 +16,9 @@ from click.testing import CliRunner
 
 from socrata_toolkit.core.cli import main
 
-
 @pytest.fixture
 def runner():
     return CliRunner()
-
 
 def _resp(json_value):
     r = MagicMock()
@@ -29,7 +27,6 @@ def _resp(json_value):
     r.text = json.dumps(json_value)
     r.raise_for_status = MagicMock()
     return r
-
 
 # ---------------------------------------------------------------------------
 # report contract
@@ -95,7 +92,6 @@ class TestReportContract:
             result = runner.invoke(main, ["report", "contract"])
         assert result.exit_code != 0
 
-
 # ---------------------------------------------------------------------------
 # dataset ramp-analysis
 # ---------------------------------------------------------------------------
@@ -155,7 +151,6 @@ class TestDatasetRampAnalysis:
         assert result.exit_code != 0
         assert "Report generation failed" in result.output
 
-
 # ---------------------------------------------------------------------------
 # analyst group
 # ---------------------------------------------------------------------------
@@ -193,7 +188,6 @@ class TestAnalystGroup:
                 ["analyst", "publish", "--profile", str(profile), "--pack", str(pack), "--dry-run"],
             )
         assert result.exit_code == 0
-
 
 # ---------------------------------------------------------------------------
 # nl-query happy path (stubbed anthropic)

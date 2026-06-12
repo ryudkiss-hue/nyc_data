@@ -48,7 +48,6 @@ try:
 except ImportError:
     HAS_LANGGRAPH = False
 
-
 class LegalHoldState(TypedDict):
     """Workflow state: passed through each node."""
     domain: str
@@ -67,7 +66,6 @@ class LegalHoldState(TypedDict):
     compliance_certificate: dict[str, Any]
     error_log: list[str]
     audit_logger: AuditLogger | None
-
 
 class LegalHoldWorkflow:
     """Orchestrate legal hold and compliance verification via LangGraph.
@@ -496,7 +494,6 @@ Provide concise, actionable guidance (~300 tokens)."""
             "fallback_mode": True,
         }
 
-
 def build_legal_hold_graph() -> StateGraph:
     """Build and return the LangGraph graph (for standalone use).
 
@@ -508,7 +505,6 @@ def build_legal_hold_graph() -> StateGraph:
 
     workflow = LegalHoldWorkflow()
     return workflow.compiled
-
 
 def run_legal_hold_workflow(
     domain: str = "data.cityofnewyork.us",

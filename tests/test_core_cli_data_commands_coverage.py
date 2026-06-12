@@ -16,11 +16,9 @@ from click.testing import CliRunner
 
 from socrata_toolkit.core.cli import main
 
-
 @pytest.fixture
 def runner():
     return CliRunner()
-
 
 def _resp(json_value, ok=True):
     r = MagicMock()
@@ -30,9 +28,7 @@ def _resp(json_value, ok=True):
     r.raise_for_status = MagicMock()
     return r
 
-
 REGISTRY = {"inspection": {"fourfour": "dntt-gqwq"}}
-
 
 # ---------------------------------------------------------------------------
 # dataset health
@@ -123,7 +119,6 @@ class TestDatasetHealth:
             )
         assert result.exit_code == 0
 
-
 # ---------------------------------------------------------------------------
 # conflict-detect
 # ---------------------------------------------------------------------------
@@ -171,7 +166,6 @@ class TestConflictDetect:
         assert result.exit_code == 0
         assert out.exists()
 
-
 # ---------------------------------------------------------------------------
 # cache refresh
 # ---------------------------------------------------------------------------
@@ -199,7 +193,6 @@ class TestCacheRefresh:
         assert "Deleted 2 cache file(s)" in result.output
         assert not (tmp_path / "inspection_2024.parquet").exists()
         assert (tmp_path / "violations.parquet").exists()
-
 
 # ---------------------------------------------------------------------------
 # export
@@ -263,7 +256,6 @@ class TestExport:
                 main, ["export", "inspection", "--format", "csv", "--output", str(tmp_path / "x.csv")]
             )
         assert result.exit_code != 0
-
 
 # ---------------------------------------------------------------------------
 # nl-query (anthropic gating)

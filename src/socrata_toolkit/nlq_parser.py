@@ -13,7 +13,6 @@ class QueryIntent:
     group_by: str | None = None
     filters: dict[str, Any] = field(default_factory=dict)
 
-
 def parse_query(text: str) -> QueryIntent | None:
     """
     A simple, keyword-based parser to translate natural language into a structured intent.

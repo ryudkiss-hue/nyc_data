@@ -54,7 +54,6 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class GovernanceEvent:
     """CDC event enriched with governance context.
@@ -112,7 +111,6 @@ class GovernanceEvent:
             "user_id": self.user_id,
             "change_reason": self.change_reason,
         }
-
 
 class GovernanceProcessor:
     """Unified processor orchestrating schema, lineage, compliance, and CDC.

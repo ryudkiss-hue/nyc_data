@@ -18,7 +18,6 @@ from socrata_toolkit.governance.audit_logger import AuditLogger
 
 logger = logging.getLogger(__name__)
 
-
 def validate_counts(
     conn,
     raw_table: str,
@@ -85,7 +84,6 @@ def validate_counts(
             )
 
         return result
-
 
 def validate_freshness(
     conn,
@@ -172,7 +170,6 @@ def validate_freshness(
 
         return validation_result
 
-
 def validate_uniqueness(
     conn,
     table: str,
@@ -235,7 +232,6 @@ def validate_uniqueness(
             )
 
         return result
-
 
 def validate_business_rules(
     conn,
@@ -322,7 +318,6 @@ def validate_business_rules(
 
         return result
 
-
 def run_all_validations(conn) -> dict:
     """Run complete validation suite on all pipeline stages.
 
@@ -363,7 +358,6 @@ def run_all_validations(conn) -> dict:
 
     return results
 
-
 # ============================================================================
 # TASK 5: Quality-Gate Validation Checks with Audit Logging Integration
 # ============================================================================
@@ -372,13 +366,11 @@ def run_all_validations(conn) -> dict:
 # {"status":"PASS"|"FAIL"|"WARNING", "check_name":"...", "details":{...}, "rows_affected":N}
 # ============================================================================
 
-
 def _get_audit_logger() -> AuditLogger:
     """Get or create an audit logger for validation checks."""
     if not hasattr(_get_audit_logger, "_instance"):
         _get_audit_logger._instance = AuditLogger()
     return _get_audit_logger._instance
-
 
 def _log_check(
     check_name: str,
@@ -411,7 +403,6 @@ def _log_check(
         rows_affected=rows_affected,
         details=details
     )
-
 
 def validate_raw_counts(conn: Optional[duckdb.DuckDBPyConnection] = None) -> dict[str, Any]:
     """Validate that raw.* tables have expected row counts (tolerance: ±%).
@@ -503,7 +494,6 @@ def validate_raw_counts(conn: Optional[duckdb.DuckDBPyConnection] = None) -> dic
 
     _log_check(check_name, "raw.*", overall_status, details, total_rows)
     return result
-
 
 def validate_staging_dedup(conn: Optional[duckdb.DuckDBPyConnection] = None) -> dict[str, Any]:
     """Validate that staging.* tables have no duplicates on primary keys.
@@ -605,7 +595,6 @@ def validate_staging_dedup(conn: Optional[duckdb.DuckDBPyConnection] = None) -> 
     _log_check(check_name, "staging.*", overall_status, details, total_duplicates)
     return result
 
-
 def validate_staging_data_types(conn: Optional[duckdb.DuckDBPyConnection] = None) -> dict[str, Any]:
     """Spot-check staging table columns have expected data types.
 
@@ -700,7 +689,6 @@ def validate_staging_data_types(conn: Optional[duckdb.DuckDBPyConnection] = None
     _log_check(check_name, "staging.*", overall_status, details, 0)
     return result
 
-
 def validate_analytics_populated(conn: Optional[duckdb.DuckDBPyConnection] = None) -> dict[str, Any]:
     """Validate all 5 analytics.* tables exist and have row_count > 0.
 
@@ -784,7 +772,6 @@ def validate_analytics_populated(conn: Optional[duckdb.DuckDBPyConnection] = Non
 
     _log_check(check_name, "analytics.*", overall_status, details, total_rows)
     return result
-
 
 def validate_staging_to_analytics_lineage(conn: Optional[duckdb.DuckDBPyConnection] = None) -> dict[str, Any]:
     """Spot-check data flow continuity from staging to analytics.
@@ -906,7 +893,6 @@ def validate_staging_to_analytics_lineage(conn: Optional[duckdb.DuckDBPyConnecti
 
     _log_check(check_name, "staging->analytics", overall_status, details, 0)
     return result
-
 
 def validate_data_freshness(conn: Optional[duckdb.DuckDBPyConnection] = None) -> dict[str, Any]:
     """Check that the most recent record in staging.inspections has a created_date

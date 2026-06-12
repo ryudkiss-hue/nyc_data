@@ -63,7 +63,6 @@ DATASET_TTL_HOURS: dict[str, float] = {
 
 _MANIFEST_PATH = CACHE_DIR / "manifest.json"
 
-
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
@@ -71,11 +70,9 @@ _MANIFEST_PATH = CACHE_DIR / "manifest.json"
 def _ensure_cache_dir() -> None:
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
-
 def _ttl_for(key: str) -> float:
     """Return TTL hours for *key*, falling back to the default."""
     return DATASET_TTL_HOURS.get(key, DATASET_TTL_HOURS["_default"])
-
 
 # ---------------------------------------------------------------------------
 # [FIX 2] Transaction management helpers
@@ -93,7 +90,6 @@ def _get_tx_manager() -> DuckDBManager:
             raise RuntimeError("DuckDBManager not available; install socrata_toolkit")
         _tx_manager = DuckDBManager()
     return _tx_manager
-
 
 def init_cache_audit_table(manager: DuckDBManager | None = None) -> None:
     """Create cache_audit table if it doesn't exist.
@@ -131,7 +127,6 @@ def init_cache_audit_table(manager: DuckDBManager | None = None) -> None:
     except Exception as exc:
         logger.warning(f"Failed to init cache_audit table: {exc}")
 
-
 # ---------------------------------------------------------------------------
 # [FIX 4] File locking helpers (platform-specific)
 # ---------------------------------------------------------------------------
@@ -154,7 +149,6 @@ def _lock_file(file_handle) -> None:
     else:  # Unix/Linux/macOS
         fcntl.flock(file_handle.fileno(), fcntl.LOCK_EX)
 
-
 def _unlock_file(file_handle) -> None:
     """Release lock on file (platform-specific).
 
@@ -173,7 +167,6 @@ def _unlock_file(file_handle) -> None:
             fcntl.flock(file_handle.fileno(), fcntl.LOCK_UN)
         except OSError:
             pass
-
 
 def cache_manifest_locked() -> tuple[dict[str, Any], Any]:
     """Load manifest with exclusive lock held.
@@ -211,7 +204,6 @@ def cache_manifest_locked() -> tuple[dict[str, Any], Any]:
         lock_file.close()
         raise
 
-
 def _unlock_manifest(lock_file: Any) -> None:
     """Release lock acquired by cache_manifest_locked().
 
@@ -227,7 +219,6 @@ def _unlock_manifest(lock_file: Any) -> None:
             lock_file.close()
         except Exception:
             pass
-
 
 def _save_manifest_locked(manifest: dict[str, Any], lock_file: Any) -> None:
     """Write manifest to disk using atomic rename.
@@ -267,7 +258,6 @@ def _save_manifest_locked(manifest: dict[str, Any], lock_file: Any) -> None:
             pass
         raise
 
-
 # ---------------------------------------------------------------------------
 # Path helpers
 # ---------------------------------------------------------------------------
@@ -276,13 +266,11 @@ def cache_path(key: str, date_str: str) -> Path:
     """Return ``data/cache/<key>_<date_str>.parquet.gz``."""
     return CACHE_DIR / f"{key}_{date_str}.parquet.gz"
 
-
 def _latest_cache_path(key: str) -> Path | None:
     """Return the most-recently-written .parquet.gz file for *key*, or None."""
     _ensure_cache_dir()
     candidates = sorted(CACHE_DIR.glob(f"{key}_*.parquet.gz"), key=lambda p: p.stat().st_mtime)
     return candidates[-1] if candidates else None
-
 
 # ---------------------------------------------------------------------------
 # Manifest
@@ -290,7 +278,6 @@ def _latest_cache_path(key: str) -> Path | None:
 
 # [FIX 4] Timeout for manifest reads when writer is active
 _MANIFEST_READ_TIMEOUT = 5.0  # seconds
-
 
 def cache_manifest(timeout: float = _MANIFEST_READ_TIMEOUT) -> dict[str, Any]:
     """Load manifest (read-only, waits for lock with timeout).
@@ -326,11 +313,9 @@ def cache_manifest(timeout: float = _MANIFEST_READ_TIMEOUT) -> dict[str, Any]:
                 return {}
             time.sleep(0.1)  # Backoff before retry
 
-
 def _save_manifest(manifest: dict[str, Any]) -> None:
     _ensure_cache_dir()
     _MANIFEST_PATH.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
-
 
 def update_manifest(key: str, path: Path, rows: int, ttl_hours: float) -> None:
     """Upsert a manifest entry for *key* with file locking.
@@ -363,7 +348,6 @@ def update_manifest(key: str, path: Path, rows: int, ttl_hours: float) -> None:
     finally:
         # Always release lock
         _unlock_manifest(lock_file)
-
 
 # ---------------------------------------------------------------------------
 # Write / Read
@@ -495,7 +479,6 @@ def write_cache_atomic(
         logger.error(f"write_cache_atomic failed for {key}: {exc}")
         raise
 
-
 def write_cache(key: str, df: pd.DataFrame) -> Path:
     """DEPRECATED: Use write_cache_atomic() instead.
 
@@ -522,7 +505,6 @@ def write_cache(key: str, df: pd.DataFrame) -> Path:
         update_manifest(key, dest, len(df), ttl_hours)
         evict_old_cache()  # Item 11: keep total size within cap
         return dest
-
 
 def read_cache(key: str, max_age_hours: float | None = None) -> pd.DataFrame | None:
     """Return a cached DataFrame if a fresh file exists, else ``None``.
@@ -558,7 +540,6 @@ def read_cache(key: str, max_age_hours: float | None = None) -> pd.DataFrame | N
         logging.warning("cache_manager: failed to read cache for %s: %s", key, exc)
         return None
 
-
 def read_stale_cache(key: str) -> pd.DataFrame | None:
     """Return any cached file for *key* regardless of age (for offline mode)."""
     manifest = cache_manifest()
@@ -579,12 +560,10 @@ def read_stale_cache(key: str) -> pd.DataFrame | None:
     except Exception:
         return None
 
-
 def last_fetched_iso(key: str) -> str | None:
     """Return the ISO-formatted fetched_at timestamp from the manifest, or None."""
     entry = cache_manifest().get(key)
     return entry["fetched_at"] if entry else None
-
 
 # ---------------------------------------------------------------------------
 # Eviction
@@ -610,7 +589,6 @@ def evict_old_cache(max_bytes: int = MAX_CACHE_BYTES) -> int:
         except Exception as exc:
             logging.warning("cache_manager: could not evict %s: %s", oldest.name, exc)
     return freed
-
 
 # ---------------------------------------------------------------------------
 # Background pre-fetch scheduler (APScheduler)
@@ -662,7 +640,6 @@ def start_prefetch_scheduler(dataset_keys: list[str], interval_minutes: int = 60
     if st is not None:
         st.session_state["_prefetch_scheduler"] = scheduler
 
-
 # ---------------------------------------------------------------------------
 # Ramp Analysis Caching (Full-Corpus)
 # ---------------------------------------------------------------------------
@@ -675,14 +652,12 @@ def cache_ramp_corpus(df: pd.DataFrame) -> Path:
     """
     return write_cache("ramp_full_corpus", df)
 
-
 def get_cached_ramp_corpus() -> pd.DataFrame | None:
     """Return the cached ramp analysis corpus if fresh, else None.
 
     Returns None on cache miss or TTL expiry.
     """
     return read_cache("ramp_full_corpus")
-
 
 # Expose CACHE_DIR env-var override so deployments can redirect the cache location
 _env_cache_dir = os.getenv("SOCRATA_CACHE_DIR", "").strip()

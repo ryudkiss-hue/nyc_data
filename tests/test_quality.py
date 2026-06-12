@@ -52,7 +52,6 @@ from socrata_toolkit.analysis import (
 # FIXTURES
 # ============================================================================
 
-
 @pytest.fixture
 def sample_dataframe():
     """Create sample sidewalk inspection data."""
@@ -79,7 +78,6 @@ def sample_dataframe():
             "longitude": [-74.0060, -73.9776, -73.9680, -73.9776, -73.9735],
         }
     )
-
 
 @pytest.fixture
 def invalid_dataframe():
@@ -108,13 +106,11 @@ def invalid_dataframe():
         }
     )
 
-
 @pytest.fixture
 def expectation_suite():
     """Create an expectation suite for testing."""
     suite = create_sidewalk_inspections_suite()
     return suite
-
 
 @pytest.fixture
 def tracker():
@@ -124,11 +120,9 @@ def tracker():
         tracker.register_sla(sla)
     return tracker
 
-
 # ============================================================================
 # EXPECTATION TESTS (8 tests)
 # ============================================================================
-
 
 def test_expectation_creation():
     """Test creating a single expectation."""
@@ -141,7 +135,6 @@ def test_expectation_creation():
     assert expectation.expectation_type == ExpectationType.COLUMN_EXISTS
     assert expectation.severity == SeverityLevel.CRITICAL
 
-
 def test_expectation_suite_creation():
     """Test creating an expectation suite."""
     suite = ExpectationSuite(
@@ -152,7 +145,6 @@ def test_expectation_suite_creation():
     assert suite.name == "test_suite"
     assert len(suite.expectations) == 0
 
-
 def test_expectation_suite_add_expectations():
     """Test adding expectations to a suite."""
     suite = ExpectationSuite("test")
@@ -161,13 +153,11 @@ def test_expectation_suite_add_expectations():
     suite.add_column_values_in_set("col3", {"A", "B", "C"})
     assert len(suite.expectations) == 3
 
-
 def test_expectation_suite_validate_pass(sample_dataframe, expectation_suite):
     """Test validation with passing data."""
     result = expectation_suite.validate(sample_dataframe)
     assert result.overall_status in ("PASS", "WARN")
     assert result.passed_count > 0
-
 
 def test_expectation_suite_validate_fail(invalid_dataframe):
     """Test validation with invalid data."""
@@ -175,7 +165,6 @@ def test_expectation_suite_validate_fail(invalid_dataframe):
     result = suite.validate(invalid_dataframe)
     # Should have failures due to invalid material types
     assert result.failed_count > 0
-
 
 def test_expectation_suite_to_from_dict():
     """Test serialization/deserialization of suite."""
@@ -186,13 +175,11 @@ def test_expectation_suite_to_from_dict():
     assert suite_dict["name"] == "test"
     assert len(suite_dict["expectations"]) == 1
 
-
 def test_sidewalk_expectations_suite():
     """Test sidewalk inspection expectation suite."""
     suite = create_sidewalk_inspections_suite()
     assert suite.name == "sidewalk_inspections"
     assert len(suite.expectations) > 5
-
 
 def test_311_complaints_expectations_suite():
     """Test 311 complaints expectation suite."""
@@ -200,17 +187,14 @@ def test_311_complaints_expectations_suite():
     assert suite.name == "311_complaints"
     assert len(suite.expectations) > 3
 
-
 # ============================================================================
 # PROFILER TESTS (8 tests)
 # ============================================================================
-
 
 def test_profiler_initialization():
     """Test profiler initialization."""
     profiler = ProfileGenerator(sample_size=5000)
     assert profiler.sample_size == 5000
-
 
 def test_profile_dataset(sample_dataframe):
     """Test dataset profiling."""
@@ -222,7 +206,6 @@ def test_profile_dataset(sample_dataframe):
     assert profile.column_count == 7
     assert len(profile.column_profiles) == 7
 
-
 def test_column_profile_numeric():
     """Test profiling of numeric column."""
     profiler = ProfileGenerator()
@@ -233,7 +216,6 @@ def test_column_profile_numeric():
     assert col_profile.min_value == 1.0
     assert col_profile.max_value == 5.0
 
-
 def test_column_profile_categorical():
     """Test profiling of categorical column."""
     profiler = ProfileGenerator()
@@ -243,7 +225,6 @@ def test_column_profile_categorical():
     assert col_profile.data_type == DataType.STRING
     assert col_profile.cardinality == 3
 
-
 def test_suggest_expectations(sample_dataframe):
     """Test suggesting expectations from profile."""
     profiler = ProfileGenerator()
@@ -252,7 +233,6 @@ def test_suggest_expectations(sample_dataframe):
 
     assert len(suggestions) > 0
     assert any(s["expectation_type"] == "column_exists" for s in suggestions)
-
 
 def test_compare_profiles():
     """Test comparing two profiles for drift."""
@@ -265,7 +245,6 @@ def test_compare_profiles():
 
     drift_report = profiler.compare_profiles(profile1, profile2)
     assert isinstance(drift_report, DriftReport)
-
 
 def test_detect_schema_drift():
     """Test detecting schema changes."""
@@ -280,7 +259,6 @@ def test_detect_schema_drift():
     assert "columns_added" in schema_changes
     assert "columns_removed" in schema_changes
 
-
 def test_generate_summary(sample_dataframe):
     """Test generating profile summary."""
     profiler = ProfileGenerator()
@@ -290,11 +268,9 @@ def test_generate_summary(sample_dataframe):
     assert summary["row_count"] == 5
     assert summary["column_count"] == 7
 
-
 # ============================================================================
 # SLA TESTS (8 tests)
 # ============================================================================
-
 
 def test_sla_definition_creation():
     """Test creating SLA definition."""
@@ -310,11 +286,9 @@ def test_sla_definition_creation():
     assert sla.metric_name == "completeness"
     assert sla.target == 0.99
 
-
 def test_quality_tracker_registration(tracker):
     """Test registering SLAs in tracker."""
     assert len(tracker._slas) > 0
-
 
 def test_quality_tracker_record_metric(tracker):
     """Test recording metrics."""
@@ -325,7 +299,6 @@ def test_quality_tracker_record_metric(tracker):
         MetricType.COMPLETENESS,
     )
     assert len(tracker._metric_history) > 0
-
 
 def test_quality_tracker_evaluate_sla(tracker):
     """Test SLA evaluation."""
@@ -339,7 +312,6 @@ def test_quality_tracker_evaluate_sla(tracker):
     compliant, actual = tracker.evaluate_sla("sidewalk_inspections_completeness")
     assert isinstance(compliant, bool)
     assert actual >= 0.0
-
 
 def test_quality_tracker_get_trend(tracker):
     """Test trend analysis."""
@@ -359,7 +331,6 @@ def test_quality_tracker_get_trend(tracker):
         TrendDirection.STABLE,
     )
 
-
 def test_quality_tracker_breach_summary(tracker):
     """Test breach tracking."""
     tracker.record_metric(
@@ -372,13 +343,11 @@ def test_quality_tracker_breach_summary(tracker):
     summary = tracker.get_breach_summary()
     assert "active_breaches" in summary
 
-
 def test_create_standard_slas():
     """Test creating standard SLAs."""
     slas = create_standard_slas()
     assert len(slas) > 0
     assert all(isinstance(sla, SLADefinition) for sla in slas)
-
 
 def test_sla_compliance_report(tracker):
     """Test SLA compliance reporting."""
@@ -394,17 +363,14 @@ def test_sla_compliance_report(tracker):
     assert "sla_results" in report
     assert "overall_compliance" in report
 
-
 # ============================================================================
 # VALIDATOR TESTS (8 tests)
 # ============================================================================
-
 
 def test_validator_initialization():
     """Test validator initialization."""
     validator = QualityValidator()
     assert not validator.fail_fast
-
 
 def test_validator_validate_pass(sample_dataframe, expectation_suite):
     """Test validation with passing data."""
@@ -415,7 +381,6 @@ def test_validator_validate_pass(sample_dataframe, expectation_suite):
     assert result.row_count == 5
     assert result.column_count == 7
 
-
 def test_validator_validate_fail(invalid_dataframe):
     """Test validation with failing data."""
     validator = QualityValidator()
@@ -424,7 +389,6 @@ def test_validator_validate_fail(invalid_dataframe):
 
     assert len(result.failed_expectations) > 0
 
-
 def test_validation_result_properties(sample_dataframe, expectation_suite):
     """Test validation result properties."""
     validator = QualityValidator()
@@ -432,7 +396,6 @@ def test_validation_result_properties(sample_dataframe, expectation_suite):
 
     assert 0 <= result.pass_rate <= 1.0
     assert result.is_critical_failure in (True, False)
-
 
 def test_validator_record_validation(sample_dataframe, expectation_suite):
     """Test recording validation results."""
@@ -444,7 +407,6 @@ def test_validator_record_validation(sample_dataframe, expectation_suite):
 
     stats = aggregator.get_statistics()
     assert "total_validations" in stats
-
 
 def test_aggregator_recent_failures(sample_dataframe, expectation_suite):
     """Test getting recent failures."""
@@ -458,12 +420,10 @@ def test_aggregator_recent_failures(sample_dataframe, expectation_suite):
     failures = aggregator.get_recent_failures(limit=2)
     assert len(failures) <= 2
 
-
 def test_validator_fail_fast():
     """Test fail-fast validation."""
     validator = QualityValidator(fail_fast=True)
     assert validator.fail_fast
-
 
 def test_validation_result_to_dict(sample_dataframe, expectation_suite):
     """Test validation result serialization."""
@@ -474,17 +434,14 @@ def test_validation_result_to_dict(sample_dataframe, expectation_suite):
     assert "status" in result_dict
     assert "pass_rate" in result_dict
 
-
 # ============================================================================
 # ANOMALY DETECTION TESTS (7 tests)
 # ============================================================================
-
 
 def test_anomaly_detector_initialization():
     """Test anomaly detector initialization."""
     detector = AnomalyDetector(z_score_threshold=3.0)
     assert detector.z_score_threshold == 3.0
-
 
 def test_anomaly_detector_outliers():
     """Test detecting outliers."""
@@ -494,7 +451,6 @@ def test_anomaly_detector_outliers():
 
     report = detector.detect_outliers("test_metric", history)
     assert isinstance(report, AnomalyReport)
-
 
 def test_anomaly_detector_drift():
     """Test detecting drift."""
@@ -506,7 +462,6 @@ def test_anomaly_detector_drift():
     report = detector.detect_drift("test_metric", history)
     assert isinstance(report, AnomalyReport)
 
-
 def test_anomaly_detector_seasonality():
     """Test detecting seasonality violations."""
     detector = AnomalyDetector()
@@ -515,7 +470,6 @@ def test_anomaly_detector_seasonality():
 
     report = detector.detect_seasonality_violation("test_metric", history)
     assert isinstance(report, AnomalyReport)
-
 
 def test_anomaly_report_properties():
     """Test anomaly report properties."""
@@ -533,7 +487,6 @@ def test_anomaly_report_properties():
 
     assert not report.has_critical_anomalies
 
-
 def test_multi_metric_anomaly_detection():
     """Test detecting anomalies across multiple metrics."""
     detector = AnomalyDetector()
@@ -544,7 +497,6 @@ def test_multi_metric_anomaly_detection():
 
     report = detector.detect_multi_metric_anomaly(metrics)
     assert isinstance(report, AnomalyReport)
-
 
 def test_anomaly_to_dict():
     """Test anomaly serialization."""
@@ -561,11 +513,9 @@ def test_anomaly_to_dict():
     assert "metric_name" in anom_dict
     assert "severity" in anom_dict
 
-
 # ============================================================================
 # BUSINESS RULES TESTS (6 tests)
 # ============================================================================
-
 
 def test_business_rules_engine_registration():
     """Test registering rules in engine."""
@@ -582,7 +532,6 @@ def test_business_rules_engine_registration():
     engine.register_rule(rule)
 
     assert "test_rule" in engine.rules
-
 
 def test_business_rules_evaluation():
     """Test evaluating business rules."""
@@ -603,18 +552,15 @@ def test_business_rules_evaluation():
 
     assert violations.total_violations > 0
 
-
 def test_sidewalk_rules_engine():
     """Test sidewalk-specific rules."""
     engine = create_sidewalk_rules()
     assert len(engine.rules) > 0
 
-
 def test_311_rules_engine():
     """Test 311 complaints rules."""
     engine = create_311_complaints_rules()
     assert len(engine.rules) > 0
-
 
 def test_hard_rules_filtering():
     """Test filtering hard rules."""
@@ -644,7 +590,6 @@ def test_hard_rules_filtering():
 
     assert isinstance(violations, RuleViolations)
 
-
 def test_rule_violations_grouping():
     """Test grouping violations by severity."""
     engine = BusinessRulesEngine()
@@ -667,11 +612,9 @@ def test_rule_violations_grouping():
     by_severity = engine.get_violations_by_severity(violations)
     assert "critical" in by_severity
 
-
 # ============================================================================
 # REPORTING TESTS (3 tests)
 # ============================================================================
-
 
 def test_report_generator_daily_report():
     """Test generating daily report."""
@@ -688,7 +631,6 @@ def test_report_generator_daily_report():
     assert "title" in report
     assert "summary" in report
 
-
 def test_report_generator_dataset_report():
     """Test generating dataset-specific report."""
     generator = QualityReportGenerator()
@@ -699,7 +641,6 @@ def test_report_generator_dataset_report():
         validation_results=[],
     )
     assert report["dataset_name"] == "test_dataset"
-
 
 def test_report_export_json(tmp_path):
     """Test exporting report to JSON."""
@@ -713,11 +654,9 @@ def test_report_export_json(tmp_path):
         loaded = json.load(f)
     assert loaded["title"] == "Test"
 
-
 # ============================================================================
 # DATA CATALOG TESTS (4 tests)
 # ============================================================================
-
 
 def test_quality_catalog_registration():
     """Test registering dataset in catalog."""
@@ -725,7 +664,6 @@ def test_quality_catalog_registration():
     catalog.register_dataset("dataset1", "Dataset 1")
 
     assert "dataset1" in catalog.profiles
-
 
 def test_quality_catalog_update_score():
     """Test updating quality score."""
@@ -737,7 +675,6 @@ def test_quality_catalog_update_score():
 
     profile = catalog.get_profile("dataset1")
     assert profile.quality_score.overall == 95.0
-
 
 def test_quality_catalog_list_by_quality():
     """Test listing datasets by quality score."""
@@ -752,7 +689,6 @@ def test_quality_catalog_list_by_quality():
     filtered = catalog.list_by_quality(min_score=90.0)
     assert len(filtered) == 1
 
-
 def test_quality_catalog_health_summary():
     """Test catalog health summary."""
     catalog = DataQualityCatalog()
@@ -764,11 +700,9 @@ def test_quality_catalog_health_summary():
     assert "total_datasets" in summary
     assert summary["total_datasets"] == 1
 
-
 # ============================================================================
 # INTEGRATION TESTS (4 tests)
 # ============================================================================
-
 
 def test_end_to_end_quality_flow(sample_dataframe):
     """Test end-to-end quality validation flow."""
@@ -792,7 +726,6 @@ def test_end_to_end_quality_flow(sample_dataframe):
     assert report["dataset_name"] == "test_dataset"
     assert len(report["validation_results"]) > 0
 
-
 def test_quality_tracking_and_sla_enforcement(sample_dataframe):
     """Test quality tracking with SLA enforcement."""
     tracker = DataQualityTracker()
@@ -814,7 +747,6 @@ def test_quality_tracking_and_sla_enforcement(sample_dataframe):
     compliant, _ = tracker.evaluate_sla("test_completeness")
     assert compliant
 
-
 def test_quality_validation_with_rules(sample_dataframe):
     """Test validation combined with business rules."""
     engine = create_sidewalk_rules()
@@ -822,7 +754,6 @@ def test_quality_validation_with_rules(sample_dataframe):
 
     violations = engine.apply_hard_rules(df)
     assert isinstance(violations, RuleViolations)
-
 
 def test_anomaly_detection_integration(tracker):
     """Test anomaly detection with quality metrics."""
@@ -834,11 +765,9 @@ def test_anomaly_detection_integration(tracker):
     report = detector.detect_outliers("test_metric", history)
     assert isinstance(report, AnomalyReport)
 
-
 # ============================================================================
 # EDGE CASES AND ERROR HANDLING (4 tests)
 # ============================================================================
-
 
 def test_empty_dataframe_profiling():
     """Test profiling empty DataFrame."""
@@ -847,7 +776,6 @@ def test_empty_dataframe_profiling():
 
     profile = profiler.profile_dataset(df, "empty")
     assert profile.row_count == 0
-
 
 def test_null_dataframe_validation():
     """Test validation with all-null columns."""
@@ -866,7 +794,6 @@ def test_null_dataframe_validation():
 
     assert result.row_count == 3
 
-
 def test_expectation_with_missing_column():
     """Test expectation when column doesn't exist."""
     df = pd.DataFrame({"col1": [1, 2, 3]})
@@ -876,7 +803,6 @@ def test_expectation_with_missing_column():
 
     result = suite.validate(df)
     assert result.failed_count > 0
-
 
 def test_division_by_zero_protection():
     """Test protection against division by zero."""
@@ -889,10 +815,8 @@ def test_division_by_zero_protection():
     # Should not raise division by zero
     assert col_profile is not None
 
-
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-
 
 # ============================================================================
 # UNIT-13 ADDITIONS
@@ -901,7 +825,6 @@ if __name__ == "__main__":
 # ---------------------------------------------------------------------------
 # Quality scorecard (compute_quality_score from governance.core)
 # ---------------------------------------------------------------------------
-
 
 def _nyc_inspection_df(nrows: int = 10) -> pd.DataFrame:
     """Small realistic-looking NYC inspection DataFrame."""
@@ -919,7 +842,6 @@ def _nyc_inspection_df(nrows: int = 10) -> pd.DataFrame:
         for i in range(nrows)
     ]
     return pd.DataFrame(rows)
-
 
 class TestQualityScorecard:
     def test_quality_scorecard_basic(self):
@@ -962,11 +884,9 @@ class TestQualityScorecard:
         score_dirty = compute_quality_score(dirty)
         assert score_dirty.overall <= score_clean.overall
 
-
 # ---------------------------------------------------------------------------
 # Schema validation
 # ---------------------------------------------------------------------------
-
 
 class TestValidateSchema:
     def test_validate_schema_missing_col_appears_in_errors(self):
@@ -987,11 +907,9 @@ class TestValidateSchema:
         assert report.valid
         assert report.errors == []
 
-
 # ---------------------------------------------------------------------------
 # Expectations — min rows
 # ---------------------------------------------------------------------------
-
 
 class TestValidateExpectations:
     def test_validate_expectations_min_rows(self):
@@ -1014,11 +932,9 @@ class TestValidateExpectations:
         result = suite.validate(df)
         assert result.failed_count >= 1
 
-
 # ---------------------------------------------------------------------------
 # SLA breach forecast
 # ---------------------------------------------------------------------------
-
 
 class TestForecastSlaBreaches:
     def test_flag_sla_violations_returns_dataframe(self):
@@ -1062,11 +978,9 @@ class TestForecastSlaBreaches:
         assert "_sla_violation" in result.columns
         assert "_sla_violation_type" in result.columns
 
-
 # ---------------------------------------------------------------------------
 # Quality trend record and load
 # ---------------------------------------------------------------------------
-
 
 class TestQualityTrend:
     def test_record_and_load_quality_trend(self):

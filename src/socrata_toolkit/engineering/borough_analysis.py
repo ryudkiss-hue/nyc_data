@@ -45,7 +45,6 @@ BOROUGH_SIDEWALK_MILES: dict[str, float] = {
     "STATEN ISLAND": 900.0,
 }
 
-
 # ---------------------------------------------------------------------------
 # Data Classes
 # ---------------------------------------------------------------------------
@@ -63,7 +62,6 @@ class BoroughMetrics:
     estimated_sqft: float
     contracts_active: int
 
-
 @dataclass
 class HotspotCluster:
     """A geographic cluster of repair-needing locations."""
@@ -76,7 +74,6 @@ class HotspotCluster:
     total_sqft: float
     community_board: str | None
 
-
 @dataclass
 class EquityScore:
     """Borough equity scoring -- how fairly repair resources are distributed."""
@@ -85,7 +82,6 @@ class EquityScore:
     resource_index: float  # normalized resource allocation (0-1)
     equity_gap: float      # need - resource (positive = underserved)
     backlog_per_mile: float
-
 
 # ---------------------------------------------------------------------------
 # Borough Summary
@@ -137,7 +133,6 @@ def borough_summary(
 
     return results
 
-
 def borough_comparison_table(
     df: pd.DataFrame,
     borough_col: str = "borough",
@@ -152,7 +147,6 @@ def borough_comparison_table(
     if not metrics:
         return pd.DataFrame()
     return pd.DataFrame([m.__dict__ for m in metrics]).sort_values("borough").reset_index(drop=True)
-
 
 # ---------------------------------------------------------------------------
 # Hotspot Identification
@@ -224,7 +218,6 @@ def identify_hotspots(
         ))
 
     return results
-
 
 # ---------------------------------------------------------------------------
 # Equity Analysis

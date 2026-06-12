@@ -40,12 +40,12 @@ Example usage:
         # Display fig.to_html() + html_stats in Dash callback
 """
 
+from .kpi_cards import KPICards
 from .phase_b import PhaseBVisualizations
 from .phase_c import PhaseCVisualizations
 from .phase_d import PhaseDVisualizations
 from .phase_e import PhaseEVisualizations
 from .phase_f import PhaseFVisualizations
-from .kpi_cards import KPICards
 from .statistics_display import StatisticsPanel
 
 __all__ = [

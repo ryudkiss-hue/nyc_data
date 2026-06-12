@@ -1,13 +1,16 @@
 """Analysis layer: Pre-built queries, NL interface, statistical summaries."""
 import logging
 from datetime import datetime
+<<<<<<< HEAD
+from typing import Any, Optional
+=======
 from typing import Any, Dict, List, Optional
+>>>>>>> main
 
 import duckdb
 import pandas as pd
 
 logger = logging.getLogger(__name__)
-
 
 class AnalyticalQueryTemplate:
     """Pre-built analytical query templates for common questions."""
@@ -29,7 +32,6 @@ class AnalyticalQueryTemplate:
     def render(self, **kwargs) -> str:
         """Render query with parameters."""
         return self.query.format(mart=self.mart_name, **kwargs)
-
 
 class StatisticalSummary:
     """Compute statistical summaries (mean, median, CI, outliers) for mart columns."""
@@ -124,7 +126,6 @@ class StatisticalSummary:
             "total_distinct": len(top_categories),
             "total_rows": total,
         }
-
 
 class AnalysisEngine:
     """Execute pre-built queries, handle NL queries, track query history."""

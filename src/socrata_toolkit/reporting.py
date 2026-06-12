@@ -44,7 +44,6 @@ class ReportSection:
     content: str
     data: dict[str, Any] | None = None
 
-
 @dataclass
 class Report:
     """A complete generated report."""
@@ -117,7 +116,6 @@ th{{background:#f5f5f5}}.green{{color:#228B22}}.yellow{{color:#B8860B}}.red{{col
         else:
             p.write_text(self.to_markdown(), encoding="utf-8")
         return str(p)
-
 
 # ---------------------------------------------------------------------------
 # Contract Status Report
@@ -199,7 +197,6 @@ def generate_contract_report(
 
     return report
 
-
 # ---------------------------------------------------------------------------
 # Program KPI Report
 # ---------------------------------------------------------------------------
@@ -253,7 +250,6 @@ def generate_program_report(
         report.add_section("Budget Codes", "Personnel and program budget code utilization:", bc_data)
 
     return report
-
 
 # ---------------------------------------------------------------------------
 # Inquiry Response

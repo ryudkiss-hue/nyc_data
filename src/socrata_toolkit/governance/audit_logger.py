@@ -8,11 +8,10 @@ import json
 import logging
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from uuid import uuid4
 
 logger = logging.getLogger(__name__)
-
 
 @dataclass
 class AuditEntry:
@@ -36,7 +35,6 @@ class AuditEntry:
     rows_affected: int
     details: dict[str, Any]
     audit_id: str = field(default_factory=lambda: str(uuid4()))
-
 
 class AuditLogger:
     """Captures and manages audit logs for data validation operations.

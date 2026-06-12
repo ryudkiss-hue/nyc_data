@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from socrata_toolkit.core.soql_builder import SoQLBuilder
 
-
 class TestSoQLBuilderBasic:
     """Basic construction tests."""
 
@@ -26,7 +25,6 @@ class TestSoQLBuilderBasic:
         builder = SoQLBuilder().select("id").select("name")
         result = builder.build()
         assert result["select"] == "id, name"
-
 
 class TestSoQLBuilderWhere:
     """WHERE clause tests."""
@@ -51,7 +49,6 @@ class TestSoQLBuilderWhere:
         result = builder.build()
         assert "(created_at > '2024-01-01')" in result["where"]
 
-
 class TestSoQLBuilderOrder:
     """ORDER BY tests."""
 
@@ -69,7 +66,6 @@ class TestSoQLBuilderOrder:
         builder = SoQLBuilder().order("name").order("id", desc=True)
         result = builder.build()
         assert result["order"] == "name ASC, id DESC"
-
 
 class TestSoQLBuilderGroup:
     """GROUP BY tests."""
@@ -89,7 +85,6 @@ class TestSoQLBuilderGroup:
         result = builder.build()
         assert result["group"] == "borough, status"
 
-
 class TestSoQLBuilderHaving:
     """HAVING clause tests."""
 
@@ -107,7 +102,6 @@ class TestSoQLBuilderHaving:
         builder = SoQLBuilder().having("count(*) > 5").having("sum(value) < 100")
         result = builder.build()
         assert result["having"] == "(count(*) > 5) AND (sum(value) < 100)"
-
 
 class TestSoQLBuilderAggregates:
     """Aggregation function tests."""
@@ -138,7 +132,6 @@ class TestSoQLBuilderAggregates:
         assert "count(*) AS cnt" in result["select"]
         assert "sum(amount)" in result["select"]
 
-
 class TestSoQLBuilderDateTrunc:
     """Date truncation tests."""
 
@@ -161,7 +154,6 @@ class TestSoQLBuilderDateTrunc:
         builder = SoQLBuilder().date_trunc("created_at", "day", "day_created")
         result = builder.build()
         assert "date_trunc_day(created_at) AS day_created" in result["select"]
-
 
 class TestSoQLBuilderLimitOffset:
     """LIMIT and OFFSET tests."""
@@ -187,7 +179,6 @@ class TestSoQLBuilderLimitOffset:
         result = builder.build()
         assert result["offset"] == "0"
 
-
 class TestSoQLBuilderSearch:
     """Full-text search tests."""
 
@@ -201,7 +192,6 @@ class TestSoQLBuilderSearch:
         result = builder.build()
         assert result["q"] == "pothole"
         assert result["select"] == "id, location"
-
 
 class TestSoQLBuilderComplexQueries:
     """Complex query combinations."""
@@ -242,7 +232,6 @@ class TestSoQLBuilderComplexQueries:
         assert "active = true" in result["where"]
         assert result["group"] == "borough"
 
-
 class TestSoQLBuilderVariables:
     """Variable substitution tests."""
 
@@ -281,7 +270,6 @@ class TestSoQLBuilderVariables:
         builder = SoQLBuilder().limit(10).set_variable("limit_val", 20)
         result = builder.build()
         assert result["limit"] == "10"
-
 
 class TestSoQLBuilderQueryString:
     """Raw query string building tests."""
@@ -336,7 +324,6 @@ class TestSoQLBuilderQueryString:
         limit_idx = query.find("LIMIT")
         assert select_idx < where_idx < group_idx < order_idx < limit_idx
 
-
 class TestSoQLBuilderHelpers:
     """Static helper method tests."""
 
@@ -363,7 +350,6 @@ class TestSoQLBuilderHelpers:
         builder = SoQLBuilder().where(SoQLBuilder.between("date", "2024-01-01", "2024-12-31"))
         result = builder.build()
         assert "between" in result["where"]
-
 
 class TestSoQLBuilderEdgeCases:
     """Edge case and special behavior tests."""

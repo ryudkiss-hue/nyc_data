@@ -6,7 +6,6 @@ import pandas as pd
 
 ROOT = Path(__file__).parent
 
-
 def write_fixtures() -> None:
     inspections = pd.DataFrame(
         {
@@ -38,7 +37,6 @@ def write_fixtures() -> None:
     inspections.to_excel(ROOT / "inspections.xlsx", index=False)
     contracts.to_excel(ROOT / "contracts.xlsx", index=False)
     permits.to_excel(ROOT / "permits.xlsx", index=False)
-
 
 if __name__ == "__main__":
     write_fixtures()

@@ -20,7 +20,6 @@ from socrata_toolkit.analysis.resource_allocation_workflow import (
     ResourceAllocationWorkflow,
 )
 
-
 class TestResourceAllocationClassifier:
     """Test suite for ResourceAllocationClassifier."""
 
@@ -184,7 +183,6 @@ class TestResourceAllocationClassifier:
 
         assert result.violations_per_inspector == 50.0  # 50 / 1
 
-
 class TestResourceAllocationWorkflow:
     """Test suite for ResourceAllocationWorkflow (integration tests)."""
 
@@ -277,7 +275,6 @@ class TestResourceAllocationWorkflow:
         assert len(plan.critical_areas) == 1
         assert plan.estimated_efficiency_gain == 25.0
         assert plan.estimated_response_time_improvement == 15.0
-
 
 class TestIntegration:
     """Integration tests (may require API keys)."""

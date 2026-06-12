@@ -74,7 +74,6 @@ try:
 except ImportError:
     HAS_CLAUDE = False
 
-
 class HotspotState(TypedDict):
     """Workflow state: passed through each node."""
     # Input context
@@ -111,7 +110,6 @@ class HotspotState(TypedDict):
     final_report: dict[str, Any]
     error_log: list[str]
     execution_log: list[str]
-
 
 class GeographicHotspotWorkflow:
     """Orchestrate geographic hotspot analysis via LangGraph.

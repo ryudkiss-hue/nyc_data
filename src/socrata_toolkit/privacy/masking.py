@@ -35,7 +35,6 @@ def redact(series: pd.Series, token: str = "***") -> pd.Series:
     """
     return series.map(lambda v: token if pd.notna(v) else v)
 
-
 def hash_token(series: pd.Series, salt: str = "") -> pd.Series:
     """Deterministically tokenise values via salted SHA-256. Irreversible.
 
@@ -57,7 +56,6 @@ def hash_token(series: pd.Series, salt: str = "") -> pd.Series:
         return digest.hexdigest()
 
     return series.map(_hash)
-
 
 def bucket_numeric(series: pd.Series, bins: int = 5) -> pd.Series:
     """Collapse numeric values into ``bins`` equal-width range buckets. Lossy.
@@ -88,7 +86,6 @@ def bucket_numeric(series: pd.Series, bins: int = 5) -> pd.Series:
 
     return numeric.map(_bucket)
 
-
 def truncate_geo(series: pd.Series, precision: int = 2) -> pd.Series:
     """Round latitude/longitude values to ``precision`` decimals. Lossy.
 
@@ -104,7 +101,6 @@ def truncate_geo(series: pd.Series, precision: int = 2) -> pd.Series:
     """
     numeric = pd.to_numeric(series, errors="coerce")
     return numeric.map(lambda v: round(float(v), precision) if pd.notna(v) else v)
-
 
 def partial_mask(series: pd.Series, keep: int = 4, mask_char: str = "*") -> pd.Series:
     """Mask all but the last ``keep`` characters of each value. Irreversible.
@@ -129,14 +125,12 @@ def partial_mask(series: pd.Series, keep: int = 4, mask_char: str = "*") -> pd.S
 
     return series.map(_mask)
 
-
 # Strategy name constants (the values returned by ``recommend_strategy``).
 REDACT = "redact"
 HASH_TOKEN = "hash_token"
 BUCKET_NUMERIC = "bucket_numeric"
 TRUNCATE_GEO = "truncate_geo"
 PARTIAL_MASK = "partial_mask"
-
 
 def recommend_strategy(signal: PiiSignal) -> str:
     """Recommend a masking strategy name for a detected PII signal.

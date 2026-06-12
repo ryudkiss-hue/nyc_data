@@ -9,7 +9,6 @@ from app.data_loader import IngestionProviderFactory
 from app.services.workflow_service import WorkflowOrchestrator
 from socrata_toolkit.core.duckdb_store import DuckDBManager, DuckDBRepository
 
-
 @pytest.fixture
 def e2e_db(tmp_path):
     db_path = str(tmp_path / "e2e.duckdb")
