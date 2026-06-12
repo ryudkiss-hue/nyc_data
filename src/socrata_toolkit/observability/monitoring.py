@@ -15,6 +15,13 @@ class HealthCheck:
     timestamp: datetime
     latency_ms: float | None = None
 
+@dataclass
+class MonitoringResult:
+    """Result of monitoring operation."""
+    success: bool
+    message: str
+    timestamp: datetime
+
 class HealthMonitor:
     """Monitor system health metrics."""
 
@@ -39,4 +46,4 @@ class Monitoring:
     def check_service(self, service: str) -> str | None:
         return self.health_monitor.get_status(service)
 
-__all__ = ["HealthCheck", "HealthMonitor", "Monitoring"]
+__all__ = ["HealthCheck", "HealthMonitor", "MonitoringResult", "Monitoring"]
