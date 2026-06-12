@@ -13,6 +13,8 @@ try:
 except ImportError:
     BayesianInferenceResult = None  # type: ignore[assignment,misc]
     BayesianRegressionEngine = None  # type: ignore[assignment,misc]
+from socrata_toolkit.quality.profiler import DriftReport
+
 from .confidence_intervals import (
     bootstrap_confidence_interval,
     mean_confidence_interval,
