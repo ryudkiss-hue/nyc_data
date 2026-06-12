@@ -38,7 +38,6 @@ TYPE_COMPATIBILITY = {
     "datetime64[ns]": {"datetime64[ns]", "object"},
 }
 
-
 class ChangeType(Enum):
     """Classification of schema changes per their impact on downstream systems."""
 
@@ -48,7 +47,6 @@ class ChangeType(Enum):
     RENAME = "rename"  # Breaking: column renamed
     NULL_CONSTRAINT_CHANGE = "null_constraint_change"  # Breaking: nullability changed
     POSITION_CHANGE = "position_change"  # Non-breaking: column order changed
-
 
 @dataclass
 class ColumnSchema:
@@ -67,7 +65,6 @@ class ColumnSchema:
     nullable: bool
     position: int
     sample_value: str | None = None
-
 
 @dataclass
 class DatasetSchema:
@@ -115,7 +112,6 @@ class DatasetSchema:
             metadata=data.get("metadata", {}),
         )
 
-
 @dataclass
 class SchemaChange:
     """Represents a detected schema difference between two versions.
@@ -135,7 +131,6 @@ class SchemaChange:
     new_value: Any
     is_breaking: bool
     description: str
-
 
 class BreakingChangeAlert(Exception):
     """Alert notification for breaking schema changes.
@@ -196,7 +191,6 @@ class BreakingChangeAlert(Exception):
             f"Recommendation: {self.recommendation}"
         )
 
-
 class NumpyEncoder(json.JSONEncoder):
     """Custom JSON encoder to handle NumPy types."""
     def default(self, obj: Any) -> Any:
@@ -210,7 +204,6 @@ class NumpyEncoder(json.JSONEncoder):
         if isinstance(obj, (datetime)):
              return obj.isoformat()
         return super().default(obj)
-
 
 class SchemaRegistry:
     """Manages schema versions, detects drift, enforces contracts.
@@ -609,7 +602,6 @@ class SchemaRegistry:
 
         return changelog
 
-
 class SchemaValidator:
     """Validates data records against a schema definition.
 
@@ -756,7 +748,6 @@ class SchemaValidator:
             return True
 
         return False
-
 
 class BackwardCompatibilityChecker:
     """Enforces backward compatibility rules during schema evolution.

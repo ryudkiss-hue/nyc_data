@@ -20,7 +20,6 @@ from socrata_toolkit.core.utils import (
     with_retries,
 )
 
-
 class TestSocrataToolkitError:
     """Tests for SocrataToolkitError exception class."""
 
@@ -28,7 +27,6 @@ class TestSocrataToolkitError:
         error = SocrataToolkitError("Test error message")
         assert isinstance(error, Exception)
         assert str(error) == "Test error message"
-
 
 class TestWithRetries:
     """Tests for with_retries function."""
@@ -113,7 +111,6 @@ class TestWithRetries:
             with pytest.raises(SocrataToolkitError):
                 with_retries(fn, retries=2)
 
-
 class TestNormalizeFormats:
     """Tests for normalize_formats function."""
 
@@ -147,7 +144,6 @@ class TestNormalizeFormats:
     def test_normalize_formats_whitespace_only(self):
         result = normalize_formats(["   ", "\t", "\n"])
         assert result == []
-
 
 class TestCoerceDatetimeColumn:
     """Tests for coerce_datetime_column function."""
@@ -191,7 +187,6 @@ class TestCoerceDatetimeColumn:
         assert not pd.api.types.is_datetime64_any_dtype(df["date"])
         assert pd.api.types.is_datetime64_any_dtype(result["date"])
 
-
 class TestCoerceDatetimeColumns:
     """Tests for coerce_datetime_columns function."""
 
@@ -219,7 +214,6 @@ class TestCoerceDatetimeColumns:
         result = coerce_datetime_columns(df, [])
         assert result.equals(df)
 
-
 class TestCoerceSeriesDatetime:
     """Tests for coerce_series_datetime function."""
 
@@ -239,7 +233,6 @@ class TestCoerceSeriesDatetime:
         result = coerce_series_datetime(series)
         assert pd.api.types.is_datetime64_any_dtype(result)
 
-
 class TestBoroughConstants:
     """Tests for borough-related constants."""
 
@@ -253,7 +246,6 @@ class TestBoroughConstants:
         assert "Manhattan" in BOROUGH_SET
         assert "Brooklyn" in BOROUGH_SET
         assert "InvalidBorough" not in BOROUGH_SET
-
 
 class TestNormalizeBorough:
     """Tests for normalize_borough function."""

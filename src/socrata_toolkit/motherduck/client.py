@@ -12,7 +12,6 @@ import duckdb
 
 logger = logging.getLogger(__name__)
 
-
 class MotherDuckClient:
     """
     Authenticated MotherDuck client with connection pooling and retry logic.

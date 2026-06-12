@@ -27,7 +27,6 @@ from socrata_toolkit.analysis.hotspot_classifier import (
     HotspotType,
 )
 
-
 def example_1_single_borough_analysis():
     """Example 1: Analyze hotspots in Manhattan only."""
     print("\n" + "=" * 70)
@@ -91,7 +90,6 @@ def example_1_single_borough_analysis():
     print(f"Report saved to {output_file}")
 
     return result
-
 
 def example_2_direct_classifier_usage():
     """Example 2: Use classifier directly on hypothetical cluster data."""
@@ -171,7 +169,6 @@ def example_2_direct_classifier_usage():
         json.dump([c.to_dict() for c in ranked], f, indent=2)
     print(f"\nClassifications saved to {output_file}")
 
-
 def example_3_batch_analysis():
     """Example 3: Run analysis on multiple boroughs sequentially."""
     print("\n" + "=" * 70)
@@ -235,7 +232,6 @@ def example_3_batch_analysis():
         json.dump(summary, f, indent=2)
     print(f"\nAggregate report saved to {output_file}")
 
-
 def main():
     """Run all examples."""
     print("\n")
@@ -265,7 +261,6 @@ def main():
     print("All examples completed successfully!")
     print("=" * 70)
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

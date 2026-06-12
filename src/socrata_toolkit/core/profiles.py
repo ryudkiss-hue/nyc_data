@@ -15,7 +15,6 @@ def _slug(value: str) -> str:
     v = v.strip("._-")
     return v or "default"
 
-
 @dataclass(frozen=True)
 class ProfilePaths:
     name: str
@@ -25,15 +24,12 @@ class ProfilePaths:
     publish_presets_dir: Path
     state_dir: Path
 
-
 def profiles_root(root: Path | None = None) -> Path:
     return (root or Path.cwd()) / "config" / "profiles"
-
 
 def active_profile_name(default: str = "default") -> str:
     # Environment wins so Dash/EXE/scheduled task can share it.
     return _slug(os.getenv("TOOLKIT_PROFILE", "") or os.getenv("PROFILE_NAME", "") or default)
-
 
 def profile_paths(name: str | None = None, *, root: Path | None = None, state_root: Path | None = None) -> ProfilePaths:
     root_path = root or Path.cwd()
@@ -51,7 +47,6 @@ def profile_paths(name: str | None = None, *, root: Path | None = None, state_ro
         state_dir=state_dir,
     )
 
-
 def ensure_profile_exists(name: str | None = None, *, root: Path | None = None) -> ProfilePaths:
     """Create profile folder structure if missing (does not overwrite YAMLs)."""
     paths = profile_paths(name, root=root)
@@ -59,7 +54,6 @@ def ensure_profile_exists(name: str | None = None, *, root: Path | None = None) 
     paths.publish_presets_dir.mkdir(parents=True, exist_ok=True)
     paths.state_dir.mkdir(parents=True, exist_ok=True)
     return paths
-
 
 def list_profiles(*, root: Path | None = None) -> list[str]:
     pr = profiles_root(root)

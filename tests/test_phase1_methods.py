@@ -14,7 +14,6 @@ import pytest
 # CLUSTERING DIAGNOSTICS TESTS
 # ============================================================================
 
-
 class TestClusteringDiagnostics:
     """Test suite for ClusteringDiagnostics."""
 
@@ -114,11 +113,9 @@ class TestClusteringDiagnostics:
         assert profiles.shape[0] == 2  # Features
         assert profiles.shape[1] >= 2  # At least 2 clusters
 
-
 # ============================================================================
 # MATERIAL DEGRADATION ANALYSIS TESTS
 # ============================================================================
-
 
 class TestMaterialDegradationAnalysis:
     """Test suite for MaterialDegradationAnalysis."""
@@ -225,11 +222,9 @@ class TestMaterialDegradationAnalysis:
         # May be empty if lifelines not available, but structure should be dict
         assert isinstance(log_rank, dict)
 
-
 # ============================================================================
 # TEMPORAL GEOSPATIAL ANIMATION TESTS
 # ============================================================================
-
 
 class TestTemporalGeospatialVisualizer:
     """Test suite for TemporalGeospatialVisualizer."""
@@ -341,11 +336,9 @@ class TestTemporalGeospatialVisualizer:
         assert isinstance(df_agg, pd.DataFrame)
         assert not df_agg.empty
 
-
 # ============================================================================
 # VISUALIZATION TESTS
 # ============================================================================
-
 
 class TestClusteringVisualizations:
     """Test suite for clustering visualization functions."""
@@ -407,7 +400,6 @@ class TestClusteringVisualizations:
         fig = plot_cluster_profiles(sample_clustering_results)
         assert fig is not None
         assert hasattr(fig, "layout")
-
 
 class TestMaterialVisualizations:
     """Test suite for material visualization functions."""
@@ -493,11 +485,9 @@ class TestMaterialVisualizations:
         assert fig is not None
         assert hasattr(fig, "layout")
 
-
 # ============================================================================
 # PERFORMANCE TESTS
 # ============================================================================
-
 
 class TestPerformance:
     """Performance tests for each method."""
@@ -569,7 +559,6 @@ class TestPerformance:
 
         assert elapsed < 1.0, f"Temporal visualization init took {elapsed:.2f}s (expected <1s)"
         assert len(viz.hot_blocks) > 0
-
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

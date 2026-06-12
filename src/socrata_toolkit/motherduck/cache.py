@@ -2,10 +2,9 @@
 
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import Optional
 
 logger = logging.getLogger(__name__)
-
 
 class CloudCacheManager:
     """

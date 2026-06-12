@@ -81,7 +81,6 @@ app.layout = dbc.Container(
     className="mt-4",
 )
 
-
 # Callback for page routing
 @app.callback(
     Output("page-content", "children"),
@@ -113,7 +112,6 @@ def display_page(pathname):
         return settings_layout
     else:
         return dbc.Alert("404: Page not found", color="danger")
-
 
 if __name__ == "__main__":
     logger.info("Starting NYC DOT SIM Workflows Dashboard")

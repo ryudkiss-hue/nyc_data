@@ -48,7 +48,6 @@ class ContractProgress:
     milestones_total: int
     velocity_sqft_per_day: float
 
-
 @dataclass
 class BudgetSummary:
     """Budget analysis for a contract or portfolio."""
@@ -61,7 +60,6 @@ class BudgetSummary:
     cost_performance_index: float  # CPI: earned / actual (>1 = under budget)
     remaining_budget: float
 
-
 @dataclass
 class ProductivityReport:
     """Productivity metrics for a contract or crew."""
@@ -73,7 +71,6 @@ class ProductivityReport:
     cost_per_sqft: float
     cost_per_linear_foot: float
     crew_efficiency: float  # ratio vs. baseline
-
 
 # ---------------------------------------------------------------------------
 # Contract Progress
@@ -142,7 +139,6 @@ def analyze_contract_progress(
 
     return results
 
-
 def _parse_first_date(group: pd.DataFrame, col: str) -> pd.Timestamp | None:
     if col not in group.columns:
         return None
@@ -153,7 +149,6 @@ def _parse_first_date(group: pd.DataFrame, col: str) -> pd.Timestamp | None:
     if ts.tzinfo is None:
         ts = ts.tz_localize("UTC")
     return ts
-
 
 # ---------------------------------------------------------------------------
 # Budget Analysis
@@ -209,7 +204,6 @@ def budget_analysis(
         remaining_budget=round(planned - actual, 2),
     )
 
-
 # ---------------------------------------------------------------------------
 # Productivity Metrics
 # ---------------------------------------------------------------------------
@@ -254,7 +248,6 @@ def productivity_metrics(
         crew_efficiency=round(efficiency, 4),
     )
 
-
 # ---------------------------------------------------------------------------
 # Contract Comparison
 # ---------------------------------------------------------------------------
@@ -284,7 +277,6 @@ def compare_contracts(
     agg["sqft_per_day"] = (agg["total_sqft"] / agg["total_days"].replace(0, np.nan)).round(2)
     agg = agg.sort_values("cost_per_sqft", ascending=True).reset_index(drop=True)
     return agg
-
 
 # ---------------------------------------------------------------------------
 # Schedule Variance

@@ -59,7 +59,6 @@ class TestSpatialCoverageMetric:
         assert m.borough == "Manhattan"
         assert m.district == "D1"
 
-
 class TestMaterialDistributionMetric:
     """Tests for the MaterialDistributionMetric dataclass."""
 
@@ -89,7 +88,6 @@ class TestMaterialDistributionMetric:
         )
         assert m.borough is None
 
-
 class TestInspectionDensityMetric:
     """Tests for the InspectionDensityMetric dataclass."""
 
@@ -109,7 +107,6 @@ class TestInspectionDensityMetric:
         assert m.unique_segments_inspected == 30
         assert m.time_period_days == 30
         assert m.last_inspection_age_days == 5
-
 
 class TestSLAComplianceMetric:
     """Tests for the SLAComplianceMetric dataclass."""
@@ -136,7 +133,6 @@ class TestSLAComplianceMetric:
             actual_value=90.0, compliance_percentage=90.0, status="at_risk"
         )
         assert m.borough is None
-
 
 # ---------------------------------------------------------------------------
 # SpatialMetricsCollector — no DB
@@ -173,7 +169,6 @@ class TestSpatialMetricsCollectorNoDb:
         collector = SpatialMetricsCollector()
         result = collector.calculate_spatial_gaps()
         assert result == {}
-
 
 # ---------------------------------------------------------------------------
 # SpatialMetricsCollector — with mock DB
@@ -241,7 +236,6 @@ class TestSpatialMetricsCollectorWithDb:
         with patch.object(collector, "_get_critical_gaps", side_effect=Exception("db error")):
             result = collector.calculate_spatial_gaps()
         assert result == {}
-
 
 # ---------------------------------------------------------------------------
 # SpatialMetricsCollector.calculate_sla_compliance
@@ -324,7 +318,6 @@ class TestCalculateSlaCompliance:
             result = collector.calculate_sla_compliance({})
         assert result == []
 
-
 # ---------------------------------------------------------------------------
 # SpatialMetricsCollector.export_metrics_prometheus
 # ---------------------------------------------------------------------------
@@ -349,7 +342,6 @@ class TestExportMetricsPrometheus:
         collector = SpatialMetricsCollector(db_connection=MagicMock())
         result = collector.export_metrics_prometheus()
         assert "borough=" in result
-
 
 # ---------------------------------------------------------------------------
 # SpatialMetricsCollector.export_metrics_json
@@ -388,7 +380,6 @@ class TestExportMetricsJson:
         if result["coverage"]:
             assert "metric" in result["coverage"][0]
 
-
 # ---------------------------------------------------------------------------
 # SpatialQualityScorer
 # ---------------------------------------------------------------------------
@@ -416,7 +407,6 @@ class TestSpatialQualityScorerCompleteness:
         score = SpatialQualityScorer.calculate_completeness_score(0, 0)
         assert score == pytest.approx(0.0)
 
-
 class TestSpatialQualityScorerRecency:
     """Tests for SpatialQualityScorer.calculate_recency_score."""
 
@@ -439,7 +429,6 @@ class TestSpatialQualityScorerRecency:
         """Negative days (future-dated inspection) yields recency score of 100.0."""
         score = SpatialQualityScorer.calculate_recency_score(-5)
         assert score == pytest.approx(100.0)
-
 
 class TestSpatialQualityScorerAccuracy:
     """Tests for SpatialQualityScorer.calculate_accuracy_score."""
@@ -465,7 +454,6 @@ class TestSpatialQualityScorerAccuracy:
         score = SpatialQualityScorer.calculate_accuracy_score(10000.0, target_accuracy_meters=5.0)
         assert score == pytest.approx(0.0)
 
-
 class TestSpatialQualityScorerConsistency:
     """Tests for SpatialQualityScorer.calculate_consistency_score."""
 
@@ -488,7 +476,6 @@ class TestSpatialQualityScorerConsistency:
         """50% duplicate rate yields consistency score of 50.0."""
         score = SpatialQualityScorer.calculate_consistency_score(50, 100)
         assert score == pytest.approx(50.0)
-
 
 class TestSpatialQualityScorerOverall:
     """Tests for SpatialQualityScorer.calculate_overall_quality."""

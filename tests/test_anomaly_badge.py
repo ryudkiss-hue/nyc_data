@@ -14,7 +14,6 @@ import pytest
 
 from socrata_toolkit.analysis.changepoint import detect_cusum_changepoint
 
-
 def test_detect_sidebar_anomaly_true_on_step_change() -> None:
     """A step-function series (flat then jump) should trigger a changepoint."""
     # 10 observations at ~0, then 10 at ~10 — clear level shift
@@ -25,7 +24,6 @@ def test_detect_sidebar_anomaly_true_on_step_change() -> None:
     assert result is not None, (
         "Expected a changepoint index for a step-function series, got None"
     )
-
 
 def test_sidebar_anomaly_false_on_flat_via_threshold() -> None:
     """A perfectly flat series should NOT trigger the sidebar badge.
@@ -43,12 +41,10 @@ def test_sidebar_anomaly_false_on_flat_via_threshold() -> None:
     is_anomaly = sigma > 0 and peak > 3.0 * sigma
     assert not is_anomaly, "Flat series should not trigger anomaly badge"
 
-
 def test_detect_cusum_changepoint_returns_none_for_short_series() -> None:
     """Series shorter than 4 observations must return None."""
     series = pd.Series([1.0, 2.0, 3.0])
     assert detect_cusum_changepoint(series) is None
-
 
 def test_detect_cusum_changepoint_index_within_range() -> None:
     """Returned index must be a valid position in the series."""

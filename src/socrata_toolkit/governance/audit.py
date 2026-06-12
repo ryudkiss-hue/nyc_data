@@ -51,7 +51,6 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-
 # ---------------------------------------------------------------------------
 # Lightweight in-process audit trail (no DB required) — suitable for the
 # FastAPI sidecar and standalone governance scripts.
@@ -73,7 +72,6 @@ class AuditEntry:
     user: str = "system"
     success: bool = True
     error: str = ""
-
 
 class _InProcessTrail:
     """Thread-safe ring-buffer of AuditEntry records."""
@@ -115,15 +113,12 @@ class _InProcessTrail:
         with self._lock:
             self._entries.clear()
 
-
 # Module-level singleton — importable by sidecar and governance utilities
 _global_trail = _InProcessTrail()
-
 
 def get_global_trail() -> _InProcessTrail:
     """Return the module-level audit trail singleton."""
     return _global_trail
-
 
 def audit_op(operation: str, user: str = "system") -> Callable:
     """Decorator that records function calls to the global audit trail.
@@ -148,8 +143,6 @@ def audit_op(operation: str, user: str = "system") -> Callable:
         return wrapper
     return decorator
 
-
-
 class ActionType(Enum):
     """Type of data operation."""
     INSERT = "INSERT"
@@ -158,7 +151,6 @@ class ActionType(Enum):
     TRUNCATE = "TRUNCATE"
     SCHEMA_CHANGE = "SCHEMA_CHANGE"
 
-
 class ChangeType(Enum):
     """Category of change."""
     DATA_CHANGE = "DATA_CHANGE"
@@ -166,7 +158,6 @@ class ChangeType(Enum):
     ACCESS = "ACCESS"
     DELETE = "DELETE"
     RESTORE = "RESTORE"
-
 
 @dataclass
 class AuditEvent:
@@ -253,7 +244,6 @@ class AuditEvent:
             "user_agent": self.user_agent,
             "created_at": self.created_at.isoformat(),
         }
-
 
 class AuditTrail:
     """Main audit trail interface.

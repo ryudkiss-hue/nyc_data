@@ -17,7 +17,6 @@ from socrata_toolkit.entity.blocking import (
 # Fixtures
 # ---------------------------------------------------------------------------
 
-
 @pytest.fixture
 def nyc_records():
     """Representative NYC DOT SIM records for blocking tests."""
@@ -30,7 +29,6 @@ def nyc_records():
         {"id": "6", "borough": "QUEENS", "block_id": "3001", "address": "11-15 Jamaica Ave"},
     ]
 
-
 @pytest.fixture
 def small_records():
     """Minimal three-record set for pair-count assertions."""
@@ -40,11 +38,9 @@ def small_records():
         {"id": "C", "borough": "BK", "name": "Carol"},
     ]
 
-
 # ---------------------------------------------------------------------------
 # BlockStatistics tests
 # ---------------------------------------------------------------------------
-
 
 class TestBlockStatistics:
     """Tests for the BlockStatistics dataclass."""
@@ -68,11 +64,9 @@ class TestBlockStatistics:
         assert stats.blocks_created == 20
         assert stats.empty_blocks == 0
 
-
 # ---------------------------------------------------------------------------
 # StandardBlocker tests
 # ---------------------------------------------------------------------------
-
 
 class TestStandardBlocker:
     """Tests for StandardBlocker algorithm."""
@@ -177,11 +171,9 @@ class TestStandardBlocker:
         for i, j in pairs:
             assert i < j
 
-
 # ---------------------------------------------------------------------------
 # SortedNeighborhoodBlocker tests
 # ---------------------------------------------------------------------------
-
 
 class TestSortedNeighborhoodBlocker:
     """Tests for SortedNeighborhoodBlocker algorithm."""
@@ -225,11 +217,9 @@ class TestSortedNeighborhoodBlocker:
         pairs = blocker.create_candidate_pairs([])
         assert pairs == []
 
-
 # ---------------------------------------------------------------------------
 # SuffixArrayBlocker tests
 # ---------------------------------------------------------------------------
-
 
 class TestSuffixArrayBlocker:
     """Tests for SuffixArrayBlocker token-based algorithm."""
@@ -295,11 +285,9 @@ class TestSuffixArrayBlocker:
         pairs = blocker.create_candidate_pairs([])
         assert pairs == []
 
-
 # ---------------------------------------------------------------------------
 # CanopyBlocker tests
 # ---------------------------------------------------------------------------
-
 
 class TestCanopyBlocker:
     """Tests for CanopyBlocker approximate clustering algorithm."""
@@ -358,11 +346,9 @@ class TestCanopyBlocker:
         pairs = blocker.create_candidate_pairs([{"id": "1", "borough": "MN"}])
         assert pairs == []
 
-
 # ---------------------------------------------------------------------------
 # CanopyBlocker._record_similarity tests
 # ---------------------------------------------------------------------------
-
 
 class TestCanopyBlockerSimilarity:
     """Tests for the internal _record_similarity method."""
@@ -402,11 +388,9 @@ class TestCanopyBlockerSimilarity:
         r2 = {"borough": ""}
         assert blocker._record_similarity(r1, r2) == pytest.approx(0.0)
 
-
 # ---------------------------------------------------------------------------
 # HybridBlocker tests
 # ---------------------------------------------------------------------------
-
 
 class TestHybridBlocker:
     """Tests for HybridBlocker combining multiple strategies."""
@@ -462,11 +446,9 @@ class TestHybridBlocker:
         pairs = hybrid.create_candidate_pairs(nyc_records)
         assert pairs == sorted(pairs)
 
-
 # ---------------------------------------------------------------------------
 # BlockingAlgorithm._calculate_statistics tests
 # ---------------------------------------------------------------------------
-
 
 class TestCalculateStatistics:
     """Tests for the base _calculate_statistics helper."""

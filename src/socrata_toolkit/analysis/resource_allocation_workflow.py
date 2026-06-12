@@ -44,7 +44,6 @@ from .allocation_classifier import (
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class ReallocationPlan:
     """Recommended plan for inspector reallocation.
@@ -71,7 +70,6 @@ class ReallocationPlan:
     implementation_steps: list[str]
     risk_assessment: str
     allocation_json: dict[str, Any]
-
 
 class ResourceAllocationWorkflow:
     """LangGraph-based workflow for resource allocation optimization.
@@ -534,7 +532,6 @@ Keep analysis to ~300 tokens. Use concrete numbers where possible.
                 },
             },
         )
-
 
 def run_resource_allocation_workflow(
     max_rows: int = 10000,

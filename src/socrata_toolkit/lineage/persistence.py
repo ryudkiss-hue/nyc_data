@@ -34,7 +34,6 @@ from .core import (
 
 logger = logging.getLogger(__name__)
 
-
 class LineagePersistence:
     """PostgreSQL persistence layer for lineage data.
 

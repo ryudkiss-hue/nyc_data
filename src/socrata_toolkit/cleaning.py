@@ -32,14 +32,12 @@ def standardize_boroughs(df: pd.DataFrame, col: str) -> pd.DataFrame:
         out.loc[~out[col].isin(valid), col] = "UNKNOWN"
     return out
 
-
 def standardize_postcodes(df: pd.DataFrame, col: str) -> pd.DataFrame:
     """Ensure postcodes are 5-digit strings."""
     out = df.copy()
     if col in out.columns:
         out[col] = out[col].astype(str).str.extract(r"(\d{5})")[0].fillna("")
     return out
-
 
 def standardize_bbl(
     df: pd.DataFrame, boro_col: str, block_col: str, lot_col: str, target_col: str = "bbl"
@@ -67,7 +65,6 @@ def standardize_bbl(
         out[target_col] = out.apply(format_bbl, axis=1)
     return out
 
-
 def clean_column_names(df: pd.DataFrame) -> pd.DataFrame:
     """Snake_case column names and remove special characters."""
     out = df.copy()
@@ -76,7 +73,6 @@ def clean_column_names(df: pd.DataFrame) -> pd.DataFrame:
         for c in out.columns
     ]
     return out
-
 
 def infer_and_convert_types(df: pd.DataFrame) -> pd.DataFrame:
     """Attempt to convert object columns to numeric or datetime."""
@@ -97,7 +93,6 @@ def infer_and_convert_types(df: pd.DataFrame) -> pd.DataFrame:
             except:
                 pass
     return out
-
 
 def remove_outliers(df: pd.DataFrame, col: str, z_threshold: float = 3) -> pd.DataFrame:
     """Remove rows where column value is more than N standard deviations from mean."""

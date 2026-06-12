@@ -14,7 +14,6 @@ import jwt
 class AuthenticationError(Exception):
     """Exception raised for authentication failures."""
 
-
 @dataclass
 class User:
     user_id: str
@@ -22,14 +21,12 @@ class User:
     roles: list[str] = field(default_factory=list)
     permissions: set[str] = field(default_factory=set)
 
-
 @dataclass
 class AuthContext:
     principal_id: str
     user: User
     roles: list[str]
     permissions: set[str]
-
 
 class JWTAuthProvider:
     def __init__(self, secret_key: str, expiry_minutes: int = 60, cache_size: int = 1000):
@@ -82,7 +79,6 @@ class JWTAuthProvider:
         except jwt.InvalidTokenError:
             raise AuthenticationError("Invalid signature")
 
-
 class APIKeyAuthProvider:
     """
     Production-ready API Key provider that validates SHA-256 hashes of keys.
@@ -111,14 +107,11 @@ class APIKeyAuthProvider:
             permissions=set()
         )
 
-
 def generate_api_key() -> str:
     return f"sk_{secrets.token_hex(32)}"
 
-
 def hash_api_key(key: str) -> str:
     return hashlib.sha256(key.encode()).hexdigest()
-
 
 def get_api_key_prefix(key: str) -> str:
     if len(key) < 10: return "****"

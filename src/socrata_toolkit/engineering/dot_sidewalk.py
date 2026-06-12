@@ -31,7 +31,6 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class SidewalkKPI:
     """Legacy sidewalk KPI container (maintained for backward compatibility).
@@ -49,7 +48,6 @@ class SidewalkKPI:
     burn_variance: float
     first_pass_yield: float
     rework_factor: float
-
 
 @dataclass
 class MaterialAwareSidewalkKPI:
@@ -78,7 +76,6 @@ class MaterialAwareSidewalkKPI:
         data = asdict(self)
         data["timestamp"] = self.timestamp.isoformat()
         return data
-
 
 def compute_sidewalk_kpis(
     df: pd.DataFrame,
@@ -143,7 +140,6 @@ def compute_sidewalk_kpis(
     return SidewalkKPI(
         defect_density, throughput_velocity, burn_variance, first_pass_yield, rework_factor
     )
-
 
 def compute_material_aware_kpis(
     df: pd.DataFrame,
@@ -327,7 +323,6 @@ def compute_material_aware_kpis(
         lineage_metadata=lineage_metadata,
     )
 
-
 def _compute_material_defect_rate(
     df: pd.DataFrame,
     material_col: str,
@@ -362,7 +357,6 @@ def _compute_material_defect_rate(
     rate = (total_defects / total_linear_feet * 1000) / 10  # Normalize to percentage
     return float(rate)
 
-
 def sql_templates() -> dict[str, str]:
     return {
         "defect_density": "SELECT SUM(violations)/NULLIF(SUM(curb_miles),0) AS defect_density FROM sidewalk_contracts;",
@@ -371,7 +365,6 @@ def sql_templates() -> dict[str, str]:
         "first_pass_yield": "SELECT SUM(first_pass)::float/NULLIF(SUM(total_inspections),0) AS first_pass_yield FROM inspections;",
         "rework_factor": "SELECT SUM(rework_spend)/NULLIF(SUM(actual_spend),0) AS rework_factor FROM contracts;",
     }
-
 
 def compute_material_lifecycle_cost_kpi(
     df: pd.DataFrame,
@@ -455,7 +448,6 @@ def compute_material_lifecycle_cost_kpi(
     logger.info(f"Computed lifecycle cost KPIs for {len(lifecycle_costs)} materials")
     return lifecycle_costs
 
-
 def compute_material_deterioration_rate_kpi(
     current_df: pd.DataFrame,
     prior_df: pd.DataFrame,
@@ -514,7 +506,6 @@ def compute_material_deterioration_rate_kpi(
 
     logger.info(f"Computed deterioration rates for {len(deterioration_rates)} materials")
     return deterioration_rates
-
 
 def compute_ada_compliance_kpi(
     df: pd.DataFrame,
@@ -580,7 +571,6 @@ def compute_ada_compliance_kpi(
 
     logger.info(f"Computed ADA compliance KPIs for {len(ada_metrics)} materials")
     return ada_metrics
-
 
 def python_templates() -> dict[str, str]:
     return {

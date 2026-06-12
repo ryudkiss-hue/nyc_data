@@ -30,7 +30,6 @@ from socrata_toolkit.pipeline import (
     SCDType2Manager,
 )
 
-
 class TestSCDRecord:
     """Tests for SCDRecord dataclass."""
 
@@ -82,7 +81,6 @@ class TestSCDRecord:
         assert d["business_key"] == "sidewalk_123"
         assert d["is_current"] is True
 
-
 class TestSCDType2Manager:
     """Tests for SCD Type 2 manager."""
 
@@ -112,7 +110,6 @@ class TestSCDType2Manager:
         """Test managing a new record (INSERT)."""
         # This would require database mocking
         # Skipped for now as it requires full DB setup
-
 
 class TestAuditEvent:
     """Tests for AuditEvent."""
@@ -168,7 +165,6 @@ class TestAuditEvent:
         assert d["audit_id"] == "event-123"
         assert "timestamp" in d
 
-
 class TestAuditTrail:
     """Tests for AuditTrail."""
 
@@ -193,7 +189,6 @@ class TestAuditTrail:
         diff = AuditTrail._calculate_diff(old, {})
         assert "field1" in diff
         assert "field2" in diff
-
 
 class TestCDCEvent:
     """Tests for CDC events."""
@@ -239,7 +234,6 @@ class TestCDCEvent:
         d = event.to_dict()
         assert d["operation"] == "INSERT"
 
-
 class TestCDCProcessor:
     """Tests for CDC processing."""
 
@@ -274,7 +268,6 @@ class TestCDCProcessor:
         # Should have issues about INSERT not being first
         assert len(report.issues) > 0
 
-
 class TestTemporalQuery:
     """Tests for temporal query operations."""
 
@@ -308,7 +301,6 @@ class TestTemporalQuery:
         assert pattern.total_versions == 5
         assert "condition" in pattern.fields_changed
 
-
 class TestSoftDelete:
     """Tests for soft delete operations."""
 
@@ -328,7 +320,6 @@ class TestSoftDelete:
         policy = RetentionPolicy("test_table")
         assert policy.retention_days == 90
         assert policy.allow_hard_delete is True
-
 
 class TestCDCExporter:
     """Tests for CDC export."""
@@ -351,7 +342,6 @@ class TestCDCExporter:
         )
         assert result.success is True
         assert result.record_count == 100
-
 
 class TestComplianceReport:
     """Tests for compliance reporting."""
@@ -378,7 +368,6 @@ class TestComplianceReport:
         assert result.passed is False
         assert len(result.issues) == 2
 
-
 class TestIntegration:
     """Integration tests for CDC system."""
 
@@ -402,7 +391,6 @@ class TestIntegration:
     def test_soft_delete_with_audit_trail(self):
         """Test soft delete is properly audited."""
         # Would test deletion is logged to audit trail
-
 
 class TestEdgeCases:
     """Tests for edge cases and error conditions."""
@@ -484,7 +472,6 @@ class TestEdgeCases:
         )
         assert pattern.total_versions == 1
 
-
 class TestDataTypes:
     """Tests for data type handling."""
 
@@ -520,7 +507,6 @@ class TestDataTypes:
         )
         assert event.metadata["source_version"] == "1.0"
 
-
 class TestErrorHandling:
     """Tests for error conditions."""
 
@@ -540,7 +526,6 @@ class TestErrorHandling:
         """Test event ordering with empty list."""
         report = CDCProcessor.validate_event_order([])
         assert report.valid is True
-
 
 class TestPerformance:
     """Performance-related tests."""
@@ -575,7 +560,6 @@ class TestPerformance:
         # Should complete 100 diffs in reasonable time
         assert duration < 1.0
 
-
 # Parametrized tests for multiple scenarios
 @pytest.mark.parametrize(
     "operation,before,after",
@@ -601,7 +585,6 @@ def test_cdc_event_operations(operation, before, after):
         assert event.before is None
     elif operation == "DELETE":
         assert event.after is None
-
 
 @pytest.mark.parametrize("severity", ["info", "warning", "critical"])
 def test_compliance_check_severity_levels(severity):

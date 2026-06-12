@@ -5,7 +5,6 @@ import pytest
 from socrata_toolkit.motherduck.connector import MotherDuckConnection
 from socrata_toolkit.motherduck.ingestion import InspectionDataLoader
 
-
 @pytest.fixture
 def motherduck_conn():
     """Fixture providing a local DuckDB connection (no MotherDuck token needed)."""
@@ -13,12 +12,10 @@ def motherduck_conn():
     yield conn
     conn.close()
 
-
 @pytest.fixture
 def data_loader(motherduck_conn):
     """Fixture providing an InspectionDataLoader instance."""
     return InspectionDataLoader(motherduck_conn)
-
 
 class TestRawTableCreation:
     """Tests for raw schema and table creation."""
@@ -138,7 +135,6 @@ class TestRawTableCreation:
 
         for col in expected_columns:
             assert col in column_names, f"Column '{col}' not found in violations_raw"
-
 
 class TestDataLoading:
     """Tests for loading data into raw tables."""

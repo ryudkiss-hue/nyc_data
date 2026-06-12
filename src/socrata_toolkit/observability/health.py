@@ -25,7 +25,6 @@ class ComponentHealth:
             "duration_ms": self.duration_ms,
         }
 
-
 class HealthMonitor:
     """Registry of component health checks.
 

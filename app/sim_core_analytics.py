@@ -61,7 +61,6 @@ def predict_homeowner_default(
         # No real outcome label available — refuse to fabricate labels (data-integrity policy)
         return df, {"error": "No real default/repair-outcome label column found; refusing to train on synthetic labels. Provide a 'city_do_it' or 'default' column."}
 
-
     # Select features (Assessed Value, Year Built, Lot Area)
     features = [c for c in df.columns if any(k in c.lower() for k in ['assess', 'year', 'area', 'sqft'])]
     if not features:

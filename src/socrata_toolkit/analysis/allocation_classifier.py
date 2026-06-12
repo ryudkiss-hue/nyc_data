@@ -29,7 +29,6 @@ class AreaPriority(str, Enum):
     MEDIUM = "MEDIUM"
     LOW = "LOW"
 
-
 class AllocationAction(str, Enum):
     """Recommended action for resource reallocation."""
     DISPATCH = "DISPATCH"  # Send inspectors immediately
@@ -37,13 +36,11 @@ class AllocationAction(str, Enum):
     OPTIMIZE = "OPTIMIZE"  # Rebalance current allocation
     MONITOR = "MONITOR"  # Track but no action needed
 
-
 class ImpactLevel(str, Enum):
     """Estimated impact of reallocation."""
     HIGH = "HIGH"
     MEDIUM = "MEDIUM"
     LOW = "LOW"
-
 
 @dataclass
 class AllocationClassification:
@@ -77,7 +74,6 @@ class AllocationClassification:
     confidence_score: float
     rationale: str
     alternative_actions: list[str]
-
 
 class ResourceAllocationClassifier:
     """Classifies geographic areas and recommends inspector allocation strategies.

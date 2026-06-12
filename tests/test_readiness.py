@@ -6,7 +6,6 @@ import json
 
 from socrata_toolkit.core.readiness import run_readiness_checks
 
-
 def test_readiness_report_structure():
     report = run_readiness_checks()
     assert report["overall_score"] >= 80
@@ -29,14 +28,12 @@ def test_readiness_report_structure():
         assert axis in report["axis_scores"]
         assert 0 <= report["axis_scores"][axis] <= 100
 
-
 def test_readiness_import_shims_pass():
     report = run_readiness_checks()
     func = report["axes"]["functionality"]
     advanced = [i for i in func if "advanced" in i["name"] or "program" in i["name"]]
     assert advanced
     assert all(i["ok"] for i in advanced)
-
 
 def test_doctor_checklist_includes_readiness():
     from click.testing import CliRunner

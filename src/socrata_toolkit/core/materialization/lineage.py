@@ -7,7 +7,6 @@ import duckdb
 
 logger = logging.getLogger(__name__)
 
-
 class MartLineage:
     """Track data lineage: which datasets feed which marts."""
 

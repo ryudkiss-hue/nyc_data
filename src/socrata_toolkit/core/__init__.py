@@ -32,6 +32,7 @@ from .client import SocrataClient, SocrataConfig
 from .config import get_default, load_local_config
 from .db_helpers import build_fts_index_sql, ensure_fts_index
 from .duckdb_store import DuckDBManager, DuckDBRepository, get_bundle_dir
+from .memory_profiler import MemoryProfiler, get_global_profiler, profile_module_import
 from .models import DatasetMetadata, SearchResult
 from .profiles import (
     ProfilePaths,
@@ -53,7 +54,6 @@ class DuckDBExporter:
 
     def __exit__(self, exc_type, exc, tb) -> None:
         self.manager.close()
-
 
 def search_nyc_datasets(query: str, domain: str = "data.cityofnewyork.us", limit: int = 10):
     """Search NYC Open Data catalog and return results as a DataFrame."""

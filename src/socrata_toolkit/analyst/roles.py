@@ -15,7 +15,6 @@ from ..program_metrics import MetricDefinition, _compute_status
 
 ROLE_PROFILES_DIR = Path("config/role_profiles")
 
-
 @dataclass
 class RoleDuty:
     id: str
@@ -23,7 +22,6 @@ class RoleDuty:
     workflow_steps: list[str] = field(default_factory=list)
     pack_outputs: list[str] = field(default_factory=list)
     inquiry_templates: list[str] = field(default_factory=list)
-
 
 @dataclass
 class RoleKpiDef:
@@ -36,7 +34,6 @@ class RoleKpiDef:
     critical_threshold: float
     data_source: dict[str, Any] = field(default_factory=dict)
 
-
 @dataclass
 class RoleProfile:
     role_id: str
@@ -47,7 +44,6 @@ class RoleProfile:
     kpis: list[RoleKpiDef]
     path: Path | None = None
 
-
 @dataclass
 class RoleKpiSnapshot:
     name: str
@@ -55,7 +51,6 @@ class RoleKpiSnapshot:
     target: float
     status: str
     description: str
-
 
 @dataclass
 class RoleKpiDashboard:
@@ -66,7 +61,6 @@ class RoleKpiDashboard:
     overall_health: str
     program_kpi_merged: bool = False
 
-
 def _parse_duty(raw: dict[str, Any]) -> RoleDuty:
     return RoleDuty(
         id=str(raw.get("id", "")),
@@ -75,7 +69,6 @@ def _parse_duty(raw: dict[str, Any]) -> RoleDuty:
         pack_outputs=[str(p) for p in raw.get("pack_outputs", [])],
         inquiry_templates=[str(t) for t in raw.get("inquiry_templates", [])],
     )
-
 
 def _parse_kpi(raw: dict[str, Any]) -> RoleKpiDef:
     return RoleKpiDef(
@@ -88,7 +81,6 @@ def _parse_kpi(raw: dict[str, Any]) -> RoleKpiDef:
         critical_threshold=float(raw.get("critical_threshold", 0)),
         data_source=dict(raw.get("data_source", {})),
     )
-
 
 def load_role_profile(role_or_path: str | Path) -> RoleProfile:
     """Load a role YAML by role_id (filename stem) or explicit path."""
@@ -108,7 +100,6 @@ def load_role_profile(role_or_path: str | Path) -> RoleProfile:
         path=path,
     )
 
-
 def list_role_profiles(directory: str | Path | None = None) -> list[RoleProfile]:
     """Load all role profiles in config/role_profiles/."""
     root = Path(directory or ROLE_PROFILES_DIR)
@@ -122,7 +113,6 @@ def list_role_profiles(directory: str | Path | None = None) -> list[RoleProfile]
             continue
     return profiles
 
-
 def resolve_role_profile_path(role: str | None, explicit: str | None = None) -> Path | None:
     """Resolve a role profile file path from a role_id or an explicit path string."""
     if explicit:
@@ -132,7 +122,6 @@ def resolve_role_profile_path(role: str | None, explicit: str | None = None) -> 
         p = ROLE_PROFILES_DIR / f"{role}.yaml"
         return p if p.exists() else None
     return None
-
 
 def _kpi_status(value: float, defn: RoleKpiDef) -> str:
     metric = MetricDefinition(
@@ -146,20 +135,17 @@ def _kpi_status(value: float, defn: RoleKpiDef) -> str:
     )
     return _compute_status(value, metric)
 
-
 def _parse_conflict_rate(conflicts_md: str) -> float | None:
     if not conflicts_md:
         return None
     m = re.search(r"Conflict rate:\s*([\d.]+)%", conflicts_md, re.I)
     return float(m.group(1)) if m else None
 
-
 def _parse_diff_added(construction_diff_md: str) -> float:
     if not construction_diff_md:
         return 0.0
     m = re.search(r"Added[:\s]+(\d+)", construction_diff_md, re.I)
     return float(m.group(1)) if m else 0.0
-
 
 def _program_green_pct(program_kpi: dict[str, Any] | None) -> float | None:
     if not program_kpi:
@@ -169,7 +155,6 @@ def _program_green_pct(program_kpi: dict[str, Any] | None) -> float | None:
         return None
     green = sum(1 for m in metrics if m.get("status") == "green")
     return (green / len(metrics)) * 100.0
-
 
 def compute_role_kpis(
     role: RoleProfile,
@@ -277,7 +262,6 @@ def compute_role_kpis(
         overall_health=health,
     )
 
-
 def evaluate_task_checklist(
     role: RoleProfile,
     pack_dir: Path,
@@ -320,7 +304,6 @@ def evaluate_task_checklist(
     pct = (done / total) * 100.0
     return rows, pct
 
-
 def build_role_task_status_md(
     role: RoleProfile,
     tasks: list[dict[str, Any]],
@@ -353,7 +336,6 @@ def build_role_task_status_md(
         lines.append(f"[City Jobs posting]({ref})")
     return "\n".join(lines)
 
-
 def role_dashboard_to_dict(dashboard: RoleKpiDashboard) -> dict[str, Any]:
     """Serialize a RoleKpiDashboard to a JSON-compatible dict."""
     return {
@@ -374,7 +356,6 @@ def role_dashboard_to_dict(dashboard: RoleKpiDashboard) -> dict[str, Any]:
         ],
     }
 
-
 def merge_program_and_role_kpis(
     program_kpi: dict[str, Any] | None,
     role_dashboard: RoleKpiDashboard,
@@ -384,7 +365,6 @@ def merge_program_and_role_kpis(
     base["role"] = role_dashboard_to_dict(role_dashboard)
     role_dashboard.program_kpi_merged = True
     return base
-
 
 def write_role_artifacts(
     pack_dir: Path,

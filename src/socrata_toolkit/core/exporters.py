@@ -35,7 +35,6 @@ class XLSXExporter:
                 pd.DataFrame([meta.summary()]).to_excel(writer, sheet_name="Summary", index=False)
                 pd.DataFrame(meta.column_dict()).to_excel(writer, sheet_name="Column Dictionary", index=False)
 
-
 class DuckDBExporter:
     """Exporter for local DuckDB or MotherDuck cloud databases."""
 
@@ -70,7 +69,6 @@ class DuckDBExporter:
             df = pd.DataFrame(batch)
             total += repo.upsert_dataframe(df, conflict_column)
         return total
-
 
 class PostgresExporter:
     def __init__(self, dsn: str):
@@ -220,7 +218,6 @@ class PostgresExporter:
             (meta.fourfour, self.psycopg.types.json.Json(meta.summary())),
         )
         self.conn.commit()
-
 
 class MongoExporter:
     def __init__(self, uri: str, db_name: str):

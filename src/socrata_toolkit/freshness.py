@@ -22,7 +22,8 @@ import logging
 import uuid
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
-from enum import Enum
+
+from socrata_toolkit.alerts.manager import AlertSeverity
 
 try:
     import psycopg
@@ -31,26 +32,16 @@ except ImportError:
     psycopg = None  # type: ignore
     psycopg_sql = None  # type: ignore
 
-
 # Logging setup
 logger = logging.getLogger(__name__)
 
-
 def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
-
 
 def _to_utc(dt: datetime) -> datetime:
     if dt.tzinfo is None:
         return dt.replace(tzinfo=timezone.utc)
     return dt.astimezone(timezone.utc)
-
-
-class AlertSeverity(Enum):
-    """Alert severity levels for freshness violations."""
-    WARNING = "warning"
-    CRITICAL = "critical"
-
 
 @dataclass
 class DatasetFreshness:
@@ -148,7 +139,6 @@ class DatasetFreshness:
         """
         age_hours = (_utc_now() - _to_utc(self.last_updated_utc)).total_seconds() / 3600
         return self.sla_threshold_hours - age_hours
-
 
 @dataclass
 class FreshnessAlert:
@@ -353,7 +343,6 @@ class FreshnessAlert:
                 },
             },
         }
-
 
 class FreshnessTracker:
     """Core freshness tracking and SLA monitoring for datasets.

@@ -18,20 +18,17 @@ from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
-
 class SLATier(Enum):
     """SLA tiers based on dataset freshness requirements."""
     HIGH = 14  # Critical datasets, updated within 14 days
     MEDIUM = 30  # Standard datasets, updated within 30 days
     LOW = 60  # Archive datasets, updated within 60 days
 
-
 class ComplianceStatus(Enum):
     """Dataset compliance status vs SLA tier."""
     COMPLIANT = "compliant"  # Data within SLA threshold
     AT_RISK = "at_risk"  # Data within 80% of SLA (e.g., 11d of 14d)
     BREACHED = "breached"  # Data exceeds SLA threshold
-
 
 class RootCause(Enum):
     """Root cause classification for SLA breaches."""
@@ -41,14 +38,12 @@ class RootCause(Enum):
     RESOURCE_CONSTRAINT = "resource_constraint"  # Socrata quota/rate limits
     UNKNOWN = "unknown"  # Unable to determine cause
 
-
 class TrendDirection(Enum):
     """Trend in compliance status over recent history."""
     IMPROVING = "improving"  # Freshness getting better
     STABLE = "stable"  # Consistent freshness
     DEGRADING = "degrading"  # Freshness getting worse
     INSUFFICIENT_DATA = "insufficient_data"  # Not enough historical data
-
 
 @dataclass
 class SLAMetricSnapshot:
@@ -71,7 +66,6 @@ class SLAMetricSnapshot:
             "sla_tier": self.sla_tier.name,
             "days_since_update": round(self.days_since_update, 2),
         }
-
 
 @dataclass
 class SLAStatusRecord:
@@ -105,7 +99,6 @@ class SLAStatusRecord:
             "historical_days_since_update": [round(d, 2) for d in self.historical_days_since_update],
         }
 
-
 @dataclass
 class SLAComplianceReport:
     """Aggregate SLA compliance across all datasets."""
@@ -135,7 +128,6 @@ class SLAComplianceReport:
             "recommendations": self.recommendations,
             "claude_analysis": self.claude_analysis,
         }
-
 
 class SLAStatusClassifier:
     """Classifies dataset freshness against SLA tiers."""

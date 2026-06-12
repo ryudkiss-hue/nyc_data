@@ -11,7 +11,6 @@ Each card displays:
 Data source: app_queries.v_kpi_dashboard
 """
 import logging
-from typing import Dict, List, Tuple
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -21,7 +20,6 @@ from socrata_toolkit.motherduck.connector import MotherDuckConnection
 from .statistics_display import StatisticsPanel
 
 logger = logging.getLogger(__name__)
-
 
 class KPICards:
     """Renders all 18 KPI cards with dynamic values.
@@ -60,7 +58,7 @@ class KPICards:
         logger.info(f"Fetched {len(self.data)} rows from KPI dashboard view")
         return self.data
 
-    def get_kpi_names(self) -> List[str]:
+    def get_kpi_names(self) -> list[str]:
         """Get list of unique KPI names.
 
         Returns:
@@ -70,7 +68,7 @@ class KPICards:
             self.fetch_data()
         return sorted(self.data["kpi_name"].unique().tolist())
 
-    def get_kpi_for_borough(self, kpi_name: str, borough: str) -> Dict:
+    def get_kpi_for_borough(self, kpi_name: str, borough: str) -> dict:
         """Get specific KPI value for a borough.
 
         Args:
@@ -103,7 +101,7 @@ class KPICards:
 
     def render_kpi_card(
         self, kpi_name: str, borough: str
-    ) -> Tuple[go.Figure, StatisticsPanel]:
+    ) -> tuple[go.Figure, StatisticsPanel]:
         """Render a single KPI card.
 
         Args:
@@ -154,7 +152,7 @@ class KPICards:
 
         return fig, stats
 
-    def render_all_kpi_cards(self) -> Dict[str, Tuple[go.Figure, StatisticsPanel]]:
+    def render_all_kpi_cards(self) -> dict[str, tuple[go.Figure, StatisticsPanel]]:
         """Render all 18 KPI cards (one per KPI, aggregate across boroughs).
 
         Returns:
@@ -252,7 +250,7 @@ class KPICards:
 
         return fig
 
-    def render_kpi_summary_table(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_kpi_summary_table(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render summary table of all KPI values by borough.
 
         Returns:
@@ -310,7 +308,7 @@ class KPICards:
 
         return fig, stats
 
-    def render_kpi_comparison_chart(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_kpi_comparison_chart(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render comparison chart of average KPI values.
 
         Returns:
@@ -354,7 +352,7 @@ class KPICards:
 
         return fig, stats
 
-    def render_borough_kpi_radar(self, borough: str) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_borough_kpi_radar(self, borough: str) -> tuple[go.Figure, StatisticsPanel]:
         """Render radar chart of all KPIs for a specific borough.
 
         Args:
@@ -413,7 +411,7 @@ class KPICards:
 
         return fig, stats
 
-    def render_all_borough_radars(self) -> Dict[str, Tuple[go.Figure, StatisticsPanel]]:
+    def render_all_borough_radars(self) -> dict[str, tuple[go.Figure, StatisticsPanel]]:
         """Render radar charts for all 5 boroughs.
 
         Returns:

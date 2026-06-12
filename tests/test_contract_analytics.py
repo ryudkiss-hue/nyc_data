@@ -8,7 +8,6 @@ from socrata_toolkit.engineering import (
     schedule_variance,
 )
 
-
 def _sample_contracts():
     return pd.DataFrame(
         {
@@ -26,7 +25,6 @@ def _sample_contracts():
         }
     )
 
-
 def test_analyze_contract_progress():
     df = _sample_contracts()
     results = analyze_contract_progress(df)
@@ -34,7 +32,6 @@ def test_analyze_contract_progress():
     c1 = [r for r in results if r.contract_id == "C1"][0]
     assert c1.pct_complete == 50.0  # 1000/2000
     assert c1.velocity_sqft_per_day > 0
-
 
 def test_budget_analysis():
     df = _sample_contracts()
@@ -45,7 +42,6 @@ def test_budget_analysis():
     assert result.cost_performance_index > 0
     assert result.remaining_budget == 60000.0
 
-
 def test_productivity_metrics():
     df = _sample_contracts()
     result = productivity_metrics(df)
@@ -55,14 +51,12 @@ def test_productivity_metrics():
     assert result.cost_per_sqft > 0
     assert result.crew_efficiency > 0
 
-
 def test_compare_contracts():
     df = _sample_contracts()
     result = compare_contracts(df)
     assert len(result) == 2
     assert "cost_per_sqft" in result.columns
     assert "sqft_per_day" in result.columns
-
 
 def test_schedule_variance():
     df = pd.DataFrame(

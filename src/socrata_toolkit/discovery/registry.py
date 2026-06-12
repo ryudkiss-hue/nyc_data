@@ -33,14 +33,12 @@ class KeyRole(str, Enum):
     IDX = "IDX"  # Indexed (non-unique)
     NONE = ""    # Regular column
 
-
 @dataclass
 class KeyMeta:
     """Key annotation attached to a ``ColumnDef``."""
     role: KeyRole
     references: str | None = None   # "EntityName.column_name" for FK / SK
     comment: str | None = None
-
 
 @dataclass
 class ColumnDef:
@@ -51,7 +49,6 @@ class ColumnDef:
     key: KeyMeta = field(default_factory=lambda: KeyMeta(KeyRole.NONE))
     description: str = ""
 
-
 @dataclass
 class EntityDef:
     """Registry entry for a single table / entity."""
@@ -60,33 +57,26 @@ class EntityDef:
     columns: list[ColumnDef]
     schema: str = "public"             # logical schema namespace
 
-
 # ── Helper factories ──────────────────────────────────────────────────────────
 
 def pk(dtype: str = "VARCHAR(50)", description: str = "") -> tuple[str, KeyMeta]:
     return dtype, KeyMeta(KeyRole.PK, comment=description)
 
-
 def uk(dtype: str = "VARCHAR(255)", references: str | None = None, description: str = "") -> tuple[str, KeyMeta]:
     return dtype, KeyMeta(KeyRole.UK, references=references, comment=description)
-
 
 def fk(dtype: str = "VARCHAR(50)", references: str = "", description: str = "") -> tuple[str, KeyMeta]:
     return dtype, KeyMeta(KeyRole.FK, references=references, comment=description)
 
-
 def sk(dtype: str = "VARCHAR(50)", references: str | None = None, description: str = "") -> tuple[str, KeyMeta]:
     return dtype, KeyMeta(KeyRole.SK, references=references, comment=description)
-
 
 def col(dtype: str, nullable: bool = True, description: str = "") -> tuple[str, bool, str]:
     return dtype, nullable, description
 
-
 def _c(name: str, dtype: str, nullable: bool = True, key: KeyMeta | None = None, description: str = "") -> ColumnDef:
     return ColumnDef(name=name, dtype=dtype, nullable=nullable,
                      key=key or KeyMeta(KeyRole.NONE), description=description)
-
 
 # ── Entity definitions ────────────────────────────────────────────────────────
 
@@ -580,7 +570,6 @@ SOURCE_CONFIG = EntityDef(
     ],
 )
 
-
 # ── Global registry ───────────────────────────────────────────────────────────
 
 REGISTRY: dict[str, EntityDef] = {
@@ -616,7 +605,6 @@ REGISTRY: dict[str, EntityDef] = {
         SOURCE_CONFIG,
     ]
 }
-
 
 # ── ER diagram generator ──────────────────────────────────────────────────────
 
@@ -687,14 +675,12 @@ _MERMAID_TYPE_MAP: dict[str, str] = {
     "GEOMETRY(POINT,4326)":     "string",
 }
 
-
 def _mermaid_type(dtype: str) -> str:
     base = dtype.split("(")[0].upper().strip()
     if base.startswith("VARCHAR"):
         return "string"
     return _MERMAID_TYPE_MAP.get(dtype.upper().strip(),
            _MERMAID_TYPE_MAP.get(base, "string"))
-
 
 def build_er_diagram() -> str:
     """Return the full Mermaid erDiagram markdown string for all registered entities."""
@@ -716,11 +702,9 @@ def build_er_diagram() -> str:
 
     return "\n".join(lines)
 
-
 def print_er_diagram() -> None:
     """Print the Mermaid erDiagram to stdout."""
     print(build_er_diagram())
-
 
 if __name__ == "__main__":
     print_er_diagram()

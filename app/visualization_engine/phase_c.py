@@ -9,7 +9,6 @@ Data source: app_queries.v_phase_c_results
 All charts include summary statistics below.
 """
 import logging
-from typing import Tuple
 
 import numpy as np
 import pandas as pd
@@ -22,7 +21,6 @@ from socrata_toolkit.motherduck.connector import MotherDuckConnection
 from .statistics_display import StatisticsPanel
 
 logger = logging.getLogger(__name__)
-
 
 class PhaseCVisualizations:
     """Renders all 13 Phase C visualizations (distribution analysis).
@@ -62,7 +60,7 @@ class PhaseCVisualizations:
         logger.info(f"Fetched {len(self.data)} rows from Phase C view")
         return self.data
 
-    def render_main_histogram(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_main_histogram(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render main histogram of violation distribution across all boroughs.
 
         Returns:
@@ -125,7 +123,7 @@ class PhaseCVisualizations:
 
         return fig, stats
 
-    def render_borough_histogram(self, borough: str) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_borough_histogram(self, borough: str) -> tuple[go.Figure, StatisticsPanel]:
         """Render histogram for a specific borough.
 
         Args:
@@ -209,7 +207,7 @@ class PhaseCVisualizations:
 
         return fig, stats
 
-    def render_box_plot(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_box_plot(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render box plot comparing distributions across boroughs.
 
         Returns:
@@ -258,7 +256,7 @@ class PhaseCVisualizations:
 
         return fig, stats
 
-    def render_skewness_chart(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_skewness_chart(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render skewness values across boroughs.
 
         Returns:
@@ -314,7 +312,7 @@ class PhaseCVisualizations:
 
         return fig, stats
 
-    def render_concentration_gauge(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_concentration_gauge(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render gauge showing overall concentration percentage.
 
         Returns:
@@ -363,7 +361,7 @@ class PhaseCVisualizations:
 
         return fig, stats
 
-    def render_concentration_comparison(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_concentration_comparison(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render comparison of concentration across boroughs.
 
         Returns:
@@ -407,7 +405,7 @@ class PhaseCVisualizations:
 
         return fig, stats
 
-    def render_std_dev_chart(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_std_dev_chart(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render standard deviation comparison across boroughs.
 
         Returns:
@@ -474,7 +472,7 @@ class PhaseCVisualizations:
 
         return fig, stats
 
-    def render_distribution_type_pie(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_distribution_type_pie(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render pie chart of distribution types.
 
         Returns:
@@ -510,7 +508,7 @@ class PhaseCVisualizations:
 
         return fig, stats
 
-    def render_mean_vs_median_scatter(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_mean_vs_median_scatter(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render scatter plot comparing mean vs median.
 
         Returns:

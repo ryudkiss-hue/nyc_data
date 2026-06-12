@@ -39,7 +39,6 @@ try:
 except ImportError:
     HAS_LANGGRAPH = False
 
-
 class CorrespondenceAuditState(TypedDict):
     """Workflow state: passed through each node."""
     domain: str
@@ -51,7 +50,6 @@ class CorrespondenceAuditState(TypedDict):
     claude_recommendations: dict
     final_report: dict
     error_log: list[str]
-
 
 class CorrespondenceAuditWorkflow:
     """Orchestrate correspondence audit via LangGraph.
@@ -461,5 +459,4 @@ Format: Brief, actionable recommendations (under 150 words).
             alerts.append(f"WARNING: {non_compliant} non-compliant records. Identify root causes in communication process.")
 
         return alerts
-
 

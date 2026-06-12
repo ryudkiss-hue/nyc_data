@@ -47,7 +47,6 @@ else:
 
 logger = logging.getLogger(__name__)
 
-
 class NodeType(Enum):
     """Classification of transformation nodes."""
     INGESTION = "ingestion"  # Data source (Socrata, API, file)
@@ -57,13 +56,11 @@ class NodeType(Enum):
     MATERIALIZATION = "materialization"  # Materialized view or table
     AGGREGATION = "aggregation"  # Aggregation operation
 
-
 class EdgeType(Enum):
     """Type of relationship between nodes."""
     DEPENDENCY = "dependency"  # One node depends on another
     DATA_FLOW = "data_flow"  # Direct data flow
     SCHEMA_DEPENDENCY = "schema_dependency"  # Schema version dependency
-
 
 class ExecutionStatus(Enum):
     """Status of a transformation execution."""
@@ -72,7 +69,6 @@ class ExecutionStatus(Enum):
     FAILED = "failed"
     PARTIAL = "partial"
     SKIPPED = "skipped"
-
 
 @dataclass
 class ExecutionRecord:
@@ -124,7 +120,6 @@ class ExecutionRecord:
         )
         return cls(**d)
 
-
 @dataclass
 class LineageEdge:
     """Represents a dependency or data flow between two nodes.
@@ -160,7 +155,6 @@ class LineageEdge:
         d["edge_type"] = EdgeType(d["edge_type"])
         d["created_at"] = datetime.fromisoformat(d["created_at"])
         return cls(**d)
-
 
 @dataclass
 class TransformationNode:
@@ -271,7 +265,6 @@ class TransformationNode:
     def get_execution_history(self, limit: int = 10) -> list[ExecutionRecord]:
         """Get recent execution history, newest first."""
         return self.execution_history[-limit:][::-1]
-
 
 class DAG:
     """Directed Acyclic Graph of transformations and data flows.

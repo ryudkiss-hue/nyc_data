@@ -19,7 +19,6 @@ except ImportError:
 
 shapely_required = pytest.mark.skipif(not HAS_SHAPELY, reason="shapely not installed")
 
-
 # ---------------------------------------------------------------------------
 # Import the module under test
 # ---------------------------------------------------------------------------
@@ -56,7 +55,6 @@ def mock_db_conn() -> MagicMock:
     db.get_connection = _get_connection
     return db
 
-
 @pytest.fixture
 def point_geom():
     """Return a Shapely Point if available, else skip."""
@@ -64,14 +62,12 @@ def point_geom():
         pytest.skip("shapely not installed")
     return Point(-74.0060, 40.7128)
 
-
 @pytest.fixture
 def linestring_geom():
     """Return a Shapely LineString representing a sidewalk segment."""
     if not HAS_SHAPELY:
         pytest.skip("shapely not installed")
     return LineString([(-74.0060, 40.7128), (-74.0065, 40.7133)])
-
 
 @pytest.fixture
 def polygon_geom():
@@ -86,7 +82,6 @@ def polygon_geom():
         (-74.0060, 40.7128),
     ])
 
-
 @pytest.fixture
 def multipolygon_geom():
     """Return a Shapely MultiPolygon representing a material zone."""
@@ -95,7 +90,6 @@ def multipolygon_geom():
     p1 = Polygon([(-74.006, 40.713), (-74.007, 40.713), (-74.007, 40.714), (-74.006, 40.714), (-74.006, 40.713)])
     p2 = Polygon([(-74.008, 40.715), (-74.009, 40.715), (-74.009, 40.716), (-74.008, 40.716), (-74.008, 40.715)])
     return MultiPolygon([p1, p2])
-
 
 # ---------------------------------------------------------------------------
 # Module-level constants
@@ -111,7 +105,6 @@ class TestModuleConstants:
     def test_srid_nad83_value(self):
         """SRID_NAD83 must equal 2263."""
         assert SRID_NAD83 == 2263
-
 
 # ---------------------------------------------------------------------------
 # SpatialGeometry dataclass
@@ -218,7 +211,6 @@ class TestSpatialGeometry:
         with pytest.raises(ValueError, match="Unsupported geometry type"):
             SpatialGeometry(gc)
 
-
 # ---------------------------------------------------------------------------
 # SpatialSegment dataclass
 # ---------------------------------------------------------------------------
@@ -291,7 +283,6 @@ class TestSpatialSegment:
                 borough="Bronx",
             )
 
-
 # ---------------------------------------------------------------------------
 # SpatialIndex
 # ---------------------------------------------------------------------------
@@ -333,7 +324,6 @@ class TestSpatialIndex:
         assert idx.query_by_bounds((-74.3, 40.4, -73.7, 40.9)) == []
         assert idx.query_by_distance((-74.0, 40.7), 100) == []
 
-
 # ---------------------------------------------------------------------------
 # GeometryHandler
 # ---------------------------------------------------------------------------
@@ -359,7 +349,6 @@ class TestGeometryHandler:
         sentinel = object()
         assert gh.buffer(sentinel, 50) is sentinel
 
-
 # ---------------------------------------------------------------------------
 # SpatialQuery dataclass
 # ---------------------------------------------------------------------------
@@ -383,7 +372,6 @@ class TestSpatialQueryDataclass:
         assert sq.center == (-74.006, 40.713)
         assert sq.radius == 500.0
 
-
 # ---------------------------------------------------------------------------
 # create_spatial_index helper
 # ---------------------------------------------------------------------------
@@ -401,7 +389,6 @@ class TestCreateSpatialIndex:
         result = create_spatial_index(["item1", "item2"])
         assert len(result.query_by_bounds((0, 0, 1, 1))) == 2
 
-
 # ---------------------------------------------------------------------------
 # query_geographic_area helper
 # ---------------------------------------------------------------------------
@@ -418,7 +405,6 @@ class TestQueryGeographicArea:
         """query_geographic_area accepts queries with bounds, center, or radius."""
         sq = SpatialQuery(bounds=(-74.3, 40.4, -73.7, 40.9), filter_type="within")
         assert query_geographic_area(sq) == []
-
 
 # ---------------------------------------------------------------------------
 # DuckDBSpatialConnection — error-handling tests with a failing manager
@@ -503,7 +489,6 @@ class TestDuckDBSpatialConnection:
         from socrata_toolkit.spatial.database import DuckDBManager, DuckDBSpatialConnection
         db = DuckDBSpatialConnection(":memory:")
         assert isinstance(db.manager, DuckDBManager)
-
 
 # ---------------------------------------------------------------------------
 # SpatialDataModel
@@ -601,7 +586,6 @@ class TestSpatialDataModel:
         )
         model.add_inspection(insp)
         assert model.inspections_count() == 1
-
 
 # ---------------------------------------------------------------------------
 # SpatialInspection validation

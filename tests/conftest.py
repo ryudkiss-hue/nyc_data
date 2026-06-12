@@ -24,7 +24,6 @@ try:
 except ImportError:
     HAS_FAKER = False
 
-
 # ============================================================================
 # Seeded Faker for reproducible synthetic data
 # ============================================================================
@@ -37,7 +36,6 @@ def faker_instance():
     fake = Faker()
     Faker.seed(42)
     return fake
-
 
 # ============================================================================
 # Common DataFrames
@@ -60,18 +58,15 @@ def sample_df():
     }
     return pd.DataFrame(data)
 
-
 @pytest.fixture
 def empty_dataframe():
     """Empty DataFrame for edge case testing."""
     return pd.DataFrame()
 
-
 @pytest.fixture
 def single_row_dataframe():
     """Single-row DataFrame for boundary tests."""
     return pd.DataFrame({"id": [1], "value": [10], "status": ["active"]})
-
 
 @pytest.fixture
 def sample_coordinates() -> list[tuple[float, float]]:
@@ -89,18 +84,15 @@ def sample_coordinates() -> list[tuple[float, float]]:
         (-74.028, 40.718),
     ]
 
-
 @pytest.fixture
 def sample_values() -> list[float]:
     """Condition scores (0-100) aligned with sample_coordinates."""
     return [80.0, 60.0, 45.0, 30.0, 75.0, 55.0, 40.0, 88.0, 20.0, 65.0]
 
-
 @pytest.fixture
 def sample_segment_ids() -> list[str]:
     """Segment IDs aligned with sample_coordinates."""
     return [f"seg_{i}" for i in range(10)]
-
 
 @pytest.fixture
 def borough_dataframe():
@@ -110,7 +102,6 @@ def borough_dataframe():
         "total_complaints": [500, 300, 400, 350, 200],
         "resolved_complaints": [450, 270, 360, 315, 180],
     })
-
 
 @pytest.fixture
 def inspection_dataframe():
@@ -122,7 +113,6 @@ def inspection_dataframe():
         "status": ["open", "closed", "open", "closed", "open", "closed", "open", "closed", "open", "closed"],
     })
 
-
 @pytest.fixture
 def quality_test_dataframe():
     """DataFrame for quality scoring tests."""
@@ -133,7 +123,6 @@ def quality_test_dataframe():
         "created_date": pd.date_range("2024-01-01", periods=100),
         "category": np.random.choice(["A", "B", "C"], 100),
     })
-
 
 # ============================================================================
 # Common Mocks
@@ -149,7 +138,6 @@ def mock_sklearn_vectorizer():
         mock_instance.fit_transform.return_value = mock_tfidf_matrix
         yield mock_instance
 
-
 @pytest.fixture
 def mock_socrata_client():
     """Mock SocrataClient for API tests."""
@@ -158,7 +146,6 @@ def mock_socrata_client():
         mock_class.return_value = mock_instance
         yield mock_instance
 
-
 @pytest.fixture
 def mock_streamlit():
     """Mock streamlit module for app tests."""
@@ -166,20 +153,17 @@ def mock_streamlit():
         mock_st.session_state = {}
         yield mock_st
 
-
 @pytest.fixture
 def mock_geopandas():
     """Mock geopandas for spatial tests without heavy geospatial deps."""
     with patch("geopandas") as mock_gpd:
         yield mock_gpd
 
-
 @pytest.fixture
 def mock_shapely():
     """Mock shapely for geometry tests."""
     with patch("shapely") as mock_shapely:
         yield mock_shapely
-
 
 # ============================================================================
 # Faker Factories (for volume/pipeline tests)
@@ -205,7 +189,6 @@ def fake_inspection_records(faker_instance):
         })
     return records
 
-
 @pytest.fixture
 def fake_violation_records(faker_instance):
     """Generate 500 realistic violation records using Faker."""
@@ -226,7 +209,6 @@ def fake_violation_records(faker_instance):
         })
     return records
 
-
 @pytest.fixture
 def fake_large_dataframe(faker_instance):
     """Generate a large (10K row) realistic DataFrame for performance tests."""
@@ -245,7 +227,6 @@ def fake_large_dataframe(faker_instance):
         })
     return pd.DataFrame(records)
 
-
 @pytest.fixture
 def fake_geospatial_dataframe(faker_instance):
     """Generate fake geospatial data with coordinates and properties."""
@@ -263,7 +244,6 @@ def fake_geospatial_dataframe(faker_instance):
         })
     return pd.DataFrame(records)
 
-
 # ============================================================================
 # Utility Fixtures
 # ============================================================================
@@ -275,14 +255,12 @@ def temp_data_dir(tmp_path):
     data_dir.mkdir()
     return data_dir
 
-
 @pytest.fixture
 def sample_csv_file(temp_data_dir, sample_df):
     """Create a temporary CSV file with sample data."""
     csv_path = temp_data_dir / "sample.csv"
     sample_df.to_csv(csv_path, index=False)
     return csv_path
-
 
 @pytest.fixture
 def sample_json_file(temp_data_dir, borough_dataframe):
@@ -291,7 +269,6 @@ def sample_json_file(temp_data_dir, borough_dataframe):
     borough_dataframe.to_json(json_path)
     return json_path
 
-
 @pytest.fixture
 def sample_parquet_file(temp_data_dir, inspection_dataframe):
     """Create a temporary Parquet file with sample data."""
@@ -299,13 +276,11 @@ def sample_parquet_file(temp_data_dir, inspection_dataframe):
     inspection_dataframe.to_parquet(parquet_path)
     return parquet_path
 
-
 @pytest.fixture
 def random_seed():
     """Set random seed for reproducibility."""
     np.random.seed(42)
     return 42
-
 
 # ============================================================================
 # Markers for test classification

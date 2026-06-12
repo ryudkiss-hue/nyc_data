@@ -34,7 +34,6 @@ __all__ = [
     "plot_cluster_profiles",
 ]
 
-
 def _get_plotly():
     """Lazy import plotly."""
     try:
@@ -43,7 +42,6 @@ def _get_plotly():
         return go
     except ImportError as exc:
         raise ImportError("Install plotly: pip install plotly") from exc
-
 
 def plot_elbow_curve(results: dict[str, Any]) -> Any:
     """Plot elbow curve with optimal k annotation.
@@ -116,7 +114,6 @@ def plot_elbow_curve(results: dict[str, Any]) -> Any:
     )
 
     return fig
-
 
 def plot_silhouette(results: dict[str, Any], k: int | None = None) -> Any:
     """Plot silhouette coefficients as horizontal bars.
@@ -191,7 +188,6 @@ def plot_silhouette(results: dict[str, Any], k: int | None = None) -> Any:
 
     return fig
 
-
 def plot_quality_metrics_heatmap(results: dict[str, Any]) -> Any:
     """Plot quality metrics (Davies-Bouldin, Calinski-Harabasz) as heatmap.
 
@@ -259,7 +255,6 @@ def plot_quality_metrics_heatmap(results: dict[str, Any]) -> Any:
     )
 
     return fig
-
 
 def plot_cluster_profiles(results: dict[str, Any]) -> Any:
     """Create table of cluster mean feature values.

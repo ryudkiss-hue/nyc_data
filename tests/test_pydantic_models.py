@@ -3,7 +3,6 @@ import pytest
 from app.analytics import ColumnProfile, DatasetProfile
 from app.services.roi_service import ProductivityROI, ROIAggregator
 
-
 def test_column_profile_quality_score():
     """Verify quality score calculation for columns."""
     # Healthy column

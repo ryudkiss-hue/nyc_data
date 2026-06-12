@@ -7,7 +7,7 @@ import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import requests
 import yaml
@@ -17,7 +17,6 @@ _REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_REPO_ROOT / "src"))
 
 from socrata_toolkit.core.client import SocrataClient, SocrataConfig
-
 
 def fetch_full_metadata(domain: str, fourfour: str) -> dict[str, Any]:
     """Queries Socrata for full view metadata including column descriptions and types."""

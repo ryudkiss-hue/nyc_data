@@ -13,11 +13,9 @@ from click.testing import CliRunner
 
 from socrata_toolkit.core.cli import main
 
-
 @pytest.fixture
 def runner():
     return CliRunner()
-
 
 @pytest.fixture
 def populated_dag():
@@ -46,14 +44,12 @@ def populated_dag():
     dag.add_edge("mid", "sink")
     return dag
 
-
 @pytest.fixture
 def patch_dag(populated_dag):
     from unittest.mock import patch
 
     with patch("socrata_toolkit.lineage.core.DAG", return_value=populated_dag):
         yield populated_dag
-
 
 class TestLineagePopulated:
     def test_nodes_lists_all(self, runner, patch_dag):

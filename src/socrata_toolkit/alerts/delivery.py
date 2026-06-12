@@ -30,7 +30,6 @@ from .rules import RuleAlert
 
 log = logging.getLogger(__name__)
 
-
 def deliver_alerts(
     alerts: list[RuleAlert],
     channels: list[str] | None = None,
@@ -74,7 +73,6 @@ def deliver_alerts(
 
     return results
 
-
 def _detect_channels() -> list[str]:
     """Auto-detect available delivery channels from environment."""
     channels = ["log"]  # always available
@@ -85,7 +83,6 @@ def _detect_channels() -> list[str]:
     if os.getenv("SMTP_HOST") and os.getenv("ALERT_RECIPIENTS"):
         channels.append("email")
     return channels
-
 
 def _send_teams(alert: RuleAlert) -> None:
     """Send alert to Microsoft Teams via incoming webhook."""
@@ -109,7 +106,6 @@ def _send_teams(alert: RuleAlert) -> None:
     }
     _requests.post(url, json=payload, timeout=10)
 
-
 def _send_slack(alert: RuleAlert) -> None:
     """Send alert to Slack via incoming webhook."""
     url = os.environ["SLACK_WEBHOOK_URL"]
@@ -118,7 +114,6 @@ def _send_slack(alert: RuleAlert) -> None:
         "text": f"{emoji} *[{alert.severity.upper()}] {alert.rule_name}*\n{alert.message}\n`{alert.field}: {alert.actual_value} (threshold: {alert.threshold})`",
     }
     _requests.post(url, json=payload, timeout=10)
-
 
 def _send_email(alert: RuleAlert) -> None:
     """Send alert via SMTP."""
@@ -152,7 +147,6 @@ def _send_email(alert: RuleAlert) -> None:
         server.login(user, password)
     server.send_message(msg)
     server.quit()
-
 
 def _send_log(alert: RuleAlert) -> None:
     """Log alert (always available, no config needed)."""

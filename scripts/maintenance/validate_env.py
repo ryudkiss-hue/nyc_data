@@ -1,7 +1,6 @@
 import sys
 from pathlib import Path
 
-
 def validate_env():
     """Validates that all variables defined in .env.example are present in .env"""
     project_root = Path(__file__).parent.parent
@@ -38,7 +37,6 @@ def validate_env():
         for key in sorted(missing_keys):
             print(f"  - {key}")
         sys.exit(1)
-
 
 if __name__ == "__main__":
     validate_env()

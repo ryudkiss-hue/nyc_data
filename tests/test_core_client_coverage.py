@@ -12,14 +12,12 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-
 def _mock_response(json_value):
     """Build a mock requests.Response whose .json() returns json_value."""
     resp = MagicMock()
     resp.json.return_value = json_value
     resp.status_code = 200
     return resp
-
 
 def _paged_get(pages):
     """Return a side_effect callable yielding successive pages then []."""
@@ -30,7 +28,6 @@ def _paged_get(pages):
         return next(it)
 
     return _call
-
 
 class TestSocrataConfig:
     """Test SocrataConfig configuration dataclass."""
@@ -71,7 +68,6 @@ class TestSocrataConfig:
         config = SocrataConfig(page_size=500)
         assert config.page_size == 500
 
-
 class TestSocrataClientInit:
     """Test SocrataClient initialization."""
 
@@ -109,7 +105,6 @@ class TestSocrataClientInit:
         client = SocrataClient(SocrataConfig(app_token=None))
         headers = client._headers()
         assert "X-App-Token" not in headers
-
 
 class TestBuildSoql:
     """Test the _build_soql query builder."""
@@ -156,7 +151,6 @@ class TestBuildSoql:
         assert "ORDER BY a" in soql
         assert "LIMIT 50" in soql
         assert "OFFSET 100" in soql
-
 
 class TestFetchDataframe:
     """Test fetch_dataframe via SODA2/SODA3 paths."""
@@ -232,7 +226,6 @@ class TestFetchDataframe:
         posted_query = call_kwargs.kwargs["json"]["query"]
         assert "WHERE borough='MANHATTAN'" in posted_query
 
-
 class TestSearch:
     """Test dataset search."""
 
@@ -282,7 +275,6 @@ class TestSearch:
             assert params["domains"] == "data.example.com"
             assert params["categories"] == "Transportation"
 
-
 class TestGetMetadata:
     """Test get_metadata."""
 
@@ -318,7 +310,6 @@ class TestGetMetadata:
             meta = client.get_metadata("data.cityofnewyork.us", "abc1-2345")
 
         assert meta.license == "CC0"
-
 
 class TestFetchGeojson:
     """Test fetch_geojson SODA3 (token) and SODA2 (no token) paths."""
@@ -376,7 +367,6 @@ class TestFetchGeojson:
 
         assert len(fc["features"]) == 1
 
-
 class TestFetchSince:
     """Test fetch_since delta fetch."""
 
@@ -418,7 +408,6 @@ class TestFetchSince:
         assert "borough='MN'" in posted_query
         assert "updated_at > '2024-01-01'" in posted_query
 
-
 class TestSyntheticDataProcessing:
     """Validate downstream processing of synthetic Faker data."""
 
@@ -441,7 +430,6 @@ class TestSyntheticDataProcessing:
         grouped = fake_large_dataframe.groupby("borough").size()
         assert grouped.sum() == 10000
 
-
 class TestErrorHandling:
     """Test error propagation."""
 
@@ -455,7 +443,6 @@ class TestErrorHandling:
             mock_requests.post.side_effect = RuntimeError("API Error")
             with pytest.raises(SocrataToolkitError):
                 client.fetch_dataframe("data.cityofnewyork.us", "invalid")
-
 
 class TestClientParamBranches:
     """Cover search filter params and SODA2 pagination param branches."""

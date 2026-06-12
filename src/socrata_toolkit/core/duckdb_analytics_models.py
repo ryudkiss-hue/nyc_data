@@ -43,10 +43,8 @@ _VIOLATION_METRIC = "violation_count"
 
 _STAGING_INSPECTIONS = "staging.inspections"
 
-
 def _get_conn():
     return dp.get_duckdb_connection(dp._connection_path or dp.DEFAULT_DB_PATH)
-
 
 def _drop_target(conn, table: str) -> None:
     conn.execute("CREATE SCHEMA IF NOT EXISTS analytics")
@@ -62,17 +60,14 @@ def _drop_target(conn, table: str) -> None:
         kind = "VIEW" if row[0] == "VIEW" else "TABLE"
         conn.execute(f"DROP {kind} IF EXISTS {table}")
 
-
 def _materialize(conn, table: str, select_sql: str) -> int:
     _drop_target(conn, table)
     conn.execute(f"CREATE TABLE {table} AS {select_sql}")
     return conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
 
-
 def _create_empty(conn, table: str, columns_sql: str) -> None:
     _drop_target(conn, table)
     conn.execute(f"CREATE TABLE {table} ({columns_sql})")
-
 
 def _staging_error(table: str) -> dict:
     return {
@@ -81,17 +76,14 @@ def _staging_error(table: str) -> dict:
         "table": table,
     }
 
-
 def _result(table: str, row_count: int, notes: list[str]) -> dict:
     result = {"status": "success", "table": table, "row_count": row_count}
     if notes:
         result["note"] = "; ".join(notes)
     return result
 
-
 def _month_expr(date_col: str) -> str:
     return f"DATE_TRUNC('month', TRY_CAST(\"{date_col}\" AS TIMESTAMP))"
-
 
 def create_borough_summary() -> dict:
     """Borough-level counts and violation aggregates from staging.inspections."""
@@ -136,7 +128,6 @@ def create_borough_summary() -> dict:
     except Exception as e:
         logger.error(f"Failed to create {table}: {e}")
         return {"status": "error", "error": str(e), "table": table}
-
 
 def create_time_series_snapshots() -> dict:
     """Monthly snapshots (month x borough) from staging.inspections."""
@@ -183,7 +174,6 @@ def create_time_series_snapshots() -> dict:
         logger.error(f"Failed to create {table}: {e}")
         return {"status": "error", "error": str(e), "table": table}
 
-
 def create_material_analysis_mart() -> dict:
     """Per-material aggregates; empty table with note if no material column."""
     table = "analytics.material_analysis_mart"
@@ -227,7 +217,6 @@ def create_material_analysis_mart() -> dict:
     except Exception as e:
         logger.error(f"Failed to create {table}: {e}")
         return {"status": "error", "error": str(e), "table": table}
-
 
 def create_clustering_features() -> dict:
     """Per-record numeric feature matrix for unsupervised clustering."""
@@ -277,7 +266,6 @@ def create_clustering_features() -> dict:
     except Exception as e:
         logger.error(f"Failed to create {table}: {e}")
         return {"status": "error", "error": str(e), "table": table}
-
 
 def create_geo_animation_mart() -> dict:
     """Month x borough x avg lat/lon aggregates for animated maps."""
@@ -341,7 +329,6 @@ def create_geo_animation_mart() -> dict:
     except Exception as e:
         logger.error(f"Failed to create {table}: {e}")
         return {"status": "error", "error": str(e), "table": table}
-
 
 def refresh_all_analytics_views(conn=None) -> dict:
     """Refresh all analytics marts.

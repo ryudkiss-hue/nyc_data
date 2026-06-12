@@ -10,11 +10,9 @@ from click.testing import CliRunner
 
 from socrata_toolkit.core.cli import main
 
-
 @pytest.fixture
 def runner():
     return CliRunner()
-
 
 class TestDoctorCheckDb:
     def test_postgres_ok(self, runner, monkeypatch):
@@ -44,7 +42,6 @@ class TestDoctorCheckDb:
         monkeypatch.delenv("PG_DSN", raising=False)
         res = runner.invoke(main, ["doctor", "--check-db"])
         assert res.exit_code == 0
-
 
 class TestAlertsPostGIS:
     def test_alerts_postgis_with_conflicts(self, runner):

@@ -1,6 +1,5 @@
 """Builder registry for plugin-style builder discovery."""
 
-
 class BuilderRegistry:
     """Registry for discovering builders by type name.
 

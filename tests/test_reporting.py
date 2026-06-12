@@ -12,7 +12,6 @@ from socrata_toolkit.analysis import (
     generate_program_report,
 )
 
-
 def _sample_contracts():
     return pd.DataFrame(
         {
@@ -27,7 +26,6 @@ def _sample_contracts():
         }
     )
 
-
 def test_report_to_markdown():
     report = Report(title="Test", generated_at="2025-01-01")
     report.add_section("Section 1", "Content here", {"key": "value"})
@@ -36,7 +34,6 @@ def test_report_to_markdown():
     assert "Section 1" in md
     assert "**key**" in md
 
-
 def test_report_to_json():
     report = Report(title="Test", generated_at="2025-01-01")
     report.add_section("S1", "C1")
@@ -44,14 +41,12 @@ def test_report_to_json():
     assert data["title"] == "Test"
     assert len(data["sections"]) == 1
 
-
 def test_report_to_html():
     report = Report(title="Test", generated_at="2025-01-01")
     report.add_section("S1", "C1", {"k": "v"})
     html = report.to_html()
     assert "<h1>Test</h1>" in html
     assert "<h2>S1</h2>" in html
-
 
 def test_report_save_markdown(tmp_path):
     report = Report(title="Test", generated_at="2025-01-01")
@@ -61,14 +56,12 @@ def test_report_save_markdown(tmp_path):
     content = open(path).read()
     assert "# Test" in content
 
-
 def test_report_save_json(tmp_path):
     report = Report(title="Test", generated_at="2025-01-01")
     path = str(tmp_path / "report.json")
     report.save(path)
     data = json.loads(open(path).read())
     assert data["title"] == "Test"
-
 
 def test_generate_contract_report():
     df = _sample_contracts()
@@ -78,7 +71,6 @@ def test_generate_contract_report():
     md = report.to_markdown()
     assert "Portfolio Summary" in md
     assert "Borough Breakdown" in md
-
 
 def test_generate_program_report():
     from socrata_toolkit.analysis import MetricsTracker
@@ -96,19 +88,16 @@ def test_generate_program_report():
     md = report.to_markdown()
     assert "Program Health" in md
 
-
 def test_generate_inquiry_response_contract():
     df = _sample_contracts()
     report = generate_inquiry_response("contract_status", df, contract_id="C1")
     assert len(report.sections) >= 1
     assert "C1" in report.to_markdown()
 
-
 def test_generate_inquiry_response_location():
     df = _sample_contracts()
     report = generate_inquiry_response("location_status", df, location="Main")
     assert len(report.sections) >= 1
-
 
 def test_generate_inquiry_response_borough():
     df = _sample_contracts()
@@ -116,11 +105,9 @@ def test_generate_inquiry_response_borough():
     md = report.to_markdown()
     assert "MANHATTAN" in md
 
-
 # ---------------------------------------------------------------------------
 # Unit-13 additions: Excel, HTML table, PDF, (optional WeasyPrint)
 # ---------------------------------------------------------------------------
-
 
 def _small_df() -> pd.DataFrame:
     return pd.DataFrame(
@@ -131,7 +118,6 @@ def _small_df() -> pd.DataFrame:
             "address": ["1 Broadway", "500 Grand Concourse", "90-01 Queens Blvd"],
         }
     )
-
 
 def test_generate_excel_report_smoke(tmp_path):
     """generate_excel_report should return bytes; save to tmp_path and verify size > 0."""
@@ -149,7 +135,6 @@ def test_generate_excel_report_smoke(tmp_path):
     out_path.write_bytes(excel_bytes)
     assert out_path.exists()
     assert out_path.stat().st_size > 0
-
 
 def test_generate_excel_report_multiple_sheets(tmp_path):
     """Multiple sheets should all appear in the workbook."""
@@ -172,7 +157,6 @@ def test_generate_excel_report_multiple_sheets(tmp_path):
     assert "Sheet1" in sheet_names
     assert "Sheet2" in sheet_names
 
-
 def test_dataframe_to_html_table_basic():
     """dataframe_to_html_table should return a string containing <table and column names."""
     from app.utils.reporting import dataframe_to_html_table
@@ -184,7 +168,6 @@ def test_dataframe_to_html_table_basic():
     for col in df.columns:
         assert col in html
 
-
 def test_dataframe_to_html_table_max_rows():
     """max_rows parameter should truncate the output."""
     from app.utils.reporting import dataframe_to_html_table
@@ -194,7 +177,6 @@ def test_dataframe_to_html_table_max_rows():
     html_50 = dataframe_to_html_table(df, max_rows=50)
     # The 5-row version should be shorter
     assert len(html_5) < len(html_50)
-
 
 def test_generate_pdf_report_smoke():
     """generate_pdf_report should raise ImportError when WeasyPrint is absent,
