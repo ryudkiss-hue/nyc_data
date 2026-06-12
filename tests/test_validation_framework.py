@@ -22,15 +22,18 @@ from socrata_toolkit.quality.duckdb_validation import (
     validate_uniqueness,
 )
 
+
 @pytest.fixture
 def audit_logger():
     """Create a fresh audit logger instance."""
     return AuditLogger()
 
+
 @pytest.fixture
 def duckdb_conn():
     """Create an in-memory DuckDB connection for testing."""
     return duckdb.connect(":memory:")
+
 
 @pytest.fixture
 def sample_inspection_table(duckdb_conn):
@@ -55,6 +58,7 @@ def sample_inspection_table(duckdb_conn):
 
     return duckdb_conn
 
+
 @pytest.fixture
 def sample_raw_table(duckdb_conn):
     """Create sample raw and staging tables for count validation."""
@@ -76,19 +80,14 @@ def sample_raw_table(duckdb_conn):
 
     # Insert 100 rows in raw table
     for i in range(100):
-        duckdb_conn.execute(
-            "INSERT INTO raw.inspection VALUES (?, ?)",
-            [i, f"data_{i}"]
-        )
+        duckdb_conn.execute("INSERT INTO raw.inspection VALUES (?, ?)", [i, f"data_{i}"])
 
     # Insert 97 rows in staging (simulating 3% loss)
     for i in range(97):
-        duckdb_conn.execute(
-            "INSERT INTO staging.inspections_clean VALUES (?, ?)",
-            [i, f"data_{i}"]
-        )
+        duckdb_conn.execute("INSERT INTO staging.inspections_clean VALUES (?, ?)", [i, f"data_{i}"])
 
     return duckdb_conn
+
 
 class TestAuditLoggerBasics:
     """Test basic AuditLogger functionality."""
@@ -114,7 +113,7 @@ class TestAuditLoggerBasics:
             table_name="test_table",
             status="success",
             rows_affected=5,
-            details={"duplicate_rows": 0}
+            details={"duplicate_rows": 0},
         )
 
         assert isinstance(entry, AuditEntry)
@@ -128,9 +127,7 @@ class TestAuditLoggerBasics:
     def test_log_check_with_no_details(self, audit_logger):
         """Test log_check with None details."""
         entry = audit_logger.log_check(
-            check_type="validate_freshness",
-            table_name="permits",
-            status="warning"
+            check_type="validate_freshness", table_name="permits", status="warning"
         )
 
         assert entry.details == {}
@@ -143,11 +140,12 @@ class TestAuditLoggerBasics:
                 check_type="validate_counts",
                 table_name=f"table_{i}",
                 status="success",
-                rows_affected=100 + i
+                rows_affected=100 + i,
             )
 
         assert len(audit_logger.entries) == 5
         assert all(entry.check_type == "validate_counts" for entry in audit_logger.entries)
+
 
 class TestAuditLoggerJsonExport:
     """Test JSON export functionality."""
@@ -166,7 +164,7 @@ class TestAuditLoggerJsonExport:
             table_name="test_table",
             status="success",
             rows_affected=5,
-            details={"duplicate_rows": 0}
+            details={"duplicate_rows": 0},
         )
 
         audit_logger.log_check(
@@ -174,7 +172,7 @@ class TestAuditLoggerJsonExport:
             table_name="test_table",
             status="warning",
             rows_affected=0,
-            details={"age_hours": 48}
+            details={"age_hours": 48},
         )
 
         json_str = audit_logger.to_json()
@@ -192,7 +190,7 @@ class TestAuditLoggerJsonExport:
             check_type="validate_counts",
             table_name="test_table",
             status="success",
-            rows_affected=100
+            rows_affected=100,
         )
 
         dict_list = audit_logger.to_dict_list()
@@ -201,6 +199,7 @@ class TestAuditLoggerJsonExport:
         assert len(dict_list) == 1
         assert isinstance(dict_list[0], dict)
         assert dict_list[0]["check_type"] == "validate_counts"
+
 
 class TestAuditLoggerDuckDBPersistence:
     """Test DuckDB persistence functionality."""
@@ -212,7 +211,7 @@ class TestAuditLoggerDuckDBPersistence:
             table_name="test_table",
             status="success",
             rows_affected=5,
-            details={"duplicate_rows": 0}
+            details={"duplicate_rows": 0},
         )
 
         result = audit_logger.save_to_duckdb(duckdb_conn)
@@ -232,7 +231,7 @@ class TestAuditLoggerDuckDBPersistence:
             table_name="test_table",
             status="success",
             rows_affected=5,
-            details={"duplicate_rows": 0}
+            details={"duplicate_rows": 0},
         )
 
         audit_logger.save_to_duckdb(duckdb_conn)
@@ -256,7 +255,7 @@ class TestAuditLoggerDuckDBPersistence:
                 check_type="validate_counts",
                 table_name=f"table_{i}",
                 status="success" if i < 2 else "failure",
-                rows_affected=100 + i
+                rows_affected=100 + i,
             )
 
         audit_logger.save_to_duckdb(duckdb_conn)
@@ -278,7 +277,7 @@ class TestAuditLoggerDuckDBPersistence:
             check_type="validate_uniqueness",
             table_name="test_table",
             status="success",
-            rows_affected=5
+            rows_affected=5,
         )
 
         result = audit_logger.save_to_duckdb(duckdb_conn, audit_table="custom_audit")
@@ -291,6 +290,7 @@ class TestAuditLoggerDuckDBPersistence:
         """).fetchall()
         assert len(tables) == 1
 
+
 class TestValidationWithAuditLogging:
     """Test validation functions with audit logging integration."""
 
@@ -300,7 +300,7 @@ class TestValidationWithAuditLogging:
             sample_raw_table,
             "raw.inspection",
             "staging.inspections_clean",
-            audit_logger=audit_logger
+            audit_logger=audit_logger,
         )
 
         assert result["status"] == "success"
@@ -327,12 +327,7 @@ class TestValidationWithAuditLogging:
         for i in range(90):
             duckdb_conn.execute("INSERT INTO staging.test VALUES (?)", [i])
 
-        result = validate_counts(
-            duckdb_conn,
-            "raw.test",
-            "staging.test",
-            audit_logger=audit_logger
-        )
+        result = validate_counts(duckdb_conn, "raw.test", "staging.test", audit_logger=audit_logger)
 
         assert result["valid"] is False
         assert len(audit_logger.entries) == 1
@@ -342,10 +337,7 @@ class TestValidationWithAuditLogging:
     def test_validate_counts_logs_error(self, audit_logger, duckdb_conn):
         """Test that validate_counts logs an error when table doesn't exist."""
         result = validate_counts(
-            duckdb_conn,
-            "nonexistent_raw",
-            "nonexistent_staging",
-            audit_logger=audit_logger
+            duckdb_conn, "nonexistent_raw", "nonexistent_staging", audit_logger=audit_logger
         )
 
         assert result["status"] == "error"
@@ -356,10 +348,7 @@ class TestValidationWithAuditLogging:
     def test_validate_freshness_logs_check(self, audit_logger, sample_inspection_table):
         """Test that validate_freshness logs a check."""
         result = validate_freshness(
-            sample_inspection_table,
-            "staging.inspections",
-            sla_hours=24,
-            audit_logger=audit_logger
+            sample_inspection_table, "staging.inspections", sla_hours=24, audit_logger=audit_logger
         )
 
         assert len(audit_logger.entries) == 1
@@ -374,7 +363,7 @@ class TestValidationWithAuditLogging:
             sample_inspection_table,
             "staging.inspections",
             key_columns=["objectid"],
-            audit_logger=audit_logger
+            audit_logger=audit_logger,
         )
 
         assert result["valid"] is True
@@ -401,10 +390,7 @@ class TestValidationWithAuditLogging:
         """)
 
         result = validate_uniqueness(
-            duckdb_conn,
-            "test.dups",
-            key_columns=["id"],
-            audit_logger=audit_logger
+            duckdb_conn, "test.dups", key_columns=["id"], audit_logger=audit_logger
         )
 
         assert result["valid"] is False
@@ -417,9 +403,7 @@ class TestValidationWithAuditLogging:
     def test_validate_business_rules_logs_success(self, audit_logger, sample_inspection_table):
         """Test that validate_business_rules logs a success check."""
         result = validate_business_rules(
-            sample_inspection_table,
-            "staging.inspections",
-            audit_logger=audit_logger
+            sample_inspection_table, "staging.inspections", audit_logger=audit_logger
         )
 
         assert result["status"] == "success"
@@ -447,16 +431,13 @@ class TestValidationWithAuditLogging:
             (2, 85, -5, '2026-06-15')
         """)
 
-        result = validate_business_rules(
-            duckdb_conn,
-            "test.bad_data",
-            audit_logger=audit_logger
-        )
+        result = validate_business_rules(duckdb_conn, "test.bad_data", audit_logger=audit_logger)
 
         assert result["valid"] is False
         assert len(audit_logger.entries) == 1
         entry = audit_logger.entries[0]
         assert entry.status == "failure"
+
 
 class TestAuditLoggerSummary:
     """Test audit logger summary and filtering methods."""
@@ -519,6 +500,7 @@ class TestAuditLoggerSummary:
         assert len(inspection_entries) == 2
         assert all(e.table_name == "inspections" for e in inspection_entries)
 
+
 class TestAuditLoggerEdgeCases:
     """Test edge cases and error handling."""
 
@@ -533,9 +515,7 @@ class TestAuditLoggerEdgeCases:
     def test_validation_without_audit_logger(self, sample_inspection_table):
         """Test that validation functions work without audit logger."""
         result = validate_uniqueness(
-            sample_inspection_table,
-            "staging.inspections",
-            key_columns=["objectid"]
+            sample_inspection_table, "staging.inspections", key_columns=["objectid"]
         )
 
         assert result["status"] == "success"
@@ -548,11 +528,7 @@ class TestAuditLoggerEdgeCases:
             table_name="test",
             status="success",
             rows_affected=10,
-            details={
-                "nested": {"key": "value"},
-                "list": [1, 2, 3],
-                "string": "test"
-            }
+            details={"nested": {"key": "value"}, "list": [1, 2, 3], "string": "test"},
         )
 
         audit_logger.save_to_duckdb(duckdb_conn)

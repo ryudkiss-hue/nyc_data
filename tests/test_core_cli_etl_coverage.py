@@ -15,21 +15,26 @@ from click.testing import CliRunner
 
 from socrata_toolkit.core.cli import main
 
+
 @pytest.fixture
 def runner():
     return CliRunner()
+
 
 def _fake_client(batches=None, geojson=None, metadata=None):
     """Build a fake SocrataClient."""
     client = MagicMock()
     client.fetch_json.return_value = iter(batches if batches is not None else [[{"id": 1}]])
-    client.fetch_dataframe.return_value = pd.DataFrame(batches[0]) if batches else pd.DataFrame([{"id": 1}])
+    client.fetch_dataframe.return_value = (
+        pd.DataFrame(batches[0]) if batches else pd.DataFrame([{"id": 1}])
+    )
     client.fetch_geojson.return_value = geojson or {"type": "FeatureCollection", "features": []}
     meta = MagicMock()
     meta.columns = metadata or [{"name": "id"}]
     meta.summary.return_value = {"name": "X"}
     client.get_metadata.return_value = meta
     return client
+
 
 class TestFetchCommand:
     def test_fetch_json(self, runner, tmp_path):
@@ -58,8 +63,10 @@ class TestFetchCommand:
     def test_fetch_xlsx(self, runner, tmp_path):
         out = tmp_path / "out.xlsx"
         client = _fake_client(batches=[[{"id": 1}]])
-        with patch("socrata_toolkit.core.cli._client", return_value=client), \
-             patch("socrata_toolkit.core.cli.XLSXExporter") as mock_xlsx:
+        with (
+            patch("socrata_toolkit.core.cli._client", return_value=client),
+            patch("socrata_toolkit.core.cli.XLSXExporter") as mock_xlsx,
+        ):
             result = runner.invoke(
                 main,
                 ["fetch", "d", "abc1-2345", "--format", "xlsx", "--out", str(out)],
@@ -70,11 +77,22 @@ class TestFetchCommand:
     def test_fetch_xlsx_with_meta(self, runner, tmp_path):
         out = tmp_path / "out.xlsx"
         client = _fake_client(batches=[[{"id": 1}]])
-        with patch("socrata_toolkit.core.cli._client", return_value=client), \
-             patch("socrata_toolkit.core.cli.XLSXExporter") as mock_xlsx:
+        with (
+            patch("socrata_toolkit.core.cli._client", return_value=client),
+            patch("socrata_toolkit.core.cli.XLSXExporter") as mock_xlsx,
+        ):
             result = runner.invoke(
                 main,
-                ["fetch", "d", "abc1-2345", "--format", "xlsx", "--out", str(out), "--include-meta"],
+                [
+                    "fetch",
+                    "d",
+                    "abc1-2345",
+                    "--format",
+                    "xlsx",
+                    "--out",
+                    str(out),
+                    "--include-meta",
+                ],
             )
         assert result.exit_code == 0
         client.get_metadata.assert_called_once()
@@ -84,18 +102,30 @@ class TestFetchCommand:
         result = runner.invoke(main, ["fetch", "d", "abc1-2345"])
         assert result.exit_code == 2
 
+
 class TestUpsertPgCommand:
     def test_upsert_pg(self, runner):
         client = _fake_client(batches=[[{"id": 1}]])
         mock_pg = MagicMock()
         mock_pg.__enter__.return_value = mock_pg
         mock_pg.upsert_batches.return_value = 5
-        with patch("socrata_toolkit.core.cli._client", return_value=client), \
-             patch("socrata_toolkit.core.cli.PostgresExporter", return_value=mock_pg):
+        with (
+            patch("socrata_toolkit.core.cli._client", return_value=client),
+            patch("socrata_toolkit.core.cli.PostgresExporter", return_value=mock_pg),
+        ):
             result = runner.invoke(
                 main,
-                ["upsert-pg", "d", "abc1-2345", "--dsn", "postgresql://x",
-                 "--table", "t", "--conflict-col", "id"],
+                [
+                    "upsert-pg",
+                    "d",
+                    "abc1-2345",
+                    "--dsn",
+                    "postgresql://x",
+                    "--table",
+                    "t",
+                    "--conflict-col",
+                    "id",
+                ],
             )
         assert result.exit_code == 0
         assert "Upserted 5 rows" in result.output
@@ -105,12 +135,24 @@ class TestUpsertPgCommand:
         mock_pg = MagicMock()
         mock_pg.__enter__.return_value = mock_pg
         mock_pg.upsert_batches.return_value = 3
-        with patch("socrata_toolkit.core.cli._client", return_value=client), \
-             patch("socrata_toolkit.core.cli.PostgresExporter", return_value=mock_pg):
+        with (
+            patch("socrata_toolkit.core.cli._client", return_value=client),
+            patch("socrata_toolkit.core.cli.PostgresExporter", return_value=mock_pg),
+        ):
             result = runner.invoke(
                 main,
-                ["upsert-pg", "d", "abc1-2345", "--dsn", "postgresql://x",
-                 "--table", "t", "--conflict-col", "id", "--save-meta"],
+                [
+                    "upsert-pg",
+                    "d",
+                    "abc1-2345",
+                    "--dsn",
+                    "postgresql://x",
+                    "--table",
+                    "t",
+                    "--conflict-col",
+                    "id",
+                    "--save-meta",
+                ],
             )
         assert result.exit_code == 0
         mock_pg.upsert_metadata.assert_called_once()
@@ -122,18 +164,32 @@ class TestUpsertPgCommand:
         )
         assert result.exit_code == 2
 
+
 class TestUpsertMongoCommand:
     def test_upsert_mongo_batches(self, runner):
         client = _fake_client(batches=[[{"id": 1}]])
         mock_mongo = MagicMock()
         mock_mongo.__enter__.return_value = mock_mongo
         mock_mongo.upsert_batches.return_value = 7
-        with patch("socrata_toolkit.core.cli._client", return_value=client), \
-             patch("socrata_toolkit.core.cli.MongoExporter", return_value=mock_mongo):
+        with (
+            patch("socrata_toolkit.core.cli._client", return_value=client),
+            patch("socrata_toolkit.core.cli.MongoExporter", return_value=mock_mongo),
+        ):
             result = runner.invoke(
                 main,
-                ["upsert-mongo", "d", "abc1-2345", "--uri", "mongodb://x",
-                 "--db", "db", "--collection", "c", "--conflict-field", "id"],
+                [
+                    "upsert-mongo",
+                    "d",
+                    "abc1-2345",
+                    "--uri",
+                    "mongodb://x",
+                    "--db",
+                    "db",
+                    "--collection",
+                    "c",
+                    "--conflict-field",
+                    "id",
+                ],
             )
         assert result.exit_code == 0
         assert "Upserted 7 rows" in result.output
@@ -143,30 +199,55 @@ class TestUpsertMongoCommand:
         mock_mongo = MagicMock()
         mock_mongo.__enter__.return_value = mock_mongo
         mock_mongo.upsert_geojson.return_value = 2
-        with patch("socrata_toolkit.core.cli._client", return_value=client), \
-             patch("socrata_toolkit.core.cli.MongoExporter", return_value=mock_mongo):
+        with (
+            patch("socrata_toolkit.core.cli._client", return_value=client),
+            patch("socrata_toolkit.core.cli.MongoExporter", return_value=mock_mongo),
+        ):
             result = runner.invoke(
                 main,
-                ["upsert-mongo", "d", "abc1-2345", "--uri", "mongodb://x",
-                 "--db", "db", "--collection", "c", "--conflict-field", "id", "--geojson"],
+                [
+                    "upsert-mongo",
+                    "d",
+                    "abc1-2345",
+                    "--uri",
+                    "mongodb://x",
+                    "--db",
+                    "db",
+                    "--collection",
+                    "c",
+                    "--conflict-field",
+                    "id",
+                    "--geojson",
+                ],
             )
         assert result.exit_code == 0
         mock_mongo.upsert_geojson.assert_called_once()
+
 
 class TestPipelineCommand:
     def test_pipeline_streaming_dry_run(self, runner, tmp_path):
         client = _fake_client(batches=[[{"id": 1}]])
         report = {"rows": 10, "dry_run": True}
-        with patch("socrata_toolkit.core.cli._client", return_value=client), \
-             patch("socrata_toolkit.core.cli.stream_pipeline", return_value=report), \
-             patch("socrata_toolkit.core.cli.load_state", return_value={}), \
-             patch("socrata_toolkit.core.cli.save_state"), \
-             patch("socrata_toolkit.core.cli.write_run_report"):
+        with (
+            patch("socrata_toolkit.core.cli._client", return_value=client),
+            patch("socrata_toolkit.core.cli.stream_pipeline", return_value=report),
+            patch("socrata_toolkit.core.cli.load_state", return_value={}),
+            patch("socrata_toolkit.core.cli.save_state"),
+            patch("socrata_toolkit.core.cli.write_run_report"),
+        ):
             result = runner.invoke(
                 main,
-                ["pipeline", "d", "abc1-2345", "--stream", "--dry-run",
-                 "--report-path", str(tmp_path / "r.json"),
-                 "--state-path", str(tmp_path / "s.json")],
+                [
+                    "pipeline",
+                    "d",
+                    "abc1-2345",
+                    "--stream",
+                    "--dry-run",
+                    "--report-path",
+                    str(tmp_path / "r.json"),
+                    "--state-path",
+                    str(tmp_path / "s.json"),
+                ],
             )
         assert result.exit_code == 0
         assert '"rows": 10' in result.output
@@ -187,9 +268,17 @@ class TestPipelineCommand:
         with patch("socrata_toolkit.core.cli._client", return_value=client):
             result = runner.invoke(
                 main,
-                ["pipeline", "d", "abc1-2345", "--json-out", str(out),
-                 "--report-path", str(tmp_path / "r.json"),
-                 "--state-path", str(tmp_path / "s.json")],
+                [
+                    "pipeline",
+                    "d",
+                    "abc1-2345",
+                    "--json-out",
+                    str(out),
+                    "--report-path",
+                    str(tmp_path / "r.json"),
+                    "--state-path",
+                    str(tmp_path / "s.json"),
+                ],
             )
         # Non-streaming path runs profiling/writes; tolerate success or a
         # controlled ClickException, but it must not crash uncaught.

@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+
 class TestClusteringDomainValidation:
     """Validate clustering results against domain knowledge."""
 
@@ -25,21 +26,25 @@ class TestClusteringDomainValidation:
         n_segments = 300
 
         # 4 natural clusters with different violation patterns
-        violations = np.concatenate([
-            np.random.normal(2, 1, 75),      # Low-violation cluster
-            np.random.normal(8, 2, 75),      # Medium-violation cluster
-            np.random.normal(15, 3, 75),     # High-violation cluster
-            np.random.normal(25, 4, 75),     # Critical cluster
-        ])
+        violations = np.concatenate(
+            [
+                np.random.normal(2, 1, 75),  # Low-violation cluster
+                np.random.normal(8, 2, 75),  # Medium-violation cluster
+                np.random.normal(15, 3, 75),  # High-violation cluster
+                np.random.normal(25, 4, 75),  # Critical cluster
+            ]
+        )
 
         costs = violations * 200 + np.random.normal(0, 500, n_segments)
         density = violations * 10 + np.random.normal(0, 20, n_segments)
 
-        df = pd.DataFrame({
-            "violation_count": np.maximum(violations, 0),
-            "repair_cost": np.maximum(costs, 0),
-            "population_density": np.maximum(density, 0),
-        })
+        df = pd.DataFrame(
+            {
+                "violation_count": np.maximum(violations, 0),
+                "repair_cost": np.maximum(costs, 0),
+                "population_density": np.maximum(density, 0),
+            }
+        )
 
         # Run clustering
         diag = ClusteringDiagnostics(df)
@@ -75,12 +80,13 @@ class TestClusteringDomainValidation:
         cost_means = profiles.loc["repair_cost"].values
 
         # Violation means should be in increasing order (roughly)
-        assert violation_means.min() < violation_means.max() * 0.5, \
+        assert violation_means.min() < violation_means.max() * 0.5, (
             "Clusters not separated enough on violations"
+        )
 
         # Cost means should be in increasing order (roughly)
-        assert cost_means.min() < cost_means.max() * 0.3, \
-            "Clusters not separated enough on cost"
+        assert cost_means.min() < cost_means.max() * 0.3, "Clusters not separated enough on cost"
+
 
 class TestMaterialDegradationDomainValidation:
     """Validate material analysis results against domain knowledge."""
@@ -102,12 +108,14 @@ class TestMaterialDegradationDomainValidation:
         asphalt_time = np.random.gamma(shape=2, scale=35, size=200)  # mean ~70 months
         asphalt_event = np.random.binomial(1, 0.7, 200)
 
-        df_surv = pd.DataFrame({
-            "material_type": ["concrete"] * 200 + ["asphalt"] * 200,
-            "time_in_months": np.concatenate([concrete_time, asphalt_time]),
-            "event": np.concatenate([concrete_event, asphalt_event]),
-            "borough": "Manhattan",
-        })
+        df_surv = pd.DataFrame(
+            {
+                "material_type": ["concrete"] * 200 + ["asphalt"] * 200,
+                "time_in_months": np.concatenate([concrete_time, asphalt_time]),
+                "event": np.concatenate([concrete_event, asphalt_event]),
+                "borough": "Manhattan",
+            }
+        )
 
         # Run analysis
         analysis = MaterialDegradationAnalysis(df_surv)
@@ -118,8 +126,9 @@ class TestMaterialDegradationDomainValidation:
         asphalt_median = results["km_curves"]["asphalt"]["median_survival_months"]
 
         # Domain expectation: concrete >> asphalt lifespan
-        assert concrete_median > asphalt_median, \
+        assert concrete_median > asphalt_median, (
             f"Concrete median ({concrete_median:.0f}) should exceed asphalt ({asphalt_median:.0f})"
+        )
 
     def test_material_economics_show_cost_benefit(self):
         """Verify that material economics reveal cost-benefit tradeoffs."""
@@ -130,18 +139,24 @@ class TestMaterialDegradationDomainValidation:
         np.random.seed(42)
 
         # Create data where concrete costs more but lasts longer
-        df_surv = pd.DataFrame({
-            "material_type": np.repeat(["concrete", "asphalt"], 100),
-            "time_in_months": np.concatenate([
-                np.random.gamma(3, 50, 100),  # Concrete
-                np.random.gamma(2, 30, 100),  # Asphalt
-            ]),
-            "event": np.concatenate([
-                np.random.binomial(1, 0.5, 100),  # Concrete
-                np.random.binomial(1, 0.7, 100),  # Asphalt
-            ]),
-            "borough": "Manhattan",
-        })
+        df_surv = pd.DataFrame(
+            {
+                "material_type": np.repeat(["concrete", "asphalt"], 100),
+                "time_in_months": np.concatenate(
+                    [
+                        np.random.gamma(3, 50, 100),  # Concrete
+                        np.random.gamma(2, 30, 100),  # Asphalt
+                    ]
+                ),
+                "event": np.concatenate(
+                    [
+                        np.random.binomial(1, 0.5, 100),  # Concrete
+                        np.random.binomial(1, 0.7, 100),  # Asphalt
+                    ]
+                ),
+                "borough": "Manhattan",
+            }
+        )
 
         analysis = MaterialDegradationAnalysis(df_surv)
         results = analysis.fit()
@@ -149,9 +164,11 @@ class TestMaterialDegradationDomainValidation:
         econ = results["material_economics"]
 
         # Concrete should have longer lifespan
-        assert econ.loc["concrete", "median_lifespan_years"] > \
-               econ.loc["asphalt", "median_lifespan_years"], \
-            "Concrete should have longer median lifespan than asphalt"
+        assert (
+            econ.loc["concrete", "median_lifespan_years"]
+            > econ.loc["asphalt", "median_lifespan_years"]
+        ), "Concrete should have longer median lifespan than asphalt"
+
 
 class TestTemporalDomainValidation:
     """Validate temporal trends against domain knowledge."""
@@ -167,18 +184,18 @@ class TestTemporalDomainValidation:
             "date": np.repeat(dates, 100),
             "community_board": np.tile(np.arange(200, 300), 12),
             "borough": np.tile(
-                (["MANHATTAN"] * 25 + ["BROOKLYN"] * 25 +
-                 ["QUEENS"] * 25 + ["BRONX"] * 25),
-                12
+                (["MANHATTAN"] * 25 + ["BROOKLYN"] * 25 + ["QUEENS"] * 25 + ["BRONX"] * 25), 12
             ),
             "violation_count": np.tile(
-                np.concatenate([
-                    np.random.poisson(20, 25),  # Manhattan: higher
-                    np.random.poisson(10, 25),  # Brooklyn
-                    np.random.poisson(8, 25),   # Queens
-                    np.random.poisson(12, 25),  # Bronx
-                ]),
-                12
+                np.concatenate(
+                    [
+                        np.random.poisson(20, 25),  # Manhattan: higher
+                        np.random.poisson(10, 25),  # Brooklyn
+                        np.random.poisson(8, 25),  # Queens
+                        np.random.poisson(12, 25),  # Bronx
+                    ]
+                ),
+                12,
             ),
         }
 
@@ -189,8 +206,9 @@ class TestTemporalDomainValidation:
         borough_density = df_agg.groupby("borough")["violation_density"].mean()
 
         # Manhattan should have highest density
-        assert borough_density["MANHATTAN"] > borough_density["QUEENS"], \
+        assert borough_density["MANHATTAN"] > borough_density["QUEENS"], (
             "Manhattan should have higher violation density than Queens"
+        )
 
     def test_hot_blocks_are_identified_correctly(self):
         """Verify that hot block identification works."""
@@ -205,11 +223,13 @@ class TestTemporalDomainValidation:
             "community_board": np.tile(np.arange(201, 221), 6),
             "borough": "MANHATTAN",
             "violation_count": np.tile(
-                np.concatenate([
-                    np.ones(5) * 50,   # Top 5: high violations
-                    np.ones(15) * 10,  # Rest: low violations
-                ]),
-                6
+                np.concatenate(
+                    [
+                        np.ones(5) * 50,  # Top 5: high violations
+                        np.ones(15) * 10,  # Rest: low violations
+                    ]
+                ),
+                6,
             ),
         }
 
@@ -222,8 +242,9 @@ class TestTemporalDomainValidation:
             assert len(blocks) <= 5, f"More than 5 blocks returned for {month}"
             # Top blocks should have highest densities
             densities = [b["violation_density"] for b in blocks]
-            assert densities == sorted(densities, reverse=True), \
+            assert densities == sorted(densities, reverse=True), (
                 f"Hot blocks not sorted by density for {month}"
+            )
 
     def test_month_over_month_change_detection(self):
         """Verify that MoM changes are detected accurately."""
@@ -240,12 +261,14 @@ class TestTemporalDomainValidation:
             "date": np.repeat(dates, 10),
             "community_board": np.tile(np.arange(201, 211), 4),
             "borough": "MANHATTAN",
-            "violation_count": np.array([
-                [10] * 10,  # Jan: 10 violations per CB
-                [15] * 10,  # Feb: 15 (50% increase)
-                [12] * 10,  # Mar: 12 (20% decrease)
-                [18] * 10,  # Apr: 18 (50% increase)
-            ]).flatten(),
+            "violation_count": np.array(
+                [
+                    [10] * 10,  # Jan: 10 violations per CB
+                    [15] * 10,  # Feb: 15 (50% increase)
+                    [12] * 10,  # Mar: 12 (20% decrease)
+                    [18] * 10,  # Apr: 18 (50% increase)
+                ]
+            ).flatten(),
         }
 
         df = pd.DataFrame(data)
@@ -256,8 +279,10 @@ class TestTemporalDomainValidation:
         feb_changes = df_change[df_change["year_month"].astype(str).str.contains("2025-02")]
         if len(feb_changes) > 0:
             # Should be positive (growth)
-            assert feb_changes["density_pct_change"].notna().any(), \
+            assert feb_changes["density_pct_change"].notna().any(), (
                 "Feb MoM changes should not be NaN"
+            )
+
 
 class TestCrossMethodConsistency:
     """Verify that methods work together coherently."""
@@ -271,12 +296,14 @@ class TestCrossMethodConsistency:
         np.random.seed(42)
 
         # Create dataset that works for both methods
-        df = pd.DataFrame({
-            "violation_count": np.random.poisson(10, 200),
-            "repair_cost": np.random.gamma(shape=2, scale=2000, size=200),
-            "material_type": np.random.choice(["concrete", "asphalt"], 200),
-            "time_months": np.random.gamma(shape=2, scale=50, size=200),
-        })
+        df = pd.DataFrame(
+            {
+                "violation_count": np.random.poisson(10, 200),
+                "repair_cost": np.random.gamma(shape=2, scale=2000, size=200),
+                "material_type": np.random.choice(["concrete", "asphalt"], 200),
+                "time_months": np.random.gamma(shape=2, scale=50, size=200),
+            }
+        )
 
         # Clustering should work on violation + cost
         cluster_cols = ["violation_count", "repair_cost"]
@@ -298,10 +325,12 @@ class TestCrossMethodConsistency:
         np.random.seed(42)
 
         # Clustering with NaN
-        df_cluster = pd.DataFrame({
-            "feature1": [1, 2, np.nan, 4, 5, 6],
-            "feature2": [10, 20, 30, np.nan, 50, 60],
-        })
+        df_cluster = pd.DataFrame(
+            {
+                "feature1": [1, 2, np.nan, 4, 5, 6],
+                "feature2": [10, 20, 30, np.nan, 50, 60],
+            }
+        )
 
         # Drop NaN for clustering (expected behavior)
         df_clean = df_cluster.dropna()
@@ -311,11 +340,13 @@ class TestCrossMethodConsistency:
             assert "optimal_k" in results
 
         # Material analysis with missing events
-        df_material = pd.DataFrame({
-            "material_type": ["concrete", "asphalt", "concrete", "asphalt"],
-            "time_in_months": [100, 80, np.nan, 90],
-            "event": [1, 0, 1, np.nan],
-        })
+        df_material = pd.DataFrame(
+            {
+                "material_type": ["concrete", "asphalt", "concrete", "asphalt"],
+                "time_in_months": [100, 80, np.nan, 90],
+                "event": [1, 0, 1, np.nan],
+            }
+        )
 
         # Drop rows with missing critical values
         df_clean = df_material.dropna(subset=["time_in_months", "event"])
@@ -323,6 +354,7 @@ class TestCrossMethodConsistency:
             analysis = MaterialDegradationAnalysis(df_clean)
             results = analysis.fit()
             assert "km_curves" in results
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

@@ -7,20 +7,25 @@ from datetime import datetime
 
 from ..alerts.manager import Alert, AlertManager, AlertSeverity, AlertStatus
 
+
 @dataclass
 class HealthCheck:
     """Health check result."""
+
     service: str
     status: str
     timestamp: datetime
     latency_ms: float | None = None
 
+
 @dataclass
 class MonitoringResult:
     """Result of monitoring operation."""
+
     success: bool
     message: str
     timestamp: datetime
+
 
 class HealthMonitor:
     """Monitor system health metrics."""
@@ -38,12 +43,15 @@ class HealthMonitor:
         matching = [c for c in self.checks if c.service == service]
         return matching[-1].status if matching else None
 
+
 class Monitoring:
     """Main monitoring interface."""
+
     def __init__(self):
         self.health_monitor = HealthMonitor()
 
     def check_service(self, service: str) -> str | None:
         return self.health_monitor.get_status(service)
+
 
 __all__ = ["HealthCheck", "HealthMonitor", "MonitoringResult", "Monitoring"]

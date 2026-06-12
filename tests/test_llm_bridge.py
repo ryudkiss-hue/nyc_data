@@ -4,6 +4,7 @@ import pandas as pd
 
 from socrata_toolkit.llm.duck_bridge import LLMAugmentConfig, augment_dataframe_with_llm
 
+
 class DummyResp:
     def raise_for_status(self):
         return None
@@ -14,6 +15,7 @@ class DummyResp:
                 {"message": {"content": '{"label":"other","confidence":0.7,"rationale":"ok"}'}}
             ]
         }
+
 
 @patch("socrata_toolkit.llm.duck_bridge.requests.post")
 def test_augment_dataframe(mock_post):

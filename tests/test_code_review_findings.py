@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 import pytest
 
+
 class TestCriticalFinding1_SoQLSyntax:
     """
     Finding #1: Invalid SoQL date syntax in CLAUDE.md line 539
@@ -41,15 +42,18 @@ class TestCriticalFinding1_SoQLSyntax:
                     domain="data.cityofnewyork.us",
                     fourfour="6kbp-uz6m",  # violations dataset
                     where=malformed_where,
-                    limit=1
+                    limit=1,
                 )
             except Exception as e:
                 # Capture what error Socrata actually returns
                 error_msg = str(e)
                 # Check if it's a syntax error (which we expect)
-                assert "syntax" in error_msg.lower() or "invalid" in error_msg.lower() or \
-                       "parse" in error_msg.lower() or "query" in error_msg.lower(), \
-                       f"Expected syntax error but got: {error_msg}"
+                assert (
+                    "syntax" in error_msg.lower()
+                    or "invalid" in error_msg.lower()
+                    or "parse" in error_msg.lower()
+                    or "query" in error_msg.lower()
+                ), f"Expected syntax error but got: {error_msg}"
                 raise
 
     def test_soql_iso_timestamp_syntax_valid(self):
@@ -72,16 +76,18 @@ class TestCriticalFinding1_SoQLSyntax:
         try:
             result = client.fetch_dataframe(
                 domain="data.cityofnewyork.us",
-                fourfour="erm2-nwe9", # 311 complaints
+                fourfour="erm2-nwe9",  # 311 complaints
                 where=valid_where,
-                max_rows=1  # API uses max_rows, not limit
+                max_rows=1,  # API uses max_rows, not limit
             )
             # If we get here without exception, the syntax is valid
-            assert result is not None or isinstance(result, pd.DataFrame), \
+            assert result is not None or isinstance(result, pd.DataFrame), (
                 "Expected valid query to return a DataFrame or None (if no results)"
+            )
             print(f"[PASS] Valid ISO timestamp query works: {thirty_days_ago}")
         except Exception as e:
             pytest.fail(f"Valid ISO timestamp query failed: {e}")
+
 
 class TestCriticalFinding2_SpatialIntersectsJoin:
     """
@@ -109,18 +115,13 @@ class TestCriticalFinding2_SpatialIntersectsJoin:
         params = list(sig.parameters.keys())
 
         # Verify it requires 4 parameters
-        assert len(params) >= 4, \
+        assert len(params) >= 4, (
             f"spatial_intersects_join should require at least 4 params, but has: {params}"
+        )
 
         # Create dummy DataFrames
-        left_df = pd.DataFrame({
-            'id': [1, 2],
-            'the_geom': ['POINT(0 0)', 'POINT(1 1)']
-        })
-        right_df = pd.DataFrame({
-            'id': [1, 2],
-            'the_geom': ['POINT(0 0)', 'POINT(2 2)']
-        })
+        left_df = pd.DataFrame({"id": [1, 2], "the_geom": ["POINT(0 0)", "POINT(1 1)"]})
+        right_df = pd.DataFrame({"id": [1, 2], "the_geom": ["POINT(0 0)", "POINT(2 2)"]})
 
         # Try to call with only 2 params (as shown in documentation)
         # This should fail
@@ -129,9 +130,11 @@ class TestCriticalFinding2_SpatialIntersectsJoin:
 
         # Verify the error mentions missing parameters
         error_msg = str(exc_info.value)
-        assert "required" in error_msg.lower() or "missing" in error_msg.lower() or \
-               "positional" in error_msg.lower(), \
-               f"Expected TypeError about missing parameters, got: {error_msg}"
+        assert (
+            "required" in error_msg.lower()
+            or "missing" in error_msg.lower()
+            or "positional" in error_msg.lower()
+        ), f"Expected TypeError about missing parameters, got: {error_msg}"
 
         print(f"[CONFIRMED] Calling with 2 params fails with: {error_msg}")
 
@@ -142,30 +145,28 @@ class TestCriticalFinding2_SpatialIntersectsJoin:
         from socrata_toolkit.spatial.core import spatial_intersects_join
 
         # Create dummy DataFrames with geometry columns
-        left_df = pd.DataFrame({
-            'id': [1, 2],
-            'the_geom': ['POINT(0 0)', 'POINT(1 1)'],
-            'name': ['A', 'B']
-        })
-        right_df = pd.DataFrame({
-            'id': [10, 20],
-            'the_geom': ['POINT(0 0)', 'POINT(2 2)'],
-            'type': ['permit', 'inspection']
-        })
+        left_df = pd.DataFrame(
+            {"id": [1, 2], "the_geom": ["POINT(0 0)", "POINT(1 1)"], "name": ["A", "B"]}
+        )
+        right_df = pd.DataFrame(
+            {
+                "id": [10, 20],
+                "the_geom": ["POINT(0 0)", "POINT(2 2)"],
+                "type": ["permit", "inspection"],
+            }
+        )
 
         # Call with all 4 required parameters
         try:
             result = spatial_intersects_join(
-                left_df,
-                right_df,
-                left_geom_col="the_geom",
-                right_geom_col="the_geom"
+                left_df, right_df, left_geom_col="the_geom", right_geom_col="the_geom"
             )
             # If we get here, the call succeeded
             assert result is not None, "spatial_intersects_join should return a result"
             print("[PASS] Calling with 4 params works correctly")
         except TypeError as e:
             pytest.fail(f"Call with all required params should work, but got: {e}")
+
 
 class TestDocumentationAccuracy:
     """
@@ -183,7 +184,7 @@ class TestDocumentationAccuracy:
             claude_content = f.read()
 
         # Find all code blocks with SoQL
-        soql_blocks = re.findall(r'```([^`]*created_date[^`]*)```', claude_content)
+        soql_blocks = re.findall(r"```([^`]*created_date[^`]*)```", claude_content)
 
         assert len(soql_blocks) > 0, "CLAUDE.md should have testable SoQL examples"
 
@@ -204,12 +205,14 @@ class TestDocumentationAccuracy:
         actual_sig = str(inspect.signature(spatial_intersects_join))
 
         # Expected from documentation
-        documented_params = ['left', 'right', 'left_geom_col', 'right_geom_col']
+        documented_params = ["left", "right", "left_geom_col", "right_geom_col"]
 
         # Verify all documented params exist
         for param in documented_params:
-            assert param in actual_sig, \
+            assert param in actual_sig, (
                 f"Documented parameter '{param}' not found in actual signature: {actual_sig}"
+            )
+
 
 class TestDocumentationImpact:
     """
@@ -236,12 +239,16 @@ class TestDocumentationImpact:
                         if "CLAUDE.md" in content or "from CLAUDE" in content:
                             found_references += 1
 
-        print(f"\nDocumentation Impact: Found {found_references} test files "
-              "referencing CLAUDE.md examples")
+        print(
+            f"\nDocumentation Impact: Found {found_references} test files "
+            "referencing CLAUDE.md examples"
+        )
 
         if found_references == 0:
-            print("[WARN] Note: No test coverage for CLAUDE.md examples found. "
-                  "This may explain why issues weren't caught.")
+            print(
+                "[WARN] Note: No test coverage for CLAUDE.md examples found. "
+                "This may explain why issues weren't caught."
+            )
 
     def test_are_documentation_examples_validated_in_ci(self):
         """
@@ -262,8 +269,11 @@ class TestDocumentationImpact:
                         print(f"[PASS] Found documentation validation in {ci_file}")
 
         if not found_validation:
-            print("[WARN] Warning: No CI validation found for documentation examples. "
-                  "This explains why these issues weren't caught automatically.")
+            print(
+                "[WARN] Warning: No CI validation found for documentation examples. "
+                "This explains why these issues weren't caught automatically."
+            )
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "-s"])

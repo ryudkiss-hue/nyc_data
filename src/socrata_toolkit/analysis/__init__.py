@@ -33,10 +33,10 @@ from .metrics import (
     BusinessRulesEngine,
     DataQualityCatalog,
     DataQualityScore,
-    DataType,
     DataQualityTracker,
-    DatasetQualityScore,
     DatasetFreshness,
+    DatasetQualityScore,
+    DataType,
     FreshnessAlert,
     FreshnessTracker,
     MetricPoint,
@@ -52,7 +52,6 @@ from .metrics import (
     correlation_heatmap,
     create_map,
     dataframe_to_pdf,
-    save_map,
     detect_outliers_iqr,
     detect_outliers_zscore,
     flag_anomalies,
@@ -60,6 +59,7 @@ from .metrics import (
     get_global_registry,
     quality_dashboard,
     reset_global_registry,
+    save_map,
     time_series_chart,
     time_series_summary,
     validate_defect_applicability,
@@ -75,7 +75,13 @@ from .text import (
     generate_text_insights,
     parse_sim_complaints,
 )
-from .viz import bar_chart, box_plot, classify_distribution, histogram, list_available_visualizations
+from .viz import (
+    bar_chart,
+    box_plot,
+    classify_distribution,
+    histogram,
+    list_available_visualizations,
+)
 
 try:
     from .dataset_health_workflow import (
@@ -280,26 +286,40 @@ def __getattr__(name: str):
             RampStatus,
             RampStatusClassifier,
         )
+
         return {
             "RampStatus": RampStatus,
             "BlockerType": BlockerType,
             "RampStatusClassifier": RampStatusClassifier,
             "RampClassificationResult": RampClassificationResult,
         }[name]
-    elif name in ("BoroughRampStats", "RampProgressState", "create_ramp_workflow", "run_ramp_workflow"):
+    elif name in (
+        "BoroughRampStats",
+        "RampProgressState",
+        "create_ramp_workflow",
+        "run_ramp_workflow",
+    ):
         from .ramp_progress_workflow import (
             BoroughRampStats,
             RampProgressState,
             create_ramp_workflow,
             run_ramp_workflow,
         )
+
         return {
             "BoroughRampStats": BoroughRampStats,
             "RampProgressState": RampProgressState,
             "create_ramp_workflow": create_ramp_workflow,
             "run_ramp_workflow": run_ramp_workflow,
         }[name]
-    elif name in ("VelocityClassifier", "VelocityMetrics", "VelocityClassification", "PerformanceTier", "MetricType", "AnomalyType"):
+    elif name in (
+        "VelocityClassifier",
+        "VelocityMetrics",
+        "VelocityClassification",
+        "PerformanceTier",
+        "MetricType",
+        "AnomalyType",
+    ):
         from .velocity_classifier import (
             AnomalyType,
             MetricType,
@@ -308,6 +328,7 @@ def __getattr__(name: str):
             VelocityClassifier,
             VelocityMetrics,
         )
+
         return {
             "VelocityClassifier": VelocityClassifier,
             "VelocityMetrics": VelocityMetrics,
@@ -316,13 +337,19 @@ def __getattr__(name: str):
             "MetricType": MetricType,
             "AnomalyType": AnomalyType,
         }[name]
-    elif name in ("run_velocity_analysis", "build_velocity_analysis_graph", "VelocityAnalysisContext", "VelocityState"):
+    elif name in (
+        "run_velocity_analysis",
+        "build_velocity_analysis_graph",
+        "VelocityAnalysisContext",
+        "VelocityState",
+    ):
         from .velocity_analysis_workflow import (
             VelocityAnalysisContext,
             VelocityState,
             build_velocity_analysis_graph,
             run_velocity_analysis,
         )
+
         return {
             "run_velocity_analysis": run_velocity_analysis,
             "build_velocity_analysis_graph": build_velocity_analysis_graph,

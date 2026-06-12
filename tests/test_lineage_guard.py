@@ -11,6 +11,7 @@ from socrata_toolkit.privacy.lineage_guard import (
 )
 from socrata_toolkit.privacy.pii_scanner import scan_dataframe
 
+
 def _frame() -> pd.DataFrame:
     return pd.DataFrame(
         {
@@ -19,6 +20,7 @@ def _frame() -> pd.DataFrame:
             "amount": [100, 200, 300],
         }
     )
+
 
 def test_pii_columns_masked_non_pii_untouched():
     df = _frame()
@@ -34,11 +36,13 @@ def test_pii_columns_masked_non_pii_untouched():
     assert list(masked["email"]) != list(df["email"])
     assert list(masked["ssn"]) != list(df["ssn"])
 
+
 def test_report_names_expected_strategies():
     df = _frame()
     _, report = mask_pii_columns(df)
     assert report["email"] == masking.PARTIAL_MASK
     assert report["ssn"] == masking.HASH_TOKEN
+
 
 def test_redact_column_names_pseudonymizes_only_flagged():
     df = _frame()

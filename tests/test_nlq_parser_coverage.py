@@ -1,9 +1,11 @@
 """Tests for nlq_parser module."""
+
 from __future__ import annotations
 
 import pytest
 
 from socrata_toolkit.nlq_parser import QueryIntent, parse_query
+
 
 class TestQueryIntent:
     """Tests for QueryIntent dataclass."""
@@ -27,6 +29,7 @@ class TestQueryIntent:
         )
         assert intent.filters["borough"] == "MANHATTAN"
         assert intent.filters["severity"] == "critical"
+
 
 class TestParseQuery:
     """Tests for parse_query function."""

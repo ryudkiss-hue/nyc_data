@@ -3,6 +3,7 @@
 Monitors computation status, data freshness, and SLA breaches.
 Sends alerts via Slack webhook.
 """
+
 from __future__ import annotations
 
 import json
@@ -10,8 +11,8 @@ import logging
 from dataclasses import dataclass
 from typing import Optional
 
-import requests
 import duckdb
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -19,10 +20,11 @@ logger = logging.getLogger(__name__)
 @dataclass
 class Alert:
     """An alert to be sent."""
+
     severity: str  # INFO, WARNING, ERROR
     title: str
     message: str
-    details: Optional[dict] = None
+    details: dict | None = None
 
 
 class SlackNotifier:
@@ -51,11 +53,7 @@ class SlackNotifier:
                     "title": alert.title,
                     "text": alert.message,
                     "fields": [
-                        {
-                            "title": "Severity",
-                            "value": alert.severity,
-                            "short": True
-                        },
+                        {"title": "Severity", "value": alert.severity, "short": True},
                     ],
                     "footer": "KPI Analytics Monitoring",
                     "ts": int(__import__("time").time()),
@@ -65,18 +63,12 @@ class SlackNotifier:
 
         if alert.details:
             for key, value in alert.details.items():
-                payload["attachments"][0]["fields"].append({
-                    "title": key,
-                    "value": str(value),
-                    "short": True
-                })
+                payload["attachments"][0]["fields"].append(
+                    {"title": key, "value": str(value), "short": True}
+                )
 
         try:
-            response = requests.post(
-                self.webhook_url,
-                json=payload,
-                timeout=10
-            )
+            response = requests.post(self.webhook_url, json=payload, timeout=10)
             response.raise_for_status()
             logger.info(f"Alert sent to Slack: {alert.title}")
             return True
@@ -88,12 +80,12 @@ class SlackNotifier:
 class KPIMonitor:
     """Monitor KPI analytics pipeline health."""
 
-    def __init__(self, conn: duckdb.DuckDBPyConnection, slack_webhook: Optional[str] = None):
+    def __init__(self, conn: duckdb.DuckDBPyConnection, slack_webhook: str | None = None):
         """Initialize monitor with database connection and optional Slack."""
         self.conn = conn
         self.notifier = SlackNotifier(slack_webhook) if slack_webhook else None
 
-    def check_computation_status(self) -> Optional[Alert]:
+    def check_computation_status(self) -> Alert | None:
         """Check if last computation succeeded."""
         try:
             result = self.conn.execute(
@@ -110,7 +102,7 @@ class KPIMonitor:
                 return Alert(
                     severity="WARNING",
                     title="No computation status found",
-                    message="Analytics layer appears empty"
+                    message="Analytics layer appears empty",
                 )
 
             failed = [r for r in result if r[0] == "FAILED"]
@@ -119,7 +111,7 @@ class KPIMonitor:
                     severity="ERROR",
                     title="KPI Computation Failed",
                     message=f"{failed[0][1]} rows failed computation",
-                    details={"Status": "FAILED", "Rows": failed[0][1]}
+                    details={"Status": "FAILED", "Rows": failed[0][1]},
                 )
 
             partial = [r for r in result if r[0] == "PARTIAL"]
@@ -128,7 +120,7 @@ class KPIMonitor:
                     severity="WARNING",
                     title="Partial KPI Computation",
                     message=f"{partial[0][1]} rows completed partially",
-                    details={"Status": "PARTIAL", "Rows": partial[0][1]}
+                    details={"Status": "PARTIAL", "Rows": partial[0][1]},
                 )
 
             return None
@@ -137,10 +129,10 @@ class KPIMonitor:
             return Alert(
                 severity="ERROR",
                 title="Computation Status Check Failed",
-                message=f"Unable to check status: {str(e)}"
+                message=f"Unable to check status: {str(e)}",
             )
 
-    def check_data_freshness(self, max_age_minutes: int = 30) -> Optional[Alert]:
+    def check_data_freshness(self, max_age_minutes: int = 30) -> Alert | None:
         """Check if data is stale."""
         try:
             result = self.conn.execute(
@@ -156,7 +148,7 @@ class KPIMonitor:
                 return Alert(
                     severity="ERROR",
                     title="No analytics data found",
-                    message="Analytics layer is empty"
+                    message="Analytics layer is empty",
                 )
 
             minutes_ago = result[1]
@@ -168,8 +160,8 @@ class KPIMonitor:
                     details={
                         "Latest Timestamp": str(result[0]),
                         "Age (minutes)": minutes_ago,
-                        "Threshold (minutes)": max_age_minutes
-                    }
+                        "Threshold (minutes)": max_age_minutes,
+                    },
                 )
 
             return None
@@ -178,10 +170,10 @@ class KPIMonitor:
             return Alert(
                 severity="ERROR",
                 title="Freshness Check Failed",
-                message=f"Unable to check freshness: {str(e)}"
+                message=f"Unable to check freshness: {str(e)}",
             )
 
-    def check_sla_breaches(self, breach_threshold: float = 50.0) -> Optional[Alert]:
+    def check_sla_breaches(self, breach_threshold: float = 50.0) -> Alert | None:
         """Check for KPIs with high SLA breach probability."""
         try:
             result = self.conn.execute(
@@ -195,7 +187,7 @@ class KPIMonitor:
                 ORDER BY pct_exceeding_risk_threshold DESC
                 LIMIT 5
                 """,
-                (breach_threshold,)
+                (breach_threshold,),
             ).fetchall()
 
             if not result:
@@ -207,17 +199,15 @@ class KPIMonitor:
                 severity="WARNING",
                 title="SLA Breach Risk Detected",
                 message=f"{len(result)} KPI-borough pairs exceed {breach_threshold}% risk threshold",
-                details={"At-Risk KPIs": "\n".join(kpi_list[:3])}
+                details={"At-Risk KPIs": "\n".join(kpi_list[:3])},
             )
 
         except Exception as e:
             return Alert(
-                severity="ERROR",
-                title="SLA Check Failed",
-                message=f"Unable to check SLA: {str(e)}"
+                severity="ERROR", title="SLA Check Failed", message=f"Unable to check SLA: {str(e)}"
             )
 
-    def check_data_anomalies(self) -> Optional[Alert]:
+    def check_data_anomalies(self) -> Alert | None:
         """Check for data quality anomalies."""
         try:
             result = self.conn.execute(
@@ -242,8 +232,8 @@ class KPIMonitor:
                     message=f"{anomaly_count} anomalies found across KPI-borough pairs",
                     details={
                         "High Outlier Count (>10%)": high_outliers,
-                        "Extreme CV (>100%)": extreme_cv
-                    }
+                        "Extreme CV (>100%)": extreme_cv,
+                    },
                 )
 
             return None
@@ -252,7 +242,7 @@ class KPIMonitor:
             return Alert(
                 severity="ERROR",
                 title="Anomaly Check Failed",
-                message=f"Unable to check anomalies: {str(e)}"
+                message=f"Unable to check anomalies: {str(e)}",
             )
 
     def monitor_all(self) -> list[Alert]:
@@ -306,8 +296,8 @@ class KPIMonitor:
                         alert.severity,
                         alert.title,
                         alert.message,
-                        json.dumps(alert.details) if alert.details else None
-                    )
+                        json.dumps(alert.details) if alert.details else None,
+                    ),
                 )
 
             logger.info(f"Logged {len(alerts)} alerts to monitoring table")
@@ -321,6 +311,7 @@ if __name__ == "__main__":
 
     # Example usage
     import os
+
     conn = duckdb.connect("md:", config={"motherduck_token": os.getenv("MOTHERDUCK_TOKEN")})
     slack_url = os.getenv("SLACK_WEBHOOK_URL")
 

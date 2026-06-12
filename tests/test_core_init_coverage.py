@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
+
 class TestDuckDBExporter:
     def test_context_manager_closes(self):
         from socrata_toolkit.core import DuckDBExporter
@@ -16,14 +17,20 @@ class TestDuckDBExporter:
                 assert exp is not None
             mgr.close.assert_called_once()
 
+
 class TestSearchNycDatasets:
     def test_returns_dataframe(self):
         from socrata_toolkit.core import search_nyc_datasets
         from socrata_toolkit.core.models import SearchResult
 
         result = SearchResult(
-            name="Test", description="d", domain="data.cityofnewyork.us",
-            fourfour="abc1-2345", page_views_last_month=10, category="cat", tags=["t"],
+            name="Test",
+            description="d",
+            domain="data.cityofnewyork.us",
+            fourfour="abc1-2345",
+            page_views_last_month=10,
+            category="cat",
+            tags=["t"],
         )
         with patch("socrata_toolkit.core.SocrataClient") as mock_cls:
             mock_cls.return_value.search.return_value = [result]

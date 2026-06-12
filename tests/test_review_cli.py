@@ -6,6 +6,7 @@ from click.testing import CliRunner
 
 from socrata_toolkit.core.cli import main
 
+
 def test_review_cli_set_list_export(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setenv("TOOLKIT_PROFILE", "test")
     monkeypatch.setenv("TOOLKIT_STATE_ROOT", str(tmp_path / "state"))
@@ -45,4 +46,3 @@ def test_review_cli_set_list_export(tmp_path: Path, monkeypatch) -> None:
     assert r3.exit_code == 0
     assert (pack / "decisions_export.xlsx").exists()
     assert (pack / "decisions_summary.md").exists()
-

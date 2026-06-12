@@ -7,6 +7,7 @@ from socrata_toolkit.engineering import (
     identify_hotspots,
 )
 
+
 def _sample_data():
     return pd.DataFrame(
         {
@@ -43,6 +44,7 @@ def _sample_data():
         }
     )
 
+
 def test_borough_summary():
     df = _sample_data()
     results = borough_summary(df)
@@ -52,12 +54,14 @@ def test_borough_summary():
     assert manhattan.total_violations == 5
     assert manhattan.repair_backlog == 2
 
+
 def test_borough_comparison_table():
     df = _sample_data()
     table = borough_comparison_table(df)
     assert isinstance(table, pd.DataFrame)
     assert "borough" in table.columns
     assert len(table) == 5
+
 
 def test_identify_hotspots():
     df = _sample_data()
@@ -68,10 +72,12 @@ def test_identify_hotspots():
     assert len(queens_hotspots) >= 1
     assert queens_hotspots[0].location_count >= 2
 
+
 def test_identify_hotspots_high_threshold():
     df = _sample_data()
     hotspots = identify_hotspots(df, threshold=100)
     assert len(hotspots) == 0
+
 
 def test_equity_analysis():
     df = _sample_data()

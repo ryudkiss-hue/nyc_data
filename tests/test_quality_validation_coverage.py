@@ -1,4 +1,5 @@
 """Tests for quality.validation module - Data validation framework."""
+
 from __future__ import annotations
 
 import pandas as pd
@@ -13,6 +14,7 @@ from socrata_toolkit.quality.validation import (
     validate_required_columns,
     validate_schema_types,
 )
+
 
 class TestValidationReport:
     """Tests for ValidationReport dataclass."""
@@ -37,6 +39,7 @@ class TestValidationReport:
         assert len(report.errors) == 2
         assert len(report.warnings) == 1
         assert report.affected_records == 5
+
 
 class TestValidateRequiredColumns:
     """Tests for validate_required_columns function."""
@@ -77,6 +80,7 @@ class TestValidateRequiredColumns:
         assert report.valid is True
         assert len(report.errors) == 0
 
+
 class TestValidateSchemaTypes:
     """Tests for validate_schema_types function."""
 
@@ -109,35 +113,42 @@ class TestValidateSchemaTypes:
         report = validate_schema_types(df, schema)
         assert report.valid is True
 
+
 class TestValidateMaterialCoverage:
     """Tests for validate_material_coverage function."""
 
     def test_all_valid_materials(self):
         """Test when all materials are valid."""
-        df = pd.DataFrame({
-            "segment_id": [1, 2, 3],
-            "material_type": ["HMA", "PCC", "asphalt"],
-        })
+        df = pd.DataFrame(
+            {
+                "segment_id": [1, 2, 3],
+                "material_type": ["HMA", "PCC", "asphalt"],
+            }
+        )
         report = validate_material_coverage(df, "material_type")
         assert report.valid is True
         assert len(report.errors) == 0
 
     def test_invalid_material(self):
         """Test when segment has invalid material."""
-        df = pd.DataFrame({
-            "segment_id": [1, 2],
-            "material_type": ["HMA", "unknown_material"],
-        })
+        df = pd.DataFrame(
+            {
+                "segment_id": [1, 2],
+                "material_type": ["HMA", "unknown_material"],
+            }
+        )
         report = validate_material_coverage(df, "material_type")
         assert report.valid is False
         assert len(report.errors) == 1
 
     def test_null_material(self):
         """Test when segment has null material."""
-        df = pd.DataFrame({
-            "segment_id": [1, 2],
-            "material_type": ["HMA", None],
-        })
+        df = pd.DataFrame(
+            {
+                "segment_id": [1, 2],
+                "material_type": ["HMA", None],
+            }
+        )
         report = validate_material_coverage(df, "material_type")
         assert report.valid is False
         assert len(report.errors) == 1
@@ -149,26 +160,31 @@ class TestValidateMaterialCoverage:
         assert report.valid is False
         assert "not found" in report.errors[0]
 
+
 class TestValidateDefectApplicability:
     """Tests for validate_defect_applicability function."""
 
     def test_valid_defect_material_pair(self):
         """Test when defect-material pair is valid."""
-        df = pd.DataFrame({
-            "defect_id": [1],
-            "material_type": ["asphalt"],
-            "defect_type": ["Potholes"],
-        })
+        df = pd.DataFrame(
+            {
+                "defect_id": [1],
+                "material_type": ["asphalt"],
+                "defect_type": ["Potholes"],
+            }
+        )
         report = validate_defect_applicability(df, "material_type", "defect_type")
         assert report.valid is True
 
     def test_invalid_defect_material_pair(self):
         """Test when defect doesn't apply to material."""
-        df = pd.DataFrame({
-            "defect_id": [1],
-            "material_type": ["PCC"],
-            "defect_type": ["Potholes"],
-        })
+        df = pd.DataFrame(
+            {
+                "defect_id": [1],
+                "material_type": ["PCC"],
+                "defect_type": ["Potholes"],
+            }
+        )
         report = validate_defect_applicability(df, "material_type", "defect_type")
         assert report.valid is False
         assert len(report.errors) >= 1
@@ -179,24 +195,29 @@ class TestValidateDefectApplicability:
         report = validate_defect_applicability(df, "material_type", "defect_type")
         assert report.valid is False
 
+
 class TestValidateADAComplianceGates:
     """Tests for validate_ada_compliance_gates function."""
 
     def test_all_segments_scored(self):
         """Test when all segments have compliance scores."""
-        df = pd.DataFrame({
-            "segment_id": [1, 2, 3],
-            "ada_compliant": [True, False, True],
-        })
+        df = pd.DataFrame(
+            {
+                "segment_id": [1, 2, 3],
+                "ada_compliant": [True, False, True],
+            }
+        )
         report = validate_ada_compliance_gates(df, "ada_compliant")
         assert report.valid is True
 
     def test_missing_compliance_score(self):
         """Test when some segments lack compliance scores."""
-        df = pd.DataFrame({
-            "segment_id": [1, 2, 3],
-            "ada_compliant": [True, None, False],
-        })
+        df = pd.DataFrame(
+            {
+                "segment_id": [1, 2, 3],
+                "ada_compliant": [True, None, False],
+            }
+        )
         report = validate_ada_compliance_gates(df, "ada_compliant")
         assert report.valid is False
         assert len(report.errors) >= 1
@@ -207,26 +228,31 @@ class TestValidateADAComplianceGates:
         report = validate_ada_compliance_gates(df, "ada_compliant")
         assert report.valid is False
 
+
 class TestValidateMarkingStandards:
     """Tests for validate_marking_standards function."""
 
     def test_valid_marking_colors(self):
         """Test when all markings have valid colors."""
-        df = pd.DataFrame({
-            "marking_id": [1, 2, 3],
-            "marking_type": ["Crosswalk", "Stop Line", "Arrow"],
-            "marking_color": ["white", "white", "yellow"],
-        })
+        df = pd.DataFrame(
+            {
+                "marking_id": [1, 2, 3],
+                "marking_type": ["Crosswalk", "Stop Line", "Arrow"],
+                "marking_color": ["white", "white", "yellow"],
+            }
+        )
         report = validate_marking_standards(df, "marking_type", "marking_color")
         assert report.valid is True
 
     def test_invalid_marking_color(self):
         """Test when marking has invalid color."""
-        df = pd.DataFrame({
-            "marking_id": [1, 2],
-            "marking_type": ["Crosswalk", "Arrow"],
-            "marking_color": ["white", "purple"],
-        })
+        df = pd.DataFrame(
+            {
+                "marking_id": [1, 2],
+                "marking_type": ["Crosswalk", "Arrow"],
+                "marking_color": ["white", "purple"],
+            }
+        )
         report = validate_marking_standards(df, "marking_type", "marking_color")
         assert report.valid is False
         assert len(report.errors) >= 1
@@ -237,37 +263,44 @@ class TestValidateMarkingStandards:
         report = validate_marking_standards(df, "marking_type", "marking_color")
         assert report.valid is False
 
+
 class TestValidateGeospatialBounds:
     """Tests for validate_geospatial_bounds function."""
 
     def test_coordinates_within_nyc_bounds(self):
         """Test when all coordinates are within NYC."""
-        df = pd.DataFrame({
-            "segment_id": [1, 2, 3],
-            "latitude": [40.7, 40.8, 40.6],
-            "longitude": [-73.9, -73.8, -74.0],
-        })
+        df = pd.DataFrame(
+            {
+                "segment_id": [1, 2, 3],
+                "latitude": [40.7, 40.8, 40.6],
+                "longitude": [-73.9, -73.8, -74.0],
+            }
+        )
         report = validate_geospatial_bounds(df, "latitude", "longitude")
         assert report.valid is True
 
     def test_latitude_out_of_bounds_high(self):
         """Test when latitude is too high."""
-        df = pd.DataFrame({
-            "segment_id": [1],
-            "latitude": [41.0],
-            "longitude": [-73.9],
-        })
+        df = pd.DataFrame(
+            {
+                "segment_id": [1],
+                "latitude": [41.0],
+                "longitude": [-73.9],
+            }
+        )
         report = validate_geospatial_bounds(df, "latitude", "longitude")
         assert report.valid is False
         assert len(report.errors) >= 1
 
     def test_longitude_out_of_bounds_high(self):
         """Test when longitude is too high."""
-        df = pd.DataFrame({
-            "segment_id": [1],
-            "latitude": [40.7],
-            "longitude": [-73.0],
-        })
+        df = pd.DataFrame(
+            {
+                "segment_id": [1],
+                "latitude": [40.7],
+                "longitude": [-73.0],
+            }
+        )
         report = validate_geospatial_bounds(df, "latitude", "longitude")
         assert report.valid is False
 

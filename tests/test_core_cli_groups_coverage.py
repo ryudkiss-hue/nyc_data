@@ -18,13 +18,16 @@ from click.testing import CliRunner
 
 from socrata_toolkit.core.cli import main
 
+
 @pytest.fixture
 def runner():
     return CliRunner()
 
+
 # ---------------------------------------------------------------------------
 # lineage group
 # ---------------------------------------------------------------------------
+
 
 class TestLineageGroup:
     def test_lineage_nodes_empty(self, runner):
@@ -84,9 +87,11 @@ class TestLineageGroup:
         assert result.exit_code == 0
         assert "NEVER EXECUTED" in result.output
 
+
 # ---------------------------------------------------------------------------
 # observability group (module missing → error path)
 # ---------------------------------------------------------------------------
+
 
 class TestObservabilityGroup:
     """The observability subsystem is now shipped, so commands succeed."""
@@ -208,7 +213,8 @@ class TestObservabilityGroup:
     def test_observability_export_metrics_prometheus(self, runner, tmp_path):
         out = tmp_path / "m.prom"
         result = runner.invoke(
-            main, ["observability", "export", "prometheus", "--output", str(out), "--type", "metrics"]
+            main,
+            ["observability", "export", "prometheus", "--output", str(out), "--type", "metrics"],
         )
         assert result.exit_code == 0
 
@@ -232,9 +238,11 @@ class TestObservabilityGroup:
         # missing required FORMAT arg → click usage error (exit 2)
         assert result.exit_code == 2
 
+
 # ---------------------------------------------------------------------------
 # material group
 # ---------------------------------------------------------------------------
+
 
 class TestMaterialGroup:
     def test_material_list(self, runner):
@@ -260,9 +268,11 @@ class TestMaterialGroup:
         result = runner.invoke(main, ["material", "show"])
         assert result.exit_code == 2
 
+
 # ---------------------------------------------------------------------------
 # compliance group
 # ---------------------------------------------------------------------------
+
 
 class TestComplianceGroup:
     def test_compliance_check_valid(self, runner):
@@ -282,9 +292,11 @@ class TestComplianceGroup:
         result = runner.invoke(main, ["compliance", "report", "--help"])
         assert result.exit_code == 0
 
+
 # ---------------------------------------------------------------------------
 # schema group (help/usage paths)
 # ---------------------------------------------------------------------------
+
 
 class TestSchemaGroup:
     @pytest.mark.parametrize(
@@ -296,9 +308,11 @@ class TestSchemaGroup:
         assert result.exit_code == 0
         assert "Usage:" in result.output
 
+
 # ---------------------------------------------------------------------------
 # top-level group help
 # ---------------------------------------------------------------------------
+
 
 class TestGroupHelp:
     @pytest.mark.parametrize(

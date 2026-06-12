@@ -5,6 +5,7 @@ import pytest
 
 from socrata_toolkit.core.duckdb_store import DuckDBManager, DuckDBRepository
 
+
 @pytest.fixture
 def temp_mgr(tmp_path):
     """Providing a fresh memory/temp DuckDB for each test."""
@@ -12,6 +13,7 @@ def temp_mgr(tmp_path):
     mgr = DuckDBManager(db_path)
     yield mgr
     mgr.close()
+
 
 def test_automatic_column_addition(temp_mgr):
     """Verify that upserting a DF with extra columns triggers ALTER TABLE."""
@@ -32,13 +34,16 @@ def test_automatic_column_addition(temp_mgr):
     repo.upsert_dataframe(df2, "id")
 
     assert repo.count() == 2
-    cols_after = [c[1] for c in temp_mgr.conn.execute(f'PRAGMA table_info("{table_name}")').fetchall()]
+    cols_after = [
+        c[1] for c in temp_mgr.conn.execute(f'PRAGMA table_info("{table_name}")').fetchall()
+    ]
     assert "val2" in cols_after
 
     # Verify data integrity
     res = repo.fetch_all()
     row2 = res[res["id"] == 2].iloc[0]
     assert row2["val2"] == "Y"
+
 
 def test_type_safety_on_evolution(temp_mgr):
     """Ensure evolved columns default to VARCHAR for maximum safety in municipal drift."""

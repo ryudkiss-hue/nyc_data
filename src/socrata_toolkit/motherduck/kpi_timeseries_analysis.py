@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 try:
     from statsmodels.tsa.arima.model import ARIMA
     from statsmodels.tsa.statespace.sarimax import SARIMAX
+
     HAS_STATSMODELS = True
 except ImportError:
     HAS_STATSMODELS = False
@@ -21,6 +22,7 @@ except ImportError:
 @dataclass
 class ForecastResult:
     """Forecast with confidence intervals."""
+
     mean: list
     ci_lower: list
     ci_upper: list
@@ -30,11 +32,12 @@ class ForecastResult:
 @dataclass
 class ModelFitResult:
     """Result of fitting a time series model."""
+
     status: str
-    aic: Optional[float] = None
-    bic: Optional[float] = None
-    model_object: Optional[object] = None
-    error_message: Optional[str] = None
+    aic: float | None = None
+    bic: float | None = None
+    model_object: object | None = None
+    error_message: str | None = None
 
 
 class ARIMAForecaster:
@@ -55,7 +58,7 @@ class ARIMAForecaster:
         self.model = None
         self.fitted_model = None
 
-    def fit(self, y: np.ndarray, exog: Optional[np.ndarray] = None) -> ModelFitResult:
+    def fit(self, y: np.ndarray, exog: np.ndarray | None = None) -> ModelFitResult:
         """Fit ARIMA model to time series.
 
         Args:
@@ -66,24 +69,24 @@ class ARIMAForecaster:
             ModelFitResult with AIC/BIC and model object
         """
         if not HAS_STATSMODELS:
-            return ModelFitResult(status='FAILED', error_message='statsmodels unavailable')
+            return ModelFitResult(status="FAILED", error_message="statsmodels unavailable")
 
         try:
             self.model = ARIMA(y, order=self.order, exog=exog if self.include_exog else None)
             self.fitted_model = self.model.fit()
 
             return ModelFitResult(
-                status='SUCCESS',
+                status="SUCCESS",
                 aic=float(self.fitted_model.aic),
                 bic=float(self.fitted_model.bic),
-                model_object=self.fitted_model
+                model_object=self.fitted_model,
             )
 
         except Exception as e:
             logger.error(f"ARIMA fit failed: {str(e)}")
-            return ModelFitResult(status='FAILED', error_message=str(e))
+            return ModelFitResult(status="FAILED", error_message=str(e))
 
-    def forecast(self, steps: int, exog: Optional[np.ndarray] = None) -> ForecastResult:
+    def forecast(self, steps: int, exog: np.ndarray | None = None) -> ForecastResult:
         """Generate forecast with 95% CI.
 
         Args:
@@ -103,10 +106,10 @@ class ARIMAForecaster:
             forecast_summary = forecast_obj.summary_frame()
 
             return ForecastResult(
-                mean=forecast_summary['mean'].tolist(),
-                ci_lower=forecast_summary['mean_ci_lower'].tolist(),
-                ci_upper=forecast_summary['mean_ci_upper'].tolist(),
-                steps=steps
+                mean=forecast_summary["mean"].tolist(),
+                ci_lower=forecast_summary["mean_ci_lower"].tolist(),
+                ci_upper=forecast_summary["mean_ci_upper"].tolist(),
+                steps=steps,
             )
 
         except Exception as e:
@@ -121,7 +124,7 @@ class SARIMAXForecaster:
         self,
         order: Tuple[int, int, int],
         seasonal_order: Tuple[int, int, int, int],
-        include_exog: bool = False
+        include_exog: bool = False,
     ):
         """Initialize SARIMAX forecaster.
 
@@ -139,10 +142,10 @@ class SARIMAXForecaster:
         self.model = None
         self.fitted_model = None
 
-    def fit(self, y: np.ndarray, exog: Optional[np.ndarray] = None) -> ModelFitResult:
+    def fit(self, y: np.ndarray, exog: np.ndarray | None = None) -> ModelFitResult:
         """Fit SARIMAX model."""
         if not HAS_STATSMODELS:
-            return ModelFitResult(status='FAILED', error_message='statsmodels unavailable')
+            return ModelFitResult(status="FAILED", error_message="statsmodels unavailable")
 
         try:
             self.model = SARIMAX(
@@ -151,22 +154,22 @@ class SARIMAXForecaster:
                 seasonal_order=self.seasonal_order,
                 exog=exog if self.include_exog else None,
                 enforce_stationarity=False,
-                enforce_invertibility=False
+                enforce_invertibility=False,
             )
             self.fitted_model = self.model.fit(disp=False)
 
             return ModelFitResult(
-                status='SUCCESS',
+                status="SUCCESS",
                 aic=float(self.fitted_model.aic),
                 bic=float(self.fitted_model.bic),
-                model_object=self.fitted_model
+                model_object=self.fitted_model,
             )
 
         except Exception as e:
             logger.error(f"SARIMAX fit failed: {str(e)}")
-            return ModelFitResult(status='FAILED', error_message=str(e))
+            return ModelFitResult(status="FAILED", error_message=str(e))
 
-    def forecast(self, steps: int, exog: Optional[np.ndarray] = None) -> ForecastResult:
+    def forecast(self, steps: int, exog: np.ndarray | None = None) -> ForecastResult:
         """Generate forecast with 95% CI."""
         if self.fitted_model is None:
             raise ValueError("Must fit model before forecasting")
@@ -178,10 +181,10 @@ class SARIMAXForecaster:
             forecast_summary = forecast_obj.summary_frame()
 
             return ForecastResult(
-                mean=forecast_summary['mean'].tolist(),
-                ci_lower=forecast_summary['mean_ci_lower'].tolist(),
-                ci_upper=forecast_summary['mean_ci_upper'].tolist(),
-                steps=steps
+                mean=forecast_summary["mean"].tolist(),
+                ci_lower=forecast_summary["mean_ci_lower"].tolist(),
+                ci_upper=forecast_summary["mean_ci_upper"].tolist(),
+                steps=steps,
             )
 
         except Exception as e:
@@ -193,11 +196,7 @@ class ModelSelection:
     """Automatic ARIMA model selection."""
 
     def select_arima_order(
-        self,
-        y: np.ndarray,
-        max_p: int = 5,
-        max_d: int = 2,
-        max_q: int = 5
+        self, y: np.ndarray, max_p: int = 5, max_d: int = 2, max_q: int = 5
     ) -> Tuple[int, int, int]:
         """Grid search for best (p,d,q) based on AIC.
 
@@ -231,11 +230,7 @@ class ModelSelection:
         return best_order
 
     def grid_search_arima(
-        self,
-        y: np.ndarray,
-        max_p: int = 5,
-        max_d: int = 2,
-        max_q: int = 5
+        self, y: np.ndarray, max_p: int = 5, max_d: int = 2, max_q: int = 5
     ) -> dict:
         """Grid search returning full results."""
         best_order = self.select_arima_order(y, max_p, max_d, max_q)
@@ -244,11 +239,11 @@ class ModelSelection:
             model = ARIMA(y, order=best_order)
             results = model.fit()
             return {
-                'best_order': best_order,
-                'aic': float(results.aic),
-                'bic': float(results.bic),
-                'n_obs': len(y)
+                "best_order": best_order,
+                "aic": float(results.aic),
+                "bic": float(results.bic),
+                "n_obs": len(y),
             }
         except Exception as e:
             logger.error(f"Grid search failed: {str(e)}")
-            return {'best_order': (1, 1, 1), 'aic': np.inf}
+            return {"best_order": (1, 1, 1), "aic": np.inf}

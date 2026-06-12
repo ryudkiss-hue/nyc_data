@@ -8,15 +8,16 @@ import pytest
 
 import socrata_toolkit
 
+
 def test_all_exports_resolvable():
     """
     Iterates through the lazy-loaded __all__ registry and explicitly attempts
     to access each attribute. If an import path is broken or a function was
     deleted/renamed, this will fail and alert the developer immediately.
     """
-    assert hasattr(
-        socrata_toolkit, "__all__"
-    ), "socrata_toolkit is missing the __all__ declaration."
+    assert hasattr(socrata_toolkit, "__all__"), (
+        "socrata_toolkit is missing the __all__ declaration."
+    )
 
     failed_imports = []
     missing_deps = set()

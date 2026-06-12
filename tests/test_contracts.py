@@ -11,6 +11,7 @@ from socrata_toolkit.contracts import (
     ValidationResult,
 )
 
+
 def _contract() -> DataContract:
     return DataContract(
         name="people",
@@ -23,6 +24,7 @@ def _contract() -> DataContract:
         ],
         primary_key=["id"],
     )
+
 
 def test_conforming_frame_passes():
     df = pd.DataFrame(
@@ -40,6 +42,7 @@ def test_conforming_frame_passes():
     assert result.violations == []
     assert result.rows_checked == 3
 
+
 def test_missing_required_field():
     df = pd.DataFrame({"id": [1], "age": [10], "status": ["active"], "email": ["a@x.com"]})
     df = df.drop(columns=["age"])
@@ -47,6 +50,7 @@ def test_missing_required_field():
     rules = {(v.field, v.rule) for v in result.violations}
     assert ("age", "required") in rules
     assert not result.passed
+
 
 def test_null_policy_violation():
     df = pd.DataFrame(
@@ -62,6 +66,7 @@ def test_null_policy_violation():
     assert len(nulls) == 1
     assert nulls[0].count == 1
 
+
 def test_dtype_violation():
     df = pd.DataFrame(
         {
@@ -75,6 +80,7 @@ def test_dtype_violation():
     dtypes = [v for v in result.violations if v.rule == "dtype" and v.field == "age"]
     assert len(dtypes) == 1
     assert dtypes[0].count == 2
+
 
 def test_min_max_violations():
     df = pd.DataFrame(
@@ -91,6 +97,7 @@ def test_min_max_violations():
     assert below and below[0].count == 1
     assert above and above[0].count == 2
 
+
 def test_allowed_violation():
     df = pd.DataFrame(
         {
@@ -104,6 +111,7 @@ def test_allowed_violation():
     allowed = [v for v in result.violations if v.rule == "allowed"]
     assert allowed and allowed[0].count == 1
 
+
 def test_regex_violation():
     df = pd.DataFrame(
         {
@@ -116,6 +124,7 @@ def test_regex_violation():
     result = _contract().validate(df)
     rx = [v for v in result.violations if v.rule == "regex"]
     assert rx and rx[0].count == 1
+
 
 def test_unique_and_primary_key_violation():
     df = pd.DataFrame(
@@ -131,6 +140,7 @@ def test_unique_and_primary_key_violation():
     pk = [v for v in result.violations if v.rule == "primary_key"]
     assert uniq and uniq[0].count == 2
     assert pk and pk[0].count == 2
+
 
 def test_yaml_round_trip(tmp_path):
     contract = _contract()
