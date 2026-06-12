@@ -534,3 +534,7 @@ def create_distribution_figures(df: pd.DataFrame, data_df: pd.DataFrame, limit: 
     except Exception as e:
         logger.error(f"Error creating distribution figures: {e}")
         return []
+
+def register_analytics_callbacks(app):
+    """Register analytics-related callbacks with the Dash app."""
+    pass
