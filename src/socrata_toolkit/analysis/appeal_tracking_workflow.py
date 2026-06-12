@@ -22,13 +22,13 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, TypedDict
 
 import pandas as pd
-from langgraph.graph import END, StateGraph
 from langchain_anthropic import ChatAnthropic
+from langgraph.graph import END, StateGraph
 
 from socrata_toolkit.analysis.appeal_classifier import (
     AppealOutcomeClassifier,
-    InspectorAppealAnalyzer,
     AppealResolution,
+    InspectorAppealAnalyzer,
 )
 from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
@@ -42,21 +42,21 @@ logger = logging.getLogger(__name__)
 class AppealTrackingState(TypedDict):
     """LangGraph state for appeal & reinspection workflow."""
     # Input context
-    context: Optional[Dict[str, Any]]
+    context: dict[str, Any] | None
     max_rows: int
     include_coaching_plan: bool
 
     # Fetched data
-    reinspection_df: Optional[pd.DataFrame]
-    dismissal_df: Optional[pd.DataFrame]
-    combined_appeals_df: Optional[pd.DataFrame]
+    reinspection_df: pd.DataFrame | None
+    dismissal_df: pd.DataFrame | None
+    combined_appeals_df: pd.DataFrame | None
     total_appeals: int
 
     # Classification and analysis
-    appeal_classifications: List[Dict]
-    inspector_stats: Dict[str, Dict]  # Serializable version
-    outliers: List[Dict]
-    systemic_issues: Dict[str, Any]
+    appeal_classifications: list[dict]
+    inspector_stats: dict[str, dict]  # Serializable version
+    outliers: list[dict]
+    systemic_issues: dict[str, Any]
 
     # Claude assessments
     claude_assessment: str  # Initial performance analysis
@@ -64,8 +64,8 @@ class AppealTrackingState(TypedDict):
     next_action: str  # "complete" | "escalate_training" | "process_review" | "end"
 
     # Output
-    final_report: Dict
-    execution_log: List[Dict]
+    final_report: dict
+    execution_log: list[dict]
 
 
 def create_appeal_tracking_workflow():
@@ -424,18 +424,18 @@ def generate_coaching_plan_node(state: AppealTrackingState) -> AppealTrackingSta
 
         if overturn_rate > 0.3:
             recs = [
-                f"Document all inspection findings with photo evidence",
-                f"Implement peer review before closing high-risk tickets",
-                f"Attend procedural accuracy refresher training",
+                "Document all inspection findings with photo evidence",
+                "Implement peer review before closing high-risk tickets",
+                "Attend procedural accuracy refresher training",
             ]
         elif overturn_rate > 0.2:
             recs = [
-                f"Review standard severity assessment criteria",
-                f"Shadowing with high-performing inspector (5 inspections)",
+                "Review standard severity assessment criteria",
+                "Shadowing with high-performing inspector (5 inspections)",
             ]
         else:
             recs = [
-                f"General quality assurance review",
+                "General quality assurance review",
             ]
 
         recommendations.append({
@@ -497,7 +497,7 @@ def generate_report_node(state: AppealTrackingState) -> AppealTrackingState:
 # HELPER FUNCTIONS
 # ============================================================================
 
-def _format_outliers(outliers: List[Dict]) -> str:
+def _format_outliers(outliers: list[dict]) -> str:
     """Format outliers for Claude prompt."""
     if not outliers:
         return "No outliers detected."
@@ -511,7 +511,7 @@ def _format_outliers(outliers: List[Dict]) -> str:
     return "\n".join(lines)
 
 
-def _format_systemic_issues(issues: Dict[str, Any]) -> str:
+def _format_systemic_issues(issues: dict[str, Any]) -> str:
     """Format systemic issues for Claude prompt."""
     if not issues:
         return "No systemic issues identified."
@@ -529,7 +529,7 @@ def _format_systemic_issues(issues: Dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def _format_coaching_plan(recommendations: List[Dict]) -> str:
+def _format_coaching_plan(recommendations: list[dict]) -> str:
     """Format coaching plan."""
     if not recommendations:
         return "No coaching recommendations."

@@ -18,12 +18,12 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass, asdict, field
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Optional
 
 import pandas as pd
-from langgraph.graph import StateGraph, END
+from langgraph.graph import END, StateGraph
 
 try:
     from langchain_anthropic import ChatAnthropic
@@ -32,15 +32,15 @@ try:
 except ImportError:
     HAS_LANGCHAIN = False
 
-from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 from socrata_toolkit.analysis.sla_status import (
-    SLAStatusClassifier,
-    SLAMetricSnapshot,
-    SLAStatusRecord,
-    SLAComplianceReport,
     ComplianceStatus,
+    SLAComplianceReport,
+    SLAMetricSnapshot,
+    SLAStatusClassifier,
+    SLAStatusRecord,
     SLATier,
 )
+from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +72,7 @@ class SLAComplianceState(dict):
     action_items: list[str] = field(default_factory=list)
 
     # Final report
-    compliance_report: Optional[SLAComplianceReport] = None
+    compliance_report: SLAComplianceReport | None = None
     execution_log: list[dict[str, Any]] = field(default_factory=list)
 
     def __init__(self):
@@ -105,7 +105,7 @@ def _load_dataset_config() -> dict[str, dict[str, str]]:
 
     config_path = "data/dataset_config.json"
     if os.path.exists(config_path):
-        with open(config_path, "r") as f:
+        with open(config_path) as f:
             return json.load(f)
 
     # Fallback: hardcoded 26-dataset registry from CLAUDE.md
@@ -214,7 +214,6 @@ def classify_sla_status(state: SLAComplianceState) -> dict[str, Any]:
     logger.info("[CLASSIFY] Classifying datasets against SLA tiers")
 
     classifier = SLAStatusClassifier(at_risk_threshold_pct=0.80)
-    registry = DatasetRegistry()
 
     # Map dataset_key → SLA tier from config
     sla_tier_map = {

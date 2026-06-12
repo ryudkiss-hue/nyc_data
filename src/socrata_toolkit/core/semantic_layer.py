@@ -23,7 +23,7 @@ Example:
 import logging
 import math
 from dataclasses import dataclass
-from typing import Dict, Optional, Tuple, List
+from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +78,7 @@ class WilsonScoreCI:
         }
         return z_values.get(confidence_level, 1.96)  # Default to 95%
 
-    def compute(self) -> Tuple[float, float]:
+    def compute(self) -> tuple[float, float]:
         """Compute Wilson Score confidence interval.
 
         Returns:
@@ -135,7 +135,7 @@ class MetricComputation:
             return 0.0
         return 100.0 * self.numerator / self.denominator
 
-    def compute_ci(self) -> Tuple[float, float]:
+    def compute_ci(self) -> tuple[float, float]:
         """Compute confidence interval as percentages.
 
         Returns:
@@ -159,7 +159,7 @@ class MetricsRegistry:
     """Central registry of all metric definitions."""
 
     def __init__(self):
-        self._metrics: Dict[str, MetricDefinition] = {}
+        self._metrics: dict[str, MetricDefinition] = {}
 
     def register(self, metric: MetricDefinition):
         """Register a metric definition.
@@ -180,7 +180,7 @@ class MetricsRegistry:
             raise KeyError(f"Metric not found: {metric_id}")
         return self._metrics[metric_id]
 
-    def list_metrics(self) -> List[MetricDefinition]:
+    def list_metrics(self) -> list[MetricDefinition]:
         """List all registered metrics."""
         return list(self._metrics.values())
 

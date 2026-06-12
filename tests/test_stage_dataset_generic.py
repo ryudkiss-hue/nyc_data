@@ -1,8 +1,10 @@
 """Tests for generic stage_dataset() function with auto column discovery."""
-import pytest
-import duckdb
 import json
 from pathlib import Path
+
+import duckdb
+import pytest
+
 from socrata_toolkit.core.duckdb_pipeline import stage_dataset
 
 

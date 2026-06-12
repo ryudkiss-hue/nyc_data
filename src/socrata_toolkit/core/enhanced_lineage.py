@@ -13,11 +13,11 @@ Provides:
 - DAG construction and visualization
 - Error tracking with recovery paths
 """
-import logging
-from datetime import datetime
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass, asdict
 import json
+import logging
+from dataclasses import asdict, dataclass
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ class LineageEvent:
     timestamp: str = None  # ISO 8601 timestamp
     row_count: Optional[int] = None
     status: str = "success"  # success, failure, skipped
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: Optional[dict[str, Any]] = None
 
     def __post_init__(self):
         if self.timestamp is None:
@@ -52,7 +52,7 @@ class LineageEvent:
 class LineageNode:
     """Node in the lineage DAG."""
 
-    def __init__(self, name: str, node_type: str, metadata: Optional[Dict] = None):
+    def __init__(self, name: str, node_type: str, metadata: Optional[dict] = None):
         self.name = name
         self.node_type = node_type  # dataset, staging, mart, dashboard, export
         self.metadata = metadata or {}
@@ -70,27 +70,27 @@ class LineageNode:
 
 # Convenience subclasses
 class DatasetNode(LineageNode):
-    def __init__(self, name: str, metadata: Optional[Dict] = None):
+    def __init__(self, name: str, metadata: Optional[dict] = None):
         super().__init__(name, "dataset", metadata)
 
 
 class MartNode(LineageNode):
-    def __init__(self, name: str, metadata: Optional[Dict] = None):
+    def __init__(self, name: str, metadata: Optional[dict] = None):
         super().__init__(name, "mart", metadata)
 
 
 class DashboardNode(LineageNode):
-    def __init__(self, name: str, metadata: Optional[Dict] = None):
+    def __init__(self, name: str, metadata: Optional[dict] = None):
         super().__init__(name, "dashboard", metadata)
 
 
 class ReportNode(LineageNode):
-    def __init__(self, name: str, metadata: Optional[Dict] = None):
+    def __init__(self, name: str, metadata: Optional[dict] = None):
         super().__init__(name, "report", metadata)
 
 
 class ExportNode(LineageNode):
-    def __init__(self, name: str, metadata: Optional[Dict] = None):
+    def __init__(self, name: str, metadata: Optional[dict] = None):
         super().__init__(name, "export", metadata)
 
 
@@ -98,7 +98,7 @@ class LineageTracker:
     """Track and record lineage events throughout the workflow."""
 
     def __init__(self):
-        self.events: List[LineageEvent] = []
+        self.events: list[LineageEvent] = []
 
     def record_event(
         self,
@@ -107,7 +107,7 @@ class LineageTracker:
         target: str,
         row_count: Optional[int] = None,
         status: str = "success",
-        metadata: Optional[Dict] = None,
+        metadata: Optional[dict] = None,
     ):
         """Record a lineage event.
 
@@ -130,15 +130,15 @@ class LineageTracker:
         self.events.append(event)
         logger.info(f"Lineage event: {event_type} {source} → {target} ({status})")
 
-    def get_events(self) -> List[LineageEvent]:
+    def get_events(self) -> list[LineageEvent]:
         """Get all recorded events."""
         return self.events.copy()
 
-    def get_events_by_type(self, event_type: str) -> List[LineageEvent]:
+    def get_events_by_type(self, event_type: str) -> list[LineageEvent]:
         """Get events filtered by type."""
         return [e for e in self.events if e.event_type == event_type]
 
-    def get_upstream_chain(self, target: str) -> List[LineageEvent]:
+    def get_upstream_chain(self, target: str) -> list[LineageEvent]:
         """Get all events that led to this target (upstream lineage)."""
         chain = []
         current_target = target
@@ -153,7 +153,7 @@ class LineageTracker:
 
         return chain
 
-    def get_downstream_chain(self, source: str) -> List[LineageEvent]:
+    def get_downstream_chain(self, source: str) -> list[LineageEvent]:
         """Get all events that depend on this source (downstream lineage)."""
         chain = []
         current_source = source
@@ -166,7 +166,7 @@ class LineageTracker:
 
         return chain
 
-    def get_failed_events(self) -> List[LineageEvent]:
+    def get_failed_events(self) -> list[LineageEvent]:
         """Get all failed events."""
         return [e for e in self.events if e.status == "failure"]
 
@@ -183,10 +183,10 @@ class LineageDAG:
     """Directed Acyclic Graph of lineage nodes and edges."""
 
     def __init__(self):
-        self.nodes: Dict[str, LineageNode] = {}
-        self.edges: List[tuple] = []
+        self.nodes: dict[str, LineageNode] = {}
+        self.edges: list[tuple] = []
 
-    def add_node(self, name: str, node_type: str, metadata: Optional[Dict] = None):
+    def add_node(self, name: str, node_type: str, metadata: Optional[dict] = None):
         """Add a node to the DAG."""
         if name not in self.nodes:
             self.nodes[name] = LineageNode(name, node_type, metadata)
@@ -273,7 +273,7 @@ class LineageDAG:
 
         return "\n".join(lines)
 
-    def get_upstream_nodes(self, node_name: str) -> List[str]:
+    def get_upstream_nodes(self, node_name: str) -> list[str]:
         """Get all upstream nodes that feed into this node."""
         upstream = set()
 
@@ -286,7 +286,7 @@ class LineageDAG:
         traverse_upstream(node_name)
         return list(upstream)
 
-    def get_downstream_nodes(self, node_name: str) -> List[str]:
+    def get_downstream_nodes(self, node_name: str) -> list[str]:
         """Get all downstream nodes that depend on this node."""
         downstream = set()
 

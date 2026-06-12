@@ -9,12 +9,12 @@ Builds 50+ KPIs across 5 analytical areas:
 5. Spatial (density, hotspots, coverage, routing)
 """
 
-import logging
-from typing import Dict, Any, List, Tuple
-from datetime import datetime, timedelta
-from dataclasses import dataclass
-import json
 import asyncio
+import json
+import logging
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -26,9 +26,9 @@ class KPIResult:
     dataset_key: str
     kpi_name: str
     kpi_value: float
-    dimensions: Dict[str, str]
+    dimensions: dict[str, str]
     computed_at: datetime
-    confidence_interval: Tuple[float, float] = None
+    confidence_interval: tuple[float, float] = None
     reliability: str = "high"  # high, medium, low
     notes: str = ""
 
@@ -50,7 +50,7 @@ class AnalyticsMaterializer:
         self.client = client
         self.kpis_computed = []
 
-    def materialize_violation_kpis(self, raw_df: Any) -> List[KPIResult]:
+    def materialize_violation_kpis(self, raw_df: Any) -> list[KPIResult]:
         """
         Compute violation analytics KPIs.
 
@@ -117,7 +117,7 @@ class AnalyticsMaterializer:
 
         return results
 
-    def materialize_ramp_kpis(self, raw_df: Any) -> List[KPIResult]:
+    def materialize_ramp_kpis(self, raw_df: Any) -> list[KPIResult]:
         """
         Compute ramp accessibility KPIs.
 
@@ -179,7 +179,7 @@ class AnalyticsMaterializer:
 
         return results
 
-    def materialize_permit_kpis(self, raw_df: Any) -> List[KPIResult]:
+    def materialize_permit_kpis(self, raw_df: Any) -> list[KPIResult]:
         """
         Compute permit coordination KPIs.
 
@@ -232,7 +232,7 @@ class AnalyticsMaterializer:
 
         return results
 
-    def materialize_quality_kpis(self, raw_df: Any) -> List[KPIResult]:
+    def materialize_quality_kpis(self, raw_df: Any) -> list[KPIResult]:
         """
         Compute data quality KPIs.
 
@@ -313,7 +313,7 @@ class AnalyticsMaterializer:
 
         return results
 
-    def materialize_spatial_kpis(self, raw_df: Any) -> List[KPIResult]:
+    def materialize_spatial_kpis(self, raw_df: Any) -> list[KPIResult]:
         """
         Compute spatial analytics KPIs.
 
@@ -374,7 +374,7 @@ class AnalyticsMaterializer:
         permit_df: Any,
         quality_df: Any,
         spatial_df: Any,
-    ) -> Dict[str, List[KPIResult]]:
+    ) -> dict[str, list[KPIResult]]:
         """
         Materialize all KPI categories in parallel (async).
 
@@ -411,7 +411,7 @@ class AnalyticsMaterializer:
         permit_df: Any,
         quality_df: Any,
         spatial_df: Any,
-    ) -> Dict[str, List[KPIResult]]:
+    ) -> dict[str, list[KPIResult]]:
         """
         Materialize all KPI categories (synchronous wrapper).
 

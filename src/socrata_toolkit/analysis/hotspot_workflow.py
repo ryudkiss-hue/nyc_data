@@ -27,7 +27,7 @@ import json
 import logging
 import os
 from datetime import datetime, timezone
-from typing import Any, TypedDict, Optional
+from typing import Any, Optional, TypedDict
 
 import numpy as np
 import pandas as pd
@@ -35,8 +35,8 @@ import pandas as pd
 from ..core.client import SocrataClient, SocrataConfig
 from .hotspot_classifier import (
     HotspotClassificationEngine,
-    HotspotMetrics,
     HotspotClassifier,
+    HotspotMetrics,
     Trend,
     classify_hotspots_from_dataframe,
 )
@@ -45,15 +45,15 @@ logger = logging.getLogger(__name__)
 
 # Optional: Only import LangGraph if available
 try:
-    from langgraph.graph import StateGraph, START, END
+    from langgraph.graph import END, START, StateGraph
     HAS_LANGGRAPH = True
 except ImportError:
     HAS_LANGGRAPH = False
 
 # Optional: Spatial clustering and density estimation
 try:
-    from sklearn.cluster import DBSCAN
     from scipy.stats import gaussian_kde
+    from sklearn.cluster import DBSCAN
     HAS_SPATIAL = True
 except ImportError:
     HAS_SPATIAL = False
@@ -82,20 +82,20 @@ class HotspotState(TypedDict):
     complaints_fourfour: str
     inspections_fourfour: str
     domain: str
-    borough_filter: Optional[str]
+    borough_filter: str | None
     sample_size: int
     dbscan_eps: float  # meters
     dbscan_min_samples: int
 
     # Fetched data
-    violations_df: Optional[pd.DataFrame]
-    complaints_df: Optional[pd.DataFrame]
-    inspections_df: Optional[pd.DataFrame]
+    violations_df: pd.DataFrame | None
+    complaints_df: pd.DataFrame | None
+    inspections_df: pd.DataFrame | None
 
     # Spatial analysis results
     clusters: list[dict]  # DBSCAN clusters
-    density_grid: Optional[np.ndarray]
-    density_bounds: Optional[tuple]  # (min_lat, max_lat, min_lon, max_lon)
+    density_grid: np.ndarray | None
+    density_bounds: tuple | None  # (min_lat, max_lat, min_lon, max_lon)
 
     # Classification results
     hotspots: list[HotspotClassifier]
@@ -107,7 +107,7 @@ class HotspotState(TypedDict):
     routing_recommendations: list[str]
 
     # Output artifacts
-    map_html: Optional[str]
+    map_html: str | None
     final_report: dict[str, Any]
     error_log: list[str]
     execution_log: list[str]
@@ -185,7 +185,7 @@ class GeographicHotspotWorkflow:
 
     def run(
         self,
-        borough_filter: Optional[str] = None,
+        borough_filter: str | None = None,
         sample_size: int = 5000,
     ) -> dict[str, Any]:
         """Execute the workflow.
@@ -542,7 +542,7 @@ Provide concise, actionable guidance (150 words max)."""
 
     def _run_without_langgraph(
         self,
-        borough_filter: Optional[str],
+        borough_filter: str | None,
         sample_size: int,
     ) -> dict[str, Any]:
         """Fallback execution when LangGraph unavailable."""

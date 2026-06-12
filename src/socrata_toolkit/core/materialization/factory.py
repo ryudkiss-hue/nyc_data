@@ -33,7 +33,7 @@ class MaterializationFactory:
         self.lineage = MartLineage()
         self.quality = MartQuality()
 
-    def materialize(self, mat_config: dict, schema: str = "analytics") -> Dict[str, dict]:
+    def materialize(self, mat_config: dict, schema: str = "analytics") -> dict[str, dict]:
         """Materialize all mats from config.
 
         Args:

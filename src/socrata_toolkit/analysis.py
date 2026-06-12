@@ -1738,6 +1738,7 @@ from .quality.anomalies import (  # noqa: E402
     AnomalyReport,
     AnomalySeverity,
 )
+from .quality.sla_tracking import compute_sla_metrics  # noqa: E402
 from .quality.validation import (  # noqa: E402
     ValidationReport,
 )
@@ -1747,7 +1748,6 @@ from .reporting import (  # noqa: E402
     generate_inquiry_response,
     generate_program_report,
 )
-from .quality.sla_tracking import compute_sla_metrics  # noqa: E402
 
 try:
     from .reports.analyst import ProjectAnalystReports  # noqa: E402

@@ -18,6 +18,7 @@ from .plotly import (
     waterfall_chart,
 )
 
+
 # Deferred imports to avoid circular dependency issues
 def __getattr__(name: str):
     """Lazy-load functions from charts_extra and analysis modules."""

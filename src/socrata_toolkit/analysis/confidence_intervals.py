@@ -19,7 +19,7 @@ def wilson_score_confidence_interval(
     successes: int,
     total: int,
     confidence_level: float = 0.95,
-) -> Dict[str, Union[float, int]]:
+) -> dict[str, Union[float, int]]:
     """
     Compute Wilson Score confidence interval for a proportion.
 
@@ -103,7 +103,7 @@ def bootstrap_confidence_interval(
     confidence_level: float = 0.95,
     n_bootstrap: int = 1000,
     random_state: Optional[int] = None,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Compute bootstrap confidence interval for any statistic.
 
@@ -189,7 +189,7 @@ def bootstrap_confidence_interval(
 def mean_confidence_interval(
     data: Union[np.ndarray, list],
     confidence_level: float = 0.95,
-) -> Dict[str, Union[float, int]]:
+) -> dict[str, Union[float, int]]:
     """
     Compute t-test confidence interval for mean of continuous data.
 

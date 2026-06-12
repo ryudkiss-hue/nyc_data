@@ -21,8 +21,8 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, TypedDict
 
 import pandas as pd
-from langgraph.graph import END, StateGraph
 from langchain_anthropic import ChatAnthropic
+from langgraph.graph import END, StateGraph
 
 from socrata_toolkit.analysis.confidence_intervals import (
     wilson_score_confidence_interval,
@@ -55,27 +55,27 @@ class BoroughRampStats:
     ci_lower: float
     ci_upper: float
     reliability: str  # "high" | "medium" | "low"
-    common_blockers: List[str]
+    common_blockers: list[str]
     avg_work_stage: float
 
 
 class RampProgressState(TypedDict):
     """LangGraph state for ramp progress workflow."""
     # Input context
-    context: Optional[Dict[str, Any]]
+    context: dict[str, Any] | None
     fourfour: str
     max_rows: int
-    borough_filter: Optional[str]
+    borough_filter: str | None
 
     # Fetched data
-    dataframe: Optional[pd.DataFrame]
+    dataframe: pd.DataFrame | None
     total_records: int
 
     # Classification results
-    classification_summary: Dict  # Status breakdown
-    borough_stats: Dict[str, BoroughRampStats]  # By borough
-    high_blocker_ramps: List[Dict]  # Ramps with multiple blockers
-    blocker_summary: Dict  # Blocker type breakdown
+    classification_summary: dict  # Status breakdown
+    borough_stats: dict[str, BoroughRampStats]  # By borough
+    high_blocker_ramps: list[dict]  # Ramps with multiple blockers
+    blocker_summary: dict  # Blocker type breakdown
 
     # Claude assessments
     claude_assessment: str  # Initial read on data
@@ -83,8 +83,8 @@ class RampProgressState(TypedDict):
     next_action: str  # "complete" | "escalate_borough" | "investigate_blockers" | "end"
 
     # Output
-    final_report: Dict
-    execution_log: List[Dict]
+    final_report: dict
+    execution_log: list[dict]
 
 
 def create_ramp_workflow():
@@ -230,7 +230,7 @@ def compute_stats_node(state: RampProgressState) -> RampProgressState:
         "borough" if "borough" in df.columns else "location_borough"
     )
     if borough_col not in df.columns:
-        logger.warning(f"[STATS] Borough column not found in dataframe")
+        logger.warning("[STATS] Borough column not found in dataframe")
         return state
 
     for borough in df[borough_col].unique():
@@ -439,7 +439,7 @@ def generate_report_node(state: RampProgressState) -> RampProgressState:
 # ============================================================================
 
 
-def _format_borough_stats(borough_stats: Dict[str, BoroughRampStats]) -> str:
+def _format_borough_stats(borough_stats: dict[str, BoroughRampStats]) -> str:
     """Format borough statistics as readable text."""
     lines = []
     for borough, stats in sorted(
@@ -456,7 +456,7 @@ def _format_borough_stats(borough_stats: Dict[str, BoroughRampStats]) -> str:
     return "\n".join(lines)
 
 
-def _format_blocker_summary(blocker_summary: Dict[str, int]) -> str:
+def _format_blocker_summary(blocker_summary: dict[str, int]) -> str:
     """Format blocker summary as readable text."""
     lines = []
     for blocker, count in sorted(
@@ -469,7 +469,7 @@ def _format_blocker_summary(blocker_summary: Dict[str, int]) -> str:
     return "\n".join(lines) if lines else "- No blockers identified"
 
 
-def _format_high_blocker_ramps(ramps: List[Dict]) -> str:
+def _format_high_blocker_ramps(ramps: list[dict]) -> str:
     """Format high-risk ramps as readable text."""
     if not ramps:
         return "- None identified"
@@ -489,8 +489,8 @@ def _format_high_blocker_ramps(ramps: List[Dict]) -> str:
 def run_ramp_workflow(
     fourfour: str = "e7gc-ub6z",
     max_rows: int = 1000,
-    borough_filter: Optional[str] = None,
-) -> Dict[str, Any]:
+    borough_filter: str | None = None,
+) -> dict[str, Any]:
     """
     Run the complete ramp progress tracking workflow.
 

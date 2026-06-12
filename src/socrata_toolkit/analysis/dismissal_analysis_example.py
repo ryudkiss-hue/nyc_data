@@ -7,12 +7,13 @@ to analyze inspector dismissal patterns and flag suspicious cases.
 
 import json
 import logging
-from socrata_toolkit.analysis.dismissal_classifier import (
-    DismissalReasonClassifier,
-    DismissalCategory,
-)
+
 from socrata_toolkit.analysis.dismissal_analysis_workflow import (
     run_dismissal_workflow,
+)
+from socrata_toolkit.analysis.dismissal_classifier import (
+    DismissalCategory,
+    DismissalReasonClassifier,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -110,7 +111,7 @@ def example_full_workflow():
         summary = report["summary"]
         print(f"Total dismissals analyzed: {summary['total_dismissals']}")
         print(f"Execution time: {summary['execution_time']:.1f}s")
-        print(f"\nCategory breakdown:")
+        print("\nCategory breakdown:")
         for category, count in summary["classifications"].items():
             pct = 100 * count / summary["total_dismissals"] if summary["total_dismissals"] > 0 else 0
             print(f"  - {category}: {count} ({pct:.1f}%)")

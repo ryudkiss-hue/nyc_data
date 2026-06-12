@@ -586,7 +586,7 @@ class SpatialIndex:
     def query_by_distance(self, center: tuple[float, float], radius: float) -> list:
         """Query items within radius of center point."""
         from shapely.geometry import Point
-        
+
         # Center point assumed to be (latitude, longitude)
         center_pt = Point(center[1], center[0])
         results = []

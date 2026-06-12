@@ -20,7 +20,6 @@ from socrata_toolkit.spatial.conflict_detection import (
     summarize_conflicts_by_severity,
 )
 
-
 # =============================================================================
 # Fixtures
 # =============================================================================

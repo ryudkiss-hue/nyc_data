@@ -1,15 +1,16 @@
 """Tests for generalized materialization factory (Phase 4a: Materialization + Management)."""
 import json
-import pytest
-import duckdb
 from pathlib import Path
 
+import duckdb
+import pytest
+
 from socrata_toolkit.core.materialization import (
-    MaterializationFactory,
     BuilderRegistry,
+    MartBuilder,
     MartLineage,
     MartQuality,
-    MartBuilder,
+    MaterializationFactory,
 )
 
 

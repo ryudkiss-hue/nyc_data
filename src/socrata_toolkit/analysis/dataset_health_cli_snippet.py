@@ -12,9 +12,10 @@ Integration pattern:
 - Add 'dataset health --monitor' flag for continuous monitoring
 """
 
-import click
 import json
 import logging
+
+import click
 
 from ..analysis.dataset_health_workflow import run_dataset_health_workflow
 
@@ -257,10 +258,10 @@ if __name__ == "__main__":
     print("=" * 60)
     print()
     print("Option 1: Extend existing 'dataset health' command")
-    print(f"  Usage: socrata dataset health --workflow")
+    print("  Usage: socrata dataset health --workflow")
     print()
     print("Option 2: Create separate 'health-workflow' command")
-    print(f"  Usage: socrata dataset health-workflow")
+    print("  Usage: socrata dataset health-workflow")
     print()
     print("Both options support:")
     print("  - JSON output (--output file.json)")

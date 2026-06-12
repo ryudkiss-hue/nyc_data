@@ -4,12 +4,13 @@ Dark luxury aesthetic with gold accents, minimalist brutalism for C-suite.
 Real-time KPI monitoring with elegant metric cards and trend indicators.
 """
 
-import dash
-from dash import dcc, html
-import plotly.graph_objects as go
-import pandas as pd
-from datetime import datetime
 import random
+from datetime import datetime
+
+import dash
+import pandas as pd
+import plotly.graph_objects as go
+from dash import dcc, html
 
 # ============================================================================
 # THEME & STYLING
@@ -215,7 +216,7 @@ def create_executive_dashboard():
         line=dict(color=ACCENT_GOLD, width=3),
         marker=dict(size=6, color=ACCENT_GOLD),
         fill='tozeroy',
-        fillcolor=f'rgba(212, 175, 55, 0.1)',
+        fillcolor='rgba(212, 175, 55, 0.1)',
     ))
     fig_velocity.update_layout(
         template='plotly_dark',
@@ -228,7 +229,7 @@ def create_executive_dashboard():
         showlegend=False,
     )
     fig_velocity.update_xaxes(showgrid=False, zeroline=False)
-    fig_velocity.update_yaxes(showgrid=True, gridwidth=1, gridcolor=f'rgba(212, 175, 55, 0.1)')
+    fig_velocity.update_yaxes(showgrid=True, gridwidth=1, gridcolor='rgba(212, 175, 55, 0.1)')
 
     fig_borough = go.Figure()
     boroughs = ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island']
@@ -252,7 +253,7 @@ def create_executive_dashboard():
         showlegend=False,
     )
     fig_borough.update_xaxes(showgrid=False)
-    fig_borough.update_yaxes(showgrid=True, gridwidth=1, gridcolor=f'rgba(212, 175, 55, 0.1)')
+    fig_borough.update_yaxes(showgrid=True, gridwidth=1, gridcolor='rgba(212, 175, 55, 0.1)')
 
     return html.Div([
         dcc.Style(children=EXECUTIVE_CSS),
@@ -281,14 +282,14 @@ def create_executive_dashboard():
                     html.Span("Data Pipeline", style={"marginRight": "auto"}),
                     html.Span("Operational", style={"color": POSITIVE})
                 ], style={"display": "flex", "alignItems": "center", "padding": "0.75rem",
-                         "background": f"rgba(16, 185, 129, 0.05)", "borderRadius": "4px",
+                         "background": "rgba(16, 185, 129, 0.05)", "borderRadius": "4px",
                          "marginBottom": "0.75rem"}),
                 html.Div([
                     html.Span("●", className="status-indicator active"),
                     html.Span("API Gateway", style={"marginRight": "auto"}),
                     html.Span("Operational", style={"color": POSITIVE})
                 ], style={"display": "flex", "alignItems": "center", "padding": "0.75rem",
-                         "background": f"rgba(16, 185, 129, 0.05)", "borderRadius": "4px"}),
+                         "background": "rgba(16, 185, 129, 0.05)", "borderRadius": "4px"}),
             ], className="chart-container")
         ], className="dashboard-section"),
 
@@ -311,7 +312,7 @@ def create_executive_dashboard():
         html.Div(
             f"Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}",
             style={"textAlign": "center", "color": TEXT_SECONDARY, "padding": "2rem 3rem",
-                   "fontSize": "0.85rem", "borderTop": f"1px solid rgba(212, 175, 55, 0.1)"}
+                   "fontSize": "0.85rem", "borderTop": "1px solid rgba(212, 175, 55, 0.1)"}
         ),
     ], style={"backgroundColor": DARK_BG, "minHeight": "100vh"})
 

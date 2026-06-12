@@ -14,9 +14,9 @@ from __future__ import annotations
 
 import json
 import logging
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from typing import Any, Optional
-from dataclasses import dataclass, asdict
 
 import pandas as pd
 from langchain_anthropic import ChatAnthropic
@@ -35,8 +35,8 @@ class VelocityAnalysisContext:
     """Input context for velocity analysis."""
     start_date: pd.Timestamp
     end_date: pd.Timestamp
-    borough_filter: Optional[str] = None  # "MANHATTAN", "BROOKLYN", etc. or None for all
-    inspector_ids: Optional[list[str]] = None  # Specific inspectors or None for all
+    borough_filter: str | None = None  # "MANHATTAN", "BROOKLYN", etc. or None for all
+    inspector_ids: list[str] | None = None  # Specific inspectors or None for all
 
 
 class VelocityState(dict):
@@ -489,7 +489,7 @@ def build_report(state: VelocityState) -> VelocityState:
 def build_velocity_analysis_graph():
     """Construct and return the LangGraph workflow."""
     try:
-        from langgraph.graph import StateGraph, END
+        from langgraph.graph import END, StateGraph
     except ImportError:
         logger.error("LangGraph not installed. Install with: pip install langgraph")
         return None

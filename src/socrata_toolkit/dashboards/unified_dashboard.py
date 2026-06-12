@@ -13,11 +13,12 @@ Features:
 - Responsive design (1920x1080+)
 """
 
-import dash
-from dash import dcc, html, Input, Output, callback
-import dash_bootstrap_components as dbc
-from pathlib import Path
 import logging
+from pathlib import Path
+
+import dash
+import dash_bootstrap_components as dbc
+from dash import Input, Output, callback, dcc, html
 
 logger = logging.getLogger(__name__)
 

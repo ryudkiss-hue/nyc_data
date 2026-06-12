@@ -150,7 +150,7 @@ class QualityExpectation:
         """Return True if data satisfies the expectation rules."""
         if not hasattr(data, "columns"):  # Basic check for DataFrame-like object
             return True
-            
+
         import pandas as pd
         for col, rule in self.rules.items():
             if col not in data.columns:

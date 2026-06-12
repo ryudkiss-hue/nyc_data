@@ -91,7 +91,7 @@ def test_workflow_imports():
         )
         print("[PASS] All workflow classes imported successfully")
         print(f"  - BoroughRampStats: {BoroughRampStats.__name__}")
-        print(f"  - RampProgressState: dict-based state")
+        print("  - RampProgressState: dict-based state")
         print(f"  - create_ramp_workflow: {create_ramp_workflow.__name__}")
         print(f"  - run_ramp_workflow: {run_ramp_workflow.__name__}")
         return True

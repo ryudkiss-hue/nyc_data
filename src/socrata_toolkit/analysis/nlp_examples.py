@@ -5,8 +5,9 @@ Shows how to classify and analyze text data without LLM calls.
 """
 
 import pandas as pd
-from socrata_toolkit.core.client import SocrataClient, SocrataConfig
+
 from socrata_toolkit.analysis.nlp_analysis import DatasetAnalyzerWithNLP
+from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
 
 def example_classify_violations():

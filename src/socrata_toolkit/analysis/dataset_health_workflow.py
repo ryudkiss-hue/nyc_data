@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 # Optional: Only import LangGraph if available (graceful degradation)
 try:
-    from langgraph.graph import StateGraph, START, END
+    from langgraph.graph import END, START, StateGraph
     HAS_LANGGRAPH = True
 except ImportError:
     HAS_LANGGRAPH = False
@@ -328,7 +328,7 @@ Format response as JSON:
             recs = {"error": str(exc)}
 
         state["claude_recommendations"] = recs
-        logger.info(f"Claude recommendations received")
+        logger.info("Claude recommendations received")
 
         return state
 

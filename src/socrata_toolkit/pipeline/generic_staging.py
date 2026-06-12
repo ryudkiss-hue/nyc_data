@@ -6,9 +6,9 @@ Supports classification, mapping, derivations, deduplication, validation.
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Callable
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ class StagingResult:
     rows_in: int
     rows_out: int
     rows_deduplicated: int
-    errors: List[str]
+    errors: list[str]
     execution_time_secs: float
     timestamp: datetime
 
@@ -60,7 +60,7 @@ class TransformationRegistry:
     }
 
     @classmethod
-    def get_classifications(cls, dataset_key: str) -> List[str]:
+    def get_classifications(cls, dataset_key: str) -> list[str]:
         """Get valid classifications for a dataset."""
         return cls.CLASSIFICATIONS.get(dataset_key, [])
 
@@ -79,8 +79,8 @@ def stage_dataset(
     dataset_key: str,
     raw_df: Any,  # Pandas DataFrame or DuckDB relation
     client: Any,  # MotherDuckClient
-    transformations: Optional[Dict[str, Any]] = None,
-    dedup_cols: Optional[List[str]] = None,
+    transformations: Optional[dict[str, Any]] = None,
+    dedup_cols: Optional[list[str]] = None,
 ) -> StagingResult:
     """
     Generic staging function for all 24 datasets.
@@ -169,8 +169,8 @@ def stage_dataset(
 
 
 def stage_all_datasets(
-    datasets: List[Dict[str, Any]], client: Any
-) -> List[StagingResult]:
+    datasets: list[dict[str, Any]], client: Any
+) -> list[StagingResult]:
     """
     Stage all datasets in sequence.
 

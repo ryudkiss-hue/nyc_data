@@ -9,9 +9,9 @@ Checks:
 5. Sample records match expected schema
 """
 
-import os
 import json
 import logging
+import os
 from datetime import datetime
 
 import requests
@@ -69,7 +69,7 @@ def verify_fourfours() -> dict:
     client = SocrataClient(SocrataConfig())
     results = {}
 
-    for key, fourfour in fourtours_to_check.items():
+    for key, fourfour in fourfours_to_check.items():
         try:
             metadata = client.get_metadata("data.cityofnewyork.us", fourfour)
 
@@ -138,7 +138,7 @@ def verify_data_authenticity() -> dict:
     logger.info(f"[VERIFY 3] Violations fetched: {len(violations_df)} rows")
     logger.info(f"[VERIFY 3] Has timestamps: {checks['has_timestamp_columns']}")
     logger.info(f"[VERIFY 3] Has locations: {checks['has_location_columns']}")
-    logger.info(f"[VERIFY 3] Sample descriptions:")
+    logger.info("[VERIFY 3] Sample descriptions:")
     for sample in checks["sample_records"]:
         logger.info(f"  - {sample['description']}")
         logger.info(f"    Borough: {sample['borough']}, Date: {sample['date']}")
@@ -248,8 +248,9 @@ def verify_live_api_calls() -> dict:
     """Verify data is fetched from live API, not local cache."""
     logger.info("[VERIFY 6] Checking for live API calls...")
 
-    import requests
     from urllib.parse import urlencode
+
+    import requests
 
     domain = "data.cityofnewyork.us"
     fourfour = "6kbp-uz6m"
@@ -289,6 +290,7 @@ def verify_live_api_calls() -> dict:
 
 import pandas as pd
 
+
 def run_all_verifications() -> dict:
     """Run all 6 verification checks."""
     logger.info("=" * 70)
@@ -299,7 +301,7 @@ def run_all_verifications() -> dict:
         "timestamp": datetime.now().isoformat(),
         "verifications": {
             "1_credentials": verify_credentials(),
-            "2_fourtours": verify_fourtours(),
+            "2_fourfours": verify_fourfours(),
             "3_authenticity": verify_data_authenticity(),
             "4_not_mocked": verify_not_mocked(),
             "5_freshness": verify_data_freshness(),

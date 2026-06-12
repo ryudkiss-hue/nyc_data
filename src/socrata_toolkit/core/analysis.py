@@ -1,7 +1,7 @@
 """Analysis layer: Pre-built queries, NL interface, statistical summaries."""
 import logging
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
 
 import duckdb
 import pandas as pd
@@ -37,7 +37,7 @@ class StatisticalSummary:
     def __init__(self, conn: duckdb.DuckDBPyConnection):
         self.conn = conn
 
-    def compute(self, table: str, columns: List[str]) -> Dict[str, Any]:
+    def compute(self, table: str, columns: list[str]) -> dict[str, Any]:
         """Compute statistics for specified columns.
 
         Args:
@@ -72,7 +72,7 @@ class StatisticalSummary:
             raise ValueError(f"Column {col} not found in {table}")
         return col_info.iloc[0]["column_type"]
 
-    def _numeric_stats(self, table: str, col: str) -> Dict[str, float]:
+    def _numeric_stats(self, table: str, col: str) -> dict[str, float]:
         """Compute numeric statistics (mean, median, stddev, min, max, quartiles)."""
         query = f"""
         SELECT
@@ -102,7 +102,7 @@ class StatisticalSummary:
             }
         return {}
 
-    def _categorical_stats(self, table: str, col: str) -> Dict[str, Any]:
+    def _categorical_stats(self, table: str, col: str) -> dict[str, Any]:
         """Compute categorical statistics (top categories, distribution)."""
         query = f"""
         SELECT
@@ -132,7 +132,7 @@ class AnalysisEngine:
     def __init__(self, conn: duckdb.DuckDBPyConnection):
         self.conn = conn
         self.query_history = []
-        self.query_templates: Dict[str, AnalyticalQueryTemplate] = {}
+        self.query_templates: dict[str, AnalyticalQueryTemplate] = {}
 
     def register_template(self, template: AnalyticalQueryTemplate):
         """Register a query template."""
@@ -192,7 +192,7 @@ class AnalysisEngine:
         sql = template.render(**kwargs)
         return self.execute_query(sql, label=template_name)
 
-    def get_query_history(self) -> List[Dict]:
+    def get_query_history(self) -> list[dict]:
         """Get query execution history."""
         return self.query_history.copy()
 

@@ -18,8 +18,8 @@ Pattern:
 """
 import logging
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
 from enum import Enum
+from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ class NLResult:
     sql: str
     confidence: float  # 0-1
     message: str  # Natural language explanation
-    result: Optional[Dict] = None  # Query result if executed
+    result: Optional[dict] = None  # Query result if executed
 
 
 class IntentClassifierDefault:
@@ -53,7 +53,7 @@ class IntentClassifierDefault:
         self.metrics_registry = metrics_registry
         self.intent_patterns = self._build_patterns()
 
-    def _build_patterns(self) -> Dict:
+    def _build_patterns(self) -> dict:
         """Build hardcoded question patterns."""
         return {
             IntentType.SHOW_METRIC: {
@@ -87,7 +87,7 @@ class IntentClassifierDefault:
             },
         }
 
-    def classify(self, question: str) -> Tuple[IntentType, str, float]:
+    def classify(self, question: str) -> tuple[IntentType, str, float]:
         """Classify question intent.
 
         Returns: (intent_type, metric_id, confidence)
@@ -177,9 +177,9 @@ class NLAnalyzerEnhanced:
         self.available = False
 
         try:
-            from langchain.embeddings import OpenAIEmbeddings
             from langchain.chains import LLMChain
             from langchain.chat_models import ChatAnthropic
+            from langchain.embeddings import OpenAIEmbeddings
             from langchain.prompts import PromptTemplate
 
             self.embeddings = OpenAIEmbeddings()
@@ -203,7 +203,7 @@ class NLAnalyzerEnhanced:
         except ImportError:
             logger.warning("Semantic matching not available; using hardcoded classifier")
 
-    def find_metric(self, question: str) -> Tuple[str, float]:
+    def find_metric(self, question: str) -> tuple[str, float]:
         """Find best metric via semantic similarity."""
         if not self.available:
             return None, 0.0

@@ -51,11 +51,11 @@ class RampClassificationResult:
     text: str
     status: RampStatus
     work_stage_percent: float  # 0-100
-    blocker_types: List[BlockerType]
+    blocker_types: list[BlockerType]
     confidence_score: float  # 0-100
-    keywords_matched: List[str]
-    extracted_dates: List[str]  # Extracted date references
-    status_details: Dict  # Additional status-specific info
+    keywords_matched: list[str]
+    extracted_dates: list[str]  # Extracted date references
+    status_details: dict  # Additional status-specific info
 
 
 class RampStatusClassifier:
@@ -240,7 +240,7 @@ class RampStatusClassifier:
 
     def _classify_status(
         self, text_lower: str
-    ) -> Tuple[RampStatus, float, List[str]]:
+    ) -> tuple[RampStatus, float, list[str]]:
         """Determine primary status and confidence score."""
         matched_keywords = []
         status_scores = {}
@@ -292,7 +292,7 @@ class RampStatusClassifier:
 
         return status_config["default_stage"] if status_config else 50.0
 
-    def _identify_blockers(self, text_lower: str) -> List[BlockerType]:
+    def _identify_blockers(self, text_lower: str) -> list[BlockerType]:
         """Identify blocker types mentioned in text."""
         blockers = []
 
@@ -305,7 +305,7 @@ class RampStatusClassifier:
 
         return blockers
 
-    def _extract_dates(self, doc: Doc) -> List[str]:
+    def _extract_dates(self, doc: Doc) -> list[str]:
         """Extract date references from text."""
         dates = []
         for ent in doc.ents:
@@ -313,7 +313,7 @@ class RampStatusClassifier:
                 dates.append(ent.text)
         return dates
 
-    def _extract_entities(self, doc: Doc) -> List[Tuple[str, str]]:
+    def _extract_entities(self, doc: Doc) -> list[tuple[str, str]]:
         """Extract named entities from text."""
         entities = []
         for ent in doc.ents:
@@ -322,8 +322,8 @@ class RampStatusClassifier:
         return entities
 
     def classify_batch(
-        self, texts: List[str]
-    ) -> Dict[str, RampClassificationResult]:
+        self, texts: list[str]
+    ) -> dict[str, RampClassificationResult]:
         """
         Classify multiple ramp descriptions.
 
@@ -343,8 +343,8 @@ class RampStatusClassifier:
 
     @staticmethod
     def summary_table(
-        results: List[RampClassificationResult],
-    ) -> Dict:
+        results: list[RampClassificationResult],
+    ) -> dict:
         """
         Summarize classification results across a batch.
 
