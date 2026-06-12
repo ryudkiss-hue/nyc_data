@@ -35,6 +35,16 @@ try:
 except ImportError:
     HAS_STATSMODELS = False
 
+# Time series imports (lazy load to handle missing statsmodels)
+def _load_timeseries_modules():
+    try:
+        from src.socrata_toolkit.motherduck.kpi_stationarity_tests import StationarityTester
+        from src.socrata_toolkit.motherduck.kpi_timeseries_analysis import ARIMAForecaster, ModelSelection
+        from src.socrata_toolkit.motherduck.kpi_var_analysis import VARAnalyzer, GrangerCausalityTester
+        return StationarityTester, ARIMAForecaster, ModelSelection, VARAnalyzer, GrangerCausalityTester
+    except ImportError:
+        return None, None, None, None, None
+
 logger = logging.getLogger(__name__)
 
 # Comprehensive SQL for computing all 60+ metrics per KPI-borough pair
@@ -291,6 +301,77 @@ class AdvancedMetricsComputer:
             }
         except Exception as e:
             logger.warning(f"Robust regression failed: {str(e)}")
+            return {}
+
+    @staticmethod
+    def compute_stationarity_tests(kpi_values: np.ndarray) -> dict:
+        """ADF and KPSS stationarity tests."""
+        StationarityTester, _, _, _, _ = _load_timeseries_modules()
+        if StationarityTester is None or kpi_values is None or len(kpi_values) < 5:
+            return {}
+
+        try:
+            tester = StationarityTester()
+            adf = tester.adf_test(kpi_values)
+            kpss = tester.kpss_test(kpi_values)
+
+            result = {}
+            if adf:
+                result['adf_p_value'] = float(adf.p_value)
+                result['adf_is_stationary'] = bool(adf.is_stationary)
+            if kpss:
+                result['kpss_p_value'] = float(kpss.p_value)
+                result['kpss_is_stationary'] = bool(kpss.is_stationary)
+            return result
+        except Exception as e:
+            logger.warning(f"Stationarity test failed: {str(e)}")
+            return {}
+
+    @staticmethod
+    def compute_arima_forecast(kpi_values: np.ndarray) -> dict:
+        """ARIMA forecast with 95% CI."""
+        _, ARIMAForecaster, ModelSelection, _, _ = _load_timeseries_modules()
+        if ARIMAForecaster is None or kpi_values is None or len(kpi_values) < 10:
+            return {}
+
+        try:
+            selector = ModelSelection()
+            best_order = selector.select_arima_order(kpi_values, max_p=5, max_d=2, max_q=5)
+
+            forecaster = ARIMAForecaster(order=best_order)
+            fit_result = forecaster.fit(kpi_values)
+
+            if fit_result.status == 'SUCCESS':
+                forecast = forecaster.forecast(steps=10)
+                return {
+                    'arima_order': str(best_order),
+                    'arima_aic': float(fit_result.aic) if fit_result.aic else None,
+                    'forecast_value': float(forecast.mean[-1]) if forecast.mean else None,
+                    'forecast_ci_lower': float(forecast.ci_lower[-1]) if forecast.ci_lower else None,
+                    'forecast_ci_upper': float(forecast.ci_upper[-1]) if forecast.ci_upper else None,
+                }
+        except Exception as e:
+            logger.warning(f"ARIMA forecast failed: {str(e)}")
+            return {}
+
+    @staticmethod
+    def compute_var_relationships(kpi_data_dict: dict) -> dict:
+        """VAR analysis for multivariate KPI relationships."""
+        _, _, _, VARAnalyzer, _ = _load_timeseries_modules()
+        if VARAnalyzer is None or len(kpi_data_dict) < 2:
+            return {}
+
+        try:
+            analyzer = VARAnalyzer()
+            fit_result = analyzer.fit(kpi_data_dict)
+
+            if fit_result.get('status') == 'SUCCESS':
+                return {
+                    'var_lag_order': fit_result.get('lag_order'),
+                    'var_aic': fit_result.get('aic'),
+                }
+        except Exception as e:
+            logger.warning(f"VAR analysis failed: {str(e)}")
             return {}
 
 
@@ -590,6 +671,98 @@ class KPIStatisticsEngine:
             results["error"] = str(e)
 
         return results
+
+    def compute_weekly_timeseries_metrics(self) -> dict:
+        """Compute advanced time series metrics weekly (optional).
+
+        Includes stationarity tests, ARIMA forecasting, and VAR analysis.
+        """
+        if self.conn is None:
+            self.connect()
+
+        results = {
+            "stationarity": 0,
+            "arima": 0,
+            "var": 0,
+            "failed": 0,
+            "duration_seconds": 0.0,
+        }
+
+        start_time = time.time()
+
+        try:
+            logger.info("Starting weekly time series metrics computation...")
+
+            # Fetch current KPI values per borough
+            kpi_data = self.conn.execute(
+                """
+                SELECT kpi_name, borough, kpi_value
+                FROM analytics.kpi_statistics_by_borough
+                WHERE analytics_timestamp >= CURRENT_TIMESTAMP - INTERVAL 90 DAY
+                ORDER BY kpi_name, borough
+                """
+            ).fetchall()
+
+            if not kpi_data:
+                logger.warning("No KPI data available for time series analysis")
+                results["duration_seconds"] = time.time() - start_time
+                return results
+
+            # Group values by KPI-borough and compute time series metrics
+            kpi_borough_groups = {}
+            for kpi_name, borough, value in kpi_data:
+                key = (kpi_name, borough)
+                if key not in kpi_borough_groups:
+                    kpi_borough_groups[key] = []
+                kpi_borough_groups[key].append(float(value))
+
+            # Compute stationarity tests
+            for (kpi_name, borough), values in kpi_borough_groups.items():
+                if len(values) < 5:
+                    continue
+
+                try:
+                    values_arr = np.array(values, dtype=float)
+
+                    # Stationarity tests
+                    stationarity = AdvancedMetricsComputer.compute_stationarity_tests(values_arr)
+                    if stationarity:
+                        results["stationarity"] += 1
+                        # Could update database here if schema supports it
+
+                    # ARIMA forecasting
+                    arima = AdvancedMetricsComputer.compute_arima_forecast(values_arr)
+                    if arima:
+                        results["arima"] += 1
+
+                except Exception as e:
+                    logger.warning(f"Time series computation failed for {kpi_name}/{borough}: {str(e)}")
+                    results["failed"] += 1
+
+            # VAR analysis (multivariate, optional)
+            try:
+                all_kpis = {}
+                for (kpi_name, borough), values in kpi_borough_groups.items():
+                    if kpi_name not in all_kpis:
+                        all_kpis[kpi_name] = np.array(values, dtype=float)
+
+                if len(all_kpis) >= 2:
+                    var_result = AdvancedMetricsComputer.compute_var_relationships(all_kpis)
+                    if var_result:
+                        results["var"] += 1
+            except Exception as e:
+                logger.warning(f"VAR analysis failed: {str(e)}")
+
+            duration = time.time() - start_time
+            results["duration_seconds"] = duration
+            logger.info(f"Weekly time series metrics complete: {results}")
+            return results
+
+        except Exception as e:
+            results["failed"] += 1
+            results["duration_seconds"] = time.time() - start_time
+            logger.error(f"Weekly time series computation failed: {str(e)}")
+            return results
 
     def close(self) -> None:
         """Close database connection."""
