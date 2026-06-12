@@ -287,6 +287,74 @@ Each Dive supports exports:
 
 ---
 
+---
+
+## Advanced Time Series Analysis (Weekly)
+
+### Stationarity Tests
+
+**What it is:** Tests whether a KPI is stationary (constant mean/variance over time) or has trends/cycles.
+
+| Test | H0 | Decision | Meaning |
+|------|--|----|-------|
+| **ADF** | Series has unit root (non-stat) | p < 0.05? | Reject H0 → series is stationary |
+| **KPSS** | Series is stationary | p > 0.05? | Fail to reject H0 → series is stationary |
+
+**How to interpret:**
+- Both ADF p > 0.05 AND KPSS p < 0.05 → **Definitely non-stationary** (needs differencing for ARIMA)
+- Both ADF p < 0.05 AND KPSS p > 0.05 → **Definitely stationary** (ready for ARIMA as-is)
+- Mixed results → **Borderline** (try both d=0 and d=1, pick by AIC)
+
+### ARIMA Forecasting
+
+**What it is:** Autoregressive Integrated Moving Average — forecasts future values using past values and past forecast errors.
+
+**Model notation:** ARIMA(p,d,q)
+- **p** = autoregressive lags (how many past values used)
+- **d** = differencing (how many times to difference for stationarity)
+- **q** = moving average lags (how many past errors used)
+
+**How to use the forecast:**
+- **Forecast value:** Point estimate for next period
+- **CI lower/upper:** 95% confidence band (uncertainty range)
+- **Narrow CI** = confident forecast; **Wide CI** = high uncertainty
+
+**Example interpretation:**
+```
+Clustering Strength (Manhattan):
+  Forecast: 0.52
+  95% CI: [0.48, 0.56]
+  → Next period expect ~0.52, but could be as low as 0.48 (still above risk threshold)
+```
+
+### VAR Multivariate Analysis
+
+**What it is:** Vector Autoregression — models how multiple KPIs influence each other over time.
+
+**Use cases:**
+- Detect KPI relationships: "Does adoption rate predict SLA breach?"
+- System-wide forecasting: Forecast all KPIs together, not in isolation
+- Granger causality: Which KPI "leads" which?
+
+**Lag order:** Like p in ARIMA, but for a system. Higher = more complex relationships, but risks overfitting.
+
+### When to Trust the Forecast
+
+✓ **Trust it if:**
+- Stationarity tests agree (clear ADF + KPSS result)
+- CI bands are narrow (< 20% of mean value)
+- Recent data looks stable (no sudden shocks)
+- ARIMA(p,d,q) parameters are simple (p+d+q < 5)
+
+✗ **Distrust it if:**
+- Stationarity tests are mixed (ADF/KPSS disagree)
+- CI bands are very wide (> 50% of mean value)
+- Data has recent shock/structural break
+- ARIMA parameters are complex (p+d+q > 5)
+- Data sample is small (n < 50)
+
+---
+
 ## Summary
 
 Each KPI Dive gives you 40+ metrics to understand your data deeply:
@@ -294,6 +362,7 @@ Each KPI Dive gives you 40+ metrics to understand your data deeply:
 - **Charts** = visual patterns
 - **Statistics table** = detailed numbers per borough
 - **Risk status** = traffic light for action
+- **Advanced time series** (weekly) = stationarity, ARIMA forecasts, VAR relationships
 
 Read top-to-bottom: summary → chart → table → decision.
 

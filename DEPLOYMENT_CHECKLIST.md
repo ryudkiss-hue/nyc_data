@@ -242,6 +242,8 @@ if __name__ == "__main__":
 
 ## Weekly Execution (Optional Advanced Metrics)
 
+### Core Advanced Metrics (normality, variance, seasonal, autocorr, robust)
+
 ```bash
 #!/bin/bash
 # run_weekly_advanced_metrics.sh
@@ -270,11 +272,41 @@ engine.close()
 echo "✅ Advanced metrics update complete!"
 ```
 
+### Time Series Enhancements (Recommended)
+
+Advanced time series capabilities available if statsmodels installed:
+
+```bash
+pip install statsmodels
+```
+
+Adds:
+- Stationarity testing (ADF, KPSS)
+- ARIMA/SARIMAX forecasting
+- VAR multivariate analysis
+- Granger causality detection
+
+Computation runs weekly (Sunday 11:02 PM) as part of `compute_weekly_timeseries_metrics()`.
+
+Enable in scheduler:
+```python
+schedule.every().sunday.at("23:02").do(engine.compute_weekly_timeseries_metrics)
+```
+
+Graceful degradation: if statsmodels unavailable, skips with warning (nightly core metrics unaffected).
+
+Column additions to `analytics.kpi_statistics_by_borough`:
+- adf_p_value, adf_is_stationary (stationarity)
+- kpss_p_value, kpss_is_stationary (stationarity)
+- arima_order, arima_aic, forecast_value, forecast_ci_lower, forecast_ci_upper (ARIMA)
+- var_lag_order, var_aic (multivariate)
+
 Schedule with cron (Sunday 11 PM):
 ```bash
 crontab -e
 # Add:
 0 23 * * 0 /path/to/run_weekly_advanced_metrics.sh >> /var/log/kpi_advanced.log 2>&1
+0 2 * * 0 /path/to/run_weekly_timeseries.sh >> /var/log/kpi_timeseries.log 2>&1
 ```
 
 ---
