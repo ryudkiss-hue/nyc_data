@@ -9,6 +9,7 @@ Tests verify that 6 serving views are created and queryable:
 6. app_queries.v_kpi_dashboard - KPI metrics aggregation view
 """
 import pytest
+
 from socrata_toolkit.motherduck.connector import MotherDuckConnection
 from socrata_toolkit.motherduck.serving import ServingViewsBuilder
 

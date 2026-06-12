@@ -17,9 +17,10 @@ import json
 import logging
 from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class LineageEvent:
@@ -47,6 +48,7 @@ class LineageEvent:
         """Convert to JSON."""
         return json.dumps(self.to_dict())
 
+
 class LineageNode:
     """Node in the lineage DAG."""
 
@@ -65,26 +67,32 @@ class LineageNode:
             "metadata": self.metadata,
         }
 
+
 # Convenience subclasses
 class DatasetNode(LineageNode):
     def __init__(self, name: str, metadata: Optional[dict] = None):
         super().__init__(name, "dataset", metadata)
 
+
 class MartNode(LineageNode):
     def __init__(self, name: str, metadata: Optional[dict] = None):
         super().__init__(name, "mart", metadata)
+
 
 class DashboardNode(LineageNode):
     def __init__(self, name: str, metadata: Optional[dict] = None):
         super().__init__(name, "dashboard", metadata)
 
+
 class ReportNode(LineageNode):
     def __init__(self, name: str, metadata: Optional[dict] = None):
         super().__init__(name, "report", metadata)
 
+
 class ExportNode(LineageNode):
     def __init__(self, name: str, metadata: Optional[dict] = None):
         super().__init__(name, "export", metadata)
+
 
 class LineageTracker:
     """Track and record lineage events throughout the workflow."""
@@ -169,6 +177,7 @@ class LineageTracker:
     def to_json(self) -> str:
         """Export all events as JSON."""
         return json.dumps(self.to_dict(), indent=2)
+
 
 class LineageDAG:
     """Directed Acyclic Graph of lineage nodes and edges."""

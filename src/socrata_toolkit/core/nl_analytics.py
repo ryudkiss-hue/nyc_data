@@ -19,9 +19,10 @@ Pattern:
 import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
+from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
+
 
 class IntentType(Enum):
     """Question intent types."""
@@ -33,6 +34,7 @@ class IntentType(Enum):
     ROOT_CAUSE = "root_cause"  # "What's causing low completion?"
     UNKNOWN = "unknown"
 
+
 @dataclass
 class NLResult:
     """Result of NL query."""
@@ -42,6 +44,7 @@ class NLResult:
     confidence: float  # 0-1
     message: str  # Natural language explanation
     result: Optional[dict] = None  # Query result if executed
+
 
 class IntentClassifierDefault:
     """Hardcoded intent classification (no API calls)."""
@@ -123,6 +126,7 @@ class IntentClassifierDefault:
 
         return best_intent, metric_id, confidence
 
+
 class NLAnalyzerDefault:
     """Hardcoded NL analyzer (no semantic matching)."""
 
@@ -163,6 +167,7 @@ class NLAnalyzerDefault:
             confidence=confidence,
             message=f"Found intent: {intent.value}. Querying {metric.name}.",
         )
+
 
 class NLAnalyzerEnhanced:
     """Semantic matching NL analyzer (LangChain + embeddings)."""
@@ -220,6 +225,7 @@ class NLAnalyzerEnhanced:
         except Exception as e:
             logger.error(f"Semantic matching failed: {e}")
             return None, 0.0
+
 
 class NLAnalyzer:
     """Dual-mode NL analyzer: hardcoded + optional semantic matching.

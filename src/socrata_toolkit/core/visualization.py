@@ -1,10 +1,11 @@
 """Visualization layer: Chart recommendations, dashboard generation, role-based views."""
 import logging
-from typing import Any, Optional
+from typing import Any, Dict, List, Optional
 
 import duckdb
 
 logger = logging.getLogger(__name__)
+
 
 class ChartRecommender:
     """Recommend chart types based on column schema and data characteristics."""
@@ -70,6 +71,7 @@ class ChartRecommender:
             })
 
         return recommendations if recommendations else [{"type": "table", "description": "Raw data table"}]
+
 
 class DashboardGenerator:
     """Auto-generate dashboards from mart metadata."""
@@ -144,6 +146,7 @@ class DashboardGenerator:
             return result[0] if result else 0
         except:
             return 0
+
 
 class RoleBasedDashboard:
     """Filter dashboards by analyst role."""

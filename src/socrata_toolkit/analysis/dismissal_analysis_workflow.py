@@ -19,7 +19,7 @@ import json
 import logging
 from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Any, Optional, TypedDict
+from typing import Any, Dict, List, Optional, TypedDict
 
 import pandas as pd
 from langchain_anthropic import ChatAnthropic
@@ -34,9 +34,11 @@ from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
 logger = logging.getLogger(__name__)
 
+
 # ============================================================================
 # STATE DEFINITIONS
 # ============================================================================
+
 
 @dataclass
 class InspectorDismissalStats:
@@ -50,6 +52,7 @@ class InspectorDismissalStats:
     avg_suspicion_score: float
     flagged_for_review: bool
     common_defect_types: list[str]
+
 
 class DismissalAnalysisState(TypedDict):
     """LangGraph state for dismissal analysis workflow."""
@@ -82,6 +85,7 @@ class DismissalAnalysisState(TypedDict):
     final_report: dict
     execution_log: list[dict]
 
+
 def create_dismissal_workflow():
     """Create and return the dismissal analysis workflow."""
     workflow = StateGraph(DismissalAnalysisState)
@@ -102,9 +106,11 @@ def create_dismissal_workflow():
 
     return workflow.compile()
 
+
 # ============================================================================
 # WORKFLOW NODES
 # ============================================================================
+
 
 def fetch_data_node(state: DismissalAnalysisState) -> DismissalAnalysisState:
     """Fetch dismissals and violations datasets from Socrata."""
@@ -166,6 +172,7 @@ def fetch_data_node(state: DismissalAnalysisState) -> DismissalAnalysisState:
 
     logger.info(f"[FETCH] Fetched {len(dismissals_df)} dismissals, {len(violations_df)} violations")
     return state
+
 
 def classify_dismissals_node(state: DismissalAnalysisState) -> DismissalAnalysisState:
     """Classify each dismissal reason with DismissalReasonClassifier."""
@@ -238,6 +245,7 @@ def classify_dismissals_node(state: DismissalAnalysisState) -> DismissalAnalysis
 
     logger.info(f"[CLASSIFY] Classified {len(classifications)} dismissals")
     return state
+
 
 def analyze_patterns_node(state: DismissalAnalysisState) -> DismissalAnalysisState:
     """Analyze dismissal patterns by inspector, defect type, and borough."""
@@ -345,6 +353,7 @@ def analyze_patterns_node(state: DismissalAnalysisState) -> DismissalAnalysisSta
     )
     return state
 
+
 def claude_assess_node(state: DismissalAnalysisState) -> DismissalAnalysisState:
     """Use Claude to assess patterns and recommend coaching."""
     logger.info("[CLAUDE] Starting Claude assessment")
@@ -428,6 +437,7 @@ Keep response to ~350 tokens focused on actionable insights.
     logger.info("[CLAUDE] Assessment complete")
     return state
 
+
 def generate_report_node(state: DismissalAnalysisState) -> DismissalAnalysisState:
     """Generate final structured JSON report."""
     logger.info("[REPORT] Generating final report")
@@ -466,9 +476,11 @@ def generate_report_node(state: DismissalAnalysisState) -> DismissalAnalysisStat
     logger.info("[REPORT] Report generated successfully")
     return state
 
+
 # ============================================================================
 # EXECUTION HELPER
 # ============================================================================
+
 
 def run_dismissal_workflow(
     dismissals_fourfour: str = "p4u2-3jgx",
@@ -518,6 +530,7 @@ def run_dismissal_workflow(
 
     logger.info("[COMPLETE] Dismissal Analysis Workflow")
     return result["final_report"]
+
 
 if __name__ == "__main__":
     # Example execution

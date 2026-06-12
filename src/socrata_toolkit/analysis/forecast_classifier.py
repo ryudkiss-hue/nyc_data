@@ -17,15 +17,17 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
+from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
 
 class RiskLevel(str, Enum):
     """Risk classification for project completion."""
     HIGH = "HIGH"
     MEDIUM = "MEDIUM"
     LOW = "LOW"
+
 
 class BlockerType(str, Enum):
     """Primary blockers that affect forecast confidence."""
@@ -35,11 +37,13 @@ class BlockerType(str, Enum):
     WEATHER = "WEATHER"
     OTHER = "OTHER"
 
+
 class ForecastConfidence(str, Enum):
     """Confidence level in the forecast estimate."""
     HIGH = "HIGH"
     MEDIUM = "MEDIUM"
     LOW = "LOW"
+
 
 @dataclass
 class CompletionForecastClassification:
@@ -59,6 +63,7 @@ class CompletionForecastClassification:
     reasoning: str
     recommendations: list[str]
     data_quality_flags: list[str]
+
 
 class CompletionForecastClassifier:
     """
@@ -397,6 +402,7 @@ class CompletionForecastClassifier:
             flags.append("No explicit blockers documented; may underestimate risk")
 
         return flags
+
 
 def batch_classify_forecasts(
     projects: list[dict],

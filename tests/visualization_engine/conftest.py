@@ -2,10 +2,11 @@
 
 Provides mock MotherDuck connections and test data for all phases.
 """
-import pandas as pd
-import pytest
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock
+
+import pandas as pd
+import pytest
 
 from socrata_toolkit.motherduck.connector import MotherDuckConnection
 

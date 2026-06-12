@@ -5,13 +5,14 @@ Combines NLP classification with hardcoded analysis to reduce LLM token usage.
 """
 
 import logging
-from typing import Optional
+from typing import Dict, List, Optional
 
 import pandas as pd
 
 from .nlp_classifier import ClassificationResult, TextClassifierPipeline
 
 logger = logging.getLogger(__name__)
+
 
 class DatasetAnalyzerWithNLP:
     """Fetch, classify, and analyze any dataset from the NYC DOT registry."""

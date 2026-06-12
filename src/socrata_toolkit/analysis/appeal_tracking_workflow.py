@@ -19,7 +19,7 @@ import json
 import logging
 from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Any, Optional, TypedDict
+from typing import Any, Dict, List, Optional, TypedDict
 
 import pandas as pd
 from langchain_anthropic import ChatAnthropic
@@ -33,6 +33,7 @@ from socrata_toolkit.analysis.appeal_classifier import (
 from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
 logger = logging.getLogger(__name__)
+
 
 # ============================================================================
 # STATE DEFINITIONS
@@ -66,6 +67,7 @@ class AppealTrackingState(TypedDict):
     final_report: dict
     execution_log: list[dict]
 
+
 def create_appeal_tracking_workflow():
     """Create and return the appeal & reinspection tracking workflow."""
     workflow = StateGraph(AppealTrackingState)
@@ -89,6 +91,7 @@ def create_appeal_tracking_workflow():
     workflow.add_edge("generate_report", END)
 
     return workflow.compile()
+
 
 # ============================================================================
 # WORKFLOW NODES
@@ -153,6 +156,7 @@ def fetch_data_node(state: AppealTrackingState) -> AppealTrackingState:
 
     logger.info(f"[FETCH] Total appeals combined: {state['total_appeals']}")
     return state
+
 
 def classify_appeals_node(state: AppealTrackingState) -> AppealTrackingState:
     """Classify appeal outcomes and reasons using AppealOutcomeClassifier."""
@@ -230,6 +234,7 @@ def classify_appeals_node(state: AppealTrackingState) -> AppealTrackingState:
     )
     return state
 
+
 def compute_inspector_stats_node(state: AppealTrackingState) -> AppealTrackingState:
     """Compute inspector-level statistics and performance signals."""
     logger.info("[STATS] Computing inspector statistics")
@@ -306,6 +311,7 @@ def compute_inspector_stats_node(state: AppealTrackingState) -> AppealTrackingSt
     logger.info(f"[STATS] Computed stats for {len(state['inspector_stats'])} inspectors")
     return state
 
+
 def identify_outliers_node(state: AppealTrackingState) -> AppealTrackingState:
     """Identify inspectors with concerning performance signals."""
     logger.info("[OUTLIERS] Identifying performance outliers")
@@ -336,6 +342,7 @@ def identify_outliers_node(state: AppealTrackingState) -> AppealTrackingState:
 
     logger.info(f"[OUTLIERS] Identified {len(outliers)} performance outliers")
     return state
+
 
 def claude_assess_node(state: AppealTrackingState) -> AppealTrackingState:
     """Claude: analyze performance patterns and identify coaching needs."""
@@ -398,6 +405,7 @@ Focus on actionable next steps, not just diagnosis.
     logger.info(f"[CLAUDE] Assessment complete (next_action={state['next_action']})")
     return state
 
+
 def generate_coaching_plan_node(state: AppealTrackingState) -> AppealTrackingState:
     """Generate detailed coaching recommendations for outliers."""
     logger.info("[COACHING] Generating coaching recommendations")
@@ -449,6 +457,7 @@ def generate_coaching_plan_node(state: AppealTrackingState) -> AppealTrackingSta
     logger.info(f"[COACHING] Generated coaching plan for {len(recommendations)} inspectors")
     return state
 
+
 def generate_report_node(state: AppealTrackingState) -> AppealTrackingState:
     """Generate final structured JSON report."""
     logger.info("[REPORT] Generating final report")
@@ -483,6 +492,7 @@ def generate_report_node(state: AppealTrackingState) -> AppealTrackingState:
     logger.info("[REPORT] Report generation complete")
     return state
 
+
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
@@ -500,6 +510,7 @@ def _format_outliers(outliers: list[dict]) -> str:
         )
     return "\n".join(lines)
 
+
 def _format_systemic_issues(issues: dict[str, Any]) -> str:
     """Format systemic issues for Claude prompt."""
     if not issues:
@@ -516,6 +527,7 @@ def _format_systemic_issues(issues: dict[str, Any]) -> str:
             lines.append(f"- {improvement}")
 
     return "\n".join(lines)
+
 
 def _format_coaching_plan(recommendations: list[dict]) -> str:
     """Format coaching plan."""

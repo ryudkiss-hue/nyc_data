@@ -30,7 +30,7 @@ import json
 import logging
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
-from typing import Any, Optional, TypedDict
+from typing import Any, Dict, List, Optional, TypedDict
 
 import pandas as pd
 
@@ -49,9 +49,11 @@ from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
 logger = logging.getLogger(__name__)
 
+
 # ============================================================================
 # STATE DEFINITIONS
 # ============================================================================
+
 
 @dataclass
 class BoroughComplaintStats:
@@ -79,6 +81,7 @@ class BoroughComplaintStats:
 
     # Top categories by volume
     top_categories: list[str]
+
 
 class ComplaintResponseState(TypedDict):
     """LangGraph state for complaint response workflow."""
@@ -111,6 +114,7 @@ class ComplaintResponseState(TypedDict):
     final_report: dict
     execution_log: list[dict]
 
+
 def create_complaint_response_workflow():
     """Create and return the complaint response analysis workflow."""
     if not HAS_LANGGRAPH:
@@ -138,9 +142,11 @@ def create_complaint_response_workflow():
 
     return workflow.compile()
 
+
 # ============================================================================
 # NODE FUNCTIONS
 # ============================================================================
+
 
 def fetch_data_node(state: ComplaintResponseState) -> ComplaintResponseState:
     """Fetch complaints and inspections datasets."""
@@ -179,6 +185,7 @@ def fetch_data_node(state: ComplaintResponseState) -> ComplaintResponseState:
 
     return state
 
+
 def classify_complaints_node(state: ComplaintResponseState) -> ComplaintResponseState:
     """Classify complaints by category, urgency, status, and time adequacy."""
     logger.info("Classifying complaints...")
@@ -216,6 +223,7 @@ def classify_complaints_node(state: ComplaintResponseState) -> ComplaintResponse
     state["_classifications"] = classifications
 
     return state
+
 
 def compute_metrics_node(state: ComplaintResponseState) -> ComplaintResponseState:
     """Compute borough-level and category-level metrics."""
@@ -332,6 +340,7 @@ def compute_metrics_node(state: ComplaintResponseState) -> ComplaintResponseStat
 
     return state
 
+
 def identify_bottlenecks_node(state: ComplaintResponseState) -> ComplaintResponseState:
     """Identify bottlenecks in complaint response pipeline."""
     logger.info("Analyzing bottlenecks...")
@@ -382,6 +391,7 @@ def identify_bottlenecks_node(state: ComplaintResponseState) -> ComplaintRespons
     })
 
     return state
+
 
 def claude_analysis_node(state: ComplaintResponseState) -> ComplaintResponseState:
     """Use Claude to analyze bottlenecks and recommend optimizations."""
@@ -444,6 +454,7 @@ Keep response to 300 tokens."""
 
     return state
 
+
 def generate_report_node(state: ComplaintResponseState) -> ComplaintResponseState:
     """Generate final structured report."""
     logger.info("Generating final report...")
@@ -479,9 +490,11 @@ def generate_report_node(state: ComplaintResponseState) -> ComplaintResponseStat
     state["final_report"] = report
     return state
 
+
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
+
 
 def _join_complaints_inspections(
     complaints: pd.DataFrame, inspections: pd.DataFrame
@@ -498,6 +511,7 @@ def _join_complaints_inspections(
         suffixes=("_complaint", "_inspection"),
     )
     return joined
+
 
 def _extract_complaint_metrics(
     complaint_row: pd.Series, joined_df: pd.DataFrame | None = None
@@ -553,6 +567,7 @@ def _extract_complaint_metrics(
         is_reopened=is_reopened,
     )
 
+
 def _extract_recommendations(analysis: str) -> list[str]:
     """Extract bullet-point recommendations from Claude analysis."""
     recommendations = []
@@ -562,6 +577,7 @@ def _extract_recommendations(analysis: str) -> list[str]:
         if line.startswith("-") or line.startswith("•"):
             recommendations.append(line.lstrip("-•").strip())
     return recommendations[:5]  # Top 5
+
 
 def _median(values: list[float]) -> float:
     """Compute median of a list."""

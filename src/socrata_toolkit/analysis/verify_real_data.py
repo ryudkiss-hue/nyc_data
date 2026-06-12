@@ -20,6 +20,7 @@ from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
 logger = logging.getLogger(__name__)
 
+
 # ============================================================================
 # VERIFICATION 1: API CREDENTIALS
 # ============================================================================
@@ -46,6 +47,7 @@ def verify_credentials() -> dict:
         return {**checks, "status": "FAILED"}
 
     return {**checks, "status": "PASSED"}
+
 
 # ============================================================================
 # VERIFICATION 2: FOURFOUR IDS ARE REAL
@@ -95,6 +97,7 @@ def verify_fourfours() -> dict:
             r.get("status") in ["REAL", "UNKNOWN"] for r in results.values()
         ) else "FAILED"
     }
+
 
 # ============================================================================
 # VERIFICATION 3: DATA HAS REAL TIMESTAMPS & LOCATIONS
@@ -146,6 +149,7 @@ def verify_data_authenticity() -> dict:
 
     return {**checks, "status": "PASSED"}
 
+
 # ============================================================================
 # VERIFICATION 4: NOT MOCKED/SIMULATED
 # ============================================================================
@@ -186,6 +190,7 @@ def verify_not_mocked() -> dict:
         logger.warning("[VERIFY 4] ⚠ Mock patterns detected")
 
     return checks
+
 
 # ============================================================================
 # VERIFICATION 5: DATA FRESHNESS
@@ -234,6 +239,7 @@ def verify_data_freshness() -> dict:
         logger.warning("[VERIFY 5] ⚠ Data appears stale (>30 days)")
         return {**freshness_check, "status": "PASSED"}  # Still real, just old
 
+
 # ============================================================================
 # VERIFICATION 6: NETWORK CALLS (NOT LOCAL CACHE)
 # ============================================================================
@@ -277,6 +283,7 @@ def verify_live_api_calls() -> dict:
         logger.error(f"[VERIFY 6] ✗ Network error: {e}")
         return {"status": "FAILED", "error": str(e)}
 
+
 # ============================================================================
 # MAIN: RUN ALL VERIFICATIONS
 # ============================================================================
@@ -294,7 +301,7 @@ def run_all_verifications() -> dict:
         "timestamp": datetime.now().isoformat(),
         "verifications": {
             "1_credentials": verify_credentials(),
-            "2_fourtours": verify_fourfours(),
+            "2_fourfours": verify_fourfours(),
             "3_authenticity": verify_data_authenticity(),
             "4_not_mocked": verify_not_mocked(),
             "5_freshness": verify_data_freshness(),
@@ -316,6 +323,7 @@ def run_all_verifications() -> dict:
     logger.info("=" * 70)
 
     return results
+
 
 if __name__ == "__main__":
     logging.basicConfig(

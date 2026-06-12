@@ -17,7 +17,7 @@ import logging
 import re
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
 if TYPE_CHECKING:
     from spacy.language import Language
@@ -25,12 +25,14 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+
 class RampStatus(str, Enum):
     """Ramp project status classification."""
     COMPLETED = "COMPLETED"
     IN_PROGRESS = "IN_PROGRESS"
     BLOCKED = "BLOCKED"
     NOT_STARTED = "NOT_STARTED"
+
 
 class BlockerType(str, Enum):
     """Types of blockers that can delay ramp projects."""
@@ -41,6 +43,7 @@ class BlockerType(str, Enum):
     CONTRACTOR = "CONTRACTOR"
     UTILITY = "UTILITY"
     OTHER = "OTHER"
+
 
 @dataclass
 class RampClassificationResult:
@@ -53,6 +56,7 @@ class RampClassificationResult:
     keywords_matched: list[str]
     extracted_dates: list[str]  # Extracted date references
     status_details: dict  # Additional status-specific info
+
 
 class RampStatusClassifier:
     """Classify ramp project status from progress descriptions."""

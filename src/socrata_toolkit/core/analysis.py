@@ -1,7 +1,11 @@
 """Analysis layer: Pre-built queries, NL interface, statistical summaries."""
 import logging
 from datetime import datetime
+<<<<<<< HEAD
 from typing import Any, Optional
+=======
+from typing import Any, Dict, List, Optional
+>>>>>>> main
 
 import duckdb
 import pandas as pd

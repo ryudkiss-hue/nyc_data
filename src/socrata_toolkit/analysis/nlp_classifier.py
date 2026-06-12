@@ -7,7 +7,7 @@ Hardcoded deterministic classifiers using spaCy — no LLM invocation.
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 import spacy
@@ -15,6 +15,7 @@ from spacy.language import Language
 from spacy.tokens import Doc
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class ClassificationResult:
@@ -26,6 +27,7 @@ class ClassificationResult:
     extracted_entities: list[tuple[str, str]]  # (text, label)
     keywords_matched: list[str]
     category_details: dict  # Additional category-specific info
+
 
 class InspectionViolationClassifier:
     """Classify inspection violation descriptions."""
@@ -192,6 +194,7 @@ class InspectionViolationClassifier:
         for text in texts:
             results.append(self.classify(text))
         return results
+
 
 class Complaint311Classifier:
     """Classify 311 complaint descriptions."""
@@ -372,6 +375,7 @@ class Complaint311Classifier:
             results.append(self.classify(text))
         return results
 
+
 class TreeDamageClassifier:
     """Classify tree damage descriptions."""
 
@@ -464,6 +468,7 @@ class TreeDamageClassifier:
 
     def batch_classify(self, texts: list[str]) -> list[ClassificationResult]:
         return [self.classify(text) for text in texts]
+
 
 class ConstructionInspectionClassifier:
     """Classify street construction inspection findings."""
@@ -563,6 +568,7 @@ class ConstructionInspectionClassifier:
 
     def batch_classify(self, texts: list[str]) -> list[ClassificationResult]:
         return [self.classify(text) for text in texts]
+
 
 class TextClassifierPipeline:
     """Unified pipeline for all NYC DOT text classification across datasets."""

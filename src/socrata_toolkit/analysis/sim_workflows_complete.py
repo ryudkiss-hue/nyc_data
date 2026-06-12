@@ -14,7 +14,7 @@ import json
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 from langchain_anthropic import ChatAnthropic
@@ -24,6 +24,7 @@ from socrata_toolkit.analysis.nlp_classifier import TextClassifierPipeline
 from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
 logger = logging.getLogger(__name__)
+
 
 # ============================================================================
 # UNIFIED WORKFLOW PATTERN
@@ -39,6 +40,7 @@ class WorkflowContext:
     borough_filter: Optional[str] = None
     params: dict = None
 
+
 class SIMWorkflowState(dict):
     """Unified state for all SIM workflows."""
     def __init__(self):
@@ -50,6 +52,7 @@ class SIMWorkflowState(dict):
         self["claude_decision"] = ""
         self["final_recommendation"] = ""
         self["execution_log"] = []
+
 
 # ============================================================================
 # CLASSIFIER REGISTRY (Each ~100 lines)
@@ -147,6 +150,7 @@ CLASSIFIER_DEFINITIONS = {
     },
 }
 
+
 class UnifiedClassifier:
     """Generic classifier using keyword-based definitions."""
 
@@ -177,6 +181,7 @@ class UnifiedClassifier:
             "confidence": min(100, (scores[primary] / len(self.definition["keywords"][primary])) * 100)
         }
 
+
 # ============================================================================
 # UNIFIED WORKFLOW NODE (Works for all workflows)
 # ============================================================================
@@ -197,6 +202,7 @@ def universal_fetch_node(state: SIMWorkflowState) -> SIMWorkflowState:
         "timestamp": datetime.now().isoformat()
     })
     return state
+
 
 def universal_classify_node(state: SIMWorkflowState) -> SIMWorkflowState:
     """Classify data for any workflow."""
@@ -221,6 +227,7 @@ def universal_classify_node(state: SIMWorkflowState) -> SIMWorkflowState:
         "step": "classify", "status": "success", "timestamp": datetime.now().isoformat()
     })
     return state
+
 
 def universal_claude_node(state: SIMWorkflowState) -> SIMWorkflowState:
     """Claude decision node for any workflow."""
@@ -251,6 +258,7 @@ def universal_claude_node(state: SIMWorkflowState) -> SIMWorkflowState:
     })
     return state
 
+
 def universal_final_node(state: SIMWorkflowState) -> SIMWorkflowState:
     """Final recommendation node."""
     llm = ChatAnthropic(model="claude-opus-4-8")
@@ -268,6 +276,7 @@ def universal_final_node(state: SIMWorkflowState) -> SIMWorkflowState:
         "step": "final", "status": "success", "timestamp": datetime.now().isoformat()
     })
     return state
+
 
 # ============================================================================
 # WORKFLOW BUILDER (Works for all workflows)
@@ -289,6 +298,7 @@ def build_workflow(workflow_name: str) -> Any:
 
     graph.set_entry_point("fetch")
     return graph.compile()
+
 
 # ============================================================================
 # UNIFIED PUBLIC API
@@ -325,6 +335,7 @@ WORKFLOW_REGISTRY = {
     "root-cause": {"dataset_key": "violations", "fourfour": "6kbp-uz6m", "description": "Root cause investigation"},
 }
 
+
 def run_sim_workflow(
     workflow_name: str,
     max_rows: int = 1000,
@@ -359,6 +370,7 @@ def run_sim_workflow(
         "recommendation": final_state["final_recommendation"],
         "audit_log": final_state["execution_log"],
     }
+
 
 # ============================================================================
 # CLI

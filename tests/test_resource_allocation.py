@@ -6,18 +6,18 @@ Tests cover:
 - Integration with Socrata and Claude APIs
 """
 
-import pytest
 import pandas as pd
+import pytest
 
 from socrata_toolkit.analysis.allocation_classifier import (
-    ResourceAllocationClassifier,
-    AreaPriority,
     AllocationAction,
+    AreaPriority,
     ImpactLevel,
+    ResourceAllocationClassifier,
 )
 from socrata_toolkit.analysis.resource_allocation_workflow import (
-    ResourceAllocationWorkflow,
     ReallocationPlan,
+    ResourceAllocationWorkflow,
 )
 
 class TestResourceAllocationClassifier:

@@ -12,6 +12,7 @@ Examples:
 """
 
 from datetime import datetime, timedelta
+from typing import Dict, List
 
 import pandas as pd
 
@@ -58,6 +59,7 @@ def example_1_classifier_test():
         print(f"  Reason: {result.reason.value} (confidence: {result.reason_confidence:.0f}%)")
         print(f"  Keywords: {', '.join(result.keywords_matched[:3])}")
         print()
+
 
 # ============================================================================
 # EXAMPLE 2: Inspector Performance Analysis
@@ -151,6 +153,7 @@ def example_2_inspector_analysis():
     for improvement in systemic.get("recommended_improvements", []):
         print(f"    • {improvement}")
 
+
 # ============================================================================
 # EXAMPLE 3: Full Workflow Execution
 # ============================================================================
@@ -200,6 +203,7 @@ def example_3_full_workflow():
     print("  Note: Full execution requires live Socrata API connection")
     print("  Use: result = workflow.invoke(initial_state)")
 
+
 # ============================================================================
 # EXAMPLE 4: CLI Integration
 # ============================================================================
@@ -233,6 +237,7 @@ Report output includes:
   - Coaching recommendations
   - Actionable next steps
 """)
+
 
 # ============================================================================
 # EXAMPLE 5: API Integration
@@ -271,6 +276,7 @@ with open("appeal_report.json", "w") as f:
 """
 
     print(example_code)
+
 
 # ============================================================================
 # MAIN

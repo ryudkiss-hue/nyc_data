@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-import pytest
 from datetime import datetime, timedelta, timezone
+
+import pytest
 
 from socrata_toolkit.analysis.dataset_health import (
     DatasetHealthClassifier,
