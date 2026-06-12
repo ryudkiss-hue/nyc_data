@@ -36,7 +36,6 @@ from socrata_toolkit.observability.monitoring import (
     MonitoringResult,
 )
 
-
 # ============================================================================
 # Alert Tests
 # ============================================================================
@@ -699,7 +698,8 @@ class TestMonitoringIntegration:
         manager = AlertManager()
 
         # Register alerts with manager
-        monitor_handler = lambda alert: manager.ingest_alert(alert)
+        def monitor_handler(alert):
+            return manager.ingest_alert(alert)
 
         # Run checks that generate alerts
         now = datetime.now(timezone.utc)

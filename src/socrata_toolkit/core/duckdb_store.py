@@ -271,7 +271,7 @@ class DuckDBManager:
 
     def create_table_as(self, table_name: str, sql: str):
         """Item 5: Intermediate Query Caching.
-        
+
         Uses CREATE TABLE AS SELECT (CTAS) to materialize query results.
         """
         logger.info(f"Caching query result to table: {table_name}")

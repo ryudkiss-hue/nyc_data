@@ -13,8 +13,8 @@ Key constraints (per MotherDuck docs):
 import logging
 import os
 import re
-from typing import Optional, Dict, List
 from dataclasses import dataclass
+from typing import Dict, List, Optional
 
 import duckdb
 
@@ -82,7 +82,7 @@ class MotherDuckValidator:
         },
     ]
 
-    def validate(self, sql: str) -> List[CompatibilityIssue]:
+    def validate(self, sql: str) -> list[CompatibilityIssue]:
         """Validate SQL for MotherDuck compatibility.
 
         Args:

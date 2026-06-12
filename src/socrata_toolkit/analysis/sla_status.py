@@ -11,10 +11,10 @@ Standards: Python 3.9+, full type hints, comprehensive docstrings, logging
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Optional, Any
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -147,8 +147,8 @@ class SLAStatusClassifier:
     def classify(
         self,
         snapshot: SLAMetricSnapshot,
-        historical_snapshots: Optional[list[SLAMetricSnapshot]] = None,
-        error_context: Optional[dict[str, Any]] = None,
+        historical_snapshots: list[SLAMetricSnapshot] | None = None,
+        error_context: dict[str, Any] | None = None,
     ) -> SLAStatusRecord:
         """Classify dataset freshness status."""
         sla_threshold = snapshot.sla_tier.value
@@ -191,7 +191,7 @@ class SLAStatusClassifier:
         self,
         snapshot: SLAMetricSnapshot,
         status: ComplianceStatus,
-        error_context: Optional[dict[str, Any]] = None,
+        error_context: dict[str, Any] | None = None,
     ) -> tuple[RootCause, float]:
         if status == ComplianceStatus.COMPLIANT:
             return RootCause.UNKNOWN, 1.0
@@ -216,7 +216,7 @@ class SLAStatusClassifier:
     def _detect_trend(
         self,
         snapshot: SLAMetricSnapshot,
-        historical_snapshots: Optional[list[SLAMetricSnapshot]] = None,
+        historical_snapshots: list[SLAMetricSnapshot] | None = None,
     ) -> TrendDirection:
         if not historical_snapshots or len(historical_snapshots) < 2:
             return TrendDirection.INSUFFICIENT_DATA

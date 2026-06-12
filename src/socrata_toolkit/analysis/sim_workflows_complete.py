@@ -13,15 +13,15 @@ Pattern replication: Copy, customize keywords, register in WORKFLOW_REGISTRY.
 import json
 import logging
 from dataclasses import dataclass
-from typing import Dict, Any, List, Optional
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
-from langgraph.graph import StateGraph, END
 from langchain_anthropic import ChatAnthropic
+from langgraph.graph import END, StateGraph
 
-from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 from socrata_toolkit.analysis.nlp_classifier import TextClassifierPipeline
+from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ class WorkflowContext:
     fourfour: str
     max_rows: int = 1000
     borough_filter: Optional[str] = None
-    params: Dict = None
+    params: dict = None
 
 
 class SIMWorkflowState(dict):
@@ -158,7 +158,7 @@ class UnifiedClassifier:
         self.classifier_type = classifier_type
         self.definition = CLASSIFIER_DEFINITIONS.get(classifier_type, {})
 
-    def classify(self, text: str) -> Dict:
+    def classify(self, text: str) -> dict:
         """Classify text based on keywords."""
         text_lower = text.lower()
         scores = {}
@@ -341,7 +341,7 @@ def run_sim_workflow(
     max_rows: int = 1000,
     borough_filter: Optional[str] = None,
     **kwargs
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Run any SIM workflow by name."""
 
     if workflow_name not in WORKFLOW_REGISTRY:

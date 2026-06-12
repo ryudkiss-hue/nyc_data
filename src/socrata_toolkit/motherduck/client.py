@@ -4,9 +4,10 @@ MotherDuck Client Wrapper for NYC DOT SIM Workflows.
 Provides authenticated, pooled connections to MotherDuck cloud databases.
 """
 
-import os
 import logging
-from typing import Optional, Dict, Any, List
+import os
+from typing import Any, Dict, List, Optional
+
 import duckdb
 
 logger = logging.getLogger(__name__)
@@ -26,7 +27,7 @@ class MotherDuckClient:
     def __init__(
         self,
         token: Optional[str] = None,
-        databases: List[str] = None,
+        databases: list[str] = None,
         pool_size: int = 4,
         timeout_secs: int = 300,
     ):
@@ -72,7 +73,7 @@ class MotherDuckClient:
 
         return self._connection
 
-    def initialize_databases(self) -> Dict[str, bool]:
+    def initialize_databases(self) -> dict[str, bool]:
         """
         Create or verify existence of required databases.
 
@@ -118,7 +119,7 @@ class MotherDuckClient:
         self,
         database: str,
         table_name: str,
-        schema: Dict[str, str],
+        schema: dict[str, str],
     ) -> bool:
         """
         Create table in specified database.
@@ -142,7 +143,7 @@ class MotherDuckClient:
             logger.error(f"Failed to create table {table_name}: {e}")
             return False
 
-    def list_tables(self, database: str) -> List[str]:
+    def list_tables(self, database: str) -> list[str]:
         """
         List all tables in a database.
 

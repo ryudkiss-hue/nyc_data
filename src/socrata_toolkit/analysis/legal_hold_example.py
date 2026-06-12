@@ -64,10 +64,10 @@ def example_basic_classification():
     print(f"Retention Years: {report.retention_years}")
     print(f"Compliance Status: {report.compliance_status.value}")
     print(f"Litigation Hold Active: {report.litigation_hold_active}")
-    print(f"\nAlerts:")
+    print("\nAlerts:")
     for alert in report.alerts:
         print(f"  - {alert}")
-    print(f"\nRecommendations:")
+    print("\nRecommendations:")
     for rec in report.recommendations:
         print(f"  - {rec}")
 
@@ -211,11 +211,7 @@ def example_retention_periods():
         )
         report = classifier.classify(metrics)
         print(
-            "{:<20} {:<15} {:<10}".format(
-                record_type.value.capitalize(),
-                report.retention_requirement.value,
-                str(report.retention_years),
-            )
+            f"{record_type.value.capitalize():<20} {report.retention_requirement.value:<15} {str(report.retention_years):<10}"
         )
 
 

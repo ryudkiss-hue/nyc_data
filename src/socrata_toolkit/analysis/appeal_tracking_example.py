@@ -11,19 +11,19 @@ Examples:
   4. Systemic issue detection
 """
 
-import pandas as pd
 from datetime import datetime, timedelta
-from typing import List, Dict
+from typing import Dict, List
+
+import pandas as pd
 
 from socrata_toolkit.analysis.appeal_classifier import (
     AppealOutcomeClassifier,
-    InspectorAppealAnalyzer,
     AppealResolution,
+    InspectorAppealAnalyzer,
 )
 from socrata_toolkit.analysis.appeal_tracking_workflow import (
     create_appeal_tracking_workflow,
 )
-
 
 # ============================================================================
 # EXAMPLE 1: Quick Classifier Test
@@ -147,9 +147,9 @@ def example_2_inspector_analysis():
 
     # Systemic issues
     systemic = analyzer.compute_systemic_issues(df)
-    print(f"\nSystemic Issues:")
+    print("\nSystemic Issues:")
     print(f"  Overall Reversal Rate: {systemic['overall_reversal_rate']:.1%}")
-    print(f"  Recommended Improvements:")
+    print("  Recommended Improvements:")
     for improvement in systemic.get("recommended_improvements", []):
         print(f"    • {improvement}")
 

@@ -1,12 +1,13 @@
 """Tests for Phase 4B: Analysis layer (pre-built queries, NL interface, summaries) + Visualization (dashboards, charts)."""
 import json
-import pytest
-import duckdb
 from pathlib import Path
 
+import duckdb
+import pytest
+
 from socrata_toolkit.core.analysis import (
-    AnalyticalQueryTemplate,
     AnalysisEngine,
+    AnalyticalQueryTemplate,
     StatisticalSummary,
 )
 from socrata_toolkit.core.visualization import (

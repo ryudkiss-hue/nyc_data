@@ -5,6 +5,14 @@ Exports data quality rules, expectations, SLA tracking, and scoring utilities.
 
 from __future__ import annotations
 
+from socrata_toolkit.quality.domain_rules import (
+    DomainRuleResult,
+    summarize_domain_rule_results,
+    validate_all_domain_rules,
+    validate_borough_coverage_distribution,
+    validate_material_lifespan_rule,
+    validate_permit_inspection_relationship,
+)
 from socrata_toolkit.quality.rules import (
     DATASET_EXPECTATIONS,
     BusinessRulesEngine,
@@ -19,14 +27,6 @@ from socrata_toolkit.quality.rules import (
     quality_scorecard,
     validate_expectations,
     validate_schema,
-)
-from socrata_toolkit.quality.domain_rules import (
-    DomainRuleResult,
-    summarize_domain_rule_results,
-    validate_all_domain_rules,
-    validate_borough_coverage_distribution,
-    validate_material_lifespan_rule,
-    validate_permit_inspection_relationship,
 )
 from socrata_toolkit.quality.sla_tracking import (
     SLAMetrics,

@@ -8,9 +8,10 @@ Standards: Python 3.11+, type hints, comprehensive docstrings
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
+
 import pandas as pd
 import pytest
-from datetime import datetime, timedelta, timezone
 
 from socrata_toolkit.analysis.confidence_intervals import wilson_score_confidence_interval
 from socrata_toolkit.governance.audit_logger import AuditLogger
@@ -21,7 +22,6 @@ from socrata_toolkit.spatial.conflict_detection import (
     detect_spatial_conflicts,
     summarize_conflicts_by_severity,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

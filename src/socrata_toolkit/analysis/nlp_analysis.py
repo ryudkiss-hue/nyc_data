@@ -4,10 +4,12 @@ Integration layer: Fetch data + classify + generate insights.
 Combines NLP classification with hardcoded analysis to reduce LLM token usage.
 """
 
-import pandas as pd
-from typing import Dict, List, Optional
-from .nlp_classifier import TextClassifierPipeline, ClassificationResult
 import logging
+from typing import Dict, List, Optional
+
+import pandas as pd
+
+from .nlp_classifier import ClassificationResult, TextClassifierPipeline
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +81,7 @@ class DatasetAnalyzerWithNLP:
         df: pd.DataFrame,
         dataset_key: str,
         text_column: Optional[str] = None,
-    ) -> Dict:
+    ) -> dict:
         """
         Classify and analyze a dataset.
 
@@ -228,7 +230,7 @@ class DatasetAnalyzerWithNLP:
 
     def borough_breakdown(
         self, df: pd.DataFrame, dataset_key: str, borough_column: str = "borough"
-    ) -> Dict[str, pd.DataFrame]:
+    ) -> dict[str, pd.DataFrame]:
         """
         Break down classifications by borough.
 

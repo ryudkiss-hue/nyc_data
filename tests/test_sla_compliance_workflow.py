@@ -13,16 +13,17 @@ Run with: pytest tests/test_sla_compliance_workflow.py -v
 
 import json
 from datetime import datetime, timedelta, timezone
+
 import pytest
 
 from socrata_toolkit.analysis.sla_status import (
-    SLAStatusClassifier,
-    SLAMetricSnapshot,
-    SLAStatusRecord,
-    SLAComplianceReport,
     ComplianceStatus,
-    SLATier,
     RootCause,
+    SLAComplianceReport,
+    SLAMetricSnapshot,
+    SLAStatusClassifier,
+    SLAStatusRecord,
+    SLATier,
     TrendDirection,
 )
 

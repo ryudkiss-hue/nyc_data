@@ -4,14 +4,15 @@ Hardcoded deterministic classifiers using spaCy + TextBlob sentiment.
 Analyzes tone, root causes, repeat patterns, and community impact.
 """
 
+import logging
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
+
+import pandas as pd
 import spacy
 from spacy.language import Language
 from spacy.tokens import Doc
-import pandas as pd
-from typing import List, Dict, Tuple, Optional
-from dataclasses import dataclass
-from pathlib import Path
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +29,7 @@ class SentimentResult:
     repeat_likelihood: float  # 0-100 (how likely based on language patterns)
     community_impact: str  # HIGH, MEDIUM, LOW
     impact_score: float  # 0-100
-    extracted_keywords: List[str]
+    extracted_keywords: list[str]
     address_context: Optional[str] = None
     sentiment_score: float = 0.0  # -1 to 1 from TextBlob
 
@@ -219,7 +220,7 @@ class SentimentClassifier:
             sentiment_score=sentiment_score,
         )
 
-    def classify_batch(self, texts: List[str], addresses: Optional[List[str]] = None) -> List[SentimentResult]:
+    def classify_batch(self, texts: list[str], addresses: Optional[list[str]] = None) -> list[SentimentResult]:
         """Classify multiple texts.
 
         Args:
@@ -279,7 +280,7 @@ class SentimentClassifier:
 
         return pd.concat([df.reset_index(drop=True), result_df], axis=1)
 
-    def _classify_tone(self, text: str) -> Tuple[str, float]:
+    def _classify_tone(self, text: str) -> tuple[str, float]:
         """Classify tone of text."""
         max_score = 0
         best_tone = "NEUTRAL"
@@ -294,7 +295,7 @@ class SentimentClassifier:
 
         return best_tone, best_confidence
 
-    def _classify_root_cause(self, text: str) -> Tuple[str, float]:
+    def _classify_root_cause(self, text: str) -> tuple[str, float]:
         """Classify root cause of complaint."""
         max_score = 0
         best_cause = "OTHER"
@@ -311,7 +312,7 @@ class SentimentClassifier:
 
         return best_cause, best_confidence
 
-    def _detect_repeat_complaint(self, text: str) -> Tuple[bool, float]:
+    def _detect_repeat_complaint(self, text: str) -> tuple[bool, float]:
         """Detect if this is likely a repeat complaint based on language patterns."""
         repeat_score = 0
 
@@ -333,7 +334,7 @@ class SentimentClassifier:
 
         return is_repeat, likelihood
 
-    def _assess_community_impact(self, text: str) -> Tuple[str, float]:
+    def _assess_community_impact(self, text: str) -> tuple[str, float]:
         """Assess community impact level."""
         impact_scores = {
             "HIGH": 0,
@@ -353,7 +354,7 @@ class SentimentClassifier:
         else:
             return "LOW", min(100, impact_scores["LOW"] * 10)
 
-    def _extract_keywords(self, text: str) -> List[str]:
+    def _extract_keywords(self, text: str) -> list[str]:
         """Extract relevant keywords from text."""
         keywords = set()
 
@@ -375,7 +376,7 @@ class SentimentClassifier:
 
         return sorted(list(keywords))
 
-    def _keyword_match_score(self, text: str, keywords: List[str]) -> int:
+    def _keyword_match_score(self, text: str, keywords: list[str]) -> int:
         """Count how many keywords appear in text."""
         score = 0
         for keyword in keywords:

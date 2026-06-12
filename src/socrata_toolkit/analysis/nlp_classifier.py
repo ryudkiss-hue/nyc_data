@@ -4,14 +4,15 @@ NLP-based text classification for inspection violations and 311 complaints.
 Hardcoded deterministic classifiers using spaCy — no LLM invocation.
 """
 
+import logging
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
+
+import pandas as pd
 import spacy
 from spacy.language import Language
 from spacy.tokens import Doc
-import pandas as pd
-from typing import List, Dict, Tuple, Optional
-from dataclasses import dataclass
-from pathlib import Path
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -23,9 +24,9 @@ class ClassificationResult:
     primary_category: str
     confidence_score: float  # 0-100
     severity_score: float  # 0-100 (inspection-specific)
-    extracted_entities: List[Tuple[str, str]]  # (text, label)
-    keywords_matched: List[str]
-    category_details: Dict  # Additional category-specific info
+    extracted_entities: list[tuple[str, str]]  # (text, label)
+    keywords_matched: list[str]
+    category_details: dict  # Additional category-specific info
 
 
 class InspectionViolationClassifier:
@@ -179,7 +180,7 @@ class InspectionViolationClassifier:
             category_details=category_details
         )
 
-    def batch_classify(self, texts: List[str]) -> List[ClassificationResult]:
+    def batch_classify(self, texts: list[str]) -> list[ClassificationResult]:
         """
         Classify multiple violation descriptions.
 
@@ -359,7 +360,7 @@ class Complaint311Classifier:
             category_details=category_details
         )
 
-    def batch_classify(self, texts: List[str]) -> List[ClassificationResult]:
+    def batch_classify(self, texts: list[str]) -> list[ClassificationResult]:
         """
         Classify multiple 311 complaints.
 
@@ -465,7 +466,7 @@ class TreeDamageClassifier:
             }
         )
 
-    def batch_classify(self, texts: List[str]) -> List[ClassificationResult]:
+    def batch_classify(self, texts: list[str]) -> list[ClassificationResult]:
         return [self.classify(text) for text in texts]
 
 
@@ -565,7 +566,7 @@ class ConstructionInspectionClassifier:
             }
         )
 
-    def batch_classify(self, texts: List[str]) -> List[ClassificationResult]:
+    def batch_classify(self, texts: list[str]) -> list[ClassificationResult]:
         return [self.classify(text) for text in texts]
 
 

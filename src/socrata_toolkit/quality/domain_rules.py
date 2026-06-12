@@ -35,7 +35,7 @@ class DomainRuleResult:
     status: str  # "PASS", "WARNING", "FAIL"
     rows_affected: int
     details: str
-    fix_recommendation: Optional[str] = None
+    fix_recommendation: str | None = None
 
     def __repr__(self) -> str:
         """String representation."""

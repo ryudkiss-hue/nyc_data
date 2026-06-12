@@ -12,11 +12,11 @@ Classifications enable targeted resource allocation and prioritization.
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from enum import Enum
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -293,14 +293,14 @@ class HotspotClassificationEngine:
         else:  # OPTIMIZED
             if trend == Trend.GROWING:
                 rec = (
-                    f"This hotspot is growing but currently optimized. "
-                    f"Monitor closely and be prepared to escalate resources if trend accelerates."
+                    "This hotspot is growing but currently optimized. "
+                    "Monitor closely and be prepared to escalate resources if trend accelerates."
                 )
             else:
                 rec = (
-                    f"This hotspot is at optimal resource allocation. "
-                    f"Continue current staffing and response strategy. "
-                    f"Schedule monthly review to confirm trend stability."
+                    "This hotspot is at optimal resource allocation. "
+                    "Continue current staffing and response strategy. "
+                    "Schedule monthly review to confirm trend stability."
                 )
 
         return reasoning, rec

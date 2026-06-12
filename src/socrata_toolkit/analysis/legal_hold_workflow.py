@@ -28,6 +28,8 @@ from datetime import datetime, timezone
 from typing import Any, TypedDict
 from uuid import uuid4
 
+from ..core.client import SocrataClient, SocrataConfig
+from ..governance.audit_logger import AuditLogger
 from .legal_hold_classifier import (
     AuditTrailMetrics,
     ComplianceStatus,
@@ -37,13 +39,11 @@ from .legal_hold_classifier import (
     RecordType,
     Sensitivity,
 )
-from ..core.client import SocrataClient, SocrataConfig
-from ..governance.audit_logger import AuditLogger
 
 logger = logging.getLogger(__name__)
 
 try:
-    from langgraph.graph import StateGraph, START, END
+    from langgraph.graph import END, START, StateGraph
     HAS_LANGGRAPH = True
 except ImportError:
     HAS_LANGGRAPH = False

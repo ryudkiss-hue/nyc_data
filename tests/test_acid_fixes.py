@@ -134,9 +134,9 @@ class TestTransactionalWrites:
     def test_write_cache_atomic_success(self, tmp_path):
         """Verify atomic write creates Parquet, manifest, and audit entry."""
         from app.utils.cache_manager import (
-            write_cache_atomic,
-            init_cache_audit_table,
             cache_manifest,
+            init_cache_audit_table,
+            write_cache_atomic,
         )
         from socrata_toolkit.core.duckdb_store import DuckDBManager
 
@@ -168,9 +168,9 @@ class TestTransactionalWrites:
     def test_write_cache_atomic_rollback_on_parquet_error(self, tmp_path):
         """Verify rollback when Parquet write fails."""
         from app.utils.cache_manager import (
-            write_cache_atomic,
-            init_cache_audit_table,
             cache_manifest,
+            init_cache_audit_table,
+            write_cache_atomic,
         )
         from socrata_toolkit.core.duckdb_store import DuckDBManager
 
@@ -201,8 +201,8 @@ class TestTransactionalWrites:
     def test_write_cache_atomic_cleans_up_temp_on_failure(self, tmp_path):
         """Verify temp file is cleaned up on write failure."""
         from app.utils.cache_manager import (
-            write_cache_atomic,
             init_cache_audit_table,
+            write_cache_atomic,
         )
         from socrata_toolkit.core.duckdb_store import DuckDBManager
 
@@ -338,8 +338,8 @@ class TestManifestFileLocking:
     def test_manifest_locked_basic(self, tmp_path):
         """Verify lock/unlock mechanism."""
         from app.utils.cache_manager import (
-            cache_manifest_locked,
             _unlock_manifest,
+            cache_manifest_locked,
         )
 
         with patch("app.utils.cache_manager._MANIFEST_PATH", tmp_path / "manifest.json"):
@@ -352,7 +352,7 @@ class TestManifestFileLocking:
 
     def test_concurrent_manifest_updates(self, tmp_path):
         """Verify no lost updates under concurrent access."""
-        from app.utils.cache_manager import update_manifest, cache_manifest
+        from app.utils.cache_manager import cache_manifest, update_manifest
 
         with patch("app.utils.cache_manager.CACHE_DIR", tmp_path):
             with patch("app.utils.cache_manager._MANIFEST_PATH", tmp_path / "manifest.json"):
@@ -380,8 +380,8 @@ class TestManifestFileLocking:
     def test_manifest_write_atomicity(self, tmp_path):
         """Verify manifest writes are atomic."""
         from app.utils.cache_manager import (
-            update_manifest,
             cache_manifest,
+            update_manifest,
         )
 
         with patch("app.utils.cache_manager.CACHE_DIR", tmp_path):
@@ -407,9 +407,9 @@ class TestManifestFileLocking:
     def test_manifest_timeout_on_lock_held(self, tmp_path):
         """Verify timeout handling when lock is held."""
         from app.utils.cache_manager import (
-            cache_manifest_locked,
             _unlock_manifest,
             cache_manifest,
+            cache_manifest_locked,
         )
 
         with patch("app.utils.cache_manager._MANIFEST_PATH", tmp_path / "manifest.json"):

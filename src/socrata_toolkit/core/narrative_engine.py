@@ -19,8 +19,8 @@ Pattern:
 import logging
 import os
 from dataclasses import dataclass
-from typing import Dict, Optional, Tuple
 from enum import Enum
+from typing import Dict, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +45,7 @@ class Insight:
     confidence: float  # 0-1: how confident is this insight
     sla_threshold: Optional[float] = None
     sla_met: Optional[bool] = None
-    context: Optional[Dict] = None
+    context: Optional[dict] = None
 
 
 class NarrativeEngineDefault:
@@ -54,7 +54,7 @@ class NarrativeEngineDefault:
     def __init__(self):
         self.templates = self._build_templates()
 
-    def _build_templates(self) -> Dict:
+    def _build_templates(self) -> dict:
         """Build hardcoded insight templates."""
         return {
             "completion_rate": {
@@ -91,7 +91,7 @@ class NarrativeEngineDefault:
         ci_upper: float,
         sla_threshold: float,
         sla_direction: str = "higher_is_better",
-        context: Optional[Dict] = None,
+        context: Optional[dict] = None,
         previous_value: Optional[float] = None,
     ) -> Insight:
         """Generate hardcoded narrative."""
@@ -151,9 +151,9 @@ class NarrativeEngineEnhanced:
 
     def __init__(self):
         try:
+            from langchain.chains import LLMChain
             from langchain.chat_models import ChatAnthropic
             from langchain.prompts import PromptTemplate
-            from langchain.chains import LLMChain
 
             self.llm = ChatAnthropic(model="claude-opus-4-8")
             self.prompt_template = PromptTemplate(
@@ -181,7 +181,7 @@ Insight:""",
             self.available = False
             logger.warning("LangChain not installed; falling back to hardcoded narratives")
 
-    def generate_narrative(self, metric_id: str, value: float, ci_lower: float, ci_upper: float, sla_threshold: float, sla_direction: str = "higher_is_better", context: Optional[Dict] = None, **kwargs) -> str:
+    def generate_narrative(self, metric_id: str, value: float, ci_lower: float, ci_upper: float, sla_threshold: float, sla_direction: str = "higher_is_better", context: Optional[dict] = None, **kwargs) -> str:
         """Generate enhanced narrative using Claude API."""
         if not self.available:
             return None
@@ -246,7 +246,7 @@ class NarrativeEngine:
         ci_upper: float,
         sla_threshold: float,
         sla_direction: str = "higher_is_better",
-        context: Optional[Dict] = None,
+        context: Optional[dict] = None,
         previous_value: Optional[float] = None,
     ) -> Insight:
         """Generate insight with AI fallback to hardcoded.

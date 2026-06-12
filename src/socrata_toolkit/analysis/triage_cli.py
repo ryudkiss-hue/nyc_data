@@ -12,8 +12,8 @@ Usage:
 import argparse
 import json
 import logging
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 from socrata_toolkit.analysis.langgraph_triage import run_triage, workflow_visualization
 
@@ -109,7 +109,7 @@ def save_report(result: dict, output_path: str) -> None:
         f.write("# NYC DOT Triage Report\n\n")
         f.write(f"Generated: {datetime.now().isoformat()}\n\n")
         f.write(f"## Dataset\n{result['dataset']}\n\n")
-        f.write(f"## Summary\n")
+        f.write("## Summary\n")
         f.write(f"- Total Records: {result['total_records']:,}\n")
         f.write(f"- High-Severity: {result['high_severity_count']}\n")
         f.write(f"- Action: {result['action_taken']}\n\n")
@@ -218,7 +218,7 @@ Examples:
 
     if args.dataset not in DATASET_REGISTRY:
         print(f"Unknown dataset: {args.dataset}")
-        print(f"Use --list-datasets to see available options")
+        print("Use --list-datasets to see available options")
         return
 
     dataset_info = DATASET_REGISTRY[args.dataset]

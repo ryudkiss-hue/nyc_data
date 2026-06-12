@@ -18,6 +18,13 @@ from .confidence_intervals import (
     mean_confidence_interval,
     wilson_score_confidence_interval,
 )
+from .dataset_health import (
+    DatasetHealthClassifier,
+    DatasetHealthMetrics,
+    DatasetHealthReport,
+    HealthStatus,
+    Severity,
+)
 from .insights import InsightsEngine, InsightsReport, generate_insights, smart_recommendations
 from .metrics import (
     compute_borough_metrics,
@@ -35,13 +42,7 @@ from .text import (
     parse_sim_complaints,
 )
 from .viz import bar_chart, histogram
-from .dataset_health import (
-    DatasetHealthClassifier,
-    DatasetHealthMetrics,
-    DatasetHealthReport,
-    HealthStatus,
-    Severity,
-)
+
 try:
     from .dataset_health_workflow import (
         DatasetHealthWorkflow,
@@ -51,37 +52,39 @@ except ImportError:
     DatasetHealthWorkflow = None  # type: ignore[assignment,misc]
     run_dataset_health_workflow = None  # type: ignore[assignment]
 from .sla_status import (
-    SLAStatusClassifier,
-    SLAMetricSnapshot,
-    SLAStatusRecord,
-    SLAComplianceReport,
     ComplianceStatus,
-    SLATier,
     RootCause,
+    SLAComplianceReport,
+    SLAMetricSnapshot,
+    SLAStatusClassifier,
+    SLAStatusRecord,
+    SLATier,
     TrendDirection,
 )
+
 try:
     from .sla_compliance_workflow import (
-        run_sla_compliance_workflow,
         build_sla_compliance_graph,
+        run_sla_compliance_workflow,
     )
 except ImportError:
     run_sla_compliance_workflow = None  # type: ignore[assignment]
     build_sla_compliance_graph = None  # type: ignore[assignment]
 from .legal_hold_classifier import (
+    AuditTrailMetrics,
     LegalHoldClassifier,
     LegalHoldMetrics,
     LegalHoldReport,
-    AuditTrailMetrics,
     RecordType,
-    Sensitivity,
     RetentionRequirement,
+    Sensitivity,
 )
+
 try:
     from .legal_hold_workflow import (
         LegalHoldWorkflow,
-        run_legal_hold_workflow,
         build_legal_hold_graph,
+        run_legal_hold_workflow,
     )
 except ImportError:
     LegalHoldWorkflow = None  # type: ignore[assignment,misc]
@@ -185,18 +188,18 @@ def _legacy_import(module: str, *names: str) -> None:
             globals()[name] = getattr(mod, name)
 
 
-_legacy_import(".quality", "Anomaly")
+_legacy_import("..quality.anomalies", "Anomaly")
 _legacy_import("..quality.sla_tracking", "SLATarget")
 _legacy_import("..quality.freshness", "AlertSeverity")
 _legacy_import("..metrics", "DataQualityMetrics")
 _legacy_import("..quality.validation", "validate_required_columns", "validate_schema_types")
 _legacy_import(".viz", "box_plot")
 _legacy_import(".reporting", "generate_program_report")
-_legacy_import(".insights", "build_weighted_rank_sql", "websearch_to_tsquery_sql")
+_legacy_import("..relevance", "build_weighted_rank_sql", "websearch_to_tsquery_sql")
 _legacy_import("..analyst.ramp_analysis", "compute_borough_completion_rates")
 _legacy_import("..engineering.cost_estimator", "estimate_costs")
 _legacy_import("..reports.analyst", "ProjectAnalystReports")
-_legacy_import(".domain_validation", "validate_ada_compliance_gates")
+_legacy_import("..quality.validation", "validate_ada_compliance_gates")
 
 
 # Lazy imports for optional NLP/LLM dependencies (spacy, langgraph, langchain)

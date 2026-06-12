@@ -27,7 +27,6 @@ from socrata_toolkit.analysis_advanced import (
 )
 from socrata_toolkit.spatial.analytics import SpatialAnomalyDetector, moran_i
 
-
 # ==========================================
 # FIXTURES
 # ==========================================

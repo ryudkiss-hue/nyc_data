@@ -24,21 +24,21 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple, TypedDict
 
+import arviz as az
 import numpy as np
 import pandas as pd
 import pymc as pm
-import arviz as az
-from langgraph.graph import END, StateGraph
 from langchain_anthropic import ChatAnthropic
+from langgraph.graph import END, StateGraph
 
 from socrata_toolkit.analysis.confidence_intervals import (
     bootstrap_confidence_interval,
 )
 from socrata_toolkit.analysis.forecast_classifier import (
-    CompletionForecastClassifier,
-    RiskLevel,
     BlockerType,
+    CompletionForecastClassifier,
     ForecastConfidence,
+    RiskLevel,
 )
 from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
@@ -58,7 +58,7 @@ class ForecastResult:
     days_until_deadline: int
     predicted_completion_date: str  # ISO 8601
     probability_on_time: float  # 0-1
-    credible_interval_days: Tuple[int, int]  # (lower, upper) 95% CI
+    credible_interval_days: tuple[int, int]  # (lower, upper) 95% CI
     risk_level: str  # HIGH, MEDIUM, LOW
     primary_blocker: str
     forecast_confidence: str
@@ -82,31 +82,31 @@ class ForecastingState(TypedDict):
     fourfour: str
     dataset_name: str  # "ramp_progress" or "violations"
     max_rows: int
-    target_completion_date: Optional[str]  # ISO 8601 deadline
+    target_completion_date: str | None  # ISO 8601 deadline
 
     # Fetched data
-    dataframe: Optional[pd.DataFrame]
+    dataframe: pd.DataFrame | None
     total_records: int
 
     # Velocity computation
-    velocity_by_project: Dict[str, float]  # project_id -> velocity
-    historical_completion_rates: Dict[str, float]  # stage -> completion_rate
+    velocity_by_project: dict[str, float]  # project_id -> velocity
+    historical_completion_rates: dict[str, float]  # stage -> completion_rate
     seasonal_adjustment: float  # -20% in winter, +10% in summer
 
     # Forecasts
-    forecasts: List[ForecastResult]
-    high_risk_projects: List[ForecastResult]
+    forecasts: list[ForecastResult]
+    high_risk_projects: list[ForecastResult]
 
     # Bayesian results
-    bayesian_model: Optional[BayesianForecastModel]
+    bayesian_model: BayesianForecastModel | None
 
     # Claude assessments
     claude_risk_analysis: str  # Which projects are at risk and why
     next_action: str  # "escalate" | "monitor" | "complete"
 
     # Output
-    final_report: Dict
-    execution_log: List[Dict]
+    final_report: dict
+    execution_log: list[dict]
 
 
 def create_forecasting_workflow():
@@ -594,7 +594,7 @@ def generate_report_node(state: ForecastingState) -> ForecastingState:
 # ============================================================================
 
 
-def _format_forecasts(forecasts: List[ForecastResult]) -> str:
+def _format_forecasts(forecasts: list[ForecastResult]) -> str:
     """Format forecasts as readable text."""
     lines = []
     for forecast in forecasts:
@@ -606,7 +606,7 @@ def _format_forecasts(forecasts: List[ForecastResult]) -> str:
     return "\n".join(lines) if lines else "- None"
 
 
-def _compute_forecast_statistics(forecasts: List[ForecastResult]) -> str:
+def _compute_forecast_statistics(forecasts: list[ForecastResult]) -> str:
     """Compute and format forecast statistics."""
     if not forecasts:
         return "- No forecasts available"
@@ -629,8 +629,8 @@ def run_forecasting_workflow(
     fourfour: str = "e7gc-ub6z",
     dataset_name: str = "ramp_progress",
     max_rows: int = 500,
-    target_completion_date: Optional[str] = None,
-) -> Dict[str, Any]:
+    target_completion_date: str | None = None,
+) -> dict[str, Any]:
     """
     Run the complete forecasting workflow.
 

@@ -21,7 +21,6 @@ from socrata_toolkit.quality.domain_rules import (
     validate_permit_inspection_relationship,
 )
 
-
 # ============================================================================
 # FIXTURES - Test Data Setup
 # ============================================================================

@@ -68,7 +68,7 @@ class MartBuilder(ABC):
         except:
             return False
 
-    def _pick_column(self, candidates: List[str], actual_columns: set) -> Optional[str]:
+    def _pick_column(self, candidates: list[str], actual_columns: set) -> Optional[str]:
         """Pick first candidate that exists in actual columns."""
         for candidate in candidates:
             if candidate in actual_columns:

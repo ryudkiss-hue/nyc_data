@@ -9,10 +9,10 @@ Provides:
 """
 
 from .builder import MartBuilder
-from .registry import BuilderRegistry
 from .factory import MaterializationFactory
 from .lineage import MartLineage
 from .quality import MartQuality
+from .registry import BuilderRegistry
 
 __all__ = [
     "MartBuilder",

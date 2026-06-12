@@ -5,10 +5,10 @@ Connects Phase 3A KPI calculations to Phase 2A Dash visualizations.
 Handles data flow: DuckDB cache → KPI calculation → Dashboard display.
 """
 
-import logging
-from typing import Dict, List, Any, Tuple
-from datetime import datetime
 import json
+import logging
+from datetime import datetime
+from typing import Any, Dict, List, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +47,7 @@ class AnalyticsBridge:
         """Store value in cache with timestamp."""
         self._cache[key] = (datetime.now(), value)
 
-    def get_violation_kpis(self) -> Dict[str, Any]:
+    def get_violation_kpis(self) -> dict[str, Any]:
         """
         Fetch violation KPIs for dashboard display (cached for 5 min).
 
@@ -86,7 +86,7 @@ class AnalyticsBridge:
             logger.error(f"Failed to fetch violation KPIs: {e}")
             return {'kpis': [], 'error': str(e), 'cached': False}
 
-    def get_ramp_kpis(self) -> Dict[str, Any]:
+    def get_ramp_kpis(self) -> dict[str, Any]:
         """
         Fetch ramp completion KPIs with confidence intervals (cached).
 
@@ -125,7 +125,7 @@ class AnalyticsBridge:
             logger.error(f"Failed to fetch ramp KPIs: {e}")
             return {'completion_rate': None, 'error': str(e), 'cached': False}
 
-    def get_quality_kpis(self) -> Dict[str, Any]:
+    def get_quality_kpis(self) -> dict[str, Any]:
         """
         Fetch data quality metrics (completeness, validity, composite score).
 
@@ -157,7 +157,7 @@ class AnalyticsBridge:
             logger.error(f"Failed to fetch quality KPIs: {e}")
             return {'metrics': {}, 'error': str(e)}
 
-    def get_spatial_coverage(self) -> Dict[str, Any]:
+    def get_spatial_coverage(self) -> dict[str, Any]:
         """
         Fetch geographic coverage and hotspot data.
 
@@ -187,7 +187,7 @@ class AnalyticsBridge:
             logger.error(f"Failed to fetch spatial coverage: {e}")
             return {'borough_distribution': {}, 'error': str(e)}
 
-    def materialize_dashboard_data(self) -> Dict[str, Any]:
+    def materialize_dashboard_data(self) -> dict[str, Any]:
         """
         Materialize all analytics for dashboard in single call.
 
@@ -214,7 +214,7 @@ class AnalyticsBridge:
         Args:
             app: Dash application instance
         """
-        from dash import callback, Input, Output
+        from dash import Input, Output, callback
 
         @callback(
             Output('violation-metrics', 'children'),

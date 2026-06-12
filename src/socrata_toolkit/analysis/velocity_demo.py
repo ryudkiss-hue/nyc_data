@@ -8,19 +8,21 @@ Run with: python -m socrata_toolkit.analysis.velocity_demo
 """
 
 import json
-import pandas as pd
 from datetime import datetime, timedelta
 
-# Import velocity components
-from .velocity_classifier import (
-    VelocityClassifier,
-    VelocityMetrics,
-    PerformanceTier,
-)
+import pandas as pd
+
 from .velocity_analysis_workflow import (
     VelocityAnalysisContext,
     VelocityState,
     run_velocity_analysis,
+)
+
+# Import velocity components
+from .velocity_classifier import (
+    PerformanceTier,
+    VelocityClassifier,
+    VelocityMetrics,
 )
 
 
@@ -112,22 +114,22 @@ def demo_workflow():
     start_date = pd.Timestamp("2026-05-01")
     end_date = pd.Timestamp("2026-05-31")
 
-    print(f"\nConfiguration:")
+    print("\nConfiguration:")
     print(f"  Start: {start_date.date()}")
     print(f"  End: {end_date.date()}")
-    print(f"  Borough: All")
-    print(f"  Inspector IDs: All")
+    print("  Borough: All")
+    print("  Inspector IDs: All")
 
-    print(f"\nWorkflow Steps:")
-    print(f"  1. Fetch inspections, violations, dismissals from Socrata")
-    print(f"  2. Group by inspector, compute metrics")
-    print(f"  3. Classify with VelocityClassifier")
-    print(f"  4. Query Claude for insights (~300 tokens)")
-    print(f"  5. Generate coaching recommendations")
-    print(f"  6. Build final report with execution log")
+    print("\nWorkflow Steps:")
+    print("  1. Fetch inspections, violations, dismissals from Socrata")
+    print("  2. Group by inspector, compute metrics")
+    print("  3. Classify with VelocityClassifier")
+    print("  4. Query Claude for insights (~300 tokens)")
+    print("  5. Generate coaching recommendations")
+    print("  6. Build final report with execution log")
 
-    print(f"\nNote: Full workflow requires Socrata API access and Claude API key.")
-    print(f"      For testing, use demo_classifier() above.")
+    print("\nNote: Full workflow requires Socrata API access and Claude API key.")
+    print("      For testing, use demo_classifier() above.")
 
 
 def demo_json_output():
@@ -164,7 +166,7 @@ def demo_json_output():
     # Export to dict (JSON-serializable)
     output = classification.to_dict()
 
-    print(f"\nJSON Export (for Streamlit/Dashboard):")
+    print("\nJSON Export (for Streamlit/Dashboard):")
     print(json.dumps(output, indent=2, default=str))
 
 

@@ -197,7 +197,7 @@ class TestTemporalDomainValidation:
 
     def test_hot_blocks_are_identified_correctly(self):
         """Verify that hot block identification works."""
-        from socrata_toolkit.viz.temporal_maps import identify_hot_blocks, bucket_temporal_data
+        from socrata_toolkit.viz.temporal_maps import bucket_temporal_data, identify_hot_blocks
 
         np.random.seed(42)
 

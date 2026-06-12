@@ -12,11 +12,12 @@ Classes:
 """
 
 import logging
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple
+
 import spacy
 from spacy.language import Language
 from spacy.tokens import Doc
-from dataclasses import dataclass
-from typing import List, Tuple, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -30,11 +31,11 @@ class CorrespondenceClassificationResult:
     clarity_score: float  # 0-100
     compliance_status: str
     compliance_score: float  # 0-100
-    keywords_matched: List[str]
-    tone_indicators: List[str]
-    compliance_issues: List[str]
-    extracted_entities: List[Tuple[str, str]]
-    category_details: Dict
+    keywords_matched: list[str]
+    tone_indicators: list[str]
+    compliance_issues: list[str]
+    extracted_entities: list[tuple[str, str]]
+    category_details: dict
 
 
 class CorrespondenceClassifier:
@@ -263,7 +264,7 @@ class CorrespondenceClassifier:
             category_details=category_details
         )
 
-    def batch_classify(self, texts: List[str]) -> List[CorrespondenceClassificationResult]:
+    def batch_classify(self, texts: list[str]) -> list[CorrespondenceClassificationResult]:
         """
         Classify multiple correspondence messages.
 
@@ -305,7 +306,7 @@ class CorrespondenceClassifier:
 
         return df_enriched
 
-    def compliance_summary(self, df) -> Dict:
+    def compliance_summary(self, df) -> dict:
         """
         Generate compliance summary for a dataframe of classified correspondence.
 
@@ -335,7 +336,7 @@ class CorrespondenceClassifier:
             "compliant": compliant,
             "needs_review": needs_review,
             "non_compliant": non_compliant,
-            "compliance_rate": float((compliant / total * 100)) if total > 0 else 0.0,
+            "compliance_rate": float(compliant / total * 100) if total > 0 else 0.0,
             "by_tone": by_tone,
             "by_type": by_type,
             "avg_clarity": float(df["clarity_score"].mean()) if "clarity_score" in df.columns else 0.0,

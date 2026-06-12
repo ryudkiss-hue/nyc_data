@@ -17,10 +17,7 @@ import json
 import logging
 from datetime import datetime
 
-from socrata_toolkit.analysis.langgraph_triage import (
-    run_triage,
-    workflow_visualization
-)
+from socrata_toolkit.analysis.langgraph_triage import run_triage, workflow_visualization
 
 logging.basicConfig(
     level=logging.INFO,
@@ -147,24 +144,24 @@ def example_5_token_cost_comparison():
     new_way_tokens = 700
     new_way_time_s = 2.5
 
-    print(f"\n❌ OLD WAY (All-Claude):")
-    print(f"   - Claude parses raw text: ~5000 tokens")
-    print(f"   - Claude aggregates: ~2000 tokens")
+    print("\n❌ OLD WAY (All-Claude):")
+    print("   - Claude parses raw text: ~5000 tokens")
+    print("   - Claude aggregates: ~2000 tokens")
     print(f"   - Total: {old_way_tokens} tokens")
     print(f"   - Time: {old_way_time_s}s")
 
-    print(f"\n✅ NEW WAY (Hardcoded + Claude):")
-    print(f"   - spaCy classifies: 0 tokens (~100ms)")
-    print(f"   - Claude decision: ~300 tokens")
-    print(f"   - Claude synthesis: ~400 tokens")
+    print("\n✅ NEW WAY (Hardcoded + Claude):")
+    print("   - spaCy classifies: 0 tokens (~100ms)")
+    print("   - Claude decision: ~300 tokens")
+    print("   - Claude synthesis: ~400 tokens")
     print(f"   - Total: {new_way_tokens} tokens")
     print(f"   - Time: {new_way_time_s}s")
 
-    print(f"\n📊 SAVINGS:")
+    print("\n📊 SAVINGS:")
     print(f"   - Per workflow: {old_way_tokens - new_way_tokens} tokens (90% reduction)")
     print(f"   - Per month (100 workflows): {(old_way_tokens - new_way_tokens) * 100:,} tokens")
     print(f"   - Speed: {old_way_time_s - new_way_time_s:.1f}s faster")
-    print(f"   - Cost: ~$3-5/month instead of $35-50/month")
+    print("   - Cost: ~$3-5/month instead of $35-50/month")
 
 
 def example_6_multiple_datasets():
@@ -209,7 +206,7 @@ def example_6_multiple_datasets():
 
     print(f"\nTotal records analyzed: {total_records:,}")
     print(f"Total high-severity items: {total_high_severity}")
-    print(f"\nBreakdown:")
+    print("\nBreakdown:")
     for dataset, stats in summary.items():
         pct = (stats['high_severity'] / stats['total'] * 100) if stats['total'] > 0 else 0
         print(f"  {dataset:20s}: {stats['high_severity']:3d}/{stats['total']:4d} ({pct:5.1f}%)")

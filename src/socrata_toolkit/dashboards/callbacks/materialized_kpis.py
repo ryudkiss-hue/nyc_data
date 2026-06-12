@@ -9,7 +9,7 @@ Performance: Dashboard latency reduced from ~500ms to ~50ms (10x faster).
 
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +40,7 @@ class MaterializedKPIStore:
         self.client = client
         self._last_refresh = {}
 
-    def materialize_kpis(self, kpi_results: Dict[str, Any]) -> bool:
+    def materialize_kpis(self, kpi_results: dict[str, Any]) -> bool:
         """
         Write KPI results to materialized tables.
 

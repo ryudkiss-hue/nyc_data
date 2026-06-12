@@ -1,11 +1,11 @@
 """Tests for MotherDuck integration and SQL compatibility validation."""
-import pytest
 import duckdb
+import pytest
 
 from socrata_toolkit.core.motherduck_integration import (
-    MotherDuckValidator,
     DuckDBConnection,
     MotherDuckConnection,
+    MotherDuckValidator,
     get_connection,
 )
 

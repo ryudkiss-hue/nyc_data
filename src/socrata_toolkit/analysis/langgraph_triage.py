@@ -9,17 +9,17 @@ as the state machine, spaCy for deterministic classification, and Claude for rea
 
 import json
 import logging
-from typing import Any, Dict, List, Optional
+from dataclasses import asdict, dataclass
 from datetime import datetime
-from dataclasses import dataclass, asdict
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
-from langgraph.graph import StateGraph, END
 from langchain_anthropic import ChatAnthropic
 from langchain_core.tools import tool
+from langgraph.graph import END, StateGraph
 
-from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 from socrata_toolkit.analysis.nlp_analysis import DatasetAnalyzerWithNLP
+from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 from socrata_toolkit.spatial.core import spatial_cluster
 
 logger = logging.getLogger(__name__)
@@ -436,7 +436,7 @@ def run_triage(
     max_rows: int = 1000,
     borough_filter: Optional[str] = None,
     severity_threshold: float = 70.0,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Run the complete triage workflow end-to-end.
 

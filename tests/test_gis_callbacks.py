@@ -3,12 +3,12 @@ Unit tests for GIS callbacks and service layer.
 Week 1-3 Phase 1 GIS Pilot - Test suite.
 """
 
-import pytest
-import pandas as pd
 import numpy as np
+import pandas as pd
 import plotly.graph_objects as go
-from app.services.gis_service import gis_service
+import pytest
 
+from app.services.gis_service import gis_service
 
 # =============================================================================
 # FIXTURES

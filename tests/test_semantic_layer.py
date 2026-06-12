@@ -1,11 +1,12 @@
 """Tests for Semantic Layer: Define metrics once, reuse everywhere."""
-import pytest
 from datetime import datetime, timedelta
 
+import pytest
+
 from socrata_toolkit.core.semantic_layer import (
+    MetricComputation,
     MetricDefinition,
     MetricsRegistry,
-    MetricComputation,
     WilsonScoreCI,
 )
 

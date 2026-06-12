@@ -23,7 +23,8 @@ import json
 import logging
 import os
 from datetime import datetime, timezone
-from typing import Any, TypedDict, Optional
+from typing import Any, Optional, TypedDict
+
 import anthropic
 
 from ..core.client import SocrataClient, SocrataConfig
@@ -33,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 # Optional: Only import LangGraph if available (graceful degradation)
 try:
-    from langgraph.graph import StateGraph, START, END
+    from langgraph.graph import END, START, StateGraph
     HAS_LANGGRAPH = True
 except ImportError:
     HAS_LANGGRAPH = False
@@ -43,7 +44,7 @@ class CorrespondenceAuditState(TypedDict):
     """Workflow state: passed through each node."""
     domain: str
     fourfour: str
-    max_rows: Optional[int]
+    max_rows: int | None
     raw_data: dict
     classified_data: dict
     high_severity_records: list[dict]
@@ -69,7 +70,7 @@ class CorrespondenceAuditWorkflow:
         self,
         domain: str = "data.cityofnewyork.us",
         fourfour: str = "bheb-sjfi",
-        max_rows: Optional[int] = None,
+        max_rows: int | None = None,
     ):
         """Initialize workflow.
 
