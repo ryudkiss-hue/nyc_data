@@ -265,6 +265,47 @@ def _legacy_import(module: str, *names: str) -> None:
 
 
 _legacy_import("..quality.anomalies", "Anomaly")
+_legacy_import(
+    "..quality.expectations",
+    "Expectation",
+    "ExpectationSuite",
+    "ExpectationType",
+    "SeverityLevel",
+    "create_311_complaints_suite",
+    "create_sidewalk_inspections_suite",
+)
+_legacy_import(
+    "..quality.profiler",
+    "ProfileGenerator",
+)
+_legacy_import(
+    "..quality.reports",
+    "QualityReportGenerator",
+)
+_legacy_import(
+    "..quality.rules",
+    "QualityRule",
+    "RuleMode",
+    "RuleSeverity",
+    "RuleViolations",
+    "create_311_complaints_rules",
+    "create_sidewalk_rules",
+)
+_legacy_import(
+    "..quality.integration",
+    "QualityValidator",
+)
+_legacy_import(
+    "..quality.sla",
+    "MetricType",
+    "SLADefinition",
+    "create_standard_slas",
+)
+_legacy_import(
+    "..quality.validator",
+    "ValidationResult",
+    "ValidationResultsAggregator",
+)
 _legacy_import("..quality.sla_tracking", "SLATarget")
 _legacy_import("..alerts.manager", "AlertSeverity")
 _legacy_import("..metrics", "DataQualityMetrics")
