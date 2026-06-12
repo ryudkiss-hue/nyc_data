@@ -342,6 +342,12 @@ class DataQualityTracker:
         self.history.append({"timestamp": timestamp, "score": score, "details": details or {}})
 
 @dataclass
+class DataQualityScore:
+    """Quality score for data."""
+    score: float
+    timestamp: datetime | None = None
+
+@dataclass
 class DatasetQualityScore:
     """Quality score for a dataset."""
     dataset_id: str
