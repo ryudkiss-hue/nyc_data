@@ -65,6 +65,31 @@ Layer 4: SERVING (90 rows, pre-computed)
 #### Confidence Intervals (2)
 - 95% CI Lower, 95% CI Upper
 
+### Advanced Statistical Tests (Optional, scipy/statsmodels, computed weekly)
+
+#### Normality Tests (3)
+- **Shapiro-Wilk p-value:** Most powerful for small samples
+- **Jarque-Bera p-value:** Uses skewness + kurtosis
+- **Anderson-Darling statistic:** Omnibus distribution test
+- **Boolean flag:** is_normal (TRUE if Shapiro-Wilk p > 0.05)
+
+#### Variance Equality Tests (2)
+- **Levene's p-value (across boroughs):** Test if variance differs by borough
+- **Boolean flag:** variances_equal (TRUE if p > 0.05)
+
+#### Effect Size & Comparative (1)
+- **Cohen's d vs. benchmark:** Standardized difference from target (effect size in σ units)
+
+#### Seasonal Analysis (1)
+- **Seasonal strength (STL):** 0-1 scale, higher = stronger seasonality (STL decomposition)
+
+#### Autocorrelation Significance (1)
+- **Ljung-Box p-value:** Is autocorrelation statistically significant? (p > 0.05 = not significant)
+
+#### Robust Regression (2)
+- **Robust regression slope (Huber M-estimator):** Slope less affected by outliers
+- **Outlier sensitivity ratio:** Abs(robust_slope - linear_slope) / abs(linear_slope), 0-1 scale
+
 ## Files
 
 ### Schema Definitions (DDL)
@@ -85,14 +110,18 @@ Layer 4: SERVING (90 rows, pre-computed)
 
 ## Execution Schedule
 
+### Nightly (3 AM – 4 AM Window)
+
 ```
 9:30 PM  │ Layer 2: Staging (deduplicate, rank)
          │ Duration: 30 seconds
          │
 10:00 PM │ Layer 3: Analytics (compute 60+ metrics)
          │ Duration: 120 seconds
+         │ Includes: mean, median, stdev, CV, skewness, kurtosis, outliers,
+         │           quantiles, diversity, risk, trend, benchmarking, CI
          │
-10:05 PM │ Layer 4: Serving (materialize + view)
+10:05 PM │ Layer 4: Serving (materialize CTAS + view)
          │ Duration: 15 seconds
          │
 10:10 PM │ Verification (check 90 rows, all metrics non-NULL)
@@ -100,6 +129,35 @@ Layer 4: SERVING (90 rows, pre-computed)
          │
 10:15 PM │ READY FOR DIVE QUERIES (zero-latency)
 ```
+
+### Weekly (Sunday 11 PM)
+
+Optional advanced metrics from scipy/statsmodels (can be disabled):
+
+```
+11:00 PM │ Normality tests (Shapiro-Wilk, Jarque-Bera, Anderson-Darling)
+         │ Duration: 30 seconds | Requires: scipy
+         │
+11:00 PM │ Levene's test (variance equality across boroughs)
+         │ Duration: 10 seconds | Requires: scipy
+         │
+11:00 PM │ Effect size (Cohen's d vs. benchmark)
+         │ Duration: 5 seconds | Requires: scipy
+         │
+11:01 PM │ Seasonal decomposition (STL: trend + seasonal + residual)
+         │ Duration: 20 seconds | Requires: statsmodels
+         │
+11:01 PM │ Autocorrelation significance (Ljung-Box test)
+         │ Duration: 15 seconds | Requires: statsmodels
+         │
+11:02 PM │ Robust regression (Huber M-estimator)
+         │ Duration: 20 seconds | Requires: statsmodels
+         │
+11:03 PM │ ADVANCED METRICS COMPLETE (~100 seconds total)
+         │ Status stored in: advanced_metrics_status, advanced_metrics_timestamp
+```
+
+**Note:** Advanced metrics are optional. If scipy/statsmodels are not installed, they remain NULL and `advanced_metrics_status = 'SKIPPED'`. The core 60+ metrics are always computed.
 
 ## Usage
 
@@ -128,6 +186,45 @@ SELECT kpi_name, borough, pct_at_risk, var_95, risk_percentile_95
 FROM app_queries.v_kpi_statistics
 WHERE pct_at_risk > 10
 ORDER BY pct_at_risk DESC;
+```
+
+### Advanced Metrics (Optional, Computed Weekly)
+
+```sql
+-- Is data normally distributed?
+SELECT kpi_name, borough, is_normal, shapiro_wilk_p, skewness, kurtosis
+FROM app_queries.v_kpi_statistics
+WHERE is_normal = FALSE
+ORDER BY shapiro_wilk_p;
+
+-- Which KPIs have significantly different variance by borough?
+SELECT DISTINCT kpi_name, variances_equal, levene_p
+FROM app_queries.v_kpi_statistics
+WHERE variances_equal = FALSE
+ORDER BY levene_p;
+
+-- Effect size vs. benchmark (in standard deviations)
+SELECT kpi_name, borough, cohens_d, benchmark_ratio
+FROM app_queries.v_kpi_statistics
+WHERE ABS(cohens_d) > 1.0  -- Large effect size (>1 σ from target)
+ORDER BY ABS(cohens_d) DESC;
+
+-- Seasonal patterns (if applicable)
+SELECT kpi_name, borough, seasonal_strength
+FROM app_queries.v_kpi_statistics
+WHERE seasonal_strength > 0.4  -- Strong seasonality
+ORDER BY seasonal_strength DESC;
+
+-- Trend sensitivity to outliers (is robust slope very different?)
+SELECT kpi_name, borough, outlier_sensitivity, robust_slope, trend_slope
+FROM app_queries.v_kpi_statistics
+WHERE outlier_sensitivity > 0.2  -- Trend significantly affected by outliers
+ORDER BY outlier_sensitivity DESC;
+
+-- Advanced metrics computation status
+SELECT DISTINCT advanced_metrics_status, COUNT(*) AS kpi_borough_pairs
+FROM analytics.kpi_metrics_comprehensive
+GROUP BY advanced_metrics_status;
 ```
 
 ### Data Quality Checks

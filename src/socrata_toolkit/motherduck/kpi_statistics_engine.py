@@ -1,4 +1,13 @@
-"""KPI Statistics Engine — compute 60+ metrics for 18 KPIs across 5 boroughs."""
+"""KPI Statistics Engine — compute 60+ metrics for 18 KPIs across 5 boroughs.
+
+Includes optional advanced metrics from scipy/statsmodels:
+- Normality tests (Shapiro-Wilk, Jarque-Bera, Anderson-Darling)
+- Variance equality tests (Levene's test across boroughs)
+- Effect size (Cohen's d vs. benchmark)
+- Seasonal decomposition (STL)
+- Autocorrelation significance (Ljung-Box test)
+- Robust regression (Huber M-estimator)
+"""
 from __future__ import annotations
 
 import logging
@@ -7,6 +16,24 @@ from dataclasses import dataclass
 from typing import Optional
 
 import duckdb
+import numpy as np
+
+# Optional dependencies for advanced metrics
+try:
+    from scipy import stats
+    HAS_SCIPY = True
+except ImportError:
+    HAS_SCIPY = False
+    logger = logging.getLogger(__name__)
+    logger.debug("scipy not available — normality/variance tests skipped")
+
+try:
+    from statsmodels.tsa.seasonal import STL
+    from statsmodels.stats.diagnostic import acorr_ljungbox
+    from statsmodels.robust import huber
+    HAS_STATSMODELS = True
+except ImportError:
+    HAS_STATSMODELS = False
 
 logger = logging.getLogger(__name__)
 
@@ -126,6 +153,147 @@ class KPIStatisticsResult:
     error_message: Optional[str] = None
 
 
+@dataclass
+class AdvancedMetricsResult:
+    """Result of advanced metrics computation."""
+    shapiro_wilk_p: Optional[float] = None
+    jarque_bera_p: Optional[float] = None
+    anderson_statistic: Optional[float] = None
+    is_normal: Optional[bool] = None
+    levene_p: Optional[float] = None
+    variances_equal: Optional[bool] = None
+    cohens_d: Optional[float] = None
+    seasonal_strength: Optional[float] = None
+    ljung_box_p: Optional[float] = None
+    robust_slope: Optional[float] = None
+    outlier_sensitivity: Optional[float] = None
+    computation_duration_seconds: float = 0.0
+    status: str = "PENDING"
+    error_message: Optional[str] = None
+
+
+class AdvancedMetricsComputer:
+    """Compute advanced statistical metrics using scipy/statsmodels."""
+
+    @staticmethod
+    def compute_normality_tests(kpi_values: np.ndarray) -> dict:
+        """Compute Shapiro-Wilk, Jarque-Bera, Anderson-Darling tests."""
+        if not HAS_SCIPY or kpi_values is None or len(kpi_values) < 3:
+            return {}
+
+        try:
+            # Shapiro-Wilk (most powerful for small samples)
+            shapiro_stat, shapiro_p = stats.shapiro(kpi_values)
+
+            # Jarque-Bera (good for larger samples, uses skewness/kurtosis)
+            jb_stat, jb_p = stats.jarque_bera(kpi_values)
+
+            # Anderson-Darling (omnibus test)
+            anderson_result = stats.anderson(kpi_values)
+
+            return {
+                "shapiro_wilk_p": float(shapiro_p),
+                "jarque_bera_p": float(jb_p),
+                "anderson_statistic": float(anderson_result.statistic),
+                "is_normal": shapiro_p > 0.05,
+            }
+        except Exception as e:
+            logger.warning(f"Normality test failed: {str(e)}")
+            return {}
+
+    @staticmethod
+    def compute_levene_test(kpi_values_by_borough: dict) -> dict:
+        """Levene's test for equality of variance across boroughs."""
+        if not HAS_SCIPY or not kpi_values_by_borough:
+            return {}
+
+        try:
+            groups = [v for v in kpi_values_by_borough.values() if v is not None and len(v) > 0]
+            if len(groups) < 2:
+                return {}
+
+            stat, p_value = stats.levene(*groups)
+            return {
+                "levene_p": float(p_value),
+                "variances_equal": p_value > 0.05,
+            }
+        except Exception as e:
+            logger.warning(f"Levene test failed: {str(e)}")
+            return {}
+
+    @staticmethod
+    def compute_cohens_d(mean_value: float, benchmark: float, std_dev: float) -> dict:
+        """Cohen's d effect size: standardized difference from benchmark."""
+        if std_dev == 0 or std_dev is None:
+            return {}
+
+        try:
+            cohens_d = (mean_value - benchmark) / std_dev
+            return {"cohens_d": float(cohens_d)}
+        except Exception as e:
+            logger.warning(f"Cohen's d computation failed: {str(e)}")
+            return {}
+
+    @staticmethod
+    def compute_seasonal_decomposition(kpi_values: np.ndarray) -> dict:
+        """STL seasonal decomposition (Trend + Seasonal + Residual)."""
+        if not HAS_STATSMODELS or kpi_values is None or len(kpi_values) < 14:
+            return {}
+
+        try:
+            ts = np.asarray(kpi_values)
+            stl = STL(ts, seasonal=13).fit()
+
+            seasonal_strength = 1.0 - (stl.resid.var() / (stl.seasonal + stl.resid).var())
+            return {
+                "seasonal_strength": float(max(0, min(1, seasonal_strength))),
+            }
+        except Exception as e:
+            logger.warning(f"STL decomposition failed: {str(e)}")
+            return {}
+
+    @staticmethod
+    def compute_ljung_box_test(kpi_values: np.ndarray) -> dict:
+        """Ljung-Box test for autocorrelation significance."""
+        if not HAS_STATSMODELS or kpi_values is None or len(kpi_values) < 10:
+            return {}
+
+        try:
+            result = acorr_ljungbox(kpi_values, lags=1, return_df=False)
+            ljung_box_stat, ljung_box_p = result[0], result[1]
+            return {
+                "ljung_box_p": float(ljung_box_p),
+            }
+        except Exception as e:
+            logger.warning(f"Ljung-Box test failed: {str(e)}")
+            return {}
+
+    @staticmethod
+    def compute_robust_regression(kpi_values: np.ndarray, linear_slope: float) -> dict:
+        """Huber robust regression: is trend driven by outliers?"""
+        if not HAS_STATSMODELS or kpi_values is None or len(kpi_values) < 5:
+            return {}
+
+        try:
+            X = np.arange(len(kpi_values)).reshape(-1, 1)
+            Y = np.asarray(kpi_values)
+
+            huber_result = huber(Y, X)
+            robust_slope = float(huber_result.params[1]) if len(huber_result.params) > 1 else 0.0
+
+            sensitivity = 0.0
+            if linear_slope != 0:
+                sensitivity = abs(robust_slope - linear_slope) / abs(linear_slope)
+
+            return {
+                "robust_regression_slope": robust_slope,
+                "outlier_sensitivity_ratio": float(max(0, min(1, sensitivity))),
+            }
+        except Exception as e:
+            logger.warning(f"Robust regression failed: {str(e)}")
+            return {}
+
+
 class KPIStatisticsEngine:
     """Computes 60+ statistical metrics for 18 KPIs across 5 boroughs."""
 
@@ -243,6 +411,153 @@ class KPIStatisticsEngine:
             checks["error"] = str(e)
 
         return checks
+
+    def compute_advanced_metrics(self, kpi_name: str, borough: str) -> AdvancedMetricsResult:
+        """Compute optional advanced metrics for a single KPI-borough pair."""
+        if self.conn is None:
+            return AdvancedMetricsResult(status="SKIPPED", error_message="Not connected")
+
+        start_time = time.time()
+
+        try:
+            # Fetch raw KPI values for this KPI-borough
+            result = self.conn.execute(
+                """
+                SELECT kpi_value FROM analytics.kpi_metrics_staged
+                WHERE kpi_name = ? AND borough = ? AND is_latest_record = TRUE
+                ORDER BY analytics_timestamp
+                """,
+                (kpi_name, borough),
+            ).fetchall()
+
+            if not result or len(result) < 3:
+                return AdvancedMetricsResult(status="SKIPPED", error_message="Insufficient data")
+
+            kpi_values = np.array([row[0] for row in result])
+
+            # Get existing metrics
+            stats_result = self.conn.execute(
+                """
+                SELECT mean_value, benchmark_value, stddev_samp, trend_slope_per_day
+                FROM analytics.kpi_statistics_by_borough
+                WHERE kpi_name = ? AND borough = ?
+                """,
+                (kpi_name, borough),
+            ).fetchone()
+
+            if not stats_result:
+                return AdvancedMetricsResult(status="SKIPPED", error_message="Stats not found")
+
+            mean_val, benchmark_val, std_val, slope_val = stats_result
+
+            advanced = AdvancedMetricsComputer()
+
+            # Compute all advanced metrics
+            norm_tests = advanced.compute_normality_tests(kpi_values)
+            cohens = advanced.compute_cohens_d(mean_val, benchmark_val, std_val)
+            seasonal = advanced.compute_seasonal_decomposition(kpi_values)
+            ljung = advanced.compute_ljung_box_test(kpi_values)
+            robust = advanced.compute_robust_regression(kpi_values, slope_val)
+
+            duration = time.time() - start_time
+
+            return AdvancedMetricsResult(
+                shapiro_wilk_p=norm_tests.get("shapiro_wilk_p"),
+                jarque_bera_p=norm_tests.get("jarque_bera_p"),
+                anderson_statistic=norm_tests.get("anderson_statistic"),
+                is_normal=norm_tests.get("is_normal"),
+                cohens_d=cohens.get("cohens_d"),
+                seasonal_strength=seasonal.get("seasonal_strength"),
+                ljung_box_p=ljung.get("ljung_box_p"),
+                robust_slope=robust.get("robust_regression_slope"),
+                outlier_sensitivity=robust.get("outlier_sensitivity_ratio"),
+                computation_duration_seconds=duration,
+                status="COMPUTED",
+            )
+
+        except Exception as e:
+            duration = time.time() - start_time
+            logger.error(f"Advanced metrics failed for {kpi_name}/{borough}: {str(e)}")
+            return AdvancedMetricsResult(
+                computation_duration_seconds=duration,
+                status="FAILED",
+                error_message=str(e),
+            )
+
+    def update_advanced_metrics_batch(self) -> dict:
+        """Update advanced metrics for all KPI-borough pairs (can run weekly)."""
+        if self.conn is None:
+            raise RuntimeError("Not connected to database")
+
+        results = {
+            "total": 0,
+            "computed": 0,
+            "failed": 0,
+            "duration_seconds": 0.0,
+        }
+
+        start_time = time.time()
+
+        try:
+            # Get all KPI-borough pairs
+            pairs = self.conn.execute(
+                "SELECT DISTINCT kpi_name, borough FROM analytics.kpi_statistics_by_borough"
+            ).fetchall()
+
+            logger.info(f"Computing advanced metrics for {len(pairs)} KPI-borough pairs...")
+
+            for kpi_name, borough in pairs:
+                result = self.compute_advanced_metrics(kpi_name, borough)
+
+                results["total"] += 1
+                if result.status == "COMPUTED":
+                    results["computed"] += 1
+
+                    # Update the database with computed metrics
+                    self.conn.execute(
+                        """
+                        UPDATE analytics.kpi_statistics_by_borough
+                        SET shapiro_wilk_p = ?,
+                            jarque_bera_p = ?,
+                            anderson_statistic = ?,
+                            is_normal = ?,
+                            cohens_d_vs_benchmark = ?,
+                            seasonal_strength = ?,
+                            ljung_box_p = ?,
+                            robust_regression_slope = ?,
+                            outlier_sensitivity_ratio = ?,
+                            advanced_metrics_status = 'COMPUTED',
+                            advanced_metrics_timestamp = CURRENT_TIMESTAMP
+                        WHERE kpi_name = ? AND borough = ?
+                        """,
+                        (
+                            result.shapiro_wilk_p,
+                            result.jarque_bera_p,
+                            result.anderson_statistic,
+                            result.is_normal,
+                            result.cohels_d,
+                            result.seasonal_strength,
+                            result.ljung_box_p,
+                            result.robust_slope,
+                            result.outlier_sensitivity,
+                            kpi_name,
+                            borough,
+                        ),
+                    )
+                else:
+                    results["failed"] += 1
+
+            results["duration_seconds"] = time.time() - start_time
+            logger.info(
+                f"✓ Advanced metrics: {results['computed']}/{results['total']} computed in {results['duration_seconds']:.2f}s"
+            )
+
+        except Exception as e:
+            logger.error(f"Batch advanced metrics update failed: {str(e)}")
+            results["status"] = "FAILED"
+            results["error"] = str(e)
+
+        return results
 
     def close(self) -> None:
         """Close database connection."""
