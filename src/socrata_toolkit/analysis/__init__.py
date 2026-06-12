@@ -27,12 +27,15 @@ from .dataset_health import (
 )
 from .insights import InsightsEngine, InsightsReport, generate_insights, smart_recommendations
 from .metrics import (
+    Anomaly,
     AnomalyDetector,
     AnomalyReport,
     AnomalySeverity,
     BusinessRulesEngine,
+    ColumnProfile,
     DataQualityCatalog,
     DataQualityScore,
+    DatasetProfile,
     DataType,
     DataQualityTracker,
     DatasetQualityScore,
@@ -96,7 +99,17 @@ from .text import (
     generate_text_insights,
     parse_sim_complaints,
 )
-from .viz import bar_chart, box_plot, classify_distribution, histogram, list_available_visualizations
+from .viz import (
+    bar_chart,
+    box_plot,
+    ChartResult,
+    classify_distribution,
+    correlation_heatmap,
+    histogram,
+    list_available_visualizations,
+    quality_dashboard,
+    time_series_chart,
+)
 
 try:
     from .dataset_health_workflow import (
@@ -154,6 +167,9 @@ __all__ = [
     "extract_term_frequencies",
     "extract_patterns",
     "parse_sim_complaints",
+    "Anomaly",
+    "ColumnProfile",
+    "DatasetProfile",
     "compute_sla_metrics",
     "compute_borough_metrics",
     "compute_sla_trends",
@@ -224,6 +240,7 @@ __all__ = [
     "histogram",
     "bar_chart",
     "box_plot",
+    "ChartResult",
     "list_available_visualizations",
     "classify_distribution",
     "classify_all_distributions",
