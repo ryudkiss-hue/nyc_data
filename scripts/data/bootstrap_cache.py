@@ -127,11 +127,24 @@ def fetch_dataset(client, dataset_name, fourfour, days_back=30):
         return None
 
 def get_date_field(dataset_name):
-    """Identify date field for incremental fetch."""
-    # Only include fields that are verified to work with SOQL date filtering.
-    # Datasets not listed here are fetched without a date filter (up to max_rows).
+    """Identify date field for incremental fetch.
+    Only fields verified to work with SOQL date filtering are listed.
+    Datasets not listed are fetched without a date filter (up to max_rows).
+    Field names verified against live API 2026-06-11.
+    """
     date_fields = {
-        "complaints_311": "created_date",
+        "violations":                      "vissuedate",
+        "inspection":                      "inspectiondate",
+        "dismissals":                      "violation_issue_date",
+        "complaints_311":                  "created_date",
+        "ramp_complaints":                 "complaint_date",
+        "street_permits":                  "permitissuedate",
+        "street_construction_inspections": "inspectiondate",
+        "street_closures_block":           "work_start_date",
+        "street_resurfacing_schedule":     "date",
+        "correspondences":                 "date_received",
+        "curb_metal_protruding":           "insp",
+        "tree_damage":                     "inspect_date",
     }
     return date_fields.get(dataset_name)
 
@@ -193,16 +206,17 @@ def materialize_analytics(conn):
     logger.info("[ANALYTICS] Materializing views...")
 
     try:
-        # Violations by borough
+        # Violations by borough — uses actual SODA2 field names (verified 2026-06-11)
         conn.execute("""
         CREATE OR REPLACE VIEW analytics.violations_by_borough AS
         SELECT
-          Borough,
-          COUNT(*) as violation_count,
-          COUNT(DISTINCT site_street_address) as affected_addresses,
-          DATE_TRUNC('month', violation_issue_date) as month
+          cb                                                      AS borough,
+          COUNT(*)                                                AS violation_count,
+          COUNT(DISTINCT onstname)                                AS affected_streets,
+          DATE_TRUNC('month', TRY_CAST(vissuedate AS TIMESTAMP)) AS month
         FROM raw.violations
-        GROUP BY Borough, DATE_TRUNC('month', violation_issue_date)
+        WHERE vissuedate IS NOT NULL
+        GROUP BY cb, DATE_TRUNC('month', TRY_CAST(vissuedate AS TIMESTAMP))
         ORDER BY month DESC, violation_count DESC
         """)
 
@@ -210,39 +224,42 @@ def materialize_analytics(conn):
         conn.execute("""
         CREATE OR REPLACE VIEW analytics.inspection_summary AS
         SELECT
-          COUNT(*) as total_inspections,
-          COUNT(DISTINCT damage_id) as unique_damages,
-          COUNT(CASE WHEN no_violation_found = 'Y' THEN 1 END) as clean_inspections,
-          DATE_TRUNC('month', inspection_date) as month
+          COUNT(*)                                                    AS total_inspections,
+          COUNT(DISTINCT damageid)                                    AS unique_damages,
+          COUNT(CASE WHEN noviolationfound = 'Y' THEN 1 END)         AS clean_inspections,
+          DATE_TRUNC('month', TRY_CAST(inspectiondate AS TIMESTAMP)) AS month
         FROM raw.inspection
-        GROUP BY DATE_TRUNC('month', inspection_date)
+        WHERE inspectiondate IS NOT NULL
+        GROUP BY DATE_TRUNC('month', TRY_CAST(inspectiondate AS TIMESTAMP))
         ORDER BY month DESC
         """)
 
-        # Ramp progress
+        # Ramp progress — construc_2 holds construction status (truncated Shapefile name)
         conn.execute("""
         CREATE OR REPLACE VIEW analytics.ramp_progress_summary AS
         SELECT
-          Borough,
-          COUNT(*) as total_ramps,
-          SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) as completed_ramps,
-          ROUND(100.0 * SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) / COUNT(*), 1) as completion_pct,
-          AVG(CAST(percent_complete AS FLOAT)) as avg_progress
+          borough,
+          COUNT(*)                                              AS total_ramps,
+          COUNT(CASE WHEN construc_2 = 'Completed' THEN 1 END) AS completed_ramps,
+          ROUND(
+            100.0 * COUNT(CASE WHEN construc_2 = 'Completed' THEN 1 END)
+            / NULLIF(COUNT(*), 0), 1
+          )                                                     AS completion_pct
         FROM raw.ramp_progress
-        GROUP BY Borough
+        WHERE borough IS NOT NULL
+        GROUP BY borough
         ORDER BY completion_pct DESC
         """)
 
-        # Permits by status
+        # Permits by status — uses actual SODA2 field names
         conn.execute("""
         CREATE OR REPLACE VIEW analytics.permits_by_status AS
         SELECT
-          permit_status,
-          COUNT(*) as permit_count,
-          SUM(CAST(budget AS FLOAT)) as total_budget,
-          COUNT(DISTINCT contractor) as contractor_count
+          permitstatusshortdesc   AS permit_status,
+          COUNT(*)                AS permit_count,
+          COUNT(DISTINCT permitteename) AS permittee_count
         FROM raw.street_permits
-        GROUP BY permit_status
+        GROUP BY permitstatusshortdesc
         ORDER BY permit_count DESC
         """)
 
