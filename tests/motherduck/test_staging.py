@@ -1,10 +1,12 @@
 """Tests for MotherDuck staging transformations (motherduck-model-data)."""
+
 import pandas as pd
 import pytest
 
 from socrata_toolkit.motherduck.connector import MotherDuckConnection
 from socrata_toolkit.motherduck.ingestion import InspectionDataLoader
 from socrata_toolkit.motherduck.staging import StagingTransformer
+
 
 @pytest.fixture
 def motherduck_conn():
@@ -13,15 +15,18 @@ def motherduck_conn():
     yield conn
     conn.close()
 
+
 @pytest.fixture
 def data_loader(motherduck_conn):
     """Fixture providing an InspectionDataLoader instance."""
     return InspectionDataLoader(motherduck_conn)
 
+
 @pytest.fixture
 def staging_transformer(motherduck_conn):
     """Fixture providing a StagingTransformer instance."""
     return StagingTransformer(motherduck_conn)
+
 
 class TestStagingSchemaCreation:
     """Tests for staging schema and table creation."""
@@ -110,9 +115,7 @@ class TestStagingSchemaCreation:
         for col in expected_columns:
             assert col in column_names, f"Column '{col}' not found in spatial_enriched"
 
-    def test_timeseries_prepared_table_created(
-        self, data_loader, staging_transformer
-    ):
+    def test_timeseries_prepared_table_created(self, data_loader, staging_transformer):
         """Verify staging.timeseries_prepared table is created with correct schema."""
         data_loader.create_raw_schema()
         staging_transformer.create_staging_schema()
@@ -140,12 +143,11 @@ class TestStagingSchemaCreation:
         for col in expected_columns:
             assert col in column_names, f"Column '{col}' not found in timeseries_prepared"
 
+
 class TestInspectionCleanTransformation:
     """Tests for inspection_clean staging table transformations."""
 
-    def test_inspection_clean_deduplication(
-        self, data_loader, staging_transformer
-    ):
+    def test_inspection_clean_deduplication(self, data_loader, staging_transformer):
         """Verify deduplication: duplicate objectid keeps only latest created_date."""
         data_loader.create_raw_schema()
         staging_transformer.create_staging_schema()
@@ -153,9 +155,7 @@ class TestInspectionCleanTransformation:
         sample_df = pd.DataFrame(
             {
                 "objectid": [1, 1, 2],  # objectid 1 appears twice
-                "created_date": pd.to_datetime(
-                    ["2026-01-01", "2026-01-02", "2026-01-03"]
-                ),
+                "created_date": pd.to_datetime(["2026-01-01", "2026-01-02", "2026-01-03"]),
                 "violation_type": ["Type1", "Type1", "Type2"],
                 "violation_code": ["CODE1", "CODE1", "CODE2"],
                 "severity": ["Critical", "Critical", "Serious"],
@@ -183,7 +183,9 @@ class TestInspectionCleanTransformation:
         # Check that objectid=1 has the latest created_date (2026-01-02)
         obj1_rows = [r for r in result if r[0] == 1]
         assert len(obj1_rows) == 1, "objectid=1 should appear only once"
-        assert obj1_rows[0][1] == pd.Timestamp("2026-01-02").to_pydatetime(), "Should keep latest date"
+        assert obj1_rows[0][1] == pd.Timestamp("2026-01-02").to_pydatetime(), (
+            "Should keep latest date"
+        )
 
     def test_inspection_clean_null_filtering(self, data_loader, staging_transformer):
         """Verify rows with null location coordinates are filtered out."""
@@ -193,9 +195,7 @@ class TestInspectionCleanTransformation:
         sample_df = pd.DataFrame(
             {
                 "objectid": [1, 2, 3],
-                "created_date": pd.to_datetime(
-                    ["2026-01-01", "2026-01-02", "2026-01-03"]
-                ),
+                "created_date": pd.to_datetime(["2026-01-01", "2026-01-02", "2026-01-03"]),
                 "violation_type": ["Type1", "Type2", "Type1"],
                 "violation_code": ["CODE1", "CODE2", "CODE1"],
                 "severity": ["High", "Low", "Medium"],
@@ -214,15 +214,11 @@ class TestInspectionCleanTransformation:
         data_loader.load_inspection_data(sample_df)
         staging_transformer.transform_inspection_clean()
 
-        result = staging_transformer.conn.fetch_all(
-            "SELECT COUNT(*) FROM staging.inspection_clean"
-        )
+        result = staging_transformer.conn.fetch_all("SELECT COUNT(*) FROM staging.inspection_clean")
 
         assert result[0][0] == 1, "Should have only 1 row (objectid=1) after null filtering"
 
-    def test_inspection_clean_severity_scoring(
-        self, data_loader, staging_transformer
-    ):
+    def test_inspection_clean_severity_scoring(self, data_loader, staging_transformer):
         """Verify severity_score is computed correctly: Critical=3, Serious=2, else=1."""
         data_loader.create_raw_schema()
         staging_transformer.create_staging_schema()
@@ -259,13 +255,11 @@ class TestInspectionCleanTransformation:
 
         for row in result:
             objectid, severity, score = row
-            assert score == expected_scores[
-                objectid
-            ], f"objectid={objectid} severity={severity} should have score={expected_scores[objectid]}"
+            assert score == expected_scores[objectid], (
+                f"objectid={objectid} severity={severity} should have score={expected_scores[objectid]}"
+            )
 
-    def test_inspection_clean_geometry_creation(
-        self, data_loader, staging_transformer
-    ):
+    def test_inspection_clean_geometry_creation(self, data_loader, staging_transformer):
         """Verify geom is created from latitude/longitude."""
         data_loader.create_raw_schema()
         staging_transformer.create_staging_schema()
@@ -334,12 +328,11 @@ class TestInspectionCleanTransformation:
         assert result[0][2] == 3, "inspection_month should be 3 (March)"
         assert result[0][3] == 2026, "inspection_year should be 2026"
 
+
 class TestSpatialEnrichedTransformation:
     """Tests for spatial_enriched staging table transformations."""
 
-    def test_spatial_enriched_z_score_computation(
-        self, data_loader, staging_transformer
-    ):
+    def test_spatial_enriched_z_score_computation(self, data_loader, staging_transformer):
         """Verify z-score is computed correctly: (count - mean) / std_dev."""
         data_loader.create_raw_schema()
         staging_transformer.create_staging_schema()
@@ -387,9 +380,7 @@ class TestSpatialEnrichedTransformation:
             assert count is not None, f"{location_id} inspection_count should not be null"
             assert z_score is not None, f"{location_id} z_score should not be null"
 
-    def test_spatial_enriched_location_id_creation(
-        self, data_loader, staging_transformer
-    ):
+    def test_spatial_enriched_location_id_creation(self, data_loader, staging_transformer):
         """Verify location_id is created from CONCAT(borough, block, lot)."""
         data_loader.create_raw_schema()
         staging_transformer.create_staging_schema()
@@ -429,12 +420,11 @@ class TestSpatialEnrichedTransformation:
         assert any("MN" in loc_id for loc_id in location_ids), "Should have MN borough"
         assert any("BK" in loc_id for loc_id in location_ids), "Should have BK borough"
 
+
 class TestTimeseriesPreparedTransformation:
     """Tests for timeseries_prepared staging table transformations."""
 
-    def test_timeseries_prepared_with_calendar_join(
-        self, data_loader, staging_transformer
-    ):
+    def test_timeseries_prepared_with_calendar_join(self, data_loader, staging_transformer):
         """Verify timeseries has daily records aggregated by date."""
         data_loader.create_raw_schema()
         staging_transformer.create_staging_schema()
@@ -443,9 +433,7 @@ class TestTimeseriesPreparedTransformation:
         sample_df = pd.DataFrame(
             {
                 "objectid": [1, 2, 3],
-                "created_date": pd.to_datetime(
-                    ["2026-01-01", "2026-01-01", "2026-01-03"]
-                ),
+                "created_date": pd.to_datetime(["2026-01-01", "2026-01-01", "2026-01-03"]),
                 "violation_type": ["Type1", "Type1", "Type2"],
                 "violation_code": ["CODE1", "CODE1", "CODE2"],
                 "severity": ["Critical", "Serious", "Minor"],
@@ -471,9 +459,7 @@ class TestTimeseriesPreparedTransformation:
 
         assert len(result) >= 2, "Should have at least 2 date records (2026-01-01 and 2026-01-03)"
 
-    def test_timeseries_prepared_7day_moving_average(
-        self, data_loader, staging_transformer
-    ):
+    def test_timeseries_prepared_7day_moving_average(self, data_loader, staging_transformer):
         """Verify violation_count_7d_ma is computed correctly."""
         data_loader.create_raw_schema()
         staging_transformer.create_staging_schema()

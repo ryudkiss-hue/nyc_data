@@ -1,4 +1,5 @@
 """Tests for core.persistence module - Pipeline persistence layer."""
+
 from __future__ import annotations
 
 import json
@@ -13,6 +14,7 @@ from socrata_toolkit.core.persistence import (
     load_pipelines,
     save_pipeline,
 )
+
 
 class TestLoadPipelines:
     """Tests for load_pipelines function."""
@@ -65,6 +67,7 @@ class TestLoadPipelines:
                 with patch.object(Path, "read_text", side_effect=OSError("Read error")):
                     result = load_pipelines()
                     assert result == {}
+
 
 class TestSavePipeline:
     """Tests for save_pipeline function."""
@@ -147,6 +150,7 @@ class TestSavePipeline:
 
                 loaded = json.loads(store_path.read_text(encoding="utf-8"))
                 assert loaded["complex_pipeline"] == config
+
 
 class TestDeletePipeline:
     """Tests for delete_pipeline function."""

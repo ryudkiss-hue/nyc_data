@@ -9,13 +9,16 @@ Tests cover:
 """
 
 import time
-import pytest
+
 import pandas as pd
+import pytest
+
 from socrata_toolkit.motherduck.query_cache import (
     QueryCache,
-    memoize_with_ttl,
     get_query_cache,
+    memoize_with_ttl,
 )
+
 
 class TestQueryCache:
     """Test suite for QueryCache class."""
@@ -193,6 +196,7 @@ class TestQueryCache:
         cache2 = get_query_cache()
         assert cache1 is cache2
 
+
 class TestCachingPerformance:
     """Integration tests for caching performance (benchmarking)."""
 
@@ -233,7 +237,7 @@ class TestCachingPerformance:
 
         # Add 100 query results to cache
         for i in range(100):
-            query = query_template.format("MN", f"2026-0{i%6}-{i%28+1:02d}")
+            query = query_template.format("MN", f"2026-0{i % 6}-{i % 28 + 1:02d}")
             df = pd.DataFrame({"col": list(range(1000))})
             cache.set(query, df)
 
@@ -242,6 +246,7 @@ class TestCachingPerformance:
         assert stats["entry_count"] >= 80
         # Memory should be reasonable for 100 DataFrames (~5-10MB)
         assert stats["total_size_mb"] < 50
+
 
 class TestCacheInvalidation:
     """Test cache invalidation strategies."""

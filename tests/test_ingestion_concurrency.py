@@ -7,6 +7,7 @@ import pytest
 
 from app.data_manager import DataManager
 
+
 def test_progress_lock_contention():
     """Stress test the progress lock in DataManager."""
     dm = DataManager()
@@ -20,11 +21,14 @@ def test_progress_lock_contention():
             time.sleep(0.001)
 
     threads = [threading.Thread(target=simulate_updates) for _ in range(10)]
-    for t in threads: t.start()
-    for t in threads: t.join()
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
 
     # Total should be exactly 1000 (10 threads * 100 updates)
     assert dm.progress["completed"] == 1000
+
 
 def test_redundant_ingestion_prevention():
     """Verify that multiple initialization calls don't spawn redundant threads."""

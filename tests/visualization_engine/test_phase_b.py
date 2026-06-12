@@ -2,11 +2,13 @@
 
 Tests all 12 Phase B charts with real test data.
 """
+
 import plotly.graph_objects as go
 import pytest
 
 from app.visualization_engine.phase_b import PhaseBVisualizations
 from app.visualization_engine.statistics_display import StatisticsPanel
+
 
 @pytest.fixture
 def phase_b_viz(mock_connection, phase_b_test_data):
@@ -22,6 +24,7 @@ def phase_b_viz(mock_connection, phase_b_test_data):
     viz = PhaseBVisualizations(mock_connection)
     mock_connection.fetch_dataframe.return_value = phase_b_test_data
     return viz
+
 
 class TestPhaseBVisualizationBasics:
     """Test basic functionality of Phase B visualizations."""
@@ -101,6 +104,7 @@ class TestPhaseBVisualizationBasics:
         assert all(isinstance(v[0], go.Figure) for v in charts.values())
         assert all(isinstance(v[1], StatisticsPanel) for v in charts.values())
 
+
 class TestPhaseBStatistics:
     """Test statistics calculation in Phase B visualizations."""
 
@@ -134,6 +138,7 @@ class TestPhaseBStatistics:
         assert "mean_value" in stats_dict
         assert "last_timestamp" in stats_dict
 
+
 class TestPhaseBDataValidation:
     """Test data validation in Phase B visualizations."""
 
@@ -153,6 +158,7 @@ class TestPhaseBDataValidation:
         for borough in boroughs:
             fig, stats = phase_b_viz.render_borough_gauge(borough)
             assert isinstance(fig, go.Figure)
+
 
 class TestPhaseBChartCharacteristics:
     """Test specific characteristics of Phase B charts."""
@@ -182,9 +188,15 @@ class TestPhaseBChartCharacteristics:
             # Check either layout title or indicator title in trace
             has_layout_title = fig.layout.title and fig.layout.title.text
             has_trace_title = any(
-                hasattr(trace, 'title') and trace.title and
-                (isinstance(trace.title, dict) and trace.title.get('text') or
-                 hasattr(trace.title, 'text') and trace.title.text)
-                for trace in fig.data if hasattr(trace, 'title')
+                hasattr(trace, "title")
+                and trace.title
+                and (
+                    isinstance(trace.title, dict)
+                    and trace.title.get("text")
+                    or hasattr(trace.title, "text")
+                    and trace.title.text
+                )
+                for trace in fig.data
+                if hasattr(trace, "title")
             )
             assert has_layout_title or has_trace_title, f"{name} has no title"

@@ -2,6 +2,7 @@ import os
 
 import pytest
 
+
 @pytest.mark.skipif(not os.getenv("RUN_INTEGRATION"), reason="Set RUN_INTEGRATION=1")
 def test_postgres_connection():
     pytest.importorskip("psycopg")
@@ -14,6 +15,7 @@ def test_postgres_connection():
             cur.execute("SELECT 1")
             assert cur.fetchone()[0] == 1
 
+
 @pytest.mark.skipif(not os.getenv("RUN_INTEGRATION"), reason="Set RUN_INTEGRATION=1")
 def test_mongo_connection():
     pytest.importorskip("pymongo")
@@ -24,11 +26,13 @@ def test_mongo_connection():
     c = MongoClient(uri)
     assert c.admin.command("ping")["ok"] == 1.0
 
+
 # ---------------------------------------------------------------------------
 # Round-trip integration: exercise the real exporters against live datastores.
 # These catch SQL-generation, driver-compat, and upsert-conflict bugs that the
 # mocked unit tests cannot. Gated on RUN_INTEGRATION (CI service containers).
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.skipif(not os.getenv("RUN_INTEGRATION"), reason="Set RUN_INTEGRATION=1")
 def test_postgres_exporter_roundtrip():
@@ -63,6 +67,7 @@ def test_postgres_exporter_roundtrip():
     by_id = {r[0]: (r[1], r[2]) for r in rows}
     assert by_id[2] == ("Bobby", 25)
     assert by_id[3] == ("Cara", 30)
+
 
 @pytest.mark.skipif(not os.getenv("RUN_INTEGRATION"), reason="Set RUN_INTEGRATION=1")
 def test_mongo_exporter_roundtrip():

@@ -2,6 +2,7 @@
 Tests for type safety in Socrata ingestion parameters.
 Ensures max_rows and page_size handle string inputs correctly.
 """
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
@@ -10,11 +11,13 @@ import pytest
 
 from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
+
 def _mock_resp(json_payload):
     resp = MagicMock()
     resp.json.return_value = json_payload
     resp.status_code = 200
     return resp
+
 
 class TestIngestionTypeSafety:
     @patch("socrata_toolkit.core.client.requests.post")
@@ -43,7 +46,10 @@ class TestIngestionTypeSafety:
         """fetch_geojson SODA3 path should cast string max_rows to int."""
         client = SocrataClient(SocrataConfig(app_token="fake", page_size=1000))
         # Need to return an empty batch to break the loop or mock the countdown
-        mock_post.side_effect = [_mock_resp({"features": [{"id": 1}]}), _mock_resp({"features": []})]
+        mock_post.side_effect = [
+            _mock_resp({"features": [{"id": 1}]}),
+            _mock_resp({"features": []}),
+        ]
 
         fc = client.fetch_geojson("data.city", "abcd-1234", max_rows="500")
         assert len(fc["features"]) == 1

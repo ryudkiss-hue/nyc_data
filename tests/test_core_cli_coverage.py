@@ -1,4 +1,5 @@
 """Tests for core.cli module - Click CLI commands."""
+
 from __future__ import annotations
 
 import json
@@ -38,10 +39,12 @@ from socrata_toolkit.core.cli import (
     visualize_cmd,
 )
 
+
 @pytest.fixture
 def cli_runner():
     """Provide Click CLI test runner."""
     return CliRunner()
+
 
 class TestMainGroup:
     """Tests for main CLI group and global options."""
@@ -79,6 +82,7 @@ class TestMainGroup:
         result = cli_runner.invoke(main, ["--log-level", "CRITICAL", "--help"])
         assert result.exit_code == 0
 
+
 class TestSearchCommand:
     """Tests for search command."""
 
@@ -115,12 +119,10 @@ class TestSearchCommand:
                 mock_client_class.return_value = mock_client
                 mock_client.search.return_value = []
 
-                result = cli_runner.invoke(
-                    search,
-                    ["test", "--json-out", str(output_file)]
-                )
+                result = cli_runner.invoke(search, ["test", "--json-out", str(output_file)])
                 if result.exit_code == 0:
                     assert output_file.exists()
+
 
 class TestMetaCommand:
     """Tests for metadata command."""
@@ -138,11 +140,9 @@ class TestMetaCommand:
             mock_meta.summary.return_value = {"rows": 100}
             mock_client.get_metadata.return_value = mock_meta
 
-            result = cli_runner.invoke(
-                meta_cmd,
-                ["example.com", "abc123", "--columns-only"]
-            )
+            result = cli_runner.invoke(meta_cmd, ["example.com", "abc123", "--columns-only"])
             assert result.exit_code == 0
+
 
 class TestFetchCommand:
     """Tests for fetch command."""
@@ -164,9 +164,11 @@ class TestFetchCommand:
                     [
                         "example.com",
                         "abc123",
-                        "--format", "json",
-                        "--out", str(output_file),
-                    ]
+                        "--format",
+                        "json",
+                        "--out",
+                        str(output_file),
+                    ],
                 )
                 if result.exit_code == 0:
                     assert output_file.exists()
@@ -178,6 +180,7 @@ class TestFetchCommand:
                 mock_client = MagicMock()
                 mock_client_class.return_value = mock_client
                 import pandas as pd
+
                 mock_client.fetch_dataframe.return_value = pd.DataFrame({"id": [1]})
 
                 with patch("socrata_toolkit.core.cli.XLSXExporter"):
@@ -186,11 +189,14 @@ class TestFetchCommand:
                         [
                             "example.com",
                             "abc123",
-                            "--format", "xlsx",
-                            "--out", str(output_file),
-                        ]
+                            "--format",
+                            "xlsx",
+                            "--out",
+                            str(output_file),
+                        ],
                     )
                     assert result.exit_code == 0
+
 
 class TestAnalyzeCommand:
     """Tests for analyze command."""
@@ -202,18 +208,17 @@ class TestAnalyzeCommand:
     def test_analyze_with_domain_and_fourfour(self, cli_runner):
         with patch("socrata_toolkit.core.cli._client") as mock_client_class:
             import pandas as pd
+
             mock_client = MagicMock()
             mock_client_class.return_value = mock_client
             mock_client.fetch_dataframe.return_value = pd.DataFrame({"id": [1, 2]})
 
             with patch("socrata_toolkit.analysis.profile_dataframe") as mock_profile:
                 mock_profile.return_value = MagicMock()
-                result = cli_runner.invoke(
-                    analyze_cmd,
-                    ["example.com", "abc123"]
-                )
+                result = cli_runner.invoke(analyze_cmd, ["example.com", "abc123"])
                 # May error if save_state fails, but command executed
                 assert result.exit_code is not None
+
 
 class TestReadinessCommand:
     """Tests for readiness check command."""
@@ -227,6 +232,7 @@ class TestReadinessCommand:
         # Should complete without error
         assert result.exit_code is not None
 
+
 class TestDoctorCommand:
     """Tests for doctor command."""
 
@@ -238,6 +244,7 @@ class TestDoctorCommand:
         result = cli_runner.invoke(doctor_cmd, [])
         # Should complete without critical errors
         assert result.exit_code is not None
+
 
 class TestOutliersCommand:
     """Tests for outliers detection command."""
@@ -251,6 +258,7 @@ class TestOutliersCommand:
             output_file = Path(tmpdir) / "outliers.json"
             with patch("socrata_toolkit.core.cli._client") as mock_client_class:
                 import pandas as pd
+
                 mock_client = MagicMock()
                 mock_client_class.return_value = mock_client
                 mock_client.fetch_dataframe.return_value = pd.DataFrame(
@@ -264,11 +272,14 @@ class TestOutliersCommand:
                         [
                             "example.com",
                             "abc123",
-                            "--method", "iqr",
-                            "--out", str(output_file),
-                        ]
+                            "--method",
+                            "iqr",
+                            "--out",
+                            str(output_file),
+                        ],
                     )
                     assert result.exit_code is not None
+
 
 class TestCorrelationsCommand:
     """Tests for correlation analysis command."""
@@ -282,6 +293,7 @@ class TestCorrelationsCommand:
             output_file = Path(tmpdir) / "correlations.json"
             with patch("socrata_toolkit.core.cli._client") as mock_client_class:
                 import pandas as pd
+
                 mock_client = MagicMock()
                 mock_client_class.return_value = mock_client
                 mock_client.fetch_dataframe.return_value = pd.DataFrame(
@@ -300,11 +312,14 @@ class TestCorrelationsCommand:
                         [
                             "example.com",
                             "abc123",
-                            "--method", "pearson",
-                            "--out", str(output_file),
-                        ]
+                            "--method",
+                            "pearson",
+                            "--out",
+                            str(output_file),
+                        ],
                     )
                     assert result.exit_code == 0
+
 
 class TestNLPAnalyzeCommand:
     """Tests for NLP analysis command."""
@@ -318,12 +333,14 @@ class TestNLPAnalyzeCommand:
         # Should handle gracefully (nlp modules may not be installed)
         assert result.exit_code is not None
 
+
 class TestSpatialJoinCommand:
     """Tests for spatial join command."""
 
     def test_spatial_join_help(self, cli_runner):
         result = cli_runner.invoke(spatial_join_cmd, ["--help"])
         assert result.exit_code == 0
+
 
 class TestUpsertPostgresCommand:
     """Tests for Postgres upsert command."""
@@ -332,12 +349,14 @@ class TestUpsertPostgresCommand:
         result = cli_runner.invoke(upsert_pg, ["--help"])
         assert result.exit_code == 0
 
+
 class TestUpsertMongoCommand:
     """Tests for MongoDB upsert command."""
 
     def test_upsert_mongo_help(self, cli_runner):
         result = cli_runner.invoke(upsert_mongo, ["--help"])
         assert result.exit_code == 0
+
 
 class TestBatchSearchCommand:
     """Tests for batch search command."""
@@ -346,12 +365,14 @@ class TestBatchSearchCommand:
         result = cli_runner.invoke(batch_search_cmd, ["--help"])
         assert result.exit_code == 0
 
+
 class TestMigrateCommand:
     """Tests for database migration command."""
 
     def test_migrate_help(self, cli_runner):
         result = cli_runner.invoke(migrate_cmd, ["--help"])
         assert result.exit_code == 0
+
 
 class TestAlertsCommand:
     """Tests for alerts command."""
@@ -366,12 +387,14 @@ class TestAlertsCommand:
             # Should execute without error
             assert result.exit_code is not None
 
+
 class TestLLMAugmentCommand:
     """Tests for LLM augmentation command."""
 
     def test_llm_augment_help(self, cli_runner):
         result = cli_runner.invoke(llm_augment_cmd, ["--help"])
         assert result.exit_code == 0
+
 
 class TestTextInsightsCommand:
     """Tests for text insights command."""
@@ -380,12 +403,14 @@ class TestTextInsightsCommand:
         result = cli_runner.invoke(text_insights_cmd, ["--help"])
         assert result.exit_code == 0
 
+
 class TestConflictCommand:
     """Tests for conflict detection command."""
 
     def test_conflict_help(self, cli_runner):
         result = cli_runner.invoke(conflict_cmd, ["--help"])
         assert result.exit_code == 0
+
 
 class TestPipelineCommand:
     """Tests for pipeline command."""
@@ -427,9 +452,12 @@ class TestPipelineCommand:
                             [
                                 "example.com",
                                 "abc123",
-                                "--json-out", str(json_out),
-                                "--report-path", str(report_path),
-                                "--state-path", str(state_path),
+                                "--json-out",
+                                str(json_out),
+                                "--report-path",
+                                str(report_path),
+                                "--state-path",
+                                str(state_path),
                             ],
                         )
                         assert result.exit_code is not None
@@ -452,8 +480,10 @@ class TestPipelineCommand:
                                     "example.com",
                                     "abc123",
                                     "--stream",
-                                    "--report-path", str(report_path),
-                                    "--state-path", str(state_path),
+                                    "--report-path",
+                                    str(report_path),
+                                    "--state-path",
+                                    str(state_path),
                                 ],
                             )
                             assert result.exit_code is not None
@@ -476,12 +506,16 @@ class TestPipelineCommand:
                                 [
                                     "example.com",
                                     "abc123",
-                                    "--required-col", "id",
-                                    "--report-path", str(report_path),
-                                    "--state-path", str(state_path),
+                                    "--required-col",
+                                    "id",
+                                    "--report-path",
+                                    str(report_path),
+                                    "--state-path",
+                                    str(state_path),
                                 ],
                             )
                             assert result.exit_code is not None
+
 
 class TestQualityScoreCommand:
     """Tests for quality-score command."""
@@ -537,9 +571,12 @@ class TestQualityScoreCommand:
                     [
                         "example.com",
                         "abc123",
-                        "--key-column", "objectid",
-                        "--date-column", "created_date",
-                        "--freshness-days", "14",
+                        "--key-column",
+                        "objectid",
+                        "--date-column",
+                        "created_date",
+                        "--freshness-days",
+                        "14",
                     ],
                 )
                 assert result.exit_code is not None
@@ -566,6 +603,7 @@ class TestQualityScoreCommand:
                 if result.exit_code == 0:
                     payload = json.loads(result.output)
                     assert "overall" in payload
+
 
 class TestSchemaDriftCommand:
     """Tests for schema-drift command."""
@@ -612,7 +650,9 @@ class TestSchemaDriftCommand:
                 mock_client.fetch_dataframe.return_value = pd.DataFrame({"id": [1]})
                 with patch("socrata_toolkit.governance.core.load_schema_snapshot"):
                     with patch("socrata_toolkit.governance.core.detect_schema_drift") as mock_drift:
-                        with patch("socrata_toolkit.governance.core.save_schema_snapshot") as mock_save:
+                        with patch(
+                            "socrata_toolkit.governance.core.save_schema_snapshot"
+                        ) as mock_save:
                             mock_diff = MagicMock()
                             mock_diff.is_compatible = True
                             mock_diff.added_columns = []
@@ -624,11 +664,14 @@ class TestSchemaDriftCommand:
                                 [
                                     "example.com",
                                     "abc123",
-                                    "--baseline", str(baseline_path),
-                                    "--save-snapshot", str(snapshot_path),
+                                    "--baseline",
+                                    str(baseline_path),
+                                    "--save-snapshot",
+                                    str(snapshot_path),
                                 ],
                             )
                             assert result.exit_code is not None
+
 
 class TestVisualizeCommand:
     """Tests for visualize command."""
@@ -657,8 +700,10 @@ class TestVisualizeCommand:
                     [
                         "example.com",
                         "abc123",
-                        "--chart", "histogram",
-                        "--out", str(out_path),
+                        "--chart",
+                        "histogram",
+                        "--out",
+                        str(out_path),
                     ],
                 )
                 assert result.exit_code is not None
@@ -671,20 +716,21 @@ class TestVisualizeCommand:
             with patch("socrata_toolkit.core.cli._client") as mock_client_cls:
                 mock_client = MagicMock()
                 mock_client_cls.return_value = mock_client
-                mock_client.fetch_dataframe.return_value = pd.DataFrame(
-                    {"borough": ["MN", "BK"]}
-                )
+                mock_client.fetch_dataframe.return_value = pd.DataFrame({"borough": ["MN", "BK"]})
                 with patch.dict("sys.modules", {"socrata_toolkit.core.visualization": mock_viz}):
                     result = cli_runner.invoke(
                         visualize_cmd,
                         [
                             "example.com",
                             "abc123",
-                            "--chart", "heatmap",
-                            "--out", str(out_path),
+                            "--chart",
+                            "heatmap",
+                            "--out",
+                            str(out_path),
                         ],
                     )
                     mock_client.fetch_dataframe.assert_called_once()
+
 
 class TestSchemaGroupCommands:
     """Tests for schema subcommand group."""
@@ -721,7 +767,9 @@ class TestSchemaGroupCommands:
 
     def test_schema_list_no_versions(self, cli_runner):
         """Schema list returns empty message for unknown dataset."""
-        with patch("socrata_toolkit.discovery.schema.SchemaRegistry._load_schema_history") as mock_hist:
+        with patch(
+            "socrata_toolkit.discovery.schema.SchemaRegistry._load_schema_history"
+        ) as mock_hist:
             mock_hist.return_value = []
             result = cli_runner.invoke(main, ["schema", "list", "unknown-dataset"])
             assert result.exit_code == 0
@@ -729,11 +777,14 @@ class TestSchemaGroupCommands:
 
     def test_schema_current_no_schema(self, cli_runner):
         """Schema current returns empty message for unknown dataset."""
-        with patch("socrata_toolkit.discovery.schema.SchemaRegistry.get_schema_version") as mock_get:
+        with patch(
+            "socrata_toolkit.discovery.schema.SchemaRegistry.get_schema_version"
+        ) as mock_get:
             mock_get.return_value = None
             result = cli_runner.invoke(main, ["schema", "current", "unknown-dataset"])
             assert result.exit_code == 0
             assert "No schema" in result.output
+
 
 class TestReviewGroupCommands:
     """Tests for review subcommand group."""
@@ -777,14 +828,20 @@ class TestReviewGroupCommands:
             result = cli_runner.invoke(
                 main,
                 [
-                    "review", "set",
-                    "--kind", "conflict",
-                    "--key-type", "location_id",
-                    "--key", "12345",
-                    "--status", "resolved",
+                    "review",
+                    "set",
+                    "--kind",
+                    "conflict",
+                    "--key-type",
+                    "location_id",
+                    "--key",
+                    "12345",
+                    "--status",
+                    "resolved",
                 ],
             )
             assert result.exit_code != 0
+
 
 class TestDoctorCommandExtended:
     """Extended tests for doctor command with additional options."""
@@ -810,6 +867,7 @@ class TestDoctorCommandExtended:
             payload = json.loads(result.output)
             assert "fix_it" in payload
 
+
 class TestFetchCommandExtended:
     """Extended tests for fetch command covering geojson and include-meta."""
 
@@ -829,8 +887,10 @@ class TestFetchCommandExtended:
                     [
                         "example.com",
                         "abc123",
-                        "--format", "geojson",
-                        "--out", str(out_path),
+                        "--format",
+                        "geojson",
+                        "--out",
+                        str(out_path),
                     ],
                 )
                 assert result.exit_code is not None
@@ -852,8 +912,10 @@ class TestFetchCommandExtended:
                         [
                             "example.com",
                             "abc123",
-                            "--format", "xlsx",
-                            "--out", str(out_path),
+                            "--format",
+                            "xlsx",
+                            "--out",
+                            str(out_path),
                             "--include-meta",
                         ],
                     )
@@ -872,12 +934,16 @@ class TestFetchCommandExtended:
                     [
                         "example.com",
                         "abc123",
-                        "--format", "json",
-                        "--out", str(out_path),
-                        "--where", "borough='MN'",
+                        "--format",
+                        "json",
+                        "--out",
+                        str(out_path),
+                        "--where",
+                        "borough='MN'",
                     ],
                 )
                 assert result.exit_code is not None
+
 
 class TestMetaCommandExtended:
     """Extended tests for meta command including json-out option."""
@@ -914,6 +980,7 @@ class TestMetaCommandExtended:
                 )
                 assert result.exit_code == 0
                 assert out_path.exists()
+
 
 class TestSearchCommandExtended:
     """Extended tests for search command options."""
@@ -954,6 +1021,7 @@ class TestSearchCommandExtended:
             )
             assert result.exit_code == 0
 
+
 class TestConflictCommandExtended:
     """Extended tests for conflict command."""
 
@@ -966,13 +1034,9 @@ class TestConflictCommandExtended:
         """Conflict command accepts --proposed-file for local JSON input."""
         with tempfile.TemporaryDirectory() as tmpdir:
             proposed_file = Path(tmpdir) / "proposed.json"
-            proposed_file.write_text(
-                json.dumps([{"id": 1, "geometry": "POINT(-74 40)"}])
-            )
+            proposed_file.write_text(json.dumps([{"id": 1, "geometry": "POINT(-74 40)"}]))
             ref_file = Path(tmpdir) / "ref.json"
-            ref_file.write_text(
-                json.dumps([{"id": 2, "geometry": "POINT(-74 40)"}])
-            )
+            ref_file.write_text(json.dumps([{"id": 2, "geometry": "POINT(-74 40)"}]))
             with patch("socrata_toolkit.core.cli.ConflictResolver") as mock_resolver_cls:
                 mock_resolver = MagicMock()
                 mock_resolver_cls.return_value = mock_resolver
@@ -985,12 +1049,15 @@ class TestConflictCommandExtended:
                 result = cli_runner.invoke(
                     conflict_cmd,
                     [
-                        "--proposed-file", str(proposed_file),
-                        "--ref-file", str(ref_file),
+                        "--proposed-file",
+                        str(proposed_file),
+                        "--ref-file",
+                        str(ref_file),
                         "--dry-run",
                     ],
                 )
                 assert result.exit_code is not None
+
 
 class TestBatchSearchCommandExtended:
     """Extended tests for batch-search command."""
@@ -1011,8 +1078,10 @@ class TestBatchSearchCommandExtended:
                         [
                             "example.com",
                             "abc123",
-                            "--field", "id",
-                            "--file", str(values_file),
+                            "--field",
+                            "id",
+                            "--file",
+                            str(values_file),
                         ],
                     )
                     assert result.exit_code is not None
@@ -1027,11 +1096,14 @@ class TestBatchSearchCommandExtended:
                 [
                     "example.com",
                     "abc123",
-                    "--field", "id",
-                    "--file", str(empty_file),
+                    "--field",
+                    "id",
+                    "--file",
+                    str(empty_file),
                 ],
             )
             assert result.exit_code != 0
+
 
 class TestOutliersCommandExtended:
     """Extended tests for outliers command."""
@@ -1041,9 +1113,7 @@ class TestOutliersCommandExtended:
         with patch("socrata_toolkit.core.cli._client") as mock_client_cls:
             mock_client = MagicMock()
             mock_client_cls.return_value = mock_client
-            mock_client.fetch_dataframe.return_value = pd.DataFrame(
-                {"value": [1, 2, 3, 4, 5, 100]}
-            )
+            mock_client.fetch_dataframe.return_value = pd.DataFrame({"value": [1, 2, 3, 4, 5, 100]})
             with patch("socrata_toolkit.analysis.advanced.detect_all_outliers") as mock_detect:
                 mock_report = MagicMock()
                 mock_report.column = "value"
@@ -1066,9 +1136,7 @@ class TestOutliersCommandExtended:
             with patch("socrata_toolkit.core.cli._client") as mock_client_cls:
                 mock_client = MagicMock()
                 mock_client_cls.return_value = mock_client
-                mock_client.fetch_dataframe.return_value = pd.DataFrame(
-                    {"v": [1, 2, 3]}
-                )
+                mock_client.fetch_dataframe.return_value = pd.DataFrame({"v": [1, 2, 3]})
                 with patch("socrata_toolkit.analysis.advanced.detect_all_outliers") as mock_detect:
                     mock_detect.return_value = []
                     result = cli_runner.invoke(
@@ -1076,10 +1144,12 @@ class TestOutliersCommandExtended:
                         [
                             "example.com",
                             "abc123",
-                            "--out", str(out_path),
+                            "--out",
+                            str(out_path),
                         ],
                     )
                     assert result.exit_code is not None
+
 
 class TestAlertsCommandExtended:
     """Extended tests for alerts command."""

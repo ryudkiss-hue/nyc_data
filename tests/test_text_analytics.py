@@ -2,6 +2,7 @@ import pandas as pd
 
 from socrata_toolkit.analysis import generate_text_insights
 
+
 def test_generate_text_insights_tags_and_regex():
     df = pd.DataFrame(
         {

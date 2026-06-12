@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from statsmodels.tsa.stattools import adfuller, kpss
+
     HAS_STATSMODELS = True
 except ImportError:
     HAS_STATSMODELS = False
@@ -20,6 +21,7 @@ except ImportError:
 @dataclass
 class StationarityResult:
     """Result of stationarity test."""
+
     test_name: str
     statistic: float
     p_value: float
@@ -37,7 +39,7 @@ class StationarityTester:
         if not HAS_STATSMODELS:
             logger.warning("statsmodels not available; stationarity tests skipped")
 
-    def adf_test(self, series: np.ndarray, autolag: str = 'AIC') -> Optional[StationarityResult]:
+    def adf_test(self, series: np.ndarray, autolag: str = "AIC") -> StationarityResult | None:
         """Augmented Dickey-Fuller test.
 
         H0: Series has unit root (non-stationary)
@@ -54,26 +56,26 @@ class StationarityTester:
             return None
 
         try:
-            result = adfuller(series, autolag=autolag, regression='c')
+            result = adfuller(series, autolag=autolag, regression="c")
 
             return StationarityResult(
-                test_name='ADF',
+                test_name="ADF",
                 statistic=float(result[0]),
                 p_value=float(result[1]),
                 is_stationary=float(result[1]) > 0.05,
                 n_obs=int(result[3]),
                 lags_used=int(result[2]),
                 critical_values={
-                    '1%': float(result[4]['1%']),
-                    '5%': float(result[4]['5%']),
-                    '10%': float(result[4]['10%']),
-                }
+                    "1%": float(result[4]["1%"]),
+                    "5%": float(result[4]["5%"]),
+                    "10%": float(result[4]["10%"]),
+                },
             )
         except Exception as e:
             logger.error(f"ADF test failed: {str(e)}")
             return None
 
-    def kpss_test(self, series: np.ndarray, regression: str = 'c') -> Optional[StationarityResult]:
+    def kpss_test(self, series: np.ndarray, regression: str = "c") -> StationarityResult | None:
         """KPSS test (opposite hypothesis to ADF).
 
         H0: Series is stationary
@@ -90,27 +92,27 @@ class StationarityTester:
             return None
 
         try:
-            result = kpss(series, regression=regression, nlags='auto')
+            result = kpss(series, regression=regression, nlags="auto")
 
             return StationarityResult(
-                test_name='KPSS',
+                test_name="KPSS",
                 statistic=float(result[0]),
                 p_value=float(result[1]),
                 is_stationary=float(result[1]) > 0.05,
                 n_obs=len(series),
                 lags_used=result[3] if len(result) > 3 else 0,
                 critical_values={
-                    '10%': float(result[2]['10%']),
-                    '5%': float(result[2]['5%']),
-                    '1%': float(result[2]['1%']),
-                }
+                    "10%": float(result[2]["10%"]),
+                    "5%": float(result[2]["5%"]),
+                    "1%": float(result[2]["1%"]),
+                },
             )
         except Exception as e:
             logger.error(f"KPSS test failed: {str(e)}")
             return None
 
     def determine_differencing_order(
-        self, series: np.ndarray, max_diff: int = 2, method: str = 'adf'
+        self, series: np.ndarray, max_diff: int = 2, method: str = "adf"
     ) -> int:
         """Determine number of differences needed for stationarity.
 
@@ -126,7 +128,7 @@ class StationarityTester:
             logger.warning("Cannot determine differencing; statsmodels unavailable")
             return 0
 
-        test_fn = self.adf_test if method == 'adf' else self.kpss_test
+        test_fn = self.adf_test if method == "adf" else self.kpss_test
 
         current_series = np.asarray(series, dtype=float)
 
@@ -144,30 +146,30 @@ class StationarityTester:
         return max_diff
 
 
-def adf_test(series: np.ndarray) -> Optional[dict]:
+def adf_test(series: np.ndarray) -> dict | None:
     """Convenience function for ADF test."""
     tester = StationarityTester()
     result = tester.adf_test(series)
     if result:
         return {
-            'test': 'ADF',
-            'statistic': result.statistic,
-            'p_value': result.p_value,
-            'is_stationary': result.is_stationary,
+            "test": "ADF",
+            "statistic": result.statistic,
+            "p_value": result.p_value,
+            "is_stationary": result.is_stationary,
         }
     return None
 
 
-def kpss_test(series: np.ndarray) -> Optional[dict]:
+def kpss_test(series: np.ndarray) -> dict | None:
     """Convenience function for KPSS test."""
     tester = StationarityTester()
     result = tester.kpss_test(series)
     if result:
         return {
-            'test': 'KPSS',
-            'statistic': result.statistic,
-            'p_value': result.p_value,
-            'is_stationary': result.is_stationary,
+            "test": "KPSS",
+            "statistic": result.statistic,
+            "p_value": result.p_value,
+            "is_stationary": result.is_stationary,
         }
     return None
 

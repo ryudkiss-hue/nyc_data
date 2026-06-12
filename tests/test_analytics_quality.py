@@ -7,17 +7,21 @@ import pytest
 
 from socrata_toolkit.analytics.quality import DataQualityAudit
 
+
 @pytest.fixture
 def sample_df():
     # Need larger N for Z-score > 3
     data = [10] * 20
-    data.append(1000) # Outlier
-    return pd.DataFrame({
-        "BBLID": range(21), # Add conflict column
-        "score": data,
-        "name": ["Name"] * 21,
-        "null_col": [1.0] * 20 + [None]
-    })
+    data.append(1000)  # Outlier
+    return pd.DataFrame(
+        {
+            "BBLID": range(21),  # Add conflict column
+            "score": data,
+            "name": ["Name"] * 21,
+            "null_col": [1.0] * 20 + [None],
+        }
+    )
+
 
 class TestDataQualityAudit:
     def test_audit_execution(self, sample_df):
@@ -44,13 +48,16 @@ class TestDataQualityAudit:
         assert "score" in result.data["outliers"]
         assert 1000 in result.data["outliers"]["score"]
 
+
 class TestSchemaMapper:
     def test_schema_mapper_with_missing_table(self):
         from socrata_toolkit.analytics.quality import SchemaMapper
+
         skill = SchemaMapper()
         result = skill.run(dataset_key="non_existent")
         assert result.success is False
         assert "not in registry" in result.data["error"]
+
 
 class TestMetricReconciliation:
     def test_reconciliation_basic(self, sample_df):
@@ -58,9 +65,9 @@ class TestMetricReconciliation:
         from socrata_toolkit.core.duckdb_store import DuckDBManager, DuckDBRepository
 
         # Setup a dummy table in DuckDB
-        manager = DuckDBManager(db_path=":memory:") # Use memory for tests
+        manager = DuckDBManager(db_path=":memory:")  # Use memory for tests
         repo = DuckDBRepository(manager, "built")
-        repo.upsert_dataframe(sample_df, "BBLID") # built expects BBLID
+        repo.upsert_dataframe(sample_df, "BBLID")  # built expects BBLID
 
         # We need to mock the registry load in the skill to use the memory DB
         # This is tricky without dependency injection.
@@ -71,4 +78,9 @@ class TestMetricReconciliation:
         # If it fails with 'Table not found' or 'IO Error' (locked), that's an expected failure path we can assert
         if not result.success:
             err = result.data["error"].lower()
-            assert "not found" in err or "no such table" in err or "access the file" in err or "being used" in err
+            assert (
+                "not found" in err
+                or "no such table" in err
+                or "access the file" in err
+                or "being used" in err
+            )

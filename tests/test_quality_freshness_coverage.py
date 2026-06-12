@@ -1,4 +1,5 @@
 """Tests for quality.freshness module - Data freshness monitoring and SLA tracking."""
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
@@ -11,6 +12,7 @@ from socrata_toolkit.quality.freshness import (
     FreshnessAlert,
     FreshnessTracker,
 )
+
 
 class TestAlertSeverityEnum:
     """Tests for AlertSeverity enum."""
@@ -26,6 +28,7 @@ class TestAlertSeverityEnum:
     def test_alert_severity_comparison(self):
         """Test AlertSeverity enum comparison."""
         assert AlertSeverity.WARNING != AlertSeverity.CRITICAL
+
 
 class TestDatasetFreshness:
     """Tests for DatasetFreshness dataclass."""
@@ -170,6 +173,7 @@ class TestDatasetFreshness:
         hours = df.hours_until_sla_violation()
         assert -1 < hours < 1  # Should be ~0
 
+
 class TestFreshnessAlert:
     """Tests for FreshnessAlert dataclass."""
 
@@ -304,6 +308,7 @@ class TestFreshnessAlert:
         assert pd_event["event_action"] == "trigger"
         assert pd_event["payload"]["severity"] == "critical"
         assert "custom_details" in pd_event["payload"]
+
 
 class TestFreshnessTracker:
     """Tests for FreshnessTracker class."""
@@ -538,7 +543,9 @@ class TestFreshnessTracker:
         lines = metrics.split("\n")
         # Should have header, compliance metric, header, and dataset metrics
         assert len([line for line in lines if line.strip()]) >= 4
-        assert all(line.startswith("#") or line.startswith("dataset_") for line in lines if line.strip())
+        assert all(
+            line.startswith("#") or line.startswith("dataset_") for line in lines if line.strip()
+        )
 
     def test_freshness_tracker_multiple_datasets(self):
         """Test tracker with multiple datasets."""

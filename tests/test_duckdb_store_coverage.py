@@ -1,4 +1,5 @@
 """Comprehensive tests for core.duckdb_store module."""
+
 from __future__ import annotations
 
 import tempfile
@@ -15,6 +16,7 @@ from socrata_toolkit.core.duckdb_store import (
     _latest_parquet_for_key,
     query_parquet_cache,
 )
+
 
 class TestDuckDBManagerInit:
     """Tests for DuckDBManager initialization."""
@@ -33,6 +35,7 @@ class TestDuckDBManagerInit:
         with patch.dict("os.environ", {"DUCKDB_PATH": "/custom/path.duckdb"}):
             manager = DuckDBManager()
             assert manager.db_path == "/custom/path.duckdb"
+
 
 class TestDuckDBManagerConnection:
     """Tests for DuckDBManager connection handling."""
@@ -73,6 +76,7 @@ class TestDuckDBManagerConnection:
             manager.close()
             assert manager._conn is None
 
+
 class TestDuckDBManagerQuery:
     """Tests for DuckDBManager query execution."""
 
@@ -102,6 +106,7 @@ class TestDuckDBManagerQuery:
             result = manager.query("SELECT ? as num", [42])
             assert result is not None
 
+
 class TestEscapeSqlLiteral:
     """Tests for _escape_sql_literal helper."""
 
@@ -120,6 +125,7 @@ class TestEscapeSqlLiteral:
     def test_escape_empty_string(self):
         result = _escape_sql_literal("")
         assert result == ""
+
 
 class TestDefaultCacheDir:
     """Tests for _default_cache_dir function."""
@@ -140,6 +146,7 @@ class TestDefaultCacheDir:
         with patch.dict("os.environ", {"SOCRATA_CACHE_DIR": "   "}, clear=False):
             cache_dir = _default_cache_dir()
             assert isinstance(cache_dir, Path)
+
 
 class TestLatestParquetForKey:
     """Tests for _latest_parquet_for_key function."""
@@ -184,13 +191,12 @@ class TestLatestParquetForKey:
             # Should return one of the files
             assert "data_202401" in result.name
 
+
 class TestQueryParquetCache:
     """Tests for query_parquet_cache function."""
 
     def test_query_parquet_cache_with_mock_manager(self):
-        with patch(
-            "socrata_toolkit.core.duckdb_store.DuckDBManager"
-        ) as mock_manager_class:
+        with patch("socrata_toolkit.core.duckdb_store.DuckDBManager") as mock_manager_class:
             mock_manager = MagicMock()
             mock_result = MagicMock()
             mock_manager.query.return_value = mock_result
@@ -198,6 +204,7 @@ class TestQueryParquetCache:
 
             result = query_parquet_cache("SELECT 1")
             assert result is not None
+
 
 class TestDuckDBManagerWithDataFrame:
     """Tests for DuckDBManager with DataFrame operations."""
@@ -218,15 +225,18 @@ class TestDuckDBManagerWithDataFrame:
             db_path = Path(tmpdir) / "test.duckdb"
             manager = DuckDBManager(str(db_path))
 
-            df = pd.DataFrame({
-                "int_col": [1, 2, 3],
-                "float_col": [1.5, 2.5, 3.5],
-                "str_col": ["a", "b", "c"],
-            })
+            df = pd.DataFrame(
+                {
+                    "int_col": [1, 2, 3],
+                    "float_col": [1.5, 2.5, 3.5],
+                    "str_col": ["a", "b", "c"],
+                }
+            )
             manager.conn.register("typed_table", df)
 
             result = manager.query("SELECT * FROM typed_table")
             assert result is not None
+
 
 class TestDuckDBManagerEdgeCases:
     """Tests for edge cases and error scenarios."""
@@ -268,9 +278,11 @@ class TestDuckDBManagerEdgeCases:
             manager.close()
             assert manager._conn is None
 
+
 # ---------------------------------------------------------------------------
 # get_bundle_dir
 # ---------------------------------------------------------------------------
+
 
 class TestGetBundleDir:
     def test_normal_returns_cwd(self):
@@ -285,13 +297,17 @@ class TestGetBundleDir:
 
         from socrata_toolkit.core import duckdb_store
 
-        with patch.object(sys, "frozen", True, create=True), \
-             patch.object(sys, "_MEIPASS", "/bundle/path", create=True):
+        with (
+            patch.object(sys, "frozen", True, create=True),
+            patch.object(sys, "_MEIPASS", "/bundle/path", create=True),
+        ):
             assert duckdb_store.get_bundle_dir() == "/bundle/path"
+
 
 # ---------------------------------------------------------------------------
 # query_parquet_cache — bare key and raw SQL execution paths
 # ---------------------------------------------------------------------------
+
 
 class TestQueryParquetCacheExecution:
     def test_empty_raises_value_error(self):
@@ -317,9 +333,11 @@ class TestQueryParquetCacheExecution:
         result = query_parquet_cache(sql)
         assert result["v"].tolist() == [10]
 
+
 # ---------------------------------------------------------------------------
 # DuckDBRepository
 # ---------------------------------------------------------------------------
+
 
 class TestDuckDBRepository:
     def _repo(self, table="t"):
