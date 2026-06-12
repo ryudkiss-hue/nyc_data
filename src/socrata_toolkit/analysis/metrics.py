@@ -267,6 +267,14 @@ class PipelineMetrics:
 
 from enum import Enum
 
+class DataType(Enum):
+    """Data type enumeration."""
+    NUMERIC = "numeric"
+    CATEGORICAL = "categorical"
+    TEMPORAL = "temporal"
+    GEOSPATIAL = "geospatial"
+    TEXT = "text"
+
 class AnomalySeverity(Enum):
     """Severity levels for detected anomalies."""
     LOW = "low"
