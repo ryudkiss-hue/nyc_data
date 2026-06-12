@@ -22,7 +22,8 @@ import logging
 import uuid
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
-from enum import Enum
+
+from socrata_toolkit.alerts.manager import AlertSeverity
 
 try:
     import psycopg
@@ -41,11 +42,6 @@ def _to_utc(dt: datetime) -> datetime:
     if dt.tzinfo is None:
         return dt.replace(tzinfo=timezone.utc)
     return dt.astimezone(timezone.utc)
-
-class AlertSeverity(Enum):
-    """Alert severity levels for freshness violations."""
-    WARNING = "warning"
-    CRITICAL = "critical"
 
 @dataclass
 class DatasetFreshness:
