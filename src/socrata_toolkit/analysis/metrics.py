@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
@@ -348,6 +348,13 @@ class DataQualityTracker:
 
     def record_quality(self, timestamp: datetime, score: float, details: dict = None):
         self.history.append({"timestamp": timestamp, "score": score, "details": details or {}})
+
+@dataclass
+class DriftReport:
+    """Report of data drift detection."""
+    drift_detected: bool
+    confidence: float
+    metrics: dict = field(default_factory=dict)
 
 @dataclass
 class DataQualityScore:
