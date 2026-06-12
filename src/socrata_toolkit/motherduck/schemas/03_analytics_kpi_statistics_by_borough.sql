@@ -76,10 +76,25 @@ CREATE TABLE IF NOT EXISTS analytics.kpi_statistics_by_borough (
   ci_lower_95                   DECIMAL(18, 6)    COMMENT '95% CI lower bound',
   ci_upper_95                   DECIMAL(18, 6)    COMMENT '95% CI upper bound',
 
+  -- ===== ADVANCED STATISTICAL TESTS (optional, statsmodels) =====
+  shapiro_wilk_p                DECIMAL(5, 4)     COMMENT 'Shapiro-Wilk normality test p-value (p > 0.05 = normal)',
+  jarque_bera_p                 DECIMAL(5, 4)     COMMENT 'Jarque-Bera normality test p-value',
+  anderson_statistic            DECIMAL(18, 6)    COMMENT 'Anderson-Darling normality test statistic',
+  is_normal                     BOOLEAN           COMMENT 'TRUE if Shapiro-Wilk p > 0.05 (normally distributed)',
+  levene_p_across_boroughs      DECIMAL(5, 4)     COMMENT 'Levene test p-value (variance equality across boroughs)',
+  variances_equal               BOOLEAN           COMMENT 'TRUE if Levene p > 0.05 (equal variance across boroughs)',
+  cohens_d_vs_benchmark         DECIMAL(18, 6)    COMMENT 'Effect size: (mean - benchmark) / stddev',
+  seasonal_strength             DECIMAL(5, 4)     COMMENT 'STL seasonal strength (0-1, higher = stronger seasonality)',
+  ljung_box_p                   DECIMAL(5, 4)     COMMENT 'Ljung-Box autocorrelation significance (p > 0.05 = not significant)',
+  robust_regression_slope       DECIMAL(18, 6)    COMMENT 'Huber robust regression slope (less outlier-sensitive)',
+  outlier_sensitivity_ratio     DECIMAL(5, 4)     COMMENT 'Abs(robust_slope - linear_slope) / abs(linear_slope)',
+
   -- ===== METADATA & AUDIT =====
   analytics_timestamp           TIMESTAMP         COMMENT 'When these statistics were computed',
   computation_duration_seconds  DECIMAL(10, 2)    COMMENT 'Time to compute all metrics (sec)',
   computation_status            VARCHAR(32)       COMMENT 'SUCCESS, PARTIAL, FAILED',
+  advanced_metrics_status       VARCHAR(32)       DEFAULT 'PENDING' COMMENT 'Advanced metrics status: PENDING, COMPUTED, SKIPPED',
+  advanced_metrics_timestamp    TIMESTAMP         COMMENT 'When advanced metrics were last computed (weekly)',
   last_updated                  TIMESTAMP         DEFAULT CURRENT_TIMESTAMP COMMENT 'Record update time'
 );
 

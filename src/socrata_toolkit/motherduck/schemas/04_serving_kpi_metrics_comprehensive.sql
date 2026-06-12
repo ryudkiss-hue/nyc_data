@@ -86,12 +86,26 @@ CREATE TABLE IF NOT EXISTS analytics.kpi_metrics_comprehensive (
   ci_lower_95                   DECIMAL(18, 6),
   ci_upper_95                   DECIMAL(18, 6),
 
+  -- Advanced Statistical Tests (optional, computed weekly via statsmodels)
+  shapiro_wilk_p                DECIMAL(5, 4)     COMMENT 'Normality test p-value',
+  jarque_bera_p                 DECIMAL(5, 4),
+  anderson_statistic            DECIMAL(18, 6),
+  is_normal                     BOOLEAN,
+  levene_p_across_boroughs      DECIMAL(5, 4)     COMMENT 'Variance equality p-value',
+  variances_equal               BOOLEAN,
+  cohens_d_vs_benchmark         DECIMAL(18, 6)    COMMENT 'Effect size vs. benchmark',
+  seasonal_strength             DECIMAL(5, 4)     COMMENT 'Seasonality strength (0-1)',
+  ljung_box_p                   DECIMAL(5, 4)     COMMENT 'Autocorrelation significance',
+  robust_regression_slope       DECIMAL(18, 6)    COMMENT 'Outlier-resistant slope',
+  outlier_sensitivity_ratio     DECIMAL(5, 4)     COMMENT 'Sensitivity to outliers',
+
   -- Metadata
   kpi_unit                      VARCHAR(128),
   phase                         VARCHAR(32),
   kpi_description               VARCHAR(1024),
   risk_threshold                DECIMAL(18, 6),
   analytics_timestamp           TIMESTAMP,
+  advanced_metrics_timestamp    TIMESTAMP,
   materialized_at               TIMESTAMP
 );
 
@@ -140,11 +154,26 @@ SELECT
   ROUND(c.benchmark_ratio, 4) AS vs_benchmark,
   ROUND(c.pct_diff_benchmark, 1) AS pct_from_benchmark,
 
+  -- Advanced Statistical Tests
+  ROUND(c.shapiro_wilk_p, 4) AS shapiro_wilk_p,
+  ROUND(c.jarque_bera_p, 4) AS jarque_bera_p,
+  ROUND(c.anderson_statistic, 6) AS anderson_statistic,
+  c.is_normal,
+  ROUND(c.levene_p_across_boroughs, 4) AS levene_p,
+  c.variances_equal,
+  ROUND(c.cohens_d_vs_benchmark, 6) AS cohens_d,
+  ROUND(c.seasonal_strength, 4) AS seasonal_strength,
+  ROUND(c.ljung_box_p, 4) AS ljung_box_p,
+  ROUND(c.robust_regression_slope, 6) AS robust_slope,
+  ROUND(c.outlier_sensitivity_ratio, 4) AS outlier_sensitivity,
+
   -- Metadata
   m.unit AS kpi_unit,
   m.phase,
   m.risk_threshold,
 
+  c.analytics_timestamp,
+  c.advanced_metrics_timestamp,
   c.materialized_at
 FROM analytics.kpi_metrics_comprehensive c
 LEFT JOIN analytics.kpi_metadata m ON c.kpi_name = m.kpi_name
