@@ -31,4 +31,12 @@ class HealthMonitor:
         matching = [c for c in self.checks if c.service == service]
         return matching[-1].status if matching else None
 
-__all__ = ["HealthCheck", "HealthMonitor"]
+class Monitoring:
+    """Main monitoring interface."""
+    def __init__(self):
+        self.health_monitor = HealthMonitor()
+
+    def check_service(self, service: str) -> str | None:
+        return self.health_monitor.get_status(service)
+
+__all__ = ["HealthCheck", "HealthMonitor", "Monitoring"]
