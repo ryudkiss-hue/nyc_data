@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 
+from ..alerts.manager import Alert
+
 @dataclass
 class HealthCheck:
     """Health check result."""

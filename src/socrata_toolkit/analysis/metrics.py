@@ -185,3 +185,59 @@ def compute_cycle_times(df: pd.DataFrame, start_col: str = COL_COMPLAINT, end_co
 def validate_defect_applicability(df: pd.DataFrame, defect_col: str = "defect_type") -> pd.DataFrame:
     """Validate that defect types are applicable to their contexts."""
     return df.copy()
+
+@dataclass
+class FreshnessAlert:
+    """Freshness alert for stale data."""
+    dataset_id: str
+    age_days: float
+    threshold_days: float
+
+@dataclass
+class AnomalyReport:
+    """Report of detected anomalies."""
+    count: int
+    method: str
+    affected_rows: list[int]
+
+class MetricsRegistry:
+    """Registry for managing metrics."""
+    def __init__(self):
+        self.metrics: dict[str, MetricPoint] = {}
+
+    def register(self, name: str, metric: MetricPoint):
+        self.metrics[name] = metric
+
+    def get(self, name: str) -> MetricPoint | None:
+        return self.metrics.get(name)
+
+def correlation_heatmap(df: pd.DataFrame) -> dict:
+    """Generate correlation heatmap data."""
+    if df.empty:
+        return {}
+    numeric_cols = df.select_dtypes(include=[float, int]).columns
+    if len(numeric_cols) > 0:
+        corr = df[numeric_cols].corr()
+        return corr.to_dict()
+    return {}
+
+def detect_outliers_iqr(series: pd.Series, multiplier: float = 1.5) -> list[int]:
+    """Detect outliers using IQR method."""
+    q1 = series.quantile(0.25)
+    q3 = series.quantile(0.75)
+    iqr = q3 - q1
+    lower = q1 - multiplier * iqr
+    upper = q3 + multiplier * iqr
+    return series[(series < lower) | (series > upper)].index.tolist()
+
+def compute_program_dashboard(df: pd.DataFrame) -> dict:
+    """Compute program dashboard metrics."""
+    return {"total_records": len(df), "status": "ready"}
+
+def validate_geospatial_bounds(df: pd.DataFrame, lat_col: str = "latitude", lon_col: str = "longitude") -> bool:
+    """Validate geospatial bounds."""
+    if lat_col not in df.columns or lon_col not in df.columns:
+        return False
+    lats = pd.to_numeric(df[lat_col], errors='coerce')
+    lons = pd.to_numeric(df[lon_col], errors='coerce')
+    return (lats.between(40, 41).all() and lons.between(-75, -73).all())
