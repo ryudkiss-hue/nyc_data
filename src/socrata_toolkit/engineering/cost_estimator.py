@@ -45,3 +45,10 @@ class MonteCarloEstimator:
         for t, cost in enumerate(annual_costs):
             npv += cost / ((1 + discount_rate) ** t)
         return float(npv)
+
+def estimate_costs(df: pd.DataFrame, base_cost_col: str = "base_cost", variance_pct: float = 0.15) -> SimulationResult:
+    """Estimate project costs using Monte Carlo simulation."""
+    if base_cost_col not in df.columns or df.empty:
+        return SimulationResult(0.0, 0.0, 0.0, 0.0, np.array([]))
+    total_base_cost = float(df[base_cost_col].sum())
+    return MonteCarloEstimator.run_budget_simulation(total_base_cost, variance_pct)
