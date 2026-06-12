@@ -310,50 +310,82 @@ class KPIStatisticsEngine:
             self.conn = duckdb.connect(":memory:")
         logger.info("Connected to DuckDB/MotherDuck")
 
-    def compute_all_metrics(self) -> KPIStatisticsResult:
-        """Compute all 60+ metrics and populate analytics layer."""
+    def compute_all_metrics(self, max_retries: int = 3) -> KPIStatisticsResult:
+        """Compute all 60+ metrics and populate analytics layer with retry logic."""
         if self.conn is None:
             self.connect()
 
         start_time = time.time()
+        last_error = None
 
-        try:
-            # Execute comprehensive metrics computation
-            logger.info("Computing 60+ metrics for 18 KPIs × 5 boroughs...")
-            self.conn.execute(
-                f"""
-                INSERT INTO analytics.kpi_statistics_by_borough
-                {COMPREHENSIVE_METRICS_SQL}
-                """
-            )
+        # Retry logic for transient failures
+        for attempt in range(max_retries):
+            try:
+                logger.info(f"Computing 60+ metrics for 18 KPIs × 5 boroughs (attempt {attempt + 1}/{max_retries})...")
 
-            # Get row count
-            result = self.conn.execute(
-                "SELECT COUNT(*) AS cnt FROM analytics.kpi_statistics_by_borough"
-            ).fetchall()
-            rows_computed = result[0][0] if result else 0
+                # Pre-check: Verify staging table exists and has data
+                staging_count = self.conn.execute(
+                    "SELECT COUNT(*) FROM analytics.kpi_metrics_staged WHERE is_latest_record = TRUE"
+                ).fetchone()
+                if not staging_count or staging_count[0] == 0:
+                    raise ValueError("Staging table empty or missing")
 
-            duration = time.time() - start_time
+                # Clear analytics table if retrying (idempotent)
+                self.conn.execute("DELETE FROM analytics.kpi_statistics_by_borough")
 
-            logger.info(
-                f"✓ Computed {rows_computed} rows (18 KPIs × 5 boroughs) in {duration:.2f}s"
-            )
+                # Execute comprehensive metrics computation
+                self.conn.execute(
+                    f"""
+                    INSERT INTO analytics.kpi_statistics_by_borough
+                    {COMPREHENSIVE_METRICS_SQL}
+                    """
+                )
 
-            return KPIStatisticsResult(
-                rows_computed=rows_computed,
-                computation_duration_seconds=duration,
-                status="SUCCESS",
-            )
+                # Validate computation results
+                validation = self.validate_completeness()
+                if validation["status"] != "PASS":
+                    raise ValueError(f"Validation failed: {validation}")
 
-        except Exception as e:
-            duration = time.time() - start_time
-            logger.error(f"Failed to compute metrics: {str(e)}")
-            return KPIStatisticsResult(
-                rows_computed=0,
-                computation_duration_seconds=duration,
-                status="FAILED",
-                error_message=str(e),
-            )
+                # Get row count
+                result = self.conn.execute(
+                    "SELECT COUNT(*) AS cnt FROM analytics.kpi_statistics_by_borough"
+                ).fetchall()
+                rows_computed = result[0][0] if result else 0
+
+                if rows_computed != 90:
+                    raise ValueError(f"Expected 90 rows, got {rows_computed}")
+
+                duration = time.time() - start_time
+
+                logger.info(
+                    f"✓ Computed {rows_computed} rows (18 KPIs × 5 boroughs) in {duration:.2f}s"
+                )
+
+                return KPIStatisticsResult(
+                    rows_computed=rows_computed,
+                    computation_duration_seconds=duration,
+                    status="SUCCESS",
+                )
+
+            except Exception as e:
+                last_error = str(e)
+                logger.warning(f"Attempt {attempt + 1} failed: {last_error}")
+                if attempt < max_retries - 1:
+                    wait_time = 2 ** attempt  # Exponential backoff
+                    logger.info(f"Retrying in {wait_time}s...")
+                    time.sleep(wait_time)
+                continue
+
+        # All retries exhausted
+        duration = time.time() - start_time
+        logger.error(f"All {max_retries} attempts failed. Last error: {last_error}")
+
+        return KPIStatisticsResult(
+            rows_computed=0,
+            computation_duration_seconds=duration,
+            status="FAILED",
+            error_message=f"Failed after {max_retries} attempts: {last_error}",
+        )
 
     def validate_completeness(self) -> dict:
         """Validate that all 60+ metrics are computed and non-NULL."""
