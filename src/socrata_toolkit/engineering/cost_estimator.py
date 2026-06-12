@@ -52,3 +52,16 @@ def estimate_costs(df: pd.DataFrame, base_cost_col: str = "base_cost", variance_
         return SimulationResult(0.0, 0.0, 0.0, 0.0, np.array([]))
     total_base_cost = float(df[base_cost_col].sum())
     return MonteCarloEstimator.run_budget_simulation(total_base_cost, variance_pct)
+
+def estimate_single(base_cost: float, variance_pct: float = 0.15) -> SimulationResult:
+    """Estimate cost for a single project."""
+    return MonteCarloEstimator.run_budget_simulation(base_cost, variance_pct)
+
+def summarize_costs(result: SimulationResult) -> dict:
+    """Summarize cost estimation results."""
+    return {
+        "mean": result.mean_cost,
+        "std_dev": result.std_dev,
+        "ci_lower": result.confidence_95_low,
+        "ci_upper": result.confidence_95_high,
+    }

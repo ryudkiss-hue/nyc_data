@@ -28,16 +28,23 @@ from .dataset_health import (
 from .insights import InsightsEngine, InsightsReport, generate_insights, smart_recommendations
 from .metrics import (
     AnomalyDetector,
+    AnomalyReport,
     DatasetFreshness,
+    FreshnessAlert,
     MetricPoint,
+    MetricsRegistry,
     MetricsTracker,
     compute_borough_metrics,
     compute_cycle_times,
     compute_freshness_score,
+    compute_program_dashboard,
     compute_sla_metrics,
     compute_sla_trends,
+    correlation_heatmap,
+    detect_outliers_iqr,
     flag_sla_violations,
     validate_defect_applicability,
+    validate_geospatial_bounds,
 )
 from .profiling import DataProfile, profile_dataframe, quality_report
 from .reporting import DashboardSummary, Report, generate_contract_report, generate_inquiry_response
@@ -116,6 +123,13 @@ __all__ = [
     "DatasetFreshness",
     "MetricsTracker",
     "AnomalyDetector",
+    "FreshnessAlert",
+    "AnomalyReport",
+    "MetricsRegistry",
+    "correlation_heatmap",
+    "detect_outliers_iqr",
+    "compute_program_dashboard",
+    "validate_geospatial_bounds",
     "Report",
     "DashboardSummary",
     "generate_contract_report",
