@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Optional
 
 import pandas as pd
 
@@ -35,7 +34,7 @@ _OUTLIER_TO_SCOPE = {
 class ConstructionListConfig:
     """Configuration for ConstructionListGenerator."""
 
-    borough_filter: Optional[str] = None
+    borough_filter: str | None = None
     min_z_score: float = 2.0
     include_coordinates: bool = True
     color_code_excel: bool = True
@@ -44,7 +43,7 @@ class ConstructionListConfig:
 class ConstructionListGenerator:
     """Builds construction lists from Phase D MotherDuck anomaly results."""
 
-    def __init__(self, config: Optional[ConstructionListConfig] = None) -> None:
+    def __init__(self, config: ConstructionListConfig | None = None) -> None:
         self.config = config or ConstructionListConfig()
 
     def build_from_phase_d(self, phase_d_df: pd.DataFrame) -> pd.DataFrame:
@@ -85,7 +84,7 @@ class ConstructionListGenerator:
         """
         try:
             import openpyxl
-            from openpyxl.styles import PatternFill, Font
+            from openpyxl.styles import Font, PatternFill
         except ImportError:
             logger.warning("openpyxl not installed, writing plain Excel")
             df.to_excel(output_path, index=False)

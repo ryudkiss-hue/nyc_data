@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -25,8 +24,8 @@ class BoroughBudgetAllocation:
     base_cost_usd: float
     contingency_cost_usd: float
     total_cost_usd: float
-    ci_lower_95: Optional[float] = None
-    ci_upper_95: Optional[float] = None
+    ci_lower_95: float | None = None
+    ci_upper_95: float | None = None
     risk_level: str = "medium"
 
 
@@ -96,10 +95,10 @@ class IFABudgetJustification:
             output_path: Path to write PDF file
         """
         try:
-            from reportlab.lib.pagesizes import letter
-            from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer
-            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
             from reportlab.lib import colors
+            from reportlab.lib.pagesizes import letter
+            from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+            from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
         except ImportError:
             logger.warning("reportlab not installed — writing text fallback")
             self._write_text_fallback(allocations, output_path)
@@ -111,7 +110,7 @@ class IFABudgetJustification:
 
         story.append(Paragraph("NYC DOT — IFA Budget Justification Memorandum", styles["Title"]))
         story.append(
-            Paragraph(f"Pedestrian Ramp SLA Completion Program", styles["Heading1"])
+            Paragraph("Pedestrian Ramp SLA Completion Program", styles["Heading1"])
         )
         story.append(Spacer(1, 12))
 
