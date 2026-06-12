@@ -22,18 +22,15 @@ from socrata_toolkit.quality.duckdb_validation import (
     validate_uniqueness,
 )
 
-
 @pytest.fixture
 def audit_logger():
     """Create a fresh audit logger instance."""
     return AuditLogger()
 
-
 @pytest.fixture
 def duckdb_conn():
     """Create an in-memory DuckDB connection for testing."""
     return duckdb.connect(":memory:")
-
 
 @pytest.fixture
 def sample_inspection_table(duckdb_conn):
@@ -57,7 +54,6 @@ def sample_inspection_table(duckdb_conn):
     """)
 
     return duckdb_conn
-
 
 @pytest.fixture
 def sample_raw_table(duckdb_conn):
@@ -93,7 +89,6 @@ def sample_raw_table(duckdb_conn):
         )
 
     return duckdb_conn
-
 
 class TestAuditLoggerBasics:
     """Test basic AuditLogger functionality."""
@@ -154,7 +149,6 @@ class TestAuditLoggerBasics:
         assert len(audit_logger.entries) == 5
         assert all(entry.check_type == "validate_counts" for entry in audit_logger.entries)
 
-
 class TestAuditLoggerJsonExport:
     """Test JSON export functionality."""
 
@@ -207,7 +201,6 @@ class TestAuditLoggerJsonExport:
         assert len(dict_list) == 1
         assert isinstance(dict_list[0], dict)
         assert dict_list[0]["check_type"] == "validate_counts"
-
 
 class TestAuditLoggerDuckDBPersistence:
     """Test DuckDB persistence functionality."""
@@ -297,7 +290,6 @@ class TestAuditLoggerDuckDBPersistence:
             WHERE table_name = 'custom_audit'
         """).fetchall()
         assert len(tables) == 1
-
 
 class TestValidationWithAuditLogging:
     """Test validation functions with audit logging integration."""
@@ -466,7 +458,6 @@ class TestValidationWithAuditLogging:
         entry = audit_logger.entries[0]
         assert entry.status == "failure"
 
-
 class TestAuditLoggerSummary:
     """Test audit logger summary and filtering methods."""
 
@@ -527,7 +518,6 @@ class TestAuditLoggerSummary:
         inspection_entries = audit_logger.filter_by_table("inspections")
         assert len(inspection_entries) == 2
         assert all(e.table_name == "inspections" for e in inspection_entries)
-
 
 class TestAuditLoggerEdgeCases:
     """Test edge cases and error handling."""

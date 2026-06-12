@@ -13,7 +13,6 @@ from socrata_toolkit.engineering.construction_list import (
 
 WEIGHT_KEYS = tuple(DEFAULT_PRIORITY_WEIGHTS.keys())
 
-
 def normalize_weights(
     severity: float,
     pedestrian_volume: float,
@@ -33,7 +32,6 @@ def normalize_weights(
     }
     total = sum(raw.values()) or 1.0
     return {k: round(v / total, 4) for k, v in raw.items()}
-
 
 def preview_priority(
     df: pd.DataFrame,
@@ -65,7 +63,6 @@ def preview_priority(
     n = max(1, int(top_n))
     return ranked.head(n).reset_index(drop=True)
 
-
 def borough_bar_counts(df: pd.DataFrame, *, score_col: str = "_priority_score") -> dict[str, float]:
     """Aggregate mean priority score by borough for bar charts."""
     if df.empty or "borough" not in df.columns:
@@ -76,7 +73,6 @@ def borough_bar_counts(df: pd.DataFrame, *, score_col: str = "_priority_score") 
     else:
         grouped = df.groupby("borough").size()
     return {str(k): round(float(v), 3) for k, v in grouped.items()}
-
 
 def filter_kpi_metrics(
     metrics: list[dict[str, Any]],
@@ -108,7 +104,6 @@ def filter_kpi_metrics(
         elif "productivity" in cats and ("productivity" in name or "sqft" in name):
             out.append(m)
     return out if out else metrics
-
 
 def profile_weight_snippet(weights: dict[str, float]) -> str:
     """YAML snippet for copy-paste (does not write files)."""

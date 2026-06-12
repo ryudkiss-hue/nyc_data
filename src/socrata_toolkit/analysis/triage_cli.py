@@ -19,7 +19,6 @@ from socrata_toolkit.analysis.langgraph_triage import run_triage, workflow_visua
 
 logger = logging.getLogger(__name__)
 
-
 DATASET_REGISTRY = {
     # Inspection data
     "violations": {
@@ -51,7 +50,6 @@ DATASET_REGISTRY = {
         "description": "Tree damage reports",
     },
 }
-
 
 def format_report(result: dict, verbose: bool = False) -> str:
     """Format workflow results for display."""
@@ -99,7 +97,6 @@ def format_report(result: dict, verbose: bool = False) -> str:
     lines.append("\n" + "=" * 70)
     return "\n".join(lines)
 
-
 def save_report(result: dict, output_path: str) -> None:
     """Save detailed report to file."""
     path = Path(output_path)
@@ -118,7 +115,6 @@ def save_report(result: dict, output_path: str) -> None:
         f.write(f"## Raw Data\n```json\n{json.dumps(result['report_data'], indent=2)}\n```\n")
 
     print(f"✓ Report saved to {path}")
-
 
 def main():
     """CLI entry point."""
@@ -245,7 +241,6 @@ Examples:
     # Save if requested
     if args.output_report:
         save_report(result, args.output_report)
-
 
 if __name__ == "__main__":
     logging.basicConfig(

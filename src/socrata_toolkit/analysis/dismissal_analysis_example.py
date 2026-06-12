@@ -19,7 +19,6 @@ from socrata_toolkit.analysis.dismissal_classifier import (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
 def example_single_classification():
     """Example: Classify individual dismissal reasons."""
     print("\n" + "="*80)
@@ -84,7 +83,6 @@ def example_single_classification():
         print(f"Requires Review: {result.requires_review}")
         if result.flagged_reason:
             print(f"Flag: {result.flagged_reason}")
-
 
 def example_full_workflow():
     """Example: Run full dismissal analysis workflow on live data."""
@@ -166,7 +164,6 @@ def example_full_workflow():
     except Exception as e:
         logger.error(f"Workflow failed: {e}", exc_info=True)
 
-
 def example_pattern_analysis():
     """Example: Pattern analysis by defect type."""
     print("\n" + "="*80)
@@ -192,7 +189,6 @@ def example_pattern_analysis():
 
     except Exception as e:
         logger.error(f"Pattern analysis failed: {e}", exc_info=True)
-
 
 if __name__ == "__main__":
     # Run examples

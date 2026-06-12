@@ -20,7 +20,6 @@ def render_empty_state() -> None:
     st.markdown("---")
     st.markdown(t("new_here"))
 
-
 def render_guided_tour() -> None:
     with st.expander(t("tour_title"), expanded=not st.session_state.get("tour_seen")):
         st.markdown(t("tour_step1"))
@@ -30,7 +29,6 @@ def render_guided_tour() -> None:
         if st.button("Got it / Entendido", key="tour_done"):
             st.session_state["tour_seen"] = True
             st.rerun()
-
 
 def frames_are_empty(frames: dict) -> bool:
     if not frames:

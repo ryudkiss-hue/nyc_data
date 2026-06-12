@@ -32,7 +32,6 @@ DOUBLED_MAINS = {
     "observability": "manager",
 }
 
-
 def fix_file(file_path: Path):
     content = file_path.read_text(encoding="utf-8")
     original_content = content
@@ -60,7 +59,6 @@ def fix_file(file_path: Path):
         return True
     return False
 
-
 def main():
     root = Path(".")
     count = 0
@@ -73,7 +71,6 @@ def main():
             count += 1
             print(f"Fixed: {py_file}")
     print(f"Total files fixed: {count}")
-
 
 if __name__ == "__main__":
     main()

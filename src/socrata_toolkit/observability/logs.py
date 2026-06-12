@@ -33,7 +33,6 @@ class LogEntry:
             "context": self.context,
         }
 
-
 class LogStore:
     """In-memory ring buffer of structured log entries with filtering."""
 

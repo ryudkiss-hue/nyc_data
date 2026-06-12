@@ -102,7 +102,6 @@ class TestMetricsCollector:
         m.reset()
         assert m.counter_count == 0
 
-
 class TestHistogramData:
     def test_mean_and_quantiles(self):
         h = HistogramData()
@@ -124,7 +123,6 @@ class TestHistogramData:
             h.observe(v)
         assert h.quantile(0) == 1
         assert h.quantile(1) == 3
-
 
 # ---------------------------------------------------------------------------
 # LogStore
@@ -184,7 +182,6 @@ class TestLogStore:
         s.log("a")
         s.clear()
         assert len(s) == 0
-
 
 # ---------------------------------------------------------------------------
 # Tracer / Span
@@ -248,7 +245,6 @@ class TestTracer:
         t.clear()
         assert t.all_spans() == []
 
-
 # ---------------------------------------------------------------------------
 # HealthMonitor
 # ---------------------------------------------------------------------------
@@ -304,7 +300,6 @@ class TestHealthMonitor:
         assert d["name"] == "x"
         assert d["duration_ms"] == 1.5
 
-
 # ---------------------------------------------------------------------------
 # SLATracker
 # ---------------------------------------------------------------------------
@@ -359,7 +354,6 @@ class TestSLATracker:
             t.register(SLA(name=f"ok{i}", target=100, actual=10))
         t.register(SLA(name="bad", target=10, actual=99))
         assert t.report()["trend"] == "watch"
-
 
 # ---------------------------------------------------------------------------
 # ObservabilityManager + singleton

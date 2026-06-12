@@ -44,7 +44,6 @@ try:
 except ImportError:
     HAS_ANTHROPIC = False
 
-
 class SentimentState(TypedDict):
     """Workflow state: passed through each node."""
     registry: dict[str, dict[str, str]]
@@ -58,7 +57,6 @@ class SentimentState(TypedDict):
     claude_analysis: dict[str, Any]
     final_report: dict[str, Any]
     error_log: list[str]
-
 
 class PublicSentimentWorkflow:
     """Orchestrate sentiment tracking via LangGraph.
@@ -500,7 +498,6 @@ Focus on operational insights, not excuses."""
             return "NEGATIVE"
         else:
             return "VERY_NEGATIVE"
-
 
 def build_sentiment_report(
     registry: dict[str, dict[str, str]],

@@ -9,7 +9,6 @@ import os
 import re
 from collections import defaultdict
 
-
 def extract_imports_from_file(filepath: str) -> list[tuple[str, str, list[str]]]:
     """
     Extract import statements from a file.
@@ -36,7 +35,6 @@ def extract_imports_from_file(filepath: str) -> list[tuple[str, str, list[str]]]
         print(f"Error reading {filepath}: {e}")
 
     return imports
-
 
 def get_module_exports(filepath: str) -> set[str]:
     """
@@ -68,7 +66,6 @@ def get_module_exports(filepath: str) -> set[str]:
 
     return exports
 
-
 def resolve_module_path(import_module: str, from_file: str) -> str:
     """
     Resolve a module import string to a file path.
@@ -87,7 +84,6 @@ def resolve_module_path(import_module: str, from_file: str) -> str:
         return mod_path
 
     return None
-
 
 def main():
     base_dir = "/ryudkiss-hue/nyc_data"
@@ -261,7 +257,6 @@ def main():
     print("\n" + "=" * 80)
     print("Detailed report saved to: missing_exports_analysis.json")
     print("=" * 80)
-
 
 if __name__ == "__main__":
     main()

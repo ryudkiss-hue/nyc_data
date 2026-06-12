@@ -17,7 +17,6 @@ from socrata_toolkit.analysis import (
     validate_schema_types,
 )
 
-
 class TestLegacyValidation:
     """Tests for backward-compatible validation functions."""
 
@@ -51,7 +50,6 @@ class TestLegacyValidation:
         schema = {"id": "int64", "name": "object"}
         report = validate_schema_types(df, schema)
         assert any("id" in w for w in report.warnings + report.errors)
-
 
 class TestMaterialValidation:
     """Tests for material classification validation."""
@@ -100,7 +98,6 @@ class TestMaterialValidation:
         assert report.valid is False
         assert "not found" in report.errors[0].lower()
 
-
 class TestDefectValidation:
     """Tests for defect-material applicability validation."""
 
@@ -147,7 +144,6 @@ class TestDefectValidation:
         report = validate_defect_applicability(df, "material_type", "defect_type")
         # Should only report error for row 1 (potholes + concrete)
         assert report.valid is False
-
 
 class TestADAValidation:
     """Tests for ADA compliance validation."""
@@ -211,7 +207,6 @@ class TestADAValidation:
         report = validate_ada_compliance_gates(df, "ada_compliant")
         assert report.valid is False
 
-
 class TestMarkingValidation:
     """Tests for pavement marking standards validation."""
 
@@ -261,7 +256,6 @@ class TestMarkingValidation:
         df = pd.DataFrame({"marking_id": [1, 2, 3]})
         report = validate_marking_standards(df, "marking_type", "marking_color")
         assert report.valid is False
-
 
 class TestGeospatialValidation:
     """Tests for geospatial bounds validation."""
@@ -327,7 +321,6 @@ class TestGeospatialValidation:
         df = pd.DataFrame({"segment_id": [1, 2, 3]})
         report = validate_geospatial_bounds(df, "latitude", "longitude")
         assert report.valid is False
-
 
 class TestValidationIntegration:
     """Integration tests combining multiple validations."""

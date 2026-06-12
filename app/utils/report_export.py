@@ -90,7 +90,6 @@ def build_excel_report(title: str, sections: dict[str, list[dict]]) -> bytes:
     buf.seek(0)
     return buf.getvalue()
 
-
 # ---------------------------------------------------------------------------
 # PDF
 # ---------------------------------------------------------------------------

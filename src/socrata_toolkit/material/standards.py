@@ -31,7 +31,6 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-
 class MaterialCategory(str, Enum):
     """NYC Street Design Manual material classifications.
 
@@ -63,7 +62,6 @@ class MaterialCategory(str, Enum):
     UNKNOWN = "unknown"
     """Unclassified or unknown material"""
 
-
 class SurfaceCondition(str, Enum):
     """Sidewalk surface condition assessment categories.
 
@@ -85,7 +83,6 @@ class SurfaceCondition(str, Enum):
 
     CRITICAL = "critical"
     """51%+ deterioration, immediate repair required, ADA non-compliant"""
-
 
 class DefectType(str, Enum):
     """Standardized sidewalk defect types with codes.
@@ -124,7 +121,6 @@ class DefectType(str, Enum):
     ADA_VIOLATION = "ada_violation"
     """ADA001-ADA010: Accessibility non-compliance per 28 CFR 36"""
 
-
 class ADAFailureSeverity(str, Enum):
     """ADA compliance violation severity levels.
 
@@ -143,7 +139,6 @@ class ADAFailureSeverity(str, Enum):
     LOW = "low"
     """Minor accessibility impact, must fix within 90 days"""
 
-
 class MaintenanceUrgency(str, Enum):
     """Maintenance scheduling urgency levels.
 
@@ -161,7 +156,6 @@ class MaintenanceUrgency(str, Enum):
 
     EMERGENCY = "emergency"
     """Immediate repair required to prevent safety hazards or legal liability"""
-
 
 @dataclass
 class ADAComplianceRule:
@@ -203,7 +197,6 @@ class ADAComplianceRule:
     parameters: dict[str, Any] = field(default_factory=dict)
     """Validation parameters (e.g., {'max_slope_percent': 5, 'max_cross_slope': 2})"""
 
-
 @dataclass
 class MaintenanceSchedule:
     """Material-specific maintenance schedule.
@@ -226,7 +219,6 @@ class MaintenanceSchedule:
 
     activities: dict[str, str] = field(default_factory=dict)
     """Maintenance activities mapped to intervals"""
-
 
 from .standards_v4 import MaterialTier
 
@@ -333,7 +325,6 @@ class MaterialSpecification:
             installation_date.month,
             installation_date.day
         )
-
 
 @dataclass
 class SurfaceAssessment:
@@ -471,7 +462,6 @@ class SurfaceAssessment:
                 return False
         return True
 
-
 @dataclass
 class DefectSeverityAssessment:
     """Comprehensive defect severity and impact analysis.
@@ -519,7 +509,6 @@ class DefectSeverityAssessment:
     urgency: MaintenanceUrgency = MaintenanceUrgency.ROUTINE
     """Repair urgency based on severity"""
 
-
 @dataclass
 class MaterialStandard:
     """Standard definition for a material.
@@ -537,7 +526,6 @@ class MaterialStandard:
 
     properties: dict[str, Any] = field(default_factory=dict)
     """Material properties"""
-
 
 @dataclass
 class MaterialInspector:
@@ -557,7 +545,6 @@ class MaterialInspector:
     jurisdiction: str
     """Geographic jurisdiction (e.g., 'Manhattan', 'NYC')"""
 
-
 def assess_surface(location: str, material: MaterialSpecification) -> SurfaceAssessment:
     """Assess surface condition at a location.
 
@@ -576,7 +563,6 @@ def assess_surface(location: str, material: MaterialSpecification) -> SurfaceAss
         ada_compliance_score=100.0,
     )
 
-
 def validate_against_standard(assessment: SurfaceAssessment, standard: MaterialStandard) -> bool:
     """Validate assessment against material standard.
 
@@ -588,7 +574,6 @@ def validate_against_standard(assessment: SurfaceAssessment, standard: MaterialS
         True if assessment meets standard, False otherwise
     """
     return assessment.ada_compliance_score >= 70.0
-
 
 def generate_compliance_report(assessments: list[SurfaceAssessment]) -> str:
     """Generate compliance report from assessments.
@@ -605,7 +590,6 @@ def generate_compliance_report(assessments: list[SurfaceAssessment]) -> str:
     compliant = sum(1 for a in assessments if a.is_ada_compliant())
     total = len(assessments)
     return f"Compliance Report: {compliant}/{total} segments compliant"
-
 
 # Module exports
 __all__ = [
@@ -625,7 +609,6 @@ __all__ = [
     "validate_against_standard",
     "generate_compliance_report",
 ]
-
 
 # Module initialization
 logger.info("NYC Street Design Manual Material Standards module loaded")

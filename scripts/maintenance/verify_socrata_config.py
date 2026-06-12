@@ -17,12 +17,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
-
 def print_status(status: str, message: str):
     """Print a status message."""
     icon = "✓" if status == "ok" else "✗" if status == "error" else "⚠"
     print(f"{icon} {message}")
-
 
 def check_token():
     """Check if Socrata token is configured."""
@@ -43,7 +41,6 @@ def check_token():
     print_status("ok", f"SOCRATA_APP_TOKEN configured: {token[:15]}...")
     return True
 
-
 def check_connectivity():
     """Check connectivity to Socrata API."""
     try:
@@ -56,7 +53,6 @@ def check_connectivity():
     except Exception as e:
         print_status("error", f"Failed to connect to Socrata API: {e}")
         return False
-
 
 def check_dataset_access():
     """Check if we can access dataset metadata and sample data."""
@@ -87,7 +83,6 @@ def check_dataset_access():
         print_status("error", f"Failed to access dataset: {e}")
         return False
 
-
 def check_cache():
     """Check if DuckDB cache is available."""
     try:
@@ -108,7 +103,6 @@ def check_cache():
     except Exception as e:
         print_status("error", f"Failed to initialize cache: {e}")
         return False
-
 
 def main():
     """Run all verification checks."""
@@ -139,7 +133,6 @@ def main():
     else:
         print("✗ Configuration incomplete. Check errors above.")
         return 1
-
 
 if __name__ == "__main__":
     sys.exit(main())

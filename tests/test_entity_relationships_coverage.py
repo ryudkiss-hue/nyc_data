@@ -13,7 +13,6 @@ from socrata_toolkit.entity.relationships import (
 # RelationshipType enum
 # ---------------------------------------------------------------------------
 
-
 class TestRelationshipTypeEnum:
     """Tests for RelationshipType string enum."""
 
@@ -33,11 +32,9 @@ class TestRelationshipTypeEnum:
         rt = RelationshipType("contains")
         assert rt == RelationshipType.CONTAINS
 
-
 # ---------------------------------------------------------------------------
 # EntityRelationship dataclass
 # ---------------------------------------------------------------------------
-
 
 class TestEntityRelationship:
     """Tests for EntityRelationship dataclass."""
@@ -80,17 +77,14 @@ class TestEntityRelationship:
         )
         assert rel.created_by == "system"
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
-
 
 @pytest.fixture()
 def graph() -> RelationshipGraph:
     """Empty relationship graph."""
     return RelationshipGraph()
-
 
 @pytest.fixture()
 def populated_graph() -> RelationshipGraph:
@@ -102,11 +96,9 @@ def populated_graph() -> RelationshipGraph:
     g.add_relationship("seg_A", "seg_B", RelationshipType.ADJACENT_TO)
     return g
 
-
 # ---------------------------------------------------------------------------
 # RelationshipGraph.add_relationship
 # ---------------------------------------------------------------------------
-
 
 class TestAddRelationship:
     """Tests for RelationshipGraph.add_relationship."""
@@ -153,11 +145,9 @@ class TestAddRelationship:
         rel = graph.get_relationship(rel_id)
         assert rel.notes == "manual entry"
 
-
 # ---------------------------------------------------------------------------
 # RelationshipGraph.get_relationship
 # ---------------------------------------------------------------------------
-
 
 class TestGetRelationship:
     """Tests for RelationshipGraph.get_relationship."""
@@ -170,11 +160,9 @@ class TestGetRelationship:
         rel = graph.get_relationship(rel_id)
         assert rel.relationship_id == rel_id
 
-
 # ---------------------------------------------------------------------------
 # RelationshipGraph.remove_relationship
 # ---------------------------------------------------------------------------
-
 
 class TestRemoveRelationship:
     """Tests for RelationshipGraph.remove_relationship."""
@@ -196,11 +184,9 @@ class TestRemoveRelationship:
         graph.remove_relationship(rel_id)
         assert graph.get_related_entities("src") == []
 
-
 # ---------------------------------------------------------------------------
 # RelationshipGraph.add_bidirectional_relationship
 # ---------------------------------------------------------------------------
-
 
 class TestAddBidirectionalRelationship:
     """Tests for RelationshipGraph.add_bidirectional_relationship."""
@@ -232,11 +218,9 @@ class TestAddBidirectionalRelationship:
         rel = graph.get_relationship(bwd)
         assert rel.relationship_type == RelationshipType.ADJACENT_TO
 
-
 # ---------------------------------------------------------------------------
 # RelationshipGraph._get_reverse_type
 # ---------------------------------------------------------------------------
-
 
 class TestGetReverseType:
     """Tests for RelationshipGraph._get_reverse_type."""
@@ -254,11 +238,9 @@ class TestGetReverseType:
         result = graph._get_reverse_type("contains")
         assert result == RelationshipType.PART_OF
 
-
 # ---------------------------------------------------------------------------
 # RelationshipGraph.get_related_entities
 # ---------------------------------------------------------------------------
-
 
 class TestGetRelatedEntities:
     """Tests for RelationshipGraph.get_related_entities."""
@@ -298,11 +280,9 @@ class TestGetRelatedEntities:
         assert isinstance(rel_type, RelationshipType)
         assert isinstance(confidence, float)
 
-
 # ---------------------------------------------------------------------------
 # RelationshipGraph.get_all_relationships
 # ---------------------------------------------------------------------------
-
 
 class TestGetAllRelationships:
     """Tests for RelationshipGraph.get_all_relationships."""
@@ -326,11 +306,9 @@ class TestGetAllRelationships:
     def test_empty_graph_returns_empty(self, graph):
         assert graph.get_all_relationships() == []
 
-
 # ---------------------------------------------------------------------------
 # RelationshipGraph.find_path
 # ---------------------------------------------------------------------------
-
 
 class TestFindPath:
     """Tests for RelationshipGraph.find_path (BFS)."""
@@ -357,11 +335,9 @@ class TestFindPath:
         path = populated_graph.find_path("borough_MN", "seg_A", max_depth=1)
         assert path is None
 
-
 # ---------------------------------------------------------------------------
 # RelationshipGraph.find_all_paths
 # ---------------------------------------------------------------------------
-
 
 class TestFindAllPaths:
     """Tests for RelationshipGraph.find_all_paths."""
@@ -381,11 +357,9 @@ class TestFindAllPaths:
             assert path[0] == "borough_MN"
             assert path[-1] == "seg_B"
 
-
 # ---------------------------------------------------------------------------
 # RelationshipGraph.get_transitive_closure
 # ---------------------------------------------------------------------------
-
 
 class TestGetTransitiveClosure:
     """Tests for RelationshipGraph.get_transitive_closure.
@@ -427,11 +401,9 @@ class TestGetTransitiveClosure:
         )
         assert reachable == set()
 
-
 # ---------------------------------------------------------------------------
 # RelationshipGraph.export_graph
 # ---------------------------------------------------------------------------
-
 
 class TestExportGraph:
     """Tests for RelationshipGraph.export_graph."""
@@ -467,11 +439,9 @@ class TestExportGraph:
         assert edge["confidence"] == pytest.approx(0.9)
         assert edge["attributes"] == {"key": "val"}
 
-
 # ---------------------------------------------------------------------------
 # RelationshipGraph.get_statistics
 # ---------------------------------------------------------------------------
-
 
 class TestGetStatistics:
     """Tests for RelationshipGraph.get_statistics."""

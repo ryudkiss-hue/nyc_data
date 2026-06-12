@@ -18,11 +18,9 @@ from click.testing import CliRunner
 
 from socrata_toolkit.core.cli import main
 
-
 @pytest.fixture
 def runner():
     return CliRunner()
-
 
 # ---------------------------------------------------------------------------
 # lineage group
@@ -85,7 +83,6 @@ class TestLineageGroup:
         result = runner.invoke(main, ["lineage", "freshness", "missing"])
         assert result.exit_code == 0
         assert "NEVER EXECUTED" in result.output
-
 
 # ---------------------------------------------------------------------------
 # observability group (module missing → error path)
@@ -235,7 +232,6 @@ class TestObservabilityGroup:
         # missing required FORMAT arg → click usage error (exit 2)
         assert result.exit_code == 2
 
-
 # ---------------------------------------------------------------------------
 # material group
 # ---------------------------------------------------------------------------
@@ -264,7 +260,6 @@ class TestMaterialGroup:
         result = runner.invoke(main, ["material", "show"])
         assert result.exit_code == 2
 
-
 # ---------------------------------------------------------------------------
 # compliance group
 # ---------------------------------------------------------------------------
@@ -287,7 +282,6 @@ class TestComplianceGroup:
         result = runner.invoke(main, ["compliance", "report", "--help"])
         assert result.exit_code == 0
 
-
 # ---------------------------------------------------------------------------
 # schema group (help/usage paths)
 # ---------------------------------------------------------------------------
@@ -301,7 +295,6 @@ class TestSchemaGroup:
         result = runner.invoke(main, ["schema", subcommand, "--help"])
         assert result.exit_code == 0
         assert "Usage:" in result.output
-
 
 # ---------------------------------------------------------------------------
 # top-level group help

@@ -14,7 +14,6 @@ from socrata_toolkit.quality.rules import (
     validate_expectations,
 )
 
-
 class TestRuleSeverityEnum:
     """Tests for RuleSeverity enum."""
 
@@ -30,7 +29,6 @@ class TestRuleSeverityEnum:
     def test_rule_severity_low(self):
         assert RuleSeverity.LOW.value == "low"
 
-
 class TestRuleModeEnum:
     """Tests for RuleMode enum."""
 
@@ -39,7 +37,6 @@ class TestRuleModeEnum:
 
     def test_rule_mode_soft(self):
         assert RuleMode.SOFT.value == "soft"
-
 
 class TestRuleViolation:
     """Tests for RuleViolation dataclass."""
@@ -82,7 +79,6 @@ class TestRuleViolation:
         assert violation.affected_records == []
         assert violation.suggested_remediation == ""
 
-
 class TestRuleViolations:
     """Tests for RuleViolations dataclass."""
 
@@ -110,7 +106,6 @@ class TestRuleViolations:
         assert result["critical_violations"] == 0
         assert result["can_proceed"] is True
         assert len(result["violations"]) == 1
-
 
 class TestQualityRule:
     """Tests for QualityRule class."""
@@ -180,7 +175,6 @@ class TestQualityRule:
         assert violation.violation_count == 0
         assert "Rule evaluation failed" in violation.suggested_remediation
         assert violation.severity == RuleSeverity.HIGH
-
 
 class TestBusinessRulesEngine:
     """Tests for BusinessRulesEngine class."""
@@ -293,7 +287,6 @@ class TestBusinessRulesEngine:
         assert "high" in by_severity
         assert len(by_severity["critical"]) == 1
         assert len(by_severity["high"]) == 2
-
 
 class TestValidateExpectations:
     """Tests for validate_expectations function."""

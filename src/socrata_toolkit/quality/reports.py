@@ -20,7 +20,6 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class ReportMetadata:
     """Metadata for a quality report."""
@@ -30,7 +29,6 @@ class ReportMetadata:
     period_start: datetime
     period_end: datetime
     author: str = "Data Quality System"
-
 
 class QualityReportGenerator:
     """Generates comprehensive quality reports.

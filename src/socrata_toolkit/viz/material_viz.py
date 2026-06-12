@@ -34,7 +34,6 @@ __all__ = [
     "plot_log_rank_results",
 ]
 
-
 def _get_plotly():
     """Lazy import plotly."""
     try:
@@ -43,7 +42,6 @@ def _get_plotly():
         return go
     except ImportError as exc:
         raise ImportError("Install plotly: pip install plotly") from exc
-
 
 def plot_km_curves(km_results: dict[str, dict[str, Any]]) -> Any:
     """Plot Kaplan-Meier survival curves with confidence bands.
@@ -102,8 +100,8 @@ def plot_km_curves(km_results: dict[str, dict[str, Any]]) -> Any:
             f"<b>{material.capitalize()}</b><br>"
             f"Time: {t:.0f} months<br>"
             f"Survival Prob: {s:.3f}<br>"
-            f"95% CI: [{l:.3f}, {u:.3f}]<extra></extra>"
-            for t, s, l, u in zip(time_points, survival_prob, ci_lower, ci_upper)
+            f"95% CI: [{ci_low:.3f}, {ci_high:.3f}]<extra></extra>"
+            for t, s, ci_low, ci_high in zip(time_points, survival_prob, ci_lower, ci_upper)
         ]
 
         fig.add_trace(
@@ -143,7 +141,6 @@ def plot_km_curves(km_results: dict[str, dict[str, Any]]) -> Any:
     )
 
     return fig
-
 
 def plot_cumulative_hazard(cumulative_hazard: dict[str, dict[str, Any]]) -> Any:
     """Plot cumulative hazard function (Nelson-Aalen) by material.
@@ -199,7 +196,6 @@ def plot_cumulative_hazard(cumulative_hazard: dict[str, dict[str, Any]]) -> Any:
 
     return fig
 
-
 def plot_material_economics(economics_df: pd.DataFrame) -> Any:
     """Create bubble chart of material cost vs lifespan.
 
@@ -241,10 +237,10 @@ def plot_material_economics(economics_df: pd.DataFrame) -> Any:
             ),
             text=[
                 f"<b>{m.capitalize()}</b><br>"
-                f"Median Lifespan: {l:.1f} years<br>"
+                f"Median Lifespan: {lf:.1f} years<br>"
                 f"20-Year Total Cost: ${c:,.0f}<br>"
                 f"Cost per Year: ${cp:,.0f}"
-                for m, l, c, cp in zip(materials, lifespan, cost_20yr, cost_per_year)
+                for m, lf, c, cp in zip(materials, lifespan, cost_20yr, cost_per_year)
             ],
             hovertemplate="%{text}<extra></extra>",
         )
@@ -301,7 +297,6 @@ def plot_material_economics(economics_df: pd.DataFrame) -> Any:
     )
 
     return fig
-
 
 def plot_log_rank_results(log_rank_tests: dict[tuple[str, str], dict[str, Any]]) -> Any:
     """Create table of log-rank test results.

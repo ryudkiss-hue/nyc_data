@@ -106,19 +106,15 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
 LANG_LABELS = {"en": "English", "es": "Español"}
 LABEL_TO_CODE = {v: k for k, v in LANG_LABELS.items()}
 
-
 def set_language(lang_code: str) -> None:
     st.session_state["lang"] = lang_code if lang_code in TRANSLATIONS else "en"
-
 
 def current_language() -> str:
     return st.session_state.get("lang", "en")
 
-
 def t(key: str) -> str:
     lang = current_language()
     return TRANSLATIONS.get(lang, TRANSLATIONS["en"]).get(key, TRANSLATIONS["en"].get(key, key))
-
 
 def render_language_selector() -> None:
     label = st.sidebar.selectbox(

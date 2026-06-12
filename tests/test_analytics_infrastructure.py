@@ -6,7 +6,6 @@ import pytest
 
 from socrata_toolkit.analytics import AnalysisResult, BaseSkill
 
-
 class MockSkill(BaseSkill):
     """A concrete implementation of BaseSkill for testing."""
     def run(self, **kwargs) -> AnalysisResult:

@@ -66,7 +66,6 @@ from socrata_toolkit.api.versioning import (
 # AUTHENTICATION TESTS
 # ====================================================================
 
-
 class TestJWTAuthentication:
     """JWT authentication tests."""
 
@@ -135,7 +134,6 @@ class TestJWTAuthentication:
         assert context1.principal_id == context2.principal_id
         assert len(provider._token_cache) == 1
 
-
 class TestAPIKeyAuthentication:
     """API key authentication tests."""
 
@@ -177,11 +175,9 @@ class TestAPIKeyAuthentication:
         with pytest.raises(AuthenticationError):
             provider.authenticate({})
 
-
 # ====================================================================
 # AUTHORIZATION & RBAC TESTS
 # ====================================================================
-
 
 class TestRBACEnforcement:
     """Role-based access control tests."""
@@ -295,11 +291,9 @@ class TestRBACEnforcement:
 
         assert "/datasets/public_1" in resources
 
-
 # ====================================================================
 # RATE LIMITING TESTS
 # ====================================================================
-
 
 class TestTokenBucketRateLimiting:
     """Token bucket rate limiting tests."""
@@ -353,7 +347,6 @@ class TestTokenBucketRateLimiting:
         assert "X-RateLimit-Remaining" in headers
         assert "X-Quota-Remaining" in headers
 
-
 class TestSlidingWindowRateLimiting:
     """Sliding window rate limiting tests."""
 
@@ -377,11 +370,9 @@ class TestSlidingWindowRateLimiting:
             allowed = strategy.check_limit("user_123", QuotaTier.STANDARD)
             assert allowed
 
-
 # ====================================================================
 # VERSIONING TESTS
 # ====================================================================
-
 
 class TestAPIVersioning:
     """API versioning tests."""
@@ -454,11 +445,9 @@ class TestAPIVersioning:
         changes = manager.get_breaking_changes("v1", "v2")
         assert len(changes) == 2
 
-
 # ====================================================================
 # DATA GOVERNANCE TESTS
 # ====================================================================
-
 
 class TestPIIMasking:
     """PII masking tests."""
@@ -563,11 +552,9 @@ class TestPIIMasking:
         decision = enforcer.validate_access("dataset_123", "admin")
         assert decision.allowed
 
-
 # ====================================================================
 # REQUEST PIPELINE TESTS
 # ====================================================================
-
 
 class TestAPIRequestPipeline:
     """API request pipeline tests."""
@@ -656,11 +643,9 @@ class TestAPIRequestPipeline:
         assert pipeline._get_action_from_method("POST") == "write"
         assert pipeline._get_action_from_method("DELETE") == "delete"
 
-
 # ====================================================================
 # INTEGRATION TESTS
 # ====================================================================
-
 
 class TestIntegration:
     """Integration tests across components."""

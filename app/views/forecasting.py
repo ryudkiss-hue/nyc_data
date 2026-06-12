@@ -41,14 +41,12 @@ try:
 except ImportError:
     HAS_OPENPYXL = False
 
-
 # Confidence level label -> (Prophet interval_width, normal z-score for bounds).
 _CONFIDENCE_LEVELS: dict[str, tuple[float, float]] = {
     "80%": (0.80, 1.2816),
     "90%": (0.90, 1.6449),
     "95%": (0.95, 1.9600),
 }
-
 
 # ---------------------------------------------------------------------------
 # Socrata data loader
@@ -78,7 +76,6 @@ def _load_timeseries_from_socrata(dataset_key: str, limit: int = 50_000) -> pd.D
         agg_df["record_count"] = df.groupby("date").size().values
     return agg_df.sort_values("date")
 
-
 # ---------------------------------------------------------------------------
 # Exponential smoothing (manual — no external deps)
 # ---------------------------------------------------------------------------
@@ -97,7 +94,6 @@ def _exp_smooth_forecast(
     lower = forecast - z_score * std_resid
     upper = forecast + z_score * std_resid
     return forecast, lower, upper
-
 
 # ---------------------------------------------------------------------------
 # NYC DOT holiday / construction-season calendar (for Prophet)
@@ -133,7 +129,6 @@ def _build_nyc_dot_holidays(start_year: int, end_year: int) -> pd.DataFrame:
     )
     return holidays.sort_values("ds").reset_index(drop=True)
 
-
 # ---------------------------------------------------------------------------
 # Forecast Excel export (multi-sheet, openpyxl)
 # ---------------------------------------------------------------------------
@@ -161,7 +156,6 @@ def _build_forecast_excel(
         forecast[["date", "forecast"]].to_excel(writer, sheet_name="Forecast", index=False)
         bounds.to_excel(writer, sheet_name="Bounds", index=False)
     return buffer.getvalue()
-
 
 # ---------------------------------------------------------------------------
 # Tab renderers
@@ -225,7 +219,6 @@ def _render_trend_analysis(df: pd.DataFrame, date_col: str, metrics: list[str]) 
         fig.update_layout(title=f"{metric} — Trend Analysis", height=320,
                           xaxis_title="Date", yaxis_title=metric, legend_orientation="h")
         st.plotly_chart(fig, use_container_width=True)
-
 
 def _render_seasonality(df: pd.DataFrame, date_col: str, metrics: list[str]) -> None:
     st.subheader("Seasonality & Patterns")
@@ -296,7 +289,6 @@ def _render_seasonality(df: pd.DataFrame, date_col: str, metrics: list[str]) -> 
 
     _render_stl_decomposition(df, date_col, metric)
 
-
 def _render_stl_decomposition(df: pd.DataFrame, date_col: str, metric: str) -> None:
     """STL (Seasonal-Trend decomposition using LOESS) component subplots."""
     if not HAS_STATSMODELS:
@@ -362,7 +354,6 @@ def _render_stl_decomposition(df: pd.DataFrame, date_col: str, metric: str) -> N
             "Strength scores (0–1, Hyndman) gauge how much of the variance each component "
             "explains. Values near 1 indicate a strong, well-defined pattern."
         )
-
 
 def _render_forecasting(df: pd.DataFrame, date_col: str, metrics: list[str]) -> None:
     st.subheader("Forecasting")
@@ -454,7 +445,6 @@ def _render_forecasting(df: pd.DataFrame, date_col: str, metrics: list[str]) -> 
     csv = fc_df.to_csv(index=False).encode()
     st.download_button("📥 Download Forecast CSV", csv, f"forecast_{metric}.csv", "text/csv")
 
-
 def _render_kpi_targets(df: pd.DataFrame, date_col: str, metrics: list[str]) -> None:
     st.subheader("KPI Targets vs Actuals")
 
@@ -527,7 +517,6 @@ def _render_kpi_targets(df: pd.DataFrame, date_col: str, metrics: list[str]) -> 
         use_container_width=True,
         hide_index=True,
     )
-
 
 # ---------------------------------------------------------------------------
 # Main entry point

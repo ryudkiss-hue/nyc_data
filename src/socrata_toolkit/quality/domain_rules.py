@@ -18,7 +18,6 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class DomainRuleResult:
     """Result of a domain validation rule.
@@ -40,7 +39,6 @@ class DomainRuleResult:
     def __repr__(self) -> str:
         """String representation."""
         return f"DomainRuleResult(rule={self.rule_name}, status={self.status}, affected={self.rows_affected})"
-
 
 def validate_material_lifespan_rule(df: pd.DataFrame) -> DomainRuleResult:
     """
@@ -157,7 +155,6 @@ def validate_material_lifespan_rule(df: pd.DataFrame) -> DomainRuleResult:
             fix_recommendation="Check dataset structure and column names",
         )
 
-
 def validate_borough_coverage_distribution(df: pd.DataFrame) -> DomainRuleResult:
     """
     Validate borough distribution matches historical patterns.
@@ -240,7 +237,6 @@ def validate_borough_coverage_distribution(df: pd.DataFrame) -> DomainRuleResult
             details=f"Rule evaluation error: {str(e)}",
             fix_recommendation="Check borough column format and values",
         )
-
 
 def validate_permit_inspection_relationship(
     permits_df: pd.DataFrame, inspections_df: pd.DataFrame
@@ -379,7 +375,6 @@ def validate_permit_inspection_relationship(
             fix_recommendation="Check DataFrame structure and date/location columns",
         )
 
-
 def validate_all_domain_rules(
     df: pd.DataFrame,
     permits_df: pd.DataFrame | None = None,
@@ -417,7 +412,6 @@ def validate_all_domain_rules(
         logger.info(f"Permit-inspection rule: {permit_result.status}")
 
     return results
-
 
 # Utility function for generating rule summary
 def summarize_domain_rule_results(results: list[DomainRuleResult]) -> dict:

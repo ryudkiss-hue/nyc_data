@@ -1,0 +1,195 @@
+version: "1.0"
+project: nyc-dot-kpi-analytics
+description: "60+ statistical metrics for 18 KPIs × 5 boroughs (90 base rows)"
+created_date: "2026-06-11"
+
+layers:
+  raw_landing:
+    description: "Raw KPI values from Socrata/MQTT sources"
+    tables:
+      - name: analytics.kpi_metrics
+        rows: 90
+        refresh_type: append
+        schedule: "*/30 * * * *"  # Every 30 minutes
+        columns:
+          - metric_id: "UUID: kpi_name + borough + timestamp hash"
+          - kpi_name: "18 standard KPI names"
+          - borough: "NYC borough: MN, BK, BX, QN, SI"
+          - kpi_value: "Raw KPI value (unit depends on kpi_name)"
+          - analytics_timestamp: "Time of computation or ingestion (UTC)"
+          - data_source: "Source system: socrata, mqtt, manual"
+          - is_provisional: "TRUE if preliminary; FALSE if finalized"
+          - data_quality_score: "0-100 data quality rating"
+
+  staging:
+    description: "Deduplicated, ranked for quantile computation"
+    tables:
+      - name: analytics.kpi_metrics_staged
+        rows: 90
+        depends_on:
+          - analytics.kpi_metrics
+        refresh_type: full_refresh
+        schedule: "0 * * * *"  # Hourly
+        computation_time_seconds: 30
+        columns:
+          - kpi_name: "KPI name"
+          - borough: "Borough code"
+          - kpi_value: "Latest KPI value for this borough"
+          - recent_90day_min: "Min value last 90 days"
+          - recent_90day_max: "Max value last 90 days"
+          - rank_asc: "ROW_NUMBER() ascending by kpi_value within borough"
+          - percentile_rank: "PERCENT_RANK() for KPI value distribution"
+
+  analytics:
+    description: "Computed 60+ statistical metrics per KPI-borough"
+    tables:
+      - name: analytics.kpi_statistics_by_borough
+        rows: 90
+        columns: 75+
+        depends_on:
+          - analytics.kpi_metrics_staged
+        refresh_type: full_refresh
+        schedule: "0 3 * * *"  # 3 AM daily (after data loads)
+        computation_time_seconds: 120
+        metrics:
+          central_tendency:
+            - mean_value: "Arithmetic mean"
+            - median_value: "Median (50th percentile)"
+            - mode_value: "Most frequent value"
+            - trimmed_mean_90: "Trimmed mean (5% tails removed)"
+          spread_dispersion:
+            - min_value: "Minimum value"
+            - max_value: "Maximum value"
+            - stddev_pop: "Population standard deviation"
+            - stddev_samp: "Sample standard deviation"
+            - iqr_value: "Interquartile range (Q3 - Q1)"
+            - coeff_variation: "Coefficient of variation (σ/μ)"
+          distribution_shape:
+            - skewness_index: "Tail asymmetry"
+            - kurtosis_excess: "Peak sharpness"
+          outlier_detection:
+            - outlier_count_3sd: "Count of values > 3σ from mean"
+            - outlier_count_iqr: "Count beyond 1.5×IQR fence"
+          risk_uncertainty:
+            - pct_exceeding_risk_threshold: "Percent of values exceeding risk threshold"
+            - value_at_risk_95: "VaR at 95% confidence"
+            - expected_shortfall: "Expected Shortfall (avg of tail)"
+          trend_analysis:
+            - trend_slope_per_day: "Linear trend slope (Δvalue/Δday)"
+            - trend_direction: "INCREASING, DECREASING, STABLE"
+            - autocorrelation_lag1: "Autocorrelation at lag 1"
+          diversity_metrics:
+            - simpsons_diversity: "Simpson's Diversity Index (0-1)"
+            - gini_coefficient: "Gini Coefficient (0-1)"
+            - shannon_entropy: "Shannon Entropy"
+          benchmarking:
+            - benchmark_ratio: "Current mean / benchmark"
+            - pct_diff_benchmark: "Percent difference from benchmark"
+
+  serving:
+    description: "Materialized for zero-latency Dive queries"
+    tables:
+      - name: analytics.kpi_metrics_comprehensive
+        rows: 90
+        depends_on:
+          - analytics.kpi_statistics_by_borough
+          - analytics.kpi_metadata
+        refresh_type: materialized_ctas
+        schedule: "0 4 * * *"  # 4 AM daily (after analytics layer)
+        computation_time_seconds: 15
+
+    views:
+      - name: app_queries.v_kpi_statistics
+        depends_on:
+          - analytics.kpi_metrics_comprehensive
+          - analytics.kpi_metadata
+        refresh_type: view_replace
+        schedule: "0 4 * * *"
+        description: "Formatted statistics for KPI Dives"
+
+reference_tables:
+  - name: analytics.kpi_metadata
+    rows: 18
+    refresh_type: manual
+    columns:
+      - kpi_name: "18 standard KPI names"
+      - kpi_id: "Unique identifier"
+      - phase: "Analysis phase: B, C, D, E, F"
+      - unit: "Measurement unit (%, count, days, etc.)"
+      - description: "Business meaning of KPI"
+      - risk_threshold: "Threshold above which KPI is at risk"
+      - benchmark_value: "Target value"
+
+dives:
+  description: "18 KPI Dive cards (one per KPI)"
+  query_source: "app_queries.v_kpi_statistics"
+  count: 18
+  metrics_per_dive: "60+"
+  visualizations:
+    - box_plot: "25th, 50th, 75th percentiles with outliers"
+    - violin_plot: "Distribution shape (skewness, kurtosis)"
+    - trend_chart: "Slope + 95% CI bands"
+    - z_score_ranking: "Standardized values by borough"
+    - risk_histogram: "Tail distribution (p95, VaR, ES)"
+    - summary_cards: "Mean, Median, StdDev, CV, Skewness, Kurtosis, Outliers, Risk %, IQR"
+    - detailed_table: "16 columns per borough (n, mean, median, Q1-Q3, min-max, σ, CV%, skew, kurt, outliers, vs_benchmark)"
+
+execution:
+  nightly_schedule:
+    - step: "1. Raw landing (external ETL writes to analytics.kpi_metrics)"
+      time: "Continuous (*/30 minutes)"
+    - step: "2. Staging (compute dedup + ranking)"
+      time: "9:30 PM"
+      depends_on: "Step 1"
+    - step: "3. Analytics (compute 60+ metrics)"
+      time: "10:00 PM"
+      depends_on: "Step 2"
+      duration: "120 seconds"
+    - step: "4. Serving (materialize CTAS + view)"
+      time: "10:05 PM"
+      depends_on: "Step 3"
+      duration: "15 seconds"
+    - step: "5. Verification (check 90 rows, 60+ non-NULL columns)"
+      time: "10:10 PM"
+      depends_on: "Step 4"
+    - step: "6. Ready for Dive queries (zero-latency from MotherDuck)"
+      time: "10:15 PM"
+
+  weekly_advanced_metrics:
+    - step: "1. Normality tests (Shapiro-Wilk, Jarque-Bera, Anderson-Darling)"
+      time: "Sunday 11 PM"
+      duration: "30 seconds"
+      requires: "scipy"
+    - step: "2. Levene's test (variance equality across boroughs)"
+      time: "Sunday 11 PM"
+      duration: "10 seconds"
+      requires: "scipy"
+    - step: "3. Effect size (Cohen's d vs. benchmark)"
+      time: "Sunday 11 PM"
+      duration: "5 seconds"
+      requires: "scipy"
+    - step: "4. Seasonal decomposition (STL trend + seasonal + residual)"
+      time: "Sunday 11 PM"
+      duration: "20 seconds"
+      requires: "statsmodels"
+    - step: "5. Autocorrelation significance (Ljung-Box test)"
+      time: "Sunday 11 PM"
+      duration: "15 seconds"
+      requires: "statsmodels"
+    - step: "6. Robust regression (Huber M-estimator, outlier sensitivity)"
+      time: "Sunday 11 PM"
+      duration: "20 seconds"
+      requires: "statsmodels"
+    - summary: "Total advanced metrics computation: ~100 seconds for 90 KPI-borough pairs"
+
+data_quality_checks:
+  - check: "Row count per layer"
+    expected: "90 rows (18 KPIs × 5 boroughs)"
+  - check: "No NULL in computed metrics"
+    expected: "All 60+ metrics non-NULL after computation"
+  - check: "Completeness of schema"
+    expected: "All 75+ columns populated for each row"
+  - check: "Timestamp freshness"
+    expected: "analytics_timestamp within last 30 minutes"
+  - check: "Uniqueness by (kpi_name, borough)"
+    expected: "Exactly 1 row per KPI-borough pair"

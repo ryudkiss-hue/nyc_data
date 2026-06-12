@@ -50,7 +50,6 @@ class MetricDefinition:
     direction: str = "lower_is_better"  # or "higher_is_better"
     category: str = "general"  # "construction", "budget", "personnel", "safety"
 
-
 @dataclass
 class MetricSnapshot:
     """A point-in-time snapshot of a metric value."""
@@ -60,7 +59,6 @@ class MetricSnapshot:
     status: str  # "green", "yellow", "red"
     target: float
     delta_from_target: float
-
 
 @dataclass
 class BudgetCode:
@@ -73,7 +71,6 @@ class BudgetCode:
     remaining: float
     pct_used: float
 
-
 @dataclass
 class ProgramDashboard:
     """Complete program dashboard with all metrics and budget summary."""
@@ -84,7 +81,6 @@ class ProgramDashboard:
     green_count: int
     yellow_count: int
     red_count: int
-
 
 # ---------------------------------------------------------------------------
 # Standard DOT Sidewalk KPI Definitions
@@ -162,7 +158,6 @@ STANDARD_KPIS: list[MetricDefinition] = [
         category="construction",
     ),
 ]
-
 
 # ---------------------------------------------------------------------------
 # Metrics Tracker
@@ -336,7 +331,6 @@ class MetricsTracker:
             self.history[name] = [MetricSnapshot(**s) for s in snapshots]
         self.budget_codes = [BudgetCode(**b) for b in data.get("budget_codes", [])]
 
-
 def _compute_status(value: float, defn: MetricDefinition) -> str:
     """Compute green/yellow/red status for a metric value."""
     if defn.direction == "lower_is_better":
@@ -357,7 +351,6 @@ def _compute_status(value: float, defn: MetricDefinition) -> str:
             return "yellow"
         else:
             return "red"
-
 
 # ---------------------------------------------------------------------------
 # Convenience: Compute from DataFrame

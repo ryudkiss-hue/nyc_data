@@ -20,7 +20,6 @@ from spacy.tokens import Doc
 
 logger = logging.getLogger(__name__)
 
-
 class DismissalCategory(str, Enum):
     """Dismissal classification category."""
     LEGAL = "LEGAL"
@@ -29,20 +28,17 @@ class DismissalCategory(str, Enum):
     SUSPICIOUS = "SUSPICIOUS"
     UNKNOWN = "UNKNOWN"
 
-
 class ConfidenceLevel(str, Enum):
     """Confidence in the classification."""
     HIGH = "HIGH"
     MEDIUM = "MEDIUM"
     LOW = "LOW"
 
-
 class InspectorConsistency(str, Enum):
     """Inspector consistency relative to cohort."""
     NORMAL = "NORMAL"
     OUTLIER_HIGH = "OUTLIER_HIGH"  # Dismisses much more than peers
     OUTLIER_LOW = "OUTLIER_LOW"    # Dismisses much less than peers
-
 
 @dataclass
 class DismissalMetrics:
@@ -54,7 +50,6 @@ class DismissalMetrics:
     avg_dismissals_per_defect: float = 0.0
     suspicious_count: int = 0
     suspicious_rate: float = 0.0
-
 
 @dataclass
 class DismissalClassification:
@@ -102,7 +97,6 @@ class DismissalClassification:
             "flagged_reason": self.flagged_reason,
             "requires_review": self.requires_review,
         }
-
 
 class DismissalReasonClassifier:
     """

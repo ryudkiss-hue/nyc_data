@@ -16,7 +16,6 @@ def find_previous_pack_dir(pack_dir: Path, outputs_root: Path | None = None) -> 
     prior = [d for d in dated if d.name < pack_dir.name]
     return prior[-1] if prior else (dated[-1] if dated and dated[-1] != pack_dir else None)
 
-
 def diff_construction_lists(
     current: pd.DataFrame,
     previous: pd.DataFrame,

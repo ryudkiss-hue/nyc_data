@@ -35,7 +35,6 @@ class BlockStatistics:
     blocks_created: int
     empty_blocks: int
 
-
 class BlockingAlgorithm(ABC):
     """Base class for blocking algorithms."""
 
@@ -90,7 +89,6 @@ class BlockingAlgorithm(ABC):
             blocks_created=len(blocks),
             empty_blocks=empty_blocks
         )
-
 
 class StandardBlocker(BlockingAlgorithm):
     """
@@ -158,7 +156,6 @@ class StandardBlocker(BlockingAlgorithm):
                 key_parts.append(value_str)
 
         return '|'.join(key_parts) if key_parts else '__none__'
-
 
 class SortedNeighborhoodBlocker(BlockingAlgorithm):
     """
@@ -256,7 +253,6 @@ class SortedNeighborhoodBlocker(BlockingAlgorithm):
             blocks[sort_key].append(idx)
 
         return blocks
-
 
 class SuffixArrayBlocker(BlockingAlgorithm):
     """
@@ -358,7 +354,6 @@ class SuffixArrayBlocker(BlockingAlgorithm):
                     tokens.add(word[:self.token_length])
 
         return tokens
-
 
 class CanopyBlocker(BlockingAlgorithm):
     """
@@ -483,7 +478,6 @@ class CanopyBlocker(BlockingAlgorithm):
                     matches += 0.5
 
         return matches / len(self.blocking_keys)
-
 
 class HybridBlocker(BlockingAlgorithm):
     """

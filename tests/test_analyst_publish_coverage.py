@@ -23,7 +23,6 @@ from socrata_toolkit.analyst.publish import (
     publish_pack,
 )
 
-
 class TestReadTextBestEffort:
     """Tests for _read_text_best_effort helper."""
 
@@ -56,7 +55,6 @@ class TestReadTextBestEffort:
 
             result = _read_text_best_effort(file_path)
             assert result == ""
-
 
 class TestPackContext:
     """Tests for _pack_context helper."""
@@ -106,7 +104,6 @@ class TestPackContext:
             result = _pack_context(pack_dir)
             assert result["run_date"] == "2024-01-15"
             assert result["profile_name"] == ""
-
 
 class TestLoadPublishProfile:
     """Tests for load_publish_profile function."""
@@ -165,7 +162,6 @@ email:
             result = load_publish_profile(profile_file)
             assert result["profile_name"] == "my_profile"
 
-
 class TestPublishAction:
     """Tests for PublishAction dataclass."""
 
@@ -190,7 +186,6 @@ class TestPublishAction:
         )
         assert action.ok is False
 
-
 class TestPublishReport:
     """Tests for PublishReport dataclass."""
 
@@ -208,7 +203,6 @@ class TestPublishReport:
         assert report.dry_run is True
         assert len(report.actions) == 2
         assert report.pack_dir == "/path/to/pack"
-
 
 class TestCopyPack:
     """Tests for _copy_pack function."""
@@ -239,7 +233,6 @@ class TestCopyPack:
             result = _copy_pack(pack_dir, str(dest_root), dry_run=False)
             assert result.ok is True
 
-
 class TestExportBi:
     """Tests for _export_bi function."""
 
@@ -262,7 +255,6 @@ class TestExportBi:
             # Should succeed with 0 files exported
             assert result.ok is True
             assert "Exported 0 files" in result.detail
-
 
 class TestPublishPack:
     """Tests for main publish_pack function."""
@@ -380,7 +372,6 @@ bi_export:
         assert isinstance(error, RuntimeError)
         assert str(error) == "Test error"
 
-
 class TestTeamsPost:
     """Tests for _teams_post function."""
 
@@ -455,7 +446,6 @@ class TestTeamsPost:
                     dry_run=False,
                 )
                 assert result.ok is False
-
 
 class TestEmailSend:
     """Tests for _email_send function."""
@@ -537,7 +527,6 @@ class TestEmailSend:
                 assert result.ok is True
                 assert len(result.meta["attachments"]) >= 0
 
-
 class TestPptxExport:
     """Tests for _pptx_export function."""
 
@@ -593,7 +582,6 @@ class TestPptxExport:
             )
             # Will fail at import, not template check
             assert isinstance(result, PublishAction)
-
 
 class TestPublishPackExtended:
     """Extended tests for publish_pack with all destination types."""

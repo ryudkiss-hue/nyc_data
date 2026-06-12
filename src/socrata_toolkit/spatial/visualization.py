@@ -39,7 +39,6 @@ logger = logging.getLogger(__name__)
 NYC_CENTER = (40.7128, -74.0060)
 NYC_BOUNDS = [[40.4774, -74.2557], [40.9155, -73.7004]]
 
-
 @dataclass
 class MapStyle:
     """Map styling configuration."""
@@ -50,7 +49,6 @@ class MapStyle:
     line_weight: int = 2
     line_opacity: float = 0.8
     popup_width: int = 300
-
 
 class SpatialVisualization:
     """
@@ -529,7 +527,6 @@ class SpatialVisualization:
         '''
         m.get_root().html.add_child(folium.Element(legend_html))
 
-
 class MapExporter:
     """Helper for exporting maps in various formats."""
 
@@ -606,7 +603,6 @@ class MapExporter:
         except Exception as e:
             logger.error(f"Error exporting to KML: {e}")
             return False
-
 
 def export_conflicts_geojson(conflicts_gdf, path: str | Path) -> bool:
     """Write a conflicts GeoDataFrame to GeoJSON with severity properties.

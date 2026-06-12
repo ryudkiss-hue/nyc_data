@@ -27,7 +27,6 @@ from socrata_toolkit.spatial.conflict_detection import (
 # Fixtures
 # ---------------------------------------------------------------------------
 
-
 @pytest.fixture()
 def sample_permits_df() -> pd.DataFrame:
     """Create sample permit DataFrame for testing."""
@@ -44,7 +43,6 @@ def sample_permits_df() -> pd.DataFrame:
         "material_type": ["concrete", "asphalt", "concrete", "asphalt", "concrete"],
     })
 
-
 @pytest.fixture()
 def sample_inspections_df() -> pd.DataFrame:
     """Create sample inspection DataFrame for testing."""
@@ -60,7 +58,6 @@ def sample_inspections_df() -> pd.DataFrame:
         "borough": ["MANHATTAN", "MANHATTAN", "BROOKLYN", "QUEENS", "BRONX"],
         "condition_score": [50, 65, 80, 45, 70],
     })
-
 
 @pytest.fixture()
 def sample_conflicts() -> list[SpatialConflict]:
@@ -112,11 +109,9 @@ def sample_conflicts() -> list[SpatialConflict]:
         ),
     ]
 
-
 # ---------------------------------------------------------------------------
 # Test: Data Loading
 # ---------------------------------------------------------------------------
-
 
 class TestDataLoading:
     """Test data loading for permits and inspections."""
@@ -153,11 +148,9 @@ class TestDataLoading:
         assert sample_inspections_df["inspection_lat"].notna().all()
         assert sample_inspections_df["inspection_lon"].notna().all()
 
-
 # ---------------------------------------------------------------------------
 # Test: Task 5 - Spatial Conflict Detection
 # ---------------------------------------------------------------------------
-
 
 class TestConflictDetection:
     """Test spatial conflict detection integration (Task 5)."""
@@ -208,11 +201,9 @@ class TestConflictDetection:
         assert summary["MEDIUM"] == 2
         assert summary["LOW"] == 1
 
-
 # ---------------------------------------------------------------------------
 # Test: Section 1 - Conflict Summary
 # ---------------------------------------------------------------------------
-
 
 class TestConflictSummarySection:
     """Test Conflict Summary section functionality."""
@@ -258,11 +249,9 @@ class TestConflictSummarySection:
         assert "date" in trend_df.columns
         assert "count" in trend_df.columns
 
-
 # ---------------------------------------------------------------------------
 # Test: Section 2 - Block-Level Analysis
 # ---------------------------------------------------------------------------
-
 
 class TestBlockAnalysisSection:
     """Test Block-Level Analysis section functionality."""
@@ -315,11 +304,9 @@ class TestBlockAnalysisSection:
             }
             assert len(details) == 5
 
-
 # ---------------------------------------------------------------------------
 # Test: Section 3 - Location Recommendations
 # ---------------------------------------------------------------------------
-
 
 class TestRecommendationsSection:
     """Test Location Recommendations section functionality."""
@@ -376,11 +363,9 @@ class TestRecommendationsSection:
             rec_date = datetime.strptime(rec["Recommended Date"], "%Y-%m-%d").date()
             assert rec_date >= current_date
 
-
 # ---------------------------------------------------------------------------
 # Test: Section 4 - Conflict Resolution
 # ---------------------------------------------------------------------------
-
 
 class TestConflictResolutionSection:
     """Test Conflict Resolution section functionality."""
@@ -441,11 +426,9 @@ class TestConflictResolutionSection:
         assert len(audit_logger.entries) == 1
         assert audit_logger.entries[0].check_type == "conflict_detection"
 
-
 # ---------------------------------------------------------------------------
 # Test: Integration Tests
 # ---------------------------------------------------------------------------
-
 
 class TestDashboardIntegration:
     """Test full dashboard integration across all tasks."""
@@ -532,11 +515,9 @@ class TestDashboardIntegration:
         summary = audit_logger.get_summary()
         assert summary["total_entries"] == 3
 
-
 # ---------------------------------------------------------------------------
 # Test: Edge Cases
 # ---------------------------------------------------------------------------
-
 
 class TestEdgeCases:
     """Test edge cases and error handling."""

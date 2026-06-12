@@ -35,7 +35,6 @@ __all__ = [
     "compute_month_over_month_change",
 ]
 
-
 def _get_plotly():
     """Lazy import plotly."""
     try:
@@ -45,7 +44,6 @@ def _get_plotly():
         return go, px
     except ImportError as exc:
         raise ImportError("Install plotly: pip install plotly") from exc
-
 
 def bucket_temporal_data(
     df: pd.DataFrame,
@@ -106,7 +104,6 @@ def bucket_temporal_data(
         + [col for col in ["latitude", "longitude", "repair_cost", "inspections"] if col in df_agg.columns]
     ]
 
-
 def compute_month_over_month_change(df_agg: pd.DataFrame) -> pd.DataFrame:
     """Calculate percentage change in violation_density from month N-1 to N.
 
@@ -123,7 +120,6 @@ def compute_month_over_month_change(df_agg: pd.DataFrame) -> pd.DataFrame:
     )
 
     return df_agg
-
 
 def identify_hot_blocks(
     df_agg: pd.DataFrame,
@@ -159,7 +155,6 @@ def identify_hot_blocks(
         ]
 
     return hot_blocks
-
 
 class TemporalGeospatialVisualizer:
     """Create temporal geospatial visualizations.

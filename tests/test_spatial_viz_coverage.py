@@ -19,7 +19,6 @@ from socrata_toolkit.spatial.visualization import (
     export_conflicts_geojson,
 )
 
-
 @pytest.fixture
 def mock_folium():
     """Inject a mock folium module and enable HAS_FOLIUM for the test."""
@@ -46,7 +45,6 @@ def mock_folium():
             delattr(viz_module, "folium")
     else:
         viz_module.folium = orig_folium
-
 
 @pytest.fixture
 def point_features() -> list[dict]:
@@ -78,7 +76,6 @@ def point_features() -> list[dict]:
         },
     ]
 
-
 @pytest.fixture
 def linestring_features() -> list[dict]:
     """Provide GeoJSON-like LineString features for visualization tests."""
@@ -106,7 +103,6 @@ def linestring_features() -> list[dict]:
             },
         },
     ]
-
 
 @pytest.fixture
 def hotspot_data() -> list[dict]:
@@ -142,7 +138,6 @@ def hotspot_data() -> list[dict]:
         },
     ]
 
-
 class TestModuleConstants:
     """Tests for module-level constants."""
 
@@ -161,7 +156,6 @@ class TestModuleConstants:
         """NYC_BOUNDS is a list of two coordinate pairs."""
         assert isinstance(NYC_BOUNDS, list)
         assert len(NYC_BOUNDS) == 2
-
 
 class TestMapStyle:
     """Tests for MapStyle dataclass."""
@@ -184,7 +178,6 @@ class TestMapStyle:
         """MapStyle accepts custom line_weight."""
         style = MapStyle(line_weight=5)
         assert style.line_weight == 5
-
 
 class TestSpatialVisualizationInit:
     """Tests for SpatialVisualization initialization."""
@@ -210,7 +203,6 @@ class TestSpatialVisualizationInit:
         with patch.object(viz_module.logger, "warning") as mock_warn:
             SpatialVisualization()
             mock_warn.assert_not_called()
-
 
 class TestSpatialVisualizationConditionMap:
     """Tests for SpatialVisualization.create_condition_map."""
@@ -288,7 +280,6 @@ class TestSpatialVisualizationConditionMap:
         assert result is None
         mock_f.Map.side_effect = None
 
-
 class TestSpatialVisualizationMaterialMap:
     """Tests for SpatialVisualization.create_material_map."""
 
@@ -347,7 +338,6 @@ class TestSpatialVisualizationMaterialMap:
         viz = SpatialVisualization()
         result = viz.create_material_map(features)
         assert result is mock_map_obj
-
 
 class TestSpatialVisualizationHotspotMap:
     """Tests for SpatialVisualization.create_hotspot_map."""
@@ -412,7 +402,6 @@ class TestSpatialVisualizationHotspotMap:
         viz.create_hotspot_map(hotspots)
         assert mock_f.CircleMarker.call_count == 4
 
-
 class TestSpatialVisualizationComparisonMap:
     """Tests for SpatialVisualization.create_comparison_map."""
 
@@ -470,7 +459,6 @@ class TestSpatialVisualizationComparisonMap:
         viz = SpatialVisualization()
         viz.create_comparison_map(linestring_features, linestring_features)
         mock_f.LayerControl.assert_called_once()
-
 
 class TestSpatialVisualizationExport:
     """Tests for SpatialVisualization.export_map_html and export_map_geojson."""
@@ -535,7 +523,6 @@ class TestSpatialVisualizationExport:
             assert result is True
             assert out_path.parent.exists()
 
-
 class TestScoreToColor:
     """Tests for SpatialVisualization._score_to_color static method."""
 
@@ -576,7 +563,6 @@ class TestScoreToColor:
             color = SpatialVisualization._score_to_color(score, style)
             assert isinstance(color, str)
 
-
 class TestCreatePopup:
     """Tests for SpatialVisualization._create_popup static method."""
 
@@ -615,7 +601,6 @@ class TestCreatePopup:
         )
         assert html.count("seg_001") == 1
 
-
 class TestMapExporterToHtml:
     """Tests for MapExporter.to_html static method."""
 
@@ -634,7 +619,6 @@ class TestMapExporterToHtml:
         mock_map.save.side_effect = Exception("io error")
         result = MapExporter.to_html(mock_map, "/bad/path/map.html")
         assert result is False
-
 
 class TestMapExporterToGeoJson:
     """Tests for MapExporter.to_geojson static method."""
@@ -664,7 +648,6 @@ class TestMapExporterToGeoJson:
             with open(path) as f:
                 data = json.load(f)
             assert data["features"] == []
-
 
 class TestMapExporterToKml:
     """Tests for MapExporter.to_kml static method."""
@@ -708,7 +691,6 @@ class TestMapExporterToKml:
             MapExporter.to_kml(linestring_features, str(path))
             content = path.read_text()
             assert "ln_001" in content or "ln_002" in content
-
 
 class TestExportConflictsGeojson:
     """Tests for export_conflicts_geojson module-level function."""

@@ -19,7 +19,6 @@ from socrata_toolkit.engineering.ramp_analysis import (
 # Fixtures
 # ---------------------------------------------------------------------------
 
-
 @pytest.fixture()
 def sample_df() -> pd.DataFrame:
     """Minimal ramp DataFrame with required columns."""
@@ -29,7 +28,6 @@ def sample_df() -> pd.DataFrame:
             "status": ["complete", "pending", "completed", "done", "pending", "complete"],
         }
     )
-
 
 @pytest.fixture()
 def large_df() -> pd.DataFrame:
@@ -41,17 +39,14 @@ def large_df() -> pd.DataFrame:
         }
     )
 
-
 @pytest.fixture()
 def generator() -> RampCompletionReportGenerator:
     """Default generator with standard cache_ttl."""
     return RampCompletionReportGenerator()
 
-
 # ---------------------------------------------------------------------------
 # BoroughRampStats dataclass
 # ---------------------------------------------------------------------------
-
 
 class TestBoroughRampStats:
     """Tests for BoroughRampStats dataclass."""
@@ -89,11 +84,9 @@ class TestBoroughRampStats:
         assert stats.ci_upper == pytest.approx(0.81)
         assert stats.reliability == "high"
 
-
 # ---------------------------------------------------------------------------
 # RampCompletionReport.to_table
 # ---------------------------------------------------------------------------
-
 
 class TestRampCompletionReportToTable:
     """Tests for RampCompletionReport.to_table method."""
@@ -170,11 +163,9 @@ class TestRampCompletionReportToTable:
         table = report.to_table()
         assert "50 corners sampled" in table
 
-
 # ---------------------------------------------------------------------------
 # RampCompletionReport.to_dict
 # ---------------------------------------------------------------------------
-
 
 class TestRampCompletionReportToDict:
     """Tests for RampCompletionReport.to_dict method."""
@@ -232,11 +223,9 @@ class TestRampCompletionReportToDict:
         assert borough_entry["total_ramps"] == 80
         assert borough_entry["completion_rate"] == pytest.approx(0.5)
 
-
 # ---------------------------------------------------------------------------
 # RampCompletionReportGenerator._assess_reliability
 # ---------------------------------------------------------------------------
-
 
 class TestAssessReliability:
     """Tests for the static _assess_reliability method."""
@@ -253,11 +242,9 @@ class TestAssessReliability:
         assert RampCompletionReportGenerator._assess_reliability(0) == "low"
         assert RampCompletionReportGenerator._assess_reliability(29) == "low"
 
-
 # ---------------------------------------------------------------------------
 # RampCompletionReportGenerator._binomial_ci
 # ---------------------------------------------------------------------------
-
 
 class TestBinomialCI:
     """Tests for the static _binomial_ci method."""
@@ -287,11 +274,9 @@ class TestBinomialCI:
         assert 0.0 <= lower <= 1.0
         assert 0.0 <= upper <= 1.0
 
-
 # ---------------------------------------------------------------------------
 # RampCompletionReportGenerator.generate — validation guards
 # ---------------------------------------------------------------------------
-
 
 class TestGenerateValidation:
     """Tests for generate() input validation."""
@@ -318,11 +303,9 @@ class TestGenerateValidation:
         with pytest.raises(ValueError, match="No data found for borough"):
             generator.generate(df=sample_df, borough_filter="ZZ")
 
-
 # ---------------------------------------------------------------------------
 # RampCompletionReportGenerator.generate — happy paths
 # ---------------------------------------------------------------------------
-
 
 class TestGenerateHappyPath:
     """Tests for generate() with valid inputs."""

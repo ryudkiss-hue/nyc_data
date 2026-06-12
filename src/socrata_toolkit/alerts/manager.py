@@ -11,6 +11,7 @@ import os
 import threading
 import time
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any, Protocol
 
 # Fix: Import os specifically to avoid 'os is not defined' in _send_email
@@ -21,6 +22,19 @@ except ImportError:  # pragma: no cover
     rprint = print
 
 log = logging.getLogger(__name__)
+
+
+class AlertSeverity(Enum):
+    """Alert severity levels for operational alerts."""
+    WARNING = "warning"
+    CRITICAL = "critical"
+
+
+class AlertStatus(Enum):
+    """Status of an operational alert."""
+    NEW = "new"
+    ACKNOWLEDGED = "acknowledged"
+    RESOLVED = "resolved"
 
 @dataclass
 class Alert:

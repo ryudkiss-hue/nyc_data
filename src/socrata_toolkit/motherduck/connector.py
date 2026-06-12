@@ -24,7 +24,6 @@ except ImportError as e:
 
 logger = logging.getLogger(__name__)
 
-
 class MotherDuckConnection:
     """MotherDuck connection handler with local DuckDB fallback.
 

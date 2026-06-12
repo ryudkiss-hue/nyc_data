@@ -14,7 +14,6 @@ _STREAMLIT_AVAILABLE = importlib.util.find_spec("streamlit") is not None
 # Helpers
 # ---------------------------------------------------------------------------
 
-
 def _make_series_with_changepoint(n: int = 40, cp: int = 20) -> pd.Series:
     """Return a Series with a clear level-shift at *cp*."""
     rng = np.random.default_rng(42)
@@ -23,11 +22,9 @@ def _make_series_with_changepoint(n: int = 40, cp: int = 20) -> pd.Series:
     values = np.concatenate([low, high])
     return pd.Series(values, index=range(n))
 
-
 # ---------------------------------------------------------------------------
 # CUSUM changepoint detection
 # ---------------------------------------------------------------------------
-
 
 class TestDetectCusumChangepoint:
     def test_returns_none_for_short_series(self):
@@ -66,11 +63,9 @@ class TestDetectCusumChangepoint:
         result = detect_cusum_changepoint(pd.Series([5.0] * 20))
         assert result is not None
 
-
 # ---------------------------------------------------------------------------
 # KMeans guard — HAS_SKLEARN=False path
 # ---------------------------------------------------------------------------
-
 
 class TestKMeansSklearnGuard:
     """Tests for KMeans sklearn guard — only run in Streamlit context."""
@@ -119,11 +114,9 @@ class TestKMeansSklearnGuard:
             expected = False
         assert mod.HAS_SKLEARN is expected
 
-
 # ---------------------------------------------------------------------------
 # Bayesian completion estimate — CI bounds are reasonable
 # ---------------------------------------------------------------------------
-
 
 class TestBayesianCompletionEstimate:
     """
@@ -156,11 +149,9 @@ class TestBayesianCompletionEstimate:
         lo, hi = self._ci(50, 50)
         assert lo < 0.5 < hi, "Equal split should straddle 0.5"
 
-
 # ---------------------------------------------------------------------------
 # IsolationForest anomaly detection
 # ---------------------------------------------------------------------------
-
 
 class TestIsolationForestAnomalyDetection:
     """Test the anomaly detection logic used in _render_anomaly_detection."""

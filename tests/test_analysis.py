@@ -12,7 +12,6 @@ from socrata_toolkit.analysis import (
     profile_dataframe,
 )
 
-
 @pytest.fixture
 def sample_df():
     """Provides a sample DataFrame for testing SIM complaint parsing."""
@@ -30,7 +29,6 @@ def sample_df():
     }
     return pd.DataFrame(data)
 
-
 @pytest.fixture
 def mock_sklearn_vectorizer():
     """Mocks the TfidfVectorizer to control keyword extraction tests."""
@@ -46,7 +44,6 @@ def mock_sklearn_vectorizer():
         mock_vectorizer_instance.get_feature_names_out.return_value = np.array([])
 
         yield mock_vectorizer_instance
-
 
 class TestParseSimComplaints:
     """Test suite for the parse_sim_complaints function."""
@@ -158,7 +155,6 @@ class TestParseSimComplaints:
         # And it should be a copy, not the same object
         assert result_df is not sample_df
 
-
 class TestListAvailableVisualizations:
     """Test suite for the list_available_visualizations function."""
 
@@ -192,7 +188,6 @@ class TestListAvailableVisualizations:
         assert "summary" in pie_chart_entry["parameters"]
         assert "title" in pie_chart_entry["parameters"]
         assert "distribution of metric statuses" in pie_chart_entry["description"]
-
 
 class TestProfileDataFrame:
     """Test suite for the profile_dataframe function."""
@@ -252,7 +247,6 @@ class TestProfileDataFrame:
         assert profile.row_count == 0
         assert profile.quality_score == 0
         assert "Input DataFrame is empty" in profile.warnings
-
 
 class TestGenerateTextInsights:
     """Test suite for the generate_text_insights function."""

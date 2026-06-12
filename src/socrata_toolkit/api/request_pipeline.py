@@ -12,7 +12,6 @@ class PipelineRequest:
     ip_address: str = ""
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
-
 class APIRequestPipeline:
     def __init__(self, auth_providers: list[Any], enforcer: Any, limiter: Any, governance: Any):
         self.auth_providers = auth_providers

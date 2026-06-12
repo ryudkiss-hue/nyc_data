@@ -22,7 +22,6 @@ cache = CacheService()
 # FILTER SYNCHRONIZATION CALLBACKS
 # =============================================================================
 
-
 @callback(
     Output("gis-session-filters", "data"),
     Input("gis-borough-filter", "value"),
@@ -57,11 +56,9 @@ def sync_gis_filters(boroughs, severity, date_range):
 
     return filters
 
-
 # =============================================================================
 # DROPDOWN/SELECT POPULATION CALLBACKS
 # =============================================================================
-
 
 @callback(
     Output("gis-borough-filter", "data"),
@@ -98,11 +95,9 @@ def populate_filter_options(trigger_data):
 
     return borough_options, severity_options
 
-
 # =============================================================================
 # VISUALIZATION CALLBACKS: CONDITION MAP
 # =============================================================================
-
 
 @callback(
     Output("viz-condition-map", "figure"),
@@ -175,11 +170,9 @@ def update_condition_map(filters, data_store):
             y=0.5,
         )
 
-
 # =============================================================================
 # VISUALIZATION CALLBACKS: HOTSPOT ANALYSIS (KDE)
 # =============================================================================
-
 
 @callback(
     Output("viz-hotspot-kde", "figure"),
@@ -233,11 +226,9 @@ def update_hotspot_analysis(filters, data_store):
             y=0.5,
         )
 
-
 # =============================================================================
 # VISUALIZATION CALLBACKS: CONFLICT DETECTION
 # =============================================================================
-
 
 @callback(
     Output("viz-conflict-map", "figure"),
@@ -317,11 +308,9 @@ def update_conflict_detection(filters, inspection_data, permit_data):
         )
         return error_fig, f"Error: {str(e)}"
 
-
 # =============================================================================
 # VISUALIZATION CALLBACKS: BOROUGH AGGREGATION
 # =============================================================================
-
 
 @callback(
     Output("viz-borough-bar", "figure"),
@@ -381,11 +370,9 @@ def update_borough_aggregation(filters, data_store):
             y=0.5,
         )
 
-
 # =============================================================================
 # VISUALIZATION CALLBACKS: SPATIAL CLUSTERING (DBSCAN)
 # =============================================================================
-
 
 @callback(
     Output("viz-dbscan-clusters", "figure"),
@@ -460,11 +447,9 @@ def update_dbscan_clustering(filters, data_store):
         )
         return error_fig, f"Error: {str(e)}"
 
-
 # =============================================================================
 # EXPORT CALLBACKS
 # =============================================================================
-
 
 @callback(
     Output("gis-export-trigger", "data"),

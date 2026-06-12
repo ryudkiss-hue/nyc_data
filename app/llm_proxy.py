@@ -109,7 +109,6 @@ def create_proxy_app():
 
     return app
 
-
 def _call_gemini(key: str, messages: list[dict], context: str) -> str | dict:
     system_prompt = (
         "You are a data engineering expert. "
@@ -149,7 +148,6 @@ def _call_gemini(key: str, messages: list[dict], context: str) -> str | dict:
     except Exception as exc:
         return {"error": f"Gemini error: {exc}"}
 
-
 def _call_openai(key: str, messages: list[dict], context: str) -> str | dict:
     system_msg = {
         "role": "system",
@@ -183,7 +181,6 @@ def _call_openai(key: str, messages: list[dict], context: str) -> str | dict:
         )
     except Exception as exc:
         return {"error": f"OpenAI error: {exc}"}
-
 
 if __name__ == "__main__":
     # Load .env if present

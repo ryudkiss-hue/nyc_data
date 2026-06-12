@@ -54,7 +54,6 @@ class TestDatasetMetadata:
         assert cols[0]["name"] == "a"
         assert cols[0]["dataTypeName"] == "number"
 
-
 # ---------------------------------------------------------------------------
 # core.temporal — TemporalQuery
 # ---------------------------------------------------------------------------
@@ -74,7 +73,6 @@ class TestTemporalQuery:
         q = TemporalQuery()
         assert q.get_history("t", "key") == []
 
-
 # ---------------------------------------------------------------------------
 # core.logging_utils — redact_secrets
 # ---------------------------------------------------------------------------
@@ -91,7 +89,6 @@ class TestRedactSecrets:
         from socrata_toolkit.core.logging_utils import redact_secrets
 
         assert redact_secrets("hello world") == "hello world"
-
 
 # ---------------------------------------------------------------------------
 # core.profiles — _slug / list_profiles
@@ -126,7 +123,6 @@ class TestProfilesHelpers:
         names = list_profiles(root=tmp_path)
         assert "alpha" in names
         assert "beta" in names
-
 
 # ---------------------------------------------------------------------------
 # core.master_data — MasterDataManager

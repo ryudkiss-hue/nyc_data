@@ -30,7 +30,6 @@ SIDEWALK_COMPLAINT_TYPES = [
     "Street Condition",  # sometimes sidewalk-related
 ]
 
-
 @dataclass
 class IngestionResult:
     """Result from a 311 complaint ingestion run."""
@@ -41,7 +40,6 @@ class IngestionResult:
     boroughs: dict[str, int]
     task_board_items_created: int
     data: pd.DataFrame | None = field(default=None, repr=False)
-
 
 def fetch_311_complaints(
     max_rows: int = 1000,
@@ -72,7 +70,6 @@ def fetch_311_complaints(
     where = " AND ".join(where_parts)
     client = SocrataClient()
     return client.fetch_dataframe(NYC_311_DOMAIN, NYC_311_FOURFOUR, where=where, max_rows=max_rows)
-
 
 def ingest_311_complaints(
     max_rows: int = 1000,
@@ -121,7 +118,6 @@ def ingest_311_complaints(
         task_board_items_created=tasks_created,
         data=df,
     )
-
 
 def _create_board_tasks(df: pd.DataFrame, board_path: str | None) -> int:
     from pathlib import Path

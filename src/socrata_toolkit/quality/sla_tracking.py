@@ -29,14 +29,12 @@ class SLAMetrics:
     violations_count: int
     by_borough: dict[str, dict[str, float]]
 
-
 @dataclass
 class SLATarget:
     """SLA target definition."""
     complaint_to_inspection_days: int = 30
     inspection_to_repair_days: int = 90
     total_cycle_days: int = 120
-
 
 def compute_cycle_times(
     df: pd.DataFrame,
@@ -57,7 +55,6 @@ def compute_cycle_times(
     out["_days_inspection_to_repair"] = (repair - inspection).dt.days
     out["_days_total_cycle"] = (repair - complaint).dt.days
     return out
-
 
 def compute_sla_metrics(
     df: pd.DataFrame,
@@ -99,7 +96,6 @@ def compute_sla_metrics(
         by_borough=by_borough,
     )
 
-
 def flag_sla_violations(
     df: pd.DataFrame,
     target: SLATarget | None = None,
@@ -129,11 +125,9 @@ def flag_sla_violations(
     tmp["_sla_violation_type"] = [",".join(v) if v else "" for v in violations]
     return tmp
 
-
 # ============================================================================
 # SLA Breach Forecasting & Quality Score History
 # ============================================================================
-
 
 def forecast_sla_breaches(
     df: pd.DataFrame,
@@ -215,7 +209,6 @@ def forecast_sla_breaches(
 
     return pd.DataFrame(rows)
 
-
 def record_quality_score(
     key: str,
     score: float,
@@ -255,7 +248,6 @@ def record_quality_score(
 
     with file_path.open("w", encoding="utf-8") as fh:
         json.dump(history, fh, indent=2)
-
 
 def load_quality_trend(
     key: str,

@@ -9,28 +9,28 @@ Author: Claude Code
 Date: 2026-06-10
 """
 
-from dash import Input, Output, dcc, html
-import pandas as pd
-import numpy as np
 from typing import Any
+
+import numpy as np
+import pandas as pd
+from dash import Input, Output, dcc, html
 
 # Import analysis modules
 from socrata_toolkit.analysis.clustering_diagnostics import ClusteringDiagnostics
 from socrata_toolkit.analysis.material_analysis import MaterialDegradationAnalysis, SurvivalDataPrep
 from socrata_toolkit.viz.clustering_viz import (
-    plot_elbow_curve,
-    plot_silhouette,
-    plot_quality_metrics_heatmap,
     plot_cluster_profiles,
+    plot_elbow_curve,
+    plot_quality_metrics_heatmap,
+    plot_silhouette,
 )
 from socrata_toolkit.viz.material_viz import (
-    plot_km_curves,
     plot_cumulative_hazard,
-    plot_material_economics,
+    plot_km_curves,
     plot_log_rank_results,
+    plot_material_economics,
 )
 from socrata_toolkit.viz.temporal_maps import TemporalGeospatialVisualizer
-
 
 # ============================================================================
 # LAYOUT EXAMPLES
@@ -102,7 +102,6 @@ def create_clustering_diagnostics_tab() -> html.Div:
             ]),
         ], type="default"),
     ])
-
 
 def create_material_degradation_tab() -> html.Div:
     """Create Material Degradation Analysis tab layout."""
@@ -185,7 +184,6 @@ def create_material_degradation_tab() -> html.Div:
         ], type="default"),
     ])
 
-
 def create_temporal_geospatial_tab() -> html.Div:
     """Create Temporal Geospatial Animation tab layout."""
     return html.Div([
@@ -259,7 +257,6 @@ def create_temporal_geospatial_tab() -> html.Div:
         ], type="default"),
     ])
 
-
 # ============================================================================
 # CALLBACK EXAMPLES
 # ============================================================================
@@ -327,7 +324,6 @@ def register_clustering_callbacks(app):
         except Exception as e:
             return {}, {}, {}, {}, html.Div(f"Error: {str(e)}", style={"color": "red"})
 
-
 def register_material_callbacks(app):
     """Register material degradation callbacks."""
 
@@ -386,7 +382,6 @@ def register_material_callbacks(app):
         except Exception as e:
             return {}, {}, {}, {}, html.Div(f"Error: {str(e)}", style={"color": "red"})
 
-
 def register_temporal_callbacks(app):
     """Register temporal geospatial callbacks."""
 
@@ -436,7 +431,6 @@ def register_temporal_callbacks(app):
         except Exception as e:
             return {}, {}, {}, html.Div(f"Error: {str(e)}", style={"color": "red"})
 
-
 # ============================================================================
 # PLACEHOLDER DATA LOADING FUNCTIONS
 # ============================================================================
@@ -457,7 +451,6 @@ def load_violations_data() -> pd.DataFrame:
 
     return pd.DataFrame()  # Placeholder
 
-
 def load_survival_data(borough: str | None = None) -> pd.DataFrame:
     """Load survival data (prepared from inspections + violations).
 
@@ -471,7 +464,6 @@ def load_survival_data(borough: str | None = None) -> pd.DataFrame:
     # return df_surv
 
     return pd.DataFrame()  # Placeholder
-
 
 def load_violations_by_date(start_date: str, end_date: str) -> pd.DataFrame:
     """Load violations within date range for temporal analysis.
@@ -488,7 +480,6 @@ def load_violations_by_date(start_date: str, end_date: str) -> pd.DataFrame:
     # return df
 
     return pd.DataFrame()  # Placeholder
-
 
 # ============================================================================
 # HOW TO INTEGRATE

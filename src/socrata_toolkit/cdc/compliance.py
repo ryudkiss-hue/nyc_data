@@ -40,7 +40,6 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class ComplianceCheckResult:
     """Result of a single compliance check.
@@ -57,7 +56,6 @@ class ComplianceCheckResult:
     issues: list[str] = field(default_factory=list)
     severity: str = "info"
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-
 
 @dataclass
 class ComplianceReport:
@@ -80,7 +78,6 @@ class ComplianceReport:
     overall_status: str
     summary: str
 
-
 @dataclass
 class ReconciliationResult:
     """Result of reconciliation between CDC and source.
@@ -101,7 +98,6 @@ class ReconciliationResult:
     extra_events: list[str] = field(default_factory=list)
     timestamp_mismatches: list[tuple[str, int, int]] = field(default_factory=list)
     reconciled: bool = False
-
 
 class CDCReconciler:
     """Verify CDC system integrity and generate compliance reports.

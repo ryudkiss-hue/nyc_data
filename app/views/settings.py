@@ -55,7 +55,6 @@ ENV_VARS_TABLE = [
     },
 ]
 
-
 def _read_env_file() -> dict[str, str]:
     """Read key=value pairs from .env file, ignoring comments."""
     env: dict[str, str] = {}
@@ -66,7 +65,6 @@ def _read_env_file() -> dict[str, str]:
                 k, _, v = line.partition("=")
                 env[k.strip()] = v.strip().strip('"').strip("'")
     return env
-
 
 def _write_env_file(env: dict[str, str]) -> None:
     """Write key=value pairs to .env file (preserves existing non-managed entries)."""
@@ -94,7 +92,6 @@ def _write_env_file(env: dict[str, str]) -> None:
         new_lines.append(f'{k}={v}')
 
     _ENV_FILE.write_text("\n".join(existing_lines + [""] + new_lines) + "\n")
-
 
 def render_settings_page() -> None:
     st.subheader(f"⚙️ {t('settings_title')}")
@@ -334,7 +331,6 @@ def render_settings_page() -> None:
     with tab_env:
         _render_environment_tab()
 
-
 # --------------------------------------------------------------------------- #
 # Tab helpers
 # --------------------------------------------------------------------------- #
@@ -346,7 +342,6 @@ _MANAGED_KEYS = {
     "ANTHROPIC_API_KEY", "CLAUDE_API_KEY",
     "SLACK_WEBHOOK_URL", "ARCGIS_ORG_URL",
 }
-
 
 def _render_api_tokens_tab() -> None:
     st.markdown("#### Socrata / NYC Open Data API Credentials")
@@ -445,7 +440,6 @@ def _render_api_tokens_tab() -> None:
             st.success(f"Connected. Discovery API returned {total:,} results for 'sidewalk'.")
         except Exception as exc:
             st.error(f"Connection failed: {exc}")
-
 
 def _render_configuration_tab() -> None:
     st.markdown("#### Data Ingestion Configuration")
@@ -550,7 +544,6 @@ def _render_configuration_tab() -> None:
                 display = "(not set)"
             rows.append({"variable": var, "value": display})
         st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
-
 
 def _render_registry_tab() -> None:
     import pandas as pd
@@ -657,7 +650,6 @@ def _render_registry_tab() -> None:
         with open(datasets_yaml_path) as f:
             st.code(f.read(), language="yaml")
 
-
 def _render_alerts_tab() -> None:
     st.markdown("### Configure Alert Thresholds")
 
@@ -731,7 +723,6 @@ def _render_alerts_tab() -> None:
             except Exception as exc:
                 st.error(f"Alert send failed: {exc}")
 
-
 def _render_filter_presets_tab() -> None:
     st.markdown("### Saved Filter Presets")
 
@@ -770,7 +761,6 @@ def _render_filter_presets_tab() -> None:
                 presets_file.write_text(json.dumps(presets, indent=2))
                 st.rerun()
 
-
 def _render_import_export_tab() -> None:
     st.markdown("### Export/Import Settings")
 
@@ -807,11 +797,9 @@ def _render_import_export_tab() -> None:
             except Exception as exc:
                 st.error(str(exc))
 
-
 # --------------------------------------------------------------------------- #
 # Unit-14 tab helpers
 # --------------------------------------------------------------------------- #
-
 
 def _load_scheduler_config() -> dict:
     """Load scheduler config from data/scheduler_config.json."""
@@ -822,12 +810,10 @@ def _load_scheduler_config() -> dict:
             pass
     return {}
 
-
 def _save_scheduler_config(data: dict) -> None:
     """Persist scheduler config to data/scheduler_config.json."""
     _SCHEDULER_CONFIG.parent.mkdir(parents=True, exist_ok=True)
     _SCHEDULER_CONFIG.write_text(json.dumps(data, indent=2), encoding="utf-8")
-
 
 def _load_sla_config() -> dict[str, int]:
     """Load SLA thresholds from data/sla_config.json."""
@@ -838,7 +824,6 @@ def _load_sla_config() -> dict[str, int]:
         except (json.JSONDecodeError, OSError, ValueError):
             pass
     return dict(_SLA_DEFAULTS)
-
 
 def _render_scheduler_tab() -> None:
     """Tab 1: Scheduler Config."""
@@ -925,7 +910,6 @@ def _render_scheduler_tab() -> None:
         with st.expander("Current scheduler_config.json"):
             st.json(cfg)
 
-
 def _render_sla_tab() -> None:
     """Tab 2: SLA Thresholds."""
     st.markdown("### 🚦 SLA Thresholds")
@@ -979,7 +963,6 @@ def _render_sla_tab() -> None:
 
     _render_sla_compliance_monitor()
 
-
 def _render_sla_compliance_monitor() -> None:
     """Render SLA compliance monitor. Shows data when Quality Workflows populate it."""
     # Placeholder: Quality Workflows will set this after running SLA evaluations
@@ -1024,7 +1007,6 @@ def _render_sla_compliance_monitor() -> None:
         st.dataframe(sla_details, use_container_width=True, hide_index=True)
     else:
         st.caption("No per-SLA details available.")
-
 
 def _render_alert_config_tab() -> None:
     """Tab 3: Alert Config (Slack + ArcGIS)."""
@@ -1089,7 +1071,6 @@ def _render_alert_config_tab() -> None:
                 st.success(f"ArcGIS connection succeeded: {msg}")
             else:
                 st.error(f"ArcGIS connection failed: {msg}")
-
 
 def _render_governance_tab() -> None:
     """Dataset Governance Status tab."""
@@ -1165,7 +1146,6 @@ def _render_governance_tab() -> None:
         st.error(f"Failed to load governance metadata: {e}")
         st.caption("Check that SOCRATA_APP_TOKEN is set and governance datasets are accessible.")
 
-
 def _render_dataset_card(meta) -> None:
     """Render a single dataset governance card.
 
@@ -1195,7 +1175,6 @@ def _render_dataset_card(meta) -> None:
         st.caption(f"Note: {meta.notes}")
 
     st.divider()
-
 
 def _render_environment_tab() -> None:
     """Tab 4: Environment variables reference with masked values."""
@@ -1231,7 +1210,6 @@ def _render_environment_tab() -> None:
         "To set these variables, add them to your `.env` file in the project root "
         "or configure them in the **API Tokens** / **Configuration** tabs."
     )
-
 
 def _render_dataset_health_tab() -> None:
     """Dataset Health Dashboard: Shows all 26 datasets with health status, last update, and row count.

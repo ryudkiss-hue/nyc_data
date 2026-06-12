@@ -11,14 +11,12 @@ from socrata_toolkit.engineering import (
     summarize_costs,
 )
 
-
 def test_estimate_single():
     est = estimate_single(100, scope="sidewalk_repair", borough="MANHATTAN", ada_required=True)
     assert est.total > 0
     assert est.base_cost == 2500.0  # 100 * 25
     assert est.borough_adjustment > 0  # Manhattan multiplier
     assert est.ada_surcharge > 0
-
 
 def test_estimate_costs():
     df = pd.DataFrame(
@@ -34,7 +32,6 @@ def test_estimate_costs():
     assert result.loc[0, "_cost_total"] > 0
     assert result.loc[1, "_cost_total"] > result.loc[0, "_cost_total"]  # ramp + ADA more expensive
 
-
 def test_summarize_costs():
     df = pd.DataFrame(
         {
@@ -48,11 +45,9 @@ def test_summarize_costs():
     assert summary.total_estimated == 11000
     assert summary.location_count == 2
 
-
 # -- Change Detection ---------------------------------------------------------
 
 from socrata_toolkit.pipeline import detect_changes, detect_status_changes
-
 
 def test_detect_changes_added_removed():
     old = pd.DataFrame({"id": [1, 2, 3], "val": ["a", "b", "c"]})
@@ -63,14 +58,12 @@ def test_detect_changes_added_removed():
     assert 4 in changes.added_keys
     assert 1 in changes.removed_keys
 
-
 def test_detect_changes_modified():
     old = pd.DataFrame({"id": [1, 2], "status": ["Pending", "Complete"]})
     new = pd.DataFrame({"id": [1, 2], "status": ["Complete", "Complete"]})
     changes = detect_changes(old, new, key_col="id")
     assert changes.modified_count == 1
     assert changes.unchanged_count == 1
-
 
 def test_detect_status_changes():
     old = pd.DataFrame({"id": [1, 2], "status": ["Pending", "In Progress"]})
@@ -79,14 +72,12 @@ def test_detect_status_changes():
     assert len(result) == 1
     assert result.iloc[0]["new_status"] == "Complete"
 
-
 # -- Contractor Scorecards ----------------------------------------------------
 
 from socrata_toolkit.engineering import (
     generate_scorecards,
     scorecards_to_dataframe,
 )
-
 
 def test_generate_scorecards():
     df = pd.DataFrame(
@@ -101,7 +92,6 @@ def test_generate_scorecards():
     cards = generate_scorecards(df)
     assert len(cards) == 2
     assert cards[0].overall_score >= cards[1].overall_score  # sorted by score
-
 
 def test_scorecards_to_dataframe():
     df = pd.DataFrame(
@@ -118,7 +108,6 @@ def test_scorecards_to_dataframe():
     assert isinstance(result, pd.DataFrame)
     assert "contractor" in result.columns
 
-
 # -- Budget Forecast ----------------------------------------------------------
 
 from socrata_toolkit.engineering import (
@@ -126,7 +115,6 @@ from socrata_toolkit.engineering import (
     forecast_spend,
     forecast_workload,
 )
-
 
 def test_forecast_spend():
     dates = pd.date_range("2024-01-01", periods=6, freq="ME")
@@ -136,41 +124,34 @@ def test_forecast_spend():
     assert fc.projected_total > fc.current_spend
     assert len(fc.forecast_values) == 3
 
-
 def test_forecast_completion():
     df = pd.DataFrame({"remaining_sqft": [5000, 3000]})
     fc = forecast_completion(df, daily_capacity=500)
     assert fc.projected_days == 16  # 8000 / 500
     assert len(fc.weekly_projection) > 0
 
-
 def test_forecast_workload():
     projection = forecast_workload(100, weekly_intake=50, weekly_completion=40, horizon_weeks=10)
     assert len(projection) == 10
     assert projection[0]["backlog"] == 110  # 100 + 50 - 40
 
-
 # -- Map View -----------------------------------------------------------------
 
 from socrata_toolkit.analysis import create_map, save_map
-
 
 def test_create_map_fallback():
     df = pd.DataFrame({"latitude": [40.75], "longitude": [-73.99], "status": ["Pending"]})
     html = create_map(df)
     assert "<" in html  # some HTML generated
 
-
 def test_save_map(tmp_path):
     html = "<html><body>test map</body></html>"
     path = save_map(html, str(tmp_path / "map.html"))
     assert "map.html" in path
 
-
 # -- QGIS Integration --------------------------------------------------------
 
 from socrata_toolkit.spatial import generate_qgis_project
-
 
 def test_generate_qgis_project(tmp_path):
     path = generate_qgis_project(
@@ -183,11 +164,9 @@ def test_generate_qgis_project(tmp_path):
     assert "inspections" in content
     assert "permits" in content
 
-
 # -- PDF Reports --------------------------------------------------------------
 
 from socrata_toolkit.analysis import dataframe_to_pdf
-
 
 @pytest.mark.skipif(dataframe_to_pdf is None, reason="viz extras not installed")
 def test_dataframe_to_pdf_fallback(tmp_path):
@@ -198,11 +177,9 @@ def test_dataframe_to_pdf_fallback(tmp_path):
     content = open(path).read()
     assert "Test Report" in content
 
-
 # -- Messaging Bot -------------------------------------------------------------
 
 from socrata_toolkit.alerts.messaging import BotAdapter
-
 
 def test_bot_greeting():
     bot = BotAdapter()
@@ -210,13 +187,11 @@ def test_bot_greeting():
     assert resp.intent == "greeting"
     assert "DOT" in resp.text
 
-
 def test_bot_help():
     bot = BotAdapter()
     resp = bot.handle("help")
     assert resp.intent == "help"
     assert "contract" in resp.text.lower()
-
 
 def test_bot_contract_status():
     df = pd.DataFrame(
@@ -227,7 +202,6 @@ def test_bot_contract_status():
     assert resp.intent == "contract_status"
     assert "C-1" in resp.text
     assert resp.data["records"] == 2
-
 
 def test_bot_borough_backlog():
     df = pd.DataFrame(
@@ -241,7 +215,6 @@ def test_bot_borough_backlog():
     assert resp.intent == "borough_backlog"
     assert "1 pending" in resp.text
 
-
 def test_bot_quality_score():
     df = pd.DataFrame({"id": [1, 2], "name": ["a", "b"]})
     bot = BotAdapter(default_data=df)
@@ -249,19 +222,15 @@ def test_bot_quality_score():
     assert resp.intent == "quality_score"
     assert "100" in resp.text  # full completeness
 
-
 def test_bot_unknown():
     bot = BotAdapter()
     resp = bot.handle("asdf gibberish xyz")
     assert resp.intent == "unknown"
 
-
 # -- 311 Complaint Ingestion (unit test only, no API call) --------------------
-
 
 from socrata_toolkit.nlp.integration import triage_complaints
 from socrata_toolkit.pipeline import IngestionResult
-
 
 def test_triage_complaints_sets_priority_column():
     df = pd.DataFrame(
@@ -273,12 +242,10 @@ def test_triage_complaints_sets_priority_column():
     assert out.loc[1, "_triage_priority"] == "high"
     assert out.loc[2, "_triage_priority"] == "medium"
 
-
 def test_nlp_integration_shim_import():
     from socrata_toolkit.nlp_integration import triage_complaints as shim_triage
 
     assert shim_triage is triage_complaints
-
 
 def test_ingestion_result_struct():
     result = IngestionResult(

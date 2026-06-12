@@ -9,7 +9,6 @@ from click.testing import CliRunner
 
 from socrata_toolkit.core.cli import main
 
-
 class TestCLIMainGroup:
     """Tests for main CLI group and global options."""
 
@@ -39,7 +38,6 @@ class TestCLIMainGroup:
         result = runner.invoke(main, ["--log-level", "WARNING", "--help"])
         # Should accept valid log level
         assert result.exit_code == 0
-
 
 class TestSearchCommand:
     """Tests for search command."""
@@ -77,7 +75,6 @@ class TestSearchCommand:
                 ])
                 assert result.exit_code == 0
                 assert output_file.exists()
-
 
 class TestMetaCommand:
     """Tests for meta command."""
@@ -118,7 +115,6 @@ class TestMetaCommand:
             ])
             assert result.exit_code == 0
 
-
 class TestFetchCommand:
     """Tests for fetch command."""
 
@@ -141,7 +137,6 @@ class TestFetchCommand:
             ])
             # Command invocation succeeds (doesn't crash) - exit codes 0, 1, 2 all acceptable
             assert result.exit_code in (0, 1, 2)
-
 
 class TestQualityScoreCommand:
     """Tests for quality-score command."""
@@ -170,7 +165,6 @@ class TestQualityScoreCommand:
                 # May pass or fail depending on dependencies
                 assert result.exit_code in (0, 1, 2)
 
-
 class TestReadinessCommand:
     """Tests for readiness command."""
 
@@ -184,7 +178,6 @@ class TestReadinessCommand:
         result = runner.invoke(main, ["readiness"])
         # Should display readiness status
         assert result.exit_code in (0, 1)
-
 
 class TestDoctorCommand:
     """Tests for doctor diagnostic command."""
@@ -200,7 +193,6 @@ class TestDoctorCommand:
         # Doctor command runs diagnostics
         assert result.exit_code in (0, 1)
 
-
 class TestAnalyzeCommand:
     """Tests for analyze command."""
 
@@ -208,7 +200,6 @@ class TestAnalyzeCommand:
         runner = CliRunner()
         result = runner.invoke(main, ["analyze", "--help"])
         assert result.exit_code == 0
-
 
 class TestOutliersCommand:
     """Tests for outliers command."""
@@ -218,7 +209,6 @@ class TestOutliersCommand:
         result = runner.invoke(main, ["outliers", "--help"])
         assert result.exit_code == 0
 
-
 class TestSchemaDriftCommand:
     """Tests for schema-drift command."""
 
@@ -226,7 +216,6 @@ class TestSchemaDriftCommand:
         runner = CliRunner()
         result = runner.invoke(main, ["schema-drift", "--help"])
         assert result.exit_code == 0
-
 
 class TestCorrelationsCommand:
     """Tests for correlations command."""
@@ -236,7 +225,6 @@ class TestCorrelationsCommand:
         result = runner.invoke(main, ["correlations", "--help"])
         assert result.exit_code == 0
 
-
 class TestVisualizeCommand:
     """Tests for visualize command."""
 
@@ -244,7 +232,6 @@ class TestVisualizeCommand:
         runner = CliRunner()
         result = runner.invoke(main, ["visualize", "--help"])
         assert result.exit_code == 0
-
 
 class TestConflictCommand:
     """Tests for conflict detection command."""
@@ -254,7 +241,6 @@ class TestConflictCommand:
         result = runner.invoke(main, ["conflict", "--help"])
         assert result.exit_code == 0
 
-
 class TestBatchSearchCommand:
     """Tests for batch-search command."""
 
@@ -262,7 +248,6 @@ class TestBatchSearchCommand:
         runner = CliRunner()
         result = runner.invoke(main, ["batch-search", "--help"])
         assert result.exit_code == 0
-
 
 class TestSpatialJoinCommand:
     """Tests for spatial-join command."""
@@ -272,7 +257,6 @@ class TestSpatialJoinCommand:
         result = runner.invoke(main, ["spatial-join", "--help"])
         assert result.exit_code == 0
 
-
 class TestLLMAugmentCommand:
     """Tests for llm-augment command."""
 
@@ -281,7 +265,6 @@ class TestLLMAugmentCommand:
         result = runner.invoke(main, ["llm-augment", "--help"])
         assert result.exit_code == 0
 
-
 class TestTextInsightsCommand:
     """Tests for text-insights command."""
 
@@ -289,7 +272,6 @@ class TestTextInsightsCommand:
         runner = CliRunner()
         result = runner.invoke(main, ["text-insights", "--help"])
         assert result.exit_code == 0
-
 
 class TestSchemaGroupCommands:
     """Tests for schema subcommand group."""
@@ -314,7 +296,6 @@ class TestSchemaGroupCommands:
         result = runner.invoke(main, ["schema", "validate", "--help"])
         assert result.exit_code == 0
 
-
 class TestReviewGroupCommands:
     """Tests for review subcommand group."""
 
@@ -327,7 +308,6 @@ class TestReviewGroupCommands:
         runner = CliRunner()
         result = runner.invoke(main, ["review", "set", "--help"])
         assert result.exit_code == 0
-
 
 class TestAlertsCommand:
     """Tests for alerts command."""

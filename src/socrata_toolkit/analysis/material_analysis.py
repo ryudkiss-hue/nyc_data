@@ -33,7 +33,6 @@ __all__ = [
     "SurvivalDataPrep",
 ]
 
-
 def _get_statsmodels():
     """Lazy import statsmodels for survival analysis."""
     try:
@@ -49,7 +48,6 @@ def _get_statsmodels():
     except ImportError:
         # Fallback to manual KM implementation
         return None
-
 
 class SurvivalDataPrep:
     """Prepare inspection + violation data for survival analysis."""
@@ -127,7 +125,6 @@ class SurvivalDataPrep:
         df.loc[df["time_in_months"] > 300, "event"] = 0
 
         return df[["material_type", "time_in_months", "event", "borough", "block_id"]]
-
 
 class MaterialDegradationAnalysis:
     """Kaplan-Meier survival analysis by material type.

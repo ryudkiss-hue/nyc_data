@@ -82,9 +82,7 @@ class ObservabilityManager:
     def sla_report(self) -> dict[str, Any]:
         return self._sla.report()
 
-
 _MANAGER: ObservabilityManager | None = None
-
 
 def get_observability_manager() -> ObservabilityManager:
     """Return the process-wide ObservabilityManager singleton."""
@@ -92,7 +90,6 @@ def get_observability_manager() -> ObservabilityManager:
     if _MANAGER is None:
         _MANAGER = ObservabilityManager()
     return _MANAGER
-
 
 def reset_observability_manager() -> None:
     """Reset the singleton (primarily for tests)."""

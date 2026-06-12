@@ -38,7 +38,6 @@ BOROUGH_COLORS = {
     "QUEENS": "green", "STATEN ISLAND": "orange",
 }
 
-
 def create_map(
     df: pd.DataFrame,
     lat_col: str = "latitude",
@@ -89,7 +88,6 @@ def create_map(
     folium.LayerControl().add_to(m)
     return m._repr_html_()
 
-
 def cluster_map(
     df: pd.DataFrame,
     lat_col: str = "latitude",
@@ -124,14 +122,12 @@ def cluster_map(
 
     return m._repr_html_()
 
-
 def save_map(html: str, path: str) -> str:
     """Save map HTML to a file."""
     p = Path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(html, encoding="utf-8")
     return str(p)
-
 
 def _fallback_map(df, lat_col, lon_col, popup_cols, title) -> str:
     """Generate a simple HTML page when folium is not available."""

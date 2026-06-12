@@ -38,7 +38,6 @@ def _get_plotly():
     except ImportError as exc:
         raise ImportError("Install plotly: pip install plotly") from exc
 
-
 # ---------------------------------------------------------------------------
 # Borough Bar Chart
 # ---------------------------------------------------------------------------
@@ -74,7 +73,6 @@ def borough_bar_chart(
         template="plotly_white",
     )
     return fig
-
 
 # ---------------------------------------------------------------------------
 # KPI Gauge
@@ -115,7 +113,6 @@ def kpi_gauge(
     fig.update_layout(height=300)
     return fig
 
-
 # ---------------------------------------------------------------------------
 # Contract Gantt Chart
 # ---------------------------------------------------------------------------
@@ -154,7 +151,6 @@ def contract_gantt(
     )
     return fig
 
-
 # ---------------------------------------------------------------------------
 # Priority Heatmap
 # ---------------------------------------------------------------------------
@@ -183,7 +179,6 @@ def priority_heatmap(
         template="plotly_white",
     )
     return fig
-
 
 # ---------------------------------------------------------------------------
 # Trend Line
@@ -223,7 +218,6 @@ def trend_line(
     )
     return fig
 
-
 # ---------------------------------------------------------------------------
 # Donut Chart (status distribution)
 # ---------------------------------------------------------------------------
@@ -255,7 +249,6 @@ def status_donut(
         template="plotly_white",
     )
     return fig
-
 
 # ---------------------------------------------------------------------------
 # Hypothesis Testing Results Visualization
@@ -316,7 +309,6 @@ def hypothesis_test_results(
     )
     return fig
 
-
 # ---------------------------------------------------------------------------
 # Waterfall Chart (change decomposition)
 # ---------------------------------------------------------------------------
@@ -356,7 +348,6 @@ def waterfall_chart(
         margin=dict(l=40, r=40, t=60, b=40),
     )
     return fig
-
 
 # ---------------------------------------------------------------------------
 # Correlation Heatmap
@@ -407,7 +398,6 @@ def correlation_heatmap(
     )
     return fig
 
-
 # ---------------------------------------------------------------------------
 # Inspector Performance Distribution (Box Plot)
 # ---------------------------------------------------------------------------
@@ -451,7 +441,6 @@ def inspector_performance_boxplot(
         yaxis_title=get_unit_label(metric_col),
     )
     return fig
-
 
 # ---------------------------------------------------------------------------
 # Save / Export

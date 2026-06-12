@@ -38,7 +38,6 @@ class TestFindPreviousPackDir:
         # Only the pack itself exists -> no prior
         assert find_previous_pack_dir(pack, outputs_root=root) is None
 
-
 class TestDiffConstructionLists:
     def test_both_empty(self):
         from socrata_toolkit.analyst.diff import diff_construction_lists
@@ -62,7 +61,6 @@ class TestDiffConstructionLists:
         df = pd.DataFrame({"location_id": ["A", "B"]})
         tagged, md = diff_construction_lists(df.copy(), df.copy())
         assert isinstance(md, str)
-
 
 # ---------------------------------------------------------------------------
 # analyst.explore — preview_priority branches
@@ -124,7 +122,6 @@ class TestPreviewPriority:
         out = preview_priority(self._df(), top_n=2)
         assert len(out) <= 2
 
-
 class TestBoroughBarCounts:
     def test_empty(self):
         from socrata_toolkit.analyst.explore import borough_bar_counts
@@ -145,7 +142,6 @@ class TestBoroughBarCounts:
         df = pd.DataFrame({"borough": ["MN", "MN", "BX"]})
         out = borough_bar_counts(df)
         assert out["MN"] == 2.0
-
 
 class TestFilterKpiMetrics:
     def test_all_returns_everything(self):

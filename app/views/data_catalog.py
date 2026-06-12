@@ -33,7 +33,6 @@ DOMAIN = "data.cityofnewyork.us"
 # SQLite API log helpers (item 96)
 # ---------------------------------------------------------------------------
 
-
 def log_api_call(key: str, rows: int, status: str, duration_ms: int) -> None:
     import sqlite3
 
@@ -50,7 +49,6 @@ def log_api_call(key: str, rows: int, status: str, duration_ms: int) -> None:
         )
         conn.commit()
 
-
 def load_api_log() -> pd.DataFrame:
     import sqlite3
 
@@ -60,11 +58,9 @@ def load_api_log() -> pd.DataFrame:
     with sqlite3.connect(db) as conn:
         return pd.read_sql("SELECT * FROM api_calls ORDER BY ts DESC LIMIT 1000", conn)
 
-
 # ---------------------------------------------------------------------------
 # Freshness check helpers (item 94)
 # ---------------------------------------------------------------------------
-
 
 @st.cache_data(ttl=86_400, show_spinner=False)
 def _fetch_last_updated(fourfour: str) -> str | None:
@@ -83,7 +79,6 @@ def _fetch_last_updated(fourfour: str) -> str | None:
         logger.debug("_fetch_last_updated failed for %s: %s", fourfour, exc)
     return None
 
-
 @st.cache_data(ttl=86_400, show_spinner=False)
 def _fetch_row_count(fourfour: str) -> int | None:
     """Fetch the approximate row count for a Socrata dataset."""
@@ -101,7 +96,6 @@ def _fetch_row_count(fourfour: str) -> int | None:
         logger.debug("_fetch_row_count failed for %s: %s", fourfour, exc)
     return None
 
-
 def _freshness_badge(days: int | None) -> str:
     if days is None:
         return "⚪ Unknown"
@@ -111,11 +105,9 @@ def _freshness_badge(days: int | None) -> str:
         return "🟡 Aging"
     return "🔴 Stale"
 
-
 # ---------------------------------------------------------------------------
 # Global search helper (item 87)
 # ---------------------------------------------------------------------------
-
 
 @st.cache_data(ttl=86_400, show_spinner=False)
 def _search_dataset(key: str, q: str, limit: int = 20) -> pd.DataFrame:
@@ -138,11 +130,9 @@ def _search_dataset(key: str, q: str, limit: int = 20) -> pd.DataFrame:
         logger.debug("_search_dataset failed for %s: %s", key, exc)
         return pd.DataFrame()
 
-
 # ---------------------------------------------------------------------------
 # Section renderers
 # ---------------------------------------------------------------------------
-
 
 def _render_catalog_table() -> None:
     """Item 95 — Data Catalog table."""
@@ -182,7 +172,6 @@ def _render_catalog_table() -> None:
             st.code(row["fourfour"], language=None)
             if row["socrata_url"]:
                 st.markdown(f"[Open on NYC Open Data]({row['socrata_url']})")
-
 
 def _render_freshness_check() -> None:
     """Item 94 — Dataset Freshness check."""
@@ -233,7 +222,6 @@ def _render_freshness_check() -> None:
     progress.empty()
     freshness_df = pd.DataFrame(results)
     st.dataframe(freshness_df, use_container_width=True)
-
 
 def _render_api_usage() -> None:
     """Item 96 — API Usage Dashboard."""
@@ -297,7 +285,6 @@ def _render_api_usage() -> None:
 
     with st.expander("Raw API log (last 100 entries)"):
         st.dataframe(log_df.head(100), use_container_width=True)
-
 
 def _render_global_search() -> None:
     """Item 87 — Global Search across all datasets."""
@@ -366,11 +353,9 @@ def _render_global_search() -> None:
     else:
         st.info(f"No results found for '{term}' across any registered dataset.")
 
-
 # ---------------------------------------------------------------------------
 # Main entry point
 # ---------------------------------------------------------------------------
-
 
 def render_data_catalog_page() -> None:
     """Render the Data Catalog page."""

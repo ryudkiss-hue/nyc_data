@@ -9,7 +9,6 @@ import pytest
 
 from socrata_toolkit.analyst.ramp_analysis import fetch_ramp_full_corpus
 
-
 class TestFetchRampFullCorpus:
     """Tests for fetch_ramp_full_corpus function."""
 

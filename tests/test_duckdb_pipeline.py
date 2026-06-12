@@ -11,7 +11,6 @@ import pytest
 
 import socrata_toolkit.core.duckdb_pipeline as dp
 
-
 @pytest.fixture
 def fixture_df():
     n = 100
@@ -25,7 +24,6 @@ def fixture_df():
         }
     )
 
-
 @pytest.fixture
 def db(tmp_path):
     """Isolated DuckDB database per test; resets module-level singleton."""
@@ -33,7 +31,6 @@ def db(tmp_path):
     conn = dp.get_duckdb_connection(db_path)
     yield conn
     dp.reset_connection()
-
 
 def test_module_contract_importable():
     import socrata_toolkit.core.scheduler  # noqa: F401
@@ -49,10 +46,8 @@ def test_module_contract_importable():
 
     assert SOCRATA_DATASETS["inspection"] == "dntt-gqwq"
 
-
 def test_duckdb_connection_initialized(db):
     assert db.execute("SELECT 1+1").fetchone()[0] == 2
-
 
 def test_initialize_database_creates_schemas(db):
     result = dp.initialize_database()
@@ -65,7 +60,6 @@ def test_initialize_database_creates_schemas(db):
         ).fetchall()
     }
     assert {"raw", "staging", "analytics"} <= schemas
-
 
 def test_load_raw_inspections(db, fixture_df):
     dp.initialize_database()
@@ -80,12 +74,10 @@ def test_load_raw_inspections(db, fixture_df):
     count = db.execute("SELECT COUNT(*) FROM raw.inspection").fetchone()[0]
     assert count == len(fixture_df)
 
-
 def test_load_raw_unknown_dataset_raises(db):
     dp.initialize_database()
     with pytest.raises(ValueError):
         dp.load_raw_from_socrata("not_a_dataset")
-
 
 def test_load_raw_idempotent(db, fixture_df):
     dp.initialize_database()
@@ -100,7 +92,6 @@ def test_load_raw_idempotent(db, fixture_df):
     count = db.execute("SELECT COUNT(*) FROM raw.violations").fetchone()[0]
     assert count == len(fixture_df)
 
-
 def test_load_raw_api_failure_returns_error(db):
     dp.initialize_database()
     mock_client = MagicMock()
@@ -111,18 +102,15 @@ def test_load_raw_api_failure_returns_error(db):
     assert "Socrata API 503" in result["error"]
     assert result["table"] == "raw.ramp_progress"
 
-
 # ---------------------------------------------------------------------------
 # Task 3: staging transformations
 # ---------------------------------------------------------------------------
-
 
 def _load_raw(conn, name, df):
     conn.execute("CREATE SCHEMA IF NOT EXISTS raw")
     conn.register("_fixture_df", df)
     conn.execute(f"CREATE OR REPLACE TABLE raw.{name} AS SELECT * FROM _fixture_df")
     conn.unregister("_fixture_df")
-
 
 @pytest.fixture
 def raw_inspections_df():
@@ -136,7 +124,6 @@ def raw_inspections_df():
         }
     )
 
-
 @pytest.fixture
 def raw_violations_df():
     return pd.DataFrame(
@@ -147,7 +134,6 @@ def raw_violations_df():
             "created_date": ["2026-01-05", "2026-01-06", "2026-01-07"],
         }
     )
-
 
 def test_stage_inspections_deduplicates(db, raw_inspections_df, raw_violations_df):
     dp.initialize_database()
@@ -166,7 +152,6 @@ def test_stage_inspections_deduplicates(db, raw_inspections_df, raw_violations_d
     ).fetchone()[0]
     assert cond == "good"
 
-
 def test_stage_inspections_joins_violations(db, raw_inspections_df, raw_violations_df):
     dp.initialize_database()
     _load_raw(db, "inspection", raw_inspections_df)
@@ -179,7 +164,6 @@ def test_stage_inspections_joins_violations(db, raw_inspections_df, raw_violatio
         ).fetchall()
     )
     assert counts == {"BLK-1": 2, "BLK-2": 1, "BLK-3": 0}
-
 
 def test_stage_permits(db):
     dp.initialize_database()
@@ -201,7 +185,6 @@ def test_stage_permits(db):
     ).fetchone()[0]
     assert status == "issued"
 
-
 def test_stage_ramps(db):
     dp.initialize_database()
     ramps = pd.DataFrame(
@@ -222,7 +205,6 @@ def test_stage_ramps(db):
     ).fetchone()[0]
     assert status == "complete"
 
-
 def test_stage_missing_raw_table_returns_error(db):
     dp.initialize_database()
     for func, table in [
@@ -235,7 +217,6 @@ def test_stage_missing_raw_table_returns_error(db):
         assert result["table"] == table
         assert "error" in result
 
-
 def test_stage_idempotent(db, raw_inspections_df, raw_violations_df):
     dp.initialize_database()
     _load_raw(db, "inspection", raw_inspections_df)
@@ -247,11 +228,9 @@ def test_stage_idempotent(db, raw_inspections_df, raw_violations_df):
     count = db.execute("SELECT COUNT(*) FROM staging.inspections").fetchone()[0]
     assert count == 3
 
-
 # ---------------------------------------------------------------------------
 # Task 3: scheduler call-site fixes
 # ---------------------------------------------------------------------------
-
 
 def test_scheduler_run_load_raw_data_loops_all_datasets():
     from socrata_toolkit.core.scheduler import ScheduleRunner
@@ -264,7 +243,6 @@ def test_scheduler_run_load_raw_data_loops_all_datasets():
     called_keys = {call.args[0] for call in mock_load.call_args_list}
     assert called_keys == set(dp.SOCRATA_DATASETS)
     assert set(results) == set(dp.SOCRATA_DATASETS)
-
 
 def test_scheduler_run_stage_data_calls_stage_functions():
     from socrata_toolkit.core.scheduler import ScheduleRunner
@@ -284,11 +262,9 @@ def test_scheduler_run_stage_data_calls_stage_functions():
     m_ramp.assert_called_once_with()
     assert set(results) == {"inspections", "permits", "ramps"}
 
-
 # ---------------------------------------------------------------------------
 # Task 6: Integration and performance benchmarking
 # ---------------------------------------------------------------------------
-
 
 def test_full_pipeline_end_to_end(db, fixture_df, raw_inspections_df, raw_violations_df):
     """Load → stage → materialize → validate → return in <30s.
@@ -380,7 +356,6 @@ def test_full_pipeline_end_to_end(db, fixture_df, raw_inspections_df, raw_violat
 
     assert elapsed < 30, f"Pipeline took {elapsed:.1f}s, expected <30s"
 
-
 def test_load_performance(db, fixture_df, raw_violations_df):
     """Raw load should be <10s per dataset group."""
     import time
@@ -405,7 +380,6 @@ def test_load_performance(db, fixture_df, raw_violations_df):
 
     elapsed = time.time() - start
     assert elapsed < 10, f"Load took {elapsed:.1f}s, expected <10s"
-
 
 def test_staging_performance(db, fixture_df, raw_violations_df):
     """Staging transformations should be <5s total."""
@@ -453,7 +427,6 @@ def test_staging_performance(db, fixture_df, raw_violations_df):
     elapsed = time.time() - start
 
     assert elapsed < 5, f"Staging took {elapsed:.1f}s, expected <5s"
-
 
 def test_analytics_performance(db, fixture_df, raw_violations_df):
     """Analytics materialization should be <3s total."""

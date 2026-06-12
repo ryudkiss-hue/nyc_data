@@ -6,7 +6,6 @@ try:
 except ImportError:
     HAS_FLASK = False
 
-
 @pytest.mark.skipif(not HAS_FLASK, reason="flask not installed")
 class TestFlaskAPI:
     @pytest.fixture

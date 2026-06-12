@@ -43,7 +43,6 @@ def example_classify_violations():
         print(f"\n{borough}:")
         print(stats)
 
-
 def example_classify_311_complaints():
     """Fetch 311 complaints and classify by urgency."""
     client = SocrataClient(SocrataConfig())
@@ -67,7 +66,6 @@ def example_classify_311_complaints():
     print(f"\nUrgent Complaints: {len(urgent)}")
     print(urgent[["description", "complaint_category", "complaint_urgency"]].head())
 
-
 def example_classify_tree_damage():
     """Fetch tree damage data and classify by damage type."""
     client = SocrataClient(SocrataConfig())
@@ -88,7 +86,6 @@ def example_classify_tree_damage():
         result["dataframe"], "tree_damage", severity_threshold=70
     )
     print(f"\nHazardous Trees: {len(hazardous)}")
-
 
 def example_construction_inspections():
     """Fetch construction inspections and classify findings."""
@@ -114,7 +111,6 @@ def example_construction_inspections():
         severity_threshold=75
     )
     print(f"\nSafety Concerns: {len(safety_issues)}")
-
 
 def example_multi_dataset_analysis():
     """
@@ -169,7 +165,6 @@ def example_multi_dataset_analysis():
 
     return all_summaries
 
-
 def example_borough_focused_analysis():
     """Analyze violations by borough to find problem areas."""
     client = SocrataClient(SocrataConfig())
@@ -204,7 +199,6 @@ def example_borough_focused_analysis():
     # Hardcoded facts ready for Claude interpretation:
     # Claude: "These are the violation patterns by borough. What should DOT prioritize?"
     # (instead of Claude parsing raw descriptions itself)
-
 
 if __name__ == "__main__":
     print("NYC DOT NLP Classification Examples")

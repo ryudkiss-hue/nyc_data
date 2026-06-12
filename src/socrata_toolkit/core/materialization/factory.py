@@ -2,7 +2,7 @@
 import json
 import logging
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Optional
 
 import duckdb
 
@@ -12,7 +12,6 @@ from .quality import MartQuality
 from .registry import BuilderRegistry
 
 logger = logging.getLogger(__name__)
-
 
 class MaterializationFactory:
     """Orchestrates materialization of all mats from config.

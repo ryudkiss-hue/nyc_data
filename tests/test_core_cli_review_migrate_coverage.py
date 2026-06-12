@@ -14,11 +14,9 @@ from click.testing import CliRunner
 
 from socrata_toolkit.core.cli import main
 
-
 @pytest.fixture
 def runner():
     return CliRunner()
-
 
 def _store_cm(store):
     """Wrap a mock store so `with ReviewStore() as s` yields it."""
@@ -26,7 +24,6 @@ def _store_cm(store):
     cm.__enter__.return_value = store
     cm.__exit__.return_value = False
     return cm
-
 
 # ---------------------------------------------------------------------------
 # review list
@@ -61,7 +58,6 @@ class TestReviewList:
         assert result.exit_code == 0
         assert out.exists()
         assert "Wrote 1 decisions" in result.output
-
 
 # ---------------------------------------------------------------------------
 # review set
@@ -99,7 +95,6 @@ class TestReviewSet:
         assert result.exit_code != 0
         assert "pack-date" in result.output
 
-
 # ---------------------------------------------------------------------------
 # review export
 # ---------------------------------------------------------------------------
@@ -124,7 +119,6 @@ class TestReviewExport:
             result = runner.invoke(main, ["review", "export", "--pack", str(pack)])
         assert result.exit_code == 0
         assert "No decisions found" in result.output
-
 
 # ---------------------------------------------------------------------------
 # migrate
@@ -157,7 +151,6 @@ class TestMigrate:
         assert result.exit_code == 0
         assert "Migrations applied" in result.output
         assert mock_cursor.execute.call_count == 2
-
 
 # ---------------------------------------------------------------------------
 # alerts (preview path)

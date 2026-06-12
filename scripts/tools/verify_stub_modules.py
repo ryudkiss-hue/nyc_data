@@ -23,7 +23,6 @@ MODULES_TO_VERIFY = [
     "socrata_toolkit.observability_logging",
 ]
 
-
 def verify_imports():
     """Verify all modules can be imported."""
     failed = []
@@ -50,7 +49,6 @@ def verify_imports():
 
     print("\nAll 13 modules verified successfully!")
     return True
-
 
 if __name__ == "__main__":
     success = verify_imports()

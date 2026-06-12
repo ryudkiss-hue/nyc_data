@@ -37,7 +37,6 @@ def _col_stats(s: pd.Series) -> dict[str, Any]:
         pass
     return out
 
-
 def build_data_dictionary(frames: dict[str, pd.DataFrame]) -> dict[str, Any]:
     payload: dict[str, Any] = {"sources": {}}
     for name, df in frames.items():
@@ -52,7 +51,6 @@ def build_data_dictionary(frames: dict[str, pd.DataFrame]) -> dict[str, Any]:
                 cols[str(c)] = {"dtype": "unknown"}
         payload["sources"][name] = {"rows": int(len(df)), "columns": cols}
     return payload
-
 
 def render_data_dictionary_md(dd: dict[str, Any]) -> str:
     lines: list[str] = ["# Data Dictionary", ""]
@@ -76,7 +74,6 @@ def render_data_dictionary_md(dd: dict[str, Any]) -> str:
             )
         lines.append("")
     return "\n".join(lines) + "\n"
-
 
 def write_data_dictionary(pack_dir: Path, frames: dict[str, pd.DataFrame]) -> dict[str, str]:
     dd = build_data_dictionary(frames)

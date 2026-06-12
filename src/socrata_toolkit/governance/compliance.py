@@ -17,7 +17,6 @@ def _http_get(*args, **kwargs):
 
     return get(*args, **kwargs)
 
-
 def check_dcwp_license(license_number: str, api_base: str | None = None) -> dict[str, Any]:
     """Verify basic contractor license metadata.
 
@@ -37,7 +36,6 @@ def check_dcwp_license(license_number: str, api_base: str | None = None) -> dict
     except Exception as exc:
         return {"valid": False, "details": str(exc)}
 
-
 def check_parks_permit(permit_number: str, api_base: str | None = None) -> dict[str, Any]:
     """Check Parks permit metadata.
 
@@ -53,7 +51,6 @@ def check_parks_permit(permit_number: str, api_base: str | None = None) -> dict[
         return {"valid": data.get("status") == "APPROVED", "details": data}
     except Exception as exc:
         return {"valid": False, "details": str(exc)}
-
 
 def validate_contractor_for_list(contractor_id: str, license_number: str, dcwp_api: str | None = None, parks_api: str | None = None, parks_permit: str | None = None) -> dict[str, Any]:
     """Return a combined validation for contractor license and optional parks permit.

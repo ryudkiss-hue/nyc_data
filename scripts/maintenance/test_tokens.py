@@ -5,7 +5,6 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from socrata_toolkit.core import SocrataClient
 
-
 def test_tokens():
     print("--- 1. Testing Environment Variables ---")
     app_token = os.getenv("SOCRATA_APP_TOKEN")
@@ -35,7 +34,6 @@ def test_tokens():
             print(f"❌ Failed to connect using SocrataClient: {e}")
     else:
         print("⚠️ Skipping API test since tokens are missing.")
-
 
 if __name__ == "__main__":
     test_tokens()

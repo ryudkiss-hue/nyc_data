@@ -38,12 +38,10 @@ from socrata_toolkit.core.cli import (
     visualize_cmd,
 )
 
-
 @pytest.fixture
 def cli_runner():
     """Provide Click CLI test runner."""
     return CliRunner()
-
 
 class TestMainGroup:
     """Tests for main CLI group and global options."""
@@ -80,7 +78,6 @@ class TestMainGroup:
     def test_main_log_level_critical(self, cli_runner):
         result = cli_runner.invoke(main, ["--log-level", "CRITICAL", "--help"])
         assert result.exit_code == 0
-
 
 class TestSearchCommand:
     """Tests for search command."""
@@ -125,7 +122,6 @@ class TestSearchCommand:
                 if result.exit_code == 0:
                     assert output_file.exists()
 
-
 class TestMetaCommand:
     """Tests for metadata command."""
 
@@ -147,7 +143,6 @@ class TestMetaCommand:
                 ["example.com", "abc123", "--columns-only"]
             )
             assert result.exit_code == 0
-
 
 class TestFetchCommand:
     """Tests for fetch command."""
@@ -197,7 +192,6 @@ class TestFetchCommand:
                     )
                     assert result.exit_code == 0
 
-
 class TestAnalyzeCommand:
     """Tests for analyze command."""
 
@@ -221,7 +215,6 @@ class TestAnalyzeCommand:
                 # May error if save_state fails, but command executed
                 assert result.exit_code is not None
 
-
 class TestReadinessCommand:
     """Tests for readiness check command."""
 
@@ -234,7 +227,6 @@ class TestReadinessCommand:
         # Should complete without error
         assert result.exit_code is not None
 
-
 class TestDoctorCommand:
     """Tests for doctor command."""
 
@@ -246,7 +238,6 @@ class TestDoctorCommand:
         result = cli_runner.invoke(doctor_cmd, [])
         # Should complete without critical errors
         assert result.exit_code is not None
-
 
 class TestOutliersCommand:
     """Tests for outliers detection command."""
@@ -278,7 +269,6 @@ class TestOutliersCommand:
                         ]
                     )
                     assert result.exit_code is not None
-
 
 class TestCorrelationsCommand:
     """Tests for correlation analysis command."""
@@ -316,7 +306,6 @@ class TestCorrelationsCommand:
                     )
                     assert result.exit_code == 0
 
-
 class TestNLPAnalyzeCommand:
     """Tests for NLP analysis command."""
 
@@ -329,14 +318,12 @@ class TestNLPAnalyzeCommand:
         # Should handle gracefully (nlp modules may not be installed)
         assert result.exit_code is not None
 
-
 class TestSpatialJoinCommand:
     """Tests for spatial join command."""
 
     def test_spatial_join_help(self, cli_runner):
         result = cli_runner.invoke(spatial_join_cmd, ["--help"])
         assert result.exit_code == 0
-
 
 class TestUpsertPostgresCommand:
     """Tests for Postgres upsert command."""
@@ -345,14 +332,12 @@ class TestUpsertPostgresCommand:
         result = cli_runner.invoke(upsert_pg, ["--help"])
         assert result.exit_code == 0
 
-
 class TestUpsertMongoCommand:
     """Tests for MongoDB upsert command."""
 
     def test_upsert_mongo_help(self, cli_runner):
         result = cli_runner.invoke(upsert_mongo, ["--help"])
         assert result.exit_code == 0
-
 
 class TestBatchSearchCommand:
     """Tests for batch search command."""
@@ -361,14 +346,12 @@ class TestBatchSearchCommand:
         result = cli_runner.invoke(batch_search_cmd, ["--help"])
         assert result.exit_code == 0
 
-
 class TestMigrateCommand:
     """Tests for database migration command."""
 
     def test_migrate_help(self, cli_runner):
         result = cli_runner.invoke(migrate_cmd, ["--help"])
         assert result.exit_code == 0
-
 
 class TestAlertsCommand:
     """Tests for alerts command."""
@@ -383,14 +366,12 @@ class TestAlertsCommand:
             # Should execute without error
             assert result.exit_code is not None
 
-
 class TestLLMAugmentCommand:
     """Tests for LLM augmentation command."""
 
     def test_llm_augment_help(self, cli_runner):
         result = cli_runner.invoke(llm_augment_cmd, ["--help"])
         assert result.exit_code == 0
-
 
 class TestTextInsightsCommand:
     """Tests for text insights command."""
@@ -399,14 +380,12 @@ class TestTextInsightsCommand:
         result = cli_runner.invoke(text_insights_cmd, ["--help"])
         assert result.exit_code == 0
 
-
 class TestConflictCommand:
     """Tests for conflict detection command."""
 
     def test_conflict_help(self, cli_runner):
         result = cli_runner.invoke(conflict_cmd, ["--help"])
         assert result.exit_code == 0
-
 
 class TestPipelineCommand:
     """Tests for pipeline command."""
@@ -504,7 +483,6 @@ class TestPipelineCommand:
                             )
                             assert result.exit_code is not None
 
-
 class TestQualityScoreCommand:
     """Tests for quality-score command."""
 
@@ -589,7 +567,6 @@ class TestQualityScoreCommand:
                     payload = json.loads(result.output)
                     assert "overall" in payload
 
-
 class TestSchemaDriftCommand:
     """Tests for schema-drift command."""
 
@@ -653,7 +630,6 @@ class TestSchemaDriftCommand:
                             )
                             assert result.exit_code is not None
 
-
 class TestVisualizeCommand:
     """Tests for visualize command."""
 
@@ -710,7 +686,6 @@ class TestVisualizeCommand:
                     )
                     mock_client.fetch_dataframe.assert_called_once()
 
-
 class TestSchemaGroupCommands:
     """Tests for schema subcommand group."""
 
@@ -759,7 +734,6 @@ class TestSchemaGroupCommands:
             result = cli_runner.invoke(main, ["schema", "current", "unknown-dataset"])
             assert result.exit_code == 0
             assert "No schema" in result.output
-
 
 class TestReviewGroupCommands:
     """Tests for review subcommand group."""
@@ -812,7 +786,6 @@ class TestReviewGroupCommands:
             )
             assert result.exit_code != 0
 
-
 class TestDoctorCommandExtended:
     """Extended tests for doctor command with additional options."""
 
@@ -836,7 +809,6 @@ class TestDoctorCommandExtended:
         if result.exit_code == 0:
             payload = json.loads(result.output)
             assert "fix_it" in payload
-
 
 class TestFetchCommandExtended:
     """Extended tests for fetch command covering geojson and include-meta."""
@@ -907,7 +879,6 @@ class TestFetchCommandExtended:
                 )
                 assert result.exit_code is not None
 
-
 class TestMetaCommandExtended:
     """Extended tests for meta command including json-out option."""
 
@@ -943,7 +914,6 @@ class TestMetaCommandExtended:
                 )
                 assert result.exit_code == 0
                 assert out_path.exists()
-
 
 class TestSearchCommandExtended:
     """Extended tests for search command options."""
@@ -984,7 +954,6 @@ class TestSearchCommandExtended:
             )
             assert result.exit_code == 0
 
-
 class TestConflictCommandExtended:
     """Extended tests for conflict command."""
 
@@ -1022,7 +991,6 @@ class TestConflictCommandExtended:
                     ],
                 )
                 assert result.exit_code is not None
-
 
 class TestBatchSearchCommandExtended:
     """Extended tests for batch-search command."""
@@ -1064,7 +1032,6 @@ class TestBatchSearchCommandExtended:
                 ],
             )
             assert result.exit_code != 0
-
 
 class TestOutliersCommandExtended:
     """Extended tests for outliers command."""
@@ -1113,7 +1080,6 @@ class TestOutliersCommandExtended:
                         ],
                     )
                     assert result.exit_code is not None
-
 
 class TestAlertsCommandExtended:
     """Extended tests for alerts command."""

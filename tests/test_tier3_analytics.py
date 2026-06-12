@@ -5,7 +5,6 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-
 class TestDataFreshness:
     """Test data freshness and lineage tracking."""
 
@@ -40,7 +39,6 @@ class TestDataFreshness:
             assert info["row_count"] > 0, f"{dataset} has non-positive row count"
             assert info["row_count"] < 1e9, f"{dataset} has unreasonable row count"
 
-
 class TestExecutiveDashboard:
     """Test executive dashboard metrics."""
 
@@ -70,7 +68,6 @@ class TestExecutiveDashboard:
         forecast = _forecast_sla_breach(df, "date", "score")
         breach_rate = forecast.get("breach_rate", 0)
         assert 0 <= breach_rate <= 1, f"Invalid breach rate: {breach_rate}"
-
 
 class TestOperationsDashboard:
     """Test operations manager dashboard."""
@@ -115,7 +112,6 @@ class TestOperationsDashboard:
 
         assert mean > 0
         assert std >= 0
-
 
 class TestAnalystWorkbench:
     """Test analyst workbench filtering and export."""
@@ -172,7 +168,6 @@ class TestAnalystWorkbench:
         assert "A" in csv
         assert "75.5" in csv
 
-
 class TestStakeholderRoles:
     """Test role-based dashboard variations."""
 
@@ -196,7 +191,6 @@ class TestStakeholderRoles:
 
         for role, metrics in role_metrics.items():
             assert len(metrics) >= 2, f"{role} role missing key metrics"
-
 
 class TestCohortRetention:
     """Test cohort retention analysis."""
@@ -231,7 +225,6 @@ class TestCohortRetention:
 
         result = _compute_cohort_retention(df, "inspector", "date")
         assert not result.empty
-
 
 class TestTrendForecast:
     """Test trend forecasting."""
@@ -307,7 +300,6 @@ class TestTrendForecast:
         result = _forecast_trend(df, "date", "score")
         assert result["trend"] == "down"
         assert result["slope"] < 0
-
 
 class TestDeltaUpdate:
     """Test delta update logic."""
