@@ -14,11 +14,7 @@ import logging
 import os
 import re
 from dataclasses import dataclass
-<<<<<<< HEAD
-from typing import Optional
-=======
 from typing import Dict, List, Optional
->>>>>>> main
 
 import duckdb
 
