@@ -38,7 +38,6 @@ MAPPINGS = {
     r"socrata_toolkit\.sql\.\w+": "socrata_toolkit.core",
 }
 
-
 def fix_file(filepath):
     with open(filepath, encoding="utf-8") as f:
         content = f.read()
@@ -51,7 +50,6 @@ def fix_file(filepath):
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(new_content)
         print(f"Fixed {filepath}")
-
 
 if __name__ == "__main__":
     for filename in os.listdir(TEST_DIR):

@@ -6,12 +6,11 @@ Supports classification, mapping, derivations, deduplication, validation.
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Callable
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any, Callable, Optional
 
 logger = logging.getLogger(__name__)
-
 
 @dataclass
 class StagingResult:
@@ -21,7 +20,7 @@ class StagingResult:
     rows_in: int
     rows_out: int
     rows_deduplicated: int
-    errors: List[str]
+    errors: list[str]
     execution_time_secs: float
     timestamp: datetime
 
@@ -29,7 +28,6 @@ class StagingResult:
     def success(self) -> bool:
         """Whether staging completed without errors."""
         return len(self.errors) == 0
-
 
 class TransformationRegistry:
     """Registry of transformations for all 24 datasets."""
@@ -60,7 +58,7 @@ class TransformationRegistry:
     }
 
     @classmethod
-    def get_classifications(cls, dataset_key: str) -> List[str]:
+    def get_classifications(cls, dataset_key: str) -> list[str]:
         """Get valid classifications for a dataset."""
         return cls.CLASSIFICATIONS.get(dataset_key, [])
 
@@ -74,13 +72,12 @@ class TransformationRegistry:
         """Normalize status value."""
         return cls.STATUS_MAPPING.get(status.upper(), status.lower())
 
-
 def stage_dataset(
     dataset_key: str,
     raw_df: Any,  # Pandas DataFrame or DuckDB relation
     client: Any,  # MotherDuckClient
-    transformations: Optional[Dict[str, Any]] = None,
-    dedup_cols: Optional[List[str]] = None,
+    transformations: Optional[dict[str, Any]] = None,
+    dedup_cols: Optional[list[str]] = None,
 ) -> StagingResult:
     """
     Generic staging function for all 24 datasets.
@@ -167,10 +164,9 @@ def stage_dataset(
         timestamp=datetime.now(),
     )
 
-
 def stage_all_datasets(
-    datasets: List[Dict[str, Any]], client: Any
-) -> List[StagingResult]:
+    datasets: list[dict[str, Any]], client: Any
+) -> list[StagingResult]:
     """
     Stage all datasets in sequence.
 

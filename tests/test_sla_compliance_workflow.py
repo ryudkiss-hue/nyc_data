@@ -26,7 +26,6 @@ from socrata_toolkit.analysis.sla_status import (
     TrendDirection,
 )
 
-
 class TestSLAStatusClassifier:
     """Test SLA status classification logic."""
 
@@ -198,7 +197,6 @@ class TestSLAStatusClassifier:
         assert SLATier.MEDIUM.value == 30
         assert SLATier.LOW.value == 60
 
-
 class TestSLAStatusRecord:
     """Test SLA status record model."""
 
@@ -228,7 +226,6 @@ class TestSLAStatusRecord:
         assert d["root_cause"] == "unknown"
         assert d["trend"] == "stable"
         assert isinstance(d["last_measured"], str)
-
 
 class TestSLAComplianceReport:
     """Test SLA compliance report model."""
@@ -313,7 +310,6 @@ class TestSLAComplianceReport:
         # Verify JSON-serializable
         json_str = json.dumps(d)
         assert len(json_str) > 0
-
 
 class TestEnums:
     """Test enum definitions."""

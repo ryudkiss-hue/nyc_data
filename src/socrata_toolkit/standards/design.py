@@ -25,7 +25,6 @@ from socrata_toolkit.material.standards import (
 
 logger = logging.getLogger(__name__)
 
-
 # ============================================================================
 # ADA COMPLIANCE RULES - Federal and NYC Requirements
 # ============================================================================
@@ -397,7 +396,6 @@ MAINTENANCE_RULE_DRAINAGE = ADAComplianceRule(
     }
 )
 
-
 # ============================================================================
 # DESIGN RULES REGISTRY
 # ============================================================================
@@ -422,7 +420,6 @@ ADA_COMPLIANCE_RULES: dict[str, ADAComplianceRule] = {
     "NYC-SNOWLOAD": MAINTENANCE_RULE_SNOWLOAD,
     "NYC-DRAINAGE": MAINTENANCE_RULE_DRAINAGE,
 }
-
 
 # ============================================================================
 # MATERIAL-TO-RULES MAPPING
@@ -500,7 +497,6 @@ MATERIAL_APPLICABLE_RULES: dict[MaterialCategory, list[str]] = {
     ],
 }
 
-
 # ============================================================================
 # QUERY AND VALIDATION FUNCTIONS
 # ============================================================================
@@ -516,7 +512,6 @@ def get_rule(rule_id: str) -> ADAComplianceRule | None:
     """
     return ADA_COMPLIANCE_RULES.get(rule_id)
 
-
 def get_rules_for_material(material_category: MaterialCategory) -> list[ADAComplianceRule]:
     """Get all applicable ADA rules for a material category.
 
@@ -528,7 +523,6 @@ def get_rules_for_material(material_category: MaterialCategory) -> list[ADACompl
     """
     rule_ids = MATERIAL_APPLICABLE_RULES.get(material_category, [])
     return [ADA_COMPLIANCE_RULES[rule_id] for rule_id in rule_ids if rule_id in ADA_COMPLIANCE_RULES]
-
 
 def get_critical_rules() -> list[ADAComplianceRule]:
     """Get all rules with CRITICAL failure severity.
@@ -542,7 +536,6 @@ def get_critical_rules() -> list[ADAComplianceRule]:
         if rule.failure_severity == ADAFailureSeverity.CRITICAL
     ]
 
-
 def get_rules_requiring_measurement() -> list[ADAComplianceRule]:
     """Get all rules requiring equipment measurement for validation.
 
@@ -554,7 +547,6 @@ def get_rules_requiring_measurement() -> list[ADAComplianceRule]:
         for rule in ADA_COMPLIANCE_RULES.values()
         if rule.validation_method == "measurement"
     ]
-
 
 def get_rules_by_severity(severity: ADAFailureSeverity) -> list[ADAComplianceRule]:
     """Get all rules matching a specific failure severity.
@@ -570,7 +562,6 @@ def get_rules_by_severity(severity: ADAFailureSeverity) -> list[ADAComplianceRul
         for rule in ADA_COMPLIANCE_RULES.values()
         if rule.failure_severity == severity
     ]
-
 
 logger.info(
     f"Loaded {len(ADA_COMPLIANCE_RULES)} ADA compliance rules and "

@@ -15,7 +15,6 @@ from socrata_toolkit.core.exporters import (
     XLSXExporter,
 )
 
-
 class TestXLSXExporter:
     """Tests for XLSXExporter class."""
 
@@ -103,7 +102,6 @@ class TestXLSXExporter:
             result = pd.read_excel(path, sheet_name="Data")
             assert len(result) == 0
 
-
 class TestPostgresExporter:
     """Tests for PostgresExporter class (mocked)."""
 
@@ -111,7 +109,6 @@ class TestPostgresExporter:
         with patch.dict(sys.modules, {"psycopg": None}):
             with pytest.raises(ImportError, match="postgres extras"):
                 PostgresExporter("postgresql://localhost/test")
-
 
 class TestMongoExporter:
     """Tests for MongoExporter class (mocked)."""

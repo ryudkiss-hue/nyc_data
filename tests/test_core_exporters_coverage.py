@@ -13,7 +13,6 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-
 class TestXLSXExporter:
     """Test XLSXExporter for writing data to Excel files."""
 
@@ -131,7 +130,6 @@ class TestXLSXExporter:
         xls = pd.ExcelFile(output_path)
         assert "Summary" in xls.sheet_names
         assert "Column Dictionary" in xls.sheet_names
-
 
 class TestPostgresExporter:
     """Test PostgresExporter for database operations.
@@ -291,7 +289,6 @@ class TestPostgresExporter:
             result = exporter.copy_upsert_batches([[]], "t", "id")
             assert result == 0
 
-
 def _fake_pymongo(mock_client):
     """Build a fake pymongo module exposing MongoClient and UpdateOne.
 
@@ -314,7 +311,6 @@ def _fake_pymongo(mock_client):
 
     fake.UpdateOne = _UpdateOne
     return patch.dict(sys.modules, {"pymongo": fake})
-
 
 class TestMongoExporter:
     """Test MongoExporter for MongoDB operations.
@@ -412,7 +408,6 @@ class TestMongoExporter:
             result = exporter.upsert_geojson({"features": []}, "geo_col", "id")
             assert result == 0
             mock_collection.bulk_write.assert_not_called()
-
 
 class TestExporterIntegration:
     """Integration tests for exporting synthetic data."""

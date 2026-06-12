@@ -25,7 +25,6 @@ from .database import (
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class ProximityResult:
     """Result of a proximity query."""
@@ -34,7 +33,6 @@ class ProximityResult:
     material_type: str
     condition_score: float
     borough: str
-
 
 @dataclass
 class SpatialAggregation:
@@ -45,7 +43,6 @@ class SpatialAggregation:
     average_condition: float
     borough: str | None = None
     district: str | None = None
-
 
 class SpatialQuery:
     """

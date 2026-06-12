@@ -2,10 +2,9 @@
 
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import Optional
 
 logger = logging.getLogger(__name__)
-
 
 class CloudCacheManager:
     """
@@ -118,7 +117,7 @@ class CloudCacheManager:
             logger.error(f"Failed to archive old records: {e}")
             return 0
 
-    def get_cache_stats(self) -> Dict[str, any]:
+    def get_cache_stats(self) -> dict[str, any]:
         """
         Get cache statistics (sizes, hits, freshness).
 

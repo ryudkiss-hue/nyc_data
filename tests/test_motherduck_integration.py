@@ -9,7 +9,6 @@ from socrata_toolkit.core.motherduck_integration import (
     get_connection,
 )
 
-
 class TestMotherDuckValidator:
     """Test SQL compatibility validation."""
 
@@ -87,7 +86,6 @@ class TestMotherDuckValidator:
 
         assert validator.is_compatible(sql_with_warning)
 
-
 class TestDuckDBConnection:
     """Test local DuckDB connection with validation."""
 
@@ -135,7 +133,6 @@ class TestDuckDBConnection:
 
         conn.close()
 
-
 class TestMotherDuckConnection:
     """Test MotherDuck cloud connection with fallback."""
 
@@ -179,7 +176,6 @@ class TestMotherDuckConnection:
 
         conn.close()
 
-
 class TestConnectionFactory:
     """Test get_connection factory function."""
 
@@ -208,7 +204,6 @@ class TestConnectionFactory:
         finally:
             if old_token:
                 os.environ["MOTHERDUCK_TOKEN"] = old_token
-
 
 class TestMotherDuckCompatibility:
     """Integration tests verifying SQL works on both DuckDB and MotherDuck paths."""

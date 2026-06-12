@@ -9,21 +9,20 @@ as the state machine, spaCy for deterministic classification, and Claude for rea
 
 import json
 import logging
-from typing import Any, Dict, List, Optional
+from dataclasses import asdict, dataclass
 from datetime import datetime
-from dataclasses import dataclass, asdict
+from typing import Any, Optional
 
 import pandas as pd
-from langgraph.graph import StateGraph, END
 from langchain_anthropic import ChatAnthropic
 from langchain_core.tools import tool
+from langgraph.graph import END, StateGraph
 
-from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 from socrata_toolkit.analysis.nlp_analysis import DatasetAnalyzerWithNLP
+from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 from socrata_toolkit.spatial.core import spatial_cluster
 
 logger = logging.getLogger(__name__)
-
 
 # ============================================================================
 # STEP 1: Define Workflow State
@@ -37,7 +36,6 @@ class TriageContext:
     max_rows: int
     borough_filter: Optional[str] = None
     severity_threshold: float = 70.0
-
 
 class TriageState(dict):
     """LangGraph state for the triage workflow."""
@@ -65,7 +63,6 @@ class TriageState(dict):
         self["final_recommendation"] = ""
         self["report_data"] = {}
         self["execution_log"] = []  # Audit trail
-
 
 # ============================================================================
 # STEP 2: Workflow Nodes (Each node is a step in the graph)
@@ -104,7 +101,6 @@ def fetch_data(state: TriageState) -> TriageState:
 
     logger.info(f"[FETCH] Retrieved {len(df)} records")
     return state
-
 
 def classify_records(state: TriageState) -> TriageState:
     """
@@ -152,7 +148,6 @@ def classify_records(state: TriageState) -> TriageState:
 
     logger.info(f"[CLASSIFY] Found {len(high_severity)} high-severity records")
     return state
-
 
 def claude_triage_decision(state: TriageState) -> TriageState:
     """
@@ -220,13 +215,11 @@ Be concise."""
     logger.info(f"[CLAUDE] Decision: {state['next_action']}")
     return state
 
-
 def route_decision(state: TriageState) -> str:
     """
     Conditional router: Direct workflow based on Claude's decision.
     """
     return state["next_action"]
-
 
 def spatial_analysis_node(state: TriageState) -> TriageState:
     """
@@ -277,7 +270,6 @@ def spatial_analysis_node(state: TriageState) -> TriageState:
     logger.info(f"[SPATIAL] Found {state['spatial_analysis_result'].get('clusters_detected', 0)} clusters")
     return state
 
-
 def borough_focus_node(state: TriageState) -> TriageState:
     """
     Node 4b: If borough focus triggered, do targeted analysis.
@@ -304,7 +296,6 @@ def borough_focus_node(state: TriageState) -> TriageState:
 
     logger.info(f"[BOROUGH] Analyzed {len(state['borough_analysis_result'])} boroughs")
     return state
-
 
 def final_recommendation(state: TriageState) -> TriageState:
     """
@@ -362,7 +353,6 @@ Be specific and actionable. NYC DOT supervisors will read this."""
 
     logger.info("[FINAL] Recommendation generated")
     return state
-
 
 # ============================================================================
 # STEP 3: Build the LangGraph Workflow
@@ -425,7 +415,6 @@ def build_triage_workflow() -> Any:
 
     return graph.compile()
 
-
 # ============================================================================
 # STEP 4: Public API
 # ============================================================================
@@ -436,7 +425,7 @@ def run_triage(
     max_rows: int = 1000,
     borough_filter: Optional[str] = None,
     severity_threshold: float = 70.0,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Run the complete triage workflow end-to-end.
 
@@ -481,7 +470,6 @@ def run_triage(
         "audit_log": final_state["execution_log"],
         "report_data": final_state["report_data"],
     }
-
 
 def workflow_visualization() -> str:
     """Return ASCII visualization of the workflow graph."""

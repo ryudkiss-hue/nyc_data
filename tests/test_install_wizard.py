@@ -15,7 +15,6 @@ from socrata_toolkit.install_wizard import (
     write_env_file,
 )
 
-
 @pytest.fixture
 def mini_project(tmp_path: Path) -> Path:
     """Minimal repo layout for wizard tests."""
@@ -30,7 +29,6 @@ def mini_project(tmp_path: Path) -> Path:
     )
     (tmp_path / "pyproject.toml").write_text("[tool.poetry]\nname='t'\n", encoding="utf-8")
     return tmp_path
-
 
 def test_write_env_and_profile(mini_project: Path) -> None:
     values = {
@@ -53,7 +51,6 @@ def test_write_env_and_profile(mini_project: Path) -> None:
     data = yaml.safe_load(profile.read_text(encoding="utf-8"))
     assert data["duckdb_path"] == values["DUCKDB_PATH"]
     assert "analyst_pack" in data["outputs"]["dir"]
-
 
 @patch.dict(
     "os.environ",
@@ -85,7 +82,6 @@ def test_run_wizard_non_interactive(mini_project: Path) -> None:
     assert Path(summary["env_file"]).exists()
     assert Path(summary["analyst_profile"]).exists()
 
-
 def test_connectivity_checks_skip_duckdb_only(mini_project: Path) -> None:
     values = {
         "SOCRATA_APP_TOKEN": "",
@@ -95,7 +91,6 @@ def test_connectivity_checks_skip_duckdb_only(mini_project: Path) -> None:
     }
     results = run_connectivity_checks(values)
     assert results["duckdb"]["ok"] is True
-
 
 def test_build_exe_script_exists() -> None:
     """Smoke: build script present; full PyInstaller only when PYINSTALLER_BUILD=1."""

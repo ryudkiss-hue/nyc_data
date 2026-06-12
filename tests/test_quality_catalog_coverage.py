@@ -13,7 +13,6 @@ from socrata_toolkit.quality.catalog import (
     QualityTrend,
 )
 
-
 class TestQualityTrend:
     """Tests for QualityTrend enum."""
 
@@ -32,7 +31,6 @@ class TestQualityTrend:
     def test_quality_trend_comparison(self):
         """Test QualityTrend enum comparison."""
         assert QualityTrend.IMPROVING != QualityTrend.STABLE
-
 
 class TestDatasetQualityScore:
     """Tests for DatasetQualityScore dataclass."""
@@ -70,7 +68,6 @@ class TestDatasetQualityScore:
         assert result["overall"] == 85.0
         assert result["completeness"] == 90.0
         assert result["validity"] == 85.0
-
 
 class TestDatasetQualityProfile:
     """Tests for DatasetQualityProfile dataclass."""
@@ -129,7 +126,6 @@ class TestDatasetQualityProfile:
             assert loaded.dataset_id == "test"
             assert loaded.dataset_name == "Test Dataset"
             assert loaded.quality_score.overall == 90.0
-
 
 class TestDataQualityCatalog:
     """Tests for DataQualityCatalog class."""

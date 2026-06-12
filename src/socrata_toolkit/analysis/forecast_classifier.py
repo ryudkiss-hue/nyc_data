@@ -17,17 +17,15 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Optional
 
 logger = logging.getLogger(__name__)
-
 
 class RiskLevel(str, Enum):
     """Risk classification for project completion."""
     HIGH = "HIGH"
     MEDIUM = "MEDIUM"
     LOW = "LOW"
-
 
 class BlockerType(str, Enum):
     """Primary blockers that affect forecast confidence."""
@@ -37,13 +35,11 @@ class BlockerType(str, Enum):
     WEATHER = "WEATHER"
     OTHER = "OTHER"
 
-
 class ForecastConfidence(str, Enum):
     """Confidence level in the forecast estimate."""
     HIGH = "HIGH"
     MEDIUM = "MEDIUM"
     LOW = "LOW"
-
 
 @dataclass
 class CompletionForecastClassification:
@@ -61,9 +57,8 @@ class CompletionForecastClassification:
 
     # Metadata
     reasoning: str
-    recommendations: List[str]
-    data_quality_flags: List[str]
-
+    recommendations: list[str]
+    data_quality_flags: list[str]
 
 class CompletionForecastClassifier:
     """
@@ -113,9 +108,9 @@ class CompletionForecastClassifier:
         current_stage_percent: float,
         days_until_deadline: int,
         historical_velocity: float,
-        known_blockers: Optional[List[str]] = None,
-        historical_completion_rate: Optional[float] = None,
-        data_quality_score: Optional[float] = None,
+        known_blockers: list[str] | None = None,
+        historical_completion_rate: float | None = None,
+        data_quality_score: float | None = None,
     ) -> CompletionForecastClassification:
         """
         Classify a project's completion forecast.
@@ -352,7 +347,7 @@ class CompletionForecastClassifier:
         primary_blocker: BlockerType,
         stage_pct: float,
         days_until_deadline: int,
-    ) -> List[str]:
+    ) -> list[str]:
         """Generate actionable recommendations."""
         recommendations = []
 
@@ -388,7 +383,7 @@ class CompletionForecastClassifier:
 
     def _identify_data_quality_flags(
         self, quality_score: float, blocker_count: int
-    ) -> List[str]:
+    ) -> list[str]:
         """Identify potential data quality or reliability issues."""
         flags = []
 
@@ -403,10 +398,9 @@ class CompletionForecastClassifier:
 
         return flags
 
-
 def batch_classify_forecasts(
-    projects: List[Dict],
-) -> List[CompletionForecastClassification]:
+    projects: list[dict],
+) -> list[CompletionForecastClassification]:
     """
     Batch classify multiple project forecasts.
 

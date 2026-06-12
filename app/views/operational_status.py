@@ -19,7 +19,6 @@ import streamlit as st
 
 logger = logging.getLogger(__name__)
 
-
 def render_operational_status_page() -> None:
     """Render the operational status dashboard.
 
@@ -304,7 +303,6 @@ def render_operational_status_page() -> None:
         st.write(f"Alert Manager State: {len(alert_manager.alerts)} tracked alerts")
         st.write(f"Alert History: {len(alert_manager.alert_history)} total events")
         st.write(f"Notification Handlers: {len(alert_manager.notification_handlers)} registered")
-
 
 if __name__ == "__main__":
     render_operational_status_page()

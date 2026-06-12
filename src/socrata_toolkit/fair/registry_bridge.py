@@ -19,7 +19,6 @@ from .model import FairDataset
 _SOCRATA_HOST = "https://data.cityofnewyork.us"
 _LICENSE = "https://www.nyc.gov/home/terms-of-use.page"
 
-
 def _to_fair_dataset(key: str, entry: dict[str, Any]) -> FairDataset:
     """Map a single registry entry to a FairDataset, tolerating gaps."""
     fourfour = str(entry.get("fourfour", "") or "")
@@ -55,7 +54,6 @@ def _to_fair_dataset(key: str, entry: dict[str, Any]) -> FairDataset:
         usage_rights="Public domain / NYC Open Data Terms of Use.",
         citation=f"City of New York. {label}. NYC Open Data. {landing}".strip(),
     )
-
 
 def from_registry_yaml(path: str | Path) -> FairCatalog:
     """Build a :class:`FairCatalog` from a ``datasets.yaml`` registry file."""

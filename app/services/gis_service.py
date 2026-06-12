@@ -38,7 +38,6 @@ def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     )
     return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
-
 class GISService:
     """Unified GIS operations for Dash callbacks."""
 
@@ -558,7 +557,6 @@ class GISService:
             hovermode="closest",
         )
         return fig
-
 
 # Global instance
 gis_service = GISService()

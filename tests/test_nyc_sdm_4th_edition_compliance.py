@@ -67,11 +67,9 @@ MANUAL_METADATA = {
     ],
 }
 
-
 # ============================================================================
 # SECTION 4: SIDEWALK MATERIALS AND FINISHES
 # ============================================================================
-
 
 class TestSection4MaterialsAndFinishes:
     """Validates material specifications from SDM Section 4."""
@@ -267,11 +265,9 @@ class TestSection4MaterialsAndFinishes:
                 "SDM 4.5 / ADA: Center-to-center spacing = 1.6 inches"
             )
 
-
 # ============================================================================
 # SECTION 5: SIDEWALK WIDTH, CLEARANCE, AND SLOPES
 # ============================================================================
-
 
 class TestSection5WidthClearanceSlopes:
     """Validates width, clearance, and slope requirements from SDM Section 5."""
@@ -343,11 +339,9 @@ class TestSection5WidthClearanceSlopes:
             "SDM 5.5: Changes 0.25-0.5\" require bevel (max 1:2 = 50%)"
         )
 
-
 # ============================================================================
 # SECTION 6: WALKING SURFACE MATERIAL PERFORMANCE
 # ============================================================================
-
 
 class TestSection6SurfacePerformance:
     """Validates walking surface performance standards from SDM Section 6."""
@@ -418,11 +412,9 @@ class TestSection6SurfacePerformance:
             "SDM 6.2: Vertical movement under load ≤ 0.5 inches"
         )
 
-
 # ============================================================================
 # ADA COMPLIANCE RULES - FEDERAL STANDARDS
 # ============================================================================
-
 
 class TestADAFederalComplianceRequirements:
     """
@@ -469,11 +461,9 @@ class TestADAFederalComplianceRequirements:
         slip_rule = get_rule("ADA-1.3.1")
         assert slip_rule.parameters["min_bpn_dry"] == 60
 
-
 # ============================================================================
 # LOCAL LAW 60 & NYC ADMINISTRATIVE CODE SECTION 19-152
 # ============================================================================
-
 
 class TestLocalLaw60Compliance:
     """Validates property owner maintenance responsibilities under Local Law 60."""
@@ -495,11 +485,9 @@ class TestLocalLaw60Compliance:
         )
         # Note: Local Law 60 enforcement is 1+ inch, but ADA is stricter
 
-
 # ============================================================================
 # CONSISTENCY & CROSS-VALIDATION TESTS
 # ============================================================================
-
 
 class TestCrossValidationAndConsistency:
     """Tests that verify internal consistency across all standards."""
@@ -554,11 +542,9 @@ class TestCrossValidationAndConsistency:
             "Width (ADA-1.2.1) should be CRITICAL severity"
         )
 
-
 # ============================================================================
 # AUDIT TRAIL & MAINTENANCE
 # ============================================================================
-
 
 class TestAuditTrailAndMaintenance:
     """Tests that help maintain and audit the design standards over time."""
@@ -599,11 +585,9 @@ class TestAuditTrailAndMaintenance:
         # This test is manual - developers should document sources
         pass
 
-
 # ============================================================================
 # RUNNING THE TESTS
 # ============================================================================
-
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])

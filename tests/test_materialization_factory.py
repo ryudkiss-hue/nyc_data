@@ -12,7 +12,6 @@ from socrata_toolkit.core.materialization import (
     MartBuilder,
 )
 
-
 @pytest.fixture
 def db():
     """In-memory DuckDB for testing."""
@@ -21,7 +20,6 @@ def db():
     conn.execute("CREATE SCHEMA staging")
     conn.execute("CREATE SCHEMA analytics")
     return conn
-
 
 @pytest.fixture
 def sample_staging_data(db):
@@ -63,7 +61,6 @@ def sample_staging_data(db):
 
     return db
 
-
 @pytest.fixture
 def test_dataset_config():
     """Test dataset configuration."""
@@ -81,7 +78,6 @@ def test_dataset_config():
             "expected_row_count_max": 1000
         }
     }
-
 
 @pytest.fixture
 def test_analytics_config():
@@ -106,7 +102,6 @@ def test_analytics_config():
         ]
     }
 
-
 def test_builder_registry_register_and_lookup():
     """Test that builders can register and be looked up."""
     registry = BuilderRegistry()
@@ -118,14 +113,12 @@ def test_builder_registry_register_and_lookup():
 
     assert registry.get("test_builder") == TestBuilder
 
-
 def test_builder_registry_missing_builder():
     """Test that missing builder raises error."""
     registry = BuilderRegistry()
 
     with pytest.raises(ValueError, match="Unknown builder"):
         registry.get("nonexistent")
-
 
 def test_cross_tab_builder_discovery(sample_staging_data, test_dataset_config):
     """Test CrossTabBuilder discovers columns and generates SQL."""
@@ -147,7 +140,6 @@ def test_cross_tab_builder_discovery(sample_staging_data, test_dataset_config):
     assert "material_type" in builder.discovered_columns["inspection"]["actual_columns"]
     assert "borough" in builder.discovered_columns["inspection"]["actual_columns"]
 
-
 def test_mart_lineage_record(sample_staging_data):
     """Test lineage recording."""
     lineage = MartLineage()
@@ -167,7 +159,6 @@ def test_mart_lineage_record(sample_staging_data):
     ).fetchone()
     assert result[0] == 1
 
-
 def test_mart_quality_score(sample_staging_data):
     """Test quality score computation."""
     quality = MartQuality()
@@ -184,7 +175,6 @@ def test_mart_quality_score(sample_staging_data):
 
     # Quality score should be >0 and <=100
     assert 0 <= score <= 100
-
 
 def test_materialization_factory_end_to_end(sample_staging_data, test_dataset_config, test_analytics_config):
     """Test full materialization factory pipeline."""
@@ -205,7 +195,6 @@ def test_materialization_factory_end_to_end(sample_staging_data, test_dataset_co
         "SELECT table_name FROM information_schema.tables WHERE table_schema = 'analytics'"
     ).fetchall()
     assert any(t[0] == "sidewalk_repair_matrix" for t in tables)
-
 
 def test_materialization_idempotency(sample_staging_data, test_dataset_config, test_analytics_config):
     """Test that materialization is idempotent (can run multiple times)."""

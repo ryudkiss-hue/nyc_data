@@ -86,7 +86,6 @@ class SpatialGeometry:
             raise ValueError("Cannot compute distance between different SRIDs")
         return float(self.geometry.distance(other.geometry))
 
-
 @dataclass
 class SpatialSegment:
     """Represents a sidewalk segment with spatial attributes."""
@@ -116,7 +115,6 @@ class SpatialSegment:
         if self.borough not in BOROUGH_SET:
             raise ValueError(f"borough must be one of {BOROUGH_SET}")
 
-
 @dataclass
 class SpatialBlock:
     """Represents a city block with spatial attributes."""
@@ -135,7 +133,6 @@ class SpatialBlock:
 
         if self.geometry.geometry_type != "Polygon":
             raise ValueError(f"Block must be Polygon, got {self.geometry.geometry_type}")
-
 
 @dataclass
 class SpatialInspection:
@@ -162,7 +159,6 @@ class SpatialInspection:
         if self.severity not in valid_severities:
             raise ValueError(f"severity must be one of {valid_severities}")
 
-
 @dataclass
 class SpatialMaterialZone:
     """Represents a geographic zone with uniform material type."""
@@ -180,7 +176,6 @@ class SpatialMaterialZone:
 
         if self.geometry.geometry_type not in {"Polygon", "MultiPolygon"}:
             raise ValueError(f"Zone must be Polygon/MultiPolygon, got {self.geometry.geometry_type}")
-
 
 class DuckDBSpatialConnection:
     """
@@ -487,7 +482,6 @@ class DuckDBSpatialConnection:
             logger.error(f"Error retrieving segment {segment_id}: {e}")
         return None
 
-
 class SpatialDataModel:
     """
     High-level spatial data model for NYC sidewalk infrastructure.
@@ -560,7 +554,6 @@ class SpatialDataModel:
         """Get zone by ID."""
         return self._zones.get(zone_id)
 
-
 @dataclass
 class SpatialQuery:
     """Query parameters for spatial searches."""
@@ -568,7 +561,6 @@ class SpatialQuery:
     center: tuple[float, float] | None = None
     radius: float | None = None
     filter_type: str = "intersect"
-
 
 class SpatialIndex:
     """Spatial index abstraction."""
@@ -586,7 +578,7 @@ class SpatialIndex:
     def query_by_distance(self, center: tuple[float, float], radius: float) -> list:
         """Query items within radius of center point."""
         from shapely.geometry import Point
-        
+
         # Center point assumed to be (latitude, longitude)
         center_pt = Point(center[1], center[0])
         results = []
@@ -599,7 +591,6 @@ class SpatialIndex:
                 # Fallback for generic items that might have been indexed
                 results.append(item)
         return results
-
 
 class GeometryHandler:
     """Handler for geometry validation."""
@@ -642,16 +633,13 @@ class GeometryHandler:
             return SpatialGeometry(geometry.geometry, target_srid)
         return geometry
 
-
 # Legacy Alias for test compatibility
 SpatialDatabaseConnection = DuckDBSpatialConnection
-
 
 def create_spatial_index(data: list) -> SpatialIndex:
     index = SpatialIndex()
     index.build_index(data)
     return index
-
 
 def query_geographic_area(query: SpatialQuery) -> list:
     return []

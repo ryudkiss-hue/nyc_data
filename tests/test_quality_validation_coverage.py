@@ -14,7 +14,6 @@ from socrata_toolkit.quality.validation import (
     validate_schema_types,
 )
 
-
 class TestValidationReport:
     """Tests for ValidationReport dataclass."""
 
@@ -38,7 +37,6 @@ class TestValidationReport:
         assert len(report.errors) == 2
         assert len(report.warnings) == 1
         assert report.affected_records == 5
-
 
 class TestValidateRequiredColumns:
     """Tests for validate_required_columns function."""
@@ -79,7 +77,6 @@ class TestValidateRequiredColumns:
         assert report.valid is True
         assert len(report.errors) == 0
 
-
 class TestValidateSchemaTypes:
     """Tests for validate_schema_types function."""
 
@@ -111,7 +108,6 @@ class TestValidateSchemaTypes:
         schema = {"name": "object"}
         report = validate_schema_types(df, schema)
         assert report.valid is True
-
 
 class TestValidateMaterialCoverage:
     """Tests for validate_material_coverage function."""
@@ -153,7 +149,6 @@ class TestValidateMaterialCoverage:
         assert report.valid is False
         assert "not found" in report.errors[0]
 
-
 class TestValidateDefectApplicability:
     """Tests for validate_defect_applicability function."""
 
@@ -184,7 +179,6 @@ class TestValidateDefectApplicability:
         report = validate_defect_applicability(df, "material_type", "defect_type")
         assert report.valid is False
 
-
 class TestValidateADAComplianceGates:
     """Tests for validate_ada_compliance_gates function."""
 
@@ -212,7 +206,6 @@ class TestValidateADAComplianceGates:
         df = pd.DataFrame({"segment_id": [1, 2]})
         report = validate_ada_compliance_gates(df, "ada_compliant")
         assert report.valid is False
-
 
 class TestValidateMarkingStandards:
     """Tests for validate_marking_standards function."""
@@ -243,7 +236,6 @@ class TestValidateMarkingStandards:
         df = pd.DataFrame({"marking_id": [1, 2], "marking_color": ["white", "yellow"]})
         report = validate_marking_standards(df, "marking_type", "marking_color")
         assert report.valid is False
-
 
 class TestValidateGeospatialBounds:
     """Tests for validate_geospatial_bounds function."""

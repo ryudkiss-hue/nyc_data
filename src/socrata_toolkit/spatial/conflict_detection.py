@@ -23,7 +23,6 @@ import pandas as pd
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-
 @dataclass
 class SpatialConflict:
     """Represents a spatial conflict between a permit and inspection location.
@@ -55,7 +54,6 @@ class SpatialConflict:
         valid_severities = {"HIGH", "MEDIUM", "LOW"}
         if self.severity not in valid_severities:
             raise ValueError(f"Severity must be one of {valid_severities}, got {self.severity}")
-
 
 def _haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """Calculate distance between two points in meters using Haversine formula.
@@ -89,7 +87,6 @@ def _haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> f
 
     return earth_radius_m * c
 
-
 def _classify_severity(distance_meters: float) -> tuple[str, str]:
     """Classify conflict severity and provide recommendation.
 
@@ -111,7 +108,6 @@ def _classify_severity(distance_meters: float) -> tuple[str, str]:
     else:
         # distance_meters < 100 (or up to buffer)
         return "LOW", "CAUTION: Monitor for safety issues"
-
 
 def detect_spatial_conflicts(
     permits_df: pd.DataFrame,
@@ -275,7 +271,6 @@ def detect_spatial_conflicts(
     conflicts.sort(key=lambda c: c.distance_meters)
 
     return conflicts
-
 
 def summarize_conflicts_by_severity(
     conflicts: Iterable[SpatialConflict],

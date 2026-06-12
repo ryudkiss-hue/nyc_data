@@ -9,7 +9,6 @@ from unittest.mock import MagicMock
 
 from socrata_toolkit.motherduck.connector import MotherDuckConnection
 
-
 @pytest.fixture
 def mock_connection():
     """Create a mock MotherDuckConnection for testing.
@@ -19,7 +18,6 @@ def mock_connection():
     """
     conn = MagicMock()
     return conn
-
 
 @pytest.fixture
 def phase_b_test_data():
@@ -43,7 +41,6 @@ def phase_b_test_data():
         "significance": ["Significant", "Significant", "Not Significant", "Not Significant", "Not Significant"],
         "analytics_timestamp": [datetime.now() - timedelta(days=i) for i in range(5)],
     })
-
 
 @pytest.fixture
 def phase_c_test_data():
@@ -72,7 +69,6 @@ def phase_c_test_data():
         "analytics_timestamp": [datetime.now() - timedelta(days=i) for i in range(5)],
     })
 
-
 @pytest.fixture
 def phase_d_test_data():
     """Create test data for Phase D (geographic anomalies).
@@ -100,7 +96,6 @@ def phase_d_test_data():
 
     return pd.DataFrame(locations)
 
-
 @pytest.fixture
 def phase_e_test_data():
     """Create test data for Phase E (time series decomposition).
@@ -126,7 +121,6 @@ def phase_e_test_data():
 
     return pd.DataFrame(data_rows)
 
-
 @pytest.fixture
 def phase_f_test_data():
     """Create test data for Phase F (bootstrap CI & SLA).
@@ -144,7 +138,6 @@ def phase_f_test_data():
         "risk_level": ["HIGH", "MEDIUM", "HIGH", "LOW", "MEDIUM"],
         "analytics_timestamp": [datetime.now() - timedelta(days=i) for i in range(5)],
     })
-
 
 @pytest.fixture
 def kpi_test_data():

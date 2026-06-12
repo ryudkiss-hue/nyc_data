@@ -9,7 +9,7 @@ This module provides statistically rigorous uncertainty quantification methods:
 All methods return consistent dict structures with bounds, standard error, and metadata.
 """
 
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any, Callable, Optional, Union
 
 import numpy as np
 from scipy import stats
@@ -19,7 +19,7 @@ def wilson_score_confidence_interval(
     successes: int,
     total: int,
     confidence_level: float = 0.95,
-) -> Dict[str, Union[float, int]]:
+) -> dict[str, Union[float, int]]:
     """
     Compute Wilson Score confidence interval for a proportion.
 
@@ -96,14 +96,13 @@ def wilson_score_confidence_interval(
         "sample_size": total,
     }
 
-
 def bootstrap_confidence_interval(
     data: Union[np.ndarray, list],
     statistic_func: Callable[[Union[np.ndarray, list]], float],
     confidence_level: float = 0.95,
     n_bootstrap: int = 1000,
     random_state: Optional[int] = None,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Compute bootstrap confidence interval for any statistic.
 
@@ -185,11 +184,10 @@ def bootstrap_confidence_interval(
         "bootstrap_samples": bootstrap_stats,
     }
 
-
 def mean_confidence_interval(
     data: Union[np.ndarray, list],
     confidence_level: float = 0.95,
-) -> Dict[str, Union[float, int]]:
+) -> dict[str, Union[float, int]]:
     """
     Compute t-test confidence interval for mean of continuous data.
 

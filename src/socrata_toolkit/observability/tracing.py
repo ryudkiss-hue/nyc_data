@@ -50,7 +50,6 @@ class Span:
             "attributes": self.attributes,
         }
 
-
 class Tracer:
     """Creates and stores spans grouped by trace id."""
 

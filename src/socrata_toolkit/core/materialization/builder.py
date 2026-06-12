@@ -1,12 +1,11 @@
 """Base builder class for all mart materialization patterns."""
 import logging
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional
+from typing import Optional
 
 import duckdb
 
 logger = logging.getLogger(__name__)
-
 
 class MartBuilder(ABC):
     """Abstract base class for all mart builders.
@@ -68,7 +67,7 @@ class MartBuilder(ABC):
         except:
             return False
 
-    def _pick_column(self, candidates: List[str], actual_columns: set) -> Optional[str]:
+    def _pick_column(self, candidates: list[str], actual_columns: set) -> Optional[str]:
         """Pick first candidate that exists in actual columns."""
         for candidate in candidates:
             if candidate in actual_columns:

@@ -12,7 +12,6 @@ from socrata_toolkit.analysis.dataset_health import (
     Severity,
 )
 
-
 class TestDatasetHealthClassifier:
     """Test DatasetHealthClassifier."""
 
@@ -275,7 +274,6 @@ class TestDatasetHealthClassifier:
         assert isinstance(report_dict["severity"], int)
         assert report_dict["severity_level"] == "low"
 
-
 class TestDatasetHealthMetrics:
     """Test DatasetHealthMetrics dataclass."""
 
@@ -296,7 +294,6 @@ class TestDatasetHealthMetrics:
         assert metrics.fourfour == "test-1234"
         assert metrics.row_count == 1000
         assert metrics.is_accessible is True
-
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

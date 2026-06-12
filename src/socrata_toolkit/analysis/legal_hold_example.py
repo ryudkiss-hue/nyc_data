@@ -64,15 +64,14 @@ def example_basic_classification():
     print(f"Retention Years: {report.retention_years}")
     print(f"Compliance Status: {report.compliance_status.value}")
     print(f"Litigation Hold Active: {report.litigation_hold_active}")
-    print(f"\nAlerts:")
+    print("\nAlerts:")
     for alert in report.alerts:
         print(f"  - {alert}")
-    print(f"\nRecommendations:")
+    print("\nRecommendations:")
     for rec in report.recommendations:
         print(f"  - {rec}")
 
     return report
-
 
 def example_protected_record():
     """Example 2: Protected record with PII."""
@@ -120,7 +119,6 @@ def example_protected_record():
         print(f"  - {rec}")
 
     return report
-
 
 def example_non_compliant_record():
     """Example 3: Non-compliant record with integrity failures."""
@@ -170,7 +168,6 @@ def example_non_compliant_record():
 
     return report
 
-
 def example_retention_periods():
     """Example 4: Comparison of retention periods by record type."""
     print("\n" + "="*60)
@@ -211,13 +208,8 @@ def example_retention_periods():
         )
         report = classifier.classify(metrics)
         print(
-            "{:<20} {:<15} {:<10}".format(
-                record_type.value.capitalize(),
-                report.retention_requirement.value,
-                str(report.retention_years),
-            )
+            f"{record_type.value.capitalize():<20} {report.retention_requirement.value:<15} {str(report.retention_years):<10}"
         )
-
 
 def example_compliance_certificate():
     """Example 5: Generate compliance certificate JSON."""
@@ -295,7 +287,6 @@ def example_compliance_certificate():
         indent=2,
     ))
 
-
 def example_workflow_integration():
     """Example 6: Full workflow integration (requires live Socrata connection)."""
     print("\n" + "="*60)
@@ -321,7 +312,6 @@ def example_workflow_integration():
         print("  1. Set SOCRATA_APP_TOKEN environment variable")
         print("  2. Ensure anthropic package is installed for Claude analysis")
         print("  3. Set ANTHROPIC_API_KEY for legal defensibility guidance")
-
 
 if __name__ == "__main__":
     print("\nLegal Hold & Compliance Verification - Examples")

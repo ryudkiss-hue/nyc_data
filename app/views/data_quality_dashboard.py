@@ -22,11 +22,9 @@ from socrata_toolkit.quality.reconciliation import DataReconciliation
 
 logger = logging.getLogger(__name__)
 
-
 # ---------------------------------------------------------------------------
 # Cached data fetchers
 # ---------------------------------------------------------------------------
-
 
 @st.cache_data(ttl=600)
 def get_actual_counts() -> dict[str, int]:
@@ -74,7 +72,6 @@ def get_actual_counts() -> dict[str, int]:
 
     return counts
 
-
 @st.cache_data(ttl=3600)
 def get_expected_counts() -> dict[str, int]:
     """Fetch expected row counts from dataset registry.
@@ -113,7 +110,6 @@ def get_expected_counts() -> dict[str, int]:
         "complaints_311": 21_300_000,
     }
 
-
 @st.cache_data(ttl=1800)
 def fetch_audit_logs(days: int = 7) -> list[dict[str, Any]]:
     """Fetch audit trail from local storage (last N days).
@@ -151,7 +147,6 @@ def fetch_audit_logs(days: int = 7) -> list[dict[str, Any]]:
         logger.warning(f"Could not load audit logs: {e}")
         return []
 
-
 @st.cache_data(ttl=300)
 def fetch_validation_results() -> dict[str, Any]:
     """Fetch recent validation results.
@@ -180,11 +175,9 @@ def fetch_validation_results() -> dict[str, Any]:
             "details": [],
         }
 
-
 # ---------------------------------------------------------------------------
 # Streamlit UI functions
 # ---------------------------------------------------------------------------
-
 
 def render_data_quality_page() -> None:
     """Render the data quality dashboard with 3 tabs.

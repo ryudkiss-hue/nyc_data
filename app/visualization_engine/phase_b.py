@@ -10,7 +10,7 @@ All charts include summary statistics below.
 """
 import logging
 from datetime import datetime
-from typing import Optional, Tuple
+from typing import Optional
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -21,7 +21,6 @@ from socrata_toolkit.motherduck.connector import MotherDuckConnection
 from .statistics_display import StatisticsPanel
 
 logger = logging.getLogger(__name__)
-
 
 class PhaseBVisualizations:
     """Renders all 12 Phase B visualizations (spatial clustering & Moran's I).
@@ -63,7 +62,7 @@ class PhaseBVisualizations:
 
     def render_main_gauge_chart(
         self,
-    ) -> Tuple[go.Figure, StatisticsPanel]:
+    ) -> tuple[go.Figure, StatisticsPanel]:
         """Render main Moran's I gauge chart (borough average).
 
         Returns:
@@ -135,7 +134,7 @@ class PhaseBVisualizations:
 
         return fig, stats
 
-    def render_borough_gauge(self, borough: str) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_borough_gauge(self, borough: str) -> tuple[go.Figure, StatisticsPanel]:
         """Render gauge chart for a specific borough.
 
         Args:
@@ -211,7 +210,7 @@ class PhaseBVisualizations:
 
         return fig, stats
 
-    def render_classification_heatmap(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_classification_heatmap(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render heatmap of classifications across boroughs.
 
         Returns:
@@ -257,7 +256,7 @@ class PhaseBVisualizations:
 
         return fig, stats
 
-    def render_p_value_scatter(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_p_value_scatter(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render scatter plot: Moran's I vs P-Value.
 
         Returns:
@@ -320,7 +319,7 @@ class PhaseBVisualizations:
 
         return fig, stats
 
-    def render_location_count_bar(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_location_count_bar(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render bar chart of location counts by borough.
 
         Returns:
@@ -368,7 +367,7 @@ class PhaseBVisualizations:
 
         return fig, stats
 
-    def render_classification_pie(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_classification_pie(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render pie chart of classification distribution.
 
         Returns:
@@ -404,7 +403,7 @@ class PhaseBVisualizations:
 
         return fig, stats
 
-    def render_significance_indicator(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_significance_indicator(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render indicator showing percentage of significant results.
 
         Returns:
@@ -487,7 +486,7 @@ class PhaseBVisualizations:
 
     def _render_morans_i_comparison(
         self,
-    ) -> Tuple[go.Figure, StatisticsPanel]:
+    ) -> tuple[go.Figure, StatisticsPanel]:
         """Render comparison chart of Moran's I values across boroughs.
 
         Returns:

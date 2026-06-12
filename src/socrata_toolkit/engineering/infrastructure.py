@@ -44,7 +44,6 @@ class MarkovDeteriorationModel:
         tpm_power = np.linalg.matrix_power(self.tpm, years)
         return current_vector.dot(tpm_power)
 
-
 class LifeCycleCostAnalysis:
     """
     Economic Valuation and Life-Cycle Cost Analysis (LCCA) for infrastructure.
@@ -102,7 +101,6 @@ class LifeCycleCostAnalysis:
             "p5_npv": float(np.percentile(npvs, 5)),
             "p95_npv": float(np.percentile(npvs, 95))
         }
-
 
 class MROptimization:
     """

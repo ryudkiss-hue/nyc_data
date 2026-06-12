@@ -12,7 +12,6 @@ from socrata_toolkit.analyst.explore import (
     profile_weight_snippet,
 )
 
-
 class TestNormalizeWeights:
     """Tests for normalize_weights function."""
 
@@ -55,7 +54,6 @@ class TestNormalizeWeights:
             "complaint_count",
         }
         assert set(result.keys()) == expected_keys
-
 
 class TestPreviewPriority:
     """Tests for preview_priority function."""
@@ -127,7 +125,6 @@ class TestPreviewPriority:
         result = preview_priority(df, borough="ALL")
         assert len(result) <= 3
 
-
 class TestBoroughBarCounts:
     """Tests for borough_bar_counts function."""
 
@@ -177,7 +174,6 @@ class TestBoroughBarCounts:
         assert "MN" in result
         assert result["MN"] == pytest.approx(10.0)
 
-
 class TestFilterKpiMetrics:
     """Tests for filter_kpi_metrics function."""
 
@@ -224,7 +220,6 @@ class TestFilterKpiMetrics:
         result = filter_kpi_metrics(metrics, categories=["program"])
         assert len(result) == 1
         assert result[0]["name"] == "kpi1"
-
 
 class TestProfileWeightSnippet:
     """Tests for profile_weight_snippet function."""

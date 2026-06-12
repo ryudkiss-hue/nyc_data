@@ -1,10 +1,9 @@
 """Schema Management for MotherDuck Cloud Databases."""
 
 import logging
-from typing import Dict, List, Optional
+from typing import Optional
 
 logger = logging.getLogger(__name__)
-
 
 class SchemaManager:
     """
@@ -50,21 +49,21 @@ class SchemaManager:
         self.client = client
         self._cached_schemas = {}
 
-    def get_raw_schema(self) -> Dict[str, str]:
+    def get_raw_schema(self) -> dict[str, str]:
         """Get schema for raw data layer."""
         return self.RAW_SCHEMA.copy()
 
-    def get_staging_schema(self) -> Dict[str, str]:
+    def get_staging_schema(self) -> dict[str, str]:
         """Get schema for staging layer."""
         return self.STAGING_SCHEMA.copy()
 
-    def get_analytics_schema(self) -> Dict[str, str]:
+    def get_analytics_schema(self) -> dict[str, str]:
         """Get schema for analytics layer."""
         return self.ANALYTICS_SCHEMA.copy()
 
     def detect_schema_drift(
-        self, database: str, table: str, expected_schema: Dict[str, str]
-    ) -> Dict[str, List[str]]:
+        self, database: str, table: str, expected_schema: dict[str, str]
+    ) -> dict[str, list[str]]:
         """
         Detect schema changes vs expected.
 
@@ -108,7 +107,7 @@ class SchemaManager:
             }
 
     def validate_schema(
-        self, database: str, table: str, expected_schema: Dict[str, str]
+        self, database: str, table: str, expected_schema: dict[str, str]
     ) -> bool:
         """
         Validate table schema against expected.

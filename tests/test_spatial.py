@@ -46,7 +46,6 @@ from socrata_toolkit.spatial import (
 
 logger = logging.getLogger(__name__)
 
-
 class TestSpatialGeometry:
     """Test spatial geometry class."""
 
@@ -109,7 +108,6 @@ class TestSpatialGeometry:
         assert dist > 0
         assert dist < 0.02  # ~1km in degrees
 
-
 class TestSpatialSegment:
     """Test spatial segment model."""
 
@@ -171,7 +169,6 @@ class TestSpatialSegment:
                 borough="Manhattan",
             )
 
-
 class TestSpatialBlock:
     """Test spatial block model."""
 
@@ -195,7 +192,6 @@ class TestSpatialBlock:
 
         assert block.block_id == "block001"
         assert block.geometry.geometry_type == "Polygon"
-
 
 class TestSpatialInspection:
     """Test spatial inspection model."""
@@ -233,7 +229,6 @@ class TestSpatialInspection:
                 severity="invalid_severity",
             )
 
-
 class TestSpatialQueries:
     """Test spatial query engine (mocked database)."""
 
@@ -263,7 +258,6 @@ class TestSpatialQueries:
             # Results may be empty since we're mocking
             # Just test that method executes without error
             assert isinstance(results, list)
-
 
 class TestArcGISIntegration:
     """Test ArcGIS integration."""
@@ -316,7 +310,6 @@ class TestArcGISIntegration:
         assert success
         assert connector.token == "test_token_123"
 
-
 class TestQGISCompatibility:
     """Test QGIS compatibility features."""
 
@@ -332,7 +325,6 @@ class TestQGISCompatibility:
         manager = QGISCompatibilityManager()
         assert manager.wms_service is None
         assert manager.wfs_service is None
-
 
 class TestNetworkAnalysis:
     """Test network analysis."""
@@ -381,7 +373,6 @@ class TestNetworkAnalysis:
 
         # May be empty or have results depending on network
         assert isinstance(path, list)
-
 
 class TestHotspotAnalysis:
     """Test hotspot detection."""
@@ -448,7 +439,6 @@ class TestHotspotAnalysis:
 
         assert isinstance(hotspots, list)
 
-
 class TestInterpolation:
     """Test spatial interpolation."""
 
@@ -470,7 +460,6 @@ class TestInterpolation:
         assert len(interpolated) == 1
         assert 60 <= interpolated[0] <= 80  # Should be between known values
 
-
 class TestSpatialVisualization:
     """Test visualization module."""
 
@@ -478,7 +467,6 @@ class TestSpatialVisualization:
         """Test visualization manager initialization."""
         viz = SpatialVisualization()
         assert len(viz.maps) == 0
-
 
 class TestFieldPackage:
     """Test mobile field packages."""
@@ -520,7 +508,6 @@ class TestFieldPackage:
             assert location.segment_id == "seg001"
             assert len(session.locations) == 1
 
-
 class TestSpatialMetrics:
     """Test spatial metrics collection."""
 
@@ -559,7 +546,6 @@ class TestSpatialMetrics:
         metrics = collector.calculate_sla_compliance(sla_def)
 
         assert isinstance(metrics, list)
-
 
 class TestSpatialQualityScorer:
     """Test spatial data quality scoring."""
@@ -603,7 +589,6 @@ class TestSpatialQualityScorer:
         assert 0 <= overall <= 100
         assert 90 < overall < 100
 
-
 class TestPerformanceBenchmarks:
     """Test spatial query performance."""
 
@@ -631,7 +616,6 @@ class TestPerformanceBenchmarks:
         elapsed = time.time() - start
 
         assert elapsed < 2.0  # Should complete quickly
-
 
 class TestIntegration:
     """Integration tests combining multiple modules."""
@@ -681,11 +665,9 @@ class TestIntegration:
         assert "timestamp" in json_metrics
         assert "coverage" in json_metrics or isinstance(json_metrics, dict)
 
-
 # ============================================================================
 # PARAMETRIZED TESTS
 # ============================================================================
-
 
 @pytest.mark.parametrize(
     "borough",
@@ -711,7 +693,6 @@ def test_valid_boroughs(borough):
     )
 
     assert segment.borough == borough
-
 
 @pytest.mark.parametrize(
     "material,expected_valid",
@@ -743,7 +724,6 @@ def test_material_types(material, expected_valid):
         # but would in database constraints
         pass
 
-
 @pytest.mark.parametrize("condition_score", [0, 25, 50, 75, 100])
 def test_condition_scores(condition_score):
     """Test valid condition scores."""
@@ -759,7 +739,6 @@ def test_condition_scores(condition_score):
     )
 
     assert segment.condition_score == condition_score
-
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])

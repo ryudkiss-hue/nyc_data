@@ -9,18 +9,16 @@ Data source: app_queries.v_phase_d_results
 All charts include summary statistics below.
 """
 import logging
-from typing import Tuple
 
 import pandas as pd
-import plotly.graph_objects as go
 import plotly.express as px
+import plotly.graph_objects as go
 
 from socrata_toolkit.motherduck.connector import MotherDuckConnection
 
 from .statistics_display import StatisticsPanel
 
 logger = logging.getLogger(__name__)
-
 
 class PhaseDVisualizations:
     """Renders all 15 Phase D visualizations (geographic anomalies).
@@ -60,7 +58,7 @@ class PhaseDVisualizations:
         logger.info(f"Fetched {len(self.data)} rows from Phase D view")
         return self.data
 
-    def render_main_geographic_map(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_main_geographic_map(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render main geographic map with all anomalies.
 
         Returns:
@@ -134,7 +132,7 @@ class PhaseDVisualizations:
 
         return fig, stats
 
-    def render_borough_map(self, borough: str) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_borough_map(self, borough: str) -> tuple[go.Figure, StatisticsPanel]:
         """Render map for a specific borough.
 
         Args:
@@ -216,7 +214,7 @@ class PhaseDVisualizations:
 
         return fig, stats
 
-    def render_priority_ranking_table(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_priority_ranking_table(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render priority ranking as table/bar chart.
 
         Returns:
@@ -271,7 +269,7 @@ class PhaseDVisualizations:
 
         return fig, stats
 
-    def render_outlier_distribution(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_outlier_distribution(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render distribution of outlier classes.
 
         Returns:
@@ -308,7 +306,7 @@ class PhaseDVisualizations:
 
         return fig, stats
 
-    def render_z_score_histogram(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_z_score_histogram(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render histogram of z-scores.
 
         Returns:
@@ -361,7 +359,7 @@ class PhaseDVisualizations:
 
         return fig, stats
 
-    def render_inspection_count_scatter(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_inspection_count_scatter(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render scatter: inspection count vs z-score.
 
         Returns:
@@ -417,7 +415,7 @@ class PhaseDVisualizations:
 
         return fig, stats
 
-    def render_borough_anomaly_comparison(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_borough_anomaly_comparison(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render comparison of anomaly counts by borough.
 
         Returns:
@@ -505,7 +503,7 @@ class PhaseDVisualizations:
         logger.info(f"Rendered {len(charts)} Phase D visualizations")
         return charts
 
-    def _render_z_score_by_outlier_class(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def _render_z_score_by_outlier_class(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render box plot of z-scores grouped by outlier class.
 
         Returns:
@@ -544,7 +542,7 @@ class PhaseDVisualizations:
 
         return fig, stats
 
-    def _render_inspection_count_by_borough(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def _render_inspection_count_by_borough(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render bar chart of total inspection counts by borough.
 
         Returns:
@@ -590,7 +588,7 @@ class PhaseDVisualizations:
 
         return fig, stats
 
-    def _render_priority_heatmap(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def _render_priority_heatmap(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render heatmap of priority ranks by borough.
 
         Returns:
@@ -630,7 +628,7 @@ class PhaseDVisualizations:
 
         return fig, stats
 
-    def _render_location_density_map(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def _render_location_density_map(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render 2D density map of anomalies.
 
         Returns:

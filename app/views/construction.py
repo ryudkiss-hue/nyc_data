@@ -57,7 +57,6 @@ _SCHEDULE_COLUMNS = {
     "priority_score",
 }
 
-
 # ---------------------------------------------------------------------------
 # Socrata data loader
 # ---------------------------------------------------------------------------
@@ -102,7 +101,6 @@ def _load_inspection_from_socrata(limit: int = 25_000) -> pd.DataFrame:
         df["priority_score"] = 0.0
     return df
 
-
 # ---------------------------------------------------------------------------
 # Core logic
 # ---------------------------------------------------------------------------
@@ -110,7 +108,6 @@ def _load_inspection_from_socrata(limit: int = 25_000) -> pd.DataFrame:
 def _validate_columns(df: pd.DataFrame, required: set[str], label: str) -> list[str]:
     missing = required - set(df.columns)
     return [f"**{label}** is missing columns: {', '.join(sorted(missing))}"] if missing else []
-
 
 def _compute_priority(
     df: pd.DataFrame,
@@ -145,7 +142,6 @@ def _compute_priority(
     ).round(4)
 
     return out.sort_values("priority_score", ascending=False).reset_index(drop=True)
-
 
 def _detect_conflicts(inspections: pd.DataFrame, contracts: pd.DataFrame) -> pd.DataFrame:
     merged = inspections[["block_id", "address", "borough"]].drop_duplicates("block_id").merge(
@@ -194,7 +190,6 @@ def _detect_conflicts(inspections: pd.DataFrame, contracts: pd.DataFrame) -> pd.
     )
     return merged.reset_index(drop=True)
 
-
 # ---------------------------------------------------------------------------
 # Excel export helper
 # ---------------------------------------------------------------------------
@@ -204,7 +199,6 @@ def _to_excel_bytes(df: pd.DataFrame, sheet_name: str = "Sheet1") -> bytes:
     with pd.ExcelWriter(buf, engine="openpyxl") as writer:
         df.to_excel(writer, index=False, sheet_name=sheet_name)
     return buf.getvalue()
-
 
 # ---------------------------------------------------------------------------
 # Tab renderers
@@ -382,7 +376,6 @@ def _render_construction_list_tab() -> None:
                 key="dl_construction_csv",
             )
 
-
 def _render_conflict_detection_tab() -> None:
     st.subheader("Conflict Detection")
     st.caption(
@@ -494,7 +487,6 @@ def _render_conflict_detection_tab() -> None:
             mime="text/csv",
             key="dl_conflicts_csv",
         )
-
 
 def _render_schedule_tab() -> None:
     st.subheader("Schedule View")
@@ -622,7 +614,6 @@ def _render_schedule_tab() -> None:
         f"earliest start: {sched_df['planned_start'].min().date()} · "
         f"latest end: {sched_df['planned_end'].max().date()}"
     )
-
 
 # ---------------------------------------------------------------------------
 # Public entry point

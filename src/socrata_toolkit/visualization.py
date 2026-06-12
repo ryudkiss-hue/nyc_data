@@ -32,7 +32,6 @@ def _get_plt():
     import matplotlib.pyplot as plt
     return plt
 
-
 @dataclass
 class ChartResult:
     """Container for a generated chart."""
@@ -40,7 +39,6 @@ class ChartResult:
     chart_type: str
     path: str | None = None
     base64_png: str | None = None
-
 
 def _finalize(fig, title: str, chart_type: str, path: str | None = None) -> ChartResult:
     """Save or encode a matplotlib figure and return a ChartResult."""
@@ -56,7 +54,6 @@ def _finalize(fig, title: str, chart_type: str, path: str | None = None) -> Char
     buf.seek(0)
     b64 = base64.b64encode(buf.read()).decode("utf-8")
     return ChartResult(title=title, chart_type=chart_type, base64_png=b64)
-
 
 # ---------------------------------------------------------------------------
 # Histogram
@@ -91,7 +88,6 @@ def histogram(
     ax.set_ylabel("Count")
     return _finalize(fig, chart_title, "histogram", path)
 
-
 # ---------------------------------------------------------------------------
 # Bar Chart
 # ---------------------------------------------------------------------------
@@ -119,7 +115,6 @@ def bar_chart(
     chart_title = title or f"Value Counts: {column}"
     ax.set_title(chart_title)
     return _finalize(fig, chart_title, "bar_chart", path)
-
 
 # ---------------------------------------------------------------------------
 # Correlation Heatmap
@@ -152,7 +147,6 @@ def correlation_heatmap(
     chart_title = title or f"Correlation Heatmap ({method})"
     ax.set_title(chart_title)
     return _finalize(fig, chart_title, "heatmap", path)
-
 
 # ---------------------------------------------------------------------------
 # Time Series Line Chart
@@ -200,7 +194,6 @@ def time_series_chart(
     fig.autofmt_xdate()
     return _finalize(fig, chart_title, "time_series", path)
 
-
 # ---------------------------------------------------------------------------
 # Box Plot Comparison
 # ---------------------------------------------------------------------------
@@ -224,7 +217,6 @@ def box_plot(
     ax.set_ylabel("Value")
     return _finalize(fig, chart_title, "box_plot", path)
 
-
 # ---------------------------------------------------------------------------
 # Quality Dashboard
 # ---------------------------------------------------------------------------
@@ -236,7 +228,6 @@ class QualityDashboard:
     completeness_score: float
     total_cells: int
     missing_cells: int
-
 
 def quality_dashboard(
     df: pd.DataFrame,

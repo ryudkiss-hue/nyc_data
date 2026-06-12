@@ -12,13 +12,12 @@ Usage:
 import argparse
 import json
 import logging
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 from socrata_toolkit.analysis.langgraph_triage import run_triage, workflow_visualization
 
 logger = logging.getLogger(__name__)
-
 
 DATASET_REGISTRY = {
     # Inspection data
@@ -51,7 +50,6 @@ DATASET_REGISTRY = {
         "description": "Tree damage reports",
     },
 }
-
 
 def format_report(result: dict, verbose: bool = False) -> str:
     """Format workflow results for display."""
@@ -99,7 +97,6 @@ def format_report(result: dict, verbose: bool = False) -> str:
     lines.append("\n" + "=" * 70)
     return "\n".join(lines)
 
-
 def save_report(result: dict, output_path: str) -> None:
     """Save detailed report to file."""
     path = Path(output_path)
@@ -109,7 +106,7 @@ def save_report(result: dict, output_path: str) -> None:
         f.write("# NYC DOT Triage Report\n\n")
         f.write(f"Generated: {datetime.now().isoformat()}\n\n")
         f.write(f"## Dataset\n{result['dataset']}\n\n")
-        f.write(f"## Summary\n")
+        f.write("## Summary\n")
         f.write(f"- Total Records: {result['total_records']:,}\n")
         f.write(f"- High-Severity: {result['high_severity_count']}\n")
         f.write(f"- Action: {result['action_taken']}\n\n")
@@ -118,7 +115,6 @@ def save_report(result: dict, output_path: str) -> None:
         f.write(f"## Raw Data\n```json\n{json.dumps(result['report_data'], indent=2)}\n```\n")
 
     print(f"✓ Report saved to {path}")
-
 
 def main():
     """CLI entry point."""
@@ -218,7 +214,7 @@ Examples:
 
     if args.dataset not in DATASET_REGISTRY:
         print(f"Unknown dataset: {args.dataset}")
-        print(f"Use --list-datasets to see available options")
+        print("Use --list-datasets to see available options")
         return
 
     dataset_info = DATASET_REGISTRY[args.dataset]
@@ -245,7 +241,6 @@ Examples:
     # Save if requested
     if args.output_report:
         save_report(result, args.output_report)
-
 
 if __name__ == "__main__":
     logging.basicConfig(

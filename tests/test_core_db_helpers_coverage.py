@@ -7,7 +7,6 @@ import pytest
 
 from socrata_toolkit.core.db_helpers import build_fts_index_sql, ensure_fts_index
 
-
 class TestBuildFtsIndexSql:
     """Tests for build_fts_index_sql function."""
 
@@ -90,7 +89,6 @@ class TestBuildFtsIndexSql:
         # Index name should be auto-generated from table and column names
         assert "_fts_idx" in sql
         assert "my_table" in sql
-
 
 class TestEnsureFtsIndex:
     """Tests for ensure_fts_index function."""

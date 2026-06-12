@@ -4,7 +4,6 @@ import requests
 
 from app.data_loader import IngestionProviderFactory, LocalParquetFetcher, SODA3Fetcher, _fetch_live
 
-
 def test_fetch_live_retry_on_429(mocker):
     """Verify tenacity retry logic on HTTP 429 errors."""
     # Mock the client returned by get_socrata_client
@@ -29,7 +28,6 @@ def test_fetch_live_retry_on_429(mocker):
     assert mock_client.get.call_count == 3
 
 from unittest.mock import MagicMock
-
 
 def test_ingestion_factory():
     """Verify provider factory correctly yields specialized fetchers."""

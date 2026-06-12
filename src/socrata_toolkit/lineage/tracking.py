@@ -40,7 +40,6 @@ _lineage_context: dict[str, Any] | None = None
 _lineage_nodes: dict[str, TransformationNode] = {}
 _lineage_persistence: Any | None = None
 
-
 def set_global_persistence(persistence: Any) -> None:
     """Set global lineage persistence instance.
 
@@ -50,7 +49,6 @@ def set_global_persistence(persistence: Any) -> None:
     global _lineage_persistence
     _lineage_persistence = persistence
     logger.info("Set global lineage persistence")
-
 
 def track_transformation(
     inputs: list[str] | None = None,
@@ -174,7 +172,6 @@ def track_transformation(
         return wrapper
     return decorator
 
-
 @contextmanager
 def lineage_context(
     context_name: str,
@@ -258,7 +255,6 @@ def lineage_context(
         except Exception as e:
             logger.error(f"Failed to record context execution: {e}")
 
-
 def register_ingestion_node(
     dataset_id: str,
     dataset_name: str,
@@ -302,7 +298,6 @@ def register_ingestion_node(
 
     logger.info(f"Registered ingestion node {node_id}")
     return node
-
 
 def register_sink_node(
     sink_id: str,
@@ -348,7 +343,6 @@ def register_sink_node(
     logger.info(f"Registered sink node {node_id}")
     return node
 
-
 def register_validation_node(
     validation_id: str,
     validation_name: str,
@@ -393,11 +387,9 @@ def register_validation_node(
     logger.info(f"Registered validation node {node_id}")
     return node
 
-
 def get_tracked_node(node_id: str) -> TransformationNode | None:
     """Get a tracked lineage node by ID."""
     return _lineage_nodes.get(node_id)
-
 
 def get_all_tracked_nodes() -> dict[str, TransformationNode]:
     """Get all tracked lineage nodes."""

@@ -15,7 +15,6 @@ from app.visualization_engine import (
     StatisticsPanel,
 )
 
-
 class TestPhase2VisualizationCounts:
     """Test that all visualization counts are correct."""
 
@@ -91,7 +90,6 @@ class TestPhase2VisualizationCounts:
         total = count_b + count_c + count_d + count_e + count_f
         assert total == 73, f"Total should be 73 visualizations, got {total}"
 
-
 class TestAllVisualizationsRender:
     """Test that all visualizations can render without errors."""
 
@@ -146,7 +144,6 @@ class TestAllVisualizationsRender:
             assert isinstance(fig, go.Figure), f"{name}: figure is not a go.Figure"
             assert isinstance(stats, StatisticsPanel), f"{name}: stats is not StatisticsPanel"
 
-
 class TestKPICards:
     """Test KPI card rendering."""
 
@@ -200,7 +197,6 @@ class TestKPICards:
         assert isinstance(fig, go.Figure)
         assert isinstance(stats, StatisticsPanel)
 
-
 class TestStatisticsDisplay:
     """Test statistics display component."""
 
@@ -250,7 +246,6 @@ class TestStatisticsDisplay:
         assert stats_dict["record_count"] == 100
         assert stats_dict["mean_value"] == 50.5
         assert stats_dict["calculation_method"] == "Test"
-
 
 class TestDataSerialization:
     """Test that figures can be serialized for JSON output."""

@@ -11,13 +11,12 @@ Standards: Python 3.9+, full type hints, comprehensive docstrings, logging
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Optional, Any
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
-
 
 class SLATier(Enum):
     """SLA tiers based on dataset freshness requirements."""
@@ -25,13 +24,11 @@ class SLATier(Enum):
     MEDIUM = 30  # Standard datasets, updated within 30 days
     LOW = 60  # Archive datasets, updated within 60 days
 
-
 class ComplianceStatus(Enum):
     """Dataset compliance status vs SLA tier."""
     COMPLIANT = "compliant"  # Data within SLA threshold
     AT_RISK = "at_risk"  # Data within 80% of SLA (e.g., 11d of 14d)
     BREACHED = "breached"  # Data exceeds SLA threshold
-
 
 class RootCause(Enum):
     """Root cause classification for SLA breaches."""
@@ -41,14 +38,12 @@ class RootCause(Enum):
     RESOURCE_CONSTRAINT = "resource_constraint"  # Socrata quota/rate limits
     UNKNOWN = "unknown"  # Unable to determine cause
 
-
 class TrendDirection(Enum):
     """Trend in compliance status over recent history."""
     IMPROVING = "improving"  # Freshness getting better
     STABLE = "stable"  # Consistent freshness
     DEGRADING = "degrading"  # Freshness getting worse
     INSUFFICIENT_DATA = "insufficient_data"  # Not enough historical data
-
 
 @dataclass
 class SLAMetricSnapshot:
@@ -71,7 +66,6 @@ class SLAMetricSnapshot:
             "sla_tier": self.sla_tier.name,
             "days_since_update": round(self.days_since_update, 2),
         }
-
 
 @dataclass
 class SLAStatusRecord:
@@ -105,7 +99,6 @@ class SLAStatusRecord:
             "historical_days_since_update": [round(d, 2) for d in self.historical_days_since_update],
         }
 
-
 @dataclass
 class SLAComplianceReport:
     """Aggregate SLA compliance across all datasets."""
@@ -136,7 +129,6 @@ class SLAComplianceReport:
             "claude_analysis": self.claude_analysis,
         }
 
-
 class SLAStatusClassifier:
     """Classifies dataset freshness against SLA tiers."""
 
@@ -147,8 +139,8 @@ class SLAStatusClassifier:
     def classify(
         self,
         snapshot: SLAMetricSnapshot,
-        historical_snapshots: Optional[list[SLAMetricSnapshot]] = None,
-        error_context: Optional[dict[str, Any]] = None,
+        historical_snapshots: list[SLAMetricSnapshot] | None = None,
+        error_context: dict[str, Any] | None = None,
     ) -> SLAStatusRecord:
         """Classify dataset freshness status."""
         sla_threshold = snapshot.sla_tier.value
@@ -191,7 +183,7 @@ class SLAStatusClassifier:
         self,
         snapshot: SLAMetricSnapshot,
         status: ComplianceStatus,
-        error_context: Optional[dict[str, Any]] = None,
+        error_context: dict[str, Any] | None = None,
     ) -> tuple[RootCause, float]:
         if status == ComplianceStatus.COMPLIANT:
             return RootCause.UNKNOWN, 1.0
@@ -216,7 +208,7 @@ class SLAStatusClassifier:
     def _detect_trend(
         self,
         snapshot: SLAMetricSnapshot,
-        historical_snapshots: Optional[list[SLAMetricSnapshot]] = None,
+        historical_snapshots: list[SLAMetricSnapshot] | None = None,
     ) -> TrendDirection:
         if not historical_snapshots or len(historical_snapshots) < 2:
             return TrendDirection.INSUFFICIENT_DATA

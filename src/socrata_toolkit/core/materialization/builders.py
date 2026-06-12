@@ -9,7 +9,6 @@ from .registry import BuilderRegistry
 
 logger = logging.getLogger(__name__)
 
-
 @BuilderRegistry.register("universal_counts")
 class UniversalCountsBuilder(MartBuilder):
     """Universal mart: row counts for all datasets.
@@ -43,7 +42,6 @@ class UniversalCountsBuilder(MartBuilder):
             return None
 
         return " UNION ALL ".join(queries)
-
 
 @BuilderRegistry.register("cross_tab")
 class CrossTabBuilder(MartBuilder):
@@ -102,7 +100,6 @@ class CrossTabBuilder(MartBuilder):
             return None
 
         return " UNION ALL ".join(queries)
-
 
 @BuilderRegistry.register("completion_rate")
 class CompletionRateBuilder(MartBuilder):

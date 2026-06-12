@@ -33,7 +33,6 @@ st.set_page_config(
 
 client = SocrataClient()
 
-
 # ---------------------------------------------------
 # Helpers
 # ---------------------------------------------------
@@ -65,7 +64,6 @@ def clean_results(df: pd.DataFrame) -> pd.DataFrame:
 
     return df[cols + remainder]
 
-
 def build_catalog_filters(
     domain: str | None,
     category: str | None,
@@ -94,7 +92,6 @@ def build_catalog_filters(
         return ""
 
     return " AND ".join(clauses)
-
 
 # ---------------------------------------------------
 # Sidebar
@@ -125,7 +122,6 @@ offset = st.sidebar.number_input(
 )
 
 show_raw = st.sidebar.checkbox("Show raw JSON")
-
 
 # ---------------------------------------------------
 # Regular Search
@@ -158,7 +154,6 @@ if mode == "Regular":
 
             if show_raw:
                 st.json(results.to_dict("records"))
-
 
 # ---------------------------------------------------
 # Advanced Search
@@ -253,7 +248,6 @@ else:
                         )
                     )
                 )
-
 
 # ---------------------------------------------------
 # Optional direct SoQL query panel

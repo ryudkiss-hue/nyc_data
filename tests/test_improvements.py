@@ -20,7 +20,6 @@ def test_incremental_model_learn_predict():
     result = model.predict({"score": 0.9, "rows": 200})
     assert result in (0, 1)
 
-
 def test_semantic_search_index_and_query():
     pytest.importorskip("sentence_transformers", reason="sentence-transformers not installed")
     from src.socrata_toolkit.analysis.semantic_search import SemanticCatalogSearch
@@ -35,7 +34,6 @@ def test_semantic_search_index_and_query():
     assert len(results) <= 2
     assert all("score" in r for r in results)
 
-
 # ---------------------------------------------------------------------------
 # Sidecar TestClient fixture
 # ---------------------------------------------------------------------------
@@ -44,7 +42,6 @@ def test_semantic_search_index_and_query():
 def sidecar_client():
     from app.sidecar_api import app
     return TestClient(app)
-
 
 # ---------------------------------------------------------------------------
 # GROUP 4 — Governance endpoints
@@ -57,20 +54,17 @@ def test_dcat3_endpoint(sidecar_client):
     assert "@context" in data
     assert data["@type"] == "dcat:Catalog"
 
-
 def test_provenance_endpoint(sidecar_client):
     resp = sidecar_client.get("/api/governance/provenance")
     assert resp.status_code == 200
     data = resp.json()
     assert "@context" in data
 
-
 def test_odrl_policy_endpoint(sidecar_client):
     resp = sidecar_client.get("/api/governance/odrl-policy")
     assert resp.status_code == 200
     data = resp.json()
     assert "@context" in data or "odrl:permission" in data
-
 
 # ---------------------------------------------------------------------------
 # GROUP 7 — STAC / OGC endpoints
@@ -83,13 +77,11 @@ def test_stac_catalog_endpoint(sidecar_client):
     assert data.get("type") == "Catalog"
     assert "stac_version" in data
 
-
 def test_ogc_collections_endpoint(sidecar_client):
     resp = sidecar_client.get("/api/ogc/collections")
     assert resp.status_code == 200
     data = resp.json()
     assert "collections" in data
-
 
 # ---------------------------------------------------------------------------
 # GROUP 2 — DP histogram endpoint

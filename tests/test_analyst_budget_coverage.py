@@ -12,7 +12,6 @@ from socrata_toolkit.analyst.budget import (
     validate_budget_codes,
 )
 
-
 class TestLoadBudgetRules:
     """Tests for load_budget_rules function."""
 
@@ -67,7 +66,6 @@ class TestLoadBudgetRules:
 
             result = load_budget_rules(str(rules_file))
             assert result["test_key"] == "test_value"
-
 
 class TestValidateBudgetCodes:
     """Tests for validate_budget_codes function."""

@@ -28,12 +28,10 @@ from socrata_toolkit.task_board import (
 # Fixtures
 # ---------------------------------------------------------------------------
 
-
 @pytest.fixture
 def empty_board() -> TaskBoard:
     """Fresh TaskBoard with no tasks."""
     return TaskBoard("Test Board")
-
 
 @pytest.fixture
 def populated_board() -> TaskBoard:
@@ -49,17 +47,14 @@ def populated_board() -> TaskBoard:
                         category="planning", borough="QN", status="backlog"))
     return board
 
-
 @pytest.fixture
 def tmp_board_path(tmp_path: Path) -> str:
     """Temporary file path for board persistence tests."""
     return str(tmp_path / "board.json")
 
-
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
-
 
 class TestConstants:
     """Tests for module-level constants."""
@@ -78,11 +73,9 @@ class TestConstants:
         for col in DEFAULT_COLUMNS:
             assert col in STATUS_LABELS
 
-
 # ---------------------------------------------------------------------------
 # Task dataclass
 # ---------------------------------------------------------------------------
-
 
 class TestTaskDataclass:
     """Tests for the Task dataclass and its properties."""
@@ -138,11 +131,9 @@ class TestTaskDataclass:
         assert task.title == "From dict"
         assert task.priority == "low"
 
-
 # ---------------------------------------------------------------------------
 # TaskBoard CRUD
 # ---------------------------------------------------------------------------
-
 
 class TestTaskBoardCRUD:
     """Tests for add, update, move, delete, and comment operations."""
@@ -198,11 +189,9 @@ class TestTaskBoardCRUD:
         populated_board.add_comment(0, actor="pm", comment="Review done")
         assert len(populated_board.activity_log) > log_before
 
-
 # ---------------------------------------------------------------------------
 # Filtering and querying
 # ---------------------------------------------------------------------------
-
 
 class TestTaskBoardFiltering:
     """Tests for get_column, filter_tasks, and search_tasks."""
@@ -246,11 +235,9 @@ class TestTaskBoardFiltering:
     def test_search_tasks_no_match_returns_empty(self, populated_board):
         assert populated_board.search_tasks("xyzzy_nonexistent_term_999") == []
 
-
 # ---------------------------------------------------------------------------
 # Board statistics
 # ---------------------------------------------------------------------------
-
 
 class TestTaskBoardStats:
     """Tests for the stats() method."""
@@ -276,11 +263,9 @@ class TestTaskBoardStats:
     def test_overdue_count_present(self, populated_board):
         assert "overdue_count" in populated_board.stats()
 
-
 # ---------------------------------------------------------------------------
 # Milestones
 # ---------------------------------------------------------------------------
-
 
 class TestMilestones:
     """Tests for milestone add and progress tracking."""
@@ -309,11 +294,9 @@ class TestMilestones:
         ms = Milestone(name="X")
         assert ms.is_complete is False
 
-
 # ---------------------------------------------------------------------------
 # Bulk import from DataFrame
 # ---------------------------------------------------------------------------
-
 
 class TestImportFromConstructionList:
     """Tests for import_from_construction_list."""
@@ -349,11 +332,9 @@ class TestImportFromConstructionList:
         empty_board.import_from_construction_list(df)
         assert empty_board.tasks[0].priority == "low"
 
-
 # ---------------------------------------------------------------------------
 # Persistence
 # ---------------------------------------------------------------------------
-
 
 class TestTaskBoardPersistence:
     """Tests for save and load round-trip."""
@@ -386,11 +367,9 @@ class TestTaskBoardPersistence:
         populated_board.save(deep_path)
         assert Path(deep_path).exists()
 
-
 # ---------------------------------------------------------------------------
 # Export
 # ---------------------------------------------------------------------------
-
 
 class TestTaskBoardExport:
     """Tests for to_dataframe and to_markdown."""

@@ -30,7 +30,6 @@ try:
 except ImportError:
     HAS_SCIPY = False
 
-
 # ---------------------------------------------------------------------------
 # Socrata data loaders
 # ---------------------------------------------------------------------------
@@ -55,7 +54,6 @@ def _load_productivity_from_socrata(limit: int = 25_000) -> pd.DataFrame:
         combined["date"] = pd.to_datetime(combined[date_col], errors="coerce")
     return combined
 
-
 @st.cache_data(ttl=86_400, show_spinner="Loading violations from Socrata…")
 def _load_violations_from_socrata(limit: int = 20_000) -> pd.DataFrame:
     """Load SMD Violations (6kbp-uz6m) for quality / defect-recurrence analysis."""
@@ -64,7 +62,6 @@ def _load_violations_from_socrata(limit: int = 20_000) -> pd.DataFrame:
     except Exception:
         return pd.DataFrame()
 
-
 @st.cache_data(ttl=86_400, show_spinner="Loading dismissal inspections from Socrata…")
 def _load_dismissals_from_socrata(limit: int = 15_000) -> pd.DataFrame:
     """Load Sidewalk Dismissal Inspection Tracking (p4u2-3jgx)."""
@@ -72,7 +69,6 @@ def _load_dismissals_from_socrata(limit: int = 15_000) -> pd.DataFrame:
         return fetch_dataset("dismissals", limit=limit)
     except Exception:
         return pd.DataFrame()
-
 
 @st.cache_data(ttl=86_400, show_spinner="Loading correspondences from Socrata…")
 def _load_correspondences_from_socrata(limit: int = 10_000) -> pd.DataFrame:
@@ -85,7 +81,6 @@ def _load_correspondences_from_socrata(limit: int = 10_000) -> pd.DataFrame:
         return df
     except Exception:
         return pd.DataFrame()
-
 
 def _upload_or_note(label: str, key: str, note: str = "") -> pd.DataFrame | None:
     """File uploader widget; returns None if no file selected."""
@@ -102,7 +97,6 @@ def _upload_or_note(label: str, key: str, note: str = "") -> pd.DataFrame | None
         st.error(f"Could not parse {up.name}: {exc}")
         return None
 
-
 # ---------------------------------------------------------------------------
 # Helper functions
 # ---------------------------------------------------------------------------
@@ -113,7 +107,6 @@ def _cpi(awarded: float, spent: float, pct: float) -> float:
     earned = awarded * (pct / 100.0)
     return round(earned / spent, 3) if spent > 0 else 0.0
 
-
 def _excel_multisheet(sheets: dict[str, pd.DataFrame]) -> bytes:
     buf = io.BytesIO()
     with pd.ExcelWriter(buf, engine="openpyxl") as writer:
@@ -121,7 +114,6 @@ def _excel_multisheet(sheets: dict[str, pd.DataFrame]) -> bytes:
             df.to_excel(writer, sheet_name=name[:31], index=False)
     buf.seek(0)
     return buf.getvalue()
-
 
 def _find_col(df: pd.DataFrame, *keywords: str) -> str | None:
     """Return the first column whose lowercased name contains any keyword."""
@@ -131,11 +123,9 @@ def _find_col(df: pd.DataFrame, *keywords: str) -> str | None:
             return col
     return None
 
-
 def _coerce_dates(df: pd.DataFrame, col: str) -> pd.Series:
     """Parse a column to datetime, tolerating bad values."""
     return coerce_series_datetime(df[col])
-
 
 # ---------------------------------------------------------------------------
 # Tab renderers
@@ -199,7 +189,6 @@ def _render_contract_progress(df: pd.DataFrame) -> None:
         display_cols = [c for c in ["contract_id", "contractor", "borough", "awarded_value",
                                      "spent_to_date", "percent_complete", "status", "planned_end"] if c in df.columns]
         st.dataframe(df[display_cols], use_container_width=True, hide_index=True)
-
 
 def _render_budget_analysis(df: pd.DataFrame) -> None:
     st.subheader("Budget Analysis")
@@ -271,7 +260,6 @@ def _render_budget_analysis(df: pd.DataFrame) -> None:
                 st.dataframe(invalid, use_container_width=True, hide_index=True)
         else:
             st.info("Add a 'budget_code' column to your data to validate codes.")
-
 
 def _render_productivity(df: pd.DataFrame) -> None:
     st.subheader("Productivity Tracker")
@@ -347,7 +335,6 @@ def _render_productivity(df: pd.DataFrame) -> None:
                           color="borough", title="Lots Inspected by Borough")
         fig_boro.update_layout(showlegend=False, height=320)
         st.plotly_chart(fig_boro, use_container_width=True)
-
 
 def _render_dismissals_correspondences() -> None:
     st.subheader("Dismissal Inspections & Program Correspondences")
@@ -425,7 +412,6 @@ def _render_dismissals_correspondences() -> None:
                 fig.update_layout(yaxis={"categoryorder": "total ascending"})
                 st.plotly_chart(fig, use_container_width=True)
 
-
 def _render_export(df_contracts: pd.DataFrame, df_productivity: pd.DataFrame) -> None:
     st.subheader("Export & Reporting")
 
@@ -475,7 +461,6 @@ def _render_export(df_contracts: pd.DataFrame, df_productivity: pd.DataFrame) ->
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
         st.success(f"Report ready: {len(sheets)} sheets covering {sum(len(d) for d in sheets.values()):,} rows.")
-
 
 # ---------------------------------------------------------------------------
 # Item 28 — Contractor weighted KPI scorecard
@@ -559,7 +544,6 @@ def _render_contractor_scorecard(df: pd.DataFrame) -> None:
     display["composite"] = display["composite"].round(1)
     st.dataframe(display, use_container_width=True, hide_index=True)
 
-
 # ---------------------------------------------------------------------------
 # Item 33 — Contract milestone Gantt chart
 # ---------------------------------------------------------------------------
@@ -605,7 +589,6 @@ def _render_contract_gantt(df: pd.DataFrame) -> None:
     fig.update_yaxes(autorange="reversed")
     fig.add_vline(x=pd.Timestamp.today(), line_dash="dash", line_color="red")
     st.plotly_chart(fig, use_container_width=True)
-
 
 # ---------------------------------------------------------------------------
 # Item 29 — Budget utilization burn-down
@@ -673,7 +656,6 @@ def _render_budget_burndown(df: pd.DataFrame) -> None:
     util = (work["_cum_spent"].iloc[-1] / total_budget * 100) if total_budget else 0.0
     st.metric("Budget Utilization", f"{util:.1f}%",
               help="Cumulative spend as a share of total awarded budget.")
-
 
 # ---------------------------------------------------------------------------
 # Item 32 — Year-over-year comparison with Mann–Whitney U test
@@ -759,7 +741,6 @@ def _render_yoy_comparison(df: pd.DataFrame) -> None:
             f"{year_a} and {year_b}."
         )
 
-
 # ---------------------------------------------------------------------------
 # Item 30 — Change-order / re-work frequency heatmap (violations)
 # ---------------------------------------------------------------------------
@@ -817,7 +798,6 @@ def _render_rework_heatmap(df_viol: pd.DataFrame) -> None:
     )
     fig.update_xaxes(tickangle=-45)
     st.plotly_chart(fig, use_container_width=True)
-
 
 # ---------------------------------------------------------------------------
 # Item 31 — Defect recurrence rate (same BBL re-inspected within 12 months)
@@ -895,7 +875,6 @@ def _render_defect_recurrence(df_viol: pd.DataFrame) -> None:
                               coloraxis_showscale=False, height=420)
             st.plotly_chart(fig, use_container_width=True)
 
-
 def _render_quality_recurrence_tab() -> None:
     """Quality & Re-work tab — items 30 & 31 (real Socrata violations data)."""
     st.subheader("Quality, Re-work & Defect Recurrence")
@@ -911,7 +890,6 @@ def _render_quality_recurrence_tab() -> None:
     _render_rework_heatmap(df_viol)
     st.markdown("---")
     _render_defect_recurrence(df_viol)
-
 
 # ---------------------------------------------------------------------------
 # Main entry point

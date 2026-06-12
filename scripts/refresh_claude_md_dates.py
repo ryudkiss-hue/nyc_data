@@ -23,7 +23,6 @@ from pathlib import Path
 
 import pandas as pd
 
-
 def fetch_dataset_stats() -> dict[str, dict]:
     """Fetch current row counts and freshness for all tracked datasets."""
     from socrata_toolkit.core.client import SocrataClient, SocrataConfig
@@ -54,7 +53,6 @@ def fetch_dataset_stats() -> dict[str, dict]:
             print(f"  ⚠️ {name}: {e}")
 
     return stats
-
 
 def update_claude_md(apply: bool = False) -> None:
     """Update CLAUDE.md with current row counts and verification date."""
@@ -94,7 +92,6 @@ def update_claude_md(apply: bool = False) -> None:
                     print(f"       - {old[:60]}")
                     print(f"       + {new[:60]}")
 
-
 def main() -> None:
     """CLI entry point."""
     parser = argparse.ArgumentParser(
@@ -127,7 +124,6 @@ def main() -> None:
 
     if not apply:
         print("\n💡 Tip: Run with --apply to write changes to CLAUDE.md")
-
 
 if __name__ == "__main__":
     main()

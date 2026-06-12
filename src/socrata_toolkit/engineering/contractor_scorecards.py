@@ -34,7 +34,6 @@ class ContractorScorecard:
     efficiency_rating: str  # "A", "B", "C", "D", "F"
     overall_score: float  # 0-100
 
-
 def generate_scorecards(
     df: pd.DataFrame,
     contractor_col: str = "contractor",
@@ -113,7 +112,6 @@ def generate_scorecards(
         ))
 
     return sorted(scorecards, key=lambda s: s.overall_score, reverse=True)
-
 
 def scorecards_to_dataframe(scorecards: list[ContractorScorecard]) -> pd.DataFrame:
     """Convert scorecards to a DataFrame for display or export."""

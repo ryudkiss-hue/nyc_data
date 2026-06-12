@@ -1,16 +1,15 @@
 """Visualization layer: Chart recommendations, dashboard generation, role-based views."""
 import logging
-from typing import Dict, List, Any, Optional
+from typing import Any, Optional
 
 import duckdb
 
 logger = logging.getLogger(__name__)
 
-
 class ChartRecommender:
     """Recommend chart types based on column schema and data characteristics."""
 
-    def recommend(self, schema: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def recommend(self, schema: dict[str, Any]) -> list[dict[str, Any]]:
         """Recommend chart types for a schema.
 
         Args:
@@ -72,7 +71,6 @@ class ChartRecommender:
 
         return recommendations if recommendations else [{"type": "table", "description": "Raw data table"}]
 
-
 class DashboardGenerator:
     """Auto-generate dashboards from mart metadata."""
 
@@ -85,8 +83,8 @@ class DashboardGenerator:
         mart_name: str,
         title: str,
         description: str = "",
-        schema: Optional[Dict] = None
-    ) -> Dict[str, Any]:
+        schema: Optional[dict] = None
+    ) -> dict[str, Any]:
         """Generate dashboard specification for a mart.
 
         Args:
@@ -126,7 +124,7 @@ class DashboardGenerator:
         logger.info(f"Generated dashboard: {title} ({len(charts)} charts, {len(filters)} filters)")
         return dashboard
 
-    def _introspect_schema(self, table_name: str) -> Dict[str, Any]:
+    def _introspect_schema(self, table_name: str) -> dict[str, Any]:
         """Introspect table schema from database."""
         try:
             result = self.conn.execute(f"DESCRIBE {table_name}").df()
@@ -146,7 +144,6 @@ class DashboardGenerator:
             return result[0] if result else 0
         except:
             return 0
-
 
 class RoleBasedDashboard:
     """Filter dashboards by analyst role."""
@@ -176,7 +173,7 @@ class RoleBasedDashboard:
         self.conn = conn
         self.generator = DashboardGenerator(conn)
 
-    def get_dashboards_for_role(self, role: str) -> List[Dict[str, Any]]:
+    def get_dashboards_for_role(self, role: str) -> list[dict[str, Any]]:
         """Get dashboards visible to a specific role.
 
         Args:

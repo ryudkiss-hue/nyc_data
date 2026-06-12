@@ -18,7 +18,6 @@ from socrata_toolkit.cdc.compliance import (
 # Dataclass tests — no DB required
 # ---------------------------------------------------------------------------
 
-
 class TestComplianceCheckResult:
     """Tests for ComplianceCheckResult dataclass."""
 
@@ -53,7 +52,6 @@ class TestComplianceCheckResult:
         )
         assert result.severity == "critical"
 
-
 class TestReconciliationResult:
     """Tests for ReconciliationResult dataclass."""
 
@@ -84,7 +82,6 @@ class TestReconciliationResult:
         )
         assert result.reconciled is True
 
-
 class TestComplianceReport:
     """Tests for ComplianceReport dataclass."""
 
@@ -114,11 +111,9 @@ class TestComplianceReport:
         report = self._make_report()
         assert len(report.checks) == 2
 
-
 # ---------------------------------------------------------------------------
 # CDCReconciler — ImportError path (psycopg absent)
 # ---------------------------------------------------------------------------
-
 
 class TestCDCReconcilerImportError:
     """Tests for ImportError when psycopg is not installed."""
@@ -128,11 +123,9 @@ class TestCDCReconcilerImportError:
             with pytest.raises(ImportError, match="postgres extras"):
                 CDCReconciler(dsn="postgresql://localhost/test")
 
-
 # ---------------------------------------------------------------------------
 # CDCReconciler — DB-mocked helpers
 # ---------------------------------------------------------------------------
-
 
 def _make_reconciler() -> CDCReconciler:
     """Return a CDCReconciler with a fake psycopg module in place."""
@@ -140,7 +133,6 @@ def _make_reconciler() -> CDCReconciler:
     with patch("socrata_toolkit.cdc.compliance.psycopg", mock_psycopg):
         reconciler = CDCReconciler(dsn="postgresql://localhost/test")
     return reconciler
-
 
 def _attach_fake_connection(reconciler: CDCReconciler, cur: MagicMock) -> None:
     """Attach a fake _get_connection context manager returning cur."""
@@ -154,7 +146,6 @@ def _attach_fake_connection(reconciler: CDCReconciler, cur: MagicMock) -> None:
 
     reconciler._get_connection = fake_conn
 
-
 def _attach_raising_connection(reconciler: CDCReconciler, exc: Exception) -> None:
     """Attach a _get_connection that raises on enter."""
     @contextmanager
@@ -164,11 +155,9 @@ def _attach_raising_connection(reconciler: CDCReconciler, exc: Exception) -> Non
 
     reconciler._get_connection = fake_conn
 
-
 # ---------------------------------------------------------------------------
 # verify_audit_trail_completeness
 # ---------------------------------------------------------------------------
-
 
 class TestVerifyAuditTrailCompleteness:
     """Tests for CDCReconciler.verify_audit_trail_completeness."""
@@ -225,11 +214,9 @@ class TestVerifyAuditTrailCompleteness:
 
         assert result.severity == "critical"
 
-
 # ---------------------------------------------------------------------------
 # verify_cdc_event_ordering
 # ---------------------------------------------------------------------------
-
 
 class TestVerifyCDCEventOrdering:
     """Tests for CDCReconciler.verify_cdc_event_ordering."""
@@ -291,11 +278,9 @@ class TestVerifyCDCEventOrdering:
         assert result.passed is False
         assert any("ordering check failed" in i for i in result.issues)
 
-
 # ---------------------------------------------------------------------------
 # verify_scd_integrity
 # ---------------------------------------------------------------------------
-
 
 class TestVerifySCDIntegrity:
     """Tests for CDCReconciler.verify_scd_integrity."""
@@ -357,11 +342,9 @@ class TestVerifySCDIntegrity:
         assert result.passed is False
         assert any("SCD integrity check failed" in i for i in result.issues)
 
-
 # ---------------------------------------------------------------------------
 # reconcile_scd_with_source
 # ---------------------------------------------------------------------------
-
 
 class TestReconcileSCDWithSource:
     """Tests for CDCReconciler.reconcile_scd_with_source."""
@@ -413,11 +396,9 @@ class TestReconcileSCDWithSource:
         assert result.cdc_record_count == 0
         assert result.source_system == "src"
 
-
 # ---------------------------------------------------------------------------
 # check_record_count_consistency
 # ---------------------------------------------------------------------------
-
 
 class TestCheckRecordCountConsistency:
     """Tests for CDCReconciler.check_record_count_consistency."""
@@ -447,11 +428,9 @@ class TestCheckRecordCountConsistency:
 
         assert result.severity == "warning"
 
-
 # ---------------------------------------------------------------------------
 # check_audit_trail_coverage
 # ---------------------------------------------------------------------------
-
 
 class TestCheckAuditTrailCoverage:
     """Tests for CDCReconciler.check_audit_trail_coverage."""
@@ -505,11 +484,9 @@ class TestCheckAuditTrailCoverage:
         assert result.passed is False
         assert any("Coverage check failed" in i for i in result.issues)
 
-
 # ---------------------------------------------------------------------------
 # generate_compliance_report
 # ---------------------------------------------------------------------------
-
 
 class TestGenerateComplianceReport:
     """Tests for CDCReconciler.generate_compliance_report."""
@@ -571,11 +548,9 @@ class TestGenerateComplianceReport:
 
         assert report.overall_status == "warning"
 
-
 # ---------------------------------------------------------------------------
 # detect_missing_changes
 # ---------------------------------------------------------------------------
-
 
 class TestDetectMissingChanges:
     """Tests for CDCReconciler.detect_missing_changes."""
@@ -620,11 +595,9 @@ class TestDetectMissingChanges:
         assert result["high_frequency_changes"][0]["entity_id"] == "entity_abc"
         assert result["high_frequency_changes"][0]["count"] == 250
 
-
 # ---------------------------------------------------------------------------
 # export_compliance_report
 # ---------------------------------------------------------------------------
-
 
 class TestExportComplianceReport:
     """Tests for CDCReconciler.export_compliance_report."""

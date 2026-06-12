@@ -29,16 +29,13 @@ try:
 except ImportError:
     psycopg = None  # type: ignore
 
-
 # Logging setup
 logger = logging.getLogger(__name__)
-
 
 class AlertSeverity(Enum):
     """Alert severity levels for freshness violations."""
     WARNING = "warning"
     CRITICAL = "critical"
-
 
 @dataclass
 class DatasetFreshness:
@@ -136,7 +133,6 @@ class DatasetFreshness:
         """
         age_hours = (datetime.now(timezone.utc) - self.last_updated_utc).total_seconds() / 3600
         return self.sla_threshold_hours - age_hours
-
 
 @dataclass
 class FreshnessAlert:
@@ -341,7 +337,6 @@ class FreshnessAlert:
                 },
             },
         }
-
 
 class FreshnessTracker:
     """Core freshness tracking and SLA monitoring for datasets.

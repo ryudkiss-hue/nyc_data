@@ -42,7 +42,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from socrata_toolkit.core.scheduler import PipelineScheduler, ScheduleRunner
 
-
 def setup_logging(config: dict):
     """Configure logging based on scheduler config."""
     logging_config = config.get("logging", {})
@@ -63,7 +62,6 @@ def setup_logging(config: dict):
     )
 
     return logging.getLogger(__name__)
-
 
 def main():
     """Initialize and run the scheduler."""
@@ -122,7 +120,6 @@ def main():
     except Exception as e:
         logger.error(f"Fatal error: {e}", exc_info=True)
         sys.exit(1)
-
 
 if __name__ == "__main__":
     # Setup logging

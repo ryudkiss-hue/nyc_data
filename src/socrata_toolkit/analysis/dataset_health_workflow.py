@@ -30,11 +30,10 @@ logger = logging.getLogger(__name__)
 
 # Optional: Only import LangGraph if available (graceful degradation)
 try:
-    from langgraph.graph import StateGraph, START, END
+    from langgraph.graph import END, START, StateGraph
     HAS_LANGGRAPH = True
 except ImportError:
     HAS_LANGGRAPH = False
-
 
 class HealthState(TypedDict):
     """Workflow state: passed through each node."""
@@ -47,7 +46,6 @@ class HealthState(TypedDict):
     claude_recommendations: dict[str, Any]
     final_report: dict[str, Any]
     error_log: list[str]
-
 
 class DatasetHealthWorkflow:
     """Orchestrate dataset health monitoring via LangGraph.
@@ -328,7 +326,7 @@ Format response as JSON:
             recs = {"error": str(exc)}
 
         state["claude_recommendations"] = recs
-        logger.info(f"Claude recommendations received")
+        logger.info("Claude recommendations received")
 
         return state
 
@@ -391,7 +389,6 @@ Format response as JSON:
                 col_type = col.get("dataTypeName", "object")
                 schema[col_name] = col_type
         return schema
-
 
 def run_dataset_health_workflow(
     registry: dict[str, dict[str, str]] | None = None,

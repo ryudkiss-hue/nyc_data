@@ -20,12 +20,11 @@ Usage:
 import json
 import logging
 from datetime import datetime, timezone
-from typing import Any, Dict
+from typing import Any
 
 from socrata_toolkit.core.duckdb_store import DuckDBManager
 
 logger = logging.getLogger(__name__)
-
 
 class DuckDBSessionStore:
     """Persist Streamlit session_state to DuckDB with automatic sync.
@@ -63,7 +62,7 @@ class DuckDBSessionStore:
         except Exception as exc:
             logger.warning(f"Failed to init session_state table: {exc}")
 
-    def load_state(self) -> Dict[str, Any]:
+    def load_state(self) -> dict[str, Any]:
         """Load all session state from DuckDB for this session.
 
         Returns:
@@ -120,7 +119,7 @@ class DuckDBSessionStore:
         except Exception as exc:
             logger.error(f"Failed to save session key {key}: {exc}")
 
-    def save_all(self, state: Dict[str, Any]) -> None:
+    def save_all(self, state: dict[str, Any]) -> None:
         """Persist all state keys in a single transaction.
 
         Either all keys are saved or none (transaction semantics).
@@ -178,7 +177,6 @@ class DuckDBSessionStore:
         except Exception as exc:
             logger.error(f"Failed to delete session: {exc}")
 
-
 def init_session_persistence(
     manager: DuckDBManager, session_id: str
 ) -> DuckDBSessionStore:
@@ -193,7 +191,6 @@ def init_session_persistence(
     """
     store = DuckDBSessionStore(manager, session_id)
     return store
-
 
 def get_session_callback(store: DuckDBSessionStore):
     """Return a callback for Streamlit to persist state on change.

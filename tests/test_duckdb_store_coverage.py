@@ -16,7 +16,6 @@ from socrata_toolkit.core.duckdb_store import (
     query_parquet_cache,
 )
 
-
 class TestDuckDBManagerInit:
     """Tests for DuckDBManager initialization."""
 
@@ -34,7 +33,6 @@ class TestDuckDBManagerInit:
         with patch.dict("os.environ", {"DUCKDB_PATH": "/custom/path.duckdb"}):
             manager = DuckDBManager()
             assert manager.db_path == "/custom/path.duckdb"
-
 
 class TestDuckDBManagerConnection:
     """Tests for DuckDBManager connection handling."""
@@ -75,7 +73,6 @@ class TestDuckDBManagerConnection:
             manager.close()
             assert manager._conn is None
 
-
 class TestDuckDBManagerQuery:
     """Tests for DuckDBManager query execution."""
 
@@ -105,7 +102,6 @@ class TestDuckDBManagerQuery:
             result = manager.query("SELECT ? as num", [42])
             assert result is not None
 
-
 class TestEscapeSqlLiteral:
     """Tests for _escape_sql_literal helper."""
 
@@ -124,7 +120,6 @@ class TestEscapeSqlLiteral:
     def test_escape_empty_string(self):
         result = _escape_sql_literal("")
         assert result == ""
-
 
 class TestDefaultCacheDir:
     """Tests for _default_cache_dir function."""
@@ -145,7 +140,6 @@ class TestDefaultCacheDir:
         with patch.dict("os.environ", {"SOCRATA_CACHE_DIR": "   "}, clear=False):
             cache_dir = _default_cache_dir()
             assert isinstance(cache_dir, Path)
-
 
 class TestLatestParquetForKey:
     """Tests for _latest_parquet_for_key function."""
@@ -190,7 +184,6 @@ class TestLatestParquetForKey:
             # Should return one of the files
             assert "data_202401" in result.name
 
-
 class TestQueryParquetCache:
     """Tests for query_parquet_cache function."""
 
@@ -205,7 +198,6 @@ class TestQueryParquetCache:
 
             result = query_parquet_cache("SELECT 1")
             assert result is not None
-
 
 class TestDuckDBManagerWithDataFrame:
     """Tests for DuckDBManager with DataFrame operations."""
@@ -235,7 +227,6 @@ class TestDuckDBManagerWithDataFrame:
 
             result = manager.query("SELECT * FROM typed_table")
             assert result is not None
-
 
 class TestDuckDBManagerEdgeCases:
     """Tests for edge cases and error scenarios."""
@@ -277,7 +268,6 @@ class TestDuckDBManagerEdgeCases:
             manager.close()
             assert manager._conn is None
 
-
 # ---------------------------------------------------------------------------
 # get_bundle_dir
 # ---------------------------------------------------------------------------
@@ -298,7 +288,6 @@ class TestGetBundleDir:
         with patch.object(sys, "frozen", True, create=True), \
              patch.object(sys, "_MEIPASS", "/bundle/path", create=True):
             assert duckdb_store.get_bundle_dir() == "/bundle/path"
-
 
 # ---------------------------------------------------------------------------
 # query_parquet_cache — bare key and raw SQL execution paths
@@ -327,7 +316,6 @@ class TestQueryParquetCacheExecution:
         sql = f"SELECT v FROM read_parquet('{pq}') WHERE id = 1"
         result = query_parquet_cache(sql)
         assert result["v"].tolist() == [10]
-
 
 # ---------------------------------------------------------------------------
 # DuckDBRepository

@@ -30,7 +30,6 @@ _DATE_COLUMN_CACHE: dict[str, Any] = {}
 # Strict identifier validation to prevent SQL injection via interpolated table/column names
 _SQL_IDENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
-
 def _safe_sql_identifier(name: str | None) -> bool:
     """Return True only for safe SQL identifiers (letters, digits, underscore)."""
     return bool(name) and bool(_SQL_IDENT_RE.match(name))
@@ -94,7 +93,6 @@ def _get_cached_date_cols(schema_hash: str, columns_tuple: tuple[str, ...]) -> l
         if any(d in col.lower() for d in date_names):
             result.append(col)
     return result
-
 
 import numpy as np
 from pydantic import BaseModel, Field
@@ -185,7 +183,6 @@ class ColumnProfile(BaseModel):
             score -= 60  # all-null or error (Guarantees <= 0 after null penalty)
         return max(0.0, score)
 
-
 class DatasetProfile(BaseModel):
     """Full dataset profile with column-level stats."""
     key: str
@@ -208,7 +205,6 @@ def _get_roi_aggregator():
     from app.services.roi_service import ROIAggregator
     return ROIAggregator()
 
-
 # ---------------------------------------------------------------------------
 # Utility helpers
 # ---------------------------------------------------------------------------
@@ -216,12 +212,10 @@ def _get_roi_aggregator():
 def _utc_today() -> pd.Timestamp:
     return pd.Timestamp.now(tz=timezone.utc).normalize().tz_localize(None)
 
-
 def _safe_sample_values(series: pd.Series, n: int = 3) -> list[str]:
     """Return n representative non-null string values from a series."""
     vals = series.dropna().unique()
     return [str(v)[:60] for v in vals[:n]]
-
 
 def _estimate_cardinality(series: pd.Series, max_sample: int = 5000, dataset_key: str | None = None, col_name: str | None = None) -> int:
     """Estimate distinct value count. Prioritizes DuckDB SQL for performance, otherwise uses sampling."""
@@ -248,7 +242,6 @@ def _estimate_cardinality(series: pd.Series, max_sample: int = 5000, dataset_key
     except Exception:
         return -1
 
-
 def _detect_geo_columns(df: pd.DataFrame) -> list[str]:
     """Detect geographic columns. Uses mutable DataFrame id for caching."""
     df_id = id(df)
@@ -260,7 +253,6 @@ def _detect_geo_columns(df: pd.DataFrame) -> list[str]:
     result = [c for c in df.columns if c.lower() in geo_names or "geo" in c.lower() or "coord" in c.lower()]
     _GEO_COLUMN_CACHE[df_id] = result
     return result
-
 
 def _detect_date_columns(df: pd.DataFrame) -> list[str]:
     """Detect date columns with single-pass scan."""
@@ -290,7 +282,6 @@ def _detect_date_columns(df: pd.DataFrame) -> list[str]:
     _DATE_COLUMN_CACHE[df_id] = result
     return result
 
-
 def _detect_pk_candidates(df: pd.DataFrame) -> list[str]:
     """Columns likely to be primary keys: high cardinality + low nulls."""
     pk_keywords = {"id", "key", "uid", "uuid", "no", "num", "number", "code", "identifier"}
@@ -303,7 +294,6 @@ def _detect_pk_candidates(df: pd.DataFrame) -> list[str]:
             if null_pct < 0.05 and card > len(df) * 0.9:
                 candidates.append(col)
     return candidates[:3]
-
 
 def _compute_duplicate_pct(df: pd.DataFrame, sample_size: int = 5000, dataset_key: str | None = None) -> float:
     """Compute duplicate percentage. Prioritizes DuckDB SQL for performance."""
@@ -335,7 +325,6 @@ def _compute_duplicate_pct(df: pd.DataFrame, sample_size: int = 5000, dataset_ke
         return round(100.0 * dupes / len(check_df), 2)
     except Exception:
         return 0.0
-
 
 # ---------------------------------------------------------------------------
 # Dataset profiler
@@ -440,7 +429,6 @@ def profile_dataset(key: str, df: pd.DataFrame, *, sample_rows: int = 5_000) -> 
         quality_score=quality,
     )
 
-
 def profile_all_datasets(frames: dict[str, pd.DataFrame]) -> dict[str, DatasetProfile]:
     """Profile all loaded datasets concurrently using ThreadPoolExecutor."""
     profiles: dict[str, DatasetProfile] = {}
@@ -460,7 +448,6 @@ def profile_all_datasets(frames: dict[str, pd.DataFrame]) -> dict[str, DatasetPr
                 log.warning("Profile failed for %s: %s", key, exc)
 
     return profiles
-
 
 # ---------------------------------------------------------------------------
 # ROI computation
@@ -496,7 +483,6 @@ def compute_productivity_roi(
         quality_flags=quality_flags,
         datasets_profiled=datasets_profiled,
     )
-
 
 # ---------------------------------------------------------------------------
 # Workflow functions
@@ -604,7 +590,6 @@ def qa_qc_inventory_ledger(
 
     return merged, stale, joins, quality_flags
 
-
 def spatial_conflict_detection(
     weekly_construction: pd.DataFrame,
     street_permits: pd.DataFrame,
@@ -706,7 +691,6 @@ def spatial_conflict_detection(
     out["detected_at"] = pd.Timestamp.now(tz=timezone.utc).isoformat()
     return out, joins
 
-
 def contract_dispatch_clearance(
     violations: pd.DataFrame,
     tree_damage: pd.DataFrame,
@@ -762,7 +746,6 @@ def contract_dispatch_clearance(
         parks_routing["route_parks_coordination"] = True
 
     return cleared, parks_routing, joins
-
 
 def productivity_ada_dashboard(
     built: pd.DataFrame,
@@ -826,7 +809,6 @@ def productivity_ada_dashboard(
 
     return result
 
-
 # ---------------------------------------------------------------------------
 # Top-level orchestrator
 # ---------------------------------------------------------------------------
@@ -871,7 +853,6 @@ def run_all_workflows(frames: dict[str, pd.DataFrame]) -> dict[str, Any]:
         "roi": roi,
     }
 
-
 # ---------------------------------------------------------------------------
 # Dataset comparison utility
 # ---------------------------------------------------------------------------
@@ -906,7 +887,6 @@ def compare_datasets(
             "join_candidate": "🔑" if join_candidate else "",
         })
     return pd.DataFrame(rows)
-
 
 # ---------------------------------------------------------------------------
 # Data quality summary

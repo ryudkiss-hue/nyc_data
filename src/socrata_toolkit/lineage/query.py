@@ -17,7 +17,6 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class FreshnessInfo:
     """Information about data freshness and staleness.
@@ -36,7 +35,6 @@ class FreshnessInfo:
     is_stale: bool = False
     stale_threshold_seconds: float = 86400.0  # 24 hours default
     next_expected_update: datetime | None = None
-
 
 class LineageQuery:
     """Query interface for data lineage relationships and analysis.

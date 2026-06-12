@@ -23,7 +23,7 @@ import json
 import logging
 import os
 from datetime import datetime, timezone
-from typing import Any, TypedDict, Optional
+from typing import Any, Optional, TypedDict
 
 from ..core.client import SocrataClient, SocrataConfig
 from .sentiment_classifier import SentimentClassifier, SentimentResult
@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 # Optional: Only import LangGraph if available (graceful degradation)
 try:
-    from langgraph.graph import StateGraph, START, END
+    from langgraph.graph import END, START, StateGraph
     HAS_LANGGRAPH = True
 except ImportError:
     HAS_LANGGRAPH = False
@@ -43,7 +43,6 @@ try:
     HAS_ANTHROPIC = True
 except ImportError:
     HAS_ANTHROPIC = False
-
 
 class SentimentState(TypedDict):
     """Workflow state: passed through each node."""
@@ -58,7 +57,6 @@ class SentimentState(TypedDict):
     claude_analysis: dict[str, Any]
     final_report: dict[str, Any]
     error_log: list[str]
-
 
 class PublicSentimentWorkflow:
     """Orchestrate sentiment tracking via LangGraph.
@@ -501,11 +499,10 @@ Focus on operational insights, not excuses."""
         else:
             return "VERY_NEGATIVE"
 
-
 def build_sentiment_report(
     registry: dict[str, dict[str, str]],
     domain: str = "data.cityofnewyork.us",
-    output_file: Optional[str] = None,
+    output_file: str | None = None,
 ) -> dict[str, Any]:
     """Convenience function to build sentiment report.
 

@@ -25,7 +25,6 @@ from socrata_toolkit.analysis.ramp_status import (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
 def test_ramp_classifier():
     """Test RampStatusClassifier with sample descriptions."""
     print("\n" + "=" * 70)
@@ -75,7 +74,6 @@ def test_ramp_classifier():
 
     return results, classifier
 
-
 def test_workflow_imports():
     """Test that workflow can be imported (without running it)."""
     print("\n" + "=" * 70)
@@ -91,14 +89,13 @@ def test_workflow_imports():
         )
         print("[PASS] All workflow classes imported successfully")
         print(f"  - BoroughRampStats: {BoroughRampStats.__name__}")
-        print(f"  - RampProgressState: dict-based state")
+        print("  - RampProgressState: dict-based state")
         print(f"  - create_ramp_workflow: {create_ramp_workflow.__name__}")
         print(f"  - run_ramp_workflow: {run_ramp_workflow.__name__}")
         return True
     except Exception as e:
         print(f"[FAIL] Workflow import failed: {e}")
         return False
-
 
 def test_classifier_batch():
     """Test batch classification and filtering."""
@@ -143,7 +140,6 @@ def test_classifier_batch():
             if item['blockers']:
                 print(f"    Blockers: {', '.join(item['blockers'])}")
 
-
 def test_blocker_extraction():
     """Test blocker type extraction."""
     print("\n" + "=" * 70)
@@ -171,7 +167,6 @@ def test_blocker_extraction():
         blockers = [b.value for b in result.blocker_types]
         print(f"\nText: {text}")
         print(f"  Blockers identified: {blockers if blockers else '(none)'}")
-
 
 def test_confidence_scoring():
     """Test confidence scoring logic."""
@@ -203,7 +198,6 @@ def test_confidence_scoring():
         print(f"\n[{status}] '{text[:40]}...'")
         print(f"  Confidence: {result.confidence_score:.0f}% (expected >= {expected_min_conf}%)")
 
-
 def test_wilson_ci():
     """Test Wilson Score CI computation."""
     print("\n" + "=" * 70)
@@ -230,7 +224,6 @@ def test_wilson_ci():
         print(f"  Completion Rate: {completion_pct:.1f}%")
         print(f"  95% CI: [{ci_lower:.1f}%, {ci_upper:.1f}%]")
         print(f"  SE: {result['standard_error']:.4f}")
-
 
 if __name__ == "__main__":
     print("\n" + "=" * 70)

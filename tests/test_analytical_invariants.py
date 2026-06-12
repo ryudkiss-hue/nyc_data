@@ -14,7 +14,6 @@ import pytest
 
 RNG = np.random.default_rng(1234)
 
-
 # ---------------------------------------------------------------------------
 # compute_borough_completion_rates — Wilson Score CI invariants
 # ---------------------------------------------------------------------------
@@ -98,7 +97,6 @@ class TestCompletionRateInvariants:
         width_large = w_large.ci_upper - w_large.ci_lower
         assert width_large < width_small
 
-
 # ---------------------------------------------------------------------------
 # compute_quality_score — composite bounds & weighting invariants
 # ---------------------------------------------------------------------------
@@ -157,7 +155,6 @@ class TestQualityScoreInvariants:
         assert s.validity == 100.0
         assert s.consistency == 100.0
 
-
 # ---------------------------------------------------------------------------
 # parse_sim_complaints — severity score is always a bounded [0,1] value
 # ---------------------------------------------------------------------------
@@ -194,7 +191,6 @@ class TestSeverityInvariants:
         out = parse_sim_complaints(df)
         assert len(out) == 3
         assert (out["_sim_severity_score"].astype(float) >= 0.0).all()
-
 
 # ---------------------------------------------------------------------------
 # detect_all_outliers — reported indices are valid; clean data has none

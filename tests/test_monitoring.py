@@ -36,7 +36,6 @@ from socrata_toolkit.observability.monitoring import (
     MonitoringResult,
 )
 
-
 # ============================================================================
 # Alert Tests
 # ============================================================================
@@ -108,7 +107,6 @@ class TestAlert:
 
         alert.status = AlertStatus.RESOLVED
         assert alert.status == AlertStatus.RESOLVED
-
 
 # ============================================================================
 # Monitoring Tests
@@ -394,7 +392,6 @@ class TestMonitoring:
         monitor.reset()
         assert len(monitor.results) == 0
 
-
 # ============================================================================
 # AlertManager Tests
 # ============================================================================
@@ -628,7 +625,6 @@ class TestAlertManager:
         manager.ingest_alert(alert)
         assert alert.alert_id in manager.alerts
 
-
 # ============================================================================
 # DuckDB Persistence Tests
 # ============================================================================
@@ -683,7 +679,6 @@ class TestDuckDBPersistence:
         manager = AlertManager(duckdb_conn=None)
         result = manager.query_alerts_from_duckdb()
         assert result == []
-
 
 # ============================================================================
 # Integration Tests
@@ -788,7 +783,6 @@ class TestMonitoringIntegration:
         )
         # Should fail when > 24 hours
         assert result.status == "FAIL"
-
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

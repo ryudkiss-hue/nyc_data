@@ -22,7 +22,6 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class ValidationReport:
     """Result of a validation check with detailed error and warning information.
@@ -38,7 +37,6 @@ class ValidationReport:
     errors: list[str]
     warnings: list[str]
     affected_records: int = 0
-
 
 # NYC Street Design Manual Material Classifications (Section 4)
 VALID_MATERIALS = {
@@ -94,7 +92,6 @@ ADA_REQUIREMENTS = {
     "curb_ramp_slope": {"max_ratio": 1 / 12, "max_percent": 8.33, "sdm_ref": "Section 3"},
 }
 
-
 def validate_required_columns(df: pd.DataFrame, required: list[str]) -> ValidationReport:
     """Validate that DataFrame contains all required columns.
 
@@ -114,7 +111,6 @@ def validate_required_columns(df: pd.DataFrame, required: list[str]) -> Validati
     missing = [c for c in required if c not in df.columns]
     errors = [f"Missing required column: {c}" for c in missing]
     return ValidationReport(valid=not errors, errors=errors, warnings=[])
-
 
 def validate_schema_types(df: pd.DataFrame, schema: dict[str, str]) -> ValidationReport:
     """Validate DataFrame column types against expected schema.
@@ -164,7 +160,6 @@ def validate_schema_types(df: pd.DataFrame, schema: dict[str, str]) -> Validatio
         errors=errors,
         warnings=warns,
     )
-
 
 def validate_material_coverage(
     df: pd.DataFrame, material_col: str = "material_type"
@@ -226,7 +221,6 @@ def validate_material_coverage(
     return ValidationReport(
         valid=not errors, errors=errors, warnings=[], affected_records=affected
     )
-
 
 def validate_defect_applicability(
     df: pd.DataFrame,
@@ -313,7 +307,6 @@ def validate_defect_applicability(
         valid=not errors, errors=errors, warnings=[], affected_records=int(invalid_count)
     )
 
-
 def validate_ada_compliance_gates(
     df: pd.DataFrame,
     ada_compliance_col: str = "ada_compliant",
@@ -388,7 +381,6 @@ def validate_ada_compliance_gates(
         valid=not errors, errors=errors, warnings=warnings, affected_records=affected
     )
 
-
 def validate_marking_standards(
     df: pd.DataFrame,
     marking_col: str = "marking_type",
@@ -457,7 +449,6 @@ def validate_marking_standards(
     return ValidationReport(
         valid=not errors, errors=errors, warnings=warnings, affected_records=affected
     )
-
 
 def validate_geospatial_bounds(
     df: pd.DataFrame,

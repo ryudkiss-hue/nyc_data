@@ -171,17 +171,14 @@ AGENCY_CSS = """
 </style>
 """
 
-
 def inject_theme() -> None:
     st.markdown(AGENCY_CSS, unsafe_allow_html=True)
-
 
 def render_skip_link() -> None:
     st.markdown(
         '<a class="mc-skip" href="#main-content">Skip to main content</a>',
         unsafe_allow_html=True,
     )
-
 
 def render_agency_header(*, demo: bool, live_auth: bool) -> None:
     if demo:
@@ -203,7 +200,6 @@ def render_agency_header(*, demo: bool, live_auth: bool) -> None:
         """,
         unsafe_allow_html=True,
     )
-
 
 def render_readiness_bars(axis_scores: dict[str, float]) -> None:
     for axis, score in sorted(axis_scores.items()):
@@ -237,7 +233,6 @@ def render_readiness_bars(axis_scores: dict[str, float]) -> None:
             unsafe_allow_html=True,
         )
 
-
 def render_quality_badge(score: float) -> str:
     """Return an HTML badge for a quality score."""
     if score >= 80:
@@ -245,7 +240,6 @@ def render_quality_badge(score: float) -> str:
     if score >= 60:
         return f'<span class="mc-badge mc-badge-demo">{score:.0f}/100</span>'
     return f'<span class="mc-badge mc-badge-warn">{score:.0f}/100</span>'
-
 
 @contextmanager
 def render_skeleton_placeholder(n_rows: int = 3) -> Generator[None, None, None]:
@@ -270,7 +264,6 @@ def render_skeleton_placeholder(n_rows: int = 3) -> Generator[None, None, None]:
         yield
     finally:
         placeholder.empty()
-
 
 def render_empty_state(
     message: str = "No data loaded yet",
