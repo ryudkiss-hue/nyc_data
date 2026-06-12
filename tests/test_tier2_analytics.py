@@ -7,7 +7,6 @@ import os
 import pandas as pd
 import pytest
 
-
 class TestSLABreachForecasting:
     """Test SLA breach forecasting functionality."""
 
@@ -75,7 +74,6 @@ class TestSLABreachForecasting:
         assert result["ci_lower"] <= result["breach_rate"]
         assert result["breach_rate"] <= result["ci_upper"]
 
-
 class TestExecutiveSummary:
     """Test executive summary generation."""
 
@@ -115,7 +113,6 @@ class TestExecutiveSummary:
         ]
         result = _generate_executive_summary(metrics, findings)
         assert isinstance(result, str)
-
 
 class TestDrillDownLogic:
     """Test drill-down navigation logic."""
@@ -171,7 +168,6 @@ class TestDrillDownLogic:
         assert len(inspector_summary) == 2
         assert inspector_summary.iloc[0]["_inspector"] == "B"
         assert inspector_summary.iloc[0]["inspections"] == 3
-
 
 class TestDateRangeFiltering:
     """Test date range filtering functionality."""

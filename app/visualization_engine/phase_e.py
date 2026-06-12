@@ -9,7 +9,6 @@ Data source: app_queries.v_phase_e_decomposition
 All charts include summary statistics below.
 """
 import logging
-from typing import Tuple
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -20,7 +19,6 @@ from socrata_toolkit.motherduck.connector import MotherDuckConnection
 from .statistics_display import StatisticsPanel
 
 logger = logging.getLogger(__name__)
-
 
 class PhaseEVisualizations:
     """Renders all 16 Phase E visualizations (time series decomposition).
@@ -61,7 +59,7 @@ class PhaseEVisualizations:
         logger.info(f"Fetched {len(self.data)} rows from Phase E view")
         return self.data
 
-    def render_main_4panel_decomposition(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_main_4panel_decomposition(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render main 4-panel time series decomposition (all boroughs aggregated).
 
         Returns:
@@ -181,7 +179,7 @@ class PhaseEVisualizations:
 
         return fig, stats
 
-    def render_borough_4panel_decomposition(self, borough: str) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_borough_4panel_decomposition(self, borough: str) -> tuple[go.Figure, StatisticsPanel]:
         """Render 4-panel decomposition for a specific borough.
 
         Args:
@@ -277,7 +275,7 @@ class PhaseEVisualizations:
 
         return fig, stats
 
-    def render_forecast_chart(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_forecast_chart(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render forecast chart with confidence bands.
 
         Returns:
@@ -368,7 +366,7 @@ class PhaseEVisualizations:
 
         return fig, stats
 
-    def render_seasonal_strength_gauge(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_seasonal_strength_gauge(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render gauge showing seasonal strength.
 
         Returns:
@@ -424,7 +422,7 @@ class PhaseEVisualizations:
 
         return fig, stats
 
-    def render_trend_analysis(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def render_trend_analysis(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render trend analysis chart.
 
         Returns:
@@ -520,7 +518,7 @@ class PhaseEVisualizations:
         logger.info(f"Rendered {len(charts)} Phase E visualizations")
         return charts
 
-    def _render_residual_acf(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def _render_residual_acf(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render residual autocorrelation function.
 
         Returns:
@@ -574,7 +572,7 @@ class PhaseEVisualizations:
 
         return fig, stats
 
-    def _render_seasonal_subseries(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def _render_seasonal_subseries(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render seasonal subseries plot.
 
         Returns:
@@ -615,7 +613,7 @@ class PhaseEVisualizations:
 
         return fig, stats
 
-    def _render_forecast_accuracy(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def _render_forecast_accuracy(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render forecast accuracy metrics.
 
         Returns:
@@ -669,7 +667,7 @@ class PhaseEVisualizations:
 
         return fig, stats
 
-    def _render_borough_trend_comparison(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def _render_borough_trend_comparison(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render comparison of trends across boroughs.
 
         Returns:
@@ -709,7 +707,7 @@ class PhaseEVisualizations:
 
         return fig, stats
 
-    def _render_violation_volatility(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def _render_violation_volatility(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render violation volatility over time.
 
         Returns:
@@ -755,7 +753,7 @@ class PhaseEVisualizations:
 
         return fig, stats
 
-    def _render_forecast_vs_actual(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def _render_forecast_vs_actual(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render forecast vs actual comparison.
 
         Returns:
@@ -816,7 +814,7 @@ class PhaseEVisualizations:
 
         return fig, stats
 
-    def _render_seasonal_pattern_heatmap(self) -> Tuple[go.Figure, StatisticsPanel]:
+    def _render_seasonal_pattern_heatmap(self) -> tuple[go.Figure, StatisticsPanel]:
         """Render heatmap of seasonal patterns (day of week × week).
 
         Returns:
@@ -864,6 +862,5 @@ class PhaseEVisualizations:
         )
 
         return fig, stats
-
 
 import numpy as np

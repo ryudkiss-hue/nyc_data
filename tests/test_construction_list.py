@@ -10,7 +10,6 @@ from socrata_toolkit.engineering import (
     summarize_construction_list,
 )
 
-
 def _sample_inspections():
     return pd.DataFrame(
         {
@@ -34,7 +33,6 @@ def _sample_inspections():
         }
     )
 
-
 def test_compute_priority_score():
     row = pd.Series(
         {
@@ -50,7 +48,6 @@ def test_compute_priority_score():
     assert 0 <= score <= 1
     assert score > 0.3  # high severity + old + ADA + spine
 
-
 def test_prioritize_construction_list():
     df = _sample_inspections()
     result = prioritize_construction_list(df)
@@ -58,7 +55,6 @@ def test_prioritize_construction_list():
     assert len(result) == 4
     # First row should be highest priority
     assert result.iloc[0]["_priority_score"] >= result.iloc[-1]["_priority_score"]
-
 
 def test_detect_construction_conflicts():
     construction = _sample_inspections()
@@ -69,14 +65,12 @@ def test_detect_construction_conflicts():
     assert len(result.clean) == 2
     assert len(result.conflicts) == 2
 
-
 def test_detect_construction_conflicts_no_overlap():
     construction = _sample_inspections()
     permits = pd.DataFrame({"location_id": ["X1", "X2"]})
     result = detect_construction_conflicts(construction, permits)
     assert result.conflict_count == 0
     assert len(result.clean) == 4
-
 
 def test_classify_scope():
     df = _sample_inspections()
@@ -86,14 +80,12 @@ def test_classify_scope():
     assert result.loc[2, "_scope"] == "tree_pit"  # "Tree pit repair"
     assert result.loc[3, "_scope"] == "curb_replacement"  # "Curb replacement"
 
-
 def test_flag_ada_locations():
     df = _sample_inspections()
     df = classify_scope(df)
     result = flag_ada_locations(df)
     assert "_ada_required" in result.columns
     assert bool(result.loc[1, "_ada_required"]) is True  # ADA ramp
-
 
 def test_summarize_construction_list():
     df = _sample_inspections()
@@ -105,7 +97,6 @@ def test_summarize_construction_list():
     assert summary.total_estimated_sqft == 650.0
     assert len(summary.by_borough) > 0
 
-
 def test_export_construction_list_csv(tmp_path):
     df = _sample_inspections()
     path = str(tmp_path / "list.csv")
@@ -113,7 +104,6 @@ def test_export_construction_list_csv(tmp_path):
     assert result == path
     loaded = pd.read_csv(path)
     assert len(loaded) == 4
-
 
 def test_export_construction_list_json(tmp_path):
     df = _sample_inspections()

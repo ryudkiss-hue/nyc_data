@@ -15,11 +15,9 @@ from click.testing import CliRunner
 
 from socrata_toolkit.core.cli import main
 
-
 @pytest.fixture
 def runner():
     return CliRunner()
-
 
 def _fake_client(batches=None, geojson=None, metadata=None):
     """Build a fake SocrataClient."""
@@ -32,7 +30,6 @@ def _fake_client(batches=None, geojson=None, metadata=None):
     meta.summary.return_value = {"name": "X"}
     client.get_metadata.return_value = meta
     return client
-
 
 class TestFetchCommand:
     def test_fetch_json(self, runner, tmp_path):
@@ -87,7 +84,6 @@ class TestFetchCommand:
         result = runner.invoke(main, ["fetch", "d", "abc1-2345"])
         assert result.exit_code == 2
 
-
 class TestUpsertPgCommand:
     def test_upsert_pg(self, runner):
         client = _fake_client(batches=[[{"id": 1}]])
@@ -126,7 +122,6 @@ class TestUpsertPgCommand:
         )
         assert result.exit_code == 2
 
-
 class TestUpsertMongoCommand:
     def test_upsert_mongo_batches(self, runner):
         client = _fake_client(batches=[[{"id": 1}]])
@@ -157,7 +152,6 @@ class TestUpsertMongoCommand:
             )
         assert result.exit_code == 0
         mock_mongo.upsert_geojson.assert_called_once()
-
 
 class TestPipelineCommand:
     def test_pipeline_streaming_dry_run(self, runner, tmp_path):

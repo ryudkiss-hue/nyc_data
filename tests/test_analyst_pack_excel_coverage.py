@@ -6,7 +6,6 @@ from unittest.mock import patch
 
 import pandas as pd
 
-
 class TestDataframeToExcel:
     def test_normal_write(self, tmp_path):
         from socrata_toolkit.analyst.pack import _dataframe_to_excel

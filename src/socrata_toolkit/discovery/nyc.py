@@ -37,7 +37,6 @@ class DatasetConfig:
     geo_columns: dict[str, str] | None = None
     column_mapping: dict[str, str] = field(default_factory=dict)
 
-
 #: Registry of pre-configured NYC datasets relevant to DOT sidewalk work.
 DATASETS: dict[str, DatasetConfig] = {
     "311_service_requests": DatasetConfig(
@@ -95,7 +94,6 @@ DATASETS: dict[str, DatasetConfig] = {
     ),
 }
 
-
 def fetch_dataset(
     dataset_key: str,
     max_rows: int = 10000,
@@ -118,7 +116,6 @@ def fetch_dataset(
     client = SocrataClient()
     return client.fetch_dataframe(ds.domain, ds.fourfour, where=where, max_rows=max_rows, **kwargs)
 
-
 def fetch_sidewalk_complaints(
     max_rows: int = 1000,
     since: str | None = None,
@@ -133,11 +130,9 @@ def fetch_sidewalk_complaints(
     where = " AND ".join(where_parts)
     return fetch_dataset("311_service_requests", max_rows=max_rows, where=where)
 
-
 def fetch_active_permits(max_rows: int = 5000) -> pd.DataFrame:
     """Convenience: fetch currently active DOT permits for conflict detection."""
     return fetch_dataset("dot_permits", max_rows=max_rows)
-
 
 def list_available_datasets() -> list[dict[str, str]]:
     """List all pre-configured datasets with their descriptions."""

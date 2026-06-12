@@ -30,7 +30,6 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-
 class RecordType(Enum):
     """Classification of record type."""
     INSPECTION = "inspection"
@@ -41,13 +40,11 @@ class RecordType(Enum):
     APPEAL = "appeal"
     UNKNOWN = "unknown"
 
-
 class Sensitivity(Enum):
     """Data sensitivity classification."""
     PUBLIC = "public"              # Aggregated, no PII
     SENSITIVE = "sensitive"        # Location/building identifiers
     PROTECTED = "protected"        # Inspector names, personal data, legal hold
-
 
 class RetentionRequirement(Enum):
     """Retention period classification."""
@@ -55,13 +52,11 @@ class RetentionRequirement(Enum):
     EXTENDED = "extended"          # 7 years
     INDEFINITE = "indefinite"      # Forever (litigation hold)
 
-
 class ComplianceStatus(Enum):
     """Record compliance status."""
     COMPLIANT = "compliant"
     AT_RISK = "at_risk"
     NON_COMPLIANT = "non_compliant"
-
 
 @dataclass
 class AuditTrailMetrics:
@@ -83,7 +78,6 @@ class AuditTrailMetrics:
             and self.audit_entries >= self.total_changes
         )
 
-
 @dataclass
 class LegalHoldMetrics:
     """Raw metrics for legal hold classification."""
@@ -100,7 +94,6 @@ class LegalHoldMetrics:
     data_integrity_checks_passed: bool
     error_message: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
-
 
 @dataclass
 class LegalHoldReport:
@@ -138,7 +131,6 @@ class LegalHoldReport:
             "recommendations": self.recommendations,
             "metadata": self.metadata,
         }
-
 
 class LegalHoldClassifier:
     """Classify records for litigation hold and legal compliance.

@@ -64,7 +64,6 @@ _connection: Optional[duckdb.DuckDBPyConnection] = None
 _connection_path: Optional[str] = None
 _connection_lock = threading.Lock()
 
-
 def get_duckdb_connection(db_path: str = DEFAULT_DB_PATH) -> duckdb.DuckDBPyConnection:
     """Get or create the module-level DuckDB connection.
 
@@ -88,7 +87,6 @@ def get_duckdb_connection(db_path: str = DEFAULT_DB_PATH) -> duckdb.DuckDBPyConn
         _connection_path = db_path
         return _connection
 
-
 def reset_connection() -> None:
     """Close and clear the module-level connection (used by tests)."""
     global _connection, _connection_path
@@ -101,7 +99,6 @@ def reset_connection() -> None:
         _connection = None
         _connection_path = None
 
-
 def initialize_database() -> dict:
     """Create the raw, staging, and analytics schemas if they don't exist."""
     conn = get_duckdb_connection(_connection_path or DEFAULT_DB_PATH)
@@ -109,7 +106,6 @@ def initialize_database() -> dict:
     for schema in schemas:
         conn.execute(f"CREATE SCHEMA IF NOT EXISTS {schema}")
     return {"status": "initialized", "schemas": schemas}
-
 
 def load_raw_from_socrata(dataset_key: str, max_rows: int | None = None) -> dict:
     """Fetch a dataset from data.cityofnewyork.us into raw.<dataset_key>.
@@ -150,7 +146,6 @@ def load_raw_from_socrata(dataset_key: str, max_rows: int | None = None) -> dict
         logger.error(f"Failed to load {dataset_key} ({fourfour}): {e}")
         return {"status": "error", "error": str(e), "table": table}
 
-
 # Candidate columns per dataset — real Socrata schemas vary, so staging SQL is
 # built defensively from whatever columns actually exist in the raw table.
 _INSPECTION_KEY_CANDIDATES = ["objectid", "object_id", "id"]
@@ -173,11 +168,9 @@ _RAMP_DATE_CANDIDATES = [
 ]
 _VIOLATION_JOIN_CANDIDATES = ["block_id", "location", "bbl", "borough_block_lot"]
 
-
 def _existing_columns(conn: duckdb.DuckDBPyConnection, table: str) -> set[str]:
     """Return the set of column names for a table (raises if table is missing)."""
     return {row[0] for row in conn.execute(f"DESCRIBE {table}").fetchall()}
-
 
 def _table_exists(conn: duckdb.DuckDBPyConnection, schema: str, name: str) -> bool:
     row = conn.execute(
@@ -187,10 +180,8 @@ def _table_exists(conn: duckdb.DuckDBPyConnection, schema: str, name: str) -> bo
     ).fetchone()
     return bool(row[0])
 
-
 def _pick_column(columns: set[str], candidates: list[str]) -> Optional[str]:
     return next((c for c in candidates if c in columns), None)
-
 
 def _dedup_subquery(
     raw_table: str, key_col: Optional[str], date_col: Optional[str]
@@ -209,7 +200,6 @@ def _dedup_subquery(
         f"FROM {raw_table}) WHERE _rn = 1"
     )
     return sql, None
-
 
 def _stage_table(
     raw_table: str,
@@ -252,7 +242,6 @@ def _stage_table(
     except Exception as e:
         logger.error(f"Failed to stage {staging_table} from {raw_table}: {e}")
         return {"status": "error", "error": str(e), "table": staging_table}
-
 
 def stage_inspections() -> dict:
     """Stage raw.inspection into staging.inspections.
@@ -300,7 +289,6 @@ def stage_inspections() -> dict:
         logger.error(f"Failed to join violations into staging.inspections: {e}")
         return {"status": "error", "error": str(e), "table": "staging.inspections"}
 
-
 def stage_permits() -> dict:
     """Stage raw.permits into staging.permits (dedup on permit key)."""
     return _stage_table(
@@ -310,7 +298,6 @@ def stage_permits() -> dict:
         _PERMIT_DATE_CANDIDATES,
     )
 
-
 def stage_ramps() -> dict:
     """Stage raw.ramp_progress into staging.ramps (dedup on ramp key)."""
     return _stage_table(
@@ -319,7 +306,6 @@ def stage_ramps() -> dict:
         _RAMP_KEY_CANDIDATES,
         _RAMP_DATE_CANDIDATES,
     )
-
 
 def stage_dataset(dataset_key: str, conn: Optional[duckdb.DuckDBPyConnection] = None) -> int:
     """Generic staging for any dataset using config-driven column discovery.
@@ -372,7 +358,6 @@ def stage_dataset(dataset_key: str, conn: Optional[duckdb.DuckDBPyConnection] = 
         raise Exception(f"Failed to stage {dataset_key}: {result.get('error')}")
 
     return result["row_count_staged"]
-
 
 class DuckDBPipeline:
     """Orchestrate raw → staging → analytics ELT workflow.

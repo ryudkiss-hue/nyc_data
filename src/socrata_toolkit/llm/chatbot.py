@@ -37,7 +37,6 @@ class ChatMessage:
     timestamp: str
     metadata: dict[str, Any] | None = None
 
-
 @dataclass
 class DatasetContext:
     """Context about a dataset for the chatbot."""
@@ -48,7 +47,6 @@ class DatasetContext:
     sample_values: dict[str, list[Any]] | None = None
     quality_score: float | None = None
     row_count: int | None = None
-
 
 class SocrataLLMChatbot:
     """
@@ -326,7 +324,6 @@ Format: {{"feasible": true/false, "reason": "...", "suggestions": []}}""")
         chain = prompt | self.llm | JsonOutputParser()
         return chain.invoke({})
 
-
 class DataQualityAssistant(SocrataLLMChatbot):
     """
     Specialized chatbot for data quality assessment and monitoring.
@@ -396,7 +393,6 @@ Return JSON with validation list:
         chain = prompt | self.llm | JsonOutputParser()
         result = chain.invoke({})
         return result.get("validations", [])
-
 
 class AnalyticsAdvisor(SocrataLLMChatbot):
     """

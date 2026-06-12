@@ -38,10 +38,8 @@ from ..discovery.schema import BackwardCompatibilityChecker, SchemaRegistry, Sch
 def _client() -> SocrataClient:
     return SocrataClient(SocrataConfig())
 
-
 CFG = load_local_config()
 LOGGER = get_logger()
-
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.option("-v", "--verbose", count=True, help="Increase verbosity (-v for INFO, -vv for DEBUG)")
@@ -64,7 +62,6 @@ def main(ctx, verbose: int, log_level: str | None) -> None:
     ctx.ensure_object(dict)
     ctx.obj["log_level"] = level
 
-
 @main.command()
 @click.argument("query", required=False)
 @click.option("--domain")
@@ -82,7 +79,6 @@ def search(query, domain, category, tags, order, limit, json_out):
         return
     click.echo(json.dumps(payload, indent=2))
 
-
 @main.command("meta")
 @click.argument("domain")
 @click.argument("fourfour")
@@ -96,7 +92,6 @@ def meta_cmd(domain, fourfour, columns_only, json_out):
             json.dump(payload, f, indent=2)
         return
     click.echo(json.dumps(payload, indent=2))
-
 
 @main.command("fetch")
 @click.argument("domain")
@@ -126,7 +121,6 @@ def fetch_cmd(domain, fourfour, fmt, out, where, select, order, q, max_rows, inc
         meta = c.get_metadata(domain, fourfour) if include_meta else None
         XLSXExporter().write(df, out, meta=meta)
 
-
 @main.command("upsert-pg")
 @click.argument("domain")
 @click.argument("fourfour")
@@ -141,7 +135,6 @@ def upsert_pg(domain, fourfour, dsn, table, conflict_col, save_meta):
         if save_meta:
             pg.upsert_metadata(c.get_metadata(domain, fourfour))
     click.echo(f"Upserted {total} rows")
-
 
 @main.command("upsert-mongo")
 @click.argument("domain")
@@ -159,7 +152,6 @@ def upsert_mongo(domain, fourfour, uri, db_name, collection, conflict_field, geo
         else:
             total = mongo.upsert_batches(c.fetch_json(domain, fourfour), collection=collection, conflict_field=conflict_field)
     click.echo(f"Upserted {total} rows")
-
 
 @main.command("pipeline")
 @click.argument("domain")
@@ -275,7 +267,6 @@ def pipeline(domain, fourfour, where, select, order, q, max_rows, pg_dsn, pg_tab
     LOGGER.info("Pipeline complete for %s rows. Report: %s", len(rows), report_path)
     click.echo(f"Pipeline complete for {len(rows)} rows")
 
-
 @main.command("analyze")
 @click.argument("domain")
 @click.argument("fourfour")
@@ -318,7 +309,6 @@ def analyze_cmd(domain, fourfour, where, select, order, q, max_rows, key_column,
     }
     click.echo(json.dumps(payload, indent=2))
 
-
 @main.command("text-insights")
 @click.argument("domain")
 @click.argument("fourfour")
@@ -351,7 +341,6 @@ def text_insights_cmd(domain, fourfour, text_column, geo_column, max_rows, out, 
         tagged.to_json(out, orient="records")
     click.echo(json.dumps(payload, indent=2))
 
-
 @main.command("llm-augment")
 @click.argument("domain")
 @click.argument("fourfour")
@@ -374,7 +363,6 @@ def llm_augment_cmd(domain, fourfour, text_column, endpoint, model, temperature,
     tagged.to_json(out, orient="records")
     click.echo(f"LLM-augmented rows written to {out}")
 
-
 @main.command("spatial-join")
 @click.option("--left-json", type=click.Path(exists=True), required=True)
 @click.option("--right-json", type=click.Path(exists=True), required=True)
@@ -389,7 +377,6 @@ def spatial_join_cmd(left_json, right_json, left_geom_col, right_geom_col, out):
     result = spatial_intersects_join(left, right, left_geom_col=left_geom_col, right_geom_col=right_geom_col)
     result.joined.to_json(out, orient="records")
     click.echo(json.dumps({"conflict_rate": result.conflict_rate, "overlap_count": result.overlap_count, "out": out}, indent=2))
-
 
 @main.command("nlp-analyze")
 @click.option("--text", required=True)
@@ -416,7 +403,6 @@ def nlp_analyze_cmd(text, translate_lang):
     if translate_lang:
         payload["translation"] = translate_text(text, target=translate_lang)
     click.echo(json.dumps(payload, indent=2))
-
 
 @main.command("conflict")
 @click.option("--proposed-domain", help="Domain for proposed features (overrides file)")
@@ -486,7 +472,6 @@ def conflict_cmd(proposed_domain, proposed_fourfour, proposed_file, proposed_geo
         XLSXExporter().write(clist, out_xlsx)
         click.echo(f"Wrote XLSX to {out_xlsx}")
 
-
 @main.command("batch-search")
 @click.argument("domain")
 @click.argument("fourfour")
@@ -516,7 +501,6 @@ def batch_search_cmd(domain, fourfour, field, file_path, out):
     else:
         click.echo(json.dumps(rows, indent=2))
 
-
 @main.command("readiness")
 @click.option("--pytest", "run_pytest", is_flag=True, help="Run full test suite (slower).")
 def readiness_cmd(run_pytest: bool):
@@ -524,7 +508,6 @@ def readiness_cmd(run_pytest: bool):
     from .readiness import readiness_json
 
     click.echo(readiness_json(run_pytest=run_pytest))
-
 
 @main.command("doctor")
 @click.option("--check-db", is_flag=True)
@@ -622,14 +605,11 @@ def doctor_cmd(check_db, checklist):
         )
     )
 
-
 # ── Review / decisions store ─────────────────────────────────────────────────
-
 
 @main.group(name="review")
 def review_group() -> None:
     """Review & decision tracking for conflicts and approvals."""
-
 
 def _default_pack_date() -> str:
     try:
@@ -641,7 +621,6 @@ def _default_pack_date() -> str:
         return str(st.get("last_run_date") or st.get("run_date") or "")
     except Exception:
         return ""
-
 
 @review_group.command("list")
 @click.option("--pack-date", default="", help="Pack date (YYYY-MM-DD). Defaults to last run.")
@@ -670,7 +649,6 @@ def review_list(pack_date: str, kind: str, status: str, q: str, limit: int, json
         click.echo(f"Wrote {len(df)} decisions to {json_out}")
         return
     click.echo(df.to_string(index=False) if not df.empty else "(no decisions)")
-
 
 @review_group.command("set")
 @click.option("--pack-date", default="", help="Pack date (YYYY-MM-DD). Defaults to last run.")
@@ -710,7 +688,6 @@ def review_set(pack_date: str, kind: str, key_type: str, key_value: str, status:
             )
     click.echo("OK")
 
-
 @review_group.command("export")
 @click.option("--pack", "pack_dir", required=True, type=click.Path(exists=True, file_okay=False))
 @click.option("--pack-date", default="", help="Pack date (YYYY-MM-DD). Defaults to pack folder name.")
@@ -728,7 +705,6 @@ def review_export(pack_dir: str, pack_date: str) -> None:
         click.echo("No decisions found to export.")
         return
     click.echo(json.dumps(arts, indent=2))
-
 
 @main.command("migrate")
 @click.option("--dsn", envvar="PG_DSN", help="Postgres DSN to apply migrations to")
@@ -757,7 +733,6 @@ def migrate_cmd(dsn, migrations_dir):
     cur.close()
     conn.close()
     click.echo("Migrations applied")
-
 
 @main.command("alerts")
 @click.option("--preview", is_flag=True, help="Preview alerts without sending or persisting")
@@ -829,7 +804,6 @@ def alerts_cmd(preview, send, persist, pg_dsn, table, corridor_table, buffer_m, 
 
     click.echo(json.dumps({"alerts": len(alerts_created)}))
 
-
 @main.command("outliers")
 @click.argument("domain")
 @click.argument("fourfour")
@@ -852,7 +826,6 @@ def outliers_cmd(domain, fourfour, method, max_rows, out):
             json.dump(payload, f, indent=2)
     click.echo(json.dumps(payload, indent=2))
 
-
 @main.command("correlations")
 @click.argument("domain")
 @click.argument("fourfour")
@@ -871,7 +844,6 @@ def correlations_cmd(domain, fourfour, method, threshold, max_rows, out):
         with open(out, "w", encoding="utf-8") as f:
             json.dump(payload, f, indent=2)
     click.echo(json.dumps(payload, indent=2))
-
 
 @main.command("quality-score")
 @click.argument("domain")
@@ -901,7 +873,6 @@ def quality_score_cmd(domain, fourfour, key_column, date_column, freshness_days,
     }
     click.echo(json.dumps(payload, indent=2))
 
-
 @main.command("schema-drift")
 @click.argument("domain")
 @click.argument("fourfour")
@@ -925,7 +896,6 @@ def schema_drift_cmd(domain, fourfour, baseline, save_snapshot, max_rows):
     if save_snapshot:
         save_schema_snapshot(df, save_snapshot)
         click.echo(f"Schema snapshot saved to {save_snapshot}")
-
 
 @main.command("visualize")
 @click.argument("domain")
@@ -953,14 +923,12 @@ def visualize_cmd(domain, fourfour, chart, column, out, max_rows):
         viz.quality_dashboard(df, path_prefix=out.replace(".png", ""))
     click.echo(f"Chart saved to {out}")
 
-
 @main.group(name="schema")
 @click.pass_context
 def schema_group(ctx):
     """Manage dataset schemas and versioning."""
     ctx.ensure_object(dict)
     ctx.obj["registry"] = SchemaRegistry()
-
 
 @schema_group.command(name="list")
 @click.argument("dataset_id")
@@ -990,7 +958,6 @@ def schema_list_cmd(ctx, dataset_id, json_out):
         click.echo(f"Schema versions exported to {json_out}")
     else:
         click.echo(json.dumps(payload, indent=2))
-
 
 @schema_group.command(name="current")
 @click.argument("dataset_id")
@@ -1028,7 +995,6 @@ def schema_current_cmd(ctx, dataset_id, json_out):
         click.echo(f"Schema exported to {json_out}")
     else:
         click.echo(json.dumps(payload, indent=2))
-
 
 @schema_group.command(name="diff")
 @click.argument("dataset_id")
@@ -1100,7 +1066,6 @@ def schema_diff_cmd(ctx, dataset_id, version1, version2):
             "changes": changes,
         }, indent=2))
 
-
 @schema_group.command(name="validate")
 @click.argument("dataset_id")
 @click.argument("jsonl_file", type=click.Path(exists=True))
@@ -1138,7 +1103,6 @@ def schema_validate_cmd(ctx, dataset_id, jsonl_file):
             click.echo(f"  - {error}")
         if len(errors) > 10:
             click.echo(f"  ... and {len(errors) - 10} more")
-
 
 @schema_group.command(name="check-compatibility")
 @click.argument("dataset_id")
@@ -1184,7 +1148,6 @@ def schema_check_compat_cmd(ctx, dataset_id, jsonl_file, strict):
     else:
         click.echo("  No violations detected.")
 
-
 # ============================================================================
 # Material Standards and Compliance Commands
 # ============================================================================
@@ -1194,7 +1157,6 @@ def schema_check_compat_cmd(ctx, dataset_id, jsonl_file, strict):
 def material_group(ctx):
     """NYC Street Design Manual material standards and specifications."""
     ctx.ensure_object(dict)
-
 
 @material_group.command(name="list")
 @click.option("--category", type=click.Choice(["asphalt", "concrete", "permeable", "specialty", "brick_stone", "metal", "composite"]), help="Filter by material category")
@@ -1234,7 +1196,6 @@ def material_list(ctx, category, json_out):
     except Exception as e:
         raise click.ClickException(f"Error listing materials: {e}")
 
-
 @material_group.command(name="show")
 @click.argument("material_id")
 @click.option("--json-out", type=click.Path())
@@ -1269,7 +1230,6 @@ def material_show(material_id, json_out):
     except Exception as e:
         raise click.ClickException(f"Error showing material: {e}")
 
-
 @material_group.command(name="maintenance-schedule")
 @click.argument("material_id")
 def material_maintenance_schedule(material_id):
@@ -1290,7 +1250,6 @@ def material_maintenance_schedule(material_id):
             click.echo(f"    {activity}: {description}")
     except Exception as e:
         raise click.ClickException(f"Error showing maintenance schedule: {e}")
-
 
 @material_group.command(name="ada-rules")
 @click.argument("material_id")
@@ -1315,13 +1274,11 @@ def material_ada_rules(material_id):
     except Exception as e:
         raise click.ClickException(f"Error showing ADA rules: {e}")
 
-
 @main.group(name="compliance")
 @click.pass_context
 def compliance_group(ctx):
     """Material and ADA compliance checking and reporting."""
     ctx.ensure_object(dict)
-
 
 @compliance_group.command(name="check")
 @click.argument("material_id")
@@ -1369,7 +1326,6 @@ def compliance_check(material_id, condition, json_out):
     except Exception as e:
         raise click.ClickException(f"Error checking compliance: {e}")
 
-
 @compliance_group.command(name="ada-violations")
 @click.option("--severity", type=click.Choice(["critical", "high", "medium", "low"]), help="Filter by severity")
 @click.option("--json-out", type=click.Path())
@@ -1401,7 +1357,6 @@ def compliance_ada_violations(severity, json_out):
                 click.echo(f"{rule['rule_id']:<20} {rule['title']:<40} [{rule['severity']:<8}]")
     except Exception as e:
         raise click.ClickException(f"Error listing ADA violations: {e}")
-
 
 @compliance_group.command(name="report")
 @click.option("--material", type=click.Choice(["asphalt", "concrete", "permeable", "specialty", "brick_stone", "metal", "composite"]), help="Filter by material category")
@@ -1437,13 +1392,11 @@ def compliance_report(material, json_out):
     except Exception as e:
         raise click.ClickException(f"Error generating compliance report: {e}")
 
-
 # Lineage Management Commands
 @main.group(name="lineage", help="Data lineage and transformation DAG management")
 def lineage_group():
     """Data lineage and DAG tracking commands."""
     pass
-
 
 @lineage_group.command(name="nodes")
 @click.option("--type", type=str, help="Filter by node type (ingestion, transformation, sink, etc.)")
@@ -1486,7 +1439,6 @@ def lineage_nodes(type, owner, tag, output_json):
     except Exception as e:
         raise click.ClickException(f"Error listing lineage nodes: {e}")
 
-
 @lineage_group.command(name="node")
 @click.argument("node_id")
 @click.option("--full", is_flag=True, help="Show full execution history")
@@ -1523,7 +1475,6 @@ def lineage_node(node_id, full):
     except Exception as e:
         raise click.ClickException(f"Error getting node info: {e}")
 
-
 @lineage_group.command(name="sources")
 @click.argument("node_id")
 def lineage_sources(node_id):
@@ -1548,7 +1499,6 @@ def lineage_sources(node_id):
     except Exception as e:
         raise click.ClickException(f"Error finding sources: {e}")
 
-
 @lineage_group.command(name="consumers")
 @click.argument("node_id")
 def lineage_consumers(node_id):
@@ -1572,7 +1522,6 @@ def lineage_consumers(node_id):
                 click.echo(f"  {consumer_id:<40} {node.name:<40} ({node.node_type.value})")
     except Exception as e:
         raise click.ClickException(f"Error finding consumers: {e}")
-
 
 @lineage_group.command(name="path")
 @click.argument("source_id")
@@ -1601,7 +1550,6 @@ def lineage_path(source_id, target_id):
     except Exception as e:
         raise click.ClickException(f"Error finding path: {e}")
 
-
 @lineage_group.command(name="impact")
 @click.argument("node_id")
 def lineage_impact(node_id):
@@ -1628,7 +1576,6 @@ def lineage_impact(node_id):
                 click.echo(f"    {i}. {step}")
     except Exception as e:
         raise click.ClickException(f"Error analyzing impact: {e}")
-
 
 @lineage_group.command(name="dag")
 @click.option("--format", type=click.Choice(["json", "graphml", "mermaid", "dot", "ascii"]), default="ascii", help="Export format")
@@ -1663,7 +1610,6 @@ def lineage_dag(format, output):
     except Exception as e:
         raise click.ClickException(f"Error exporting DAG: {e}")
 
-
 @lineage_group.command(name="freshness")
 @click.argument("node_id")
 @click.option("--stale-hours", type=float, default=24, help="Hours threshold for staleness")
@@ -1687,7 +1633,6 @@ def lineage_freshness(node_id, stale_hours):
             click.echo("  Status: NEVER EXECUTED")
     except Exception as e:
         raise click.ClickException(f"Error checking freshness: {e}")
-
 
 @lineage_group.command(name="stats")
 def lineage_stats():
@@ -1713,7 +1658,6 @@ def lineage_stats():
     except Exception as e:
         raise click.ClickException(f"Error getting statistics: {e}")
 
-
 # ============================================================================
 # Observability Commands
 # ============================================================================
@@ -1722,7 +1666,6 @@ def lineage_stats():
 def observability_group():
     """Observability and monitoring commands."""
     pass
-
 
 @observability_group.command(name="status")
 def observability_status():
@@ -1761,7 +1704,6 @@ def observability_status():
 
     except Exception as e:
         raise click.ClickException(f"Error getting observability status: {e}")
-
 
 @observability_group.command(name="logs")
 @click.option("--level", type=click.Choice(["DEBUG", "INFO", "WARN", "ERROR", "CRITICAL"]), help="Filter by log level")
@@ -1803,7 +1745,6 @@ def observability_logs(level, correlation_id, limit, dataset_id, json_format):
     except Exception as e:
         raise click.ClickException(f"Error querying logs: {e}")
 
-
 @observability_group.command(name="metrics")
 @click.option("--metric", help="Specific metric name")
 @click.option("--format", type=click.Choice(["text", "json", "prometheus"]), default="text", help="Output format")
@@ -1840,7 +1781,6 @@ Timestamp: {summary['timestamp']}"""
     except Exception as e:
         raise click.ClickException(f"Error exporting metrics: {e}")
 
-
 @observability_group.command(name="sla-report")
 @click.option("--window", type=click.Choice(["5m", "1h", "1d"]), default="1h", help="Time window")
 @click.option("--json", "json_format", is_flag=True, help="Output as JSON")
@@ -1872,7 +1812,6 @@ def observability_sla_report(window, json_format):
 
     except Exception as e:
         raise click.ClickException(f"Error generating SLA report: {e}")
-
 
 @observability_group.command(name="health")
 @click.option("--detailed", is_flag=True, help="Show detailed component info")
@@ -1909,7 +1848,6 @@ def observability_health(detailed, json_format):
 
     except Exception as e:
         raise click.ClickException(f"Error checking health: {e}")
-
 
 @observability_group.command(name="export")
 @click.argument("format", type=click.Choice(["prometheus", "json", "csv"]))
@@ -1961,7 +1899,6 @@ def observability_export(format, output, export_type):
     except Exception as e:
         raise click.ClickException(f"Error exporting data: {e}")
 
-
 @observability_group.command(name="trace")
 @click.argument("trace_id")
 @click.option("--json", "json_format", is_flag=True, help="Output as JSON")
@@ -2000,14 +1937,11 @@ def observability_trace(trace_id, json_format):
     except Exception as e:
         raise click.ClickException(f"Error retrieving trace: {e}")
 
-
 # ── Analyst Autopilot ─────────────────────────────────────────────────────────
-
 
 @click.group("analyst")
 def analyst_group() -> None:
     """Analyst Autopilot — weekly pack workflow."""
-
 
 @analyst_group.command("init-config")
 @click.option(
@@ -2034,7 +1968,6 @@ def analyst_init_config(out_path: str) -> None:
         )
     click.echo(f"Wrote analyst profile template to {dest}")
 
-
 @analyst_group.command("run")
 @click.option("--profile", required=True, type=click.Path(exists=True), help="YAML analyst profile")
 @click.option("--dry-run", is_flag=True, help="Validate sources only; do not write pack")
@@ -2046,7 +1979,6 @@ def analyst_run(profile: str, dry_run: bool, offline: bool) -> None:
     result = run_analyst_pack(profile, dry_run=dry_run, offline=offline)
     click.echo(json.dumps({"pack_dir": str(result.pack_dir), "artifacts": result.artifacts, "warnings": result.warnings}, indent=2))
 
-
 @analyst_group.command("publish")
 @click.option("--profile", "publish_profile", required=True, type=click.Path(exists=True), help="YAML publish profile")
 @click.option("--pack", "pack_dir", required=True, type=click.Path(exists=True, file_okay=False), help="Analyst pack directory (outputs/analyst_pack/YYYY-MM-DD)")
@@ -2057,6 +1989,68 @@ def analyst_publish(publish_profile: str, pack_dir: str, dry_run: bool) -> None:
 
     report = publish_pack(pack_dir=pack_dir, profile_path=publish_profile, dry_run=dry_run)
     click.echo(json.dumps(report.to_dict(), indent=2, default=str))
+
+@analyst_group.command("construction-list")
+@click.option("--borough", default=None, help="Filter to one borough (MN/BX/BK/QN/SI)")
+@click.option("--min-z-score", default=2.0, type=float, help="Minimum z-score for inclusion")
+@click.option("--output", "-o", default="construction_list.xlsx", help="Output Excel path")
+def cmd_construction_list(borough: str, min_z_score: float, output: str) -> None:
+    """Generate Excel construction list from Phase D anomalies."""
+    from ..analyst.construction_list_generator import (
+        ConstructionListGenerator,
+        ConstructionListConfig,
+    )
+
+    try:
+        from app.services.motherduck_service import fetch_phase_d_results
+    except ImportError:
+        click.echo("MotherDuck service not available. Ensure app/ is installed.", err=True)
+        return
+
+    click.echo("Fetching Phase D anomaly results...")
+    df = fetch_phase_d_results({"borough": borough} if borough else {})
+    if df is None or df.empty:
+        click.echo("No Phase D results available. Run analytics pipeline first.", err=True)
+        return
+
+    config = ConstructionListConfig(borough_filter=borough, min_z_score=min_z_score)
+    gen = ConstructionListGenerator(config=config)
+    result = gen.build_from_phase_d(df)
+    gen.export_to_excel(result, output)
+    click.echo(f"✓ Construction list: {len(result)} locations → {output}")
+    click.echo(f"  Total estimated cost: ${result['estimated_cost'].sum():,.0f}")
+
+
+@analyst_group.command("ifa-budget")
+@click.option("--sample", default=500, type=int, help="Ramp_progress sample size")
+@click.option("--output", "-o", default="ifa_budget.pdf", help="Output PDF path")
+def cmd_ifa_budget(sample: int, output: str) -> None:
+    """Generate IFA Budget Justification PDF from ramp completion gap."""
+    from ..analyst.ifa_budget_justification import IFABudgetJustification
+    from ..engineering.ramp_analysis import RampCompletionReportGenerator
+    from ..core.client import SocrataClient, SocrataConfig
+
+    click.echo("Fetching ramp_progress from Socrata (fourfour: e7gc-ub6z)...")
+    try:
+        client = SocrataClient(SocrataConfig())
+        df = client.fetch_dataframe("data.cityofnewyork.us", "e7gc-ub6z", max_rows=sample)
+    except Exception as e:
+        click.echo(f"Failed to fetch ramp_progress: {e}", err=True)
+        return
+
+    gen_ramp = RampCompletionReportGenerator()
+    report = gen_ramp.generate(df, mode="sample", sample_size=sample, include_ci=True)
+
+    gen_ifa = IFABudgetJustification()
+    allocations = gen_ifa.compute_allocations(report.borough_stats)
+    gen_ifa.export_to_pdf(allocations, output)
+
+    total = gen_ifa.total_budget(allocations)
+    click.echo(f"✓ IFA budget justification: ${total:,.0f} total → {output}")
+    for a in allocations:
+        click.echo(
+            f"  {a.borough}: {a.ramps_remaining} ramps, ${a.total_cost_usd:,.0f} ({a.risk_level} risk)"
+        )
 
 
 @main.command("publish")
@@ -2070,9 +2064,7 @@ def publish_alias(publish_profile: str, pack_dir: str, dry_run: bool) -> None:
     report = publish_pack(pack_dir=pack_dir, profile_path=publish_profile, dry_run=dry_run)
     click.echo(json.dumps(report.to_dict(), indent=2, default=str))
 
-
 main.add_command(analyst_group)
-
 
 @main.command("setup")
 @click.option("--non-interactive", is_flag=True, help="Use environment variables (WIZARD_NONINTERACTIVE=1)")
@@ -2089,7 +2081,6 @@ def setup_cmd(non_interactive: bool, skip_checks: bool, force_profile: bool) -> 
     )
     _print_summary(summary)
 
-
 @main.command("wizard")
 @click.option("--non-interactive", is_flag=True, help="Use environment variables")
 @click.option("--skip-checks", is_flag=True, help="Skip connectivity validation")
@@ -2100,9 +2091,7 @@ def wizard_cmd(non_interactive: bool, skip_checks: bool) -> None:
     summary = run_wizard(non_interactive=non_interactive, skip_checks=skip_checks)
     _print_summary(summary)
 
-
 # ── Thin CLI commands (search/fetch/sync/status retained for nightly ops) ───
-
 
 @main.command()
 @click.option("--query", "-q", required=True, help="Search query")
@@ -2114,7 +2103,6 @@ def toolkit_search(query: str, domain: str, limit: int) -> None:
     results = c.search(query=query, domain=domain, limit=limit)
     for r in results:
         click.echo(f"{r.name} [{r.fourfour}] — {r.domain}")
-
 
 @main.command("sync")
 @click.option("--dataset", "-i", required=True)
@@ -2128,7 +2116,6 @@ def sync_cmd(dataset: str, domain: str, db_path: str, table: str, updated_col: s
 
     count = sync_dataset(domain, dataset, db_path, table, updated_col)
     click.echo(f"Sync complete: {count} rows processed into {table}")
-
 
 @main.command("db-status")
 @click.option("--db-path", default="data/local_db/nyc_mission_control.duckdb")
@@ -2145,7 +2132,6 @@ def db_status(db_path: str) -> None:
             click.echo(f"{name}: {count:,} rows")
     finally:
         mgr.close()
-
 
 # ============================================================================
 # Unit 7: conflict-detect, report, dataset health, cache refresh, export, nl-query
@@ -2169,7 +2155,6 @@ try:
 except ImportError:
     HAS_ANTHROPIC = False
 
-
 def _load_dataset_registry() -> dict:
     """Load datasets.yaml from the config directory."""
     import pathlib
@@ -2189,7 +2174,6 @@ def _load_dataset_registry() -> dict:
     raw = yaml.safe_load(config_path.read_text(encoding="utf-8"))
     return {k: dict(v) for k, v in raw["datasets"].items()}
 
-
 def _make_session():
     """Create a requests.Session with retry logic."""
     import requests
@@ -2202,7 +2186,6 @@ def _make_session():
     session.mount("https://", adapter)
     session.mount("http://", adapter)
     return session
-
 
 # ---------------------------------------------------------------------------
 # 1. conflict-detect
@@ -2304,7 +2287,6 @@ def conflict_detect_cmd(borough: str, buffer_dist: int, output_path: str | None)
     if conflicting_bbls:
         click.echo(f"Sample conflicting BBLs: {conflicting_bbls[:10]}")
 
-
 # ---------------------------------------------------------------------------
 # 2. report (sub-group with 'contract' sub-command)
 # ---------------------------------------------------------------------------
@@ -2312,7 +2294,6 @@ def conflict_detect_cmd(borough: str, buffer_dist: int, output_path: str | None)
 @main.group(name="report")
 def report_group() -> None:
     """Generate analytical reports from Socrata data."""
-
 
 @report_group.command(name="contract")
 @click.option("--output", "output_path", type=click.Path(), default=None, help="Output path (PDF if weasyprint available, else .txt)")
@@ -2382,7 +2363,6 @@ def report_contract_cmd(output_path: str | None) -> None:
     else:
         click.echo(report_text)
 
-
 # ---------------------------------------------------------------------------
 # 3. dataset health
 # ---------------------------------------------------------------------------
@@ -2390,7 +2370,6 @@ def report_contract_cmd(output_path: str | None) -> None:
 @main.group(name="dataset")
 def dataset_group() -> None:
     """Dataset inspection and metadata commands."""
-
 
 @dataset_group.command(name="health")
 @click.option("--key", "dataset_key", default=None, help="Specific dataset key (checks all if omitted)")
@@ -2547,7 +2526,6 @@ def dataset_health_cmd(
     if health_status_code != 0:
         sys.exit(health_status_code)
 
-
 @dataset_group.command(name="ramp-analysis")
 @click.option(
     "--full-corpus",
@@ -2654,7 +2632,6 @@ def dataset_ramp_analysis_cmd(
     click.echo("\n")
     click.echo(json.dumps(report.to_dict(), indent=2))
 
-
 # ---------------------------------------------------------------------------
 # 4. cache refresh
 # ---------------------------------------------------------------------------
@@ -2662,7 +2639,6 @@ def dataset_ramp_analysis_cmd(
 @main.group(name="cache")
 def cache_group() -> None:
     """Cache management commands."""
-
 
 @cache_group.command(name="refresh")
 @click.argument("key")
@@ -2690,7 +2666,6 @@ def cache_refresh_cmd(key: str) -> None:
             click.echo(f"  {f}")
     else:
         click.echo(f"No cache files found for key '{key}' in {cache_dir}")
-
 
 # ---------------------------------------------------------------------------
 # 5. export
@@ -2753,7 +2728,6 @@ def export_cmd(key: str, fmt: str, output_path: str) -> None:
                 click.echo(f"Parquet written to {output_path} ({len(df)} rows)")
             except ImportError as exc:
                 raise click.ClickException(f"pyarrow or fastparquet required for parquet export: {exc}") from exc
-
 
 # ---------------------------------------------------------------------------
 # 6. nl-query
@@ -2863,7 +2837,6 @@ def nl_query_cmd(question: str, dataset_key: str | None) -> None:
 
     df = pd.DataFrame(rows)
     click.echo(df.to_string(index=False, max_rows=50))
-
 
 if __name__ == "__main__":
     main()

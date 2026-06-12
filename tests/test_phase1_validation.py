@@ -11,7 +11,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-
 class TestClusteringDomainValidation:
     """Validate clustering results against domain knowledge."""
 
@@ -83,7 +82,6 @@ class TestClusteringDomainValidation:
         assert cost_means.min() < cost_means.max() * 0.3, \
             "Clusters not separated enough on cost"
 
-
 class TestMaterialDegradationDomainValidation:
     """Validate material analysis results against domain knowledge."""
 
@@ -154,7 +152,6 @@ class TestMaterialDegradationDomainValidation:
         assert econ.loc["concrete", "median_lifespan_years"] > \
                econ.loc["asphalt", "median_lifespan_years"], \
             "Concrete should have longer median lifespan than asphalt"
-
 
 class TestTemporalDomainValidation:
     """Validate temporal trends against domain knowledge."""
@@ -262,7 +259,6 @@ class TestTemporalDomainValidation:
             assert feb_changes["density_pct_change"].notna().any(), \
                 "Feb MoM changes should not be NaN"
 
-
 class TestCrossMethodConsistency:
     """Verify that methods work together coherently."""
 
@@ -327,7 +323,6 @@ class TestCrossMethodConsistency:
             analysis = MaterialDegradationAnalysis(df_clean)
             results = analysis.fit()
             assert "km_curves" in results
-
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

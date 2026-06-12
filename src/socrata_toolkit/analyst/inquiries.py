@@ -35,7 +35,6 @@ def load_template_library(templates_dir: str | Path) -> list[tuple[str, list[str
         out.append((path.stem, keywords, body.strip()))
     return out
 
-
 def match_templates(
     contracts: pd.DataFrame,
     templates: list[tuple[str, list[str], str]],
@@ -59,7 +58,6 @@ def match_templates(
                 matches.append((cid, name, name))
                 break
     return matches
-
 
 def render_inquiry_drafts(
     contracts: pd.DataFrame,

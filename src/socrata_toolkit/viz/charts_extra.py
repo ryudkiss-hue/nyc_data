@@ -16,7 +16,6 @@ except ImportError:
     go = None  # type: ignore
     px = None  # type: ignore
 
-
 def _apply_modern_layout(fig: Any, title: str | None = None) -> Any:
     if fig is None:
         return fig
@@ -26,7 +25,6 @@ def _apply_modern_layout(fig: Any, title: str | None = None) -> Any:
         margin=dict(l=40, r=40, t=60, b=40),
     )
     return fig
-
 
 def metric_status_pie_chart(summary: DashboardSummary, title: str | None = None) -> Any:
     """Pie chart showing the distribution of metric statuses (green / yellow / red)."""
@@ -56,7 +54,6 @@ def metric_status_pie_chart(summary: DashboardSummary, title: str | None = None)
     fig.update_traces(textposition="inside", textinfo="percent+label")
     return _apply_modern_layout(fig, title or "Overall Program Health Status")
 
-
 def data_completeness_chart(profile: DataProfile, title: str | None = None) -> Any:
     if px is None or go is None:
         raise ImportError("Install plotly: pip install plotly")
@@ -79,7 +76,6 @@ def data_completeness_chart(profile: DataProfile, title: str | None = None) -> A
     )
     fig.update_layout(xaxis_range=[0, 100])
     return _apply_modern_layout(fig, title or "Data Completeness by Column")
-
 
 def plot_geospatial_compliance_map(
     df: pd.DataFrame,

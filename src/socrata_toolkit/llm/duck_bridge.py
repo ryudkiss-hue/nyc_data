@@ -15,7 +15,6 @@ class LLMAugmentConfig:
     temperature: float = 0.1
     timeout: int = 60
 
-
 DEFAULT_TAXONOMY = [
     "sidewalk_repair_needed",
     "ada_accessibility_issue",
@@ -25,13 +24,11 @@ DEFAULT_TAXONOMY = [
     "other",
 ]
 
-
 def build_prompt(text: str, taxonomy: list[str]) -> str:
     return (
         "Classify the NYC DOT sidewalk-related text into one taxonomy label and provide confidence (0-1). "
         f"taxonomy={taxonomy}. Return strict JSON with keys: label, confidence, rationale. Text: {text}"
     )
-
 
 def llm_classify_text(text: str, cfg: LLMAugmentConfig, taxonomy: list[str] | None = None) -> dict[str, Any]:
     taxonomy = taxonomy or DEFAULT_TAXONOMY
@@ -50,7 +47,6 @@ def llm_classify_text(text: str, cfg: LLMAugmentConfig, taxonomy: list[str] | No
         return json.loads(content)
     except json.JSONDecodeError:
         return {"label": "other", "confidence": 0.0, "rationale": content}
-
 
 def augment_dataframe_with_llm(
     df: pd.DataFrame,

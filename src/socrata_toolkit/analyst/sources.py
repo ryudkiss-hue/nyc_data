@@ -17,13 +17,11 @@ class DataSource(Protocol):
 
     def load(self) -> pd.DataFrame: ...
 
-
 def _apply_column_map(df: pd.DataFrame, column_map: dict[str, str]) -> pd.DataFrame:
     if not column_map:
         return df
     rename = {k: v for k, v in column_map.items() if k in df.columns}
     return df.rename(columns=rename)
-
 
 class ExcelSource:
     def __init__(self, config: SourceConfig):
@@ -46,7 +44,6 @@ class ExcelSource:
         out = pd.concat(frames, ignore_index=True) if len(frames) > 1 else frames[0]
         return _apply_column_map(out, self.config.column_map)
 
-
 class SocrataSource:
     def __init__(self, config: SourceConfig):
         self.config = config
@@ -65,7 +62,6 @@ class SocrataSource:
         )
         return _apply_column_map(df, self.config.column_map)
 
-
 class PostgresSource:
     def __init__(self, config: SourceConfig):
         self.config = config
@@ -81,7 +77,6 @@ class PostgresSource:
         with psycopg.connect(dsn) as conn:
             df = pd.read_sql(f'SELECT * FROM "{table}"', conn)
         return _apply_column_map(df, self.config.column_map)
-
 
 class GeoSource:
     """Optional geospatial file loader (requires geo extra for some formats)."""
@@ -115,7 +110,6 @@ class GeoSource:
                 records = [f.get("properties", {}) for f in rows]
                 return _apply_column_map(pd.DataFrame(records), self.config.column_map)
             return pd.DataFrame()
-
 
 def build_source(config: SourceConfig) -> DataSource:
     """Instantiate and return the appropriate DataSource subclass for the given config type."""

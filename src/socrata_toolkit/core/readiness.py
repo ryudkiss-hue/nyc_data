@@ -13,14 +13,11 @@ from typing import Any
 def _root() -> Path:
     return Path(__file__).resolve().parents[3]
 
-
 def _check(name: str, ok: bool, detail: str = "", fix: str = "") -> dict[str, Any]:
     return {"name": name, "ok": ok, "detail": detail, "fix": fix}
 
-
 def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8") if path.exists() else ""
-
 
 def run_readiness_checks(*, run_pytest: bool = False) -> dict[str, Any]:
     root = _root()
@@ -167,7 +164,6 @@ def run_readiness_checks(*, run_pytest: bool = False) -> dict[str, Any]:
         "grade": "agency_ready" if overall >= 95 else ("production_candidate" if overall >= 85 else "in_progress"),
         "note": "Automated checks only; agency sign-off requires live data and COMPLETENESS checklist.",
     }
-
 
 def readiness_json(**kwargs: Any) -> str:
     return json.dumps(run_readiness_checks(**kwargs), indent=2)

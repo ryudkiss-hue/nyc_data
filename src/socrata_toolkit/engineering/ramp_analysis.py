@@ -47,7 +47,6 @@ class BoroughRampStats:
     sample_size: int = 0
     reliability: str = "unknown"  # "high", "medium", "low"
 
-
 @dataclass
 class RampCompletionReport:
     """Complete ramp completion analysis report."""
@@ -135,7 +134,6 @@ class RampCompletionReport:
                 for stat in self.borough_stats
             ],
         }
-
 
 class RampCompletionReportGenerator:
     """Generate ramp program completion reports with statistical analysis.

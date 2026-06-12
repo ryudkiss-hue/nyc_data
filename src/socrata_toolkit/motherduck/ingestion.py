@@ -19,7 +19,6 @@ from socrata_toolkit.motherduck.connector import MotherDuckConnection
 
 logger = logging.getLogger(__name__)
 
-
 class InspectionDataLoader:
     """Data loader for NYC DOT inspection and violations data.
 

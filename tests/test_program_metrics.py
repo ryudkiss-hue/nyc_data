@@ -6,7 +6,6 @@ from socrata_toolkit.analysis import (
     compute_program_dashboard,
 )
 
-
 def test_metrics_tracker_define_and_record():
     tracker = MetricsTracker()
     tracker.define(
@@ -20,7 +19,6 @@ def test_metrics_tracker_define_and_record():
     assert snap.status == "green"
     assert snap.value == 8.0
 
-
 def test_metrics_tracker_yellow_status():
     tracker = MetricsTracker()
     tracker.define(
@@ -33,7 +31,6 @@ def test_metrics_tracker_yellow_status():
     snap = tracker.record("m", 17.0)
     assert snap.status == "yellow"
 
-
 def test_metrics_tracker_red_status():
     tracker = MetricsTracker()
     tracker.define(
@@ -45,7 +42,6 @@ def test_metrics_tracker_red_status():
     )
     snap = tracker.record("m", 25.0)
     assert snap.status == "red"
-
 
 def test_metrics_tracker_higher_is_better():
     tracker = MetricsTracker()
@@ -60,14 +56,12 @@ def test_metrics_tracker_higher_is_better():
     assert tracker.record("m", 85.0).status == "yellow"
     assert tracker.record("m", 60.0).status == "red"
 
-
 def test_metrics_tracker_load_standard_kpis():
     tracker = MetricsTracker()
     tracker.load_standard_kpis()
     assert "defect_density" in tracker.definitions
     assert "throughput_velocity" in tracker.definitions
     assert len(tracker.definitions) >= 5
-
 
 def test_metrics_tracker_dashboard():
     tracker = MetricsTracker()
@@ -79,7 +73,6 @@ def test_metrics_tracker_dashboard():
     assert dashboard.green_count >= 2
     assert dashboard.overall_health in ("green", "yellow", "red")
 
-
 def test_metrics_tracker_budget_code():
     tracker = MetricsTracker()
     bc = tracker.add_budget_code(
@@ -87,7 +80,6 @@ def test_metrics_tracker_budget_code():
     )
     assert bc.remaining == 40000
     assert bc.pct_used == 60.0
-
 
 def test_metrics_tracker_save_and_load(tmp_path):
     path = str(tmp_path / "metrics.json")
@@ -103,7 +95,6 @@ def test_metrics_tracker_save_and_load(tmp_path):
     assert len(tracker2.history["m1"]) == 1
     assert len(tracker2.budget_codes) == 1
 
-
 def test_metrics_tracker_trend():
     tracker = MetricsTracker()
     tracker.define("m", target=5.0, warning_threshold=8.0, critical_threshold=10.0)
@@ -113,12 +104,10 @@ def test_metrics_tracker_trend():
     assert len(trend) == 3
     assert trend[-1].value == 7.0
 
-
 def test_metrics_tracker_record_undefined_raises():
     tracker = MetricsTracker()
     with pytest.raises(KeyError):
         tracker.record("nonexistent", 5.0)
-
 
 def test_compute_program_dashboard():
     df = pd.DataFrame(

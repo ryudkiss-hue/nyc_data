@@ -23,7 +23,6 @@ def _sql_type(value: Any) -> str:
         return "DOUBLE PRECISION"
     return "TEXT"
 
-
 def _collect_columns_and_types(rows: list[dict[str, Any]], sample_n: int = 10) -> dict[str, str]:
     cols = {}
     if not rows:
@@ -42,7 +41,6 @@ def _collect_columns_and_types(rows: list[dict[str, Any]], sample_n: int = 10) -
         if k not in cols:
             cols[k] = "TEXT"
     return cols
-
 
 def generate_postgres_preview(rows: list[dict[str, Any]], table: str, conflict_col: str | None = None) -> dict:
     cols = _collect_columns_and_types(rows)
@@ -63,7 +61,6 @@ def generate_postgres_preview(rows: list[dict[str, Any]], table: str, conflict_c
     else:
         insert_sql = f'INSERT INTO "{table}" ({cols_list}) VALUES ({placeholders}) ON CONFLICT ("{conflict_col}") DO NOTHING;'
     return {"create_table": create_sql, "index": index_sql, "insert_example": insert_sql, "sample_row": sample}
-
 
 def run_from_rows(rows: list[dict[str, Any]], targets: dict, dry_run: bool = True) -> dict:
     """Run a pipeline from an in-memory list of rows.

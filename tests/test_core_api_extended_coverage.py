@@ -16,7 +16,6 @@ pytest.importorskip("flask", reason="Flask required for API tests")
 
 from socrata_toolkit.core.api import create_app  # noqa: E402
 
-
 @pytest.fixture
 def client():
     """Flask test client.
@@ -27,7 +26,6 @@ def client():
     app = create_app()
     with app.test_client() as c:
         yield c
-
 
 class TestCreateApp:
     """Test the Flask application factory."""
@@ -41,7 +39,6 @@ class TestCreateApp:
         app = create_app()
         assert app.config.get("JSON_SORT_KEYS") is False
 
-
 class TestHealthEndpoint:
     def test_health_returns_ok(self, client):
         response = client.get("/api/health")
@@ -49,7 +46,6 @@ class TestHealthEndpoint:
         data = response.get_json()
         assert data["status"] == "ok"
         assert "version" in data
-
 
 class TestSearchEndpoint:
     def test_search_default(self, client):
@@ -85,7 +81,6 @@ class TestSearchEndpoint:
             assert response.status_code == 200
             assert response.get_json() == []
 
-
 class TestDatasetEndpoint:
     def test_dataset_fetch_default(self, client):
         with patch("socrata_toolkit.core.client.SocrataClient") as mock_cls:
@@ -114,7 +109,6 @@ class TestDatasetEndpoint:
                 "data.example.com", "abc1-2345", max_rows=500
             )
 
-
 class TestMetadataEndpoint:
     def test_metadata_fetch(self, client):
         with patch("socrata_toolkit.core.client.SocrataClient") as mock_cls:
@@ -128,7 +122,6 @@ class TestMetadataEndpoint:
             assert response.status_code == 200
             data = response.get_json()
             assert data["name"] == "Test"
-
 
 class TestAnalyzeEndpoint:
     def test_analyze_missing_rows(self, client):
@@ -144,7 +137,6 @@ class TestAnalyzeEndpoint:
         assert data["row_count"] == 2
         assert "column_count" in data
         assert "null_counts" in data
-
 
 class TestQualityScoreEndpoint:
     def test_quality_score_missing_rows(self, client):
@@ -165,7 +157,6 @@ class TestQualityScoreEndpoint:
         assert "overall" in data
         assert 0 <= data["overall"] <= 100
 
-
 class TestPrioritizeEndpoint:
     def test_prioritize_missing_rows(self, client):
         response = client.post("/api/prioritize", json={})
@@ -180,7 +171,6 @@ class TestPrioritizeEndpoint:
         # May succeed (200) or error depending on construction_list expectations
         assert response.status_code in (200, 400, 500)
 
-
 class TestTriageEndpoint:
     def test_triage_missing_rows(self, client):
         response = client.post("/api/triage", json={})
@@ -190,7 +180,6 @@ class TestTriageEndpoint:
         rows = [{"complaint_text": "There is a pothole on 5th Ave"}]
         response = client.post("/api/triage", json={"rows": rows})
         assert response.status_code in (200, 500)
-
 
 class TestBoardEndpoint:
     def test_board_get_state(self, client):
@@ -212,7 +201,6 @@ class TestBoardEndpoint:
         assert data["title"] == "Fix pothole"
         assert "task_id" in data
 
-
 class TestKpisEndpoint:
     def test_kpis_no_metrics_file(self, client, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
@@ -221,7 +209,6 @@ class TestKpisEndpoint:
         data = response.get_json()
         assert "health" in data
         assert "metrics" in data
-
 
 class TestErrorHandling:
     def test_dataset_fetch_error_returns_500(self, client):

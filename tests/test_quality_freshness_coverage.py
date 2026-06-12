@@ -12,7 +12,6 @@ from socrata_toolkit.quality.freshness import (
     FreshnessTracker,
 )
 
-
 class TestAlertSeverityEnum:
     """Tests for AlertSeverity enum."""
 
@@ -27,7 +26,6 @@ class TestAlertSeverityEnum:
     def test_alert_severity_comparison(self):
         """Test AlertSeverity enum comparison."""
         assert AlertSeverity.WARNING != AlertSeverity.CRITICAL
-
 
 class TestDatasetFreshness:
     """Tests for DatasetFreshness dataclass."""
@@ -172,7 +170,6 @@ class TestDatasetFreshness:
         hours = df.hours_until_sla_violation()
         assert -1 < hours < 1  # Should be ~0
 
-
 class TestFreshnessAlert:
     """Tests for FreshnessAlert dataclass."""
 
@@ -307,7 +304,6 @@ class TestFreshnessAlert:
         assert pd_event["event_action"] == "trigger"
         assert pd_event["payload"]["severity"] == "critical"
         assert "custom_details" in pd_event["payload"]
-
 
 class TestFreshnessTracker:
     """Tests for FreshnessTracker class."""

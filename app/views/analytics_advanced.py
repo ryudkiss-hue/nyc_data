@@ -84,7 +84,6 @@ if not hasattr(st, "session_state"):
 
 _TODAY = date.today()
 
-
 def _pick_date_col(df: pd.DataFrame) -> str | None:
     """Return the first column whose name contains a date-like keyword."""
     keywords = ("date", "created", "open")
@@ -94,7 +93,6 @@ def _pick_date_col(df: pd.DataFrame) -> str | None:
             return col
     return None
 
-
 def _pick_col_icontains(df: pd.DataFrame, *fragments: str) -> str | None:
     """Return the first column whose lowercase name contains any of the fragments."""
     for frag in fragments:
@@ -103,30 +101,24 @@ def _pick_col_icontains(df: pd.DataFrame, *fragments: str) -> str | None:
                 return col
     return None
 
-
 def _coerce_datetime(df: pd.DataFrame, col: str) -> pd.Series:
     return pd.to_datetime(df[col], errors="coerce", utc=True).dt.tz_localize(None)
-
 
 @st.cache_data(ttl=86_400, show_spinner="Loading inspections…")
 def _load_inspections(limit: int) -> pd.DataFrame:
     return fetch_dataset("inspection", limit=limit)
 
-
 @st.cache_data(ttl=86_400, show_spinner="Loading violations…")
 def _load_violations(limit: int = 20_000) -> pd.DataFrame:
     return fetch_dataset("violations", limit=limit)
-
 
 @st.cache_data(ttl=86_400, show_spinner="Loading street permits…")
 def _load_street_permits(limit: int = 20_000) -> pd.DataFrame:
     return fetch_dataset("street_permits", limit=limit)
 
-
 @st.cache_data(ttl=86_400, show_spinner="Loading HIQA inspections…")
 def _load_hiqa(limit: int = 10_000) -> pd.DataFrame:
     return fetch_dataset("street_construction_inspections", limit=limit)
-
 
 # ---------------------------------------------------------------------------
 # CUSUM change-point detection (pure logic lives in the analysis library)
@@ -137,7 +129,6 @@ from socrata_toolkit.analysis.changepoint import detect_cusum_changepoint  # noq
 # Anomaly summary helper
 # ---------------------------------------------------------------------------
 
-
 def _anomaly_summary(anomalies: int, total: int) -> str:
     pct = anomalies / total * 100
     return (
@@ -146,11 +137,9 @@ def _anomaly_summary(anomalies: int, total: int) -> str:
         "position compared to typical inspection sites."
     )
 
-
 # ---------------------------------------------------------------------------
 # Duration derivation (shared by Bayesian / Monte Carlo / survival analytics)
 # ---------------------------------------------------------------------------
-
 
 def _derive_durations(df: pd.DataFrame) -> pd.Series:
     """Derive completion/turnaround durations (days) from a fetched frame.
@@ -197,7 +186,6 @@ def _derive_durations(df: pd.DataFrame) -> pd.Series:
 
     return pd.Series(dtype="float64")
 
-
 def _normal_credible_interval(
     sample: np.ndarray, conf: float = 0.95
 ) -> tuple[float, float, float]:
@@ -221,7 +209,6 @@ def _normal_credible_interval(
         crit = 1.96
     return mean, mean - crit * se, mean + crit * se
 
-
 def _km_survival(durations: np.ndarray) -> pd.DataFrame:
     """Kaplan–Meier survival estimate (all events observed) implemented in numpy.
 
@@ -242,11 +229,9 @@ def _km_survival(durations: np.ndarray) -> pd.DataFrame:
         at_risk -= d
     return pd.DataFrame(rows)
 
-
 # ---------------------------------------------------------------------------
 # Tab renderers
 # ---------------------------------------------------------------------------
-
 
 def _render_kpi_trends(df: pd.DataFrame) -> None:
     """Tab 1 — KPI Trends (items 48, 49, 67)."""
@@ -458,7 +443,6 @@ def _render_kpi_trends(df: pd.DataFrame) -> None:
                     f"No weeks exceed the ±{threshold_k:g}σ band — weekly volume is stable."
                 )
 
-
 def _render_cohort_analysis(df: pd.DataFrame) -> None:
     """Tab 2 — Cohort Analysis (items 45, 65)."""
     if df.empty:
@@ -531,7 +515,6 @@ def _render_cohort_analysis(df: pd.DataFrame) -> None:
             fig_heat.update_layout(height=400, margin={"t": 40, "b": 20})
             st.plotly_chart(fig_heat, use_container_width=True)
 
-
 def _render_anomaly_detection(df: pd.DataFrame) -> None:
     """Tab 3 — Anomaly Detection (items 44, 62)."""
     if df.empty:
@@ -602,7 +585,6 @@ def _render_anomaly_detection(df: pd.DataFrame) -> None:
     )
     fig.update_layout(height=450, margin={"t": 40, "b": 20})
     st.plotly_chart(fig, use_container_width=True)
-
 
 def _render_borough_rankings(df: pd.DataFrame) -> None:
     """Tab 4 — Borough Rankings (items 47, 55)."""
@@ -724,7 +706,6 @@ def _render_borough_rankings(df: pd.DataFrame) -> None:
     fig_contractors.update_layout(height=500, margin={"t": 40, "b": 20})
     st.plotly_chart(fig_contractors, use_container_width=True)
 
-
 def _render_inspector_scorecard(df: pd.DataFrame) -> None:
     """Tab 5 — Inspector Scorecard (item 46)."""
     if df.empty:
@@ -789,7 +770,6 @@ def _render_inspector_scorecard(df: pd.DataFrame) -> None:
         file_name="inspector_scorecard.csv",
         mime="text/csv",
     )
-
 
 def _render_sla_tracker() -> None:
     """Tab 6 — SLA Tracker (items 52, 69)."""
@@ -924,7 +904,6 @@ def _render_sla_tracker() -> None:
         mime="text/csv",
     )
 
-
 def _render_cross_dataset(inspections_df: pd.DataFrame) -> None:
     """Tab 7 — Cross-Dataset Analysis (items 64, 70)."""
     if inspections_df.empty:
@@ -1031,7 +1010,6 @@ def _render_cross_dataset(inspections_df: pd.DataFrame) -> None:
         file_name="composite_risk.csv",
         mime="text/csv",
     )
-
 
 def _render_segmentation(df: pd.DataFrame) -> None:
     """Tab 8 — Segmentation (items 50, 68)."""
@@ -1155,11 +1133,9 @@ def _render_segmentation(df: pd.DataFrame) -> None:
     fig_seg.update_layout(margin={"t": 40, "b": 0})
     st.plotly_chart(fig_seg, use_container_width=True)
 
-
 # ---------------------------------------------------------------------------
 # Tier 1 Dashboard: Hypothesis Testing, Waterfall, Correlation, Cross-Filter
 # ---------------------------------------------------------------------------
-
 
 def _render_tier1_dashboard(inspections_df: pd.DataFrame) -> None:
     """Tab 9 — Tier 1 Dashboard with statistical testing and decomposition."""
@@ -1307,11 +1283,9 @@ def _render_tier1_dashboard(inspections_df: pd.DataFrame) -> None:
             )
             st.plotly_chart(fig_box, use_container_width=True)
 
-
 # ---------------------------------------------------------------------------
 # Tier 2: Date Range Controls, Drill-Down, SLA Forecasting, Executive Summary
 # ---------------------------------------------------------------------------
-
 
 def _get_date_range_controls() -> tuple[date, date]:
     """Return selected date range with presets and persistence."""
@@ -1354,7 +1328,6 @@ def _get_date_range_controls() -> tuple[date, date]:
     start, end = st.session_state.get("date_range", (_TODAY - pd.Timedelta(days=30), _TODAY))
     return start, end
 
-
 def _forecast_sla_breach(df: pd.DataFrame, date_col: str, score_col: str) -> dict:
     """Forecast SLA breach probability using simple Bayesian inference."""
     if df.empty or date_col not in df.columns or score_col not in df.columns:
@@ -1390,7 +1363,6 @@ def _forecast_sla_breach(df: pd.DataFrame, date_col: str, score_col: str) -> dic
         "forecast_days": 14,
     }
 
-
 def _generate_executive_summary(metrics: dict, findings: list[str]) -> str:
     """Generate AI-powered executive summary if Claude API is available."""
     if not HAS_ANTHROPIC or not os.getenv("ANTHROPIC_API_KEY"):
@@ -1423,7 +1395,6 @@ Provide exactly 3 recommendations (as bullet points) for operations leadership."
         return response.content[0].text
     except Exception as e:
         return f"Summary generation failed: {str(e)}"
-
 
 def _render_tier2_dashboard(inspections_df: pd.DataFrame) -> None:
     """Tab 10 — Tier 2 Dashboard with drill-down, forecasting, and executive summary."""
@@ -1623,11 +1594,9 @@ def _render_tier2_dashboard(inspections_df: pd.DataFrame) -> None:
     if st.button("📋 Copy Executive Summary", use_container_width=True):
         st.success("Summary copied to clipboard")
 
-
 # ---------------------------------------------------------------------------
 # Tier 3: Stakeholder Views, Data Lineage, Advanced ML
 # ---------------------------------------------------------------------------
-
 
 def _get_data_freshness_info() -> dict:
     """Return dataset freshness and schema info."""
@@ -1651,7 +1620,6 @@ def _get_data_freshness_info() -> dict:
             "schema_status": "stable",
         },
     }
-
 
 def _render_executive_dashboard(inspections_df: pd.DataFrame) -> None:
     """Executive dashboard: 3 hero metrics + top risks."""
@@ -1745,7 +1713,6 @@ def _render_executive_dashboard(inspections_df: pd.DataFrame) -> None:
             st.caption(
                 f"Updated {days_ago:.1f}d ago • {info['row_count']:,} rows"
             )
-
 
 def _render_operations_dashboard(inspections_df: pd.DataFrame) -> None:
     """Operations dashboard: breach drivers, inspector impact, performance."""
@@ -1863,7 +1830,6 @@ def _render_operations_dashboard(inspections_df: pd.DataFrame) -> None:
                     labels={"date": "Date", "value": "Average Score"},
                 )
                 st.plotly_chart(fig_trend, use_container_width=True)
-
 
 def _render_analyst_workbench(inspections_df: pd.DataFrame) -> None:
     """Analyst workbench: full filtering, exports, saved presets."""
@@ -1996,7 +1962,6 @@ def _render_analyst_workbench(inspections_df: pd.DataFrame) -> None:
         with col4:
             st.metric("Min/Max", f"{df_filtered['_score'].min():.1f}–{df_filtered['_score'].max():.1f}")
 
-
 def _compute_cohort_retention(df: pd.DataFrame, cohort_col: str, date_col: str) -> pd.DataFrame:
     """Compute cohort retention rates over time."""
     if df.empty or cohort_col not in df.columns or date_col not in df.columns:
@@ -2016,7 +1981,6 @@ def _compute_cohort_retention(df: pd.DataFrame, cohort_col: str, date_col: str) 
     cohort_sizes.columns = ["cohort_week", "cohort_size"]
 
     return cohort_sizes.head(10)
-
 
 def _forecast_trend(df: pd.DataFrame, date_col: str, value_col: str) -> dict:
     """Simple linear trend forecast (14 days ahead)."""
@@ -2046,7 +2010,6 @@ def _forecast_trend(df: pd.DataFrame, date_col: str, value_col: str) -> dict:
         "slope": float(slope),
     }
 
-
 def _should_refetch_data(current_rows: int, previous_rows: int = 0) -> bool:
     """Determine if data should be re-fetched (delta update logic)."""
     if previous_rows == 0:
@@ -2056,7 +2019,6 @@ def _should_refetch_data(current_rows: int, previous_rows: int = 0) -> bool:
 
     # Refetch if >5% change (new data) or <5% change (stale check)
     return pct_change > 5 or pct_change < 1
-
 
 def _render_tier3_dashboard(inspections_df: pd.DataFrame) -> None:
     """Tab 11 — Tier 3 Dashboard with stakeholder-specific views."""
@@ -2230,11 +2192,9 @@ def _render_tier3_dashboard(inspections_df: pd.DataFrame) -> None:
             )
             st.write(f"{ds}: {status}")
 
-
 # ---------------------------------------------------------------------------
 # Main entry point
 # ---------------------------------------------------------------------------
-
 
 def render_analytics_advanced_page() -> None:
     """Render the Advanced Analytics page with 11 analysis tabs."""

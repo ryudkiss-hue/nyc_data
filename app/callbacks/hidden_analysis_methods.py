@@ -54,7 +54,6 @@ def timer_callback(func: Callable) -> Callable:
 
     return wrapper
 
-
 def memoize_with_ttl(seconds: int = 600):
     """Decorator to cache callback results with TTL (time-to-live)."""
 
@@ -84,11 +83,9 @@ def memoize_with_ttl(seconds: int = 600):
 
     return decorator
 
-
 # ==========================================
 # HELPER FUNCTIONS
 # ==========================================
-
 
 def safe_fetch_dataset(
     dm_instance: Any, dataset_key: str, filters: dict, limit: int = 10000
@@ -112,7 +109,6 @@ def safe_fetch_dataset(
         logger.error(f"Error fetching {dataset_key}: {e}")
         return pd.DataFrame()
 
-
 def create_error_figure(error_msg: str) -> go.Figure:
     """Create error placeholder figure."""
     fig = go.Figure()
@@ -122,11 +118,9 @@ def create_error_figure(error_msg: str) -> go.Figure:
     )
     return fig
 
-
 # ==========================================
 # METHOD 1: MORAN'S I SPATIAL AUTOCORRELATION
 # ==========================================
-
 
 def register_morans_i_callbacks(app, dm_instance):
     """Register Moran's I callback for GIS Dashboard."""
@@ -274,11 +268,9 @@ def register_morans_i_callbacks(app, dm_instance):
                 dmc.Text("", size="xs"),
             )
 
-
 # ==========================================
 # METHOD 2: DISTRIBUTION CLASSIFICATION
 # ==========================================
-
 
 def register_distribution_callbacks(app, dm_instance):
     """Register distribution classification callbacks."""
@@ -407,11 +399,9 @@ def register_distribution_callbacks(app, dm_instance):
             logger.error(f"Error in update_distributions: {e}")
             return [dmc.Text(f"Error: {str(e)}", c="red")]
 
-
 # ==========================================
 # METHOD 3: MULTIVARIATE ANOMALY DETECTION
 # ==========================================
-
 
 def register_anomaly_detection_callbacks(app, dm_instance):
     """Register spatial anomaly detection callbacks."""
@@ -558,11 +548,9 @@ def register_anomaly_detection_callbacks(app, dm_instance):
                 [],
             )
 
-
 # ==========================================
 # METHOD 4: SEASONAL DECOMPOSITION
 # ==========================================
-
 
 def decompose_timeseries(
     df: pd.DataFrame,
@@ -621,7 +609,6 @@ def decompose_timeseries(
     except Exception as e:
         logger.error(f"Error in decompose_timeseries: {e}")
         return {"error": str(e)}
-
 
 def register_decomposition_callbacks(app, dm_instance):
     """Register seasonal decomposition callbacks."""
@@ -799,11 +786,9 @@ def register_decomposition_callbacks(app, dm_instance):
                 dmc.Text(f"Error: {str(e)}", c="red"),
             )
 
-
 # ==========================================
 # METHOD 5: BOOTSTRAP CONFIDENCE INTERVALS
 # ==========================================
-
 
 def bootstrap_confidence_interval(
     data: np.ndarray,
@@ -847,7 +832,6 @@ def bootstrap_confidence_interval(
     except Exception as e:
         logger.error(f"Error in bootstrap_confidence_interval: {e}")
         return 0.0, 0.0, 0.0
-
 
 def register_bootstrap_callbacks(app, dm_instance):
     """Register bootstrap confidence interval callbacks."""
@@ -935,11 +919,9 @@ def register_bootstrap_callbacks(app, dm_instance):
             logger.error(f"Error in update_kpi_with_ci: {e}")
             return create_error_figure(str(e))
 
-
 # ==========================================
 # REGISTRATION FUNCTION
 # ==========================================
-
 
 def register_all_hidden_method_callbacks(app, dm_instance):
     """Register all 5 hidden method callbacks."""

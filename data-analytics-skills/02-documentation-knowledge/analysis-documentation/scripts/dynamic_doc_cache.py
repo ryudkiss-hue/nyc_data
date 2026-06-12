@@ -32,7 +32,6 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 CONFIG_PATH = PROJECT_ROOT / "config" / "doc_cache_config.yaml"
 DATASETS_PATH = PROJECT_ROOT / "config" / "datasets.yaml"
 
-
 # ---------------------------------------------------------------------------
 # Config helpers
 # ---------------------------------------------------------------------------
@@ -43,14 +42,12 @@ def _load_config() -> dict:
     with CONFIG_PATH.open() as f:
         return yaml.safe_load(f).get("doc_cache", {})
 
-
 def _cache_db_path(cfg: dict) -> Path:
     p = Path(cfg.get("cache_path", "data/cache/doc_cache.duckdb"))
     if not p.is_absolute():
         p = PROJECT_ROOT / p
     p.parent.mkdir(parents=True, exist_ok=True)
     return p
-
 
 # ---------------------------------------------------------------------------
 # Cache schema
@@ -70,12 +67,10 @@ CREATE TABLE IF NOT EXISTS doc_cache (
 );
 """
 
-
 def _get_conn(db_path: Path) -> duckdb.DuckDBPyConnection:
     conn = duckdb.connect(str(db_path))
     conn.execute(SCHEMA)
     return conn
-
 
 # ---------------------------------------------------------------------------
 # Cache key / hash
@@ -90,7 +85,6 @@ def _input_hash(dataset_key: str, last_modified: str | None, cfg: dict) -> str:
         "include_schema": cfg.get("content", {}).get("include_schema", True),
     }, sort_keys=True)
     return hashlib.sha256(payload.encode()).hexdigest()[:16]
-
 
 # ---------------------------------------------------------------------------
 # Cache read/write
@@ -125,7 +119,6 @@ def _cache_get(conn: duckdb.DuckDBPyConnection, doc_id: str, strategy: str,
 
     return content
 
-
 def _cache_put(conn: duckdb.DuckDBPyConnection, doc_id: str, dataset_key: str,
                input_hash: str, content: str, ttl_hours: int, strategy: str,
                row_count: int | None, quality_score: float | None) -> None:
@@ -140,7 +133,6 @@ def _cache_put(conn: duckdb.DuckDBPyConnection, doc_id: str, dataset_key: str,
          strategy, content, row_count, quality_score],
     )
 
-
 def _cache_evict_lru(conn: duckdb.DuckDBPyConnection, max_entries: int) -> None:
     count = conn.execute("SELECT COUNT(*) FROM doc_cache").fetchone()[0]
     if count > max_entries:
@@ -150,7 +142,6 @@ def _cache_evict_lru(conn: duckdb.DuckDBPyConnection, max_entries: int) -> None:
                SELECT doc_id FROM doc_cache ORDER BY generated_at ASC LIMIT ?)""",
             [excess],
         )
-
 
 # ---------------------------------------------------------------------------
 # Doc generation
@@ -164,7 +155,6 @@ def _fetch_last_modified(domain: str, fourfour: str) -> str | None:
         return getattr(meta, "last_modified", None) or getattr(meta, "updated_at", None)
     except Exception:
         return None
-
 
 def _generate_doc(dataset_key: str, cfg: dict) -> tuple[str, int | None, float | None]:
     """Produce the markdown documentation string for a dataset."""
@@ -261,7 +251,6 @@ def _generate_doc(dataset_key: str, cfg: dict) -> tuple[str, int | None, float |
 
     return "\n".join(lines), row_count, quality_score
 
-
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -317,7 +306,6 @@ def get_or_generate(dataset_key: str, invalidate: bool = False) -> str:
     conn.close()
     return doc
 
-
 def list_cached() -> list[dict]:
     cfg = _load_config()
     db_path = _cache_db_path(cfg)
@@ -333,7 +321,6 @@ def list_cached() -> list[dict]:
         for r in rows
     ]
 
-
 def purge_cache() -> int:
     cfg = _load_config()
     db_path = _cache_db_path(cfg)
@@ -342,7 +329,6 @@ def purge_cache() -> int:
     conn.execute("DELETE FROM doc_cache")
     conn.close()
     return count
-
 
 def _audit(action: str, dataset_key: str) -> None:
     try:
@@ -355,7 +341,6 @@ def _audit(action: str, dataset_key: str) -> None:
         )
     except Exception:
         pass
-
 
 # ---------------------------------------------------------------------------
 # CLI
@@ -393,7 +378,6 @@ def main() -> None:
 
     doc = get_or_generate(args.key, invalidate=args.invalidate)
     print(doc)
-
 
 if __name__ == "__main__":
     main()

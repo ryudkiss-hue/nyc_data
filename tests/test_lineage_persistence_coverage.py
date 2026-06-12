@@ -55,7 +55,6 @@ def _make_cursor(fetchone_result=None, fetchall_result=None):
     cur.fetchall.return_value = fetchall_result or []
     return cur
 
-
 def _make_conn(cursor: MagicMock):
     """Return a MagicMock connection that yields the given cursor."""
     conn = MagicMock()
@@ -63,7 +62,6 @@ def _make_conn(cursor: MagicMock):
     conn.__exit__ = MagicMock(return_value=False)
     conn.cursor.return_value = cursor
     return conn
-
 
 def _make_node(node_id: str = "node-001", name: str = "Test Node") -> TransformationNode:
     """Build a minimal TransformationNode."""
@@ -74,7 +72,6 @@ def _make_node(node_id: str = "node-001", name: str = "Test Node") -> Transforma
         owner="test@example.com",
     )
 
-
 def _make_edge(src: str = "n1", tgt: str = "n2") -> LineageEdge:
     """Build a minimal LineageEdge."""
     return LineageEdge(
@@ -82,7 +79,6 @@ def _make_edge(src: str = "n1", tgt: str = "n2") -> LineageEdge:
         target_node_id=tgt,
         edge_type=EdgeType.DATA_FLOW,
     )
-
 
 def _make_execution(node_id: str = "node-001") -> ExecutionRecord:
     """Build a minimal ExecutionRecord."""
@@ -93,14 +89,12 @@ def _make_execution(node_id: str = "node-001") -> ExecutionRecord:
         output_row_count=90,
     )
 
-
 # ---------------------------------------------------------------------------
 # Import persistence using the patched psycopg
 # ---------------------------------------------------------------------------
 
 with patch.dict("sys.modules", {"psycopg": _psycopg_mock}):
     from socrata_toolkit.lineage.persistence import LineagePersistence  # noqa: E402
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -111,12 +105,10 @@ def mock_conn():
     """Fresh mock connection for each test."""
     return MagicMock()
 
-
 @pytest.fixture()
 def persistence(mock_conn):
     """LineagePersistence backed by a mock connection."""
     return LineagePersistence(db_connection=mock_conn)
-
 
 # ---------------------------------------------------------------------------
 # Initialisation
@@ -134,7 +126,6 @@ class TestLineagePersistenceInit:
         """None connection is accepted (methods will short-circuit)."""
         p = LineagePersistence(db_connection=None)
         assert p.conn is None
-
 
 # ---------------------------------------------------------------------------
 # save_node
@@ -195,7 +186,6 @@ class TestSaveNode:
             pass
         mock_conn.rollback.assert_called_once()
 
-
 # ---------------------------------------------------------------------------
 # get_node
 # ---------------------------------------------------------------------------
@@ -241,7 +231,6 @@ class TestGetNode:
         result = persistence.get_node("node-001")
         assert result is None
 
-
 # ---------------------------------------------------------------------------
 # save_edge
 # ---------------------------------------------------------------------------
@@ -274,7 +263,6 @@ class TestSaveEdge:
         except RuntimeError:
             pass
         mock_conn.rollback.assert_called_once()
-
 
 # ---------------------------------------------------------------------------
 # get_edges
@@ -329,7 +317,6 @@ class TestGetEdges:
         result = persistence.get_edges()
         assert result == []
 
-
 # ---------------------------------------------------------------------------
 # save_execution
 # ---------------------------------------------------------------------------
@@ -368,7 +355,6 @@ class TestSaveExecution:
         with pytest.raises(RuntimeError):
             persistence.save_execution(_make_execution())
         mock_conn.rollback.assert_called_once()
-
 
 # ---------------------------------------------------------------------------
 # get_execution_history
@@ -419,7 +405,6 @@ class TestGetExecutionHistory:
         result = persistence.get_execution_history("n")
         assert result == []
 
-
 # ---------------------------------------------------------------------------
 # delete_node
 # ---------------------------------------------------------------------------
@@ -464,7 +449,6 @@ class TestDeleteNode:
         assert result is False
         mock_conn.rollback.assert_called_once()
 
-
 # ---------------------------------------------------------------------------
 # export_dag
 # ---------------------------------------------------------------------------
@@ -498,7 +482,6 @@ class TestExportDag:
         mock_conn.cursor.return_value = cur
         result = persistence.export_dag(format="xlsx")
         assert result == ""
-
 
 # ---------------------------------------------------------------------------
 # load_dag

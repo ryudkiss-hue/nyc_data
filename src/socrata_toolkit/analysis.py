@@ -29,7 +29,6 @@ from .core import (
 
 logger = logging.getLogger(__name__)
 
-
 class InsightsEngine:
     """Engine for generating automated data insights."""
 
@@ -42,9 +41,7 @@ class InsightsEngine:
             "Temporal trends indicate rising volume.",
         ]
 
-
 # ΓöÇΓöÇ Basic Profiling (Legacy & Core) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
-
 
 @dataclass
 class DataProfile:
@@ -55,7 +52,6 @@ class DataProfile:
     quality_score: int
     warnings: list[str]
     numeric_summary: dict[str, Any]
-
 
 def profile_dataframe(df: pd.DataFrame) -> DataProfile:
     """Produce a comprehensive profile of the dataframe for CLI and Dash frontend."""
@@ -123,7 +119,6 @@ def profile_dataframe(df: pd.DataFrame) -> DataProfile:
         numeric_summary=numeric_df.describe().to_dict() if not numeric_df.empty else {},
     )
 
-
 def quality_report(df: pd.DataFrame, key_columns: list[str]) -> dict[str, Any]:
     """Produce a simple quality report covering missing values and duplicates."""
 
@@ -139,11 +134,9 @@ def quality_report(df: pd.DataFrame, key_columns: list[str]) -> dict[str, Any]:
         "duplicate_keys": {col: int(df.duplicated(subset=[col]).sum()) for col in key_columns},
     }
 
-
 # ΓöÇΓöÇ Text Analytics ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 WORD_RE = re.compile(r"[A-Za-z][A-Za-z0-9_\-']+")
-
 
 @dataclass
 class TextInsights:
@@ -151,7 +144,6 @@ class TextInsights:
     regex_hits: dict[str, int]
     tags: list[str]
     row_count: int
-
 
 def generate_text_insights(
     df: pd.DataFrame,
@@ -215,14 +207,12 @@ def generate_text_insights(
     )
     return tagged, insights
 
-
 def extract_term_frequencies(text_list: list[str]) -> dict[str, int]:
     """Calculate frequency of terms in a list of strings."""
     tokens = []
     for text in text_list:
         tokens.extend(WORD_RE.findall(str(text).lower()))
     return dict(Counter(t for t in tokens if len(t) >= 4).most_common(100))
-
 
 def extract_patterns(df: pd.DataFrame, column: str, pattern_type: str = "emails") -> dict[str, int]:
     """Count occurrences of specific regex patterns."""
@@ -233,7 +223,6 @@ def extract_patterns(df: pd.DataFrame, column: str, pattern_type: str = "emails"
     pat = re.compile(patterns.get(pattern_type, patterns["emails"]), re.IGNORECASE)
     matches = df[column].dropna().astype(str).apply(lambda x: len(pat.findall(x))).sum()
     return {pattern_type: int(matches)}
-
 
 def parse_sim_complaints(df: pd.DataFrame, text_col: str = "description") -> pd.DataFrame:
     """
@@ -339,9 +328,7 @@ def parse_sim_complaints(df: pd.DataFrame, text_col: str = "description") -> pd.
 
     return out
 
-
 # ΓöÇΓöÇ NYC SDM & ADA Validation ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
-
 
 @dataclass
 class ValidationReport:
@@ -349,7 +336,6 @@ class ValidationReport:
     errors: list[str]
     warnings: list[str]
     affected_records: int = 0
-
 
 VALID_MATERIALS = {
     "Hot Mix Asphalt (HMA)",
@@ -364,13 +350,11 @@ ADA_REQUIREMENTS = {
     "level_change": {"max_inches": 0.5},
 }
 
-
 def validate_required_columns(df: pd.DataFrame, required: list[str]) -> ValidationReport:
     missing = [c for c in required if c not in df.columns]
     return ValidationReport(
         valid=not missing, errors=[f"Missing column: {c}" for c in missing], warnings=[]
     )
-
 
 def validate_geospatial_bounds(
     df: pd.DataFrame,
@@ -396,7 +380,6 @@ def validate_geospatial_bounds(
         warnings=[],
         affected_records=missing + out_of_bounds,
     )
-
 
 def validate_ada_compliance_gates(
     df: pd.DataFrame,
@@ -434,7 +417,6 @@ def validate_ada_compliance_gates(
         valid=affected == 0, errors=errors, warnings=warnings, affected_records=affected
     )
 
-
 def validate_material_coverage(df: pd.DataFrame, material_col: str) -> ValidationReport:
     """Validate that material types are within official NYC SDM standards."""
     if material_col not in df.columns:
@@ -458,7 +440,6 @@ def validate_material_coverage(df: pd.DataFrame, material_col: str) -> Validatio
         errors.append(f"Found {len(missing)} missing material values.")
 
     return ValidationReport(valid=len(errors) == 0, errors=errors, warnings=[])
-
 
 def validate_defect_applicability(
     df: pd.DataFrame, material_col: str, defect_col: str
@@ -491,7 +472,6 @@ def validate_defect_applicability(
 
     return ValidationReport(valid=len(errors) == 0, errors=errors, warnings=[])
 
-
 def validate_marking_standards(
     df: pd.DataFrame, type_col: str, color_col: str, reflectivity_col: str | None = None
 ) -> ValidationReport:
@@ -514,7 +494,6 @@ def validate_marking_standards(
 
     return ValidationReport(valid=len(errors) == 0, errors=errors, warnings=warnings)
 
-
 def validate_schema_types(df: pd.DataFrame, schema: dict[str, str]) -> ValidationReport:
     """Strict check of dataframe dtypes against a provided schema."""
     errors = []
@@ -530,7 +509,6 @@ def validate_schema_types(df: pd.DataFrame, schema: dict[str, str]) -> Validatio
 
     return ValidationReport(valid=len(errors) == 0, errors=errors, warnings=warnings)
 
-
 # ΓöÇΓöÇ Statistical Anomaly & Drift Detection ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 class AnomalySeverity(Enum):
@@ -539,7 +517,6 @@ class AnomalySeverity(Enum):
     MEDIUM = "medium"
     LOW = "low"
     INFO = "info"
-
 
 @dataclass
 class Anomaly:
@@ -555,7 +532,6 @@ class Anomaly:
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
-
 @dataclass
 class AnomalyReport:
     detected_at: datetime
@@ -564,7 +540,6 @@ class AnomalyReport:
     @property
     def has_critical_anomalies(self) -> bool:
         return any(a.severity == AnomalySeverity.CRITICAL for a in self.anomalies)
-
 
 class AnomalyDetector:
     def __init__(self, z_score_threshold: float = 3.0, min_history: int = 5):
@@ -607,9 +582,7 @@ class AnomalyDetector:
     def detect_multi_metric_anomaly(self, metrics: dict[str, list[tuple[datetime, float]]]) -> AnomalyReport:
         return AnomalyReport(detected_at=datetime.now(timezone.utc))
 
-
 # ΓöÇΓöÇ SLA & Freshness Tracking ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
-
 
 @dataclass
 class SLAMetrics:
@@ -617,7 +590,6 @@ class SLAMetrics:
     sla_compliance_rate: float
     violation_count: int
     by_borough: dict[str, Any]
-
 
 def compute_sla_metrics(
     df: pd.DataFrame, start_col: str = COL_COMPLAINT, end_col: str = COL_REPAIR
@@ -639,7 +611,6 @@ def compute_sla_metrics(
         violation_count=violations,
         by_borough=compute_borough_metrics(df) if "borough" in df.columns else {},
     )
-
 
 def compute_borough_metrics(
     df: pd.DataFrame, cost_col: str = "repair_cost", status_col: str = "status"
@@ -675,7 +646,6 @@ def compute_borough_metrics(
             }
         )
     return results
-
 
 def compute_sla_trends(
     df: pd.DataFrame, date_col: str = "inspection_date", status_col: str = "status"
@@ -736,7 +706,6 @@ def compute_sla_trends(
     results.sort(key=lambda x: month_order.index(x["month"]) if x["month"] in month_order else 99)
     return results
 
-
 def flag_sla_violations(df: pd.DataFrame, threshold_days: int = 120) -> pd.DataFrame:
     """Return rows that exceed the SLA cycle time."""
     # Placeholder for actual date columns in NYC datasets
@@ -749,7 +718,6 @@ def flag_sla_violations(df: pd.DataFrame, threshold_days: int = 120) -> pd.DataF
             return df.loc[tmp["_days"] > threshold_days].reset_index(drop=True)
     return pd.DataFrame()
 
-
 def compute_freshness_score(df: pd.DataFrame, date_col: str) -> float:
     """Calculate a 0-100 freshness score based on the latest record."""
     if date_col not in df.columns:
@@ -759,7 +727,6 @@ def compute_freshness_score(df: pd.DataFrame, date_col: str) -> float:
         return 0.0
     age = (datetime.now(timezone.utc) - latest.to_pydatetime().replace(tzinfo=timezone.utc)).days
     return max(0.0, 100.0 - age)
-
 
 @dataclass
 class OutlierResult:
@@ -772,14 +739,12 @@ class OutlierResult:
         if self.outlier_indices is None:
             self.outlier_indices = []
 
-
 def detect_outliers_iqr(df: pd.DataFrame, column: str) -> OutlierResult:
     q1 = df[column].quantile(0.25)
     q3 = df[column].quantile(0.75)
     iqr = q3 - q1
     mask = (df[column] < (q1 - 1.5 * iqr)) | (df[column] > (q3 + 1.5 * iqr))
     return OutlierResult(column=column, outlier_count=int(mask.sum()), method="iqr", outlier_indices=list(df.index[mask]))
-
 
 def detect_outliers_zscore(df: pd.DataFrame, column: str, threshold: float = 3.0) -> OutlierResult:
     mean = df[column].mean()
@@ -789,17 +754,14 @@ def detect_outliers_zscore(df: pd.DataFrame, column: str, threshold: float = 3.0
     mask = ((df[column] - mean).abs() / std) > threshold
     return OutlierResult(column=column, outlier_count=int(mask.sum()), method="zscore", outlier_indices=list(df.index[mask]))
 
-
 def detect_all_outliers(df: pd.DataFrame, method: str = "iqr") -> list[OutlierResult]:
     num_cols = df.select_dtypes(include=DTYPE_NUM).columns
     fn = detect_outliers_zscore if method == "zscore" else detect_outliers_iqr
     return [fn(df, col) for col in num_cols]
 
-
 @dataclass
 class CorrelationResult:
     pairs: list
-
 
 def correlation_analysis(df: pd.DataFrame, threshold: float = 0.0) -> CorrelationResult:
     num = df.select_dtypes(include=DTYPE_NUM)
@@ -815,7 +777,6 @@ def correlation_analysis(df: pd.DataFrame, threshold: float = 0.0) -> Correlatio
                 pairs.append({"column_a": a, "column_b": b, "correlation": val})
     return CorrelationResult(pairs=pairs)
 
-
 @dataclass
 class TimeSeriesSummary:
     count: int
@@ -823,7 +784,6 @@ class TimeSeriesSummary:
     max: float
     trend_direction: str
     trend_slope: float
-
 
 def time_series_summary(df: pd.DataFrame, date_col: str, value_col: str) -> TimeSeriesSummary:
     if df.empty:
@@ -844,7 +804,6 @@ def time_series_summary(df: pd.DataFrame, date_col: str, value_col: str) -> Time
     direction = "increasing" if slope > 1e-9 else ("decreasing" if slope < -1e-9 else "flat")
     return TimeSeriesSummary(count=n, mean=float(vals.mean()), max=float(vals.max()), trend_direction=direction, trend_slope=slope)
 
-
 @dataclass
 class DistributionResult:
     column: str
@@ -855,7 +814,6 @@ class DistributionResult:
     def __post_init__(self) -> None:
         if not self.classification:
             self.classification = self.best_fit
-
 
 def classify_distribution(df: pd.DataFrame, column: str) -> DistributionResult:
     series = df[column]
@@ -868,11 +826,9 @@ def classify_distribution(df: pd.DataFrame, column: str) -> DistributionResult:
         cls = "normal"
     return DistributionResult(column=column, best_fit=cls, classification=cls, sample_size=n)
 
-
 def classify_all_distributions(df: pd.DataFrame) -> list[DistributionResult]:
     num_cols = df.select_dtypes(include=DTYPE_NUM).columns
     return [classify_distribution(df, col) for col in num_cols]
-
 
 def detect_anomalies(df: pd.DataFrame) -> pd.DataFrame:
     num = df.select_dtypes(DTYPE_NUM)
@@ -882,12 +838,10 @@ def detect_anomalies(df: pd.DataFrame) -> pd.DataFrame:
     anom_mask = (z.abs() > 3).any(axis=1)
     return df.loc[anom_mask].reset_index(drop=True)
 
-
 @dataclass
 class AnomalyReport:
     flagged_rows: int
     total_rows: int
-
 
 def flag_anomalies(df: pd.DataFrame) -> tuple[pd.DataFrame, AnomalyReport]:
     num = df.select_dtypes(DTYPE_NUM)
@@ -899,7 +853,6 @@ def flag_anomalies(df: pd.DataFrame) -> tuple[pd.DataFrame, AnomalyReport]:
     anom_mask = (z.abs() > 3).any(axis=1)
     out["_anomaly"] = anom_mask
     return out, AnomalyReport(flagged_rows=int(anom_mask.sum()), total_rows=len(df))
-
 
 def detect_data_drift(old_df: pd.DataFrame, new_df: pd.DataFrame, num_col: str) -> dict[str, Any]:
     """Basic statistical drift detection to see if new data distributions have shifted from historical baselines."""
@@ -919,9 +872,7 @@ def detect_data_drift(old_df: pd.DataFrame, new_df: pd.DataFrame, num_col: str) 
         "shift": abs(new_mean - old_mean),
     }
 
-
 # ΓöÇΓöÇ Program Metrics & Dashboards ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
-
 
 @dataclass
 class DashboardSummary:
@@ -934,7 +885,6 @@ class DashboardSummary:
     red_count: int
     timestamp: str = ""
     budget_codes: list = field(default_factory=list)
-
 
 class Report:
     """Simple report object with markdown/HTML rendering."""
@@ -953,11 +903,9 @@ class Report:
         Path(path).parent.mkdir(parents=True, exist_ok=True)
         Path(path).write_text(self.to_markdown(), encoding="utf-8")
 
-
 def generate_contract_report(df: pd.DataFrame) -> Report:
     """Generate a summary report for contracts."""
     return Report("Contract Status Report", f"Total Records: {len(df)}")
-
 
 def generate_inquiry_response(inquiry_type: str, df: pd.DataFrame, **kwargs) -> Report:
     """Generate a boilerplate inquiry response for a given inquiry type."""
@@ -967,7 +915,6 @@ def generate_inquiry_response(inquiry_type: str, df: pd.DataFrame, **kwargs) -> 
         f"Thank you for your inquiry regarding NYC DOT data.\nType: {inquiry_type} | Filter: {details}\nTotal records reviewed: {len(df)}",
     )
 
-
 def generate_program_report(dash: DashboardSummary) -> Report:
     """Generate a report from the program dashboard snapshot."""
     content = f"Overall Health: {dash.overall_health.upper()}\n\n"
@@ -976,7 +923,6 @@ def generate_program_report(dash: DashboardSummary) -> Report:
     for m in dash.metrics:
         content += f"- {m.name.title()}: {m.value:.2f} (Target: {m.target:.2f})\n"
     return Report("Program KPI Report", content)
-
 
 def generate_executive_briefing_automated(df: pd.DataFrame) -> Report:
     """Headless Automated Executive Briefing. Synthesizes a full textual KPI summary for management."""
@@ -995,17 +941,14 @@ def generate_executive_briefing_automated(df: pd.DataFrame) -> Report:
 
     return Report("Automated Executive Briefing", content)
 
-
 def generate_pdf_report(report: Report, path: str = "outputs/reports/latest_report.pdf"):
     """Simulate PDF generation by saving markdown."""
     report.save(path)
-
 
 # ΓöÇΓöÇ Visualizations (Plotly) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 _PLOTLY_THEME = "plotly_dark"
 _FONT_FAMILY = "Inter, sans-serif"
-
 
 def _apply_modern_layout(fig: Any, title: str | None = None) -> Any:
     """Standardize the look and feel of all Plotly charts with reference-grade defaults."""
@@ -1060,7 +1003,6 @@ def _apply_modern_layout(fig: Any, title: str | None = None) -> Any:
     )
     return fig
 
-
 def export_plotly_figure(fig: Any, base_filepath: str, formats: list[str] = None) -> list[str]:
     """Export a Plotly figure to multiple formats for portability and presentations.
     Formats supported: 'html' (interactive), 'json' (live-update state), 'png', 'pdf' (requires kaleido).
@@ -1095,7 +1037,6 @@ def export_plotly_figure(fig: Any, base_filepath: str, formats: list[str] = None
 
     return saved_paths
 
-
 def histogram(df: pd.DataFrame, column: str, title: str | None = None) -> Any:
     """Return a refined interactive Plotly histogram."""
     import plotly.express as px
@@ -1111,7 +1052,6 @@ def histogram(df: pd.DataFrame, column: str, title: str | None = None) -> Any:
     # Rich tooltips (Plotly Reference: trace.hovertemplate)
     fig.update_traces(hovertemplate="<b>%{x}</b><br>Count: %{y}<extra></extra>")
     return _apply_modern_layout(fig, title or f"Distribution Analysis: {column.title()}")
-
 
 def bar_chart(
     df: pd.DataFrame,
@@ -1162,7 +1102,6 @@ def bar_chart(
     )
     return _apply_modern_layout(fig, title or f"Top {top_n} Categories: {column.title()}")
 
-
 def correlation_heatmap(df: pd.DataFrame, title: str | None = None) -> Any:
     """Return a high-resolution interactive Plotly correlation heatmap."""
     import plotly.express as px
@@ -1184,7 +1123,6 @@ def correlation_heatmap(df: pd.DataFrame, title: str | None = None) -> Any:
 
     fig.update_xaxes(side="top")
     return _apply_modern_layout(fig, title or "Inter-Variable Correlation Matrix")
-
 
 def time_series_chart(
     df: pd.DataFrame, date_col: str, value_col: str, group_col: str | None = None
@@ -1227,7 +1165,6 @@ def time_series_chart(
 
     return _apply_modern_layout(fig, f"Temporal Trend: {value_col.title()} Over Time")
 
-
 def sunburst_chart(df: pd.DataFrame, path: list[str], values: str, title: str | None = None) -> Any:
     """Create a hierarchical Sunburst chart (Plotly Reference: Sunburst)."""
     import plotly.express as px
@@ -1245,7 +1182,6 @@ def sunburst_chart(df: pd.DataFrame, path: list[str], values: str, title: str | 
     )
     return _apply_modern_layout(fig, title or "Hierarchical Data Breakdown")
 
-
 def treemap_chart(df: pd.DataFrame, path: list[str], values: str, title: str | None = None) -> Any:
     """Create a hierarchical Treemap (Plotly Reference: Treemap)."""
     import plotly.express as px
@@ -1262,7 +1198,6 @@ def treemap_chart(df: pd.DataFrame, path: list[str], values: str, title: str | N
         hovertemplate="<b>%{label}</b><br>Value: %{value:,.0f}<extra></extra>",
     )
     return _apply_modern_layout(fig, title or "Proportional Data Density")
-
 
 def gauge_chart(value: float, target: float | None = None, title: str | None = None) -> Any:
     """Create a high-impact KPI Gauge (Plotly Reference: Indicator)."""
@@ -1293,7 +1228,6 @@ def gauge_chart(value: float, target: float | None = None, title: str | None = N
         )
     )
     return _apply_modern_layout(fig)
-
 
 def animated_scatter_chart(
     df: pd.DataFrame,
@@ -1329,7 +1263,6 @@ def animated_scatter_chart(
 
     return _apply_modern_layout(fig, title or f"Animated Trends: {y.title()} vs {x.title()}")
 
-
 def hotspot_density_mapbox(
     df: pd.DataFrame,
     lat_col: str = COL_LAT,
@@ -1358,7 +1291,6 @@ def hotspot_density_mapbox(
     fig.update_layout(margin=dict(t=80 if title else 0, b=0, l=0, r=0))
     return _apply_modern_layout(fig, title or "Operational Density Hotspots")
 
-
 def material_breakdown_pie_chart(
     df: pd.DataFrame, material_col: str, title: str | None = None
 ) -> Any:
@@ -1386,7 +1318,6 @@ def material_breakdown_pie_chart(
     )
 
     return _apply_modern_layout(fig, title or "Material Composition Breakdown")
-
 
 def material_borough_subplots(
     df: pd.DataFrame, material_col: str, borough_col: str = "borough", title: str | None = None
@@ -1433,7 +1364,6 @@ def material_borough_subplots(
 
     return _apply_modern_layout(fig, title or f"Material Breakdown by {borough_col.title()}")
 
-
 def operations_gantt_chart(
     df: pd.DataFrame,
     task_col: str,
@@ -1457,7 +1387,6 @@ def operations_gantt_chart(
     fig.update_yaxes(autorange="reversed")
     return _apply_modern_layout(fig, title or "Operations Schedule & Timelines")
 
-
 def triage_funnel_chart(df: pd.DataFrame, stage_col: str, title: str | None = None) -> Any:
     """Create a funnel chart to visualize operational throughput (e.g., Reported -> Inspected -> Assigned -> Completed)."""
     import plotly.express as px
@@ -1472,7 +1401,6 @@ def triage_funnel_chart(df: pd.DataFrame, stage_col: str, title: str | None = No
 
     fig = px.funnel(counts, x="Count", y="Stage", color="Stage")
     return _apply_modern_layout(fig, title or "Pipeline Conversion & Triage Funnel")
-
 
 def plot_sidewalk_anatomy(geojson_data: dict[str, Any], title: str | None = None) -> Any:
     """Render a vectorized 2D sandbox schematic of sidewalk infrastructure."""
@@ -1518,7 +1446,6 @@ def plot_sidewalk_anatomy(geojson_data: dict[str, Any], title: str | None = None
     )
     return _apply_modern_layout(fig, title or "Vectorized Sidewalk Anatomy Sandbox")
 
-
 def violin_plot(df: pd.DataFrame, x_col: str, y_col: str, title: str | None = None) -> Any:
     """Create a Violin plot to visualize distributions and probability density (e.g. Repair Cost by Borough)."""
     import plotly.express as px
@@ -1534,7 +1461,6 @@ def violin_plot(df: pd.DataFrame, x_col: str, y_col: str, title: str | None = No
     )
     fig.update_traces(hovertemplate="<b>%{x}</b><br>Value: %{y}<extra></extra>")
     return _apply_modern_layout(fig, title or f"Distribution: {y_col.title()} by {x_col.title()}")
-
 
 def quality_radar_chart(score_dict: dict[str, float], title: str | None = None) -> Any:
     """Create a Radar chart visualizing the multiple dimensions of data quality."""
@@ -1553,7 +1479,6 @@ def quality_radar_chart(score_dict: dict[str, float], title: str | None = None) 
     )
     fig.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0, 100])), showlegend=False)
     return _apply_modern_layout(fig, title or "Data Quality Radar")
-
 
 def generate_analysis_results(df: pd.DataFrame, analysis_type: str) -> dict[str, Any]:
     """Orchestrator to return the correct data structure for a given analysis type.
@@ -1584,9 +1509,7 @@ def generate_analysis_results(df: pd.DataFrame, analysis_type: str) -> dict[str,
         return {"summary": asdict(summary), "records": est_df.head(100).to_dict(orient="records")}
     return {"message": f"Unknown analysis type: {analysis_type}"}
 
-
 # ΓöÇΓöÇ Enums & Types ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
-
 
 class DataType(Enum):
     NUMERIC = "numeric"
@@ -1595,9 +1518,7 @@ class DataType(Enum):
     BOOLEAN = "boolean"
     GEOSPATIAL = "geospatial"
 
-
 # ── Insights (program analyst reports) ────────────────────────────────────────
-
 
 @dataclass
 class Insight:
@@ -1605,12 +1526,10 @@ class Insight:
     text: str
     priority: str = "medium"
 
-
 @dataclass
 class Recommendation:
     priority: str
     text: str
-
 
 @dataclass
 class InsightsReport:
@@ -1630,7 +1549,6 @@ class InsightsReport:
             md += f"- **{k}:** {v}\n"
         return md
 
-
 def smart_recommendations(df: pd.DataFrame) -> list[Recommendation]:
     recs: list[Recommendation] = []
     if "severity_rating" in df.columns and df["severity_rating"].mean() > 5:
@@ -1644,7 +1562,6 @@ def smart_recommendations(df: pd.DataFrame) -> list[Recommendation]:
             Recommendation(priority="critical", text="High volume of pending repairs detected.")
         )
     return recs
-
 
 def generate_insights(
     df: pd.DataFrame,
@@ -1678,7 +1595,6 @@ def generate_insights(
         recommendations=recs or smart_recommendations(df),
     )
 
-
 def list_available_visualizations() -> pd.DataFrame:
     import inspect
 
@@ -1698,9 +1614,7 @@ def list_available_visualizations() -> pd.DataFrame:
         charts.append({"name": name, "description": description, "parameters": ", ".join(params)})
     return pd.DataFrame(charts).sort_values("name").reset_index(drop=True)
 
-
 # ── Pillar compatibility re-exports ───────────────────────────────────────────
-
 
 try:
     from .viz.map import create_map, save_map  # noqa: E402

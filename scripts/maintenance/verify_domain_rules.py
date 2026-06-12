@@ -21,7 +21,6 @@ def test_imports():
         traceback.print_exc()
         return False
 
-
 def test_material_lifespan():
     """Test material_lifespan_rule."""
     try:
@@ -49,7 +48,6 @@ def test_material_lifespan():
         print(f"❌ Material lifespan rule test FAILED: {e}")
         traceback.print_exc()
         return False
-
 
 def test_borough_coverage():
     """Test borough_coverage_distribution rule."""
@@ -81,7 +79,6 @@ def test_borough_coverage():
         print(f"❌ Borough coverage rule test FAILED: {e}")
         traceback.print_exc()
         return False
-
 
 def test_permit_inspection():
     """Test permit_inspection_relationship rule."""
@@ -120,7 +117,6 @@ def test_permit_inspection():
         traceback.print_exc()
         return False
 
-
 def test_orchestration():
     """Test validate_all_domain_rules orchestrator."""
     try:
@@ -148,7 +144,6 @@ def test_orchestration():
         print(f"❌ Rule orchestration test FAILED: {e}")
         traceback.print_exc()
         return False
-
 
 def main():
     """Run all verification tests."""
@@ -186,7 +181,6 @@ def main():
     print("=" * 70)
 
     return 0 if passed_count == total_count else 1
-
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -29,19 +29,16 @@ from socrata_toolkit.engineering.construction_list import DEFAULT_PRIORITY_WEIGH
 pytest.importorskip("dash")
 from dash_app.components.interactive import param_slider, tip_card  # noqa: E402
 
-
 def test_interactive_components_import():
     card = tip_card("Title", "Body text", id="test-tip")
     slider = param_slider("Weight", 0, 1, 0.1, 0.5, "test-slider", aria_label="Weight")
     assert card is not None
     assert slider is not None
 
-
 def test_normalize_weights_sums_to_one():
     w = normalize_weights(0.3, 0.2, 0.15, 0.15, 0.1, 0.1)
     assert abs(sum(w.values()) - 1.0) < 0.01
     assert set(w.keys()) == set(DEFAULT_PRIORITY_WEIGHTS.keys())
-
 
 def test_preview_priority_with_fixture():
     df = pd.DataFrame(
@@ -61,13 +58,11 @@ def test_preview_priority_with_fixture():
     assert "_priority_score" in result.columns
     assert result.iloc[0]["location_id"] == "L1"
 
-
 def test_borough_bar_counts():
     df = pd.DataFrame({"borough": ["A", "A", "B"], "_priority_score": [0.9, 0.8, 0.5]})
     counts = borough_bar_counts(df)
     assert "A" in counts
     assert counts["A"] > counts["B"]
-
 
 def test_filter_kpi_metrics():
     metrics = [
@@ -78,20 +73,17 @@ def test_filter_kpi_metrics():
     assert len(filtered) == 1
     assert "CPI" in filtered[0]["name"]
 
-
 def test_profile_weight_snippet():
     w = normalize_weights(0.3, 0.2, 0.15, 0.15, 0.1, 0.1)
     snippet = profile_weight_snippet(w)
     assert "priority_weights" in snippet
     assert "severity" in snippet
 
-
 def test_construction_page_imports():
     import dash_app.app  # noqa: F401
     from dash_app.pages import construction
 
     assert construction.layout is not None
-
 
 def test_shell_helpers():
     from dash_app.components.shell import empty_state, page_shell

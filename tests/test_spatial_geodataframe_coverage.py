@@ -24,7 +24,6 @@ geopandas_required = pytest.mark.skipif(
     not HAS_GEOPANDAS, reason="geopandas not installed"
 )
 
-
 # ---------------------------------------------------------------------------
 # _parse_geom_value
 # ---------------------------------------------------------------------------
@@ -97,7 +96,6 @@ class TestParseGeomValue:
         """_parse_geom_value returns None for a dict missing 'type'/'coordinates'."""
         assert _parse_geom_value({"key": "value"}) is None
 
-
 # ---------------------------------------------------------------------------
 # geodataframe_from_socrata — without geopandas
 # ---------------------------------------------------------------------------
@@ -119,7 +117,6 @@ class TestGeodataframeFromSocrataNoGeopandas:
         df = pd.DataFrame({"value": [1, 2]})
         with pytest.raises(KeyError, match="the_geom"):
             geodataframe_from_socrata(df, geom_col="the_geom")
-
 
 # ---------------------------------------------------------------------------
 # geodataframe_from_socrata — with geopandas
@@ -179,7 +176,6 @@ class TestGeodataframeFromSocrataWithGeopandas:
         gdf = geodataframe_from_socrata(df, crs="EPSG:4326")
         assert gdf.crs.to_epsg() == 4326
 
-
 # ---------------------------------------------------------------------------
 # to_geojson
 # ---------------------------------------------------------------------------
@@ -203,7 +199,6 @@ class TestToGeojson:
         assert isinstance(result, str)
         parsed = json.loads(result)
         assert parsed["type"] == "FeatureCollection"
-
 
 # ---------------------------------------------------------------------------
 # to_wkt_column
@@ -232,7 +227,6 @@ class TestToWktColumn:
         assert isinstance(result, pd.Series)
         assert all(isinstance(v, str) for v in result)
         assert result.iloc[0].startswith("POINT")
-
 
 # ---------------------------------------------------------------------------
 # spatial_stats

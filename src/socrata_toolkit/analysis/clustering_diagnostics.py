@@ -33,7 +33,6 @@ __all__ = [
     "SilhouetteAnalyzer",
 ]
 
-
 def _get_sklearn():
     """Lazy import sklearn to handle optional dependency."""
     try:
@@ -58,7 +57,6 @@ def _get_sklearn():
         raise ImportError(
             "Install scikit-learn: pip install scikit-learn"
         ) from exc
-
 
 class ElbowAnalyzer:
     """Detect elbow point in inertia curve using slope-based method."""
@@ -126,7 +124,6 @@ class ElbowAnalyzer:
 
         return inertias, labels_list
 
-
 class SilhouetteAnalyzer:
     """Compute silhouette coefficients and quality metrics."""
 
@@ -181,7 +178,6 @@ class SilhouetteAnalyzer:
         ch = float(calinski_harabasz_score(X, labels))
 
         return {"davies_bouldin": db, "calinski_harabasz": ch}
-
 
 class ClusteringDiagnostics:
     """Full clustering analysis pipeline: elbow detection + silhouette + quality metrics.

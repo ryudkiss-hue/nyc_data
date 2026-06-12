@@ -46,7 +46,6 @@ class HistogramData:
         rank = max(0, min(rank, len(ordered) - 1))
         return ordered[rank]
 
-
 class MetricsCollector:
     """Collects counter, gauge, histogram and summary metrics in memory."""
 

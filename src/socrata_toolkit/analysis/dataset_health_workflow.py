@@ -35,7 +35,6 @@ try:
 except ImportError:
     HAS_LANGGRAPH = False
 
-
 class HealthState(TypedDict):
     """Workflow state: passed through each node."""
     registry: dict[str, dict[str, str]]
@@ -47,7 +46,6 @@ class HealthState(TypedDict):
     claude_recommendations: dict[str, Any]
     final_report: dict[str, Any]
     error_log: list[str]
-
 
 class DatasetHealthWorkflow:
     """Orchestrate dataset health monitoring via LangGraph.
@@ -391,7 +389,6 @@ Format response as JSON:
                 col_type = col.get("dataTypeName", "object")
                 schema[col_name] = col_type
         return schema
-
 
 def run_dataset_health_workflow(
     registry: dict[str, dict[str, str]] | None = None,

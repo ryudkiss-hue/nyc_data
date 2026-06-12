@@ -23,7 +23,6 @@ _STRATEGY_FUNCS = {
     masking.PARTIAL_MASK: masking.partial_mask,
 }
 
-
 def mask_pii_columns(
     df: pd.DataFrame, signals: list[PiiSignal] | None = None
 ) -> tuple[pd.DataFrame, dict[str, str]]:
@@ -50,7 +49,6 @@ def mask_pii_columns(
         masked[sig.column] = func(masked[sig.column])
         report[sig.column] = strategy
     return masked, report
-
 
 def redact_column_names(
     names: list[str], signals: list[PiiSignal]

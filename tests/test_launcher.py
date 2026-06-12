@@ -4,14 +4,12 @@ from __future__ import annotations
 
 import pytest
 
-
 def test_launcher_help_exits_zero():
     import launcher
 
     with pytest.raises(SystemExit) as exc:
         launcher.main(["help"])
     assert exc.value.code == 0
-
 
 def test_launcher_doctor_via_cli():
     from click.testing import CliRunner

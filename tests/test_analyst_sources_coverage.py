@@ -27,7 +27,6 @@ try:
 except ImportError:
     HAS_PSYCOPG = False
 
-
 class TestApplyColumnMap:
     """Tests for _apply_column_map helper function."""
 
@@ -61,7 +60,6 @@ class TestApplyColumnMap:
         df = pd.DataFrame({"old": [10, 20, 30]})
         result = _apply_column_map(df, {"old": "new"})
         assert list(result["new"]) == [10, 20, 30]
-
 
 class TestExcelSource:
     """Tests for ExcelSource class."""
@@ -140,7 +138,6 @@ class TestExcelSource:
 
             assert len(result) == 2
 
-
 class TestSocrataSource:
     """Tests for SocrataSource class."""
 
@@ -214,7 +211,6 @@ class TestSocrataSource:
             result = source.load()
             assert "new" in result.columns
 
-
 class TestPostgresSource:
     """Tests for PostgresSource class."""
 
@@ -274,7 +270,6 @@ class TestPostgresSource:
 
                     result = source.load()
                     assert "new_col" in result.columns
-
 
 class TestGeoSource:
     """Tests for GeoSource class."""
@@ -385,7 +380,6 @@ class TestGeoSource:
 
             if len(result) > 0 and "new_col" in result.columns:
                 assert "old_col" not in result.columns
-
 
 class TestBuildSource:
     """Tests for build_source factory function."""

@@ -8,7 +8,6 @@ import pytest
 from socrata_toolkit.core import DuckDBManager
 from socrata_toolkit.pipeline.sync import sync_dataset
 
-
 class TestPipelineAnalytics:
     def test_sync_triggers_audit(self, monkeypatch, tmp_path):
         # We need to mock SocrataClient to avoid network calls

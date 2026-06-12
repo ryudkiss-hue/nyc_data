@@ -18,15 +18,12 @@ from click.testing import CliRunner
 
 from socrata_toolkit.core.cli import main
 
-
 @pytest.fixture
 def runner():
     return CliRunner()
 
-
 def _col(dtype, nullable=True, position=0, sample_value=None):
     return SimpleNamespace(dtype=dtype, nullable=nullable, position=position, sample_value=sample_value)
-
 
 def _schema(dataset_id="inspection", version=1, columns=None, row_count=100):
     return SimpleNamespace(
@@ -37,7 +34,6 @@ def _schema(dataset_id="inspection", version=1, columns=None, row_count=100):
         columns=columns or {"a": _col("int"), "b": _col("text")},
         metadata={},
     )
-
 
 # ---------------------------------------------------------------------------
 # compliance group (real bundled rules)
@@ -76,7 +72,6 @@ class TestComplianceCommands:
         assert out.exists()
         payload = json.loads(out.read_text())
         assert "total_rules" in payload
-
 
 # ---------------------------------------------------------------------------
 # schema diff
@@ -123,7 +118,6 @@ class TestSchemaDiff:
         assert payload["change_count"] == 3
         types = {c["type"] for c in payload["changes"]}
         assert types == {"COLUMN_DELETION", "COLUMN_ADDITION", "TYPE_CHANGE"}
-
 
 # ---------------------------------------------------------------------------
 # schema validate
@@ -176,7 +170,6 @@ class TestSchemaValidate:
             result = runner.invoke(main, ["schema", "validate", "inspection", str(jsonl)])
         assert result.exit_code == 0
         assert "Error parsing line 2" in result.output
-
 
 # ---------------------------------------------------------------------------
 # schema check-compatibility
@@ -232,7 +225,6 @@ class TestSchemaCheckCompatibility:
         assert result.exit_code == 0
         assert "Compatible: False" in result.output
         assert "dropped column a" in result.output
-
 
 # ---------------------------------------------------------------------------
 # schema list / current

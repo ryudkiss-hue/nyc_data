@@ -19,7 +19,6 @@ from socrata_toolkit.governance.dataset_governance import (
     registry_audit,
 )
 
-
 class TestFetchSocrataJson:
     """Tests for _fetch_socrata_json function."""
 
@@ -62,7 +61,6 @@ class TestFetchSocrataJson:
 
         with pytest.raises(URLError):
             _fetch_socrata_json("test-fourfour")
-
 
 class TestFetchLL251Metadata:
     """Tests for _fetch_ll251_metadata function."""
@@ -126,7 +124,6 @@ class TestFetchLL251Metadata:
         result = _fetch_ll251_metadata()
         assert result == {}
 
-
 class TestFetchRemovalList:
     """Tests for _fetch_removal_list function."""
 
@@ -169,7 +166,6 @@ class TestFetchRemovalList:
         result = _fetch_removal_list()
         assert result == set()
 
-
 class TestFetchAutomationStatus:
     """Tests for _fetch_automation_status function."""
 
@@ -211,7 +207,6 @@ class TestFetchAutomationStatus:
 
         result = _fetch_automation_status()
         assert result == {}
-
 
 class TestCaching:
     """Tests for caching functionality."""
@@ -258,7 +253,6 @@ class TestCaching:
         time.sleep(1.1)
 
         assert not _is_cache_valid()
-
 
 class TestCrossReference:
     """Tests for cross_reference function."""
@@ -319,7 +313,6 @@ class TestCrossReference:
         assert result["ll251_metadata"] is None
         assert result["removal_flagged"] is False
         assert result["automated"] is False
-
 
 class TestRegistryAudit:
     """Tests for registry_audit function."""

@@ -6,7 +6,6 @@ import pytest
 
 from socrata_toolkit.analyst.ramp_analysis import compute_borough_completion_rates
 
-
 class TestComputeBoroughCompletionRates:
     """Tests for compute_borough_completion_rates function."""
 

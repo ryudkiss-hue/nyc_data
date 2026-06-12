@@ -4,12 +4,10 @@ from __future__ import annotations
 
 import pandas as pd
 
-
 def _profile(**steps):
     from socrata_toolkit.analyst.config import AnalystProfile
 
     return AnalystProfile(profile_name="test", sources={}, steps=steps)
-
 
 # ---------------------------------------------------------------------------
 # _normalize_frames
@@ -40,7 +38,6 @@ class TestNormalizeFrames:
         df = pd.DataFrame({"x": [1], "y": [2]})
         out = _normalize_frames({"a": df})
         assert list(out["a"].columns) == ["x", "y"]
-
 
 # ---------------------------------------------------------------------------
 # _compute_kpi_payload
@@ -76,7 +73,6 @@ class TestComputeKpiPayload:
         assert payload is not None
         assert "metrics" in payload
         assert path is not None and path.endswith(".json")
-
 
 # ---------------------------------------------------------------------------
 # _build_construction_plan
@@ -116,7 +112,6 @@ class TestBuildConstructionPlan:
             profile, inspections, pd.DataFrame()
         )
         assert not construction.empty
-
 
 class TestApplyRoleProfile:
     """Cover _apply_role_profile using a bundled role profile config."""
@@ -176,7 +171,6 @@ class TestApplyRoleProfile:
         )
         # manifest written either way
         assert (result.pack_dir / "manifest.json").exists() or result.artifacts is not None
-
 
 class TestStageDuckdb:
     def test_stages_nonempty_frames(self, tmp_path):

@@ -12,11 +12,9 @@ from click.testing import CliRunner
 
 from socrata_toolkit.core.cli import main
 
-
 @pytest.fixture
 def runner():
     return CliRunner()
-
 
 def _resp(json_value):
     r = MagicMock()
@@ -25,7 +23,6 @@ def _resp(json_value):
     r.text = json.dumps(json_value)
     r.raise_for_status = MagicMock()
     return r
-
 
 # ---------------------------------------------------------------------------
 # conflict
@@ -103,7 +100,6 @@ class TestConflictCommand:
         assert res.exit_code == 0
         assert client.fetch_json.call_count == 2
 
-
 # ---------------------------------------------------------------------------
 # llm-augment
 # ---------------------------------------------------------------------------
@@ -123,7 +119,6 @@ class TestLlmAugment:
         assert res.exit_code == 0
         assert out.exists()
         assert "LLM-augmented" in res.output
-
 
 # ---------------------------------------------------------------------------
 # export geojson (geopandas)
@@ -165,7 +160,6 @@ class TestExportGeojson:
                 "export", "inspection", "--format", "geojson", "--output", str(tmp_path / "x.geojson"),
             ])
         assert res.exit_code != 0
-
 
 # ---------------------------------------------------------------------------
 # nlp-analyze (keyword-triage shim)

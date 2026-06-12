@@ -2,7 +2,6 @@ import os
 import shutil
 from pathlib import Path
 
-
 def ruthless_cleanup():
     root = Path(".").resolve()
     archive = root / "legacy_archive"

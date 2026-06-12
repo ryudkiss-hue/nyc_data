@@ -19,7 +19,6 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-
 class LineageVisualizer:
     """Exports lineage in multiple formats for visualization and analysis."""
 

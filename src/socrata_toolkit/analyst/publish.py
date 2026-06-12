@@ -25,7 +25,6 @@ from ..core.state import save_state
 class PublishError(RuntimeError):
     pass
 
-
 def _read_text_best_effort(path: Path) -> str:
     try:
         return path.read_text(encoding="utf-8")
@@ -34,7 +33,6 @@ def _read_text_best_effort(path: Path) -> str:
             return path.read_text(encoding="utf-8", errors="ignore")
         except Exception:
             return ""
-
 
 def _pack_context(pack_dir: Path) -> dict[str, str]:
     manifest = pack_dir / "manifest.json"
@@ -52,7 +50,6 @@ def _pack_context(pack_dir: Path) -> dict[str, str]:
             pass
     return ctx
 
-
 def load_publish_profile(path: str | Path) -> dict[str, Any]:
     p = Path(path)
     if not p.exists():
@@ -63,14 +60,12 @@ def load_publish_profile(path: str | Path) -> dict[str, Any]:
     data.setdefault("profile_name", p.stem)
     return data
 
-
 @dataclass
 class PublishAction:
     kind: str
     ok: bool
     detail: str
     meta: dict[str, Any]
-
 
 @dataclass
 class PublishReport:
@@ -88,7 +83,6 @@ class PublishReport:
                 {"kind": a.kind, "ok": a.ok, "detail": a.detail, "meta": a.meta} for a in self.actions
             ],
         }
-
 
 def _copy_pack(pack_dir: Path, dest_root: str, *, dry_run: bool) -> PublishAction:
     dest = Path(dest_root) / pack_dir.name
@@ -117,7 +111,6 @@ def _copy_pack(pack_dir: Path, dest_root: str, *, dry_run: bool) -> PublishActio
             detail=f"Copy failed: {exc}",
             meta={"source": str(pack_dir), "dest": str(dest)},
         )
-
 
 def _export_bi(pack_dir: Path, dest_root: str, include: list[str] | None, *, dry_run: bool) -> PublishAction:
     dest = Path(dest_root) / pack_dir.name
@@ -149,7 +142,6 @@ def _export_bi(pack_dir: Path, dest_root: str, include: list[str] | None, *, dry
         detail=f"Exported {len(selected)} files to {dest}",
         meta={"dest": str(dest), "files": [p.name for p in selected]},
     )
-
 
 def _teams_post(cfg: dict[str, Any], ctx: dict[str, str], summary: str, *, dry_run: bool) -> PublishAction:
     webhook = os.getenv(str(cfg.get("webhook_env", "TOOLKIT_TEAMS_WEBHOOK")), "")
@@ -186,7 +178,6 @@ def _teams_post(cfg: dict[str, Any], ctx: dict[str, str], summary: str, *, dry_r
         detail=f"Teams webhook POST HTTP {resp.status_code}",
         meta={"status_code": resp.status_code, "response": resp.text[:500]},
     )
-
 
 def _email_send(cfg: dict[str, Any], pack_dir: Path, ctx: dict[str, str], body_text: str, *, dry_run: bool) -> PublishAction:
     smtp_cfg = cfg.get("smtp") or {}
@@ -258,7 +249,6 @@ def _email_send(cfg: dict[str, Any], pack_dir: Path, ctx: dict[str, str], body_t
     except Exception as exc:
         return PublishAction(kind="email", ok=False, detail=f"Email send failed: {exc}", meta={})
 
-
 def _pptx_export(cfg: dict[str, Any], pack_dir: Path, ctx: dict[str, str], executive_summary_text: str, *, dry_run: bool) -> PublishAction:
     try:
         from pptx import Presentation  # type: ignore
@@ -305,7 +295,6 @@ def _pptx_export(cfg: dict[str, Any], pack_dir: Path, ctx: dict[str, str], execu
     output_path.parent.mkdir(parents=True, exist_ok=True)
     prs.save(str(output_path))
     return PublishAction(kind="pptx", ok=True, detail=f"Wrote {output_path}", meta={"output": str(output_path)})
-
 
 def publish_pack(
     *,

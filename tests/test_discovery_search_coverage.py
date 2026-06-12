@@ -27,7 +27,6 @@ import pytest
 # import time.  We inject a comprehensive fake 'streamlit' module before the
 # first import so none of those calls raise.
 
-
 def _make_streamlit_stub() -> types.ModuleType:
     """Build a minimal Streamlit stub that absorbs all attribute accesses."""
     st = types.ModuleType("streamlit")
@@ -62,7 +61,6 @@ def _make_streamlit_stub() -> types.ModuleType:
     st.sidebar = stub
     return st
 
-
 # Inject the stub before any import of the target module
 if "streamlit" not in sys.modules:
     sys.modules["streamlit"] = _make_streamlit_stub()
@@ -77,11 +75,9 @@ with patch("socrata_toolkit.core.client.SocrataClient", return_value=_client_moc
     # Import after all mocks are in place
     from socrata_toolkit.discovery.search import build_catalog_filters, clean_results  # noqa: E402
 
-
 # ---------------------------------------------------------------------------
 # clean_results
 # ---------------------------------------------------------------------------
-
 
 class TestCleanResults:
     """Tests for the clean_results() DataFrame helper."""
@@ -158,11 +154,9 @@ class TestCleanResults:
         assert "name" in result.columns
         assert len(result.columns) == 1
 
-
 # ---------------------------------------------------------------------------
 # build_catalog_filters
 # ---------------------------------------------------------------------------
-
 
 class TestBuildCatalogFilters:
     """Tests for the build_catalog_filters() expression builder."""

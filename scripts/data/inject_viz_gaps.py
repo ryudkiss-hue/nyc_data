@@ -144,7 +144,6 @@ def update_viz_engine():
     with open(VIZ_ENGINE_PATH, "w", encoding="utf-8") as f:
         f.write(content)
 
-
 def update_dash_layouts():
     with open(DASH_LAYOUTS_PATH, encoding="utf-8") as f:
         content = f.read()

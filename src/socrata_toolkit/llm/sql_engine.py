@@ -23,7 +23,6 @@ from langchain_core.prompts import ChatPromptTemplate
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class QueryExecution:
     """Record of a query execution."""
@@ -35,7 +34,6 @@ class QueryExecution:
     interpretation: str
     timestamp: str
     error: str | None = None
-
 
 class SQLQueryEngine:
     """
@@ -338,7 +336,6 @@ Provide a 2-3 sentence explanation of what this table contains.""")
         chain = prompt | self.llm | StrOutputParser()
         return chain.invoke({})
 
-
 class InteractiveQuerySession:
     """
     Manages an interactive query session with conversation context.
@@ -411,7 +408,6 @@ class InteractiveQuerySession:
     def clear(self) -> None:
         """Clear conversation history."""
         self.conversation.clear()
-
 
 class QueryOptimizer:
     """

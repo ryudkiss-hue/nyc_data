@@ -42,11 +42,9 @@ from socrata_toolkit.spatial.conflict_detection import (
 
 logger = logging.getLogger(__name__)
 
-
 # ---------------------------------------------------------------------------
 # Cached data fetchers
 # ---------------------------------------------------------------------------
-
 
 @st.cache_data(ttl=600)
 def load_permit_data() -> pd.DataFrame:
@@ -65,7 +63,6 @@ def load_permit_data() -> pd.DataFrame:
         logger.error(f"Failed to load permits: {e}")
         return pd.DataFrame()
 
-
 @st.cache_data(ttl=600)
 def load_inspection_data() -> pd.DataFrame:
     """Load inspection data for conflict analysis.
@@ -82,7 +79,6 @@ def load_inspection_data() -> pd.DataFrame:
     except Exception as e:
         logger.error(f"Failed to load inspections: {e}")
         return pd.DataFrame()
-
 
 @st.cache_data(ttl=300)
 def get_conflict_data(
@@ -113,7 +109,6 @@ def get_conflict_data(
         logger.error(f"Failed to detect conflicts: {e}")
         return []
 
-
 @st.cache_data(ttl=1800)
 def get_conflict_trend(
     conflicts: list, days: int = 7
@@ -141,22 +136,21 @@ def get_conflict_trend(
     for date in dates:
         # For demo, distribute conflicts across days
         for severity in ["HIGH", "MEDIUM", "LOW"]:
-            count = len([c for c in conflicts if c.severity == severity]) // days
+            severity_conflicts = [c for c in conflicts if c.severity == severity]
+            count = len(severity_conflicts) // days
             data.append({
                 "date": date,
                 "severity": severity,
-                "count": count + (1 if (conflicts.index(c) % 3 == 0) else 0)
-                if conflicts and len([c for c in conflicts if c.severity == severity]) > 0
+                "count": count + (1 if severity_conflicts and (conflicts.index(severity_conflicts[0]) % 3 == 0) else 0)
+                if severity_conflicts
                 else count
             })
 
     return pd.DataFrame(data)
 
-
 # ---------------------------------------------------------------------------
 # Section 1: Conflict Summary
 # ---------------------------------------------------------------------------
-
 
 def render_conflict_summary_section(conflicts: list) -> None:
     """Render conflict summary with metrics cards and visualization.
@@ -255,11 +249,9 @@ def render_conflict_summary_section(conflicts: list) -> None:
         )
         st.plotly_chart(fig, use_container_width=True)
 
-
 # ---------------------------------------------------------------------------
 # Section 2: Block-Level Analysis
 # ---------------------------------------------------------------------------
-
 
 def render_block_analysis_section(
     conflicts: list,
@@ -384,11 +376,9 @@ def render_block_analysis_section(
             hide_index=True
         )
 
-
 # ---------------------------------------------------------------------------
 # Section 3: Location Recommendations
 # ---------------------------------------------------------------------------
-
 
 def render_recommendations_section(
     conflicts: list,
@@ -490,11 +480,9 @@ def render_recommendations_section(
             f"✅ No {rec_severity} conflicts detected for recommended scheduling."
         )
 
-
 # ---------------------------------------------------------------------------
 # Section 4: Conflict Resolution
 # ---------------------------------------------------------------------------
-
 
 def render_conflict_resolution_section(conflicts: list) -> None:
     """Render conflict resolution list with reschedule suggestions.
@@ -553,11 +541,9 @@ def render_conflict_resolution_section(conflicts: list) -> None:
             f"Conflict resolution report generated for {len(conflicts)} conflicts"
         )
 
-
 # ---------------------------------------------------------------------------
 # Main view entry point
 # ---------------------------------------------------------------------------
-
 
 def render_construction_planning_page() -> None:
     """Main render function for construction planning dashboard.

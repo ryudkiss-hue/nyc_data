@@ -23,7 +23,6 @@ _DTYPES = {"int", "float", "str", "bool", "datetime"}
 _BOOL_TRUE = {"true", "1", "yes", "y", "t"}
 _BOOL_FALSE = {"false", "0", "no", "n", "f"}
 
-
 @dataclass
 class FieldContract:
     """Declarative expectations for a single field/column.
@@ -58,7 +57,6 @@ class FieldContract:
         known = {f for f in cls.__dataclass_fields__}  # type: ignore[attr-defined]
         return cls(**{k: v for k, v in data.items() if k in known})
 
-
 @dataclass
 class ContractViolation:
     """A single failed rule for a field.
@@ -78,7 +76,6 @@ class ContractViolation:
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
-
 @dataclass
 class ValidationResult:
     """Outcome of validating a DataFrame against a :class:`DataContract`."""
@@ -93,7 +90,6 @@ class ValidationResult:
             "violations": [v.to_dict() for v in self.violations],
             "rows_checked": self.rows_checked,
         }
-
 
 def _parseable_mask(series: pd.Series, dtype: str) -> pd.Series:
     """Boolean mask of non-null values that parse as ``dtype``."""
@@ -117,7 +113,6 @@ def _parseable_mask(series: pd.Series, dtype: str) -> pd.Series:
         return pd.to_datetime(non_null, errors="coerce").notna()
     # str: anything stringifiable parses
     return pd.Series(True, index=non_null.index)
-
 
 @dataclass
 class DataContract:

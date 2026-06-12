@@ -11,7 +11,6 @@ from socrata_toolkit.governance.compliance import (
     validate_contractor_for_list,
 )
 
-
 class TestCheckDCWPLicense:
     """Tests for check_dcwp_license function."""
 
@@ -96,7 +95,6 @@ class TestCheckDCWPLicense:
                 timeout=10,
             )
 
-
 class TestCheckParkspermit:
     """Tests for check_parks_permit function."""
 
@@ -175,7 +173,6 @@ class TestCheckParkspermit:
                 "https://example.com/parks/permits/PERM-2024-001",
                 timeout=10,
             )
-
 
 class TestValidateContractorForList:
     """Tests for validate_contractor_for_list function."""

@@ -7,7 +7,6 @@ import duckdb
 
 logger = logging.getLogger(__name__)
 
-
 class MartQuality:
     """Track and score mart quality across multiple dimensions."""
 

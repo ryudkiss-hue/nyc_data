@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import pytest
 
-
 def test_toolbox_layout_exists():
     from app.dash_layouts import layout_toolbox
     layout = layout_toolbox()

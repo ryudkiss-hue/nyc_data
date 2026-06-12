@@ -9,14 +9,12 @@ import sys
 
 from apscheduler.schedulers.blocking import BlockingScheduler
 
-
 def run_pack() -> None:
     profile = os.environ.get("ANALYST_PROFILE", "config/analyst_profile.yaml")
     subprocess.run(
         [sys.executable, "-m", "socrata_toolkit.core.cli", "analyst", "run", "--profile", profile],
         check=False,
     )
-
 
 def main() -> None:
     cron = os.environ.get("ANALYST_CRON", "0 6 * * 1").split()
@@ -34,7 +32,6 @@ def main() -> None:
         day_of_week=cron[4],
     )
     sched.start()
-
 
 if __name__ == "__main__":
     main()

@@ -15,7 +15,6 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class ReconciliationResult:
     """Result of a single reconciliation check.
@@ -49,7 +48,6 @@ class ReconciliationResult:
             "status": self.status,
             "timestamp": self.timestamp,
         }
-
 
 class DataReconciliation:
     """Reconciliation system comparing expected vs actual row counts.

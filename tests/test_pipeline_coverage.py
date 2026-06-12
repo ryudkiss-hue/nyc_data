@@ -8,7 +8,6 @@ from socrata_toolkit.core.pipeline import (
     run_from_rows,
 )
 
-
 class TestSqlType:
     """Tests for _sql_type function."""
 
@@ -38,7 +37,6 @@ class TestSqlType:
 
     def test_dict_type(self):
         assert _sql_type({"key": "value"}) == "TEXT"
-
 
 class TestCollectColumnsAndTypes:
     """Tests for _collect_columns_and_types function."""
@@ -101,7 +99,6 @@ class TestCollectColumnsAndTypes:
         result = _collect_columns_and_types(rows)
         assert result["flag"] == "BOOLEAN"
 
-
 class TestGeneratePostgresPreview:
     """Tests for generate_postgres_preview function."""
 
@@ -159,7 +156,6 @@ class TestGeneratePostgresPreview:
         rows = [{"id": 1, "name": "Alice"}]
         result = generate_postgres_preview(rows, "users")
         assert result["sample_row"] == {"id": 1, "name": "Alice"}
-
 
 class TestRunFromRows:
     """Tests for run_from_rows function."""

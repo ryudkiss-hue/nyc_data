@@ -44,7 +44,6 @@ from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
 logger = logging.getLogger(__name__)
 
-
 # ============================================================================
 # WORKFLOW STATE
 # ============================================================================
@@ -93,7 +92,6 @@ class SLAComplianceState(dict):
             "execution_log": [],
         })
 
-
 # ============================================================================
 # WORKFLOW NODES
 # ============================================================================
@@ -138,7 +136,6 @@ def _load_dataset_config() -> dict[str, dict[str, str]]:
         "mappluto": {"fourfour": "64uk-42ks"},
         "complaints_311": {"fourfour": "erm2-nwe9"},
     }
-
 
 def fetch_dataset_metadata(state: SLAComplianceState) -> dict[str, Any]:
     """
@@ -194,7 +191,6 @@ def fetch_dataset_metadata(state: SLAComplianceState) -> dict[str, Any]:
 
     logger.info(f"[FETCH] Completed: {len(metadata)} datasets fetched, {len(errors)} errors")
     return state
-
 
 def classify_sla_status(state: SLAComplianceState) -> dict[str, Any]:
     """
@@ -321,7 +317,6 @@ def classify_sla_status(state: SLAComplianceState) -> dict[str, Any]:
     logger.info(f"[CLASSIFY] Completed: {summary}")
     return state
 
-
 def analyze_with_claude(state: SLAComplianceState) -> dict[str, Any]:
     """
     Node 3: Call Claude to analyze breaches and trends.
@@ -430,7 +425,6 @@ Please provide a concise analysis (2-3 paragraphs) focused on operational insigh
 
     return state
 
-
 def generate_report(state: SLAComplianceState) -> dict[str, Any]:
     """
     Node 4: Compile final report and action items.
@@ -504,7 +498,6 @@ def generate_report(state: SLAComplianceState) -> dict[str, Any]:
     logger.info(f"[REPORT] Generated with {len(action_items)} action items")
     return state
 
-
 def save_report(state: SLAComplianceState) -> dict[str, Any]:
     """
     Node 5: Optionally save report to disk.
@@ -551,7 +544,6 @@ def save_report(state: SLAComplianceState) -> dict[str, Any]:
 
     return state
 
-
 # ============================================================================
 # GRAPH ASSEMBLY
 # ============================================================================
@@ -582,7 +574,6 @@ def build_sla_compliance_graph() -> StateGraph:
     graph.set_entry_point("fetch_metadata")
 
     return graph
-
 
 def run_sla_compliance_workflow(
     include_full_corpus: bool = False,
@@ -630,7 +621,6 @@ def run_sla_compliance_workflow(
     logger.info("=" * 70)
 
     return final_state["compliance_report"]
-
 
 if __name__ == "__main__":
     logging.basicConfig(
