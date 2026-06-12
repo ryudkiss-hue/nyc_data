@@ -39,22 +39,33 @@ def _apply_modern_layout(fig: Any, title: str | None = None) -> Any:
     )
     return fig
 
-def histogram(df: pd.DataFrame, column: str, title: str | None = None) -> Any:
+def histogram(df: pd.DataFrame, column: str, title: str | None = None, path: str | None = None) -> Any:
     import plotly.express as px
     fig = px.histogram(df, x=column, marginal="box", opacity=0.75)
-    return _apply_modern_layout(fig, title or f"Distribution: {column}")
+    fig = _apply_modern_layout(fig, title or f"Distribution: {column}")
+    fig.chart_type = "histogram"
+    if path:
+        fig.write_html(path)
+    return fig
 
-def bar_chart(df: pd.DataFrame, column: str, title: str | None = None) -> Any:
+def bar_chart(df: pd.DataFrame, column: str, title: str | None = None, horizontal: bool = False) -> Any:
     import plotly.express as px
     counts = df[column].value_counts().head(15).reset_index()
     counts.columns = [column, "Count"]
-    fig = px.bar(counts, x=column, y="Count", color="Count", color_continuous_scale="Blues")
-    return _apply_modern_layout(fig, title or f"Top Categories: {column}")
+    if horizontal:
+        fig = px.barh(counts, x="Count", y=column, color="Count", color_continuous_scale="Blues")
+    else:
+        fig = px.bar(counts, x=column, y="Count", color="Count", color_continuous_scale="Blues")
+    fig = _apply_modern_layout(fig, title or f"Top Categories: {column}")
+    fig.chart_type = "bar_chart"
+    return fig
 
 def box_plot(df: pd.DataFrame, column: str, title: str | None = None) -> Any:
     import plotly.express as px
     fig = px.box(df, y=column)
-    return _apply_modern_layout(fig, title or f"Box Plot: {column}")
+    fig = _apply_modern_layout(fig, title or f"Box Plot: {column}")
+    fig.chart_type = "box_plot"
+    return fig
 
 def list_available_visualizations() -> pd.DataFrame:
     return pd.DataFrame([
