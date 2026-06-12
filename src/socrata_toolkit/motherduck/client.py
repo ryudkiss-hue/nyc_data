@@ -6,11 +6,7 @@ Provides authenticated, pooled connections to MotherDuck cloud databases.
 
 import logging
 import os
-<<<<<<< HEAD
-from typing import Any, Optional
-=======
 from typing import Any, Dict, List, Optional
->>>>>>> main
 
 import duckdb
 
