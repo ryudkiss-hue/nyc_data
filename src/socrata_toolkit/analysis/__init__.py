@@ -34,6 +34,7 @@ from .metrics import (
     DataQualityCatalog,
     DataQualityScore,
     DataQualityTracker,
+    DatasetQualityScore,
     DatasetFreshness,
     FreshnessAlert,
     FreshnessTracker,
