@@ -33,6 +33,7 @@ from .metrics import (
     BusinessRulesEngine,
     DataQualityCatalog,
     DataQualityScore,
+    DataType,
     DataQualityTracker,
     DatasetQualityScore,
     DatasetFreshness,
