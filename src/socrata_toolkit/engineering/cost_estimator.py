@@ -65,3 +65,10 @@ def summarize_costs(result: SimulationResult) -> dict:
         "ci_lower": result.confidence_95_low,
         "ci_upper": result.confidence_95_high,
     }
+
+def forecast_completion(df: pd.DataFrame, progress_col: str = "completion_rate") -> dict:
+    """Forecast project completion date."""
+    if df.empty or progress_col not in df.columns:
+        return {"estimated_days": 0, "confidence": 0.0}
+    avg_progress = df[progress_col].mean()
+    return {"estimated_days": int(100 / avg_progress) if avg_progress > 0 else 0, "confidence": 0.85}

@@ -241,3 +241,35 @@ def validate_geospatial_bounds(df: pd.DataFrame, lat_col: str = "latitude", lon_
     lats = pd.to_numeric(df[lat_col], errors='coerce')
     lons = pd.to_numeric(df[lon_col], errors='coerce')
     return (lats.between(40, 41).all() and lons.between(-75, -73).all())
+
+def detect_outliers_zscore(series: pd.Series, threshold: float = 3.0) -> list[int]:
+    """Detect outliers using Z-score method."""
+    from scipy import stats
+    z_scores = stats.zscore(series.dropna())
+    return series[abs(z_scores) > threshold].index.tolist()
+
+class FreshnessTracker:
+    """Track freshness of datasets over time."""
+    def __init__(self):
+        self.freshness_history: dict[str, list[datetime]] = {}
+
+    def record_update(self, dataset_id: str, timestamp: datetime):
+        if dataset_id not in self.freshness_history:
+            self.freshness_history[dataset_id] = []
+        self.freshness_history[dataset_id].append(timestamp)
+
+class PipelineMetrics:
+    """Metrics for data pipeline execution."""
+    def __init__(self, success_count: int = 0, failure_count: int = 0, avg_duration_sec: float = 0.0):
+        self.success_count = success_count
+        self.failure_count = failure_count
+        self.avg_duration_sec = avg_duration_sec
+
+from enum import Enum
+
+class AnomalySeverity(Enum):
+    """Severity levels for detected anomalies."""
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
