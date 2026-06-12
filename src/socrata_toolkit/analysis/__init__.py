@@ -157,7 +157,6 @@ __all__ = [
     "build_legal_hold_graph",
     "BayesianInferenceResult",
     "BayesianRegressionEngine",
-    "list_available_visualizations",
     "validate_ada_compliance_gates",
     "box_plot",
 ]
