@@ -276,3 +276,9 @@ def validate_filters(filters: Optional[dict]) -> bool:
         return False
     # At minimum should have borough or dataset_key
     return 'borough' in filters or 'dataset_key' in filters
+
+def digital_twin_pre_screen(df: pd.DataFrame) -> dict:
+    """Pre-screen data for digital twin analysis."""
+    if df.empty:
+        return {"status": "empty", "records": 0}
+    return {"status": "ready", "records": len(df)}
