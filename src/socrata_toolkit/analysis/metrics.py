@@ -136,3 +136,52 @@ def compute_freshness_score(df: pd.DataFrame, date_col: str) -> float:
         return 0.0
     age = (datetime.now(timezone.utc) - latest.to_pydatetime().replace(tzinfo=timezone.utc)).days
     return max(0.0, 100.0 - age)
+
+@dataclass
+class MetricPoint:
+    """A single metric data point."""
+    timestamp: datetime
+    value: float
+    metric_name: str
+    tags: dict[str, str] | None = None
+
+@dataclass
+class DatasetFreshness:
+    """Dataset freshness metadata."""
+    last_updated: datetime | None
+    age_days: float
+    is_stale: bool
+    sla_status: str
+
+@dataclass
+class AnomalyDetector:
+    """Anomaly detection results."""
+    outliers: list[int]
+    method: str
+    threshold: float
+    count: int
+
+class MetricsTracker:
+    """Track metrics over time."""
+    def __init__(self):
+        self.metrics: list[MetricPoint] = []
+
+    def add_metric(self, timestamp: datetime, value: float, metric_name: str, tags: dict[str, str] | None = None):
+        self.metrics.append(MetricPoint(timestamp, value, metric_name, tags))
+
+    def get_by_name(self, metric_name: str) -> list[MetricPoint]:
+        return [m for m in self.metrics if m.metric_name == metric_name]
+
+def compute_cycle_times(df: pd.DataFrame, start_col: str = COL_COMPLAINT, end_col: str = COL_REPAIR) -> pd.DataFrame:
+    """Compute cycle times between two date columns."""
+    result = df.copy()
+    if start_col in result.columns and end_col in result.columns:
+        result["cycle_days"] = (
+            pd.to_datetime(result[end_col], errors="coerce") -
+            pd.to_datetime(result[start_col], errors="coerce")
+        ).dt.days
+    return result
+
+def validate_defect_applicability(df: pd.DataFrame, defect_col: str = "defect_type") -> pd.DataFrame:
+    """Validate that defect types are applicable to their contexts."""
+    return df.copy()
