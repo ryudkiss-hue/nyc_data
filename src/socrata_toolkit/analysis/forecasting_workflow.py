@@ -22,7 +22,7 @@ import json
 import logging
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta
-from typing import Any, Optional, TypedDict
+from typing import Any, Dict, List, Optional, Tuple, TypedDict
 
 import arviz as az
 import numpy as np
@@ -44,9 +44,11 @@ from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
 logger = logging.getLogger(__name__)
 
+
 # ============================================================================
 # STATE DEFINITIONS
 # ============================================================================
+
 
 @dataclass
 class ForecastResult:
@@ -62,6 +64,7 @@ class ForecastResult:
     forecast_confidence: str
     confidence_score: float
 
+
 @dataclass
 class BayesianForecastModel:
     """Bayesian MCMC model results."""
@@ -71,6 +74,7 @@ class BayesianForecastModel:
     samples_days_to_completion: np.ndarray
     converged: bool
     r_hat_max: float
+
 
 class ForecastingState(TypedDict):
     """LangGraph state for forecasting workflow."""
@@ -104,6 +108,7 @@ class ForecastingState(TypedDict):
     final_report: dict
     execution_log: list[dict]
 
+
 def create_forecasting_workflow():
     """Create and return the forecasting workflow."""
     workflow = StateGraph(ForecastingState)
@@ -126,9 +131,11 @@ def create_forecasting_workflow():
 
     return workflow.compile()
 
+
 # ============================================================================
 # WORKFLOW NODES
 # ============================================================================
+
 
 def fetch_data_node(state: ForecastingState) -> ForecastingState:
     """Fetch project dataset from Socrata."""
@@ -156,6 +163,7 @@ def fetch_data_node(state: ForecastingState) -> ForecastingState:
 
     logger.info(f"[FETCH] Fetched {len(df)} {state['dataset_name']} records")
     return state
+
 
 def compute_velocity_node(state: ForecastingState) -> ForecastingState:
     """Compute historical velocity per project."""
@@ -250,6 +258,7 @@ def compute_velocity_node(state: ForecastingState) -> ForecastingState:
     )
     return state
 
+
 def bayesian_forecast_node(state: ForecastingState) -> ForecastingState:
     """Run Bayesian MCMC model for completion forecasting."""
     logger.info("[BAYESIAN] Running Bayesian completion forecast model")
@@ -341,6 +350,7 @@ def bayesian_forecast_node(state: ForecastingState) -> ForecastingState:
         state["bayesian_model"] = None
 
     return state
+
 
 def classify_projects_node(state: ForecastingState) -> ForecastingState:
     """Classify projects for risk and generate forecasts."""
@@ -464,6 +474,7 @@ def classify_projects_node(state: ForecastingState) -> ForecastingState:
     )
     return state
 
+
 def claude_analyze_node(state: ForecastingState) -> ForecastingState:
     """Claude: analyze risks and blockers."""
     logger.info("[CLAUDE] Running Claude risk analysis")
@@ -525,6 +536,7 @@ Be concise (~400 tokens). Use specific project IDs and percentages.
     logger.info(f"[CLAUDE] Analysis complete (next_action={state['next_action']})")
     return state
 
+
 def generate_report_node(state: ForecastingState) -> ForecastingState:
     """Generate final structured report."""
     logger.info("[REPORT] Generating final report")
@@ -576,9 +588,11 @@ def generate_report_node(state: ForecastingState) -> ForecastingState:
     logger.info("[REPORT] Report generation complete")
     return state
 
+
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
+
 
 def _format_forecasts(forecasts: list[ForecastResult]) -> str:
     """Format forecasts as readable text."""
@@ -590,6 +604,7 @@ def _format_forecasts(forecasts: list[ForecastResult]) -> str:
             f"RISK={forecast.risk_level}, blocker={forecast.primary_blocker}"
         )
     return "\n".join(lines) if lines else "- None"
+
 
 def _compute_forecast_statistics(forecasts: list[ForecastResult]) -> str:
     """Compute and format forecast statistics."""
@@ -608,6 +623,7 @@ def _compute_forecast_statistics(forecasts: list[ForecastResult]) -> str:
 - High risk projects: {high_risk_count} ({high_risk_count/len(forecasts)*100:.0f}%)
 - Medium risk projects: {medium_risk_count} ({medium_risk_count/len(forecasts)*100:.0f}%)
 """
+
 
 def run_forecasting_workflow(
     fourfour: str = "e7gc-ub6z",
@@ -655,6 +671,7 @@ def run_forecasting_workflow(
         "execution_log": result["execution_log"],
         "total_records": result["total_records"],
     }
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

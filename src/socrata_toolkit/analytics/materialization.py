@@ -14,9 +14,10 @@ import json
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Dict, List, Tuple
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class KPIResult:
@@ -30,6 +31,7 @@ class KPIResult:
     confidence_interval: tuple[float, float] = None
     reliability: str = "high"  # high, medium, low
     notes: str = ""
+
 
 class AnalyticsMaterializer:
     """

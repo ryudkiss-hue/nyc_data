@@ -14,7 +14,7 @@ Key classifications:
 import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
+from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 import spacy
@@ -23,12 +23,14 @@ from spacy.tokens import Doc
 
 logger = logging.getLogger(__name__)
 
+
 class AppealResolution(Enum):
     """Outcome of appeal/reinspection."""
     UPHELD = "upheld"  # Original inspection decision confirmed
     OVERTURNED = "overturned"  # Original decision reversed
     MODIFIED = "modified"  # Partial modification to original finding
     INCONCLUSIVE = "inconclusive"  # No clear resolution
+
 
 class AppealReason(Enum):
     """Reason for appeal reversal or modification."""
@@ -38,6 +40,7 @@ class AppealReason(Enum):
     ADMINISTRATIVE = "administrative"  # Clerical/process issue
     INSUFFICIENT_EVIDENCE = "insufficient_evidence"  # Lack of documentation
 
+
 class InspectorConsistency(Enum):
     """Inspector performance consistency signal."""
     NORMAL = "normal"  # Consistent with peer group
@@ -45,12 +48,14 @@ class InspectorConsistency(Enum):
     OUTLIER_LOW = "outlier_low"  # Unusually low overturn rate
     UNRELIABLE = "unreliable"  # Extreme variance
 
+
 class PerformanceTrend(Enum):
     """Inspector performance trend over time."""
     IMPROVING = "improving"  # Fewer overturns over time
     STABLE = "stable"  # Consistent performance
     DEGRADING = "degrading"  # More overturns over time
     INSUFFICIENT_DATA = "insufficient_data"  # <5 appeals in period
+
 
 @dataclass
 class AppealClassificationResult:
@@ -64,6 +69,7 @@ class AppealClassificationResult:
     keywords_matched: list[str]
     extracted_entities: list[tuple[str, str]]  # (text, label)
     details: dict  # Additional context
+
 
 @dataclass
 class InspectorAppealStats:
@@ -81,6 +87,7 @@ class InspectorAppealStats:
     reliability: str  # "high" | "medium" | "low" (based on sample size)
     coaching_needed: bool
     coaching_reason: Optional[str]
+
 
 class AppealOutcomeClassifier:
     """Classify appeal outcomes, reasons, and inspector consistency signals."""
@@ -243,6 +250,7 @@ class AppealOutcomeClassifier:
     def batch_classify(self, texts: list[str]) -> list[AppealClassificationResult]:
         """Classify multiple appeal texts."""
         return [self.classify(text) for text in texts]
+
 
 class InspectorAppealAnalyzer:
     """

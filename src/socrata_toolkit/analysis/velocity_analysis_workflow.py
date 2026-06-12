@@ -24,9 +24,11 @@ from langchain_core.tools import tool
 
 logger = logging.getLogger(__name__)
 
+
 # ============================================================================
 # STEP 1: Define Workflow State
 # ============================================================================
+
 
 @dataclass
 class VelocityAnalysisContext:
@@ -35,6 +37,7 @@ class VelocityAnalysisContext:
     end_date: pd.Timestamp
     borough_filter: str | None = None  # "MANHATTAN", "BROOKLYN", etc. or None for all
     inspector_ids: list[str] | None = None  # Specific inspectors or None for all
+
 
 class VelocityState(dict):
     """LangGraph state for velocity analysis workflow."""
@@ -66,9 +69,11 @@ class VelocityState(dict):
         self["report"] = {}
         self["execution_log"] = []
 
+
 # ============================================================================
 # STEP 2: Helper Functions for Metric Computation
 # ============================================================================
+
 
 def compute_inspector_metrics(
     inspections: pd.DataFrame,
@@ -167,9 +172,11 @@ def compute_inspector_metrics(
         sample_size=inspection_count,
     )
 
+
 # ============================================================================
 # STEP 3: Workflow Nodes
 # ============================================================================
+
 
 def fetch_data(state: VelocityState) -> VelocityState:
     """Node 1: Fetch inspections, violations, dismissals from Socrata."""
@@ -241,6 +248,7 @@ def fetch_data(state: VelocityState) -> VelocityState:
 
     return state
 
+
 def compute_metrics(state: VelocityState) -> VelocityState:
     """Node 2: Compute metrics per inspector."""
     logger.info("[METRICS] Computing velocity metrics")
@@ -290,6 +298,7 @@ def compute_metrics(state: VelocityState) -> VelocityState:
 
     return state
 
+
 def classify_performance(state: VelocityState) -> VelocityState:
     """Node 3: Classify performance using VelocityClassifier."""
     from .velocity_classifier import VelocityClassifier
@@ -337,6 +346,7 @@ def classify_performance(state: VelocityState) -> VelocityState:
     })
 
     return state
+
 
 def generate_claude_assessment(state: VelocityState) -> VelocityState:
     """Node 4: Query Claude for insights (~300 tokens)."""
@@ -411,6 +421,7 @@ Keep response to ~300 tokens. Be specific and actionable.
 
     return state
 
+
 def generate_recommendations(state: VelocityState) -> VelocityState:
     """Node 5: Generate coaching recommendations for each underperformer."""
     logger.info("[RECOMMENDATIONS] Generating coaching recommendations")
@@ -438,6 +449,7 @@ def generate_recommendations(state: VelocityState) -> VelocityState:
     })
 
     return state
+
 
 def build_report(state: VelocityState) -> VelocityState:
     """Node 6: Build final report."""
@@ -468,9 +480,11 @@ def build_report(state: VelocityState) -> VelocityState:
 
     return state
 
+
 # ============================================================================
 # STEP 4: Build Graph
 # ============================================================================
+
 
 def build_velocity_analysis_graph():
     """Construct and return the LangGraph workflow."""
@@ -503,9 +517,11 @@ def build_velocity_analysis_graph():
 
     return graph.compile()
 
+
 # ============================================================================
 # STEP 5: Public API
 # ============================================================================
+
 
 def run_velocity_analysis(
     start_date: pd.Timestamp,

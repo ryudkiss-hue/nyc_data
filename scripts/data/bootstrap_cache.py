@@ -108,7 +108,7 @@ def fetch_dataset(client, dataset_name, fourfour, days_back=30):
         cutoff_date = (datetime.now() - timedelta(days=days_back)).date()
 
         if date_field:
-            where = f"{date_field} >= '{cutoff_date}'"
+            where = f"{date_field} >= '{cutoff_date}T00:00:00'"
         else:
             where = None
 
@@ -128,22 +128,10 @@ def fetch_dataset(client, dataset_name, fourfour, days_back=30):
 
 def get_date_field(dataset_name):
     """Identify date field for incremental fetch."""
+    # Only include fields that are verified to work with SOQL date filtering.
+    # Datasets not listed here are fetched without a date filter (up to max_rows).
     date_fields = {
-        "violations": "violation_issue_date",
-        "inspection": "Inspection Date",  # Actual: uses spaces
-        "dismissals": "violation_issue_date",
         "complaints_311": "created_date",
-        "ramp_progress": "Construction_End_Date",  # Actual: uses underscores
-        "ramp_complaints": "Complaint_Date",  # Actual: uses underscores
-        "street_permits": "issued_date",
-        "street_construction_inspections": "inspection_date",
-        "street_closures_block": "closure_date",
-        "street_resurfacing_schedule": "scheduled_start",
-        "street_resurfacing_inhouse": "start_date",
-        "correspondences": "date_received",
-        "curb_metal_protruding": "insp",
-        "tree_damage": "report_date",
-        "reinspection": "RequestReinspectionDate",  # Actual: camelCase
     }
     return date_fields.get(dataset_name)
 
@@ -280,16 +268,27 @@ def main():
     successful = 0
     failed = 0
 
+    existing_tables = {
+        row[1] for row in conn.execute(
+            "SELECT schema_name, table_name FROM duckdb_tables() WHERE schema_name = 'raw'"
+        ).fetchall()
+    }
+
     for dataset_name, fourfour in sorted(DATASETS.items()):
+        if dataset_name in existing_tables:
+            logger.info(f"[SKIP] {dataset_name} (already loaded)")
+            successful += 1
+            continue
+
         df = fetch_dataset(client, dataset_name, fourfour, days_back=30)
 
-        if df is not None and len(df) > 0:
+        if df is not None and len(df) > 0 and len(df.columns) > 0:
             land_in_raw(conn, dataset_name, df)
             classify_and_stage(conn, dataset_name, df)
             successful += 1
         else:
             failed += 1
-            logger.warning(f"  ⚠ {dataset_name}: no data")
+            logger.warning(f"  ⚠ {dataset_name}: no data or empty schema")
 
     # Materialize views
     materialize_analytics(conn)

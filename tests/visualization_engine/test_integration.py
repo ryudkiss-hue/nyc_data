@@ -3,15 +3,16 @@
 Verifies that all visualizations can render with real test data
 and that the total count matches expectations.
 """
-import pytest
 import plotly.graph_objects as go
+import pytest
+
 from app.visualization_engine import (
+    KPICards,
     PhaseBVisualizations,
     PhaseCVisualizations,
     PhaseDVisualizations,
     PhaseEVisualizations,
     PhaseFVisualizations,
-    KPICards,
     StatisticsPanel,
 )
 

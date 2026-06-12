@@ -18,7 +18,7 @@ import hashlib
 import json
 import logging
 from datetime import datetime
-from typing import Any
+from typing import Any, Dict, List, Tuple
 
 import duckdb
 import pandas as pd
@@ -32,6 +32,7 @@ from socrata_toolkit.analysis.sim_workflows_complete import (
 from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
 logger = logging.getLogger(__name__)
+
 
 # ============================================================================
 # STAGE 1: RAW INGESTION
@@ -76,6 +77,7 @@ class RawStage:
     def verify_no_loss(self) -> bool:
         """Verify all rows landed."""
         return all(v["rows"] > 0 for v in self.ingested_tables.values())
+
 
 # ============================================================================
 # STAGE 2: STAGING (Classify)
@@ -150,6 +152,7 @@ class StagingStage:
             for v in self.classified_tables.values()
         )
 
+
 # ============================================================================
 # STAGE 3: ANALYTICS (Run Workflows)
 # ============================================================================
@@ -215,6 +218,7 @@ class AnalyticsStage:
             "successful": sum(1 for r in self.workflow_results.values() if r.get("status") == "success"),
             "failed": sum(1 for r in self.workflow_results.values() if r.get("status") == "error"),
         }
+
 
 # ============================================================================
 # STAGE 4: VERIFICATION
@@ -311,6 +315,7 @@ class VerificationStage:
             ),
         }
 
+
 # ============================================================================
 # MAIN: RUN FULL PIPELINE
 # ============================================================================
@@ -352,6 +357,7 @@ def run_full_validation_pipeline() -> dict:
     logger.info("\n" + "=" * 70)
 
     return report
+
 
 if __name__ == "__main__":
     logging.basicConfig(

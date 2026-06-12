@@ -18,7 +18,7 @@ import json
 import logging
 from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Any, Optional, TypedDict
+from typing import Any, Dict, List, Optional, TypedDict
 
 import pandas as pd
 from langchain_anthropic import ChatAnthropic
@@ -36,9 +36,11 @@ from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
 logger = logging.getLogger(__name__)
 
+
 # ============================================================================
 # STATE DEFINITIONS
 # ============================================================================
+
 
 @dataclass
 class BoroughRampStats:
@@ -55,6 +57,7 @@ class BoroughRampStats:
     reliability: str  # "high" | "medium" | "low"
     common_blockers: list[str]
     avg_work_stage: float
+
 
 class RampProgressState(TypedDict):
     """LangGraph state for ramp progress workflow."""
@@ -83,6 +86,7 @@ class RampProgressState(TypedDict):
     final_report: dict
     execution_log: list[dict]
 
+
 def create_ramp_workflow():
     """Create and return the ramp progress tracking workflow."""
     workflow = StateGraph(RampProgressState)
@@ -103,9 +107,11 @@ def create_ramp_workflow():
 
     return workflow.compile()
 
+
 # ============================================================================
 # WORKFLOW NODES
 # ============================================================================
+
 
 def fetch_data_node(state: RampProgressState) -> RampProgressState:
     """Fetch ramp_progress dataset from Socrata."""
@@ -140,6 +146,7 @@ def fetch_data_node(state: RampProgressState) -> RampProgressState:
 
     logger.info(f"[FETCH] Fetched {len(df)} ramp records")
     return state
+
 
 def classify_progress_node(state: RampProgressState) -> RampProgressState:
     """Classify ramp progress using RampStatusClassifier."""
@@ -203,6 +210,7 @@ def classify_progress_node(state: RampProgressState) -> RampProgressState:
         f"summary: {summary['status_breakdown']}"
     )
     return state
+
 
 def compute_stats_node(state: RampProgressState) -> RampProgressState:
     """Compute borough-level statistics with Wilson Score CIs."""
@@ -323,6 +331,7 @@ def compute_stats_node(state: RampProgressState) -> RampProgressState:
     logger.info(f"[STATS] Computed stats for {len(borough_stats)} boroughs")
     return state
 
+
 def claude_assess_node(state: RampProgressState) -> RampProgressState:
     """Claude: analyze why certain boroughs are behind."""
     logger.info("[CLAUDE] Running Claude assessment")
@@ -381,6 +390,7 @@ Be concise (~300 tokens). Cite specific numbers.
     logger.info(f"[CLAUDE] Assessment complete (next_action={state['next_action']})")
     return state
 
+
 def generate_report_node(state: RampProgressState) -> RampProgressState:
     """Generate final structured JSON report."""
     logger.info("[REPORT] Generating final report")
@@ -423,9 +433,11 @@ def generate_report_node(state: RampProgressState) -> RampProgressState:
     logger.info("[REPORT] Report generation complete")
     return state
 
+
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
+
 
 def _format_borough_stats(borough_stats: dict[str, BoroughRampStats]) -> str:
     """Format borough statistics as readable text."""
@@ -443,6 +455,7 @@ def _format_borough_stats(borough_stats: dict[str, BoroughRampStats]) -> str:
         )
     return "\n".join(lines)
 
+
 def _format_blocker_summary(blocker_summary: dict[str, int]) -> str:
     """Format blocker summary as readable text."""
     lines = []
@@ -454,6 +467,7 @@ def _format_blocker_summary(blocker_summary: dict[str, int]) -> str:
         if count > 0:
             lines.append(f"- {blocker}: {count} ramps affected")
     return "\n".join(lines) if lines else "- No blockers identified"
+
 
 def _format_high_blocker_ramps(ramps: list[dict]) -> str:
     """Format high-risk ramps as readable text."""
@@ -470,6 +484,7 @@ def _format_high_blocker_ramps(ramps: list[dict]) -> str:
             f"Blockers: {', '.join(blockers) if blockers else 'None'}"
         )
     return "\n".join(lines)
+
 
 def run_ramp_workflow(
     fourfour: str = "e7gc-ub6z",
@@ -514,6 +529,7 @@ def run_ramp_workflow(
         "execution_log": result["execution_log"],
         "total_records": result["total_records"],
     }
+
 
 if __name__ == "__main__":
     # Example usage

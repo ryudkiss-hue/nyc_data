@@ -7,7 +7,7 @@ Analyzes tone, root causes, repeat patterns, and community impact.
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 import spacy
@@ -15,6 +15,7 @@ from spacy.language import Language
 from spacy.tokens import Doc
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class SentimentResult:
@@ -31,6 +32,7 @@ class SentimentResult:
     extracted_keywords: list[str]
     address_context: Optional[str] = None
     sentiment_score: float = 0.0  # -1 to 1 from TextBlob
+
 
 class SentimentClassifier:
     """Classify sentiment, tone, and root causes in 311 complaints and public correspondence."""

@@ -2,8 +2,9 @@
 
 Tests all 12 Phase B charts with real test data.
 """
-import pytest
 import plotly.graph_objects as go
+import pytest
+
 from app.visualization_engine.phase_b import PhaseBVisualizations
 from app.visualization_engine.statistics_display import StatisticsPanel
 

@@ -23,9 +23,10 @@ Example:
 import logging
 import math
 from dataclasses import dataclass
-from typing import Optional
+from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class MetricDefinition:
@@ -43,6 +44,7 @@ class MetricDefinition:
     sla_direction: str = "higher_is_better"  # "higher_is_better" or "lower_is_better"
     sample_size_min: int = 1  # Minimum sample size for validity
     confidence_level: float = 0.95  # CI confidence level (default 95%)
+
 
 class WilsonScoreCI:
     """Compute Wilson Score confidence interval for binomial proportions.
@@ -96,6 +98,7 @@ class WilsonScoreCI:
         upper = min(1.0, center + margin)
 
         return lower, upper
+
 
 class MetricComputation:
     """Compute a metric value and optional confidence interval."""
@@ -151,6 +154,7 @@ class MetricComputation:
         """Check if computation is statistically valid."""
         return self.sample_size >= min_sample_size
 
+
 class MetricsRegistry:
     """Central registry of all metric definitions."""
 
@@ -199,6 +203,7 @@ class MetricsRegistry:
             return value >= metric.sla_threshold
         else:  # lower_is_better
             return value <= metric.sla_threshold
+
 
 def create_default_registry() -> MetricsRegistry:
     """Create registry with 12 core NYC DOT metrics."""

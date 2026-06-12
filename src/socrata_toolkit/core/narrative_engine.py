@@ -20,9 +20,10 @@ import logging
 import os
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
+from typing import Dict, Optional, Tuple
 
 logger = logging.getLogger(__name__)
+
 
 class InsightType(Enum):
     """Types of insights the engine can generate."""
@@ -32,6 +33,7 @@ class InsightType(Enum):
     TREND = "trend"
     CORRELATION = "correlation"
     OUTLIER = "outlier"
+
 
 @dataclass
 class Insight:
@@ -44,6 +46,7 @@ class Insight:
     sla_threshold: Optional[float] = None
     sla_met: Optional[bool] = None
     context: Optional[dict] = None
+
 
 class NarrativeEngineDefault:
     """Hardcoded narrative templates (no API calls)."""
@@ -142,6 +145,7 @@ class NarrativeEngineDefault:
             context=context,
         )
 
+
 class NarrativeEngineEnhanced:
     """LangChain + Claude API for rich narratives (optional)."""
 
@@ -199,6 +203,7 @@ Insight:""",
         except Exception as e:
             logger.error(f"Enhanced narrative generation failed: {e}")
             return None
+
 
 class NarrativeEngine:
     """Dual-mode narrative engine: hardcoded default + optional AI-enhanced.

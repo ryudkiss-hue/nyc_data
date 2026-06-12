@@ -25,6 +25,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 def example_1_simple_cli_style():
     """Example 1: Simple - just run the workflow and see results."""
     print("\n" + "=" * 70)
@@ -43,6 +44,7 @@ def example_1_simple_cli_style():
     print(f"High-severity items: {result['high_severity_count']}")
     print(f"Action taken: {result['action_taken'].upper()}")
     print(f"\nClaude's recommendation:\n{result['final_recommendation']}")
+
 
 def example_2_borough_focused():
     """Example 2: Focus on a specific borough."""
@@ -66,6 +68,7 @@ def example_2_borough_focused():
     if result['spatial_analysis']:
         print(f"\nSpatial clusters detected: {result['spatial_analysis'].get('clusters_detected', 'N/A')}")
 
+
 def example_3_complaints_311():
     """Example 3: Triage citizen complaints."""
     print("\n" + "=" * 70)
@@ -83,6 +86,7 @@ def example_3_complaints_311():
     print(f"Urgent items (severity >= 80): {result['high_severity_count']}")
     print(f"Action: {result['action_taken']}")
     print(f"\nRecommendation:\n{result['final_recommendation']}")
+
 
 def example_4_full_report():
     """Example 4: Generate complete report with audit log."""
@@ -122,6 +126,7 @@ def example_4_full_report():
     # with open("triage_report.json", "w") as f:
     #     json.dump(report, f, indent=2)
 
+
 def example_5_token_cost_comparison():
     """Example 5: Show token cost savings."""
     print("\n" + "=" * 70)
@@ -157,6 +162,7 @@ def example_5_token_cost_comparison():
     print(f"   - Per month (100 workflows): {(old_way_tokens - new_way_tokens) * 100:,} tokens")
     print(f"   - Speed: {old_way_time_s - new_way_time_s:.1f}s faster")
     print("   - Cost: ~$3-5/month instead of $35-50/month")
+
 
 def example_6_multiple_datasets():
     """Example 6: Run triage on multiple datasets in sequence."""
@@ -205,6 +211,7 @@ def example_6_multiple_datasets():
         pct = (stats['high_severity'] / stats['total'] * 100) if stats['total'] > 0 else 0
         print(f"  {dataset:20s}: {stats['high_severity']:3d}/{stats['total']:4d} ({pct:5.1f}%)")
 
+
 def example_7_workflow_diagram():
     """Example 7: Show the workflow diagram."""
     print("\n" + "=" * 70)
@@ -212,6 +219,7 @@ def example_7_workflow_diagram():
     print("=" * 70)
 
     print(workflow_visualization())
+
 
 def example_8_integration_in_code():
     """Example 8: How to integrate into your own code."""
@@ -226,6 +234,7 @@ from socrata_toolkit.analysis.langgraph_triage import run_triage
 result = run_triage("violations", "6kbp-uz6m", max_rows=1000)
 print(result['final_recommendation'])
 
+
 # Pattern B: In a Streamlit app
 import streamlit as st
 from socrata_toolkit.analysis.langgraph_triage import run_triage
@@ -239,6 +248,7 @@ if st.button("Run Triage"):
         )
     st.success(f"Analyzed {result['total_records']} records")
     st.write(result["final_recommendation"])
+
 
 # Pattern C: In a scheduled job
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -262,6 +272,7 @@ def triage_job():
 scheduler.add_job(triage_job, 'cron', hour=6)  # Daily at 6 AM
 scheduler.start()
 
+
 # Pattern D: With custom parameters
 from socrata_toolkit.analysis.langgraph_triage import run_triage
 
@@ -278,6 +289,7 @@ for borough in boroughs:
 
     print(f"{borough}: {result['high_severity_count']} urgent issues")
     """)
+
 
 def main():
     """Run all examples."""
@@ -309,6 +321,7 @@ def main():
     print("\n" + "=" * 70)
     print("Examples complete. See INTEGRATION_GUIDE.md for full documentation.")
     print("=" * 70)
+
 
 if __name__ == "__main__":
     main()

@@ -13,13 +13,14 @@ Classes:
 
 import logging
 from dataclasses import dataclass
-from typing import Optional
+from typing import Dict, List, Optional, Tuple
 
 import spacy
 from spacy.language import Language
 from spacy.tokens import Doc
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class CorrespondenceClassificationResult:
@@ -35,6 +36,7 @@ class CorrespondenceClassificationResult:
     compliance_issues: list[str]
     extracted_entities: list[tuple[str, str]]
     category_details: dict
+
 
 class CorrespondenceClassifier:
     """Classify correspondence and communication messages for compliance audit."""

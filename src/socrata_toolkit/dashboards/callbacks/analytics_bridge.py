@@ -8,9 +8,10 @@ Handles data flow: DuckDB cache → KPI calculation → Dashboard display.
 import json
 import logging
 from datetime import datetime
-from typing import Any
+from typing import Any, Dict, List, Tuple
 
 logger = logging.getLogger(__name__)
+
 
 class AnalyticsBridge:
     """

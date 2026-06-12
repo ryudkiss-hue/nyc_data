@@ -104,6 +104,7 @@ def demo_classifier():
         if classification.flagged_issues:
             print(f"  Flags: {', '.join(classification.flagged_issues)}")
 
+
 def demo_workflow():
     """Demo 2: Full VelocityAnalysisWorkflow (LangGraph-based)."""
     print("\n" + "=" * 70)
@@ -129,6 +130,7 @@ def demo_workflow():
 
     print("\nNote: Full workflow requires Socrata API access and Claude API key.")
     print("      For testing, use demo_classifier() above.")
+
 
 def demo_json_output():
     """Demo 3: JSON export for integration with dashboards."""
@@ -167,6 +169,7 @@ def demo_json_output():
     print("\nJSON Export (for Streamlit/Dashboard):")
     print(json.dumps(output, indent=2, default=str))
 
+
 def main():
     """Run all demos."""
     print("\n" + "=" * 70)
@@ -191,6 +194,7 @@ def main():
     print("  # Full workflow:")
     print("  report = run_velocity_analysis(start_date, end_date, borough_filter='MANHATTAN')")
     print("")
+
 
 if __name__ == "__main__":
     main()

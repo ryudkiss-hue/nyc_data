@@ -8,9 +8,10 @@ Supports classification, mapping, derivations, deduplication, validation.
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class StagingResult:
@@ -28,6 +29,7 @@ class StagingResult:
     def success(self) -> bool:
         """Whether staging completed without errors."""
         return len(self.errors) == 0
+
 
 class TransformationRegistry:
     """Registry of transformations for all 24 datasets."""
@@ -71,6 +73,7 @@ class TransformationRegistry:
     def normalize_status(cls, status: str) -> str:
         """Normalize status value."""
         return cls.STATUS_MAPPING.get(status.upper(), status.lower())
+
 
 def stage_dataset(
     dataset_key: str,
@@ -163,6 +166,7 @@ def stage_dataset(
         execution_time_secs=execution_time,
         timestamp=datetime.now(),
     )
+
 
 def stage_all_datasets(
     datasets: list[dict[str, Any]], client: Any

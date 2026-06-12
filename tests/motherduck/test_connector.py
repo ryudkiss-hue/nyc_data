@@ -3,9 +3,10 @@
 TDD approach: tests first, implementation follows.
 """
 import os
-import pytest
-import pandas as pd
+
 import duckdb
+import pandas as pd
+import pytest
 
 from socrata_toolkit.motherduck.connector import MotherDuckConnection
 
