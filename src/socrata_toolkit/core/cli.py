@@ -1997,8 +1997,8 @@ def analyst_publish(publish_profile: str, pack_dir: str, dry_run: bool) -> None:
 def cmd_construction_list(borough: str, min_z_score: float, output: str) -> None:
     """Generate Excel construction list from Phase D anomalies."""
     from ..analyst.construction_list_generator import (
-        ConstructionListGenerator,
         ConstructionListConfig,
+        ConstructionListGenerator,
     )
 
     try:
@@ -2027,8 +2027,8 @@ def cmd_construction_list(borough: str, min_z_score: float, output: str) -> None
 def cmd_ifa_budget(sample: int, output: str) -> None:
     """Generate IFA Budget Justification PDF from ramp completion gap."""
     from ..analyst.ifa_budget_justification import IFABudgetJustification
-    from ..engineering.ramp_analysis import RampCompletionReportGenerator
     from ..core.client import SocrataClient, SocrataConfig
+    from ..engineering.ramp_analysis import RampCompletionReportGenerator
 
     click.echo("Fetching ramp_progress from Socrata (fourfour: e7gc-ub6z)...")
     try:

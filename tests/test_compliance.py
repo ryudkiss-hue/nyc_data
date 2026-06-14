@@ -4,6 +4,7 @@ from socrata_toolkit.governance import (
     validate_contractor_for_list,
 )
 
+
 def test_check_dcwp_license_no_api():
     res = check_dcwp_license("ABC123", api_base=None)
     assert res["valid"] is False

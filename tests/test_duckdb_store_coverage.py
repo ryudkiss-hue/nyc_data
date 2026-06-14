@@ -16,6 +16,7 @@ from socrata_toolkit.core.duckdb_store import (
     query_parquet_cache,
 )
 
+
 class TestDuckDBManagerInit:
     """Tests for DuckDBManager initialization."""
 

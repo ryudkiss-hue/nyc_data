@@ -18,14 +18,15 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from socrata_toolkit.analysis.hotspot_workflow import GeographicHotspotWorkflow
 from socrata_toolkit.analysis.hotspot_classifier import (
-    HotspotMetrics,
-    HotspotClassificationEngine,
-    Trend,
     DensityLevel,
+    HotspotClassificationEngine,
+    HotspotMetrics,
     HotspotType,
+    Trend,
 )
+from socrata_toolkit.analysis.hotspot_workflow import GeographicHotspotWorkflow
+
 
 def example_1_single_borough_analysis():
     """Example 1: Analyze hotspots in Manhattan only."""
@@ -43,13 +44,13 @@ def example_1_single_borough_analysis():
     result = workflow.run(borough_filter="MN", sample_size=3000)
 
     # Print summary
-    print(f"\nSummary:")
+    print("\nSummary:")
     print(f"  Total hotspots detected: {result['summary']['total_hotspots']}")
     print(f"  High-severity hotspots: {result['summary']['high_severity_count']}")
     print(f"  Borough: {result['summary']['borough_filter']}")
 
     # Print top 3 priorities
-    print(f"\nTop 3 Priority Hotspots:")
+    print("\nTop 3 Priority Hotspots:")
     for i, hotspot in enumerate(result['hotspots'][:3], 1):
         print(f"\n  {i}. {hotspot['hotspot_id']}")
         print(f"     Type: {hotspot['hotspot_type']}")
@@ -62,17 +63,17 @@ def example_1_single_borough_analysis():
 
     # Print Claude guidance
     if result['claude_guidance']:
-        print(f"\nClaude's Resource Allocation Guidance:")
+        print("\nClaude's Resource Allocation Guidance:")
         print(f"  {result['claude_guidance'][:200]}...")
 
     # Print execution log
-    print(f"\nExecution Log:")
+    print("\nExecution Log:")
     for log_entry in result['execution_log']:
         print(f"  {log_entry}")
 
     # Print errors if any
     if result['final_report']['errors']:
-        print(f"\nErrors Encountered:")
+        print("\nErrors Encountered:")
         for error in result['final_report']['errors']:
             print(f"  {error}")
 
@@ -198,9 +199,9 @@ def example_3_batch_analysis():
                   f"(severity: {top_hotspot['severity_score']:.0f})")
 
     # Summary across all boroughs
-    print(f"\n" + "-" * 70)
-    print(f"Aggregate Summary:")
-    print(f"-" * 70)
+    print("\n" + "-" * 70)
+    print("Aggregate Summary:")
+    print("-" * 70)
 
     total_hotspots = sum(r['summary']['total_hotspots'] for r in all_results.values())
     total_high_severity = sum(r['summary']['high_severity_count'] for r in all_results.values())
@@ -209,7 +210,7 @@ def example_3_batch_analysis():
     print(f"Total high-severity: {total_high_severity}")
 
     # Borough breakdown
-    print(f"\nBy Borough:")
+    print("\nBy Borough:")
     for borough in boroughs:
         result = all_results[borough]
         print(f"  {borough}: {result['summary']['total_hotspots']} hotspots, "

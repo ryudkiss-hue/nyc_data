@@ -15,6 +15,7 @@ from socrata_toolkit.quality.integration import (
     set_quality_integration,
 )
 
+
 class TestQualityIntegrationInitialization:
     """Tests for QualityIntegration initialization."""
 

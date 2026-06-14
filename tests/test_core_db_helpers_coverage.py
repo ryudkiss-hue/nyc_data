@@ -7,6 +7,7 @@ import pytest
 
 from socrata_toolkit.core.db_helpers import build_fts_index_sql, ensure_fts_index
 
+
 class TestBuildFtsIndexSql:
     """Tests for build_fts_index_sql function."""
 

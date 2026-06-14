@@ -15,6 +15,7 @@ from socrata_toolkit.core.exporters import (
     XLSXExporter,
 )
 
+
 class TestXLSXExporter:
     """Tests for XLSXExporter class."""
 

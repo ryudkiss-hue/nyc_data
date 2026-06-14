@@ -20,6 +20,7 @@ from socrata_toolkit.core.utils import (
     with_retries,
 )
 
+
 class TestSocrataToolkitError:
     """Tests for SocrataToolkitError exception class."""
 

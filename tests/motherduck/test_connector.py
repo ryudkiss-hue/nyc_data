@@ -10,6 +10,7 @@ import pytest
 
 from socrata_toolkit.motherduck.connector import MotherDuckConnection
 
+
 class TestMotherDuckConnectionInitialization:
     """Test MotherDuck connection initialization with various configurations."""
 

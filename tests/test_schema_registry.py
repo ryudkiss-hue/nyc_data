@@ -22,6 +22,7 @@ from socrata_toolkit.core import (
     SchemaValidator,
 )
 
+
 class TestColumnSchema:
     """Tests for ColumnSchema dataclass."""
 

@@ -14,6 +14,7 @@ from socrata_toolkit.core.persistence import (
     save_pipeline,
 )
 
+
 class TestLoadPipelines:
     """Tests for load_pipelines function."""
 

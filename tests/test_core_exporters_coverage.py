@@ -13,6 +13,7 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
+
 class TestXLSXExporter:
     """Test XLSXExporter for writing data to Excel files."""
 

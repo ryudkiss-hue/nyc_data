@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 import pytest
 
+
 class TestCriticalFinding1_SoQLSyntax:
     """
     Finding #1: Invalid SoQL date syntax in CLAUDE.md line 539

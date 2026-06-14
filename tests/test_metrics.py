@@ -12,6 +12,7 @@ from socrata_toolkit.analysis import (
     reset_global_registry,
 )
 
+
 class TestMetricPoint:
     """Tests for MetricPoint class."""
 

@@ -2,6 +2,7 @@ import pytest
 
 from app.services.roi_service import ProductivityROI, ROIAggregator
 
+
 def test_roi_aggregator_variations():
     """Verify ROI logic with varying inputs and boundary conditions."""
     # Zero case

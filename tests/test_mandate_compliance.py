@@ -7,6 +7,7 @@ from socrata_toolkit.analysis.profiling import profile_dataframe
 from socrata_toolkit.engineering.infrastructure import LifeCycleCostAnalysis
 from socrata_toolkit.material.standards_v4 import run_vision_zero_audit
 
+
 def test_four_moments_mandate():
     """Verify that DataProfile explicitly calculates the Four Moments."""
     df = pd.DataFrame({"test": np.random.normal(0, 1, 100)})

@@ -8,6 +8,7 @@ from socrata_toolkit.analyst.data_dictionary import build_data_dictionary, rende
 from socrata_toolkit.core.profiles import profile_paths
 from socrata_toolkit.review.store import ReviewStore
 
+
 def test_profile_paths_resolve_state_root(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setenv("TOOLKIT_PROFILE", "team-a")
     monkeypatch.setenv("TOOLKIT_STATE_ROOT", str(tmp_path / "state_root"))

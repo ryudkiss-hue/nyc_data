@@ -19,6 +19,7 @@ from socrata_toolkit.spatial.visualization import (
     export_conflicts_geojson,
 )
 
+
 @pytest.fixture
 def mock_folium():
     """Inject a mock folium module and enable HAS_FOLIUM for the test."""

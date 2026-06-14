@@ -12,6 +12,7 @@ from socrata_toolkit.analysis import (
     generate_program_report,
 )
 
+
 def _sample_contracts():
     return pd.DataFrame(
         {

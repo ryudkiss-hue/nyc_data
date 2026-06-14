@@ -13,6 +13,7 @@ from socrata_toolkit.analysis.dataset_health import (
     Severity,
 )
 
+
 class TestDatasetHealthClassifier:
     """Test DatasetHealthClassifier."""
 

@@ -9,6 +9,7 @@ from click.testing import CliRunner
 
 from socrata_toolkit.core.cli import main
 
+
 class TestCLIMainGroup:
     """Tests for main CLI group and global options."""
 

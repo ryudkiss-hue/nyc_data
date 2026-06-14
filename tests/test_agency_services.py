@@ -6,6 +6,7 @@ from pathlib import Path
 
 from app.services import agency
 
+
 def test_repo_root_exists():
     root = agency.repo_root()
     assert (root / "app" / "main.py").exists()

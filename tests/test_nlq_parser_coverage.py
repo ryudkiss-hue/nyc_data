@@ -5,6 +5,7 @@ import pytest
 
 from socrata_toolkit.nlq_parser import QueryIntent, parse_query
 
+
 class TestQueryIntent:
     """Tests for QueryIntent dataclass."""
 

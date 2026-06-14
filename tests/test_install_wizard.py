@@ -15,6 +15,7 @@ from socrata_toolkit.install_wizard import (
     write_env_file,
 )
 
+
 @pytest.fixture
 def mini_project(tmp_path: Path) -> Path:
     """Minimal repo layout for wizard tests."""

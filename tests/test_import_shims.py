@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+
 def test_analysis_advanced_outliers():
     from socrata_toolkit.analysis.advanced import detect_all_outliers
 

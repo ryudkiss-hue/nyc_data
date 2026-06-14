@@ -11,6 +11,7 @@ from socrata_toolkit.engineering import (
     summarize_costs,
 )
 
+
 def test_estimate_single():
     est = estimate_single(100, scope="sidewalk_repair", borough="MANHATTAN", ada_required=True)
     assert est.total > 0
@@ -49,6 +50,7 @@ def test_summarize_costs():
 
 from socrata_toolkit.pipeline import detect_changes, detect_status_changes
 
+
 def test_detect_changes_added_removed():
     old = pd.DataFrame({"id": [1, 2, 3], "val": ["a", "b", "c"]})
     new = pd.DataFrame({"id": [2, 3, 4], "val": ["b", "C", "d"]})
@@ -78,6 +80,7 @@ from socrata_toolkit.engineering import (
     generate_scorecards,
     scorecards_to_dataframe,
 )
+
 
 def test_generate_scorecards():
     df = pd.DataFrame(
@@ -116,6 +119,7 @@ from socrata_toolkit.engineering import (
     forecast_workload,
 )
 
+
 def test_forecast_spend():
     dates = pd.date_range("2024-01-01", periods=6, freq="ME")
     df = pd.DataFrame({"date": dates, "actual_spend": [10000, 12000, 11000, 13000, 12500, 14000]})
@@ -139,6 +143,7 @@ def test_forecast_workload():
 
 from socrata_toolkit.analysis import create_map, save_map
 
+
 def test_create_map_fallback():
     df = pd.DataFrame({"latitude": [40.75], "longitude": [-73.99], "status": ["Pending"]})
     html = create_map(df)
@@ -152,6 +157,7 @@ def test_save_map(tmp_path):
 # -- QGIS Integration --------------------------------------------------------
 
 from socrata_toolkit.spatial import generate_qgis_project
+
 
 def test_generate_qgis_project(tmp_path):
     path = generate_qgis_project(
@@ -168,6 +174,7 @@ def test_generate_qgis_project(tmp_path):
 
 from socrata_toolkit.analysis import dataframe_to_pdf
 
+
 @pytest.mark.skipif(dataframe_to_pdf is None, reason="viz extras not installed")
 def test_dataframe_to_pdf_fallback(tmp_path):
     df = pd.DataFrame({"a": [1, 2], "b": ["x", "y"]})
@@ -180,6 +187,7 @@ def test_dataframe_to_pdf_fallback(tmp_path):
 # -- Messaging Bot -------------------------------------------------------------
 
 from socrata_toolkit.alerts.messaging import BotAdapter
+
 
 def test_bot_greeting():
     bot = BotAdapter()
@@ -231,6 +239,7 @@ def test_bot_unknown():
 
 from socrata_toolkit.nlp.integration import triage_complaints
 from socrata_toolkit.pipeline import IngestionResult
+
 
 def test_triage_complaints_sets_priority_column():
     df = pd.DataFrame(

@@ -13,6 +13,7 @@ import pytest
 
 from socrata_toolkit.quality.reconciliation import DataReconciliation, ReconciliationResult
 
+
 class TestReconciliationResult:
     """Test suite for ReconciliationResult dataclass."""
 

@@ -10,6 +10,7 @@ from socrata_toolkit.core.semantic_layer import (
     WilsonScoreCI,
 )
 
+
 class TestMetricDefinition:
     """Test metric definition and metadata."""
 

@@ -14,6 +14,7 @@ from socrata_toolkit.analysis.confidence_intervals import (
     wilson_score_confidence_interval,
 )
 
+
 class TestWilsonScoreConfidenceInterval:
     """Tests for Wilson Score CI (proportion-based)."""
 

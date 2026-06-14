@@ -16,6 +16,7 @@ pytest.importorskip("flask", reason="Flask required for API tests")
 
 from socrata_toolkit.core.api import create_app  # noqa: E402
 
+
 @pytest.fixture
 def client():
     """Flask test client.

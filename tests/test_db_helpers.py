@@ -2,6 +2,7 @@ import pytest
 
 from socrata_toolkit.core import build_fts_index_sql
 
+
 def test_build_fts_index_sql_single_column():
     sql = build_fts_index_sql("complaints", ["description"])
     assert "CREATE INDEX IF NOT EXISTS" in sql

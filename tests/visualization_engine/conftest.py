@@ -10,6 +10,7 @@ import pytest
 
 from socrata_toolkit.motherduck.connector import MotherDuckConnection
 
+
 @pytest.fixture
 def mock_connection():
     """Create a mock MotherDuckConnection for testing.

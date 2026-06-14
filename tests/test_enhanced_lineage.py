@@ -15,6 +15,7 @@ from socrata_toolkit.core.enhanced_lineage import (
     ReportNode,
 )
 
+
 class TestLineageEvent:
     """Test individual lineage events."""
 

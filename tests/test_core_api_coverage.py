@@ -15,6 +15,7 @@ flask = pytest.importorskip("flask", reason="flask not installed")
 
 from socrata_toolkit.core.api import create_app  # noqa: E402 — must come after guard
 
+
 @pytest.fixture()
 def client():
     """Create a Flask test client from the application factory."""

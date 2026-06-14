@@ -13,6 +13,7 @@ from socrata_toolkit.core.materialization import (
     MaterializationFactory,
 )
 
+
 @pytest.fixture
 def db():
     """In-memory DuckDB for testing."""

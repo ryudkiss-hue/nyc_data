@@ -11,6 +11,7 @@ from socrata_toolkit.contracts import (
     ValidationResult,
 )
 
+
 def _contract() -> DataContract:
     return DataContract(
         name="people",

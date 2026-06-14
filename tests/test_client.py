@@ -2,6 +2,7 @@ from unittest.mock import patch
 
 from socrata_toolkit.core import SocrataClient, SocrataConfig
 
+
 class DummyResp:
     def __init__(self, payload):
         self.payload = payload

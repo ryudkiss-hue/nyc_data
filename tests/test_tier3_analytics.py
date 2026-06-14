@@ -5,6 +5,7 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
+
 class TestDataFreshness:
     """Test data freshness and lineage tracking."""
 

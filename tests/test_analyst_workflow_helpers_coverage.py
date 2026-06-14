@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pandas as pd
 
+
 def _profile(**steps):
     from socrata_toolkit.analyst.config import AnalystProfile
 

@@ -6,6 +6,7 @@ import json
 
 from socrata_toolkit.fair.cli import main
 
+
 def test_score_runs(capsys):
     rc = main(["score", "--registry", "config/datasets.yaml"])
     assert rc == 0

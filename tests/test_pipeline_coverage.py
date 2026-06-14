@@ -8,6 +8,7 @@ from socrata_toolkit.core.pipeline import (
     run_from_rows,
 )
 
+
 class TestSqlType:
     """Tests for _sql_type function."""
 

@@ -1,6 +1,7 @@
 import sys
 from pathlib import Path
 
+
 def validate_env():
     """Validates that all variables defined in .env.example are present in .env"""
     project_root = Path(__file__).parent.parent

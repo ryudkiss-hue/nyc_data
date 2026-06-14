@@ -14,6 +14,7 @@ from socrata_toolkit.quality.validation import (
     validate_schema_types,
 )
 
+
 class TestValidationReport:
     """Tests for ValidationReport dataclass."""
 

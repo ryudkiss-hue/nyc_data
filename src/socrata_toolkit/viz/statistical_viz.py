@@ -449,7 +449,7 @@ def changepoint_overlay(
                 x=cp_date,
                 line_dash="dash",
                 line_color=color,
-                annotation_text=f"↑ Shift",
+                annotation_text="↑ Shift",
                 annotation_position="top",
             )
 

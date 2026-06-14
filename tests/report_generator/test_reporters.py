@@ -5,6 +5,7 @@ Validates that all 5 report generators produce valid output with correct structu
 """
 
 import pytest
+
 from app.report_generator import (
     generate_phase_b_report,
     generate_phase_c_report,

@@ -12,6 +12,7 @@ from socrata_toolkit.analyst.budget import (
     validate_budget_codes,
 )
 
+
 class TestLoadBudgetRules:
     """Tests for load_budget_rules function."""
 

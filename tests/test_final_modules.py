@@ -10,6 +10,7 @@ from socrata_toolkit.analysis import (
     flag_sla_violations,
 )
 
+
 def test_compute_cycle_times():
     df = pd.DataFrame(
         {
@@ -50,6 +51,7 @@ def test_flag_sla_violations():
 # -- Notification Rules -------------------------------------------------------
 
 from socrata_toolkit.alerts.rules import Rule, RulesEngine
+
 
 def test_rules_engine_evaluate():
     engine = RulesEngine()
@@ -101,6 +103,7 @@ def test_rules_engine_evaluate_dataframe():
 
 from socrata_toolkit.core import generate_data_dictionary
 
+
 def test_generate_data_dictionary():
     df = pd.DataFrame({"id": [1, 2, 3], "name": ["a", None, "c"], "score": [10.5, 20.3, None]})
     dd = generate_data_dictionary(df, dataset_name="Test Data")
@@ -128,6 +131,7 @@ def test_data_dictionary_save(tmp_path):
 # -- NYC Datasets Registry ----------------------------------------------------
 
 from socrata_toolkit.core import DATASETS, list_available_datasets
+
 
 def test_datasets_registry():
     assert "311_service_requests" in DATASETS

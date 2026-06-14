@@ -10,8 +10,8 @@ import logging
 from dataclasses import dataclass
 from typing import Optional
 
-import requests
 import duckdb
+import requests
 
 logger = logging.getLogger(__name__)
 

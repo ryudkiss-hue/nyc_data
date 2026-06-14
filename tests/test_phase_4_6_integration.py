@@ -13,11 +13,12 @@ Run with:
     pytest tests/test_phase_4_6_integration.py -v --benchmark-only (for perf tests)
 """
 
-import pytest
+import io
+from datetime import datetime, timedelta
+
 import pandas as pd
 import plotly.graph_objects as go
-from datetime import datetime, timedelta
-import io
+import pytest
 
 # Mock MotherDuck data for testing (no real DB calls)
 

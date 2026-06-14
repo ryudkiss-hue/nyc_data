@@ -14,6 +14,7 @@ import socket
 
 import pytest
 
+
 def _socrata_reachable() -> bool:
     """Return True if data.cityofnewyork.us:443 is reachable within 5 s."""
     try:

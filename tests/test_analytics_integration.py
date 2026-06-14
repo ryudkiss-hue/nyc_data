@@ -11,17 +11,18 @@ Coverage includes:
 - Phase B: Moran's I Spatial Autocorrelation
 """
 
-import pytest
-import pandas as pd
-import numpy as np
-import geopandas as gpd
-from shapely.geometry import Point
-from datetime import datetime, timedelta
 import logging
+import sys
+from datetime import datetime, timedelta
 
 # Import test fixtures and utilities
 from pathlib import Path
-import sys
+
+import geopandas as gpd
+import numpy as np
+import pandas as pd
+import pytest
+from shapely.geometry import Point
 
 ROOT_PATH = str(Path(__file__).resolve().parent.parent)
 SRC_PATH = str(Path(__file__).resolve().parent.parent / "src")
@@ -104,12 +105,13 @@ class TestPhaseC_Distribution:
         """Verify AnalyticsEngine has chart_distribution_classification method."""
         from app.callbacks.analytics import AnalyticsEngine
         assert hasattr(AnalyticsEngine, "chart_distribution_classification")
-        assert callable(getattr(AnalyticsEngine, "chart_distribution_classification"))
+        assert callable(AnalyticsEngine.chart_distribution_classification)
 
     def test_distribution_with_valid_data(self, mock_tabular_data):
         """Test distribution analysis with valid data."""
-        from app.callbacks.analytics import AnalyticsEngine
         import plotly.graph_objects as go
+
+        from app.callbacks.analytics import AnalyticsEngine
 
         data_bundle = {"data": mock_tabular_data}
         fig, narrative = AnalyticsEngine.chart_distribution_classification(data_bundle)
@@ -172,8 +174,9 @@ class TestPhaseD_Anomaly:
 
     def test_anomaly_with_valid_spatial_data(self, mock_spatial_data):
         """Test anomaly detection with valid spatial data."""
-        from app.callbacks.analytics import AnalyticsEngine
         import plotly.graph_objects as go
+
+        from app.callbacks.analytics import AnalyticsEngine
 
         data_bundle = {"spatial": mock_spatial_data}
         fig, narrative = AnalyticsEngine.chart_anomaly_detection(data_bundle)
@@ -238,8 +241,9 @@ class TestPhaseE_Decomposition:
 
     def test_decomposition_with_valid_timeseries(self, mock_timeseries_data):
         """Test decomposition with valid time series data."""
-        from app.callbacks.analytics import AnalyticsEngine
         import plotly.graph_objects as go
+
+        from app.callbacks.analytics import AnalyticsEngine
 
         # Ensure datetime column is properly typed
         mock_timeseries_data["date"] = pd.to_datetime(mock_timeseries_data["date"])
@@ -295,8 +299,9 @@ class TestPhaseF_BootstrapCI:
 
     def test_bootstrap_ci_with_valid_metrics(self, mock_kpi_metrics):
         """Test bootstrap CI with valid KPI metrics."""
-        from app.callbacks.analytics import AnalyticsEngine
         import plotly.graph_objects as go
+
+        from app.callbacks.analytics import AnalyticsEngine
 
         for metric_name, (point_est, ci_lower, ci_upper) in mock_kpi_metrics.items():
             data_bundle = {"metrics": {metric_name: (point_est, ci_lower, ci_upper)}}
@@ -346,8 +351,9 @@ class TestPhaseB_MoransI:
 
     def test_morans_i_with_valid_spatial_data(self, mock_spatial_data):
         """Test Moran's I with valid spatial data."""
-        from app.callbacks.analytics import AnalyticsEngine
         import plotly.graph_objects as go
+
+        from app.callbacks.analytics import AnalyticsEngine
 
         data_bundle = {"spatial": mock_spatial_data}
         fig, narrative = AnalyticsEngine.chart_morans_i(data_bundle)
@@ -382,8 +388,9 @@ class TestCallbacks:
 
     def test_update_distribution_classification_callback_signature(self):
         """Verify callback signature is correct."""
-        from app.callbacks.analytics_integration import update_distribution_classification
         import inspect
+
+        from app.callbacks.analytics_integration import update_distribution_classification
 
         sig = inspect.signature(update_distribution_classification)
         assert "filters" in sig.parameters
@@ -391,8 +398,9 @@ class TestCallbacks:
 
     def test_update_anomaly_detection_callback_signature(self):
         """Verify callback signature is correct."""
-        from app.callbacks.analytics_integration import update_anomaly_detection
         import inspect
+
+        from app.callbacks.analytics_integration import update_anomaly_detection
 
         sig = inspect.signature(update_anomaly_detection)
         assert "filters" in sig.parameters
@@ -400,8 +408,9 @@ class TestCallbacks:
 
     def test_update_decomposition_callback_signature(self):
         """Verify callback signature is correct."""
-        from app.callbacks.analytics_integration import update_seasonal_decomposition
         import inspect
+
+        from app.callbacks.analytics_integration import update_seasonal_decomposition
 
         sig = inspect.signature(update_seasonal_decomposition)
         assert "filters" in sig.parameters
@@ -410,8 +419,9 @@ class TestCallbacks:
 
     def test_update_bootstrap_ci_callback_signature(self):
         """Verify callback signature is correct."""
-        from app.callbacks.analytics_integration import update_bootstrap_ci_kpis
         import inspect
+
+        from app.callbacks.analytics_integration import update_bootstrap_ci_kpis
 
         sig = inspect.signature(update_bootstrap_ci_kpis)
         assert "filters" in sig.parameters

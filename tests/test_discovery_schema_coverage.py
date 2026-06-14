@@ -17,6 +17,7 @@ from socrata_toolkit.discovery.schema import (
     SchemaValidator,
 )
 
+
 class TestChangeTypeEnum:
     """Tests for ChangeType enum."""
 

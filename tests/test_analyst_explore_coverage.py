@@ -12,6 +12,7 @@ from socrata_toolkit.analyst.explore import (
     profile_weight_snippet,
 )
 
+
 class TestNormalizeWeights:
     """Tests for normalize_weights function."""
 

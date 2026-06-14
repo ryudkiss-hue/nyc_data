@@ -13,6 +13,7 @@ from socrata_toolkit.quality.catalog import (
     QualityTrend,
 )
 
+
 class TestQualityTrend:
     """Tests for QualityTrend enum."""
 

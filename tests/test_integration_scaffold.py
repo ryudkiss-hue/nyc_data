@@ -2,6 +2,7 @@ import os
 
 import pytest
 
+
 @pytest.mark.skipif(
     not os.getenv("RUN_INTEGRATION"), reason="Set RUN_INTEGRATION=1 to enable integration tests"
 )

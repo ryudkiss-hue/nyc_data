@@ -17,10 +17,9 @@ All charts render demo data by default; replace _demo_*() with DuckDB queries.
 
 from __future__ import annotations
 
+import dash_bootstrap_components as dbc
 import numpy as np
 import pandas as pd
-
-import dash_bootstrap_components as dbc
 from dash import dcc, html
 
 # ---------------------------------------------------------------------------
@@ -67,8 +66,8 @@ def _safe_fig(fn):
 
 
 def _dbscan_fig():
-    from sklearn.cluster import DBSCAN
     import plotly.express as px
+    from sklearn.cluster import DBSCAN
     df = _demo_geo_df(500)
     coords = df[["latitude", "longitude"]].values
     eps_deg = 0.015  # ~1.5 km
@@ -163,8 +162,9 @@ def _bubble_fig():
 
 
 def _treemap_fig():
-    from socrata_toolkit.viz.advanced_multidim import sankey_flow
     import plotly.express as px
+
+    from socrata_toolkit.viz.advanced_multidim import sankey_flow
     df = _demo_geo_df(500)
     fig = px.treemap(
         df,

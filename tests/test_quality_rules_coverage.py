@@ -14,6 +14,7 @@ from socrata_toolkit.quality.rules import (
     validate_expectations,
 )
 
+
 class TestRuleSeverityEnum:
     """Tests for RuleSeverity enum."""
 

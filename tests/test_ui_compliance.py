@@ -8,6 +8,7 @@ import pytest
 from app.dash_layouts import render_header, render_sidebar
 from app.viz_engine import VisualizationEngine
 
+
 def _find_values_in_component(comp, key_to_find=None, val_to_find=None):
     """Recursively search Dash component tree for specific prop keys or values."""
     found = False

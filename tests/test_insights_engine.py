@@ -6,6 +6,7 @@ from socrata_toolkit.analysis import (
     smart_recommendations,
 )
 
+
 def _sample_data():
     return pd.DataFrame(
         {

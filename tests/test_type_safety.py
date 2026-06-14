@@ -10,6 +10,7 @@ import pytest
 
 from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
+
 def _mock_resp(json_payload):
     resp = MagicMock()
     resp.json.return_value = json_payload

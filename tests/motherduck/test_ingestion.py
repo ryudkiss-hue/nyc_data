@@ -5,6 +5,7 @@ import pytest
 from socrata_toolkit.motherduck.connector import MotherDuckConnection
 from socrata_toolkit.motherduck.ingestion import InspectionDataLoader
 
+
 @pytest.fixture
 def motherduck_conn():
     """Fixture providing a local DuckDB connection (no MotherDuck token needed)."""

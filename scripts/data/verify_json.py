@@ -11,7 +11,7 @@ files = [
 all_valid = True
 for filepath in files:
     try:
-        with open(filepath, 'r') as f:
+        with open(filepath) as f:
             data = json.load(f)
         print(f"✓ {filepath}: Valid JSON ({len(data)} top-level keys)")
     except Exception as e:

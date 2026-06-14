@@ -20,6 +20,7 @@ from socrata_toolkit.spatial.analytics import (
     spatial_conflict_score,
 )
 
+
 @pytest.fixture
 def sample_coordinates() -> list[tuple[float, float]]:
     """Provide a list of NYC-area (lon, lat) coordinates for testing."""

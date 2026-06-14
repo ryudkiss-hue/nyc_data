@@ -7,6 +7,7 @@ import pytest
 
 from socrata_toolkit.core.duckdb_pipeline import stage_dataset
 
+
 @pytest.fixture
 def db():
     """In-memory DuckDB connection for testing."""

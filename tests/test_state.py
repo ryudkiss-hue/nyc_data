@@ -1,5 +1,6 @@
 from socrata_toolkit.core import load_state, save_state
 
+
 def test_save_and_load_state(tmp_path):
     path = str(tmp_path / "state.json")
     save_state(path, {"domain": "data.city", "last_rows": 42})

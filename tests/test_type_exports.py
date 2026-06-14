@@ -8,6 +8,7 @@ import pytest
 
 import socrata_toolkit
 
+
 def test_all_exports_resolvable():
     """
     Iterates through the lazy-loaded __all__ registry and explicitly attempts

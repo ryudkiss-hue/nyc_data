@@ -5,17 +5,19 @@ Tests full end-to-end workflows with realistic data volumes and edge cases.
 Run with: pytest tests/test_staging_integration.py -v
 """
 
-import pytest
-import pandas as pd
-import numpy as np
-import geopandas as gpd
-from shapely.geometry import Point
-from datetime import datetime, timedelta
+import sys
 import time
+from datetime import datetime, timedelta
 
 # Setup paths
 from pathlib import Path
-import sys
+
+import geopandas as gpd
+import numpy as np
+import pandas as pd
+import pytest
+from shapely.geometry import Point
+
 ROOT_PATH = str(Path(__file__).resolve().parent.parent)
 SRC_PATH = str(Path(__file__).resolve().parent.parent / "src")
 for p in [ROOT_PATH, SRC_PATH]:
@@ -24,10 +26,10 @@ for p in [ROOT_PATH, SRC_PATH]:
 
 from app.callbacks.analytics import AnalyticsEngine
 from app.callbacks.analytics_integration import (
-    update_distribution_classification,
     update_anomaly_detection,
-    update_seasonal_decomposition,
     update_bootstrap_ci_kpis,
+    update_distribution_classification,
+    update_seasonal_decomposition,
 )
 from app.dash_layouts_analytics_integration import render_analytics_integration_tabs
 from app.services.analytics_service import get_kpi_metrics, validate_filters

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from socrata_toolkit.core.soql_builder import SoQLBuilder
 
+
 class TestSoQLBuilderBasic:
     """Basic construction tests."""
 

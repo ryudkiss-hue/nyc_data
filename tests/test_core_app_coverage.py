@@ -19,6 +19,7 @@ from socrata_toolkit.core.app import (
     safe_read_table,
 )
 
+
 class TestLoadEnv:
     """Tests for load_env function."""
 

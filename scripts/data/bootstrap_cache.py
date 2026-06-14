@@ -14,13 +14,15 @@ Result:
   - Ready for daily incremental refresh
 """
 
-import sys
 import os
+import sys
+
 sys.path.insert(0, 'src')
 
-import duckdb
 import logging
 from datetime import datetime, timedelta
+
+import duckdb
 import pandas as pd
 
 logging.basicConfig(
@@ -181,7 +183,7 @@ def classify_and_stage(conn, dataset_name, df):
         conn.execute(f"DROP TABLE IF EXISTS {staging_table}")
         conn.execute(f"CREATE TABLE {staging_table} AS SELECT * FROM {dataset_name}_classified")
 
-        logger.info(f"  ✓ Classified and staged")
+        logger.info("  ✓ Classified and staged")
         return True
 
     except Exception as e:
@@ -295,13 +297,13 @@ def main():
 
     # Summary
     logger.info("\n" + "=" * 70)
-    logger.info(f"BOOTSTRAP COMPLETE")
+    logger.info("BOOTSTRAP COMPLETE")
     logger.info("=" * 70)
     logger.info(f"Successful: {successful}/{len(DATASETS)}")
     logger.info(f"Failed: {failed}/{len(DATASETS)}")
     logger.info(f"Database: {db_path}")
-    logger.info(f"\nReady for daily refresh via: daily_refresh.py")
-    logger.info(f"Query cache via: analytics views")
+    logger.info("\nReady for daily refresh via: daily_refresh.py")
+    logger.info("Query cache via: analytics views")
     logger.info("=" * 70)
 
     conn.close()

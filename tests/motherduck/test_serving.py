@@ -13,6 +13,7 @@ import pytest
 from socrata_toolkit.motherduck.connector import MotherDuckConnection
 from socrata_toolkit.motherduck.serving import ServingViewsBuilder
 
+
 @pytest.fixture
 def md_connection():
     """Create a MotherDuck connection for testing."""

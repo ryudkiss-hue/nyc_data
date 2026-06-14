@@ -17,6 +17,7 @@ from socrata_toolkit.analysis import (
     validate_schema_types,
 )
 
+
 class TestLegacyValidation:
     """Tests for backward-compatible validation functions."""
 
