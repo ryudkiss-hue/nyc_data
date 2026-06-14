@@ -31,8 +31,8 @@ def infer_message_type(df: pd.DataFrame, x_col: str, y_col: str | None) -> str:
     """Guess message type from column dtypes."""
     x_dtype = df[x_col].dtype if x_col in df.columns else None
     is_datetime = pd.api.types.is_datetime64_any_dtype(x_dtype)
-    is_categorical = pd.api.types.is_object_dtype(x_dtype) or pd.api.types.is_categorical_dtype(
-        x_dtype
+    is_categorical = pd.api.types.is_object_dtype(x_dtype) or (
+        hasattr(x_dtype, "name") and x_dtype.name == "category"
     )
 
     if is_datetime:
@@ -52,7 +52,7 @@ def recommend_charts(df: pd.DataFrame, target_col: str | None = None) -> None:
 
     datetime_cols = df.select_dtypes(include=["datetime64"]).columns.tolist()
     numeric_cols = df.select_dtypes(include="number").columns.tolist()
-    cat_cols = df.select_dtypes(include=["object", "category"]).columns.tolist()
+    cat_cols = df.select_dtypes(include=["str", "category"]).columns.tolist()
 
     print("Detected columns:")
     print(f"  Datetime: {datetime_cols or ['none']}")

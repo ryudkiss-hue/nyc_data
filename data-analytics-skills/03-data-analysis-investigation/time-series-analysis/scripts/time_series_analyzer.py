@@ -23,13 +23,15 @@ def load_series(path: str, date_col: str, metric_col: str) -> pd.Series:
         print(f"[ERROR] Metric column '{metric_col}' not found.")
         sys.exit(1)
     series = df.set_index(date_col)[metric_col].sort_index()
+    # Aggregate duplicate dates (multiple rows per day → sum)
+    series = series.groupby(series.index).sum()
     return series
 
 
 def fill_gaps(series: pd.Series, freq: str = "D") -> pd.Series:
     """Reindex to regular frequency, forward-fill gaps up to 3 periods."""
     full_index = pd.date_range(series.index.min(), series.index.max(), freq=freq)
-    return series.reindex(full_index).fillna(method="ffill", limit=3)
+    return series.reindex(full_index).ffill(limit=3)
 
 
 def rolling_stats(series: pd.Series, window: int) -> pd.DataFrame:
