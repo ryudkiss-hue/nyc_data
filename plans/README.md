@@ -14,15 +14,19 @@ the audit session.
 | 003 | [perf-callback-memoization](003-perf-callback-memoization.md) | P2 | S | LOW | — | TODO |
 | 004 | [analysis-init-refactor](004-analysis-init-refactor.md) | P1 | M | MED | — | TODO |
 | 005 | [deps-cleanup](005-deps-cleanup.md) | P2 | S | LOW | — | TODO |
+| 006 | [skill-md-doc-fixes](006-skill-md-doc-fixes.md) | P2 | S | LOW | — | TODO |
+| 007 | [skill-demo-modes](007-skill-demo-modes.md) | P2 | M | LOW | — | TODO |
 
 ## Dependency graph
 
 ```
 001 (security-env-credentials)   ──┐
-002 (security-motherduck-token)  ──┤── independent, all can run in parallel
-003 (perf-callback-memoization)  ──┤
+002 (security-motherduck-token)  ──┤
+003 (perf-callback-memoization)  ──┤── independent, all can run in parallel
 004 (analysis-init-refactor)     ──┤
-005 (deps-cleanup)               ──┘
+005 (deps-cleanup)               ──┤
+006 (skill-md-doc-fixes)         ──┤
+007 (skill-demo-modes)           ──┘
 ```
 
 No plan depends on another. Plans 001 and 002 are both P1 security fixes and
@@ -35,8 +39,8 @@ and addresses the root cause of recurring CI collection failures.
    token injection are the highest risk items.
 2. **004** — P1 tech-debt; eliminates the `_legacy_import` junk-drawer that
    has caused four consecutive CI-fixing commits.
-3. **003 + 005** simultaneously — P2 polish; memoization perf win and
-   dependency manifest cleanup.
+3. **003 + 005 + 006 + 007** simultaneously — P2 polish; memoization perf
+   win, dependency cleanup, skills doc fixes, and demo mode additions.
 
 ## Categories
 
@@ -46,6 +50,16 @@ and addresses the root cause of recurring CI collection failures.
 | perf | 003 |
 | tech-debt | 004 |
 | migration | 005 |
+| docs | 006 |
+| dx | 007 |
+
+## Considered and rejected
+
+- Adding `--demo` to all 30 skill scripts — most already have demo/summary modes
+  or are designed as composable library tools; only `run_audit.py` and
+  `chart_builder.py` had genuine blocking DX issues (API-required or no data path).
+- Adding sklearn to the base skill requirements — all clustering falls back to
+  rule-based segmentation; keeping it optional is the right call.
 
 ## Status values
 
