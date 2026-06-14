@@ -57,7 +57,7 @@ def detect_numeric_cols(df: pd.DataFrame) -> list[str]:
 
 
 def detect_categorical_cols(df: pd.DataFrame) -> list[str]:
-    return list(df.select_dtypes(include=["object", "category"]).columns)
+    return list(df.select_dtypes(include=["str", "category"]).columns)
 
 
 # ---------------------------------------------------------------------------
