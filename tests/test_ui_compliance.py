@@ -51,8 +51,8 @@ def test_header_accessibility_markup():
 def test_sidebar_navigation_labels():
     """Verify that navigation links have distinct labels."""
     sidebar = render_sidebar()
-    assert _find_values_in_component(sidebar, val_to_find="MISSION COMMAND")
-    assert _find_values_in_component(sidebar, val_to_find="Structural Mandate")
+    assert _find_values_in_component(sidebar, val_to_find="NYC DOT Analytics")
+    assert _find_values_in_component(sidebar, val_to_find="Engineering")
 
 
 def test_visualization_summary_generation():
