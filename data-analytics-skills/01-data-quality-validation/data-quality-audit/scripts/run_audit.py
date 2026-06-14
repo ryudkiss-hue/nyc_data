@@ -70,6 +70,31 @@ def fetch_data(key: str, rows: int) -> pd.DataFrame:
     return client.fetch_dataframe(domain, fourfour, max_rows=rows)
 
 
+def generate_demo_data() -> pd.DataFrame:
+    """Synthetic NYC DOT inspection records for demo/offline use."""
+    import random
+    from datetime import date, timedelta
+
+    random.seed(42)
+    boroughs = ["MN", "BX", "BK", "QN", "SI", "INVALID_B"]
+    statuses = ["OPEN", "CLOSED", "PENDING", "DISMISSED"]
+    rows = []
+    base = date(2025, 1, 1)
+    for i in range(200):
+        d = base + timedelta(days=random.randint(0, 500))
+        rows.append(
+            {
+                "objectid": i if i != 5 else 4,  # one duplicate for dup check
+                "borough": random.choices(boroughs, weights=[20, 20, 20, 20, 18, 2])[0],
+                "status": random.choice(statuses),
+                "inspection_date": str(d),
+                "defect_count": random.randint(0, 15),
+                "days_to_close": random.randint(1, 90) if random.random() > 0.2 else None,
+            }
+        )
+    return pd.DataFrame(rows)
+
+
 def check_completeness(df: pd.DataFrame, required: list[str]) -> dict:
     results = {}
     for col in df.columns:
@@ -189,21 +214,35 @@ def render_markdown(
 
 def main():
     parser = argparse.ArgumentParser(description="NYC DOT data quality audit")
-    parser.add_argument("--key", required=True, choices=list(DATASET_KEYS), help="Dataset key")
+    parser.add_argument(
+        "--key",
+        choices=list(DATASET_KEYS),
+        help="Dataset key (required unless --demo is used)",
+    )
+    parser.add_argument("--demo", action="store_true", help="Run with synthetic demo data (no API)")
     parser.add_argument("--rows", type=int, default=5000, help="Rows to sample (default: 5000)")
     parser.add_argument("--output", default=None, help="Output file path (.md or .html)")
     parser.add_argument("--html", action="store_true", help="Output HTML report")
     args = parser.parse_args()
 
-    df = fetch_data(args.key, args.rows)
-    required = REQUIRED_FIELDS.get(args.key, [])
+    if args.demo:
+        df = generate_demo_data()
+        key = "inspection"
+        print("[INFO] Running with synthetic demo data (200 rows, inspection schema)")
+    elif args.key:
+        df = fetch_data(args.key, args.rows)
+        key = args.key
+    else:
+        parser.error("--key or --demo is required")
+
+    required = REQUIRED_FIELDS.get(key, [])
 
     completeness = check_completeness(df, required)
     duplicates = check_duplicates(df)
     borough = check_borough_validity(df)
     scores = score_dimensions(completeness, duplicates, borough)
 
-    report = render_markdown(args.key, df, completeness, duplicates, borough, scores)
+    report = render_markdown(key, df, completeness, duplicates, borough, scores)
     print(report)
 
     if args.output:

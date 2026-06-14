@@ -27,6 +27,30 @@ MESSAGE_TYPE_MAP = {
 }
 
 
+def generate_demo_data() -> pd.DataFrame:
+    """Synthetic NYC DOT inspection records for demo/testing."""
+    import random
+    from datetime import date, timedelta
+
+    random.seed(42)
+    boroughs = ["MN", "BX", "BK", "QN", "SI"]
+    rows = []
+    base = date(2026, 1, 1)
+    for i in range(120):
+        d = base + timedelta(days=i // 4)
+        rows.append(
+            {
+                "inspection_date": str(d),
+                "borough": boroughs[i % 5],
+                "defect_count": random.randint(0, 20),
+                "days_to_close": random.randint(1, 60),
+                "violation_rate": round(random.uniform(0, 1), 3),
+                "count": random.randint(50, 200),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
 def infer_message_type(df: pd.DataFrame, x_col: str, y_col: str | None) -> str:
     """Guess message type from column dtypes."""
     x_dtype = df[x_col].dtype if x_col in df.columns else None
@@ -176,7 +200,8 @@ def build_chart(
 
 def main():
     parser = argparse.ArgumentParser(description="Recommend or build charts for NYC DOT data.")
-    parser.add_argument("--input", required=True, help="Path to CSV")
+    parser.add_argument("--input", help="Path to CSV (required unless --demo)")
+    parser.add_argument("--demo", action="store_true", help="Use built-in synthetic demo data")
     parser.add_argument(
         "--recommend", action="store_true", help="Print chart recommendations and exit"
     )
@@ -189,10 +214,19 @@ def main():
     parser.add_argument("--out", default="chart.png", help="Output file (.png)")
     args = parser.parse_args()
 
-    df = pd.read_csv(args.input)
-    for col in df.columns:
-        if "date" in col.lower() or "time" in col.lower():
-            df[col] = pd.to_datetime(df[col], errors="coerce")
+    if args.demo:
+        df = generate_demo_data()
+        print("[INFO] Using built-in demo data (120 rows, NYC DOT inspection schema)")
+        for col in df.columns:
+            if "date" in col.lower():
+                df[col] = pd.to_datetime(df[col], errors="coerce")
+    elif args.input:
+        df = pd.read_csv(args.input)
+        for col in df.columns:
+            if "date" in col.lower() or "time" in col.lower():
+                df[col] = pd.to_datetime(df[col], errors="coerce")
+    else:
+        parser.error("--input or --demo is required")
 
     if args.recommend:
         recommend_charts(df, target_col=args.target_col)

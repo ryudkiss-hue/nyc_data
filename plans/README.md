@@ -14,8 +14,8 @@ the audit session.
 | 003 | [perf-callback-memoization](003-perf-callback-memoization.md) | P2 | S | LOW | — | TODO |
 | 004 | [analysis-init-refactor](004-analysis-init-refactor.md) | P1 | M | MED | — | TODO |
 | 005 | [deps-cleanup](005-deps-cleanup.md) | P2 | S | LOW | — | TODO |
-| 006 | [skill-md-doc-fixes](006-skill-md-doc-fixes.md) | P2 | S | LOW | — | TODO |
-| 007 | [skill-demo-modes](007-skill-demo-modes.md) | P2 | M | LOW | — | TODO |
+| 006 | [skill-md-doc-fixes](006-skill-md-doc-fixes.md) | P2 | S | LOW | — | DONE |
+| 007 | [skill-demo-modes](007-skill-demo-modes.md) | P2 | M | LOW | — | DONE |
 
 ## Dependency graph
 
