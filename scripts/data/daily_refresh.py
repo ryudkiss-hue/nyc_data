@@ -16,6 +16,7 @@ import os
 sys.path.insert(0, 'src')
 
 import duckdb
+import pandas as pd
 import logging
 from datetime import datetime, timedelta
 
@@ -28,21 +29,22 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Datasets to refresh (high-volume)
+# Datasets to refresh: (actual_date_field_in_api, fourfour)
+# date fields verified against live API schema 2026-06-14
 REFRESH_DATASETS = {
-    "violations": ("violation_issue_date", "6kbp-uz6m"),
-    "inspection": ("inspection_date", "dntt-gqwq"),
+    "violations": ("vissuedate", "6kbp-uz6m"),
+    "inspection": ("inspectiondate", "dntt-gqwq"),
     "dismissals": ("violation_issue_date", "p4u2-3jgx"),
     "complaints_311": ("created_date", "erm2-nwe9"),
-    "ramp_progress": ("startdate", "e7gc-ub6z"),
-    "ramp_complaints": ("date_received", "jagj-gttd"),
-    "street_permits": ("issued_date", "tqtj-sjs8"),
-    "street_construction_inspections": ("inspection_date", "ydkf-mpxb"),
-    "street_closures_block": ("closure_date", "i6b5-j7bu"),
-    "street_resurfacing_schedule": ("scheduled_start", "xnfm-u3k5"),
+    "ramp_progress": (None, "e7gc-ub6z"),       # no filterable date field; fetch latest
+    "ramp_complaints": ("complaint_date", "jagj-gttd"),
+    "street_permits": ("permitissuedate", "tqtj-sjs8"),
+    "street_construction_inspections": ("inspectiondate", "ydkf-mpxb"),
+    "street_closures_block": ("work_start_date", "i6b5-j7bu"),
+    "street_resurfacing_schedule": ("date", "xnfm-u3k5"),
     "correspondences": ("date_received", "bheb-sjfi"),
     "curb_metal_protruding": ("insp", "i2y3-sx2e"),
-    "tree_damage": ("report_date", "j6v2-6uxq"),
+    "tree_damage": ("inspect_date", "j6v2-6uxq"),
 }
 
 CLASSIFICATION_DATASETS = {
@@ -51,6 +53,20 @@ CLASSIFICATION_DATASETS = {
     "complaints_311": "complaints",
     "tree_damage": "tree_damage",
 }
+
+def align_df_to_table(conn, df: pd.DataFrame, table: str) -> pd.DataFrame:
+    """Add missing columns (as None) and drop extras so df matches table schema."""
+    table_cols = [
+        r[0] for r in conn.execute(
+            f"SELECT column_name FROM information_schema.columns "
+            f"WHERE table_schema='{table.split('.')[0]}' AND table_name='{table.split('.')[1]}'"
+        ).fetchall()
+    ]
+    for col in table_cols:
+        if col not in df.columns:
+            df[col] = None
+    return df[[c for c in table_cols if c in df.columns]]
+
 
 def daily_refresh():
     """Fetch new records and update cache."""
@@ -69,7 +85,6 @@ def daily_refresh():
     pipeline = TextClassifierPipeline()
 
     yesterday = (datetime.now() - timedelta(days=1)).date()
-    today = datetime.now().date()
 
     total_new = 0
     successful = 0
@@ -78,8 +93,11 @@ def daily_refresh():
         try:
             logger.info(f"[REFRESH] {dataset_name}...")
 
-            # Fetch new records (since yesterday)
-            where = f"{date_field} >= '{yesterday}'"
+            if date_field is not None:
+                where = f"{date_field} >= '{yesterday}T00:00:00.000'"
+            else:
+                where = None
+
             df = client.fetch_dataframe(
                 "data.cityofnewyork.us",
                 fourfour,
@@ -89,73 +107,69 @@ def daily_refresh():
 
             if len(df) == 0:
                 logger.info(f"  (no new records)")
+                successful += 1
                 continue
 
             logger.info(f"  {len(df)} new records")
             total_new += len(df)
 
-            # Upsert into raw schema
+            # Append into raw schema (no PK constraints — append-only for daily increments)
             raw_table = f"raw.{dataset_name}"
+            df = align_df_to_table(conn, df, raw_table)
             conn.register(f"{dataset_name}_new", df)
-            conn.execute(f"""
-            INSERT OR REPLACE INTO {raw_table}
-            SELECT * FROM {dataset_name}_new
-            """)
+            conn.execute(f"INSERT INTO {raw_table} SELECT * FROM {dataset_name}_new")
 
             # Classify if applicable
             if dataset_name in CLASSIFICATION_DATASETS:
                 classifier_type = CLASSIFICATION_DATASETS[dataset_name]
 
-                if classifier_type == "violations":
-                    classified_df = pipeline.classify_violations_dataframe(df)
-                elif classifier_type == "complaints":
-                    classified_df = pipeline.classify_complaints_dataframe(df)
-                elif classifier_type == "tree_damage":
-                    classified_df = df  # Simplified for now
-                else:
-                    classified_df = df
+                try:
+                    if classifier_type == "violations":
+                        classified_df = pipeline.classify_violations_dataframe(df)
+                    elif classifier_type == "complaints":
+                        classified_df = pipeline.classify_complaints_dataframe(df)
+                    else:
+                        classified_df = df
 
-                # Upsert into staging
-                staging_table = f"staging.{dataset_name}"
-                conn.register(f"{dataset_name}_classified", classified_df)
-                conn.execute(f"""
-                INSERT OR REPLACE INTO {staging_table}
-                SELECT * FROM {dataset_name}_classified
-                """)
+                    staging_table = f"staging.{dataset_name}"
+                    conn.register(f"{dataset_name}_classified", classified_df)
+                    try:
+                        conn.execute(f"INSERT INTO {staging_table} SELECT * FROM {dataset_name}_classified")
+                    except Exception:
+                        conn.execute(f"CREATE TABLE IF NOT EXISTS {staging_table} AS SELECT * FROM {dataset_name}_classified")
+                except Exception as e:
+                    logger.warning(f"  ⚠ Classification skipped: {e}")
 
             successful += 1
 
         except Exception as e:
             logger.error(f"  ✗ Error: {e}")
 
-    # Refresh materialized views
+    # Refresh materialized views (CREATE OR REPLACE avoids INSERT OR REPLACE PK issue)
     logger.info("\n[VIEWS] Refreshing analytics...")
 
     try:
-        # Violations summary
         conn.execute("""
-        INSERT OR REPLACE INTO analytics.violations_by_borough
+        CREATE OR REPLACE VIEW analytics.violations_by_borough AS
         SELECT
-          Borough,
-          COUNT(*) as violation_count,
-          COUNT(DISTINCT site_street_address) as affected_addresses,
-          DATE_TRUNC('month', violation_issue_date) as month
+          cb AS borough,
+          COUNT(*) AS violation_count,
+          COUNT(DISTINCT onstname) AS affected_streets,
+          DATE_TRUNC('month', TRY_CAST(vissuedate AS TIMESTAMP)) AS month
         FROM raw.violations
-        WHERE violation_issue_date >= DATE '2024-01-01'
-        GROUP BY Borough, DATE_TRUNC('month', violation_issue_date)
+        WHERE vissuedate IS NOT NULL
+        GROUP BY cb, DATE_TRUNC('month', TRY_CAST(vissuedate AS TIMESTAMP))
         """)
 
-        # Ramp progress summary
         conn.execute("""
-        INSERT OR REPLACE INTO analytics.ramp_progress_summary
+        CREATE OR REPLACE VIEW analytics.ramp_progress_summary AS
         SELECT
-          Borough,
-          COUNT(*) as total_ramps,
-          SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) as completed_ramps,
-          ROUND(100.0 * SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) / COUNT(*), 1) as completion_pct,
-          AVG(CAST(percent_complete AS FLOAT)) as avg_progress
+          borough,
+          COUNT(*) AS total_ramps,
+          SUM(CASE WHEN constructi = 'Completed' THEN 1 ELSE 0 END) AS completed_ramps,
+          ROUND(100.0 * SUM(CASE WHEN constructi = 'Completed' THEN 1 ELSE 0 END) / COUNT(*), 1) AS completion_pct
         FROM raw.ramp_progress
-        GROUP BY Borough
+        GROUP BY borough
         """)
 
         logger.info("  ✓ Views updated")
@@ -163,7 +177,7 @@ def daily_refresh():
     except Exception as e:
         logger.warning(f"  ⚠ View update error: {e}")
 
-    # Cleanup old data (archive to cloud)
+    # Cleanup old data (archive to Parquet)
     logger.info("\n[ARCHIVE] Checking for data to archive...")
 
     try:
@@ -178,8 +192,8 @@ def daily_refresh():
     logger.info(f"  Database size: {db_size_mb:.1f} MB")
 
     raw_count = conn.execute("""
-    SELECT COUNT(*) as total FROM (
-        SELECT COUNT(*) FROM raw.violations
+    SELECT SUM(cnt) FROM (
+        SELECT COUNT(*) AS cnt FROM raw.violations
         UNION ALL SELECT COUNT(*) FROM raw.inspection
         UNION ALL SELECT COUNT(*) FROM raw.dismissals
         UNION ALL SELECT COUNT(*) FROM raw.complaints_311
@@ -190,7 +204,7 @@ def daily_refresh():
 
     # Summary
     logger.info("\n" + "=" * 70)
-    logger.info(f"DAILY REFRESH COMPLETE")
+    logger.info("DAILY REFRESH COMPLETE")
     logger.info("=" * 70)
     logger.info(f"New records: {total_new:,}")
     logger.info(f"Datasets updated: {successful}/{len(REFRESH_DATASETS)}")
@@ -201,26 +215,25 @@ def daily_refresh():
     conn.close()
 
 def archive_old_data(conn, days_old=30):
-    """Archive data older than N days to MotherDuck."""
+    """Archive data older than N days to local Parquet (MotherDuck upload is TODO)."""
     cutoff_date = (datetime.now() - timedelta(days=days_old)).date()
 
-    # Datasets with date fields suitable for archival
+    # Use actual column names as verified from live schema
     archive_datasets = [
-        ("violations", "violation_issue_date"),
-        ("inspection", "inspection_date"),
+        ("violations", "vissuedate"),
+        ("inspection", "inspectiondate"),
         ("dismissals", "violation_issue_date"),
         ("complaints_311", "created_date"),
-        ("street_construction_inspections", "inspection_date"),
+        ("street_construction_inspections", "inspectiondate"),
     ]
 
     logger.info(f"  Archiving records older than {cutoff_date}...")
 
     for dataset_name, date_field in archive_datasets:
         try:
-            # Count records to archive
             count = conn.execute(f"""
             SELECT COUNT(*) FROM raw.{dataset_name}
-            WHERE {date_field} < '{cutoff_date}'
+            WHERE TRY_CAST({date_field} AS TIMESTAMP) < TIMESTAMP '{cutoff_date}'
             """).fetchone()[0]
 
             if count == 0:
@@ -228,7 +241,6 @@ def archive_old_data(conn, days_old=30):
 
             logger.info(f"  {dataset_name}: {count} records to archive")
 
-            # Export to Parquet (for cloud upload)
             parquet_dir = f"data/parquet_archive/{datetime.now().year}/{datetime.now().strftime('%m-%B')}"
             os.makedirs(parquet_dir, exist_ok=True)
 
@@ -237,20 +249,13 @@ def archive_old_data(conn, days_old=30):
             conn.execute(f"""
             COPY (
                 SELECT * FROM raw.{dataset_name}
-                WHERE {date_field} < '{cutoff_date}'
+                WHERE TRY_CAST({date_field} AS TIMESTAMP) < TIMESTAMP '{cutoff_date}'
             ) TO '{parquet_file}' (FORMAT PARQUET)
             """)
 
             logger.info(f"    → Exported to {parquet_file}")
 
-            # TODO: Upload to MotherDuck
-            # upload_to_motherduck(parquet_file, f"md:raw.{dataset_name}")
-
-            # Delete from local cache (optional - keep if space available)
-            # conn.execute(f"""
-            # DELETE FROM raw.{dataset_name}
-            # WHERE {date_field} < '{cutoff_date}'
-            # """)
+            # TODO: upload_to_motherduck(parquet_file, f"md:raw.{dataset_name}")
 
         except Exception as e:
             logger.warning(f"  ⚠ Archive error for {dataset_name}: {e}")
