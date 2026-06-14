@@ -7,6 +7,7 @@ from click.testing import CliRunner
 
 from socrata_toolkit.core.cli import main
 
+
 def test_dataset_health_help() -> None:
     """Test that health command help shows all new options."""
     runner = CliRunner()

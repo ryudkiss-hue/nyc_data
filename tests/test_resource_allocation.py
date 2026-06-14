@@ -20,6 +20,7 @@ from socrata_toolkit.analysis.resource_allocation_workflow import (
     ResourceAllocationWorkflow,
 )
 
+
 class TestResourceAllocationClassifier:
     """Test suite for ResourceAllocationClassifier."""
 

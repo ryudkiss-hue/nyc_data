@@ -14,6 +14,7 @@ import pytest
 
 from socrata_toolkit.analysis.changepoint import detect_cusum_changepoint
 
+
 def test_detect_sidebar_anomaly_true_on_step_change() -> None:
     """A step-function series (flat then jump) should trigger a changepoint."""
     # 10 observations at ~0, then 10 at ~10 — clear level shift

@@ -5,18 +5,20 @@ Validates that all hardcoded rules, classifications, and thresholds work correct
 """
 
 import pytest
+
 from app.report_generator.hardcoded_logic import (
-    classify_morans_i,
+    DISTRIBUTION_TYPES,
+    MORANS_I_CLASSIFICATIONS,
+    RISK_ASSESSMENT_MATRIX,
     classify_distribution,
-    get_risk_level,
-    get_morans_i_config,
+    classify_morans_i,
     get_distribution_config,
+    get_morans_i_config,
     get_outlier_config,
     get_risk_config,
-    MORANS_I_CLASSIFICATIONS,
-    DISTRIBUTION_TYPES,
-    RISK_ASSESSMENT_MATRIX,
+    get_risk_level,
 )
+
 
 class TestMoransIClassification:
     """Test Moran's I classification logic."""

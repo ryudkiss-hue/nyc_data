@@ -3,16 +3,17 @@
 import sys
 import traceback
 
+
 def test_imports():
     """Test that the module imports correctly."""
     try:
         from socrata_toolkit.quality.domain_rules import (
             DomainRuleResult,
-            validate_material_lifespan_rule,
-            validate_borough_coverage_distribution,
-            validate_permit_inspection_relationship,
-            validate_all_domain_rules,
             summarize_domain_rule_results,
+            validate_all_domain_rules,
+            validate_borough_coverage_distribution,
+            validate_material_lifespan_rule,
+            validate_permit_inspection_relationship,
         )
         print("✅ All imports successful")
         return True
@@ -25,6 +26,7 @@ def test_material_lifespan():
     """Test material_lifespan_rule."""
     try:
         import pandas as pd
+
         from socrata_toolkit.quality.domain_rules import validate_material_lifespan_rule
 
         # Create test data
@@ -53,6 +55,7 @@ def test_borough_coverage():
     """Test borough_coverage_distribution rule."""
     try:
         import pandas as pd
+
         from socrata_toolkit.quality.domain_rules import validate_borough_coverage_distribution
 
         # Create test data with 40% Manhattan (PASS case)
@@ -84,6 +87,7 @@ def test_permit_inspection():
     """Test permit_inspection_relationship rule."""
     try:
         import pandas as pd
+
         from socrata_toolkit.quality.domain_rules import validate_permit_inspection_relationship
 
         # Create test data
@@ -121,6 +125,7 @@ def test_orchestration():
     """Test validate_all_domain_rules orchestrator."""
     try:
         import pandas as pd
+
         from socrata_toolkit.quality.domain_rules import validate_all_domain_rules
 
         df = pd.DataFrame({

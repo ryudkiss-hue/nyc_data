@@ -21,6 +21,7 @@ from app.callbacks.export import register_export_callbacks
 from app.callbacks.ingestion import register_ingestion_callbacks
 from app.callbacks.navigation import register_navigation_callbacks
 
+
 def test_callback_registration():
     """Verify that all modular callbacks are correctly registered to a Dash app."""
     app = Dash(__name__)

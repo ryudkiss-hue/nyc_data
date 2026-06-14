@@ -2,6 +2,7 @@ import pandas as pd
 
 from socrata_toolkit.analysis import validate_required_columns, validate_schema_types
 
+
 def test_validate_required_columns_pass():
     df = pd.DataFrame({"a": [1], "b": [2]})
     result = validate_required_columns(df, ["a", "b"])

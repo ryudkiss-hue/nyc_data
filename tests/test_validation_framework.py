@@ -22,6 +22,7 @@ from socrata_toolkit.quality.duckdb_validation import (
     validate_uniqueness,
 )
 
+
 @pytest.fixture
 def audit_logger():
     """Create a fresh audit logger instance."""

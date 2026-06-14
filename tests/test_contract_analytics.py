@@ -8,6 +8,7 @@ from socrata_toolkit.engineering import (
     schedule_variance,
 )
 
+
 def _sample_contracts():
     return pd.DataFrame(
         {

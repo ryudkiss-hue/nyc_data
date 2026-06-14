@@ -28,9 +28,9 @@ except ImportError:
     logger.debug("scipy not available — normality/variance tests skipped")
 
 try:
-    from statsmodels.tsa.seasonal import STL
-    from statsmodels.stats.diagnostic import acorr_ljungbox
     from statsmodels.robust import huber
+    from statsmodels.stats.diagnostic import acorr_ljungbox
+    from statsmodels.tsa.seasonal import STL
     HAS_STATSMODELS = True
 except ImportError:
     HAS_STATSMODELS = False
@@ -39,8 +39,14 @@ except ImportError:
 def _load_timeseries_modules():
     try:
         from src.socrata_toolkit.motherduck.kpi_stationarity_tests import StationarityTester
-        from src.socrata_toolkit.motherduck.kpi_timeseries_analysis import ARIMAForecaster, ModelSelection
-        from src.socrata_toolkit.motherduck.kpi_var_analysis import VARAnalyzer, GrangerCausalityTester
+        from src.socrata_toolkit.motherduck.kpi_timeseries_analysis import (
+            ARIMAForecaster,
+            ModelSelection,
+        )
+        from src.socrata_toolkit.motherduck.kpi_var_analysis import (
+            GrangerCausalityTester,
+            VARAnalyzer,
+        )
         return StationarityTester, ARIMAForecaster, ModelSelection, VARAnalyzer, GrangerCausalityTester
     except ImportError:
         return None, None, None, None, None

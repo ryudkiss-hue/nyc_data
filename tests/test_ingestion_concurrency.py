@@ -7,6 +7,7 @@ import pytest
 
 from app.data_manager import DataManager
 
+
 def test_progress_lock_contention():
     """Stress test the progress lock in DataManager."""
     dm = DataManager()

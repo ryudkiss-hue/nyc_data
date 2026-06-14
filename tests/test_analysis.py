@@ -12,6 +12,7 @@ from socrata_toolkit.analysis import (
     profile_dataframe,
 )
 
+
 @pytest.fixture
 def sample_df():
     """Provides a sample DataFrame for testing SIM complaint parsing."""

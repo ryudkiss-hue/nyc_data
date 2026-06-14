@@ -29,6 +29,7 @@ from socrata_toolkit.engineering.construction_list import DEFAULT_PRIORITY_WEIGH
 pytest.importorskip("dash")
 from dash_app.components.interactive import param_slider, tip_card  # noqa: E402
 
+
 def test_interactive_components_import():
     card = tip_card("Title", "Body text", id="test-tip")
     slider = param_slider("Weight", 0, 1, 0.1, 0.5, "test-slider", aria_label="Weight")

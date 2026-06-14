@@ -19,6 +19,7 @@ from socrata_toolkit.governance.dataset_governance import (
     registry_audit,
 )
 
+
 class TestFetchSocrataJson:
     """Tests for _fetch_socrata_json function."""
 

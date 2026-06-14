@@ -14,6 +14,7 @@ from socrata_toolkit.analysis import (
     FreshnessTracker,
 )
 
+
 class TestDatasetFreshness:
     """Tests for DatasetFreshness class."""
 

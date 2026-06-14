@@ -10,6 +10,7 @@ import pandas as pd
 
 from socrata_toolkit.quality.reports import QualityReportGenerator, ReportMetadata
 
+
 class TestReportMetadata:
     """Tests for ReportMetadata dataclass."""
 

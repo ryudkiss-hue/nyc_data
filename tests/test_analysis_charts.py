@@ -13,6 +13,7 @@ from socrata_toolkit.viz import (
     plot_geospatial_compliance_map,
 )
 
+
 def test_data_completeness_chart_with_data():
     """
     Tests that data_completeness_chart generates a valid Plotly figure

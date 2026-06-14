@@ -1,10 +1,11 @@
 """Tests for IFABudgetJustification."""
 import pandas as pd
 import pytest
+
 from socrata_toolkit.analyst.ifa_budget_justification import (
-    IFABudgetJustification,
-    BoroughBudgetAllocation,
     COST_PER_RAMP_USD,
+    BoroughBudgetAllocation,
+    IFABudgetJustification,
 )
 from socrata_toolkit.engineering.ramp_analysis import BoroughRampStats
 

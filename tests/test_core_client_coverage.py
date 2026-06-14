@@ -12,6 +12,7 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
+
 def _mock_response(json_value):
     """Build a mock requests.Response whose .json() returns json_value."""
     resp = MagicMock()

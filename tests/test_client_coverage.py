@@ -9,6 +9,7 @@ import pytest
 from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 from socrata_toolkit.core.models import DatasetMetadata
 
+
 class TestSocrataConfig:
     """Tests for SocrataConfig dataclass."""
 

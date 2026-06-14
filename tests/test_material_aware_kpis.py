@@ -17,6 +17,7 @@ from socrata_toolkit.engineering import (
     compute_sidewalk_kpis,
 )
 
+
 class TestLegacySidewalkKPI:
     """Tests for backward-compatible SidewalkKPI class."""
 

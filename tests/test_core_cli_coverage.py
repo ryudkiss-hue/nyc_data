@@ -38,6 +38,7 @@ from socrata_toolkit.core.cli import (
     visualize_cmd,
 )
 
+
 @pytest.fixture
 def cli_runner():
     """Provide Click CLI test runner."""

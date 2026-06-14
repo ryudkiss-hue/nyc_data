@@ -4,14 +4,17 @@ Test suite for value injection system.
 Validates that dynamic values are correctly injected into templates.
 """
 
+from datetime import date, datetime
+
 import pytest
-from datetime import datetime, date
+
 from app.report_generator.value_injector import (
+    ValueInjectionError,
     ValueInjector,
     create_injector,
     inject_into_template,
-    ValueInjectionError,
 )
+
 
 class TestValueInjectorBasic:
     """Test basic value injection functionality."""

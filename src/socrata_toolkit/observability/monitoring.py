@@ -7,6 +7,7 @@ from datetime import datetime
 
 from ..alerts.manager import Alert, AlertManager, AlertSeverity, AlertStatus
 
+
 @dataclass
 class HealthCheck:
     """Health check result."""

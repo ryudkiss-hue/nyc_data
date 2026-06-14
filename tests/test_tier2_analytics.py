@@ -7,6 +7,7 @@ import os
 import pandas as pd
 import pytest
 
+
 class TestSLABreachForecasting:
     """Test SLA breach forecasting functionality."""
 

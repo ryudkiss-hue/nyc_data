@@ -11,6 +11,7 @@ import pytest
 
 import socrata_toolkit.core.duckdb_pipeline as dp
 
+
 @pytest.fixture
 def fixture_df():
     n = 100

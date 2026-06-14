@@ -16,6 +16,7 @@ from socrata_toolkit.core.visualization import (
     RoleBasedDashboard,
 )
 
+
 @pytest.fixture
 def db():
     """In-memory DuckDB with sample analytics marts."""

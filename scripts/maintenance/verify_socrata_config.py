@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
+
 def print_status(status: str, message: str):
     """Print a status message."""
     icon = "✓" if status == "ok" else "✗" if status == "error" else "⚠"

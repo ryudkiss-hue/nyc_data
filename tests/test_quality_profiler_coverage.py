@@ -13,6 +13,7 @@ from socrata_toolkit.quality.profiler import (
     generate_profile_report,
 )
 
+
 class TestDataType:
     """Tests for DataType enum."""
 

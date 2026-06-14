@@ -5,6 +5,7 @@ from __future__ import annotations
 import sys
 from unittest.mock import MagicMock, patch
 
+
 def test_translations_cover_nav_keys():
     with patch.dict(sys.modules, {"streamlit": MagicMock()}):
         from app.utils.i18n import TRANSLATIONS

@@ -16,6 +16,7 @@ from app.visualization_engine import (
     StatisticsPanel,
 )
 
+
 class TestPhase2VisualizationCounts:
     """Test that all visualization counts are correct."""
 

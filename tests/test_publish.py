@@ -7,6 +7,7 @@ import yaml
 
 from socrata_toolkit.analyst.publish import load_publish_profile, publish_pack
 
+
 def _make_pack(tmp_path: Path) -> Path:
     pack = tmp_path / "outputs" / "analyst_pack" / "2099-01-01"
     pack.mkdir(parents=True, exist_ok=True)

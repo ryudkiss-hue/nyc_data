@@ -13,6 +13,7 @@ from socrata_toolkit.analyst.config import (
     load_profile,
 )
 
+
 class TestSourceConfig:
     """Tests for SourceConfig dataclass."""
 

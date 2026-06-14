@@ -7,6 +7,7 @@ from socrata_toolkit.core import (
     or_join,
 )
 
+
 def test_quote_value_string():
     assert _quote_value("hello") == "'hello'"
 

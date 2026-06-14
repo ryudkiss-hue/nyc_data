@@ -1,10 +1,11 @@
 """Tests for ConstructionListGenerator."""
 import pandas as pd
 import pytest
+
 from socrata_toolkit.analyst.construction_list_generator import (
-    ConstructionListGenerator,
-    ConstructionListConfig,
     REPAIR_COST_BY_SCOPE,
+    ConstructionListConfig,
+    ConstructionListGenerator,
 )
 
 SAMPLE_PHASE_D = pd.DataFrame({

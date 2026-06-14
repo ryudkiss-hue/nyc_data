@@ -11,8 +11,9 @@ This module generates an interactive Sankey chart mapping:
 Use for understanding Chart Finder's question-to-chart routing logic.
 """
 
-import plotly.graph_objects as go
 from typing import Dict, List, Tuple
+
+import plotly.graph_objects as go
 
 
 def generate_research_questions_sankey() -> go.Figure:
@@ -457,7 +458,7 @@ def generate_research_questions_sankey() -> go.Figure:
             source=source,
             target=target,
             value=value,
-            color=[f"rgba(200, 200, 200, 0.4)"] * len(flows),
+            color=["rgba(200, 200, 200, 0.4)"] * len(flows),
         ),
     )])
 

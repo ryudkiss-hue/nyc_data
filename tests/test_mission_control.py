@@ -6,6 +6,7 @@ import pandas as pd
 
 from app import analytics, data_loader
 
+
 def test_dataset_registry_from_yaml():
     assert len(data_loader.DATASET_REGISTRY) >= 15
     assert "inspection" in data_loader.DATASET_REGISTRY

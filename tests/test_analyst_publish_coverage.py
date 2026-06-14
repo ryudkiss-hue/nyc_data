@@ -23,6 +23,7 @@ from socrata_toolkit.analyst.publish import (
     publish_pack,
 )
 
+
 class TestReadTextBestEffort:
     """Tests for _read_text_best_effort helper."""
 

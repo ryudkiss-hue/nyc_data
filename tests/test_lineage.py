@@ -29,6 +29,7 @@ from socrata_toolkit.governance import (
     TransformationNode,
 )
 
+
 class TestTransformationNode:
     """Tests for TransformationNode."""
 

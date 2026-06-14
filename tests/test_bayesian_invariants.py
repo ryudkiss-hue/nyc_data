@@ -9,6 +9,7 @@ from socrata_toolkit.engineering.infrastructure import (
     MROptimization,
 )
 
+
 def test_markov_stochastic_matrix_validation():
     """Verify that the Markov model rejects non-stochastic matrices."""
     # Rows don't sum to 1.0

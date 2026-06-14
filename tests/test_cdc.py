@@ -30,6 +30,7 @@ from socrata_toolkit.pipeline import (
     SCDType2Manager,
 )
 
+
 class TestSCDRecord:
     """Tests for SCDRecord dataclass."""
 

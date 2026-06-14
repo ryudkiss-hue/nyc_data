@@ -4,6 +4,7 @@ import pandas as pd
 
 from socrata_toolkit.llm.duck_bridge import LLMAugmentConfig, augment_dataframe_with_llm
 
+
 class DummyResp:
     def raise_for_status(self):
         return None

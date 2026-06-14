@@ -11,6 +11,7 @@ from socrata_toolkit.privacy.lineage_guard import (
 )
 from socrata_toolkit.privacy.pii_scanner import scan_dataframe
 
+
 def _frame() -> pd.DataFrame:
     return pd.DataFrame(
         {

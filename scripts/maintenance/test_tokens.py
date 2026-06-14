@@ -5,6 +5,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from socrata_toolkit.core import SocrataClient
 
+
 def test_tokens():
     print("--- 1. Testing Environment Variables ---")
     app_token = os.getenv("SOCRATA_APP_TOKEN")

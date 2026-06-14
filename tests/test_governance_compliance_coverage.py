@@ -11,6 +11,7 @@ from socrata_toolkit.governance.compliance import (
     validate_contractor_for_list,
 )
 
+
 class TestCheckDCWPLicense:
     """Tests for check_dcwp_license function."""
 

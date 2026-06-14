@@ -18,6 +18,7 @@ from click.testing import CliRunner
 
 from socrata_toolkit.core.cli import main
 
+
 @pytest.fixture
 def runner():
     return CliRunner()

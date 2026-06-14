@@ -9,6 +9,7 @@ from socrata_toolkit.core.motherduck_integration import (
     get_connection,
 )
 
+
 class TestMotherDuckValidator:
     """Test SQL compatibility validation."""
 

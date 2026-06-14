@@ -10,6 +10,7 @@ from socrata_toolkit.engineering import (
     summarize_construction_list,
 )
 
+
 def _sample_inspections():
     return pd.DataFrame(
         {

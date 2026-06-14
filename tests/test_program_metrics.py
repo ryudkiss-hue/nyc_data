@@ -6,6 +6,7 @@ from socrata_toolkit.analysis import (
     compute_program_dashboard,
 )
 
+
 def test_metrics_tracker_define_and_record():
     tracker = MetricsTracker()
     tracker.define(

@@ -8,6 +8,7 @@ import pytest
 from app.visualization_engine.phase_b import PhaseBVisualizations
 from app.visualization_engine.statistics_display import StatisticsPanel
 
+
 @pytest.fixture
 def phase_b_viz(mock_connection, phase_b_test_data):
     """Create Phase B visualizations instance with mocked connection.

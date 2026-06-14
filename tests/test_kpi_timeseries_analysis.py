@@ -6,12 +6,16 @@ Tests cover:
 - VAR multivariate analysis
 - Granger causality testing
 """
-import pytest
-import numpy as np
 from unittest.mock import Mock, patch
 
+import numpy as np
+import pytest
+
 from src.socrata_toolkit.motherduck.kpi_stationarity_tests import (
-    StationarityTester, adf_test, kpss_test, determine_differencing_order
+    StationarityTester,
+    adf_test,
+    determine_differencing_order,
+    kpss_test,
 )
 
 
@@ -77,7 +81,9 @@ class TestARIMAForecasting:
         """✓ ARIMA modules import without error."""
         try:
             from src.socrata_toolkit.motherduck.kpi_timeseries_analysis import (
-                ARIMAForecaster, SARIMAXForecaster, ModelSelection
+                ARIMAForecaster,
+                ModelSelection,
+                SARIMAXForecaster,
             )
             assert True
         except ImportError:
@@ -116,7 +122,8 @@ class TestVARAnalysis:
         """✓ VAR modules import without error."""
         try:
             from src.socrata_toolkit.motherduck.kpi_var_analysis import (
-                VARAnalyzer, GrangerCausalityTester
+                GrangerCausalityTester,
+                VARAnalyzer,
             )
             assert True
         except ImportError:

@@ -7,6 +7,7 @@ from socrata_toolkit.engineering import (
     identify_hotspots,
 )
 
+
 def _sample_data():
     return pd.DataFrame(
         {

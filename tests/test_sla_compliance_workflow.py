@@ -27,6 +27,7 @@ from socrata_toolkit.analysis.sla_status import (
     TrendDirection,
 )
 
+
 class TestSLAStatusClassifier:
     """Test SLA status classification logic."""
 

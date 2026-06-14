@@ -12,6 +12,7 @@ from socrata_toolkit.quality.freshness import (
     FreshnessTracker,
 )
 
+
 class TestAlertSeverityEnum:
     """Tests for AlertSeverity enum."""
 

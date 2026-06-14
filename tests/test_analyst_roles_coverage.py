@@ -27,6 +27,7 @@ from socrata_toolkit.analyst.roles import (
     write_role_artifacts,
 )
 
+
 class TestRoleDuty:
     """Tests for RoleDuty dataclass."""
 

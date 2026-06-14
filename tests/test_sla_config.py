@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+
 class TestSLAConfig:
     """SLA thresholds are single source of truth for freshness monitoring."""
 

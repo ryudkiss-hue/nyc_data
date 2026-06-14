@@ -3,10 +3,11 @@ Test decorator stacking for AnalyticsEngine cache integration.
 Verifies that @staticmethod, @memoize_with_ttl, and @timer_callback stack correctly.
 """
 
-import time
 import logging
-import pandas as pd
+import time
+
 import numpy as np
+import pandas as pd
 import plotly.graph_objects as go
 import pytest
 

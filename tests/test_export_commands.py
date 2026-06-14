@@ -4,6 +4,7 @@ from dash import dcc
 
 from app.services.export_service import ExportCommand, ExportRegistry
 
+
 def test_export_registry_registration():
     """Verify that commands can be registered and retrieved."""
     registry = ExportRegistry()

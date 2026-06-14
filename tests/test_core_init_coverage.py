@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
+
 class TestDuckDBExporter:
     def test_context_manager_closes(self):
         from socrata_toolkit.core import DuckDBExporter

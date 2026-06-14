@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+
 class TestClusteringDomainValidation:
     """Validate clustering results against domain knowledge."""
 
