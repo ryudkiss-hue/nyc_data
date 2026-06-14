@@ -9,13 +9,16 @@ Tests cover:
 """
 
 import time
-import pytest
+
 import pandas as pd
+import pytest
+
 from socrata_toolkit.motherduck.query_cache import (
     QueryCache,
-    memoize_with_ttl,
     get_query_cache,
+    memoize_with_ttl,
 )
+
 
 class TestQueryCache:
     """Test suite for QueryCache class."""
@@ -164,7 +167,6 @@ class TestQueryCache:
 
         class MockConnection:
             def __init__(self):
-                nonlocal cache_instance
                 self.call_count = 0
 
             @memoize_with_ttl(ttl_seconds=60)
