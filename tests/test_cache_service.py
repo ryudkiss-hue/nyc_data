@@ -1,7 +1,9 @@
-import fakeredis
 import pytest
 
+fakeredis = pytest.importorskip("fakeredis")
+
 from app.services.cache_service import CacheService
+
 
 @pytest.fixture
 def cache_service(monkeypatch):
