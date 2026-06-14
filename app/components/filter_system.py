@@ -46,6 +46,7 @@ METRIC_TYPES = [
     {"label": "Completed", "value": "completed"},
 ]
 
+
 def render_filter_bar() -> html.Div:
     """
     Render the filter bar with borough, date range, and metric selectors.
@@ -73,7 +74,6 @@ def render_filter_bar() -> html.Div:
                         value=["MN", "BK", "BX", "QN", "SI"],  # Default: all
                         style={"flex": 1, "minWidth": "200px"},
                     ),
-
                     # Date Range Picker
                     dmc.DateInput(
                         id="filter-date-start",
@@ -82,7 +82,6 @@ def render_filter_bar() -> html.Div:
                         valueFormat="YYYY-MM-DD",
                         style={"flex": 1, "minWidth": "150px"},
                     ),
-
                     dmc.DateInput(
                         id="filter-date-end",
                         label="End Date",
@@ -90,7 +89,6 @@ def render_filter_bar() -> html.Div:
                         valueFormat="YYYY-MM-DD",
                         style={"flex": 1, "minWidth": "150px"},
                     ),
-
                     # Metric Type Selector
                     dmc.Select(
                         id="filter-metric-type",
@@ -102,7 +100,6 @@ def render_filter_bar() -> html.Div:
                         clearable=False,
                         style={"flex": 1, "minWidth": "180px"},
                     ),
-
                     # Apply/Reset Buttons
                     dmc.Group(
                         [
@@ -128,19 +125,6 @@ def render_filter_bar() -> html.Div:
                 grow=True,
                 spacing="md",
             ),
-
-            # Hidden store for global filters (broadcasted to all callbacks)
-            dcc.Store(
-                id="store-global-filters",
-                data={
-                    "boroughs": ["MN", "BK", "BX", "QN", "SI"],
-                    "date_start": None,
-                    "date_end": None,
-                    "metric_type": "all",
-                },
-                storage_type="memory",
-            ),
-
             # Loading indicator
             dmc.LoadingOverlay(
                 id="filter-loading-overlay",
@@ -157,6 +141,7 @@ def render_filter_bar() -> html.Div:
             "boxShadow": "0 1px 3px rgba(0,0,0,0.1)",
         },
     )
+
 
 def register_filter_callbacks() -> None:
     """
@@ -203,6 +188,7 @@ def register_filter_callbacks() -> None:
         ctx_id = None
         try:
             from dash import ctx
+
             ctx_id = ctx.triggered_id if ctx.triggered_id else None
         except Exception:
             pass

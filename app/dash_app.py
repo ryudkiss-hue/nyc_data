@@ -17,10 +17,12 @@ for p in [_app_path, _src_path]:
     if p not in sys.path:
         sys.path.insert(0, p)
 
-# Item 42: Bulletproof environment configuration for High-Performance Bayesian Engine
-MINGW_BIN = os.getenv("MINGW_BIN_PATH", r"C:\msys64\mingw64\bin")
-os.environ["PATH"] = f"{MINGW_BIN};" + os.environ.get("PATH", "")
-os.environ["PYTENSOR_FLAGS"] = f"cxx={os.path.join(MINGW_BIN, 'g++.exe')},gcc_version_str=14.1.0"
+if sys.platform.startswith("win"):
+    MINGW_BIN = os.getenv("MINGW_BIN_PATH", r"C:\msys64\mingw64\bin")
+    os.environ["PATH"] = f"{MINGW_BIN};" + os.environ.get("PATH", "")
+    os.environ["PYTENSOR_FLAGS"] = (
+        f"cxx={os.path.join(MINGW_BIN, 'g++.exe')},gcc_version_str=14.1.0"
+    )
 
 import logging
 
@@ -39,6 +41,8 @@ from app.callbacks.ingestion import register_ingestion_callbacks
 
 # Import Modular Callbacks
 from app.callbacks.navigation import register_navigation_callbacks
+from app.components.filter_system import register_filter_callbacks
+from app.components.kpi_cards import register_kpi_callbacks
 from app.dash_layouts import (
     layout_construction,
     layout_copilot,
@@ -88,9 +92,11 @@ app = dash.Dash(
 )
 server = app.server
 
+
 @server.get("/api/v1/health")
 async def health_check():
     return {"status": "optimized", "engine": "FastAPI (Dash 4.2 Native)", "mode": "Enterprise"}
+
 
 # Item 118: Industrial Security via FastAPI Middleware
 server.add_middleware(
@@ -117,10 +123,22 @@ app.layout = dmc.MantineProvider(
     forceColorScheme="light",
     theme=THEME,
     children=[
+        html.A(
+            "Skip to main content", href="#page-content", **{"aria-label": "Skip to main content"}
+        ),
         dcc.Location(id="url", refresh=False),
         dcc.Store(id="store-data-loaded", data=False, storage_type="session"),
         dcc.Store(id="store-ingestion-active", data=False, storage_type="session"),
-        dcc.Store(id="store-global-filters", data={"boro": "ALL", "cat": "ALL", "date_range": []}, storage_type="session"),
+        dcc.Store(
+            id="store-global-filters",
+            data={
+                "boroughs": ["MN", "BK", "BX", "QN", "SI"],
+                "date_start": None,
+                "date_end": None,
+                "metric_type": "all",
+            },
+            storage_type="session",
+        ),
         dcc.Download(id="download-manager"),
         dcc.Interval(id="ingestion-poller", interval=2000, n_intervals=0),
         dmc.NotificationProvider(),
@@ -132,12 +150,13 @@ app.layout = dmc.MantineProvider(
             children=[
                 render_header(),
                 render_sidebar(),
-                dmc.AppShellMain(id="page-content", children=[html.Div()])
+                dmc.AppShellMain(id="page-content", children=[html.Div()]),
             ],
-            style={"backgroundColor": "#FFFFFF"}
-        )
-    ]
+            style={"backgroundColor": "#FFFFFF"},
+        ),
+    ],
 )
+
 
 # --- ROUTING ENGINE ---
 def render_page_content(pathname):
@@ -169,12 +188,6 @@ def render_page_content(pathname):
         return layout_copilot()
     return dmc.Center(dmc.Text("404: Mission target not found.", size="xl", fw=700, c="red"))
 
-@app.callback(
-    Output("page-content", "children"),
-    Input("url", "pathname")
-)
-def display_page(pathname):
-    return render_page_content(pathname)
 
 # --- REGISTER CALLBACKS ---
 register_navigation_callbacks(app)
@@ -182,6 +195,8 @@ register_ingestion_callbacks(app, dm)
 register_analytics_callbacks(app, dm)
 register_export_callbacks(app, dm)
 register_copilot_callbacks(app)
+register_filter_callbacks()
+register_kpi_callbacks()
 
 if __name__ == "__main__":
     # Item 125: High-Performance ASGI Server (Uvicorn)

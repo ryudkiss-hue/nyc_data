@@ -18,6 +18,7 @@ from app.services.analytics_service import get_dataset, get_spatial_data, valida
 
 logger = logging.getLogger(__name__)
 
+
 class AnalyticsEngine:
     """5 Hidden Analytical Methods with Integrated Narratives."""
 
@@ -31,10 +32,24 @@ class AnalyticsEngine:
         """Apply consistent styling matching viz_engine.py standard."""
         fig.update_layout(
             title=dict(text=title, font=dict(family="Arial, sans-serif", size=18, color="#212529")),
-            xaxis=dict(title=x_label, showgrid=True, gridwidth=1, gridcolor='rgba(0,0,0,0.05)',
-                      showline=True, linewidth=1, linecolor='#CBD5E1'),
-            yaxis=dict(title=y_label, showgrid=True, gridwidth=1, gridcolor='rgba(0,0,0,0.05)',
-                      showline=True, linewidth=1, linecolor='#CBD5E1'),
+            xaxis=dict(
+                title=x_label,
+                showgrid=True,
+                gridwidth=1,
+                gridcolor="rgba(0,0,0,0.05)",
+                showline=True,
+                linewidth=1,
+                linecolor="#CBD5E1",
+            ),
+            yaxis=dict(
+                title=y_label,
+                showgrid=True,
+                gridwidth=1,
+                gridcolor="rgba(0,0,0,0.05)",
+                showline=True,
+                linewidth=1,
+                linecolor="#CBD5E1",
+            ),
             template="simple_white",
             hovermode="x unified",
             margin=dict(l=60, r=30, t=80, b=60),
@@ -59,9 +74,12 @@ class AnalyticsEngine:
         """
         try:
             # Fetch spatial data
-            gdf = data_bundle.get('spatial', AnalyticsEngine._safe_df(None))
+            gdf = data_bundle.get("spatial", AnalyticsEngine._safe_df(None))
             if gdf.empty or len(gdf) < 10:
-                return go.Figure(), "Insufficient spatial data for Moran's I analysis (minimum 10 points required)."
+                return (
+                    go.Figure(),
+                    "Insufficient spatial data for Moran's I analysis (minimum 10 points required).",
+                )
 
             # Import spatial analysis
             try:
@@ -79,11 +97,14 @@ class AnalyticsEngine:
             column = numeric_cols[0]
             valid_data = gdf[gdf[column].notna()].copy()
             if len(valid_data) < 10:
-                return go.Figure(), f"Insufficient valid data in column '{column}' (need 10+, have {len(valid_data)})."
+                return (
+                    go.Figure(),
+                    f"Insufficient valid data in column '{column}' (need 10+, have {len(valid_data)}).",
+                )
 
             # Build k-nearest neighbors weights (k=8)
             coords = np.array([[geom.y, geom.x] for geom in valid_data.geometry])
-            weights = KNN.from_array(coords, k=min(8, len(valid_data)-1))
+            weights = KNN.from_array(coords, k=min(8, len(valid_data) - 1))
 
             # Compute Moran's I
             moran = Moran(valid_data[column].values, weights)
@@ -91,21 +112,27 @@ class AnalyticsEngine:
             p_value = moran.p_norm
 
             # Create gauge figure
-            color = 'rgb(239, 68, 68)' if i_value < 0 else ('rgb(234, 179, 8)' if i_value < 0.2 else 'rgb(16, 185, 129)')
-            fig = go.Figure(go.Indicator(
-                mode="gauge+number",
-                value=i_value,
-                title={'text': "Moran's I (Spatial Autocorrelation)"},
-                gauge={
-                    'axis': {'range': [-1, 1]},
-                    'bar': {'color': color},
-                    'steps': [
-                        {'range': [-1, -0.5], 'color': 'rgba(239, 68, 68, 0.2)'},
-                        {'range': [-0.5, 0.2], 'color': 'rgba(234, 179, 8, 0.1)'},
-                        {'range': [0.2, 1], 'color': 'rgba(16, 185, 129, 0.2)'},
-                    ],
-                }
-            ))
+            color = (
+                "rgb(239, 68, 68)"
+                if i_value < 0
+                else ("rgb(234, 179, 8)" if i_value < 0.2 else "rgb(16, 185, 129)")
+            )
+            fig = go.Figure(
+                go.Indicator(
+                    mode="gauge+number",
+                    value=i_value,
+                    title={"text": "Moran's I (Spatial Autocorrelation)"},
+                    gauge={
+                        "axis": {"range": [-1, 1]},
+                        "bar": {"color": color},
+                        "steps": [
+                            {"range": [-1, -0.5], "color": "rgba(239, 68, 68, 0.2)"},
+                            {"range": [-0.5, 0.2], "color": "rgba(234, 179, 8, 0.1)"},
+                            {"range": [0.2, 1], "color": "rgba(16, 185, 129, 0.2)"},
+                        ],
+                    },
+                )
+            )
             fig.update_layout(height=350, margin=dict(l=20, r=20, t=60, b=20))
 
             # S-DIKW Narrative
@@ -150,7 +177,7 @@ class AnalyticsEngine:
         Performance target: <300ms
         """
         try:
-            df = AnalyticsEngine._safe_df(data_bundle.get('data'))
+            df = AnalyticsEngine._safe_df(data_bundle.get("data"))
             if df.empty:
                 return go.Figure(), "No data available for distribution analysis."
 
@@ -161,8 +188,12 @@ class AnalyticsEngine:
 
             # For now: create histogram of first numeric column (TODO: enhance)
             col = numeric_cols[0]
-            fig = px.histogram(df[col].dropna(), nbins=30, title=f"Distribution of {col}", labels={'value': col})
-            fig = AnalyticsEngine._apply_standard_layout(fig, f"Distribution Analysis: {col}", col, "Frequency")
+            fig = px.histogram(
+                df[col].dropna(), nbins=30, title=f"Distribution of {col}", labels={"value": col}
+            )
+            fig = AnalyticsEngine._apply_standard_layout(
+                fig, f"Distribution Analysis: {col}", col, "Frequency"
+            )
 
             insight = (
                 f"**Data:** Analyzed distribution of '{col}' across {len(df):,} records.\n\n"
@@ -194,9 +225,12 @@ class AnalyticsEngine:
         Performance target: <400ms
         """
         try:
-            gdf = data_bundle.get('spatial', AnalyticsEngine._safe_df(None))
+            gdf = data_bundle.get("spatial", AnalyticsEngine._safe_df(None))
             if gdf.empty or len(gdf) < 20:
-                return go.Figure(), "Insufficient spatial data for anomaly detection (minimum 20 points required)."
+                return (
+                    go.Figure(),
+                    "Insufficient spatial data for anomaly detection (minimum 20 points required).",
+                )
 
             numeric_cols = gdf.select_dtypes(include=[np.number]).columns
             if len(numeric_cols) == 0:
@@ -210,30 +244,49 @@ class AnalyticsEngine:
             lower_bound = Q1 - 1.5 * IQR
             upper_bound = Q3 + 1.5 * IQR
 
-            gdf['is_anomaly'] = (gdf[col] < lower_bound) | (gdf[col] > upper_bound)
-            n_anomalies = gdf['is_anomaly'].sum()
+            gdf["is_anomaly"] = (gdf[col] < lower_bound) | (gdf[col] > upper_bound)
+            n_anomalies = gdf["is_anomaly"].sum()
 
             # Create scatter figure
             fig = go.Figure()
-            normal = gdf[~gdf['is_anomaly']]
-            anomalies = gdf[gdf['is_anomaly']]
+            normal = gdf[~gdf["is_anomaly"]]
+            anomalies = gdf[gdf["is_anomaly"]]
 
             if not normal.empty:
                 coords = normal.geometry.apply(lambda g: (g.y, g.x)).apply(pd.Series)
-                fig.add_trace(go.Scatter(x=coords[1], y=coords[0], mode='markers', name='Normal',
-                                       marker=dict(size=5, color='rgb(50, 150, 200)'), opacity=0.6))
+                fig.add_trace(
+                    go.Scatter(
+                        x=coords[1],
+                        y=coords[0],
+                        mode="markers",
+                        name="Normal",
+                        marker=dict(size=5, color="rgb(50, 150, 200)"),
+                        opacity=0.6,
+                    )
+                )
 
             if not anomalies.empty:
                 coords = anomalies.geometry.apply(lambda g: (g.y, g.x)).apply(pd.Series)
-                fig.add_trace(go.Scatter(x=coords[1], y=coords[0], mode='markers', name='Anomaly',
-                                       marker=dict(size=8, color='rgb(239, 68, 68)', symbol='star')))
+                fig.add_trace(
+                    go.Scatter(
+                        x=coords[1],
+                        y=coords[0],
+                        mode="markers",
+                        name="Anomaly",
+                        marker=dict(size=8, color="rgb(239, 68, 68)", symbol="star"),
+                    )
+                )
 
-            fig.update_layout(title="Spatial Anomaly Detection", height=400,
-                            xaxis_title="Longitude", yaxis_title="Latitude")
+            fig.update_layout(
+                title="Spatial Anomaly Detection",
+                height=400,
+                xaxis_title="Longitude",
+                yaxis_title="Latitude",
+            )
 
             insight = (
                 f"**Data:** Analyzed {len(gdf):,} spatial points using IQR method on column '{col}'.\n\n"
-                f"**Information:** Detected {n_anomalies} anomalies ({100*n_anomalies/len(gdf):.1f}% of data).\n\n"
+                f"**Information:** Detected {n_anomalies} anomalies ({100 * n_anomalies / len(gdf):.1f}% of data).\n\n"
                 f"**Knowledge:** Outliers indicate extreme values beyond 1.5×IQR from quartiles.\n\n"
                 f"**Wisdom:** Investigate anomalies for data quality issues or genuine operational events."
             )
@@ -263,12 +316,12 @@ class AnalyticsEngine:
         try:
             from plotly.subplots import make_subplots
 
-            df = data_bundle.get('timeseries', AnalyticsEngine._safe_df(None))
+            df = data_bundle.get("timeseries", AnalyticsEngine._safe_df(None))
             if df.empty or len(df) < 20:
                 return go.Figure(), "Insufficient time series data (minimum 20 points required)."
 
             # Get date and numeric columns
-            date_cols = df.select_dtypes(include=['datetime64']).columns
+            date_cols = df.select_dtypes(include=["datetime64"]).columns
             numeric_cols = df.select_dtypes(include=[np.number]).columns
 
             if len(date_cols) == 0 or len(numeric_cols) == 0:
@@ -284,17 +337,58 @@ class AnalyticsEngine:
             residual = seasonal - seasonal.mean()
 
             # Create 4-panel subplot
-            fig = make_subplots(rows=4, cols=1, subplot_titles=('Original', 'Trend', 'Seasonal', 'Residual'),
-                              shared_xaxes=True, vertical_spacing=0.08)
+            fig = make_subplots(
+                rows=4,
+                cols=1,
+                subplot_titles=("Original", "Trend", "Seasonal", "Residual"),
+                shared_xaxes=True,
+                vertical_spacing=0.08,
+            )
 
-            fig.add_trace(go.Scatter(x=df_sorted[date_col], y=df_sorted[value_col],
-                                    mode='lines', name='Original', line=dict(color='rgb(50, 100, 200)')), row=1, col=1)
-            fig.add_trace(go.Scatter(x=df_sorted[date_col], y=trend,
-                                    mode='lines', name='Trend', line=dict(color='rgb(16, 185, 129)')), row=2, col=1)
-            fig.add_trace(go.Scatter(x=df_sorted[date_col], y=seasonal,
-                                    mode='lines', name='Seasonal', line=dict(color='rgb(239, 68, 68)')), row=3, col=1)
-            fig.add_trace(go.Scatter(x=df_sorted[date_col], y=residual,
-                                    mode='markers', name='Residual', marker=dict(color='rgb(100, 100, 100)')), row=4, col=1)
+            fig.add_trace(
+                go.Scatter(
+                    x=df_sorted[date_col],
+                    y=df_sorted[value_col],
+                    mode="lines",
+                    name="Original",
+                    line=dict(color="rgb(50, 100, 200)"),
+                ),
+                row=1,
+                col=1,
+            )
+            fig.add_trace(
+                go.Scatter(
+                    x=df_sorted[date_col],
+                    y=trend,
+                    mode="lines",
+                    name="Trend",
+                    line=dict(color="rgb(16, 185, 129)"),
+                ),
+                row=2,
+                col=1,
+            )
+            fig.add_trace(
+                go.Scatter(
+                    x=df_sorted[date_col],
+                    y=seasonal,
+                    mode="lines",
+                    name="Seasonal",
+                    line=dict(color="rgb(239, 68, 68)"),
+                ),
+                row=3,
+                col=1,
+            )
+            fig.add_trace(
+                go.Scatter(
+                    x=df_sorted[date_col],
+                    y=residual,
+                    mode="markers",
+                    name="Residual",
+                    marker=dict(color="rgb(100, 100, 100)"),
+                ),
+                row=4,
+                col=1,
+            )
 
             fig.update_layout(height=800, title_text="Time Series Decomposition", showlegend=False)
 
@@ -328,7 +422,7 @@ class AnalyticsEngine:
         Performance target: <300ms
         """
         try:
-            metrics = data_bundle.get('metrics', {})
+            metrics = data_bundle.get("metrics", {})
             if not metrics:
                 return go.Figure(), "No KPI metrics available for confidence interval computation."
 
@@ -337,19 +431,24 @@ class AnalyticsEngine:
             point_est, ci_lower, ci_upper = metrics[metric_name]
 
             # Create gauge with CI annotation
-            fig = go.Figure(go.Indicator(
-                mode="gauge+number",
-                value=point_est,
-                title={'text': f"{metric_name.replace('_', ' ').title()} (with 95% CI)"},
-                gauge={'axis': {'range': [0, 100]}, 'bar': {'color': 'rgb(59, 130, 246)'}}
-            ))
+            fig = go.Figure(
+                go.Indicator(
+                    mode="gauge+number",
+                    value=point_est,
+                    title={"text": f"{metric_name.replace('_', ' ').title()} (with 95% CI)"},
+                    gauge={"axis": {"range": [0, 100]}, "bar": {"color": "rgb(59, 130, 246)"}},
+                )
+            )
 
             # Add CI annotation
             fig.add_annotation(
                 text=f"95% CI: [{ci_lower:.1f}, {ci_upper:.1f}]",
-                xref="paper", yref="paper",
-                x=0.5, y=-0.15, showarrow=False,
-                font=dict(size=12, color="rgb(100, 100, 100)")
+                xref="paper",
+                yref="paper",
+                x=0.5,
+                y=-0.15,
+                showarrow=False,
+                font=dict(size=12, color="rgb(100, 100, 100)"),
             )
 
             fig.update_layout(height=350, margin=dict(l=20, r=20, t=80, b=80))
@@ -367,9 +466,11 @@ class AnalyticsEngine:
             logger.error(f"Error in bootstrap CI computation: {e}")
             return go.Figure(), f"Error: {str(e)}"
 
+
 # ============================================================================
 # PHASE C: DISTRIBUTION CLASSIFICATION
 # ============================================================================
+
 
 @timer_callback
 @memoize_with_ttl(seconds=600)
@@ -401,7 +502,7 @@ def classify_all_distributions(filters: dict, limit: int = 8) -> pd.DataFrame:
             return pd.DataFrame()
 
         # Select numeric columns, sorted by variance
-        numeric_cols = df.select_dtypes(include=['int64', 'float64']).columns
+        numeric_cols = df.select_dtypes(include=["int64", "float64"]).columns
         variances = df[numeric_cols].var().sort_values(ascending=False)
         top_cols = variances.head(limit).index.tolist()
 
@@ -421,30 +522,32 @@ def classify_all_distributions(filters: dict, limit: int = 8) -> pd.DataFrame:
 
                 # Classify distribution
                 if abs(skew) < 0.5 and abs(kurt) < 1:
-                    classification = 'NORMAL'
-                    color = 'green'
+                    classification = "NORMAL"
+                    color = "green"
                 elif skew > 0.5:
-                    classification = 'RIGHT_SKEWED'
-                    color = 'orange'
+                    classification = "RIGHT_SKEWED"
+                    color = "orange"
                 elif skew < -0.5:
-                    classification = 'LEFT_SKEWED'
-                    color = 'orange'
+                    classification = "LEFT_SKEWED"
+                    color = "orange"
                 elif kurt > 3:
-                    classification = 'HEAVY_TAILED'
-                    color = 'red'
+                    classification = "HEAVY_TAILED"
+                    color = "red"
                 else:
-                    classification = 'UNIFORM'
-                    color = 'blue'
+                    classification = "UNIFORM"
+                    color = "blue"
 
-                results.append({
-                    'column': col,
-                    'classification': classification,
-                    'skewness': skew,
-                    'kurtosis': kurt,
-                    'variance': var,
-                    'n': len(data),
-                    'color': color
-                })
+                results.append(
+                    {
+                        "column": col,
+                        "classification": classification,
+                        "skewness": skew,
+                        "kurtosis": kurt,
+                        "variance": var,
+                        "n": len(data),
+                        "color": color,
+                    }
+                )
 
             except Exception as e:
                 logger.debug(f"Error analyzing column {col}: {e}")
@@ -456,6 +559,7 @@ def classify_all_distributions(filters: dict, limit: int = 8) -> pd.DataFrame:
     except Exception as e:
         logger.error(f"Error in distribution classification: {e}")
         return pd.DataFrame()
+
 
 def create_distribution_figures(df: pd.DataFrame, data_df: pd.DataFrame, limit: int = 8) -> list:
     """
@@ -475,20 +579,22 @@ def create_distribution_figures(df: pd.DataFrame, data_df: pd.DataFrame, limit: 
             try:
                 from scipy.stats import gaussian_kde
 
-                col = row['column']
+                col = row["column"]
                 data = data_df[col].dropna()
 
                 # Create histogram
                 fig = go.Figure()
 
                 # Add histogram
-                fig.add_trace(go.Histogram(
-                    x=data,
-                    nbinsx=30,
-                    name='Distribution',
-                    marker=dict(color='rgba(100, 150, 200, 0.5)'),
-                    showlegend=False
-                ))
+                fig.add_trace(
+                    go.Histogram(
+                        x=data,
+                        nbinsx=30,
+                        name="Distribution",
+                        marker=dict(color="rgba(100, 150, 200, 0.5)"),
+                        showlegend=False,
+                    )
+                )
 
                 # Add KDE curve if enough data
                 if len(data) > 20:
@@ -502,25 +608,27 @@ def create_distribution_figures(df: pd.DataFrame, data_df: pd.DataFrame, limit: 
                         bin_width = (x_max - x_min) / 30
                         y_range = y_range * len(data) * bin_width
 
-                        fig.add_trace(go.Scatter(
-                            x=x_range,
-                            y=y_range,
-                            mode='lines',
-                            name='KDE',
-                            line=dict(color='rgb(50, 100, 200)', width=2),
-                            showlegend=False
-                        ))
+                        fig.add_trace(
+                            go.Scatter(
+                                x=x_range,
+                                y=y_range,
+                                mode="lines",
+                                name="KDE",
+                                line=dict(color="rgb(50, 100, 200)", width=2),
+                                showlegend=False,
+                            )
+                        )
                     except Exception as e:
                         logger.debug(f"Could not add KDE: {e}")
 
                 fig.update_layout(
                     title=f"{col} — {row['classification']}",
                     xaxis_title=col,
-                    yaxis_title='Count',
+                    yaxis_title="Count",
                     height=300,
                     showlegend=False,
-                    hovermode='closest',
-                    paper_bgcolor='white'
+                    hovermode="closest",
+                    paper_bgcolor="white",
                 )
 
                 figures.append(fig)
@@ -535,6 +643,26 @@ def create_distribution_figures(df: pd.DataFrame, data_df: pd.DataFrame, limit: 
         logger.error(f"Error creating distribution figures: {e}")
         return []
 
-def register_analytics_callbacks(app):
+
+def register_analytics_callbacks(app, dm=None):
     """Register analytics-related callbacks with the Dash app."""
-    pass
+    import app.callbacks.analytics_integration  # noqa: F401
+    import app.callbacks.visualization_callbacks  # noqa: F401
+    from app.callbacks.visualization_callbacks import register_visualization_callbacks
+
+    register_visualization_callbacks()
+
+    if dm is not None:
+        try:
+            from app.callbacks.hidden_analysis_methods import register_morans_i_callbacks
+
+            register_morans_i_callbacks(app, dm)
+        except Exception as e:
+            logger.warning(f"Moran's I callbacks skipped: {e}")
+
+    try:
+        import app.callbacks.gis  # noqa: F401
+    except ImportError as e:
+        logger.warning(f"GIS callbacks skipped (missing dependency): {e}")
+
+    logger.info("Analytics callbacks registered")
