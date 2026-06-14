@@ -14,6 +14,21 @@ description: Create effective, publication-ready data visualizations. Use when c
 1. **Identify the message type** — classify the chart's purpose: comparison (bar), trend over time (line), composition / part-of-whole (stacked bar, pie only for 2–3 categories), distribution (histogram, box plot), or relationship (scatter). The message type determines the chart type. See `references/chart_selection_guide.md`.
 2. **Select and load the data** — confirm the data is at the right grain for the chart. Aggregations (e.g., groupby month) should happen before plotting, not inside the chart library.
 3. **Build the base chart** — use `scripts/chart_builder.py` with pre-set professional styling (whitegrid, sans-serif, accessible color palette). Set axes, ticks, and scale deliberately — default settings are often wrong.
+
+   **CLI usage:**
+   ```bash
+   # See chart recommendations for your data (no chart rendered):
+   python3 scripts/chart_builder.py --input your_data.csv --recommend
+
+   # Build a bar chart (borough × defect count):
+   python3 scripts/chart_builder.py --input your_data.csv --chart bar --x borough --y defect_count --out chart.png
+
+   # Build a line trend over time:
+   python3 scripts/chart_builder.py --input your_data.csv --chart line --x inspection_date --y count --out trend.png
+
+   # Other chart types: histogram, scatter
+   ```
+   Note: `--input CSV` is required. Requires `pip install matplotlib`.
 4. **Apply visual hierarchy** — make the most important data element visually dominant (bolder line, darker bar, distinct color). De-emphasise secondary series. Remove every element that doesn't contribute to the message (gridlines at 0.2 alpha, no top/right spines). See `references/visual_design_principles.md`.
 5. **Annotate for the reader** — add a descriptive title that states the finding ("Mobile churn is 2× desktop"), not the variable names ("Churn by device type"). Annotate key data points, thresholds, and reference lines directly on the chart. Add a data source and date.
 6. **Export and validate** — export at 300 DPI for print or 150 DPI for web. View the chart at the intended display size. Check: is the key message legible in under 5 seconds? Does it work in greyscale? Complete `assets/viz_spec_template.md` if the chart is part of a larger deliverable.
