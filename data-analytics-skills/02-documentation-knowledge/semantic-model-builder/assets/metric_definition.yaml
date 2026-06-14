@@ -1,0 +1,125 @@
+version: 2
+generated_at: 2026-06-14T00:00:00+00:00
+
+# NYC DOT SIM — Canonical Metric Definitions
+# Validate with: python scripts/definition_validator.py --file assets/metric_definition.yaml
+
+metrics:
+
+  - name: ramp_completion_rate
+    label: Ramp Completion Rate
+    description: >
+      Percentage of curb ramps with status COMPLETE out of all non-cancelled ramps.
+      Used to track accessibility program progress. Report with 95% Wilson Score CI
+      for boroughs where n < 1000.
+    type: ratio
+    model: ramp_progress
+    fourfour: e7gc-ub6z
+    numerator: "SUM(CASE WHEN status = 'COMPLETE' THEN 1 ELSE 0 END)"
+    denominator: "COUNT(CASE WHEN status != 'CANCELLED' THEN 1 END)"
+    unit: "%"
+    grain: borough, fiscal_year
+    dimensions:
+      - borough
+      - fiscal_year
+      - ramp_type
+    filters:
+      - "status != 'CANCELLED'"
+    sla_tier: HIGH
+    owner: NYC DOT Accessibility Programs
+    notes: >
+      ramp_locations (ufzp-rrqu) is stale since 2021 — use ramp_progress (e7gc-ub6z)
+      as the authoritative source for this metric.
+
+  - name: open_violation_count
+    label: Open Violation Count
+    description: >
+      Point-in-time count of violations with status = 'OPEN'. Snapshot metric;
+      not cumulative. Used for workload management and borough SLA compliance.
+    type: simple
+    aggregation: COUNT
+    model: violations
+    fourfour: 6kbp-uz6m
+    measure: objectid
+    unit: count
+    grain: borough, week
+    dimensions:
+      - borough
+      - defect_type
+      - material_type
+    filters:
+      - "status = 'OPEN'"
+    sla_tier: HIGH
+    owner: NYC DOT SIM Unit
+
+  - name: inspection_pass_rate
+    label: Inspection Pass Rate
+    description: >
+      Percentage of inspections with outcome PASS out of all completed inspections
+      (PASS or FAIL). Excludes PENDING and NULL status. Used to measure sidewalk
+      condition improvement over time.
+    type: ratio
+    model: inspection
+    fourfour: dntt-gqwq
+    numerator: "SUM(CASE WHEN status = 'PASS' THEN 1 ELSE 0 END)"
+    denominator: "COUNT(CASE WHEN status IN ('PASS', 'FAIL') THEN 1 END)"
+    unit: "%"
+    grain: borough, month
+    dimensions:
+      - borough
+      - defect_type
+      - material_type
+      - inspection_month
+    filters:
+      - "status IN ('PASS', 'FAIL')"
+      - "inspection_date IS NOT NULL"
+    sla_tier: HIGH
+    owner: NYC DOT SIM Unit
+    notes: >
+      Use inspection_date (not created_date) for time-series aggregation.
+      created_date lags inspection_date by 0–45 days.
+
+  - name: avg_violation_age_days
+    label: Average Open Violation Age (Days)
+    description: >
+      Mean number of days between violation created_date and the current date,
+      for violations with status = 'OPEN'. Measures how long open violations have
+      been outstanding. High values indicate enforcement backlog.
+    type: simple
+    aggregation: AVG
+    model: violations
+    fourfour: 6kbp-uz6m
+    measure: "DATEDIFF('day', created_date, CURRENT_DATE)"
+    unit: days
+    grain: borough, snapshot_date
+    dimensions:
+      - borough
+      - defect_type
+    filters:
+      - "status = 'OPEN'"
+      - "created_date IS NOT NULL"
+    sla_tier: HIGH
+    owner: NYC DOT SIM Unit
+
+  - name: dismissal_rate
+    label: Violation Dismissal Rate
+    description: >
+      Percentage of all closed violations that were dismissed (rather than corrected).
+      High dismissal rates may indicate data quality or enforcement issues.
+    type: ratio
+    model: dismissals
+    fourfour: p4u2-3jgx
+    numerator: "COUNT(objectid)"
+    denominator: >
+      (SELECT COUNT(objectid) FROM violations
+       WHERE status IN ('CLOSED', 'DISMISSED'))
+    unit: "%"
+    grain: borough, quarter
+    dimensions:
+      - borough
+    filters: []
+    sla_tier: HIGH
+    owner: NYC DOT SIM Unit
+    notes: >
+      Requires joining dismissals (p4u2-3jgx) to violations (6kbp-uz6m)
+      on unit_id. Confirm join cardinality before aggregating.

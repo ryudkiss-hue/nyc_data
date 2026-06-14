@@ -1,0 +1,91 @@
+version: 2
+generated_at: 2026-06-14T00:00:00+00:00
+
+# NYC DOT SIM — Canonical Dimension Definitions
+# Validate with: python scripts/definition_validator.py --file assets/dimension_definition.yaml
+
+dimensions:
+
+  - name: borough
+    label: Borough
+    description: >
+      NYC borough where the inspection, violation, or ramp is located.
+      Codes map to the five NYC boroughs. Records with null borough are excluded
+      from per-borough breakdowns but included in city-wide aggregates as UNKNOWN.
+    type: categorical
+    model: inspection
+    column: borough
+    valid_values: [MN, BX, BK, QN, SI]
+    null_rate_approx: "< 0.2%"
+    null_handling: "Label null as UNKNOWN; exclude from borough slices; include in ALL-borough totals"
+    applies_to_models: [inspection, violations, ramp_progress, dismissals, ramp_complaints, tree_damage]
+
+  - name: defect_type
+    label: Defect Type
+    description: >
+      Classification of sidewalk defect observed during inspection.
+      OTHER (~15% of records) is a catch-all category — not suitable for
+      defect-specific analysis without further sub-classification.
+    type: categorical
+    model: inspection
+    column: defect_type
+    valid_values: [CRACK, UNEVEN, OBSTRUCTION, TREE_DAMAGE, OTHER]
+    null_handling: "Exclude null defect_type from defect breakdowns"
+    applies_to_models: [inspection, violations]
+    notes: "TREE_DAMAGE overlaps with tree_damage dataset (j6v2-6uxq)"
+
+  - name: material_type
+    label: Material Type
+    description: Sidewalk surface material at the inspection or violation site.
+    type: categorical
+    model: inspection
+    column: material_type
+    valid_values: [CONCRETE, BRICK, ASPHALT, BLUESTONE, OTHER]
+    null_handling: "Exclude null from material breakdowns"
+    applies_to_models: [inspection, violations]
+
+  - name: status
+    label: Record Status
+    description: >
+      Current status of the record. Valid values differ by dataset:
+      inspection uses PASS/FAIL/PENDING; violations use OPEN/CLOSED/DISMISSED/IN PROGRESS;
+      ramp_progress uses COMPLETE/PENDING/IN PROGRESS/CANCELLED.
+    type: categorical
+    model: inspection
+    column: status
+    valid_values_by_model:
+      inspection: [PASS, FAIL, PENDING]
+      violations: [OPEN, CLOSED, DISMISSED, IN PROGRESS]
+      ramp_progress: [COMPLETE, PENDING, IN PROGRESS, CANCELLED]
+      dismissals: [DISMISSED]
+    null_handling: "Exclude null status from breakdowns; investigate as data quality issue"
+    applies_to_models: [inspection, violations, ramp_progress, dismissals]
+
+  - name: inspection_month
+    label: Inspection Month
+    description: >
+      Calendar month derived from inspection_date. Use for monthly time-series.
+      Prefer inspection_date over created_date for event timing — created_date
+      lags the actual inspection by 0–45 days.
+    type: time
+    model: inspection
+    column: inspection_date
+    grain: month
+    derived: "DATE_TRUNC('month', inspection_date)"
+    applies_to_models: [inspection]
+
+  - name: fiscal_year
+    label: NYC Fiscal Year
+    description: >
+      NYC fiscal year runs July 1 through June 30. FY2026 = July 1, 2025 to June 30, 2026.
+      Derived from inspection_date or created_date depending on context.
+    type: time
+    model: inspection
+    column: inspection_date
+    grain: fiscal_year
+    derived: >
+      CASE WHEN MONTH(inspection_date) >= 7
+           THEN YEAR(inspection_date) + 1
+           ELSE YEAR(inspection_date)
+      END
+    applies_to_models: [inspection, violations, ramp_progress]
