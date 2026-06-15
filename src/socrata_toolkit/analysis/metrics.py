@@ -595,11 +595,6 @@ def compute_program_dashboard(df: pd.DataFrame) -> Any:
     return tracker.dashboard()
 
 
-def compute_program_dashboard(df: pd.DataFrame) -> dict:
-    """Compute program dashboard metrics."""
-    return {"total_records": len(df), "status": "ready"}
-
-
 def validate_geospatial_bounds(df: pd.DataFrame, lat_col: str = "latitude", lon_col: str = "longitude") -> bool:
     """Validate geospatial bounds."""
     if lat_col not in df.columns or lon_col not in df.columns:
