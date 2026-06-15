@@ -501,3 +501,17 @@ def __getattr__(name: str):
             "VelocityState": VelocityState,
         }[name]
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+try:
+    from .ab_testing import ABTestResult, compare_boroughs, compare_groups
+    from .assumptions_logger import AnalysisAssumptions, log_assumptions
+    from .forecast_validation import (
+        ForecastValidationResult,
+        summarize_forecast_accuracy,
+        validate_forecasts,
+    )
+    from .qa_checklist import QACheckResult, QAReport, run_preflight
+    from .reproducibility import ReproducibilityKey, make_run_key
+except Exception:
+    pass

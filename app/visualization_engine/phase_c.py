@@ -8,19 +8,18 @@ Renders all Phase C visualizations:
 Data source: app_queries.v_phase_c_results
 All charts include summary statistics below.
 """
+
 import logging
 
-import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-from scipy import stats
 
 from socrata_toolkit.motherduck.connector import MotherDuckConnection
 
 from .statistics_display import StatisticsPanel
 
 logger = logging.getLogger(__name__)
+
 
 class PhaseCVisualizations:
     """Renders all 13 Phase C visualizations (distribution analysis).
@@ -73,34 +72,26 @@ class PhaseCVisualizations:
         fig = go.Figure()
 
         for _, row in self.data.iterrows():
-            # Generate synthetic distribution based on statistical parameters
-            # (In production, this would use actual violation counts per location)
             borough = row["borough"]
             mean_val = row["mean_val"]
             std_val = row["std_val"]
-            record_count = int(row["record_count"])
-
-            # Generate sample data from normal distribution
-            if std_val > 0:
-                dist_data = np.random.normal(mean_val, std_val, record_count)
-                dist_data = np.clip(dist_data, 0, None)  # No negative counts
-            else:
-                dist_data = np.full(record_count, mean_val)
 
             fig.add_trace(
-                go.Histogram(
-                    x=dist_data,
+                go.Bar(
+                    x=[borough],
+                    y=[mean_val],
                     name=borough,
-                    opacity=0.7,
-                    nbinsx=30,
+                    error_y=dict(type="data", array=[std_val], visible=True)
+                    if std_val > 0
+                    else None,
                 )
             )
 
         fig.update_layout(
             title="Phase C: Violation Distribution Analysis",
-            xaxis_title="Violation Count",
-            yaxis_title="Frequency",
-            barmode="overlay",
+            xaxis_title="Borough",
+            yaxis_title="Mean Violation Count",
+            barmode="group",
             height=500,
             font={"family": "Arial, sans-serif", "size": 11},
             hovermode="x unified",
@@ -112,7 +103,7 @@ class PhaseCVisualizations:
             min_value=self.data["mean_val"].min(),
             max_value=self.data["mean_val"].max(),
             last_timestamp=pd.to_datetime(self.data["analytics_timestamp"]).max(),
-            calculation_method="Histogram with Normal Distribution Fit",
+            calculation_method="Aggregate Mean with Std Dev Error Bars",
             confidence_level="95%",
             additional_stats={
                 "Overall Mean": f"{self.data['mean_val'].mean():.2f}",
@@ -149,33 +140,19 @@ class PhaseCVisualizations:
         record_count = int(row["record_count"])
         distribution_type = row["distribution_type"]
 
-        # Generate sample data
-        if std_val > 0:
-            dist_data = np.random.normal(mean_val, std_val, record_count)
-            dist_data = np.clip(dist_data, 0, None)
-        else:
-            dist_data = np.full(record_count, mean_val)
-
         fig = go.Figure(
-            data=go.Histogram(
-                x=dist_data,
-                nbinsx=25,
+            data=go.Bar(
+                x=[borough],
+                y=[mean_val],
                 marker_color="rgba(0, 100, 200, 0.7)",
                 name=borough,
+                error_y=dict(type="data", array=[std_val], visible=True) if std_val > 0 else None,
             )
         )
 
-        # Add mean line
-        fig.add_vline(
-            x=mean_val,
-            line_dash="dash",
-            line_color="red",
-            annotation_text=f"Mean: {mean_val:.2f}",
-        )
-
-        # Add median line
-        fig.add_vline(
-            x=median_val,
+        # Add median reference line
+        fig.add_hline(
+            y=median_val,
             line_dash="dot",
             line_color="green",
             annotation_text=f"Median: {median_val:.2f}",
@@ -183,8 +160,8 @@ class PhaseCVisualizations:
 
         fig.update_layout(
             title=f"Distribution: {borough} - {distribution_type}",
-            xaxis_title="Violation Count",
-            yaxis_title="Frequency",
+            xaxis_title="Borough",
+            yaxis_title="Mean Violation Count",
             height=450,
             font={"family": "Arial, sans-serif", "size": 11},
         )
@@ -266,10 +243,7 @@ class PhaseCVisualizations:
             self.fetch_data()
 
         colors = [
-            "red" if val > 0.5
-            else "orange" if val > 0
-            else "green" if val > -0.5
-            else "blue"
+            "red" if val > 0.5 else "orange" if val > 0 else "green" if val > -0.5 else "blue"
             for val in self.data["skewness"]
         ]
 
