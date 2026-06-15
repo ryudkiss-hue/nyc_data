@@ -27,9 +27,6 @@ from .d3_components import (
     stream_graph,
     treemap_d3,
 )
-from .d3_components import (
-    sankey_flow as sankey_d3,
-)
 from .map import *
 from .plotly import (
     borough_bar_chart,
