@@ -597,10 +597,6 @@ def compute_program_dashboard(df: pd.DataFrame) -> Any:
     return tracker.dashboard()
 
 
-def validate_geospatial_bounds(
-    df: pd.DataFrame, lat_col: str = "latitude", lon_col: str = "longitude"
-) -> bool:
-
 def compute_program_dashboard(df: pd.DataFrame) -> dict:
     """Compute program dashboard metrics."""
     return {"total_records": len(df), "status": "ready"}
