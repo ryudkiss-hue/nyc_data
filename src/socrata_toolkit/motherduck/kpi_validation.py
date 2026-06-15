@@ -61,6 +61,7 @@ class KPIValidator:
     def __init__(self, conn: duckdb.DuckDBPyConnection):
         """Initialize validator with database connection."""
         self.conn = conn
+        self.conn.execute("CREATE SCHEMA IF NOT EXISTS analytics")
 
     def validate_all(self) -> QualityReport:
         """Run all validation checks and return comprehensive report."""

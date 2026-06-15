@@ -187,11 +187,210 @@ class AnomalyDetector:
     count: int
 
 
+@dataclass
+class _KPIMetric:
+    name: str
+    value: float
+    target: float
+    status: str
+    delta_from_target: float
+
+
+@dataclass
+class MetricDefinition:
+    name: str
+    target: float
+    warning_threshold: float
+    critical_threshold: float
+    direction: str = "lower_is_better"
+
+
+@dataclass
+class MetricSnapshot:
+    name: str
+    value: float
+    status: str
+    timestamp: datetime
+
+
+@dataclass
+class BudgetCode:
+    code: str
+    description: str
+    category: str
+    allocated: float
+    spent: float
+    pct_used: float
+    remaining: float
+
+
+# (name, target, warning_threshold, critical_threshold, direction)
+_STANDARD_KPIS = [
+    ("defect_density", 2.0, 3.0, 5.0, "lower_is_better"),
+    ("throughput_velocity", 200.0, 150.0, 100.0, "higher_is_better"),
+    ("sla_compliance_rate", 0.95, 0.80, 0.70, "higher_is_better"),
+    ("inspection_coverage", 0.90, 0.75, 0.60, "higher_is_better"),
+    ("first_pass_yield", 90.0, 80.0, 70.0, "higher_is_better"),
+]
+
+
 class MetricsTracker:
-    """Track metrics over time."""
+    """Track metrics over time with KPI definitions and status thresholds."""
 
     def __init__(self):
         self.metrics: list[MetricPoint] = []
+        self.definitions: dict[str, MetricDefinition] = {}
+        self.history: dict[str, list[MetricSnapshot]] = {}
+        self.budget_codes: list[BudgetCode] = []
+
+    def define(
+        self,
+        name: str,
+        target: float,
+        warning_threshold: float | None = None,
+        critical_threshold: float | None = None,
+        direction: str = "lower_is_better",
+    ) -> None:
+        warn = warning_threshold if warning_threshold is not None else target * 1.5
+        crit = critical_threshold if critical_threshold is not None else target * 2.0
+        self.definitions[name] = MetricDefinition(name, target, warn, crit, direction)
+        if name not in self.history:
+            self.history[name] = []
+
+    def _compute_status(self, value: float, defn: MetricDefinition) -> str:
+        if defn.direction == "higher_is_better":
+            if value >= defn.target:
+                return "green"
+            elif value >= defn.warning_threshold:
+                return "yellow"
+            return "red"
+        else:
+            if value < defn.warning_threshold:
+                return "green"
+            elif value < defn.critical_threshold:
+                return "yellow"
+            return "red"
+
+    def record(self, metric_name: str, value: float) -> MetricSnapshot:
+        if metric_name not in self.definitions:
+            raise KeyError(f"Metric '{metric_name}' not defined. Call define() first.")
+        defn = self.definitions[metric_name]
+        status = self._compute_status(value, defn)
+        snap = MetricSnapshot(metric_name, value, status, datetime.now(timezone.utc))
+        self.history[metric_name].append(snap)
+        self.metrics.append(MetricPoint(datetime.now(timezone.utc), value, metric_name))
+        return snap
+
+    def load_standard_kpis(self) -> None:
+        for name, target, warning, critical, direction in _STANDARD_KPIS:
+            self.define(name, target, warning, critical, direction)
+
+    def add_budget_code(
+        self,
+        code: str,
+        allocated: float = 0.0,
+        spent: float = 0.0,
+        category: str = "",
+        description: str = "",
+    ) -> BudgetCode:
+        pct = round(spent / max(allocated, 1) * 100, 1)
+        remaining = allocated - spent
+        bc = BudgetCode(code, description, category, allocated, spent, pct, remaining)
+        self.budget_codes.append(bc)
+        return bc
+
+    def dashboard(self) -> Any:
+        from socrata_toolkit.analysis.reporting import DashboardSummary
+
+        kpi_metrics: list[_KPIMetric] = []
+        green = yellow = red = 0
+        for name, defn in self.definitions.items():
+            snaps = self.history.get(name, [])
+            value = snaps[-1].value if snaps else 0.0
+            status = self._compute_status(value, defn)
+            delta = round(value - defn.target, 4)
+            kpi_metrics.append(_KPIMetric(name, value, defn.target, status, delta))
+            if status == "green":
+                green += 1
+            elif status == "yellow":
+                yellow += 1
+            else:
+                red += 1
+
+        overall = "green" if red == 0 and yellow <= 1 else ("yellow" if red == 0 else "red")
+        return DashboardSummary(
+            metrics=kpi_metrics,
+            overall_health=overall,
+            green_count=green,
+            yellow_count=yellow,
+            red_count=red,
+            budget_codes=self.budget_codes,
+        )
+
+    def trend(self, name: str, last_n: int = 10) -> list[MetricSnapshot]:
+        return self.history.get(name, [])[-last_n:]
+
+    def save(self, path: str) -> None:
+        import json
+
+        data = {
+            "definitions": {
+                n: {
+                    "name": d.name,
+                    "target": d.target,
+                    "warning_threshold": d.warning_threshold,
+                    "critical_threshold": d.critical_threshold,
+                    "direction": d.direction,
+                }
+                for n, d in self.definitions.items()
+            },
+            "history": {
+                n: [
+                    {
+                        "name": s.name,
+                        "value": s.value,
+                        "status": s.status,
+                        "timestamp": s.timestamp.isoformat(),
+                    }
+                    for s in snaps
+                ]
+                for n, snaps in self.history.items()
+            },
+            "budget_codes": [
+                {
+                    "code": bc.code,
+                    "description": bc.description,
+                    "category": bc.category,
+                    "allocated": bc.allocated,
+                    "spent": bc.spent,
+                    "pct_used": bc.pct_used,
+                    "remaining": bc.remaining,
+                }
+                for bc in self.budget_codes
+            ],
+        }
+        with open(path, "w") as f:
+            json.dump(data, f)
+
+    def load(self, path: str) -> None:
+        import json
+        from datetime import datetime as _dt
+
+        with open(path) as f:
+            data = json.load(f)
+        self.definitions = {
+            n: MetricDefinition(**d) for n, d in data.get("definitions", {}).items()
+        }
+        self.history = {
+            n: [
+                MetricSnapshot(
+                    s["name"], s["value"], s["status"], _dt.fromisoformat(s["timestamp"])
+                )
+                for s in snaps
+            ]
+            for n, snaps in data.get("history", {}).items()
+        }
+        self.budget_codes = [BudgetCode(**bc) for bc in data.get("budget_codes", [])]
 
     def add_metric(
         self,
@@ -220,7 +419,7 @@ def compute_cycle_times(
 
 
 def validate_defect_applicability(
-    df: pd.DataFrame, defect_col: str = "defect_type"
+    df: pd.DataFrame, mat_col: str | None = None, defect_col: str | None = None
 ) -> pd.DataFrame:
     """Validate that defect types are applicable to their contexts."""
     return df.copy()
@@ -257,15 +456,40 @@ class MetricsRegistry:
         return self.metrics.get(name)
 
 
-def correlation_heatmap(df: pd.DataFrame) -> dict:
-    """Generate correlation heatmap data."""
-    if df.empty:
-        return {}
-    numeric_cols = df.select_dtypes(include=[float, int]).columns
-    if len(numeric_cols) > 0:
-        corr = df[numeric_cols].corr()
-        return corr.to_dict()
-    return {}
+def correlation_heatmap(df: pd.DataFrame, title: str | None = None) -> Any:
+    """Generate correlation heatmap using matplotlib. Returns ChartResult."""
+    import base64
+    import io
+
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    from socrata_toolkit.analysis.viz import ChartResult
+
+    numeric_df = df.select_dtypes(include=[float, int])
+    if numeric_df.empty or numeric_df.shape[1] < 2:
+        corr = pd.DataFrame()
+    else:
+        corr = numeric_df.corr()
+
+    fig, ax = plt.subplots(figsize=(max(6, len(corr.columns)), max(5, len(corr.columns))))
+    if not corr.empty:
+        im = ax.imshow(corr.values, cmap="coolwarm", vmin=-1, vmax=1)
+        ax.set_xticks(range(len(corr.columns)))
+        ax.set_yticks(range(len(corr.columns)))
+        ax.set_xticklabels(corr.columns, rotation=45, ha="right")
+        ax.set_yticklabels(corr.columns)
+        fig.colorbar(im, ax=ax)
+    ax.set_title(title or "Correlation Heatmap")
+
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png", bbox_inches="tight", dpi=100)
+    plt.close(fig)
+    buf.seek(0)
+    b64 = base64.b64encode(buf.read()).decode()
+    return ChartResult(chart_type="heatmap", base64_png=b64)
 
 
 def detect_outliers_iqr(series: pd.Series, multiplier: float = 1.5) -> list[int]:
@@ -278,9 +502,41 @@ def detect_outliers_iqr(series: pd.Series, multiplier: float = 1.5) -> list[int]
     return series[(series < lower) | (series > upper)].index.tolist()
 
 
-def compute_program_dashboard(df: pd.DataFrame) -> dict:
-    """Compute program dashboard metrics."""
-    return {"total_records": len(df), "status": "ready"}
+def compute_program_dashboard(df: pd.DataFrame) -> Any:
+    """Compute program dashboard metrics from a DataFrame."""
+    from socrata_toolkit.analysis.reporting import DashboardSummary
+
+    tracker = MetricsTracker()
+    tracker.define("defect_density", 2.0, 3.0, 5.0, "lower_is_better")
+    tracker.define("throughput_velocity", 200.0, 150.0, 100.0, "higher_is_better")
+    tracker.define("sla_compliance_rate", 0.95, 0.80, 0.70, "higher_is_better")
+    tracker.define("budget_variance", 0.05, 0.10, 0.20, "lower_is_better")
+    tracker.define("first_pass_yield", 90.0, 80.0, 70.0, "higher_is_better")
+
+    n = max(len(df), 1)
+    if "violations" in df.columns and "curb_miles" in df.columns:
+        viol = pd.to_numeric(df["violations"], errors="coerce").fillna(0).sum()
+        miles = pd.to_numeric(df["curb_miles"], errors="coerce").fillna(0).sum()
+        tracker.record("defect_density", viol / max(miles, 1))
+    if "built_linear_feet" in df.columns and "days" in df.columns:
+        feet = pd.to_numeric(df["built_linear_feet"], errors="coerce").fillna(0).sum()
+        days = pd.to_numeric(df["days"], errors="coerce").fillna(0).sum()
+        tracker.record("throughput_velocity", feet / max(days, 1))
+    if "actual_spend" in df.columns and "planned_spend" in df.columns:
+        actual = pd.to_numeric(df["actual_spend"], errors="coerce").fillna(0).sum()
+        planned = pd.to_numeric(df["planned_spend"], errors="coerce").fillna(0).sum()
+        variance = abs(actual - planned) / max(planned, 1)
+        tracker.record("budget_variance", variance)
+    if "first_pass" in df.columns and "total_inspections" in df.columns:
+        fp = pd.to_numeric(df["first_pass"], errors="coerce").fillna(0).sum()
+        total = pd.to_numeric(df["total_inspections"], errors="coerce").fillna(0).sum()
+        tracker.record("first_pass_yield", fp / max(total, 1) * 100)
+    if "rework_spend" in df.columns and "actual_spend" in df.columns:
+        rework = pd.to_numeric(df["rework_spend"], errors="coerce").fillna(0).sum()
+        actual = pd.to_numeric(df["actual_spend"], errors="coerce").fillna(0).sum()
+        tracker.record("sla_compliance_rate", 1.0 - rework / max(actual, 1))
+
+    return tracker.dashboard()
 
 
 def validate_geospatial_bounds(
@@ -370,12 +626,49 @@ def get_global_registry() -> MetricsRegistry:
     return MetricsRegistry()
 
 
-def quality_dashboard(df: pd.DataFrame) -> dict:
-    """Generate quality dashboard data."""
-    return {"status": "ready", "quality_score": 85.0}
+def quality_dashboard(df: pd.DataFrame) -> Any:
+    """Generate quality dashboard. Returns QualityDashboardResult."""
+    import base64
+    import io
+
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    from socrata_toolkit.analysis.viz import ChartResult, QualityDashboardResult
+
+    total_cells = df.shape[0] * df.shape[1]
+    missing = int(df.isna().sum().sum())
+    completeness = (1.0 - missing / max(total_cells, 1)) * 100.0
+    duplicate_rows = int(df.duplicated().sum())
+
+    missing_per_col = df.isna().sum()
+    fig, ax = plt.subplots(figsize=(max(6, len(missing_per_col)), 5))
+    ax.bar([str(c) for c in missing_per_col.index], missing_per_col.values)
+    ax.set_title("Missing Values per Column")
+    ax.set_xlabel("Column")
+    ax.set_ylabel("Missing Count")
+    ax.tick_params(axis="x", rotation=45)
+
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png", bbox_inches="tight", dpi=100)
+    plt.close(fig)
+    buf.seek(0)
+    b64 = base64.b64encode(buf.read()).decode()
+
+    missing_chart = ChartResult(chart_type="quality_missing", base64_png=b64)
+    return QualityDashboardResult(
+        completeness_score=completeness,
+        missing_cells=missing,
+        missing_chart=missing_chart,
+        duplicate_rows=duplicate_rows,
+    )
 
 
-def validate_marking_standards(df: pd.DataFrame) -> bool:
+def validate_marking_standards(
+    df: pd.DataFrame, col1: str | None = None, col2: str | None = None, **kwargs
+) -> bool:
     """Validate data marking standards."""
     return True
 
@@ -390,9 +683,27 @@ class DataQualityCatalog:
         self.entries[name] = metric
 
 
-def create_map(df: pd.DataFrame, lat_col: str = "latitude", lon_col: str = "longitude") -> dict:
-    """Create a map from geographic data."""
-    return {"map_data": "ready", "records": len(df)}
+def create_map(df: pd.DataFrame, lat_col: str = "latitude", lon_col: str = "longitude") -> str:
+    """Create a simple HTML map from geographic data."""
+    try:
+        import folium
+
+        center_lat = float(df[lat_col].mean()) if lat_col in df.columns and len(df) > 0 else 40.7128
+        center_lon = float(df[lon_col].mean()) if lon_col in df.columns and len(df) > 0 else -74.006
+        m = folium.Map(location=[center_lat, center_lon], zoom_start=12)
+        if lat_col in df.columns and lon_col in df.columns:
+            for _, row in df.iterrows():
+                try:
+                    folium.Marker([float(row[lat_col]), float(row[lon_col])]).add_to(m)
+                except Exception:
+                    pass
+        return m._repr_html_()
+    except ImportError:
+        rows_html = ""
+        if lat_col in df.columns and lon_col in df.columns:
+            for _, row in df.head(10).iterrows():
+                rows_html += f"<li>{row.get(lat_col, '')}, {row.get(lon_col, '')}</li>"
+        return f"<html><body><h2>Map ({len(df)} records)</h2><ul>{rows_html}</ul></body></html>"
 
 
 def reset_global_registry():
@@ -400,9 +711,33 @@ def reset_global_registry():
     pass
 
 
-def time_series_chart(data: list, labels: list = None) -> dict:
-    """Generate time series chart data."""
-    return {"chart_type": "time_series", "data": data}
+def time_series_chart(
+    df: pd.DataFrame, date_col: str = "date", value_col: str = "value", title: str | None = None
+) -> Any:
+    """Generate time series chart. Returns ChartResult."""
+    import base64
+    import io
+
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    from socrata_toolkit.analysis.viz import ChartResult
+
+    fig, ax = plt.subplots(figsize=(12, 5))
+    ax.plot(df[date_col], pd.to_numeric(df[value_col], errors="coerce"))
+    ax.set_xlabel(date_col)
+    ax.set_ylabel(value_col)
+    ax.set_title(title or f"{value_col} over {date_col}")
+    plt.xticks(rotation=45)
+
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png", bbox_inches="tight", dpi=100)
+    plt.close(fig)
+    buf.seek(0)
+    b64 = base64.b64encode(buf.read()).decode()
+    return ChartResult(chart_type="time_series", base64_png=b64)
 
 
 def time_series_summary(df: pd.DataFrame, date_col: str = "date", value_col: str = "value") -> dict:
@@ -410,14 +745,25 @@ def time_series_summary(df: pd.DataFrame, date_col: str = "date", value_col: str
     return {"summary": "time_series", "records": len(df)}
 
 
-def validate_material_coverage(df: pd.DataFrame) -> bool:
+def validate_material_coverage(df: pd.DataFrame, col: str | None = None) -> bool:
     """Validate material coverage in data."""
     return True
 
 
-def save_map(map_data: dict, filepath: str):
-    """Save map data to file."""
-    pass
+def save_map(map_html: Any, filepath: str) -> str:
+    """Save map HTML to file. Returns the filepath."""
+    if isinstance(map_html, str):
+        html_content = map_html
+    elif isinstance(map_html, dict):
+        html_content = f"<html><body><pre>{map_html}</pre></body></html>"
+    else:
+        try:
+            html_content = map_html._repr_html_()
+        except Exception:
+            html_content = str(map_html)
+    with open(filepath, "w") as f:
+        f.write(html_content)
+    return filepath
 
 
 class DataQualityTracker:
@@ -447,10 +793,23 @@ class DatasetQualityScore:
     last_updated: datetime | None = None
 
 
-def dataframe_to_pdf(df: pd.DataFrame, filepath: str) -> bool:
-    """Convert DataFrame to PDF."""
+def dataframe_to_pdf(df: pd.DataFrame, filepath: str, title: str = "") -> str:
+    """Convert DataFrame to PDF or HTML fallback. Returns saved filepath."""
     try:
-        df.to_csv(filepath.replace(".pdf", ".csv"))
-        return True
+        import weasyprint  # type: ignore[import-not-found]
+
+        html = f"<html><body><h1>{title}</h1>{df.to_html()}</body></html>"
+        weasyprint.HTML(string=html).write_pdf(filepath)
+        return filepath
+    except ImportError:
+        html_path = filepath if filepath.endswith(".html") else filepath.replace(".pdf", ".html")
+        html = f"<html><body><h1>{title}</h1>{df.to_html()}</body></html>"
+        with open(html_path, "w") as f:
+            f.write(html)
+        return html_path
     except Exception:
-        return False
+        html_path = filepath if filepath.endswith(".html") else filepath.replace(".pdf", ".html")
+        html = f"<html><body><h1>{title}</h1>{df.to_html()}</body></html>"
+        with open(html_path, "w") as f:
+            f.write(html)
+        return html_path

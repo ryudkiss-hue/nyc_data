@@ -31,7 +31,14 @@ except Exception:  # pragma: no cover
     ConflictResolver = None  # type: ignore
     PostGISConflictResolver = None  # type: ignore
     in_clause = None  # type: ignore
-from ..alerts.manager import Alert, AlertManager, CLINotifier, DBNotifier, EmailNotifier
+from ..alerts.manager import (
+    Alert,
+    AlertManager,
+    AlertSeverity,
+    CLINotifier,
+    DBNotifier,
+    EmailNotifier,
+)
 from ..discovery.schema import BackwardCompatibilityChecker, SchemaRegistry, SchemaValidator
 
 
@@ -1033,9 +1040,10 @@ def alerts_cmd(
             if not df.empty:
                 for _, row in df.iterrows():
                     if int(row.get("_conflict_count", 0)) > 0:
-                        a = Alert(
-                            severity="critical",
+                        a = Alert.create(
+                            severity=AlertSeverity.CRITICAL,
                             message=f"Spatial conflict for id={row.get('id')}",
+                            alert_type="spatial_conflict",
                             payload={
                                 "id": row.get("id"),
                                 "conflict_count": int(row.get("_conflict_count")),
@@ -1046,9 +1054,10 @@ def alerts_cmd(
             resolver.close()
         except Exception as exc:
             mgr.emit(
-                Alert(
-                    severity="warning",
+                Alert.create(
+                    severity=AlertSeverity.WARNING,
                     message="Alerts generation failed",
+                    alert_type="system_error",
                     payload={"error": str(exc)},
                 )
             )
@@ -1056,9 +1065,10 @@ def alerts_cmd(
     # If no PG connection or no alerts found, create a sample alert for preview/demo
     if not alerts_created and preview:
         alerts_created.append(
-            Alert(
-                severity="info",
+            Alert.create(
+                severity=AlertSeverity.LOW,
                 message="Preview alert: no DB alerts found or running in demo mode",
+                alert_type="preview",
                 payload={},
             )
         )

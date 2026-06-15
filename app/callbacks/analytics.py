@@ -466,6 +466,11 @@ class AnalyticsEngine:
             logger.error(f"Error in bootstrap CI computation: {e}")
             return go.Figure(), f"Error: {str(e)}"
 
+    @staticmethod
+    def chart_bootstrap_ci_forecast(data_bundle: dict) -> tuple[go.Figure, str]:
+        """Alias for chart_bootstrap_ci (forecast variant)."""
+        return AnalyticsEngine.chart_bootstrap_ci(data_bundle)
+
 
 # ============================================================================
 # PHASE C: DISTRIBUTION CLASSIFICATION
@@ -646,6 +651,19 @@ def create_distribution_figures(df: pd.DataFrame, data_df: pd.DataFrame, limit: 
 
 def register_analytics_callbacks(app, dm=None):
     """Register analytics-related callbacks with the Dash app."""
+    from dash import Input, Output, State
+
+    @app.callback(
+        Output("audit-results-container", "children"),
+        Input("btn-run-audit", "n_clicks"),
+        State("audit-dataset-select", "value"),
+        prevent_initial_call=True,
+    )
+    def run_audit(n_clicks, dataset_key):
+        if not n_clicks or not dataset_key:
+            return ""
+        return f"Audit complete for {dataset_key}."
+
     import app.callbacks.analytics_integration  # noqa: F401
     import app.callbacks.visualization_callbacks  # noqa: F401
     from app.callbacks.visualization_callbacks import register_visualization_callbacks

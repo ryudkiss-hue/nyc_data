@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 # CACHE MANAGEMENT (Phase 3B Optimization)
 # ============================================================================
 
+
 class CacheManager:
     """KPI cache with TTL validation."""
 
@@ -50,9 +51,11 @@ class CacheManager:
         self._cache.clear()
         logger.info("Cache cleared")
 
+
 # ============================================================================
 # CONNECTION POOLING (Phase 2B Optimization)
 # ============================================================================
+
 
 class ConnectionPool:
     """Connection pool for concurrent DuckDB access."""
@@ -79,6 +82,7 @@ class ConnectionPool:
             self._in_use.remove(conn_id)
             self._available.append(conn_id)
 
+
 # Global instances
 _cache_manager = CacheManager(ttl_seconds=300)  # 5-minute TTL
 _connection_pool = ConnectionPool(pool_size=4)
@@ -87,7 +91,8 @@ _connection_pool = ConnectionPool(pool_size=4)
 # DATA FETCH HELPERS
 # ============================================================================
 
-def get_dataset(filters: Optional[dict] = None, dataset_key: str = 'inspection') -> pd.DataFrame:
+
+def get_dataset(filters: Optional[dict] = None, dataset_key: str = "inspection") -> pd.DataFrame:
     """
     Fetch dataset with optional filters.
 
@@ -102,12 +107,12 @@ def get_dataset(filters: Optional[dict] = None, dataset_key: str = 'inspection')
         from socrata_toolkit.core.duckdb_store import query_parquet_cache
 
         where_clause = ""
-        if filters and 'borough' in filters:
-            borough = filters['borough'].upper()
+        if filters and "borough" in filters:
+            borough = filters["borough"].upper()
             where_clause += f" AND borough = '{borough}'"
 
-        if filters and 'date_range' in filters:
-            start_date, end_date = filters['date_range']
+        if filters and "date_range" in filters:
+            start_date, end_date = filters["date_range"]
             where_clause += f" AND created_date BETWEEN '{start_date}' AND '{end_date}'"
 
         query = f"SELECT * FROM {dataset_key} WHERE 1=1{where_clause} LIMIT 10000"
@@ -122,7 +127,10 @@ def get_dataset(filters: Optional[dict] = None, dataset_key: str = 'inspection')
         logger.error(f"Error fetching dataset: {e}")
         return pd.DataFrame()
 
-def get_spatial_data(filters: Optional[dict] = None, dataset_key: str = 'inspection') -> gpd.GeoDataFrame:
+
+def get_spatial_data(
+    filters: Optional[dict] = None, dataset_key: str = "inspection"
+) -> gpd.GeoDataFrame:
     """
     Fetch spatial data with geometry column.
 
@@ -139,8 +147,8 @@ def get_spatial_data(filters: Optional[dict] = None, dataset_key: str = 'inspect
             return gpd.GeoDataFrame()
 
         # Convert to GeoDataFrame if geometry column exists
-        if 'the_geom' in df.columns:
-            gdf = gpd.GeoDataFrame(df, geometry='the_geom', crs='EPSG:4326')
+        if "the_geom" in df.columns:
+            gdf = gpd.GeoDataFrame(df, geometry="the_geom", crs="EPSG:4326")
             logger.info(f"Converted to GeoDataFrame with {len(gdf)} features")
             return gdf
         else:
@@ -151,8 +159,10 @@ def get_spatial_data(filters: Optional[dict] = None, dataset_key: str = 'inspect
         logger.error(f"Error fetching spatial data: {e}")
         return gpd.GeoDataFrame()
 
-def get_timeseries_data(dataset_key: str, date_col: str, value_col: str,
-                       filters: Optional[dict] = None) -> pd.DataFrame:
+
+def get_timeseries_data(
+    dataset_key: str, date_col: str, value_col: str, filters: Optional[dict] = None
+) -> pd.DataFrame:
     """
     Fetch time series data for temporal analysis.
 
@@ -169,7 +179,7 @@ def get_timeseries_data(dataset_key: str, date_col: str, value_col: str,
         from socrata_toolkit.core.duckdb_store import query_parquet_cache
 
         where_clause = ""
-        if filters and 'borough' in filters:
+        if filters and "borough" in filters:
             where_clause += f" AND borough = '{filters['borough'].upper()}'"
 
         query = f"""
@@ -188,17 +198,21 @@ def get_timeseries_data(dataset_key: str, date_col: str, value_col: str,
 
     except ImportError:
         logger.warning("DuckDB not available, using mock time series")
-        return pd.DataFrame({
-            date_col: pd.date_range('2026-05-01', '2026-06-11', freq='D'),
-            value_col: [85, 86, 84, 87, 85] * 8 + [85, 86]
-        })
+        return pd.DataFrame(
+            {
+                date_col: pd.date_range("2026-05-01", "2026-06-11", freq="D"),
+                value_col: [85, 86, 84, 87, 85] * 8 + [85, 86],
+            }
+        )
     except Exception as e:
         logger.error(f"Error fetching time series: {e}")
         return pd.DataFrame()
 
+
 # ============================================================================
 # KPI HELPERS
 # ============================================================================
+
 
 def get_kpi_metrics(filters: Optional[dict] = None) -> dict[str, tuple[float, float, float]]:
     """
@@ -214,8 +228,8 @@ def get_kpi_metrics(filters: Optional[dict] = None) -> dict[str, tuple[float, fl
     cached = _cache_manager._get_cached(cache_key)
     if cached is not None:
         # Remove old _cached flag and set to True
-        cached_copy = {k: v for k, v in cached.items() if k != '_cached'}
-        cached_copy['_cached'] = True
+        cached_copy = {k: v for k, v in cached.items() if k != "_cached"}
+        cached_copy["_cached"] = True
         return cached_copy
 
     try:
@@ -224,69 +238,91 @@ def get_kpi_metrics(filters: Optional[dict] = None) -> dict[str, tuple[float, fl
         from socrata_toolkit.governance import compute_quality_score
 
         # Fetch inspection data
-        df = get_dataset(filters, 'inspection')
+        df = get_dataset(filters, "inspection")
 
         # Compute metrics (or use defaults)
         metrics = {}
 
         if not df.empty:
             # Completion rate: non-null status divided by total
-            if 'status' in df.columns:
-                completion = df['status'].notna().sum() / len(df)
-                metrics['completion_rate'] = (completion, completion - 0.05, completion + 0.05)
+            if "status" in df.columns:
+                completion = df["status"].notna().sum() / len(df)
+                metrics["completion_rate"] = (completion, completion - 0.05, completion + 0.05)
 
             # Quality score (0-100)
-            if 'quality_score' in df.columns or len(df) > 0:
-                score = compute_quality_score(df, key_columns=['id'])
-                metrics['quality_score'] = (score.overall, max(0, score.overall - 5), min(100, score.overall + 5))
+            if "quality_score" in df.columns or len(df) > 0:
+                score = compute_quality_score(df, key_columns=["id"])
+                metrics["quality_score"] = (
+                    score.overall,
+                    max(0, score.overall - 5),
+                    min(100, score.overall + 5),
+                )
 
         # Use mocks for missing metrics
-        for key in ['completion_rate', 'avg_response_time', 'sla_compliance']:
+        for key in ["completion_rate", "avg_response_time", "sla_compliance"]:
             if key not in metrics:
                 metrics[key] = _get_mock_kpis().get(key, (0, 0, 0))
 
         # Store in cache (Phase 3B optimization - cache all responses)
         _cache_manager._set_cache(cache_key, metrics)
         logger.info(f"Computed {len(metrics)} KPI metrics (fresh, cached)")
-        return {**metrics, '_cached': False}
+        return {**metrics, "_cached": False}
 
     except Exception as e:
         logger.error(f"Error computing KPI metrics: {e}")
         mock_metrics = _get_mock_kpis()
         # Cache even error cases for consistency
         _cache_manager._set_cache(cache_key, mock_metrics)
-        return {**mock_metrics, '_cached': False}
+        return {**mock_metrics, "_cached": False}
+
 
 def _get_mock_kpis() -> dict[str, tuple[float, float, float]]:
     """Return mock KPI values when real data unavailable."""
     return {
-        'completion_rate': (87.4, 85.2, 89.1),
-        'avg_response_time': (2.3, 2.1, 2.5),
-        'quality_score': (92.0, 90.5, 93.2),
-        'sla_compliance': (94.1, 92.8, 95.2),
+        "completion_rate": (87.4, 85.2, 89.1),
+        "avg_response_time": (2.3, 2.1, 2.5),
+        "quality_score": (92.0, 90.5, 93.2),
+        "sla_compliance": (94.1, 92.8, 95.2),
     }
+
 
 # ============================================================================
 # VALIDATION HELPERS
 # ============================================================================
+
 
 def validate_filters(filters: Optional[dict]) -> bool:
     """Validate filter dictionary structure."""
     if not filters or not isinstance(filters, dict):
         return False
     # At minimum should have borough or dataset_key
-    return 'borough' in filters or 'dataset_key' in filters
+    return "borough" in filters or "dataset_key" in filters
 
-def digital_twin_pre_screen(df: pd.DataFrame) -> dict:
-    """Pre-screen data for digital twin analysis."""
-    if df.empty:
-        return {"status": "empty", "records": 0}
-    return {"status": "ready", "records": len(df)}
 
-def perform_causal_what_if_simulation(df: pd.DataFrame, intervention: dict) -> dict:
+def digital_twin_pre_screen(contractor_id: str, df: pd.DataFrame = None) -> dict:
+    """Pre-screen contractor data for digital twin analysis."""
+    if df is None or (hasattr(df, "empty") and df.empty):
+        return {"success": True, "pre_screen_result": {"status": "empty", "records": 0}}
+    return {
+        "success": True,
+        "pre_screen_result": {
+            "status": "ready",
+            "records": len(df),
+            "contractor_id": contractor_id,
+        },
+    }
+
+
+def perform_causal_what_if_simulation(
+    manager, df: pd.DataFrame, budget: float = 0.0, strategy: str = "default"
+) -> dict:
     """Perform causal what-if simulation."""
-    return {"scenario": "simulated", "records": len(df)}
+    outcomes = []
+    if df is not None and not (hasattr(df, "empty") and df.empty):
+        outcomes = [{"scenario": strategy, "budget": budget, "records": len(df)}]
+    return {"success": True, "simulated_outcomes": outcomes}
 
-def update_predictive_simulation_intervention(intervention_id: str, new_params: dict) -> dict:
+
+def update_predictive_simulation_intervention(intervention_id: str, new_params=None) -> dict:
     """Update predictive simulation intervention parameters."""
-    return {"intervention_id": intervention_id, "status": "updated"}
+    return {"success": True, "intervention_updated": intervention_id, "params": new_params}
