@@ -23,6 +23,7 @@ from pathlib import Path
 
 import pandas as pd
 
+
 def fetch_dataset_stats() -> dict[str, dict]:
     """Fetch current row counts and freshness for all tracked datasets."""
     from socrata_toolkit.core.client import SocrataClient, SocrataConfig

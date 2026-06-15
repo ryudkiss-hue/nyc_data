@@ -11,16 +11,18 @@ Usage:
   scheduler.add_job(daily_refresh, 'cron', hour=6, minute=0, timezone='UTC')
 """
 
-import sys
 import os
+import sys
+
 sys.path.insert(0, 'src')
 
-import duckdb
 import logging
 from datetime import datetime, timedelta
 
-from socrata_toolkit.core.client import SocrataClient, SocrataConfig
+import duckdb
+
 from socrata_toolkit.analysis.nlp_classifier import TextClassifierPipeline
+from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
 logging.basicConfig(
     level=logging.INFO,
@@ -88,7 +90,7 @@ def daily_refresh():
             )
 
             if len(df) == 0:
-                logger.info(f"  (no new records)")
+                logger.info("  (no new records)")
                 continue
 
             logger.info(f"  {len(df)} new records")
@@ -190,7 +192,7 @@ def daily_refresh():
 
     # Summary
     logger.info("\n" + "=" * 70)
-    logger.info(f"DAILY REFRESH COMPLETE")
+    logger.info("DAILY REFRESH COMPLETE")
     logger.info("=" * 70)
     logger.info(f"New records: {total_new:,}")
     logger.info(f"Datasets updated: {successful}/{len(REFRESH_DATASETS)}")

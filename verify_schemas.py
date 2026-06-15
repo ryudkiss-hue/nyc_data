@@ -2,10 +2,12 @@
 """Verify Socrata dataset schemas and test joins."""
 
 import sys
+
 sys.path.insert(0, '/c/Users/ryudk/nyc_data/src')
 
-from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 import json
+
+from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
 config = SocrataConfig()
 client = SocrataClient(config)
@@ -19,7 +21,7 @@ print("1. VIOLATIONS (6kbp-uz6m)")
 print("="*70)
 try:
     meta = client.get_metadata(domain, "6kbp-uz6m")
-    print(f"Total rows: ~398K")
+    print("Total rows: ~398K")
     print(f"Columns: {len(meta.column_dict())}")
 
     cols = meta.column_dict()
