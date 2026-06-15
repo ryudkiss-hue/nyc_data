@@ -2,6 +2,7 @@
 
 TDD approach: tests first, implementation follows.
 """
+
 import os
 
 import duckdb
@@ -9,6 +10,7 @@ import pandas as pd
 import pytest
 
 from socrata_toolkit.motherduck.connector import MotherDuckConnection
+
 
 class TestMotherDuckConnectionInitialization:
     """Test MotherDuck connection initialization with various configurations."""
@@ -38,9 +40,7 @@ class TestMotherDuckConnectionInitialization:
 
     def test_motherduck_connection_custom_database(self):
         """Test creating connection with custom database name."""
-        conn = MotherDuckConnection(
-            token=None, database="custom_analytics_db"
-        )
+        conn = MotherDuckConnection(token=None, database="custom_analytics_db")
 
         # Should still be connectable (falls back to local if no token)
         assert conn.database == "custom_analytics_db"
@@ -66,6 +66,7 @@ class TestMotherDuckConnectionInitialization:
         assert "harness-claude-code" in conn.user_agent
         assert "llm-haiku-4-5" in conn.user_agent
         conn.close()
+
 
 class TestDuckDBFallbackConnection:
     """Test DuckDB fallback when MotherDuck token is unavailable."""
@@ -106,6 +107,7 @@ class TestDuckDBFallbackConnection:
         conn.close()
         # After close, connection should not be usable
         # (implementation may vary based on DuckDB behavior)
+
 
 class TestConnectionMethods:
     """Test core connection methods: execute, fetch_all, fetch_df, create_schema."""
@@ -188,6 +190,7 @@ class TestConnectionMethods:
         assert len(df) == 0
         conn.close()
 
+
 class TestConnectionErrorHandling:
     """Test error handling in connection layer."""
 
@@ -215,6 +218,7 @@ class TestConnectionErrorHandling:
             pass
 
         conn.close()
+
 
 class TestConnectionIntegration:
     """Integration tests for realistic workflows."""
@@ -257,9 +261,7 @@ class TestConnectionIntegration:
         """)
 
         assert len(df) == 2
-        assert df.loc[df["borough"] == "MN", "avg_rating"].values[0] == pytest.approx(
-            86.5
-        )
+        assert df.loc[df["borough"] == "MN", "avg_rating"].values[0] == pytest.approx(86.5)
 
         conn.close()
 
@@ -272,12 +274,8 @@ class TestConnectionIntegration:
         conn.create_schema("analytics")
 
         # Create tables in both
-        conn.execute(
-            "CREATE TABLE staging.raw (id INT, value FLOAT)"
-        )
-        conn.execute(
-            "CREATE TABLE analytics.processed (id INT, value_squared FLOAT)"
-        )
+        conn.execute("CREATE TABLE staging.raw (id INT, value FLOAT)")
+        conn.execute("CREATE TABLE analytics.processed (id INT, value_squared FLOAT)")
 
         # Insert data
         conn.execute("INSERT INTO staging.raw VALUES (1, 2.0), (2, 3.0)")

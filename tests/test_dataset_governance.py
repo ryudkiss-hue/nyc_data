@@ -19,6 +19,7 @@ from socrata_toolkit.governance.dataset_governance import (
     registry_audit,
 )
 
+
 class TestFetchSocrataJson:
     """Tests for _fetch_socrata_json function."""
 
@@ -30,7 +31,10 @@ class TestFetchSocrataJson:
         mock_response.__enter__ = MagicMock(return_value=mock_response)
         mock_response.__exit__ = MagicMock(return_value=None)
 
-        monkeypatch.setattr("socrata_toolkit.governance.dataset_governance.urlopen", MagicMock(return_value=mock_response))
+        monkeypatch.setattr(
+            "socrata_toolkit.governance.dataset_governance.urlopen",
+            MagicMock(return_value=mock_response),
+        )
 
         result = _fetch_socrata_json("test-fourfour")
         assert result == mock_data
@@ -61,6 +65,7 @@ class TestFetchSocrataJson:
 
         with pytest.raises(URLError):
             _fetch_socrata_json("test-fourfour")
+
 
 class TestFetchLL251Metadata:
     """Tests for _fetch_ll251_metadata function."""
@@ -124,6 +129,7 @@ class TestFetchLL251Metadata:
         result = _fetch_ll251_metadata()
         assert result == {}
 
+
 class TestFetchRemovalList:
     """Tests for _fetch_removal_list function."""
 
@@ -166,6 +172,7 @@ class TestFetchRemovalList:
         result = _fetch_removal_list()
         assert result == set()
 
+
 class TestFetchAutomationStatus:
     """Tests for _fetch_automation_status function."""
 
@@ -207,6 +214,7 @@ class TestFetchAutomationStatus:
 
         result = _fetch_automation_status()
         assert result == {}
+
 
 class TestCaching:
     """Tests for caching functionality."""
@@ -253,6 +261,7 @@ class TestCaching:
         time.sleep(1.1)
 
         assert not _is_cache_valid()
+
 
 class TestCrossReference:
     """Tests for cross_reference function."""
@@ -314,6 +323,7 @@ class TestCrossReference:
         assert result["removal_flagged"] is False
         assert result["automated"] is False
 
+
 class TestRegistryAudit:
     """Tests for registry_audit function."""
 
@@ -346,7 +356,15 @@ class TestRegistryAudit:
         )
         monkeypatch.setattr(
             "socrata_toolkit.governance.dataset_governance._fetch_ll251_metadata",
-            MagicMock(return_value={"dntt-gqwq": {"automation": True, "update_frequency": "daily", "removed_records": False}}),
+            MagicMock(
+                return_value={
+                    "dntt-gqwq": {
+                        "automation": True,
+                        "update_frequency": "daily",
+                        "removed_records": False,
+                    }
+                }
+            ),
         )
         monkeypatch.setattr(
             "socrata_toolkit.governance.dataset_governance._fetch_removal_list",

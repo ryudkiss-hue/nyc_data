@@ -13,6 +13,8 @@ try:
 except ImportError:
     BayesianInferenceResult = None  # type: ignore[assignment,misc]
     BayesianRegressionEngine = None  # type: ignore[assignment,misc]
+from socrata_toolkit.quality.profiler import DriftReport
+
 from .confidence_intervals import (
     bootstrap_confidence_interval,
     mean_confidence_interval,
@@ -38,7 +40,6 @@ from .metrics import (
     DatasetProfile,
     DataType,
     DataQualityTracker,
-    DatasetQualityScore,
     DatasetFreshness,
     DriftReport,
     Expectation,
@@ -76,7 +77,6 @@ from .metrics import (
     correlation_heatmap,
     create_map,
     dataframe_to_pdf,
-    save_map,
     detect_outliers_iqr,
     detect_outliers_zscore,
     flag_anomalies,
@@ -84,6 +84,7 @@ from .metrics import (
     get_global_registry,
     quality_dashboard,
     reset_global_registry,
+    save_map,
     time_series_chart,
     time_series_summary,
     validate_defect_applicability,
@@ -317,6 +318,47 @@ def _legacy_import(module: str, *names: str) -> None:
 
 
 _legacy_import("..quality.anomalies", "Anomaly")
+_legacy_import(
+    "..quality.expectations",
+    "Expectation",
+    "ExpectationSuite",
+    "ExpectationType",
+    "SeverityLevel",
+    "create_311_complaints_suite",
+    "create_sidewalk_inspections_suite",
+)
+_legacy_import(
+    "..quality.profiler",
+    "ProfileGenerator",
+)
+_legacy_import(
+    "..quality.reports",
+    "QualityReportGenerator",
+)
+_legacy_import(
+    "..quality.rules",
+    "QualityRule",
+    "RuleMode",
+    "RuleSeverity",
+    "RuleViolations",
+    "create_311_complaints_rules",
+    "create_sidewalk_rules",
+)
+_legacy_import(
+    "..quality.integration",
+    "QualityValidator",
+)
+_legacy_import(
+    "..quality.sla",
+    "MetricType",
+    "SLADefinition",
+    "create_standard_slas",
+)
+_legacy_import(
+    "..quality.validator",
+    "ValidationResult",
+    "ValidationResultsAggregator",
+)
 _legacy_import("..quality.sla_tracking", "SLATarget")
 _legacy_import("..alerts.manager", "AlertSeverity")
 _legacy_import("..metrics", "DataQualityMetrics")
@@ -329,6 +371,105 @@ _legacy_import("..engineering.cost_estimator", "estimate_costs")
 _legacy_import("..reports.analyst", "ProjectAnalystReports")
 _legacy_import("..quality.validation", "validate_ada_compliance_gates")
 
+# Override stub implementations from metrics.py with full quality module classes
+try:
+    from ..quality.anomalies import (  # type: ignore[no-redef]
+        Anomaly,
+        AnomalyDetector,
+        AnomalyReport,
+        AnomalySeverity,
+    )
+except Exception:
+    pass
+
+try:
+    from ..quality.rules import (  # type: ignore[no-redef]
+        BusinessRulesEngine,
+        QualityRule,
+        RuleMode,
+        RuleSeverity,
+        RuleViolations,
+    )
+except Exception:
+    pass
+
+try:
+    from ..quality.sla import TrendDirection  # type: ignore[no-redef]
+except Exception:
+    pass
+
+try:
+    from ..quality.sla import DataQualityTracker  # type: ignore[no-redef]
+except Exception:
+    pass
+
+try:
+    from ..quality.catalog import (  # type: ignore[no-redef]
+        DataQualityCatalog,
+        DatasetQualityScore,
+    )
+except Exception:
+    pass
+
+try:
+    from ..quality.profiler import DataType  # type: ignore[no-redef]
+except Exception:
+    pass
+
+try:
+    from ..quality.validation import (  # type: ignore[no-redef]
+        validate_defect_applicability,
+        validate_geospatial_bounds,
+        validate_marking_standards,
+        validate_material_coverage,
+    )
+except Exception:
+    pass
+
+try:
+    from ..analysis_advanced import (  # type: ignore[no-redef]
+        detect_outliers_iqr,
+        detect_outliers_zscore,
+        flag_anomalies,
+        time_series_summary,
+    )
+except Exception:
+    pass
+
+# Override stub MetricPoint/MetricsRegistry/PipelineMetrics/DataQualityMetrics
+# with full Prometheus-compatible implementations from socrata_toolkit.metrics
+try:
+    from ..metrics import (  # type: ignore[no-redef]
+        DataQualityMetrics,
+        MetricPoint,
+        MetricsRegistry,
+        PipelineMetrics,
+        get_global_registry,
+        reset_global_registry,
+    )
+except Exception:
+    pass
+
+# Override stub DatasetFreshness/FreshnessAlert/FreshnessTracker with full implementations
+try:
+    from ..quality.freshness import (  # type: ignore[no-redef]
+        DatasetFreshness,
+        FreshnessAlert,
+        FreshnessTracker,
+    )
+except Exception:
+    pass
+
+# Override stub compute_cycle_times/flag_sla_violations with full SLA tracking implementations
+try:
+    from ..quality.sla_tracking import (  # type: ignore[no-redef]
+        SLATarget,
+        compute_cycle_times,
+        flag_sla_violations,
+    )
+except Exception:
+    pass
+
 
 # Lazy imports for optional NLP/LLM dependencies (spacy, langgraph, langchain)
 def __getattr__(name: str):
@@ -340,26 +481,40 @@ def __getattr__(name: str):
             RampStatus,
             RampStatusClassifier,
         )
+
         return {
             "RampStatus": RampStatus,
             "BlockerType": BlockerType,
             "RampStatusClassifier": RampStatusClassifier,
             "RampClassificationResult": RampClassificationResult,
         }[name]
-    elif name in ("BoroughRampStats", "RampProgressState", "create_ramp_workflow", "run_ramp_workflow"):
+    elif name in (
+        "BoroughRampStats",
+        "RampProgressState",
+        "create_ramp_workflow",
+        "run_ramp_workflow",
+    ):
         from .ramp_progress_workflow import (
             BoroughRampStats,
             RampProgressState,
             create_ramp_workflow,
             run_ramp_workflow,
         )
+
         return {
             "BoroughRampStats": BoroughRampStats,
             "RampProgressState": RampProgressState,
             "create_ramp_workflow": create_ramp_workflow,
             "run_ramp_workflow": run_ramp_workflow,
         }[name]
-    elif name in ("VelocityClassifier", "VelocityMetrics", "VelocityClassification", "PerformanceTier", "MetricType", "AnomalyType"):
+    elif name in (
+        "VelocityClassifier",
+        "VelocityMetrics",
+        "VelocityClassification",
+        "PerformanceTier",
+        "MetricType",
+        "AnomalyType",
+    ):
         from .velocity_classifier import (
             AnomalyType,
             MetricType,
@@ -368,6 +523,7 @@ def __getattr__(name: str):
             VelocityClassifier,
             VelocityMetrics,
         )
+
         return {
             "VelocityClassifier": VelocityClassifier,
             "VelocityMetrics": VelocityMetrics,
@@ -376,13 +532,19 @@ def __getattr__(name: str):
             "MetricType": MetricType,
             "AnomalyType": AnomalyType,
         }[name]
-    elif name in ("run_velocity_analysis", "build_velocity_analysis_graph", "VelocityAnalysisContext", "VelocityState"):
+    elif name in (
+        "run_velocity_analysis",
+        "build_velocity_analysis_graph",
+        "VelocityAnalysisContext",
+        "VelocityState",
+    ):
         from .velocity_analysis_workflow import (
             VelocityAnalysisContext,
             VelocityState,
             build_velocity_analysis_graph,
             run_velocity_analysis,
         )
+
         return {
             "run_velocity_analysis": run_velocity_analysis,
             "build_velocity_analysis_graph": build_velocity_analysis_graph,
@@ -390,3 +552,17 @@ def __getattr__(name: str):
             "VelocityState": VelocityState,
         }[name]
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+try:
+    from .ab_testing import ABTestResult, compare_boroughs, compare_groups
+    from .assumptions_logger import AnalysisAssumptions, log_assumptions
+    from .forecast_validation import (
+        ForecastValidationResult,
+        summarize_forecast_accuracy,
+        validate_forecasts,
+    )
+    from .qa_checklist import QACheckResult, QAReport, run_preflight
+    from .reproducibility import ReproducibilityKey, make_run_key
+except Exception:
+    pass

@@ -88,3 +88,31 @@ h1, h2, h3, h4 {
     box-shadow: 0 0 12px #10B98144;
     border: 1px solid #10B98188;
 }
+
+/* WCAG 2.1 SC 2.3.3 — Disable motion for users who request it */
+@media (prefers-reduced-motion: reduce) {
+    .mantine-Paper-root:hover {
+        transform: none;
+    }
+    * {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+    }
+}
+
+/* Skip link (WCAG 2.4.1) */
+a[href="#page-content"] {
+    position: absolute;
+    left: -9999px;
+    z-index: 9999;
+    padding: 8px 16px;
+    background: #003087;
+    color: #fff !important;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: 700;
+}
+a[href="#page-content"]:focus {
+    left: 12px;
+    top: 12px;
+}

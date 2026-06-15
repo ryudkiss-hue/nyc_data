@@ -8,16 +8,19 @@ Tests verify that 6 serving views are created and queryable:
 5. app_queries.v_phase_f_bootstrap_ci - SLA confidence intervals view
 6. app_queries.v_kpi_dashboard - KPI metrics aggregation view
 """
+
 import pytest
 
 from socrata_toolkit.motherduck.connector import MotherDuckConnection
 from socrata_toolkit.motherduck.serving import ServingViewsBuilder
+
 
 @pytest.fixture
 def md_connection():
     """Create a MotherDuck connection for testing."""
     conn = MotherDuckConnection(database_path=":memory:")
     return conn
+
 
 @pytest.fixture
 def setup_analytics_tables(md_connection):
@@ -114,7 +117,7 @@ def setup_analytics_tables(md_connection):
     """)
 
     # Insert sample data
-    boroughs = ['MN', 'BK', 'BX', 'QN', 'SI']
+    boroughs = ["MN", "BK", "BX", "QN", "SI"]
 
     # Phase B data
     for idx, borough in enumerate(boroughs):
@@ -145,10 +148,11 @@ def setup_analytics_tables(md_connection):
 
     # Phase E data - ~450 rows (90 per borough)
     from datetime import datetime, timedelta
+
     base_date = datetime(2026, 1, 1)
     for borough in boroughs:
         for day_offset in range(90):
-            date_str = (base_date + timedelta(days=day_offset)).strftime('%Y-%m-%d')
+            date_str = (base_date + timedelta(days=day_offset)).strftime("%Y-%m-%d")
             md_connection.execute(f"""
                 INSERT INTO analytics.phase_e_decomposition VALUES
                 ('{date_str}', '{borough}', 10 + {day_offset} % 20, 11.5, 0.8, 1.2, 12.3, NOW())
@@ -163,11 +167,24 @@ def setup_analytics_tables(md_connection):
 
     # KPI metrics - 18 KPIs × 5 boroughs = 90 rows
     kpi_names = [
-        'phase_b_clustering_strength', 'phase_b_confidence', 'phase_b_resource_gap',
-        'phase_c_concentration_index', 'phase_c_segmentation_potential', 'phase_c_type_certainty', 'phase_c_distribution_balance',
-        'phase_d_outlier_concentration', 'phase_d_adoption_rate', 'phase_d_priority_score',
-        'phase_e_trend_direction', 'phase_e_seasonality_strength', 'phase_e_resource_gap', 'phase_e_forecast_confidence',
-        'phase_f_sla_probability', 'phase_f_risk_score', 'phase_f_ci_coverage', 'phase_f_investment_justification'
+        "phase_b_clustering_strength",
+        "phase_b_confidence",
+        "phase_b_resource_gap",
+        "phase_c_concentration_index",
+        "phase_c_segmentation_potential",
+        "phase_c_type_certainty",
+        "phase_c_distribution_balance",
+        "phase_d_outlier_concentration",
+        "phase_d_adoption_rate",
+        "phase_d_priority_score",
+        "phase_e_trend_direction",
+        "phase_e_seasonality_strength",
+        "phase_e_resource_gap",
+        "phase_e_forecast_confidence",
+        "phase_f_sla_probability",
+        "phase_f_risk_score",
+        "phase_f_ci_coverage",
+        "phase_f_investment_justification",
     ]
 
     for borough in boroughs:
@@ -179,6 +196,7 @@ def setup_analytics_tables(md_connection):
 
     return md_connection
 
+
 class TestServingViewsCreation:
     """Test that all serving views are created."""
 
@@ -189,12 +207,12 @@ class TestServingViewsCreation:
         builder.create_all_views()
 
         view_names = [
-            'v_phase_b_results',
-            'v_phase_c_results',
-            'v_phase_d_results',
-            'v_phase_e_decomposition',
-            'v_phase_f_bootstrap_ci',
-            'v_kpi_dashboard'
+            "v_phase_b_results",
+            "v_phase_c_results",
+            "v_phase_d_results",
+            "v_phase_e_decomposition",
+            "v_phase_f_bootstrap_ci",
+            "v_kpi_dashboard",
         ]
 
         for view_name in view_names:
@@ -202,7 +220,8 @@ class TestServingViewsCreation:
                 f"SELECT table_type FROM information_schema.tables WHERE table_name = '{view_name}' AND table_schema = 'app_queries'"
             )
             assert len(result) > 0, f"View {view_name} not found in app_queries schema"
-            assert result[0][0] == 'VIEW', f"{view_name} is not a VIEW table type"
+            assert result[0][0] == "VIEW", f"{view_name} is not a VIEW table type"
+
 
 class TestPhaseB:
     """Test v_phase_b_results view."""
@@ -215,14 +234,23 @@ class TestPhaseB:
 
         df = conn.fetch_df("SELECT * FROM app_queries.v_phase_b_results")
 
-        required_columns = ['borough', 'morans_i_value', 'classification', 'location_count', 'p_value', 'significance', 'analytics_timestamp']
+        required_columns = [
+            "borough",
+            "morans_i_value",
+            "classification",
+            "location_count",
+            "p_value",
+            "significance",
+            "analytics_timestamp",
+        ]
         for col in required_columns:
             assert col in df.columns, f"Column {col} not found in v_phase_b_results"
 
         # Verify significance computed column
-        assert df['significance'].dtype == 'object', "significance should be VARCHAR"
-        assert all(val in ['Significant', 'Not Significant'] for val in df['significance']), \
+        assert df["significance"].dtype == "object", "significance should be VARCHAR"
+        assert all(val in ["Significant", "Not Significant"] for val in df["significance"]), (
             "significance should be 'Significant' or 'Not Significant'"
+        )
 
     def test_v_phase_b_results_row_count(self, setup_analytics_tables):
         """Verify v_phase_b_results returns 5 rows (one per borough)."""
@@ -240,8 +268,9 @@ class TestPhaseB:
         builder.create_all_views()
 
         df = conn.fetch_df("SELECT borough FROM app_queries.v_phase_b_results")
-        boroughs = df['borough'].tolist()
+        boroughs = df["borough"].tolist()
         assert boroughs == sorted(boroughs), "Results should be ordered by borough"
+
 
 class TestPhaseC:
     """Test v_phase_c_results view."""
@@ -254,8 +283,17 @@ class TestPhaseC:
 
         df = conn.fetch_df("SELECT * FROM app_queries.v_phase_c_results")
 
-        required_columns = ['borough', 'record_count', 'mean_val', 'median_val', 'std_val',
-                          'skewness', 'distribution_type', 'concentration_percent', 'analytics_timestamp']
+        required_columns = [
+            "borough",
+            "record_count",
+            "mean_val",
+            "median_val",
+            "std_val",
+            "skewness",
+            "distribution_type",
+            "concentration_percent",
+            "analytics_timestamp",
+        ]
         for col in required_columns:
             assert col in df.columns, f"Column {col} not found in v_phase_c_results"
 
@@ -268,10 +306,12 @@ class TestPhaseC:
         df = conn.fetch_df("SELECT concentration_percent FROM app_queries.v_phase_c_results")
 
         # concentration_percent should be numeric (0-100 range)
-        assert df['concentration_percent'].dtype in ['float64', 'float32', 'int64'], \
+        assert df["concentration_percent"].dtype in ["float64", "float32", "int64"], (
             "concentration_percent should be numeric"
-        assert all(0 <= val <= 100 for val in df['concentration_percent'] if pd.notna(val)), \
+        )
+        assert all(0 <= val <= 100 for val in df["concentration_percent"] if pd.notna(val)), (
             "concentration_percent should be in 0-100 range"
+        )
 
     def test_v_phase_c_results_row_count(self, setup_analytics_tables):
         """Verify v_phase_c_results returns 5 rows."""
@@ -281,6 +321,7 @@ class TestPhaseC:
 
         result = conn.fetch_all("SELECT COUNT(*) FROM app_queries.v_phase_c_results")
         assert result[0][0] == 5, f"Expected 5 rows, got {result[0][0]}"
+
 
 class TestPhaseD:
     """Test v_phase_d_results view."""
@@ -293,8 +334,16 @@ class TestPhaseD:
 
         df = conn.fetch_df("SELECT * FROM app_queries.v_phase_d_results")
 
-        required_columns = ['location_id', 'borough', 'latitude', 'longitude',
-                          'inspection_count', 'z_score_violations', 'outlier_class', 'priority_rank']
+        required_columns = [
+            "location_id",
+            "borough",
+            "latitude",
+            "longitude",
+            "inspection_count",
+            "z_score_violations",
+            "outlier_class",
+            "priority_rank",
+        ]
         for col in required_columns:
             assert col in df.columns, f"Column {col} not found in v_phase_d_results"
 
@@ -317,9 +366,10 @@ class TestPhaseD:
         df = conn.fetch_df("SELECT borough, priority_rank FROM app_queries.v_phase_d_results")
 
         # Check that within each borough, priority_rank is ascending
-        for borough in df['borough'].unique():
-            borough_data = df[df['borough'] == borough]['priority_rank'].tolist()
+        for borough in df["borough"].unique():
+            borough_data = df[df["borough"] == borough]["priority_rank"].tolist()
             assert borough_data == sorted(borough_data), f"Rank not ascending for borough {borough}"
+
 
 class TestPhaseE:
     """Test v_phase_e_decomposition view."""
@@ -332,8 +382,16 @@ class TestPhaseE:
 
         df = conn.fetch_df("SELECT * FROM app_queries.v_phase_e_decomposition")
 
-        required_columns = ['date', 'borough', 'violation_count', 'trend_value',
-                          'seasonal_value', 'residual_value', 'forecast_next_period', 'analytics_timestamp']
+        required_columns = [
+            "date",
+            "borough",
+            "violation_count",
+            "trend_value",
+            "seasonal_value",
+            "residual_value",
+            "forecast_next_period",
+            "analytics_timestamp",
+        ]
         for col in required_columns:
             assert col in df.columns, f"Column {col} not found in v_phase_e_decomposition"
 
@@ -354,10 +412,11 @@ class TestPhaseE:
         builder.create_all_views()
 
         df = conn.fetch_df("SELECT date FROM app_queries.v_phase_e_decomposition LIMIT 10")
-        dates = df['date'].tolist()
+        dates = df["date"].tolist()
 
         # Dates should be descending
         assert dates == sorted(dates, reverse=True), "Dates should be descending"
+
 
 class TestPhaseF:
     """Test v_phase_f_bootstrap_ci view."""
@@ -370,8 +429,16 @@ class TestPhaseF:
 
         df = conn.fetch_df("SELECT * FROM app_queries.v_phase_f_bootstrap_ci")
 
-        required_columns = ['borough', 'point_estimate', 'ci_lower_95', 'ci_upper_95',
-                          'interval_width', 'prob_meets_sla', 'risk_level', 'analytics_timestamp']
+        required_columns = [
+            "borough",
+            "point_estimate",
+            "ci_lower_95",
+            "ci_upper_95",
+            "interval_width",
+            "prob_meets_sla",
+            "risk_level",
+            "analytics_timestamp",
+        ]
         for col in required_columns:
             assert col in df.columns, f"Column {col} not found in v_phase_f_bootstrap_ci"
 
@@ -383,9 +450,10 @@ class TestPhaseF:
 
         df = conn.fetch_df("SELECT risk_level FROM app_queries.v_phase_f_bootstrap_ci")
 
-        valid_levels = {'HIGH', 'MEDIUM', 'LOW', 'CRITICAL'}
-        assert all(val in valid_levels for val in df['risk_level']), \
+        valid_levels = {"HIGH", "MEDIUM", "LOW", "CRITICAL"}
+        assert all(val in valid_levels for val in df["risk_level"]), (
             f"risk_level should be in {valid_levels}"
+        )
 
     def test_v_phase_f_bootstrap_ci_row_count(self, setup_analytics_tables):
         """Verify v_phase_f_bootstrap_ci returns 5 rows."""
@@ -395,6 +463,7 @@ class TestPhaseF:
 
         result = conn.fetch_all("SELECT COUNT(*) FROM app_queries.v_phase_f_bootstrap_ci")
         assert result[0][0] == 5, f"Expected 5 rows, got {result[0][0]}"
+
 
 class TestKPIDashboard:
     """Test v_kpi_dashboard view."""
@@ -407,7 +476,13 @@ class TestKPIDashboard:
 
         df = conn.fetch_df("SELECT * FROM app_queries.v_kpi_dashboard")
 
-        required_columns = ['kpi_name', 'borough', 'kpi_value', 'metric_category', 'analytics_timestamp']
+        required_columns = [
+            "kpi_name",
+            "borough",
+            "kpi_value",
+            "metric_category",
+            "analytics_timestamp",
+        ]
         for col in required_columns:
             assert col in df.columns, f"Column {col} not found in v_kpi_dashboard"
 
@@ -426,11 +501,15 @@ class TestKPIDashboard:
         builder = ServingViewsBuilder(conn)
         builder.create_all_views()
 
-        df = conn.fetch_df("SELECT DISTINCT metric_category FROM app_queries.v_kpi_dashboard ORDER BY metric_category")
+        df = conn.fetch_df(
+            "SELECT DISTINCT metric_category FROM app_queries.v_kpi_dashboard ORDER BY metric_category"
+        )
 
         # Should have multiple categories
         assert len(df) > 0, "metric_category should have values"
-        assert all(isinstance(val, str) for val in df['metric_category']), "metric_category should be VARCHAR"
+        assert all(isinstance(val, str) for val in df["metric_category"]), (
+            "metric_category should be VARCHAR"
+        )
 
     def test_v_kpi_dashboard_ordered_by_borough_and_kpi(self, setup_analytics_tables):
         """Verify v_kpi_dashboard is ordered by borough, kpi_name."""
@@ -441,9 +520,10 @@ class TestKPIDashboard:
         df = conn.fetch_df("SELECT borough, kpi_name FROM app_queries.v_kpi_dashboard")
 
         # Check sorting: should be ordered by borough first, then kpi_name
-        expected = df.sort_values(['borough', 'kpi_name']).reset_index(drop=True)
+        expected = df.sort_values(["borough", "kpi_name"]).reset_index(drop=True)
         actual = df.reset_index(drop=True)
         assert actual.equals(expected), "Results should be ordered by borough, then kpi_name"
+
 
 # Import pandas for type checking in tests
 try:

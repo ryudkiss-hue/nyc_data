@@ -8,13 +8,12 @@ import pytest
 from socrata_toolkit.viz.accessibility import apply_wcag_palette, generate_chart_summary
 from socrata_toolkit.viz.plotly import borough_bar_chart
 
+
 @pytest.fixture
 def sample_fig():
-    df = pd.DataFrame({
-        "borough": ["MANHATTAN", "BRONX", "BROOKLYN"],
-        "violations": [10, 20, 30]
-    })
+    df = pd.DataFrame({"borough": ["MANHATTAN", "BRONX", "BROOKLYN"], "violations": [10, 20, 30]})
     return borough_bar_chart(df)
+
 
 class TestAccessibilityUtility:
     def test_wcag_palette_injection(self, sample_fig):

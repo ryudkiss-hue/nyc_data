@@ -8,6 +8,7 @@ import pytest
 from app.dash_layouts import render_header, render_sidebar
 from app.viz_engine import VisualizationEngine
 
+
 def _find_values_in_component(comp, key_to_find=None, val_to_find=None):
     """Recursively search Dash component tree for specific prop keys or values."""
     found = False
@@ -38,6 +39,7 @@ def _find_values_in_component(comp, key_to_find=None, val_to_find=None):
 
     return False
 
+
 def test_header_accessibility_markup():
     """Verify that the header contains appropriate accessible labels."""
     header = render_header()
@@ -45,11 +47,13 @@ def test_header_accessibility_markup():
     assert _find_values_in_component(header, val_to_find="NYC DOT Socrata Toolkit Header")
     assert _find_values_in_component(header, val_to_find="toolkit-brand")
 
+
 def test_sidebar_navigation_labels():
     """Verify that navigation links have distinct labels."""
     sidebar = render_sidebar()
-    assert _find_values_in_component(sidebar, val_to_find="MISSION COMMAND")
-    assert _find_values_in_component(sidebar, val_to_find="Structural Mandate")
+    assert _find_values_in_component(sidebar, val_to_find="NYC DOT Analytics")
+    assert _find_values_in_component(sidebar, val_to_find="Engineering")
+
 
 def test_visualization_summary_generation():
     """Verify that the engine generates textual summaries for screen readers."""
@@ -68,17 +72,21 @@ def test_visualization_summary_generation():
     assert "B" in summary
     assert "20" in summary
 
+
 def test_dmc_component_semantic_integrity():
     """Ensure heavy UI components use correct Mantine 8.0 alpha semantic props."""
     # Example: AppShell should have appropriate structure
     from app.dash_app import app
+
     layout = app.layout
 
     # Provider should be at the root
     assert isinstance(layout, dmc.MantineProvider)
+
     # AppShell should be a descendant
     def find_component(comp, target_type):
-        if isinstance(comp, target_type): return True
+        if isinstance(comp, target_type):
+            return True
         if hasattr(comp, "children") and comp.children:
             children = comp.children if isinstance(comp.children, list) else [comp.children]
             return any(find_component(c, target_type) for c in children)

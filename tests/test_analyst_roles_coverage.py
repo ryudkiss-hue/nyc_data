@@ -1,4 +1,5 @@
 """Comprehensive tests for analyst.roles module."""
+
 from __future__ import annotations
 
 import tempfile
@@ -27,6 +28,7 @@ from socrata_toolkit.analyst.roles import (
     write_role_artifacts,
 )
 
+
 class TestRoleDuty:
     """Tests for RoleDuty dataclass."""
 
@@ -46,6 +48,7 @@ class TestRoleDuty:
         )
         assert len(duty.workflow_steps) == 3
         assert "fetch" in duty.workflow_steps
+
 
 class TestRoleKpiDef:
     """Tests for RoleKpiDef dataclass."""
@@ -75,6 +78,7 @@ class TestRoleKpiDef:
             data_source={"dataset": "violations", "fourfour": "dntt-gqwq"},
         )
         assert kpi.data_source["dataset"] == "violations"
+
 
 class TestRoleProfile:
     """Tests for RoleProfile dataclass."""
@@ -115,6 +119,7 @@ class TestRoleProfile:
         assert len(profile.duties) == 1
         assert len(profile.kpis) == 1
 
+
 class TestParseDuty:
     """Tests for _parse_duty function."""
 
@@ -136,6 +141,7 @@ class TestParseDuty:
         assert duty.id == "D1"
         assert len(duty.workflow_steps) == 2
         assert len(duty.pack_outputs) == 2
+
 
 class TestParseKpi:
     """Tests for _parse_kpi function."""
@@ -161,6 +167,7 @@ class TestParseKpi:
         assert kpi.name == "completion_rate"
         assert kpi.direction == "higher_is_better"
         assert kpi.target == 0.8
+
 
 class TestLoadRoleProfile:
     """Tests for load_role_profile function."""
@@ -200,11 +207,7 @@ kpis:
             role_dir.mkdir()
             role_file = role_dir / "test_role.yaml"
             role_yaml = (
-                "role_id: test\n"
-                "display_name: Test\n"
-                "unit_focus: Test focus\n"
-                "duties: []\n"
-                "kpis: []\n"
+                "role_id: test\ndisplay_name: Test\nunit_focus: Test focus\nduties: []\nkpis: []\n"
             )
             role_file.write_text(role_yaml, encoding="utf-8")
 
@@ -214,6 +217,7 @@ kpis:
     def test_load_nonexistent_profile(self):
         with pytest.raises(FileNotFoundError):
             load_role_profile("/nonexistent/profile.yaml")
+
 
 class TestParseConflictRate:
     """Tests for _parse_conflict_rate function."""
@@ -234,6 +238,7 @@ class TestParseConflictRate:
         assert _parse_conflict_rate("") is None
         assert _parse_conflict_rate(None) is None
 
+
 class TestParseDiffAdded:
     """Tests for _parse_diff_added function."""
 
@@ -252,6 +257,7 @@ class TestParseDiffAdded:
     def test_parse_diff_added_empty(self):
         assert _parse_diff_added("") == 0.0
         assert _parse_diff_added(None) == 0.0
+
 
 class TestProgramGreenPct:
     """Tests for _program_green_pct function."""
@@ -283,6 +289,7 @@ class TestProgramGreenPct:
         assert _program_green_pct(None) is None
         assert _program_green_pct({}) is None
         assert _program_green_pct({"metrics": []}) is None
+
 
 class TestComputeRoleKpis:
     """Tests for compute_role_kpis function."""
@@ -340,6 +347,7 @@ class TestComputeRoleKpis:
         dashboard = compute_role_kpis(basic_role, pack_artifacts=artifacts)
         assert any(m.name == "ifa_report_ready" and m.value == 1.0 for m in dashboard.metrics)
 
+
 class TestRoleDashboardSerialization:
     """Tests for role_dashboard_to_dict function."""
 
@@ -364,6 +372,7 @@ class TestRoleDashboardSerialization:
         assert result["overall_health"] == "yellow"
         assert len(result["metrics"]) == 1
         assert result["metrics"][0]["name"] == "metric1"
+
 
 class TestMergeProgramAndRoleKpis:
     """Tests for merge_program_and_role_kpis function."""
@@ -392,6 +401,7 @@ class TestMergeProgramAndRoleKpis:
         )
         merged = merge_program_and_role_kpis(None, dashboard)
         assert "role" in merged
+
 
 class TestWriteRoleArtifacts:
     """Tests for write_role_artifacts function."""
@@ -437,6 +447,7 @@ class TestWriteRoleArtifacts:
             assert "program_kpi" in artifacts
             assert (pack_dir / "program_kpi.json").exists()
 
+
 class TestBuildRoleTaskStatusMd:
     """Tests for build_role_task_status_md function."""
 
@@ -444,7 +455,11 @@ class TestBuildRoleTaskStatusMd:
         role = RoleProfile(
             role_id="analyst",
             display_name="Project Analyst",
-            job_reference={"business_title": "Analyst", "jid": "35715", "url": "https://cityjobs.nyc.gov"},
+            job_reference={
+                "business_title": "Analyst",
+                "jid": "35715",
+                "url": "https://cityjobs.nyc.gov",
+            },
             unit_focus="Sidewalk program",
             duties=[
                 RoleDuty(id="D1", text="Review data", pack_outputs=["report.xlsx"]),
@@ -473,6 +488,7 @@ class TestBuildRoleTaskStatusMd:
         assert "[x] **D1**" in md
         assert "[ ] **D2**" in md
         assert "cityjobs.nyc.gov" in md
+
 
 class TestEvaluateTaskChecklist:
     """Tests for evaluate_task_checklist function."""
@@ -520,6 +536,7 @@ class TestEvaluateTaskChecklist:
             assert len(tasks) == 1
             assert tasks[0]["complete"] is False
             assert pct == 0.0
+
 
 class TestResolveRoleProfilePath:
     """Tests for resolve_role_profile_path function."""

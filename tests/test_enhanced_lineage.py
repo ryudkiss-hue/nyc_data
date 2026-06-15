@@ -1,4 +1,5 @@
 """Tests for enhanced lineage tracking: datasets → marts → dashboards → reports → exports."""
+
 import json
 from datetime import datetime
 
@@ -14,6 +15,7 @@ from socrata_toolkit.core.enhanced_lineage import (
     MartNode,
     ReportNode,
 )
+
 
 class TestLineageEvent:
     """Test individual lineage events."""
@@ -92,6 +94,7 @@ class TestLineageEvent:
         assert event.event_type == "export"
         assert event.metadata["format"] == "pdf"
 
+
 class TestLineageTracker:
     """Test lineage tracking and recording."""
 
@@ -136,7 +139,13 @@ class TestLineageTracker:
 
         events = tracker.get_events()
         assert len(events) == 5
-        assert [e.event_type for e in events] == ["fetch", "stage", "materialize", "dashboard", "export"]
+        assert [e.event_type for e in events] == [
+            "fetch",
+            "stage",
+            "materialize",
+            "dashboard",
+            "export",
+        ]
 
     def test_get_upstream_chain(self):
         """Test getting full upstream lineage chain."""
@@ -144,7 +153,9 @@ class TestLineageTracker:
 
         tracker.record_event("fetch", "inspection", "raw.inspection")
         tracker.record_event("stage", "raw.inspection", "staging.inspection")
-        tracker.record_event("materialize", "staging.inspection", "analytics.sidewalk_repair_matrix")
+        tracker.record_event(
+            "materialize", "staging.inspection", "analytics.sidewalk_repair_matrix"
+        )
 
         upstream = tracker.get_upstream_chain("analytics.sidewalk_repair_matrix")
 
@@ -158,15 +169,22 @@ class TestLineageTracker:
 
         tracker.record_event("fetch", "inspection", "raw.inspection")
         tracker.record_event("stage", "raw.inspection", "staging.inspection")
-        tracker.record_event("materialize", "staging.inspection", "analytics.sidewalk_repair_matrix")
-        tracker.record_event("dashboard", "analytics.sidewalk_repair_matrix", "dashboards/sidewalk_repair_matrix")
-        tracker.record_event("export", "dashboards/sidewalk_repair_matrix", "reports/sidewalk_repair_matrix.pdf")
+        tracker.record_event(
+            "materialize", "staging.inspection", "analytics.sidewalk_repair_matrix"
+        )
+        tracker.record_event(
+            "dashboard", "analytics.sidewalk_repair_matrix", "dashboards/sidewalk_repair_matrix"
+        )
+        tracker.record_event(
+            "export", "dashboards/sidewalk_repair_matrix", "reports/sidewalk_repair_matrix.pdf"
+        )
 
         downstream = tracker.get_downstream_chain("raw.inspection")
 
         assert len(downstream) == 4
         assert downstream[0].target == "staging.inspection"
         assert downstream[-1].target == "reports/sidewalk_repair_matrix.pdf"
+
 
 class TestLineageDAG:
     """Test DAG construction and visualization."""
@@ -177,7 +195,9 @@ class TestLineageDAG:
 
         tracker.record_event("fetch", "inspection", "raw.inspection")
         tracker.record_event("stage", "raw.inspection", "staging.inspection")
-        tracker.record_event("materialize", "staging.inspection", "analytics.sidewalk_repair_matrix")
+        tracker.record_event(
+            "materialize", "staging.inspection", "analytics.sidewalk_repair_matrix"
+        )
 
         dag = LineageDAG.from_tracker(tracker)
 
@@ -191,8 +211,12 @@ class TestLineageDAG:
 
         tracker.record_event("fetch", "inspection", "raw.inspection")
         tracker.record_event("stage", "raw.inspection", "staging.inspection")
-        tracker.record_event("materialize", "staging.inspection", "analytics.sidewalk_repair_matrix")
-        tracker.record_event("dashboard", "analytics.sidewalk_repair_matrix", "dashboards/sidewalk_repair_matrix")
+        tracker.record_event(
+            "materialize", "staging.inspection", "analytics.sidewalk_repair_matrix"
+        )
+        tracker.record_event(
+            "dashboard", "analytics.sidewalk_repair_matrix", "dashboards/sidewalk_repair_matrix"
+        )
 
         dag = LineageDAG.from_tracker(tracker)
         mermaid = dag.to_mermaid()
@@ -216,6 +240,7 @@ class TestLineageDAG:
         assert "edges" in parsed
         # Nodes: inspection, raw.inspection, analytics.sidewalk_repair_matrix
         assert len(parsed["nodes"]) == 3
+
 
 class TestLineageIntegration:
     """Integration tests for complete workflows."""
@@ -253,7 +278,9 @@ class TestLineageIntegration:
         tracker = LineageTracker()
 
         tracker.record_event("materialize", "staging.inspection", "analytics.raw_counts_summary")
-        tracker.record_event("dashboard", "analytics.raw_counts_summary", "dashboards/raw_counts_summary")
+        tracker.record_event(
+            "dashboard", "analytics.raw_counts_summary", "dashboards/raw_counts_summary"
+        )
 
         # Export to multiple formats
         tracker.record_event(
@@ -285,7 +312,11 @@ class TestLineageIntegration:
 
         tracker.record_event("fetch", "inspection", "raw.inspection", status="success")
         tracker.record_event(
-            "stage", "raw.inspection", "staging.inspection", status="failure", metadata={"error": "Schema drift"}
+            "stage",
+            "raw.inspection",
+            "staging.inspection",
+            status="failure",
+            metadata={"error": "Schema drift"},
         )
 
         events = tracker.get_events()

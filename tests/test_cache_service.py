@@ -3,6 +3,7 @@ import pytest
 
 from app.services.cache_service import CacheService
 
+
 @pytest.fixture
 def cache_service(monkeypatch):
     # Use an in-memory fake Redis so the test does not depend on a live
@@ -14,12 +15,14 @@ def cache_service(monkeypatch):
     svc.client = fake
     return svc
 
+
 def test_cache_set_get(cache_service):
     key = "test_key"
     value = {"a": 1, "b": [1, 2, 3]}
 
     assert cache_service.set(key, value, ttl_seconds=10) is True
     assert cache_service.get(key) == value
+
 
 def test_cache_metadata(cache_service):
     key = "meta_key"

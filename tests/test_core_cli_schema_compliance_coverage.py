@@ -18,12 +18,17 @@ from click.testing import CliRunner
 
 from socrata_toolkit.core.cli import main
 
+
 @pytest.fixture
 def runner():
     return CliRunner()
 
+
 def _col(dtype, nullable=True, position=0, sample_value=None):
-    return SimpleNamespace(dtype=dtype, nullable=nullable, position=position, sample_value=sample_value)
+    return SimpleNamespace(
+        dtype=dtype, nullable=nullable, position=position, sample_value=sample_value
+    )
+
 
 def _schema(dataset_id="inspection", version=1, columns=None, row_count=100):
     return SimpleNamespace(
@@ -35,9 +40,11 @@ def _schema(dataset_id="inspection", version=1, columns=None, row_count=100):
         metadata={},
     )
 
+
 # ---------------------------------------------------------------------------
 # compliance group (real bundled rules)
 # ---------------------------------------------------------------------------
+
 
 class TestComplianceCommands:
     def test_ada_violations_default(self, runner):
@@ -73,9 +80,11 @@ class TestComplianceCommands:
         payload = json.loads(out.read_text())
         assert "total_rules" in payload
 
+
 # ---------------------------------------------------------------------------
 # schema diff
 # ---------------------------------------------------------------------------
+
 
 class TestSchemaDiff:
     def test_diff_version1_missing(self, runner):
@@ -119,9 +128,11 @@ class TestSchemaDiff:
         types = {c["type"] for c in payload["changes"]}
         assert types == {"COLUMN_DELETION", "COLUMN_ADDITION", "TYPE_CHANGE"}
 
+
 # ---------------------------------------------------------------------------
 # schema validate
 # ---------------------------------------------------------------------------
+
 
 class TestSchemaValidate:
     def test_validate_no_schema_raises(self, runner, tmp_path):
@@ -139,8 +150,10 @@ class TestSchemaValidate:
         jsonl.write_text('{"a": 1}\n{"a": 2}\n')
         mock_reg = MagicMock()
         mock_reg.get_schema_version.return_value = _schema()
-        with patch("socrata_toolkit.core.cli.SchemaRegistry", return_value=mock_reg), \
-             patch("socrata_toolkit.core.cli.SchemaValidator") as mock_val:
+        with (
+            patch("socrata_toolkit.core.cli.SchemaRegistry", return_value=mock_reg),
+            patch("socrata_toolkit.core.cli.SchemaValidator") as mock_val,
+        ):
             mock_val.return_value.validate_batch.return_value = (2, [])
             result = runner.invoke(main, ["schema", "validate", "inspection", str(jsonl)])
         assert result.exit_code == 0
@@ -151,8 +164,10 @@ class TestSchemaValidate:
         jsonl.write_text('{"a": 1}\n{"a": "bad"}\n')
         mock_reg = MagicMock()
         mock_reg.get_schema_version.return_value = _schema()
-        with patch("socrata_toolkit.core.cli.SchemaRegistry", return_value=mock_reg), \
-             patch("socrata_toolkit.core.cli.SchemaValidator") as mock_val:
+        with (
+            patch("socrata_toolkit.core.cli.SchemaRegistry", return_value=mock_reg),
+            patch("socrata_toolkit.core.cli.SchemaValidator") as mock_val,
+        ):
             mock_val.return_value.validate_batch.return_value = (1, ["row 2: type error"])
             result = runner.invoke(main, ["schema", "validate", "inspection", str(jsonl)])
         assert result.exit_code == 0
@@ -164,16 +179,20 @@ class TestSchemaValidate:
         jsonl.write_text('{"a": 1}\nNOT JSON\n')
         mock_reg = MagicMock()
         mock_reg.get_schema_version.return_value = _schema()
-        with patch("socrata_toolkit.core.cli.SchemaRegistry", return_value=mock_reg), \
-             patch("socrata_toolkit.core.cli.SchemaValidator") as mock_val:
+        with (
+            patch("socrata_toolkit.core.cli.SchemaRegistry", return_value=mock_reg),
+            patch("socrata_toolkit.core.cli.SchemaValidator") as mock_val,
+        ):
             mock_val.return_value.validate_batch.return_value = (1, [])
             result = runner.invoke(main, ["schema", "validate", "inspection", str(jsonl)])
         assert result.exit_code == 0
         assert "Error parsing line 2" in result.output
 
+
 # ---------------------------------------------------------------------------
 # schema check-compatibility
 # ---------------------------------------------------------------------------
+
 
 class TestSchemaCheckCompatibility:
     def test_check_compat_no_old_schema(self, runner, tmp_path):
@@ -182,7 +201,9 @@ class TestSchemaCheckCompatibility:
         mock_reg = MagicMock()
         mock_reg.get_schema_version.return_value = None
         with patch("socrata_toolkit.core.cli.SchemaRegistry", return_value=mock_reg):
-            result = runner.invoke(main, ["schema", "check-compatibility", "inspection", str(jsonl)])
+            result = runner.invoke(
+                main, ["schema", "check-compatibility", "inspection", str(jsonl)]
+            )
         assert result.exit_code == 0
         assert "No previous schema" in result.output
 
@@ -192,7 +213,9 @@ class TestSchemaCheckCompatibility:
         mock_reg = MagicMock()
         mock_reg.get_schema_version.return_value = _schema()
         with patch("socrata_toolkit.core.cli.SchemaRegistry", return_value=mock_reg):
-            result = runner.invoke(main, ["schema", "check-compatibility", "inspection", str(jsonl)])
+            result = runner.invoke(
+                main, ["schema", "check-compatibility", "inspection", str(jsonl)]
+            )
         assert result.exit_code != 0
         assert "No records found" in result.output
 
@@ -202,12 +225,19 @@ class TestSchemaCheckCompatibility:
         mock_reg = MagicMock()
         mock_reg.get_schema_version.return_value = _schema()
         mock_reg.extract_schema_from_dataframe = MagicMock(return_value=_schema(version=2))
-        with patch("socrata_toolkit.core.cli.SchemaRegistry", return_value=mock_reg), \
-             patch("socrata_toolkit.core.cli.SchemaRegistry.extract_schema_from_dataframe",
-                   return_value=_schema(version=2), create=True), \
-             patch("socrata_toolkit.core.cli.BackwardCompatibilityChecker") as mock_chk:
+        with (
+            patch("socrata_toolkit.core.cli.SchemaRegistry", return_value=mock_reg),
+            patch(
+                "socrata_toolkit.core.cli.SchemaRegistry.extract_schema_from_dataframe",
+                return_value=_schema(version=2),
+                create=True,
+            ),
+            patch("socrata_toolkit.core.cli.BackwardCompatibilityChecker") as mock_chk,
+        ):
             mock_chk.return_value.check_compatibility.return_value = (True, [])
-            result = runner.invoke(main, ["schema", "check-compatibility", "inspection", str(jsonl)])
+            result = runner.invoke(
+                main, ["schema", "check-compatibility", "inspection", str(jsonl)]
+            )
         assert result.exit_code == 0
         assert "Compatible: True" in result.output
 
@@ -216,19 +246,28 @@ class TestSchemaCheckCompatibility:
         jsonl.write_text('{"a": 1}\n')
         mock_reg = MagicMock()
         mock_reg.get_schema_version.return_value = _schema()
-        with patch("socrata_toolkit.core.cli.SchemaRegistry", return_value=mock_reg), \
-             patch("socrata_toolkit.core.cli.SchemaRegistry.extract_schema_from_dataframe",
-                   return_value=_schema(version=2), create=True), \
-             patch("socrata_toolkit.core.cli.BackwardCompatibilityChecker") as mock_chk:
+        with (
+            patch("socrata_toolkit.core.cli.SchemaRegistry", return_value=mock_reg),
+            patch(
+                "socrata_toolkit.core.cli.SchemaRegistry.extract_schema_from_dataframe",
+                return_value=_schema(version=2),
+                create=True,
+            ),
+            patch("socrata_toolkit.core.cli.BackwardCompatibilityChecker") as mock_chk,
+        ):
             mock_chk.return_value.check_compatibility.return_value = (False, ["dropped column a"])
-            result = runner.invoke(main, ["schema", "check-compatibility", "inspection", str(jsonl), "--strict"])
+            result = runner.invoke(
+                main, ["schema", "check-compatibility", "inspection", str(jsonl), "--strict"]
+            )
         assert result.exit_code == 0
         assert "Compatible: False" in result.output
         assert "dropped column a" in result.output
 
+
 # ---------------------------------------------------------------------------
 # schema list / current
 # ---------------------------------------------------------------------------
+
 
 class TestSchemaListCurrent:
     def test_list_empty(self, runner):

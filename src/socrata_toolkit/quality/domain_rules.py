@@ -18,6 +18,7 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class DomainRuleResult:
     """Result of a domain validation rule.
@@ -39,6 +40,7 @@ class DomainRuleResult:
     def __repr__(self) -> str:
         """String representation."""
         return f"DomainRuleResult(rule={self.rule_name}, status={self.status}, affected={self.rows_affected})"
+
 
 def validate_material_lifespan_rule(df: pd.DataFrame) -> DomainRuleResult:
     """
@@ -155,6 +157,7 @@ def validate_material_lifespan_rule(df: pd.DataFrame) -> DomainRuleResult:
             fix_recommendation="Check dataset structure and column names",
         )
 
+
 def validate_borough_coverage_distribution(df: pd.DataFrame) -> DomainRuleResult:
     """
     Validate borough distribution matches historical patterns.
@@ -181,7 +184,16 @@ def validate_borough_coverage_distribution(df: pd.DataFrame) -> DomainRuleResult
             )
 
         # Compute Manhattan percentage
-        borough_dist = df["borough"].value_counts(normalize=True)
+        borough_series = df["borough"].dropna()
+        if borough_series.empty:
+            return DomainRuleResult(
+                rule_name="borough_coverage_distribution",
+                status="WARNING",
+                rows_affected=0,
+                details="Borough column contains only null values",
+                fix_recommendation="Populate borough column with valid values",
+            )
+        borough_dist = borough_series.value_counts(normalize=True)
         manhattan_variants = ["MANHATTAN", "Manhattan", "MN", "M"]
         manhattan_pct = 0
         for variant in manhattan_variants:
@@ -218,7 +230,9 @@ def validate_borough_coverage_distribution(df: pd.DataFrame) -> DomainRuleResult
                 "Manhattan coverage outside expected 30-55% range suggests structural data changes."
             )
         elif status == "WARNING":
-            fix_recommendation = "Monitor Manhattan coverage trend; verify data collection consistency."
+            fix_recommendation = (
+                "Monitor Manhattan coverage trend; verify data collection consistency."
+            )
 
         return DomainRuleResult(
             rule_name="borough_coverage_distribution",
@@ -238,6 +252,7 @@ def validate_borough_coverage_distribution(df: pd.DataFrame) -> DomainRuleResult
             fix_recommendation="Check borough column format and values",
         )
 
+
 def validate_permit_inspection_relationship(
     permits_df: pd.DataFrame, inspections_df: pd.DataFrame
 ) -> DomainRuleResult:
@@ -255,6 +270,16 @@ def validate_permit_inspection_relationship(
         DomainRuleResult with spatial/temporal alignment status
     """
     try:
+        # Check for empty DataFrames first (before column validation)
+        if permits_df.empty or inspections_df.empty:
+            return DomainRuleResult(
+                rule_name="permit_inspection_relationship",
+                status="PASS",
+                rows_affected=0,
+                details="One or both DataFrames empty; no validation possible",
+                fix_recommendation=None,
+            )
+
         # Validate required columns
         permit_cols = {"start_date", "end_date", "latitude", "longitude", "borough"}
         inspection_cols = {"inspection_date", "latitude", "longitude", "borough"}
@@ -272,15 +297,6 @@ def validate_permit_inspection_relationship(
                     f"inspections={missing_inspection_cols}"
                 ),
                 fix_recommendation="Ensure both DataFrames have required date and spatial columns",
-            )
-
-        if permits_df.empty or inspections_df.empty:
-            return DomainRuleResult(
-                rule_name="permit_inspection_relationship",
-                status="PASS",
-                rows_affected=0,
-                details="One or both DataFrames empty; no validation possible",
-                fix_recommendation=None,
             )
 
         # Convert dates
@@ -310,9 +326,7 @@ def validate_permit_inspection_relationship(
         for _, permit in permits_valid.iterrows():
             # Check if any inspections in same spatial region
             borough = permit["borough"]
-            inspections_in_borough = inspections_valid[
-                inspections_valid["borough"] == borough
-            ]
+            inspections_in_borough = inspections_valid[inspections_valid["borough"] == borough]
             if inspections_in_borough.empty:
                 borough_mismatches += 1
 
@@ -337,7 +351,9 @@ def validate_permit_inspection_relationship(
 
         # Determine status
         total_violations = borough_mismatches + temporal_violations
-        violation_rate = total_violations / len(inspections_valid) if inspections_valid.shape[0] > 0 else 0
+        violation_rate = (
+            total_violations / len(inspections_valid) if inspections_valid.shape[0] > 0 else 0
+        )
 
         if violation_rate < 0.05:
             status = "PASS"
@@ -347,15 +363,13 @@ def validate_permit_inspection_relationship(
             status = "FAIL"
 
         details = (
-            f"Borough mismatches: {borough_mismatches}, Temporal violations: {temporal_violations} "
+            f"{borough_mismatches} Borough mismatches, {temporal_violations} Temporal violations "
             f"({violation_rate:.1%} of inspections)"
         )
 
         fix_recommendation = None
         if status != "PASS":
-            fix_recommendation = (
-                "Review inspection records to ensure they align with permit timelines and spatial coverage."
-            )
+            fix_recommendation = "Review inspection records to ensure they align with permit timelines and spatial coverage."
 
         return DomainRuleResult(
             rule_name="permit_inspection_relationship",
@@ -374,6 +388,7 @@ def validate_permit_inspection_relationship(
             details=f"Rule evaluation error: {str(e)}",
             fix_recommendation="Check DataFrame structure and date/location columns",
         )
+
 
 def validate_all_domain_rules(
     df: pd.DataFrame,
@@ -412,6 +427,7 @@ def validate_all_domain_rules(
         logger.info(f"Permit-inspection rule: {permit_result.status}")
 
     return results
+
 
 # Utility function for generating rule summary
 def summarize_domain_rule_results(results: list[DomainRuleResult]) -> dict:

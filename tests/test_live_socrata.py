@@ -7,12 +7,14 @@ These tests make real HTTP requests and are skipped automatically when:
 In CI the token is injected via repository secrets; tests only run when the
 runner can actually reach api.us.socrata.com / data.cityofnewyork.us.
 """
+
 from __future__ import annotations
 
 import os
 import socket
 
 import pytest
+
 
 def _socrata_reachable() -> bool:
     """Return True if data.cityofnewyork.us:443 is reachable within 5 s."""
@@ -21,6 +23,7 @@ def _socrata_reachable() -> bool:
             return True
     except OSError:
         return False
+
 
 TOKEN = os.getenv("SOCRATA_APP_TOKEN", "")
 _NETWORK_OK = _socrata_reachable()
@@ -42,8 +45,9 @@ NEEDS_VALID_TOKEN = pytest.mark.skipif(
 )
 
 DOMAIN = "data.cityofnewyork.us"
-RAMP_FOURFOUR = "e7gc-ub6z"     # Pedestrian Ramp Program Progress
+RAMP_FOURFOUR = "e7gc-ub6z"  # Pedestrian Ramp Program Progress
 INSPECTION_FOURFOUR = "dntt-gqwq"  # SMD Inspections
+
 
 @NEEDS_TOKEN
 def test_socrata_search_returns_results():
@@ -53,6 +57,7 @@ def test_socrata_search_returns_results():
     client = SocrataClient(SocrataConfig())
     results = client.search("sidewalk", limit=5)
     assert len(results) > 0, "Live search returned no results"
+
 
 @NEEDS_TOKEN
 def test_ramp_progress_dataset_accessible():
@@ -64,6 +69,7 @@ def test_ramp_progress_dataset_accessible():
 
     assert len(df) > 0, "Ramp progress dataset returned 0 rows"
     assert "borough" in df.columns, "Expected 'borough' column in ramp dataset"
+
 
 @NEEDS_TOKEN
 def test_ramp_progress_expected_boroughs():
@@ -78,6 +84,7 @@ def test_ramp_progress_expected_boroughs():
     found = boroughs & expected
     assert len(found) >= 3, f"Expected ≥3 boroughs, got: {found}"
 
+
 @NEEDS_TOKEN
 def test_inspection_dataset_large():
     """Inspections dataset (dntt-gqwq) has meaningful row counts."""
@@ -87,6 +94,7 @@ def test_inspection_dataset_large():
     df = client.fetch_dataframe(DOMAIN, INSPECTION_FOURFOUR, max_rows=100)
 
     assert len(df) >= 100, "Inspections dataset returned fewer rows than expected"
+
 
 @NEEDS_VALID_TOKEN
 def test_dataset_health_cmd_live():
@@ -102,6 +110,7 @@ def test_dataset_health_cmd_live():
     assert result.exit_code in (0, 1), f"dataset health crashed: {result.output}"
     assert "ramp_progress" in result.output
     assert "e7gc-ub6z" in result.output
+
 
 @NEEDS_VALID_TOKEN
 def test_ramp_analysis_cmd_live():

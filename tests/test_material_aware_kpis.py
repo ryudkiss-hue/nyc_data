@@ -17,6 +17,7 @@ from socrata_toolkit.engineering import (
     compute_sidewalk_kpis,
 )
 
+
 class TestLegacySidewalkKPI:
     """Tests for backward-compatible SidewalkKPI class."""
 
@@ -83,6 +84,7 @@ class TestLegacySidewalkKPI:
         # Should not raise KeyError
         kpi = compute_sidewalk_kpis(df)
         assert kpi is not None
+
 
 class TestMaterialAwareSidewalkKPI:
     """Tests for MaterialAwareSidewalkKPI dataclass."""
@@ -170,6 +172,7 @@ class TestMaterialAwareSidewalkKPI:
             },
         )
         assert kpi.material_longevity["asphalt"]["segment_count"] == 1250
+
 
 class TestMaterialAwareKPIComputation:
     """Tests for compute_material_aware_kpis function."""
@@ -370,6 +373,7 @@ class TestMaterialAwareKPIComputation:
             linear_feet_col="linear_feet",
         )
         assert kpi is not None
+
 
 class TestKPIIntegration:
     """Integration tests for legacy and material-aware KPIs together."""

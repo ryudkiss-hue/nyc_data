@@ -33,12 +33,22 @@ from typing import Any
 
 try:
     import psycopg
-    from psycopg import sql
+    from psycopg import sql as _pgsql
 except ImportError:
     psycopg = None  # type: ignore
-    sql = None  # type: ignore
+    _pgsql = None  # type: ignore
+
+# Keep sql alias for any existing code that references it
+sql = _pgsql
+
+
+def _q(name: str) -> str:
+    """Double-quote a SQL identifier (escaping embedded quotes)."""
+    return '"' + name.replace('"', '""') + '"'
+
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class ComplianceCheckResult:
@@ -51,11 +61,13 @@ class ComplianceCheckResult:
         severity: 'critical', 'warning', or 'info'
         timestamp: When check was run
     """
+
     check_name: str
     passed: bool
     issues: list[str] = field(default_factory=list)
     severity: str = "info"
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+
 
 @dataclass
 class ComplianceReport:
@@ -70,6 +82,7 @@ class ComplianceReport:
         overall_status: 'compliant', 'warning', or 'critical'
         summary: Human-readable summary
     """
+
     report_date: datetime
     total_checks: int
     passed_checks: int
@@ -77,6 +90,7 @@ class ComplianceReport:
     checks: list[ComplianceCheckResult]
     overall_status: str
     summary: str
+
 
 @dataclass
 class ReconciliationResult:
@@ -91,6 +105,7 @@ class ReconciliationResult:
         timestamp_mismatches: Records with different timestamps
         reconciled: Whether reconciliation succeeded
     """
+
     source_system: str
     cdc_record_count: int
     source_record_count: int
@@ -98,6 +113,7 @@ class ReconciliationResult:
     extra_events: list[str] = field(default_factory=list)
     timestamp_mismatches: list[tuple[str, int, int]] = field(default_factory=list)
     reconciled: bool = False
+
 
 class CDCReconciler:
     """Verify CDC system integrity and generate compliance reports.
@@ -146,9 +162,7 @@ class CDCReconciler:
             with self._get_connection() as conn:
                 with conn.cursor() as cur:
                     # Check for tables with no audit entries
-                    cur.execute(
-                        """SELECT COUNT(*) FROM public.audit_trail"""
-                    )
+                    cur.execute("""SELECT COUNT(*) FROM public.audit_trail""")
                     total_audit = cur.fetchone()[0]
 
                     if total_audit == 0:
@@ -269,27 +283,26 @@ class CDCReconciler:
         try:
             with self._get_connection() as conn:
                 with conn.cursor() as cur:
+                    qt = _q(table)
                     # Check for multiple is_current
                     cur.execute(
-                        sql.SQL("""SELECT business_key, COUNT(*)
-                           FROM {}
+                        f"""SELECT business_key, COUNT(*)
+                           FROM {qt}
                            WHERE is_current = TRUE
                            GROUP BY business_key
-                           HAVING COUNT(*) > 1""").format(sql.Identifier(table))
+                           HAVING COUNT(*) > 1"""
                     )
                     if cur.fetchall():
                         issues.append(f"Multiple is_current=TRUE records found in {table}")
 
                     # Check for overlapping dates
                     cur.execute(
-                        sql.SQL("""SELECT COUNT(*) FROM {} t1
-                           JOIN {} t2 ON t1.business_key = t2.business_key
+                        f"""SELECT COUNT(*) FROM {qt} t1
+                           JOIN {qt} t2 ON t1.business_key = t2.business_key
                            WHERE t1.scd_id != t2.scd_id
                              AND t1.start_date <= t2.start_date
                              AND (t1.end_date IS NULL OR t1.end_date > t2.start_date)
-                             AND (t2.end_date IS NULL OR t2.end_date > t1.start_date)""").format(
-                            sql.Identifier(table), sql.Identifier(table)
-                        )
+                             AND (t2.end_date IS NULL OR t2.end_date > t1.start_date)"""
                     )
                     overlaps = cur.fetchone()[0]
                     if overlaps > 0:
@@ -297,14 +310,14 @@ class CDCReconciler:
 
                     # Check end_date >= start_date
                     cur.execute(
-                        sql.SQL("""SELECT COUNT(*) FROM {}
-                           WHERE end_date IS NOT NULL AND end_date < start_date""").format(
-                            sql.Identifier(table)
-                        )
+                        f"""SELECT COUNT(*) FROM {qt}
+                           WHERE end_date IS NOT NULL AND end_date < start_date"""
                     )
                     invalid_ranges = cur.fetchone()[0]
                     if invalid_ranges > 0:
-                        issues.append(f"{invalid_ranges} invalid date ranges (end < start) in {table}")
+                        issues.append(
+                            f"{invalid_ranges} invalid date ranges (end < start) in {table}"
+                        )
         except Exception as e:
             issues.append(f"SCD integrity check failed: {e}")
 
@@ -315,9 +328,7 @@ class CDCReconciler:
             severity="critical" if len(issues) > 0 else "info",
         )
 
-    def reconcile_scd_with_source(
-        self, table: str, source_table: str
-    ) -> ReconciliationResult:
+    def reconcile_scd_with_source(self, table: str, source_table: str) -> ReconciliationResult:
         """Reconcile SCD table with source table.
 
         Checks:
@@ -335,36 +346,32 @@ class CDCReconciler:
         try:
             with self._get_connection() as conn:
                 with conn.cursor() as cur:
+                    qt = _q(table)
+                    qs = _q(source_table)
                     # Count records
                     cur.execute(
-                        sql.SQL("""SELECT COUNT(DISTINCT business_key)
-                           FROM {}
-                           WHERE is_current = TRUE""").format(sql.Identifier(table))
+                        f"""SELECT COUNT(DISTINCT business_key)
+                           FROM {qt}
+                           WHERE is_current = TRUE"""
                     )
                     scd_count = cur.fetchone()[0]
 
-                    cur.execute(
-                        sql.SQL("SELECT COUNT(*) FROM {}").format(sql.Identifier(source_table))
-                    )
+                    cur.execute(f"SELECT COUNT(*) FROM {qs}")
                     source_count = cur.fetchone()[0]
 
                     # Find missing events
                     cur.execute(
-                        sql.SQL("""SELECT st.id FROM {} st
-                           LEFT JOIN {} scd ON st.id = scd.business_key
-                           WHERE scd.business_key IS NULL""").format(
-                            sql.Identifier(source_table), sql.Identifier(table)
-                        )
+                        f"""SELECT st.id FROM {qs} st
+                           LEFT JOIN {qt} scd ON st.id = scd.business_key
+                           WHERE scd.business_key IS NULL"""
                     )
                     missing = [row[0] for row in cur.fetchall()]
 
                     # Find extra events
                     cur.execute(
-                        sql.SQL("""SELECT scd.business_key FROM {} scd
-                           LEFT JOIN {} st ON scd.business_key = st.id
-                           WHERE scd.is_current = TRUE AND st.id IS NULL""").format(
-                            sql.Identifier(table), sql.Identifier(source_table)
-                        )
+                        f"""SELECT scd.business_key FROM {qt} scd
+                           LEFT JOIN {qs} st ON scd.business_key = st.id
+                           WHERE scd.is_current = TRUE AND st.id IS NULL"""
                     )
                     extra = [row[0] for row in cur.fetchall()]
         except Exception as e:
@@ -402,10 +409,9 @@ class CDCReconciler:
         try:
             with self._get_connection() as conn:
                 with conn.cursor() as cur:
-                    query = sql.SQL(
-                        "SELECT COUNT(DISTINCT business_key) FROM {} WHERE is_current = TRUE"
-                    ).format(sql.Identifier(table))
-                    cur.execute(query)
+                    cur.execute(
+                        f"SELECT COUNT(DISTINCT business_key) FROM {_q(table)} WHERE is_current = TRUE"
+                    )
                     actual_count = cur.fetchone()[0]
 
             if actual_count != expected_count:
@@ -514,9 +520,7 @@ class CDCReconciler:
             summary=summary,
         )
 
-    def detect_missing_changes(
-        self, start_date: date, end_date: date
-    ) -> dict[str, Any]:
+    def detect_missing_changes(self, start_date: date, end_date: date) -> dict[str, Any]:
         """Detect potentially missing changes in date range.
 
         Identifies suspicious gaps or patterns that might indicate
@@ -545,7 +549,7 @@ class CDCReconciler:
                              WHERE entity_id = recent.entity_id
                                AND timestamp >= %s AND timestamp <= %s
                            )""",
-                        (start_date, end_date, start_date, end_date)
+                        (start_date, end_date, start_date, end_date),
                     )
                     no_change = cur.fetchone()[0]
 
@@ -558,7 +562,7 @@ class CDCReconciler:
                            HAVING COUNT(*) > 100
                            ORDER BY change_count DESC
                            LIMIT 10""",
-                        (start_date, end_date)
+                        (start_date, end_date),
                     )
                     frequent = cur.fetchall()
         except Exception as e:

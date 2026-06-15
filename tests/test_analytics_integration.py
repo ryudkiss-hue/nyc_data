@@ -11,17 +11,18 @@ Coverage includes:
 - Phase B: Moran's I Spatial Autocorrelation
 """
 
-import pytest
-import pandas as pd
-import numpy as np
-import geopandas as gpd
-from shapely.geometry import Point
-from datetime import datetime, timedelta
 import logging
+import sys
+from datetime import datetime, timedelta
 
 # Import test fixtures and utilities
 from pathlib import Path
-import sys
+
+import geopandas as gpd
+import numpy as np
+import pandas as pd
+import pytest
+from shapely.geometry import Point
 
 ROOT_PATH = str(Path(__file__).resolve().parent.parent)
 SRC_PATH = str(Path(__file__).resolve().parent.parent / "src")
@@ -35,17 +36,21 @@ logger = logging.getLogger(__name__)
 # FIXTURES: MOCK DATA
 # =============================================================================
 
+
 @pytest.fixture
 def mock_tabular_data():
     """Mock tabular data for Phase C (Distribution)."""
     np.random.seed(42)
-    return pd.DataFrame({
-        "id": range(100),
-        "violation_count": np.random.exponential(5, 100),
-        "score": np.random.normal(75, 15, 100),
-        "response_time_hours": np.random.uniform(1, 24, 100),
-        "completion": np.random.binomial(1, 0.87, 100),
-    })
+    return pd.DataFrame(
+        {
+            "id": range(100),
+            "violation_count": np.random.exponential(5, 100),
+            "score": np.random.normal(75, 15, 100),
+            "response_time_hours": np.random.uniform(1, 24, 100),
+            "completion": np.random.binomial(1, 0.87, 100),
+        }
+    )
+
 
 @pytest.fixture
 def mock_spatial_data():
@@ -58,8 +63,9 @@ def mock_spatial_data():
             "violation_count": np.random.poisson(5, 30),
             "geometry": [Point(xy) for xy in coords],
         },
-        crs="EPSG:4326"
+        crs="EPSG:4326",
     )
+
 
 @pytest.fixture
 def mock_timeseries_data():
@@ -68,12 +74,15 @@ def mock_timeseries_data():
     dates = pd.date_range("2025-01-01", periods=100, freq="D")
     # Create synthetic data: trend + seasonal + noise
     trend = np.linspace(100, 120, 100)
-    seasonal = 5 * np.sin(np.linspace(0, 4*np.pi, 100))
+    seasonal = 5 * np.sin(np.linspace(0, 4 * np.pi, 100))
     noise = np.random.normal(0, 2, 100)
-    return pd.DataFrame({
-        "date": dates,
-        "violation_count": trend + seasonal + noise,
-    })
+    return pd.DataFrame(
+        {
+            "date": dates,
+            "violation_count": trend + seasonal + noise,
+        }
+    )
+
 
 @pytest.fixture
 def mock_filters():
@@ -84,6 +93,7 @@ def mock_filters():
         "dataset_key": "inspection",
     }
 
+
 @pytest.fixture
 def mock_kpi_metrics():
     """Mock KPI metrics for Phase F (Bootstrap CI)."""
@@ -93,9 +103,11 @@ def mock_kpi_metrics():
         "sla_compliance": (0.941, 0.928, 0.952),
     }
 
+
 # =============================================================================
 # TESTS: PHASE C - DISTRIBUTION CLASSIFICATION
 # =============================================================================
+
 
 class TestPhaseC_Distribution:
     """Test Phase C: Distribution Classification."""
@@ -103,13 +115,15 @@ class TestPhaseC_Distribution:
     def test_analytics_engine_method_exists(self):
         """Verify AnalyticsEngine has chart_distribution_classification method."""
         from app.callbacks.analytics import AnalyticsEngine
+
         assert hasattr(AnalyticsEngine, "chart_distribution_classification")
-        assert callable(getattr(AnalyticsEngine, "chart_distribution_classification"))
+        assert callable(AnalyticsEngine.chart_distribution_classification)
 
     def test_distribution_with_valid_data(self, mock_tabular_data):
         """Test distribution analysis with valid data."""
-        from app.callbacks.analytics import AnalyticsEngine
         import plotly.graph_objects as go
+
+        from app.callbacks.analytics import AnalyticsEngine
 
         data_bundle = {"data": mock_tabular_data}
         fig, narrative = AnalyticsEngine.chart_distribution_classification(data_bundle)
@@ -135,16 +149,18 @@ class TestPhaseC_Distribution:
         """Test distribution analysis with non-numeric data."""
         from app.callbacks.analytics import AnalyticsEngine
 
-        df = pd.DataFrame({
-            "name": ["A", "B", "C"],
-            "category": ["X", "Y", "Z"],
-        })
+        df = pd.DataFrame(
+            {
+                "name": ["A", "B", "C"],
+                "category": ["X", "Y", "Z"],
+            }
+        )
         data_bundle = {"data": df}
         fig, narrative = AnalyticsEngine.chart_distribution_classification(data_bundle)
 
         # Should handle gracefully
         assert isinstance(narrative, str)
-        assert ("No numeric" in narrative or len(narrative) > 0)
+        assert "No numeric" in narrative or len(narrative) > 0
 
     def test_distribution_narrative_contains_dikw(self, mock_tabular_data):
         """Test that narrative follows S-DIKW structure."""
@@ -158,9 +174,11 @@ class TestPhaseC_Distribution:
             # If successful, should contain DIKW structure
             assert len(narrative) > 50  # Reasonable length
 
+
 # =============================================================================
 # TESTS: PHASE D - ANOMALY DETECTION
 # =============================================================================
+
 
 class TestPhaseD_Anomaly:
     """Test Phase D: Anomaly Detection."""
@@ -168,12 +186,14 @@ class TestPhaseD_Anomaly:
     def test_analytics_engine_method_exists(self):
         """Verify AnalyticsEngine has chart_anomaly_detection method."""
         from app.callbacks.analytics import AnalyticsEngine
+
         assert hasattr(AnalyticsEngine, "chart_anomaly_detection")
 
     def test_anomaly_with_valid_spatial_data(self, mock_spatial_data):
         """Test anomaly detection with valid spatial data."""
-        from app.callbacks.analytics import AnalyticsEngine
         import plotly.graph_objects as go
+
+        from app.callbacks.analytics import AnalyticsEngine
 
         data_bundle = {"spatial": mock_spatial_data}
         fig, narrative = AnalyticsEngine.chart_anomaly_detection(data_bundle)
@@ -188,16 +208,14 @@ class TestPhaseD_Anomaly:
         from app.callbacks.analytics import AnalyticsEngine
 
         gdf = gpd.GeoDataFrame(
-            {"id": [1, 2], "value": [10, 20]},
-            geometry=[Point(0, 0), Point(1, 1)],
-            crs="EPSG:4326"
+            {"id": [1, 2], "value": [10, 20]}, geometry=[Point(0, 0), Point(1, 1)], crs="EPSG:4326"
         )
         data_bundle = {"spatial": gdf}
         fig, narrative = AnalyticsEngine.chart_anomaly_detection(data_bundle)
 
         # Should gracefully handle
         assert isinstance(narrative, str)
-        assert ("Insufficient" in narrative or "Error" in narrative or len(narrative) > 0)
+        assert "Insufficient" in narrative or "Error" in narrative or len(narrative) > 0
 
     def test_anomaly_detects_outliers(self):
         """Test that anomaly detection identifies outliers."""
@@ -212,7 +230,7 @@ class TestPhaseD_Anomaly:
         gdf = gpd.GeoDataFrame(
             {"id": range(27), "value": all_values},
             geometry=[Point(xy) for xy in coords],
-            crs="EPSG:4326"
+            crs="EPSG:4326",
         )
 
         data_bundle = {"spatial": gdf}
@@ -224,9 +242,11 @@ class TestPhaseD_Anomaly:
             # Check that narrative mentions anomalies
             assert len(narrative) > 0
 
+
 # =============================================================================
 # TESTS: PHASE E - SEASONAL DECOMPOSITION
 # =============================================================================
+
 
 class TestPhaseE_Decomposition:
     """Test Phase E: Seasonal Decomposition."""
@@ -234,12 +254,14 @@ class TestPhaseE_Decomposition:
     def test_analytics_engine_method_exists(self):
         """Verify AnalyticsEngine has chart_seasonal_decomposition method."""
         from app.callbacks.analytics import AnalyticsEngine
+
         assert hasattr(AnalyticsEngine, "chart_seasonal_decomposition")
 
     def test_decomposition_with_valid_timeseries(self, mock_timeseries_data):
         """Test decomposition with valid time series data."""
-        from app.callbacks.analytics import AnalyticsEngine
         import plotly.graph_objects as go
+
+        from app.callbacks.analytics import AnalyticsEngine
 
         # Ensure datetime column is properly typed
         mock_timeseries_data["date"] = pd.to_datetime(mock_timeseries_data["date"])
@@ -256,16 +278,18 @@ class TestPhaseE_Decomposition:
         """Test decomposition with insufficient time series data."""
         from app.callbacks.analytics import AnalyticsEngine
 
-        df = pd.DataFrame({
-            "date": pd.date_range("2025-01-01", periods=5, freq="D"),
-            "value": [100, 101, 102, 103, 104],
-        })
+        df = pd.DataFrame(
+            {
+                "date": pd.date_range("2025-01-01", periods=5, freq="D"),
+                "value": [100, 101, 102, 103, 104],
+            }
+        )
         data_bundle = {"timeseries": df}
         fig, narrative = AnalyticsEngine.chart_seasonal_decomposition(data_bundle)
 
         # Should gracefully handle
         assert isinstance(narrative, str)
-        assert ("Insufficient" in narrative or "Error" in narrative or len(narrative) > 0)
+        assert "Insufficient" in narrative or "Error" in narrative or len(narrative) > 0
 
     def test_decomposition_produces_4_panels(self, mock_timeseries_data):
         """Test that decomposition produces 4-panel subplot."""
@@ -281,9 +305,11 @@ class TestPhaseE_Decomposition:
             # Should have multiple traces (original, trend, seasonal, residual)
             assert len(fig.data) >= 3  # At least 3 components
 
+
 # =============================================================================
 # TESTS: PHASE F - BOOTSTRAP CONFIDENCE INTERVALS
 # =============================================================================
+
 
 class TestPhaseF_BootstrapCI:
     """Test Phase F: Bootstrap Confidence Intervals."""
@@ -291,12 +317,14 @@ class TestPhaseF_BootstrapCI:
     def test_analytics_engine_method_exists(self):
         """Verify AnalyticsEngine has chart_bootstrap_ci method."""
         from app.callbacks.analytics import AnalyticsEngine
+
         assert hasattr(AnalyticsEngine, "chart_bootstrap_ci")
 
     def test_bootstrap_ci_with_valid_metrics(self, mock_kpi_metrics):
         """Test bootstrap CI with valid KPI metrics."""
-        from app.callbacks.analytics import AnalyticsEngine
         import plotly.graph_objects as go
+
+        from app.callbacks.analytics import AnalyticsEngine
 
         for metric_name, (point_est, ci_lower, ci_upper) in mock_kpi_metrics.items():
             data_bundle = {"metrics": {metric_name: (point_est, ci_lower, ci_upper)}}
@@ -316,7 +344,7 @@ class TestPhaseF_BootstrapCI:
 
         # Should gracefully handle
         assert isinstance(narrative, str)
-        assert ("No" in narrative or "Error" in narrative or len(narrative) > 0)
+        assert "No" in narrative or "Error" in narrative or len(narrative) > 0
 
     def test_bootstrap_ci_shows_uncertainty(self):
         """Test that CI properly represents uncertainty."""
@@ -332,9 +360,11 @@ class TestPhaseF_BootstrapCI:
         if "Error" not in narrative:
             assert len(narrative) > 0
 
+
 # =============================================================================
 # TESTS: PHASE B - MORAN'S I
 # =============================================================================
+
 
 class TestPhaseB_MoransI:
     """Test Phase B: Moran's I Spatial Autocorrelation."""
@@ -342,12 +372,14 @@ class TestPhaseB_MoransI:
     def test_analytics_engine_method_exists(self):
         """Verify AnalyticsEngine has chart_morans_i method."""
         from app.callbacks.analytics import AnalyticsEngine
+
         assert hasattr(AnalyticsEngine, "chart_morans_i")
 
     def test_morans_i_with_valid_spatial_data(self, mock_spatial_data):
         """Test Moran's I with valid spatial data."""
-        from app.callbacks.analytics import AnalyticsEngine
         import plotly.graph_objects as go
+
+        from app.callbacks.analytics import AnalyticsEngine
 
         data_bundle = {"spatial": mock_spatial_data}
         fig, narrative = AnalyticsEngine.chart_morans_i(data_bundle)
@@ -364,7 +396,7 @@ class TestPhaseB_MoransI:
         gdf = gpd.GeoDataFrame(
             {"id": [1, 2, 3], "value": [10, 20, 30]},
             geometry=[Point(0, 0), Point(1, 1), Point(2, 2)],
-            crs="EPSG:4326"
+            crs="EPSG:4326",
         )
         data_bundle = {"spatial": gdf}
         fig, narrative = AnalyticsEngine.chart_morans_i(data_bundle)
@@ -373,17 +405,20 @@ class TestPhaseB_MoransI:
         assert isinstance(narrative, str)
         # Could be error or insufficient data message
 
+
 # =============================================================================
 # TESTS: CALLBACKS & DATA FLOW
 # =============================================================================
+
 
 class TestCallbacks:
     """Test callback functions."""
 
     def test_update_distribution_classification_callback_signature(self):
         """Verify callback signature is correct."""
-        from app.callbacks.analytics_integration import update_distribution_classification
         import inspect
+
+        from app.callbacks.analytics_integration import update_distribution_classification
 
         sig = inspect.signature(update_distribution_classification)
         assert "filters" in sig.parameters
@@ -391,8 +426,9 @@ class TestCallbacks:
 
     def test_update_anomaly_detection_callback_signature(self):
         """Verify callback signature is correct."""
-        from app.callbacks.analytics_integration import update_anomaly_detection
         import inspect
+
+        from app.callbacks.analytics_integration import update_anomaly_detection
 
         sig = inspect.signature(update_anomaly_detection)
         assert "filters" in sig.parameters
@@ -400,8 +436,9 @@ class TestCallbacks:
 
     def test_update_decomposition_callback_signature(self):
         """Verify callback signature is correct."""
-        from app.callbacks.analytics_integration import update_seasonal_decomposition
         import inspect
+
+        from app.callbacks.analytics_integration import update_seasonal_decomposition
 
         sig = inspect.signature(update_seasonal_decomposition)
         assert "filters" in sig.parameters
@@ -410,15 +447,18 @@ class TestCallbacks:
 
     def test_update_bootstrap_ci_callback_signature(self):
         """Verify callback signature is correct."""
-        from app.callbacks.analytics_integration import update_bootstrap_ci_kpis
         import inspect
+
+        from app.callbacks.analytics_integration import update_bootstrap_ci_kpis
 
         sig = inspect.signature(update_bootstrap_ci_kpis)
         assert "filters" in sig.parameters
 
+
 # =============================================================================
 # TESTS: LAYOUT GENERATORS
 # =============================================================================
+
 
 class TestLayouts:
     """Test layout generators."""
@@ -426,38 +466,46 @@ class TestLayouts:
     def test_layout_phase_c_exists(self):
         """Verify Phase C layout generator exists."""
         from app.dash_layouts_analytics_integration import layout_phase_c_distribution
+
         assert callable(layout_phase_c_distribution)
 
     def test_layout_phase_d_exists(self):
         """Verify Phase D layout generator exists."""
         from app.dash_layouts_analytics_integration import layout_phase_d_anomaly
+
         assert callable(layout_phase_d_anomaly)
 
     def test_layout_phase_e_exists(self):
         """Verify Phase E layout generator exists."""
         from app.dash_layouts_analytics_integration import layout_phase_e_decomposition
+
         assert callable(layout_phase_e_decomposition)
 
     def test_layout_phase_f_exists(self):
         """Verify Phase F layout generator exists."""
         from app.dash_layouts_analytics_integration import layout_phase_f_bootstrap_ci
+
         assert callable(layout_phase_f_bootstrap_ci)
 
     def test_layout_phase_b_exists(self):
         """Verify Phase B layout generator exists."""
         from app.dash_layouts_analytics_integration import layout_phase_b_morans_i
+
         assert callable(layout_phase_b_morans_i)
 
     def test_unified_tabs_layout(self):
         """Verify unified tab layout exists."""
         from app.dash_layouts_analytics_integration import render_analytics_integration_tabs
+
         layout = render_analytics_integration_tabs()
         # Should return a Dash component
         assert layout is not None
 
+
 # =============================================================================
 # TESTS: DATA SERVICES
 # =============================================================================
+
 
 class TestDataServices:
     """Test data service functions."""
@@ -465,11 +513,13 @@ class TestDataServices:
     def test_validate_filters_with_valid_input(self, mock_filters):
         """Test filter validation with valid input."""
         from app.services.analytics_service import validate_filters
+
         assert validate_filters(mock_filters) is True
 
     def test_validate_filters_with_invalid_input(self):
         """Test filter validation with invalid input."""
         from app.services.analytics_service import validate_filters
+
         assert validate_filters({}) is False
         assert validate_filters(None) is False
         assert validate_filters({"unrelated_key": "value"}) is False
@@ -477,18 +527,22 @@ class TestDataServices:
     def test_validate_filters_with_borough(self):
         """Test filter validation with borough key."""
         from app.services.analytics_service import validate_filters
+
         filters = {"borough": "MANHATTAN"}
         assert validate_filters(filters) is True
 
     def test_validate_filters_with_dataset_key(self):
         """Test filter validation with dataset_key."""
         from app.services.analytics_service import validate_filters
+
         filters = {"dataset_key": "inspection"}
         assert validate_filters(filters) is True
+
 
 # =============================================================================
 # INTEGRATION TESTS
 # =============================================================================
+
 
 class TestIntegration:
     """End-to-end integration tests."""
@@ -545,9 +599,11 @@ class TestIntegration:
             assert fig is not None
             assert narrative is not None
 
+
 # =============================================================================
 # PERFORMANCE TESTS
 # =============================================================================
+
 
 class TestPerformance:
     """Performance baseline tests."""
@@ -597,6 +653,7 @@ class TestPerformance:
             return all_figs
 
         result = benchmark(run)
+
 
 if __name__ == "__main__":
     # Run tests: pytest tests/test_analytics_integration.py -v

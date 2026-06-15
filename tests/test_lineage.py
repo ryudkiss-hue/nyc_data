@@ -29,6 +29,7 @@ from socrata_toolkit.governance import (
     TransformationNode,
 )
 
+
 class TestTransformationNode:
     """Tests for TransformationNode."""
 
@@ -111,6 +112,7 @@ class TestTransformationNode:
         history = node.get_execution_history(limit=3)
         assert len(history) == 3
 
+
 class TestExecutionRecord:
     """Tests for ExecutionRecord."""
 
@@ -158,6 +160,7 @@ class TestExecutionRecord:
         assert record.node_id == "test"
         assert record.status == ExecutionStatus.SUCCESS
 
+
 class TestLineageEdge:
     """Tests for LineageEdge."""
 
@@ -194,6 +197,7 @@ class TestLineageEdge:
         restored = LineageEdge.from_dict(d)
         assert restored.source_node_id == "source"
         assert restored.target_node_id == "target"
+
 
 class TestDAG:
     """Tests for DAG (Directed Acyclic Graph)."""
@@ -333,6 +337,7 @@ class TestDAG:
         assert "n2" in impact["all_affected_nodes"]
         assert "user2" in impact["affected_users"]
 
+
 class TestLineageQuery:
     """Tests for LineageQuery interface."""
 
@@ -467,6 +472,7 @@ class TestLineageQuery:
         validation = self.query.validate_lineage()
         assert validation["is_valid"]
 
+
 class TestImpactAnalysis:
     """Tests for ImpactAnalysis engine."""
 
@@ -527,6 +533,7 @@ class TestImpactAnalysis:
         assert len(impact_scores) > 0
         for node_id, score in impact_scores.items():
             assert 0 <= score <= 100
+
 
 class TestLineageVisualizer:
     """Tests for LineageVisualizer."""
@@ -589,6 +596,7 @@ class TestLineageVisualizer:
         assert summary["total_executions"] == 2
         assert summary["successful"] == 1
         assert summary["failed"] == 1
+
 
 class TestIntegration:
     """Integration tests combining multiple components."""
@@ -665,6 +673,7 @@ class TestIntegration:
         # Validate DAG
         validation = query.validate_lineage()
         assert validation["is_valid"]
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

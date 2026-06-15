@@ -1,4 +1,5 @@
 """Comprehensive tests for analyst.budget module."""
+
 from __future__ import annotations
 
 import tempfile
@@ -11,6 +12,7 @@ from socrata_toolkit.analyst.budget import (
     load_budget_rules,
     validate_budget_codes,
 )
+
 
 class TestLoadBudgetRules:
     """Tests for load_budget_rules function."""
@@ -31,10 +33,7 @@ class TestLoadBudgetRules:
         with tempfile.TemporaryDirectory() as tmpdir:
             rules_file = Path(tmpdir) / "rules.yaml"
             rules_file.write_text(
-                "allowed_codes:\n"
-                "  - B001\n"
-                "  - B002\n"
-                "require_code: true\n",
+                "allowed_codes:\n  - B001\n  - B002\nrequire_code: true\n",
                 encoding="utf-8",
             )
 
@@ -66,6 +65,7 @@ class TestLoadBudgetRules:
 
             result = load_budget_rules(str(rules_file))
             assert result["test_key"] == "test_value"
+
 
 class TestValidateBudgetCodes:
     """Tests for validate_budget_codes function."""

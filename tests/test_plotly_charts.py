@@ -25,6 +25,7 @@ from socrata_toolkit.viz import (
     waterfall_chart,
 )
 
+
 @pytest.mark.skipif(not HAS_PLOTLY, reason="plotly not installed")
 class TestPlotlyCharts:
     def test_borough_bar_chart(self):

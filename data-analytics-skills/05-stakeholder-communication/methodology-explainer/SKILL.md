@@ -19,10 +19,20 @@ description: Create a clear, transparent explanation of analytical methodology f
 6. **Produce deliverables** — fill `assets/methodology_writeup_template.md` or `assets/methodology_slide_template.md` depending on format
 
 # Inputs the skill needs
-- Required: description of the analysis method used
-- Required: target audience tier (executive / analyst / technical)
+- Required: the method to explain — choose from the built-in list:
+  `wilson_score`, `iqr_outlier`, `z_score`, `linear_regression`, `kmeans`
+- Required: target audience — `field_staff | manager | council | public`
 - Optional: known concerns or questions the audience is likely to raise
 - Optional: format requirements (slide, written doc, email)
+
+**Quick start (script — no external data required):**
+```bash
+python3 scripts/explain_method.py --method wilson_score --audience manager
+python3 scripts/explain_method.py --method z_score --audience council
+```
+The script prints the formula, plain-language explanation, an NYC DOT example,
+and the audience-tailored phrasing. For custom methods not in the list, use the
+templates in `assets/` directly.
 
 # Output
 - Plain-language methodology write-up

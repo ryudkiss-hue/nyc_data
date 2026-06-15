@@ -6,12 +6,17 @@ Tests cover:
 - VAR multivariate analysis
 - Granger causality testing
 """
-import pytest
-import numpy as np
+
 from unittest.mock import Mock, patch
 
+import numpy as np
+import pytest
+
 from src.socrata_toolkit.motherduck.kpi_stationarity_tests import (
-    StationarityTester, adf_test, kpss_test, determine_differencing_order
+    StationarityTester,
+    adf_test,
+    determine_differencing_order,
+    kpss_test,
 )
 
 
@@ -25,8 +30,8 @@ class TestStationarityTests:
         result = tester.adf_test(stationary)
         # Result might be None if statsmodels unavailable
         if result is not None:
-            assert hasattr(result, 'p_value')
-            assert hasattr(result, 'is_stationary')
+            assert hasattr(result, "p_value")
+            assert hasattr(result, "is_stationary")
 
     def test_adf_test_on_series(self):
         """✓ ADF test accepts series data."""
@@ -34,7 +39,7 @@ class TestStationarityTests:
         tester = StationarityTester()
         result = tester.adf_test(random_walk)
         # Should return a result or None, not crash
-        assert result is None or hasattr(result, 'p_value')
+        assert result is None or hasattr(result, "p_value")
 
     def test_kpss_test_returns_result(self):
         """✓ KPSS test handles series."""
@@ -43,7 +48,7 @@ class TestStationarityTests:
         result = tester.kpss_test(stationary)
         # Result might be None if statsmodels unavailable or test fails
         if result is not None:
-            assert hasattr(result, 'p_value')
+            assert hasattr(result, "p_value")
 
     def test_determine_differencing_order_returns_int(self):
         """✓ Differencing order returns integer >= 0."""
@@ -77,8 +82,11 @@ class TestARIMAForecasting:
         """✓ ARIMA modules import without error."""
         try:
             from src.socrata_toolkit.motherduck.kpi_timeseries_analysis import (
-                ARIMAForecaster, SARIMAXForecaster, ModelSelection
+                ARIMAForecaster,
+                ModelSelection,
+                SARIMAXForecaster,
             )
+
             assert True
         except ImportError:
             pytest.skip("statsmodels not available")
@@ -93,7 +101,7 @@ class TestARIMAForecasting:
         ts = np.cumsum(np.random.normal(0, 1, 100))
         forecaster = ARIMAForecaster(order=(1, 1, 1))
         result = forecaster.fit(ts)
-        assert result.status in ['SUCCESS', 'FAILED']
+        assert result.status in ["SUCCESS", "FAILED"]
 
     def test_model_selection(self):
         """✓ Model selection can identify best ARIMA order."""
@@ -116,8 +124,10 @@ class TestVARAnalysis:
         """✓ VAR modules import without error."""
         try:
             from src.socrata_toolkit.motherduck.kpi_var_analysis import (
-                VARAnalyzer, GrangerCausalityTester
+                GrangerCausalityTester,
+                VARAnalyzer,
             )
+
             assert True
         except ImportError:
             pytest.skip("statsmodels not available")
@@ -143,4 +153,4 @@ class TestVARAnalysis:
         cause = np.random.normal(0, 1, 100)
         effect = np.random.normal(0, 1, 100)
         result = tester.test_causality(cause, effect, max_lag=3)
-        assert 'granger_causes' in result
+        assert "granger_causes" in result

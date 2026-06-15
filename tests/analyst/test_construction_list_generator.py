@@ -1,22 +1,26 @@
 """Tests for ConstructionListGenerator."""
+
 import pandas as pd
 import pytest
+
 from socrata_toolkit.analyst.construction_list_generator import (
-    ConstructionListGenerator,
-    ConstructionListConfig,
     REPAIR_COST_BY_SCOPE,
+    ConstructionListConfig,
+    ConstructionListGenerator,
 )
 
-SAMPLE_PHASE_D = pd.DataFrame({
-    "location_id": ["LOC001", "LOC002", "LOC003"],
-    "borough": ["MN", "BX", "BK"],
-    "latitude": [40.75, 40.83, 40.65],
-    "longitude": [-74.00, -73.92, -73.95],
-    "inspection_count": [15, 22, 8],
-    "z_score_violations": [3.2, 4.1, 2.8],
-    "outlier_class": ["high", "critical", "moderate"],
-    "priority_rank": [1, 2, 3],
-})
+SAMPLE_PHASE_D = pd.DataFrame(
+    {
+        "location_id": ["LOC001", "LOC002", "LOC003"],
+        "borough": ["MN", "BX", "BK"],
+        "latitude": [40.75, 40.83, 40.65],
+        "longitude": [-74.00, -73.92, -73.95],
+        "inspection_count": [15, 22, 8],
+        "z_score_violations": [3.2, 4.1, 2.8],
+        "outlier_class": ["high", "critical", "moderate"],
+        "priority_rank": [1, 2, 3],
+    }
+)
 
 
 def test_from_phase_d_returns_dataframe():

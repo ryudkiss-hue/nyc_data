@@ -3,6 +3,7 @@
 Verifies that all visualizations can render with real test data
 and that the total count matches expectations.
 """
+
 import plotly.graph_objects as go
 import pytest
 
@@ -15,6 +16,7 @@ from app.visualization_engine import (
     PhaseFVisualizations,
     StatisticsPanel,
 )
+
 
 class TestPhase2VisualizationCounts:
     """Test that all visualization counts are correct."""
@@ -59,9 +61,15 @@ class TestPhase2VisualizationCounts:
 
         assert len(charts) == 17, f"Phase F should have 17 charts, got {len(charts)}"
 
-    def test_total_visualizations_is_73(self, mock_connection, phase_b_test_data,
-                                         phase_c_test_data, phase_d_test_data,
-                                         phase_e_test_data, phase_f_test_data):
+    def test_total_visualizations_is_73(
+        self,
+        mock_connection,
+        phase_b_test_data,
+        phase_c_test_data,
+        phase_d_test_data,
+        phase_e_test_data,
+        phase_f_test_data,
+    ):
         """Test that total visualization count is 73."""
         # Phase B: 12
         viz_b = PhaseBVisualizations(mock_connection)
@@ -90,6 +98,7 @@ class TestPhase2VisualizationCounts:
 
         total = count_b + count_c + count_d + count_e + count_f
         assert total == 73, f"Total should be 73 visualizations, got {total}"
+
 
 class TestAllVisualizationsRender:
     """Test that all visualizations can render without errors."""
@@ -145,6 +154,7 @@ class TestAllVisualizationsRender:
             assert isinstance(fig, go.Figure), f"{name}: figure is not a go.Figure"
             assert isinstance(stats, StatisticsPanel), f"{name}: stats is not StatisticsPanel"
 
+
 class TestKPICards:
     """Test KPI card rendering."""
 
@@ -198,6 +208,7 @@ class TestKPICards:
         assert isinstance(fig, go.Figure)
         assert isinstance(stats, StatisticsPanel)
 
+
 class TestStatisticsDisplay:
     """Test statistics display component."""
 
@@ -248,6 +259,7 @@ class TestStatisticsDisplay:
         assert stats_dict["mean_value"] == 50.5
         assert stats_dict["calculation_method"] == "Test"
 
+
 class TestDataSerialization:
     """Test that figures can be serialized for JSON output."""
 
@@ -269,6 +281,7 @@ class TestDataSerialization:
         fig, stats = viz.render_main_gauge_chart()
 
         import json
+
         stats_dict = stats.to_dict()
         json_str = json.dumps(stats_dict, default=str)
         assert isinstance(json_str, str)

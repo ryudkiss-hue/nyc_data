@@ -6,6 +6,7 @@ Tests verify:
 - All 18 KPIs are calculated (90 rows: 18 × 5 boroughs)
 - Phase-specific calculations match expected formulas
 """
+
 import pandas as pd
 import pytest
 
@@ -14,6 +15,7 @@ from socrata_toolkit.motherduck.connector import MotherDuckConnection
 from socrata_toolkit.motherduck.ingestion import InspectionDataLoader
 from socrata_toolkit.motherduck.staging import StagingTransformer
 
+
 @pytest.fixture
 def motherduck_conn():
     """Fixture providing a local DuckDB connection (no MotherDuck token needed)."""
@@ -21,20 +23,24 @@ def motherduck_conn():
     yield conn
     conn.close()
 
+
 @pytest.fixture
 def data_loader(motherduck_conn):
     """Fixture providing an InspectionDataLoader instance."""
     return InspectionDataLoader(motherduck_conn)
+
 
 @pytest.fixture
 def staging_transformer(motherduck_conn):
     """Fixture providing a StagingTransformer instance."""
     return StagingTransformer(motherduck_conn)
 
+
 @pytest.fixture
 def analytics_builder(motherduck_conn):
     """Fixture providing an AnalyticsBuilder instance."""
     return AnalyticsBuilder(motherduck_conn)
+
 
 class TestAnalyticsSchemaCreation:
     """Tests for analytics schema and phase table creation."""
@@ -115,9 +121,7 @@ class TestAnalyticsSchemaCreation:
         for col in expected_columns:
             assert col in column_names, f"Column '{col}' not found in phase_c_distributions"
 
-    def test_phase_d_anomalies_created(
-        self, data_loader, staging_transformer, analytics_builder
-    ):
+    def test_phase_d_anomalies_created(self, data_loader, staging_transformer, analytics_builder):
         """Verify analytics.phase_d_anomalies table is created with correct schema."""
         data_loader.create_raw_schema()
         staging_transformer.create_staging_schema()
@@ -234,12 +238,11 @@ class TestAnalyticsSchemaCreation:
             )
             assert len(result) > 0, f"Phase table '{phase_table}' should exist"
 
+
 class TestKPIMetricsTableCreation:
     """Tests for KPI metrics table creation."""
 
-    def test_kpi_metrics_table_created(
-        self, data_loader, staging_transformer, analytics_builder
-    ):
+    def test_kpi_metrics_table_created(self, data_loader, staging_transformer, analytics_builder):
         """Verify analytics.kpi_metrics table is created with correct schema."""
         data_loader.create_raw_schema()
         staging_transformer.create_staging_schema()
@@ -264,12 +267,11 @@ class TestKPIMetricsTableCreation:
         for col in expected_columns:
             assert col in column_names, f"Column '{col}' not found in kpi_metrics"
 
+
 class TestAnalyticsDataBuild:
     """Tests for analytics data building and calculation."""
 
-    def test_phase_b_builds_correctly(
-        self, data_loader, staging_transformer, analytics_builder
-    ):
+    def test_phase_b_builds_correctly(self, data_loader, staging_transformer, analytics_builder):
         """Insert sample data, build phase B, and verify results."""
         # Setup
         data_loader.create_raw_schema()
@@ -337,9 +339,7 @@ class TestAnalyticsDataBuild:
         for row in result:
             assert row[0] in valid_classifications, f"Invalid classification: {row[0]}"
 
-    def test_all_kpis_calculated(
-        self, data_loader, staging_transformer, analytics_builder
-    ):
+    def test_all_kpis_calculated(self, data_loader, staging_transformer, analytics_builder):
         """Verify 90 KPI rows (18 × 5 boroughs) are calculated."""
         # Setup
         data_loader.create_raw_schema()
@@ -396,13 +396,9 @@ class TestAnalyticsDataBuild:
         analytics_builder.build_kpi_metrics()
 
         # Verify 90 KPI rows (18 KPIs × 5 boroughs)
-        result = analytics_builder.conn.fetch_all(
-            "SELECT COUNT(*) FROM analytics.kpi_metrics"
-        )
+        result = analytics_builder.conn.fetch_all("SELECT COUNT(*) FROM analytics.kpi_metrics")
         kpi_count = result[0][0]
-        assert (
-            kpi_count == 90
-        ), f"Expected 90 KPI rows (18 × 5 boroughs), got {kpi_count}"
+        assert kpi_count == 90, f"Expected 90 KPI rows (18 × 5 boroughs), got {kpi_count}"
 
         # Verify all expected KPI names
         result = analytics_builder.conn.fetch_all(

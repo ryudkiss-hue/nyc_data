@@ -9,15 +9,18 @@ from app.data_loader import IngestionProviderFactory
 from app.services.workflow_service import WorkflowOrchestrator
 from socrata_toolkit.core.duckdb_store import DuckDBManager, DuckDBRepository
 
+
 @pytest.fixture
 def e2e_db(tmp_path):
     db_path = str(tmp_path / "e2e.duckdb")
     # Inject into global state
     import app.data_loader
+
     original_path = app.data_loader._DUCKDB_PATH
     app.data_loader._DUCKDB_PATH = db_path
     yield db_path
     app.data_loader._DUCKDB_PATH = original_path
+
 
 def test_full_ingestion_to_orchestration_cycle(e2e_db, mocker):
     """End-to-End smoke test for the complete Mission Control lifecycle."""
@@ -38,7 +41,7 @@ def test_full_ingestion_to_orchestration_cycle(e2e_db, mocker):
     df_live = fetcher.fetch("lot_info", limit=10)
 
     assert len(df_live) == 2
-    assert "_bbl" in df_live.columns # Post-processing applied
+    assert "_bbl" in df_live.columns  # Post-processing applied
 
     # 3. Step: Persistence in DuckDB
     mgr = DuckDBManager(e2e_db)

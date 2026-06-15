@@ -1,4 +1,5 @@
 """Tests for quality.reports module - Quality report generation."""
+
 from __future__ import annotations
 
 import json
@@ -9,6 +10,7 @@ from pathlib import Path
 import pandas as pd
 
 from socrata_toolkit.quality.reports import QualityReportGenerator, ReportMetadata
+
 
 class TestReportMetadata:
     """Tests for ReportMetadata dataclass."""
@@ -39,6 +41,7 @@ class TestReportMetadata:
             period_end=now,
         )
         assert metadata.author == "Data Quality System"
+
 
 class TestQualityReportGenerator:
     """Tests for QualityReportGenerator class."""

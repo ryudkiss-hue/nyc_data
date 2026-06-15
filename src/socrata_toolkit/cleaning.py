@@ -32,12 +32,14 @@ def standardize_boroughs(df: pd.DataFrame, col: str) -> pd.DataFrame:
         out.loc[~out[col].isin(valid), col] = "UNKNOWN"
     return out
 
+
 def standardize_postcodes(df: pd.DataFrame, col: str) -> pd.DataFrame:
     """Ensure postcodes are 5-digit strings."""
     out = df.copy()
     if col in out.columns:
         out[col] = out[col].astype(str).str.extract(r"(\d{5})")[0].fillna("")
     return out
+
 
 def standardize_bbl(
     df: pd.DataFrame, boro_col: str, block_col: str, lot_col: str, target_col: str = "bbl"
@@ -65,6 +67,7 @@ def standardize_bbl(
         out[target_col] = out.apply(format_bbl, axis=1)
     return out
 
+
 def clean_column_names(df: pd.DataFrame) -> pd.DataFrame:
     """Snake_case column names and remove special characters."""
     out = df.copy()
@@ -74,25 +77,38 @@ def clean_column_names(df: pd.DataFrame) -> pd.DataFrame:
     ]
     return out
 
+
 def infer_and_convert_types(df: pd.DataFrame) -> pd.DataFrame:
-    """Attempt to convert object columns to numeric or datetime."""
+    """Attempt to convert object/string columns to numeric or datetime."""
     out = df.copy()
     for col in out.columns:
-        if out[col].dtype == "object":
-            # Try numeric
-            try:
-                out[col] = pd.to_numeric(out[col])
-                continue
-            except:
-                pass
+        col_dtype = out[col].dtype
+        # Handle both legacy object dtype and pandas 3.x StringDtype
+        is_string_like = (
+            col_dtype == "object" or hasattr(col_dtype, "na_value") or str(col_dtype) == "str"
+        )
+        if not is_string_like:
+            continue
+        # Try numeric
+        try:
+            out[col] = pd.to_numeric(out[col])
+            continue
+        except Exception:
+            pass
 
-            # Try datetime
-            try:
-                if "date" in col.lower() or "time" in col.lower() or "timestamp" in col.lower():
-                    out[col] = pd.to_datetime(out[col])
-            except:
-                pass
+        # Try datetime
+        try:
+            if "date" in col.lower() or "time" in col.lower() or "timestamp" in col.lower():
+                out[col] = pd.to_datetime(out[col])
+                continue
+        except Exception:
+            pass
+
+        # Ensure non-convertible string columns use object dtype for consistency
+        if str(col_dtype) != "object":
+            out[col] = out[col].astype(object)
     return out
+
 
 def remove_outliers(df: pd.DataFrame, col: str, z_threshold: float = 3) -> pd.DataFrame:
     """Remove rows where column value is more than N standard deviations from mean."""

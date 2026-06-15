@@ -14,6 +14,7 @@ from socrata_toolkit.analysis.confidence_intervals import (
     wilson_score_confidence_interval,
 )
 
+
 class TestWilsonScoreConfidenceInterval:
     """Tests for Wilson Score CI (proportion-based)."""
 
@@ -75,7 +76,9 @@ class TestWilsonScoreConfidenceInterval:
         # No successes (0%)
         result_0 = wilson_score_confidence_interval(0, 100, confidence_level=0.95)
         assert result_0["point_estimate"] == 0.0
-        assert np.isclose(result_0["lower_bound"], 0.0, atol=1e-10)  # Should be ~0 (floating point precision)
+        assert np.isclose(
+            result_0["lower_bound"], 0.0, atol=1e-10
+        )  # Should be ~0 (floating point precision)
         assert result_0["upper_bound"] < 0.05  # Should have upper bound but near 0.0
 
     def test_wilson_score_ci_confidence_levels(self):
@@ -116,6 +119,7 @@ class TestWilsonScoreConfidenceInterval:
 
         with pytest.raises(ValueError, match="confidence_level must be"):
             wilson_score_confidence_interval(50, 100, confidence_level=0.0)
+
 
 class TestBootstrapConfidenceInterval:
     """Tests for bootstrap CI (non-parametric)."""
@@ -202,9 +206,7 @@ class TestBootstrapConfidenceInterval:
         assert result1["point_estimate"] == result2["point_estimate"]
         assert result1["lower_bound"] == result2["lower_bound"]
         assert result1["upper_bound"] == result2["upper_bound"]
-        np.testing.assert_array_equal(
-            result1["bootstrap_samples"], result2["bootstrap_samples"]
-        )
+        np.testing.assert_array_equal(result1["bootstrap_samples"], result2["bootstrap_samples"])
 
     def test_bootstrap_ci_different_n_bootstrap(self):
         """Test bootstrap with different sample sizes."""
@@ -241,18 +243,15 @@ class TestBootstrapConfidenceInterval:
         data_list = [1.5, 2.3, 1.8, 2.5, 2.1]
         data_array = np.array(data_list)
 
-        result_list = bootstrap_confidence_interval(
-            data_list, np.mean, random_state=42
-        )
-        result_array = bootstrap_confidence_interval(
-            data_array, np.mean, random_state=42
-        )
+        result_list = bootstrap_confidence_interval(data_list, np.mean, random_state=42)
+        result_array = bootstrap_confidence_interval(data_array, np.mean, random_state=42)
 
         # Results should be identical
         assert result_list["point_estimate"] == result_array["point_estimate"]
         np.testing.assert_array_equal(
             result_list["bootstrap_samples"], result_array["bootstrap_samples"]
         )
+
 
 class TestMeanConfidenceInterval:
     """Tests for t-test CI (parametric, continuous)."""
@@ -365,6 +364,7 @@ class TestMeanConfidenceInterval:
         assert result_list["lower_bound"] == result_array["lower_bound"]
         assert result_list["upper_bound"] == result_array["upper_bound"]
 
+
 class TestConsistentDictStructure:
     """Tests that all CI methods return consistent dict structures."""
 
@@ -375,9 +375,7 @@ class TestConsistentDictStructure:
         continuous_data = np.array([22.5, 23.1, 21.8, 22.9, 23.3])
 
         wilson_result = wilson_score_confidence_interval(*proportions_data)
-        bootstrap_result = bootstrap_confidence_interval(
-            continuous_data, np.mean, random_state=42
-        )
+        bootstrap_result = bootstrap_confidence_interval(continuous_data, np.mean, random_state=42)
         mean_result = mean_confidence_interval(continuous_data)
 
         # All should have these core keys
@@ -397,29 +395,18 @@ class TestConsistentDictStructure:
         """Verify lower_bound <= point_estimate <= upper_bound."""
         # Wilson Score
         w_result = wilson_score_confidence_interval(75, 100)
-        assert (
-            w_result["lower_bound"]
-            <= w_result["point_estimate"]
-            <= w_result["upper_bound"]
-        )
+        assert w_result["lower_bound"] <= w_result["point_estimate"] <= w_result["upper_bound"]
 
         # Bootstrap
         b_result = bootstrap_confidence_interval(
             np.array([1, 2, 3, 4, 5]), np.mean, random_state=42
         )
-        assert (
-            b_result["lower_bound"]
-            <= b_result["point_estimate"]
-            <= b_result["upper_bound"]
-        )
+        assert b_result["lower_bound"] <= b_result["point_estimate"] <= b_result["upper_bound"]
 
         # Mean
         m_result = mean_confidence_interval(np.array([1.0, 2.0, 3.0, 4.0, 5.0]))
-        assert (
-            m_result["lower_bound"]
-            <= m_result["point_estimate"]
-            <= m_result["upper_bound"]
-        )
+        assert m_result["lower_bound"] <= m_result["point_estimate"] <= m_result["upper_bound"]
+
 
 class TestIntegrationScenarios:
     """Integration tests with realistic NYC DOT data scenarios."""
@@ -444,20 +431,14 @@ class TestIntegrationScenarios:
         assert len(results) == 5
 
         # Check Bronx has wider CI due to smaller sample
-        bronx_width = (
-            results["Bronx"]["upper_bound"] - results["Bronx"]["lower_bound"]
-        )
-        manhattan_width = (
-            results["Manhattan"]["upper_bound"] - results["Manhattan"]["lower_bound"]
-        )
+        bronx_width = results["Bronx"]["upper_bound"] - results["Bronx"]["lower_bound"]
+        manhattan_width = results["Manhattan"]["upper_bound"] - results["Manhattan"]["lower_bound"]
         assert bronx_width > manhattan_width  # Smaller sample = wider interval
 
     def test_temperature_measurements_confidence(self):
         """Realistic scenario: sidewalk temperature monitoring."""
         # Daily temperature readings (°C)
-        temperatures = np.array(
-            [22.5, 23.1, 21.8, 22.9, 23.3, 22.0, 23.5, 22.8, 23.2, 22.6]
-        )
+        temperatures = np.array([22.5, 23.1, 21.8, 22.9, 23.3, 22.0, 23.5, 22.8, 23.2, 22.6])
 
         # Mean with t-test
         mean_result = mean_confidence_interval(temperatures, confidence_level=0.95)
@@ -473,8 +454,6 @@ class TestIntegrationScenarios:
 
         # Check that CIs are narrow enough to be useful
         mean_width = mean_result["upper_bound"] - mean_result["lower_bound"]
-        bootstrap_width = (
-            bootstrap_result["upper_bound"] - bootstrap_result["lower_bound"]
-        )
+        bootstrap_width = bootstrap_result["upper_bound"] - bootstrap_result["lower_bound"]
         assert mean_width < 2.0
         assert bootstrap_width < 2.0

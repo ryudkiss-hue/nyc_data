@@ -6,15 +6,17 @@ Tests cover:
 - Error handling (retry logic, rollback)
 - Data quality checks
 """
-import pytest
+
 from unittest.mock import Mock, patch
+
 import duckdb
+import pytest
 
 from src.socrata_toolkit.motherduck.kpi_statistics_engine import (
+    AdvancedMetricsComputer,
+    AdvancedMetricsResult,
     KPIStatisticsEngine,
     KPIStatisticsResult,
-    AdvancedMetricsResult,
-    AdvancedMetricsComputer,
 )
 from src.socrata_toolkit.motherduck.kpi_validation import KPIValidator
 
@@ -63,6 +65,7 @@ class TestAdvancedMetricsComputer:
         """✓ Compute normality tests on random data."""
         try:
             import numpy as np
+
             data = np.random.normal(100, 15, 50)
             result = AdvancedMetricsComputer.compute_normality_tests(data)
             assert "shapiro_wilk_p" in result
@@ -74,6 +77,7 @@ class TestAdvancedMetricsComputer:
     def test_normality_tests_with_insufficient_data(self):
         """✓ Normality tests gracefully fail with < 3 samples."""
         import numpy as np
+
         data = np.array([1.0, 2.0])
         result = AdvancedMetricsComputer.compute_normality_tests(data)
         assert result == {}  # Returns empty dict on insufficient data
@@ -97,6 +101,7 @@ class TestAdvancedMetricsComputer:
         """✓ Levene's test detects variance differences."""
         try:
             import numpy as np
+
             groups = {
                 "MN": np.array([1.0, 2.0, 3.0, 4.0, 5.0]),
                 "BK": np.array([10.0, 20.0, 30.0, 40.0, 50.0]),
@@ -129,7 +134,7 @@ class TestKPIValidator:
             """
         )
         result = validator.check_row_counts()
-        assert result.passed == False
+        assert not result.passed
         assert "Expected 90 rows" in result.message
 
     def test_check_null_metrics(self, validator):
@@ -153,12 +158,12 @@ class TestKPIValidator:
             """
         )
         result = validator.check_null_metrics()
-        assert result.passed == False
+        assert not result.passed
 
     def test_check_schema_integrity_missing_table(self, validator):
         """✓ Schema check detects missing tables."""
         result = validator.check_schema_integrity()
-        assert result.passed == False
+        assert not result.passed
         assert "Missing tables" in result.message
 
 
@@ -230,7 +235,7 @@ class TestIntegration:
         # Validate
         validator = KPIValidator(conn)
         result = validator.check_row_counts()
-        assert result.passed == True
+        assert result.passed
         assert "90 rows" in result.message
 
 

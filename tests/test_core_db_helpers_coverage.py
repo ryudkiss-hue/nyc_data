@@ -1,4 +1,5 @@
 """Tests for core.db_helpers module - Database helper utilities."""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
@@ -6,6 +7,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from socrata_toolkit.core.db_helpers import build_fts_index_sql, ensure_fts_index
+
 
 class TestBuildFtsIndexSql:
     """Tests for build_fts_index_sql function."""
@@ -50,7 +52,7 @@ class TestBuildFtsIndexSql:
 
     def test_build_fts_index_quotes_stripped(self):
         """Test that quotes in column names are stripped from index name."""
-        sql = build_fts_index_sql("documents", ['"content"', 'title'])
+        sql = build_fts_index_sql("documents", ['"content"', "title"])
         # Quotes should be stripped from index name generation
         # but COALESCE still references the column with quotes
         assert "documents_content_title_fts_idx" in sql or "documents_content_title" in sql
@@ -89,6 +91,7 @@ class TestBuildFtsIndexSql:
         # Index name should be auto-generated from table and column names
         assert "_fts_idx" in sql
         assert "my_table" in sql
+
 
 class TestEnsureFtsIndex:
     """Tests for ensure_fts_index function."""
@@ -132,22 +135,21 @@ class TestEnsureFtsIndex:
 
         with patch.dict("sys.modules", {"psycopg": mock_psycopg}):
             ensure_fts_index(
-                "postgresql://localhost/test",
-                "documents",
-                ["content"],
-                language="spanish"
+                "postgresql://localhost/test", "documents", ["content"], language="spanish"
             )
             sql = mock_cursor.execute.call_args[0][0]
             assert "spanish" in sql
 
     def test_ensure_fts_index_psycopg_not_installed(self):
         """Test ImportError when psycopg not available."""
+
         # Mock the import to fail
         def mock_import_error(*args, **kwargs):
             raise ImportError("No module named 'psycopg'")
 
         # Patch builtins to make import fail for psycopg
         import builtins
+
         original_import = builtins.__import__
 
         def import_with_error(name, *args, **kwargs):
