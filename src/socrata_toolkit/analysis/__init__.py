@@ -389,6 +389,11 @@ except Exception:
     pass
 
 try:
+    from ..quality.profiler import DriftReport  # type: ignore[no-redef]
+except Exception:
+    pass
+
+try:
     from ..quality.validation import (  # type: ignore[no-redef]
         validate_defect_applicability,
         validate_geospatial_bounds,
