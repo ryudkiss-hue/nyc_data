@@ -346,9 +346,9 @@ def stage_inspections() -> dict:
         return {"status": "error", "error": str(e), "table": "staging.inspections"}
 
 def stage_permits() -> dict:
-    """Stage raw.permits into staging.permits (dedup on permit key)."""
+    """Stage raw.street_permits into staging.permits (dedup on permit key)."""
     return _stage_table(
-        "raw.permits",
+        "raw.street_permits",
         "staging.permits",
         _PERMIT_KEY_CANDIDATES,
         _PERMIT_DATE_CANDIDATES,

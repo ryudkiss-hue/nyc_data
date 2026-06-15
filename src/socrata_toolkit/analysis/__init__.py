@@ -34,35 +34,12 @@ from .metrics import (
     AnomalyReport,
     AnomalySeverity,
     BusinessRulesEngine,
-    ColumnProfile,
     DataQualityCatalog,
     DataQualityScore,
-    DatasetProfile,
-    DataType,
     DataQualityTracker,
     DatasetFreshness,
-    DriftReport,
-    Expectation,
-    ExpectationSuite,
-    ExpectationType,
+    DataType,
     FreshnessAlert,
-    MetricType,
-    ProfileGenerator,
-    QualityReportGenerator,
-    QualityRule,
-    QualityValidator,
-    RuleMode,
-    RuleSeverity,
-    RuleViolations,
-    SeverityLevel,
-    SLADefinition,
-    ValidationResult,
-    ValidationResultsAggregator,
-    create_311_complaints_rules,
-    create_311_complaints_suite,
-    create_sidewalk_inspections_suite,
-    create_sidewalk_rules,
-    create_standard_slas,
     FreshnessTracker,
     MetricPoint,
     MetricsRegistry,
@@ -83,7 +60,6 @@ from .metrics import (
     flag_sla_violations,
     get_global_registry,
     quality_dashboard,
-    reset_global_registry,
     save_map,
     time_series_chart,
     time_series_summary,
@@ -92,6 +68,39 @@ from .metrics import (
     validate_marking_standards,
     validate_material_coverage,
 )
+from socrata_toolkit.quality.profiler import (
+    ColumnProfile,
+    ProfileGenerator,
+    TableProfile as DatasetProfile,
+)
+from socrata_toolkit.quality.rules import (
+    QualityRule,
+    RuleMode,
+    RuleSeverity,
+    RuleViolations,
+    create_311_complaints_rules,
+    create_sidewalk_rules,
+)
+from socrata_toolkit.quality.expectations import (
+    Expectation,
+    ExpectationSuite,
+    ExpectationType,
+    SeverityLevel,
+    create_311_complaints_suite,
+    create_sidewalk_inspections_suite,
+)
+from socrata_toolkit.quality.validator import (
+    QualityValidator,
+    ValidationResult,
+    ValidationResultsAggregator,
+)
+from socrata_toolkit.quality.reports import QualityReportGenerator
+from socrata_toolkit.quality.sla import MetricType, SLADefinition, create_standard_slas
+try:
+    from socrata_toolkit.metrics import reset_global_registry
+except ImportError:
+    pass
+
 from .profiling import DataProfile, profile_dataframe, quality_report
 from .reporting import DashboardSummary, Report, generate_contract_report, generate_inquiry_response
 from .text import (
@@ -101,15 +110,12 @@ from .text import (
     parse_sim_complaints,
 )
 from .viz import (
+    ChartResult,
     bar_chart,
     box_plot,
-    ChartResult,
     classify_distribution,
-    correlation_heatmap,
     histogram,
     list_available_visualizations,
-    quality_dashboard,
-    time_series_chart,
 )
 
 try:
