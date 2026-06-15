@@ -76,7 +76,11 @@ class BayesianRegressionEngine:
             )
 
         # 6. Uncertainty Quantification (94% HDI)
-        hdi = az.hdi(trace, hdi_prob=0.94)
+        # arviz >=0.17 renamed hdi_prob to prob; support both
+        try:
+            hdi = az.hdi(trace, prob=0.94)
+        except TypeError:
+            hdi = az.hdi(trace, hdi_prob=0.94)
         hdi_dict = {}
         for var in ["Intercept", "Predictor_Effect"]:
             vals = hdi[var].values
