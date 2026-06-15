@@ -28,13 +28,11 @@ logger = logging.getLogger(__name__)
 SOCRATA_DOMAIN = "data.cityofnewyork.us"
 
 SOCRATA_DATASETS = {
-    # Core SIM (already present)
+    # ------------------------------------------------------------------ #
+    # core_smd — primary SIM inspection data
+    # ------------------------------------------------------------------ #
     "inspection": "dntt-gqwq",
     "violations": "6kbp-uz6m",
-    "permits": "tqtj-sjs8",
-    "ramp_progress": "e7gc-ub6z",
-
-    # Add 22 more
     "built": "ugc8-s3f6",
     "lot_info": "i642-2fxq",
     "reinspection": "gx72-kirf",
@@ -42,20 +40,78 @@ SOCRATA_DATASETS = {
     "dismissals": "p4u2-3jgx",
     "correspondences": "bheb-sjfi",
     "curb_metal_protruding": "i2y3-sx2e",
-    "ramp_locations": "ufzp-rrqu",
+    "encroachments_defacements": "kyvb-rbwd",
+
+    # ------------------------------------------------------------------ #
+    # accessibility — ramp program
+    # ------------------------------------------------------------------ #
+    "ramp_locations": "ufzp-rrqu",          # stale 2021
     "ramp_complaints": "jagj-gttd",
-    "weekly_construction": "r528-jcks",
-    "capital_blocks": "jvk9-k4re",
+    "ramp_progress": "e7gc-ub6z",
+    "mbpo_ramp_report": "8kic-uvpz",        # stale 2021
+    "accessible_pedestrian_signals": "umfn-twbz",
+    "lpi_signals": "mqt5-ctec",
+    "exclusive_pedestrian_signals": "8kuj-2n3u",
+
+    # ------------------------------------------------------------------ #
+    # coordination — permits and construction
+    # ------------------------------------------------------------------ #
+    "street_permits": "tqtj-sjs8",
+    "street_permits_historical": "c9sj-fmsg",
+    "weekly_construction": "r528-jcks",     # stale 2017
+    "capital_blocks": "jvk9-k4re",          # empty
     "capital_intersections": "97nd-ff3i",
+    "capital_blocks_map": "si9g-fztb",
+    "capital_intersections_map": "3zy2-a8eg",
     "street_construction_inspections": "ydkf-mpxb",
     "street_closures_block": "i6b5-j7bu",
+    "permit_stipulations": "gsgx-6efw",     # 403 error
     "street_resurfacing_schedule": "xnfm-u3k5",
     "street_resurfacing_inhouse": "ffaf-8mrv",
+    "concrete_repair_schedule": "78sp-6jhj",
+    "bridge_hold_stipulations": "ge3f-inui",
+    "holiday_construction_embargo": "bbj7-8idq",
+    "dob_permit_issuance": "ipu4-2q9a",
+
+    # ------------------------------------------------------------------ #
+    # pavement_quality — road surface condition and protection
+    # ------------------------------------------------------------------ #
+    "street_pavement_ratings": "6yyb-pb25",
+    "street_pavement_ratings_map": "h933-akrx",
+    "protected_streets_block": "wyih-3nzf",
+    "protected_streets_intersection": "bryy-vqd9",
+    "protected_streets_segments": "9p9k-tusd",
+    "pothole_workorders": "x9wy-ing4",
+
+    # ------------------------------------------------------------------ #
+    # vision_zero — pedestrian safety and KSI metrics
+    # ------------------------------------------------------------------ #
+    "vzv_priority_corridors": "kdda-2wcy",
+    "vzv_priority_zones": "n4hs-fahn",
+    "vzv_priority_intersections": "2nj7-jxah",
+    "vzv_street_improvement_corridors": "wqhs-q6wd",
+    "vzv_street_improvement_intersections": "79sh-heg3",
+    "vzv_enhanced_crossings": "bssx-36gg",
+    "motor_vehicle_collisions": "h9gi-nx95",
+
+    # ------------------------------------------------------------------ #
+    # traffic_counts — volume and pedestrian flow
+    # ------------------------------------------------------------------ #
+    "automated_traffic_counts": "7ym2-wayt",
+    "pedestrian_counts_biannual": "2de2-6x2h",
+    "traffic_signal_studies": "w76s-c5u4",
+
+    # ------------------------------------------------------------------ #
+    # overlays — context layers
+    # ------------------------------------------------------------------ #
     "step_streets": "u9au-h79y",
     "sidewalk_planimetric": "vfx9-tbb6",
     "pedestrian_demand": "fwpa-qxaf",
     "mappluto": "64uk-42ks",
     "complaints_311": "erm2-nwe9",
+    "planimetric_curbs": "ikvd-dex8",
+    "planimetric_pavement_edge": "vs44-rznx",
+    "street_tree_census_2015": "uvpi-gqnh",
 }
 
 DEFAULT_DB_PATH = "data/local_db/nyc_mission_control.duckdb"
