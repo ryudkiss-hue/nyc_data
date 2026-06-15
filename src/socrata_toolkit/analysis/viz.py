@@ -5,6 +5,9 @@ import io
 from dataclasses import dataclass, field
 from typing import Any
 
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 import pandas as pd
 
 from .metrics import compute_borough_metrics, compute_sla_trends
