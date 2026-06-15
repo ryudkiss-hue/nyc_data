@@ -336,7 +336,7 @@ def test_full_pipeline_end_to_end(db, fixture_df, raw_inspections_df, raw_violat
     with patch.object(dp, "SocrataClient", return_value=mock_client):
         load_insp = dp.load_raw_from_socrata("inspection")
         load_viol = dp.load_raw_from_socrata("violations")
-        load_perm = dp.load_raw_from_socrata("permits")
+        load_perm = dp.load_raw_from_socrata("street_permits")
         load_ramp = dp.load_raw_from_socrata("ramp_progress")
 
     # Stage
