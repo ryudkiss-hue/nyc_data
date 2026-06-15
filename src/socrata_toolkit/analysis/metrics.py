@@ -502,7 +502,7 @@ class AnomalyReport:
 class MetricsRegistry:
     """Registry for managing metrics."""
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.metrics: dict[str, MetricPoint] = {}
         for k, v in kwargs.items():
             setattr(self, k, v)
@@ -597,15 +597,6 @@ def compute_program_dashboard(df: pd.DataFrame) -> Any:
     return tracker.dashboard()
 
 
-def validate_geospatial_bounds(
-    df: pd.DataFrame, lat_col: str = "latitude", lon_col: str = "longitude"
-) -> bool:
-
-def compute_program_dashboard(df: pd.DataFrame) -> dict:
-    """Compute program dashboard metrics."""
-    return {"total_records": len(df), "status": "ready"}
-
-
 def validate_geospatial_bounds(df: pd.DataFrame, lat_col: str = "latitude", lon_col: str = "longitude") -> bool:
     """Validate geospatial bounds."""
     if lat_col not in df.columns or lon_col not in df.columns:
@@ -668,6 +659,9 @@ class AnomalySeverity(Enum):
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
+
+
+from ..quality.rules import RuleMode
 
 
 class BusinessRulesEngine:
@@ -814,9 +808,6 @@ def create_map(df: pd.DataFrame, lat_col: str = "latitude", lon_col: str = "long
             for _, row in df.head(10).iterrows():
                 rows_html += f"<li>{row.get(lat_col, '')}, {row.get(lon_col, '')}</li>"
         return f"<html><body><h2>Map ({len(df)} records)</h2><ul>{rows_html}</ul></body></html>"
-
-
-    return DictWithChartType(result)
 
 
 def time_series_chart(

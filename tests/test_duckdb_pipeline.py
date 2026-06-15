@@ -183,7 +183,7 @@ def test_stage_permits(db):
             "permit_issue_date": ["2026-01-01", "2026-03-01", "2026-02-01"],
         }
     )
-    _load_raw(db, "permits", permits)
+    _load_raw(db, "street_permits", permits)
     result = dp.stage_permits()
     assert result["status"] == "success"
     assert result["table"] == "staging.permits"
@@ -336,7 +336,7 @@ def test_full_pipeline_end_to_end(db, fixture_df, raw_inspections_df, raw_violat
     with patch.object(dp, "SocrataClient", return_value=mock_client):
         load_insp = dp.load_raw_from_socrata("inspection")
         load_viol = dp.load_raw_from_socrata("violations")
-        load_perm = dp.load_raw_from_socrata("permits")
+        load_perm = dp.load_raw_from_socrata("street_permits")
         load_ramp = dp.load_raw_from_socrata("ramp_progress")
 
     # Stage
@@ -434,7 +434,7 @@ def test_staging_performance(db, fixture_df, raw_violations_df):
         }
     )
 
-    _load_raw(db, "permits", permits_df)
+    _load_raw(db, "street_permits", permits_df)
     _load_raw(db, "ramp_progress", ramps_df)
 
     start = time.time()
@@ -484,7 +484,7 @@ def test_analytics_performance(db, fixture_df, raw_violations_df):
         }
     )
 
-    _load_raw(db, "permits", permits_df)
+    _load_raw(db, "street_permits", permits_df)
     _load_raw(db, "ramp_progress", ramps_df)
 
     dp.stage_inspections()
