@@ -14,18 +14,22 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
+
 def get_bundle_dir() -> str:
     if getattr(sys, "frozen", False):
         return sys._MEIPASS  # type: ignore[attr-defined]
     return os.getcwd()
 
+
 # ---------------------------------------------------------------------------
 # Parquet cache querying (Item 34)
 # ---------------------------------------------------------------------------
 
+
 def _escape_sql_literal(value: str) -> str:
     """Escape single quotes so *value* is safe inside a SQL string literal."""
     return value.replace("'", "''")
+
 
 def _default_cache_dir() -> Path:
     """Return the on-disk L2 cache directory used by Mission Control.
@@ -39,6 +43,7 @@ def _default_cache_dir() -> Path:
     # This file lives at src/socrata_toolkit/core/ — repo root is parents[3].
     repo_root = Path(__file__).resolve().parents[3]
     return repo_root / "data" / "cache"
+
 
 def _latest_parquet_for_key(key: str, cache_dir: str | Path | None) -> Path | None:
     """Return the newest cached Parquet file for *key*, or ``None`` if none exist.
@@ -58,6 +63,7 @@ def _latest_parquet_for_key(key: str, cache_dir: str | Path | None) -> Path | No
         key=lambda p: p.stat().st_mtime,
     )
     return candidates[-1] if candidates else None
+
 
 def query_parquet_cache(
     sql_or_key: str,
@@ -101,9 +107,7 @@ def query_parquet_cache(
     looks_like_sql = (
         any(ch.isspace() for ch in text)
         or "(" in text
-        or text.lower().startswith(
-            ("select", "with", "describe", "summarize", "pragma", "from")
-        )
+        or text.lower().startswith(("select", "with", "describe", "summarize", "pragma", "from"))
     )
 
     if looks_like_sql:
@@ -120,6 +124,7 @@ def query_parquet_cache(
         return duckdb.query(sql).to_df()
     except duckdb.Error as exc:  # pragma: no cover - depends on caller SQL
         raise RuntimeError(f"query_parquet_cache: DuckDB query failed: {exc}") from exc
+
 
 class DuckDBManager:
     """Manages DuckDB local file connection, MotherDuck integration, and extensions."""
@@ -214,9 +219,7 @@ class DuckDBManager:
         logger.info("Attaching MotherDuck as '%s'", alias)
         self.conn.execute(f"ATTACH 'md:' AS {alias}")
 
-    def publish_to_motherduck(
-        self, table_name: str, remote_name: str, database: str = "my_db"
-    ):
+    def publish_to_motherduck(self, table_name: str, remote_name: str, database: str = "my_db"):
         """Item 7: Data Bridging - Push local table/view to MotherDuck.
 
         Example: publish_to_motherduck('local_cache', 'nyc_data_share')
@@ -275,12 +278,15 @@ class DuckDBManager:
         """Generate a summary of the table's statistics using DuckDB's SUMMARIZE."""
         return self.query(f"SUMMARIZE {table_name}").df()
 
-    def get_partitioned_parquet_files(self, key: str, cache_dir: str | Path | None = None) -> list[Path]:
+    def get_partitioned_parquet_files(
+        self, key: str, cache_dir: str | Path | None = None
+    ) -> list[Path]:
         """Item 2: Helper for Partitioned Parquet."""
         base = Path(cache_dir) if cache_dir is not None else _default_cache_dir()
         if not base.exists():
             return []
         return sorted(list(base.glob(f"{key}_*.parquet")))
+
 
 class DuckDBRepository:
     """Repository for DuckDB bulk upserts with Spatial awareness.
@@ -310,9 +316,7 @@ class DuckDBRepository:
                 break
 
         # Lat/Lon Detection
-        lat_cand = next(
-            (cols[c] for c in ("latitude", "lat", "y", "ycoord") if c in cols), None
-        )
+        lat_cand = next((cols[c] for c in ("latitude", "lat", "y", "ycoord") if c in cols), None)
         lon_cand = next(
             (cols[c] for c in ("longitude", "lon", "lng", "long", "x", "xcoord") if c in cols),
             None,
@@ -340,27 +344,18 @@ class DuckDBRepository:
         elif "lat" in spatial_info and "lon" in spatial_info:
             # Note: NYC uses EPSG:2263 or WGS84 (4326). We default to 4326 for ingestion.
             geom_expr = (
-                f"ST_Point(CAST(\"{spatial_info['lon']}\" AS DOUBLE), "
-                f"CAST(\"{spatial_info['lat']}\" AS DOUBLE))"
+                f'ST_Point(CAST("{spatial_info["lon"]}" AS DOUBLE), '
+                f'CAST("{spatial_info["lat"]}" AS DOUBLE))'
             )
 
-        # Check if table exists in the target database
+        # Check if table exists — use direct query as the primary approach since
+        # information_schema.table_catalog varies ('memory' for in-memory, database
+        # name for file-based) and doesn't reliably match self.database ('main').
         try:
-            # information_schema.tables is standard for both local and MD
-            tables = self.manager.conn.execute(
-                f"SELECT table_name FROM information_schema.tables "
-                f"WHERE table_catalog = '{self.database}' "
-                f"AND table_name = '{self.table_name}'"
-            ).fetchall()
-            table_exists = len(tables) > 0
+            self.manager.conn.execute(f"SELECT 1 FROM {self.qualified_name} WHERE 1=0")
+            table_exists = True
         except Exception:
-            # Fallback for systems where information_schema might be flaky
-            # We use qualify check
-            try:
-                self.manager.conn.execute(f"SELECT 1 FROM {self.qualified_name} WHERE 1=0")
-                table_exists = True
-            except Exception:
-                table_exists = False
+            table_exists = False
 
         if not table_exists:
             # Create table with an explicit GEOMETRY column
@@ -376,18 +371,17 @@ class DuckDBRepository:
             if self.database == "main":
                 self.manager.conn.execute(
                     f'CREATE UNIQUE INDEX IF NOT EXISTS "idx_{self.table_name}_{conflict_col}" '
-                    f"ON {self.qualified_name} (\"{conflict_col}\")"
+                    f'ON {self.qualified_name} ("{conflict_col}")'
                 )
             return len(df)
 
-        # Schema Evolution: Ensure native_geom exists
-        # PRAGMA table_info only works for the 'main' database or with a prefix
-        # Use information_schema for multi-db compatibility
+        # Schema Evolution: get existing columns via information_schema,
+        # filtering by table_schema='main' (works for both in-memory and file-based).
         existing_cols = [
             row[0]
             for row in self.manager.conn.execute(
                 f"SELECT column_name FROM information_schema.columns "
-                f"WHERE table_catalog = '{self.database}' "
+                f"WHERE table_schema = 'main' "
                 f"AND table_name = '{self.table_name}'"
             ).fetchall()
         ]
@@ -403,9 +397,7 @@ class DuckDBRepository:
             ]
 
         if "native_geom" not in existing_cols:
-            logger.info(
-                "Spatial Migration: Adding 'native_geom' column to %s", self.qualified_name
-            )
+            logger.info("Spatial Migration: Adding 'native_geom' column to %s", self.qualified_name)
             self.manager.conn.execute(
                 f"ALTER TABLE {self.qualified_name} ADD COLUMN native_geom GEOMETRY;"
             )
@@ -445,7 +437,5 @@ class DuckDBRepository:
         ).df()
 
     def count(self) -> int:
-        row = self.manager.conn.execute(
-            f"SELECT COUNT(*) FROM {self.qualified_name}"
-        ).fetchone()
+        row = self.manager.conn.execute(f"SELECT COUNT(*) FROM {self.qualified_name}").fetchone()
         return int(row[0]) if row else 0

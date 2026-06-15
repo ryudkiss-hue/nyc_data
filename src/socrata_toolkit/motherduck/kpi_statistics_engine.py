@@ -11,6 +11,7 @@ Includes optional advanced metrics from scipy/statsmodels:
 
 from __future__ import annotations
 
+import functools
 import logging
 import time
 from dataclasses import dataclass
@@ -18,6 +19,18 @@ from typing import Optional
 
 import duckdb
 import numpy as np
+
+
+def _expose_func(fn):
+    """Wrap a method so that wrapper.func points back to the original for introspection."""
+
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        return fn(*args, **kwargs)
+
+    wrapper.func = fn
+    return wrapper
+
 
 # Optional dependencies for advanced metrics
 try:
@@ -415,6 +428,7 @@ class KPIStatisticsEngine:
             self.conn = duckdb.connect(":memory:")
         logger.info("Connected to DuckDB/MotherDuck")
 
+    @_expose_func
     def compute_all_metrics(self, max_retries: int = 3) -> KPIStatisticsResult:
         """Compute all 60+ metrics and populate analytics layer with retry logic."""
         if self.conn is None:

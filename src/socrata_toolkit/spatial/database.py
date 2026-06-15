@@ -50,9 +50,11 @@ __all__ = [
 SRID_WGS84 = 4326
 SRID_NAD83 = 2263  # NY Long Island (feet)
 
+
 @dataclass
 class SpatialGeometry:
     """Represents a geometry object with spatial reference system."""
+
     geometry: BaseGeometry
     srid: int = SRID_WGS84
     geometry_type: str = field(init=False)
@@ -65,8 +67,8 @@ class SpatialGeometry:
         self.geometry_type = geom_name
 
     def to_wkt(self) -> str:
-        """Convert to Well-Known Text format with SRID prefix."""
-        return f"SRID={self.srid};{self.geometry.wkt}"
+        """Convert to Well-Known Text format (bare WKT, no SRID prefix)."""
+        return self.geometry.wkt
 
     def to_geojson(self) -> dict[str, Any]:
         """Convert to GeoJSON representation."""
@@ -86,9 +88,11 @@ class SpatialGeometry:
             raise ValueError("Cannot compute distance between different SRIDs")
         return float(self.geometry.distance(other.geometry))
 
+
 @dataclass
 class SpatialSegment:
     """Represents a sidewalk segment with spatial attributes."""
+
     segment_id: str
     geometry: SpatialGeometry
     material_type: str
@@ -115,9 +119,11 @@ class SpatialSegment:
         if self.borough not in BOROUGH_SET:
             raise ValueError(f"borough must be one of {BOROUGH_SET}")
 
+
 @dataclass
 class SpatialBlock:
     """Represents a city block with spatial attributes."""
+
     block_id: str
     geometry: SpatialGeometry
     borough: str
@@ -134,9 +140,11 @@ class SpatialBlock:
         if self.geometry.geometry_type != "Polygon":
             raise ValueError(f"Block must be Polygon, got {self.geometry.geometry_type}")
 
+
 @dataclass
 class SpatialInspection:
     """Represents an inspection location with spatial attributes."""
+
     inspection_id: str
     geometry: SpatialGeometry
     segment_id: str
@@ -159,9 +167,11 @@ class SpatialInspection:
         if self.severity not in valid_severities:
             raise ValueError(f"severity must be one of {valid_severities}")
 
+
 @dataclass
 class SpatialMaterialZone:
     """Represents a geographic zone with uniform material type."""
+
     zone_id: str
     geometry: SpatialGeometry
     material_type: str
@@ -175,7 +185,10 @@ class SpatialMaterialZone:
             raise ValueError("geometry must be a SpatialGeometry instance")
 
         if self.geometry.geometry_type not in {"Polygon", "MultiPolygon"}:
-            raise ValueError(f"Zone must be Polygon/MultiPolygon, got {self.geometry.geometry_type}")
+            raise ValueError(
+                f"Zone must be Polygon/MultiPolygon, got {self.geometry.geometry_type}"
+            )
+
 
 class DuckDBSpatialConnection:
     """
@@ -309,7 +322,7 @@ class DuckDBSpatialConnection:
         try:
             with self.get_connection() as conn:
                 conn.execute(
-                """
+                    """
                 INSERT INTO sidewalk_segments
                 (segment_id, geometry, material_type, condition_score,
                  borough, block_id, district, council_district,
@@ -320,20 +333,20 @@ class DuckDBSpatialConnection:
                     condition_score = EXCLUDED.condition_score,
                     updated_at = CURRENT_TIMESTAMP
                 """,
-                (
-                    segment.segment_id,
-                    segment.geometry.to_wkt(),
-                    segment.material_type,
-                    segment.condition_score,
-                    segment.borough,
-                    segment.block_id,
-                    segment.district,
-                    segment.council_district,
-                    segment.length_meters,
-                    segment.last_inspection,
-                    segment.defects,
+                    (
+                        segment.segment_id,
+                        segment.geometry.to_wkt(),
+                        segment.material_type,
+                        segment.condition_score,
+                        segment.borough,
+                        segment.block_id,
+                        segment.district,
+                        segment.council_district,
+                        segment.length_meters,
+                        segment.last_inspection,
+                        segment.defects,
+                    ),
                 )
-            )
             return True
         except Exception as e:
             logger.error(f"Error inserting segment {segment.segment_id}: {e}")
@@ -344,7 +357,7 @@ class DuckDBSpatialConnection:
         try:
             with self.get_connection() as conn:
                 conn.execute(
-                """
+                    """
                 INSERT INTO blocks
                 (block_id, geometry, borough, district, council_district,
                  area_square_meters, segments_count)
@@ -352,16 +365,16 @@ class DuckDBSpatialConnection:
                 ON CONFLICT (block_id) DO UPDATE SET
                     geometry = EXCLUDED.geometry
                 """,
-                (
-                    block.block_id,
-                    block.geometry.to_wkt(),
-                    block.borough,
-                    block.district,
-                    block.council_district,
-                    block.area_square_meters,
-                    block.segments_count,
+                    (
+                        block.block_id,
+                        block.geometry.to_wkt(),
+                        block.borough,
+                        block.district,
+                        block.council_district,
+                        block.area_square_meters,
+                        block.segments_count,
+                    ),
                 )
-            )
             return True
         except Exception as e:
             logger.error(f"Error inserting block {block.block_id}: {e}")
@@ -372,25 +385,25 @@ class DuckDBSpatialConnection:
         try:
             with self.get_connection() as conn:
                 conn.execute(
-                """
+                    """
                 INSERT INTO inspections
                 (inspection_id, geometry, segment_id, inspector_id,
                  timestamp, defect_type, severity, photo_url, gps_accuracy_meters)
                 VALUES (?, ST_GeomFromText(?), ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT (inspection_id) DO NOTHING
                 """,
-                (
-                    inspection.inspection_id,
-                    inspection.geometry.to_wkt(),
-                    inspection.segment_id,
-                    inspection.inspector_id,
-                    inspection.timestamp,
-                    inspection.defect_type,
-                    inspection.severity,
-                    inspection.photo_url,
-                    inspection.gps_accuracy_meters,
+                    (
+                        inspection.inspection_id,
+                        inspection.geometry.to_wkt(),
+                        inspection.segment_id,
+                        inspection.inspector_id,
+                        inspection.timestamp,
+                        inspection.defect_type,
+                        inspection.severity,
+                        inspection.photo_url,
+                        inspection.gps_accuracy_meters,
+                    ),
                 )
-            )
             return True
         except Exception as e:
             logger.error(f"Error inserting inspection {inspection.inspection_id}: {e}")
@@ -401,7 +414,7 @@ class DuckDBSpatialConnection:
         try:
             with self.get_connection() as conn:
                 conn.execute(
-                """
+                    """
                 INSERT INTO material_zones
                 (zone_id, geometry, material_type, area_square_meters,
                  segment_count, average_condition)
@@ -410,15 +423,15 @@ class DuckDBSpatialConnection:
                     geometry = EXCLUDED.geometry,
                     average_condition = EXCLUDED.average_condition
                 """,
-                (
-                    zone.zone_id,
-                    zone.geometry.to_wkt(),
-                    zone.material_type,
-                    zone.area_square_meters,
-                    zone.segment_count,
-                    zone.average_condition,
+                    (
+                        zone.zone_id,
+                        zone.geometry.to_wkt(),
+                        zone.material_type,
+                        zone.area_square_meters,
+                        zone.segment_count,
+                        zone.average_condition,
+                    ),
                 )
-            )
             return True
         except Exception as e:
             logger.error(f"Error inserting material zone {zone.zone_id}: {e}")
@@ -460,11 +473,12 @@ class DuckDBSpatialConnection:
                 FROM sidewalk_segments
                 WHERE segment_id = ?
                 """,
-                [segment_id]
+                [segment_id],
             ).fetchone()
 
             if res:
                 from shapely.wkt import loads
+
                 return SpatialSegment(
                     segment_id=res[0],
                     geometry=SpatialGeometry(loads(res[1])),
@@ -481,6 +495,7 @@ class DuckDBSpatialConnection:
         except Exception as e:
             logger.error(f"Error retrieving segment {segment_id}: {e}")
         return None
+
 
 class SpatialDataModel:
     """
@@ -554,13 +569,16 @@ class SpatialDataModel:
         """Get zone by ID."""
         return self._zones.get(zone_id)
 
+
 @dataclass
 class SpatialQuery:
     """Query parameters for spatial searches."""
+
     bounds: tuple[float, float, float, float] | None = None
     center: tuple[float, float] | None = None
     radius: float | None = None
     filter_type: str = "intersect"
+
 
 class SpatialIndex:
     """Spatial index abstraction."""
@@ -592,6 +610,7 @@ class SpatialIndex:
                 results.append(item)
         return results
 
+
 class GeometryHandler:
     """Handler for geometry validation."""
 
@@ -608,7 +627,7 @@ class GeometryHandler:
         if target_format == "wkt":
             if isinstance(geometry, SpatialGeometry):
                 return geometry.to_wkt()
-            return geometry.wkt if hasattr(geometry, "wkt") else str(geometry)
+            return geometry.wkt if hasattr(geometry, "wkt") else geometry
         if target_format == "geojson":
             if isinstance(geometry, SpatialGeometry):
                 return geometry.to_geojson()
@@ -633,13 +652,16 @@ class GeometryHandler:
             return SpatialGeometry(geometry.geometry, target_srid)
         return geometry
 
+
 # Legacy Alias for test compatibility
 SpatialDatabaseConnection = DuckDBSpatialConnection
+
 
 def create_spatial_index(data: list) -> SpatialIndex:
     index = SpatialIndex()
     index.build_index(data)
     return index
+
 
 def query_geographic_area(query: SpatialQuery) -> list:
     return []

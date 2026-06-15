@@ -78,6 +78,8 @@ from .text import (
     parse_sim_complaints,
 )
 from .viz import (
+    ChartResult,
+    QualityDashboardResult,
     bar_chart,
     box_plot,
     classify_distribution,
@@ -317,6 +319,105 @@ _legacy_import("..analyst.ramp_analysis", "compute_borough_completion_rates")
 _legacy_import("..engineering.cost_estimator", "estimate_costs")
 _legacy_import("..reports.analyst", "ProjectAnalystReports")
 _legacy_import("..quality.validation", "validate_ada_compliance_gates")
+
+# Override stub implementations from metrics.py with full quality module classes
+try:
+    from ..quality.anomalies import (  # type: ignore[no-redef]
+        Anomaly,
+        AnomalyDetector,
+        AnomalyReport,
+        AnomalySeverity,
+    )
+except Exception:
+    pass
+
+try:
+    from ..quality.rules import (  # type: ignore[no-redef]
+        BusinessRulesEngine,
+        QualityRule,
+        RuleMode,
+        RuleSeverity,
+        RuleViolations,
+    )
+except Exception:
+    pass
+
+try:
+    from ..quality.sla import TrendDirection  # type: ignore[no-redef]
+except Exception:
+    pass
+
+try:
+    from ..quality.sla import DataQualityTracker  # type: ignore[no-redef]
+except Exception:
+    pass
+
+try:
+    from ..quality.catalog import (  # type: ignore[no-redef]
+        DataQualityCatalog,
+        DatasetQualityScore,
+    )
+except Exception:
+    pass
+
+try:
+    from ..quality.profiler import DataType  # type: ignore[no-redef]
+except Exception:
+    pass
+
+try:
+    from ..quality.validation import (  # type: ignore[no-redef]
+        validate_defect_applicability,
+        validate_geospatial_bounds,
+        validate_marking_standards,
+        validate_material_coverage,
+    )
+except Exception:
+    pass
+
+try:
+    from ..analysis_advanced import (  # type: ignore[no-redef]
+        detect_outliers_iqr,
+        detect_outliers_zscore,
+        flag_anomalies,
+        time_series_summary,
+    )
+except Exception:
+    pass
+
+# Override stub MetricPoint/MetricsRegistry/PipelineMetrics/DataQualityMetrics
+# with full Prometheus-compatible implementations from socrata_toolkit.metrics
+try:
+    from ..metrics import (  # type: ignore[no-redef]
+        DataQualityMetrics,
+        MetricPoint,
+        MetricsRegistry,
+        PipelineMetrics,
+        get_global_registry,
+        reset_global_registry,
+    )
+except Exception:
+    pass
+
+# Override stub DatasetFreshness/FreshnessAlert/FreshnessTracker with full implementations
+try:
+    from ..quality.freshness import (  # type: ignore[no-redef]
+        DatasetFreshness,
+        FreshnessAlert,
+        FreshnessTracker,
+    )
+except Exception:
+    pass
+
+# Override stub compute_cycle_times/flag_sla_violations with full SLA tracking implementations
+try:
+    from ..quality.sla_tracking import (  # type: ignore[no-redef]
+        SLATarget,
+        compute_cycle_times,
+        flag_sla_violations,
+    )
+except Exception:
+    pass
 
 
 # Lazy imports for optional NLP/LLM dependencies (spacy, langgraph, langchain)

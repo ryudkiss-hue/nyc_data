@@ -11,15 +11,18 @@ import pymc as pm
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class BayesianInferenceResult:
     """Standardized result for Bayesian MCMC inference."""
+
     summary: pd.DataFrame
     hdi_intervals: dict[str, tuple[float, float]]
     r_hat_max: float
     ess_min: float
     converged: bool
     trace: az.InferenceData
+
 
 class BayesianRegressionEngine:
     """
@@ -33,7 +36,7 @@ class BayesianRegressionEngine:
         observed: np.ndarray,
         draws: int = 1000,
         tune: int = 1000,
-        chains: int = 2
+        chains: int = 2,
     ) -> BayesianInferenceResult:
         """
         Performs Bayesian Poisson Regression for count-based operational data.
@@ -58,7 +61,7 @@ class BayesianRegressionEngine:
                 target_accept=0.9,
                 return_inferencedata=True,
                 progressbar=False,
-                random_seed=42
+                random_seed=42,
             )
 
         # 5. Convergence Diagnostics (Mandated by GEMINI.md)
@@ -68,10 +71,12 @@ class BayesianRegressionEngine:
         converged = r_hat_max < 1.05
 
         if not converged:
-            logger.warning(f"MCMC Chain did not reach convergence benchmark (R-hat={r_hat_max:.4f}).")
+            logger.warning(
+                f"MCMC Chain did not reach convergence benchmark (R-hat={r_hat_max:.4f})."
+            )
 
         # 6. Uncertainty Quantification (94% HDI)
-        hdi = az.hdi(trace, prob=0.94)
+        hdi = az.hdi(trace, hdi_prob=0.94)
         hdi_dict = {}
         for var in ["Intercept", "Predictor_Effect"]:
             vals = hdi[var].values
@@ -83,5 +88,5 @@ class BayesianRegressionEngine:
             r_hat_max=r_hat_max,
             ess_min=ess_min,
             converged=converged,
-            trace=trace
+            trace=trace,
         )
