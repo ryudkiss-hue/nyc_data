@@ -504,8 +504,6 @@ class MetricsRegistry:
 
     def __init__(self):
         self.metrics: dict[str, MetricPoint] = {}
-        for k, v in kwargs.items():
-            setattr(self, k, v)
 
     def register(self, name: str, metric: MetricPoint):
         self.metrics[name] = metric
@@ -699,7 +697,7 @@ class BusinessRulesEngine:
         """Apply hard (critical) rules to DataFrame."""
         violations = []
         for name, rule in self.rules.items():
-            if hasattr(rule, 'mode') and rule.mode in (RuleMode.HARD,):
+            if hasattr(rule, 'mode') and getattr(rule.mode, 'value', None) == 'hard':
                 if hasattr(rule, 'rule_func') and callable(rule.rule_func):
                     try:
                         result = rule.rule_func(df)
@@ -787,6 +785,7 @@ def correlation_heatmap(df: pd.DataFrame) -> Any:
         result = corr.to_dict()
     else:
         result = {}
+    return result
 
 
 def create_map(df: pd.DataFrame, lat_col: str = "latitude", lon_col: str = "longitude") -> str:
@@ -810,9 +809,6 @@ def create_map(df: pd.DataFrame, lat_col: str = "latitude", lon_col: str = "long
             for _, row in df.head(10).iterrows():
                 rows_html += f"<li>{row.get(lat_col, '')}, {row.get(lon_col, '')}</li>"
         return f"<html><body><h2>Map ({len(df)} records)</h2><ul>{rows_html}</ul></body></html>"
-
-
-    return DictWithChartType(result)
 
 
 def time_series_chart(
