@@ -32,7 +32,6 @@ from typing import Any
 
 import pandas as pd
 
-
 _D3_CDN = "https://unpkg.com/d3@7/dist/d3.min.js"
 
 _HTML_WRAPPER = """<!DOCTYPE html>
