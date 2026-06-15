@@ -197,13 +197,8 @@ def get_timeseries_data(
         return df
 
     except ImportError:
-        logger.warning("DuckDB not available, using mock time series")
-        return pd.DataFrame(
-            {
-                date_col: pd.date_range("2026-05-01", "2026-06-11", freq="D"),
-                value_col: [85, 86, 84, 87, 85] * 8 + [85, 86],
-            }
-        )
+        logger.error("DuckDB not available — time series data cannot be fetched")
+        return pd.DataFrame()
     except Exception as e:
         logger.error(f"Error fetching time series: {e}")
         return pd.DataFrame()
@@ -258,11 +253,6 @@ def get_kpi_metrics(filters: Optional[dict] = None) -> dict[str, tuple[float, fl
                     min(100, score.overall + 5),
                 )
 
-        # Use mocks for missing metrics
-        for key in ["completion_rate", "avg_response_time", "sla_compliance"]:
-            if key not in metrics:
-                metrics[key] = _get_mock_kpis().get(key, (0, 0, 0))
-
         # Store in cache (Phase 3B optimization - cache all responses)
         _cache_manager._set_cache(cache_key, metrics)
         logger.info(f"Computed {len(metrics)} KPI metrics (fresh, cached)")
@@ -270,20 +260,7 @@ def get_kpi_metrics(filters: Optional[dict] = None) -> dict[str, tuple[float, fl
 
     except Exception as e:
         logger.error(f"Error computing KPI metrics: {e}")
-        mock_metrics = _get_mock_kpis()
-        # Cache even error cases for consistency
-        _cache_manager._set_cache(cache_key, mock_metrics)
-        return {**mock_metrics, "_cached": False}
-
-
-def _get_mock_kpis() -> dict[str, tuple[float, float, float]]:
-    """Return mock KPI values when real data unavailable."""
-    return {
-        "completion_rate": (87.4, 85.2, 89.1),
-        "avg_response_time": (2.3, 2.1, 2.5),
-        "quality_score": (92.0, 90.5, 93.2),
-        "sla_compliance": (94.1, 92.8, 95.2),
-    }
+        return {"_unavailable": True, "_cached": False}
 
 
 # ============================================================================
