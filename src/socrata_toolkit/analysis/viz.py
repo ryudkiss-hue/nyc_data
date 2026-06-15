@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
