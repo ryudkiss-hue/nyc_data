@@ -13,101 +13,134 @@ Run with:
     pytest tests/test_phase_4_6_integration.py -v --benchmark-only (for perf tests)
 """
 
-import pytest
+import io
+from datetime import datetime, timedelta
+
 import pandas as pd
 import plotly.graph_objects as go
-from datetime import datetime, timedelta
-import io
+import pytest
 
 # Mock MotherDuck data for testing (no real DB calls)
+
 
 @pytest.fixture
 def mock_phase_b_data():
     """Mock Phase B results (Moran's I spatial)."""
-    return pd.DataFrame({
-        "borough": ["MN", "BK", "BX", "QN", "SI"],
-        "morans_i": [0.342, 0.215, 0.189, 0.156, 0.098],
-        "significance": ["HIGH", "MEDIUM", "MEDIUM", "LOW", "LOW"],
-        "cluster_count": [5, 3, 2, 2, 1],
-    })
+    return pd.DataFrame(
+        {
+            "borough": ["MN", "BK", "BX", "QN", "SI"],
+            "morans_i": [0.342, 0.215, 0.189, 0.156, 0.098],
+            "significance": ["HIGH", "MEDIUM", "MEDIUM", "LOW", "LOW"],
+            "cluster_count": [5, 3, 2, 2, 1],
+        }
+    )
+
 
 @pytest.fixture
 def mock_phase_c_data():
     """Mock Phase C results (distributions)."""
-    return pd.DataFrame({
-        "borough": ["MN", "BK", "BX", "QN", "SI"],
-        "distribution_type": ["NORMAL", "SKEWED", "NORMAL", "UNIFORM", "SKEWED"],
-        "skewness": [0.12, 0.78, 0.05, -0.02, 0.65],
-        "concentration_pct": [15.2, 22.1, 18.5, 12.3, 25.8],
-    })
+    return pd.DataFrame(
+        {
+            "borough": ["MN", "BK", "BX", "QN", "SI"],
+            "distribution_type": ["NORMAL", "SKEWED", "NORMAL", "UNIFORM", "SKEWED"],
+            "skewness": [0.12, 0.78, 0.05, -0.02, 0.65],
+            "concentration_pct": [15.2, 22.1, 18.5, 12.3, 25.8],
+        }
+    )
+
 
 @pytest.fixture
 def mock_phase_d_data():
     """Mock Phase D results (anomalies)."""
-    return pd.DataFrame({
-        "location_id": list(range(1, 26)),
-        "borough": ["MN"] * 5 + ["BK"] * 5 + ["BX"] * 5 + ["QN"] * 5 + ["SI"] * 5,
-        "outlier_type": ["HIGH", "LOW", "HIGH", "MODERATE", "HIGH"] * 5,
-        "severity": ["CRITICAL", "INFO", "CRITICAL", "WARNING", "CRITICAL"] * 5,
-        "priority": [1, 5, 2, 3, 1] * 5,
-    })
+    return pd.DataFrame(
+        {
+            "location_id": list(range(1, 26)),
+            "borough": ["MN"] * 5 + ["BK"] * 5 + ["BX"] * 5 + ["QN"] * 5 + ["SI"] * 5,
+            "outlier_type": ["HIGH", "LOW", "HIGH", "MODERATE", "HIGH"] * 5,
+            "severity": ["CRITICAL", "INFO", "CRITICAL", "WARNING", "CRITICAL"] * 5,
+            "priority": [1, 5, 2, 3, 1] * 5,
+        }
+    )
+
 
 @pytest.fixture
 def mock_phase_e_data():
     """Mock Phase E results (decomposition)."""
     dates = pd.date_range("2026-01-01", periods=450, freq="D")
-    return pd.DataFrame({
-        "period": dates,
-        "trend": [100 + i * 0.1 for i in range(450)],
-        "seasonal": [10 * (1 + i % 7) for i in range(450)],
-        "residual": [0.5 * (i % 3) for i in range(450)],
-        "forecast": [100 + i * 0.1 + 10 for i in range(450)],
-    })
+    return pd.DataFrame(
+        {
+            "period": dates,
+            "trend": [100 + i * 0.1 for i in range(450)],
+            "seasonal": [10 * (1 + i % 7) for i in range(450)],
+            "residual": [0.5 * (i % 3) for i in range(450)],
+            "forecast": [100 + i * 0.1 + 10 for i in range(450)],
+        }
+    )
+
 
 @pytest.fixture
 def mock_phase_f_data():
     """Mock Phase F results (bootstrap CI)."""
-    return pd.DataFrame({
-        "borough": ["MN", "BK", "BX", "QN", "SI"],
-        "point_estimate": [85.2, 78.5, 82.1, 76.3, 80.9],
-        "ci_lower": [82.1, 75.2, 79.5, 73.1, 77.8],
-        "ci_upper": [88.3, 81.8, 84.7, 79.5, 84.0],
-        "prob_meets_sla": [0.92, 0.78, 0.87, 0.71, 0.85],
-        "prob_sla_breach": [0.08, 0.22, 0.13, 0.29, 0.15],
-    })
+    return pd.DataFrame(
+        {
+            "borough": ["MN", "BK", "BX", "QN", "SI"],
+            "point_estimate": [85.2, 78.5, 82.1, 76.3, 80.9],
+            "ci_lower": [82.1, 75.2, 79.5, 73.1, 77.8],
+            "ci_upper": [88.3, 81.8, 84.7, 79.5, 84.0],
+            "prob_meets_sla": [0.92, 0.78, 0.87, 0.71, 0.85],
+            "prob_sla_breach": [0.08, 0.22, 0.13, 0.29, 0.15],
+        }
+    )
+
 
 @pytest.fixture
 def mock_kpi_data():
     """Mock KPI dashboard data (18 KPIs × 5 boroughs = 90 rows)."""
     kpis = [
-        "total_inspections", "inspection_rate", "avg_violations_per_inspection",
-        "critical_violations", "inspection_backlog",
-        "data_completeness", "data_validity", "data_consistency",
-        "data_freshness", "quality_score",
-        "ramp_completion_rate", "ramp_complaints", "ramp_progress_month",
+        "total_inspections",
+        "inspection_rate",
+        "avg_violations_per_inspection",
+        "critical_violations",
+        "inspection_backlog",
+        "data_completeness",
+        "data_validity",
+        "data_consistency",
+        "data_freshness",
+        "quality_score",
+        "ramp_completion_rate",
+        "ramp_complaints",
+        "ramp_progress_month",
         "ramp_sla_breach",
-        "morans_i_statistic", "spatial_clusters", "hotspot_concentration",
-        "outlier_count"
+        "morans_i_statistic",
+        "spatial_clusters",
+        "hotspot_concentration",
+        "outlier_count",
     ]
     boroughs = ["MN", "BK", "BX", "QN", "SI"]
 
     rows = []
     for kpi in kpis:
         for borough in boroughs:
-            rows.append({
-                "metric_id": kpi,
-                "metric_name": kpi.replace("_", " ").title(),
-                "borough": borough,
-                "value": 75.5 + hash(f"{kpi}{borough}") % 25,
-                "change_pct": 2.3 + hash(f"{kpi}{borough}") % 5 - 2.5,
-                "category": "Inspection Performance" if kpi.startswith("inspection") else "Quality",
-            })
+            rows.append(
+                {
+                    "metric_id": kpi,
+                    "metric_name": kpi.replace("_", " ").title(),
+                    "borough": borough,
+                    "value": 75.5 + hash(f"{kpi}{borough}") % 25,
+                    "change_pct": 2.3 + hash(f"{kpi}{borough}") % 5 - 2.5,
+                    "category": "Inspection Performance"
+                    if kpi.startswith("inspection")
+                    else "Quality",
+                }
+            )
 
     return pd.DataFrame(rows)
+
 
 # =============================================================================
 # PHASE 4 TESTS: DASHBOARD INTEGRATION
 # =============================================================================
+
 
 class TestPhase4DashboardIntegration:
     """Test Phase 4: Filter system, callbacks, KPI cards."""
@@ -176,9 +209,11 @@ class TestPhase4DashboardIntegration:
         result = _apply_filters(query, filters)
         assert result == query
 
+
 # =============================================================================
 # PHASE 5 TESTS: EXPORT SYSTEM
 # =============================================================================
+
 
 class TestPhase5ExportSystem:
     """Test Phase 5: PDF, CSV, Excel exports."""
@@ -195,11 +230,7 @@ class TestPhase5ExportSystem:
         from app.services.universal_exporter import UniversalExporter
 
         exporter = UniversalExporter()
-        csv_str = exporter.export_data_to_csv(
-            mock_phase_b_data,
-            "Test Report",
-            {"Records": 5}
-        )
+        csv_str = exporter.export_data_to_csv(mock_phase_b_data, "Test Report", {"Records": 5})
 
         assert csv_str is not None
         assert "Test Report" in csv_str
@@ -212,11 +243,7 @@ class TestPhase5ExportSystem:
 
         exporter = UniversalExporter()
         stats = {"Avg Moran's I": 0.2, "Records": 5}
-        csv_str = exporter.export_data_to_csv(
-            mock_phase_b_data,
-            "Test",
-            stats
-        )
+        csv_str = exporter.export_data_to_csv(mock_phase_b_data, "Test", stats)
 
         assert "Avg Moran's I" in csv_str
         assert "0.2" in csv_str
@@ -227,9 +254,7 @@ class TestPhase5ExportSystem:
 
         exporter = UniversalExporter()
         xlsx_bytes = exporter.export_data_to_excel(
-            mock_phase_b_data,
-            "Test Report",
-            "Test narrative"
+            mock_phase_b_data, "Test Report", "Test narrative"
         )
 
         assert xlsx_bytes is not None
@@ -241,19 +266,17 @@ class TestPhase5ExportSystem:
 
         exporter = UniversalExporter()
         fig = go.Figure(data=[go.Bar(x=["A", "B", "C"], y=[1, 2, 3])])
-        pdf_bytes = exporter.export_figure_to_pdf(
-            fig,
-            "Test Report",
-            {"Test": "Value"}
-        )
+        pdf_bytes = exporter.export_figure_to_pdf(fig, "Test Report", {"Test": "Value"})
 
         # PDF export may return None if ReportLab not installed, so check if not None
         if pdf_bytes is not None:
             assert len(pdf_bytes) > 0
 
+
 # =============================================================================
 # PHASE 6 TESTS: END-TO-END INTEGRATION
 # =============================================================================
+
 
 class TestPhase6EndToEndIntegration:
     """Test Phase 6: Complete data flow integration."""
@@ -347,9 +370,11 @@ class TestPhase6EndToEndIntegration:
 
         assert len(filtered_data) == 18  # 18 KPIs for 1 borough
 
+
 # =============================================================================
 # PERFORMANCE BENCHMARKS (Phase 6.2)
 # =============================================================================
+
 
 class TestPhase6Performance:
     """Test Phase 6: Performance benchmarks."""
@@ -404,6 +429,7 @@ class TestPhase6Performance:
             AnalyticsEngine.chart_bootstrap_ci_forecast(data_bundle)
 
         result = benchmark(render_phase_f)
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

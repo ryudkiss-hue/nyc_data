@@ -1,4 +1,5 @@
 """Tests for quality.integration module - Pipeline integration and decorators."""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock
@@ -14,6 +15,7 @@ from socrata_toolkit.quality.integration import (
     run_all_quality_checks,
     set_quality_integration,
 )
+
 
 class TestQualityIntegrationInitialization:
     """Tests for QualityIntegration initialization."""
@@ -71,6 +73,7 @@ class TestQualityIntegrationInitialization:
         assert integration.anomaly_detector is mock_detector
         assert integration.rules_engine is mock_engine
 
+
 class TestQualityFramework:
     """Tests for QualityFramework class."""
 
@@ -90,6 +93,7 @@ class TestQualityFramework:
         df = pd.DataFrame({"col": [1, 2, 3]})
         result = framework.run_quality_checks(df)
         assert isinstance(result, dict)
+
 
 class TestQualityPipeline:
     """Tests for QualityPipeline class."""
@@ -122,6 +126,7 @@ class TestQualityPipeline:
         result = pipeline.execute(df)
         assert isinstance(result, dict)
 
+
 class TestCreateQualityPipeline:
     """Tests for create_quality_pipeline function."""
 
@@ -129,6 +134,7 @@ class TestCreateQualityPipeline:
         """Test create_quality_pipeline returns QualityPipeline."""
         pipeline = create_quality_pipeline()
         assert isinstance(pipeline, QualityPipeline)
+
 
 class TestRunAllQualityChecks:
     """Tests for run_all_quality_checks function."""
@@ -139,12 +145,14 @@ class TestRunAllQualityChecks:
         result = run_all_quality_checks(df)
         assert isinstance(result, dict)
 
+
 class TestGlobalIntegrationManagement:
     """Tests for global integration management functions."""
 
     def test_get_quality_integration_creates_instance(self):
         """Test get_quality_integration creates instance."""
         import socrata_toolkit.quality.integration as integration_module
+
         integration_module._global_integration = None
 
         integration = get_quality_integration()

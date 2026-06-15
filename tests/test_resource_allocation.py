@@ -20,6 +20,7 @@ from socrata_toolkit.analysis.resource_allocation_workflow import (
     ResourceAllocationWorkflow,
 )
 
+
 class TestResourceAllocationClassifier:
     """Test suite for ResourceAllocationClassifier."""
 
@@ -93,14 +94,16 @@ class TestResourceAllocationClassifier:
         """Test batch classification using DataFrame."""
         clf = ResourceAllocationClassifier()
 
-        df = pd.DataFrame({
-            "area_id": ["a1", "a2", "a3"],
-            "area_name": ["Area 1", "Area 2", "Area 3"],
-            "violation_count": [100, 70, 20],
-            "response_time_days": [15.0, 10.5, 5.0],
-            "inspector_count": [1, 2, 3],
-            "violations_with_response": [60, 50, 18],
-        })
+        df = pd.DataFrame(
+            {
+                "area_id": ["a1", "a2", "a3"],
+                "area_name": ["Area 1", "Area 2", "Area 3"],
+                "violation_count": [100, 70, 20],
+                "response_time_days": [15.0, 10.5, 5.0],
+                "inspector_count": [1, 2, 3],
+                "violations_with_response": [60, 50, 18],
+            }
+        )
 
         results = clf.classify_dataframe(
             df=df,
@@ -183,6 +186,7 @@ class TestResourceAllocationClassifier:
 
         assert result.violations_per_inspector == 50.0  # 50 / 1
 
+
 class TestResourceAllocationWorkflow:
     """Test suite for ResourceAllocationWorkflow (integration tests)."""
 
@@ -206,10 +210,12 @@ class TestResourceAllocationWorkflow:
         """Test metrics computation with sample block data."""
         workflow = ResourceAllocationWorkflow()
 
-        violations_df = pd.DataFrame({
-            "block": [1, 1, 2, 2, 3],
-            "created_date": ["2024-01-01"] * 5,
-        })
+        violations_df = pd.DataFrame(
+            {
+                "block": [1, 1, 2, 2, 3],
+                "created_date": ["2024-01-01"] * 5,
+            }
+        )
         inspections_df = pd.DataFrame()
 
         metrics = workflow._compute_metrics_by_block(violations_df, inspections_df)
@@ -223,14 +229,16 @@ class TestResourceAllocationWorkflow:
         """Test area classification from metrics."""
         workflow = ResourceAllocationWorkflow()
 
-        metrics_df = pd.DataFrame({
-            "area_id": ["a1", "a2"],
-            "area_name": ["Area 1", "Area 2"],
-            "violation_count": [100, 30],
-            "response_time_days": [15.0, 5.0],
-            "inspector_count": [1, 2],
-            "violations_with_response": [60, 28],
-        })
+        metrics_df = pd.DataFrame(
+            {
+                "area_id": ["a1", "a2"],
+                "area_name": ["Area 1", "Area 2"],
+                "violation_count": [100, 30],
+                "response_time_days": [15.0, 5.0],
+                "inspector_count": [1, 2],
+                "violations_with_response": [60, 28],
+            }
+        )
 
         classifications = workflow.classify_areas(metrics_df)
 
@@ -276,6 +284,7 @@ class TestResourceAllocationWorkflow:
         assert plan.estimated_efficiency_gain == 25.0
         assert plan.estimated_response_time_improvement == 15.0
 
+
 class TestIntegration:
     """Integration tests (may require API keys)."""
 
@@ -283,12 +292,14 @@ class TestIntegration:
         """Test full workflow with mock data."""
         workflow = ResourceAllocationWorkflow()
 
-        violations_df = pd.DataFrame({
-            "block": [1] * 50 + [2] * 30,
-            "created_date": ["2024-01-01"] * 80,
-            "latitude": [40.7] * 80,
-            "longitude": [-74.0] * 80,
-        })
+        violations_df = pd.DataFrame(
+            {
+                "block": [1] * 50 + [2] * 30,
+                "created_date": ["2024-01-01"] * 80,
+                "latitude": [40.7] * 80,
+                "longitude": [-74.0] * 80,
+            }
+        )
         inspections_df = pd.DataFrame()
 
         plan = workflow.generate_reallocation_plan(

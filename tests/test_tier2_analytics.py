@@ -7,6 +7,7 @@ import os
 import pandas as pd
 import pytest
 
+
 class TestSLABreachForecasting:
     """Test SLA breach forecasting functionality."""
 
@@ -30,9 +31,7 @@ class TestSLABreachForecasting:
         """Forecast should require minimum data points."""
         from app.views.analytics_advanced import _forecast_sla_breach
 
-        df = pd.DataFrame(
-            {"date": ["2024-01-01", "2024-01-02"], "score": [50, 60]}
-        )
+        df = pd.DataFrame({"date": ["2024-01-01", "2024-01-02"], "score": [50, 60]})
         result = _forecast_sla_breach(df, "date", "score")
         assert result == {}
 
@@ -44,9 +43,7 @@ class TestSLABreachForecasting:
         df = pd.DataFrame(
             {
                 "date": dates,
-                "score": [
-                    45 if i < 10 else 55 for i in range(30)
-                ],
+                "score": [45 if i < 10 else 55 for i in range(30)],
             }
         )
         result = _forecast_sla_breach(df, "date", "score")
@@ -73,6 +70,7 @@ class TestSLABreachForecasting:
         assert result["ci_upper"] <= 1
         assert result["ci_lower"] <= result["breach_rate"]
         assert result["breach_rate"] <= result["ci_upper"]
+
 
 class TestExecutiveSummary:
     """Test executive summary generation."""
@@ -114,6 +112,7 @@ class TestExecutiveSummary:
         result = _generate_executive_summary(metrics, findings)
         assert isinstance(result, str)
 
+
 class TestDrillDownLogic:
     """Test drill-down navigation logic."""
 
@@ -121,9 +120,11 @@ class TestDrillDownLogic:
         """Drill-down state should initialize properly."""
         import streamlit as st
 
-        assert "drill_level" not in st.session_state or st.session_state.get(
-            "drill_level"
-        ) in ["city", "borough", "inspector"]
+        assert "drill_level" not in st.session_state or st.session_state.get("drill_level") in [
+            "city",
+            "borough",
+            "inspector",
+        ]
 
     def test_borough_aggregation(self):
         """Borough-level aggregation should work correctly."""
@@ -168,6 +169,7 @@ class TestDrillDownLogic:
         assert len(inspector_summary) == 2
         assert inspector_summary.iloc[0]["_inspector"] == "B"
         assert inspector_summary.iloc[0]["inspections"] == 3
+
 
 class TestDateRangeFiltering:
     """Test date range filtering functionality."""

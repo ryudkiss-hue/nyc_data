@@ -2,6 +2,7 @@ import pandas as pd
 
 from socrata_toolkit.engineering import compute_sidewalk_kpis
 
+
 def test_compute_sidewalk_kpis():
     df = pd.DataFrame(
         {

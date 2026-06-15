@@ -1,4 +1,5 @@
 """Comprehensive tests for spatial.analytics module."""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
@@ -20,6 +21,7 @@ from socrata_toolkit.spatial.analytics import (
     spatial_conflict_score,
 )
 
+
 @pytest.fixture
 def sample_coordinates() -> list[tuple[float, float]]:
     """Provide a list of NYC-area (lon, lat) coordinates for testing."""
@@ -36,15 +38,18 @@ def sample_coordinates() -> list[tuple[float, float]]:
         (-73.98, 40.75),
     ]
 
+
 @pytest.fixture
 def sample_values() -> list[float]:
     """Provide a list of condition scores (0-100) for testing."""
     return [80.0, 60.0, 45.0, 30.0, 75.0, 55.0, 40.0, 88.0, 20.0, 65.0]
 
+
 @pytest.fixture
 def sample_segment_ids() -> list[str]:
     """Provide segment IDs aligned with sample_coordinates."""
     return [f"seg_{i}" for i in range(10)]
+
 
 @pytest.fixture
 def street_centerlines() -> list[dict]:
@@ -54,6 +59,7 @@ def street_centerlines() -> list[dict]:
         {"id": "st2", "coordinates": [[-74.012, 40.702], [-74.014, 40.704]], "length": 250},
         {"id": "st3", "coordinates": [[-74.014, 40.704], [-74.016, 40.706]], "length": 300},
     ]
+
 
 class TestNetworkAnalysisInit:
     """Tests for NetworkAnalysis initialization."""
@@ -70,6 +76,7 @@ class TestNetworkAnalysisInit:
         na2 = NetworkAnalysis()
         na1.network["node1"] = ["node2"]
         assert "node1" not in na2.network
+
 
 class TestNetworkAnalysisBuildNetwork:
     """Tests for NetworkAnalysis.build_network."""
@@ -121,6 +128,7 @@ class TestNetworkAnalysisBuildNetwork:
         stats = na.build_network(streets)
         assert stats["edges"] == 1
 
+
 class TestNetworkAnalysisFindRoute:
     """Tests for NetworkAnalysis.find_shortest_route."""
 
@@ -136,14 +144,18 @@ class TestNetworkAnalysisFindRoute:
     def test_route_unknown_start_node(self):
         """Route returns empty list for unknown start node."""
         na = NetworkAnalysis()
-        na.build_network([{"id": "s1", "coordinates": [[-74.0, 40.7], [-74.01, 40.71]], "length": 100}])
+        na.build_network(
+            [{"id": "s1", "coordinates": [[-74.0, 40.7], [-74.01, 40.71]], "length": 100}]
+        )
         path = na.find_shortest_route("nonexistent_start", "s1_end")
         assert path == []
 
     def test_route_unknown_end_node(self):
         """Route returns empty list for unknown end node."""
         na = NetworkAnalysis()
-        na.build_network([{"id": "s1", "coordinates": [[-74.0, 40.7], [-74.01, 40.71]], "length": 100}])
+        na.build_network(
+            [{"id": "s1", "coordinates": [[-74.0, 40.7], [-74.01, 40.71]], "length": 100}]
+        )
         path = na.find_shortest_route("s1_start", "nonexistent_end")
         assert path == []
 
@@ -162,6 +174,7 @@ class TestNetworkAnalysisFindRoute:
             path = na.find_shortest_route(nodes[0], nodes[0])
             assert isinstance(path, list)
 
+
 class TestNetworkAnalysisServiceAreas:
     """Tests for NetworkAnalysis.compute_service_areas."""
 
@@ -177,6 +190,7 @@ class TestNetworkAnalysisServiceAreas:
         na.build_network(street_centerlines)
         result = na.compute_service_areas(-74.01, 40.70, 100)
         assert isinstance(result, list)
+
 
 class TestHotspotAnalysisKDE:
     """Tests for HotspotAnalysis.kernel_density."""
@@ -200,32 +214,47 @@ class TestHotspotAnalysisKDE:
         if "error" not in result:
             assert result["max_density"] >= 0
 
+
 class TestHotspotAnalysisClusterSegments:
     """Tests for HotspotAnalysis.cluster_segments."""
 
-    def test_cluster_dbscan_returns_list(self, sample_coordinates, sample_values, sample_segment_ids):
+    def test_cluster_dbscan_returns_list(
+        self, sample_coordinates, sample_values, sample_segment_ids
+    ):
         """DBSCAN clustering returns a list of Cluster objects."""
         ha = HotspotAnalysis()
         clusters = ha.cluster_segments(
-            sample_coordinates, sample_values, sample_segment_ids,
-            method="dbscan", eps=0.01, min_samples=2,
+            sample_coordinates,
+            sample_values,
+            sample_segment_ids,
+            method="dbscan",
+            eps=0.01,
+            min_samples=2,
         )
         assert isinstance(clusters, list)
 
-    def test_cluster_kmeans_returns_list(self, sample_coordinates, sample_values, sample_segment_ids):
+    def test_cluster_kmeans_returns_list(
+        self, sample_coordinates, sample_values, sample_segment_ids
+    ):
         """KMeans clustering returns a list of Cluster objects."""
         ha = HotspotAnalysis()
         clusters = ha.cluster_segments(
-            sample_coordinates, sample_values, sample_segment_ids,
+            sample_coordinates,
+            sample_values,
+            sample_segment_ids,
             method="kmeans",
         )
         assert isinstance(clusters, list)
 
-    def test_cluster_unknown_method_returns_empty(self, sample_coordinates, sample_values, sample_segment_ids):
+    def test_cluster_unknown_method_returns_empty(
+        self, sample_coordinates, sample_values, sample_segment_ids
+    ):
         """Unknown clustering method returns empty list."""
         ha = HotspotAnalysis()
         clusters = ha.cluster_segments(
-            sample_coordinates, sample_values, sample_segment_ids,
+            sample_coordinates,
+            sample_values,
+            sample_segment_ids,
             method="unsupported_method",
         )
         assert clusters == []
@@ -236,11 +265,15 @@ class TestHotspotAnalysisClusterSegments:
         clusters = ha.cluster_segments([(0.0, 0.0)], [50.0], ["seg1"])
         assert clusters == []
 
-    def test_cluster_objects_have_expected_fields(self, sample_coordinates, sample_values, sample_segment_ids):
+    def test_cluster_objects_have_expected_fields(
+        self, sample_coordinates, sample_values, sample_segment_ids
+    ):
         """Returned Cluster objects have all required fields."""
         ha = HotspotAnalysis()
         clusters = ha.cluster_segments(
-            sample_coordinates, sample_values, sample_segment_ids,
+            sample_coordinates,
+            sample_values,
+            sample_segment_ids,
             method="kmeans",
         )
         for c in clusters:
@@ -252,15 +285,20 @@ class TestHotspotAnalysisClusterSegments:
             assert hasattr(c, "segment_ids")
             assert isinstance(c.segment_ids, list)
 
-    def test_cluster_size_matches_segment_ids(self, sample_coordinates, sample_values, sample_segment_ids):
+    def test_cluster_size_matches_segment_ids(
+        self, sample_coordinates, sample_values, sample_segment_ids
+    ):
         """Cluster.size equals len(segment_ids) for each cluster."""
         ha = HotspotAnalysis()
         clusters = ha.cluster_segments(
-            sample_coordinates, sample_values, sample_segment_ids,
+            sample_coordinates,
+            sample_values,
+            sample_segment_ids,
             method="kmeans",
         )
         for c in clusters:
             assert c.size == len(c.segment_ids)
+
 
 class TestHotspotAnalysisDetectHotspots:
     """Tests for HotspotAnalysis.detect_hotspots."""
@@ -300,6 +338,7 @@ class TestHotspotAnalysisDetectHotspots:
         valid_severities = {"critical", "high", "medium", "low"}
         for h in hotspots:
             assert h.severity in valid_severities
+
 
 class TestInterpolationAnalysisIDW:
     """Tests for InterpolationAnalysis.inverse_distance_weighted."""
@@ -352,6 +391,7 @@ class TestInterpolationAnalysisIDW:
         result = ia.inverse_distance_weighted(known_pts, known_vals, query_pts)
         assert isinstance(result, list)
 
+
 class TestSpatialAnomalyDetector:
     """Tests for SpatialAnomalyDetector statistical outlier detection."""
 
@@ -389,9 +429,7 @@ class TestSpatialAnomalyDetector:
         """Uniform data has no outliers under IQR method."""
         coords = [(-74.0 + i * 0.001, 40.7) for i in range(10)]
         values = [50.0] * 10
-        outliers = SpatialAnomalyDetector.detect_outliers(
-            coords, values, method="iqr"
-        )
+        outliers = SpatialAnomalyDetector.detect_outliers(coords, values, method="iqr")
         assert isinstance(outliers, list)
 
     def test_detect_spatial_outliers_returns_list(self, sample_coordinates, sample_values):
@@ -409,6 +447,7 @@ class TestSpatialAnomalyDetector:
             coords, values, k=3, std_threshold=1.5
         )
         assert isinstance(outliers, list)
+
 
 class TestDetectConflictsFunctions:
     """Tests for module-level detect_conflicts function."""
@@ -437,6 +476,7 @@ class TestDetectConflictsFunctions:
                 mock_gpd.GeoDataFrame.return_value = mock_gdf
                 result = detect_conflicts(mock_gdf, mock_gdf)
                 assert result is not None
+
 
 class TestSpatialConflictScore:
     """Tests for spatial_conflict_score function."""
@@ -491,6 +531,7 @@ class TestSpatialConflictScore:
         )
         result = spatial_conflict_score(gdf)
         assert "conflict_score" in result.columns
+
 
 class TestMoranI:
     """Tests for moran_i function."""
@@ -574,6 +615,7 @@ class TestMoranI:
         result = moran_i(gdf, "value")
         assert result is None or result == 0.0
 
+
 class TestClusterConflictHotspots:
     """Tests for cluster_conflict_hotspots function."""
 
@@ -622,6 +664,7 @@ class TestClusterConflictHotspots:
         assert "cluster" in result.columns
         assert result["cluster"].dtype in (int, "int64", "int32")
 
+
 class TestFindRampGaps:
     """Tests for find_ramp_gaps function."""
 
@@ -663,6 +706,7 @@ class TestFindRampGaps:
         )
         result = find_ramp_gaps(gdf_ramps, gdf_insp, threshold_m=50)
         assert result is not None
+
 
 class TestDataclassStructures:
     """Tests for Hotspot and Cluster dataclasses."""

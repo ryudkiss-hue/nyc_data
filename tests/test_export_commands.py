@@ -4,6 +4,7 @@ from dash import dcc
 
 from app.services.export_service import ExportCommand, ExportRegistry
 
+
 def test_export_registry_registration():
     """Verify that commands can be registered and retrieved."""
     registry = ExportRegistry()
@@ -18,6 +19,7 @@ def test_export_registry_registration():
     result = registry.export("test", pd.DataFrame(), "c1")
     assert result == "test_success"
 
+
 def test_builtin_csv_export():
     """Verify standard CSV export command."""
     registry = ExportRegistry()
@@ -26,9 +28,10 @@ def test_builtin_csv_export():
     # Trigger CSV export
     result = registry.export("csv", df, "test_chart")
 
-    assert isinstance(result, dict) # dcc.send_data_frame returns a dict
+    assert isinstance(result, dict)  # dcc.send_data_frame returns a dict
     assert "filename" in result
     assert result["filename"].endswith(".csv")
+
 
 def test_builtin_md_export():
     """Verify Markdown export command."""
@@ -41,6 +44,7 @@ def test_builtin_md_export():
     # Base64 content check (minimal)
     assert "content" in result
 
+
 def test_builtin_python_export():
     """Verify Python snippet export command."""
     registry = ExportRegistry()
@@ -48,6 +52,7 @@ def test_builtin_python_export():
 
     assert isinstance(result, dict)
     assert result["filename"].endswith(".py")
+
 
 def test_unknown_export_mode():
     """Verify handling of unknown export modes."""

@@ -16,9 +16,11 @@ from click.testing import CliRunner
 
 from socrata_toolkit.core.cli import main
 
+
 @pytest.fixture
 def runner():
     return CliRunner()
+
 
 def _resp(json_value):
     r = MagicMock()
@@ -27,9 +29,11 @@ def _resp(json_value):
     r.raise_for_status = MagicMock()
     return r
 
+
 # ---------------------------------------------------------------------------
 # toolkit_search
 # ---------------------------------------------------------------------------
+
 
 class TestToolkitSearch:
     def test_search_echoes_results(self, runner):
@@ -49,16 +53,25 @@ class TestToolkitSearch:
         res = runner.invoke(main, ["toolkit-search"])
         assert res.exit_code == 2
 
+
 # ---------------------------------------------------------------------------
 # sync
 # ---------------------------------------------------------------------------
 
+
 class TestSync:
     def test_sync_reports_count(self, runner):
         with patch("socrata_toolkit.pipeline.sync_dataset", return_value=123):
-            res = runner.invoke(main, [
-                "sync", "-i", "dntt-gqwq", "--table", "inspections",
-            ])
+            res = runner.invoke(
+                main,
+                [
+                    "sync",
+                    "-i",
+                    "dntt-gqwq",
+                    "--table",
+                    "inspections",
+                ],
+            )
         assert res.exit_code == 0
         assert "123 rows" in res.output
 
@@ -66,9 +79,11 @@ class TestSync:
         res = runner.invoke(main, ["sync", "-i", "dntt-gqwq"])
         assert res.exit_code == 2
 
+
 # ---------------------------------------------------------------------------
 # db-status
 # ---------------------------------------------------------------------------
+
 
 class TestDbStatus:
     def test_db_status_lists_tables(self, runner):
@@ -94,29 +109,37 @@ class TestDbStatus:
             res = runner.invoke(main, ["db-status"])
         assert res.exit_code == 0
 
+
 # ---------------------------------------------------------------------------
 # setup / wizard
 # ---------------------------------------------------------------------------
 
+
 class TestSetupWizard:
     def test_setup(self, runner):
-        with patch("socrata_toolkit.install_wizard.run_wizard", return_value={"ok": True}) as rw, \
-             patch("socrata_toolkit.install_wizard._print_summary") as ps:
+        with (
+            patch("socrata_toolkit.install_wizard.run_wizard", return_value={"ok": True}) as rw,
+            patch("socrata_toolkit.install_wizard._print_summary") as ps,
+        ):
             res = runner.invoke(main, ["setup", "--non-interactive", "--skip-checks"])
         assert res.exit_code == 0
         rw.assert_called_once()
         ps.assert_called_once()
 
     def test_wizard_alias(self, runner):
-        with patch("socrata_toolkit.install_wizard.run_wizard", return_value={"ok": True}) as rw, \
-             patch("socrata_toolkit.install_wizard._print_summary"):
+        with (
+            patch("socrata_toolkit.install_wizard.run_wizard", return_value={"ok": True}) as rw,
+            patch("socrata_toolkit.install_wizard._print_summary"),
+        ):
             res = runner.invoke(main, ["wizard", "--non-interactive"])
         assert res.exit_code == 0
         rw.assert_called_once()
 
+
 # ---------------------------------------------------------------------------
 # conflict-detect GeoJSON export (geopandas path)
 # ---------------------------------------------------------------------------
+
 
 class TestConflictDetectGeoJSON:
     def test_geojson_export_with_geopandas(self, runner, tmp_path):
@@ -128,8 +151,10 @@ class TestConflictDetectGeoJSON:
         out = tmp_path / "conflicts.geojson"
         session = MagicMock()
         session.get.return_value = _resp(rows)
-        with patch("socrata_toolkit.core.cli._make_session", return_value=session), \
-             patch("socrata_toolkit.core.cli.HAS_GEOPANDAS", True):
+        with (
+            patch("socrata_toolkit.core.cli._make_session", return_value=session),
+            patch("socrata_toolkit.core.cli.HAS_GEOPANDAS", True),
+        ):
             res = runner.invoke(main, ["conflict-detect", "--output", str(out)])
         assert res.exit_code == 0
         assert out.exists()
@@ -141,16 +166,20 @@ class TestConflictDetectGeoJSON:
         out = tmp_path / "conflicts.geojson"
         session = MagicMock()
         session.get.return_value = _resp(rows)
-        with patch("socrata_toolkit.core.cli._make_session", return_value=session), \
-             patch("socrata_toolkit.core.cli.HAS_GEOPANDAS", True):
+        with (
+            patch("socrata_toolkit.core.cli._make_session", return_value=session),
+            patch("socrata_toolkit.core.cli.HAS_GEOPANDAS", True),
+        ):
             res = runner.invoke(main, ["conflict-detect", "--output", str(out)])
         assert res.exit_code == 0
         assert out.exists()
         assert "no lat/lon" in res.output
 
+
 # ---------------------------------------------------------------------------
 # dataset health manual-format fallback (tabulate missing)
 # ---------------------------------------------------------------------------
+
 
 class TestDatasetHealthFallback:
     def test_manual_format_when_tabulate_missing(self, runner):
@@ -164,32 +193,49 @@ class TestDatasetHealthFallback:
             _resp({"rowsUpdatedAt": int(datetime.now(timezone.utc).timestamp())}),
         ]
         # Force the `from tabulate import tabulate` inside the command to fail.
-        with patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=reg), \
-             patch("socrata_toolkit.core.cli._make_session", return_value=session), \
-             patch.dict(sys.modules, {"tabulate": None}):
+        with (
+            patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=reg),
+            patch("socrata_toolkit.core.cli._make_session", return_value=session),
+            patch.dict(sys.modules, {"tabulate": None}),
+        ):
             res = runner.invoke(main, ["dataset", "health", "--key", "inspection"])
         assert res.exit_code == 0
         assert "inspection" in res.output
 
+
 # ---------------------------------------------------------------------------
 # _load_dataset_registry / _make_session helpers
 # ---------------------------------------------------------------------------
+
 
 class TestAnalyzeAndTextInsights:
     """analyze and text-insights run real profiling over fetch_json batches."""
 
     def test_analyze_cmd(self, runner):
         client = MagicMock()
-        client.fetch_json.return_value = iter([[
-            {"id": 1, "borough": "MN", "value": 10},
-            {"id": 2, "borough": "BX", "value": 20},
-            {"id": 3, "borough": "MN", "value": 30},
-        ]])
-        with patch("socrata_toolkit.core.cli._client", return_value=client), \
-             patch("socrata_toolkit.core.cli.load_state", return_value=None):
-            res = runner.invoke(main, [
-                "analyze", "data.cityofnewyork.us", "abc1-2345", "--key-column", "id",
-            ])
+        client.fetch_json.return_value = iter(
+            [
+                [
+                    {"id": 1, "borough": "MN", "value": 10},
+                    {"id": 2, "borough": "BX", "value": 20},
+                    {"id": 3, "borough": "MN", "value": 30},
+                ]
+            ]
+        )
+        with (
+            patch("socrata_toolkit.core.cli._client", return_value=client),
+            patch("socrata_toolkit.core.cli.load_state", return_value=None),
+        ):
+            res = runner.invoke(
+                main,
+                [
+                    "analyze",
+                    "data.cityofnewyork.us",
+                    "abc1-2345",
+                    "--key-column",
+                    "id",
+                ],
+            )
         assert res.exit_code == 0
         payload = json.loads(res.output)
         assert payload["profile"]["row_count"] == 3
@@ -197,21 +243,36 @@ class TestAnalyzeAndTextInsights:
 
     def test_text_insights_cmd(self, runner, tmp_path):
         client = MagicMock()
-        client.fetch_json.return_value = iter([[
-            {"id": 1, "description": "cracked sidewalk trip hazard near curb"},
-            {"id": 2, "description": "pothole pooling water after rain"},
-        ]])
+        client.fetch_json.return_value = iter(
+            [
+                [
+                    {"id": 1, "description": "cracked sidewalk trip hazard near curb"},
+                    {"id": 2, "description": "pothole pooling water after rain"},
+                ]
+            ]
+        )
         out = tmp_path / "tagged.json"
-        with patch("socrata_toolkit.core.cli._client", return_value=client), \
-             patch("socrata_toolkit.core.cli.load_state", return_value=None):
-            res = runner.invoke(main, [
-                "text-insights", "data.cityofnewyork.us", "abc1-2345",
-                "--text-column", "description", "--out", str(out),
-            ])
+        with (
+            patch("socrata_toolkit.core.cli._client", return_value=client),
+            patch("socrata_toolkit.core.cli.load_state", return_value=None),
+        ):
+            res = runner.invoke(
+                main,
+                [
+                    "text-insights",
+                    "data.cityofnewyork.us",
+                    "abc1-2345",
+                    "--text-column",
+                    "description",
+                    "--out",
+                    str(out),
+                ],
+            )
         assert res.exit_code == 0
         payload = json.loads(res.output)
         assert payload["row_count"] == 2
         assert out.exists()
+
 
 class TestRegistryAndSession:
     def test_load_dataset_registry_real(self):
@@ -231,6 +292,7 @@ class TestRegistryAndSession:
         assert session.get_adapter("https://x") is not None
         assert session.get_adapter("http://x") is not None
 
+
 class TestSpatialJoinAndDefaultPackDate:
     def test_spatial_join_cmd(self, runner, tmp_path):
         from types import SimpleNamespace
@@ -248,10 +310,22 @@ class TestSpatialJoinAndDefaultPackDate:
             joined=pd.DataFrame({"a": [1]}), conflict_rate=0.5, overlap_count=1
         )
         with patch("socrata_toolkit.core.cli.spatial_intersects_join", return_value=result):
-            res = runner.invoke(main, [
-                "spatial-join", "--left-json", str(left), "--right-json", str(right),
-                "--left-geom-col", "the_geom", "--right-geom-col", "the_geom", "--out", str(out),
-            ])
+            res = runner.invoke(
+                main,
+                [
+                    "spatial-join",
+                    "--left-json",
+                    str(left),
+                    "--right-json",
+                    str(right),
+                    "--left-geom-col",
+                    "the_geom",
+                    "--right-geom-col",
+                    "the_geom",
+                    "--out",
+                    str(out),
+                ],
+            )
         assert res.exit_code == 0
         assert out.exists()
         assert "overlap_count" in res.output
@@ -264,8 +338,13 @@ class TestSpatialJoinAndDefaultPackDate:
         from socrata_toolkit.core.cli import _default_pack_date
 
         prof = SimpleNamespace(state_dir=Path("/tmp"))
-        with patch("socrata_toolkit.core.profiles.ensure_profile_exists", return_value=prof), \
-             patch("socrata_toolkit.core.state.load_state", return_value={"last_run_date": "2024-05-01"}):
+        with (
+            patch("socrata_toolkit.core.profiles.ensure_profile_exists", return_value=prof),
+            patch(
+                "socrata_toolkit.core.state.load_state",
+                return_value={"last_run_date": "2024-05-01"},
+            ),
+        ):
             assert _default_pack_date() == "2024-05-01"
 
     def test_default_pack_date_exception_returns_empty(self):
@@ -273,5 +352,8 @@ class TestSpatialJoinAndDefaultPackDate:
 
         from socrata_toolkit.core.cli import _default_pack_date
 
-        with patch("socrata_toolkit.core.profiles.ensure_profile_exists", side_effect=RuntimeError("no profile")):
+        with patch(
+            "socrata_toolkit.core.profiles.ensure_profile_exists",
+            side_effect=RuntimeError("no profile"),
+        ):
             assert _default_pack_date() == ""

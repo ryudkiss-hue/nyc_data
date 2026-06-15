@@ -1,0 +1,6 @@
+contract_id,contractor_name,borough,amount,start_date
+C001,ACME Paving,MANHATTAN,150000,2024-01-01
+C002,Brooklyn Roads LLC,BROOKLYN,220000,2024-02-01
+C003,Queens Construction,QUEENS,180000,2024-03-01
+C004,Bronx Sidewalk Inc,BRONX,95000,2024-04-01
+C005,SI Contractors,STATEN_ISLAND,75000,2024-05-01

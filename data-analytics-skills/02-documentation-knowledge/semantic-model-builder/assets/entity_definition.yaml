@@ -1,0 +1,105 @@
+version: 2
+generated_at: 2026-06-14T00:00:00+00:00
+
+# NYC DOT SIM — Canonical Entity Definitions
+# Validate with: python scripts/definition_validator.py --file assets/entity_definition.yaml
+
+entities:
+
+  - name: sim_unit
+    label: SIM Inspection Unit
+    description: >
+      A uniquely identified sidewalk segment tracked by the NYC DOT SIM program.
+      unit_id is the cross-dataset join key linking inspections, violations, and
+      dismissals for the same physical sidewalk location.
+    model: inspection
+    fourfour: dntt-gqwq
+    primary_key: unit_id
+    key_type: text
+    null_rate_approx: "< 1%"
+    foreign_key_references:
+      - dataset: violations
+        fourfour: 6kbp-uz6m
+        column: unit_id
+        join_type: left
+        cardinality: one_to_many
+        notes: "One unit_id may have multiple open violations"
+      - dataset: dismissals
+        fourfour: p4u2-3jgx
+        column: unit_id
+        join_type: left
+        cardinality: one_to_many
+        notes: "One unit_id may have multiple dismissal records over time"
+    geo_column: the_geom
+    geo_type: Point
+    geo_coverage: "~92% of records have coordinates"
+
+  - name: curb_ramp
+    label: Curb Ramp
+    description: >
+      A single curb ramp location tracked by the NYC DOT Accessibility Programs.
+      objectid is the primary key within ramp_progress. Ramp locations are
+      point geometry. ramp_locations (ufzp-rrqu) is stale since 2021 —
+      use ramp_progress (e7gc-ub6z) as the authoritative entity source.
+    model: ramp_progress
+    fourfour: e7gc-ub6z
+    primary_key: objectid
+    key_type: number
+    foreign_key_references:
+      - dataset: ramp_complaints
+        fourfour: jagj-gttd
+        column: objectid
+        join_type: left
+        cardinality: one_to_many
+        notes: "Complaints may reference a ramp_progress objectid"
+    geo_column: the_geom
+    geo_type: Point
+    geo_coverage: "~88% of records have coordinates"
+    known_issues:
+      - "ramp_locations (ufzp-rrqu) is stale since 2021; do not use as entity source"
+
+  - name: street_permit
+    label: Street Construction Permit
+    description: >
+      A DOT street construction permit representing approved work on a NYC street segment.
+      Used as the reference entity for conflict detection between construction and
+      sidewalk inspections. ~3.6M records; updated on an ongoing basis.
+    model: street_permits
+    fourfour: tqtj-sjs8
+    primary_key: objectid
+    key_type: number
+    geo_column: the_geom
+    geo_type: MultiLineString
+    geo_coverage: "~75% of recent permits have geometry"
+    use_in_analysis:
+      - "Spatial join with inspection to detect construction conflicts"
+      - "socrata conflict-detect --borough MN --buffer 50"
+
+  - name: inspection_record
+    label: Sidewalk Inspection Record
+    description: >
+      A single sidewalk inspection event conducted by a SIM unit inspector.
+      One inspection_record per unit_id per inspection_date. objectid is the
+      system-assigned primary key. This is the highest-volume entity in the toolkit
+      (~398K rows, updated daily).
+    model: inspection
+    fourfour: dntt-gqwq
+    primary_key: objectid
+    key_type: number
+    natural_key: unit_id
+    natural_key_notes: "unit_id identifies the location; objectid identifies the event"
+    foreign_key_references:
+      - dataset: violations
+        fourfour: 6kbp-uz6m
+        column: unit_id
+        join_type: left
+        cardinality: one_to_many
+      - dataset: dismissals
+        fourfour: p4u2-3jgx
+        column: unit_id
+        join_type: left
+        cardinality: one_to_many
+    geo_column: the_geom
+    geo_type: Point
+    geo_coverage: "~92%"
+    grain: one row per inspection event

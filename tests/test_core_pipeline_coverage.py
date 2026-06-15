@@ -1,4 +1,5 @@
 """Tests for core.pipeline module - In-memory pipeline runner and SQL preview."""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
@@ -11,6 +12,7 @@ from socrata_toolkit.core.pipeline import (
     generate_postgres_preview,
     run_from_rows,
 )
+
 
 class TestSqlType:
     """Tests for _sql_type function."""
@@ -49,6 +51,7 @@ class TestSqlType:
     def test_sql_type_dict(self):
         """Test SQL type for dict values."""
         assert _sql_type({"key": "value"}) == "TEXT"
+
 
 class TestCollectColumnsAndTypes:
     """Tests for _collect_columns_and_types function."""
@@ -127,6 +130,7 @@ class TestCollectColumnsAndTypes:
         result = _collect_columns_and_types(rows)
         assert result["value"] == "BIGINT"
 
+
 class TestGeneratePostgresPreview:
     """Tests for generate_postgres_preview function."""
 
@@ -193,6 +197,7 @@ class TestGeneratePostgresPreview:
         assert "DO UPDATE SET" in result["insert_example"]
         assert '"name" = EXCLUDED."name"' in result["insert_example"]
         assert '"email" = EXCLUDED."email"' in result["insert_example"]
+
 
 class TestRunFromRows:
     """Tests for run_from_rows function."""
@@ -278,7 +283,12 @@ class TestRunFromRows:
         """Test that large row sets are sampled correctly."""
         rows = [{"id": i, "name": f"User {i}"} for i in range(100)]
         targets = {
-            "mongo": {"enabled": True, "uri": "mongodb://localhost", "db": "test_db", "collection": "users"}
+            "mongo": {
+                "enabled": True,
+                "uri": "mongodb://localhost",
+                "db": "test_db",
+                "collection": "users",
+            }
         }
         result = run_from_rows(rows, targets, dry_run=True)
         # Mongo target should only show first 5 rows in sample

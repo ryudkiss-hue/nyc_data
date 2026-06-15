@@ -1,4 +1,5 @@
 """Tests for quality.catalog module - Data catalog quality integration."""
+
 from __future__ import annotations
 
 import json
@@ -12,6 +13,7 @@ from socrata_toolkit.quality.catalog import (
     DatasetQualityScore,
     QualityTrend,
 )
+
 
 class TestQualityTrend:
     """Tests for QualityTrend enum."""
@@ -31,6 +33,7 @@ class TestQualityTrend:
     def test_quality_trend_comparison(self):
         """Test QualityTrend enum comparison."""
         assert QualityTrend.IMPROVING != QualityTrend.STABLE
+
 
 class TestDatasetQualityScore:
     """Tests for DatasetQualityScore dataclass."""
@@ -68,6 +71,7 @@ class TestDatasetQualityScore:
         assert result["overall"] == 85.0
         assert result["completeness"] == 90.0
         assert result["validity"] == 85.0
+
 
 class TestDatasetQualityProfile:
     """Tests for DatasetQualityProfile dataclass."""
@@ -127,6 +131,7 @@ class TestDatasetQualityProfile:
             assert loaded.dataset_name == "Test Dataset"
             assert loaded.quality_score.overall == 90.0
 
+
 class TestDataQualityCatalog:
     """Tests for DataQualityCatalog class."""
 
@@ -149,9 +154,7 @@ class TestDataQualityCatalog:
         """Test registering dataset with metadata."""
         with tempfile.TemporaryDirectory() as tmpdir:
             catalog = DataQualityCatalog(storage_dir=tmpdir)
-            catalog.register_dataset(
-                "ds1", "Dataset 1", metadata={"owner": "team-a"}
-            )
+            catalog.register_dataset("ds1", "Dataset 1", metadata={"owner": "team-a"})
             assert catalog.profiles["ds1"].metadata == {"owner": "team-a"}
 
     def test_update_quality_score(self):

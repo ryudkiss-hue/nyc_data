@@ -12,6 +12,7 @@ from socrata_toolkit.analysis import (
     reset_global_registry,
 )
 
+
 class TestMetricPoint:
     """Tests for MetricPoint class."""
 
@@ -41,6 +42,7 @@ class TestMetricPoint:
         line = point.to_prometheus_line()
         assert "test_metric{" in line
         assert 'dataset_id="nyc-311"' in line
+
 
 class TestMetricsRegistry:
     """Tests for MetricsRegistry class."""
@@ -114,6 +116,7 @@ class TestMetricsRegistry:
         json_data = registry.export_json()
         assert isinstance(json_data, dict)
 
+
 class TestPipelineMetrics:
     """Tests for PipelineMetrics class."""
 
@@ -159,6 +162,7 @@ class TestPipelineMetrics:
         pm.record_ingestion_success("nyc-311", 1200, 2.1)
         pm.record_ingestion_error("nyc-parking", "timeout")
         # Should track all records
+
 
 class TestDataQualityMetrics:
     """Tests for DataQualityMetrics class."""
@@ -206,6 +210,7 @@ class TestDataQualityMetrics:
         dq.record_validity("nyc-311", "col1", 99.5)
         # Should track all metrics
 
+
 class TestGlobalRegistry:
     """Tests for global registry singleton."""
 
@@ -229,6 +234,7 @@ class TestGlobalRegistry:
         counter = registry.register_counter("global_test", "Global test")
         counter.inc(10)
         # Should work without error
+
 
 class TestMetricsIntegration:
     """Integration tests for metrics."""
@@ -260,6 +266,7 @@ class TestMetricsIntegration:
 
         json_data = registry.export_json()
         assert "metrics" in json_data or "prometheus_format" in json_data
+
 
 class TestMetricsEdgeCases:
     """Tests for edge cases and special scenarios."""

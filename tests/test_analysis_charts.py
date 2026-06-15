@@ -13,6 +13,7 @@ from socrata_toolkit.viz import (
     plot_geospatial_compliance_map,
 )
 
+
 def test_data_completeness_chart_with_data():
     """
     Tests that data_completeness_chart generates a valid Plotly figure
@@ -71,6 +72,7 @@ def test_data_completeness_chart_with_data():
     assert fig.layout.xaxis.range == (0, 100)
     assert "Completeness (%)" in fig.layout.xaxis.title.text
 
+
 def test_data_completeness_chart_empty_profile():
     """
     Tests that data_completeness_chart returns an empty figure
@@ -94,6 +96,7 @@ def test_data_completeness_chart_empty_profile():
     assert isinstance(fig, go.Figure)
     # An empty figure created with go.Figure() has no data traces
     assert len(fig.data) == 0
+
 
 def test_metric_status_pie_chart_all_statuses():
     """
@@ -138,6 +141,7 @@ def test_metric_status_pie_chart_all_statuses():
     green_index = labels_list.index("Green (On Target)")
     assert chart_data.pull[green_index] == 0
 
+
 def test_metric_status_pie_chart_some_zero_counts():
     """
     Tests that the pie chart correctly omits slices for statuses with zero counts.
@@ -165,6 +169,7 @@ def test_metric_status_pie_chart_some_zero_counts():
     assert set(chart_data.values) == {12, 3}
     assert set(chart_data.marker.colors) == {COLOR_GREEN, COLOR_RED}
 
+
 def test_metric_status_pie_chart_all_zero_counts():
     """
     Tests that an empty state with an annotation is shown when all metric counts are zero.
@@ -188,6 +193,7 @@ def test_metric_status_pie_chart_all_zero_counts():
     # Should have an annotation
     assert len(fig.layout.annotations) > 0
     assert "No metric data" in fig.layout.annotations[0].text
+
 
 def test_plot_geospatial_compliance_map_with_mixed_data():
     """
@@ -220,6 +226,7 @@ def test_plot_geospatial_compliance_map_with_mixed_data():
         elif trace.name == "Out of Bounds":
             # Point (40.5, -74.0) is out of bounds
             assert len(trace.lat) == 1
+
 
 def test_plot_geospatial_compliance_map_empty_and_missing_cols():
     """

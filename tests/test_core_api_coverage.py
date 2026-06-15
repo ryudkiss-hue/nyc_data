@@ -1,4 +1,5 @@
 """Tests for socrata_toolkit.core.api — Flask application factory and endpoints."""
+
 from __future__ import annotations
 
 import json
@@ -15,6 +16,7 @@ flask = pytest.importorskip("flask", reason="flask not installed")
 
 from socrata_toolkit.core.api import create_app  # noqa: E402 — must come after guard
 
+
 @pytest.fixture()
 def client():
     """Create a Flask test client from the application factory."""
@@ -23,9 +25,11 @@ def client():
     with app.test_client() as c:
         yield c
 
+
 # ---------------------------------------------------------------------------
 # /api/health
 # ---------------------------------------------------------------------------
+
 
 class TestHealthEndpoint:
     """Tests for GET /api/health."""
@@ -47,9 +51,11 @@ class TestHealthEndpoint:
         data = resp.get_json()
         assert "version" in data
 
+
 # ---------------------------------------------------------------------------
 # /api/search
 # ---------------------------------------------------------------------------
+
 
 class TestSearchEndpoint:
     """Tests for GET /api/search."""
@@ -72,9 +78,11 @@ class TestSearchEndpoint:
             resp = client.get("/api/search")
         assert resp.status_code == 200
 
+
 # ---------------------------------------------------------------------------
 # /api/analyze  (POST)
 # ---------------------------------------------------------------------------
+
 
 class TestAnalyzeEndpoint:
     """Tests for POST /api/analyze."""
@@ -114,9 +122,11 @@ class TestAnalyzeEndpoint:
         data = resp.get_json()
         assert data["row_count"] == 3
 
+
 # ---------------------------------------------------------------------------
 # /api/quality-score  (POST)
 # ---------------------------------------------------------------------------
+
 
 class TestQualityScoreEndpoint:
     """Tests for POST /api/quality-score."""
@@ -153,9 +163,11 @@ class TestQualityScoreEndpoint:
         data = resp.get_json()
         assert 0 <= data["overall"] <= 100
 
+
 # ---------------------------------------------------------------------------
 # /api/prioritize  (POST)
 # ---------------------------------------------------------------------------
+
 
 class TestPrioritizeEndpoint:
     """Tests for POST /api/prioritize."""
@@ -183,9 +195,11 @@ class TestPrioritizeEndpoint:
         assert "summary" in data
         assert "rows" in data
 
+
 # ---------------------------------------------------------------------------
 # /api/board  (GET)
 # ---------------------------------------------------------------------------
+
 
 class TestBoardEndpoint:
     """Tests for GET /api/board."""
@@ -205,9 +219,11 @@ class TestBoardEndpoint:
         assert "stats" in data
         assert "tasks" in data
 
+
 # ---------------------------------------------------------------------------
 # /api/kpis  (GET)
 # ---------------------------------------------------------------------------
+
 
 class TestKPIsEndpoint:
     """Tests for GET /api/kpis."""
@@ -221,9 +237,11 @@ class TestKPIsEndpoint:
         assert data["health"] == "unknown"
         assert data["metrics"] == []
 
+
 # ---------------------------------------------------------------------------
 # create_app factory
 # ---------------------------------------------------------------------------
+
 
 class TestCreateApp:
     """Tests for create_app function."""

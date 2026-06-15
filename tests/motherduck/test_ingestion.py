@@ -1,9 +1,11 @@
 """Tests for MotherDuck data ingestion layer (motherduck-load-data)."""
+
 import pandas as pd
 import pytest
 
 from socrata_toolkit.motherduck.connector import MotherDuckConnection
 from socrata_toolkit.motherduck.ingestion import InspectionDataLoader
+
 
 @pytest.fixture
 def motherduck_conn():
@@ -12,10 +14,12 @@ def motherduck_conn():
     yield conn
     conn.close()
 
+
 @pytest.fixture
 def data_loader(motherduck_conn):
     """Fixture providing an InspectionDataLoader instance."""
     return InspectionDataLoader(motherduck_conn)
+
 
 class TestRawTableCreation:
     """Tests for raw schema and table creation."""
@@ -136,6 +140,7 @@ class TestRawTableCreation:
         for col in expected_columns:
             assert col in column_names, f"Column '{col}' not found in violations_raw"
 
+
 class TestDataLoading:
     """Tests for loading data into raw tables."""
 
@@ -146,9 +151,7 @@ class TestDataLoading:
         sample_df = pd.DataFrame(
             {
                 "objectid": [1, 2, 3],
-                "created_date": pd.to_datetime(
-                    ["2026-01-01", "2026-01-02", "2026-01-03"]
-                ),
+                "created_date": pd.to_datetime(["2026-01-01", "2026-01-02", "2026-01-03"]),
                 "violation_type": ["Type1", "Type2", "Type1"],
                 "violation_code": ["CODE1", "CODE2", "CODE1"],
                 "severity": ["High", "Low", "Medium"],
@@ -184,9 +187,7 @@ class TestDataLoading:
                 "the_geom": ["POINT(1 1)", "POINT(2 2)", "POINT(3 3)"],
                 "community_board": ["CB1", "CB2", "CB3"],
                 "inspection_count": [5, 10, 15],
-                "last_inspection_date": pd.to_datetime(
-                    ["2026-01-01", "2026-01-02", "2026-01-03"]
-                ),
+                "last_inspection_date": pd.to_datetime(["2026-01-01", "2026-01-02", "2026-01-03"]),
                 "data_load_timestamp": pd.to_datetime(["2026-06-11"] * 3),
             }
         )
@@ -214,9 +215,7 @@ class TestDataLoading:
 
         data_loader.load_timeseries_data(sample_df)
 
-        result = data_loader.conn.fetch_all(
-            "SELECT COUNT(*) FROM raw.timeseries_raw"
-        )
+        result = data_loader.conn.fetch_all("SELECT COUNT(*) FROM raw.timeseries_raw")
         assert result[0][0] == 3, "Expected 3 rows in timeseries_raw"
 
     def test_load_violations_data(self, data_loader):
@@ -229,9 +228,7 @@ class TestDataLoading:
                 "inspection_id": [1, 2, 3],
                 "violation_type": ["Type1", "Type2", "Type1"],
                 "violation_code": ["CODE1", "CODE2", "CODE1"],
-                "violation_date": pd.to_datetime(
-                    ["2026-01-01", "2026-01-02", "2026-01-03"]
-                ),
+                "violation_date": pd.to_datetime(["2026-01-01", "2026-01-02", "2026-01-03"]),
                 "status": ["Open", "Closed", "Open"],
                 "borough": ["MN", "BK", "QN"],
                 "data_load_timestamp": pd.to_datetime(["2026-06-11"] * 3),

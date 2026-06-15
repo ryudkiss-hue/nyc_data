@@ -1,4 +1,3 @@
-
 import pandas as pd
 import pytest
 
@@ -8,6 +7,7 @@ from app.services.analytics_service import (
     update_predictive_simulation_intervention,
 )
 
+
 def test_causal_what_if_simulation():
     # Mocking manager and data
     manager = None
@@ -16,10 +16,12 @@ def test_causal_what_if_simulation():
     assert result["success"] is True
     assert "simulated_outcomes" in result
 
+
 def test_update_predictive_simulation_intervention():
     result = update_predictive_simulation_intervention("int_001", 0.5)
     assert result["success"] is True
     assert result["intervention_updated"] == "int_001"
+
 
 def test_digital_twin_pre_screen():
     historical_df = pd.DataFrame({"performance": [0.8, 0.9]})

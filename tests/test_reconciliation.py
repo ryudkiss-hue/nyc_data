@@ -13,6 +13,7 @@ import pytest
 
 from socrata_toolkit.quality.reconciliation import DataReconciliation, ReconciliationResult
 
+
 class TestReconciliationResult:
     """Test suite for ReconciliationResult dataclass."""
 
@@ -52,6 +53,7 @@ class TestReconciliationResult:
         assert result_dict["variance_pct"] == 5.0
         assert result_dict["status"] == "OK"
         assert result_dict["timestamp"] == "2026-06-10T12:00:00+00:00"
+
 
 class TestDataReconciliation:
     """Test suite for DataReconciliation class."""

@@ -10,9 +10,11 @@ from click.testing import CliRunner
 
 from socrata_toolkit.core.cli import main
 
+
 @pytest.fixture
 def runner():
     return CliRunner()
+
 
 class TestDoctorCheckDb:
     def test_postgres_ok(self, runner, monkeypatch):
@@ -43,14 +45,17 @@ class TestDoctorCheckDb:
         res = runner.invoke(main, ["doctor", "--check-db"])
         assert res.exit_code == 0
 
+
 class TestAlertsPostGIS:
     def test_alerts_postgis_with_conflicts(self, runner):
         resolver = MagicMock()
-        df = pd.DataFrame({
-            "id": [1, 2],
-            "_conflict_count": [2, 0],
-            "_conflict_ids": [[9], []],
-        })
+        df = pd.DataFrame(
+            {
+                "id": [1, 2],
+                "_conflict_count": [2, 0],
+                "_conflict_ids": [[9], []],
+            }
+        )
         resolver.resolve_conflicts.return_value = (df, MagicMock())
         with patch("socrata_toolkit.core.cli.PostGISConflictResolver", return_value=resolver):
             res = runner.invoke(main, ["alerts", "--pg-dsn", "postgresql://x", "--preview"])
@@ -59,7 +64,9 @@ class TestAlertsPostGIS:
         resolver.close.assert_called_once()
 
     def test_alerts_postgis_failure_emits_warning(self, runner):
-        with patch("socrata_toolkit.core.cli.PostGISConflictResolver", side_effect=RuntimeError("db down")):
+        with patch(
+            "socrata_toolkit.core.cli.PostGISConflictResolver", side_effect=RuntimeError("db down")
+        ):
             res = runner.invoke(main, ["alerts", "--pg-dsn", "postgresql://x", "--preview"])
         # failure is caught and emitted as a warning alert, command still succeeds
         assert res.exit_code == 0

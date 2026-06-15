@@ -1,4 +1,5 @@
 """Comprehensive tests for analyst.config module."""
+
 from __future__ import annotations
 
 import tempfile
@@ -12,6 +13,7 @@ from socrata_toolkit.analyst.config import (
     _parse_source,
     load_profile,
 )
+
 
 class TestSourceConfig:
     """Tests for SourceConfig dataclass."""
@@ -63,6 +65,7 @@ class TestSourceConfig:
         config = SourceConfig(type="excel", column_map=column_map)
         assert config.column_map == column_map
         assert config.column_map["id"] == "violation_id"
+
 
 class TestAnalystProfile:
     """Tests for AnalystProfile dataclass."""
@@ -123,6 +126,7 @@ class TestAnalystProfile:
         )
         assert len(profile.contract_ids) == 2
         assert "CONTRACT001" in profile.contract_ids
+
 
 class TestAnalystProfileProperties:
     """Tests for AnalystProfile property methods."""
@@ -251,6 +255,7 @@ class TestAnalystProfileProperties:
         )
         assert profile.conflict_buffer_m == 20.0
 
+
 class TestParseSource:
     """Tests for _parse_source function."""
 
@@ -319,6 +324,7 @@ class TestParseSource:
         raw = {"path": "/data/file.xlsx"}
         config = _parse_source("test_source", raw)
         assert config.type == "excel"
+
 
 class TestLoadProfile:
     """Tests for load_profile function."""

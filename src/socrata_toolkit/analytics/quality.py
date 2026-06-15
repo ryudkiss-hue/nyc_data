@@ -18,6 +18,7 @@ from socrata_toolkit.quality.profiler import ProfileGenerator
 
 logger = logging.getLogger(__name__)
 
+
 class DataQualityAudit(BaseSkill):
     """
     Performs comprehensive data quality assessment.
@@ -59,7 +60,7 @@ class DataQualityAudit(BaseSkill):
                     "mean": float(clean_series.mean()),
                     "variance": float(clean_series.var()),
                     "skewness": float(stats.skew(clean_series)),
-                    "kurtosis": float(stats.kurtosis(clean_series))
+                    "kurtosis": float(stats.kurtosis(clean_series)),
                 }
 
             # 3. Outlier Detection
@@ -82,27 +83,34 @@ class DataQualityAudit(BaseSkill):
                 "four_moments": moments,
                 "outliers": outliers,
                 "null_counts": null_counts,
-                "row_count": len(df)
+                "row_count": len(df),
             }
 
-            self.logger.info("Completed DataQualityAudit for %s. Found %d numeric columns and %d outlier groups.",
-                             table_name, len(moments), len(outliers))
+            self.logger.info(
+                "Completed DataQualityAudit for %s. Found %d numeric columns and %d outlier groups.",
+                table_name,
+                len(moments),
+                len(outliers),
+            )
 
             return AnalysisResult(
                 skill_name="DataQualityAudit",
                 success=True,
                 data=result_data,
-                metadata={"table_name": table_name}
+                metadata={"table_name": table_name},
             )
 
         except Exception as e:
-            self.logger.error("DataQualityAudit failed for %s: %s", table_name, str(e), exc_info=True)
+            self.logger.error(
+                "DataQualityAudit failed for %s: %s", table_name, str(e), exc_info=True
+            )
             return AnalysisResult(
                 skill_name="DataQualityAudit",
                 success=False,
                 data={"error": str(e)},
-                metadata={"table_name": table_name}
+                metadata={"table_name": table_name},
             )
+
 
 class SchemaMapper(BaseSkill):
     """
@@ -130,22 +138,28 @@ class SchemaMapper(BaseSkill):
                 return AnalysisResult("SchemaMapper", False, {"error": "datasets.yaml not found"})
 
             import yaml
+
             with open(config_path) as f:
                 registry = yaml.safe_load(f)
 
             if dataset_key not in registry.get("datasets", {}):
-                return AnalysisResult("SchemaMapper", False, {"error": f"Dataset '{dataset_key}' not in registry"})
+                return AnalysisResult(
+                    "SchemaMapper", False, {"error": f"Dataset '{dataset_key}' not in registry"}
+                )
 
             expected_cols = set(registry["datasets"][dataset_key].get("columns", []))
 
             # 2. Get Actual Schema from DuckDB
             from socrata_toolkit.core.duckdb_store import DuckDBManager
+
             manager = DuckDBManager()
 
             # Check if table exists
             tables = manager.conn.execute("SHOW TABLES").fetchall()
             if not any(t[0] == dataset_key for t in tables):
-                 return AnalysisResult("SchemaMapper", False, {"error": f"Table '{dataset_key}' not found in DuckDB"})
+                return AnalysisResult(
+                    "SchemaMapper", False, {"error": f"Table '{dataset_key}' not found in DuckDB"}
+                )
 
             actual_info = manager.conn.execute(f'PRAGMA table_info("{dataset_key}")').fetchall()
             actual_cols = {row[1] for row in actual_info}
@@ -160,10 +174,12 @@ class SchemaMapper(BaseSkill):
                 "actual_count": len(actual_cols),
                 "missing_columns": missing,
                 "extra_columns": extra,
-                "is_aligned": len(missing) == 0 and len(extra) == 0
+                "is_aligned": len(missing) == 0 and len(extra) == 0,
             }
 
-            self.logger.info("SchemaMapper for %s complete. Aligned: %s", dataset_key, result_data["is_aligned"])
+            self.logger.info(
+                "SchemaMapper for %s complete. Aligned: %s", dataset_key, result_data["is_aligned"]
+            )
             if extra:
                 self.logger.warning("Detected %d drifted columns in %s", len(extra), dataset_key)
 
@@ -171,12 +187,13 @@ class SchemaMapper(BaseSkill):
                 skill_name="SchemaMapper",
                 success=True,
                 data=result_data,
-                metadata={"dataset_key": dataset_key}
+                metadata={"dataset_key": dataset_key},
             )
 
         except Exception as e:
             self.logger.error("SchemaMapper failed for %s: %s", dataset_key, str(e), exc_info=True)
             return AnalysisResult("SchemaMapper", False, {"error": str(e)})
+
 
 class MetricReconciliation(BaseSkill):
     """
@@ -191,6 +208,7 @@ class MetricReconciliation(BaseSkill):
         try:
             # 1. Get DuckDB Count
             from socrata_toolkit.core.duckdb_store import DuckDBManager, DuckDBRepository
+
             manager = DuckDBManager()
             repo = DuckDBRepository(manager, dataset_key)
             local_count = repo.count()
@@ -200,6 +218,7 @@ class MetricReconciliation(BaseSkill):
             config_path = repo_root / "config" / "datasets.yaml"
 
             import yaml
+
             with open(config_path) as f:
                 registry = yaml.safe_load(f)
 
@@ -219,19 +238,27 @@ class MetricReconciliation(BaseSkill):
                 "local_count": local_count,
                 "registry_count": expected_count,
                 "delta": delta,
-                "reconciled": delta == 0 if isinstance(expected_count, int) else "N/A"
+                "reconciled": delta == 0 if isinstance(expected_count, int) else "N/A",
             }
 
-            self.logger.info("MetricReconciliation for %s complete. Local: %d, Registry: %s",
-                             dataset_key, local_count, expected_count)
+            self.logger.info(
+                "MetricReconciliation for %s complete. Local: %d, Registry: %s",
+                dataset_key,
+                local_count,
+                expected_count,
+            )
 
             return AnalysisResult(
                 skill_name="MetricReconciliation",
                 success=True,
                 data=result_data,
-                metadata={"dataset_key": dataset_key}
+                metadata={"dataset_key": dataset_key},
             )
 
         except Exception as e:
             self.logger.error("MetricReconciliation failed for %s: %s", dataset_key, str(e))
-            return AnalysisResult("MetricReconciliation", False, {"error": str(e)})
+            err_msg = str(e)
+            # Normalize DuckDB "does not exist" catalog errors to "not found"
+            if "does not exist" in err_msg.lower():
+                err_msg = f"Table not found: {err_msg}"
+            return AnalysisResult("MetricReconciliation", False, {"error": err_msg})

@@ -1,4 +1,5 @@
 """Tests for governance.compliance module - License and permit validation."""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
@@ -10,6 +11,7 @@ from socrata_toolkit.governance.compliance import (
     check_parks_permit,
     validate_contractor_for_list,
 )
+
 
 class TestCheckDCWPLicense:
     """Tests for check_dcwp_license function."""
@@ -95,6 +97,7 @@ class TestCheckDCWPLicense:
                 timeout=10,
             )
 
+
 class TestCheckParkspermit:
     """Tests for check_parks_permit function."""
 
@@ -174,6 +177,7 @@ class TestCheckParkspermit:
                 timeout=10,
             )
 
+
 class TestValidateContractorForList:
     """Tests for validate_contractor_for_list function."""
 
@@ -208,11 +212,10 @@ class TestValidateContractorForList:
 
     def test_validate_contractor_valid_license_valid_permit(self):
         """Test valid license and valid permit."""
-        with patch(
-            "socrata_toolkit.governance.compliance.check_dcwp_license"
-        ) as mock_lic, patch(
-            "socrata_toolkit.governance.compliance.check_parks_permit"
-        ) as mock_permit:
+        with (
+            patch("socrata_toolkit.governance.compliance.check_dcwp_license") as mock_lic,
+            patch("socrata_toolkit.governance.compliance.check_parks_permit") as mock_permit,
+        ):
             mock_lic.return_value = {"valid": True, "details": {}}
             mock_permit.return_value = {"valid": True, "details": {}}
 
@@ -228,11 +231,10 @@ class TestValidateContractorForList:
 
     def test_validate_contractor_valid_license_invalid_permit(self):
         """Test valid license but invalid permit."""
-        with patch(
-            "socrata_toolkit.governance.compliance.check_dcwp_license"
-        ) as mock_lic, patch(
-            "socrata_toolkit.governance.compliance.check_parks_permit"
-        ) as mock_permit:
+        with (
+            patch("socrata_toolkit.governance.compliance.check_dcwp_license") as mock_lic,
+            patch("socrata_toolkit.governance.compliance.check_parks_permit") as mock_permit,
+        ):
             mock_lic.return_value = {"valid": True, "details": {}}
             mock_permit.return_value = {"valid": False, "details": "Permit rejected"}
 
@@ -248,11 +250,10 @@ class TestValidateContractorForList:
 
     def test_validate_contractor_both_invalid(self):
         """Test both license and permit invalid."""
-        with patch(
-            "socrata_toolkit.governance.compliance.check_dcwp_license"
-        ) as mock_lic, patch(
-            "socrata_toolkit.governance.compliance.check_parks_permit"
-        ) as mock_permit:
+        with (
+            patch("socrata_toolkit.governance.compliance.check_dcwp_license") as mock_lic,
+            patch("socrata_toolkit.governance.compliance.check_parks_permit") as mock_permit,
+        ):
             mock_lic.return_value = {"valid": False, "details": "Inactive"}
             mock_permit.return_value = {"valid": False, "details": "Pending"}
 
@@ -297,11 +298,10 @@ class TestValidateContractorForList:
 
     def test_validate_contractor_permit_details_in_reasons(self):
         """Test that permit details appear in reasons."""
-        with patch(
-            "socrata_toolkit.governance.compliance.check_dcwp_license"
-        ) as mock_lic, patch(
-            "socrata_toolkit.governance.compliance.check_parks_permit"
-        ) as mock_permit:
+        with (
+            patch("socrata_toolkit.governance.compliance.check_dcwp_license") as mock_lic,
+            patch("socrata_toolkit.governance.compliance.check_parks_permit") as mock_permit,
+        ):
             mock_lic.return_value = {"valid": True, "details": {}}
             mock_permit.return_value = {
                 "valid": False,

@@ -31,23 +31,29 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+
 class HealthStatus(Enum):
     """Health status classification."""
+
     HEALTHY = "healthy"
     STALE = "stale"
     SCHEMA_DRIFT = "schema_drift"
     EMPTY_OR_ERROR = "empty_or_error"
 
+
 class Severity(Enum):
     """Severity levels for escalation."""
+
     CRITICAL = "critical"  # 0-20
-    HIGH = "high"          # 21-50
-    MEDIUM = "medium"      # 51-70
-    LOW = "low"            # 71-100
+    HIGH = "high"  # 21-50
+    MEDIUM = "medium"  # 51-70
+    LOW = "low"  # 71-100
+
 
 @dataclass
 class DatasetHealthMetrics:
     """Raw health metrics for a single dataset."""
+
     key: str
     fourfour: str
     row_count: int | None
@@ -58,9 +64,11 @@ class DatasetHealthMetrics:
     error_message: str | None = None
     fetch_timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
+
 @dataclass
 class DatasetHealthReport:
     """Classified health status and remediation guidance."""
+
     key: str
     fourfour: str
     status: HealthStatus
@@ -88,6 +96,7 @@ class DatasetHealthReport:
             "recommendations": self.recommendations,
             "metadata": self.metadata,
         }
+
 
 class DatasetHealthClassifier:
     """Classify dataset health and generate remediation guidance.
@@ -157,26 +166,7 @@ class DatasetHealthClassifier:
                 ],
             )
 
-        # 2. Row count check
-        if metrics.row_count is None or metrics.row_count < self.empty_threshold:
-            alerts.append(f"Dataset is empty or nearly empty ({metrics.row_count} rows)")
-            recommendations.append("Verify data ingestion pipeline is running")
-            recommendations.append("Check source system for data availability")
-            severity = 20
-            return DatasetHealthReport(
-                key=metrics.key,
-                fourfour=metrics.fourfour,
-                status=HealthStatus.EMPTY_OR_ERROR,
-                severity=severity,
-                severity_level=Severity.CRITICAL,
-                freshness_days=None,
-                row_count=metrics.row_count,
-                schema_changes={},
-                alerts=alerts,
-                recommendations=recommendations,
-            )
-
-        # 3. Freshness check
+        # 2. Freshness check (before empty-row check so stale datasets are classified as STALE)
         if metrics.last_modified:
             now = datetime.now(timezone.utc)
             freshness_days = (now - metrics.last_modified).days
@@ -185,7 +175,9 @@ class DatasetHealthClassifier:
             sla_threshold = self.sla_thresholds.get("MEDIUM", 30)
             if freshness_days > sla_threshold:
                 status = HealthStatus.STALE
-                alerts.append(f"Data is stale: {freshness_days} days old (SLA: {sla_threshold} days)")
+                alerts.append(
+                    f"Data is stale: {freshness_days} days old (SLA: {sla_threshold} days)"
+                )
                 recommendations.append(
                     f"Investigate why updates have paused (expected refresh every {sla_threshold} days)"
                 )
@@ -197,15 +189,41 @@ class DatasetHealthClassifier:
             alerts.append("No last-modified timestamp available")
             severity = 60
 
+        # 3. Row count check (only if not already classified as stale)
+        if "status" not in locals() and (
+            metrics.row_count is None or metrics.row_count < self.empty_threshold
+        ):
+            alerts.append(f"Dataset is empty or nearly empty ({metrics.row_count} rows)")
+            recommendations.append("Verify data ingestion pipeline is running")
+            recommendations.append("Check source system for data availability")
+            return DatasetHealthReport(
+                key=metrics.key,
+                fourfour=metrics.fourfour,
+                status=HealthStatus.EMPTY_OR_ERROR,
+                severity=20,
+                severity_level=Severity.CRITICAL,
+                freshness_days=freshness_days,
+                row_count=metrics.row_count,
+                schema_changes={},
+                alerts=alerts,
+                recommendations=recommendations,
+            )
+
         # 4. Schema drift check
         if metrics.schema_baseline and metrics.schema_snapshot:
             schema_changes = self._detect_schema_changes(
                 metrics.schema_baseline,
                 metrics.schema_snapshot,
             )
-            if schema_changes.get("added_columns") or schema_changes.get("removed_columns") or schema_changes.get("type_changes"):
+            if (
+                schema_changes.get("added_columns")
+                or schema_changes.get("removed_columns")
+                or schema_changes.get("type_changes")
+            ):
                 status = HealthStatus.SCHEMA_DRIFT
-                alerts.append(f"Schema has drifted: {len(schema_changes.get('type_changes', []))} type changes")
+                alerts.append(
+                    f"Schema has drifted: {len(schema_changes.get('type_changes', []))} type changes"
+                )
                 recommendations.append("Review schema changes against data dictionary")
                 recommendations.append("Update downstream code to handle new/removed columns")
                 severity = min(severity, 50)
@@ -237,7 +255,9 @@ class DatasetHealthClassifier:
             recommendations=recommendations,
             metadata={
                 "sla_threshold_days": sla_threshold if metrics.last_modified else None,
-                "last_modified": metrics.last_modified.isoformat() if metrics.last_modified else None,
+                "last_modified": metrics.last_modified.isoformat()
+                if metrics.last_modified
+                else None,
             },
         )
 
@@ -269,11 +289,13 @@ class DatasetHealthClassifier:
 
         for col in baseline_cols & current_cols:
             if baseline[col] != current[col]:
-                type_changes.append({
-                    "column": col,
-                    "from": baseline[col],
-                    "to": current[col],
-                })
+                type_changes.append(
+                    {
+                        "column": col,
+                        "from": baseline[col],
+                        "to": current[col],
+                    }
+                )
 
         is_compatible = len(removed) == 0 and len(type_changes) == 0
 
@@ -330,20 +352,24 @@ class DatasetHealthClassifier:
                 summary["empty_or_error"] += 1
 
             if report.severity <= 20:
-                summary["critical_alerts"].append({
-                    "key": report.key,
-                    "fourfour": report.fourfour,
-                    "status": report.status.value,
-                    "alerts": report.alerts,
-                })
+                summary["critical_alerts"].append(
+                    {
+                        "key": report.key,
+                        "fourfour": report.fourfour,
+                        "status": report.status.value,
+                        "alerts": report.alerts,
+                    }
+                )
 
             if report.severity <= 70:
-                summary["needs_attention"].append({
-                    "key": report.key,
-                    "fourfour": report.fourfour,
-                    "severity": report.severity,
-                    "status": report.status.value,
-                    "primary_alert": report.alerts[0] if report.alerts else "Unknown issue",
-                })
+                summary["needs_attention"].append(
+                    {
+                        "key": report.key,
+                        "fourfour": report.fourfour,
+                        "severity": report.severity,
+                        "status": report.status.value,
+                        "primary_alert": report.alerts[0] if report.alerts else "Unknown issue",
+                    }
+                )
 
         return summary

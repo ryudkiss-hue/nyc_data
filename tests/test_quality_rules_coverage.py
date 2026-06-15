@@ -1,4 +1,5 @@
 """Tests for quality.rules module - Business rules engine."""
+
 from __future__ import annotations
 
 import pandas as pd
@@ -13,6 +14,7 @@ from socrata_toolkit.quality.rules import (
     RuleViolations,
     validate_expectations,
 )
+
 
 class TestRuleSeverityEnum:
     """Tests for RuleSeverity enum."""
@@ -29,6 +31,7 @@ class TestRuleSeverityEnum:
     def test_rule_severity_low(self):
         assert RuleSeverity.LOW.value == "low"
 
+
 class TestRuleModeEnum:
     """Tests for RuleMode enum."""
 
@@ -37,6 +40,7 @@ class TestRuleModeEnum:
 
     def test_rule_mode_soft(self):
         assert RuleMode.SOFT.value == "soft"
+
 
 class TestRuleViolation:
     """Tests for RuleViolation dataclass."""
@@ -79,6 +83,7 @@ class TestRuleViolation:
         assert violation.affected_records == []
         assert violation.suggested_remediation == ""
 
+
 class TestRuleViolations:
     """Tests for RuleViolations dataclass."""
 
@@ -106,6 +111,7 @@ class TestRuleViolations:
         assert result["critical_violations"] == 0
         assert result["can_proceed"] is True
         assert len(result["violations"]) == 1
+
 
 class TestQualityRule:
     """Tests for QualityRule class."""
@@ -175,6 +181,7 @@ class TestQualityRule:
         assert violation.violation_count == 0
         assert "Rule evaluation failed" in violation.suggested_remediation
         assert violation.severity == RuleSeverity.HIGH
+
 
 class TestBusinessRulesEngine:
     """Tests for BusinessRulesEngine class."""
@@ -259,12 +266,8 @@ class TestBusinessRulesEngine:
         def soft_func(df):
             return ["rec2"]
 
-        hard_rule = QualityRule(
-            "hard1", "Hard Rule", hard_func, mode=RuleMode.HARD
-        )
-        soft_rule = QualityRule(
-            "soft1", "Soft Rule", soft_func, mode=RuleMode.SOFT
-        )
+        hard_rule = QualityRule("hard1", "Hard Rule", hard_func, mode=RuleMode.HARD)
+        soft_rule = QualityRule("soft1", "Soft Rule", soft_func, mode=RuleMode.SOFT)
         engine.register_rule(hard_rule)
         engine.register_rule(soft_rule)
 
@@ -288,6 +291,7 @@ class TestBusinessRulesEngine:
         assert len(by_severity["critical"]) == 1
         assert len(by_severity["high"]) == 2
 
+
 class TestValidateExpectations:
     """Tests for validate_expectations function."""
 
@@ -306,12 +310,14 @@ class TestValidateExpectations:
         assert any(v["rule"] == "required_cols" for v in violations)
 
     def test_validate_expectations_sidewalk_inspections_valid(self):
-        df = pd.DataFrame({
-            "inspection_id": [1, 2, 3, 4, 5] * 30,  # 150 rows to exceed min_rows
-            "borough": ["MN", "BK", "QN", "BX", "SI"] * 30,
-            "status": ["Open", "Closed"] * 75,
-            "open_date": pd.date_range("2024-01-01", periods=150),
-        })
+        df = pd.DataFrame(
+            {
+                "inspection_id": [1, 2, 3, 4, 5] * 30,  # 150 rows to exceed min_rows
+                "borough": ["MN", "BK", "QN", "BX", "SI"] * 30,
+                "status": ["Open", "Closed"] * 75,
+                "open_date": pd.date_range("2024-01-01", periods=150),
+            }
+        )
         violations = validate_expectations("sidewalk_inspections", df)
 
         # Should have no critical violations for valid data
@@ -319,10 +325,12 @@ class TestValidateExpectations:
         assert len(critical_violations) == 0
 
     def test_validate_expectations_work_orders(self):
-        df = pd.DataFrame({
-            "work_order_id": range(1, 20),
-            "borough": ["MN"] * 19,
-        })
+        df = pd.DataFrame(
+            {
+                "work_order_id": range(1, 20),
+                "borough": ["MN"] * 19,
+            }
+        )
         violations = validate_expectations("work_orders", df)
 
         # Should pass (has required columns and > min_rows)
@@ -330,9 +338,11 @@ class TestValidateExpectations:
         assert len(critical_violations) == 0
 
     def test_validate_expectations_violations(self):
-        df = pd.DataFrame({
-            "borough": ["MN", "BK"],
-        })
+        df = pd.DataFrame(
+            {
+                "borough": ["MN", "BK"],
+            }
+        )
         violations = validate_expectations("violations", df)
 
         # Should have no critical violations (has required column)
@@ -340,11 +350,13 @@ class TestValidateExpectations:
         assert len(critical_violations) == 0
 
     def test_validate_expectations_complaints_311_empty(self):
-        df = pd.DataFrame({
-            "complaint_type": ["type1"],
-            "borough": ["MN"],
-            "created_date": pd.date_range("2024-01-01", periods=1),
-        })
+        df = pd.DataFrame(
+            {
+                "complaint_type": ["type1"],
+                "borough": ["MN"],
+                "created_date": pd.date_range("2024-01-01", periods=1),
+            }
+        )
         violations = validate_expectations("complaints_311", df)
 
         # Should have min_rows violation

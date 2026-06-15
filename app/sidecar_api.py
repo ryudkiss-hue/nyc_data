@@ -39,13 +39,19 @@ logger = logging.getLogger("mmc.sidecar")
 try:
     from socrata_toolkit.governance.audit import audit_op
     from socrata_toolkit.governance.audit import get_global_trail as _get_trail
+
     _AUDIT_OK = True
 except ImportError:
     _AUDIT_OK = False
+
     def audit_op(op, **_):  # type: ignore[misc]
         import functools
-        def d(fn): return fn
+
+        def d(fn):
+            return fn
+
         return d
+
 
 app = FastAPI(title="NYC Data Sidecar", version="1.0.0")
 
@@ -75,6 +81,7 @@ _START_TIME = time.monotonic()
 # ---------------------------------------------------------------------------
 _quality_catalog: dict[str, Any] = {}
 
+
 def _write_catalog(dataset_id: str, entry: dict) -> None:
     """Persist a catalog entry; logs warnings on failure."""
     try:
@@ -82,13 +89,16 @@ def _write_catalog(dataset_id: str, entry: dict) -> None:
     except Exception as exc:
         logger.warning("catalog write failed: %s", exc)
 
+
 # ---------------------------------------------------------------------------
 # In-memory audit trail
 # ---------------------------------------------------------------------------
 _audit_trail: OrderedDict[str, dict] = OrderedDict()
 
+
 def _get_trail() -> OrderedDict[str, dict]:
     return _audit_trail
+
 
 def _module_available(name: str) -> bool:
     """Return True if a module can be imported without importing it."""
@@ -96,6 +106,7 @@ def _module_available(name: str) -> bool:
         return importlib.util.find_spec(name) is not None
     except (ImportError, ValueError, ModuleNotFoundError):
         return False
+
 
 # --------------------------------------------------------------------------- #
 # Health
@@ -115,23 +126,29 @@ def health() -> dict[str, Any]:
         },
     }
 
+
 def _pymc_available() -> bool:
     try:
         import pymc  # noqa: F401
+
         return True
     except ImportError:
         return False
+
 
 def _prophet_available() -> bool:
     try:
         from prophet import Prophet  # noqa: F401
+
         return True
     except ImportError:
         return False
 
+
 # ---------------------------------------------------------------------------
 # Audit trail endpoint
 # ---------------------------------------------------------------------------
+
 
 @app.get("/api/audit-trail")
 def audit_trail_get(limit: int = 100, offset: int = 0):
@@ -140,12 +157,14 @@ def audit_trail_get(limit: int = 100, offset: int = 0):
         return {"total": 0, "entries": []}
     entries = list(_get_trail().entries())  # snapshot once
     total = len(entries)
-    page = entries[offset: offset + limit]
+    page = entries[offset : offset + limit]
     return {"total": total, "entries": [e.__dict__ for e in page]}
+
 
 # --------------------------------------------------------------------------- #
 # Bayesian yield-rate
 # --------------------------------------------------------------------------- #
+
 
 class YieldRateRequest(BaseModel):
     """Beta-Binomial yield-rate request.
@@ -157,6 +176,7 @@ class YieldRateRequest(BaseModel):
     totals: list[int] = Field(..., min_length=1)
     draws: int = Field(500, ge=10, le=5000)
     tune: int = Field(200, ge=10, le=5000)
+
 
 @app.post("/api/bayesian/yield-rate")
 def bayesian_yield_rate(req: YieldRateRequest) -> dict[str, Any]:
@@ -205,10 +225,12 @@ def bayesian_yield_rate(req: YieldRateRequest) -> dict[str, Any]:
             "method": "advi",
         }
     except Exception:
-        # Conjugate Beta(1,1) prior -> Beta(1 + successes, 1 + failures) posterior.
+        # Conjugate Beta posterior — frequentist approximation, NOT MCMC
         alpha = 1.0 + total_success
-        beta = 1.0 + (total_trials - total_success)
-        draws = [random.betavariate(alpha, beta) for _ in range(req.draws)]
+        beta_param = 1.0 + (total_trials - total_success)
+        import random as _random
+
+        draws = [_random.betavariate(alpha, beta_param) for _ in range(req.draws)]
         draws.sort()
         n = len(draws)
         mean = sum(draws) / n
@@ -222,8 +244,10 @@ def bayesian_yield_rate(req: YieldRateRequest) -> dict[str, Any]:
             "hdi_3": _pct(3),
             "hdi_97": _pct(97),
             "samples": draws[:200],
-            "method": "bootstrap",
+            "method": "conjugate_beta",
+            "warning": "PyMC unavailable — frequentist conjugate Beta approximation used, not full Bayesian MCMC",
         }
+
 
 # --------------------------------------------------------------------------- #
 # Prophet forecast
@@ -235,6 +259,7 @@ class ProphetRequest(BaseModel):
     values: list[float] = Field(..., min_length=2)
     periods: int = Field(30, ge=1, le=3650)
     freq: str = "D"
+
 
 @app.post("/api/forecast/prophet")
 def forecast_prophet(req: ProphetRequest) -> dict[str, Any]:
@@ -271,6 +296,7 @@ def forecast_prophet(req: ProphetRequest) -> dict[str, Any]:
     except Exception as exc:  # pragma: no cover - depends on prophet runtime
         raise HTTPException(500, f"prophet forecast failed: {exc}") from exc
 
+
 # --------------------------------------------------------------------------- #
 # Governance: PII scan
 # --------------------------------------------------------------------------- #
@@ -278,6 +304,7 @@ class RowsRequest(BaseModel):
     """Generic tabular payload: a list of row dicts."""
 
     rows: list[dict[str, Any]] = Field(default_factory=list)
+
 
 @app.post("/api/governance/pii-scan")
 def governance_pii_scan(req: RowsRequest) -> dict[str, Any]:
@@ -299,6 +326,7 @@ def governance_pii_scan(req: RowsRequest) -> dict[str, Any]:
             out.append(dict(s))
     return {"signals": out, "count": len(out)}
 
+
 # --------------------------------------------------------------------------- #
 # Governance: DMBOK
 # --------------------------------------------------------------------------- #
@@ -308,6 +336,7 @@ class DmbokRequest(BaseModel):
     rows: list[dict[str, Any]] = Field(default_factory=list)
     key_columns: Optional[list[str]] = None  # noqa: UP045
     date_column: Optional[str] = None  # noqa: UP045
+
 
 @app.post("/api/governance/dmbok")
 def governance_dmbok(req: DmbokRequest) -> dict[str, Any]:
@@ -331,6 +360,7 @@ def governance_dmbok(req: DmbokRequest) -> dict[str, Any]:
     if hasattr(report, "__dict__"):
         return dict(report.__dict__)
     return dict(report)
+
 
 # --------------------------------------------------------------------------- #
 # Governance: FAIR
@@ -357,10 +387,12 @@ _FAIR_FIELDS = {
     "citation",
 }
 
+
 class FairRequest(BaseModel):
     """FAIR dataset descriptor; extra/unknown fields are ignored."""
 
     model_config = {"extra": "allow"}
+
 
 @app.post("/api/governance/fairness")
 def governance_fairness(req: FairRequest) -> dict[str, Any]:
@@ -385,6 +417,7 @@ def governance_fairness(req: FairRequest) -> dict[str, Any]:
         return dict(score.__dict__)
     return dict(score)
 
+
 # --------------------------------------------------------------------------- #
 # Quality: anomaly detection (pure numpy, always available)
 # --------------------------------------------------------------------------- #
@@ -393,7 +426,10 @@ class AnomalyRequest(BaseModel):
 
     values: list[float] = Field(..., min_length=1)
     method: str = "zscore"
-    period: int = Field(default=7, ge=2, le=365, description="Seasonal period for STL decomposition")
+    period: int = Field(
+        default=7, ge=2, le=365, description="Seasonal period for STL decomposition"
+    )
+
 
 @app.post("/api/quality/anomalies")
 def quality_anomalies(req: AnomalyRequest) -> dict[str, Any]:
@@ -430,7 +466,9 @@ def quality_anomalies(req: AnomalyRequest) -> dict[str, Any]:
     # seasonal (STL-lite)
     period = req.period
     if n < period * 2:
-        raise HTTPException(422, f"Need at least {period * 2} values for seasonal period={period}; got {n}")
+        raise HTTPException(
+            422, f"Need at least {period * 2} values for seasonal period={period}; got {n}"
+        )
 
     # 1. Trend: centered moving average
     half = period // 2
@@ -470,6 +508,7 @@ def quality_anomalies(req: AnomalyRequest) -> dict[str, Any]:
         "seasonal": [float(seasonal[i % period]) for i in range(n)],
     }
 
+
 # --------------------------------------------------------------------------- #
 # Governance: attach DMBOK quality score to FAIR catalog entry  (#47)
 # --------------------------------------------------------------------------- #
@@ -481,6 +520,7 @@ class QualityCatalogRequest(BaseModel):
     key_columns: list[str] = Field(default_factory=list)
     date_column: Optional[str] = None  # noqa: UP045
     catalog_path: Optional[str] = None  # path to persist updated catalog JSON  # noqa: UP045
+
 
 @app.post("/api/governance/quality-catalog")
 def governance_quality_catalog(req: QualityCatalogRequest) -> dict[str, Any]:
@@ -500,6 +540,7 @@ def governance_quality_catalog(req: QualityCatalogRequest) -> dict[str, Any]:
     catalog_updated = False
     if req.catalog_path:
         import pathlib  # noqa: PLC0415
+
         p = pathlib.Path(req.catalog_path)
         if p.exists():
             try:
@@ -521,6 +562,7 @@ def governance_quality_catalog(req: QualityCatalogRequest) -> dict[str, Any]:
         "catalog_updated": catalog_updated,
     }
 
+
 # --------------------------------------------------------------------------- #
 # Audit trail endpoint  (#50)
 # --------------------------------------------------------------------------- #
@@ -531,25 +573,33 @@ def audit_trail_get(limit: int = 100) -> dict[str, Any]:
     entries = list(trail.values())[-limit:]
     return {"entries": list(reversed(entries)), "total": len(trail)}
 
+
 @app.delete("/api/audit/trail")
 def audit_trail_clear() -> dict[str, Any]:
     """Clear in-process audit entries."""
     _get_trail().clear()
-    return {"cleared": True}# ---------------------------------------------------------------------------
+    return {
+        "cleared": True
+    }  # ---------------------------------------------------------------------------
+
+
 # GROUP 2 — Semantic search endpoint
 # ---------------------------------------------------------------------------
 
 _semantic_search_instance = None
 
+
 def _get_semantic_search():
     global _semantic_search_instance
     if _semantic_search_instance is None:
         from socrata_toolkit.analysis.semantic_search import SemanticCatalogSearch  # noqa: E402
+
         _semantic_search_instance = SemanticCatalogSearch()
         records = [{"id": k, "name": v.get("name", k)} for k, v in _quality_catalog.items()]
         if records:
             _semantic_search_instance.index(records)
     return _semantic_search_instance
+
 
 @app.get("/api/analysis/semantic-search")
 def semantic_search(q: str = "", top_k: int = 10):
@@ -567,9 +617,11 @@ def semantic_search(q: str = "", top_k: int = 10):
     except Exception as exc:
         raise HTTPException(500, str(exc)) from exc
 
+
 class DPHistogramRequest(BaseModel):
     values: list[float]
     epsilon: float = 1.0
+
 
 @app.post("/api/analysis/dp-histogram")
 def dp_histogram(req: DPHistogramRequest):
@@ -577,10 +629,15 @@ def dp_histogram(req: DPHistogramRequest):
     if not req.values:
         raise HTTPException(400, "values must be non-empty")
     import math
+
     bins = min(20, max(5, int(math.sqrt(len(req.values)))))
     lo, hi = min(req.values), max(req.values)
     if lo == hi:
-        return {"bins": [{"bin": lo, "count": len(req.values)}], "method": "plain", "epsilon": req.epsilon}
+        return {
+            "bins": [{"bin": lo, "count": len(req.values)}],
+            "method": "plain",
+            "epsilon": req.epsilon,
+        }
 
     bin_width = (hi - lo) / bins
     counts = [0] * bins
@@ -591,10 +648,12 @@ def dp_histogram(req: DPHistogramRequest):
     method = "plain"
     try:
         import opendp.prelude as dp  # type: ignore
+
         dp.enable_features("contrib", "floating-point")
         sensitivity = 2.0
         noise_scale = sensitivity / req.epsilon
         import random
+
         rng = random.Random()
         noised = [max(0, c + rng.gauss(0, noise_scale)) for c in counts]
         counts = [round(v) for v in noised]
@@ -605,25 +664,29 @@ def dp_histogram(req: DPHistogramRequest):
     bins_out = [{"bin": round(lo + i * bin_width, 4), "count": counts[i]} for i in range(bins)]
     return {"bins": bins_out, "method": method, "epsilon": req.epsilon}
 
+
 # ---------------------------------------------------------------------------
 # GROUP 4 — Governance: DCAT 3, PROV-DM, ODRL
 # ---------------------------------------------------------------------------
+
 
 @app.get("/api/governance/dcat3")
 def governance_dcat3():
     """Serialize quality catalog as DCAT 3 JSON-LD."""
     datasets = []
     for dataset_id, entry in _quality_catalog.items():
-        datasets.append({
-            "@type": "dcat:Dataset",
-            "@id": f"urn:nyc:dataset:{dataset_id}",
-            "dct:identifier": dataset_id,
-            "dct:title": entry.get("name", dataset_id),
-            "dct:description": entry.get("description", ""),
-            "dcat:keyword": entry.get("tags", []),
-            "dct:modified": entry.get("updated_at", ""),
-            "dcat:distribution": [],
-        })
+        datasets.append(
+            {
+                "@type": "dcat:Dataset",
+                "@id": f"urn:nyc:dataset:{dataset_id}",
+                "dct:identifier": dataset_id,
+                "dct:title": entry.get("name", dataset_id),
+                "dct:description": entry.get("description", ""),
+                "dcat:keyword": entry.get("tags", []),
+                "dct:modified": entry.get("updated_at", ""),
+                "dcat:distribution": [],
+            }
+        )
     return {
         "@context": "https://www.w3.org/ns/dcat3",
         "@type": "dcat:Catalog",
@@ -631,6 +694,7 @@ def governance_dcat3():
         "dct:description": "Quality-scored NYC open datasets",
         "dcat:dataset": datasets,
     }
+
 
 @app.get("/api/governance/provenance")
 def governance_provenance():
@@ -644,13 +708,15 @@ def governance_provenance():
             "prov:id": f"urn:nyc:dataset:{eid}",
             "prov:type": "prov:Entity",
         }
-        activities.append({
-            "prov:id": f"urn:nyc:activity:{e.get('timestamp', '')}:{eid}",
-            "prov:type": e.get("prov_type", "prov:Activity"),
-            "prov:startTime": e.get("timestamp", ""),
-            "prov:used": f"urn:nyc:dataset:{eid}",
-            "dc:description": e.get("action", ""),
-        })
+        activities.append(
+            {
+                "prov:id": f"urn:nyc:activity:{e.get('timestamp', '')}:{eid}",
+                "prov:type": e.get("prov_type", "prov:Activity"),
+                "prov:startTime": e.get("timestamp", ""),
+                "prov:used": f"urn:nyc:dataset:{eid}",
+                "dc:description": e.get("action", ""),
+            }
+        )
     return {
         "@context": {
             "prov": "http://www.w3.org/ns/prov#",
@@ -660,6 +726,7 @@ def governance_provenance():
         "prov:entity": list(entities.values()),
         "prov:activity": activities,
     }
+
 
 @app.get("/api/governance/odrl-policy")
 def governance_odrl_policy():
@@ -694,9 +761,11 @@ def governance_odrl_policy():
         ],
     }
 
+
 # ---------------------------------------------------------------------------
 # GROUP 7 — Standards interop: STAC, OGC API Features
 # ---------------------------------------------------------------------------
+
 
 @app.get("/api/stac/catalog")
 def stac_catalog():
@@ -706,12 +775,14 @@ def stac_catalog():
         {"rel": "root", "href": "/api/stac/catalog", "type": "application/json"},
     ]
     for dataset_id in list(_quality_catalog.keys())[:50]:
-        links.append({
-            "rel": "item",
-            "href": f"/api/stac/catalog/items/{dataset_id}",
-            "type": "application/geo+json",
-            "title": _quality_catalog[dataset_id].get("name", dataset_id),
-        })
+        links.append(
+            {
+                "rel": "item",
+                "href": f"/api/stac/catalog/items/{dataset_id}",
+                "type": "application/geo+json",
+                "title": _quality_catalog[dataset_id].get("name", dataset_id),
+            }
+        )
     return {
         "type": "Catalog",
         "id": "nyc-mission-control",
@@ -721,23 +792,31 @@ def stac_catalog():
         "links": links,
     }
 
+
 @app.get("/api/ogc/collections")
 def ogc_collections():
     """OGC API Features collections list."""
     collections = []
     for dataset_id, entry in _quality_catalog.items():
-        collections.append({
-            "id": dataset_id,
-            "title": entry.get("name", dataset_id),
-            "description": entry.get("description", ""),
-            "links": [
-                {"rel": "items", "href": f"/api/ogc/collections/{dataset_id}/items", "type": "application/geo+json"},
-            ],
-        })
+        collections.append(
+            {
+                "id": dataset_id,
+                "title": entry.get("name", dataset_id),
+                "description": entry.get("description", ""),
+                "links": [
+                    {
+                        "rel": "items",
+                        "href": f"/api/ogc/collections/{dataset_id}/items",
+                        "type": "application/geo+json",
+                    },
+                ],
+            }
+        )
     return {
         "collections": collections,
         "links": [{"rel": "self", "href": "/api/ogc/collections", "type": "application/json"}],
     }
+
 
 @app.get("/api/ogc/collections/{collection_id}/items")
 def ogc_collection_items(collection_id: str):
@@ -753,11 +832,17 @@ def ogc_collection_items(collection_id: str):
         lat = row.get("latitude") or row.get("lat") or row.get("y")
         if lon is not None and lat is not None:
             try:
-                features.append({
-                    "type": "Feature",
-                    "geometry": {"type": "Point", "coordinates": [float(lon), float(lat)]},
-                    "properties": {k: v for k, v in row.items() if k not in ("longitude", "latitude", "lon", "lat", "x", "y")},
-                })
+                features.append(
+                    {
+                        "type": "Feature",
+                        "geometry": {"type": "Point", "coordinates": [float(lon), float(lat)]},
+                        "properties": {
+                            k: v
+                            for k, v in row.items()
+                            if k not in ("longitude", "latitude", "lon", "lat", "x", "y")
+                        },
+                    }
+                )
             except (TypeError, ValueError):
                 pass
 
@@ -769,6 +854,7 @@ def ogc_collection_items(collection_id: str):
         "links": [{"rel": "self", "href": f"/api/ogc/collections/{collection_id}/items"}],
     }
 
+
 # --------------------------------------------------------------------------- #
 # MAPIE uncertainty bands on Prophet forecast (optional enhancement)
 # --------------------------------------------------------------------------- #
@@ -778,6 +864,7 @@ class ProphetMAPIERequest(BaseModel):
     periods: int = Field(default=30, ge=1, le=730)
     freq: str = "D"
     coverage: float = Field(default=0.9, ge=0.5, le=0.99)
+
 
 @app.post("/api/forecast/prophet-mapie")
 def forecast_prophet_mapie(req: ProphetMAPIERequest) -> dict[str, Any]:
@@ -835,6 +922,7 @@ def forecast_prophet_mapie(req: ProphetMAPIERequest) -> dict[str, Any]:
         result["mapie_upper"] = mapie_upper
     return result
 
+
 # --------------------------------------------------------------------------- #
 # PowerPoint export
 # --------------------------------------------------------------------------- #
@@ -847,9 +935,11 @@ class PPTXSlide(BaseModel):
     chart_b64: str = ""  # base64-encoded PNG
     caption: str = ""
 
+
 class PPTXRequest(BaseModel):
     filename: str = "mission_control_export"
     slides: list[PPTXSlide] = Field(default_factory=list)
+
 
 @app.post("/api/export/pptx")
 def export_pptx(req: PPTXRequest):
@@ -879,7 +969,9 @@ def export_pptx(req: PPTXRequest):
             try:
                 img_bytes = base64.b64decode(slide_data.chart_b64)
                 img_stream = io.BytesIO(img_bytes)
-                slide.shapes.add_picture(img_stream, Inches(0.5), Inches(1.0), Inches(9), Inches(5.5))
+                slide.shapes.add_picture(
+                    img_stream, Inches(0.5), Inches(1.0), Inches(9), Inches(5.5)
+                )
             except Exception:
                 pass
 

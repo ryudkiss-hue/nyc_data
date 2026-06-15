@@ -3,6 +3,7 @@
 Comprehensive data quality checks for the 4-tier analytics pipeline.
 Ensures data freshness, completeness, and integrity before Dives consume.
 """
+
 from __future__ import annotations
 
 import logging
@@ -17,16 +18,18 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ValidationResult:
     """Result of a validation check."""
+
     check_name: str
     passed: bool
     message: str
-    detail: Optional[str] = None
+    detail: str | None = None
     severity: str = "ERROR"  # ERROR, WARNING, INFO
 
 
 @dataclass
 class QualityReport:
     """Complete quality assessment of analytics pipeline."""
+
     timestamp_check: ValidationResult
     row_count_check: ValidationResult
     null_check: ValidationResult
@@ -40,9 +43,14 @@ class QualityReport:
     def __post_init__(self):
         """Compute overall pass/fail."""
         all_checks = [
-            self.timestamp_check, self.row_count_check, self.null_check,
-            self.column_count_check, self.freshness_check, self.schema_check,
-            self.metric_ranges_check, self.anomaly_check
+            self.timestamp_check,
+            self.row_count_check,
+            self.null_check,
+            self.column_count_check,
+            self.freshness_check,
+            self.schema_check,
+            self.metric_ranges_check,
+            self.anomaly_check,
         ]
         self.all_passed = all(check.passed for check in all_checks if check.severity == "ERROR")
 
@@ -53,6 +61,7 @@ class KPIValidator:
     def __init__(self, conn: duckdb.DuckDBPyConnection):
         """Initialize validator with database connection."""
         self.conn = conn
+        self.conn.execute("CREATE SCHEMA IF NOT EXISTS analytics")
 
     def validate_all(self) -> QualityReport:
         """Run all validation checks and return comprehensive report."""
@@ -86,7 +95,7 @@ class KPIValidator:
                     check_name="timestamp_freshness",
                     passed=False,
                     message="No analytics_timestamp found",
-                    severity="ERROR"
+                    severity="ERROR",
                 )
 
             minutes_ago = result[1]
@@ -96,14 +105,14 @@ class KPIValidator:
                     passed=False,
                     message=f"Data is {minutes_ago} minutes old (threshold: 30 min)",
                     detail=f"Latest: {result[0]}",
-                    severity="WARNING"
+                    severity="WARNING",
                 )
 
             return ValidationResult(
                 check_name="timestamp_freshness",
                 passed=True,
                 message=f"Data is {minutes_ago} minutes old ✓",
-                severity="INFO"
+                severity="INFO",
             )
 
         except Exception as e:
@@ -111,7 +120,7 @@ class KPIValidator:
                 check_name="timestamp_freshness",
                 passed=False,
                 message=f"Timestamp check failed: {str(e)}",
-                severity="ERROR"
+                severity="ERROR",
             )
 
     def check_row_counts(self) -> ValidationResult:
@@ -129,14 +138,14 @@ class KPIValidator:
                     passed=False,
                     message=f"Expected 90 rows, got {row_count}",
                     detail=f"Break down: {self._get_row_breakdown()}",
-                    severity="ERROR"
+                    severity="ERROR",
                 )
 
             return ValidationResult(
                 check_name="row_count",
                 passed=True,
                 message="Exactly 90 rows (18 KPIs × 5 boroughs) ✓",
-                severity="INFO"
+                severity="INFO",
             )
 
         except Exception as e:
@@ -144,7 +153,7 @@ class KPIValidator:
                 check_name="row_count",
                 passed=False,
                 message=f"Row count check failed: {str(e)}",
-                severity="ERROR"
+                severity="ERROR",
             )
 
     def check_null_metrics(self) -> ValidationResult:
@@ -168,21 +177,21 @@ class KPIValidator:
                     f"stddev_samp({result[1]})",
                     f"median_value({result[2]})",
                     f"q1_value({result[3]})",
-                    f"q3_value({result[4]})"
+                    f"q3_value({result[4]})",
                 ]
-                null_cols = [c for c in null_cols if int(c.split('(')[1].rstrip(')')) > 0]
+                null_cols = [c for c in null_cols if int(c.split("(")[1].rstrip(")")) > 0]
                 return ValidationResult(
                     check_name="null_metrics",
                     passed=False,
                     message=f"NULL values found in core metrics: {', '.join(null_cols)}",
-                    severity="ERROR"
+                    severity="ERROR",
                 )
 
             return ValidationResult(
                 check_name="null_metrics",
                 passed=True,
                 message="All core metrics (mean, stddev, median, Q1, Q3) are non-NULL ✓",
-                severity="INFO"
+                severity="INFO",
             )
 
         except Exception as e:
@@ -190,7 +199,7 @@ class KPIValidator:
                 check_name="null_metrics",
                 passed=False,
                 message=f"NULL check failed: {str(e)}",
-                severity="ERROR"
+                severity="ERROR",
             )
 
     def check_column_completeness(self) -> ValidationResult:
@@ -208,14 +217,14 @@ class KPIValidator:
                     passed=False,
                     message=f"Expected 75+ columns, got {column_count}",
                     detail=f"Columns: {[c[0] for c in columns[:10]]}...",
-                    severity="ERROR"
+                    severity="ERROR",
                 )
 
             return ValidationResult(
                 check_name="column_completeness",
                 passed=True,
                 message=f"All {column_count} columns present ✓",
-                severity="INFO"
+                severity="INFO",
             )
 
         except Exception as e:
@@ -223,7 +232,7 @@ class KPIValidator:
                 check_name="column_completeness",
                 passed=False,
                 message=f"Column check failed: {str(e)}",
-                severity="ERROR"
+                severity="ERROR",
             )
 
     def check_data_freshness(self) -> ValidationResult:
@@ -251,14 +260,14 @@ class KPIValidator:
                     check_name="data_freshness",
                     passed=False,
                     message=f"Missing layers: {', '.join(missing)}",
-                    severity="ERROR"
+                    severity="ERROR",
                 )
 
             return ValidationResult(
                 check_name="data_freshness",
                 passed=True,
                 message=f"All pipeline layers populated: raw({results['raw']}), staging({results['staging']}), analytics({results['analytics']}), serving({results['serving']}) ✓",
-                severity="INFO"
+                severity="INFO",
             )
 
         except Exception as e:
@@ -266,7 +275,7 @@ class KPIValidator:
                 check_name="data_freshness",
                 passed=False,
                 message=f"Freshness check failed: {str(e)}",
-                severity="ERROR"
+                severity="ERROR",
             )
 
     def check_schema_integrity(self) -> ValidationResult:
@@ -282,8 +291,11 @@ class KPIValidator:
             table_names = [t[0] for t in tables]
 
             required_tables = [
-                'kpi_metrics', 'kpi_metrics_staged',
-                'kpi_statistics_by_borough', 'kpi_metrics_comprehensive', 'kpi_metadata'
+                "kpi_metrics",
+                "kpi_metrics_staged",
+                "kpi_statistics_by_borough",
+                "kpi_metrics_comprehensive",
+                "kpi_metadata",
             ]
             missing = [t for t in required_tables if t not in table_names]
 
@@ -292,14 +304,14 @@ class KPIValidator:
                     check_name="schema_integrity",
                     passed=False,
                     message=f"Missing tables: {', '.join(missing)}",
-                    severity="ERROR"
+                    severity="ERROR",
                 )
 
             return ValidationResult(
                 check_name="schema_integrity",
                 passed=True,
                 message=f"All {len(required_tables)} required tables present ✓",
-                severity="INFO"
+                severity="INFO",
             )
 
         except Exception as e:
@@ -307,7 +319,7 @@ class KPIValidator:
                 check_name="schema_integrity",
                 passed=False,
                 message=f"Schema check failed: {str(e)}",
-                severity="ERROR"
+                severity="ERROR",
             )
 
     def check_metric_ranges(self) -> ValidationResult:
@@ -339,14 +351,14 @@ class KPIValidator:
                     check_name="metric_ranges",
                     passed=False,
                     message=f"Invalid metric ranges detected: {', '.join(issues)}",
-                    severity="WARNING"
+                    severity="WARNING",
                 )
 
             return ValidationResult(
                 check_name="metric_ranges",
                 passed=True,
                 message="All metrics within expected ranges ✓",
-                severity="INFO"
+                severity="INFO",
             )
 
         except Exception as e:
@@ -354,7 +366,7 @@ class KPIValidator:
                 check_name="metric_ranges",
                 passed=False,
                 message=f"Range check failed: {str(e)}",
-                severity="ERROR"
+                severity="ERROR",
             )
 
     def check_anomalies(self) -> ValidationResult:
@@ -378,14 +390,14 @@ class KPIValidator:
                     check_name="anomalies",
                     passed=False,
                     message=f"{anomaly_count} KPI-borough pairs show anomalies (high variance or outliers)",
-                    severity="WARNING"
+                    severity="WARNING",
                 )
 
             return ValidationResult(
                 check_name="anomalies",
                 passed=True,
                 message=f"Data quality looks good ({anomaly_count} minor anomalies detected) ✓",
-                severity="INFO"
+                severity="INFO",
             )
 
         except Exception as e:
@@ -393,7 +405,7 @@ class KPIValidator:
                 check_name="anomalies",
                 passed=False,
                 message=f"Anomaly check failed: {str(e)}",
-                severity="ERROR"
+                severity="ERROR",
             )
 
     def check_stationarity_coverage(self) -> ValidationResult:
@@ -415,7 +427,7 @@ class KPIValidator:
                     check_name="timeseries_coverage",
                     passed=True,
                     message="No time series metrics yet (computed weekly)",
-                    severity="INFO"
+                    severity="INFO",
                 )
 
             coverage = ts_computed / total if total > 0 else 0
@@ -424,15 +436,15 @@ class KPIValidator:
                 return ValidationResult(
                     check_name="timeseries_coverage",
                     passed=False,
-                    message=f"Time series metrics only {coverage*100:.1f}% complete",
-                    severity="WARNING"
+                    message=f"Time series metrics only {coverage * 100:.1f}% complete",
+                    severity="WARNING",
                 )
 
             return ValidationResult(
                 check_name="timeseries_coverage",
                 passed=True,
-                message=f"Time series metrics {coverage*100:.1f}% computed ✓",
-                severity="INFO"
+                message=f"Time series metrics {coverage * 100:.1f}% computed ✓",
+                severity="INFO",
             )
 
         except Exception as e:
@@ -440,7 +452,7 @@ class KPIValidator:
                 check_name="timeseries_coverage",
                 passed=False,
                 message=f"Stationarity check failed: {str(e)}",
-                severity="ERROR"
+                severity="ERROR",
             )
 
     def _get_row_breakdown(self) -> str:

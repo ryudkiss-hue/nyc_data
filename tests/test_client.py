@@ -2,6 +2,7 @@ from unittest.mock import patch
 
 from socrata_toolkit.core import SocrataClient, SocrataConfig
 
+
 class DummyResp:
     def __init__(self, payload):
         self.payload = payload
@@ -11,6 +12,7 @@ class DummyResp:
 
     def json(self):
         return self.payload
+
 
 @patch("socrata_toolkit.core.client.requests.get")
 def test_search_maps_results(mock_get):

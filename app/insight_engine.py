@@ -8,6 +8,7 @@ from sklearn.preprocessing import LabelEncoder
 
 logger = logging.getLogger(__name__)
 
+
 class StaticInsightEngine:
     """Deterministic Semantic Mapping & Readability Engine for NYC DOT SIM."""
 
@@ -24,7 +25,7 @@ class StaticInsightEngine:
         "LSA": "Latent Semantic Analysis",
         "SoQL": "Socrata Query Language",
         "ESS": "Effective Sample Size",
-        "IRI": "International Roughness Index"
+        "IRI": "International Roughness Index",
     }
 
     @staticmethod
@@ -40,7 +41,7 @@ class StaticInsightEngine:
         df: pd.DataFrame,
         verbosity: str = "verbose",
         reading_level: str = "executive",
-        data_bundle: Optional[dict[str, pd.DataFrame]] = None
+        data_bundle: Optional[dict[str, pd.DataFrame]] = None,
     ) -> str:
         """
         Main entry point for deterministic insights.
@@ -54,15 +55,10 @@ class StaticInsightEngine:
         stats = {}
         if not numeric_df.empty:
             col = numeric_df.columns[0]
-            stats['mean'] = numeric_df[col].mean()
-            stats['std'] = numeric_df[col].std()
-            stats['skew'] = numeric_df[col].skew()
-            stats['kurtosis'] = numeric_df[col].kurtosis()
-
-            # Item 30: NUTS Convergence Diagnostics (Simulated from MCMC trace analysis)
-            # In a real system, these would be passed from the Bayesian sampler
-            stats['r_hat'] = 1.01 + (np.random.rand() * 0.04) # Typical good convergence
-            stats['ess'] = np.random.randint(400, 2500)
+            stats["mean"] = numeric_df[col].mean()
+            stats["std"] = numeric_df[col].std()
+            stats["skew"] = numeric_df[col].skew()
+            stats["kurtosis"] = numeric_df[col].kurtosis()
 
         # Mapping Logic
         raw_text = ""
@@ -76,18 +72,16 @@ class StaticInsightEngine:
             raw_text = "Predictive Pavement Decay: Regression analysis indicates that IRI progression is primarily driven by seasonal freeze-thaw cycles and heavy vehicle traffic loads."
         else:
             raw_text = f"The analysis of {len(df)} records is complete. The average value is {stats.get('mean', 0):.2f}."
-            if 'r_hat' in stats:
-                raw_text += f" MCMC Diagnostics: R-hat={stats['r_hat']:.3f}, ESS={stats['ess']}."
 
         return StaticInsightEngine._spell_out_acronyms(raw_text)
 
     @staticmethod
     def _map_velocity(stats, verbosity, level):
-        mean_val = stats.get('mean', 0)
-        r_hat = stats.get('r_hat', 1.0)
-        ess = stats.get('ess', 0)
+        mean_val = stats.get("mean", 0)
+        r_hat = stats.get("r_hat", 1.0)
+        ess = stats.get("ess", 0)
 
-        if level == "standard": # 8th Grade Level
+        if level == "standard":  # 8th Grade Level
             if verbosity == "concise":
                 return f"Hiring speed is looking good. We are seeing about {mean_val:.1f} new people starting each month."
             return (
@@ -108,12 +102,14 @@ class StaticInsightEngine:
 
     @staticmethod
     def _map_violations(stats, verbosity, level):
-        skew = stats.get('skew', 0)
-        kurt = stats.get('kurtosis', 0)
+        skew = stats.get("skew", 0)
+        kurt = stats.get("kurtosis", 0)
 
-        if level == "standard": # 8th Grade Level
+        if level == "standard":  # 8th Grade Level
             if verbosity == "concise":
-                return "Most sidewalk problems are minor, but a few big ones take up most of the work."
+                return (
+                    "Most sidewalk problems are minor, but a few big ones take up most of the work."
+                )
             return (
                 f"We checked all the reported sidewalk problems in the city. Most of them are small and easy to fix. "
                 f"However, our math shows a 'skew' of {skew:.2f} and 'kurtosis' of {kurt:.2f}. This means that a few very large repair projects are "
@@ -133,7 +129,9 @@ class StaticInsightEngine:
         Item 23: Feature Importance Ranking across datasets using RandomForest.
         """
         if not data_bundle:
-            return "Feature Importance Analysis: Insufficient data bundle for cross-dataset ranking."
+            return (
+                "Feature Importance Analysis: Insufficient data bundle for cross-dataset ranking."
+            )
 
         # Consolidate features from multiple datasets
         # We'll use 'built' as the target (repair volume) and features from others
@@ -141,17 +139,25 @@ class StaticInsightEngine:
         if target_df is None or target_df.empty:
             return "Feature Importance Analysis: Target dataset 'built' is missing."
 
-        target_col = "TotalSQFTSidewalkRepaired" if "TotalSQFTSidewalkRepaired" in target_df.columns else target_df.columns[8]
+        target_col = (
+            "TotalSQFTSidewalkRepaired"
+            if "TotalSQFTSidewalkRepaired" in target_df.columns
+            else target_df.columns[8]
+        )
         y = target_df[target_col].fillna(0)
 
         # Create a feature matrix from various datasets (simplified join/aggregation)
         features = pd.DataFrame(index=target_df.index)
-        features['month'] = pd.to_datetime(target_df.get('DOT_CONTSTRUCT_DATE', target_df.columns[1])).dt.month
+        features["month"] = pd.to_datetime(
+            target_df.get("DOT_CONTSTRUCT_DATE", target_df.columns[1])
+        ).dt.month
 
         # Add some features from lot_info if available
         lot_df = data_bundle.get("lot_info")
         if lot_df is not None and not lot_df.empty:
-            features['avg_lot_area'] = lot_df['LotArea'].mean() if 'LotArea' in lot_df.columns else 0
+            features["avg_lot_area"] = (
+                lot_df["LotArea"].mean() if "LotArea" in lot_df.columns else 0
+            )
 
         # RandomForest to rank drivers
         rf = RandomForestRegressor(n_estimators=100, random_state=42)

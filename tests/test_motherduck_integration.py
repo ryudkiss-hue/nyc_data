@@ -1,4 +1,5 @@
 """Tests for MotherDuck integration and SQL compatibility validation."""
+
 import duckdb
 import pytest
 
@@ -8,6 +9,7 @@ from socrata_toolkit.core.motherduck_integration import (
     MotherDuckValidator,
     get_connection,
 )
+
 
 class TestMotherDuckValidator:
     """Test SQL compatibility validation."""
@@ -86,6 +88,7 @@ class TestMotherDuckValidator:
 
         assert validator.is_compatible(sql_with_warning)
 
+
 class TestDuckDBConnection:
     """Test local DuckDB connection with validation."""
 
@@ -115,10 +118,7 @@ class TestDuckDBConnection:
         conn.conn.execute("CREATE TABLE test (id INT, value FLOAT)")
         conn.conn.execute("INSERT INTO test VALUES (1, 3.14)")
 
-        result = conn.execute(
-            "SELECT AVG(value) FROM test",
-            validate=True
-        ).fetchall()
+        result = conn.execute("SELECT AVG(value) FROM test", validate=True).fetchall()
 
         assert len(result) == 1
         conn.close()
@@ -132,6 +132,7 @@ class TestDuckDBConnection:
             conn.execute(sql_with_variant, validate=True)
 
         conn.close()
+
 
 class TestMotherDuckConnection:
     """Test MotherDuck cloud connection with fallback."""
@@ -161,20 +162,15 @@ class TestMotherDuckConnection:
         conn = MotherDuckConnection(token=None)  # Falls back to local
 
         # Valid query should work
-        result = conn.execute(
-            "SELECT 1 as x",
-            validate=True
-        ).fetchone()
+        result = conn.execute("SELECT 1 as x", validate=True).fetchone()
         assert result[0] == 1
 
         # Invalid query should fail
         with pytest.raises(ValueError, match="compatibility"):
-            conn.execute(
-                "SELECT CAST(1 AS VARIANT) as x",
-                validate=True
-            )
+            conn.execute("SELECT CAST(1 AS VARIANT) as x", validate=True)
 
         conn.close()
+
 
 class TestConnectionFactory:
     """Test get_connection factory function."""
@@ -204,6 +200,7 @@ class TestConnectionFactory:
         finally:
             if old_token:
                 os.environ["MOTHERDUCK_TOKEN"] = old_token
+
 
 class TestMotherDuckCompatibility:
     """Integration tests verifying SQL works on both DuckDB and MotherDuck paths."""
