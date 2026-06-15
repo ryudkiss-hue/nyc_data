@@ -5,6 +5,7 @@ Tests both the NiceGUI frontend responsiveness and the FastAPI backend endpoints
 
 from locust import HttpUser, between, task
 
+
 class MissionControlUser(HttpUser):
     # Simulate users clicking around every 1 to 3 seconds
     wait_time = between(1, 3)
