@@ -1,103 +1,93 @@
-# NYC DOT Socrata Toolkit - Quick Start Guide
+# NYC DOT SIM Toolkit - Quick Start Guide
 
-Get up and running in 5 minutes.
+Get the Streamlit Mission Control dashboard running in under 5 minutes.
 
-## One Command Setup
+## Installation
 
-### Windows (PowerShell)
+### Prerequisites
+- Python 3.11+
+- pip
 
-```powershell
+### Local Setup
+
+```bash
+# Clone the repository
 git clone <repo-url>
 cd nyc_data
-.\deploy.ps1 setup
-.\deploy.ps1 start
-Start http://localhost:8501
+
+# Install dependencies
+pip install -e ".[mission,xlsx]"
+
+# (Optional) Set your Socrata API token
+export SOCRATA_APP_TOKEN=your-token-here
+export ANTHROPIC_API_KEY=your-api-key-here
 ```
 
-### Linux / MacOS
+### Launch the Dashboard
 
 ```bash
-git clone <repo-url>
-cd nyc_data
-chmod +x deploy.sh
-./deploy.sh setup
-./deploy.sh start
-open http://localhost:8501
+# Option 1: Direct Streamlit (recommended for development)
+streamlit run app/app.py
+
+# Option 2: Via shim
+python main.py
+
+# Option 3: Docker (requires Docker)
+docker compose up mission-control
 ```
 
-### All Platforms
+Then open your browser to: **http://localhost:8501**
 
+## What You Can Do
+
+Once the dashboard loads, you can:
+- **Home** — View project status and KPIs
+- **Construction Lists** — Browse construction projects by borough
+- **GIS & Conflicts** — Visualize spatial overlaps between permits and inspections
+- **Contract Analytics** — Analyze contractor performance and spending
+- **Forecasting** — Forecast SLA breaches and project timelines
+
+## Configuration
+
+### API Token (Required)
+
+For full data access (>2,000 rows), you'll need a Socrata API token:
+
+1. Visit https://data.cityofnewyork.us/profile/settings/tokens
+2. Create a new token
+3. Set it in your environment:
+   ```bash
+   export SOCRATA_APP_TOKEN=your-token-here
+   ```
+
+### Optional Features
+
+- **NL Queries** — `ANTHROPIC_API_KEY` for natural language questions
+- **Demo Mode** — `MISSION_DEMO=1` (no API calls, synthetic data)
+
+See `docs/DEPLOYMENT.md` for cloud deployment, Docker, and environment configuration.
+
+## Troubleshooting
+
+**Dashboard won't load:**
 ```bash
-git clone <repo-url>
-cd nyc_data
-python launcher.py setup all
-python launcher.py docker up
-python launcher.py web
-# Open browser to http://localhost:8501
+# Check if Streamlit is running
+curl http://localhost:8501/_stcore/health
+
+# Check logs
+streamlit run app/app.py --logger.level=debug
 ```
 
-## What You Get
-
-After setup completes, you have:
-
-| Service | URL | Username | Password |
-|---------|-----|----------|----------|
-| **Turbo-Stream Dash** | http://localhost:8012 | - | - |
-| **Airflow Orchestrator** | http://localhost:8080 | airflow | airflow |
-| **Streamlit Dashboard** | http://localhost:8501 | - | - |
-| **PostgreSQL Database** | localhost:5432 | dot_user | (see .env.socrata) |
-| **Grafana Monitoring** | http://localhost:3000 | admin | (see .env.socrata) |
-| **Prometheus Metrics** | http://localhost:9090 | - | - |
-| **Jaeger Tracing** | http://localhost:16686 | - | - |
-
-## First Steps
-
-### 1. Edit Configuration
-
+**Missing data:**
 ```bash
-# Edit .env.socrata with your Socrata API token
-# This token will be automatically synced to Airflow on startup
-notepad .env.socrata     # Windows
+# Verify API token
+echo $SOCRATA_APP_TOKEN
+
+# Check DuckDB cache
+ls -la data/local_db/
 ```
 
-### 2. Verify Airflow Variables
-
-Ensure the `SOCRATA_APP_TOKEN` is set in the Airflow UI (Admin -> Variables) or via CLI:
-```bash
-docker exec airflow-scheduler airflow variables set SOCRATA_APP_TOKEN your_token_here
-```
-
-### 2. Run CLI Command
-
-```bash
-# Search for datasets
-python launcher.py cli search --query "sidewalk repairs"
-
-# Or via launcher on Windows
-py launcher.py cli search --query "sidewalk repairs"
-```
-
-### 3. Check Health
-
-```bash
-# Run system diagnostics
-python launcher.py doctor
-```
-
-### 4. View Dashboard
-
-Open browser to **http://localhost:8501**
-
-## Common Commands
-
-### Using Python Launcher
-
-```bash
-# Web dashboard
-python launcher.py web
-
-# CLI tools
-python launcher.py cli search --query repairs
+**CLI Tools
 python launcher.py cli meta --domain data.cityofnewyork.us --fourfour a2nx-4u46
 
 # Docker management
