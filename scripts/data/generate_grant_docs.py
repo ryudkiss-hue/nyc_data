@@ -1,6 +1,6 @@
 import csv
-import sys
 import os
+import sys
 
 # Placeholder for actual data retrieval logic.
 # In a real NYC DOT production context, this would query the Socrata API or DuckDB L2 cache.
@@ -12,7 +12,7 @@ ASSETS = [
 def generate_grant_csv(output_path: str):
     """Exports asset data into a grant-compliant CSV format."""
     keys = ["asset_id", "name", "type", "status"]
-    
+
     try:
         with open(output_path, 'w', newline='', encoding='utf-8') as f:
             writer = csv.DictWriter(f, fieldnames=keys)
@@ -28,5 +28,5 @@ if __name__ == "__main__":
     output_filename = "grant_compliant_assets.csv"
     # Ensure it's written in the script directory or designated data path
     output_path = os.path.join(os.path.dirname(__file__), output_filename)
-    
+
     generate_grant_csv(output_path)
