@@ -149,6 +149,7 @@ ignore = [
     "E722",   # bare except
     "UP006",  # use dict/list instead of Dict/List for type annotation (legacy py39)
     "UP035",  # typing.Dict is deprecated (legacy py39)
+    "UP045",  # use X | None instead of Optional[X] — requires py310+, project targets py39
     "E741",   # ambiguous variable name 'l'
     "E731",   # do not assign a lambda expression
     "B017",   # blind exception
