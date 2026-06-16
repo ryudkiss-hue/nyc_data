@@ -39,7 +39,6 @@ class SchemaField:
     def from_dict(cls, data: dict[str, Any]) -> SchemaField:
         return cls(**data)
 
-
 @dataclass
 class FairDataset:
     """FAIR metadata record for a dataset.
@@ -97,7 +96,6 @@ class FairDataset:
         ]
         known = {f for f in cls.__dataclass_fields__}  # type: ignore[attr-defined]
         return cls(**{k: v for k, v in data.items() if k in known})
-
 
 @dataclass
 class FairnessScore:

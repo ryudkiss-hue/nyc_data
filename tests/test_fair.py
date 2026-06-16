@@ -17,7 +17,6 @@ from socrata_toolkit.fair import (
 
 REGISTRY = Path(__file__).resolve().parents[1] / "config" / "datasets.yaml"
 
-
 def _full_dataset() -> FairDataset:
     return FairDataset(
         persistent_id="https://data.cityofnewyork.us/d/abcd-1234",
@@ -40,7 +39,6 @@ def _full_dataset() -> FairDataset:
         citation="City of New York. Sidewalk Inspections. NYC Open Data.",
     )
 
-
 def test_dataclass_construction():
     ds = _full_dataset()
     assert ds.title == "Sidewalk Inspections"
@@ -49,7 +47,6 @@ def test_dataclass_construction():
     again = FairDataset.from_dict(ds.to_dict())
     assert again == ds
     assert isinstance(again.schema_fields[0], SchemaField)
-
 
 def test_scoring_full_is_high():
     score = score_fairness(_full_dataset())
@@ -61,7 +58,6 @@ def test_scoring_full_is_high():
     assert score.reusable == 25
     assert score.gaps == []
 
-
 def test_scoring_empty_is_low_with_gaps():
     score = score_fairness(FairDataset())
     assert score.overall == 0
@@ -69,12 +65,10 @@ def test_scoring_empty_is_low_with_gaps():
     assert any("persistent_id" in g for g in score.gaps)
     assert any("license" in g for g in score.gaps)
 
-
 def test_scoring_subscore_bounds():
     score = score_fairness(_full_dataset())
     for sub in (score.findable, score.accessible, score.interoperable, score.reusable):
         assert 0 <= sub <= 25
-
 
 def test_catalog_add_get_list():
     cat = FairCatalog()
@@ -85,11 +79,9 @@ def test_catalog_add_get_list():
     assert cat.list() == ["sidewalk"]
     assert len(cat) == 1
 
-
 def test_catalog_add_requires_id():
     with pytest.raises(ValueError):
         FairCatalog().add(FairDataset())
-
 
 def test_catalog_json_round_trip():
     cat = FairCatalog(title="My Catalog")
@@ -99,7 +91,6 @@ def test_catalog_json_round_trip():
     assert restored.list() == ["sidewalk"]
     assert restored.get("sidewalk") == cat.get("sidewalk")
 
-
 def test_score_all():
     cat = FairCatalog()
     cat.add(_full_dataset(), dataset_id="full")
@@ -107,7 +98,6 @@ def test_score_all():
     scores = cat.score_all()
     assert scores["full"].overall == 100
     assert scores["empty"].overall < 25
-
 
 def test_dcat_jsonld_shape():
     cat = FairCatalog(title="DCAT Test")
@@ -128,7 +118,6 @@ def test_dcat_jsonld_shape():
 
     json.dumps(doc)
 
-
 def test_registry_bridge_on_real_config():
     assert REGISTRY.exists(), REGISTRY
     cat = from_registry_yaml(REGISTRY)
@@ -140,7 +129,6 @@ def test_registry_bridge_on_real_config():
     # every registry dataset should score reasonably (has access + license)
     scores = cat.score_all()
     assert all(s.overall > 50 for s in scores.values())
-
 
 def test_registry_bridge_graceful_missing_fields(tmp_path):
     p = tmp_path / "d.yaml"

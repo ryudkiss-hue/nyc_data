@@ -9,17 +9,20 @@ from socrata_toolkit.analytics import AnalysisResult, BaseSkill
 
 class MockSkill(BaseSkill):
     """A concrete implementation of BaseSkill for testing."""
+
     def run(self, **kwargs) -> AnalysisResult:
         return AnalysisResult(
             skill_name="MockSkill",
             success=True,
             data={"status": "complete"},
-            metadata={"version": "1.0.0"}
+            metadata={"version": "1.0.0"},
         )
+
 
 class TestAnalyticsInfrastructure:
     def test_package_is_importable(self):
         import socrata_toolkit.analytics
+
         assert socrata_toolkit.analytics.__name__ == "socrata_toolkit.analytics"
 
     def test_base_skill_is_abstract(self):
@@ -36,10 +39,7 @@ class TestAnalyticsInfrastructure:
 
     def test_analysis_result_serialization(self):
         result = AnalysisResult(
-            skill_name="Test",
-            success=True,
-            data={"val": 1},
-            metadata={"env": "prod"}
+            skill_name="Test", success=True, data={"val": 1}, metadata={"env": "prod"}
         )
         # Assuming we want a to_dict or similar for unified reporting
         d = result.to_dict()

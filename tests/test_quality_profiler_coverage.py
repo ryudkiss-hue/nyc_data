@@ -1,4 +1,5 @@
 """Tests for quality.profiler module - Data profiling and schema analysis."""
+
 from __future__ import annotations
 
 import pandas as pd
@@ -71,7 +72,9 @@ class TestTableProfile:
             "col1": ColumnProfile(data_type=DataType.NUMERIC, cardinality=10),
             "col2": ColumnProfile(data_type=DataType.STRING, cardinality=5),
         }
-        prof = TableProfile(table_name="test_table", row_count=100, column_count=2, column_profiles=col_profs)
+        prof = TableProfile(
+            table_name="test_table", row_count=100, column_count=2, column_profiles=col_profs
+        )
         assert prof.table_name == "test_table"
         assert prof.row_count == 100
         assert prof.column_count == 2
@@ -80,10 +83,14 @@ class TestTableProfile:
     def test_table_profile_to_dict(self):
         """Test serializing TableProfile to dict."""
         col_profs = {
-            "id": ColumnProfile(data_type=DataType.NUMERIC, min_value=1, max_value=100, cardinality=100),
+            "id": ColumnProfile(
+                data_type=DataType.NUMERIC, min_value=1, max_value=100, cardinality=100
+            ),
             "name": ColumnProfile(data_type=DataType.STRING, cardinality=50),
         }
-        prof = TableProfile(table_name="users", row_count=100, column_count=2, column_profiles=col_profs)
+        prof = TableProfile(
+            table_name="users", row_count=100, column_count=2, column_profiles=col_profs
+        )
         result = prof.to_dict()
         assert result["table_name"] == "users"
         assert result["row_count"] == 100
@@ -102,7 +109,9 @@ class TestTableProfile:
                 cardinality=365,
             ),
         }
-        prof = TableProfile(table_name="events", row_count=1000, column_count=1, column_profiles=col_profs)
+        prof = TableProfile(
+            table_name="events", row_count=1000, column_count=1, column_profiles=col_profs
+        )
         result = prof.to_dict()
         assert result["column_profiles"]["created_at"]["data_type"] == "datetime"
 
@@ -146,11 +155,13 @@ class TestProfileGenerator:
     def test_profile_dataset_small_dataframe(self):
         """Test profiling a small DataFrame."""
         gen = ProfileGenerator()
-        df = pd.DataFrame({
-            "id": [1, 2, 3],
-            "name": ["Alice", "Bob", "Charlie"],
-            "score": [85.5, 90.0, 78.5],
-        })
+        df = pd.DataFrame(
+            {
+                "id": [1, 2, 3],
+                "name": ["Alice", "Bob", "Charlie"],
+                "score": [85.5, 90.0, 78.5],
+            }
+        )
         profile = gen.profile_dataset(df, table_name="test_data")
         assert profile.table_name == "test_data"
         assert profile.row_count == 3
@@ -162,10 +173,12 @@ class TestProfileGenerator:
     def test_profile_dataset_large_dataframe(self):
         """Test profiling a large DataFrame (tests sampling)."""
         gen = ProfileGenerator(sample_size=100)
-        df = pd.DataFrame({
-            "x": range(1000),
-            "y": [i * 2 for i in range(1000)],
-        })
+        df = pd.DataFrame(
+            {
+                "x": range(1000),
+                "y": [i * 2 for i in range(1000)],
+            }
+        )
         profile = gen.profile_dataset(df)
         assert profile.row_count == 1000  # Original size
         assert profile.column_count == 2
@@ -231,7 +244,9 @@ class TestProfileGenerator:
             "id": ColumnProfile(data_type=DataType.NUMERIC, cardinality=100),
             "category": ColumnProfile(data_type=DataType.STRING, cardinality=5),
         }
-        profile = TableProfile(table_name="data", row_count=100, column_count=2, column_profiles=col_profs)
+        profile = TableProfile(
+            table_name="data", row_count=100, column_count=2, column_profiles=col_profs
+        )
         suggestions = gen.suggest_expectations(profile)
         assert len(suggestions) >= 2
         # Should have column_exists for each column
@@ -244,9 +259,13 @@ class TestProfileGenerator:
         col_profs = {
             "status": ColumnProfile(data_type=DataType.STRING, cardinality=3),
         }
-        profile = TableProfile(table_name="data", row_count=100, column_count=1, column_profiles=col_profs)
+        profile = TableProfile(
+            table_name="data", row_count=100, column_count=1, column_profiles=col_profs
+        )
         suggestions = gen.suggest_expectations(profile)
-        set_expectations = [s for s in suggestions if s["expectation_type"] == "column_values_in_set"]
+        set_expectations = [
+            s for s in suggestions if s["expectation_type"] == "column_values_in_set"
+        ]
         assert len(set_expectations) > 0
 
     def test_compare_profiles(self):
@@ -254,8 +273,12 @@ class TestProfileGenerator:
         gen = ProfileGenerator()
         col_profs1 = {"col1": ColumnProfile(data_type=DataType.NUMERIC, cardinality=10)}
         col_profs2 = {"col1": ColumnProfile(data_type=DataType.NUMERIC, cardinality=15)}
-        profile1 = TableProfile(table_name="t1", row_count=100, column_count=1, column_profiles=col_profs1)
-        profile2 = TableProfile(table_name="t2", row_count=100, column_count=1, column_profiles=col_profs2)
+        profile1 = TableProfile(
+            table_name="t1", row_count=100, column_count=1, column_profiles=col_profs1
+        )
+        profile2 = TableProfile(
+            table_name="t2", row_count=100, column_count=1, column_profiles=col_profs2
+        )
         report = gen.compare_profiles(profile1, profile2)
         assert isinstance(report, DriftReport)
 
@@ -266,8 +289,12 @@ class TestProfileGenerator:
             "id": ColumnProfile(data_type=DataType.NUMERIC, cardinality=100),
             "name": ColumnProfile(data_type=DataType.STRING, cardinality=50),
         }
-        profile1 = TableProfile(table_name="t1", row_count=100, column_count=2, column_profiles=col_profs)
-        profile2 = TableProfile(table_name="t2", row_count=100, column_count=2, column_profiles=col_profs)
+        profile1 = TableProfile(
+            table_name="t1", row_count=100, column_count=2, column_profiles=col_profs
+        )
+        profile2 = TableProfile(
+            table_name="t2", row_count=100, column_count=2, column_profiles=col_profs
+        )
         drift = gen.detect_schema_drift(profile1, profile2)
         assert drift["columns_added"] == []
         assert drift["columns_removed"] == []
@@ -280,8 +307,12 @@ class TestProfileGenerator:
             "col1": ColumnProfile(data_type=DataType.NUMERIC, cardinality=10),
             "col2": ColumnProfile(data_type=DataType.STRING, cardinality=5),
         }
-        profile1 = TableProfile(table_name="t1", row_count=100, column_count=1, column_profiles=col_profs1)
-        profile2 = TableProfile(table_name="t2", row_count=100, column_count=2, column_profiles=col_profs2)
+        profile1 = TableProfile(
+            table_name="t1", row_count=100, column_count=1, column_profiles=col_profs1
+        )
+        profile2 = TableProfile(
+            table_name="t2", row_count=100, column_count=2, column_profiles=col_profs2
+        )
         drift = gen.detect_schema_drift(profile1, profile2)
         assert "col2" in drift["columns_added"]
         assert drift["columns_removed"] == []
@@ -294,8 +325,12 @@ class TestProfileGenerator:
             "col2": ColumnProfile(data_type=DataType.STRING, cardinality=5),
         }
         col_profs2 = {"col1": ColumnProfile(data_type=DataType.NUMERIC, cardinality=10)}
-        profile1 = TableProfile(table_name="t1", row_count=100, column_count=2, column_profiles=col_profs1)
-        profile2 = TableProfile(table_name="t2", row_count=100, column_count=1, column_profiles=col_profs2)
+        profile1 = TableProfile(
+            table_name="t1", row_count=100, column_count=2, column_profiles=col_profs1
+        )
+        profile2 = TableProfile(
+            table_name="t2", row_count=100, column_count=1, column_profiles=col_profs2
+        )
         drift = gen.detect_schema_drift(profile1, profile2)
         assert drift["columns_added"] == []
         assert "col2" in drift["columns_removed"]
@@ -307,7 +342,9 @@ class TestProfileGenerator:
             "col1": ColumnProfile(data_type=DataType.NUMERIC, cardinality=10),
             "col2": ColumnProfile(data_type=DataType.STRING, cardinality=5),
         }
-        profile = TableProfile(table_name="test", row_count=1000, column_count=2, column_profiles=col_profs)
+        profile = TableProfile(
+            table_name="test", row_count=1000, column_count=2, column_profiles=col_profs
+        )
         summary = gen.generate_summary(profile)
         assert summary["row_count"] == 1000
         assert summary["column_count"] == 2

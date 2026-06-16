@@ -12,7 +12,6 @@ from typing import Literal
 
 Comparator = Literal[">", ">=", "<", "<=", "==", "!="]
 
-
 def _compare(value: float, op: Comparator, threshold: float) -> bool:
     return {
         ">": value > threshold,
@@ -22,7 +21,6 @@ def _compare(value: float, op: Comparator, threshold: float) -> bool:
         "==": value == threshold,
         "!=": value != threshold,
     }[op]
-
 
 @dataclass
 class ThresholdRule:
@@ -38,7 +36,6 @@ class ThresholdRule:
         name = self.label or self.metric
         return f"{name} {self.op} {self.threshold:g}"
 
-
 @dataclass
 class AlertResult:
     """Outcome of evaluating a rule against a value."""
@@ -53,7 +50,6 @@ class AlertResult:
         status = "BREACH" if self.breached else "OK"
         return f"[{status}] {self.rule.describe()} (actual: {self.value:g})"
 
-
 def evaluate_rule(rule: ThresholdRule, value: float) -> AlertResult:
     """Evaluate one rule against a single metric value."""
     breached = _compare(value, rule.op, rule.threshold)
@@ -63,7 +59,6 @@ def evaluate_rule(rule: ThresholdRule, value: float) -> AlertResult:
         breached=breached,
         severity=rule.severity if breached else "ok",
     )
-
 
 def evaluate_all(
     rules: list[ThresholdRule], metrics: dict[str, float]
@@ -75,11 +70,9 @@ def evaluate_all(
             results.append(evaluate_rule(rule, float(metrics[rule.metric])))
     return results
 
-
 def breach_count(results: list[AlertResult]) -> int:
     """Number of breached rules."""
     return sum(1 for r in results if r.breached)
-
 
 # Sensible defaults for dataset quality monitoring
 DEFAULT_RULES: list[ThresholdRule] = [

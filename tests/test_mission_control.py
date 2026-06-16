@@ -31,7 +31,6 @@ def test_normalize_bbl():
     assert out.iloc[0] == "3022330001"
 
 
-
 def test_qa_qc_ledger_owner_mismatch():
     lot = pd.DataFrame({"bbl": ["1000010001"], "owner": ["City"]})
     lot["_bbl"] = data_loader.normalize_bbl(lot["bbl"])

@@ -17,9 +17,11 @@ from .infrastructure import LifeCycleCostAnalysis
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class ForecastResult:
     """Risk-adjusted budget forecast snapshot."""
+
     mean_npv: float
     p95_risk_npv: float
     discount_rate: float
@@ -27,11 +29,13 @@ class ForecastResult:
     recommendations: list[str] = field(default_factory=list)
     monthly_projection: list[dict[str, Any]] = field(default_factory=list)
 
+
 class EliteBudgetForecaster:
     """
     Advanced Infrastructure Budget Forecasting Engine.
     Leverages LCCA and Monte Carlo simulations for long-term fiscal planning.
     """
+
     def __init__(self, discount_rate: float = 0.04):
         self.lcca = LifeCycleCostAnalysis(discount_rate=discount_rate)
 
@@ -51,7 +55,7 @@ class EliteBudgetForecaster:
             initial_cost_mean=mean_unit_cost * len(df),
             initial_cost_std=std_unit_cost * np.sqrt(len(df)),
             life_years=target_years,
-            iterations=2000
+            iterations=2000,
         )
 
         recs = []
@@ -61,11 +65,14 @@ class EliteBudgetForecaster:
         # Build deterministic projection for the 'mean' case for reporting
         projection = []
         for yr in range(1, target_years + 1):
-             projection.append({
-                 "year": yr,
-                 "projected_cost_nominal": mean_unit_cost * len(df),
-                 "present_value": (mean_unit_cost * len(df)) / ((1 + self.lcca.discount_rate)**yr)
-             })
+            projection.append(
+                {
+                    "year": yr,
+                    "projected_cost_nominal": mean_unit_cost * len(df),
+                    "present_value": (mean_unit_cost * len(df))
+                    / ((1 + self.lcca.discount_rate) ** yr),
+                }
+            )
 
         return ForecastResult(
             mean_npv=mc_results["mean_npv"],
@@ -73,11 +80,29 @@ class EliteBudgetForecaster:
             discount_rate=self.lcca.discount_rate,
             analysis_period_years=target_years,
             recommendations=recs,
-            monthly_projection=projection
+            monthly_projection=projection,
         )
 
-# Backward-compatible shims (deprecated)
-def forecast_spend(df: pd.DataFrame, horizon_months: int = 6) -> Any:
-    """Deprecated: Use EliteBudgetForecaster.forecast_sidewalk_budget instead."""
-    forecaster = EliteBudgetForecaster()
-    return forecaster.forecast_sidewalk_budget(df, target_years=max(1, horizon_months // 12))
+
+@dataclass
+class SpendForecast:
+    current_spend: float
+    projected_total: float
+    forecast_values: list[float]
+
+
+def forecast_spend(
+    df: pd.DataFrame, horizon_months: int = 6, value_col: str = "actual_spend"
+) -> SpendForecast:
+    """Forecast spend over the next N months based on historical actuals."""
+    current_spend = float(df[value_col].sum()) if value_col in df.columns and not df.empty else 0.0
+    n = max(len(df), 1)
+    avg_monthly = current_spend / n
+    growth_rate = 0.05
+    forecast_values = [avg_monthly * (1 + growth_rate * i) for i in range(1, horizon_months + 1)]
+    projected_total = current_spend + sum(forecast_values)
+    return SpendForecast(
+        current_spend=current_spend,
+        projected_total=projected_total,
+        forecast_values=forecast_values,
+    )

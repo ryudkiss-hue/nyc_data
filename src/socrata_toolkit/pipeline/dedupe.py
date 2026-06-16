@@ -36,14 +36,12 @@ class MaterializationMode(str, Enum):
     SOFT = "soft"  # Flag duplicates, preserve originals
     REVIEW = "review"  # Queue for manual review
 
-
 class DuplicateStatus(str, Enum):
     """Status of a duplicate group."""
     UNRESOLVED = "unresolved"
     AUTO_RESOLVED = "auto_resolved"
     MANUAL_RESOLVED = "manual_resolved"
     REJECTED = "rejected"  # Not actually duplicates
-
 
 @dataclass
 class DuplicateGroup:
@@ -64,7 +62,6 @@ class DuplicateGroup:
     def __repr__(self) -> str:
         return (f"DuplicateGroup(id={self.group_id}, records={len(self.duplicate_record_ids)}, "
                 f"confidence={self.confidence_score:.3f}, status={self.status.value})")
-
 
 class DeduplicationRule:
     """
@@ -115,7 +112,6 @@ class DeduplicationRule:
         return (f"DeduplicationRule(rule_id={self.rule_id}, entity_type={self.entity_type}, "
                 f"threshold={self.threshold}, strategy={self.matching_strategy.name})")
 
-
 class DeduplicationResult:
     """Result of applying a deduplication rule."""
 
@@ -140,7 +136,6 @@ class DeduplicationResult:
         if self.total_records == 0:
             return 0.0
         return (self.duplicates_found / self.total_records) * 100
-
 
 class Deduplicator:
     """

@@ -10,7 +10,6 @@ class VersionStatus(Enum):
     DEPRECATED = "deprecated"
     SUNSET = "sunset"
 
-
 @dataclass
 class APIVersion:
     version: str
@@ -22,11 +21,9 @@ class APIVersion:
     def is_deprecated(self) -> bool:
         return self.status == VersionStatus.DEPRECATED
 
-
 @dataclass
 class NegotiationResult:
     negotiated_version: str
-
 
 class VersionManager:
     def __init__(self):
@@ -56,7 +53,6 @@ class VersionManager:
         if from_version in self.versions: changes.extend(self.versions[from_version].breaking_changes)
         if to_version in self.versions: changes.extend(self.versions[to_version].breaking_changes)
         return changes
-
 
 def parse_version_from_accept_header(header: str) -> str | None:
     if "version=" in header:

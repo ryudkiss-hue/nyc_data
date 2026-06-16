@@ -72,7 +72,6 @@ STATUS_LABELS: dict[str, str] = {
     "blocked": "Blocked",
 }
 
-
 # ---------------------------------------------------------------------------
 # Data Classes
 # ---------------------------------------------------------------------------
@@ -141,7 +140,6 @@ class Task:
     def from_dict(cls, d: dict[str, Any]) -> Task:
         return cls(**{k: v for k, v in d.items() if k in cls.__dataclass_fields__})
 
-
 @dataclass
 class ActivityEntry:
     """An entry in the activity log."""
@@ -150,7 +148,6 @@ class ActivityEntry:
     action: str
     task_id: int | None
     details: str
-
 
 @dataclass
 class Milestone:
@@ -163,7 +160,6 @@ class Milestone:
     @property
     def is_complete(self) -> bool:
         return False  # Evaluated by board context
-
 
 # ---------------------------------------------------------------------------
 # Task Board

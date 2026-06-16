@@ -28,7 +28,6 @@ class SocrataConfig:
     page_size: int = 1000
     soda_version: str = "3.0" # Default to SODA3
 
-
 class SocrataClient:
     def __init__(self, config: SocrataConfig | None = None) -> None:
         self.config = config or SocrataConfig(app_token=os.getenv("SOCRATA_APP_TOKEN"))

@@ -21,11 +21,9 @@ try:
 except ImportError:
     HAS_ARCGIS = False
 
-
 # ---------------------------------------------------------------------------
 # Item 88 — Slack webhook
 # ---------------------------------------------------------------------------
-
 
 def send_slack_alert(
     webhook_url: str,
@@ -70,11 +68,9 @@ def send_slack_alert(
     except Exception as e:
         return False, str(e)
 
-
 # ---------------------------------------------------------------------------
 # Item 89 — ArcGIS Online push
 # ---------------------------------------------------------------------------
-
 
 def push_to_arcgis_online(
     org_url: str,
@@ -133,11 +129,9 @@ def push_to_arcgis_online(
         return True, f"{org_url}/home/item.html?id={item_id}"
     return False, str(result.get("error", result))
 
-
 # ---------------------------------------------------------------------------
 # Item 91 — NYC 311 polling (simplified)
 # ---------------------------------------------------------------------------
-
 
 def poll_311_new_complaints(
     domain: str = "data.cityofnewyork.us",
@@ -175,11 +169,9 @@ def poll_311_new_complaints(
         logger.warning("311 poll failed: %s", e)
         return []
 
-
 # ---------------------------------------------------------------------------
 # Item 92 — DOB Jobs cross-reference
 # ---------------------------------------------------------------------------
-
 
 def fetch_dob_jobs_near_address(
     block: str,
@@ -207,11 +199,9 @@ def fetch_dob_jobs_near_address(
         logger.warning("DOB jobs fetch failed: %s", e)
         return []
 
-
 # ---------------------------------------------------------------------------
 # Item 93 — ArcGIS Online connection test
 # ---------------------------------------------------------------------------
-
 
 def test_arcgis_connection(
     org_url: str,
@@ -261,11 +251,9 @@ def test_arcgis_connection(
     except Exception as exc:
         return False, f"Unexpected error: {exc}"
 
-
 # ---------------------------------------------------------------------------
 # Item 94 — Scheduler last-run helper
 # ---------------------------------------------------------------------------
-
 
 def get_last_scheduler_run() -> str:
     """Return ISO timestamp of the last scheduler run, or 'Never' if not found."""

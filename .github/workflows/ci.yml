@@ -28,7 +28,6 @@ jobs:
             --ignore=tests/test_visualization.py \
             --ignore=tests/test_docker_environment.py \
             --ignore=tests/test_improvements.py
-            --ignore=tests/test_docker_environment.py
         env:
           SOCRATA_APP_TOKEN: ${{ secrets.SOCRATA_APP_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

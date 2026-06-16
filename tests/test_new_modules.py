@@ -258,7 +258,6 @@ def test_bot_unknown():
 
 # -- 311 Complaint Ingestion (unit test only, no API call) --------------------
 
-
 from socrata_toolkit.nlp.integration import triage_complaints
 from socrata_toolkit.pipeline import IngestionResult
 

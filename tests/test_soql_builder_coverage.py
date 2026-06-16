@@ -1,4 +1,5 @@
 """Comprehensive tests for core.soql_builder module."""
+
 from __future__ import annotations
 
 from socrata_toolkit.core.soql_builder import SoQLBuilder
@@ -268,11 +269,7 @@ class TestSoQLBuilderVariables:
         assert "100" in result["where"]
 
     def test_variable_in_select(self):
-        builder = (
-            SoQLBuilder()
-            .select("id")
-            .set_variable("col", "name")
-        )
+        builder = SoQLBuilder().select("id").set_variable("col", "name")
         result = builder.build()
         # Variable substitution in select
         assert "name" in result["select"] or "{{col}}" not in result["select"]
@@ -319,14 +316,7 @@ class TestSoQLBuilderQueryString:
         assert query == ""
 
     def test_query_string_order_of_clauses(self):
-        builder = (
-            SoQLBuilder()
-            .select("id")
-            .where("id > 0")
-            .group("id")
-            .order("id")
-            .limit(10)
-        )
+        builder = SoQLBuilder().select("id").where("id > 0").group("id").order("id").limit(10)
         query = builder.build_query_string()
         # Check clause order: SELECT, WHERE, GROUP BY, ORDER BY, LIMIT
         select_idx = query.find("SELECT")

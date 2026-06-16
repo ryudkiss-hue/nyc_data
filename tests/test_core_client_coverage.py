@@ -148,9 +148,7 @@ class TestBuildSoql:
         from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
         client = SocrataClient(SocrataConfig())
-        soql = client._build_soql(
-            limit=50, offset=100, select="a, b", where="x>1", order="a"
-        )
+        soql = client._build_soql(limit=50, offset=100, select="a, b", where="x>1", order="a")
         assert "SELECT a, b" in soql
         assert "WHERE x>1" in soql
         assert "ORDER BY a" in soql
@@ -481,8 +479,13 @@ class TestClientParamBranches:
             mock_requests.get.side_effect = [_mock_response(page1), _mock_response([])]
             with pytest.warns(UserWarning):
                 df = client.fetch_dataframe(
-                    "data.cityofnewyork.us", "abc1-2345",
-                    where="x=1", select="id", order="id", q="term", max_rows=2,
+                    "data.cityofnewyork.us",
+                    "abc1-2345",
+                    where="x=1",
+                    select="id",
+                    order="id",
+                    q="term",
+                    max_rows=2,
                 )
             params = mock_requests.get.call_args_list[0].kwargs["params"]
             assert params["$where"] == "x=1"
@@ -499,7 +502,9 @@ class TestClientParamBranches:
         with patch("socrata_toolkit.core.client.requests") as mock_requests:
             mock_requests.get.side_effect = [_mock_response(fc), _mock_response({"features": []})]
             with pytest.warns(UserWarning):
-                out = client.fetch_geojson("data.cityofnewyork.us", "abc1-2345", where="b='MN'", max_rows=5)
+                out = client.fetch_geojson(
+                    "data.cityofnewyork.us", "abc1-2345", where="b='MN'", max_rows=5
+                )
             params = mock_requests.get.call_args_list[0].kwargs["params"]
             assert params["$where"] == "b='MN'"
         assert len(out["features"]) == 1

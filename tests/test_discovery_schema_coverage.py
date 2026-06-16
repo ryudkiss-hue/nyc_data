@@ -1,4 +1,5 @@
 """Tests for discovery.schema module - Schema registry and drift detection."""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -175,12 +176,14 @@ class TestSchemaValidator:
             captured_at=datetime.now(timezone.utc),
             row_count=3,
         )
-        df = pd.DataFrame({
-            "id": [1, 2, 3],
-        })
+        df = pd.DataFrame(
+            {
+                "id": [1, 2, 3],
+            }
+        )
         validator = SchemaValidator(schema)
         # Validator has a validate method
-        if hasattr(validator, 'validate'):
+        if hasattr(validator, "validate"):
             result = validator.validate(df)
             assert result is not None
 
@@ -192,7 +195,7 @@ class TestSchemaRegistry:
         registry = SchemaRegistry()
         assert registry is not None
         # Check if it has expected methods
-        assert hasattr(registry, '__init__')
+        assert hasattr(registry, "__init__")
 
 
 class TestBackwardCompatibilityChecker:
@@ -201,42 +204,50 @@ class TestBackwardCompatibilityChecker:
     def test_backward_compatibility_checker_init(self):
         checker = BackwardCompatibilityChecker()
         assert checker is not None
-        assert hasattr(checker, '__init__')
+        assert hasattr(checker, "__init__")
 
 
 class TestSchemaFromDataFrame:
     """Tests for schema extraction from DataFrames."""
 
     def test_extract_schema_basic_types(self):
-        df = pd.DataFrame({
-            "int_col": [1, 2, 3],
-            "float_col": [1.5, 2.5, 3.5],
-            "str_col": ["a", "b", "c"],
-            "bool_col": [True, False, True],
-        })
+        df = pd.DataFrame(
+            {
+                "int_col": [1, 2, 3],
+                "float_col": [1.5, 2.5, 3.5],
+                "str_col": ["a", "b", "c"],
+                "bool_col": [True, False, True],
+            }
+        )
         # Test that schema can be created from DataFrame
         assert len(df.columns) == 4
         assert df["int_col"].dtype == "int64"
 
     def test_extract_schema_with_nulls(self):
-        df = pd.DataFrame({
-            "col1": [1, None, 3],
-            "col2": ["a", None, "c"],
-        })
+        df = pd.DataFrame(
+            {
+                "col1": [1, None, 3],
+                "col2": ["a", None, "c"],
+            }
+        )
         # Nulls are preserved in dtypes
         assert pd.isna(df["col1"]).any()
         assert pd.isna(df["col2"]).any()
 
     def test_extract_schema_datetime(self):
-        df = pd.DataFrame({
-            "date_col": pd.date_range("2024-01-01", periods=3),
-        })
+        df = pd.DataFrame(
+            {
+                "date_col": pd.date_range("2024-01-01", periods=3),
+            }
+        )
         assert pd.api.types.is_datetime64_any_dtype(df["date_col"])
 
     def test_extract_schema_large_dataframe(self):
-        df = pd.DataFrame({
-            "id": range(10000),
-            "value": range(10000, 20000),
-        })
+        df = pd.DataFrame(
+            {
+                "id": range(10000),
+                "value": range(10000, 20000),
+            }
+        )
         assert len(df) == 10000
         assert len(df.columns) == 2

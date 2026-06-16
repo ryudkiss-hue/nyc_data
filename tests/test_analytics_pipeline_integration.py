@@ -14,17 +14,23 @@ class TestPipelineAnalytics:
         # We need to mock SocrataClient to avoid network calls
         class MockClient:
             def __init__(self, *args, **kwargs):
-                self.config = type('obj', (object,), {'app_token': ''})
+                self.config = type("obj", (object,), {"app_token": ""})
+
             def fetch_json(self, *args, **kwargs):
                 yield [{"Unique Key": "1", "val": 10}, {"Unique Key": "2", "val": 20}]
-            def _headers(self): return {}
+
+            def _headers(self):
+                return {}
 
         monkeypatch.setattr("socrata_toolkit.pipeline.sync.SocrataClient", MockClient)
 
         # Mock requests.get for the probe
         class MockResponse:
             status_code = 200
-            def json(self): return [{"count": 2}]
+
+            def json(self):
+                return [{"count": 2}]
+
         monkeypatch.setattr("requests.get", lambda *args, **kwargs: MockResponse())
 
         db_path = str(tmp_path / "test.duckdb")
@@ -35,7 +41,7 @@ class TestPipelineAnalytics:
             fourfour="test-4444",
             db_path=db_path,
             table_name=table_name,
-            updated_col="val"
+            updated_col="val",
         )
 
         assert count == 2

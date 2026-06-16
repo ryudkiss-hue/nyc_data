@@ -33,6 +33,7 @@ def test_mongo_connection():
 # mocked unit tests cannot. Gated on RUN_INTEGRATION (CI service containers).
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.skipif(not os.getenv("RUN_INTEGRATION"), reason="Set RUN_INTEGRATION=1")
 def test_postgres_exporter_roundtrip():
     pytest.importorskip("psycopg")

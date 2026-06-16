@@ -6,6 +6,8 @@ process-wide :class:`ObservabilityManager` aggregating all sub-components.
 
 from __future__ import annotations
 
+from socrata_toolkit.alerts.manager import Alert, AlertManager, AlertSeverity, AlertStatus
+
 from .health import ComponentHealth, HealthMonitor
 from .integration import (
     ObservabilityManager,
@@ -31,4 +33,8 @@ __all__ = [
     "ComponentHealth",
     "SLA",
     "SLATracker",
+    "Alert",
+    "AlertManager",
+    "AlertSeverity",
+    "AlertStatus",
 ]

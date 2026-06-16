@@ -21,7 +21,6 @@ _DCAT_CONTEXT = {
     "foaf": "http://xmlns.com/foaf/0.1/",
 }
 
-
 class FairCatalog:
     """A catalog of FAIR dataset metadata records.
 

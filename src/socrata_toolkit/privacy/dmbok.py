@@ -35,7 +35,6 @@ _EMAIL_RE = re.compile(r"^[\w.+-]+@[\w-]+\.[\w.-]+$")
 # Columns whose names imply non-negative counts/quantities.
 _COUNT_RE = re.compile(r"count|qty|quantity|num_|_num|total|amount|age|population")
 
-
 @dataclass
 class DimensionScore:
     """Score for a single DAMA-DMBOK2 quality dimension.
@@ -49,7 +48,6 @@ class DimensionScore:
     dimension: str
     score: float
     detail: str = ""
-
 
 @dataclass
 class DmbokReport:
@@ -65,7 +63,6 @@ class DmbokReport:
     dimensions: list[DimensionScore] = field(default_factory=list)
     generated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
-
 def _completeness(df: pd.DataFrame) -> DimensionScore:
     """Completeness = non-null cells / total cells * 100."""
     total = df.size
@@ -77,7 +74,6 @@ def _completeness(df: pd.DataFrame) -> DimensionScore:
         "completeness", round(score, 2),
         f"{non_null}/{total} non-null cells",
     )
-
 
 def _validity(df: pd.DataFrame) -> DimensionScore:
     """Validity = mean per-column type-parseable / regex-conformance ratio * 100.
@@ -108,7 +104,6 @@ def _validity(df: pd.DataFrame) -> DimensionScore:
     return DimensionScore("validity", round(score, 2),
                           f"mean conformance over {len(ratios)} columns")
 
-
 def _uniqueness(df: pd.DataFrame, key_columns: list[str] | None) -> DimensionScore:
     """Uniqueness = (1 - duplicate_ratio) * 100.
 
@@ -122,7 +117,6 @@ def _uniqueness(df: pd.DataFrame, key_columns: list[str] | None) -> DimensionSco
     basis = f"key columns {key_columns}" if key_columns else "full rows"
     return DimensionScore("uniqueness", round(score, 2),
                           f"{dup_count}/{len(df)} duplicates on {basis}")
-
 
 def _consistency(df: pd.DataFrame) -> DimensionScore:
     """Consistency = fraction of cross-column/value sanity checks that pass * 100.
@@ -145,7 +139,6 @@ def _consistency(df: pd.DataFrame) -> DimensionScore:
     return DimensionScore("consistency", round(score, 2),
                           f"non-negative ratio over {len(ratios)} count-like columns")
 
-
 def _timeliness(df: pd.DataFrame, date_column: str | None) -> DimensionScore:
     """Timeliness = recency of ``date_column`` vs now, decaying over 365 days.
 
@@ -162,7 +155,6 @@ def _timeliness(df: pd.DataFrame, date_column: str | None) -> DimensionScore:
     score = max(0.0, 1 - age_days / 365.0) * 100.0
     return DimensionScore("timeliness", round(score, 2),
                           f"newest record {age_days} days old")
-
 
 def _accuracy(df: pd.DataFrame) -> DimensionScore:
     """Accuracy (proxy) = fraction of numeric values within plausible range * 100.
@@ -200,7 +192,6 @@ def _accuracy(df: pd.DataFrame) -> DimensionScore:
     score = 100.0 * float(np.mean(ratios))
     return DimensionScore("accuracy", round(score, 2),
                           f"plausible-value ratio over {len(ratios)} numeric columns")
-
 
 def score_dataframe(
     df: pd.DataFrame,

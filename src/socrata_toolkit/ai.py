@@ -20,13 +20,11 @@ logger = logging.getLogger(__name__)
 
 # ── NLP & Text Analytics ──────────────────────────────────────────────────────
 
-
 @dataclass
 class NLPResult:
     sentiment: float
     summary: str
     entities: list[dict[str, str]] = field(default_factory=list)
-
 
 def sentiment_score(text: str) -> float:
     """Heuristic-based sentiment scoring (falls back to 0.0)."""
@@ -40,14 +38,11 @@ def sentiment_score(text: str) -> float:
             score -= 0.2
     return max(-1.0, min(1.0, score))
 
-
 def summarize_text(text: str, max_sentences: int = 2) -> str:
     sents = [s.strip() for s in text.replace("\n", " ").split(".") if s.strip()]
     return ". ".join(sents[:max_sentences]) + ("." if sents else "")
 
-
 # ── LLM & NLP ─────────────────────────────────────────────────────────────────
-
 
 class SocrataLLMChatbot:
     """Conversational AI for Socrata datasets."""
@@ -63,13 +58,11 @@ class SocrataLLMChatbot:
     def chat(self, message: str) -> str:
         return f"Simulated response to: {message}"
 
-
 class SQLQueryEngine:
     """Natural language to SQL engine."""
 
     def translate(self, question: str) -> str:
         return f"SELECT * FROM datasets WHERE description LIKE '%{question}%'"
-
 
 class LegalPolicyEngine:
     """RAG-Powered Legal Policy Engine for NYC Street Design Manual, ADA CFR 36, and Local Law 60."""
@@ -113,9 +106,7 @@ class LegalPolicyEngine:
         memo += "\nACTION REQUIRED: Field inspection required to verify compliance with the cited regulations."
         return memo
 
-
 # ── Optimization & Quantum ────────────────────────────────────────────────────
-
 
 @dataclass
 class QuantumSearchResult:
@@ -125,7 +116,6 @@ class QuantumSearchResult:
     grover_iterations: int
     circuit_depth: int
     matches: list[Any]
-
 
 def quantum_search(items: Any, criteria: Any) -> QuantumSearchResult:
     """Simulated quantum search algorithm."""
@@ -139,13 +129,11 @@ def quantum_search(items: Any, criteria: Any) -> QuantumSearchResult:
         matches=items[:1] if items is not None and hasattr(items, "__getitem__") else [],
     )
 
-
 class LLMBridge:
     """Stub for LLM connectivity."""
 
     def ask(self, prompt: str) -> str:
         return f"Simulated response to: {prompt}"
-
 
 class TriageEngine:
     """Stub for triage logic."""
@@ -153,9 +141,7 @@ class TriageEngine:
     def triage(self, df: pd.DataFrame, text_col: str) -> pd.DataFrame:
         return df
 
-
 # ── AI Enrichment ─────────────────────────────────────────────────────────────
-
 
 def enrich_construction_list(
     df: pd.DataFrame, text_col: str | None = "description"
@@ -174,15 +160,12 @@ def enrich_construction_list(
     out["_ai_summary"] = summaries
     return out
 
-
 # ── Optimization (Quantum-Inspired) ───────────────────────────────────────────
-
 
 @dataclass
 class QuantumConfig:
     backend: str = "classical"
     max_iterations: int = 100
-
 
 @dataclass
 class SearchCriteria:
@@ -192,7 +175,6 @@ class SearchCriteria:
     borough: str | None = None
     min_severity: float | None = None
     status: str | None = None
-
 
 def analyze_grover_circuit(n_records: int, n_solutions: int = 1) -> Any:
     """Return metrics for a Grover quantum search circuit.
@@ -214,7 +196,6 @@ def analyze_grover_circuit(n_records: int, n_solutions: int = 1) -> Any:
         method="Grover Unstructured Search",
     )
 
-
 def analyze_quantum_efficiency(n_records: int) -> Any:
     """Compare classical vs quantum complexity for infrastructure audits."""
     classical_ops = n_records
@@ -228,7 +209,6 @@ def analyze_quantum_efficiency(n_records: int) -> Any:
         "status": "Quantum Ready",
     }
 
-
 def _haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """Calculate the great circle distance in miles between two points on the earth."""
     # Convert decimal degrees to radians
@@ -241,7 +221,6 @@ def _haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> f
     r = 3956  # Radius of earth in miles
     return c * r
 
-
 @dataclass
 class RouteOptResult:
     total_distance_miles: float
@@ -249,7 +228,6 @@ class RouteOptResult:
     method: str
     route: list[Any]
     ordered_df: pd.DataFrame
-
 
 def optimize_repair_route(
     df: pd.DataFrame, lat_col: str = "latitude", lon_col: str = "longitude"
@@ -317,14 +295,12 @@ def optimize_repair_route(
         ordered_df=valid_df.loc[route].reset_index(drop=True),
     )
 
-
 @dataclass
 class CrewAssignResult:
     method: str
     total_cost: float
     balance_score: float
     assignments: dict[str, list[str]]
-
 
 def optimize_crew_assignment(
     df: pd.DataFrame, n_crews: int = 5, config: Any = None
@@ -341,7 +317,6 @@ def optimize_crew_assignment(
         balance_score=0.92,
         assignments=assignments,
     )
-
 
 def triage_complaints(
     df: pd.DataFrame,
@@ -391,7 +366,6 @@ def triage_complaints(
     out["_priority"] = priorities
     return out
 
-
 def export_training_data_for_local_llm(
     df: pd.DataFrame, output_path: str, text_col: str = "description", label_col: str = "severity"
 ):
@@ -414,7 +388,6 @@ def export_training_data_for_local_llm(
                 ]
             }
             f.write(json.dumps(example) + "\n")
-
 
 def triage_complaints_gemini(
     df: pd.DataFrame, text_col: str, model_name: str, api_key: str

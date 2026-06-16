@@ -12,7 +12,6 @@ def load_local_config(path: str | None = None) -> dict[str, Any]:
             return json.loads(c.read_text(encoding="utf-8"))
     return {}
 
-
 def get_default(config: dict[str, Any], *keys: str, default: Any = None) -> Any:
     cur: Any = config
     for k in keys:

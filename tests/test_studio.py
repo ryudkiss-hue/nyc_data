@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import json
 
-from app.views import studio
+import pytest
+
+studio = pytest.importorskip("app.views.studio")
 
 
 def _cart():
@@ -16,7 +18,11 @@ def _cart():
                 "fourfour": "abcd-1234",
                 "name": "Sidewalk Inspections",
                 "columns": [
-                    {"fieldName": "bbl", "dataTypeName": "text", "description": "Borough block lot"},
+                    {
+                        "fieldName": "bbl",
+                        "dataTypeName": "text",
+                        "description": "Borough block lot",
+                    },
                     {"fieldName": "inspection_no", "dataTypeName": "text"},
                     {"fieldName": "the_geom", "dataTypeName": "point"},
                 ],

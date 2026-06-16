@@ -11,9 +11,11 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class DashboardSummary:
     """Backward-compatible dashboard snapshot."""
+
     metrics: list
     overall_health: str
     green_count: int
@@ -22,9 +24,11 @@ class DashboardSummary:
     timestamp: str = ""
     budget_codes: list = field(default_factory=list)
 
+
 @dataclass
 class ReportSection:
     """A section within a report."""
+
     title: str
     content: str
     data: dict[str, Any] | None = None
@@ -33,6 +37,7 @@ class ReportSection:
 @dataclass
 class Report:
     """A complete generated report conforming to WCAG 2.1 AA accessibility standards."""
+
     title: str
     generated_at: str
     sections: list[ReportSection] = field(default_factory=list)
@@ -48,10 +53,10 @@ class Report:
     def to_markdown(self) -> str:
         """Render the report as Markdown text."""
         lines = [
-            f"# 🏛️ {self.title}",
+            f"# {self.title}",
             f"**Report Generated:** {self.generated_at} | **Department:** NYC DOT Operations",
             "---",
-            ""
+            "",
         ]
 
         if self.warnings:
@@ -71,16 +76,19 @@ class Report:
 
     def to_json(self) -> str:
         """Serialize the report as JSON."""
-        return json.dumps({
-            "title": self.title,
-            "generated_at": self.generated_at,
-            "metadata": self.metadata,
-            "warnings": self.warnings,
-            "sections": [
-                {"title": s.title, "content": s.content, "data": s.data}
-                for s in self.sections
-            ],
-        }, indent=2, default=str)
+        return json.dumps(
+            {
+                "title": self.title,
+                "generated_at": self.generated_at,
+                "metadata": self.metadata,
+                "warnings": self.warnings,
+                "sections": [
+                    {"title": s.title, "content": s.content, "data": s.data} for s in self.sections
+                ],
+            },
+            indent=2,
+            default=str,
+        )
 
     def to_html(self) -> str:
         """Render the report as a highly accessible, styled HTML document for public administration."""
@@ -99,12 +107,17 @@ class Report:
         for i, s in enumerate(self.sections):
             data_html = ""
             if s.data:
-                data_html = '<dl class="data-grid">' + "".join(
-                    f'<div class="data-item"><dt>{k}</dt><dd>{v}</dd></div>' for k, v in s.data.items()
-                ) + "</dl>"
+                data_html = (
+                    '<dl class="data-grid">'
+                    + "".join(
+                        f'<div class="data-item"><dt>{k}</dt><dd>{v}</dd></div>'
+                        for k, v in s.data.items()
+                    )
+                    + "</dl>"
+                )
             sections_html += f"""
-            <section aria-labelledby="sec-{i}">
-                <h2 id="sec-{i}">{s.title}</h2>
+            <section id="sec-{i}">
+                <h2>{s.title}</h2>
                 <p>{s.content}</p>
                 {data_html}
             </section>
@@ -256,10 +269,19 @@ def generate_contract_report(
         return report
 
     # Check missing columns
-    expected_cols = [contract_id_col, planned_sqft_col, actual_sqft_col, planned_spend_col, actual_spend_col, borough_col]
+    expected_cols = [
+        contract_id_col,
+        planned_sqft_col,
+        actual_sqft_col,
+        planned_spend_col,
+        actual_spend_col,
+        borough_col,
+    ]
     missing = [c for c in expected_cols if c not in df.columns]
     if missing:
-        report.add_warning(f"Missing expected columns in dataset: {', '.join(missing)}. Values derived from these columns will display as 'Data Unavailable' or 0.")
+        report.add_warning(
+            f"Missing expected columns in dataset: {', '.join(missing)}. Values derived from these columns will display as 'Data Unavailable' or 0."
+        )
 
     def get_sum(col: str) -> float:
         return float(df[col].fillna(0).sum()) if col in df.columns else 0.0
@@ -267,7 +289,11 @@ def generate_contract_report(
     total_contracts = df[contract_id_col].nunique() if contract_id_col in df.columns else len(df)
     planned_sqft = get_sum(planned_sqft_col)
     actual_sqft = get_sum(actual_sqft_col)
-    pct_complete = round(actual_sqft / max(planned_sqft, 1) * 100, 1) if planned_sqft > 0 else "Data Unavailable"
+    pct_complete = (
+        round(actual_sqft / max(planned_sqft, 1) * 100, 1)
+        if planned_sqft > 0
+        else "Data Unavailable"
+    )
     planned_budget = get_sum(planned_spend_col)
     actual_budget = get_sum(actual_spend_col)
     budget_variance = actual_budget - planned_budget
@@ -288,18 +314,30 @@ def generate_contract_report(
     if borough_col in df.columns:
         boro_data = {}
         for borough, group in df.groupby(borough_col):
-            b_planned = float(group[planned_sqft_col].fillna(0).sum()) if planned_sqft_col in group.columns else 0
-            b_actual = float(group[actual_sqft_col].fillna(0).sum()) if actual_sqft_col in group.columns else 0
+            b_planned = (
+                float(group[planned_sqft_col].fillna(0).sum())
+                if planned_sqft_col in group.columns
+                else 0
+            )
+            b_actual = (
+                float(group[actual_sqft_col].fillna(0).sum())
+                if actual_sqft_col in group.columns
+                else 0
+            )
             if b_planned > 0:
                 b_pct = round(b_actual / max(b_planned, 1) * 100, 1)
-                boro_data[str(borough)] = f"{b_pct}% complete ({b_actual:,.0f} / {b_planned:,.0f} sqft)"
+                boro_data[str(borough)] = (
+                    f"{b_pct}% complete ({b_actual:,.0f} / {b_planned:,.0f} sqft)"
+                )
             else:
                 boro_data[str(borough)] = f"{len(group)} records (SqFt data unavailable)"
         report.add_section("Borough Breakdown", "Progress mapped by geographic region:", boro_data)
 
     if planned_budget > 0:
-        variance_status = "ON BUDGET" if abs(budget_variance) < planned_budget * 0.05 else (
-            "OVER BUDGET" if budget_variance > 0 else "UNDER BUDGET"
+        variance_status = (
+            "ON BUDGET"
+            if abs(budget_variance) < planned_budget * 0.05
+            else ("OVER BUDGET" if budget_variance > 0 else "UNDER BUDGET")
         )
         report.add_section(
             "Budget Analysis",
@@ -348,17 +386,17 @@ def generate_program_report(dashboard: Any) -> Report:
     if dashboard.budget_codes:
         bc_data = {}
         for bc in dashboard.budget_codes:
-            bc_data[f"{bc.code} - {bc.category.title()}"] = f"${bc.spent:,.2f} spent of ${bc.allocated:,.2f} ({bc.pct_used}% utilization)"
-        report.add_section("Budget Code Allocations", "Utilization rates across active funding lines:", bc_data)
+            bc_data[f"{bc.code} - {bc.category.title()}"] = (
+                f"${bc.spent:,.2f} spent of ${bc.allocated:,.2f} ({bc.pct_used}% utilization)"
+            )
+        report.add_section(
+            "Budget Code Allocations", "Utilization rates across active funding lines:", bc_data
+        )
 
     return report
 
 
-def generate_inquiry_response(
-    inquiry_type: str,
-    df: pd.DataFrame,
-    **kwargs
-) -> Report:
+def generate_inquiry_response(inquiry_type: str, df: pd.DataFrame, **kwargs) -> Report:
     """Generate an official response to an administrative data inquiry."""
     report = Report(
         title=f"Official Data Inquiry Response: {inquiry_type.replace('_', ' ').title()}",
@@ -374,11 +412,10 @@ def generate_inquiry_response(
         "Inquiry Synopsis",
         "This document serves as the automated data retrieval response for the requested parameters.",
         {
-            "Inquiry Type": inquiry_type.replace('_', ' ').title(),
+            "Inquiry Type": inquiry_type.replace("_", " ").title(),
             "Search Parameters": details,
             "Total Records Validated": len(df),
-        }
+        },
     )
 
     return report
-

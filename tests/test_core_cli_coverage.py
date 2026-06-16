@@ -1,4 +1,5 @@
 """Tests for core.cli module - Click CLI commands."""
+
 from __future__ import annotations
 
 import json
@@ -118,10 +119,7 @@ class TestSearchCommand:
                 mock_client_class.return_value = mock_client
                 mock_client.search.return_value = []
 
-                result = cli_runner.invoke(
-                    search,
-                    ["test", "--json-out", str(output_file)]
-                )
+                result = cli_runner.invoke(search, ["test", "--json-out", str(output_file)])
                 if result.exit_code == 0:
                     assert output_file.exists()
 
@@ -142,10 +140,7 @@ class TestMetaCommand:
             mock_meta.summary.return_value = {"rows": 100}
             mock_client.get_metadata.return_value = mock_meta
 
-            result = cli_runner.invoke(
-                meta_cmd,
-                ["example.com", "abc123", "--columns-only"]
-            )
+            result = cli_runner.invoke(meta_cmd, ["example.com", "abc123", "--columns-only"])
             assert result.exit_code == 0
 
 
@@ -169,9 +164,11 @@ class TestFetchCommand:
                     [
                         "example.com",
                         "abc123",
-                        "--format", "json",
-                        "--out", str(output_file),
-                    ]
+                        "--format",
+                        "json",
+                        "--out",
+                        str(output_file),
+                    ],
                 )
                 if result.exit_code == 0:
                     assert output_file.exists()
@@ -183,6 +180,7 @@ class TestFetchCommand:
                 mock_client = MagicMock()
                 mock_client_class.return_value = mock_client
                 import pandas as pd
+
                 mock_client.fetch_dataframe.return_value = pd.DataFrame({"id": [1]})
 
                 with patch("socrata_toolkit.core.cli.XLSXExporter"):
@@ -191,9 +189,11 @@ class TestFetchCommand:
                         [
                             "example.com",
                             "abc123",
-                            "--format", "xlsx",
-                            "--out", str(output_file),
-                        ]
+                            "--format",
+                            "xlsx",
+                            "--out",
+                            str(output_file),
+                        ],
                     )
                     assert result.exit_code == 0
 
@@ -208,16 +208,14 @@ class TestAnalyzeCommand:
     def test_analyze_with_domain_and_fourfour(self, cli_runner):
         with patch("socrata_toolkit.core.cli._client") as mock_client_class:
             import pandas as pd
+
             mock_client = MagicMock()
             mock_client_class.return_value = mock_client
             mock_client.fetch_dataframe.return_value = pd.DataFrame({"id": [1, 2]})
 
             with patch("socrata_toolkit.analysis.profile_dataframe") as mock_profile:
                 mock_profile.return_value = MagicMock()
-                result = cli_runner.invoke(
-                    analyze_cmd,
-                    ["example.com", "abc123"]
-                )
+                result = cli_runner.invoke(analyze_cmd, ["example.com", "abc123"])
                 # May error if save_state fails, but command executed
                 assert result.exit_code is not None
 
@@ -260,6 +258,7 @@ class TestOutliersCommand:
             output_file = Path(tmpdir) / "outliers.json"
             with patch("socrata_toolkit.core.cli._client") as mock_client_class:
                 import pandas as pd
+
                 mock_client = MagicMock()
                 mock_client_class.return_value = mock_client
                 mock_client.fetch_dataframe.return_value = pd.DataFrame(
@@ -273,9 +272,11 @@ class TestOutliersCommand:
                         [
                             "example.com",
                             "abc123",
-                            "--method", "iqr",
-                            "--out", str(output_file),
-                        ]
+                            "--method",
+                            "iqr",
+                            "--out",
+                            str(output_file),
+                        ],
                     )
                     assert result.exit_code is not None
 
@@ -292,6 +293,7 @@ class TestCorrelationsCommand:
             output_file = Path(tmpdir) / "correlations.json"
             with patch("socrata_toolkit.core.cli._client") as mock_client_class:
                 import pandas as pd
+
                 mock_client = MagicMock()
                 mock_client_class.return_value = mock_client
                 mock_client.fetch_dataframe.return_value = pd.DataFrame(
@@ -310,9 +312,11 @@ class TestCorrelationsCommand:
                         [
                             "example.com",
                             "abc123",
-                            "--method", "pearson",
-                            "--out", str(output_file),
-                        ]
+                            "--method",
+                            "pearson",
+                            "--out",
+                            str(output_file),
+                        ],
                     )
                     assert result.exit_code == 0
 
@@ -448,9 +452,12 @@ class TestPipelineCommand:
                             [
                                 "example.com",
                                 "abc123",
-                                "--json-out", str(json_out),
-                                "--report-path", str(report_path),
-                                "--state-path", str(state_path),
+                                "--json-out",
+                                str(json_out),
+                                "--report-path",
+                                str(report_path),
+                                "--state-path",
+                                str(state_path),
                             ],
                         )
                         assert result.exit_code is not None
@@ -473,8 +480,10 @@ class TestPipelineCommand:
                                     "example.com",
                                     "abc123",
                                     "--stream",
-                                    "--report-path", str(report_path),
-                                    "--state-path", str(state_path),
+                                    "--report-path",
+                                    str(report_path),
+                                    "--state-path",
+                                    str(state_path),
                                 ],
                             )
                             assert result.exit_code is not None
@@ -497,9 +506,12 @@ class TestPipelineCommand:
                                 [
                                     "example.com",
                                     "abc123",
-                                    "--required-col", "id",
-                                    "--report-path", str(report_path),
-                                    "--state-path", str(state_path),
+                                    "--required-col",
+                                    "id",
+                                    "--report-path",
+                                    str(report_path),
+                                    "--state-path",
+                                    str(state_path),
                                 ],
                             )
                             assert result.exit_code is not None
@@ -559,9 +571,12 @@ class TestQualityScoreCommand:
                     [
                         "example.com",
                         "abc123",
-                        "--key-column", "objectid",
-                        "--date-column", "created_date",
-                        "--freshness-days", "14",
+                        "--key-column",
+                        "objectid",
+                        "--date-column",
+                        "created_date",
+                        "--freshness-days",
+                        "14",
                     ],
                 )
                 assert result.exit_code is not None
@@ -635,7 +650,9 @@ class TestSchemaDriftCommand:
                 mock_client.fetch_dataframe.return_value = pd.DataFrame({"id": [1]})
                 with patch("socrata_toolkit.governance.core.load_schema_snapshot"):
                     with patch("socrata_toolkit.governance.core.detect_schema_drift") as mock_drift:
-                        with patch("socrata_toolkit.governance.core.save_schema_snapshot") as mock_save:
+                        with patch(
+                            "socrata_toolkit.governance.core.save_schema_snapshot"
+                        ) as mock_save:
                             mock_diff = MagicMock()
                             mock_diff.is_compatible = True
                             mock_diff.added_columns = []
@@ -647,8 +664,10 @@ class TestSchemaDriftCommand:
                                 [
                                     "example.com",
                                     "abc123",
-                                    "--baseline", str(baseline_path),
-                                    "--save-snapshot", str(snapshot_path),
+                                    "--baseline",
+                                    str(baseline_path),
+                                    "--save-snapshot",
+                                    str(snapshot_path),
                                 ],
                             )
                             assert result.exit_code is not None
@@ -681,8 +700,10 @@ class TestVisualizeCommand:
                     [
                         "example.com",
                         "abc123",
-                        "--chart", "histogram",
-                        "--out", str(out_path),
+                        "--chart",
+                        "histogram",
+                        "--out",
+                        str(out_path),
                     ],
                 )
                 assert result.exit_code is not None
@@ -695,17 +716,17 @@ class TestVisualizeCommand:
             with patch("socrata_toolkit.core.cli._client") as mock_client_cls:
                 mock_client = MagicMock()
                 mock_client_cls.return_value = mock_client
-                mock_client.fetch_dataframe.return_value = pd.DataFrame(
-                    {"borough": ["MN", "BK"]}
-                )
+                mock_client.fetch_dataframe.return_value = pd.DataFrame({"borough": ["MN", "BK"]})
                 with patch.dict("sys.modules", {"socrata_toolkit.core.visualization": mock_viz}):
                     result = cli_runner.invoke(
                         visualize_cmd,
                         [
                             "example.com",
                             "abc123",
-                            "--chart", "heatmap",
-                            "--out", str(out_path),
+                            "--chart",
+                            "heatmap",
+                            "--out",
+                            str(out_path),
                         ],
                     )
                     mock_client.fetch_dataframe.assert_called_once()
@@ -746,7 +767,9 @@ class TestSchemaGroupCommands:
 
     def test_schema_list_no_versions(self, cli_runner):
         """Schema list returns empty message for unknown dataset."""
-        with patch("socrata_toolkit.discovery.schema.SchemaRegistry._load_schema_history") as mock_hist:
+        with patch(
+            "socrata_toolkit.discovery.schema.SchemaRegistry._load_schema_history"
+        ) as mock_hist:
             mock_hist.return_value = []
             result = cli_runner.invoke(main, ["schema", "list", "unknown-dataset"])
             assert result.exit_code == 0
@@ -754,7 +777,9 @@ class TestSchemaGroupCommands:
 
     def test_schema_current_no_schema(self, cli_runner):
         """Schema current returns empty message for unknown dataset."""
-        with patch("socrata_toolkit.discovery.schema.SchemaRegistry.get_schema_version") as mock_get:
+        with patch(
+            "socrata_toolkit.discovery.schema.SchemaRegistry.get_schema_version"
+        ) as mock_get:
             mock_get.return_value = None
             result = cli_runner.invoke(main, ["schema", "current", "unknown-dataset"])
             assert result.exit_code == 0
@@ -803,11 +828,16 @@ class TestReviewGroupCommands:
             result = cli_runner.invoke(
                 main,
                 [
-                    "review", "set",
-                    "--kind", "conflict",
-                    "--key-type", "location_id",
-                    "--key", "12345",
-                    "--status", "resolved",
+                    "review",
+                    "set",
+                    "--kind",
+                    "conflict",
+                    "--key-type",
+                    "location_id",
+                    "--key",
+                    "12345",
+                    "--status",
+                    "resolved",
                 ],
             )
             assert result.exit_code != 0
@@ -857,8 +887,10 @@ class TestFetchCommandExtended:
                     [
                         "example.com",
                         "abc123",
-                        "--format", "geojson",
-                        "--out", str(out_path),
+                        "--format",
+                        "geojson",
+                        "--out",
+                        str(out_path),
                     ],
                 )
                 assert result.exit_code is not None
@@ -880,8 +912,10 @@ class TestFetchCommandExtended:
                         [
                             "example.com",
                             "abc123",
-                            "--format", "xlsx",
-                            "--out", str(out_path),
+                            "--format",
+                            "xlsx",
+                            "--out",
+                            str(out_path),
                             "--include-meta",
                         ],
                     )
@@ -900,9 +934,12 @@ class TestFetchCommandExtended:
                     [
                         "example.com",
                         "abc123",
-                        "--format", "json",
-                        "--out", str(out_path),
-                        "--where", "borough='MN'",
+                        "--format",
+                        "json",
+                        "--out",
+                        str(out_path),
+                        "--where",
+                        "borough='MN'",
                     ],
                 )
                 assert result.exit_code is not None
@@ -997,13 +1034,9 @@ class TestConflictCommandExtended:
         """Conflict command accepts --proposed-file for local JSON input."""
         with tempfile.TemporaryDirectory() as tmpdir:
             proposed_file = Path(tmpdir) / "proposed.json"
-            proposed_file.write_text(
-                json.dumps([{"id": 1, "geometry": "POINT(-74 40)"}])
-            )
+            proposed_file.write_text(json.dumps([{"id": 1, "geometry": "POINT(-74 40)"}]))
             ref_file = Path(tmpdir) / "ref.json"
-            ref_file.write_text(
-                json.dumps([{"id": 2, "geometry": "POINT(-74 40)"}])
-            )
+            ref_file.write_text(json.dumps([{"id": 2, "geometry": "POINT(-74 40)"}]))
             with patch("socrata_toolkit.core.cli.ConflictResolver") as mock_resolver_cls:
                 mock_resolver = MagicMock()
                 mock_resolver_cls.return_value = mock_resolver
@@ -1016,8 +1049,10 @@ class TestConflictCommandExtended:
                 result = cli_runner.invoke(
                     conflict_cmd,
                     [
-                        "--proposed-file", str(proposed_file),
-                        "--ref-file", str(ref_file),
+                        "--proposed-file",
+                        str(proposed_file),
+                        "--ref-file",
+                        str(ref_file),
                         "--dry-run",
                     ],
                 )
@@ -1043,8 +1078,10 @@ class TestBatchSearchCommandExtended:
                         [
                             "example.com",
                             "abc123",
-                            "--field", "id",
-                            "--file", str(values_file),
+                            "--field",
+                            "id",
+                            "--file",
+                            str(values_file),
                         ],
                     )
                     assert result.exit_code is not None
@@ -1059,8 +1096,10 @@ class TestBatchSearchCommandExtended:
                 [
                     "example.com",
                     "abc123",
-                    "--field", "id",
-                    "--file", str(empty_file),
+                    "--field",
+                    "id",
+                    "--file",
+                    str(empty_file),
                 ],
             )
             assert result.exit_code != 0
@@ -1074,9 +1113,7 @@ class TestOutliersCommandExtended:
         with patch("socrata_toolkit.core.cli._client") as mock_client_cls:
             mock_client = MagicMock()
             mock_client_cls.return_value = mock_client
-            mock_client.fetch_dataframe.return_value = pd.DataFrame(
-                {"value": [1, 2, 3, 4, 5, 100]}
-            )
+            mock_client.fetch_dataframe.return_value = pd.DataFrame({"value": [1, 2, 3, 4, 5, 100]})
             with patch("socrata_toolkit.analysis.advanced.detect_all_outliers") as mock_detect:
                 mock_report = MagicMock()
                 mock_report.column = "value"
@@ -1099,9 +1136,7 @@ class TestOutliersCommandExtended:
             with patch("socrata_toolkit.core.cli._client") as mock_client_cls:
                 mock_client = MagicMock()
                 mock_client_cls.return_value = mock_client
-                mock_client.fetch_dataframe.return_value = pd.DataFrame(
-                    {"v": [1, 2, 3]}
-                )
+                mock_client.fetch_dataframe.return_value = pd.DataFrame({"v": [1, 2, 3]})
                 with patch("socrata_toolkit.analysis.advanced.detect_all_outliers") as mock_detect:
                     mock_detect.return_value = []
                     result = cli_runner.invoke(
@@ -1109,7 +1144,8 @@ class TestOutliersCommandExtended:
                         [
                             "example.com",
                             "abc123",
-                            "--out", str(out_path),
+                            "--out",
+                            str(out_path),
                         ],
                     )
                     assert result.exit_code is not None
@@ -1130,5 +1166,7 @@ class TestAlertsCommandExtended:
 
     def test_alerts_persist_without_pg_dsn_errors(self, cli_runner):
         """Alerts --persist without --pg-dsn raises error."""
-        result = cli_runner.invoke(alerts_cmd, ["--persist"])
+        # Ensure PG_DSN is not inherited from the environment
+        result = cli_runner.invoke(alerts_cmd, ["--persist"], env={"PG_DSN": ""})
         assert result.exit_code != 0
+        assert "pg-dsn is required" in result.output

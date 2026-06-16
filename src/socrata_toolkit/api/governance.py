@@ -11,18 +11,15 @@ class PIIType(Enum):
     SSN = "ssn"
     NONE = "none"
 
-
 class MaskingStrategy(Enum):
     MASK = "mask"
     REDACT = "redact"
     NONE = "none"
 
-
 @dataclass
 class AccessDecision:
     allowed: bool
     reason: str = ""
-
 
 class GovernanceEnforcer:
     def __init__(self):

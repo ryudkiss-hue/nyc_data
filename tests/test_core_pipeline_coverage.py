@@ -1,4 +1,5 @@
 """Tests for core.pipeline module - In-memory pipeline runner and SQL preview."""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
@@ -282,7 +283,12 @@ class TestRunFromRows:
         """Test that large row sets are sampled correctly."""
         rows = [{"id": i, "name": f"User {i}"} for i in range(100)]
         targets = {
-            "mongo": {"enabled": True, "uri": "mongodb://localhost", "db": "test_db", "collection": "users"}
+            "mongo": {
+                "enabled": True,
+                "uri": "mongodb://localhost",
+                "db": "test_db",
+                "collection": "users",
+            }
         }
         result = run_from_rows(rows, targets, dry_run=True)
         # Mongo target should only show first 5 rows in sample

@@ -45,14 +45,12 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-
 class ExportFormat(Enum):
     """Supported export formats."""
     CSV = "csv"
     JSON = "json"
     JSONL = "jsonl"
     PARQUET = "parquet"
-
 
 @dataclass
 class ExportResult:
@@ -76,7 +74,6 @@ class ExportResult:
     duration_seconds: float = 0.0
     message: str = ""
     error: str | None = None
-
 
 class CDCExporter:
     """Export CDC events in multiple formats.

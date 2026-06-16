@@ -1,4 +1,5 @@
 """Comprehensive tests for spatial.visualization module."""
+
 from __future__ import annotations
 
 import json
@@ -322,13 +323,15 @@ class TestSpatialVisualizationMaterialMap:
         mock_f, mock_map_obj = mock_folium
         features = []
         for material in ["asphalt", "concrete", "brick", "stone", "other"]:
-            features.append({
-                "geometry": {
-                    "type": "LineString",
-                    "coordinates": [[-74.01, 40.70], [-74.012, 40.702]],
-                },
-                "properties": {"segment_id": f"seg_{material}", "material_type": material},
-            })
+            features.append(
+                {
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": [[-74.01, 40.70], [-74.012, 40.702]],
+                    },
+                    "properties": {"segment_id": f"seg_{material}", "material_type": material},
+                }
+            )
         viz = SpatialVisualization()
         result = viz.create_material_map(features)
         assert result is mock_map_obj
@@ -337,13 +340,15 @@ class TestSpatialVisualizationMaterialMap:
     def test_material_map_unknown_material_type(self, mock_folium):
         """create_material_map handles unknown material types with fallback color."""
         mock_f, mock_map_obj = mock_folium
-        features = [{
-            "geometry": {
-                "type": "LineString",
-                "coordinates": [[-74.01, 40.70], [-74.012, 40.702]],
-            },
-            "properties": {"segment_id": "seg_x", "material_type": "unknown_material"},
-        }]
+        features = [
+            {
+                "geometry": {
+                    "type": "LineString",
+                    "coordinates": [[-74.01, 40.70], [-74.012, 40.702]],
+                },
+                "properties": {"segment_id": "seg_x", "material_type": "unknown_material"},
+            }
+        ]
         viz = SpatialVisualization()
         result = viz.create_material_map(features)
         assert result is mock_map_obj
@@ -405,7 +410,13 @@ class TestSpatialVisualizationHotspotMap:
         """create_hotspot_map handles all four severity levels."""
         mock_f, _ = mock_folium
         hotspots = [
-            {"centroid_x": -74.01, "centroid_y": 40.70, "density": 1.0, "severity": sev, "segment_count": 1}
+            {
+                "centroid_x": -74.01,
+                "centroid_y": 40.70,
+                "density": 1.0,
+                "severity": sev,
+                "segment_count": 1,
+            }
             for sev in ["critical", "high", "medium", "low"]
         ]
         viz = SpatialVisualization()

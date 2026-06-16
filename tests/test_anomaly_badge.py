@@ -22,9 +22,7 @@ def test_detect_sidebar_anomaly_true_on_step_change() -> None:
     jump = [10.0] * 10
     series = pd.Series(flat + jump)
     result = detect_cusum_changepoint(series)
-    assert result is not None, (
-        "Expected a changepoint index for a step-function series, got None"
-    )
+    assert result is not None, "Expected a changepoint index for a step-function series, got None"
 
 
 def test_sidebar_anomaly_false_on_flat_via_threshold() -> None:

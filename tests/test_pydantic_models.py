@@ -25,16 +25,17 @@ def test_column_profile_quality_score():
     # 100 - (100 * 0.5) - 50 = 0
     assert c4.quality_score() == 0.0
 
+
 def test_roi_aggregator_logic():
     """Verify business value calculation in ROI service."""
     roi = ROIAggregator.compute(
-        lots_validated=10,        # 10 * 3 = 30 min
-        spatial_conflicts_checked=2, # 2 * 15 = 30 min
-        contracts_cleared=4,      # 4 * 5 = 20 min
+        lots_validated=10,  # 10 * 3 = 30 min
+        spatial_conflicts_checked=2,  # 2 * 15 = 30 min
+        contracts_cleared=4,  # 4 * 5 = 20 min
         joins_automated=5,
         actionable_discrepancies=3,
-        quality_flags=10,         # 10 * 2 = 20 min
-        datasets_profiled=5
+        quality_flags=10,  # 10 * 2 = 20 min
+        datasets_profiled=5,
     )
 
     # Total minutes = 30 + 30 + 20 + 20 = 100 min
@@ -42,6 +43,7 @@ def test_roi_aggregator_logic():
     assert roi.hours_reclaimed == 1.67
     assert roi.joins_automated == 5
     assert roi.quality_flags == 10
+
 
 def test_dataset_profile_pydantic_validation():
     """Verify Pydantic models reject invalid structures."""
@@ -63,6 +65,6 @@ def test_dataset_profile_pydantic_validation():
         fk_candidates=[],
         overall_null_pct=0.0,
         duplicate_row_pct=0.0,
-        quality_score=0.0
+        quality_score=0.0,
     )
     assert dp.key == "test"

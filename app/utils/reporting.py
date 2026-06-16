@@ -23,16 +23,13 @@ try:
 except ImportError:
     HAS_PPTX = False
 
-
 # ---------------------------------------------------------------------------
 # Item 77 — PDF export (WeasyPrint)
 # ---------------------------------------------------------------------------
 
-
 def dataframe_to_html_table(df: pd.DataFrame, max_rows: int = 100) -> str:
     """Render a DataFrame as an HTML table string."""
     return df.head(max_rows).to_html(index=False, border=1, classes="report-table")
-
 
 def generate_pdf_report(
     title: str,
@@ -82,11 +79,9 @@ def generate_pdf_report(
     HTML(string=html).write_pdf(str(path))
     return str(path)
 
-
 # ---------------------------------------------------------------------------
 # Item 78 — PowerPoint export
 # ---------------------------------------------------------------------------
-
 
 def generate_pptx_report(
     title: str,
@@ -130,11 +125,9 @@ def generate_pptx_report(
     prs.save(buf)
     return buf.getvalue()
 
-
 # ---------------------------------------------------------------------------
 # Item 79 — Scheduled email
 # ---------------------------------------------------------------------------
-
 
 def send_email_report(
     to_address: str,
@@ -172,11 +165,9 @@ def send_email_report(
     except Exception as e:
         return False, str(e)
 
-
 # ---------------------------------------------------------------------------
 # Item 80 — Excel multi-sheet export
 # ---------------------------------------------------------------------------
-
 
 def generate_excel_report(
     sheets: dict[str, pd.DataFrame],

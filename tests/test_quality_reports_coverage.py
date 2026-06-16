@@ -1,4 +1,5 @@
 """Tests for quality.reports module - Quality report generation."""
+
 from __future__ import annotations
 
 import json

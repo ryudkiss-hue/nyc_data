@@ -1,4 +1,5 @@
 """Tests for quality.catalog module - Data catalog quality integration."""
+
 from __future__ import annotations
 
 import json
@@ -153,9 +154,7 @@ class TestDataQualityCatalog:
         """Test registering dataset with metadata."""
         with tempfile.TemporaryDirectory() as tmpdir:
             catalog = DataQualityCatalog(storage_dir=tmpdir)
-            catalog.register_dataset(
-                "ds1", "Dataset 1", metadata={"owner": "team-a"}
-            )
+            catalog.register_dataset("ds1", "Dataset 1", metadata={"owner": "team-a"})
             assert catalog.profiles["ds1"].metadata == {"owner": "team-a"}
 
     def test_update_quality_score(self):

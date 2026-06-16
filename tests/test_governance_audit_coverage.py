@@ -26,13 +26,11 @@ from socrata_toolkit.governance.audit import (
 # Fixtures
 # ---------------------------------------------------------------------------
 
-
 @pytest.fixture
 def fresh_trail():
     """Return a new _InProcessTrail with no entries."""
     trail = _InProcessTrail(maxlen=100)
     return trail
-
 
 @pytest.fixture
 def sample_audit_event():
@@ -55,11 +53,9 @@ def sample_audit_event():
         user_agent="socrata-toolkit/1.0",
     )
 
-
 # ---------------------------------------------------------------------------
 # _InProcessTrail tests
 # ---------------------------------------------------------------------------
-
 
 class TestInProcessTrail:
     """Tests for _InProcessTrail thread-safe ring buffer."""
@@ -165,11 +161,9 @@ class TestInProcessTrail:
         parsed = datetime.fromisoformat(entry.timestamp)
         assert parsed.tzinfo is not None
 
-
 # ---------------------------------------------------------------------------
 # audit_op decorator tests
 # ---------------------------------------------------------------------------
-
 
 class TestAuditOpDecorator:
     """Tests for the audit_op decorator."""
@@ -234,11 +228,9 @@ class TestAuditOpDecorator:
         assert len(entries) >= 1
         assert "kwargs=['b']" in entries[-1].detail
 
-
 # ---------------------------------------------------------------------------
 # AuditEvent tests
 # ---------------------------------------------------------------------------
-
 
 class TestAuditEvent:
     """Tests for AuditEvent dataclass."""
@@ -327,11 +319,9 @@ class TestAuditEvent:
         )
         assert event.prov_type == "prov:Activity"
 
-
 # ---------------------------------------------------------------------------
 # AuditTrail._calculate_diff tests
 # ---------------------------------------------------------------------------
-
 
 class TestCalculateDiff:
     """Tests for the static _calculate_diff method."""
@@ -383,11 +373,9 @@ class TestCalculateDiff:
         diff = AuditTrail._calculate_diff(None, None)
         assert diff == {}
 
-
 # ---------------------------------------------------------------------------
 # AuditTrail DB tests (mocked psycopg)
 # ---------------------------------------------------------------------------
-
 
 @pytest.fixture
 def mock_psycopg():
@@ -403,7 +391,6 @@ def mock_psycopg():
         mock_pg.connect.return_value = mock_conn
         yield mock_pg, mock_conn, mock_cur
 
-
 class TestAuditTrailInit:
     """Tests for AuditTrail initialisation."""
 
@@ -417,7 +404,6 @@ class TestAuditTrailInit:
         """AuditTrail should store the provided DSN."""
         trail = AuditTrail("postgresql://localhost/test")
         assert trail.dsn == "postgresql://localhost/test"
-
 
 class TestAuditTrailLogInsert:
     """Tests for AuditTrail.log_insert."""
@@ -463,7 +449,6 @@ class TestAuditTrailLogInsert:
         params = mock_cur.execute.call_args[0][1]
         assert ActionType.INSERT.value in params
 
-
 class TestAuditTrailLogUpdate:
     """Tests for AuditTrail.log_update."""
 
@@ -506,7 +491,6 @@ class TestAuditTrailLogUpdate:
         params = mock_cur.execute.call_args[0][1]
         assert ActionType.UPDATE.value in params
 
-
 class TestAuditTrailLogDelete:
     """Tests for AuditTrail.log_delete."""
 
@@ -538,7 +522,6 @@ class TestAuditTrailLogDelete:
         trail.log_delete("tbl", "e1", {"a": 1})
         params = mock_cur.execute.call_args[0][1]
         assert params[8] is None
-
 
 class TestAuditTrailGetEvents:
     """Tests for AuditTrail.get_events."""
@@ -593,7 +576,6 @@ class TestAuditTrailGetEvents:
         events = trail.get_events("nonexistent_table", "no-entity")
         assert events == []
 
-
 class TestAuditTrailExportCsv:
     """Tests for AuditTrail.export_csv."""
 
@@ -644,7 +626,6 @@ class TestAuditTrailExportCsv:
         content = buf.read()
         assert "audit_id" in content
 
-
 class TestAuditTrailExportJson:
     """Tests for AuditTrail.export_json."""
 
@@ -685,7 +666,6 @@ class TestAuditTrailExportJson:
         trail = AuditTrail("postgresql://localhost/test")
         result = trail.export_json()
         assert result == []
-
 
 class TestAuditTrailGenerateComplianceReport:
     """Tests for AuditTrail.generate_compliance_report."""
@@ -735,11 +715,9 @@ class TestAuditTrailGenerateComplianceReport:
         assert report["total_events"] == 100
         assert report["user_count"] == 2
 
-
 # ---------------------------------------------------------------------------
 # ActionType and ChangeType enum tests
 # ---------------------------------------------------------------------------
-
 
 class TestEnums:
     """Tests for ActionType and ChangeType enums."""
@@ -762,11 +740,9 @@ class TestEnums:
         assert ActionType.UPDATE.value == "UPDATE"
         assert ActionType.DELETE.value == "DELETE"
 
-
 # ---------------------------------------------------------------------------
 # get_global_trail singleton tests
 # ---------------------------------------------------------------------------
-
 
 class TestGetGlobalTrail:
     """Tests for the get_global_trail() singleton accessor."""

@@ -6,18 +6,15 @@ from typing import Any
 class RateLimitExceeded(Exception):
     pass
 
-
 class QuotaTier(Enum):
     GUEST = "guest"
     STANDARD = "standard"
     PREMIUM = "premium"
 
-
 @dataclass
 class QuotaStatus:
     tier: QuotaTier
     hour_remaining: int
-
 
 class TokenBucketStrategy:
     def __init__(self):
@@ -32,7 +29,6 @@ class TokenBucketStrategy:
         self.buckets[user_id] = count + 1
         return True
 
-
 class SlidingWindowStrategy:
     def record_request(self, user_id: str):
         """Record a request event for the given user in the sliding window."""
@@ -42,7 +38,6 @@ class SlidingWindowStrategy:
         """Return True if the user is within the allowed request rate for their tier."""
         return True
 
-
 class LeakyBucketStrategy:
     def __init__(self, leak_rate: float):
         self.leak_rate = leak_rate
@@ -50,7 +45,6 @@ class LeakyBucketStrategy:
     def check_limit(self, user_id: str, tier: QuotaTier) -> bool:
         """Return True if the leaky bucket has capacity for another request."""
         return True
-
 
 class RateLimiter:
     def __init__(self, strategy: Any = None):

@@ -11,7 +11,6 @@ import pandas as pd
 _CRITICAL_KEYWORDS = ("collapse", "hole", "trip hazard", "unsafe", "emergency", "cave-in")
 _HIGH_KEYWORDS = ("cracked", "broken", "raised", "damaged", "blocked", "uneven", "missing")
 
-
 def triage_complaints(df: pd.DataFrame, text_col: str = "description") -> pd.DataFrame:
     """Assign ``_triage_priority`` from keyword rules (no network calls)."""
     out = df.copy()

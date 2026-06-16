@@ -29,15 +29,18 @@ try:
 except ImportError:
     psycopg = None  # type: ignore
 
-
 # Logging setup
 logger = logging.getLogger(__name__)
 
+try:
+    from ..alerts.manager import AlertSeverity
+except Exception:
 
-class AlertSeverity(Enum):
-    """Alert severity levels for freshness violations."""
-    WARNING = "warning"
-    CRITICAL = "critical"
+    class AlertSeverity(Enum):  # type: ignore[no-redef]
+        """Alert severity levels for freshness violations."""
+
+        WARNING = "warning"
+        CRITICAL = "critical"
 
 
 @dataclass
@@ -245,9 +248,9 @@ class FreshnessAlert:
         """
         timestamp_ms = int(self.alert_time.timestamp() * 1000)
         return (
-            f'dataset_freshness_sla_violations_total'
+            f"dataset_freshness_sla_violations_total"
             f'{{dataset_id="{self.dataset_id}",severity="{self.severity.value}"}} '
-            f'1 {timestamp_ms}'
+            f"1 {timestamp_ms}"
         )
 
     def to_slack_json(self) -> dict:
@@ -461,7 +464,9 @@ class FreshnessTracker:
             True
         """
         if expected_frequency_hours <= 0:
-            raise ValueError(f"expected_frequency_hours must be positive, got {expected_frequency_hours}")
+            raise ValueError(
+                f"expected_frequency_hours must be positive, got {expected_frequency_hours}"
+            )
 
         # Default SLA: 2x expected frequency
         sla_threshold = sla_threshold_hours or (expected_frequency_hours * 2)
@@ -657,7 +662,7 @@ class FreshnessTracker:
         ]
 
         sla_report = self.compute_freshness_sla_pct()
-        lines.append(f'dataset_freshness_sla_compliance_pct {sla_report["compliance_pct"]}')
+        lines.append(f"dataset_freshness_sla_compliance_pct {sla_report['compliance_pct']}")
 
         lines.extend(
             [

@@ -14,7 +14,7 @@ description: Identify distinct customer or user segments based on behavior, attr
 1. **Define segmentation goal** — clarify which business decision the segments will support; this determines variable selection and acceptable segment count (typically 3–7)
 2. **Select segmentation variables** — choose 3–7 attributes or behaviours with meaningful variation; prepare data (scale numeric variables, encode categoricals, handle nulls)
 3. **Run segmentation** — use `scripts/segmentation_engine.py` supporting k-means clustering (for numeric behavioural data) or rule-based segmentation (for business-defined groups); validate with silhouette score > 0.3 for clustering
-4. **Profile each segment** — calculate mean/median metrics per segment as % deviation from overall average; use `scripts/segment_profiler.py`
+4. **Profile each segment** — calculate mean/median metrics per segment as % deviation from overall average; use `scripts/segment_builder.py`
 5. **Name and describe segments** — assign descriptive names based on 2–3 defining characteristics; reference `references/segment_naming_conventions.md`
 6. **Produce recommendations** — for each segment, recommend a strategic action: Retain & Expand, Monetise, Activate, Win-Back, or Sunset; fill `assets/segment_profiles_template.md`
 
@@ -27,5 +27,6 @@ description: Identify distinct customer or user segments based on behavior, attr
 
 # Output
 - `scripts/segmentation_engine.py` — k-means or rule-based segmentation with validation
+- `scripts/segment_builder.py` — per-segment profiling: mean/median metrics and top borough per segment
 - `references/segment_naming_conventions.md` — naming patterns and anti-patterns
 - `assets/segment_profiles_template.md` (filled) — per-segment profiles with size, defining metrics, and strategic recommendations

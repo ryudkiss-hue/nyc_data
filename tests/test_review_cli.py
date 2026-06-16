@@ -46,4 +46,3 @@ def test_review_cli_set_list_export(tmp_path: Path, monkeypatch) -> None:
     assert r3.exit_code == 0
     assert (pack / "decisions_export.xlsx").exists()
     assert (pack / "decisions_summary.md").exists()
-

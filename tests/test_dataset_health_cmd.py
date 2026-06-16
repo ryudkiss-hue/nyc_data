@@ -1,4 +1,5 @@
 """Test suite for dataset health CLI command (Unit 4)."""
+
 from __future__ import annotations
 
 from pathlib import Path

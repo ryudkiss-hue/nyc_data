@@ -1,4 +1,5 @@
 """Comprehensive tests for core.exporters module."""
+
 from __future__ import annotations
 
 import sys
@@ -22,11 +23,13 @@ class TestXLSXExporter:
     def test_write_dataframe(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             exporter = XLSXExporter()
-            df = pd.DataFrame({
-                "id": [1, 2, 3],
-                "name": ["Alice", "Bob", "Charlie"],
-                "value": [10.5, 20.3, 30.1],
-            })
+            df = pd.DataFrame(
+                {
+                    "id": [1, 2, 3],
+                    "name": ["Alice", "Bob", "Charlie"],
+                    "value": [10.5, 20.3, 30.1],
+                }
+            )
             path = Path(tmpdir) / "test.xlsx"
             exporter.write(df, str(path))
 
@@ -61,6 +64,7 @@ class TestXLSXExporter:
             assert path.exists()
             # Load the workbook to verify freeze panes was set
             from openpyxl import load_workbook
+
             wb = load_workbook(str(path))
             ws = wb["Data"]
             assert ws.freeze_panes == "A2"
@@ -68,15 +72,18 @@ class TestXLSXExporter:
     def test_write_with_auto_filter(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             exporter = XLSXExporter()
-            df = pd.DataFrame({
-                "id": [1, 2, 3],
-                "name": ["Alice", "Bob", "Charlie"],
-            })
+            df = pd.DataFrame(
+                {
+                    "id": [1, 2, 3],
+                    "name": ["Alice", "Bob", "Charlie"],
+                }
+            )
             path = Path(tmpdir) / "test.xlsx"
             exporter.write(df, str(path), auto_filter=True)
 
             assert path.exists()
             from openpyxl import load_workbook
+
             wb = load_workbook(str(path))
             ws = wb["Data"]
             # auto_filter.ref should be set

@@ -1,4 +1,5 @@
 """Comprehensive tests for analyst.explore module."""
+
 from __future__ import annotations
 
 import pandas as pd
@@ -66,64 +67,78 @@ class TestPreviewPriority:
         assert result.empty
 
     def test_preview_priority_basic(self):
-        df = pd.DataFrame({
-            "id": [1, 2, 3],
-            "borough": ["MN", "BX", "MN"],
-            "severity_rating": [5, 3, 4],
-        })
+        df = pd.DataFrame(
+            {
+                "id": [1, 2, 3],
+                "borough": ["MN", "BX", "MN"],
+                "severity_rating": [5, 3, 4],
+            }
+        )
         result = preview_priority(df, top_n=2)
         assert len(result) <= 2
 
     def test_preview_priority_with_borough_filter(self):
-        df = pd.DataFrame({
-            "id": [1, 2, 3, 4],
-            "borough": ["MN", "BX", "MN", "QN"],
-            "severity_rating": [5, 3, 4, 2],
-        })
+        df = pd.DataFrame(
+            {
+                "id": [1, 2, 3, 4],
+                "borough": ["MN", "BX", "MN", "QN"],
+                "severity_rating": [5, 3, 4, 2],
+            }
+        )
         result = preview_priority(df, borough="MN")
         assert all(result["borough"].str.upper() == "MN")
 
     def test_preview_priority_with_ada_only(self):
-        df = pd.DataFrame({
-            "id": [1, 2, 3],
-            "ada_flag": [True, False, True],
-            "severity_rating": [5, 3, 4],
-        })
+        df = pd.DataFrame(
+            {
+                "id": [1, 2, 3],
+                "ada_flag": [True, False, True],
+                "severity_rating": [5, 3, 4],
+            }
+        )
         result = preview_priority(df, ada_only=True)
         assert all(result["ada_flag"])
 
     def test_preview_priority_with_conflicts_only(self):
-        df = pd.DataFrame({
-            "id": [1, 2, 3],
-            "_has_conflict": [True, False, True],
-            "severity_rating": [5, 3, 4],
-        })
+        df = pd.DataFrame(
+            {
+                "id": [1, 2, 3],
+                "_has_conflict": [True, False, True],
+                "severity_rating": [5, 3, 4],
+            }
+        )
         result = preview_priority(df, conflicts_only=True)
         assert all(result["_has_conflict"])
 
     def test_preview_priority_top_n_respected(self):
-        df = pd.DataFrame({
-            "id": list(range(100)),
-            "severity_rating": list(range(100)),
-        })
+        df = pd.DataFrame(
+            {
+                "id": list(range(100)),
+                "severity_rating": list(range(100)),
+            }
+        )
         result = preview_priority(df, top_n=10)
         assert len(result) == 10
 
     def test_preview_priority_case_insensitive_borough(self):
-        df = pd.DataFrame({
-            "id": [1, 2, 3],
-            "borough": ["manhattan", "brooklyn", "manhattan"],
-            "severity_rating": [5, 3, 4],
-        })
+        df = pd.DataFrame(
+            {
+                "id": [1, 2, 3],
+                "borough": ["manhattan", "brooklyn", "manhattan"],
+                "severity_rating": [5, 3, 4],
+            }
+        )
         result = preview_priority(df, borough="MN")
         assert len(result) > 0 or len(result) == 0  # May not match depending on normalization
 
     def test_preview_priority_all_borough(self):
-        df = pd.DataFrame({
-            "id": [1, 2, 3],
-            "borough": ["MN", "BX", "BK"],
-            "severity_rating": [5, 3, 4],
-        })
+        df = pd.DataFrame(
+            {
+                "id": [1, 2, 3],
+                "borough": ["MN", "BX", "BK"],
+                "severity_rating": [5, 3, 4],
+            }
+        )
         result = preview_priority(df, borough="ALL")
         assert len(result) <= 3
 
@@ -132,28 +147,34 @@ class TestBoroughBarCounts:
     """Tests for borough_bar_counts function."""
 
     def test_borough_bar_counts_basic(self):
-        df = pd.DataFrame({
-            "borough": ["MN", "MN", "BX", "BX", "BX"],
-            "_priority_score": [10, 20, 30, 40, 50],
-        })
+        df = pd.DataFrame(
+            {
+                "borough": ["MN", "MN", "BX", "BX", "BX"],
+                "_priority_score": [10, 20, 30, 40, 50],
+            }
+        )
         result = borough_bar_counts(df)
         assert isinstance(result, dict)
         assert "MN" in result
         assert "BX" in result
 
     def test_borough_bar_counts_mean_calculation(self):
-        df = pd.DataFrame({
-            "borough": ["MN", "MN"],
-            "_priority_score": [10, 20],
-        })
+        df = pd.DataFrame(
+            {
+                "borough": ["MN", "MN"],
+                "_priority_score": [10, 20],
+            }
+        )
         result = borough_bar_counts(df)
         assert result["MN"] == pytest.approx(15.0)
 
     def test_borough_bar_counts_custom_score_col(self):
-        df = pd.DataFrame({
-            "borough": ["MN", "BX"],
-            "custom_score": [100, 200],
-        })
+        df = pd.DataFrame(
+            {
+                "borough": ["MN", "BX"],
+                "custom_score": [100, 200],
+            }
+        )
         result = borough_bar_counts(df, score_col="custom_score")
         assert "MN" in result
         assert result["MN"] == 100
@@ -169,10 +190,12 @@ class TestBoroughBarCounts:
         assert isinstance(result, dict)
 
     def test_borough_bar_counts_single_borough(self):
-        df = pd.DataFrame({
-            "borough": ["MN", "MN", "MN"],
-            "_priority_score": [5, 10, 15],
-        })
+        df = pd.DataFrame(
+            {
+                "borough": ["MN", "MN", "MN"],
+                "_priority_score": [5, 10, 15],
+            }
+        )
         result = borough_bar_counts(df)
         assert "MN" in result
         assert result["MN"] == pytest.approx(10.0)

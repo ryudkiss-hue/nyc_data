@@ -18,7 +18,6 @@ DATABASE_URL = os.getenv(
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 API_KEY = os.getenv("API_KEY", "sk_test_demo_admin_abc123")
 
-
 def _integration_services_available() -> bool:
     """Return True when Postgres and the API are reachable (Docker stack up)."""
     try:
@@ -32,12 +31,10 @@ def _integration_services_available() -> bool:
     except Exception:
         return False
 
-
 pytestmark = pytest.mark.skipif(
     not _integration_services_available(),
     reason="Docker integration services not available on localhost",
 )
-
 
 class TestDatabaseConnectivity:
     """PostgreSQL connectivity and health checks"""
@@ -129,7 +126,6 @@ class TestDatabaseConnectivity:
         cursor.close()
         conn.close()
 
-
 class TestAPIHealthAndConnectivity:
     """API service health checks"""
 
@@ -151,7 +147,6 @@ class TestAPIHealthAndConnectivity:
         response = requests.get(f"{API_BASE_URL}/redoc", timeout=10)
         assert response.status_code == 200, "ReDoc not accessible"
 
-
 class TestAPIAuthentication:
     """API authentication and authorization tests"""
 
@@ -167,7 +162,6 @@ class TestAPIAuthentication:
         """Test that requests without API key are rejected"""
         response = requests.get(f"{API_BASE_URL}/api/v1/sidewalk_inspections?limit=1", timeout=10)
         assert response.status_code in [401, 403], "Missing API key should be rejected"
-
 
 class TestAPIDataEndpoints:
     """Test API data query endpoints"""
@@ -238,7 +232,6 @@ class TestAPIDataEndpoints:
             # Filter may not be strictly enforced in mock, so just check structure
             assert "inspection_id" in record
 
-
 class TestDataIntegrity:
     """Test data integrity and consistency"""
 
@@ -280,7 +273,6 @@ class TestDataIntegrity:
 
         cursor.close()
         conn.close()
-
 
 class TestObservability:
     """Test observability features"""
@@ -337,7 +329,6 @@ class TestObservability:
         cursor.close()
         conn.close()
 
-
 class TestServiceInteraction:
     """Test integration between services"""
 
@@ -363,7 +354,6 @@ class TestServiceInteraction:
 
         # Should be the same (or at least close)
         assert api_count == db_count, f"API count ({api_count}) != DB count ({db_count})"
-
 
 class TestPerformance:
     """Performance and timing tests"""
@@ -399,7 +389,6 @@ class TestPerformance:
 
         cursor.close()
         conn.close()
-
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

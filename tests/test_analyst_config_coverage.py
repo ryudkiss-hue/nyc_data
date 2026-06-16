@@ -1,4 +1,5 @@
 """Comprehensive tests for analyst.config module."""
+
 from __future__ import annotations
 
 import tempfile

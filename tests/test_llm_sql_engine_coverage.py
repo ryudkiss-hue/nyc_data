@@ -21,7 +21,6 @@ import pytest
 # Inject stub modules for missing optional dependencies
 # ---------------------------------------------------------------------------
 
-
 def _inject_langchain_stubs() -> None:
     """Create minimal fake langchain_core and psycopg stubs."""
     for mod_name in [
@@ -64,7 +63,6 @@ def _inject_langchain_stubs() -> None:
         sys.modules["psycopg"] = psycopg_mod
         sys.modules["psycopg.sql"] = sql_submod
 
-
 _inject_langchain_stubs()
 
 from socrata_toolkit.llm.sql_engine import (  # noqa: E402
@@ -77,7 +75,6 @@ from socrata_toolkit.llm.sql_engine import (  # noqa: E402
 # ---------------------------------------------------------------------------
 # Shared fixtures
 # ---------------------------------------------------------------------------
-
 
 @pytest.fixture()
 def mock_psycopg_connect():
@@ -99,13 +96,11 @@ def mock_psycopg_connect():
         ]
         yield mock_conn, cursor
 
-
 @pytest.fixture()
 def mock_llm():
     """Return a mock LangChain BaseLanguageModel."""
     llm = MagicMock()
     return llm
-
 
 @pytest.fixture()
 def engine(mock_psycopg_connect, mock_llm):
@@ -113,11 +108,9 @@ def engine(mock_psycopg_connect, mock_llm):
     mock_conn, cursor = mock_psycopg_connect
     return SQLQueryEngine(dsn="postgresql://test/db", llm=mock_llm)
 
-
 # ---------------------------------------------------------------------------
 # QueryExecution dataclass
 # ---------------------------------------------------------------------------
-
 
 class TestQueryExecution:
     """Tests for the QueryExecution dataclass."""
@@ -167,11 +160,9 @@ class TestQueryExecution:
         )
         assert qe.error == "connection refused"
 
-
 # ---------------------------------------------------------------------------
 # SQLQueryEngine initialisation
 # ---------------------------------------------------------------------------
-
 
 class TestSQLQueryEngineInit:
     """Tests for SQLQueryEngine construction and schema loading."""
@@ -213,11 +204,9 @@ class TestSQLQueryEngineInit:
         """explain is enabled by default."""
         assert engine.enable_explain is True
 
-
 # ---------------------------------------------------------------------------
 # SQLQueryEngine._get_schema_context
 # ---------------------------------------------------------------------------
-
 
 class TestGetSchemaContext:
     """Tests for the schema formatting helper."""
@@ -250,11 +239,9 @@ class TestGetSchemaContext:
         assert "amount" in result
         assert "numeric" in result
 
-
 # ---------------------------------------------------------------------------
 # SQLQueryEngine.translate_to_sql
 # ---------------------------------------------------------------------------
-
 
 class TestTranslateToSQL:
     """Tests for natural-language-to-SQL translation."""
@@ -312,11 +299,9 @@ class TestTranslateToSQL:
             sql = sql[:-3]
         assert sql.strip() == "SELECT 2"
 
-
 # ---------------------------------------------------------------------------
 # SQLQueryEngine.validate_query
 # ---------------------------------------------------------------------------
-
 
 class TestValidateQuery:
     """Tests for the SQL safety validator."""
@@ -363,11 +348,9 @@ class TestValidateQuery:
         assert ok is False
         assert "validation failed" in msg.lower()
 
-
 # ---------------------------------------------------------------------------
 # SQLQueryEngine.execute
 # ---------------------------------------------------------------------------
-
 
 class TestExecute:
     """Tests for the main execute() method."""
@@ -427,11 +410,9 @@ class TestExecute:
         assert result.error is not None
         assert "boom" in result.error
 
-
 # ---------------------------------------------------------------------------
 # SQLQueryEngine.get_execution_history
 # ---------------------------------------------------------------------------
-
 
 class TestGetExecutionHistory:
     """Tests for the history accessor."""
@@ -452,11 +433,9 @@ class TestGetExecutionHistory:
         assert len(last5) == 5
         assert last5[-1].natural_language == "q14"
 
-
 # ---------------------------------------------------------------------------
 # SQLQueryEngine.explain_table
 # ---------------------------------------------------------------------------
-
 
 class TestExplainTable:
     """Tests for explain_table()."""
@@ -482,11 +461,9 @@ class TestExplainTable:
         assert isinstance(result, str)
         assert result == "This table stores permits."
 
-
 # ---------------------------------------------------------------------------
 # InteractiveQuerySession
 # ---------------------------------------------------------------------------
-
 
 class TestInteractiveQuerySession:
     """Tests for the conversational session wrapper."""
@@ -540,11 +517,9 @@ class TestInteractiveQuerySession:
         ctx = session._build_context()
         assert "q0" in ctx or "q1" in ctx
 
-
 # ---------------------------------------------------------------------------
 # QueryOptimizer
 # ---------------------------------------------------------------------------
-
 
 class TestQueryOptimizer:
     """Tests for QueryOptimizer LLM wrappers."""

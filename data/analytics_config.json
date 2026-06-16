@@ -1,0 +1,33 @@
+{
+  "universal_marts": [
+    {
+      "name": "raw_counts_summary",
+      "datasets": ["all"],
+      "query": "SELECT dataset, COUNT(*) as row_count FROM raw.{dataset} GROUP BY 1"
+    }
+  ],
+  "role1_marts": [
+    {
+      "name": "sidewalk_repair_matrix",
+      "datasets": ["inspection", "violations", "built"],
+      "description": "Sidewalk condition by material × borough for contract planning"
+    },
+    {
+      "name": "construction_conflict_index",
+      "datasets": ["permits", "inspection"],
+      "description": "Spatial conflict matrix for scheduling"
+    }
+  ],
+  "role2_marts": [
+    {
+      "name": "ramp_completion_rates",
+      "datasets": ["ramp_progress"],
+      "description": "Ramp completion by borough with Wilson Score CI"
+    },
+    {
+      "name": "accessibility_coverage_heatmap",
+      "datasets": ["ramp_locations", "pedestrian_demand", "mappluto"],
+      "description": "Geographic × demographic accessibility gaps"
+    }
+  ]
+}

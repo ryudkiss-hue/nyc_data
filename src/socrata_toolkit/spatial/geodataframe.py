@@ -26,7 +26,6 @@ except ImportError:
     load_wkt = None
     HAS_GEOPANDAS = False
 
-
 def _parse_geom_value(val: Any):
     """Parse a single the_geom value — WKT string, GeoJSON dict, or JSON string."""
     if val is None or (isinstance(val, float) and pd.isna(val)):
@@ -58,7 +57,6 @@ def _parse_geom_value(val: Any):
         except Exception:
             return None
     return None
-
 
 def geodataframe_from_socrata(
     df: pd.DataFrame,
@@ -100,7 +98,6 @@ def geodataframe_from_socrata(
         gdf = gdf[gdf.geometry.notna()].reset_index(drop=True)
     return gdf
 
-
 def spatial_join_socrata(
     left_df: pd.DataFrame,
     right_df: pd.DataFrame,
@@ -129,7 +126,6 @@ def spatial_join_socrata(
     left_gdf = geodataframe_from_socrata(left_df, geom_col=left_geom_col, crs=crs)
     right_gdf = geodataframe_from_socrata(right_df, geom_col=right_geom_col, crs=crs)
     return gpd.sjoin(left_gdf, right_gdf, how=how, predicate=predicate)
-
 
 def detect_conflicts_geopandas(
     inspections: pd.DataFrame,
@@ -169,20 +165,17 @@ def detect_conflicts_geopandas(
     conflicts = gpd.sjoin(insp_proj, perm_proj, how="inner", predicate="intersects")
     return conflicts.to_crs("EPSG:4326")
 
-
 def to_geojson(gdf: gpd.GeoDataFrame) -> str:
     """Serialize a GeoDataFrame to a GeoJSON string."""
     if not HAS_GEOPANDAS:
         raise ImportError("geopandas is required.")
     return gdf.to_json()
 
-
 def to_wkt_column(gdf: gpd.GeoDataFrame, geom_col: str = "geometry") -> pd.Series:
     """Return a WKT string Series from the GeoDataFrame geometry column."""
     if not HAS_GEOPANDAS:
         raise ImportError("geopandas is required.")
     return gdf[geom_col].apply(lambda g: g.wkt if g is not None else None)
-
 
 def spatial_stats(gdf) -> dict:
     """Compute summary spatial statistics for a GeoDataFrame.

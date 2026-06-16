@@ -123,7 +123,6 @@ def _fetch_live_kpi_data() -> dict:
 
     return result
 
-
 def _make_live_kpis_fragment():
     """Build and return the live-KPI render function.
 
@@ -186,10 +185,8 @@ def _make_live_kpis_fragment():
         return st.fragment(run_every=300)(_render_live_kpis_inner)
     return _render_live_kpis_inner
 
-
 # Build the fragment once at module import so we reuse the decorated version.
 render_live_kpis = _make_live_kpis_fragment()
-
 
 # ---------------------------------------------------------------------------
 # Home page
@@ -203,7 +200,6 @@ def _format_age(path_mtime: float) -> str:
     if age_sec < 86400:
         return f"{int(age_sec / 3600)}h ago"
     return f"{int(age_sec / 86400)}d ago"
-
 
 def render_home_page() -> None:
     st.subheader(t("welcome"))

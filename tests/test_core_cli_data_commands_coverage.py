@@ -8,7 +8,7 @@ so we patch those in ``socrata_toolkit.core.cli`` and feed mock HTTP responses.
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -33,22 +33,24 @@ def _resp(json_value, ok=True):
 
 REGISTRY = {"inspection": {"fourfour": "dntt-gqwq"}}
 
-
 # ---------------------------------------------------------------------------
 # dataset health
 # ---------------------------------------------------------------------------
 
+
 class TestDatasetHealth:
     def test_health_ok(self, runner):
-        now_ts = int(datetime.utcnow().timestamp())
+        now_ts = int(datetime.now(timezone.utc).timestamp())
         session = MagicMock()
         # SODA3 count is fetched via session.post; metadata via session.get.
         session.post.return_value = _resp([{"c": "100"}])
         session.get.side_effect = [
-            _resp({"rowsUpdatedAt": now_ts}),            # metadata (fresh)
+            _resp({"rowsUpdatedAt": now_ts}),  # metadata (fresh)
         ]
-        with patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=REGISTRY), \
-             patch("socrata_toolkit.core.cli._make_session", return_value=session):
+        with (
+            patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=REGISTRY),
+            patch("socrata_toolkit.core.cli._make_session", return_value=session),
+        ):
             result = runner.invoke(main, ["dataset", "health", "--key", "inspection"])
         assert result.exit_code == 0
         assert "inspection" in result.output
@@ -56,12 +58,14 @@ class TestDatasetHealth:
 
     def test_health_empty_dataset_exits_nonzero(self, runner):
         session = MagicMock()
-        session.post.return_value = _resp([{"c": "0"}])    # count = 0 -> empty
+        session.post.return_value = _resp([{"c": "0"}])  # count = 0 -> empty
         session.get.side_effect = [
-            _resp({"rowsUpdatedAt": int(datetime.utcnow().timestamp())}),
+            _resp({"rowsUpdatedAt": int(datetime.now(timezone.utc).timestamp())}),
         ]
-        with patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=REGISTRY), \
-             patch("socrata_toolkit.core.cli._make_session", return_value=session):
+        with (
+            patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=REGISTRY),
+            patch("socrata_toolkit.core.cli._make_session", return_value=session),
+        ):
             result = runner.invoke(main, ["dataset", "health", "--key", "inspection"])
         assert result.exit_code == 1
         assert "empty" in result.output
@@ -71,18 +75,24 @@ class TestDatasetHealth:
         session = MagicMock()
         session.post.return_value = _resp([{"c": "50"}])
         session.get.side_effect = [
-            _resp({"rowsUpdatedAt": old_ts}),            # very old -> stale
+            _resp({"rowsUpdatedAt": old_ts}),  # very old -> stale
         ]
-        with patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=REGISTRY), \
-             patch("socrata_toolkit.core.cli._make_session", return_value=session):
-            result = runner.invoke(main, ["dataset", "health", "--key", "inspection", "--stale", "7"])
+        with (
+            patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=REGISTRY),
+            patch("socrata_toolkit.core.cli._make_session", return_value=session),
+        ):
+            result = runner.invoke(
+                main, ["dataset", "health", "--key", "inspection", "--stale", "7"]
+            )
         assert result.exit_code == 1
         assert "stale" in result.output
 
     def test_health_unknown_key(self, runner):
         session = MagicMock()
-        with patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=REGISTRY), \
-             patch("socrata_toolkit.core.cli._make_session", return_value=session):
+        with (
+            patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=REGISTRY),
+            patch("socrata_toolkit.core.cli._make_session", return_value=session),
+        ):
             result = runner.invoke(main, ["dataset", "health", "--key", "nonexistent"])
         assert "unknown_key" in result.output
         session.get.assert_not_called()
@@ -92,8 +102,10 @@ class TestDatasetHealth:
 
         session = MagicMock()
         session.get.side_effect = requests.RequestException("boom")
-        with patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=REGISTRY), \
-             patch("socrata_toolkit.core.cli._make_session", return_value=session):
+        with (
+            patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=REGISTRY),
+            patch("socrata_toolkit.core.cli._make_session", return_value=session),
+        ):
             result = runner.invoke(main, ["dataset", "health", "--key", "inspection"])
         assert result.exit_code == 1
         assert "error" in result.output
@@ -102,10 +114,12 @@ class TestDatasetHealth:
         session = MagicMock()
         session.get.side_effect = [
             _resp([{"c": "0"}]),
-            _resp({"rowsUpdatedAt": int(datetime.utcnow().timestamp())}),
+            _resp({"rowsUpdatedAt": int(datetime.now(timezone.utc).timestamp())}),
         ]
-        with patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=REGISTRY), \
-             patch("socrata_toolkit.core.cli._make_session", return_value=session):
+        with (
+            patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=REGISTRY),
+            patch("socrata_toolkit.core.cli._make_session", return_value=session),
+        ):
             result = runner.invoke(main, ["dataset", "health", "--key", "inspection", "--empty"])
         # empty dataset shown, exit 1 due to empty status
         assert result.exit_code == 1
@@ -114,10 +128,12 @@ class TestDatasetHealth:
         session = MagicMock()
         session.post.return_value = _resp([{"c": "100"}])
         session.get.side_effect = [
-            _resp({"rowsUpdatedAt": int(datetime.utcnow().timestamp())}),
+            _resp({"rowsUpdatedAt": int(datetime.now(timezone.utc).timestamp())}),
         ]
-        with patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=REGISTRY), \
-             patch("socrata_toolkit.core.cli._make_session", return_value=session):
+        with (
+            patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=REGISTRY),
+            patch("socrata_toolkit.core.cli._make_session", return_value=session),
+        ):
             result = runner.invoke(
                 main, ["dataset", "health", "--key", "inspection", "--sort-by", "size"]
             )
@@ -127,6 +143,7 @@ class TestDatasetHealth:
 # ---------------------------------------------------------------------------
 # conflict-detect
 # ---------------------------------------------------------------------------
+
 
 class TestConflictDetect:
     def test_conflict_detect_with_duplicates(self, runner):
@@ -165,8 +182,10 @@ class TestConflictDetect:
         out = tmp_path / "conflicts.geojson"
         session = MagicMock()
         session.get.return_value = _resp(rows)
-        with patch("socrata_toolkit.core.cli._make_session", return_value=session), \
-             patch("socrata_toolkit.core.cli.HAS_GEOPANDAS", False):
+        with (
+            patch("socrata_toolkit.core.cli._make_session", return_value=session),
+            patch("socrata_toolkit.core.cli.HAS_GEOPANDAS", False),
+        ):
             result = runner.invoke(main, ["conflict-detect", "--output", str(out)])
         assert result.exit_code == 0
         assert out.exists()
@@ -175,6 +194,7 @@ class TestConflictDetect:
 # ---------------------------------------------------------------------------
 # cache refresh
 # ---------------------------------------------------------------------------
+
 
 class TestCacheRefresh:
     def test_cache_refresh_no_dir(self, runner, tmp_path, monkeypatch):
@@ -205,14 +225,17 @@ class TestCacheRefresh:
 # export
 # ---------------------------------------------------------------------------
 
+
 class TestExport:
     def test_export_csv(self, runner, tmp_path):
         rows = [{"id": 1, "v": "a"}, {"id": 2, "v": "b"}]
         out = tmp_path / "out.csv"
         session = MagicMock()
         session.get.return_value = _resp(rows)
-        with patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=REGISTRY), \
-             patch("socrata_toolkit.core.cli._make_session", return_value=session):
+        with (
+            patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=REGISTRY),
+            patch("socrata_toolkit.core.cli._make_session", return_value=session),
+        ):
             result = runner.invoke(
                 main, ["export", "inspection", "--format", "csv", "--output", str(out)]
             )
@@ -225,8 +248,10 @@ class TestExport:
         out = tmp_path / "out.parquet"
         session = MagicMock()
         session.get.return_value = _resp(rows)
-        with patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=REGISTRY), \
-             patch("socrata_toolkit.core.cli._make_session", return_value=session):
+        with (
+            patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=REGISTRY),
+            patch("socrata_toolkit.core.cli._make_session", return_value=session),
+        ):
             result = runner.invoke(
                 main, ["export", "inspection", "--format", "parquet", "--output", str(out)]
             )
@@ -243,11 +268,20 @@ class TestExport:
         assert "not found" in result.output
 
     def test_export_geojson_without_geopandas(self, runner, tmp_path):
-        with patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=REGISTRY), \
-             patch("socrata_toolkit.core.cli.HAS_GEOPANDAS", False):
+        with (
+            patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=REGISTRY),
+            patch("socrata_toolkit.core.cli.HAS_GEOPANDAS", False),
+        ):
             result = runner.invoke(
                 main,
-                ["export", "inspection", "--format", "geojson", "--output", str(tmp_path / "x.geojson")],
+                [
+                    "export",
+                    "inspection",
+                    "--format",
+                    "geojson",
+                    "--output",
+                    str(tmp_path / "x.geojson"),
+                ],
             )
         assert result.exit_code != 0
         assert "geopandas is required" in result.output
@@ -257,10 +291,13 @@ class TestExport:
 
         session = MagicMock()
         session.get.side_effect = requests.RequestException("fail")
-        with patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=REGISTRY), \
-             patch("socrata_toolkit.core.cli._make_session", return_value=session):
+        with (
+            patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=REGISTRY),
+            patch("socrata_toolkit.core.cli._make_session", return_value=session),
+        ):
             result = runner.invoke(
-                main, ["export", "inspection", "--format", "csv", "--output", str(tmp_path / "x.csv")]
+                main,
+                ["export", "inspection", "--format", "csv", "--output", str(tmp_path / "x.csv")],
             )
         assert result.exit_code != 0
 
@@ -268,6 +305,7 @@ class TestExport:
 # ---------------------------------------------------------------------------
 # nl-query (anthropic gating)
 # ---------------------------------------------------------------------------
+
 
 class TestNlQuery:
     def test_nl_query_without_anthropic(self, runner):

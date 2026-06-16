@@ -31,6 +31,7 @@ def _resp(json_value):
 # conflict
 # ---------------------------------------------------------------------------
 
+
 class TestConflictCommand:
     def test_no_proposed_source(self, runner):
         with patch("socrata_toolkit.core.cli._client", return_value=MagicMock()):
@@ -54,11 +55,21 @@ class TestConflictCommand:
         resolver = MagicMock()
         summary = SimpleNamespace(conflict_count=1, total=1)
         resolver.resolve_conflicts.return_value = (pd.DataFrame({"a": [1]}), summary)
-        with patch("socrata_toolkit.core.cli._client", return_value=MagicMock()), \
-             patch("socrata_toolkit.core.cli.ConflictResolver", return_value=resolver):
-            res = runner.invoke(main, [
-                "conflict", "--proposed-file", str(pf), "--ref-file", str(rf), "--dry-run",
-            ])
+        with (
+            patch("socrata_toolkit.core.cli._client", return_value=MagicMock()),
+            patch("socrata_toolkit.core.cli.ConflictResolver", return_value=resolver),
+        ):
+            res = runner.invoke(
+                main,
+                [
+                    "conflict",
+                    "--proposed-file",
+                    str(pf),
+                    "--ref-file",
+                    str(rf),
+                    "--dry-run",
+                ],
+            )
         assert res.exit_code == 0
         assert "Dry-run" in res.output
 
@@ -70,16 +81,31 @@ class TestConflictCommand:
         out_gj = tmp_path / "out.geojson"
         out_xlsx = tmp_path / "out.xlsx"
         resolver = MagicMock()
-        resolver.resolve_conflicts.return_value = (pd.DataFrame({"a": [1]}), SimpleNamespace(conflict_count=0))
+        resolver.resolve_conflicts.return_value = (
+            pd.DataFrame({"a": [1]}),
+            SimpleNamespace(conflict_count=0),
+        )
         resolver.export_geojson.return_value = {"type": "FeatureCollection", "features": []}
         resolver.generate_construction_list.return_value = pd.DataFrame({"loc": ["L1"]})
-        with patch("socrata_toolkit.core.cli._client", return_value=MagicMock()), \
-             patch("socrata_toolkit.core.cli.ConflictResolver", return_value=resolver), \
-             patch("socrata_toolkit.core.cli.XLSXExporter") as mock_xlsx:
-            res = runner.invoke(main, [
-                "conflict", "--proposed-file", str(pf), "--ref-file", str(rf),
-                "--out-geojson", str(out_gj), "--out-xlsx", str(out_xlsx),
-            ])
+        with (
+            patch("socrata_toolkit.core.cli._client", return_value=MagicMock()),
+            patch("socrata_toolkit.core.cli.ConflictResolver", return_value=resolver),
+            patch("socrata_toolkit.core.cli.XLSXExporter") as mock_xlsx,
+        ):
+            res = runner.invoke(
+                main,
+                [
+                    "conflict",
+                    "--proposed-file",
+                    str(pf),
+                    "--ref-file",
+                    str(rf),
+                    "--out-geojson",
+                    str(out_gj),
+                    "--out-xlsx",
+                    str(out_xlsx),
+                ],
+            )
         assert res.exit_code == 0
         assert out_gj.exists()
         assert "Wrote GeoJSON" in res.output
@@ -92,14 +118,29 @@ class TestConflictCommand:
             iter([[{"geometry": "POINT(0 0)"}]]),
         ]
         resolver = MagicMock()
-        resolver.resolve_conflicts.return_value = (pd.DataFrame(), SimpleNamespace(conflict_count=0))
-        with patch("socrata_toolkit.core.cli._client", return_value=client), \
-             patch("socrata_toolkit.core.cli.ConflictResolver", return_value=resolver):
-            res = runner.invoke(main, [
-                "conflict",
-                "--proposed-domain", "d", "--proposed-fourfour", "aaaa-1111",
-                "--ref-domain", "d", "--ref-fourfour", "bbbb-2222", "--dry-run",
-            ])
+        resolver.resolve_conflicts.return_value = (
+            pd.DataFrame(),
+            SimpleNamespace(conflict_count=0),
+        )
+        with (
+            patch("socrata_toolkit.core.cli._client", return_value=client),
+            patch("socrata_toolkit.core.cli.ConflictResolver", return_value=resolver),
+        ):
+            res = runner.invoke(
+                main,
+                [
+                    "conflict",
+                    "--proposed-domain",
+                    "d",
+                    "--proposed-fourfour",
+                    "aaaa-1111",
+                    "--ref-domain",
+                    "d",
+                    "--ref-fourfour",
+                    "bbbb-2222",
+                    "--dry-run",
+                ],
+            )
         assert res.exit_code == 0
         assert client.fetch_json.call_count == 2
 
@@ -108,18 +149,29 @@ class TestConflictCommand:
 # llm-augment
 # ---------------------------------------------------------------------------
 
+
 class TestLlmAugment:
     def test_llm_augment_writes_output(self, runner, tmp_path):
         client = MagicMock()
         client.fetch_json.return_value = iter([[{"id": 1, "description": "crack"}]])
         out = tmp_path / "augmented.json"
         tagged = pd.DataFrame({"id": [1], "description": ["crack"], "_llm_tag": ["surface"]})
-        with patch("socrata_toolkit.core.cli._client", return_value=client), \
-             patch("socrata_toolkit.core.cli.augment_dataframe_with_llm", return_value=tagged):
-            res = runner.invoke(main, [
-                "llm-augment", "data.cityofnewyork.us", "abc1-2345",
-                "--text-column", "description", "--out", str(out),
-            ])
+        with (
+            patch("socrata_toolkit.core.cli._client", return_value=client),
+            patch("socrata_toolkit.core.cli.augment_dataframe_with_llm", return_value=tagged),
+        ):
+            res = runner.invoke(
+                main,
+                [
+                    "llm-augment",
+                    "data.cityofnewyork.us",
+                    "abc1-2345",
+                    "--text-column",
+                    "description",
+                    "--out",
+                    str(out),
+                ],
+            )
         assert res.exit_code == 0
         assert out.exists()
         assert "LLM-augmented" in res.output
@@ -128,6 +180,7 @@ class TestLlmAugment:
 # ---------------------------------------------------------------------------
 # export geojson (geopandas)
 # ---------------------------------------------------------------------------
+
 
 class TestExportGeojson:
     REG = {"inspection": {"fourfour": "dntt-gqwq"}}
@@ -143,12 +196,22 @@ class TestExportGeojson:
         geojson_resp.text = json.dumps({"type": "FeatureCollection", "features": []})
         geojson_resp.raise_for_status = MagicMock()
         session.get.return_value = geojson_resp
-        with patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=self.REG), \
-             patch("socrata_toolkit.core.cli._make_session", return_value=session), \
-             patch("socrata_toolkit.core.cli.HAS_GEOPANDAS", True):
-            res = runner.invoke(main, [
-                "export", "inspection", "--format", "geojson", "--output", str(out),
-            ])
+        with (
+            patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=self.REG),
+            patch("socrata_toolkit.core.cli._make_session", return_value=session),
+            patch("socrata_toolkit.core.cli.HAS_GEOPANDAS", True),
+        ):
+            res = runner.invoke(
+                main,
+                [
+                    "export",
+                    "inspection",
+                    "--format",
+                    "geojson",
+                    "--output",
+                    str(out),
+                ],
+            )
         assert res.exit_code == 0
         assert out.exists()
         assert "GeoJSON written" in res.output
@@ -158,18 +221,29 @@ class TestExportGeojson:
 
         session = MagicMock()
         session.get.side_effect = requests.RequestException("fail")
-        with patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=self.REG), \
-             patch("socrata_toolkit.core.cli._make_session", return_value=session), \
-             patch("socrata_toolkit.core.cli.HAS_GEOPANDAS", True):
-            res = runner.invoke(main, [
-                "export", "inspection", "--format", "geojson", "--output", str(tmp_path / "x.geojson"),
-            ])
+        with (
+            patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=self.REG),
+            patch("socrata_toolkit.core.cli._make_session", return_value=session),
+            patch("socrata_toolkit.core.cli.HAS_GEOPANDAS", True),
+        ):
+            res = runner.invoke(
+                main,
+                [
+                    "export",
+                    "inspection",
+                    "--format",
+                    "geojson",
+                    "--output",
+                    str(tmp_path / "x.geojson"),
+                ],
+            )
         assert res.exit_code != 0
 
 
 # ---------------------------------------------------------------------------
 # nlp-analyze (keyword-triage shim)
 # ---------------------------------------------------------------------------
+
 
 class TestNlpAnalyze:
     def test_nlp_analyze_basic(self, runner):
@@ -180,7 +254,9 @@ class TestNlpAnalyze:
         assert "priority" in payload
 
     def test_nlp_analyze_with_translate(self, runner):
-        res = runner.invoke(main, ["nlp-analyze", "--text", "cracked sidewalk", "--translate", "es"])
+        res = runner.invoke(
+            main, ["nlp-analyze", "--text", "cracked sidewalk", "--translate", "es"]
+        )
         assert res.exit_code == 0
         payload = json.loads(res.output)
         assert "translation" in payload

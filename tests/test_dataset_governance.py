@@ -31,7 +31,10 @@ class TestFetchSocrataJson:
         mock_response.__enter__ = MagicMock(return_value=mock_response)
         mock_response.__exit__ = MagicMock(return_value=None)
 
-        monkeypatch.setattr("socrata_toolkit.governance.dataset_governance.urlopen", MagicMock(return_value=mock_response))
+        monkeypatch.setattr(
+            "socrata_toolkit.governance.dataset_governance.urlopen",
+            MagicMock(return_value=mock_response),
+        )
 
         result = _fetch_socrata_json("test-fourfour")
         assert result == mock_data
@@ -353,7 +356,15 @@ class TestRegistryAudit:
         )
         monkeypatch.setattr(
             "socrata_toolkit.governance.dataset_governance._fetch_ll251_metadata",
-            MagicMock(return_value={"dntt-gqwq": {"automation": True, "update_frequency": "daily", "removed_records": False}}),
+            MagicMock(
+                return_value={
+                    "dntt-gqwq": {
+                        "automation": True,
+                        "update_frequency": "daily",
+                        "removed_records": False,
+                    }
+                }
+            ),
         )
         monkeypatch.setattr(
             "socrata_toolkit.governance.dataset_governance._fetch_removal_list",

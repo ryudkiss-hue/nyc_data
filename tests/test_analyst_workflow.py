@@ -1,7 +1,5 @@
 """End-to-end tests for Analyst Autopilot workflow."""
 
-
-
 from __future__ import annotations
 
 import json
@@ -16,10 +14,6 @@ from socrata_toolkit.analyst.diff import diff_construction_lists
 
 FIXTURES = Path(__file__).parent / "fixtures" / "analyst"
 
-
-
-
-
 @pytest.fixture(scope="module", autouse=True)
 
 def _ensure_fixtures():
@@ -28,13 +22,7 @@ def _ensure_fixtures():
 
         from tests.fixtures.analyst.generate_fixtures import write_fixtures
 
-
-
         write_fixtures()
-
-
-
-
 
 @pytest.fixture
 
@@ -118,10 +106,6 @@ def analyst_profile(tmp_path) -> Path:
 
     return path
 
-
-
-
-
 def test_analyst_dry_run(analyst_profile):
 
     result = run_analyst_pack(analyst_profile, dry_run=True)
@@ -135,10 +119,6 @@ def test_analyst_dry_run(analyst_profile):
     assert "sources" in manifest
 
     assert manifest.get("toolkit_version")
-
-
-
-
 
 def test_analyst_pack_outputs(analyst_profile):
 
@@ -194,10 +174,6 @@ def test_analyst_pack_outputs(analyst_profile):
 
         assert "overall_health" in kpi_data
 
-
-
-
-
 def test_construction_diff(tmp_path):
 
     out = tmp_path / "pack"
@@ -213,10 +189,6 @@ def test_construction_diff(tmp_path):
     assert "L003" in md
 
     assert tagged.loc[tagged["location_id"] == "L003", "_wow_change"].iloc[0] == "new"
-
-
-
-
 
 def test_partial_failure_continues(tmp_path):
 
@@ -259,10 +231,6 @@ def test_partial_failure_continues(tmp_path):
     assert manifest["sources"]["inspections"]["status"] == "ok"
 
     assert (result.pack_dir / "construction_list.xlsx").exists()
-
-
-
-
 
 def test_offline_skips_socrata(tmp_path):
 
@@ -307,5 +275,4 @@ def test_offline_skips_socrata(tmp_path):
     result = run_analyst_pack(path, dry_run=True)
 
     assert any("offline" in w.lower() for w in result.warnings)
-
 

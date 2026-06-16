@@ -1,4 +1,5 @@
 """Focused tests for core.cli module - key commands only."""
+
 from __future__ import annotations
 
 import tempfile
@@ -70,11 +71,7 @@ class TestSearchCommand:
                 mock_client_fn.return_value = mock_client
                 mock_client.search.return_value = []
 
-                result = runner.invoke(main, [
-                    "search",
-                    "test",
-                    "--json-out", str(output_file)
-                ])
+                result = runner.invoke(main, ["search", "test", "--json-out", str(output_file)])
                 assert result.exit_code == 0
                 assert output_file.exists()
 
@@ -110,12 +107,9 @@ class TestMetaCommand:
             mock_meta.column_dict.return_value = [{"name": "col1"}]
             mock_client.get_metadata.return_value = mock_meta
 
-            result = runner.invoke(main, [
-                "meta",
-                "data.example.com",
-                "dntt-gqwq",
-                "--columns-only"
-            ])
+            result = runner.invoke(
+                main, ["meta", "data.example.com", "dntt-gqwq", "--columns-only"]
+            )
             assert result.exit_code == 0
 
 
@@ -134,11 +128,7 @@ class TestFetchCommand:
             mock_client_fn.return_value = mock_client
             mock_client.fetch_dataframe.return_value = MagicMock()
 
-            result = runner.invoke(main, [
-                "fetch",
-                "data.example.com",
-                "dntt-gqwq"
-            ])
+            result = runner.invoke(main, ["fetch", "data.example.com", "dntt-gqwq"])
             # Command invocation succeeds (doesn't crash) - exit codes 0, 1, 2 all acceptable
             assert result.exit_code in (0, 1, 2)
 
@@ -162,11 +152,7 @@ class TestQualityScoreCommand:
             with patch("socrata_toolkit.core.cli.quality_report") as mock_quality:
                 mock_quality.return_value = {"overall": 75}
 
-                result = runner.invoke(main, [
-                    "quality-score",
-                    "data.example.com",
-                    "dntt-gqwq"
-                ])
+                result = runner.invoke(main, ["quality-score", "data.example.com", "dntt-gqwq"])
                 # May pass or fail depending on dependencies
                 assert result.exit_code in (0, 1, 2)
 

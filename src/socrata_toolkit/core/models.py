@@ -14,7 +14,6 @@ class SearchResult:
     category: str | None = None
     tags: list[str] = field(default_factory=list)
 
-
 @dataclass
 class DatasetMetadata:
     domain: str

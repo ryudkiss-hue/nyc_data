@@ -7,6 +7,7 @@ These tests make real HTTP requests and are skipped automatically when:
 In CI the token is injected via repository secrets; tests only run when the
 runner can actually reach api.us.socrata.com / data.cityofnewyork.us.
 """
+
 from __future__ import annotations
 
 import os
@@ -44,7 +45,7 @@ NEEDS_VALID_TOKEN = pytest.mark.skipif(
 )
 
 DOMAIN = "data.cityofnewyork.us"
-RAMP_FOURFOUR = "e7gc-ub6z"     # Pedestrian Ramp Program Progress
+RAMP_FOURFOUR = "e7gc-ub6z"  # Pedestrian Ramp Program Progress
 INSPECTION_FOURFOUR = "dntt-gqwq"  # SMD Inspections
 
 

@@ -1,0 +1,125 @@
+{
+  "status": "success",
+  "generated_at": "2026-06-11T15:32:45.123456+00:00",
+  "data_summary": {
+    "total_items": 4256,
+    "complaints": 3124,
+    "correspondences": 1132,
+    "repeat_clusters": 287,
+    "repeat_issues": 67
+  },
+  "sentiment_dashboard": {
+    "tone_distribution": {
+      "FRUSTRATED": 1842,
+      "NEUTRAL": 1456,
+      "ANGRY": 512,
+      "RESIGNED": 312,
+      "HELPFUL": 134
+    },
+    "root_cause_distribution": {
+      "NEGLECT": 892,
+      "SLOW_RESPONSE": 756,
+      "POOR_QUALITY": 523,
+      "LACK_OF_FOLLOWUP": 412,
+      "OTHER": 1673
+    },
+    "impact_distribution": {
+      "HIGH": 412,
+      "MEDIUM": 1023,
+      "LOW": 2821
+    },
+    "avg_sentiment_score": -0.38,
+    "sentiment_trend": "NEGATIVE"
+  },
+  "high_impact_clusters": [
+    {
+      "address": "123 Main Street, Manhattan",
+      "root_cause": "NEGLECT",
+      "repeat_count": 12,
+      "avg_impact_score": 78.3,
+      "dominant_tone": "FRUSTRATED",
+      "avg_sentiment": -0.62
+    },
+    {
+      "address": "456 Park Avenue, Manhattan",
+      "root_cause": "SLOW_RESPONSE",
+      "repeat_count": 9,
+      "avg_impact_score": 71.2,
+      "dominant_tone": "ANGRY",
+      "avg_sentiment": -0.71
+    },
+    {
+      "address": "789 Broadway, Manhattan",
+      "root_cause": "POOR_QUALITY",
+      "repeat_count": 7,
+      "avg_impact_score": 65.8,
+      "dominant_tone": "RESIGNED",
+      "avg_sentiment": -0.58
+    },
+    {
+      "address": "101 5th Avenue, Manhattan",
+      "root_cause": "LACK_OF_FOLLOWUP",
+      "repeat_count": 6,
+      "avg_impact_score": 82.1,
+      "dominant_tone": "FRUSTRATED",
+      "avg_sentiment": -0.74
+    },
+    {
+      "address": "202 Wall Street, Manhattan",
+      "root_cause": "NEGLECT",
+      "repeat_count": 5,
+      "avg_impact_score": 68.9,
+      "dominant_tone": "FRUSTRATED",
+      "avg_sentiment": -0.55
+    },
+    {
+      "address": "303 Madison Avenue, Manhattan",
+      "root_cause": "SLOW_RESPONSE",
+      "repeat_count": 5,
+      "avg_impact_score": 64.2,
+      "dominant_tone": "RESIGNED",
+      "avg_sentiment": -0.45
+    },
+    {
+      "address": "404 Park Place, Brooklyn",
+      "root_cause": "POOR_QUALITY",
+      "repeat_count": 4,
+      "avg_impact_score": 72.5,
+      "dominant_tone": "ANGRY",
+      "avg_sentiment": -0.68
+    },
+    {
+      "address": "505 Court Street, Brooklyn",
+      "root_cause": "LACK_OF_FOLLOWUP",
+      "repeat_count": 4,
+      "avg_impact_score": 76.3,
+      "dominant_tone": "FRUSTRATED",
+      "avg_sentiment": -0.63
+    },
+    {
+      "address": "606 Lexington Avenue, Manhattan",
+      "root_cause": "NEGLECT",
+      "repeat_count": 3,
+      "avg_impact_score": 61.5,
+      "dominant_tone": "FRUSTRATED",
+      "avg_sentiment": -0.51
+    },
+    {
+      "address": "707 Queens Boulevard, Queens",
+      "root_cause": "SLOW_RESPONSE",
+      "repeat_count": 3,
+      "avg_impact_score": 69.7,
+      "dominant_tone": "ANGRY",
+      "avg_sentiment": -0.66
+    }
+  ],
+  "strategic_analysis": {
+    "status": "success",
+    "analysis": "Main drivers of dissatisfaction are city neglect of maintenance and slow response times, with residents expressing frustration over multi-month delays. Communication gaps are evident: 35% of high-impact complaints cite lack of follow-up or status updates. Recommended messaging: (1) Publish weekly 'repair progress' dashboard showing specific addresses under work, (2) Establish 48-hour response acknowledgment for safety-critical complaints, (3) Proactive outreach to repeat complainants with personalized updates. Consider targeting communications to Manhattan and Brooklyn where repeat issues cluster.",
+    "usage": {
+      "input_tokens": 287,
+      "output_tokens": 156
+    }
+  },
+  "errors": []
+}

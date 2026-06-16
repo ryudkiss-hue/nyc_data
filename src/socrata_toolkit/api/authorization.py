@@ -9,13 +9,11 @@ class Classification(Enum):
     SENSITIVE = "sensitive"
     RESTRICTED = "restricted"
 
-
 @dataclass
 class Resource:
     path: str
     resource_type: str
     classification: Classification
-
 
 @dataclass
 class DelegatedPermission:
@@ -25,7 +23,6 @@ class DelegatedPermission:
     resource_pattern: str
     granted_at: datetime
 
-
 @dataclass
 class Decision:
     allowed: bool
@@ -34,7 +31,6 @@ class Decision:
     action: str
     reason: str = ""
     roles_checked: list[str] = field(default_factory=list)
-
 
 class RBACEnforcer:
     def __init__(self):

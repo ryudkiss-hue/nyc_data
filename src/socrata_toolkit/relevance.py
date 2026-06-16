@@ -22,7 +22,6 @@ def build_weighted_rank_sql(text_columns: Iterable[str], text_query_param: str =
     sql = f"( (ts_rank(to_tsvector('english', {concat}), to_tsquery({text_query_param})) * {weight_text}) + (COALESCE(spatial_priority,0) * {weight_geo}) + ((GREATEST(0, date_part('day', now()::date - COALESCE(inspection_date, now()::date))) / 30.0) * {weight_age}) ) AS final_rank"
     return sql
 
-
 def websearch_to_tsquery_sql(param: str = "%s") -> str:
     """Return SQL expression that converts a websearch-style query to a tsquery.
 

@@ -20,7 +20,6 @@ def _quote_value(v: Any) -> str:
     s = s.replace("'", "''")
     return f"'{s}'"
 
-
 def in_clause(column: str, values: Iterable[Any]) -> str:
     """Build a safe IN(...) clause for SoQL.
 
@@ -32,7 +31,6 @@ def in_clause(column: str, values: Iterable[Any]) -> str:
     quoted = ",".join(_quote_value(v) for v in vals)
     return f"{column} IN ({quoted})"
 
-
 def like_clause(column: str, pattern: str) -> str:
     """Build a LIKE clause with safe quoting.
 
@@ -40,14 +38,11 @@ def like_clause(column: str, pattern: str) -> str:
     """
     return f"{column} LIKE {_quote_value(pattern)}"
 
-
 def equals_clause(column: str, value: Any) -> str:
     return f"{column} = {_quote_value(value)}"
 
-
 def and_join(clauses: Iterable[str]) -> str:
     return " AND ".join([c for c in clauses if c])
-
 
 def or_join(clauses: Iterable[str]) -> str:
     return " OR ".join([c for c in clauses if c])

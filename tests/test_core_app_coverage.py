@@ -1,4 +1,5 @@
 """Tests for core.app module - Database and environment helpers."""
+
 from __future__ import annotations
 
 import os
@@ -83,7 +84,9 @@ class TestGetEngine:
 
     def test_get_engine_creation_fails(self):
         """Test get_engine returns None when engine creation fails."""
-        with patch("socrata_toolkit.core.app.create_engine", side_effect=Exception("Connection failed")):
+        with patch(
+            "socrata_toolkit.core.app.create_engine", side_effect=Exception("Connection failed")
+        ):
             result = get_engine("postgresql://localhost/test")
             assert result is None
 
@@ -94,10 +97,12 @@ class TestListTables:
     def test_list_tables_success(self):
         """Test listing tables from database."""
         mock_engine = MagicMock(spec=Engine)
-        expected_df = pd.DataFrame({
-            "table_schema": ["public", "public"],
-            "table_name": ["users", "orders"],
-        })
+        expected_df = pd.DataFrame(
+            {
+                "table_schema": ["public", "public"],
+                "table_name": ["users", "orders"],
+            }
+        )
 
         with patch("pandas.read_sql_query", return_value=expected_df):
             result = list_tables(mock_engine)
@@ -120,10 +125,12 @@ class TestCandidateSidewalkTables:
     def test_candidate_sidewalk_tables_found(self):
         """Test identifying sidewalk-related tables."""
         mock_engine = MagicMock(spec=Engine)
-        mock_tables = pd.DataFrame({
-            "table_schema": ["public", "public", "public", "public"],
-            "table_name": ["sidewalk_inspections", "orders", "ramp_progress", "users"],
-        })
+        mock_tables = pd.DataFrame(
+            {
+                "table_schema": ["public", "public", "public", "public"],
+                "table_name": ["sidewalk_inspections", "orders", "ramp_progress", "users"],
+            }
+        )
 
         with patch("socrata_toolkit.core.app.list_tables", return_value=mock_tables):
             result = candidate_sidewalk_tables(mock_engine)
@@ -134,10 +141,12 @@ class TestCandidateSidewalkTables:
     def test_candidate_sidewalk_tables_none_found(self):
         """Test returning defaults when no matches found."""
         mock_engine = MagicMock(spec=Engine)
-        mock_tables = pd.DataFrame({
-            "table_schema": ["public", "public"],
-            "table_name": ["users", "products"],
-        })
+        mock_tables = pd.DataFrame(
+            {
+                "table_schema": ["public", "public"],
+                "table_name": ["users", "products"],
+            }
+        )
 
         with patch("socrata_toolkit.core.app.list_tables", return_value=mock_tables):
             result = candidate_sidewalk_tables(mock_engine)
@@ -165,10 +174,12 @@ class TestCandidateSidewalkTables:
     def test_candidate_sidewalk_tables_deduplication(self):
         """Test that results are deduplicated."""
         mock_engine = MagicMock(spec=Engine)
-        mock_tables = pd.DataFrame({
-            "table_schema": ["public", "public"],
-            "table_name": ["inspections", "inspections"],
-        })
+        mock_tables = pd.DataFrame(
+            {
+                "table_schema": ["public", "public"],
+                "table_name": ["inspections", "inspections"],
+            }
+        )
 
         with patch("socrata_toolkit.core.app.list_tables", return_value=mock_tables):
             result = candidate_sidewalk_tables(mock_engine)
@@ -182,10 +193,12 @@ class TestSafeReadTable:
         """Test reading table successfully."""
         mock_engine = MagicMock(spec=Engine)
         expected_data = pd.DataFrame({"id": [1, 2], "name": ["a", "b"]})
-        mock_tables = pd.DataFrame({
-            "table_schema": ["public"],
-            "table_name": ["test_table"],
-        })
+        mock_tables = pd.DataFrame(
+            {
+                "table_schema": ["public"],
+                "table_name": ["test_table"],
+            }
+        )
 
         with patch("socrata_toolkit.core.app.list_tables", return_value=mock_tables):
             with patch("pandas.read_sql_query", return_value=expected_data):
@@ -195,10 +208,12 @@ class TestSafeReadTable:
     def test_safe_read_table_not_found(self):
         """Test reading non-existent table."""
         mock_engine = MagicMock(spec=Engine)
-        mock_tables = pd.DataFrame({
-            "table_schema": ["public"],
-            "table_name": ["other_table"],
-        })
+        mock_tables = pd.DataFrame(
+            {
+                "table_schema": ["public"],
+                "table_name": ["other_table"],
+            }
+        )
 
         with patch("socrata_toolkit.core.app.list_tables", return_value=mock_tables):
             result = safe_read_table(mock_engine, "missing_table")
@@ -216,10 +231,12 @@ class TestSafeReadTable:
         """Test reading table with custom limit."""
         mock_engine = MagicMock(spec=Engine)
         expected_data = pd.DataFrame({"id": [1, 2, 3]})
-        mock_tables = pd.DataFrame({
-            "table_schema": ["public"],
-            "table_name": ["test_table"],
-        })
+        mock_tables = pd.DataFrame(
+            {
+                "table_schema": ["public"],
+                "table_name": ["test_table"],
+            }
+        )
 
         with patch("socrata_toolkit.core.app.list_tables", return_value=mock_tables):
             with patch("pandas.read_sql_query", return_value=expected_data) as mock_read:
@@ -230,10 +247,12 @@ class TestSafeReadTable:
         """Test fallback to unqualified query when primary fails."""
         mock_engine = MagicMock(spec=Engine)
         expected_data = pd.DataFrame({"id": [1, 2]})
-        mock_tables = pd.DataFrame({
-            "table_schema": ["public"],
-            "table_name": ["test_table"],
-        })
+        mock_tables = pd.DataFrame(
+            {
+                "table_schema": ["public"],
+                "table_name": ["test_table"],
+            }
+        )
 
         call_count = 0
 
@@ -255,21 +274,25 @@ class TestFindLatlonColumns:
 
     def test_find_latlon_explicit_names(self):
         """Test finding lat/lon columns with explicit names."""
-        df = pd.DataFrame({
-            "latitude": [40.7, 40.8],
-            "longitude": [-73.9, -74.0],
-            "name": ["A", "B"],
-        })
+        df = pd.DataFrame(
+            {
+                "latitude": [40.7, 40.8],
+                "longitude": [-73.9, -74.0],
+                "name": ["A", "B"],
+            }
+        )
         result = find_latlon_columns(df)
         assert result == ("latitude", "longitude")
 
     def test_find_latlon_short_names(self):
         """Test finding lat/lon columns with short names."""
-        df = pd.DataFrame({
-            "lat": [40.7, 40.8],
-            "lon": [-73.9, -74.0],
-            "name": ["A", "B"],
-        })
+        df = pd.DataFrame(
+            {
+                "lat": [40.7, 40.8],
+                "lon": [-73.9, -74.0],
+                "name": ["A", "B"],
+            }
+        )
         result = find_latlon_columns(df)
         assert result is not None
         assert result[0] == "lat"
@@ -277,11 +300,13 @@ class TestFindLatlonColumns:
 
     def test_find_latlon_xy_columns(self):
         """Test finding lat/lon columns with x/y names."""
-        df = pd.DataFrame({
-            "x": [40.7, 40.8],
-            "y": [-73.9, -74.0],
-            "name": ["A", "B"],
-        })
+        df = pd.DataFrame(
+            {
+                "x": [40.7, 40.8],
+                "y": [-73.9, -74.0],
+                "name": ["A", "B"],
+            }
+        )
         result = find_latlon_columns(df)
         assert result is not None
         # The function may return in either order depending on the heuristic
@@ -289,29 +314,35 @@ class TestFindLatlonColumns:
 
     def test_find_latlon_by_range(self):
         """Test finding lat/lon columns by numeric range heuristic."""
-        df = pd.DataFrame({
-            "col_a": [40.7, 40.8, 40.9],
-            "col_b": [-73.9, -74.0, -74.1],
-            "col_c": [1000, 2000, 3000],
-        })
+        df = pd.DataFrame(
+            {
+                "col_a": [40.7, 40.8, 40.9],
+                "col_b": [-73.9, -74.0, -74.1],
+                "col_c": [1000, 2000, 3000],
+            }
+        )
         result = find_latlon_columns(df)
         assert result is not None
 
     def test_find_latlon_missing(self):
         """Test when no lat/lon columns found."""
-        df = pd.DataFrame({
-            "name": ["A", "B"],
-            "value": [1, 2],
-        })
+        df = pd.DataFrame(
+            {
+                "name": ["A", "B"],
+                "value": [1, 2],
+            }
+        )
         result = find_latlon_columns(df)
         assert result is None
 
     def test_find_latlon_only_one_candidate(self):
         """Test when only one explicit lat/lon candidate but other numeric columns exist."""
-        df = pd.DataFrame({
-            "latitude": [40.7, 40.8],
-            "other_col": [1, 2],
-        })
+        df = pd.DataFrame(
+            {
+                "latitude": [40.7, 40.8],
+                "other_col": [1, 2],
+            }
+        )
         result = find_latlon_columns(df)
         # The function tries heuristics with numeric columns even if not explicit
         # So result depends on whether other_col looks like a longitude
@@ -320,19 +351,23 @@ class TestFindLatlonColumns:
 
     def test_find_latlon_with_nulls(self):
         """Test finding lat/lon when columns have null values."""
-        df = pd.DataFrame({
-            "latitude": [40.7, None, 40.9],
-            "longitude": [-73.9, -74.0, None],
-        })
+        df = pd.DataFrame(
+            {
+                "latitude": [40.7, None, 40.9],
+                "longitude": [-73.9, -74.0, None],
+            }
+        )
         result = find_latlon_columns(df)
         assert result == ("latitude", "longitude")
 
     def test_find_latlon_all_nulls(self):
         """Test when numeric columns are all nulls."""
-        df = pd.DataFrame({
-            "col_a": [None, None, None],
-            "col_b": [None, None, None],
-        })
+        df = pd.DataFrame(
+            {
+                "col_a": [None, None, None],
+                "col_b": [None, None, None],
+            }
+        )
         result = find_latlon_columns(df)
         assert result is None
 
@@ -342,18 +377,22 @@ class TestComputeKpisFromDf:
 
     def test_compute_kpis_with_violations_column(self):
         """Test KPI computation with violations data."""
-        df = pd.DataFrame({
-            "violations": [10, 20, 30],
-            "curb_miles": [1.0, 2.0, 3.0],
-        })
+        df = pd.DataFrame(
+            {
+                "violations": [10, 20, 30],
+                "curb_miles": [1.0, 2.0, 3.0],
+            }
+        )
         result = compute_kpis_from_df(df)
         assert "total_defects" in result or "defect_density" in result
 
     def test_compute_kpis_with_curb_miles(self):
         """Test KPI computation with curb miles data."""
-        df = pd.DataFrame({
-            "curb_miles": [1.5, 2.5, 3.5],
-        })
+        df = pd.DataFrame(
+            {
+                "curb_miles": [1.5, 2.5, 3.5],
+            }
+        )
         result = compute_kpis_from_df(df)
         assert isinstance(result, dict)
 
@@ -365,31 +404,39 @@ class TestComputeKpisFromDf:
 
     def test_compute_kpis_with_nulls(self):
         """Test KPI computation with null values."""
-        df = pd.DataFrame({
-            "violations": [10, None, 30],
-            "curb_miles": [1.0, 2.0, None],
-        })
+        df = pd.DataFrame(
+            {
+                "violations": [10, None, 30],
+                "curb_miles": [1.0, 2.0, None],
+            }
+        )
         result = compute_kpis_from_df(df)
         assert isinstance(result, dict)
 
     def test_compute_kpis_specialized_available(self):
         """Test KPI computation when specialized implementation is available."""
-        df = pd.DataFrame({
-            "violations": [10, 20, 30],
-        })
+        df = pd.DataFrame(
+            {
+                "violations": [10, 20, 30],
+            }
+        )
 
         mock_kpis = {"specialized": "kpi"}
 
-        with patch("socrata_toolkit.engineering.dot_sidewalk.compute_sidewalk_kpis", return_value=mock_kpis):
+        with patch(
+            "socrata_toolkit.engineering.dot_sidewalk.compute_sidewalk_kpis", return_value=mock_kpis
+        ):
             result = compute_kpis_from_df(df)
             # Result should use specialized implementation
             assert result == mock_kpis
 
     def test_compute_kpis_with_fallback(self):
         """Test KPI computation uses fallback when specialized module unavailable."""
-        df = pd.DataFrame({
-            "violations": [10, 20],
-        })
+        df = pd.DataFrame(
+            {
+                "violations": [10, 20],
+            }
+        )
 
         # The function handles ImportError internally and falls back to basic computation
         result = compute_kpis_from_df(df)
@@ -399,27 +446,33 @@ class TestComputeKpisFromDf:
 
     def test_compute_kpis_defect_density_calculation(self):
         """Test defect density is calculated correctly."""
-        df = pd.DataFrame({
-            "violations": [60.0],
-            "curb_miles": [3.0],
-        })
+        df = pd.DataFrame(
+            {
+                "violations": [60.0],
+                "curb_miles": [3.0],
+            }
+        )
         result = compute_kpis_from_df(df)
         assert isinstance(result, dict)
 
     def test_compute_kpis_zero_division_protection(self):
         """Test protection against zero division."""
-        df = pd.DataFrame({
-            "violations": [10],
-            "curb_miles": [0],
-        })
+        df = pd.DataFrame(
+            {
+                "violations": [10],
+                "curb_miles": [0],
+            }
+        )
         result = compute_kpis_from_df(df)
         assert isinstance(result, dict)
 
     def test_compute_kpis_non_numeric_violations(self):
         """Test handling of non-numeric violations column."""
-        df = pd.DataFrame({
-            "violations": ["a", "b", "c"],
-            "curb_miles": [1.0, 2.0, 3.0],
-        })
+        df = pd.DataFrame(
+            {
+                "violations": ["a", "b", "c"],
+                "curb_miles": [1.0, 2.0, 3.0],
+            }
+        )
         result = compute_kpis_from_df(df)
         assert isinstance(result, dict)

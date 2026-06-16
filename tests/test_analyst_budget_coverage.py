@@ -1,4 +1,5 @@
 """Comprehensive tests for analyst.budget module."""
+
 from __future__ import annotations
 
 import tempfile
@@ -32,10 +33,7 @@ class TestLoadBudgetRules:
         with tempfile.TemporaryDirectory() as tmpdir:
             rules_file = Path(tmpdir) / "rules.yaml"
             rules_file.write_text(
-                "allowed_codes:\n"
-                "  - B001\n"
-                "  - B002\n"
-                "require_code: true\n",
+                "allowed_codes:\n  - B001\n  - B002\nrequire_code: true\n",
                 encoding="utf-8",
             )
 

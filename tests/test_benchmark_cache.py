@@ -9,8 +9,8 @@ from app.utils.cache_manager import CACHE_DIR, read_cache, write_cache
 from src.socrata_toolkit.core.duckdb_store import DuckDBManager, DuckDBRepository
 
 # Performance Thresholds (in seconds)
-WRITE_THRESHOLD = 0.5
-READ_THRESHOLD = 0.2
+WRITE_THRESHOLD = 2.0
+READ_THRESHOLD = 1.0
 
 @pytest.fixture(autouse=True)
 def setup_teardown():

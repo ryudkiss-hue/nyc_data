@@ -1,4 +1,5 @@
 """Tests for socrata_toolkit.core.api — Flask application factory and endpoints."""
+
 from __future__ import annotations
 
 import json
@@ -12,7 +13,6 @@ import pytest
 # ---------------------------------------------------------------------------
 
 flask = pytest.importorskip("flask", reason="flask not installed")
-
 
 from socrata_toolkit.core.api import create_app  # noqa: E402 — must come after guard
 
@@ -29,6 +29,7 @@ def client():
 # ---------------------------------------------------------------------------
 # /api/health
 # ---------------------------------------------------------------------------
+
 
 class TestHealthEndpoint:
     """Tests for GET /api/health."""
@@ -55,6 +56,7 @@ class TestHealthEndpoint:
 # /api/search
 # ---------------------------------------------------------------------------
 
+
 class TestSearchEndpoint:
     """Tests for GET /api/search."""
 
@@ -80,6 +82,7 @@ class TestSearchEndpoint:
 # ---------------------------------------------------------------------------
 # /api/analyze  (POST)
 # ---------------------------------------------------------------------------
+
 
 class TestAnalyzeEndpoint:
     """Tests for POST /api/analyze."""
@@ -124,6 +127,7 @@ class TestAnalyzeEndpoint:
 # /api/quality-score  (POST)
 # ---------------------------------------------------------------------------
 
+
 class TestQualityScoreEndpoint:
     """Tests for POST /api/quality-score."""
 
@@ -164,6 +168,7 @@ class TestQualityScoreEndpoint:
 # /api/prioritize  (POST)
 # ---------------------------------------------------------------------------
 
+
 class TestPrioritizeEndpoint:
     """Tests for POST /api/prioritize."""
 
@@ -195,6 +200,7 @@ class TestPrioritizeEndpoint:
 # /api/board  (GET)
 # ---------------------------------------------------------------------------
 
+
 class TestBoardEndpoint:
     """Tests for GET /api/board."""
 
@@ -218,6 +224,7 @@ class TestBoardEndpoint:
 # /api/kpis  (GET)
 # ---------------------------------------------------------------------------
 
+
 class TestKPIsEndpoint:
     """Tests for GET /api/kpis."""
 
@@ -234,6 +241,7 @@ class TestKPIsEndpoint:
 # ---------------------------------------------------------------------------
 # create_app factory
 # ---------------------------------------------------------------------------
+
 
 class TestCreateApp:
     """Tests for create_app function."""

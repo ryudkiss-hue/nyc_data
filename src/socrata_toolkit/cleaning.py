@@ -79,23 +79,34 @@ def clean_column_names(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def infer_and_convert_types(df: pd.DataFrame) -> pd.DataFrame:
-    """Attempt to convert object columns to numeric or datetime."""
+    """Attempt to convert object/string columns to numeric or datetime."""
     out = df.copy()
     for col in out.columns:
-        if out[col].dtype == "object":
-            # Try numeric
-            try:
-                out[col] = pd.to_numeric(out[col])
-                continue
-            except:
-                pass
+        col_dtype = out[col].dtype
+        # Handle both legacy object dtype and pandas 3.x StringDtype
+        is_string_like = (
+            col_dtype == "object" or hasattr(col_dtype, "na_value") or str(col_dtype) == "str"
+        )
+        if not is_string_like:
+            continue
+        # Try numeric
+        try:
+            out[col] = pd.to_numeric(out[col])
+            continue
+        except Exception:
+            pass
 
-            # Try datetime
-            try:
-                if "date" in col.lower() or "time" in col.lower() or "timestamp" in col.lower():
-                    out[col] = pd.to_datetime(out[col])
-            except:
-                pass
+        # Try datetime
+        try:
+            if "date" in col.lower() or "time" in col.lower() or "timestamp" in col.lower():
+                out[col] = pd.to_datetime(out[col])
+                continue
+        except Exception:
+            pass
+
+        # Ensure non-convertible string columns use object dtype for consistency
+        if str(col_dtype) != "object":
+            out[col] = out[col].astype(object)
     return out
 
 

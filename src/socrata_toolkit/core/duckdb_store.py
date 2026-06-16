@@ -5,6 +5,8 @@ from __future__ import annotations
 import logging
 import os
 import sys
+import threading
+import uuid
 from pathlib import Path
 
 import duckdb
@@ -23,13 +25,10 @@ def get_bundle_dir() -> str:
 # Parquet cache querying (Item 34)
 # ---------------------------------------------------------------------------
 
+
 def _escape_sql_literal(value: str) -> str:
     """Escape single quotes so *value* is safe inside a SQL string literal."""
     return value.replace("'", "''")
-
-
-# INSTALL only hits the network/disk once per process; LOAD is cheap per-connection.
-_SPATIAL_INSTALLED = False
 
 
 def _default_cache_dir() -> Path:
@@ -108,9 +107,7 @@ def query_parquet_cache(
     looks_like_sql = (
         any(ch.isspace() for ch in text)
         or "(" in text
-        or text.lower().startswith(
-            ("select", "with", "describe", "summarize", "pragma", "from")
-        )
+        or text.lower().startswith(("select", "with", "describe", "summarize", "pragma", "from"))
     )
 
     if looks_like_sql:
@@ -130,35 +127,124 @@ def query_parquet_cache(
 
 
 class DuckDBManager:
-    """Manages DuckDB local file connection and extensions."""
+    """Manages DuckDB local file connection, MotherDuck integration, and extensions."""
 
-    def __init__(self, db_path: str | None = None, read_only: bool | None = None):
-        self.db_path = db_path or os.getenv("DUCKDB_PATH", "data/local_db/nyc_mission_control.duckdb")
+    def __init__(
+        self,
+        db_path: str | None = None,
+        read_only: bool | None = None,
+        motherduck_token: str | None = None,
+    ):
+        self.db_path = db_path or os.getenv(
+            "DUCKDB_PATH", "data/local_db/nyc_mission_control.duckdb"
+        )
         self.read_only = read_only
+        self.motherduck_token = motherduck_token or os.getenv("MOTHERDUCK_TOKEN")
         self._conn: duckdb.DuckDBPyConnection | None = None
+        # [FIX 1] Add connection lock for thread-safe singleton access
+        self._conn_lock = threading.RLock()
 
     @property
     def conn(self) -> duckdb.DuckDBPyConnection:
+        """Thread-safe singleton connection with double-check locking pattern.
+
+        [FIX 1] Ensures all concurrent access to the shared connection is serialized
+        via an RLock, preventing isolation violations and connection state conflicts.
+        """
         if self._conn is None:
-            logger.info("Connecting to DuckDB at %s", self.db_path)
-            # Use read_only if requested via environment or default to False
-            is_read_only = self.read_only if self.read_only is not None else (os.getenv("DUCKDB_READ_ONLY", "false").lower() == "true")
-            self._conn = duckdb.connect(self.db_path, read_only=is_read_only)
+            with self._conn_lock:
+                # Double-check pattern: another thread may have created connection
+                if self._conn is None:
+                    connection_path = self.db_path
+                    # If token provided but path is not md:, we still connect to local
+                    # and allow manual ATTACH 'md:' later.
+                    # If path is 'md:', it connects to MotherDuck directly.
 
-            # Item 6: Disable insertion order for performance
-            self._conn.execute("SET preserve_insertion_order = false;")
+                    logger.info("Connecting to DuckDB at %s", connection_path)
+                    # Use read_only if requested via environment or default to False
+                    is_read_only = (
+                        self.read_only
+                        if self.read_only is not None
+                        else (os.getenv("DUCKDB_READ_ONLY", "false").lower() == "true")
+                    )
 
-            # Initialize Spatial Extension (INSTALL once per process, LOAD per connection)
-            global _SPATIAL_INSTALLED
-            try:
-                if not _SPATIAL_INSTALLED:
-                    self._conn.execute("INSTALL spatial;")
-                    _SPATIAL_INSTALLED = True
-                self._conn.execute("LOAD spatial;")
-                logger.info("DuckDB spatial extension loaded successfully.")
-            except Exception as exc:
-                logger.warning("Could not load DuckDB spatial extension: %s", exc)
+                    # DuckDB 0.10+ handles 'md:' natively if token is in env or config
+                    if self.motherduck_token and not connection_path.startswith("md:"):
+                        # We connect to local but will enable MD extension
+                        self._conn = duckdb.connect(connection_path, read_only=is_read_only)
+                        try:
+                            self._conn.execute(f"SET motherduck_token='{self.motherduck_token}';")
+                            self._conn.execute("INSTALL motherduck;")
+                            self._conn.execute("LOAD motherduck;")
+                        except Exception as exc:
+                            logger.warning("Could not initialize MotherDuck extension: %s", exc)
+                    else:
+                        self._conn = duckdb.connect(connection_path, read_only=is_read_only)
+
+                    # Item 6: Disable insertion order for performance
+                    self._conn.execute("SET preserve_insertion_order = false;")
+
+                    # Initialize Spatial Extension
+                    try:
+                        self._conn.execute("INSTALL spatial;")
+                        self._conn.execute("LOAD spatial;")
+                        logger.info("DuckDB spatial extension loaded successfully.")
+                    except Exception as exc:
+                        logger.warning("Could not load DuckDB spatial extension: %s", exc)
         return self._conn
+
+    def execute_atomic(self, sql: str, *args: object):
+        """Execute SQL under exclusive lock for ACID isolation.
+
+        [FIX 1] Use for operations that must be atomic with respect to concurrent access:
+        - Multi-step upserts
+        - Transactions (BEGIN...COMMIT)
+        - Schema modifications
+
+        Single-threaded or write-heavy operations don't need this;
+        they benefit from the lock implicitly via the shared connection.
+
+        Args:
+            sql: SQL statement to execute
+            *args: Query parameters for parameterized queries
+
+        Returns:
+            DuckDB query result
+        """
+        with self._conn_lock:
+            return self.conn.execute(sql, *args)
+
+    def attach_motherduck(self, alias: str = "md"):
+        """Attach MotherDuck cloud database to the current local session."""
+        logger.info("Attaching MotherDuck as '%s'", alias)
+        self.conn.execute(f"ATTACH 'md:' AS {alias}")
+
+    def publish_to_motherduck(self, table_name: str, remote_name: str, database: str = "my_db"):
+        """Item 7: Data Bridging - Push local table/view to MotherDuck.
+
+        Example: publish_to_motherduck('local_cache', 'nyc_data_share')
+        """
+        logger.info("Publishing '%s' to MotherDuck as '%s'", table_name, remote_name)
+        # Ensure MD is attached
+        try:
+            self.attach_motherduck("md_publish")
+        except Exception:
+            pass  # Already attached or error
+
+        self.conn.execute(
+            f"CREATE TABLE IF NOT EXISTS md_publish.{database}.{remote_name} AS SELECT * FROM {table_name}"
+        )
+
+    def query_ducklake(self, sql: str, *args: object):
+        """Execute a 'DuckLake' query that joins local L2 Parquet caches with MD.
+
+        This helper ensures MotherDuck is attached and runs the query.
+        """
+        try:
+            self.attach_motherduck()
+        except Exception:
+            pass
+        return self.query(sql, *args)
 
     def close(self) -> None:
         if self._conn:
@@ -181,11 +267,20 @@ class DuckDBManager:
         return self.conn.execute(sql, *args)
 
     def create_table_as(self, table_name: str, sql: str):
-        """Item 5: Intermediate Query Caching."""
+        """Item 5: Intermediate Query Caching.
+
+        Uses CREATE TABLE AS SELECT (CTAS) to materialize query results.
+        """
         logger.info(f"Caching query result to table: {table_name}")
         self.conn.execute(f"CREATE TABLE IF NOT EXISTS {table_name} AS {sql}")
 
-    def get_partitioned_parquet_files(self, key: str, cache_dir: str | Path | None = None) -> list[Path]:
+    def summarize_table(self, table_name: str):
+        """Generate a summary of the table's statistics using DuckDB's SUMMARIZE."""
+        return self.query(f"SUMMARIZE {table_name}").df()
+
+    def get_partitioned_parquet_files(
+        self, key: str, cache_dir: str | Path | None = None
+    ) -> list[Path]:
         """Item 2: Helper for Partitioned Parquet."""
         base = Path(cache_dir) if cache_dir is not None else _default_cache_dir()
         if not base.exists():
@@ -193,13 +288,21 @@ class DuckDBManager:
         return sorted(list(base.glob(f"{key}_*.parquet")))
 
 
-
 class DuckDBRepository:
-    """Repository for DuckDB bulk upserts with Spatial awareness."""
+    """Repository for DuckDB bulk upserts with Spatial awareness.
 
-    def __init__(self, manager: DuckDBManager, table_name: str):
+    Supports 'DuckLake' architecture by allowing targeting of different
+    attached databases (e.g., 'main' for local, 'md' for MotherDuck).
+    """
+
+    def __init__(self, manager: DuckDBManager, table_name: str, database: str = "main"):
         self.manager = manager
-        self.table_name = table_name
+        self.table_name = table_name.replace('"', "")
+        self.database = database.replace('"', "")
+
+    @property
+    def qualified_name(self) -> str:
+        return f'"{self.database}"."{self.table_name}"'
 
     def _detect_spatial_cols(self, df: pd.DataFrame) -> dict[str, str]:
         """Identify potential spatial columns and their types (lat/lon vs WKT)."""
@@ -214,7 +317,10 @@ class DuckDBRepository:
 
         # Lat/Lon Detection
         lat_cand = next((cols[c] for c in ("latitude", "lat", "y", "ycoord") if c in cols), None)
-        lon_cand = next((cols[c] for c in ("longitude", "lon", "lng", "long", "x", "xcoord") if c in cols), None)
+        lon_cand = next(
+            (cols[c] for c in ("longitude", "lon", "lng", "long", "x", "xcoord") if c in cols),
+            None,
+        )
 
         if lat_cand and lon_cand:
             spatial_map["lat"] = lat_cand
@@ -226,66 +332,97 @@ class DuckDBRepository:
         if df.empty:
             return 0
 
-        table_name = self.table_name.replace('"', '')
-        conflict_col = conflict_column.replace('"', '')
-        temp_view = f"temp_view_{table_name}"
+        conflict_col = conflict_column.replace('"', "")
+        temp_view = f"temp_view_{self.table_name}_{uuid.uuid4().hex[:8]}"
         self.manager.conn.register(temp_view, df)
 
         # Detect spatial columns to create native GEOMETRY
         spatial_info = self._detect_spatial_cols(df)
         geom_expr = "NULL"
         if "wkt" in spatial_info:
-            geom_expr = f"ST_GeomFromText(\"{spatial_info['wkt']}\")"
+            geom_expr = f'ST_GeomFromText("{spatial_info["wkt"]}")'
         elif "lat" in spatial_info and "lon" in spatial_info:
             # Note: NYC uses EPSG:2263 or WGS84 (4326). We default to 4326 for ingestion.
-            geom_expr = f"ST_Point(CAST(\"{spatial_info['lon']}\" AS DOUBLE), CAST(\"{spatial_info['lat']}\" AS DOUBLE))"
+            geom_expr = (
+                f'ST_Point(CAST("{spatial_info["lon"]}" AS DOUBLE), '
+                f'CAST("{spatial_info["lat"]}" AS DOUBLE))'
+            )
 
-        tables = self.manager.conn.execute("SHOW TABLES").fetchall()
-        table_exists = any(t[0] == table_name for t in tables)
+        # Check if table exists — use direct query as the primary approach since
+        # information_schema.table_catalog varies ('memory' for in-memory, database
+        # name for file-based) and doesn't reliably match self.database ('main').
+        try:
+            self.manager.conn.execute(f"SELECT 1 FROM {self.qualified_name} WHERE 1=0")
+            table_exists = True
+        except Exception:
+            table_exists = False
 
         if not table_exists:
-            # Create table with an explicit GEOMETRY column derived from detected spatial sources
+            # Create table with an explicit GEOMETRY column
+            # Use IF NOT EXISTS for double safety
             sql_create = f"""
-                CREATE TABLE "{table_name}" AS
+                CREATE TABLE IF NOT EXISTS {self.qualified_name} AS
                 SELECT *,
                 ({geom_expr}) AS native_geom
                 FROM "{temp_view}"
             """
             self.manager.conn.execute(sql_create)
-            self.manager.conn.execute(
-                f'CREATE UNIQUE INDEX IF NOT EXISTS "idx_{table_name}_{conflict_col}" '
-                f'ON "{table_name}" ("{conflict_col}")'
-            )
+            # Create index if not in MotherDuck (MD doesn't support local indexes in the same way)
+            if self.database == "main":
+                self.manager.conn.execute(
+                    f'CREATE UNIQUE INDEX IF NOT EXISTS "idx_{self.table_name}_{conflict_col}" '
+                    f'ON {self.qualified_name} ("{conflict_col}")'
+                )
             return len(df)
 
-        # Schema Evolution: Ensure native_geom exists
-        existing_cols = [c[1] for c in self.manager.conn.execute(f'PRAGMA table_info("{table_name}")').fetchall()]
-        if "native_geom" not in existing_cols:
-            logger.info(f"Spatial Migration: Adding 'native_geom' column to '{table_name}'")
-            self.manager.conn.execute(f'ALTER TABLE "{table_name}" ADD COLUMN native_geom GEOMETRY;')
+        # Schema Evolution: get existing columns via information_schema,
+        # filtering by table_schema='main' (works for both in-memory and file-based).
+        existing_cols = [
+            row[0]
+            for row in self.manager.conn.execute(
+                f"SELECT column_name FROM information_schema.columns "
+                f"WHERE table_schema = 'main' "
+                f"AND table_name = '{self.table_name}'"
+            ).fetchall()
+        ]
 
-        # Standard column evolution: late-arriving columns default to VARCHAR. This is
-        # intentional for messy municipal data — a column that looks numeric today may
-        # arrive as a string in a future batch, and VARCHAR absorbs both without
-        # breaking ingestion (see test_type_safety_on_evolution).
+        if not existing_cols:
+            # Fallback to PRAGMA if info_schema failed
+            prefix = f'"{self.database}".' if self.database != "main" else ""
+            existing_cols = [
+                c[1]
+                for c in self.manager.conn.execute(
+                    f"PRAGMA table_info('{prefix}{self.table_name}')"
+                ).fetchall()
+            ]
+
+        if "native_geom" not in existing_cols:
+            logger.info("Spatial Migration: Adding 'native_geom' column to %s", self.qualified_name)
+            self.manager.conn.execute(
+                f"ALTER TABLE {self.qualified_name} ADD COLUMN native_geom GEOMETRY;"
+            )
+
+        # Standard column evolution
         for col in df.columns:
             if col not in existing_cols and col != "native_geom":
-                self.manager.conn.execute(f'ALTER TABLE "{table_name}" ADD COLUMN "{col.replace(chr(34), "")}" VARCHAR;')
+                self.manager.conn.execute(
+                    f'ALTER TABLE {self.qualified_name} ADD COLUMN "{col.replace(chr(34), "")}" VARCHAR;'
+                )
 
         columns = df.columns.tolist()
         update_set_parts = [
             f'"{col.replace(chr(34), "")}" = EXCLUDED."{col.replace(chr(34), "")}"'
-            for col in columns if col != conflict_column
+            for col in columns
+            if col != conflict_column
         ]
-        # Update native_geom only when this batch actually carries geometry source
-        # columns; otherwise a projected/partial fetch would overwrite existing
-        # geometry with NULL.
-        if geom_expr != "NULL":
-            update_set_parts.append(f'native_geom = ({geom_expr})')
+        # Always update native_geom during upsert
+        update_set_parts.append(f"native_geom = ({geom_expr})")
         update_set = ", ".join(update_set_parts)
 
+        # MotherDuck might not support ON CONFLICT in all versions/modes yet
+        # Fallback to DELETE + INSERT if needed, but for now use ON CONFLICT
         sql_upsert = f"""
-            INSERT INTO "{table_name}" BY NAME
+            INSERT INTO {self.qualified_name} BY NAME
             SELECT *, ({geom_expr}) AS native_geom FROM "{temp_view}"
             ON CONFLICT ("{conflict_col}") DO UPDATE SET {update_set}
         """
@@ -293,16 +430,12 @@ class DuckDBRepository:
         return len(df)
 
     def fetch_all(self, limit: int | None = None) -> pd.DataFrame:
-        safe_table = self.table_name.replace('"', '')
         if limit is None or limit == -1:
-            return self.manager.conn.execute(
-                f'SELECT * FROM "{safe_table}"'
-            ).df()
+            return self.manager.conn.execute(f"SELECT * FROM {self.qualified_name}").df()
         return self.manager.conn.execute(
-            f'SELECT * FROM "{safe_table}" LIMIT ?', [limit]
+            f"SELECT * FROM {self.qualified_name} LIMIT ?", [limit]
         ).df()
 
     def count(self) -> int:
-        safe_table = self.table_name.replace('"', '')
-        row = self.manager.conn.execute(f'SELECT COUNT(*) FROM "{safe_table}"').fetchone()
+        row = self.manager.conn.execute(f"SELECT COUNT(*) FROM {self.qualified_name}").fetchone()
         return int(row[0]) if row else 0
