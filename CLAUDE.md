@@ -4,22 +4,22 @@ Guidance for Claude Code when working with this repository.
 
 ## What this project is
 
-NYC DOT Sidewalk Inspection & Management Toolkit — a Streamlit-based application for analyzing SIM unit data from NYC Open Data, with a Python CLI toolkit for analysts and a desktop/web interface.
+NYC DOT Sidewalk Inspection & Management Toolkit — a **Dash/Plotly-based Mission Control dashboard** for analyzing SIM unit data from NYC Open Data, with a Python CLI toolkit for analysts and responsive Mantine UI.
 
 **Key components:**
-- `app/` — Streamlit Mission Control dashboard (app/app.py)
+- `app/` — **Dash Mission Control** (app/dash_app.py, FastAPI backend, Mantine UI)
+- `app/app.py` — Streamlit alternative (secondary option for data exploration)
 - `src/socrata_toolkit/` — Core Python library for analysis, data quality, lineage tracking, governance
 - `data-analytics-skills/` — 31 portable AI-powered analytical skills (see below)
 - `tests/` — Test suite (pytest)
 - `scripts/` — Utility scripts
 
-**Current visualizations:** 30 across the app:
-- 3 Plotly charts (velocity, lag, forecast) in mission control
-- 2 Streamlit maps (spatial workflows, studio view)
-- 1 scatter chart (workflows view)
-- 13 Advanced Analytics charts (CUSUM, Bayesian CI, KMeans, survival curves, etc.)
+**Current visualizations:** 30+ across the app:
+- 20+ Plotly interactive charts (Dash callbacks, real-time updates)
 - 10 GIS Dashboard charts (DBSCAN, TSP, conflict buffers, animated bar, etc.)
-- 1 quality scorecard chart
+- 13 Advanced Analytics charts (CUSUM, Bayesian CI, KMeans, survival curves, etc.)
+- 1 quality scorecard (Dash KPI cards with Mantine theming)
+- Statistical/correlation heatmaps (Dash dcc.Graph)
 
 ---
 
@@ -167,12 +167,21 @@ See `data-analytics-skills/QUICKSTART.md` for:
 
 ## 🔧 Running the App
 
-### Streamlit (Mission Control)
+### Dash Mission Control (PRIMARY)
+```bash
+python app/dash_app.py
+```
+
+Accesses at http://localhost:8011 with FastAPI backend, Plotly interactive charts, Mantine UI.
+
+Requires: `pip install -e ".[mission]"` (includes dash, plotly, dash-mantine-components, fastapi, etc.)
+
+### Streamlit (SECONDARY - Alternative)
 ```bash
 streamlit run app/app.py
 ```
 
-Requires: `pip install -e ".[mission]"` (includes streamlit, plotly, folium, geospatial, forecasting, etc.)
+For simpler data exploration. Includes streamlit, folium, geospatial tools.
 
 ### CLI Toolkit
 ```bash
@@ -202,13 +211,16 @@ Dev dependencies: `pip install -r requirements-dev.txt`
   - `spatial/` — Geospatial analytics and queries
   - `governance/` — Audit, compliance, versioning
   - `discovery/` — Data discovery and catalog
-- `app/` — Streamlit UI
-  - `app.py` — Canonical entry point (Streamlit Mission Control)
-  - `main.py` — Legacy entry point (archived; use app.py)
-  - `dash_app.py` — Dash framework implementation (archived)
-  - `views/` — Page views (home, publish, workflows, studio, settings)
-  - `ui/` — Theme, empty states, i18n
-  - `utils/` — Alerts, exports, i18n
+- `app/` — UI Applications
+  - `dash_app.py` — **PRIMARY: Dash Mission Control** (FastAPI backend, Mantine UI, Plotly charts)
+  - `dash_layouts.py` — Dash page layouts (dashboard, construction, gis, reports, etc.)
+  - `dash_layouts_analytics_integration.py` — Advanced analytics views
+  - `dash_layouts_gis.py` — Geospatial dashboards
+  - `callbacks/` — Dash callback handlers (analytics, navigation, export)
+  - `components/` — Custom Dash components (filter_system, kpi_cards, etc.)
+  - `assets/` — Custom CSS, Mantine theming
+  - `app.py` — SECONDARY: Streamlit alternative (simplified data exploration)
+  - `views/` — Streamlit page views (legacy)
   - `services/` — Agency service layer
 - `tests/` — Test suite
 - `data/` — Local data files (not tracked)
@@ -246,9 +258,11 @@ black src/socrata_toolkit tests app
 6. Push and create PR (draft OK)
 
 **Common tasks:**
-- **Add a visualization:** Create chart function in `src/socrata_toolkit/viz/` or inline in `app/main.py`, then call `st.plotly_chart()` in the appropriate view
+- **Add a Dash visualization:** Create Plotly figure in `src/socrata_toolkit/viz/`, register callback in `app/callbacks/`, bind to layout in `app/dash_layouts.py`
+- **Add Dash interactivity:** Define `@callback` in `app/callbacks/`, update `app/dash_layouts.py` with `dcc.Store` or filter IDs
+- **Add a Streamlit chart:** Use `st.plotly_chart()` in `app/app.py` views (secondary UI)
 - **Add a quality rule:** Implement in `src/socrata_toolkit/quality/rules.py`
-- **Add a new view:** Create file in `app/views/`, define `render_*_page()` function, register in `app/app.py` router
+- **Add GIS overlay:** Add geometry to `src/socrata_toolkit/spatial/`, register in `app/dash_layouts_gis.py`
 - **Customize a skill:** Add `references/` folder inside skill with company-specific context (schema.md, metric_definitions.md, etc.)
 
 ---

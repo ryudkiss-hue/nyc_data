@@ -1,6 +1,6 @@
 # NYC DOT SIM Toolkit - Quick Start Guide
 
-Get the Streamlit Mission Control dashboard running in under 5 minutes.
+Get the Dash Mission Control dashboard running in under 5 minutes.
 
 ## Installation
 
@@ -26,17 +26,22 @@ export ANTHROPIC_API_KEY=your-api-key-here
 ### Launch the Dashboard
 
 ```bash
-# Option 1: Direct Streamlit (recommended for development)
-streamlit run app/app.py
+# Option 1: Direct Dash Mission Control (RECOMMENDED)
+python app/dash_app.py
+# → Open http://localhost:8011
 
-# Option 2: Via shim
+# Option 2: Via launcher shim
 python main.py
+# → Launches Dash or falls back to Streamlit
 
-# Option 3: Docker (requires Docker)
+# Option 3: Streamlit (SECONDARY - for data exploration)
+streamlit run app/app.py
+# → Open http://localhost:8501
+
+# Option 4: Docker (requires Docker)
 docker compose up mission-control
+# → http://localhost:8011
 ```
-
-Then open your browser to: **http://localhost:8501**
 
 ## What You Can Do
 
