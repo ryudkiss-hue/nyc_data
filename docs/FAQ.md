@@ -313,7 +313,11 @@ See [`docs/DEPLOYMENT.md`](./DEPLOYMENT.md) for comprehensive instructions:
 
 ### Q46. What are the memory and CPU requirements?
 
-**Streamlit Mission Control:**
+**Dash Mission Control (PRIMARY):**
+- Minimum: 256 MB RAM, 0.25 CPU
+- Recommended: 2–4 GB RAM, 1–2 CPU
+
+**Streamlit (SECONDARY — if used as fallback):**
 - Minimum: 512 MB RAM, 0.25 CPU
 - Recommended: 2–4 GB RAM, 1–2 CPU
 

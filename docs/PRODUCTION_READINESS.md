@@ -2,11 +2,15 @@
 
 Complete checklist and considerations for production deployment, including security, packaging, and enterprise requirements.
 
+**Primary UI:** Dash Mission Control (FastAPI, port 8011)  
+**Alternative UI:** Streamlit (secondary, port 8501)  
+**Deployment Guide:** See [`DEPLOYMENT_GUIDE.md`](DEPLOYMENT_GUIDE.md) for cloud deployment options
+
 ## Quick Reference
 
 | Aspect | Current Status | Recommended Action |
 |--------|---|---|
-| **Authentication** | Environment variables (.env) | Implement vault or add Streamlit auth |
+| **Authentication** | Environment variables (.env) | Implement vault or add FastAPI auth (OAuth2, JWT) |
 | **Python Packaging** | Poetry configured | Test `poetry build` before release |
 | **Encryption** | PostgreSQL capable | Enable pgcrypto extension |
 | **Audit Trails** | CDC event logging | Configure retention policies |
@@ -484,22 +488,23 @@ CMD ["python", "launcher.py", "web"]
 Build and distribute:
 
 ```bash
-# Build production image
-docker build -f Dockerfile.production -t nycdot/socrata-toolkit:0.3.0 .
+# Build production image (Dash Mission Control primary)
+docker build -t nycdot/socrata-toolkit:0.5.0 --target mission .
 
-# Test image
-docker run -e SOCRATA_APP_TOKEN=test -p 8501:8501 \
-    nycdot/socrata-toolkit:0.3.0
+# Test image (Dash at port 8011)
+docker run -e SOCRATA_APP_TOKEN=test -p 8011:8011 \
+    nycdot/socrata-toolkit:0.5.0
 
 # Push to registry
-docker tag nycdot/socrata-toolkit:0.3.0 \
-    registry.example.com/nycdot/socrata-toolkit:0.3.0
-docker push registry.example.com/nycdot/socrata-toolkit:0.3.0
+docker tag nycdot/socrata-toolkit:0.5.0 \
+    registry.example.com/nycdot/socrata-toolkit:0.5.0
+docker push registry.example.com/nycdot/socrata-toolkit:0.5.0
 
 # Users run with:
-docker pull registry.example.com/nycdot/socrata-toolkit:0.3.0
-docker run -e SOCRATA_APP_TOKEN=your_token -p 8501:8501 \
-    registry.example.com/nycdot/socrata-toolkit:0.3.0
+docker pull registry.example.com/nycdot/socrata-toolkit:0.5.0
+docker run -e SOCRATA_APP_TOKEN=your_token -p 8011:8011 \
+    registry.example.com/nycdot/socrata-toolkit:0.5.0
+# → http://localhost:8011 (Dash Mission Control)
 ```
 
 ---
@@ -568,9 +573,12 @@ docker-compose ps
 python launcher.py doctor
 
 # Test CLI commands
-python launcher.py cli search --query test
+socrata search --query test
 
-# Access dashboard
+# Access Dash Mission Control dashboard (PRIMARY)
+# http://localhost:8011
+# 
+# Or Streamlit fallback (if needed)
 # http://localhost:8501
 ```
 
