@@ -1,3 +1,17 @@
+"""
+⚠️ ARCHIVED ENTRY POINT (Superseded by app/app.py)
+
+This file is legacy Dash framework implementation and no longer maintained.
+The project has migrated to Streamlit for the Mission Control dashboard.
+
+Use 'streamlit run app/app.py' instead.
+
+MIGRATION: Run the canonical Streamlit app with:
+  streamlit run app/app.py
+Or use the shim:
+  python main.py
+"""
+
 import json
 import os
 import sys

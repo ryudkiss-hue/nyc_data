@@ -1,9 +1,24 @@
-# Dash Application — Page Reference
+# ⚠️ ARCHIVED: Dash Application Reference
 
-**App entry point:** `dash_app/app.py`  
-**Data layer:** `dash_app/data/db.py`  
-**Theme:** `dash_app/assets/theme.css` (dark / light / sepia)  
-**Run:** `python dash_app/app.py` → `http://localhost:8050`
+This document describes the legacy Dash-based application, which has been superseded by the Streamlit Mission Control dashboard.
+
+## Current Application
+
+**App entry point:** `app/app.py` (Streamlit)  
+**Run command:** `streamlit run app/app.py` → `http://localhost:8501`  
+**Deployment:** See `docs/DEPLOYMENT.md` for local, Docker, and cloud deployment  
+**Configuration:** See `QUICKSTART.md` for setup and environment variables  
+
+---
+
+## Legacy Dash Architecture (Archived)
+
+This section documents the previous Dash-based application for historical reference.
+
+**Previous entry point:** `dash_app/app.py`  
+**Previous data layer:** `dash_app/data/db.py`  
+**Previous theme:** `dash_app/assets/theme.css` (dark / light / sepia)  
+**Previous run:** `python dash_app/app.py` → `http://localhost:8050`
 
 ---
 
