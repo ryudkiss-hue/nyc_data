@@ -195,17 +195,17 @@ def materialize_analytics(conn):
     logger.info("[ANALYTICS] Materializing views...")
 
     try:
-        # Violations by borough
+        # Violations by month (violations table has no borough column)
         conn.execute("""
         CREATE OR REPLACE VIEW analytics.violations_by_borough AS
         SELECT
-          Borough,
+          DATE_TRUNC('month', TRY_CAST(vissuedate AS DATE)) as month,
           COUNT(*) as violation_count,
-          COUNT(DISTINCT site_street_address) as affected_addresses,
-          DATE_TRUNC('month', violation_issue_date) as month
+          COUNT(DISTINCT swv_number) as unique_violations
         FROM raw.violations
-        GROUP BY Borough, DATE_TRUNC('month', violation_issue_date)
-        ORDER BY month DESC, violation_count DESC
+        WHERE vissuedate IS NOT NULL
+        GROUP BY DATE_TRUNC('month', TRY_CAST(vissuedate AS DATE))
+        ORDER BY month DESC
         """)
 
         # Inspection summary
@@ -213,25 +213,25 @@ def materialize_analytics(conn):
         CREATE OR REPLACE VIEW analytics.inspection_summary AS
         SELECT
           COUNT(*) as total_inspections,
-          COUNT(DISTINCT damage_id) as unique_damages,
-          COUNT(CASE WHEN no_violation_found = 'Y' THEN 1 END) as clean_inspections,
-          DATE_TRUNC('month', inspection_date) as month
+          COUNT(DISTINCT damageid) as unique_damages,
+          COUNT(CASE WHEN noviolationfound = 'Y' THEN 1 END) as clean_inspections,
+          DATE_TRUNC('month', TRY_CAST(inspectiondate AS DATE)) as month
         FROM raw.inspection
-        GROUP BY DATE_TRUNC('month', inspection_date)
+        WHERE inspectiondate IS NOT NULL
+        GROUP BY DATE_TRUNC('month', TRY_CAST(inspectiondate AS DATE))
         ORDER BY month DESC
         """)
 
-        # Ramp progress
+        # Ramp progress (construc_2 = status field; 'Constructed'/'Complex Constructed' = done)
         conn.execute("""
         CREATE OR REPLACE VIEW analytics.ramp_progress_summary AS
         SELECT
-          Borough,
+          borough,
           COUNT(*) as total_ramps,
-          SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) as completed_ramps,
-          ROUND(100.0 * SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) / COUNT(*), 1) as completion_pct,
-          AVG(CAST(percent_complete AS FLOAT)) as avg_progress
+          SUM(CASE WHEN construc_2 IN ('Constructed', 'Complex Constructed') THEN 1 ELSE 0 END) as completed_ramps,
+          ROUND(100.0 * SUM(CASE WHEN construc_2 IN ('Constructed', 'Complex Constructed') THEN 1 ELSE 0 END) / COUNT(*), 1) as completion_pct
         FROM raw.ramp_progress
-        GROUP BY Borough
+        GROUP BY borough
         ORDER BY completion_pct DESC
         """)
 
@@ -239,12 +239,11 @@ def materialize_analytics(conn):
         conn.execute("""
         CREATE OR REPLACE VIEW analytics.permits_by_status AS
         SELECT
-          permit_status,
+          permitstatusshortdesc as permit_status,
           COUNT(*) as permit_count,
-          SUM(CAST(budget AS FLOAT)) as total_budget,
-          COUNT(DISTINCT contractor) as contractor_count
+          COUNT(DISTINCT permitteename) as contractor_count
         FROM raw.street_permits
-        GROUP BY permit_status
+        GROUP BY permitstatusshortdesc
         ORDER BY permit_count DESC
         """)
 
