@@ -167,7 +167,6 @@ class TestQueryCache:
 
         class MockConnection:
             def __init__(self):
-                nonlocal cache_instance
                 self.call_count = 0
 
             @memoize_with_ttl(ttl_seconds=60)
