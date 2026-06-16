@@ -5,14 +5,15 @@
 [![Streamlit App](https://img.shields.io/badge/UI-Streamlit-red?style=flat-square)](app/app.py)
 [![30+ Charts](https://img.shields.io/badge/Visualizations-30%2B-orange?style=flat-square)](app/viz_engine.py)
 
-**NYC DOT SIM Toolkit** is a Python-based analysis platform for NYC's Sidewalk Inspection & Management program. It ingests live Socrata open data, detects spatial conflicts between construction permits and inspections, performs data quality analysis, and surfaces interactive visualizations via Streamlit — all backed by DuckDB for high-performance local analytics.
+**NYC DOT SIM Toolkit** is a Python-based analysis platform for NYC's Sidewalk Inspection & Management program. It ingests live Socrata open data, detects spatial conflicts between construction permits and inspections, performs data quality analysis, and surfaces interactive visualizations via **Dash/Plotly** with a **Mantine UI** — all backed by DuckDB for high-performance local analytics and FastAPI for production-grade infrastructure.
 
 ### Key Features
 
 | Feature | Status |
 |---------|--------|
-| **Streamlit Dashboard** (Mission Control) | ✅ |
-| **30+ Interactive Charts** | ✅ |
+| **Dash Mission Control** (FastAPI + Plotly + Mantine) | ✅ |
+| **30+ Interactive Plotly Charts** | ✅ |
+| **Real-time Callbacks & Filters** | ✅ |
 | **Spatial Conflict Detection** | ✅ |
 | **Bayesian SLA Forecasting** | ✅ |
 | **Data Quality Scoring** (0–100) | ✅ |
@@ -21,6 +22,7 @@
 | **PDF/Excel/PPTX Reports** | ✅ |
 | **Natural Language Queries** (Claude API) | ✅ |
 | **Schema Drift Detection** | ✅ |
+| **Streamlit UI** (Secondary option) | ✅ |
 
 ---
 
@@ -35,14 +37,17 @@ pip install -e ".[mission,xlsx]"
 
 ### 2. Run the Dashboard
 ```bash
-# Start Streamlit Mission Control
-streamlit run app/app.py
+# Start Dash Mission Control (PRIMARY)
+python app/dash_app.py
+# → Open http://localhost:8011
 
-# Or use the shim
+# Or use the launcher shim
 python main.py
-```
 
-Open **http://localhost:8501** in your browser.
+# Or use Streamlit (SECONDARY option)
+streamlit run app/app.py
+# → Open http://localhost:8501
+```
 
 ### 3. Configure (Optional)
 For live data access (>2,000 rows), set your Socrata API token:
