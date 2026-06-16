@@ -1,0 +1,57 @@
+# Jupyter Book Configuration
+# NYC DOT Sidewalk Inspection & Management Toolkit - Interactive Jupyter Edition
+
+title: "NYC DOT SIM Toolkit — Interactive Mission Control"
+author: "NYC Department of Transportation"
+copyright: "2026"
+logo: "logo.png"
+
+# Force all math to be rendered using mathjax (can be overridden per page).
+execute:
+  execute_notebooks: cache
+  timeout: 300
+  allow_errors: true
+
+html:
+  favicon: "favicon.ico"
+  use_issues_button: true
+  use_repository_button: true
+  extra_footer: |
+    <div>
+      <p>NYC DOT Sidewalk Inspection & Management Toolkit v0.5.0</p>
+      <p><a href="https://github.com/ryudkiss-hue/nyc_data">Repository</a> | <a href="https://data.cityofnewyork.us">NYC Open Data</a></p>
+    </div>
+
+# Sphinx configuration
+sphinx:
+  extra_extensions:
+    - 'sphinx_design'
+  config:
+    html_theme: 'sphinx_book_theme'
+    language: en
+    intersphinx_mapping:
+      python: ['https://docs.python.org/3', null]
+      pandas: ['https://pandas.pydata.org/docs', null]
+      plotly: ['https://plotly.com/python-api-reference', null]
+
+# Jupyter Book chapter structure
+chapters:
+  - file: intro
+  - file: dashboards/01_inspection_dashboard
+    title: "Inspection Dashboard"
+  - file: dashboards/02_ramp_analysis
+    title: "ADA Ramp Analysis"
+  - file: dashboards/03_gis_overview
+    title: "Spatial Conflict Detection"
+  - file: dashboards/04_quality_scorecard
+    title: "Data Quality Scorecard"
+  - file: dashboards/05_advanced_analytics
+    title: "Advanced Analytics"
+  - file: reference/dataset_registry
+    title: "Dataset Registry"
+  - file: reference/cli_reference
+    title: "CLI Toolkit Reference"
+
+# Options for the JupyterLab preview
+jupyterlab:
+  jupyter_server_url: ""
