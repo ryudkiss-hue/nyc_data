@@ -1,5 +1,5 @@
 import pytest
-pytestmark = pytest.mark.skip(reason="Data Unavailable - Live telemetry required")
+
 """Tests for the analytics marts (Task 4)."""
 
 from unittest.mock import patch

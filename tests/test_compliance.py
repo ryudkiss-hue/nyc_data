@@ -1,5 +1,5 @@
 import pytest
-pytestmark = pytest.mark.skip(reason="Data Unavailable - Live telemetry required")
+
 from socrata_toolkit.governance import (
     check_dcwp_license,
     check_parks_permit,

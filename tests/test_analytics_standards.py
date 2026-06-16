@@ -1,5 +1,5 @@
 import pytest
-pytestmark = pytest.mark.skip(reason="Data Unavailable - Live telemetry required")
+
 """Tests for QA checklist, reproducibility keys, and forecast validation."""
 
 from datetime import datetime, timezone

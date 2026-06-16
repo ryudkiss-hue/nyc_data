@@ -8,7 +8,7 @@ that single-example tests miss.
 
 from __future__ import annotations
 import pytest
-pytestmark = pytest.mark.skip(reason="Data Unavailable - Live telemetry required")
+
 
 import numpy as np
 import pandas as pd

@@ -6,7 +6,7 @@ GeoJSON-export path (geopandas), and the dataset-health manual-format fallback.
 
 from __future__ import annotations
 import pytest
-pytestmark = pytest.mark.skip(reason="Data Unavailable - Live telemetry required")
+
 
 import json
 import sys

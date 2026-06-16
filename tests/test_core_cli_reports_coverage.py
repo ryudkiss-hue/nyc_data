@@ -6,7 +6,7 @@ run, publish), and the nl-query execution path with a stubbed anthropic module.
 
 from __future__ import annotations
 import pytest
-pytestmark = pytest.mark.skip(reason="Data Unavailable - Live telemetry required")
+
 
 import json
 import sys

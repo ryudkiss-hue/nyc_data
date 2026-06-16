@@ -5,7 +5,7 @@ Ensures max_rows and page_size handle string inputs correctly.
 
 from __future__ import annotations
 import pytest
-pytestmark = pytest.mark.skip(reason="Data Unavailable - Live telemetry required")
+
 
 from unittest.mock import MagicMock, patch
 

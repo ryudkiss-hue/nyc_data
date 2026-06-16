@@ -9,7 +9,7 @@ Tests cover:
 
 from __future__ import annotations
 import pytest
-pytestmark = pytest.mark.skip(reason="Data Unavailable - Live telemetry required")
+
 
 import os
 import sys
@@ -49,12 +49,13 @@ class TestAlert:
 
     def test_alert_creation(self):
         """Test creating an alert."""
-        alert = Alert(
-            severity=AlertSeverity.CRITICAL.value,
+        alert = Alert.create(
+            severity=AlertSeverity.CRITICAL,
             message="Test alert",
+            alert_type="test",
             payload={"test": "value"}
         )
-        assert alert.severity == "critical"
+        assert alert.severity == AlertSeverity.CRITICAL
         assert alert.message == "Test alert"
         assert alert.payload == {"test": "value"}
         assert alert.created_at > 0
@@ -80,7 +81,7 @@ class TestAlertManager:
         manager = AlertManager(batch_mode=False)
         sub = DummySubscriber()
         manager.register(sub)
-        alert = Alert(severity="warning", message="sync msg")
+        alert = Alert.create(severity=AlertSeverity.WARNING, message="sync msg", alert_type="sync", payload={})
         manager.emit(alert)
         assert len(sub.alerts) == 1
         assert sub.alerts[0].message == "sync msg"
@@ -89,7 +90,7 @@ class TestAlertManager:
         manager = AlertManager(batch_mode=True, batch_interval=0.1)
         sub = DummySubscriber()
         manager.register(sub)
-        alert = Alert(severity="critical", message="batch msg")
+        alert = Alert.create(severity=AlertSeverity.CRITICAL, message="batch msg", alert_type="batch", payload={})
         manager.emit(alert)
         assert len(sub.alerts) == 0  # not emitted yet
         time.sleep(0.2)  # wait for thread
@@ -101,7 +102,7 @@ class TestAlertManager:
         manager = AlertManager(batch_mode=True, batch_interval=10.0)
         sub = DummySubscriber()
         manager.register(sub)
-        alert = Alert(severity="warning", message="shutdown msg")
+        alert = Alert.create(severity=AlertSeverity.WARNING, message="shutdown msg", alert_type="shutdown", payload={})
         manager.emit(alert)
         manager.shutdown()
         # Should flush on shutdown
@@ -110,7 +111,7 @@ class TestAlertManager:
 class TestNotifiers:
     def test_cli_notifier(self, capsys):
         notifier = CLINotifier(show_payload=True)
-        alert = Alert(severity="warning", message="cli msg", payload={"x": 1})
+        alert = Alert.create(severity=AlertSeverity.WARNING, message="cli msg", alert_type="cli", payload={"x": 1})
         notifier.notify(alert)
         captured = capsys.readouterr()
         assert "WARNING" in captured.out
@@ -130,7 +131,7 @@ class TestNotifiers:
             "password": "pwd"
         }
         notifier = EmailNotifier(config)
-        alert = Alert(severity="critical", message="email msg", payload={"x": 1})
+        alert = Alert.create(severity=AlertSeverity.CRITICAL, message="email msg", alert_type="email", payload={"x": 1})
         notifier.notify(alert)
         
         mock_smtp.assert_called_once_with("localhost", 25)
