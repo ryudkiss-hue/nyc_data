@@ -20,7 +20,6 @@ try:
 except ImportError:
     pytest.skip("Governance modules not available", allow_module_level=True)
 
-
 class TestGovernanceProcessor:
     """Test GovernanceProcessor orchestration."""
 
@@ -84,7 +83,6 @@ class TestGovernanceProcessor:
         assert enriched.after_values["budget"] == 100000
         assert enriched.is_compliant  # default true
 
-
 class TestProjectAnalystReports:
     """Test ProjectAnalystReports for Project Analysts."""
 
@@ -115,7 +113,6 @@ class TestProjectAnalystReports:
 
         assert "project_id" in result
         assert "is_compliant" in result or "error" in result
-
 
 class TestGovernanceIntegration:
     """End-to-end integration tests for governance flow."""
@@ -166,7 +163,6 @@ class TestGovernanceIntegration:
 
         assert len(event.design_rule_violations) == 1
         assert event.is_compliant is False
-
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

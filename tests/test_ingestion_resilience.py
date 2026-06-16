@@ -15,7 +15,7 @@ def test_fetch_live_retry_on_429(mocker):
     mock_client.get.side_effect = [
         requests.exceptions.HTTPError("429 Too Many Requests"),
         requests.exceptions.HTTPError("429 Too Many Requests"),
-        [{"bbl": "1234567890"}]
+        [{"bbl": "1234567890"}],
     ]
 
     # Trigger fetch
@@ -27,6 +27,7 @@ def test_fetch_live_retry_on_429(mocker):
 
     # Ensure it called get() exactly 3 times
     assert mock_client.get.call_count == 3
+
 
 from unittest.mock import MagicMock
 
@@ -43,6 +44,7 @@ def test_ingestion_factory():
 
     with pytest.raises(ValueError, match="Unknown ingestion mode"):
         factory.get_fetcher(mode="unknown")
+
 
 def test_max_workers_hardcap(mocker):
     """Verify that concurrency is capped at 3 workers."""

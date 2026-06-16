@@ -35,6 +35,7 @@ def _resp(json_value):
 # report contract
 # ---------------------------------------------------------------------------
 
+
 class TestReportContract:
     REG = {"street_construction_inspections": {"fourfour": "ydkf-mpxb"}}
 
@@ -46,8 +47,10 @@ class TestReportContract:
         ]
         session = MagicMock()
         session.get.return_value = _resp(rows)
-        with patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=self.REG), \
-             patch("socrata_toolkit.core.cli._make_session", return_value=session):
+        with (
+            patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=self.REG),
+            patch("socrata_toolkit.core.cli._make_session", return_value=session),
+        ):
             result = runner.invoke(main, ["report", "contract"])
         assert result.exit_code == 0
         assert "Contractor Performance Report" in result.output
@@ -57,8 +60,10 @@ class TestReportContract:
         rows = [{"id": 1, "value": 10}]
         session = MagicMock()
         session.get.return_value = _resp(rows)
-        with patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=self.REG), \
-             patch("socrata_toolkit.core.cli._make_session", return_value=session):
+        with (
+            patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=self.REG),
+            patch("socrata_toolkit.core.cli._make_session", return_value=session),
+        ):
             result = runner.invoke(main, ["report", "contract"])
         assert result.exit_code == 0
         assert "No contractor/applicant column" in result.output
@@ -68,9 +73,11 @@ class TestReportContract:
         out = tmp_path / "report.txt"
         session = MagicMock()
         session.get.return_value = _resp(rows)
-        with patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=self.REG), \
-             patch("socrata_toolkit.core.cli._make_session", return_value=session), \
-             patch("socrata_toolkit.core.cli.HAS_WEASYPRINT", False):
+        with (
+            patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=self.REG),
+            patch("socrata_toolkit.core.cli._make_session", return_value=session),
+            patch("socrata_toolkit.core.cli.HAS_WEASYPRINT", False),
+        ):
             result = runner.invoke(main, ["report", "contract", "--output", str(out)])
         assert result.exit_code == 0
         assert out.exists()
@@ -80,8 +87,10 @@ class TestReportContract:
         reg = {"violations": {"fourfour": "6kbp-uz6m"}}
         session = MagicMock()
         session.get.return_value = _resp([{"applicant": "X", "id": 1}])
-        with patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=reg), \
-             patch("socrata_toolkit.core.cli._make_session", return_value=session):
+        with (
+            patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=reg),
+            patch("socrata_toolkit.core.cli._make_session", return_value=session),
+        ):
             result = runner.invoke(main, ["report", "contract"])
         assert result.exit_code == 0
 
@@ -90,8 +99,10 @@ class TestReportContract:
 
         session = MagicMock()
         session.get.side_effect = requests.RequestException("fail")
-        with patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=self.REG), \
-             patch("socrata_toolkit.core.cli._make_session", return_value=session):
+        with (
+            patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=self.REG),
+            patch("socrata_toolkit.core.cli._make_session", return_value=session),
+        ):
             result = runner.invoke(main, ["report", "contract"])
         assert result.exit_code != 0
 
@@ -99,6 +110,7 @@ class TestReportContract:
 # ---------------------------------------------------------------------------
 # dataset ramp-analysis
 # ---------------------------------------------------------------------------
+
 
 class TestDatasetRampAnalysis:
     REG = {"ramp_progress": {"fourfour": "e7gc-ub6z"}}
@@ -112,8 +124,10 @@ class TestDatasetRampAnalysis:
     def test_ramp_no_rows(self, runner):
         session = MagicMock()
         session.get.return_value = _resp([])
-        with patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=self.REG), \
-             patch("socrata_toolkit.core.cli._make_session", return_value=session):
+        with (
+            patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=self.REG),
+            patch("socrata_toolkit.core.cli._make_session", return_value=session),
+        ):
             result = runner.invoke(main, ["dataset", "ramp-analysis", "--sample", "10"])
         assert result.exit_code == 0
         assert "No ramp data found" in result.output
@@ -123,8 +137,10 @@ class TestDatasetRampAnalysis:
 
         session = MagicMock()
         session.get.side_effect = requests.RequestException("boom")
-        with patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=self.REG), \
-             patch("socrata_toolkit.core.cli._make_session", return_value=session):
+        with (
+            patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=self.REG),
+            patch("socrata_toolkit.core.cli._make_session", return_value=session),
+        ):
             result = runner.invoke(main, ["dataset", "ramp-analysis"])
         assert result.exit_code != 0
 
@@ -135,11 +151,17 @@ class TestDatasetRampAnalysis:
         mock_report = MagicMock()
         mock_report.to_table.return_value = "BOROUGH TABLE"
         mock_report.to_dict.return_value = {"overall_completion_rate": 0.8}
-        with patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=self.REG), \
-             patch("socrata_toolkit.core.cli._make_session", return_value=session), \
-             patch("socrata_toolkit.engineering.ramp_analysis.RampCompletionReportGenerator") as mock_gen:
+        with (
+            patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=self.REG),
+            patch("socrata_toolkit.core.cli._make_session", return_value=session),
+            patch(
+                "socrata_toolkit.engineering.ramp_analysis.RampCompletionReportGenerator"
+            ) as mock_gen,
+        ):
             mock_gen.return_value.generate.return_value = mock_report
-            result = runner.invoke(main, ["dataset", "ramp-analysis", "--sample", "100", "--include-ci"])
+            result = runner.invoke(
+                main, ["dataset", "ramp-analysis", "--sample", "100", "--include-ci"]
+            )
         assert result.exit_code == 0
         assert "BOROUGH TABLE" in result.output
 
@@ -147,9 +169,13 @@ class TestDatasetRampAnalysis:
         rows = [{"borough": "MN"}]
         session = MagicMock()
         session.get.return_value = _resp(rows)
-        with patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=self.REG), \
-             patch("socrata_toolkit.core.cli._make_session", return_value=session), \
-             patch("socrata_toolkit.engineering.ramp_analysis.RampCompletionReportGenerator") as mock_gen:
+        with (
+            patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=self.REG),
+            patch("socrata_toolkit.core.cli._make_session", return_value=session),
+            patch(
+                "socrata_toolkit.engineering.ramp_analysis.RampCompletionReportGenerator"
+            ) as mock_gen,
+        ):
             mock_gen.return_value.generate.side_effect = ValueError("bad columns")
             result = runner.invoke(main, ["dataset", "ramp-analysis"])
         assert result.exit_code != 0
@@ -159,6 +185,7 @@ class TestDatasetRampAnalysis:
 # ---------------------------------------------------------------------------
 # analyst group
 # ---------------------------------------------------------------------------
+
 
 class TestAnalystGroup:
     def test_init_config_writes_template(self, runner, tmp_path):
@@ -199,6 +226,7 @@ class TestAnalystGroup:
 # nl-query happy path (stubbed anthropic)
 # ---------------------------------------------------------------------------
 
+
 class TestNlQueryHappyPath:
     REG = {"inspection": {"fourfour": "dntt-gqwq"}}
 
@@ -227,10 +255,12 @@ class TestNlQueryHappyPath:
             _resp([{"borough": "MN", "count": 5}]),
         ]
         stub = self._stub_anthropic("SELECT borough, count(*) GROUP BY borough")
-        with patch("socrata_toolkit.core.cli.HAS_ANTHROPIC", True), \
-             patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=self.REG), \
-             patch("socrata_toolkit.core.cli._make_session", return_value=session), \
-             patch.dict(sys.modules, {"anthropic": stub}):
+        with (
+            patch("socrata_toolkit.core.cli.HAS_ANTHROPIC", True),
+            patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=self.REG),
+            patch("socrata_toolkit.core.cli._make_session", return_value=session),
+            patch.dict(sys.modules, {"anthropic": stub}),
+        ):
             result = runner.invoke(main, ["nl-query", "violations per borough"])
         assert result.exit_code == 0
         assert "Generated SoQL" in result.output
@@ -240,10 +270,12 @@ class TestNlQueryHappyPath:
         session = MagicMock()
         session.get.return_value = _resp([{"borough": "MN"}])
         stub = self._stub_anthropic("DROP TABLE inspections")
-        with patch("socrata_toolkit.core.cli.HAS_ANTHROPIC", True), \
-             patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=self.REG), \
-             patch("socrata_toolkit.core.cli._make_session", return_value=session), \
-             patch.dict(sys.modules, {"anthropic": stub}):
+        with (
+            patch("socrata_toolkit.core.cli.HAS_ANTHROPIC", True),
+            patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=self.REG),
+            patch("socrata_toolkit.core.cli._make_session", return_value=session),
+            patch.dict(sys.modules, {"anthropic": stub}),
+        ):
             result = runner.invoke(main, ["nl-query", "drop everything"])
         assert result.exit_code != 0
         assert "forbidden keyword" in result.output
@@ -251,9 +283,11 @@ class TestNlQueryHappyPath:
     def test_nl_query_unknown_dataset(self, runner, monkeypatch):
         monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
         stub = self._stub_anthropic("SELECT *")
-        with patch("socrata_toolkit.core.cli.HAS_ANTHROPIC", True), \
-             patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=self.REG), \
-             patch.dict(sys.modules, {"anthropic": stub}):
+        with (
+            patch("socrata_toolkit.core.cli.HAS_ANTHROPIC", True),
+            patch("socrata_toolkit.core.cli._load_dataset_registry", return_value=self.REG),
+            patch.dict(sys.modules, {"anthropic": stub}),
+        ):
             result = runner.invoke(main, ["nl-query", "q", "--dataset", "nonexistent"])
         assert result.exit_code != 0
         assert "not found" in result.output

@@ -78,7 +78,6 @@ except ImportError:
 NYC_BOUNDS = {"lat_min": 40.477, "lat_max": 40.917, "lon_min": -74.259, "lon_max": -73.700}
 BOROUGHS = BOROUGH_LIST
 
-
 # ---------------------------------------------------------------------------
 # Normalisation helpers
 # ---------------------------------------------------------------------------
@@ -105,7 +104,6 @@ def _normalize_inspection(df: pd.DataFrame) -> pd.DataFrame:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce")
     return df
-
 
 def _normalize_permits(df: pd.DataFrame) -> pd.DataFrame:
     """Map Socrata street_permits columns to standard view column names."""
@@ -136,7 +134,6 @@ def _normalize_permits(df: pd.DataFrame) -> pd.DataFrame:
             df[col] = pd.to_numeric(df[col], errors="coerce")
     return df
 
-
 # ---------------------------------------------------------------------------
 # Cached data loaders
 # ---------------------------------------------------------------------------
@@ -146,12 +143,10 @@ def _load_inspections(limit: int = 25_000) -> pd.DataFrame:
     df = fetch_dataset("inspection", limit=limit)
     return _normalize_inspection(df)
 
-
 @st.cache_data(ttl=86_400, show_spinner="Loading permit data from Socrata…")
 def _load_permits(limit: int = 25_000) -> pd.DataFrame:
     df = fetch_dataset("street_permits", limit=limit)
     return _normalize_permits(df)
-
 
 @st.cache_data(ttl=86_400, show_spinner="Loading HIQA street construction inspections…")
 def _load_street_construction_inspections(limit: int = 15_000) -> pd.DataFrame:
@@ -162,7 +157,6 @@ def _load_street_construction_inspections(limit: int = 15_000) -> pd.DataFrame:
         return df
     except Exception:
         return pd.DataFrame()
-
 
 @st.cache_data(ttl=86_400, show_spinner="Loading capital reconstruction intersections…")
 def _load_capital_intersections(limit: int = 10_000) -> pd.DataFrame:
@@ -175,14 +169,12 @@ def _load_capital_intersections(limit: int = 10_000) -> pd.DataFrame:
     except Exception:
         return pd.DataFrame()
 
-
 @st.cache_data(ttl=86_400, show_spinner="Loading permit stipulations…")
 def _load_permit_stipulations(limit: int = 10_000) -> pd.DataFrame:
     try:
         return fetch_dataset("permit_stipulations", limit=limit)
     except Exception:
         return pd.DataFrame()
-
 
 @st.cache_data(ttl=86_400, show_spinner="Loading street closures (block level)…")
 def _load_street_closures(limit: int = 10_000) -> pd.DataFrame:
@@ -201,7 +193,6 @@ def _load_street_closures(limit: int = 10_000) -> pd.DataFrame:
     except Exception:
         return pd.DataFrame()
 
-
 @st.cache_data(ttl=86_400, show_spinner="Loading step streets…")
 def _load_step_streets(limit: int = 5_000) -> pd.DataFrame:
     try:
@@ -219,7 +210,6 @@ def _load_step_streets(limit: int = 5_000) -> pd.DataFrame:
     except Exception:
         return pd.DataFrame()
 
-
 # ---------------------------------------------------------------------------
 # Utility helpers
 # ---------------------------------------------------------------------------
@@ -232,7 +222,6 @@ def _flag_in_bounds(df: pd.DataFrame) -> pd.DataFrame:
         & df["longitude"].between(NYC_BOUNDS["lon_min"], NYC_BOUNDS["lon_max"])
     )
     return df[mask].copy()
-
 
 def _df_to_geojson(df: pd.DataFrame) -> str:
     """Build a simple Point FeatureCollection from latitude/longitude columns."""
@@ -250,7 +239,6 @@ def _df_to_geojson(df: pd.DataFrame) -> str:
             features.append(feat)
     return json.dumps({"type": "FeatureCollection", "features": features})
 
-
 def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """Return the great-circle distance in kilometres between two WGS84 points."""
     R = 6371
@@ -261,7 +249,6 @@ def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
         + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2
     )
     return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-
 
 def _nearest_neighbor_route(coords: list[tuple]) -> list[int]:
     """Greedy nearest-neighbour TSP heuristic.
@@ -288,7 +275,6 @@ def _nearest_neighbor_route(coords: list[tuple]) -> list[int]:
         unvisited.remove(nearest)
         current = nearest
     return route
-
 
 # ---------------------------------------------------------------------------
 # Conflict detection (attribute-based fallback)
@@ -358,11 +344,9 @@ def _detect_spatial_conflicts(inspections: pd.DataFrame, permits: pd.DataFrame) 
     df["_sort"] = df["severity"].map(order)
     return df.sort_values("_sort").drop(columns=["_sort"]).reset_index(drop=True)
 
-
 # EPSG:2263 = NY State Plane (Long Island), feet. Used for metric distance ops.
 NY_STATE_PLANE = "EPSG:2263"
 M_TO_FT = 3.280839895
-
 
 def _detect_conflicts_geopandas(
     inspections: pd.DataFrame,
@@ -456,7 +440,6 @@ def _detect_conflicts_geopandas(
     )
     return result.reset_index(drop=True)
 
-
 def _base_folium_map(center_lat: float, center_lon: float, zoom_start: int = 11) -> folium.Map:
     """Create a CartoDB-positron Folium map with MiniMap, Fullscreen, and Draw controls.
 
@@ -480,7 +463,6 @@ def _base_folium_map(center_lat: float, center_lon: float, zoom_start: int = 11)
         draw_options={"polyline": False, "marker": False, "circlemarker": False},
     ).add_to(m)
     return m
-
 
 def _render_folium_map(
     df: pd.DataFrame,
@@ -580,7 +562,6 @@ def _render_folium_map(
 
     st_folium(m, width=900, height=550, returned_objects=[])
 
-
 def _render_folium_heatmap(df: pd.DataFrame) -> None:
     """Interactive Folium HeatMap density overlay for critical locations (Item 8)."""
     if not HAS_FOLIUM:
@@ -614,7 +595,6 @@ def _render_folium_heatmap(df: pd.DataFrame) -> None:
 
     st_folium(m, width=900, height=540, returned_objects=[])
 
-
 def _render_plotly_map(df: pd.DataFrame, title: str = "Inspection Locations") -> None:
     if not HAS_PLOTLY:
         st.info("Install plotly for interactive charts.")
@@ -645,7 +625,6 @@ def _render_plotly_map(df: pd.DataFrame, title: str = "Inspection Locations") ->
     )
     fig.update_layout(mapbox_style="carto-positron", margin={"r": 0, "t": 40, "l": 0, "b": 0})
     st.plotly_chart(fig, use_container_width=True)
-
 
 def _render_pydeck_map(df: pd.DataFrame, title: str = "Inspection Locations") -> None:
     """Render a high-performance deck.gl scatter map via pydeck.
@@ -717,7 +696,6 @@ def _render_pydeck_map(df: pd.DataFrame, title: str = "Inspection Locations") ->
     st.pydeck_chart(deck)
     st.caption(f"{len(df_valid):,} points rendered · {title}")
 
-
 # ---------------------------------------------------------------------------
 # Item 20 — Block-level aggregation
 # ---------------------------------------------------------------------------
@@ -776,7 +754,6 @@ def _render_block_aggregation(df: pd.DataFrame) -> None:
         st.plotly_chart(fig2, use_container_width=True)
 
     st.dataframe(agg_df, use_container_width=True, hide_index=True)
-
 
 # ---------------------------------------------------------------------------
 # Item 23 / Item 41 — Spatial export buttons
@@ -863,7 +840,6 @@ def _export_spatial_buttons(df: pd.DataFrame, key_prefix: str) -> None:
             key=f"{key_prefix}_csv",
         )
 
-
 # ---------------------------------------------------------------------------
 # Item 27 — Spatial time-lapse
 # ---------------------------------------------------------------------------
@@ -930,7 +906,6 @@ def _render_time_lapse(df: pd.DataFrame) -> None:
     fig.update_layout(xaxis_tickangle=-30)
     st.plotly_chart(fig, use_container_width=True)
 
-
 # ---------------------------------------------------------------------------
 # Item 28 — Route optimiser
 # ---------------------------------------------------------------------------
@@ -986,7 +961,6 @@ def _render_route_optimizer(df: pd.DataFrame) -> None:
         key="route_csv",
     )
 
-
 # ---------------------------------------------------------------------------
 # Tab renderers
 # ---------------------------------------------------------------------------
@@ -1017,7 +991,6 @@ def render_gis_page() -> None:
     with tab6:
         _render_stipulations_tab()
 
-
 def _get_inspection_df(key_prefix: str) -> pd.DataFrame:
     """Load inspections from Socrata or user-uploaded CSV."""
     source = st.radio(
@@ -1047,7 +1020,6 @@ def _get_inspection_df(key_prefix: str) -> pd.DataFrame:
             return pd.DataFrame()
         df = pd.read_csv(up)
         return _normalize_inspection(df)
-
 
 def _render_inspection_map_tab() -> None:
     st.subheader("Inspection Locations")
@@ -1152,7 +1124,6 @@ def _render_inspection_map_tab() -> None:
     st.markdown("---")
     _export_spatial_buttons(df_filtered, "insp_map")
 
-
 def _render_conflict_detection_tab() -> None:
     st.subheader("⚠️ Conflict Detection")
     st.caption("Identify inspection locations that overlap with active permits or capital projects.")
@@ -1248,7 +1219,6 @@ def _render_conflict_detection_tab() -> None:
             )
             _render_folium_map(df_insp, permits=df_perm)
 
-
 def _render_hotspot_tab() -> None:
     st.subheader("🔥 Hotspot Analysis")
     st.caption("Identify geographic clusters of high-severity defects to prioritize patrol areas.")
@@ -1342,7 +1312,6 @@ def _render_hotspot_tab() -> None:
         else:
             _render_dbscan_clusters(df_critical)
 
-
 def _render_dbscan_clusters(df: pd.DataFrame) -> None:
     """DBSCAN hotspot clustering overlay (Item 21)."""
     if df.empty or "latitude" not in df.columns or "longitude" not in df.columns:
@@ -1397,7 +1366,6 @@ def _render_dbscan_clusters(df: pd.DataFrame) -> None:
     )
     st.markdown("**Top 5 clusters by size**")
     st.dataframe(cluster_sizes, use_container_width=True, hide_index=True)
-
 
 def _render_spatial_reports_tab() -> None:
     st.subheader("📊 Spatial Reports")
@@ -1480,7 +1448,6 @@ def _render_spatial_reports_tab() -> None:
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
 
-
 def _render_coordinate_converter() -> None:
     """WGS84 → NY State Plane + Web Mercator coordinate converter (Item 38)."""
     st.markdown("Convert WGS84 (lat/lon) to projected coordinate systems.")
@@ -1516,7 +1483,6 @@ def _render_coordinate_converter() -> None:
         with col2:
             st.markdown("**Web Mercator (EPSG:3857) — metres**")
             st.code(f"X: {merc_x:,.2f} m\nY: {merc_y:,.2f} m")
-
 
 def _render_hiqa_capital_tab() -> None:
     st.subheader("🚧 HIQA Street Construction Inspections & Capital Projects")
@@ -1635,7 +1601,6 @@ def _render_hiqa_capital_tab() -> None:
     with st.expander("🗄️ PostGIS Connection"):
         _render_postgis_settings()
 
-
 def _render_capital_impact_radius(df_cap: pd.DataFrame) -> None:
     """Proportional-marker overlay for capital project impact radius (Item 33)."""
     if not HAS_PLOTLY:
@@ -1683,7 +1648,6 @@ def _render_capital_impact_radius(df_cap: pd.DataFrame) -> None:
     st.caption(f"Each marker represents one capital intersection. Marker size reflects the "
                f"{radius_m} m impact radius (larger radius → bigger marker).")
 
-
 def _render_postgis_settings() -> None:
     """PostGIS connection form (Item 40)."""
     try:
@@ -1730,7 +1694,6 @@ def _render_postgis_settings() -> None:
                     st.info("No spatial tables found.")
         except Exception as err:
             st.error(f"Connection error: {err}")
-
 
 # ---------------------------------------------------------------------------
 # Item 34 / 35 — Stipulations & Closures tab
@@ -1818,7 +1781,6 @@ def _render_stipulations_tab() -> None:
 
     with step_tab:
         _render_step_streets(int(row_limit))
-
 
 def _render_step_streets(limit: int) -> None:
     """Step streets dataset view (Item 35) — fourfour u9au-h79y."""

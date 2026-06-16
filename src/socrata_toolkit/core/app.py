@@ -13,7 +13,6 @@ from sqlalchemy.engine import Engine
 
 log = logging.getLogger("analysis_helpers")
 
-
 # -----------------------------
 # ENVIRONMENT
 # -----------------------------
@@ -36,7 +35,6 @@ def load_env(env_path: str = ".env") -> dict[str, Any]:
         "MAPBOX_TOKEN": os.getenv("MAPBOX_TOKEN"),
     }
 
-
 # -----------------------------
 # DATABASE
 # -----------------------------
@@ -57,7 +55,6 @@ def get_engine(pg_dsn: str | None) -> Engine | None:
         log.error("Failed to create SQLAlchemy engine: %s", exc, exc_info=True)
         return None
 
-
 def list_tables(engine: Engine) -> pd.DataFrame:
     """
     Returns a DataFrame of public base tables with columns: table_schema, table_name.
@@ -71,7 +68,6 @@ def list_tables(engine: Engine) -> pd.DataFrame:
     ORDER BY table_name
     """
     return pd.read_sql_query(q, engine)
-
 
 def candidate_sidewalk_tables(engine: Engine) -> list[str]:
     """
@@ -117,7 +113,6 @@ def candidate_sidewalk_tables(engine: Engine) -> list[str]:
     # preserve order and deduplicate
     return list(dict.fromkeys(candidates))
 
-
 def safe_read_table(engine: Engine, table: str, limit: int = 2000) -> pd.DataFrame:
     """
     Safely reads a table with fallback quoting strategies.
@@ -152,7 +147,6 @@ def safe_read_table(engine: Engine, table: str, limit: int = 2000) -> pd.DataFra
 
     log.error("Failed to read table: %s", table)
     return pd.DataFrame()
-
 
 # -----------------------------
 # GEO HELPERS
@@ -189,7 +183,6 @@ def find_latlon_columns(df: pd.DataFrame) -> tuple[str, str] | None:
                 return a, b
 
     return None
-
 
 # -----------------------------
 # KPI COMPUTATION

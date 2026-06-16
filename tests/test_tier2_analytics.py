@@ -31,9 +31,7 @@ class TestSLABreachForecasting:
         """Forecast should require minimum data points."""
         from app.views.analytics_advanced import _forecast_sla_breach
 
-        df = pd.DataFrame(
-            {"date": ["2024-01-01", "2024-01-02"], "score": [50, 60]}
-        )
+        df = pd.DataFrame({"date": ["2024-01-01", "2024-01-02"], "score": [50, 60]})
         result = _forecast_sla_breach(df, "date", "score")
         assert result == {}
 
@@ -45,9 +43,7 @@ class TestSLABreachForecasting:
         df = pd.DataFrame(
             {
                 "date": dates,
-                "score": [
-                    45 if i < 10 else 55 for i in range(30)
-                ],
+                "score": [45 if i < 10 else 55 for i in range(30)],
             }
         )
         result = _forecast_sla_breach(df, "date", "score")
@@ -124,9 +120,11 @@ class TestDrillDownLogic:
         """Drill-down state should initialize properly."""
         import streamlit as st
 
-        assert "drill_level" not in st.session_state or st.session_state.get(
-            "drill_level"
-        ) in ["city", "borough", "inspector"]
+        assert "drill_level" not in st.session_state or st.session_state.get("drill_level") in [
+            "city",
+            "borough",
+            "inspector",
+        ]
 
     def test_borough_aggregation(self):
         """Borough-level aggregation should work correctly."""

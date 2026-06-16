@@ -28,6 +28,7 @@ def runner():
 # lineage group
 # ---------------------------------------------------------------------------
 
+
 class TestLineageGroup:
     def test_lineage_nodes_empty(self, runner):
         result = runner.invoke(main, ["lineage", "nodes"])
@@ -90,6 +91,7 @@ class TestLineageGroup:
 # ---------------------------------------------------------------------------
 # observability group (module missing → error path)
 # ---------------------------------------------------------------------------
+
 
 class TestObservabilityGroup:
     """The observability subsystem is now shipped, so commands succeed."""
@@ -211,7 +213,8 @@ class TestObservabilityGroup:
     def test_observability_export_metrics_prometheus(self, runner, tmp_path):
         out = tmp_path / "m.prom"
         result = runner.invoke(
-            main, ["observability", "export", "prometheus", "--output", str(out), "--type", "metrics"]
+            main,
+            ["observability", "export", "prometheus", "--output", str(out), "--type", "metrics"],
         )
         assert result.exit_code == 0
 
@@ -239,6 +242,7 @@ class TestObservabilityGroup:
 # ---------------------------------------------------------------------------
 # material group
 # ---------------------------------------------------------------------------
+
 
 class TestMaterialGroup:
     def test_material_list(self, runner):
@@ -269,6 +273,7 @@ class TestMaterialGroup:
 # compliance group
 # ---------------------------------------------------------------------------
 
+
 class TestComplianceGroup:
     def test_compliance_check_valid(self, runner):
         result = runner.invoke(main, ["compliance", "check", "ASPH-NYC-001"])
@@ -292,6 +297,7 @@ class TestComplianceGroup:
 # schema group (help/usage paths)
 # ---------------------------------------------------------------------------
 
+
 class TestSchemaGroup:
     @pytest.mark.parametrize(
         "subcommand",
@@ -306,6 +312,7 @@ class TestSchemaGroup:
 # ---------------------------------------------------------------------------
 # top-level group help
 # ---------------------------------------------------------------------------
+
 
 class TestGroupHelp:
     @pytest.mark.parametrize(

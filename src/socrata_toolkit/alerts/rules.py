@@ -38,7 +38,6 @@ class Rule:
     enabled: bool = True
     cooldown_minutes: int = 60
 
-
 @dataclass
 class RuleAlert:
     """An alert triggered by a rule."""
@@ -49,7 +48,6 @@ class RuleAlert:
     actual_value: float
     threshold: float
     timestamp: str
-
 
 class RulesEngine:
     """Evaluate rules against data and produce alerts."""

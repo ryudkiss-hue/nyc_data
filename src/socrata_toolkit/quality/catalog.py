@@ -19,13 +19,11 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-
 class QualityTrend(Enum):
     """Direction of quality trend."""
     IMPROVING = "improving"
     STABLE = "stable"
     DEGRADING = "degrading"
-
 
 @dataclass
 class DatasetQualityScore:
@@ -49,7 +47,6 @@ class DatasetQualityScore:
     def to_dict(self) -> dict[str, float]:
         """Convert to dictionary."""
         return asdict(self)
-
 
 @dataclass
 class DatasetQualityProfile:
@@ -129,7 +126,6 @@ class DatasetQualityProfile:
             violation_summary=data.get("violation_summary", {}),
             metadata=data.get("metadata", {}),
         )
-
 
 class DataQualityCatalog:
     """Manages dataset quality profiles in a catalog.

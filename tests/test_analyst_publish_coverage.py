@@ -1,4 +1,5 @@
 """Comprehensive tests for analyst.publish module."""
+
 from __future__ import annotations
 
 import json
@@ -75,10 +76,14 @@ class TestPackContext:
             pack_dir = Path(tmpdir) / "my_pack"
             pack_dir.mkdir()
             manifest = pack_dir / "manifest.json"
-            manifest.write_text(json.dumps({
-                "run_date": "2024-01-15",
-                "profile_name": "test_profile",
-            }))
+            manifest.write_text(
+                json.dumps(
+                    {
+                        "run_date": "2024-01-15",
+                        "profile_name": "test_profile",
+                    }
+                )
+            )
 
             result = _pack_context(pack_dir)
             assert result["run_date"] == "2024-01-15"
@@ -146,6 +151,7 @@ email:
             profile_file.write_text("[invalid yaml :")
 
             import yaml
+
             with pytest.raises((yaml.YAMLError, ValueError)):
                 load_publish_profile(profile_file)
 

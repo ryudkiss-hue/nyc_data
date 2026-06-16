@@ -8,22 +8,22 @@ from dataclasses import dataclass
 
 import pandas as pd
 
-try:
-    from sklearn.feature_extraction.text import TfidfVectorizer
-except ImportError:
-    TfidfVectorizer = None  # type: ignore[misc, assignment]
+from . import _monolith as _text_monolith
 
 logger = logging.getLogger(__name__)
 
 WORD_RE = re.compile(r"[A-Za-z][A-Za-z0-9_\-']+")
 
+
 @dataclass
 class TextInsights:
     """Insights derived from text analysis."""
+
     top_terms: list[tuple[str, int]]
     regex_hits: dict[str, int]
     tags: list[str]
     row_count: int
+
 
 def generate_text_insights(
     df: pd.DataFrame,
@@ -87,12 +87,14 @@ def generate_text_insights(
     )
     return tagged, insights
 
+
 def extract_term_frequencies(text_list: list[str]) -> dict[str, int]:
     """Calculate frequency of terms in a list of strings."""
     tokens = []
     for text in text_list:
         tokens.extend(WORD_RE.findall(str(text).lower()))
     return dict(Counter(t for t in tokens if len(t) >= 4).most_common(100))
+
 
 def extract_patterns(df: pd.DataFrame, column: str, pattern_type: str = "emails") -> dict[str, int]:
     """Count occurrences of specific regex patterns."""
@@ -104,11 +106,13 @@ def extract_patterns(df: pd.DataFrame, column: str, pattern_type: str = "emails"
     matches = df[column].dropna().astype(str).apply(lambda x: len(pat.findall(x))).sum()
     return {pattern_type: int(matches)}
 
+
 def parse_sim_complaints(df: pd.DataFrame, text_col: str = "description") -> pd.DataFrame:
     """
     Quantitatively parse Sidewalk Inspection and Management (SIM) complaints.
     """
     import numpy as np
+
     out = df.copy()
     if text_col not in out.columns:
         logger.warning(f"Column '{text_col}' not found in DataFrame. Skipping SIM parsing.")
@@ -136,10 +140,30 @@ def parse_sim_complaints(df: pd.DataFrame, text_col: str = "description") -> pd.
 
     out["_sim_severity_score"] = out["_sim_flags"].apply(calculate_severity)
 
-    # Keyword extraction placeholder (production ready)
-    out["_sim_unique_keywords"] = [[] for _ in range(len(out))]
-
-    # Add keyword extraction logic if needed...
+    # Keyword extraction via TF-IDF
+    if _text_monolith.TfidfVectorizer is not None:
+        try:
+            vectorizer = _text_monolith.TfidfVectorizer(max_features=100, stop_words="english")
+            tfidf_matrix = vectorizer.fit_transform(texts)
+            scores_array = tfidf_matrix.toarray()
+            feature_names = vectorizer.get_feature_names_out()
+            keywords_list = []
+            for row_scores in scores_array:
+                ranked = sorted(
+                    (
+                        (feature_names[i], row_scores[i])
+                        for i in range(len(row_scores))
+                        if row_scores[i] > 0
+                    ),
+                    key=lambda x: x[1],
+                    reverse=True,
+                )
+                keywords_list.append([kw for kw, _ in ranked])
+            out["_sim_unique_keywords"] = keywords_list
+        except Exception:
+            out["_sim_unique_keywords"] = [[] for _ in range(len(out))]
+    else:
+        out["_sim_unique_keywords"] = [[] for _ in range(len(out))]
 
     def get_primary_cat(flags: list[str]) -> str:
         if "trip_hazard" in flags and "ada_accessibility" in flags:

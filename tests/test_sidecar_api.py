@@ -14,7 +14,6 @@ from app.sidecar_api import app  # noqa: E402
 
 client = TestClient(app)
 
-
 def test_health():
     r = client.get("/health")
     assert r.status_code == 200
@@ -26,7 +25,6 @@ def test_health():
     for key in ("pymc", "prophet", "privacy", "fair", "dmbok"):
         assert key in caps
         assert isinstance(caps[key], bool)
-
 
 def test_bayesian_yield_rate_posterior():
     r = client.post(
@@ -42,14 +40,12 @@ def test_bayesian_yield_rate_posterior():
     assert len(body["samples"]) <= 200
     assert all(0.0 <= s <= 1.0 for s in body["samples"])
 
-
 def test_bayesian_yield_rate_validation():
     r = client.post(
         "/api/bayesian/yield-rate",
         json={"observations": [1, 2], "totals": [10]},
     )
     assert r.status_code == 400
-
 
 def test_anomalies_flags_outlier():
     # One obvious outlier among many tightly-clustered points so the simple
@@ -62,12 +58,10 @@ def test_anomalies_flags_outlier():
     assert outlier_idx in body["indices"]
     assert body["method"] == "zscore"
 
-
 def test_anomalies_no_outlier():
     r = client.post("/api/quality/anomalies", json={"values": [1.0, 1.0, 1.0, 1.0]})
     assert r.status_code == 200
     assert r.json()["indices"] == []
-
 
 def test_prophet_endpoint_present_or_absent():
     r = client.post(
@@ -80,7 +74,6 @@ def test_prophet_endpoint_present_or_absent():
     )
     assert r.status_code in (200, 503)
 
-
 def test_prophet_length_mismatch():
     r = client.post(
         "/api/forecast/prophet",
@@ -89,14 +82,12 @@ def test_prophet_length_mismatch():
     # 400 (validation) preferred; pydantic min_length may yield 422.
     assert r.status_code in (400, 422)
 
-
 def test_pii_scan_present_or_absent():
     r = client.post(
         "/api/governance/pii-scan",
         json={"rows": [{"email": "a@b.com"}, {"email": "c@d.com"}]},
     )
     assert r.status_code in (200, 503)
-
 
 def test_dmbok_present_or_absent():
     r = client.post(
@@ -105,14 +96,12 @@ def test_dmbok_present_or_absent():
     )
     assert r.status_code in (200, 503)
 
-
 def test_fairness_present_or_absent():
     r = client.post(
         "/api/governance/fairness",
         json={"title": "Test", "description": "d", "license": "CC0"},
     )
     assert r.status_code in (200, 503)
-
 
 def test_anomaly_zscore():
     # Need enough points so the outlier clearly exceeds |z| > 3
@@ -127,7 +116,6 @@ def test_anomaly_zscore():
     assert body["method"] == "zscore"
     assert 15 in body["indices"]
     assert len(body["all_scores"]) == 30
-
 
 def test_anomaly_seasonal():
     import math
@@ -145,7 +133,6 @@ def test_anomaly_seasonal():
     assert "trend" in body
     assert "seasonal" in body
 
-
 def test_anomaly_seasonal_too_short():
     r = client.post(
         "/api/quality/anomalies",
@@ -153,14 +140,12 @@ def test_anomaly_seasonal_too_short():
     )
     assert r.status_code == 422
 
-
 def test_anomaly_bad_method():
     r = client.post(
         "/api/quality/anomalies",
         json={"values": [1.0, 2.0], "method": "interpolation"},
     )
     assert r.status_code == 400
-
 
 def test_audit_trail_endpoints():
     # GET returns a list (may be empty)
@@ -172,7 +157,6 @@ def test_audit_trail_endpoints():
     # DELETE clears the trail
     r2 = client.delete("/api/audit/trail")
     assert r2.status_code == 200
-
 
 def test_quality_catalog_basic():
     r = client.post(

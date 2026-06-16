@@ -1,4 +1,5 @@
 """Comprehensive tests for analyst.roles module."""
+
 from __future__ import annotations
 
 import tempfile
@@ -206,11 +207,7 @@ kpis:
             role_dir.mkdir()
             role_file = role_dir / "test_role.yaml"
             role_yaml = (
-                "role_id: test\n"
-                "display_name: Test\n"
-                "unit_focus: Test focus\n"
-                "duties: []\n"
-                "kpis: []\n"
+                "role_id: test\ndisplay_name: Test\nunit_focus: Test focus\nduties: []\nkpis: []\n"
             )
             role_file.write_text(role_yaml, encoding="utf-8")
 
@@ -458,7 +455,11 @@ class TestBuildRoleTaskStatusMd:
         role = RoleProfile(
             role_id="analyst",
             display_name="Project Analyst",
-            job_reference={"business_title": "Analyst", "jid": "35715", "url": "https://cityjobs.nyc.gov"},
+            job_reference={
+                "business_title": "Analyst",
+                "jid": "35715",
+                "url": "https://cityjobs.nyc.gov",
+            },
             unit_focus="Sidewalk program",
             duties=[
                 RoleDuty(id="D1", text="Review data", pack_outputs=["report.xlsx"]),

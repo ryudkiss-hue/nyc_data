@@ -1,4 +1,5 @@
 """Comprehensive tests for core.client module."""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
@@ -254,7 +255,3 @@ class TestSocrataClientMetadata:
             mock_retries.side_effect = RuntimeError("API error")
             with pytest.raises(RuntimeError):
                 client.get_metadata("data.example.com", "invalid-id")
-
-
-
-

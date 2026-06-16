@@ -18,7 +18,6 @@ def build_fts_index_sql(table: str, columns: Iterable[str], language: str = "eng
     sql = f"CREATE INDEX IF NOT EXISTS \"{idx}\" ON {table} USING GIN (to_tsvector('{language}', {concat}));"
     return sql
 
-
 def ensure_fts_index(dsn: str, table: str, columns: Iterable[str], language: str = "english") -> None:
     """Connect to Postgres and create the FTS index for the given table/columns.
 

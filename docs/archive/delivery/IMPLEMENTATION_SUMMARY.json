@@ -1,0 +1,363 @@
+{
+  "workflow_name": "311 Complaint Response Analysis",
+  "status": "COMPLETED",
+  "created_date": "2026-06-11",
+  "description": "Multi-step LangGraph workflow for analyzing 311 complaint response lifecycle, identifying bottlenecks, and recommending optimizations",
+  "components": {
+    "classifier": {
+      "filename": "src/socrata_toolkit/analysis/complaint_response_classifier.py",
+      "lines": 457,
+      "size_kb": 16.1,
+      "description": "311 complaint response classifier with SLA-driven status determination"
+    },
+    "workflow": {
+      "filename": "src/socrata_toolkit/analysis/complaint_response_workflow.py",
+      "lines": 590,
+      "size_kb": 21.4,
+      "description": "LangGraph-based orchestration for end-to-end complaint analysis"
+    }
+  },
+  "classifier_details": {
+    "class_name": "ComplaintResponseClassifier",
+    "methods": 13,
+    "enums": [
+      {
+        "name": "ComplaintCategory",
+        "values": ["SIDEWALK_DAMAGE", "HAZARD", "DRAINAGE", "DEBRIS", "OTHER"]
+      },
+      {
+        "name": "ComplaintUrgency",
+        "values": ["EMERGENCY", "HIGH", "MEDIUM", "LOW"]
+      },
+      {
+        "name": "ResponseStatus",
+        "values": ["RESOLVED", "PENDING", "DELAYED", "ABANDONED"]
+      },
+      {
+        "name": "TimeAdequacy",
+        "values": ["FAST", "ON_TIME", "SLOW", "VERY_SLOW"]
+      }
+    ],
+    "dataclasses": [
+      {
+        "name": "ComplaintMetrics",
+        "fields": [
+          "complaint_id",
+          "description",
+          "location_descriptor",
+          "borough",
+          "days_open",
+          "days_to_inspection",
+          "days_to_resolution",
+          "has_location_details",
+          "is_resolved",
+          "is_duplicate",
+          "is_reopened"
+        ]
+      },
+      {
+        "name": "ComplaintResponseClassification",
+        "fields": [
+          "complaint_id",
+          "category",
+          "urgency",
+          "response_status",
+          "time_adequacy",
+          "category_severity_score (0-100)",
+          "urgency_score (0-100)",
+          "response_timeliness_score (0-100)",
+          "overall_satisfaction_score (0-100)",
+          "sla_target_days",
+          "flagged_issues",
+          "next_action"
+        ]
+      }
+    ],
+    "sla_targets": {
+      "EMERGENCY": {
+        "days": 1.0,
+        "description": "24 hours for imminent safety risks"
+      },
+      "HIGH": {
+        "days": 3.0,
+        "description": "3 days for significant problems"
+      },
+      "MEDIUM": {
+        "days": 7.0,
+        "description": "1 week for moderate issues"
+      },
+      "LOW": {
+        "days": 14.0,
+        "description": "2 weeks for minor issues"
+      }
+    },
+    "scoring_weights": {
+      "category_severity": 0.25,
+      "urgency": 0.30,
+      "response_timeliness": 0.45
+    },
+    "category_keywords": {
+      "SIDEWALK_DAMAGE": [
+        "sidewalk",
+        "pavement",
+        "concrete",
+        "crack",
+        "broken",
+        "damaged",
+        "trip hazard",
+        "uneven",
+        "pothole",
+        "surface"
+      ],
+      "HAZARD": [
+        "hazard",
+        "dangerous",
+        "unsafe",
+        "risk",
+        "injury",
+        "exposed",
+        "broken glass",
+        "sharp",
+        "protruding",
+        "unstable"
+      ],
+      "DRAINAGE": [
+        "drain",
+        "water",
+        "flood",
+        "wet",
+        "puddle",
+        "standing water",
+        "drainage",
+        "gutter",
+        "sewer",
+        "clogged"
+      ],
+      "DEBRIS": [
+        "debris",
+        "trash",
+        "garbage",
+        "litter",
+        "dirt",
+        "dust",
+        "fallen",
+        "branches",
+        "leaves",
+        "mess"
+      ]
+    },
+    "classification_logic": [
+      "1. Infer category from complaint description keywords",
+      "2. Infer urgency from keywords, category baseline, and location precision",
+      "3. Determine response status: RESOLVED | PENDING | DELAYED | ABANDONED",
+      "   - RESOLVED: complaint closed",
+      "   - PENDING: days_open < SLA",
+      "   - DELAYED: days_open > SLA but < SLA*1.5",
+      "   - ABANDONED: days_open > SLA*1.5",
+      "4. Assess time adequacy vs SLA target",
+      "5. Compute dimension scores and overall satisfaction",
+      "6. Identify flagged issues (missing location, reopens, duplicates, delays)",
+      "7. Recommend next action (ESCALATE, PRIORITIZE, DISPATCH, MONITOR, CONTINUE)"
+    ]
+  },
+  "workflow_details": {
+    "graph_type": "LangGraph StateGraph",
+    "nodes": 6,
+    "state_type": "ComplaintResponseState (TypedDict)",
+    "node_sequence": [
+      {
+        "name": "fetch_data",
+        "input": "fourfour_complaints, fourfour_inspections, max_rows, borough_filter",
+        "output": "complaints_df, inspections_df, joined_df, total_complaints",
+        "purpose": "Fetch live 311 complaints and inspection data from Socrata API",
+        "execution_time_sec": "2-3"
+      },
+      {
+        "name": "classify_complaints",
+        "input": "complaints_df, joined_df",
+        "output": "classification_summary, _classifications",
+        "purpose": "Apply ComplaintResponseClassifier to each complaint",
+        "execution_time_sec": "1-2"
+      },
+      {
+        "name": "compute_metrics",
+        "input": "complaints_df, _classifications",
+        "output": "borough_stats, category_distribution, urgency_distribution",
+        "purpose": "Aggregate metrics by borough and category",
+        "execution_time_sec": "0.5"
+      },
+      {
+        "name": "identify_bottlenecks",
+        "input": "borough_stats",
+        "output": "bottleneck_analysis",
+        "purpose": "Identify queue delays, repair delays, high abandonment rates",
+        "logic": [
+          "- Inspection queue delays: avg_days_to_inspection > 3",
+          "- Repair delays: avg_days_to_resolution > 14",
+          "- High abandonment: abandon_rate > 15%"
+        ],
+        "execution_time_sec": "0.5"
+      },
+      {
+        "name": "claude_analysis",
+        "input": "borough_stats, bottleneck_analysis, category_distribution",
+        "output": "claude_analysis, optimization_recommendations",
+        "purpose": "Claude analyzes bottlenecks and recommends optimizations (~350 tokens)",
+        "prompt_focus": [
+          "Which bottlenecks are most critical?",
+          "What operational changes would improve response times?",
+          "Are there resource allocation issues?",
+          "What's one high-impact improvement to prioritize?"
+        ],
+        "model": "claude-haiku-4-5-20251001",
+        "token_budget": "~600 tokens (input + output)",
+        "execution_time_sec": "3-5"
+      },
+      {
+        "name": "generate_report",
+        "input": "All previous outputs",
+        "output": "final_report (JSON)",
+        "purpose": "Generate structured report with analysis, metrics, and recommendations",
+        "report_schema": {
+          "timestamp": "ISO 8601",
+          "total_complaints_analyzed": "int",
+          "summary": {
+            "classifications": "dict[status, count]",
+            "category_distribution": "dict[category, count]",
+            "urgency_distribution": "dict[urgency, count]"
+          },
+          "borough_metrics": "dict[borough, stats]",
+          "bottleneck_analysis": "dict with queue/repair/abandon data",
+          "claude_analysis": "string",
+          "optimization_recommendations": "list[str]",
+          "execution_log": "list[dict]"
+        },
+        "execution_time_sec": "0.5"
+      }
+    ],
+    "total_execution_time_sec": "5-8",
+    "token_cost": "~600 tokens",
+    "data_sources": [
+      {
+        "dataset_key": "complaints_311",
+        "fourfour": "erm2-nwe9",
+        "rows_approx": 21300000,
+        "update_frequency": "Real-time"
+      },
+      {
+        "dataset_key": "inspection (optional)",
+        "fourfour": "dntt-gqwq",
+        "rows_approx": 398000,
+        "update_frequency": "Daily"
+      }
+    ]
+  },
+  "usage_example": {
+    "python": [
+      "from socrata_toolkit.analysis.complaint_response_workflow import create_complaint_response_workflow",
+      "from socrata_toolkit.analysis.complaint_response_classifier import ComplaintMetrics, ComplaintResponseClassifier",
+      "",
+      "# Option 1: Use full LangGraph workflow",
+      "workflow = create_complaint_response_workflow()",
+      "state = {",
+      "    'context': None,",
+      "    'fourfour_complaints': 'erm2-nwe9',",
+      "    'fourfour_inspections': 'dntt-gqwq',",
+      "    'max_rows': 5000,",
+      "    'borough_filter': 'MANHATTAN',",
+      "    'execution_log': [],",
+      "}",
+      "result = workflow.invoke(state)",
+      "print(json.dumps(result['final_report'], indent=2))",
+      "",
+      "# Option 2: Use classifier standalone",
+      "classifier = ComplaintResponseClassifier()",
+      "metrics = ComplaintMetrics(",
+      "    complaint_id='2024-001',",
+      "    description='Broken sidewalk with trip hazard',",
+      "    borough='MANHATTAN',",
+      "    days_open=5.0,",
+      "    days_to_inspection=2.5,",
+      "    days_to_resolution=8.0,",
+      "    is_resolved=True,",
+      ")",
+      "classification = classifier.classify(metrics)",
+      "print(classification.to_dict())"
+    ]
+  },
+  "key_features": {
+    "bottleneck_detection": [
+      "Inspection queue delays (threshold: >3 days avg)",
+      "Repair delays (threshold: >14 days avg)",
+      "High abandonment rates (threshold: >15%)",
+      "Missing location details impact",
+      "Reopened complaints (quality issues)"
+    ],
+    "sla_compliance": [
+      "Per-complaint SLA tracking",
+      "Status-based SLA enforcement",
+      "Timeliness scoring (FAST/ON_TIME/SLOW/VERY_SLOW)",
+      "Borough-level compliance aggregation"
+    ],
+    "reporting": [
+      "JSON-serializable output",
+      "Borough-level aggregation",
+      "Category/urgency distribution",
+      "Bottleneck ranking",
+      "Claude-powered recommendations",
+      "Execution audit trail"
+    ]
+  },
+  "performance": {
+    "sample_size_complaints": 1000,
+    "expected_execution_time_sec": "5-8",
+    "token_cost_per_1000_complaints": "600",
+    "memory_overhead_mb": "150",
+    "parallelization": "Classification loop (1000 complaints ~2 sec)",
+    "optimization_notes": [
+      "Classifier is CPU-bound (keyword matching)",
+      "LangGraph execution is I/O-bound (Socrata API + Claude API)",
+      "Could be parallelized with multiprocessing for classifier",
+      "Batch Claude calls for 100+ complaints if needed"
+    ]
+  },
+  "testing": {
+    "unit_tests": [
+      "Category inference from description",
+      "Urgency detection (EMERGENCY vs HIGH vs MEDIUM vs LOW)",
+      "SLA target computation per urgency",
+      "Response status determination (RESOLVED/PENDING/DELAYED/ABANDONED)",
+      "Time adequacy scoring",
+      "Flagged issue identification",
+      "Next action recommendation"
+    ],
+    "integration_tests": [
+      "Fetch live 311 complaints",
+      "Join with inspection data",
+      "Classify 1000+ complaints end-to-end",
+      "Borough aggregation",
+      "Bottleneck detection",
+      "Claude analysis and recommendations"
+    ],
+    "test_fixtures": [
+      "High-severity hazard complaint (EMERGENCY)",
+      "Sidewalk damage complaint (MEDIUM)",
+      "Abandoned complaint (>SLA threshold)",
+      "Resolved complaint (on-time)",
+      "Missing location complaint"
+    ]
+  },
+  "files": {
+    "classifier_file": "src/socrata_toolkit/analysis/complaint_response_classifier.py",
+    "workflow_file": "src/socrata_toolkit/analysis/complaint_response_workflow.py",
+    "documentation": "This JSON file contains complete specification"
+  },
+  "next_steps": [
+    "1. Add unit tests in tests/analysis/test_complaint_response_classifier.py",
+    "2. Add integration test in tests/analysis/test_complaint_response_workflow.py",
+    "3. Register workflow in CLI (socrata complaint-response --borough MN --sample 5000)",
+    "4. Add dashboard visualization (borough compliance map, bottleneck timeline)",
+    "5. Set up scheduled execution (daily/weekly report generation)",
+    "6. Tune SLA targets based on actual NYC DOT standards"
+  ]
+}

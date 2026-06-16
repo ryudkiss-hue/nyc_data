@@ -43,7 +43,6 @@ from socrata_toolkit.standards.design import (
 # MATERIAL DEFINITIONS TESTS (5 tests)
 # ============================================================================
 
-
 class TestMaterialDefinitions:
     """Tests for material specification definitions."""
 
@@ -91,11 +90,9 @@ class TestMaterialDefinitions:
         for mat in asphalt_materials:
             assert mat.category == MaterialCategory.ASPHALT
 
-
 # ============================================================================
 # MAINTENANCE SCHEDULE TESTS (5 tests)
 # ============================================================================
-
 
 class TestMaintenanceSchedules:
     """Tests for material maintenance schedules."""
@@ -140,11 +137,9 @@ class TestMaintenanceSchedules:
         # Permeable surfaces should need more frequent maintenance
         assert schedule.routine_interval_years <= 3
 
-
 # ============================================================================
 # ADA COMPLIANCE RULES TESTS (6 tests)
 # ============================================================================
-
 
 class TestADAComplianceRules:
     """Tests for ADA compliance rule definitions."""
@@ -195,11 +190,9 @@ class TestADAComplianceRules:
         rule_ids = [r.rule_id for r in asphalt_rules]
         assert "ADA-1.2.1" in rule_ids or any("1.2" in rid for rid in rule_ids)
 
-
 # ============================================================================
 # SURFACE ASSESSMENT TESTS (5 tests)
 # ============================================================================
-
 
 class TestSurfaceAssessment:
     """Tests for surface assessment model."""
@@ -295,11 +288,9 @@ class TestSurfaceAssessment:
         rate = current_assessment.get_deterioration_rate([earlier_assessment, current_assessment])
         assert rate > 0  # Should be deteriorating
 
-
 # ============================================================================
 # COMPLIANCE CHECKING TESTS (5 tests)
 # ============================================================================
-
 
 class TestComplianceChecking:
     """Tests for material compliance checking."""
@@ -387,11 +378,9 @@ class TestComplianceChecking:
         assert result.age_percent >= 70
         assert result.lifecycle_stage in ["late", "end_of_life"]
 
-
 # ============================================================================
 # DEFECT SEVERITY ASSESSMENT TESTS (3 tests)
 # ============================================================================
-
 
 class TestDefectSeverityAssessment:
     """Tests for defect severity analysis."""
@@ -433,11 +422,9 @@ class TestDefectSeverityAssessment:
 
         assert assessment.ada_violation
 
-
 # ============================================================================
 # COST ANALYSIS TESTS (2 tests)
 # ============================================================================
-
 
 class TestCostAnalysis:
     """Tests for lifecycle cost analysis."""
@@ -467,11 +454,9 @@ class TestCostAnalysis:
         premium = get_materials_by_lifecycle_cost_range(20, 100)
         assert len(premium) > 0
 
-
 # ============================================================================
 # SUSTAINABILITY TESTS (2 tests)
 # ============================================================================
-
 
 class TestSustainability:
     """Tests for material sustainability metrics."""
@@ -491,11 +476,9 @@ class TestSustainability:
         if rubber:
             assert rubber.sustainability_score >= 75
 
-
 # ============================================================================
 # INTEGRATION TESTS (3 tests)
 # ============================================================================
-
 
 class TestIntegration:
     """Integration tests across multiple modules."""
@@ -555,7 +538,6 @@ class TestIntegration:
         assert data["condition"] == "poor"
         assert data["defect_area_sqft"] == 150.5
         assert data["estimated_repair_cost"] == 5000.0
-
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

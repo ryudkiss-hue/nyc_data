@@ -21,8 +21,20 @@ def test_review_store_upsert_and_list(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setenv("TOOLKIT_PROFILE", "qa")
     monkeypatch.setenv("TOOLKIT_STATE_ROOT", str(tmp_path / "state"))
     with ReviewStore() as store:
-        store.set_conflict(pack_date="2099-01-01", key_type="location_id", key_value="L1", status="resolved", notes="ok")
-        store.set_conflict(pack_date="2099-01-01", key_type="location_id", key_value="L1", status="defer", notes="later")
+        store.set_conflict(
+            pack_date="2099-01-01",
+            key_type="location_id",
+            key_value="L1",
+            status="resolved",
+            notes="ok",
+        )
+        store.set_conflict(
+            pack_date="2099-01-01",
+            key_type="location_id",
+            key_value="L1",
+            status="defer",
+            notes="later",
+        )
         df = store.list(pack_date="2099-01-01", kind="conflict")
         assert len(df) == 1
         assert df.iloc[0]["status"] == "defer"
@@ -35,4 +47,3 @@ def test_data_dictionary_builds_and_renders() -> None:
     md = render_data_dictionary_md(dd)
     assert "# Data Dictionary" in md
     assert "`a`" in md
-

@@ -31,7 +31,14 @@ except Exception:  # pragma: no cover
     ConflictResolver = None  # type: ignore
     PostGISConflictResolver = None  # type: ignore
     in_clause = None  # type: ignore
-from ..alerts.manager import Alert, AlertManager, CLINotifier, DBNotifier, EmailNotifier
+from ..alerts.manager import (
+    Alert,
+    AlertManager,
+    AlertSeverity,
+    CLINotifier,
+    DBNotifier,
+    EmailNotifier,
+)
 from ..discovery.schema import BackwardCompatibilityChecker, SchemaRegistry, SchemaValidator
 
 
@@ -45,7 +52,12 @@ LOGGER = get_logger()
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.option("-v", "--verbose", count=True, help="Increase verbosity (-v for INFO, -vv for DEBUG)")
-@click.option("--log-level", type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]), default=None, help="Explicit log level")
+@click.option(
+    "--log-level",
+    type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
+    default=None,
+    help="Explicit log level",
+)
 @click.pass_context
 def main(ctx, verbose: int, log_level: str | None) -> None:
     """Socrata toolkit CLI."""
@@ -90,7 +102,11 @@ def search(query, domain, category, tags, order, limit, json_out):
 @click.option("--json-out", type=click.Path())
 def meta_cmd(domain, fourfour, columns_only, json_out):
     meta = _client().get_metadata(domain, fourfour)
-    payload = meta.column_dict() if columns_only else {"summary": meta.summary(), "columns": meta.column_dict()}
+    payload = (
+        meta.column_dict()
+        if columns_only
+        else {"summary": meta.summary(), "columns": meta.column_dict()}
+    )
     if json_out:
         with open(json_out, "w", encoding="utf-8") as f:
             json.dump(payload, f, indent=2)
@@ -113,7 +129,9 @@ def fetch_cmd(domain, fourfour, fmt, out, where, select, order, q, max_rows, inc
     c = _client()
     if fmt == "json":
         rows = []
-        for batch in c.fetch_json(domain, fourfour, where=where, select=select, order=order, q=q, max_rows=max_rows):
+        for batch in c.fetch_json(
+            domain, fourfour, where=where, select=select, order=order, q=q, max_rows=max_rows
+        ):
             rows.extend(batch)
         with open(out, "w", encoding="utf-8") as f:
             json.dump(rows, f)
@@ -122,7 +140,9 @@ def fetch_cmd(domain, fourfour, fmt, out, where, select, order, q, max_rows, inc
         with open(out, "w", encoding="utf-8") as f:
             json.dump(gj, f)
     else:
-        df = c.fetch_dataframe(domain, fourfour, where=where, select=select, order=order, q=q, max_rows=max_rows)
+        df = c.fetch_dataframe(
+            domain, fourfour, where=where, select=select, order=order, q=q, max_rows=max_rows
+        )
         meta = c.get_metadata(domain, fourfour) if include_meta else None
         XLSXExporter().write(df, out, meta=meta)
 
@@ -137,7 +157,9 @@ def fetch_cmd(domain, fourfour, fmt, out, where, select, order, q, max_rows, inc
 def upsert_pg(domain, fourfour, dsn, table, conflict_col, save_meta):
     c = _client()
     with PostgresExporter(dsn) as pg:
-        total = pg.upsert_batches(c.fetch_json(domain, fourfour), table=table, conflict_column=conflict_col)
+        total = pg.upsert_batches(
+            c.fetch_json(domain, fourfour), table=table, conflict_column=conflict_col
+        )
         if save_meta:
             pg.upsert_metadata(c.get_metadata(domain, fourfour))
     click.echo(f"Upserted {total} rows")
@@ -155,9 +177,15 @@ def upsert_mongo(domain, fourfour, uri, db_name, collection, conflict_field, geo
     c = _client()
     with MongoExporter(uri, db_name) as mongo:
         if geojson:
-            total = mongo.upsert_geojson(c.fetch_geojson(domain, fourfour), collection=collection, conflict_field=conflict_field)
+            total = mongo.upsert_geojson(
+                c.fetch_geojson(domain, fourfour),
+                collection=collection,
+                conflict_field=conflict_field,
+            )
         else:
-            total = mongo.upsert_batches(c.fetch_json(domain, fourfour), collection=collection, conflict_field=conflict_field)
+            total = mongo.upsert_batches(
+                c.fetch_json(domain, fourfour), collection=collection, conflict_field=conflict_field
+            )
     click.echo(f"Upserted {total} rows")
 
 
@@ -182,10 +210,43 @@ def upsert_mongo(domain, fourfour, uri, db_name, collection, conflict_field, geo
 @click.option("--report-path", type=click.Path(), default="outputs/pipeline_run_report.json")
 @click.option("--state-path", type=click.Path(), default="outputs/pipeline_state.json")
 @click.option("--required-col", multiple=True)
-@click.option("--dry-run", is_flag=True, default=False, help="Preview the pipeline without performing writes")
-@click.option("--stream", "use_stream", is_flag=True, default=False, help="Use streaming (low-memory) mode")
-@click.option("--chunk-size", type=int, default=None, help="Chunk size (overrides client page_size) for streaming mode")
-def pipeline(domain, fourfour, where, select, order, q, max_rows, pg_dsn, pg_table, pg_conflict_col, mongo_uri, mongo_db, mongo_collection, mongo_conflict_field, xlsx_out, json_out, geojson_out, report_path, state_path, required_col, dry_run, use_stream, chunk_size):
+@click.option(
+    "--dry-run", is_flag=True, default=False, help="Preview the pipeline without performing writes"
+)
+@click.option(
+    "--stream", "use_stream", is_flag=True, default=False, help="Use streaming (low-memory) mode"
+)
+@click.option(
+    "--chunk-size",
+    type=int,
+    default=None,
+    help="Chunk size (overrides client page_size) for streaming mode",
+)
+def pipeline(
+    domain,
+    fourfour,
+    where,
+    select,
+    order,
+    q,
+    max_rows,
+    pg_dsn,
+    pg_table,
+    pg_conflict_col,
+    mongo_uri,
+    mongo_db,
+    mongo_collection,
+    mongo_conflict_field,
+    xlsx_out,
+    json_out,
+    geojson_out,
+    report_path,
+    state_path,
+    required_col,
+    dry_run,
+    use_stream,
+    chunk_size,
+):
     c = _client()
     LOGGER.info("Starting analysis for %s/%s", domain, fourfour)
     # If user requested required-column checks in streaming mode, validate via metadata (no full fetch)
@@ -203,22 +264,52 @@ def pipeline(domain, fourfour, where, select, order, q, max_rows, pg_dsn, pg_tab
     # If streaming mode requested, delegate to streaming pipeline
     if use_stream:
         targets = {
-            "postgres": {"enabled": bool(pg_dsn and pg_table and pg_conflict_col), "dsn": pg_dsn, "table": pg_table, "conflict_column": pg_conflict_col},
-            "mongo": {"enabled": bool(mongo_uri and mongo_db and mongo_collection and mongo_conflict_field), "uri": mongo_uri, "db": mongo_db, "collection": mongo_collection, "conflict_field": mongo_conflict_field},
+            "postgres": {
+                "enabled": bool(pg_dsn and pg_table and pg_conflict_col),
+                "dsn": pg_dsn,
+                "table": pg_table,
+                "conflict_column": pg_conflict_col,
+            },
+            "mongo": {
+                "enabled": bool(
+                    mongo_uri and mongo_db and mongo_collection and mongo_conflict_field
+                ),
+                "uri": mongo_uri,
+                "db": mongo_db,
+                "collection": mongo_collection,
+                "conflict_field": mongo_conflict_field,
+            },
             "xlsx": {"enabled": bool(xlsx_out), "path": xlsx_out},
         }
-        report = stream_pipeline(c, domain, fourfour, targets, dry_run=dry_run, chunk_size=chunk_size, max_rows=max_rows)
+        report = stream_pipeline(
+            c, domain, fourfour, targets, dry_run=dry_run, chunk_size=chunk_size, max_rows=max_rows
+        )
         # write report and state
         prev_state = load_state(state_path)
-        run_payload = {"domain": domain, "fourfour": fourfour, "rows": report.get("rows", 0), "outputs": {"postgres": bool(pg_dsn and pg_table and pg_conflict_col), "mongo": bool(mongo_uri and mongo_db and mongo_collection and mongo_conflict_field), "xlsx": bool(xlsx_out)}, "prev_state": prev_state, "report": report}
+        run_payload = {
+            "domain": domain,
+            "fourfour": fourfour,
+            "rows": report.get("rows", 0),
+            "outputs": {
+                "postgres": bool(pg_dsn and pg_table and pg_conflict_col),
+                "mongo": bool(mongo_uri and mongo_db and mongo_collection and mongo_conflict_field),
+                "xlsx": bool(xlsx_out),
+            },
+            "prev_state": prev_state,
+            "report": report,
+        }
         write_run_report(report_path, run_payload)
-        save_state(state_path, {"domain": domain, "fourfour": fourfour, "last_rows": report.get("rows", 0)})
+        save_state(
+            state_path, {"domain": domain, "fourfour": fourfour, "last_rows": report.get("rows", 0)}
+        )
         click.echo(json.dumps(report, indent=2))
         return
 
     # Standard (non-streaming) pipeline
     rows = []
-    for batch in c.fetch_json(domain, fourfour, where=where, select=select, order=order, q=q, max_rows=max_rows):
+    for batch in c.fetch_json(
+        domain, fourfour, where=where, select=select, order=order, q=q, max_rows=max_rows
+    ):
         rows.extend(batch)
 
     df = pd.DataFrame(rows)
@@ -249,10 +340,15 @@ def pipeline(domain, fourfour, where, select, order, q, max_rows, pg_dsn, pg_tab
     def _upsert_mongo():
         if mongo_uri and mongo_db and mongo_collection and mongo_conflict_field:
             with MongoExporter(mongo_uri, mongo_db) as mongo:
-                mongo.upsert_batches([rows], collection=mongo_collection, conflict_field=mongo_conflict_field)
+                mongo.upsert_batches(
+                    [rows], collection=mongo_collection, conflict_field=mongo_conflict_field
+                )
 
     with ThreadPoolExecutor(max_workers=5) as ex:
-        futures = [ex.submit(fn) for fn in (_write_json, _write_xlsx, _write_geojson, _upsert_pg, _upsert_mongo)]
+        futures = [
+            ex.submit(fn)
+            for fn in (_write_json, _write_xlsx, _write_geojson, _upsert_pg, _upsert_mongo)
+        ]
         for fut in futures:
             fut.result()
     # load previous state (if any) and write a run report
@@ -283,7 +379,11 @@ def pipeline(domain, fourfour, where, select, order, q, max_rows, pg_dsn, pg_tab
 @click.option("--select")
 @click.option("--order")
 @click.option("--q")
-@click.option("--max-rows", type=int, default=get_default(CFG, "preferences", "default_max_rows", default=10000))
+@click.option(
+    "--max-rows",
+    type=int,
+    default=get_default(CFG, "preferences", "default_max_rows", default=10000),
+)
 @click.option("--key-column", multiple=True)
 @click.option("--state-path", type=click.Path(), default="outputs/pipeline_state.json")
 def analyze_cmd(domain, fourfour, where, select, order, q, max_rows, key_column, state_path):
@@ -294,7 +394,9 @@ def analyze_cmd(domain, fourfour, where, select, order, q, max_rows, key_column,
     except Exception:
         prev_state = None
     rows = []
-    for batch in c.fetch_json(domain, fourfour, where=where, select=select, order=order, q=q, max_rows=max_rows):
+    for batch in c.fetch_json(
+        domain, fourfour, where=where, select=select, order=order, q=q, max_rows=max_rows
+    ):
         rows.extend(batch)
     import pandas as pd
 
@@ -324,7 +426,11 @@ def analyze_cmd(domain, fourfour, where, select, order, q, max_rows, key_column,
 @click.argument("fourfour")
 @click.option("--text-column", multiple=True, required=True)
 @click.option("--geo-column")
-@click.option("--max-rows", type=int, default=get_default(CFG, "preferences", "default_max_rows", default=10000))
+@click.option(
+    "--max-rows",
+    type=int,
+    default=get_default(CFG, "preferences", "default_max_rows", default=10000),
+)
 @click.option("--out", type=click.Path())
 @click.option("--state-path", type=click.Path(), default="outputs/pipeline_state.json")
 def text_insights_cmd(domain, fourfour, text_column, geo_column, max_rows, out, state_path):
@@ -359,7 +465,11 @@ def text_insights_cmd(domain, fourfour, text_column, geo_column, max_rows, out, 
 @click.option("--endpoint", default="http://localhost:1234/v1/chat/completions")
 @click.option("--model", default="local-model")
 @click.option("--temperature", type=float, default=0.1)
-@click.option("--max-rows", type=int, default=get_default(CFG, "preferences", "default_max_rows", default=10000))
+@click.option(
+    "--max-rows",
+    type=int,
+    default=get_default(CFG, "preferences", "default_max_rows", default=10000),
+)
 @click.option("--out", type=click.Path(), required=True)
 def llm_augment_cmd(domain, fourfour, text_column, endpoint, model, temperature, max_rows, out):
     c = _client()
@@ -386,9 +496,20 @@ def spatial_join_cmd(left_json, right_json, left_geom_col, right_geom_col, out):
 
     left = pd.read_json(left_json)
     right = pd.read_json(right_json)
-    result = spatial_intersects_join(left, right, left_geom_col=left_geom_col, right_geom_col=right_geom_col)
+    result = spatial_intersects_join(
+        left, right, left_geom_col=left_geom_col, right_geom_col=right_geom_col
+    )
     result.joined.to_json(out, orient="records")
-    click.echo(json.dumps({"conflict_rate": result.conflict_rate, "overlap_count": result.overlap_count, "out": out}, indent=2))
+    click.echo(
+        json.dumps(
+            {
+                "conflict_rate": result.conflict_rate,
+                "overlap_count": result.overlap_count,
+                "out": out,
+            },
+            indent=2,
+        )
+    )
 
 
 @main.command("nlp-analyze")
@@ -421,17 +542,39 @@ def nlp_analyze_cmd(text, translate_lang):
 @main.command("conflict")
 @click.option("--proposed-domain", help="Domain for proposed features (overrides file)")
 @click.option("--proposed-fourfour", help="4x4 dataset id for proposed features (overrides file)")
-@click.option("--proposed-file", type=click.Path(), help="Local JSON/CSV file with proposed features")
-@click.option("--proposed-geom", default="geometry", help="Geometry column name for proposed features")
+@click.option(
+    "--proposed-file", type=click.Path(), help="Local JSON/CSV file with proposed features"
+)
+@click.option(
+    "--proposed-geom", default="geometry", help="Geometry column name for proposed features"
+)
 @click.option("--ref-domain", help="Domain for reference features")
 @click.option("--ref-fourfour", help="4x4 dataset id for reference features")
 @click.option("--ref-file", type=click.Path(), help="Local JSON/CSV file for reference features")
 @click.option("--ref-geom", default="geometry", help="Geometry column name for reference features")
-@click.option("--buffer-meters", type=float, default=20.0, help="Buffer distance in meters for conflict detection")
+@click.option(
+    "--buffer-meters",
+    type=float,
+    default=20.0,
+    help="Buffer distance in meters for conflict detection",
+)
 @click.option("--out-geojson", type=click.Path(), help="Write conflict GeoJSON to this file")
 @click.option("--out-xlsx", type=click.Path(), help="Write construction list to XLSX")
 @click.option("--dry-run", is_flag=True, help="Preview without writing outputs")
-def conflict_cmd(proposed_domain, proposed_fourfour, proposed_file, proposed_geom, ref_domain, ref_fourfour, ref_file, ref_geom, buffer_meters, out_geojson, out_xlsx, dry_run):
+def conflict_cmd(
+    proposed_domain,
+    proposed_fourfour,
+    proposed_file,
+    proposed_geom,
+    ref_domain,
+    ref_fourfour,
+    ref_file,
+    ref_geom,
+    buffer_meters,
+    out_geojson,
+    out_xlsx,
+    dry_run,
+):
     """Detect spatial conflicts between a proposed dataset and a reference dataset.
 
     Provide either domain+fourfour pairs or local files for proposed and reference.
@@ -451,7 +594,9 @@ def conflict_cmd(proposed_domain, proposed_fourfour, proposed_file, proposed_geo
             rows.extend(batch)
         proposed_df = pd.DataFrame(rows)
     else:
-        raise click.ClickException("Provide either --proposed-file or --proposed-domain and --proposed-fourfour")
+        raise click.ClickException(
+            "Provide either --proposed-file or --proposed-domain and --proposed-fourfour"
+        )
 
     # load reference
     if ref_file:
@@ -468,7 +613,13 @@ def conflict_cmd(proposed_domain, proposed_fourfour, proposed_file, proposed_geo
         raise click.ClickException("Provide either --ref-file or --ref-domain and --ref-fourfour")
 
     resolver = ConflictResolver()
-    annotated, summary = resolver.resolve_conflicts(proposed_df, ref_df, proposed_geom_col=proposed_geom, reference_geom_col=ref_geom, buffer_m=buffer_meters)
+    annotated, summary = resolver.resolve_conflicts(
+        proposed_df,
+        ref_df,
+        proposed_geom_col=proposed_geom,
+        reference_geom_col=ref_geom,
+        buffer_m=buffer_meters,
+    )
     click.echo(json.dumps({"summary": summary.__dict__}, indent=2))
 
     if dry_run:
@@ -491,7 +642,13 @@ def conflict_cmd(proposed_domain, proposed_fourfour, proposed_file, proposed_geo
 @click.argument("domain")
 @click.argument("fourfour")
 @click.option("--field", required=True, help="Field name to match against the values in the file")
-@click.option("--file", "file_path", required=True, type=click.Path(), help="File with one value per line (IDs or keys)")
+@click.option(
+    "--file",
+    "file_path",
+    required=True,
+    type=click.Path(),
+    help="File with one value per line (IDs or keys)",
+)
 @click.option("--out", type=click.Path(), help="Write results to JSON file")
 def batch_search_cmd(domain, fourfour, field, file_path, out):
     """Run a batch search against a dataset field using a newline-separated file of values."""
@@ -541,7 +698,16 @@ def doctor_cmd(check_db, checklist):
         except Exception as exc:
             checks[mod] = f"missing: {exc}"
 
-    optional = ["psycopg", "pymongo", "shapely", "spacy", "transformers", "textblob", "gensim", "nltk"]
+    optional = [
+        "psycopg",
+        "pymongo",
+        "shapely",
+        "spacy",
+        "transformers",
+        "textblob",
+        "gensim",
+        "nltk",
+    ]
     optional_status = {}
     for mod in optional:
         try:
@@ -553,11 +719,13 @@ def doctor_cmd(check_db, checklist):
     db_status = {}
     if check_db:
         import os
+
         pg_dsn = os.getenv("PG_DSN")
         mongo_uri = os.getenv("MONGO_URI")
         if pg_dsn:
             try:
                 import psycopg
+
                 with psycopg.connect(pg_dsn) as conn:
                     with conn.cursor() as cur:
                         cur.execute("SELECT 1")
@@ -567,6 +735,7 @@ def doctor_cmd(check_db, checklist):
         if mongo_uri:
             try:
                 from pymongo import MongoClient
+
                 c = MongoClient(mongo_uri)
                 c.admin.command("ping")
                 db_status["mongo"] = "ok"
@@ -576,13 +745,23 @@ def doctor_cmd(check_db, checklist):
     # Actionable "fix-it" hints (best-effort, platform-agnostic).
     fixes: list[str] = []
     missing_core = [k for k, v in checks.items() if isinstance(v, str) and v.startswith("missing:")]
-    missing_opt = [k for k, v in optional_status.items() if isinstance(v, str) and v.startswith("missing:")]
+    missing_opt = [
+        k for k, v in optional_status.items() if isinstance(v, str) and v.startswith("missing:")
+    ]
     if missing_core:
-        fixes.append("Install core deps: `pip install -e .` (or `pip install .`) then rerun `socrata doctor`.")
+        fixes.append(
+            "Install core deps: `pip install -e .` (or `pip install .`) then rerun `socrata doctor`."
+        )
     if missing_opt:
-        fixes.append("Install optional extras (examples): `pip install '.[postgres]'`, `pip install '.[pptx]'`, `pip install '.[spatial]'`.")
-    fixes.append("If Dash pages look empty, run an Analyst Pack: `socrata analyst run --profile <path>`.")
-    fixes.append("Open Mission Control SPA: open app/static/mission_control_v2.html in a browser, or run the Electron desktop app via `cd desktop && npm start`.")
+        fixes.append(
+            "Install optional extras (examples): `pip install '.[postgres]'`, `pip install '.[pptx]'`, `pip install '.[spatial]'`."
+        )
+    fixes.append(
+        "If Dash pages look empty, run an Analyst Pack: `socrata analyst run --profile <path>`."
+    )
+    fixes.append(
+        "Open Mission Control SPA: open app/static/mission_control_v2.html in a browser, or run the Electron desktop app via `cd desktop && npm start`."
+    )
 
     import_checks: dict[str, str] = {}
     for label, modpath in [
@@ -597,10 +776,16 @@ def doctor_cmd(check_db, checklist):
             import_checks[label] = f"fail: {exc}"
 
     checklist = {
-        "wizard_module": "ok" if __import__("importlib").util.find_spec("socrata_toolkit.install_wizard") else "missing",
-        "analyst_module": "ok" if __import__("importlib").util.find_spec("socrata_toolkit.analyst") else "missing",
+        "wizard_module": "ok"
+        if __import__("importlib").util.find_spec("socrata_toolkit.install_wizard")
+        else "missing",
+        "analyst_module": "ok"
+        if __import__("importlib").util.find_spec("socrata_toolkit.analyst")
+        else "missing",
         "spa_html": "ok"
-        if (Path(__file__).resolve().parents[3] / "app" / "static" / "mission_control_v2.html").exists()
+        if (
+            Path(__file__).resolve().parents[3] / "app" / "static" / "mission_control_v2.html"
+        ).exists()
         else "missing",
     }
     payload = {
@@ -645,7 +830,9 @@ def _default_pack_date() -> str:
 
 @review_group.command("list")
 @click.option("--pack-date", default="", help="Pack date (YYYY-MM-DD). Defaults to last run.")
-@click.option("--kind", type=click.Choice(["conflict", "approval"]), default=None, help="Filter by kind")
+@click.option(
+    "--kind", type=click.Choice(["conflict", "approval"]), default=None, help="Filter by kind"
+)
 @click.option("--status", default="", help="Filter by status")
 @click.option("--q", default="", help="Search key/notes/assignee")
 @click.option("--limit", type=int, default=2000)
@@ -677,11 +864,24 @@ def review_list(pack_date: str, kind: str, status: str, q: str, limit: int, json
 @click.option("--kind", type=click.Choice(["conflict", "approval"]), required=True)
 @click.option("--key-type", required=True, help="Key type (e.g. location_id, contract_id)")
 @click.option("--key", "key_value", required=True, help="Key value")
-@click.option("--status", required=True, help="Decision status (resolved/defer/needs_coordination or approved/hold)")
+@click.option(
+    "--status",
+    required=True,
+    help="Decision status (resolved/defer/needs_coordination or approved/hold)",
+)
 @click.option("--assigned-to", default="", help="Owner/assignee")
 @click.option("--reason", default="", help="Reason (approvals)")
 @click.option("--notes", default="", help="Freeform notes")
-def review_set(pack_date: str, kind: str, key_type: str, key_value: str, status: str, assigned_to: str, reason: str, notes: str) -> None:
+def review_set(
+    pack_date: str,
+    kind: str,
+    key_type: str,
+    key_value: str,
+    status: str,
+    assigned_to: str,
+    reason: str,
+    notes: str,
+) -> None:
     """Set a decision (upsert) in the local store."""
     from ..review.store import ReviewStore
 
@@ -713,7 +913,9 @@ def review_set(pack_date: str, kind: str, key_type: str, key_value: str, status:
 
 @review_group.command("export")
 @click.option("--pack", "pack_dir", required=True, type=click.Path(exists=True, file_okay=False))
-@click.option("--pack-date", default="", help="Pack date (YYYY-MM-DD). Defaults to pack folder name.")
+@click.option(
+    "--pack-date", default="", help="Pack date (YYYY-MM-DD). Defaults to pack folder name."
+)
 def review_export(pack_dir: str, pack_date: str) -> None:
     """Export decisions into a pack directory (xlsx + md)."""
     from pathlib import Path
@@ -743,6 +945,7 @@ def migrate_cmd(dsn, migrations_dir):
         raise click.ClickException("Install postgres extras: pip install '.[postgres]'") from exc
     import glob
     import os
+
     files = sorted(glob.glob(os.path.join(migrations_dir, "*.sql")))
     if not files:
         click.echo("No migration files found")
@@ -763,16 +966,37 @@ def migrate_cmd(dsn, migrations_dir):
 @click.option("--preview", is_flag=True, help="Preview alerts without sending or persisting")
 @click.option("--send", is_flag=True, help="Send email notifications for alerts")
 @click.option("--persist", is_flag=True, help="Persist alerts to DB")
-@click.option("--pg-dsn", envvar="PG_DSN", help="Postgres DSN to query for conflicts and optionally persist alerts")
-@click.option("--table", default="sidewalk_complaints", help="Table to scan for high-priority conditions")
-@click.option("--corridor-table", default="smart_spine", help="Corridor table to check intersections against")
+@click.option(
+    "--pg-dsn",
+    envvar="PG_DSN",
+    help="Postgres DSN to query for conflicts and optionally persist alerts",
+)
+@click.option(
+    "--table", default="sidewalk_complaints", help="Table to scan for high-priority conditions"
+)
+@click.option(
+    "--corridor-table", default="smart_spine", help="Corridor table to check intersections against"
+)
 @click.option("--buffer-m", type=float, default=0.0, help="Buffer in meters for ST_DWithin checks")
 @click.option("--recipients", help="Comma-separated list of email recipients for --send")
 @click.option("--smtp-host", help="SMTP host for sending emails")
 @click.option("--smtp-port", type=int, default=25, help="SMTP port")
 @click.option("--smtp-username", help="SMTP username (also used as from address if provided)")
 @click.option("--smtp-password", help="SMTP password")
-def alerts_cmd(preview, send, persist, pg_dsn, table, corridor_table, buffer_m, recipients, smtp_host, smtp_port, smtp_username, smtp_password):
+def alerts_cmd(
+    preview,
+    send,
+    persist,
+    pg_dsn,
+    table,
+    corridor_table,
+    buffer_m,
+    recipients,
+    smtp_host,
+    smtp_port,
+    smtp_username,
+    smtp_password,
+):
     """Generate operational alerts by running spatial checks and dispatching them via registered notifiers."""
     mgr = AlertManager(batch_mode=False)
     cli_notifier = CLINotifier()
@@ -781,7 +1005,14 @@ def alerts_cmd(preview, send, persist, pg_dsn, table, corridor_table, buffer_m, 
     if send:
         if not recipients:
             raise click.ClickException("--recipients required when --send is used")
-        smtp_cfg = {"host": smtp_host or "localhost", "port": smtp_port, "username": smtp_username, "password": smtp_password, "from_addr": smtp_username or "alerts@localhost", "recipients": [r.strip() for r in recipients.split(",") if r.strip()]}
+        smtp_cfg = {
+            "host": smtp_host or "localhost",
+            "port": smtp_port,
+            "username": smtp_username,
+            "password": smtp_password,
+            "from_addr": smtp_username or "alerts@localhost",
+            "recipients": [r.strip() for r in recipients.split(",") if r.strip()],
+        }
         mgr.register(EmailNotifier(smtp_cfg))
 
     db_notifier = None
@@ -796,20 +1027,51 @@ def alerts_cmd(preview, send, persist, pg_dsn, table, corridor_table, buffer_m, 
     if pg_dsn:
         try:
             resolver = PostGISConflictResolver(pg_dsn)
-            df, summary = resolver.resolve_conflicts(proposed_table=table, reference_table=corridor_table, proposed_id_col="id", proposed_geom_col="geom", reference_id_col="id", reference_geom_col="geom", buffer_m=buffer_m)
+            df, summary = resolver.resolve_conflicts(
+                proposed_table=table,
+                reference_table=corridor_table,
+                proposed_id_col="id",
+                proposed_geom_col="geom",
+                reference_id_col="id",
+                reference_geom_col="geom",
+                buffer_m=buffer_m,
+            )
             # create Alert objects for rows which have conflicts
             if not df.empty:
                 for _, row in df.iterrows():
                     if int(row.get("_conflict_count", 0)) > 0:
-                        a = Alert(severity="critical", message=f"Spatial conflict for id={row.get('id')}", payload={"id": row.get("id"), "conflict_count": int(row.get("_conflict_count")), "conflict_ids": row.get("_conflict_ids")})
+                        a = Alert.create(
+                            severity=AlertSeverity.CRITICAL,
+                            message=f"Spatial conflict for id={row.get('id')}",
+                            alert_type="spatial_conflict",
+                            payload={
+                                "id": row.get("id"),
+                                "conflict_count": int(row.get("_conflict_count")),
+                                "conflict_ids": row.get("_conflict_ids"),
+                            },
+                        )
                         alerts_created.append(a)
             resolver.close()
         except Exception as exc:
-            mgr.emit(Alert(severity="warning", message="Alerts generation failed", payload={"error": str(exc)}))
+            mgr.emit(
+                Alert.create(
+                    severity=AlertSeverity.WARNING,
+                    message="Alerts generation failed",
+                    alert_type="system_error",
+                    payload={"error": str(exc)},
+                )
+            )
 
     # If no PG connection or no alerts found, create a sample alert for preview/demo
     if not alerts_created and preview:
-        alerts_created.append(Alert(severity="info", message="Preview alert: no DB alerts found or running in demo mode", payload={}))
+        alerts_created.append(
+            Alert.create(
+                severity=AlertSeverity.LOW,
+                message="Preview alert: no DB alerts found or running in demo mode",
+                alert_type="preview",
+                payload={},
+            )
+        )
 
     # Dispatch alerts according to options
     for a in alerts_created:
@@ -834,17 +1096,28 @@ def alerts_cmd(preview, send, persist, pg_dsn, table, corridor_table, buffer_m, 
 @click.argument("domain")
 @click.argument("fourfour")
 @click.option("--method", type=click.Choice(["iqr", "zscore"]), default="iqr")
-@click.option("--max-rows", type=int, default=get_default(CFG, "preferences", "default_max_rows", default=10000))
+@click.option(
+    "--max-rows",
+    type=int,
+    default=get_default(CFG, "preferences", "default_max_rows", default=10000),
+)
 @click.option("--out", type=click.Path())
 def outliers_cmd(domain, fourfour, method, max_rows, out):
     """Detect outliers in numeric columns of a dataset."""
     from ..analysis.advanced import detect_all_outliers
+
     c = _client()
     df = c.fetch_dataframe(domain, fourfour, max_rows=max_rows)
     reports = detect_all_outliers(df, method=method)
     payload = [
-        {"column": r.column, "method": r.method, "outlier_count": r.outlier_count,
-         "outlier_pct": r.outlier_pct, "lower_bound": r.lower_bound, "upper_bound": r.upper_bound}
+        {
+            "column": r.column,
+            "method": r.method,
+            "outlier_count": r.outlier_count,
+            "outlier_pct": r.outlier_pct,
+            "lower_bound": r.lower_bound,
+            "upper_bound": r.upper_bound,
+        }
         for r in reports
     ]
     if out:
@@ -858,11 +1131,16 @@ def outliers_cmd(domain, fourfour, method, max_rows, out):
 @click.argument("fourfour")
 @click.option("--method", type=click.Choice(["pearson", "spearman", "kendall"]), default="pearson")
 @click.option("--threshold", type=float, default=0.5)
-@click.option("--max-rows", type=int, default=get_default(CFG, "preferences", "default_max_rows", default=10000))
+@click.option(
+    "--max-rows",
+    type=int,
+    default=get_default(CFG, "preferences", "default_max_rows", default=10000),
+)
 @click.option("--out", type=click.Path())
 def correlations_cmd(domain, fourfour, method, threshold, max_rows, out):
     """Compute pairwise correlations above a threshold."""
     from ..analysis.advanced import correlation_analysis
+
     c = _client()
     df = c.fetch_dataframe(domain, fourfour, max_rows=max_rows)
     result = correlation_analysis(df, method=method, threshold=threshold)
@@ -879,10 +1157,15 @@ def correlations_cmd(domain, fourfour, method, threshold, max_rows, out):
 @click.option("--key-column", multiple=True)
 @click.option("--date-column")
 @click.option("--freshness-days", type=int, default=30)
-@click.option("--max-rows", type=int, default=get_default(CFG, "preferences", "default_max_rows", default=10000))
+@click.option(
+    "--max-rows",
+    type=int,
+    default=get_default(CFG, "preferences", "default_max_rows", default=10000),
+)
 def quality_score_cmd(domain, fourfour, key_column, date_column, freshness_days, max_rows):
     """Compute a composite data quality score for a dataset."""
     from ..governance.core import compute_quality_score
+
     c = _client()
     df = c.fetch_dataframe(domain, fourfour, max_rows=max_rows)
     score = compute_quality_score(
@@ -905,12 +1188,17 @@ def quality_score_cmd(domain, fourfour, key_column, date_column, freshness_days,
 @main.command("schema-drift")
 @click.argument("domain")
 @click.argument("fourfour")
-@click.option("--baseline", type=click.Path(exists=True), required=True, help="Path to baseline schema JSON")
-@click.option("--save-snapshot", type=click.Path(), help="Save current schema snapshot to this path")
+@click.option(
+    "--baseline", type=click.Path(exists=True), required=True, help="Path to baseline schema JSON"
+)
+@click.option(
+    "--save-snapshot", type=click.Path(), help="Save current schema snapshot to this path"
+)
 @click.option("--max-rows", type=int, default=100)
 def schema_drift_cmd(domain, fourfour, baseline, save_snapshot, max_rows):
     """Detect schema drift between a dataset and a baseline schema."""
     from ..governance.core import detect_schema_drift, load_schema_snapshot, save_schema_snapshot
+
     c = _client()
     df = c.fetch_dataframe(domain, fourfour, max_rows=max_rows)
     baseline_schema = load_schema_snapshot(baseline)
@@ -930,13 +1218,20 @@ def schema_drift_cmd(domain, fourfour, baseline, save_snapshot, max_rows):
 @main.command("visualize")
 @click.argument("domain")
 @click.argument("fourfour")
-@click.option("--chart", type=click.Choice(["histogram", "bar", "heatmap", "quality"]), required=True)
+@click.option(
+    "--chart", type=click.Choice(["histogram", "bar", "heatmap", "quality"]), required=True
+)
 @click.option("--column", help="Column to visualize (for histogram/bar)")
 @click.option("--out", type=click.Path(), required=True, help="Output image path")
-@click.option("--max-rows", type=int, default=get_default(CFG, "preferences", "default_max_rows", default=10000))
+@click.option(
+    "--max-rows",
+    type=int,
+    default=get_default(CFG, "preferences", "default_max_rows", default=10000),
+)
 def visualize_cmd(domain, fourfour, chart, column, out, max_rows):
     """Generate a chart from a dataset and save to a file."""
     from . import visualization as viz
+
     c = _client()
     df = c.fetch_dataframe(domain, fourfour, max_rows=max_rows)
     if chart == "histogram":
@@ -977,12 +1272,14 @@ def schema_list_cmd(ctx, dataset_id, json_out):
 
     payload = []
     for schema in history:
-        payload.append({
-            "version": schema.version,
-            "captured_at": schema.captured_at.isoformat(),
-            "columns": len(schema.columns),
-            "row_count": schema.row_count,
-        })
+        payload.append(
+            {
+                "version": schema.version,
+                "captured_at": schema.captured_at.isoformat(),
+                "columns": len(schema.columns),
+                "row_count": schema.row_count,
+            }
+        )
 
     if json_out:
         with open(json_out, "w", encoding="utf-8") as f:
@@ -1057,48 +1354,59 @@ def schema_diff_cmd(ctx, dataset_id, version1, version2):
     # Deleted columns
     for col_name in cols_v1:
         if col_name not in cols_v2:
-            changes.append({
-                "type": "COLUMN_DELETION",
-                "field": col_name,
-                "description": f"Column '{col_name}' deleted",
-                "breaking": True,
-            })
+            changes.append(
+                {
+                    "type": "COLUMN_DELETION",
+                    "field": col_name,
+                    "description": f"Column '{col_name}' deleted",
+                    "breaking": True,
+                }
+            )
 
     # Added columns
     for col_name in cols_v2:
         if col_name not in cols_v1:
-            changes.append({
-                "type": "COLUMN_ADDITION",
-                "field": col_name,
-                "old_type": None,
-                "new_type": cols_v2[col_name].dtype,
-                "description": f"Column '{col_name}' added",
-                "breaking": False,
-            })
+            changes.append(
+                {
+                    "type": "COLUMN_ADDITION",
+                    "field": col_name,
+                    "old_type": None,
+                    "new_type": cols_v2[col_name].dtype,
+                    "description": f"Column '{col_name}' added",
+                    "breaking": False,
+                }
+            )
 
     # Type changes
     for col_name in cols_v1:
         if col_name in cols_v2:
             if cols_v1[col_name].dtype != cols_v2[col_name].dtype:
-                changes.append({
-                    "type": "TYPE_CHANGE",
-                    "field": col_name,
-                    "old_type": cols_v1[col_name].dtype,
-                    "new_type": cols_v2[col_name].dtype,
-                    "description": f"Column '{col_name}' type changed",
-                    "breaking": True,
-                })
+                changes.append(
+                    {
+                        "type": "TYPE_CHANGE",
+                        "field": col_name,
+                        "old_type": cols_v1[col_name].dtype,
+                        "new_type": cols_v2[col_name].dtype,
+                        "description": f"Column '{col_name}' type changed",
+                        "breaking": True,
+                    }
+                )
 
     if not changes:
         click.echo(f"No changes between v{version1} and v{version2}")
     else:
-        click.echo(json.dumps({
-            "dataset_id": dataset_id,
-            "from_version": version1,
-            "to_version": version2,
-            "change_count": len(changes),
-            "changes": changes,
-        }, indent=2))
+        click.echo(
+            json.dumps(
+                {
+                    "dataset_id": dataset_id,
+                    "from_version": version1,
+                    "to_version": version2,
+                    "change_count": len(changes),
+                    "changes": changes,
+                },
+                indent=2,
+            )
+        )
 
 
 @schema_group.command(name="validate")
@@ -1189,6 +1497,7 @@ def schema_check_compat_cmd(ctx, dataset_id, jsonl_file, strict):
 # Material Standards and Compliance Commands
 # ============================================================================
 
+
 @main.group(name="material")
 @click.pass_context
 def material_group(ctx):
@@ -1197,7 +1506,13 @@ def material_group(ctx):
 
 
 @material_group.command(name="list")
-@click.option("--category", type=click.Choice(["asphalt", "concrete", "permeable", "specialty", "brick_stone", "metal", "composite"]), help="Filter by material category")
+@click.option(
+    "--category",
+    type=click.Choice(
+        ["asphalt", "concrete", "permeable", "specialty", "brick_stone", "metal", "composite"]
+    ),
+    help="Filter by material category",
+)
 @click.option("--json-out", type=click.Path(), help="Output to JSON file")
 @click.pass_context
 def material_list(ctx, category, json_out):
@@ -1214,15 +1529,17 @@ def material_list(ctx, category, json_out):
                 if spec.category.value != category:
                     continue
 
-            materials.append({
-                "id": spec.material_id,
-                "name": spec.name,
-                "category": spec.category.value,
-                "lifecycle_years": spec.lifecycle_years,
-                "cost_per_sqft": spec.cost_per_sqft,
-                "lifecycle_cost_per_sqft": spec.lifecycle_cost_per_sqft,
-                "sustainability_score": spec.sustainability_score,
-            })
+            materials.append(
+                {
+                    "id": spec.material_id,
+                    "name": spec.name,
+                    "category": spec.category.value,
+                    "lifecycle_years": spec.lifecycle_years,
+                    "cost_per_sqft": spec.cost_per_sqft,
+                    "lifecycle_cost_per_sqft": spec.lifecycle_cost_per_sqft,
+                    "sustainability_score": spec.sustainability_score,
+                }
+            )
 
         if json_out:
             with open(json_out, "w", encoding="utf-8") as f:
@@ -1230,7 +1547,9 @@ def material_list(ctx, category, json_out):
             click.echo(f"Wrote {len(materials)} materials to {json_out}")
         else:
             for mat in materials:
-                click.echo(f"{mat['id']:<20} {mat['name']:<45} {mat['category']:<12} Lifecycle: {mat['lifecycle_years']}y Cost: ${mat['lifecycle_cost_per_sqft']:.2f}/sqft")
+                click.echo(
+                    f"{mat['id']:<20} {mat['name']:<45} {mat['category']:<12} Lifecycle: {mat['lifecycle_years']}y Cost: ${mat['lifecycle_cost_per_sqft']:.2f}/sqft"
+                )
     except Exception as e:
         raise click.ClickException(f"Error listing materials: {e}")
 
@@ -1282,8 +1601,12 @@ def material_maintenance_schedule(material_id):
             raise click.ClickException(f"Material {material_id} not found")
 
         click.echo(f"Maintenance Schedule: {spec.name}")
-        click.echo(f"  Routine interval: Every {spec.maintenance_schedule.routine_interval_years} years")
-        click.echo(f"  Preventive overlay: Year {spec.maintenance_schedule.preventive_overlay_years}")
+        click.echo(
+            f"  Routine interval: Every {spec.maintenance_schedule.routine_interval_years} years"
+        )
+        click.echo(
+            f"  Preventive overlay: Year {spec.maintenance_schedule.preventive_overlay_years}"
+        )
         click.echo(f"  Full lifecycle: {spec.maintenance_schedule.lifecycle_years} years")
         click.echo("\n  Activities:")
         for activity, description in spec.maintenance_schedule.activities.items():
@@ -1325,12 +1648,17 @@ def compliance_group(ctx):
 
 @compliance_group.command(name="check")
 @click.argument("material_id")
-@click.option("--condition", type=click.Choice(["excellent", "good", "fair", "poor", "critical"]), default="fair", help="Surface condition")
+@click.option(
+    "--condition",
+    type=click.Choice(["excellent", "good", "fair", "poor", "critical"]),
+    default="fair",
+    help="Surface condition",
+)
 @click.option("--json-out", type=click.Path())
 def compliance_check(material_id, condition, json_out):
     """Check compliance for a material type."""
     try:
-        from datetime import datetime
+        from datetime import datetime, timezone
 
         from socrata_toolkit.material.compliance import MaterialCompliance
         from socrata_toolkit.material.definitions import get_material_by_id
@@ -1344,7 +1672,7 @@ def compliance_check(material_id, condition, json_out):
         assessment = SurfaceAssessment(
             location_id="test-location",
             material=spec,
-            last_inspected=datetime.now(),
+            last_inspected=datetime.now(timezone.utc),
             condition=SurfaceCondition(condition),
         )
 
@@ -1362,7 +1690,9 @@ def compliance_check(material_id, condition, json_out):
             click.echo(f"Compliance Check: {spec.name}")
             click.echo(f"  Status: {report.overall_status.value}")
             click.echo(f"  Score: {report.overall_score:.1f}/100")
-            click.echo(f"  ADA Violations: {report.ada_compliance.critical_violations + report.ada_compliance.high_violations}")
+            click.echo(
+                f"  ADA Violations: {report.ada_compliance.critical_violations + report.ada_compliance.high_violations}"
+            )
             click.echo("\nCritical Actions:")
             for action in report.critical_actions:
                 click.echo(f"  - {action}")
@@ -1371,7 +1701,11 @@ def compliance_check(material_id, condition, json_out):
 
 
 @compliance_group.command(name="ada-violations")
-@click.option("--severity", type=click.Choice(["critical", "high", "medium", "low"]), help="Filter by severity")
+@click.option(
+    "--severity",
+    type=click.Choice(["critical", "high", "medium", "low"]),
+    help="Filter by severity",
+)
 @click.option("--json-out", type=click.Path())
 def compliance_ada_violations(severity, json_out):
     """List all ADA violation rules."""
@@ -1384,13 +1718,15 @@ def compliance_ada_violations(severity, json_out):
                 if rule.failure_severity.value != severity:
                     continue
 
-            rules.append({
-                "rule_id": rule_id,
-                "title": rule.title,
-                "severity": rule.failure_severity.value,
-                "validation_method": rule.validation_method,
-                "description": rule.description[:100],
-            })
+            rules.append(
+                {
+                    "rule_id": rule_id,
+                    "title": rule.title,
+                    "severity": rule.failure_severity.value,
+                    "validation_method": rule.validation_method,
+                    "description": rule.description[:100],
+                }
+            )
 
         if json_out:
             with open(json_out, "w", encoding="utf-8") as f:
@@ -1404,7 +1740,13 @@ def compliance_ada_violations(severity, json_out):
 
 
 @compliance_group.command(name="report")
-@click.option("--material", type=click.Choice(["asphalt", "concrete", "permeable", "specialty", "brick_stone", "metal", "composite"]), help="Filter by material category")
+@click.option(
+    "--material",
+    type=click.Choice(
+        ["asphalt", "concrete", "permeable", "specialty", "brick_stone", "metal", "composite"]
+    ),
+    help="Filter by material category",
+)
 @click.option("--json-out", type=click.Path())
 def compliance_report(material, json_out):
     """Generate compliance summary report."""
@@ -1446,7 +1788,9 @@ def lineage_group():
 
 
 @lineage_group.command(name="nodes")
-@click.option("--type", type=str, help="Filter by node type (ingestion, transformation, sink, etc.)")
+@click.option(
+    "--type", type=str, help="Filter by node type (ingestion, transformation, sink, etc.)"
+)
 @click.option("--owner", type=str, help="Filter by owner email/user")
 @click.option("--tag", type=str, help="Filter by tag")
 @click.option("--json", "output_json", is_flag=True, help="Output as JSON")
@@ -1474,7 +1818,7 @@ def lineage_nodes(type, owner, tag, output_json):
                     }
                     for nid in nodes
                     if nid in dag.nodes
-                ]
+                ],
             }
             click.echo(json.dumps(result, indent=2))
         else:
@@ -1513,13 +1857,15 @@ def lineage_node(node_id, full):
         click.echo(f"Downstream Consumers: {', '.join(info['downstream_consumers'])}")
         click.echo(f"Tags: {', '.join(info['tags'])}")
 
-        if full and info['execution_count'] > 0:
+        if full and info["execution_count"] > 0:
             click.echo(f"\nExecution History ({info['execution_count']} total):")
-            if info['latest_execution']:
-                exec_info = info['latest_execution']
+            if info["latest_execution"]:
+                exec_info = info["latest_execution"]
                 click.echo(f"  Latest: {exec_info['status']} at {exec_info['started_at']}")
                 click.echo(f"    Duration: {exec_info['duration_seconds']}s")
-                click.echo(f"    Rows: {exec_info['input_row_count']} -> {exec_info['output_row_count']}")
+                click.echo(
+                    f"    Rows: {exec_info['input_row_count']} -> {exec_info['output_row_count']}"
+                )
     except Exception as e:
         raise click.ClickException(f"Error getting node info: {e}")
 
@@ -1631,7 +1977,12 @@ def lineage_impact(node_id):
 
 
 @lineage_group.command(name="dag")
-@click.option("--format", type=click.Choice(["json", "graphml", "mermaid", "dot", "ascii"]), default="ascii", help="Export format")
+@click.option(
+    "--format",
+    type=click.Choice(["json", "graphml", "mermaid", "dot", "ascii"]),
+    default="ascii",
+    help="Export format",
+)
 @click.option("--output", type=click.Path(), help="Output file path")
 def lineage_dag(format, output):
     """Export complete DAG."""
@@ -1706,9 +2057,9 @@ def lineage_stats():
         click.echo(f"  Total edges: {stats['total_edges']}")
         click.echo(f"  DAG depth: {stats['depth']}")
 
-        if stats['nodes_by_type']:
+        if stats["nodes_by_type"]:
             click.echo("\n  Nodes by type:")
-            for node_type, count in stats['nodes_by_type'].items():
+            for node_type, count in stats["nodes_by_type"].items():
                 click.echo(f"    {node_type}: {count}")
     except Exception as e:
         raise click.ClickException(f"Error getting statistics: {e}")
@@ -1717,6 +2068,7 @@ def lineage_stats():
 # ============================================================================
 # Observability Commands
 # ============================================================================
+
 
 @main.group(name="observability")
 def observability_group():
@@ -1739,8 +2091,8 @@ def observability_status():
         click.echo(f"Health Status: {health['status']}")
         click.echo(f"Ready: {health.get('is_ready', False)}")
         click.echo(f"Components: {len(health['components'])}")
-        for comp in health['components']:
-            status_symbol = "✓" if comp['status'] == 'HEALTHY' else "✗"
+        for comp in health["components"]:
+            status_symbol = "✓" if comp["status"] == "HEALTHY" else "✗"
             click.echo(f"  {status_symbol} {comp['name']}: {comp['status']}")
 
         # Metrics summary
@@ -1764,7 +2116,11 @@ def observability_status():
 
 
 @observability_group.command(name="logs")
-@click.option("--level", type=click.Choice(["DEBUG", "INFO", "WARN", "ERROR", "CRITICAL"]), help="Filter by log level")
+@click.option(
+    "--level",
+    type=click.Choice(["DEBUG", "INFO", "WARN", "ERROR", "CRITICAL"]),
+    help="Filter by log level",
+)
 @click.option("--correlation-id", help="Filter by correlation ID")
 @click.option("--limit", type=int, default=10, help="Number of logs to show")
 @click.option("--dataset-id", help="Filter by dataset ID")
@@ -1779,11 +2135,11 @@ def observability_logs(level, correlation_id, limit, dataset_id, json_format):
         # Build filters
         filters = {}
         if level:
-            filters['level'] = level
+            filters["level"] = level
         if correlation_id:
-            filters['correlation_id'] = correlation_id
+            filters["correlation_id"] = correlation_id
         if dataset_id:
-            filters['dataset_id'] = dataset_id
+            filters["dataset_id"] = dataset_id
 
         logs = obs.query_logs(**filters)
         logs = logs[-limit:] if len(logs) > limit else logs
@@ -1806,7 +2162,12 @@ def observability_logs(level, correlation_id, limit, dataset_id, json_format):
 
 @observability_group.command(name="metrics")
 @click.option("--metric", help="Specific metric name")
-@click.option("--format", type=click.Choice(["text", "json", "prometheus"]), default="text", help="Output format")
+@click.option(
+    "--format",
+    type=click.Choice(["text", "json", "prometheus"]),
+    default="text",
+    help="Output format",
+)
 @click.option("--output", type=click.Path(), help="Output file")
 def observability_metrics(metric, format, output):
     """Show metrics data."""
@@ -1824,14 +2185,14 @@ def observability_metrics(metric, format, output):
             # Text format
             summary = metrics_collector.summary_dict()
             data = f"""Metrics Summary
-Counter Metrics: {summary['counter_count']}
-Gauge Metrics: {summary['gauge_count']}
-Histogram Metrics: {summary['histogram_count']}
-Summary Metrics: {summary['summary_count']}
-Timestamp: {summary['timestamp']}"""
+Counter Metrics: {summary["counter_count"]}
+Gauge Metrics: {summary["gauge_count"]}
+Histogram Metrics: {summary["histogram_count"]}
+Summary Metrics: {summary["summary_count"]}
+Timestamp: {summary["timestamp"]}"""
 
         if output:
-            with open(output, 'w') as f:
+            with open(output, "w") as f:
                 f.write(data)
             click.echo(f"Metrics exported to {output}")
         else:
@@ -1863,9 +2224,9 @@ def observability_sla_report(window, json_format):
             click.echo(f"Compliance: {report['compliance_percent']:.1f}%")
             click.echo(f"Trend: {report.get('trend', 'unknown')}")
 
-            if report.get('violations'):
+            if report.get("violations"):
                 click.echo("\nViolations:")
-                for v in report['violations']:
+                for v in report["violations"]:
                     click.echo(f"  ✗ {v['sla_name']}")
                     click.echo(f"    Target: {v['target']}, Actual: {v['actual']}")
                     click.echo(f"    Severity: {v['severity']}")
@@ -1899,12 +2260,12 @@ def observability_health(detailed, json_format):
 
             if detailed:
                 click.echo("\nComponent Details:")
-                for comp in health['components']:
-                    status_icon = "✓" if comp['status'] == 'HEALTHY' else "✗"
+                for comp in health["components"]:
+                    status_icon = "✓" if comp["status"] == "HEALTHY" else "✗"
                     click.echo(f"  {status_icon} {comp['name']}: {comp['status']}")
-                    if comp.get('message'):
+                    if comp.get("message"):
                         click.echo(f"      {comp['message']}")
-                    if comp.get('duration_ms'):
+                    if comp.get("duration_ms"):
                         click.echo(f"      Duration: {comp['duration_ms']:.2f}ms")
 
     except Exception as e:
@@ -1914,7 +2275,13 @@ def observability_health(detailed, json_format):
 @observability_group.command(name="export")
 @click.argument("format", type=click.Choice(["prometheus", "json", "csv"]))
 @click.option("--output", type=click.Path(), required=True, help="Output file path")
-@click.option("--type", "export_type", type=click.Choice(["logs", "metrics", "traces"]), default="metrics", help="What to export")
+@click.option(
+    "--type",
+    "export_type",
+    type=click.Choice(["logs", "metrics", "traces"]),
+    default="metrics",
+    help="What to export",
+)
 def observability_export(format, output, export_type):
     """Export observability data."""
     try:
@@ -1936,7 +2303,7 @@ def observability_export(format, output, export_type):
                 click.echo(f"Metrics exported to {output}")
                 return
 
-            with open(output_path, 'w') as f:
+            with open(output_path, "w") as f:
                 f.write(data)
             click.echo(f"Metrics exported to {output}")
 
@@ -1952,7 +2319,7 @@ def observability_export(format, output, export_type):
         elif export_type == "traces":
             if format == "json":
                 data = obs.export_traces_jaeger()
-                with open(output_path, 'w') as f:
+                with open(output_path, "w") as f:
                     f.write(data)
                 click.echo(f"Traces exported to {output}")
             else:
@@ -2038,18 +2405,41 @@ def analyst_init_config(out_path: str) -> None:
 @analyst_group.command("run")
 @click.option("--profile", required=True, type=click.Path(exists=True), help="YAML analyst profile")
 @click.option("--dry-run", is_flag=True, help="Validate sources only; do not write pack")
-@click.option("--offline", is_flag=True, help="Skip Socrata sources (same as offline: true in profile)")
+@click.option(
+    "--offline", is_flag=True, help="Skip Socrata sources (same as offline: true in profile)"
+)
 def analyst_run(profile: str, dry_run: bool, offline: bool) -> None:
     """Run Analyst Autopilot pack workflow."""
     from ..analyst import run_analyst_pack
 
     result = run_analyst_pack(profile, dry_run=dry_run, offline=offline)
-    click.echo(json.dumps({"pack_dir": str(result.pack_dir), "artifacts": result.artifacts, "warnings": result.warnings}, indent=2))
+    click.echo(
+        json.dumps(
+            {
+                "pack_dir": str(result.pack_dir),
+                "artifacts": result.artifacts,
+                "warnings": result.warnings,
+            },
+            indent=2,
+        )
+    )
 
 
 @analyst_group.command("publish")
-@click.option("--profile", "publish_profile", required=True, type=click.Path(exists=True), help="YAML publish profile")
-@click.option("--pack", "pack_dir", required=True, type=click.Path(exists=True, file_okay=False), help="Analyst pack directory (outputs/analyst_pack/YYYY-MM-DD)")
+@click.option(
+    "--profile",
+    "publish_profile",
+    required=True,
+    type=click.Path(exists=True),
+    help="YAML publish profile",
+)
+@click.option(
+    "--pack",
+    "pack_dir",
+    required=True,
+    type=click.Path(exists=True, file_okay=False),
+    help="Analyst pack directory (outputs/analyst_pack/YYYY-MM-DD)",
+)
 @click.option("--dry-run", is_flag=True, help="Preview publish actions without side effects")
 def analyst_publish(publish_profile: str, pack_dir: str, dry_run: bool) -> None:
     """Publish an existing Analyst Pack to configured destinations."""
@@ -2059,9 +2449,84 @@ def analyst_publish(publish_profile: str, pack_dir: str, dry_run: bool) -> None:
     click.echo(json.dumps(report.to_dict(), indent=2, default=str))
 
 
+@analyst_group.command("construction-list")
+@click.option("--borough", default=None, help="Filter to one borough (MN/BX/BK/QN/SI)")
+@click.option("--min-z-score", default=2.0, type=float, help="Minimum z-score for inclusion")
+@click.option("--output", "-o", default="construction_list.xlsx", help="Output Excel path")
+def cmd_construction_list(borough: str, min_z_score: float, output: str) -> None:
+    """Generate Excel construction list from Phase D anomalies."""
+    from ..analyst.construction_list_generator import (
+        ConstructionListConfig,
+        ConstructionListGenerator,
+    )
+
+    try:
+        from app.services.motherduck_service import fetch_phase_d_results
+    except ImportError:
+        click.echo("MotherDuck service not available. Ensure app/ is installed.", err=True)
+        return
+
+    click.echo("Fetching Phase D anomaly results...")
+    df = fetch_phase_d_results({"borough": borough} if borough else {})
+    if df is None or df.empty:
+        click.echo("No Phase D results available. Run analytics pipeline first.", err=True)
+        return
+
+    config = ConstructionListConfig(borough_filter=borough, min_z_score=min_z_score)
+    gen = ConstructionListGenerator(config=config)
+    result = gen.build_from_phase_d(df)
+    gen.export_to_excel(result, output)
+    click.echo(f"✓ Construction list: {len(result)} locations → {output}")
+    click.echo(f"  Total estimated cost: ${result['estimated_cost'].sum():,.0f}")
+
+
+@analyst_group.command("ifa-budget")
+@click.option("--sample", default=500, type=int, help="Ramp_progress sample size")
+@click.option("--output", "-o", default="ifa_budget.pdf", help="Output PDF path")
+def cmd_ifa_budget(sample: int, output: str) -> None:
+    """Generate IFA Budget Justification PDF from ramp completion gap."""
+    from ..analyst.ifa_budget_justification import IFABudgetJustification
+    from ..core.client import SocrataClient, SocrataConfig
+    from ..engineering.ramp_analysis import RampCompletionReportGenerator
+
+    click.echo("Fetching ramp_progress from Socrata (fourfour: e7gc-ub6z)...")
+    try:
+        client = SocrataClient(SocrataConfig())
+        df = client.fetch_dataframe("data.cityofnewyork.us", "e7gc-ub6z", max_rows=sample)
+    except Exception as e:
+        click.echo(f"Failed to fetch ramp_progress: {e}", err=True)
+        return
+
+    gen_ramp = RampCompletionReportGenerator()
+    report = gen_ramp.generate(df, mode="sample", sample_size=sample, include_ci=True)
+
+    gen_ifa = IFABudgetJustification()
+    allocations = gen_ifa.compute_allocations(report.borough_stats)
+    gen_ifa.export_to_pdf(allocations, output)
+
+    total = gen_ifa.total_budget(allocations)
+    click.echo(f"✓ IFA budget justification: ${total:,.0f} total → {output}")
+    for a in allocations:
+        click.echo(
+            f"  {a.borough}: {a.ramps_remaining} ramps, ${a.total_cost_usd:,.0f} ({a.risk_level} risk)"
+        )
+
+
 @main.command("publish")
-@click.option("--profile", "publish_profile", required=True, type=click.Path(exists=True), help="YAML publish profile")
-@click.option("--pack", "pack_dir", required=True, type=click.Path(exists=True, file_okay=False), help="Analyst pack directory (outputs/analyst_pack/YYYY-MM-DD)")
+@click.option(
+    "--profile",
+    "publish_profile",
+    required=True,
+    type=click.Path(exists=True),
+    help="YAML publish profile",
+)
+@click.option(
+    "--pack",
+    "pack_dir",
+    required=True,
+    type=click.Path(exists=True, file_okay=False),
+    help="Analyst pack directory (outputs/analyst_pack/YYYY-MM-DD)",
+)
 @click.option("--dry-run", is_flag=True, help="Preview publish actions without side effects")
 def publish_alias(publish_profile: str, pack_dir: str, dry_run: bool) -> None:
     """Alias for `socrata analyst publish`."""
@@ -2075,7 +2540,9 @@ main.add_command(analyst_group)
 
 
 @main.command("setup")
-@click.option("--non-interactive", is_flag=True, help="Use environment variables (WIZARD_NONINTERACTIVE=1)")
+@click.option(
+    "--non-interactive", is_flag=True, help="Use environment variables (WIZARD_NONINTERACTIVE=1)"
+)
 @click.option("--skip-checks", is_flag=True, help="Skip connectivity validation")
 @click.option("--force-profile", is_flag=True, help="Overwrite analyst profile YAML")
 def setup_cmd(non_interactive: bool, skip_checks: bool, force_profile: bool) -> None:
@@ -2153,18 +2620,21 @@ def db_status(db_path: str) -> None:
 
 try:
     import geopandas as _gpd  # noqa: F401
+
     HAS_GEOPANDAS = True
 except ImportError:
     HAS_GEOPANDAS = False
 
 try:
     import weasyprint as _weasyprint  # noqa: F401
+
     HAS_WEASYPRINT = True
-except ImportError:
+except (ImportError, OSError):
     HAS_WEASYPRINT = False
 
 try:
     import anthropic as _anthropic  # noqa: F401
+
     HAS_ANTHROPIC = True
 except ImportError:
     HAS_ANTHROPIC = False
@@ -2185,7 +2655,9 @@ def _load_dataset_registry() -> dict:
                 config_path = candidate
                 break
     if not config_path.exists():
-        raise click.ClickException(f"config/datasets.yaml not found (searched from {pathlib.Path(__file__)})")
+        raise click.ClickException(
+            f"config/datasets.yaml not found (searched from {pathlib.Path(__file__)})"
+        )
     raw = yaml.safe_load(config_path.read_text(encoding="utf-8"))
     return {k: dict(v) for k, v in raw["datasets"].items()}
 
@@ -2208,10 +2680,25 @@ def _make_session():
 # 1. conflict-detect
 # ---------------------------------------------------------------------------
 
+
 @main.command("conflict-detect")
-@click.option("--borough", default="MN", show_default=True, help="Borough code to filter (e.g. MN, BX, BK, QN, SI)")
-@click.option("--buffer", "buffer_dist", type=int, default=100, show_default=True, help="Buffer distance in feet for overlap detection")
-@click.option("--output", "output_path", type=click.Path(), default=None, help="Optional GeoJSON output path")
+@click.option(
+    "--borough",
+    default="MN",
+    show_default=True,
+    help="Borough code to filter (e.g. MN, BX, BK, QN, SI)",
+)
+@click.option(
+    "--buffer",
+    "buffer_dist",
+    type=int,
+    default=100,
+    show_default=True,
+    help="Buffer distance in feet for overlap detection",
+)
+@click.option(
+    "--output", "output_path", type=click.Path(), default=None, help="Optional GeoJSON output path"
+)
 def conflict_detect_cmd(borough: str, buffer_dist: int, output_path: str | None) -> None:
     """Detect overlapping work zones from sidewalk inspection data by BBL/block."""
     import os
@@ -2223,7 +2710,11 @@ def conflict_detect_cmd(borough: str, buffer_dist: int, output_path: str | None)
     # wjnr-3vgm was retired; use SMD Violations (6kbp-uz6m) which has bblid.
     FOURFOUR = "6kbp-uz6m"
     _BOROUGH_CONTRACT_SUFFIX = {
-        "MN": "M", "BX": "X", "BK": "K", "QN": "Q", "SI": "I",
+        "MN": "M",
+        "BX": "X",
+        "BK": "K",
+        "QN": "Q",
+        "SI": "I",
     }
     base_url = f"https://data.cityofnewyork.us/resource/{FOURFOUR}.json"
     token = os.getenv("SOCRATA_APP_TOKEN", "")
@@ -2250,7 +2741,14 @@ def conflict_detect_cmd(borough: str, buffer_dist: int, output_path: str | None)
 
     df = pd.DataFrame(rows)
     # Detect BBL/block column
-    bbl_col = next((c for c in df.columns if c.lower() in ("bblid", "bbl", "lot_bbl", "tax_lot", "block", "boro_block_lot")), None)
+    bbl_col = next(
+        (
+            c
+            for c in df.columns
+            if c.lower() in ("bblid", "bbl", "lot_bbl", "tax_lot", "block", "boro_block_lot")
+        ),
+        None,
+    )
     conflict_count = 0
     conflicting_bbls: list = []
     if bbl_col and bbl_col in df.columns:
@@ -2277,9 +2775,14 @@ def conflict_detect_cmd(borough: str, buffer_dist: int, output_path: str | None)
             import geopandas as gpd
 
             lat_col = next((c for c in df.columns if c.lower() in ("latitude", "lat", "y")), None)
-            lon_col = next((c for c in df.columns if c.lower() in ("longitude", "lon", "lng", "long", "x")), None)
+            lon_col = next(
+                (c for c in df.columns if c.lower() in ("longitude", "lon", "lng", "long", "x")),
+                None,
+            )
             if lat_col and lon_col:
-                df_conflict = df[df[bbl_col].isin(conflicting_bbls)].copy() if bbl_col else df.copy()
+                df_conflict = (
+                    df[df[bbl_col].isin(conflicting_bbls)].copy() if bbl_col else df.copy()
+                )
                 try:
                     df_conflict[lat_col] = pd.to_numeric(df_conflict[lat_col], errors="coerce")
                     df_conflict[lon_col] = pd.to_numeric(df_conflict[lon_col], errors="coerce")
@@ -2309,13 +2812,20 @@ def conflict_detect_cmd(borough: str, buffer_dist: int, output_path: str | None)
 # 2. report (sub-group with 'contract' sub-command)
 # ---------------------------------------------------------------------------
 
+
 @main.group(name="report")
 def report_group() -> None:
     """Generate analytical reports from Socrata data."""
 
 
 @report_group.command(name="contract")
-@click.option("--output", "output_path", type=click.Path(), default=None, help="Output path (PDF if weasyprint available, else .txt)")
+@click.option(
+    "--output",
+    "output_path",
+    type=click.Path(),
+    default=None,
+    help="Output path (PDF if weasyprint available, else .txt)",
+)
 def report_contract_cmd(output_path: str | None) -> None:
     """Generate a contractor performance summary from inspection data."""
     import os
@@ -2348,14 +2858,29 @@ def report_contract_cmd(output_path: str | None) -> None:
 
     # Try to identify contractor column
     contractor_col = next(
-        (c for c in df.columns if "contractor" in c.lower() or "applicant" in c.lower() or "company" in c.lower()),
+        (
+            c
+            for c in df.columns
+            if "contractor" in c.lower() or "applicant" in c.lower() or "company" in c.lower()
+        ),
         None,
     )
 
-    lines = [f"Contractor Performance Report — {dataset_key} ({fourfour})", "=" * 60, f"Total records: {len(df)}", ""]
+    lines = [
+        f"Contractor Performance Report — {dataset_key} ({fourfour})",
+        "=" * 60,
+        f"Total records: {len(df)}",
+        "",
+    ]
 
     if contractor_col:
-        summary = df.groupby(contractor_col).size().reset_index(name="count").sort_values("count", ascending=False).head(20)
+        summary = (
+            df.groupby(contractor_col)
+            .size()
+            .reset_index(name="count")
+            .sort_values("count", ascending=False)
+            .head(20)
+        )
         lines.append(f"Top contractors by record count (column: {contractor_col}):")
         lines.append(f"{'Contractor':<50} {'Count':>8}")
         lines.append("-" * 60)
@@ -2371,7 +2896,9 @@ def report_contract_cmd(output_path: str | None) -> None:
         if HAS_WEASYPRINT:
             import weasyprint
 
-            html = f"<html><body><pre style='font-family:monospace'>{report_text}</pre></body></html>"
+            html = (
+                f"<html><body><pre style='font-family:monospace'>{report_text}</pre></body></html>"
+            )
             weasyprint.HTML(string=html).write_pdf(output_path)
             click.echo(f"PDF report written to {output_path}")
         else:
@@ -2387,17 +2914,27 @@ def report_contract_cmd(output_path: str | None) -> None:
 # 3. dataset health
 # ---------------------------------------------------------------------------
 
+
 @main.group(name="dataset")
 def dataset_group() -> None:
     """Dataset inspection and metadata commands."""
 
 
 @dataset_group.command(name="health")
-@click.option("--key", "dataset_key", default=None, help="Specific dataset key (checks all if omitted)")
+@click.option(
+    "--key", "dataset_key", default=None, help="Specific dataset key (checks all if omitted)"
+)
 @click.option("--all", "show_all", is_flag=True, help="Show all 26 registered datasets")
-@click.option("--stale", "stale_days", type=int, default=7, help="Days threshold for staleness (default: 7)")
+@click.option(
+    "--stale", "stale_days", type=int, default=7, help="Days threshold for staleness (default: 7)"
+)
 @click.option("--empty", "show_empty", is_flag=True, help="Show only empty (0-row) datasets")
-@click.option("--sort-by", type=click.Choice(["staleness", "size"]), default="staleness", help="Sort results by staleness (default) or size")
+@click.option(
+    "--sort-by",
+    type=click.Choice(["staleness", "size"]),
+    default="staleness",
+    help="Sort results by staleness (default) or size",
+)
 def dataset_health_cmd(
     dataset_key: str | None,
     show_all: bool,
@@ -2415,7 +2952,7 @@ def dataset_health_cmd(
     """
     import os
     import sys
-    from datetime import datetime
+    from datetime import datetime, timezone
 
     import requests
 
@@ -2427,21 +2964,23 @@ def dataset_health_cmd(
     token = os.getenv("SOCRATA_APP_TOKEN", "")
     session = _make_session()
     domain = os.getenv("SOCRATA_DOMAIN", "data.cityofnewyork.us")
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     rows_out: list[dict] = []
     health_status_code = 0  # Start assuming all healthy (exit code 0)
 
     for key in keys_to_check:
         if key not in registry:
-            rows_out.append({
-                "key": key,
-                "fourfour": "N/A",
-                "row_count": None,
-                "last_modified": None,
-                "status": "unknown_key",
-                "stale_days": None,
-            })
+            rows_out.append(
+                {
+                    "key": key,
+                    "fourfour": "N/A",
+                    "row_count": None,
+                    "last_modified": None,
+                    "status": "unknown_key",
+                    "stale_days": None,
+                }
+            )
             continue
 
         fourfour = registry[key]["fourfour"]
@@ -2457,7 +2996,9 @@ def dataset_health_cmd(
             headers = {}
             if token:
                 headers["X-App-Token"] = token
-            r = session.post(count_url, json={"query": "select count(*) as c"}, headers=headers, timeout=30)
+            r = session.post(
+                count_url, json={"query": "select count(*) as c"}, headers=headers, timeout=30
+            )
             r.raise_for_status()
             data = r.json()
             row_count = int(data[0]["c"]) if data else 0
@@ -2476,7 +3017,7 @@ def dataset_health_cmd(
                 meta_json = mr.json()
                 ts = meta_json.get("rowsUpdatedAt") or meta_json.get("updatedAt")
                 if ts:
-                    last_modified_dt = datetime.utcfromtimestamp(int(ts))
+                    last_modified_dt = datetime.fromtimestamp(int(ts), timezone.utc)
                     last_modified = last_modified_dt.isoformat()
                     # Calculate staleness in days
                     delta = now - last_modified_dt
@@ -2490,14 +3031,16 @@ def dataset_health_cmd(
             status = "error"
             health_status_code = 1
 
-        rows_out.append({
-            "key": key,
-            "fourfour": fourfour,
-            "row_count": row_count,
-            "last_modified": last_modified,
-            "status": status,
-            "stale_days": stale_days_val,
-        })
+        rows_out.append(
+            {
+                "key": key,
+                "fourfour": fourfour,
+                "row_count": row_count,
+                "last_modified": last_modified,
+                "status": status,
+                "stale_days": stale_days_val,
+            }
+        )
 
     # Apply filters based on options
     filtered_rows = rows_out
@@ -2521,27 +3064,33 @@ def dataset_health_cmd(
             rc = str(r["row_count"]) if r["row_count"] is not None else "N/A"
             lm = str(r["last_modified"] or "N/A")[:19]
             sd = str(r["stale_days"]) if r["stale_days"] is not None else "N/A"
-            table_data.append([
-                r["key"],
-                r["fourfour"],
-                rc,
-                lm,
-                sd,
-                r["status"],
-            ])
+            table_data.append(
+                [
+                    r["key"],
+                    r["fourfour"],
+                    rc,
+                    lm,
+                    sd,
+                    r["status"],
+                ]
+            )
 
         headers = ["Key", "FourFour", "Rows", "Last Modified", "Stale (days)", "Status"]
         click.echo(tabulate(table_data, headers=headers, tablefmt="grid"))
     except ImportError:
         # Fallback to manual formatting if tabulate not available
-        header = f"{'Key':<35} {'FourFour':<12} {'Rows':>10} {'Last Modified':<22} {'Stale':<8} Status"
+        header = (
+            f"{'Key':<35} {'FourFour':<12} {'Rows':>10} {'Last Modified':<22} {'Stale':<8} Status"
+        )
         click.echo(header)
         click.echo("-" * len(header))
         for r in filtered_rows:
             rc = str(r["row_count"]) if r["row_count"] is not None else "N/A"
             lm = str(r["last_modified"] or "N/A")[:20]
             sd = str(r["stale_days"]) if r["stale_days"] is not None else "N/A"
-            click.echo(f"{r['key']:<35} {r['fourfour']:<12} {rc:>10} {lm:<22} {sd:<8} {r['status']}")
+            click.echo(
+                f"{r['key']:<35} {r['fourfour']:<12} {rc:>10} {lm:<22} {sd:<8} {r['status']}"
+            )
 
     # Exit with appropriate code
     if health_status_code != 0:
@@ -2599,9 +3148,7 @@ def dataset_ramp_analysis_cmd(
 
     registry = _load_dataset_registry()
     if "ramp_progress" not in registry:
-        raise click.ClickException(
-            "Dataset key 'ramp_progress' not found in config/datasets.yaml"
-        )
+        raise click.ClickException("Dataset key 'ramp_progress' not found in config/datasets.yaml")
 
     fourfour = registry["ramp_progress"]["fourfour"]
     domain = os.getenv("SOCRATA_DOMAIN", "data.cityofnewyork.us")
@@ -2626,9 +3173,7 @@ def dataset_ramp_analysis_cmd(
         raise click.ClickException(f"Socrata fetch failed: {exc}") from exc
 
     if not rows:
-        click.echo(
-            "No ramp data found in dataset. Check borough filter and dataset availability."
-        )
+        click.echo("No ramp data found in dataset. Check borough filter and dataset availability.")
         return
 
     # Convert to DataFrame
@@ -2658,6 +3203,7 @@ def dataset_ramp_analysis_cmd(
 # ---------------------------------------------------------------------------
 # 4. cache refresh
 # ---------------------------------------------------------------------------
+
 
 @main.group(name="cache")
 def cache_group() -> None:
@@ -2696,6 +3242,7 @@ def cache_refresh_cmd(key: str) -> None:
 # 5. export
 # ---------------------------------------------------------------------------
 
+
 @main.command(name="export")
 @click.argument("key")
 @click.option("--format", "fmt", type=click.Choice(["geojson", "parquet", "csv"]), required=True)
@@ -2716,7 +3263,9 @@ def export_cmd(key: str, fmt: str, output_path: str) -> None:
 
     if fmt == "geojson":
         if not HAS_GEOPANDAS:
-            raise click.ClickException("geopandas is required for GeoJSON export. Install with: pip install geopandas")
+            raise click.ClickException(
+                "geopandas is required for GeoJSON export. Install with: pip install geopandas"
+            )
         geojson_url = f"https://{domain}/resource/{fourfour}.geojson"
         params: dict = {"$limit": 50000}
         if token:
@@ -2752,16 +3301,21 @@ def export_cmd(key: str, fmt: str, output_path: str) -> None:
                 df.to_parquet(output_path, index=False)
                 click.echo(f"Parquet written to {output_path} ({len(df)} rows)")
             except ImportError as exc:
-                raise click.ClickException(f"pyarrow or fastparquet required for parquet export: {exc}") from exc
+                raise click.ClickException(
+                    f"pyarrow or fastparquet required for parquet export: {exc}"
+                ) from exc
 
 
 # ---------------------------------------------------------------------------
 # 6. nl-query
 # ---------------------------------------------------------------------------
 
+
 @main.command(name="nl-query")
 @click.argument("question")
-@click.option("--dataset", "dataset_key", default=None, help="Dataset key from config/datasets.yaml")
+@click.option(
+    "--dataset", "dataset_key", default=None, help="Dataset key from config/datasets.yaml"
+)
 def nl_query_cmd(question: str, dataset_key: str | None) -> None:
     """Translate a natural-language question into SoQL and query Socrata."""
     import os
@@ -2815,8 +3369,7 @@ def nl_query_cmd(question: str, dataset_key: str | None) -> None:
     system_prompt = (
         "You are a Socrata SoQL query assistant. Given a question about NYC sidewalk inspection data, "
         "output ONLY a valid SoQL query (no explanation). "
-        "Available columns depend on dataset."
-        + columns_hint
+        "Available columns depend on dataset." + columns_hint
     )
 
     client = anthropic.Anthropic(api_key=api_key)

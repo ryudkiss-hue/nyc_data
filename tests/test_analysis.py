@@ -108,7 +108,9 @@ class TestParseSimComplaints:
 
     def test_keyword_extraction_with_mock(self, mock_sklearn_vectorizer):
         """Test that TF-IDF is called and keywords are extracted based on mock scores."""
-        df = pd.DataFrame({"description": ["wheelchair hazard crack", "just a root", "rebar metal"]})
+        df = pd.DataFrame(
+            {"description": ["wheelchair hazard crack", "just a root", "rebar metal"]}
+        )
 
         # Configure the mock's return values for this specific test
         scores = np.array(
@@ -303,4 +305,4 @@ class TestGenerateTextInsights:
         assert ("lazy", 2) in insights.top_terms
         # Check that the global tag list is correct
         assert "big" in insights.tags
-        assert "untagged" not in insights.tags # Because every row gets at least one tag
+        assert "untagged" not in insights.tags  # Because every row gets at least one tag

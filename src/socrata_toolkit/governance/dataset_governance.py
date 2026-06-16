@@ -45,11 +45,9 @@ CACHE_DIR = Path(".cache")
 CACHE_FILE = CACHE_DIR / "governance_audit.json"
 CACHE_VALIDITY_SECONDS = 3600  # 1 hour
 
-
 def _ensure_cache_dir() -> None:
     """Create cache directory if it does not exist."""
     CACHE_DIR.mkdir(exist_ok=True)
-
 
 def _is_cache_valid() -> bool:
     """Check if cached audit is still valid (less than 1 hour old)."""
@@ -60,7 +58,6 @@ def _is_cache_valid() -> bool:
         return age < CACHE_VALIDITY_SECONDS
     except OSError:
         return False
-
 
 def _load_cache() -> dict[str, Any] | None:
     """Load governance audit from cache if valid."""
@@ -75,7 +72,6 @@ def _load_cache() -> dict[str, Any] | None:
         logger.warning(f"Failed to load cache: {e}")
         return None
 
-
 def _save_cache(data: dict[str, Any]) -> None:
     """Save governance audit to cache."""
     try:
@@ -85,7 +81,6 @@ def _save_cache(data: dict[str, Any]) -> None:
         logger.debug(f"Saved governance audit to cache: {CACHE_FILE}")
     except OSError as e:
         logger.warning(f"Failed to save cache: {e}")
-
 
 def _extract_fourfour(row: dict[str, Any]) -> str:
     """Extract fourfour ID from a row, trying multiple field names.
@@ -97,7 +92,6 @@ def _extract_fourfour(row: dict[str, Any]) -> str:
         Fourfour ID string (empty if not found)
     """
     return (row.get("fourfour", "").strip() or row.get("dataset_id", "").strip())
-
 
 def _fetch_socrata_json(fourfour: str, select: str | None = None, limit: int = 50000) -> list[dict[str, Any]]:
     """Fetch JSON data from a Socrata dataset.
@@ -149,7 +143,6 @@ def _fetch_socrata_json(fourfour: str, select: str | None = None, limit: int = 5
         logger.error(f"Failed to fetch {fourfour}: {e}")
         raise
 
-
 def _fetch_ll251_metadata() -> dict[str, dict[str, Any]]:
     """Fetch LL251 Inventory dataset and return fourfour -> metadata mapping.
 
@@ -183,7 +176,6 @@ def _fetch_ll251_metadata() -> dict[str, dict[str, Any]]:
     logger.info(f"Fetched LL251 metadata for {len(metadata)} datasets")
     return metadata
 
-
 def _fetch_removal_list() -> set[str]:
     """Fetch Dataset Removals dataset and return set of fourfour IDs marked for removal.
 
@@ -205,7 +197,6 @@ def _fetch_removal_list() -> set[str]:
     logger.info(f"Fetched removal list: {len(removal_list)} datasets marked for removal")
     return removal_list
 
-
 def _fetch_automation_status() -> dict[str, bool]:
     """Fetch Automated Datasets dataset and return fourfour -> automation_status mapping.
 
@@ -226,7 +217,6 @@ def _fetch_automation_status() -> dict[str, bool]:
 
     logger.info(f"Fetched automation status for {len(automation)} datasets")
     return automation
-
 
 def cross_reference(fourfour: str) -> dict[str, Any]:
     """Get governance metadata for a single dataset.
@@ -264,7 +254,6 @@ def cross_reference(fourfour: str) -> dict[str, Any]:
         "removal_flagged": False,
         "automated": False,
     }
-
 
 def registry_audit() -> dict[str, Any]:
     """Audit all registry datasets against governance sources.

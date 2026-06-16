@@ -10,7 +10,7 @@ def test_parse_complaint_to_json(mock_call_llm):
     mock_call_llm.return_value = {
         "severity": "high",
         "category": "street-condition",
-        "summary": "Large pothole on Broadway"
+        "summary": "Large pothole on Broadway",
     }
 
     result = parse_complaint_to_json("There is a large pothole on Broadway!")
@@ -20,12 +20,13 @@ def test_parse_complaint_to_json(mock_call_llm):
     assert "pothole" in result["summary"]
     mock_call_llm.assert_called_once()
 
+
 @patch("app.services.nl_query._call_llm")
 def test_triage_complaint(mock_call_llm):
     mock_call_llm.return_value = {
         "frustration_score": 9,
         "escalate": True,
-        "reason": "Repeated complaints ignored"
+        "reason": "Repeated complaints ignored",
     }
 
     result = triage_complaint("I have complained 5 times and nothing happened!")

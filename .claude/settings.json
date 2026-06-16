@@ -1,26 +1,44 @@
 {
-    "$schema": "https://json.schemastore.org/claude-code-settings.json",
-    "extraKnownMarketplaces": {
-        "mhattingpete-claude-skills": {
-            "source": {
-                "source": "github",
-                "repo": "mhattingpete/claude-skills-marketplace"
-            }
-        },
-        "data-analytics-skills": {
-            "source": {
-                "source": "directory",
-                "path": "data-analytics-skills"
-            }
-        }
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Skill",
+      "Bash(black *)",
+      "Bash(ruff *)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "FILE=$(jq -r '.tool_input.file_path // .tool_response.filePath' 2>/dev/null); if [[ \"$FILE\" == *.py ]]; then black --quiet \"$FILE\" 2>/dev/null || true; fi"
+          }
+        ]
+      }
+    ]
+  },
+  "enabledPlugins": {
+    "engineering-workflow-skills@mhattingpete-claude-skills": true,
+    "visual-documentation-skills@mhattingpete-claude-skills": true,
+    "productivity-skills@mhattingpete-claude-skills": true,
+    "code-operations-skills@mhattingpete-claude-skills": true,
+    "remember@claude-plugins-official": true
+  },
+  "extraKnownMarketplaces": {
+    "mhattingpete-claude-skills": {
+      "source": {
+        "source": "github",
+        "repo": "mhattingpete/claude-skills-marketplace"
+      }
     },
-    "enabledPlugins": {
-        "engineering-workflow-skills@mhattingpete-claude-skills": true,
-        "visual-documentation-skills@mhattingpete-claude-skills": true,
-        "productivity-skills@mhattingpete-claude-skills": true,
-        "code-operations-skills@mhattingpete-claude-skills": true
-    },
-    "permissions": {
-        "allow": ["Skill"]
+    "data-analytics-skills": {
+      "source": {
+        "source": "directory",
+        "path": "data-analytics-skills"
+      }
     }
+  }
 }

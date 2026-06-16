@@ -47,7 +47,6 @@ class BoroughRampStats:
     sample_size: int = 0
     reliability: str = "unknown"  # "high", "medium", "low"
 
-
 @dataclass
 class RampCompletionReport:
     """Complete ramp completion analysis report."""
@@ -136,7 +135,6 @@ class RampCompletionReport:
             ],
         }
 
-
 class RampCompletionReportGenerator:
     """Generate ramp program completion reports with statistical analysis.
 
@@ -174,7 +172,7 @@ class RampCompletionReportGenerator:
         Returns:
             RampCompletionReport with borough-level statistics
         """
-        from datetime import datetime
+        from datetime import datetime, timezone
 
         if df is None or df.empty:
             raise ValueError("DataFrame is required and cannot be empty")
@@ -261,7 +259,7 @@ class RampCompletionReportGenerator:
         )
 
         return RampCompletionReport(
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
             mode=mode,
             sample_size=sample_size_actual if mode == "sample" else None,
             total_boroughs=len(borough_stats),

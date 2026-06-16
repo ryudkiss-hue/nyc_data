@@ -29,7 +29,6 @@ DATA_FILES: list[tuple[str, str]] = [
     (str(ROOT / "src"), "src"),
 ]
 
-
 def _run_pyinstaller(*, debug: bool) -> int:
     cmd = [
         sys.executable, "-m", "PyInstaller",
@@ -70,7 +69,6 @@ def _run_pyinstaller(*, debug: bool) -> int:
     print("  " + " ".join(cmd))
     return subprocess.run(cmd, check=False).returncode
 
-
 def main() -> None:
     args = set(sys.argv[1:])
     debug = "--debug" in args
@@ -92,7 +90,6 @@ def main() -> None:
     print("To build the Windows installer (Inno Setup):")
     print('   "C:\\Program Files (x86)\\Inno Setup 6\\ISCC.exe" standalone\\installer.iss')
     print()
-
 
 if __name__ == "__main__":
     main()

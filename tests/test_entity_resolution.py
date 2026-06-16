@@ -32,7 +32,6 @@ from socrata_toolkit.pipeline import DeduplicationRule, Deduplicator
 
 # ========== MATCHING STRATEGY TESTS ==========
 
-
 class TestExactMatch:
     """Tests for ExactMatch strategy."""
 
@@ -72,7 +71,6 @@ class TestExactMatch:
         score = matcher.score(record1, record2)
         assert score == 0.0
 
-
 class TestFuzzyMatch:
     """Tests for FuzzyMatch strategy."""
 
@@ -94,7 +92,6 @@ class TestFuzzyMatch:
         score = matcher.score(record1, record2)
         assert score > 0.7
 
-
 class TestPhoneticMatch:
     """Tests for PhoneticMatch strategy."""
 
@@ -106,7 +103,6 @@ class TestPhoneticMatch:
 
         score = matcher.score(record1, record2)
         assert score > 0.5
-
 
 class TestGeographicMatch:
     """Tests for GeographicMatch strategy."""
@@ -131,7 +127,6 @@ class TestGeographicMatch:
         score = matcher.score(record1, record2)
         assert score == 0.0
 
-
 class TestTemporalMatch:
     """Tests for TemporalMatch strategy."""
 
@@ -143,7 +138,6 @@ class TestTemporalMatch:
 
         score = matcher.score(record1, record2)
         assert score == 1.0
-
 
 class TestCompositeMatch:
     """Tests for CompositeMatch strategy."""
@@ -161,9 +155,7 @@ class TestCompositeMatch:
         score = composite.score(record1, record2)
         assert score > 0.8
 
-
 # ========== DEDUPLICATION TESTS ==========
-
 
 class TestDeduplicator:
     """Tests for Deduplicator engine."""
@@ -199,9 +191,7 @@ class TestDeduplicator:
         assert success
         assert dedup.get_duplicates_for_record("rec2") == ["rec1", "rec3"]
 
-
 # ========== MASTER DATA TESTS ==========
-
 
 class TestMasterDataManager:
     """Tests for MasterDataManager."""
@@ -248,9 +238,7 @@ class TestMasterDataManager:
 
         assert is_valid
 
-
 # ========== BLOCKING TESTS ==========
-
 
 class TestStandardBlocker:
     """Tests for StandardBlocker."""
@@ -273,9 +261,7 @@ class TestStandardBlocker:
         stats = blocker.get_statistics()
         assert stats.reduction_ratio > 0.5
 
-
 # ========== INCREMENTAL MATCHING TESTS ==========
-
 
 class TestIncrementalMatcher:
     """Tests for IncrementalMatcher."""
@@ -295,9 +281,7 @@ class TestIncrementalMatcher:
 
         assert result.decision == MatchDecision.AUTO_ASSIGNED
 
-
 # ========== REVIEW WORKFLOW TESTS ==========
-
 
 class TestReviewWorkflow:
     """Tests for ReviewWorkflow."""
@@ -342,9 +326,7 @@ class TestReviewWorkflow:
         assert metrics["total_reviewed"] == 5
         assert metrics["match_rate"] == 100.0
 
-
 # ========== RECONCILIATION TESTS ==========
-
 
 class TestReconciler:
     """Tests for Reconciler."""
@@ -367,9 +349,7 @@ class TestReconciler:
         report = reconciler.reconcile_to_external("NYC_CARTO")
         assert report.matched_count > 0
 
-
 # ========== RELATIONSHIP TESTS ==========
-
 
 class TestRelationshipGraph:
     """Tests for RelationshipGraph."""
@@ -405,9 +385,7 @@ class TestRelationshipGraph:
         assert path is not None
         assert len(path) == 3
 
-
 # ========== PERFORMANCE BENCHMARKS ==========
-
 
 class TestPerformanceBenchmarks:
     """Performance tests for large datasets."""
@@ -479,9 +457,7 @@ class TestPerformanceBenchmarks:
             f"Reduced {stats.total_possible_pairs} to {stats.candidate_pairs} pairs in {elapsed:.2f}s"
         )
 
-
 # ========== INTEGRATION TESTS ==========
-
 
 class TestEndToEndFlow:
     """End-to-end integration tests."""
@@ -525,9 +501,7 @@ class TestEndToEndFlow:
         stats = mgr.get_statistics()
         assert stats["total_entities"] > 0
 
-
 # ========== EDGE CASE TESTS ==========
-
 
 class TestEdgeCases:
     """Test edge cases and error handling."""
@@ -561,7 +535,6 @@ class TestEdgeCases:
 
         score = matcher.score(record1, record2)
         assert score > 0.5
-
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])

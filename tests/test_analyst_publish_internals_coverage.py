@@ -8,7 +8,6 @@ import pytest
 
 CTX = {"pack_name": "2024-01-01", "run_date": "2024-01-01"}
 
-
 # ---------------------------------------------------------------------------
 # _email_send
 # ---------------------------------------------------------------------------
@@ -70,7 +69,6 @@ class TestEmailSend:
         assert action.ok is False
         assert "Email send failed" in action.detail
 
-
 # ---------------------------------------------------------------------------
 # _pptx_export
 # ---------------------------------------------------------------------------
@@ -118,7 +116,6 @@ class TestPptxExport:
             action = _pptx_export(cfg, tmp_path, CTX, "summary", dry_run=False)
         assert action.ok is False
         assert "Template not found" in action.detail
-
 
 class TestPptxRender:
     def test_pptx_actual_render(self, tmp_path):

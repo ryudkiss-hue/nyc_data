@@ -74,7 +74,6 @@ class TestBuildExecutiveSummary:
         )
         assert "Total conflicts: 2" in md
 
-
 # ---------------------------------------------------------------------------
 # analyst.inquiries
 # ---------------------------------------------------------------------------
@@ -108,7 +107,6 @@ class TestLoadTemplateLibrary:
         assert name == "contract_status"
         assert "contract status" in keywords
 
-
 class TestMatchTemplates:
     def test_empty_inputs(self):
         from socrata_toolkit.analyst.inquiries import match_templates
@@ -129,7 +127,6 @@ class TestMatchTemplates:
         contracts = pd.DataFrame({"contract_id": ["C1"], "status": ["active"]})
         templates = [("delay", ["overdue"], "body")]
         assert match_templates(contracts, templates) == []
-
 
 class TestRenderInquiryDrafts:
     def test_renders_drafts(self, tmp_path):

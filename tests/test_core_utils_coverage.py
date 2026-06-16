@@ -1,4 +1,5 @@
 """Tests for core.utils module."""
+
 from __future__ import annotations
 
 import time
@@ -57,7 +58,7 @@ class TestWithRetries:
 
         fn = MagicMock(side_effect=fn_impl)
 
-        with patch('time.sleep'):  # Don't actually sleep in tests
+        with patch("time.sleep"):  # Don't actually sleep in tests
             result = with_retries(fn, retries=2)
 
         assert result == mock_response
@@ -66,14 +67,14 @@ class TestWithRetries:
     def test_with_retries_all_failures(self):
         fn = MagicMock(side_effect=requests.RequestException("Failed"))
 
-        with patch('time.sleep'):  # Don't actually sleep
+        with patch("time.sleep"):  # Don't actually sleep
             with pytest.raises(SocrataToolkitError, match="after 3 retries"):
                 with_retries(fn, retries=3)
 
     def test_with_retries_custom_retries(self):
         fn = MagicMock(side_effect=requests.RequestException("Failed"))
 
-        with patch('time.sleep'):
+        with patch("time.sleep"):
             with pytest.raises(SocrataToolkitError):
                 with_retries(fn, retries=5)
 
@@ -93,7 +94,7 @@ class TestWithRetries:
 
         fn = MagicMock(side_effect=fn_impl)
 
-        with patch('time.sleep') as mock_sleep:
+        with patch("time.sleep") as mock_sleep:
             result = with_retries(fn, retries=3, backoff=2.0)
 
         assert result == mock_response
@@ -109,7 +110,7 @@ class TestWithRetries:
 
         fn = MagicMock(return_value=mock_response)
 
-        with patch('time.sleep'):
+        with patch("time.sleep"):
             with pytest.raises(SocrataToolkitError):
                 with_retries(fn, retries=2)
 
@@ -153,19 +154,23 @@ class TestCoerceDatetimeColumn:
     """Tests for coerce_datetime_column function."""
 
     def test_coerce_datetime_column_valid(self):
-        df = pd.DataFrame({
-            "date": ["2024-01-01", "2024-01-02", "2024-01-03"],
-            "value": [1, 2, 3],
-        })
+        df = pd.DataFrame(
+            {
+                "date": ["2024-01-01", "2024-01-02", "2024-01-03"],
+                "value": [1, 2, 3],
+            }
+        )
         result = coerce_datetime_column(df, "date")
         assert pd.api.types.is_datetime64_any_dtype(result["date"])
         assert len(result) == 3
 
     def test_coerce_datetime_column_with_invalid(self):
-        df = pd.DataFrame({
-            "date": ["2024-01-01", "invalid", "2024-01-03"],
-            "value": [1, 2, 3],
-        })
+        df = pd.DataFrame(
+            {
+                "date": ["2024-01-01", "invalid", "2024-01-03"],
+                "value": [1, 2, 3],
+            }
+        )
         result = coerce_datetime_column(df, "date")
         assert pd.api.types.is_datetime64_any_dtype(result["date"])
         assert pd.isna(result.loc[1, "date"])
@@ -177,10 +182,12 @@ class TestCoerceDatetimeColumn:
         assert result.equals(df)
 
     def test_coerce_datetime_column_preserves_other_columns(self):
-        df = pd.DataFrame({
-            "date": ["2024-01-01", "2024-01-02"],
-            "value": [1, 2],
-        })
+        df = pd.DataFrame(
+            {
+                "date": ["2024-01-01", "2024-01-02"],
+                "value": [1, 2],
+            }
+        )
         result = coerce_datetime_column(df, "date")
         assert "value" in result.columns
         assert result["value"].tolist() == [1, 2]
@@ -196,21 +203,25 @@ class TestCoerceDatetimeColumns:
     """Tests for coerce_datetime_columns function."""
 
     def test_coerce_datetime_columns_multiple(self):
-        df = pd.DataFrame({
-            "created": ["2024-01-01", "2024-01-02"],
-            "updated": ["2024-02-01", "2024-02-02"],
-            "value": [1, 2],
-        })
+        df = pd.DataFrame(
+            {
+                "created": ["2024-01-01", "2024-01-02"],
+                "updated": ["2024-02-01", "2024-02-02"],
+                "value": [1, 2],
+            }
+        )
         result = coerce_datetime_columns(df, ["created", "updated"])
         assert pd.api.types.is_datetime64_any_dtype(result["created"])
         assert pd.api.types.is_datetime64_any_dtype(result["updated"])
         assert result["value"].dtype == df["value"].dtype
 
     def test_coerce_datetime_columns_missing_some(self):
-        df = pd.DataFrame({
-            "created": ["2024-01-01"],
-            "value": [1],
-        })
+        df = pd.DataFrame(
+            {
+                "created": ["2024-01-01"],
+                "value": [1],
+            }
+        )
         result = coerce_datetime_columns(df, ["created", "nonexistent"])
         assert pd.api.types.is_datetime64_any_dtype(result["created"])
 
@@ -247,7 +258,9 @@ class TestBoroughConstants:
         assert BOROUGH_LIST == ["Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"]
 
     def test_borough_set(self):
-        assert BOROUGH_SET == frozenset(["Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"])
+        assert BOROUGH_SET == frozenset(
+            ["Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"]
+        )
 
     def test_borough_set_membership(self):
         assert "Manhattan" in BOROUGH_SET

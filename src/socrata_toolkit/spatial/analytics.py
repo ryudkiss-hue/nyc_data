@@ -57,7 +57,6 @@ except ImportError:
 METRIC_CRS = "EPSG:2263"
 _FEET_PER_METER = 3.28084
 
-
 @dataclass
 class Hotspot:
     """Represents a detected hotspot."""
@@ -68,7 +67,6 @@ class Hotspot:
     average_condition: float
     severity: str  # "low", "medium", "high"
 
-
 @dataclass
 class Cluster:
     """Represents a cluster of segments."""
@@ -78,7 +76,6 @@ class Cluster:
     centroid_y: float
     average_value: float
     segment_ids: list[str]
-
 
 class NetworkAnalysis:
     """
@@ -288,7 +285,6 @@ class NetworkAnalysis:
         except Exception as e:
             logger.error(f"Error computing service area: {e}")
             return []
-
 
 class HotspotAnalysis:
     """
@@ -515,7 +511,6 @@ class HotspotAnalysis:
             logger.error(f"Error detecting hotspots: {e}")
             return []
 
-
 class InterpolationAnalysis:
     """
     Spatial interpolation for estimating values at unmapped locations.
@@ -578,7 +573,6 @@ class InterpolationAnalysis:
         except Exception as e:
             logger.error(f"Error in IDW interpolation: {e}")
             return []
-
 
 class SpatialAnomalyDetector:
     """
@@ -680,7 +674,6 @@ class SpatialAnomalyDetector:
             logger.error(f"Error in spatial outlier detection: {e}")
             return []
 
-
 # ── Spatial Conflict Engine ─────────────────────────────────────────────────
 #
 # GeoPandas-backed helpers used by NYC DOT analysts to flag conflicts between
@@ -711,13 +704,11 @@ _PRIORITY_WEIGHTS = {
     "routine": 0.2,
 }
 
-
 def _empty_geodataframe():
     """Return an empty GeoDataFrame (WGS84) or None if geopandas is missing."""
     if not HAS_GEOPANDAS:
         return None
     return gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
-
 
 def detect_conflicts(gdf_inspections, gdf_permits, buffer_m: float = 100):
     """Find inspections whose buffered footprint overlaps permit areas.
@@ -783,7 +774,6 @@ def detect_conflicts(gdf_inspections, gdf_permits, buffer_m: float = 100):
     except Exception as exc:  # noqa: BLE001 - degrade gracefully for analysts
         logger.error("detect_conflicts failed: %s", exc)
         return _empty_geodataframe()
-
 
 def spatial_conflict_score(
     gdf,
@@ -865,7 +855,6 @@ def spatial_conflict_score(
         logger.error("spatial_conflict_score failed: %s", exc)
         return gdf
 
-
 def find_ramp_gaps(gdf_ramps, gdf_inspections, threshold_m: float = 50):
     """Identify inspections with no accessible ramp within ``threshold_m``.
 
@@ -926,7 +915,6 @@ def find_ramp_gaps(gdf_ramps, gdf_inspections, threshold_m: float = 50):
     except Exception as exc:  # noqa: BLE001
         logger.error("find_ramp_gaps failed: %s", exc)
         return _empty_geodataframe()
-
 
 def moran_i(gdf, col: str, *, max_neighbors: int = 8):
     """Compute global Moran's I spatial autocorrelation for a numeric column.
@@ -1003,7 +991,6 @@ def moran_i(gdf, col: str, *, max_neighbors: int = 8):
     except Exception as exc:  # noqa: BLE001
         logger.error("moran_i failed: %s", exc)
         return None
-
 
 def cluster_conflict_hotspots(gdf, eps_deg: float = 0.005, min_samples: int = 5):
     """Label conflict-point clusters with DBSCAN on lon/lat coordinates.

@@ -16,6 +16,7 @@ def time_series_df():
     values = np.linspace(10, 110, 100) + np.random.normal(0, 2, 100)
     return pd.DataFrame({"date": dates, "value": values})
 
+
 class TestTimeSeriesForecasting:
     def test_forecasting_execution(self, time_series_df):
         skill = TimeSeriesForecasting()
@@ -27,12 +28,10 @@ class TestTimeSeriesForecasting:
         assert "metrics" in result.data
         assert "rmse" in result.data["metrics"]
 
+
 class TestSegmentation:
     def test_segmentation_execution(self):
-        df = pd.DataFrame({
-            "feature1": [1, 1, 5, 5, 10, 10],
-            "feature2": [1, 2, 5, 6, 10, 11]
-        })
+        df = pd.DataFrame({"feature1": [1, 1, 5, 5, 10, 10], "feature2": [1, 2, 5, 6, 10, 11]})
         skill = Segmentation()
         result = skill.run(df=df, n_clusters=3)
 

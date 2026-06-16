@@ -37,10 +37,8 @@ except ImportError:
     psycopg = None  # type: ignore
     psycopg_sql = None  # type: ignore
 
-
 # Logging setup
 logger = logging.getLogger(__name__)
-
 
 class TransformationType(Enum):
     """Categorization of data transformation types."""
@@ -52,7 +50,6 @@ class TransformationType(Enum):
     ENRICHMENT = "enrichment"
     CUSTOM_SQL = "custom_sql"
     COPY = "copy"
-
 
 @dataclass
 class LineageEdge:
@@ -123,7 +120,6 @@ class LineageEdge:
         """
         return json.dumps(self.to_dict())
 
-
 @dataclass
 class ColumnLineage:
     """Column-level provenance tracking with upstream dependencies.
@@ -182,7 +178,6 @@ class ColumnLineage:
             True
         """
         return json.dumps(self.to_dict())
-
 
 class LineageGraph:
     """Builds and queries lineage DAG with cycle detection.
@@ -570,7 +565,6 @@ class LineageGraph:
             "total_edges": len(self.edges),
             "exported_at": datetime.now(timezone.utc).isoformat() + "Z",
         }
-
 
 class LineageRegistry:
     """Persistent lineage registry with PostgreSQL backend.

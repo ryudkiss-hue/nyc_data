@@ -209,9 +209,7 @@ def validate_material_coverage(
     affected = null_count + invalid_count
 
     if null_count > 0:
-        errors.append(
-            f"SDM Section 4: {null_count} segments missing material classification"
-        )
+        errors.append(f"SDM Section 4: {null_count} segments missing material classification")
 
     if invalid_count > 0:
         invalid_materials = df[invalid_mask][material_col].unique().tolist()
@@ -219,13 +217,9 @@ def validate_material_coverage(
             f"SDM Section 4: {invalid_count} segments with invalid materials: {invalid_materials}"
         )
 
-    logger.info(
-        f"Material coverage validation: {len(df) - affected}/{len(df)} segments valid"
-    )
+    logger.info(f"Material coverage validation: {len(df) - affected}/{len(df)} segments valid")
 
-    return ValidationReport(
-        valid=not errors, errors=errors, warnings=[], affected_records=affected
-    )
+    return ValidationReport(valid=not errors, errors=errors, warnings=[], affected_records=affected)
 
 
 def validate_defect_applicability(
@@ -296,7 +290,7 @@ def validate_defect_applicability(
 
             # Special case for "concrete" category members
             if not is_valid and "concrete" in applicable and "PCC" in material:
-                 is_valid = True
+                is_valid = True
 
             if not is_valid:
                 errors.append(
@@ -367,7 +361,7 @@ def validate_ada_compliance_gates(
         width_violation = df[clear_path_width_col] < min_width
         width_count = width_violation.sum()
         if width_count > 0:
-            warnings.append(
+            errors.append(
                 f"ADA-4.3.1: {width_count} segments below minimum {min_width}ft clear path width"
             )
 
@@ -377,7 +371,7 @@ def validate_ada_compliance_gates(
         slope_violation = df[slope_col] > max_slope
         slope_count = slope_violation.sum()
         if slope_count > 0:
-            warnings.append(
+            errors.append(
                 f"ADA-4.3.2: {slope_count} segments exceed maximum {max_slope}% running slope"
             )
 
@@ -437,9 +431,7 @@ def validate_marking_standards(
     # Validate marking colors
     invalid_colors = df[~df[color_col].isin(valid_colors)]
     if len(invalid_colors) > 0:
-        errors.append(
-            f"SDM Section 5: {len(invalid_colors)} markings with invalid colors"
-        )
+        errors.append(f"SDM Section 5: {len(invalid_colors)} markings with invalid colors")
         affected += len(invalid_colors)
 
     # Check reflectivity if provided
@@ -510,18 +502,14 @@ def validate_geospatial_bounds(
     affected = 0
 
     # Check latitude bounds
-    lat_out = (df[lat_col] < nyc_bounds["min_lat"]) | (
-        df[lat_col] > nyc_bounds["max_lat"]
-    )
+    lat_out = (df[lat_col] < nyc_bounds["min_lat"]) | (df[lat_col] > nyc_bounds["max_lat"])
     lat_count = lat_out.sum()
     if lat_count > 0:
         errors.append(f"{lat_count} records with invalid latitude (outside NYC bounds)")
         affected += lat_count
 
     # Check longitude bounds
-    lon_out = (df[lon_col] < nyc_bounds["min_lon"]) | (
-        df[lon_col] > nyc_bounds["max_lon"]
-    )
+    lon_out = (df[lon_col] < nyc_bounds["min_lon"]) | (df[lon_col] > nyc_bounds["max_lon"])
     lon_count = lon_out.sum()
     if lon_count > 0:
         errors.append(f"{lon_count} records with invalid longitude (outside NYC bounds)")
@@ -536,6 +524,4 @@ def validate_geospatial_bounds(
 
     logger.info(f"Geospatial validation: {len(df) - affected}/{len(df)} within NYC bounds")
 
-    return ValidationReport(
-        valid=not errors, errors=errors, warnings=[], affected_records=affected
-    )
+    return ValidationReport(valid=not errors, errors=errors, warnings=[], affected_records=affected)

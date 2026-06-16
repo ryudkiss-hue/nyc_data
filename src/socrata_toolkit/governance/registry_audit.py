@@ -17,7 +17,6 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class DatasetGovernanceMetadata:
     """Governance metadata for a single dataset."""
@@ -41,7 +40,6 @@ class DatasetGovernanceMetadata:
             "update_frequency": self.update_frequency,
             "notes": self.notes,
         }
-
 
 def _fetch_ll251_inventory(domain: str = "data.cityofnewyork.us", token: str | None = None) -> dict[str, dict[str, Any]]:
     """Fetch LL251 Inventory dataset (5tqd-u88y).
@@ -84,7 +82,6 @@ def _fetch_ll251_inventory(domain: str = "data.cityofnewyork.us", token: str | N
 
     return result
 
-
 def _fetch_automated_datasets(domain: str = "data.cityofnewyork.us", token: str | None = None) -> dict[str, bool]:
     """Fetch Automated Datasets (7t2y-4fke).
 
@@ -112,7 +109,6 @@ def _fetch_automated_datasets(domain: str = "data.cityofnewyork.us", token: str 
 
     return result
 
-
 def _fetch_dataset_removals(domain: str = "data.cityofnewyork.us", token: str | None = None) -> dict[str, str]:
     """Fetch Dataset Removals (tm5c-buy3).
 
@@ -138,7 +134,6 @@ def _fetch_dataset_removals(domain: str = "data.cityofnewyork.us", token: str | 
         logger.warning(f"Failed to fetch dataset removals: {e}")
 
     return result
-
 
 def registry_audit(
     dataset_registry: dict[str, dict[str, str]],
@@ -210,7 +205,6 @@ def registry_audit(
 
     logger.info(f"Registry audit complete: {len(result)} datasets")
     return result
-
 
 def registry_audit_summary(
     metadata_list: list[DatasetGovernanceMetadata],

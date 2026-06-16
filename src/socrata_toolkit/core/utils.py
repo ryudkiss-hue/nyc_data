@@ -9,10 +9,8 @@ import requests
 if TYPE_CHECKING:
     import pandas as pd
 
-
 class SocrataToolkitError(Exception):
     pass
-
 
 def with_retries(fn: Callable[[], requests.Response], retries: int = 3, backoff: float = 1.5) -> requests.Response:
     last_exc: Exception | None = None
@@ -28,15 +26,12 @@ def with_retries(fn: Callable[[], requests.Response], retries: int = 3, backoff:
             delay *= backoff
     raise SocrataToolkitError(f"Request failed after {retries} retries: {last_exc}")
 
-
 def normalize_formats(values: list[str]) -> list[str]:
     return [v.strip().lower() for v in values if v and v.strip()]
-
 
 # ---------------------------------------------------------------------------
 # Date coercion helpers
 # ---------------------------------------------------------------------------
-
 
 def coerce_datetime_column(df: pd.DataFrame, col: str) -> pd.DataFrame:
     """Return a copy of *df* with *col* coerced to datetime (errors -> NaT).
@@ -52,7 +47,6 @@ def coerce_datetime_column(df: pd.DataFrame, col: str) -> pd.DataFrame:
         out[col] = pd.to_datetime(out[col], errors="coerce")
     return out
 
-
 def coerce_datetime_columns(df: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
     """Coerce multiple columns to datetime in a single call."""
     import pandas as pd
@@ -63,7 +57,6 @@ def coerce_datetime_columns(df: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
             out[col] = pd.to_datetime(out[col], errors="coerce")
     return out
 
-
 def coerce_series_datetime(series: pd.Series) -> pd.Series:
     """Coerce a Series to datetime, converting bad values to NaT.
 
@@ -73,7 +66,6 @@ def coerce_series_datetime(series: pd.Series) -> pd.Series:
     import pandas as pd
 
     return pd.to_datetime(series, errors="coerce")
-
 
 # ---------------------------------------------------------------------------
 # Borough normalisation helpers
@@ -111,7 +103,6 @@ _BOROUGH_ALIASES: dict[str, str] = {
     "QUEENS": "Queens",
     "STATEN ISLAND": "Staten Island",
 }
-
 
 def normalize_borough(value: str) -> str:
     """Normalise a raw borough string to its canonical title-case form.

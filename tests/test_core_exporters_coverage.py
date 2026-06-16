@@ -118,7 +118,10 @@ class TestXLSXExporter:
 
         # Create mock metadata object
         mock_meta = MagicMock()
-        mock_meta.summary.return_value = {"total_rows": len(sample_df), "total_cols": len(sample_df.columns)}
+        mock_meta.summary.return_value = {
+            "total_rows": len(sample_df),
+            "total_cols": len(sample_df.columns),
+        }
         mock_meta.column_dict.return_value = [
             {"column": "id", "type": "int"},
             {"column": "description", "type": "str"},

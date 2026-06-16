@@ -33,14 +33,12 @@ class ReviewDecision(str, Enum):
     UNSURE = "unsure"
     SKIP = "skip"
 
-
 class ReviewStatus(str, Enum):
     """Status of a review case."""
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
     DISPUTED = "disputed"
-
 
 @dataclass
 class FieldComparison:
@@ -50,7 +48,6 @@ class FieldComparison:
     value2: Any
     match_score: float
     is_match: bool
-
 
 @dataclass
 class ReviewCase:
@@ -84,7 +81,6 @@ class ReviewCase:
         return (f"ReviewCase(case_id={self.case_id}, status={self.status.value}, "
                 f"decision={self.decision}, reviewer={self.reviewer})")
 
-
 @dataclass
 class ReviewStatistics:
     """Statistics on review workflow."""
@@ -95,7 +91,6 @@ class ReviewStatistics:
     avg_review_time_seconds: float
     reviewers: list[str]
     agreement_with_auto: float  # Agreement rate with automated decisions
-
 
 class ReviewWorkflow:
     """

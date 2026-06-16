@@ -1,7 +1,5 @@
 """YAML profile loading for Analyst Autopilot."""
 
-
-
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -33,10 +31,6 @@ class SourceConfig:
 
     column_map: dict[str, str] = field(default_factory=dict)
 
-
-
-
-
 @dataclass
 
 class AnalystProfile:
@@ -67,15 +61,11 @@ class AnalystProfile:
 
     role_profile_path: str | None = None
 
-
-
     @property
 
     def prioritize(self) -> bool:
 
         return bool(self.steps.get("prioritize", True))
-
-
 
     @property
 
@@ -83,15 +73,11 @@ class AnalystProfile:
 
         return bool(self.steps.get("contract_report", True))
 
-
-
     @property
 
     def program_kpi(self) -> bool:
 
         return bool(self.steps.get("program_kpi", True))
-
-
 
     @property
 
@@ -99,15 +85,11 @@ class AnalystProfile:
 
         return bool(self.steps.get("inquiry_templates", True))
 
-
-
     @property
 
     def construction_diff(self) -> bool:
 
         return bool(self.steps.get("construction_diff", True))
-
-
 
     @property
 
@@ -125,8 +107,6 @@ class AnalystProfile:
         v = self.steps.get("publish_profile") or self.steps.get("publish_profile_path")
         return str(v) if v else None
 
-
-
     @property
 
     def conflict_buffer_m(self) -> float:
@@ -138,10 +118,6 @@ class AnalystProfile:
             return float(conflicts.get("buffer_m", 20))
 
         return 20.0
-
-
-
-
 
 def _parse_source(name: str, raw: dict[str, Any]) -> SourceConfig:
 
@@ -166,10 +142,6 @@ def _parse_source(name: str, raw: dict[str, Any]) -> SourceConfig:
         column_map=dict(raw.get("column_map", {})),
 
     )
-
-
-
-
 
 def load_profile(config_path: str | Path) -> AnalystProfile:
 

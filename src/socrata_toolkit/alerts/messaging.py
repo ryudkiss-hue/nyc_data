@@ -39,7 +39,6 @@ class BotResponse:
     intent: str = "unknown"
     confidence: float = 0.0
 
-
 class BotAdapter:
     """Natural-language query handler for chat integrations.
 
@@ -194,7 +193,6 @@ class BotAdapter:
             return BotResponse(text=text, intent="search_datasets", confidence=0.9)
         except Exception as e:
             return BotResponse(text=f"Search failed: {e}", intent="search_datasets", confidence=0.3)
-
 
 def _find_col(df: pd.DataFrame, candidates: list[str]) -> str | None:
     for c in candidates:

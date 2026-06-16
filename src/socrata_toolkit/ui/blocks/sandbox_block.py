@@ -31,7 +31,6 @@ DEFAULT_MATERIAL_COSTS: Final[dict[str, float]] = {
     "Asphaltic Concrete": 12.0,
 }
 
-
 class SidewalkSandboxBlock:
     """
     Interactive GUI block for real-time manipulation of sidewalk anatomy.

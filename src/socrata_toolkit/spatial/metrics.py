@@ -19,7 +19,6 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class SpatialCoverageMetric:
     """Spatial coverage metric."""
@@ -34,7 +33,6 @@ class SpatialCoverageMetric:
         if self.timestamp is None:
             self.timestamp = datetime.now(timezone.utc)
 
-
 @dataclass
 class MaterialDistributionMetric:
     """Material distribution by geography."""
@@ -44,7 +42,6 @@ class MaterialDistributionMetric:
     percentage: float
     average_condition: float
     borough: str | None = None
-
 
 @dataclass
 class InspectionDensityMetric:
@@ -56,7 +53,6 @@ class InspectionDensityMetric:
     time_period_days: int
     last_inspection_age_days: int
 
-
 @dataclass
 class SLAComplianceMetric:
     """SLA compliance status."""
@@ -66,7 +62,6 @@ class SLAComplianceMetric:
     compliance_percentage: float
     status: str  # "compliant", "at_risk", "non_compliant"
     borough: str | None = None
-
 
 class SpatialMetricsCollector:
     """
@@ -437,7 +432,6 @@ class SpatialMetricsCollector:
     def _get_high_priority_gaps(self) -> list[dict[str, Any]]:
         """Get areas needing urgent inspection."""
         return []  # Placeholder
-
 
 class SpatialQualityScorer:
     """

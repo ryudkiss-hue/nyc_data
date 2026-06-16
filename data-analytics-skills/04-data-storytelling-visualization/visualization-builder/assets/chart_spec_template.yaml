@@ -1,0 +1,146 @@
+# Chart Specification Template
+# Fill one section per chart. Check in alongside the analysis or dashboard specification.
+# Use chart_recommender.py to determine chart_type; fill this spec before building.
+
+chart:
+  # ─── Identity ─────────────────────────────────────────────────────────────
+  title: "FILL ME — state the finding, not the variable. e.g. 'Brooklyn Closure Rate Fell 12pp in May'"
+  subtitle: ""                         # optional; additional context
+  chart_type: ""                       # bar | line | scatter | histogram | box | heatmap | choropleth | stacked_bar
+  message_type: ""                     # comparison | trend | distribution | part-of-whole | relationship | geo
+
+  # ─── Data source ──────────────────────────────────────────────────────────
+  data_source:
+    dataset_key: ""                    # e.g. violations (6kbp-uz6m)
+    query_or_file: ""                  # SOQL filter or CSV path used
+    row_count: null                    # number of rows in the chart dataset
+    date_range:
+      start: ""                        # YYYY-MM-DD
+      end: ""                          # YYYY-MM-DD
+    freshness_date: ""                 # last_modified date of source dataset
+
+  # ─── Axes ─────────────────────────────────────────────────────────────────
+  x_axis:
+    column: ""                         # column name
+    label: ""                          # display label (include units: "Month", "Borough", "Days")
+    type: ""                           # datetime | categorical | numeric
+    sort: "value_desc"                 # value_desc | value_asc | alpha | chronological | custom
+
+  y_axis:
+    column: ""
+    label: ""                          # include units: "Count", "Closure Rate (%)", "Days"
+    scale: "linear"                    # linear | log
+    range_min: null                    # set to 0 for bar charts showing counts
+    range_max: null
+
+  # ─── Grouping / Color ─────────────────────────────────────────────────────
+  color_by:
+    column: ""                         # categorical column for color encoding (leave blank if none)
+    palette: "accessible"              # accessible | borough_standard | sequential | diverging
+    # borough_standard colors: MN=#003087, BX=#0072CE, BK=#FC4C02, QN=#00843D, SI=#7B2D8B
+
+  # ─── Filters applied before charting ──────────────────────────────────────
+  filters:
+    - column: ""
+      operator: ""                     # eq | neq | gt | gte | lt | lte | in | not_in | isnull | notnull
+      value: ""
+  # Example:
+  # filters:
+  #   - column: status
+  #     operator: eq
+  #     value: OPEN
+  #   - column: borough
+  #     operator: in
+  #     value: [MN, BX, BK, QN, SI]
+
+  # ─── Annotations ──────────────────────────────────────────────────────────
+  annotations:
+    reference_lines:
+      - label: ""                      # e.g. "SLA HIGH threshold (14 days)"
+        value: null                    # numeric y-value
+        color: "red"
+        style: "dashed"               # dashed | solid | dotted
+    callouts:
+      - label: ""                      # e.g. "Storm diversion event"
+        x_value: ""                    # date or category value
+        y_value: null
+    data_labels: false                 # show value labels on bars/points?
+    show_legend: true
+
+  # ─── Export / Display ─────────────────────────────────────────────────────
+  export:
+    format: "png"                      # png | svg | html | pdf
+    dpi: 150                           # 150 for web/slides; 300 for print
+    width_px: 1200
+    height_px: 700
+    display_context: ""               # presentation_slide | dashboard | report | email
+
+  # ─── Accessibility ────────────────────────────────────────────────────────
+  accessibility:
+    colorblind_safe: true             # use accessible palette (no red/green only encoding)
+    alt_text: ""                       # one sentence describing the chart for screen readers
+
+  # ─── Quality checklist ────────────────────────────────────────────────────
+  # Complete before finalising the chart.
+  checklist:
+    - "[ ] Title states the finding, not just the variable names"
+    - "[ ] Both axes have labels with units"
+    - "[ ] Data source and date range visible (in subtitle or footer)"
+    - "[ ] Key message legible in under 5 seconds"
+    - "[ ] Works in greyscale"
+    - "[ ] n= (sample size) stated somewhere on the chart or caption"
+    - "[ ] Colour palette is accessible to colorblind viewers"
+    - "[ ] Reference lines / SLA thresholds annotated where relevant"
+
+# ─── Example (filled) ─────────────────────────────────────────────────────
+# chart:
+#   title: "Brooklyn Violation Closure Rate Fell 12pp in May 2026"
+#   chart_type: line
+#   message_type: trend
+#   data_source:
+#     dataset_key: violations (6kbp-uz6m)
+#     query_or_file: "WHERE borough='BK' AND created_date >= '2026-01-01T00:00:00'"
+#     row_count: 12450
+#     date_range:
+#       start: "2026-01-01"
+#       end: "2026-06-14"
+#     freshness_date: "2026-06-13"
+#   x_axis:
+#     column: week_start_date
+#     label: "Week"
+#     type: datetime
+#     sort: chronological
+#   y_axis:
+#     column: closure_rate
+#     label: "Closure Rate (%)"
+#     scale: linear
+#     range_min: 0
+#     range_max: 100
+#   color_by:
+#     column: ""
+#     palette: accessible
+#   filters:
+#     - column: borough
+#       operator: eq
+#       value: BK
+#   annotations:
+#     reference_lines:
+#       - label: "SLA MED baseline (68%)"
+#         value: 68
+#         color: "#999999"
+#         style: dashed
+#     callouts:
+#       - label: "Crew diversion event"
+#         x_value: "2026-05-06"
+#         y_value: 62
+#     data_labels: false
+#     show_legend: false
+#   export:
+#     format: png
+#     dpi: 150
+#     width_px: 1200
+#     height_px: 600
+#     display_context: presentation_slide
+#   accessibility:
+#     colorblind_safe: true
+#     alt_text: "Line chart showing Brooklyn violation closure rate declining from 68% in April to 56% in May 2026, coinciding with a crew diversion event."

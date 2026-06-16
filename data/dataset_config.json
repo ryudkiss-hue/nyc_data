@@ -1,0 +1,236 @@
+{
+  "inspection": {
+    "fourfour": "dntt-gqwq",
+    "key_candidates": ["objectid", "object_id", "id"],
+    "date_candidates": ["created_date", "inspection_date", ":updated_at"],
+    "expected_row_count_min": 350000,
+    "expected_row_count_max": 450000,
+    "tolerance_pct": 0.10,
+    "roles": ["contract_analyst", "ramp_analyst"]
+  },
+  "violations": {
+    "fourfour": "6kbp-uz6m",
+    "key_candidates": ["violation_id", "id"],
+    "date_candidates": ["created_date", "violation_date", ":updated_at"],
+    "expected_row_count_min": 280000,
+    "expected_row_count_max": 380000,
+    "tolerance_pct": 0.10,
+    "roles": ["contract_analyst"]
+  },
+  "permits": {
+    "fourfour": "tqtj-sjs8",
+    "key_candidates": ["permit_number", "permit_id", "id"],
+    "date_candidates": ["permit_issue_date", "issue_date", "created_date", ":updated_at"],
+    "expected_row_count_min": 3400000,
+    "expected_row_count_max": 3900000,
+    "tolerance_pct": 0.05,
+    "roles": ["contract_analyst"]
+  },
+  "ramp_progress": {
+    "fourfour": "e7gc-ub6z",
+    "key_candidates": ["ramp_id", "rampid", "id"],
+    "date_candidates": ["status_date", "updated_date", "created_date", ":updated_at"],
+    "expected_row_count_min": 170000,
+    "expected_row_count_max": 220000,
+    "tolerance_pct": 0.10,
+    "roles": ["ramp_analyst"]
+  },
+  "ramp_complaints": {
+    "fourfour": "jagj-gttd",
+    "key_candidates": ["complaint_id", "id"],
+    "date_candidates": ["created_date", "complaint_date", ":updated_at"],
+    "expected_row_count_min": 5000,
+    "expected_row_count_max": 10000,
+    "tolerance_pct": 0.20,
+    "roles": ["ramp_analyst"]
+  },
+  "street_construction_inspections": {
+    "fourfour": "ydkf-mpxb",
+    "key_candidates": ["inspection_id", "id"],
+    "date_candidates": ["created_date", "inspection_date", ":updated_at"],
+    "expected_row_count_min": 10000000,
+    "expected_row_count_max": 13000000,
+    "tolerance_pct": 0.05,
+    "roles": ["contract_analyst"]
+  },
+  "built": {
+    "fourfour": "ugc8-s3f6",
+    "key_candidates": ["objectid", "object_id", "id"],
+    "date_candidates": ["created_date", ":updated_at"],
+    "expected_row_count_min": 90000,
+    "expected_row_count_max": 120000,
+    "tolerance_pct": 0.10,
+    "roles": ["contract_analyst"]
+  },
+  "lot_info": {
+    "fourfour": "i642-2fxq",
+    "key_candidates": ["lot_id", "bbl", "id"],
+    "date_candidates": ["created_date", ":updated_at"],
+    "expected_row_count_min": 1000000,
+    "expected_row_count_max": 1400000,
+    "tolerance_pct": 0.10,
+    "roles": ["contract_analyst"]
+  },
+  "reinspection": {
+    "fourfour": "gx72-kirf",
+    "key_candidates": ["reinspection_id", "id"],
+    "date_candidates": ["created_date", "reinspection_date", ":updated_at"],
+    "expected_row_count_min": 30000,
+    "expected_row_count_max": 42000,
+    "tolerance_pct": 0.15,
+    "roles": ["contract_analyst"]
+  },
+  "tree_damage": {
+    "fourfour": "j6v2-6uxq",
+    "key_candidates": ["damage_id", "id"],
+    "date_candidates": ["created_date", "damage_date", ":updated_at"],
+    "expected_row_count_min": 10000,
+    "expected_row_count_max": 25000,
+    "tolerance_pct": 0.20,
+    "roles": ["contract_analyst"]
+  },
+  "dismissals": {
+    "fourfour": "p4u2-3jgx",
+    "key_candidates": ["dismissal_id", "id"],
+    "date_candidates": ["created_date", "dismissal_date", ":updated_at"],
+    "expected_row_count_min": 75000,
+    "expected_row_count_max": 95000,
+    "tolerance_pct": 0.10,
+    "roles": ["contract_analyst"]
+  },
+  "correspondences": {
+    "fourfour": "bheb-sjfi",
+    "key_candidates": ["correspondence_id", "id"],
+    "date_candidates": ["created_date", "correspondence_date", ":updated_at"],
+    "expected_row_count_min": 25000,
+    "expected_row_count_max": 35000,
+    "tolerance_pct": 0.15,
+    "roles": ["contract_analyst"]
+  },
+  "curb_metal_protruding": {
+    "fourfour": "i2y3-sx2e",
+    "key_candidates": ["defect_id", "id"],
+    "date_candidates": ["created_date", "defect_date", ":updated_at"],
+    "expected_row_count_min": 15000,
+    "expected_row_count_max": 30000,
+    "tolerance_pct": 0.20,
+    "roles": ["contract_analyst"]
+  },
+  "ramp_locations": {
+    "fourfour": "ufzp-rrqu",
+    "key_candidates": ["ramp_id", "id"],
+    "date_candidates": ["created_date", ":updated_at"],
+    "expected_row_count_min": 200000,
+    "expected_row_count_max": 230000,
+    "tolerance_pct": 0.10,
+    "roles": ["ramp_analyst"]
+  },
+  "weekly_construction": {
+    "fourfour": "r528-jcks",
+    "key_candidates": ["construction_id", "id"],
+    "date_candidates": ["created_date", "week_date", ":updated_at"],
+    "expected_row_count_min": 50,
+    "expected_row_count_max": 100,
+    "tolerance_pct": 0.50,
+    "roles": ["contract_analyst"]
+  },
+  "capital_blocks": {
+    "fourfour": "jvk9-k4re",
+    "key_candidates": ["block_id", "id"],
+    "date_candidates": ["created_date", ":updated_at"],
+    "expected_row_count_min": 0,
+    "expected_row_count_max": 1,
+    "tolerance_pct": 1.0,
+    "roles": ["contract_analyst"]
+  },
+  "capital_intersections": {
+    "fourfour": "97nd-ff3i",
+    "key_candidates": ["intersection_id", "id"],
+    "date_candidates": ["created_date", ":updated_at"],
+    "expected_row_count_min": 7000,
+    "expected_row_count_max": 8600,
+    "tolerance_pct": 0.10,
+    "roles": ["contract_analyst"]
+  },
+  "street_closures_block": {
+    "fourfour": "i6b5-j7bu",
+    "key_candidates": ["closure_id", "id"],
+    "date_candidates": ["created_date", "closure_date", ":updated_at"],
+    "expected_row_count_min": 4000,
+    "expected_row_count_max": 4600,
+    "tolerance_pct": 0.10,
+    "roles": ["contract_analyst"]
+  },
+  "street_resurfacing_schedule": {
+    "fourfour": "xnfm-u3k5",
+    "key_candidates": ["schedule_id", "id"],
+    "date_candidates": ["created_date", "schedule_date", ":updated_at"],
+    "expected_row_count_min": 280000,
+    "expected_row_count_max": 340000,
+    "tolerance_pct": 0.10,
+    "roles": ["contract_analyst"]
+  },
+  "street_resurfacing_inhouse": {
+    "fourfour": "ffaf-8mrv",
+    "key_candidates": ["schedule_id", "id"],
+    "date_candidates": ["created_date", "schedule_date", ":updated_at"],
+    "expected_row_count_min": 550000,
+    "expected_row_count_max": 650000,
+    "tolerance_pct": 0.10,
+    "roles": ["contract_analyst"]
+  },
+  "step_streets": {
+    "fourfour": "u9au-h79y",
+    "key_candidates": ["step_id", "id"],
+    "date_candidates": ["created_date", ":updated_at"],
+    "expected_row_count_min": 100,
+    "expected_row_count_max": 150,
+    "tolerance_pct": 0.20,
+    "roles": ["contract_analyst"]
+  },
+  "sidewalk_planimetric": {
+    "fourfour": "vfx9-tbb6",
+    "key_candidates": ["segment_id", "id"],
+    "date_candidates": ["created_date", ":updated_at"],
+    "expected_row_count_min": 45000,
+    "expected_row_count_max": 55000,
+    "tolerance_pct": 0.10,
+    "roles": ["contract_analyst"]
+  },
+  "pedestrian_demand": {
+    "fourfour": "fwpa-qxaf",
+    "key_candidates": ["demand_id", "segment_id", "id"],
+    "date_candidates": ["created_date", ":updated_at"],
+    "expected_row_count_min": 120000,
+    "expected_row_count_max": 140000,
+    "tolerance_pct": 0.10,
+    "roles": ["ramp_analyst"]
+  },
+  "mappluto": {
+    "fourfour": "64uk-42ks",
+    "key_candidates": ["bbl", "lot_id", "id"],
+    "date_candidates": ["created_date", ":updated_at"],
+    "expected_row_count_min": 800000,
+    "expected_row_count_max": 920000,
+    "tolerance_pct": 0.10,
+    "roles": ["contract_analyst"]
+  },
+  "complaints_311": {
+    "fourfour": "erm2-nwe9",
+    "key_candidates": ["complaint_id", "id"],
+    "date_candidates": ["created_date", "complaint_date", ":updated_at"],
+    "expected_row_count_min": 20000000,
+    "expected_row_count_max": 22000000,
+    "tolerance_pct": 0.05,
+    "roles": ["contract_analyst"]
+  },
+  "_template": {
+    "fourfour": "required_string",
+    "key_candidates": ["list of candidate column names for primary key"],
+    "date_candidates": ["list of candidate column names for date/timestamp"],
+    "expected_row_count_min": "min_expected_rows",
+    "expected_row_count_max": "max_expected_rows",
+    "tolerance_pct": "acceptable_variance_as_fraction",
+    "roles": ["which_analyst_roles_use_this"]
+  }
+}

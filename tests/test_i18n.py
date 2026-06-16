@@ -10,7 +10,14 @@ def test_translations_cover_nav_keys():
     with patch.dict(sys.modules, {"streamlit": MagicMock()}):
         from app.utils.i18n import TRANSLATIONS
 
-        for key in ("nav_home", "nav_workflows", "welcome", "empty_title", "publish_title", "settings_title"):
+        for key in (
+            "nav_home",
+            "nav_workflows",
+            "welcome",
+            "empty_title",
+            "publish_title",
+            "settings_title",
+        ):
             assert key in TRANSLATIONS["en"]
             assert key in TRANSLATIONS["es"]
 

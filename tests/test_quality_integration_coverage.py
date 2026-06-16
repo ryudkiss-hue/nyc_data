@@ -1,4 +1,5 @@
 """Tests for quality.integration module - Pipeline integration and decorators."""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock
@@ -151,6 +152,7 @@ class TestGlobalIntegrationManagement:
     def test_get_quality_integration_creates_instance(self):
         """Test get_quality_integration creates instance."""
         import socrata_toolkit.quality.integration as integration_module
+
         integration_module._global_integration = None
 
         integration = get_quality_integration()

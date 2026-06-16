@@ -27,6 +27,8 @@ from typing import Any
 
 import pandas as pd
 
+from socrata_toolkit.viz.units import get_unit_label
+
 
 def _get_plotly():
     try:
@@ -35,7 +37,6 @@ def _get_plotly():
         return go, px
     except ImportError as exc:
         raise ImportError("Install plotly: pip install plotly") from exc
-
 
 # ---------------------------------------------------------------------------
 # Borough Bar Chart
@@ -49,7 +50,7 @@ def borough_bar_chart(
     title: str | None = None,
     color_map: dict[str, str] | None = None,
 ) -> Any:
-    """Interactive bar chart of a metric by borough."""
+    """Interactive bar chart of a metric by borough with proper units."""
     go, px = _get_plotly()
     agg_df = df.groupby(borough_col)[value_col].agg(agg).reset_index()
     agg_df.columns = [borough_col, value_col]
@@ -66,12 +67,12 @@ def borough_bar_chart(
         textposition="auto",
     ))
     fig.update_layout(
-        title=title or f"{value_col.replace('_', ' ').title()} by Borough",
-        xaxis_title="Borough", yaxis_title=value_col.replace("_", " ").title(),
+        title=title or f"{get_unit_label(value_col)} by Borough",
+        xaxis_title="Borough Name",
+        yaxis_title=get_unit_label(value_col),
         template="plotly_white",
     )
     return fig
-
 
 # ---------------------------------------------------------------------------
 # KPI Gauge
@@ -112,7 +113,6 @@ def kpi_gauge(
     fig.update_layout(height=300)
     return fig
 
-
 # ---------------------------------------------------------------------------
 # Contract Gantt Chart
 # ---------------------------------------------------------------------------
@@ -141,12 +141,15 @@ def contract_gantt(
     fig = px.timeline(
         tmp, x_start=start_col, x_end=end_col, y=task_col,
         color=color_col, color_discrete_map=color_map,
-        title=title or "Contract Schedule",
+        title=title or "Contract Schedule (Timeline)",
     )
     fig.update_yaxes(autorange="reversed")
-    fig.update_layout(template="plotly_white")
+    fig.update_layout(
+        template="plotly_white",
+        xaxis_title="Date (YYYY-MM-DD)",
+        yaxis_title="Task/Contract",
+    )
     return fig
-
 
 # ---------------------------------------------------------------------------
 # Priority Heatmap
@@ -167,13 +170,15 @@ def priority_heatmap(
     fig = go.Figure(go.Heatmap(
         z=pivot.values, x=pivot.columns.tolist(), y=pivot.index.tolist(),
         colorscale="RdYlGn_r", text=pivot.values, texttemplate="%{text:.0f}",
+        colorbar=dict(title=get_unit_label(value_col)),
     ))
     fig.update_layout(
-        title=title or f"{value_col.replace('_', ' ').title()} Heatmap",
+        title=title or f"{get_unit_label(value_col)} by {row_col.replace('_', ' ').title()} and {col_col.replace('_', ' ').title()}",
+        xaxis_title=col_col.replace('_', ' ').title(),
+        yaxis_title=row_col.replace('_', ' ').title(),
         template="plotly_white",
     )
     return fig
-
 
 # ---------------------------------------------------------------------------
 # Trend Line
@@ -199,16 +204,19 @@ def trend_line(
             tmp.groupby([pd.Grouper(key=date_col, freq=resample), group_col])[value_col]
             .agg(agg).reset_index(),
             x=date_col, y=value_col, color=group_col,
-            title=title or f"{value_col.replace('_', ' ').title()} Trend",
+            title=title or f"{get_unit_label(value_col)} Trend Over Time",
         )
     else:
         resampled = tmp.set_index(date_col).resample(resample)[value_col].agg(agg).reset_index()
         fig = px.line(resampled, x=date_col, y=value_col,
-                      title=title or f"{value_col.replace('_', ' ').title()} Trend")
+                      title=title or f"{get_unit_label(value_col)} Trend Over Time")
 
-    fig.update_layout(template="plotly_white")
+    fig.update_layout(
+        template="plotly_white",
+        xaxis_title=get_unit_label(date_col),
+        yaxis_title=get_unit_label(value_col),
+    )
     return fig
-
 
 # ---------------------------------------------------------------------------
 # Donut Chart (status distribution)
@@ -234,10 +242,13 @@ def status_donut(
         labels=counts.index, values=counts.values,
         hole=0.45, marker_colors=marker_colors,
         textinfo="label+percent",
+        hovertemplate="<b>%{label}</b><br>Count: %{value}<br>Percentage: %{percent}<extra></extra>",
     ))
-    fig.update_layout(title=title or "Status Distribution", template="plotly_white")
+    fig.update_layout(
+        title=title or f"{status_col.replace('_', ' ').title()} Distribution (count)",
+        template="plotly_white",
+    )
     return fig
-
 
 # ---------------------------------------------------------------------------
 # Hypothesis Testing Results Visualization
@@ -288,16 +299,15 @@ def hypothesis_test_results(
     )
 
     fig.update_layout(
-        title=title,
+        title=title or "Hypothesis Test Results (P-value & Effect Size)",
         xaxis_title="Group Comparison",
-        yaxis=dict(title="P-value"),
-        yaxis2=dict(title="Effect Size", overlaying="y", side="right"),
+        yaxis=dict(title=get_unit_label('p_value')),
+        yaxis2=dict(title=get_unit_label('effect_size'), overlaying="y", side="right"),
         hovermode="x unified",
         template="plotly_white",
         height=400,
     )
     return fig
-
 
 # ---------------------------------------------------------------------------
 # Waterfall Chart (change decomposition)
@@ -339,7 +349,6 @@ def waterfall_chart(
     )
     return fig
 
-
 # ---------------------------------------------------------------------------
 # Correlation Heatmap
 # ---------------------------------------------------------------------------
@@ -375,18 +384,19 @@ def correlation_heatmap(
             text=corr_matrix.values.round(2),
             texttemplate="%{text}",
             textfont={"size": 10},
-            colorbar=dict(title="Correlation"),
+            colorbar=dict(title=get_unit_label('correlation')),
         )
     )
 
     fig.update_layout(
-        title=title,
+        title=title or "Metric Correlation Matrix (−1 to 1)",
+        xaxis_title="Metric",
+        yaxis_title="Metric",
         height=500,
         width=600,
         template="plotly_white",
     )
     return fig
-
 
 # ---------------------------------------------------------------------------
 # Inspector Performance Distribution (Box Plot)
@@ -419,8 +429,8 @@ def inspector_performance_boxplot(
         df_plot.sort_values(inspector_col),
         x=inspector_col,
         y=metric_col,
-        title=title,
-        labels={inspector_col: "Inspector", metric_col: "Score"},
+        title=title or f"{get_unit_label(metric_col)} by Inspector",
+        labels={inspector_col: "Inspector Name", metric_col: get_unit_label(metric_col)},
     )
 
     fig.update_layout(
@@ -428,9 +438,9 @@ def inspector_performance_boxplot(
         template="plotly_white",
         margin=dict(b=100),
         xaxis_tickangle=-45,
+        yaxis_title=get_unit_label(metric_col),
     )
     return fig
-
 
 # ---------------------------------------------------------------------------
 # Save / Export

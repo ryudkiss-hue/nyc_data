@@ -97,11 +97,13 @@ except ImportError:  # pragma: no cover
 
 try:
     from socrata_toolkit.core.duckdb_store import DuckDBManager, DuckDBRepository
+
     _DUCKDB_AVAILABLE = True
 except ImportError:
     _DUCKDB_AVAILABLE = False
 
 _DUCKDB_PATH = str(_REPO_ROOT / "data" / "local_db" / "nyc_mission_control.duckdb")
+
 
 def _read_duckdb_cache(dataset_key: str, limit: int | None = None) -> pd.DataFrame | None:
     if not _DUCKDB_AVAILABLE:
@@ -121,12 +123,14 @@ def _read_duckdb_cache(dataset_key: str, limit: int | None = None) -> pd.DataFra
             manager.close()
     return None
 
+
 def _write_duckdb_cache(dataset_key: str, df: pd.DataFrame) -> None:
     if not _DUCKDB_AVAILABLE or df.empty or "_error" in df.columns:
         return
     manager = None
     try:
         from socrata_toolkit.core import COL_AT_ID, COL_ID
+
         manager = DuckDBManager(_DUCKDB_PATH)
         repo = DuckDBRepository(manager, dataset_key)
         # Identify PK
@@ -157,30 +161,27 @@ def _get_duckdb_watermark(dataset_key: str) -> tuple[str | None, str | None]:
             return None, None
 
         # Get columns to find the best DATE_CANDIDATE
-        cols_df = manager.query(f"DESCRIBE \"{dataset_key}\"").df()
+        cols_df = manager.query(f'DESCRIBE "{dataset_key}"').df()
         cols_lower = [c.lower() for c in cols_df["column_name"].tolist()]
 
         target_col = None
         for cand in DATE_CANDIDATES:
             if cand.lower() in cols_lower:
-                target_col = next(
-                    c for c in cols_df["column_name"] if c.lower() == cand.lower()
-                )
+                target_col = next(c for c in cols_df["column_name"] if c.lower() == cand.lower())
                 break
 
         if not target_col:
             return None, None
 
         # Get max date
-        res = manager.query(
-            f'SELECT MAX("{target_col}") as max_val FROM "{dataset_key}"'
-        ).df()
+        res = manager.query(f'SELECT MAX("{target_col}") as max_val FROM "{dataset_key}"').df()
 
         if not res.empty and pd.notna(res.iloc[0]["max_val"]):
             val = res.iloc[0]["max_val"]
             # Socrata ISO 8601 formatting
             if hasattr(val, "isoformat"):
-                return target_col, val.isoformat()
+                # Socrata Floating Timestamps don't support microseconds well
+                return target_col, val.isoformat(timespec="seconds")
             return target_col, str(val)
     except Exception as exc:
         logging.debug("DuckDB watermark check failed for %s: %s", dataset_key, exc)
@@ -212,7 +213,9 @@ OWNER_CANDIDATES = ("owner", "owner_type", "ownership", "lot_owner", "agency")
 GRACE_CANDIDATES = ("grace_pd", "grace_period", "grace_date", "graceperiod")
 
 
-def _load_registry_from_yaml() -> tuple[dict[str, dict[str, str]], tuple[str, ...], dict[str, tuple[str, ...]]]:
+def _load_registry_from_yaml() -> tuple[
+    dict[str, dict[str, str]], tuple[str, ...], dict[str, tuple[str, ...]]
+]:
     if not _DATASETS_YAML.exists():
         raise FileNotFoundError(f"Missing dataset registry: {_DATASETS_YAML}")
     raw = yaml.safe_load(_DATASETS_YAML.read_text(encoding="utf-8"))
@@ -240,7 +243,9 @@ def get_socrata_client() -> Any:
     _require_sodapy()
     token = (os.getenv("SOCRATA_APP_TOKEN") or "").strip() or None
     username = (os.getenv("SOCRATA_KEY_ID") or os.getenv("SOCRATA_USERNAME") or "").strip() or None
-    password = (os.getenv("SOCRATA_KEY_SECRET") or os.getenv("SOCRATA_PASSWORD") or "").strip() or None
+    password = (
+        os.getenv("SOCRATA_KEY_SECRET") or os.getenv("SOCRATA_PASSWORD") or ""
+    ).strip() or None
     return Socrata(DOMAIN, token, username=username, password=password, timeout=90)
 
 
@@ -295,14 +300,12 @@ def _check_dataset_health() -> None:
 
         if warning_parts:
             stale_str = (
-                ", ".join(stale_datasets[:5])
-                + ("..." if len(stale_datasets) > 5 else "")
+                ", ".join(stale_datasets[:5]) + ("..." if len(stale_datasets) > 5 else "")
                 if stale_datasets
                 else "none"
             )
             empty_str = (
-                ", ".join(empty_datasets[:5])
-                + ("..." if len(empty_datasets) > 5 else "")
+                ", ".join(empty_datasets[:5]) + ("..." if len(empty_datasets) > 5 else "")
                 if empty_datasets
                 else "none"
             )
@@ -431,11 +434,12 @@ def _detect_delta_column(dataset_key: str) -> str | None:
     _DELTA_COLUMN_CACHE[dataset_key] = None
     return None
 
+
 @retry(
     stop=stop_after_attempt(5),
     wait=wait_exponential(multiplier=1, min=2, max=10),
     retry=retry_if_exception_type(requests.exceptions.HTTPError),
-    reraise=True
+    reraise=True,
 )
 def _fetch_live(
     dataset_key: str,
@@ -445,19 +449,20 @@ def _fetch_live(
     select: str | None = None,
 ) -> pd.DataFrame:
     """Internal routine to pull JSON from Socrata with retry logic."""
-    if Socrata is None:
+    client = get_socrata_client()
+    if client is None:
         raise ImportError("sodapy not installed")
 
     conf = DATASET_REGISTRY[dataset_key]
     fourfour = conf["fourfour"]
 
-    client = get_socrata_client()
     try:
         results = client.get(fourfour, limit=limit, where=where, select=select)
         df = pd.DataFrame.from_records(results) if results else pd.DataFrame()
         return _postprocess_dataset(dataset_key, df)
     finally:
-        client.close()
+        if hasattr(client, "close"):
+            client.close()
 
 
 from abc import ABC, abstractmethod
@@ -468,9 +473,11 @@ class BaseFetcher(ABC):
     def fetch(self, key: str, limit: int | None = None, **kwargs) -> pd.DataFrame:
         pass
 
+
 class SODA3Fetcher(BaseFetcher):
     def fetch(self, key: str, limit: int | None = None, **kwargs) -> pd.DataFrame:
         return fetch_dataset(key, limit=limit, **kwargs)
+
 
 class LocalParquetFetcher(BaseFetcher):
     def fetch(self, key: str, limit: int | None = None, **kwargs) -> pd.DataFrame:
@@ -479,8 +486,10 @@ class LocalParquetFetcher(BaseFetcher):
             return pd.read_parquet(path)
         return pd.DataFrame()
 
+
 class IngestionProviderFactory:
     """Industrial factory for municipal data fetchers."""
+
     @staticmethod
     def get_fetcher(mode: str = "live") -> BaseFetcher:
         if mode == "live":
@@ -488,6 +497,7 @@ class IngestionProviderFactory:
         elif mode == "parquet":
             return LocalParquetFetcher()
         raise ValueError(f"Unknown ingestion mode: {mode}")
+
 
 @_cache_decorator()
 def fetch_dataset(
@@ -552,9 +562,7 @@ def fetch_dataset(
             safe_max = str(max_val).replace("'", "''")
             delta_clause = f"{delta_col} >= '{safe_max}'"
             effective_where = (
-                f"({effective_where}) AND {delta_clause}"
-                if effective_where
-                else delta_clause
+                f"({effective_where}) AND {delta_clause}" if effective_where else delta_clause
             )
             delta_applied = True
             logging.info(
@@ -566,9 +574,7 @@ def fetch_dataset(
 
     try:
         t0 = time.perf_counter()
-        df = _fetch_live(
-            dataset_key, limit=effective_limit, where=effective_where, select=select
-        )
+        df = _fetch_live(dataset_key, limit=effective_limit, where=effective_where, select=select)
         new_rows_count = len(df)
 
         # Priority Write: Write to primary DuckDB store (L1.5) synchronously
@@ -608,7 +614,8 @@ def fetch_dataset(
             if stale is not None:
                 logging.warning(
                     "fetch_dataset: live fetch failed for %s (%s) — returning stale cache.",
-                    dataset_key, exc,
+                    dataset_key,
+                    exc,
                 )
                 stale = stale.copy()
                 stale.attrs["stale"] = True
@@ -695,7 +702,9 @@ def df_to_gdf(df: pd.DataFrame) -> gpd.GeoDataFrame | None:
         return None
     if "the_geom" in df.columns:
         try:
-            gdf_out = gpd.GeoDataFrame(df.copy(), geometry=gpd.GeoSeries.from_wkt(df["the_geom"], crs=WGS84))
+            gdf_out = gpd.GeoDataFrame(
+                df.copy(), geometry=gpd.GeoSeries.from_wkt(df["the_geom"], crs=WGS84)
+            )
             return gdf_out.to_crs(NYC_CRS)
         except Exception:
             pass
@@ -748,7 +757,9 @@ def dataframe_to_map_df(df: pd.DataFrame, *, layer: str) -> pd.DataFrame:
 
 
 @_cache_decorator()
-def fetch_geodataframe(dataset_key: str, *, limit: int = 50_000, manhattan_only: bool = False) -> Any:
+def fetch_geodataframe(
+    dataset_key: str, *, limit: int = 50_000, manhattan_only: bool = False
+) -> Any:
     if manhattan_only and dataset_key in MANHATTAN_MAP_KEYS:
         df = fetch_manhattan_map_layer(dataset_key, limit=limit)
     else:
@@ -762,7 +773,9 @@ def load_manhattan_map_layers(*, limit: int = 25_000) -> dict[str, pd.DataFrame]
     for key in MANHATTAN_MAP_KEYS:
         df = fetch_manhattan_map_layer(key, limit=limit)
         gdf = df_to_gdf(df)
-        layers[key] = dataframe_to_map_df(df, layer=key) if gdf is None else gdf_to_map_df(gdf, layer=key)
+        layers[key] = (
+            dataframe_to_map_df(df, layer=key) if gdf is None else gdf_to_map_df(gdf, layer=key)
+        )
     return layers
 
 
@@ -773,7 +786,9 @@ def token_status() -> dict[str, Any]:
     return {
         "configured": bool(token),
         "key_pair": bool(key_id and key_secret),
-        "masked": f"{token[:4]}…{token[-4:]}" if len(token) > 8 else ("(set)" if token else "(missing)"),
+        "masked": f"{token[:4]}…{token[-4:]}"
+        if len(token) > 8
+        else ("(set)" if token else "(missing)"),
         "domain": DOMAIN,
         "datasets": len(DATASET_REGISTRY),
     }
@@ -794,7 +809,9 @@ def ingestion_summary(frames: dict[str, pd.DataFrame]) -> pd.DataFrame:
             else None
         )
         source = (
-            "demo" if not loaded else ("parquet" if cache_path.exists() and _parquet_fresh(cache_path) else "live")
+            "demo"
+            if not loaded
+            else ("parquet" if cache_path.exists() and _parquet_fresh(cache_path) else "live")
         )
 
         rows.append(
@@ -828,13 +845,17 @@ def cache_freshness_report() -> pd.DataFrame:
             stat = path.stat()
             age_h = round((time.time() - stat.st_mtime) / 3600, 1)
             size_kb = round(stat.st_size / 1024, 1)
-            rows.append({
-                "key": key,
-                "age_hours": age_h,
-                "size_kb": size_kb,
-                "fresh": age_h < (CACHE_TTL_SECONDS / 3600),
-                "path": str(path),
-            })
-    return pd.DataFrame(rows) if rows else pd.DataFrame(
-        columns=["key", "age_hours", "size_kb", "fresh", "path"]
+            rows.append(
+                {
+                    "key": key,
+                    "age_hours": age_h,
+                    "size_kb": size_kb,
+                    "fresh": age_h < (CACHE_TTL_SECONDS / 3600),
+                    "path": str(path),
+                }
+            )
+    return (
+        pd.DataFrame(rows)
+        if rows
+        else pd.DataFrame(columns=["key", "age_hours", "size_kb", "fresh", "path"])
     )

@@ -15,10 +15,8 @@ class TestSLAConfig:
     def sla_config(self) -> dict:
         """Load SLA config from JSON file."""
         config_path = Path(__file__).parent.parent / "data" / "sla_config.json"
-        assert (
-            config_path.exists()
-        ), f"SLA config not found at {config_path}. Required for tests."
-        with open(config_path) as f:
+        assert config_path.exists(), f"SLA config not found at {config_path}. Required for tests."
+        with open(config_path, encoding="utf-8") as f:
             return json.load(f)
 
     def test_sla_config_is_valid_json(self, sla_config):
@@ -32,23 +30,19 @@ class TestSLAConfig:
     def test_sla_high_threshold_is_14(self, sla_config):
         """HIGH SLA threshold must be 14 days (documented in CLAUDE.md)."""
         high_days = sla_config["sla_thresholds"]["HIGH"]["days"]
-        assert (
-            high_days == 14
-        ), f"HIGH SLA changed to {high_days}. Update CLAUDE.md if intentional."
+        assert high_days == 14, f"HIGH SLA changed to {high_days}. Update CLAUDE.md if intentional."
 
     def test_sla_medium_threshold_is_30(self, sla_config):
         """MEDIUM SLA threshold must be 30 days (documented in CLAUDE.md)."""
         medium_days = sla_config["sla_thresholds"]["MEDIUM"]["days"]
-        assert (
-            medium_days == 30
-        ), f"MEDIUM SLA changed to {medium_days}. Update CLAUDE.md if intentional."
+        assert medium_days == 30, (
+            f"MEDIUM SLA changed to {medium_days}. Update CLAUDE.md if intentional."
+        )
 
     def test_sla_low_threshold_is_60(self, sla_config):
         """LOW SLA threshold must be 60 days (documented in CLAUDE.md)."""
         low_days = sla_config["sla_thresholds"]["LOW"]["days"]
-        assert (
-            low_days == 60
-        ), f"LOW SLA changed to {low_days}. Update CLAUDE.md if intentional."
+        assert low_days == 60, f"LOW SLA changed to {low_days}. Update CLAUDE.md if intentional."
 
     def test_sla_thresholds_are_ordered(self, sla_config):
         """SLA thresholds should be ordered: HIGH < MEDIUM < LOW."""
@@ -56,9 +50,9 @@ class TestSLAConfig:
         medium = sla_config["sla_thresholds"]["MEDIUM"]["days"]
         low = sla_config["sla_thresholds"]["LOW"]["days"]
 
-        assert (
-            high < medium < low
-        ), f"SLA ordering incorrect: HIGH={high}, MEDIUM={medium}, LOW={low}"
+        assert high < medium < low, (
+            f"SLA ordering incorrect: HIGH={high}, MEDIUM={medium}, LOW={low}"
+        )
 
     def test_sla_thresholds_are_positive(self, sla_config):
         """All SLA thresholds must be positive integers."""
@@ -83,7 +77,7 @@ class TestSLAConfig:
         from pathlib import Path
 
         claude_md_path = Path(__file__).parent.parent / "CLAUDE.md"
-        with open(claude_md_path) as f:
+        with open(claude_md_path, encoding="utf-8") as f:
             content = f.read()
 
         # Check that CLAUDE.md references the correct SLA values

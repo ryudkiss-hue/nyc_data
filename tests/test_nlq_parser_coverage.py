@@ -1,4 +1,5 @@
 """Tests for nlq_parser module."""
+
 from __future__ import annotations
 
 import pytest

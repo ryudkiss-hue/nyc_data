@@ -1,4 +1,5 @@
 """Comprehensive tests for core.pipeline module."""
+
 from __future__ import annotations
 
 from socrata_toolkit.core.pipeline import (
@@ -87,10 +88,7 @@ class TestCollectColumnsAndTypes:
         assert "col_b" in result
 
     def test_sample_n_limits_rows_examined(self):
-        rows = [
-            {"id": i, "value": i * 1.0}
-            for i in range(100)
-        ]
+        rows = [{"id": i, "value": i * 1.0} for i in range(100)]
         result = _collect_columns_and_types(rows, sample_n=5)
         # Should still detect types correctly even with small sample
         assert result["id"] == "BIGINT"

@@ -23,7 +23,6 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class BreakingChange:
     """Represents a breaking change that could affect downstream systems.
@@ -43,7 +42,6 @@ class BreakingChange:
     severity: str = "medium"
     downstream_impact_count: int = 0
     description: str = ""
-
 
 @dataclass
 class ImpactReport:
@@ -97,7 +95,6 @@ class ImpactReport:
             "estimated_effort_hours": self.estimated_effort_hours,
             "risk_score": self.risk_score,
         }
-
 
 class ImpactAnalysis:
     """Impact analysis engine for data lineage changes.

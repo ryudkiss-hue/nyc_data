@@ -50,7 +50,6 @@ assert (
     abs(_WEIGHT_SUM - 1.0) < 0.001
 ), f"Quality score weights must sum to 1.0, got {_WEIGHT_SUM}"
 
-
 # ---------------------------------------------------------------------------
 # Data Lineage
 # ---------------------------------------------------------------------------
@@ -65,7 +64,6 @@ class LineageEntry:
     row_count_in: int
     row_count_out: int
     metadata: dict[str, Any] = field(default_factory=dict)
-
 
 @dataclass
 class LineageRecord:
@@ -130,7 +128,6 @@ class LineageRecord:
             record.steps.append(LineageEntry(**s))
         return record
 
-
 def create_lineage(dataset_id: str, run_id: str | None = None) -> LineageRecord:
     """Create a new lineage record for a pipeline run."""
     if run_id is None:
@@ -142,7 +139,6 @@ def create_lineage(dataset_id: str, run_id: str | None = None) -> LineageRecord:
         run_id=run_id,
         created_at=datetime.now(timezone.utc).isoformat(),
     )
-
 
 # ---------------------------------------------------------------------------
 # Access Audit Logging
@@ -156,7 +152,6 @@ class AuditEvent:
     action: str  # "read", "write", "delete", "export", "query"
     resource: str
     details: dict[str, Any] = field(default_factory=dict)
-
 
 class AuditLogger:
     """Append-only audit logger for data access events.
@@ -227,7 +222,6 @@ class AuditLogger:
         self.events.clear()
         return count
 
-
 # ---------------------------------------------------------------------------
 # Data Quality Scoring
 # ---------------------------------------------------------------------------
@@ -241,7 +235,6 @@ class QualityScore:
     consistency: float   # % rows without duplicate keys
     freshness: float     # score based on data recency
     details: dict[str, Any] = field(default_factory=dict)
-
 
 def compute_quality_score(
     df: pd.DataFrame,
@@ -331,7 +324,6 @@ def compute_quality_score(
         },
     )
 
-
 # ---------------------------------------------------------------------------
 # Schema Drift Detection
 # ---------------------------------------------------------------------------
@@ -343,7 +335,6 @@ class SchemaDiff:
     removed_columns: list[str]
     type_changes: list[dict[str, str]]
     is_compatible: bool
-
 
 def detect_schema_drift(
     current_df: pd.DataFrame,
@@ -381,11 +372,9 @@ def detect_schema_drift(
         is_compatible=is_compatible,
     )
 
-
 def snapshot_schema(df: pd.DataFrame) -> dict[str, str]:
     """Capture the current schema as a dict suitable for drift detection baselines."""
     return {col: str(dtype) for col, dtype in df.dtypes.items()}
-
 
 def save_schema_snapshot(df: pd.DataFrame, path: str) -> None:
     """Save a schema snapshot to a JSON file."""
@@ -394,11 +383,9 @@ def save_schema_snapshot(df: pd.DataFrame, path: str) -> None:
     schema = snapshot_schema(df)
     p.write_text(json.dumps(schema, indent=2), encoding="utf-8")
 
-
 def load_schema_snapshot(path: str) -> dict[str, str]:
     """Load a schema snapshot from a JSON file."""
     return json.loads(Path(path).read_text(encoding="utf-8"))
-
 
 # ---------------------------------------------------------------------------
 # Retention Policy Helpers
@@ -412,7 +399,6 @@ class RetentionReport:
     expired_rows: int
     expired_pct: float
     retention_days: int
-
 
 def apply_retention_policy(
     df: pd.DataFrame,

@@ -106,9 +106,7 @@ class TestDatasetEndpoint:
             mock_cls.return_value = mock_inst
             mock_inst.fetch_dataframe.return_value = pd.DataFrame({"value": [10]})
 
-            response = client.get(
-                "/api/dataset/abc1-2345?max_rows=500&domain=data.example.com"
-            )
+            response = client.get("/api/dataset/abc1-2345?max_rows=500&domain=data.example.com")
             assert response.status_code == 200
             mock_inst.fetch_dataframe.assert_called_once_with(
                 "data.example.com", "abc1-2345", max_rows=500

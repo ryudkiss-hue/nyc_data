@@ -1,0 +1,50 @@
+[
+  {
+    "hotspot_id": "HS_URGENT_001",
+    "hotspot_type": "COMBINED",
+    "density_level": "HIGH",
+    "severity_score": 34.0,
+    "trend": "GROWING",
+    "resource_allocation": "UNDER_RESOURCED",
+    "classification_reasoning": "Type: COMBINED. Density: HIGH (120.0 events/sq km). Trend: GROWING (+0.3% over period). Resource allocation: UNDER_RESOURCED (efficiency: 0.30).",
+    "recommendation": "PRIORITY: This COMBINED hotspot is growing and understaffed. Deploy additional personnel or expand operating hours. Estimated backlog: 200 items. Recommend weekly monitoring until trend stabilizes.",
+    "estimated_backlog_days": 100,
+    "priority_rank": 1,
+    "latitude": 40.7505,
+    "longitude": -73.9972,
+    "event_count": 200,
+    "density_per_sqkm": 120.0
+  },
+  {
+    "hotspot_id": "HS_STABLE_002",
+    "hotspot_type": "VIOLATION",
+    "density_level": "MEDIUM",
+    "severity_score": 17.0,
+    "trend": "STABLE",
+    "resource_allocation": "OPTIMIZED",
+    "classification_reasoning": "Type: VIOLATION. Density: MEDIUM (45.0 events/sq km). Trend: STABLE (+0.0% over period). Resource allocation: OPTIMIZED (efficiency: 0.65).",
+    "recommendation": "This hotspot is at optimal resource allocation. Continue current staffing and response strategy. Schedule monthly review to confirm trend stability.",
+    "estimated_backlog_days": 26,
+    "priority_rank": 2,
+    "latitude": 40.7614,
+    "longitude": -73.9776,
+    "event_count": 80,
+    "density_per_sqkm": 45.0
+  },
+  {
+    "hotspot_id": "HS_DECLINING_003",
+    "hotspot_type": "COMPLAINT",
+    "density_level": "LOW",
+    "severity_score": 5.0,
+    "trend": "SHRINKING",
+    "resource_allocation": "OVER_RESOURCED",
+    "classification_reasoning": "Type: COMPLAINT. Density: LOW (12.0 events/sq km). Trend: SHRINKING (-0.3% over period). Resource allocation: OVER_RESOURCED (efficiency: 0.80).",
+    "recommendation": "This hotspot is stabilizing (LOW density, SHRINKING trend). Current resource level appears sufficient. Recommend reallocation to emerging problem areas.",
+    "estimated_backlog_days": 15,
+    "priority_rank": 3,
+    "latitude": 40.7489,
+    "longitude": -73.968,
+    "event_count": 30,
+    "density_per_sqkm": 12.0
+  }
+]

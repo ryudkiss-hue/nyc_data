@@ -19,7 +19,6 @@ import pytest
 # Helpers to build mock Socrata clients
 # ---------------------------------------------------------------------------
 
-
 def _mock_client(batches: list[list[dict]], row_count: int | None = None) -> MagicMock:
     """Build a mock SocrataClient that streams pre-defined batches.
 
@@ -39,15 +38,12 @@ def _mock_client(batches: list[list[dict]], row_count: int | None = None) -> Mag
     client.config = MagicMock()
     return client
 
-
 def _simple_batch() -> list[dict]:
     return [{"id": "1", "borough": "MN", "description": "crack"}]
-
 
 # ===========================================================================
 # stream_pipeline tests
 # ===========================================================================
-
 
 class TestStreamPipelineDryRun:
     """Tests for the dry-run branch of stream_pipeline."""
@@ -120,7 +116,6 @@ class TestStreamPipelineDryRun:
         client = _mock_client([_simple_batch()])
         stream_pipeline(client, "d.com", "abc", targets={}, dry_run=True, chunk_size=500)
         assert client.config.page_size == 500
-
 
 class TestStreamPipelineLive:
     """Tests for the live (non-dry-run) path of stream_pipeline."""
@@ -214,11 +209,9 @@ class TestStreamPipelineLive:
         stream_pipeline(client, "d.com", "abc", targets=targets, dry_run=False, max_rows=50)
         client.fetch_json.assert_called_once_with("d.com", "abc", max_rows=50)
 
-
 # ===========================================================================
 # sync_dataset tests
 # ===========================================================================
-
 
 class TestSyncDataset:
     """Tests for the sync_dataset function."""

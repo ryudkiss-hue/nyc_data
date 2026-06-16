@@ -19,7 +19,6 @@ from .registry_bridge import from_registry_yaml
 
 _DEFAULT_REGISTRY = "config/datasets.yaml"
 
-
 def _build_parser() -> argparse.ArgumentParser:
     # Shared --registry option, accepted either before or after the subcommand.
     common = argparse.ArgumentParser(add_help=False)
@@ -44,7 +43,6 @@ def _build_parser() -> argparse.ArgumentParser:
     sub.add_parser("score", parents=[common], help="Print a FAIRness score table.")
     return parser
 
-
 def _cmd_emit(args: argparse.Namespace) -> int:
     catalog = from_registry_yaml(args.registry)
     text = catalog.to_json()
@@ -55,7 +53,6 @@ def _cmd_emit(args: argparse.Namespace) -> int:
         print(text)
     return 0
 
-
 def _cmd_dcat(args: argparse.Namespace) -> int:
     catalog = from_registry_yaml(args.registry)
     text = json.dumps(catalog.to_dcat_jsonld(), indent=2)
@@ -65,7 +62,6 @@ def _cmd_dcat(args: argparse.Namespace) -> int:
     else:
         print(text)
     return 0
-
 
 def _cmd_score(args: argparse.Namespace) -> int:
     catalog = from_registry_yaml(args.registry)
@@ -80,15 +76,12 @@ def _cmd_score(args: argparse.Namespace) -> int:
         )
     return 0
 
-
 _DISPATCH = {"emit": _cmd_emit, "dcat": _cmd_dcat, "score": _cmd_score}
-
 
 def main(argv: list[str] | None = None) -> int:
     """Entry point. Returns a process exit code."""
     args = _build_parser().parse_args(argv)
     return _DISPATCH[args.command](args)
-
 
 if __name__ == "__main__":  # pragma: no cover
     sys.exit(main())

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .exporters import MongoExporter, PostgresExporter, XLSXExporter
+from .exporters import DuckDBExporter, MongoExporter, PostgresExporter, XLSXExporter
 
 
 def _sql_type(value: Any) -> str:
@@ -22,7 +22,6 @@ def _sql_type(value: Any) -> str:
     if isinstance(value, float):
         return "DOUBLE PRECISION"
     return "TEXT"
-
 
 def _collect_columns_and_types(rows: list[dict[str, Any]], sample_n: int = 10) -> dict[str, str]:
     cols = {}
@@ -43,7 +42,6 @@ def _collect_columns_and_types(rows: list[dict[str, Any]], sample_n: int = 10) -
             cols[k] = "TEXT"
     return cols
 
-
 def generate_postgres_preview(rows: list[dict[str, Any]], table: str, conflict_col: str | None = None) -> dict:
     cols = _collect_columns_and_types(rows)
     if not cols:
@@ -63,7 +61,6 @@ def generate_postgres_preview(rows: list[dict[str, Any]], table: str, conflict_c
     else:
         insert_sql = f'INSERT INTO "{table}" ({cols_list}) VALUES ({placeholders}) ON CONFLICT ("{conflict_col}") DO NOTHING;'
     return {"create_table": create_sql, "index": index_sql, "insert_example": insert_sql, "sample_row": sample}
-
 
 def run_from_rows(rows: list[dict[str, Any]], targets: dict, dry_run: bool = True) -> dict:
     """Run a pipeline from an in-memory list of rows.
@@ -105,5 +102,22 @@ def run_from_rows(rows: list[dict[str, Any]], targets: dict, dry_run: bool = Tru
         if not dry_run:
             XLSXExporter().write(rows, xl.get("path", "socrata_backup.xlsx"))
             report["targets"]["xlsx"]["written"] = True
+
+    # DuckDB / MotherDuck
+    ddb = targets.get("duckdb")
+    if ddb and ddb.get("enabled"):
+        report["targets"]["duckdb"] = {"count": len(rows)}
+        if not dry_run:
+            with DuckDBExporter(
+                db_path=ddb.get("db_path"),
+                motherduck_token=ddb.get("motherduck_token"),
+                database=ddb.get("database", "main"),
+            ) as ddbe:
+                total = ddb_rows = ddbe.upsert_batches(
+                    [rows],
+                    table=ddb.get("table", "socrata_data"),
+                    conflict_column=ddb.get("conflict_column"),
+                )
+            report["targets"]["duckdb"]["rows_upserted"] = total
 
     return report
