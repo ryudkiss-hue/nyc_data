@@ -1,0 +1,14 @@
+{
+  "description": "NYC DOT SIM Equity Routing Multipliers",
+  "last_updated": "2026-06-16",
+  "methodology": "Based on NYC equity assessment framework; multipliers prioritize historically underserved communities",
+  "borough_multipliers": {
+    "MANHATTAN": 1.0,
+    "BROOKLYN": 2.0,
+    "QUEENS": 1.5,
+    "BRONX": 2.0,
+    "STATEN ISLAND": 1.0
+  },
+  "maximum_multiplier": 2.0,
+  "notes": "Multipliers reflect differential priority weighting in inspection dispatch queues. Higher values indicate greater historical underfunding or infrastructure backlog."
+}

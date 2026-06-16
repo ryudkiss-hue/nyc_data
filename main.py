@@ -10,14 +10,14 @@ from pathlib import Path
 
 def main() -> None:
     root = Path(__file__).resolve().parent
-    app_entry = root / "app" / "main.py"
+    app_entry = root / "app" / "app.py"
     if not app_entry.exists():
         print(f"Streamlit app not found: {app_entry}")
-        print("Run from repo root: streamlit run app/main.py")
+        print("Run from repo root: streamlit run app/app.py")
         raise SystemExit(1)
 
-    print("Starting Mission Control (Streamlit)…")
-    print("  streamlit run app/main.py")
+    print("Starting NYC DOT SIM Toolkit (Streamlit)…")
+    print("  streamlit run app/app.py")
 
     env = {**os.environ}
     src = str(root / "src")

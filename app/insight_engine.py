@@ -58,10 +58,18 @@ class StaticInsightEngine:
             stats['skew'] = numeric_df[col].skew()
             stats['kurtosis'] = numeric_df[col].kurtosis()
 
-            # Item 30: NUTS Convergence Diagnostics (Simulated from MCMC trace analysis)
-            # In a real system, these would be passed from the Bayesian sampler
-            stats['r_hat'] = 1.01 + (np.random.rand() * 0.04) # Typical good convergence
-            stats['ess'] = np.random.randint(400, 2500)
+            # Item 30: NUTS Convergence Diagnostics (from Bayesian inference results)
+            # These are populated from arviz trace analysis when inference is run;
+            # if not available, diagnostic section will be omitted from insights.
+            if data_bundle and "trace" in data_bundle:
+                try:
+                    import arviz as az
+                    trace = data_bundle["trace"]
+                    idata = az.from_pymc3(trace) if hasattr(trace, "posterior") else trace
+                    stats['r_hat'] = float(az.rhat(idata).to_array().max())
+                    stats['ess'] = int(az.ess(idata).to_array().min())
+                except Exception:
+                    pass
 
         # Mapping Logic
         raw_text = ""
