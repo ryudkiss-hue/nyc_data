@@ -8,8 +8,10 @@ Includes optional advanced metrics from scipy/statsmodels:
 - Autocorrelation significance (Ljung-Box test)
 - Robust regression (Huber M-estimator)
 """
+
 from __future__ import annotations
 
+import functools
 import logging
 import time
 from dataclasses import dataclass
@@ -18,9 +20,22 @@ from typing import Optional
 import duckdb
 import numpy as np
 
+
+def _expose_func(fn):
+    """Wrap a method so that wrapper.func points back to the original for introspection."""
+
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        return fn(*args, **kwargs)
+
+    wrapper.func = fn
+    return wrapper
+
+
 # Optional dependencies for advanced metrics
 try:
     from scipy import stats
+
     HAS_SCIPY = True
 except ImportError:
     HAS_SCIPY = False
@@ -34,6 +49,7 @@ try:
     HAS_STATSMODELS = True
 except ImportError:
     HAS_STATSMODELS = False
+
 
 # Time series imports (lazy load to handle missing statsmodels)
 def _load_timeseries_modules():
@@ -50,6 +66,7 @@ def _load_timeseries_modules():
         return StationarityTester, ARIMAForecaster, ModelSelection, VARAnalyzer, GrangerCausalityTester
     except ImportError:
         return None, None, None, None, None
+
 
 logger = logging.getLogger(__name__)
 
@@ -163,10 +180,11 @@ ORDER BY borough, kpi_name;
 @dataclass
 class KPIStatisticsResult:
     """Result of KPI statistics computation."""
+
     rows_computed: int
     computation_duration_seconds: float
     status: str
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 @dataclass
@@ -185,7 +203,7 @@ class AdvancedMetricsResult:
     outlier_sensitivity: float | None = None
     computation_duration_seconds: float = 0.0
     status: str = "PENDING"
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 class AdvancedMetricsComputer:
@@ -323,11 +341,11 @@ class AdvancedMetricsComputer:
 
             result = {}
             if adf:
-                result['adf_p_value'] = float(adf.p_value)
-                result['adf_is_stationary'] = bool(adf.is_stationary)
+                result["adf_p_value"] = float(adf.p_value)
+                result["adf_is_stationary"] = bool(adf.is_stationary)
             if kpss:
-                result['kpss_p_value'] = float(kpss.p_value)
-                result['kpss_is_stationary'] = bool(kpss.is_stationary)
+                result["kpss_p_value"] = float(kpss.p_value)
+                result["kpss_is_stationary"] = bool(kpss.is_stationary)
             return result
         except Exception as e:
             logger.warning(f"Stationarity test failed: {str(e)}")
@@ -347,14 +365,18 @@ class AdvancedMetricsComputer:
             forecaster = ARIMAForecaster(order=best_order)
             fit_result = forecaster.fit(kpi_values)
 
-            if fit_result.status == 'SUCCESS':
+            if fit_result.status == "SUCCESS":
                 forecast = forecaster.forecast(steps=10)
                 return {
-                    'arima_order': str(best_order),
-                    'arima_aic': float(fit_result.aic) if fit_result.aic else None,
-                    'forecast_value': float(forecast.mean[-1]) if forecast.mean else None,
-                    'forecast_ci_lower': float(forecast.ci_lower[-1]) if forecast.ci_lower else None,
-                    'forecast_ci_upper': float(forecast.ci_upper[-1]) if forecast.ci_upper else None,
+                    "arima_order": str(best_order),
+                    "arima_aic": float(fit_result.aic) if fit_result.aic else None,
+                    "forecast_value": float(forecast.mean[-1]) if forecast.mean else None,
+                    "forecast_ci_lower": float(forecast.ci_lower[-1])
+                    if forecast.ci_lower
+                    else None,
+                    "forecast_ci_upper": float(forecast.ci_upper[-1])
+                    if forecast.ci_upper
+                    else None,
                 }
         except Exception as e:
             logger.warning(f"ARIMA forecast failed: {str(e)}")
@@ -371,10 +393,10 @@ class AdvancedMetricsComputer:
             analyzer = VARAnalyzer()
             fit_result = analyzer.fit(kpi_data_dict)
 
-            if fit_result.get('status') == 'SUCCESS':
+            if fit_result.get("status") == "SUCCESS":
                 return {
-                    'var_lag_order': fit_result.get('lag_order'),
-                    'var_aic': fit_result.get('aic'),
+                    "var_lag_order": fit_result.get("lag_order"),
+                    "var_aic": fit_result.get("aic"),
                 }
         except Exception as e:
             logger.warning(f"VAR analysis failed: {str(e)}")
@@ -384,7 +406,7 @@ class AdvancedMetricsComputer:
 class KPIStatisticsEngine:
     """Computes 60+ statistical metrics for 18 KPIs across 5 boroughs."""
 
-    def __init__(self, motherduck_token: Optional[str] = None):
+    def __init__(self, motherduck_token: str | None = None):
         """Initialize engine with optional MotherDuck connection."""
         self.motherduck_token = motherduck_token
         self.conn = None
@@ -397,6 +419,7 @@ class KPIStatisticsEngine:
             self.conn = duckdb.connect(":memory:")
         logger.info("Connected to DuckDB/MotherDuck")
 
+    @_expose_func
     def compute_all_metrics(self, max_retries: int = 3) -> KPIStatisticsResult:
         """Compute all 60+ metrics and populate analytics layer with retry logic."""
         if self.conn is None:
@@ -408,7 +431,9 @@ class KPIStatisticsEngine:
         # Retry logic for transient failures
         for attempt in range(max_retries):
             try:
-                logger.info(f"Computing 60+ metrics for 18 KPIs × 5 boroughs (attempt {attempt + 1}/{max_retries})...")
+                logger.info(
+                    f"Computing 60+ metrics for 18 KPIs × 5 boroughs (attempt {attempt + 1}/{max_retries})..."
+                )
 
                 # Pre-check: Verify staging table exists and has data
                 staging_count = self.conn.execute(
@@ -458,7 +483,7 @@ class KPIStatisticsEngine:
                 last_error = str(e)
                 logger.warning(f"Attempt {attempt + 1} failed: {last_error}")
                 if attempt < max_retries - 1:
-                    wait_time = 2 ** attempt  # Exponential backoff
+                    wait_time = 2**attempt  # Exponential backoff
                     logger.info(f"Retrying in {wait_time}s...")
                     time.sleep(wait_time)
                 continue
@@ -742,7 +767,9 @@ class KPIStatisticsEngine:
                         results["arima"] += 1
 
                 except Exception as e:
-                    logger.warning(f"Time series computation failed for {kpi_name}/{borough}: {str(e)}")
+                    logger.warning(
+                        f"Time series computation failed for {kpi_name}/{borough}: {str(e)}"
+                    )
                     results["failed"] += 1
 
             # VAR analysis (multivariate, optional)
