@@ -1,10 +1,9 @@
 from __future__ import annotations
 
+import inspect
 import logging
 from dataclasses import dataclass
 from typing import Any
-
-import inspect
 
 import arviz as az
 import numpy as np
