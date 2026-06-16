@@ -1,6 +1,8 @@
 """Comprehensive tests for analyst.budget module."""
 
 from __future__ import annotations
+import pytest
+
 
 import tempfile
 from pathlib import Path

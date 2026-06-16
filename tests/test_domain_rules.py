@@ -8,6 +8,8 @@ Standards: pytest, comprehensive coverage, edge case handling
 """
 
 from __future__ import annotations
+import pytest
+
 
 import pandas as pd
 import pytest

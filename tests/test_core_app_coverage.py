@@ -1,6 +1,8 @@
 """Tests for core.app module - Database and environment helpers."""
 
 from __future__ import annotations
+import pytest
+
 
 import os
 from unittest.mock import MagicMock, patch

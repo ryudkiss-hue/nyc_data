@@ -1,6 +1,8 @@
 """Coverage tests for core.cli conflict, llm-augment, and export-geojson commands."""
 
 from __future__ import annotations
+import pytest
+
 
 import json
 from types import SimpleNamespace

@@ -1,3 +1,5 @@
+import pytest
+
 """Tests for QA checklist, reproducibility keys, and forecast validation."""
 
 from datetime import datetime, timezone

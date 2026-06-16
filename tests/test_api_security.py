@@ -170,7 +170,7 @@ class TestAPIKeyAuthentication:
 
     def test_api_key_provider_missing_key(self):
         """Test API key provider with missing credentials."""
-        provider = APIKeyAuthProvider(db_connection=None)
+        provider = APIKeyAuthProvider()
 
         with pytest.raises(AuthenticationError):
             provider.authenticate({})

@@ -1,6 +1,8 @@
 """Tests for core.db_helpers module - Database helper utilities."""
 
 from __future__ import annotations
+import pytest
+
 
 from unittest.mock import MagicMock, patch
 

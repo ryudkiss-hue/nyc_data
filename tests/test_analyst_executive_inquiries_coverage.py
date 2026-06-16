@@ -1,6 +1,8 @@
 """Coverage tests for analyst.executive and analyst.inquiries."""
 
 from __future__ import annotations
+import pytest
+
 
 from types import SimpleNamespace
 

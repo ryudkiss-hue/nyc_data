@@ -27,7 +27,9 @@ from typing import Any
 
 import pandas as pd
 
-from socrata_toolkit.viz.units import get_unit_label
+from .accessibility import apply_wcag_palette
+from .branding import BOROUGH_COLORS, DOT_BLUE, STATUS_COLORS
+from .units import get_unit_label
 
 
 def _get_plotly():

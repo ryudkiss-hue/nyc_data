@@ -1,5 +1,7 @@
 """Tests for governance.audit module - AuditTrail, AuditEvent, _InProcessTrail."""
 from __future__ import annotations
+import pytest
+
 
 import io
 import json

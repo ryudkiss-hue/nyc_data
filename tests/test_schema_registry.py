@@ -1,3 +1,5 @@
+import pytest
+
 """
 Tests for Schema Registry module (socrata_toolkit.core)
 

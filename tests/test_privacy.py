@@ -1,6 +1,8 @@
 """Tests for socrata_toolkit.privacy (PII scanner, masking, DMBOK scoring)."""
 
 from __future__ import annotations
+import pytest
+
 
 import pandas as pd
 import pytest

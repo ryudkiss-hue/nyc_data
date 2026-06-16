@@ -1,3 +1,5 @@
+import pytest
+
 """Comprehensive test suite for CDC and SCD Type 2 implementation.
 
 Tests cover:

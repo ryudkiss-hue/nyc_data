@@ -1,3 +1,5 @@
+import pytest
+
 """
 Tests for Material-Aware KPI Computation (socrata_toolkit.engineering)
 

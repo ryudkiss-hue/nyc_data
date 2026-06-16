@@ -1,3 +1,5 @@
+import pytest
+
 """Unit tests for query result caching (Task 1: Query Result Caching).
 
 Tests cover:

@@ -1,3 +1,5 @@
+import pytest
+
 """
 Comprehensive Test Suite for PostGIS and Spatial Analytics.
 

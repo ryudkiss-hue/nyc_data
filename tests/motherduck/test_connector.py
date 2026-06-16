@@ -1,3 +1,5 @@
+import pytest
+
 """Tests for MotherDuck connection layer (motherduck-connect).
 
 TDD approach: tests first, implementation follows.

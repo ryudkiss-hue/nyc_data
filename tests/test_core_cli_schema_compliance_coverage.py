@@ -7,6 +7,8 @@ the real bundled ADA rule set.
 """
 
 from __future__ import annotations
+import pytest
+
 
 import json
 from datetime import datetime

@@ -1,6 +1,8 @@
 """Focused tests for core.cli module - key commands only."""
 
 from __future__ import annotations
+import pytest
+
 
 import tempfile
 from pathlib import Path

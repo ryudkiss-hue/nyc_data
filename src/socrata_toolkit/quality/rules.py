@@ -461,11 +461,11 @@ def quality_scorecard(df: pd.DataFrame) -> dict:
 
     if df.empty:
         return {
-            "total": 0.0,
-            "completeness": 0.0,
-            "uniqueness": 0.0,
-            "validity": 0.0,
-            "timeliness": 0.0,
+            "total": "N/A",
+            "completeness": "N/A",
+            "uniqueness": "N/A",
+            "validity": "N/A",
+            "timeliness": "N/A",
             "issues": ["DataFrame is empty"],
         }
 
@@ -505,7 +505,7 @@ def quality_scorecard(df: pd.DataFrame) -> dict:
         for c in df.columns
         if "date" in c.lower() or "time" in c.lower() or "created" in c.lower()
     ]
-    timeliness = 100.0
+    timeliness = "N/A"
     if date_cols:
         max_dates: list[pd.Timestamp] = []
         for col in date_cols:
@@ -531,12 +531,19 @@ def quality_scorecard(df: pd.DataFrame) -> dict:
             else:
                 timeliness = 20.0
                 issues.append(f"Data is stale (latest date is {days_old} days old)")
+        else:
+            issues.append("Date columns present but no parseable dates found.")
+    else:
+        issues.append("No date columns found for timeliness assessment.")
 
+    # Calculate total score - treat N/A as 0 for numeric calculation or handle missingness
+    t_score = timeliness if isinstance(timeliness, (int, float)) else 0.0
+    
     total = round(
         completeness * 0.30
         + uniqueness * 0.20
         + validity * 0.30
-        + timeliness * 0.20,
+        + t_score * 0.20,
         1,
     )
 
@@ -649,15 +656,19 @@ def create_sidewalk_rules() -> BusinessRulesEngine:
         if "defect_count" not in df.columns or "defects" not in df.columns:
             return []
 
-        # Simple check: if defects are listed, count should be > 0
-        invalid_rows = []
-        for idx, row in df.iterrows():
-            defects = row.get("defects", [])
-            defect_count = row.get("defect_count", 0)
-            if isinstance(defects, (list, str)) and len(str(defects)) > 0 and defect_count == 0:
-                invalid_rows.append(row.get("inspection_id", idx))
+        # Vectorized check: if defects are listed, count should be > 0
+        def get_len(x):
+            if isinstance(x, list):
+                return len(x)
+            if isinstance(x, str):
+                return len(x) if x else 0
+            return 0
 
-        return [str(r) for r in invalid_rows]
+        defects_populated = df["defects"].apply(get_len) > 0
+        invalid_mask = defects_populated & (df["defect_count"] == 0)
+        
+        invalid = df[invalid_mask]
+        return invalid.get("inspection_id", invalid.index).astype(str).tolist()
 
     engine.register_rule(QualityRule(
         rule_id="defect_count_consistent",

@@ -1,3 +1,5 @@
+import pytest
+
 from unittest.mock import patch
 
 from socrata_toolkit.core import SocrataClient, SocrataConfig

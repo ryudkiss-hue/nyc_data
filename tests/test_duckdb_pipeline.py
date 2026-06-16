@@ -1,3 +1,5 @@
+import pytest
+
 """Tests for socrata_toolkit.core.duckdb_pipeline (Phase 2A Tasks 1-2).
 
 No live Socrata API calls — SocrataClient.fetch_dataframe is mocked.
