@@ -32,20 +32,21 @@ Or: open the dashboard (step 3) and click **Run Analyst Pack** on Home.
 
 Outputs land in `outputs/analyst_pack/YYYY-MM-DD/` (Excel, Markdown, HTML, JSON).
 
-## 3. Open the dashboard
+## 3. Open Mission Control Dashboard
 
 ```bash
 pip install -e ".[mission,postgres,xlsx]"
-python main.py
+python app/dash_app.py     # PRIMARY: Dash Mission Control
+# or: python main.py       # Launcher shim (auto-selects primary)
 ```
 
 No Socrata token? Demo mode loads automatically (or set `MISSION_DEMO=1`).
 
-Browser: **http://localhost:8501** (Streamlit Mission Control — `app/mission_control.py`)
+Browser: **http://localhost:8011** (Dash Mission Control — PRIMARY)
+
+**Secondary option (Streamlit):** `streamlit run app/app.py` → http://localhost:8501
 
 **Alternative — Render one-click deploy:** push the repo to GitHub and connect it at [render.com](https://render.com) → New Blueprint. No local setup required; `render.yaml` handles everything. Set `SOCRATA_APP_TOKEN` in the Render dashboard for live data.
-
-Legacy Analyst Pack UI (archived Dash): `python legacy_archive/dash_app/app.py` → http://127.0.0.1:8050
 
 | Tab | What to do |
 |-----|------------|

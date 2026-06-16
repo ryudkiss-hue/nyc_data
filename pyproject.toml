@@ -71,17 +71,27 @@ dash-iconify = {version = ">=0.1.2", optional = true}
 diskcache = {version = ">=5.6", optional = true}
 
 [tool.poetry.extras]
-# Default install: pip install -e .  (core analyst + Dash workflow)
+# Install groups by use case:
+# Base: pip install -e .                  (core analyst toolkit only)
+# Mission: pip install -e ".[mission]"    (DASH PRIMARY + Streamlit secondary + full viz/reporting)
+# UI: pip install -e ".[ui]"              (Streamlit only)
+# Dev: pip install -r requirements-dev.txt (testing + linting)
+
+# Format & data
 xlsx = ["openpyxl"]
 postgres = ["psycopg"]
-# Optional — install only when needed
+pptx = ["python-pptx"]
+
+# Analytics & visualization
 nlp = ["spacy"]
 llm = ["langchain", "langchain-community", "langchain-openai", "ollama", "openai", "huggingface-hub"]
 viz = ["matplotlib", "plotly"]
 geo = ["shapely", "geopandas"]
 reports = ["plotly", "weasyprint"]
-ui = ["streamlit"]
-mission = ["streamlit", "sodapy", "geopandas", "shapely", "plotly", "pyarrow", "folium", "pydeck", "prophet", "beautifulsoup4", "river", "mapie", "dowhy", "sentence-transformers", "numba", "opendp", "agentql", "playwright", "openpyxl", "python-pptx", "networkx", "fastapi", "uvicorn", "dash", "dash-mantine-components", "dash-iconify", "diskcache"]
+
+# UI frameworks (pick one or both)
+ui = ["streamlit"]  # Streamlit UI (secondary fallback)
+mission = ["streamlit", "sodapy", "geopandas", "shapely", "plotly", "pyarrow", "folium", "pydeck", "prophet", "beautifulsoup4", "river", "mapie", "dowhy", "sentence-transformers", "numba", "opendp", "agentql", "playwright", "openpyxl", "python-pptx", "networkx", "fastapi", "uvicorn", "dash", "dash-mantine-components", "dash-iconify", "diskcache"]  # DASH PRIMARY (FastAPI backend, Plotly, Mantine) + all analytics/viz deps
 pptx = ["python-pptx"]
 exe = ["pyinstaller"]
 desktop = ["pywebview"]

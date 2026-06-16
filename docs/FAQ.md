@@ -217,22 +217,33 @@ Or sync from `.env.socrata` per [QUICKSTART.md](../QUICKSTART.md).
 
 ### Q35. Which web UI should analysts use daily?
 
-**Mission Control** (`python main.py`) is the primary 8-tab Streamlit app for all agency analytics, data quality, spatial analysis, governance, and AI Copilot workflows. The legacy Dash app is archived at `legacy_archive/dash_app/app.py`.
+**Dash Mission Control** (`python app/dash_app.py`) is the primary FastAPI/Plotly dashboard for all agency analytics, data quality, spatial analysis, governance, and AI Copilot workflows. It features real-time callbacks, interactive Plotly charts, responsive Mantine UI, and production-grade infrastructure.
+
+**Streamlit** (`streamlit run app/app.py`) is available as a secondary option for simplified data exploration.
 
 ### Q36. How do I open Mission Control?
 
+**Primary (Dash — Recommended):**
 ```bash
-python main.py
-# or: PYTHONPATH=src:. python -m streamlit run app/mission_control.py
+python app/dash_app.py     # Direct launch → http://localhost:8011
+# or via launcher shim:
+python main.py             # Auto-selects primary UI
 ```
 
-Then open http://localhost:8501. For demo mode (no Socrata token needed): `MISSION_DEMO=1 python main.py`.
+**Secondary (Streamlit — Alternative):**
+```bash
+streamlit run app/app.py   # → http://localhost:8501
+```
 
-Legacy Dash (archived): `python legacy_archive/dash_app/app.py` → http://127.0.0.1:8050
+For demo mode (no Socrata token needed): `MISSION_DEMO=1 python app/dash_app.py`.
 
 ### Q37. What port does Mission Control use?
 
-**8501** (Streamlit default). Check the terminal output when the server starts. To use a different port: `python main.py --server.port 8502`.
+**Primary (Dash):** **8011** (FastAPI default)
+
+**Secondary (Streamlit):** **8501** (Streamlit default)
+
+Check terminal output when the server starts. To use a different port for Dash: modify `HOST` / `PORT` in app/dash_app.py or set `DASH_PORT=8012 python app/dash_app.py`.
 
 ---
 

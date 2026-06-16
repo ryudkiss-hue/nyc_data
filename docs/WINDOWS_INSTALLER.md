@@ -127,7 +127,12 @@ nyc-dot-toolkit.exe dash
 nyc-dot-toolkit.exe doctor
 ```
 
-The Streamlit Mission Control UI is not fully embedded in the PyInstaller binary; `dash` tries `streamlit run app/app.py`, then legacy `legacy_archive/dash_app/app.py`, otherwise opens Getting Started. For full GUI, use a dev install or Docker (see [GETTING_STARTED.md](GETTING_STARTED.md)).
+The Mission Control UI within the PyInstaller binary is limited; the `dash` command attempts to launch:
+1. **Primary:** `python app/dash_app.py` (Dash/FastAPI at http://localhost:8011)
+2. **Fallback:** `streamlit run app/app.py` (Streamlit at http://localhost:8501)
+3. **Otherwise:** Opens Getting Started guide
+
+For full UI with all features, use a dev install (`pip install -e ".[mission]"`) or Docker (see [GETTING_STARTED.md](GETTING_STARTED.md)).
 
 ## CI / tests
 

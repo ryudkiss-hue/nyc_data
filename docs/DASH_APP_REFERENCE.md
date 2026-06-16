@@ -1,242 +1,239 @@
-# ⚠️ ARCHIVED: Dash Application Reference
+# Dash Application Reference — Mission Control (PRIMARY)
 
-This document describes the legacy Dash-based application, which has been superseded by the Streamlit Mission Control dashboard.
+This document describes the **current primary Dash/FastAPI/Mantine UI application** — the production-grade Mission Control dashboard for NYC DOT analysts.
 
-## Current Application
+## Current Application (PRIMARY)
+
+**App entry point:** `app/dash_app.py` (Dash/FastAPI + Plotly)  
+**Run command:** `python app/dash_app.py` → `http://localhost:8011`  
+**Backend:** FastAPI (async, production-grade)  
+**UI Framework:** Dash 4.2 with Mantine components  
+**Charts:** Plotly interactive visualizations  
+**State Management:** dcc.Store for reactive updates  
+**Deployment:** See `docs/MISSION_CONTROL.md` for local, Docker, and cloud deployment  
+**Configuration:** See `QUICKSTART.md` for setup and environment variables  
+
+## Alternative Application (SECONDARY)
 
 **App entry point:** `app/app.py` (Streamlit)  
 **Run command:** `streamlit run app/app.py` → `http://localhost:8501`  
-**Deployment:** See `docs/DEPLOYMENT.md` for local, Docker, and cloud deployment  
-**Configuration:** See `QUICKSTART.md` for setup and environment variables  
+**Use case:** Simplified data exploration (non-primary, alternative option)
 
 ---
 
-## Legacy Dash Architecture (Archived)
-
-This section documents the previous Dash-based application for historical reference.
-
-**Previous entry point:** `dash_app/app.py`  
-**Previous data layer:** `dash_app/data/db.py`  
-**Previous theme:** `dash_app/assets/theme.css` (dark / light / sepia)  
-**Previous run:** `python dash_app/app.py` → `http://localhost:8050`
-
----
-
-## Architecture
+## Current Architecture (Dash/FastAPI)
 
 ```
-dash_app/
-├── app.py              ← Dash server, sidebar layout, theme callback, router
-├── data/
-│   └── db.py           ← Thread-safe DuckDB singleton (threading.local)
-├── pages/              ← Auto-discovered by Dash multi-page
-│   ├── home.py         /
-│   ├── analytics.py    /analytics
-│   ├── geospatial.py   /geospatial
-│   ├── governance.py   /governance
-│   ├── soql.py         /soql
-│   ├── pipeline.py     /pipeline
-│   ├── ai.py           /ai
-│   ├── tasks.py        /tasks
-│   ├── quantum.py      /quantum
-│   ├── engineering.py  /engineering
-│   ├── export.py       /export
-│   ├── reports.py      /reports
-│   ├── settings.py     /settings
-│   └── devtools.py     /devtools
-└── assets/
-    └── theme.css       ← CSS custom properties for all 3 themes
+app/
+├── dash_app.py                ← Main Dash app with FastAPI backend
+├── dash_layouts.py            ← Page layouts and component definitions
+├── dash_layouts_analytics_integration.py  ← Advanced analytics layouts
+├── dash_layouts_gis.py        ← Geospatial dashboard layouts
+├── callbacks/                 ← Real-time callback handlers (reactive updates)
+│   ├── analytics.py           ← KPI and metric analytics callbacks
+│   ├── analytics_integration.py← Advanced analytics integrations
+│   ├── gis.py                 ← Spatial analysis callbacks
+│   ├── export_callbacks.py    ← PDF/Excel/PPTX export pipelines
+│   ├── visualization_callbacks.py ← Chart generation callbacks
+│   ├── navigation.py          ← Page routing callbacks
+│   └── ...
+├── components/                ← Custom Dash component definitions
+│   ├── filter_system.py       ← Interactive filter UI components
+│   ├── kpi_cards.py           ← KPI metric card components
+│   ├── spatial_map.py         ← Map visualization components
+│   └── ...
+├── assets/                    ← Static assets
+│   ├── custom.css             ← Mantine theming and custom styles
+│   ├── favicon.ico            ← Browser tab icon
+│   └── ...
+├── main.py                    ← Launcher shim (auto-selects primary Dash)
+└── app.py                     ← SECONDARY: Streamlit alternative
 ```
 
----
+### Data Flow
 
-## Pages
-
-### 🏠 Dashboard (`/`)
-**File:** `pages/home.py`  
-**Toolkit:** `pipeline.ingest_311_complaints`, `core.DuckDBManager`
-
-- CSV / ZIP upload → auto-load to DuckDB
-- Quick Start cards: NYC 311, Sidewalk Violations, Construction, DOT Permits
-- DuckDB table browser with row counts
-- Dataset preview (AG Grid)
-
-### 📊 Analytics (`/analytics`)
-**File:** `pages/analytics.py`  
-**Toolkit:** `analysis.*`, `governance.compute_quality_score`
-
-6-tab layout:
-
-| Tab | Content |
-|-----|---------|
-| KPI Dashboard | `MetricsTracker` cards with trend indicators |
-| Time Series | Plotly line chart by date column |
-| Distribution | Histogram + box plot marginal |
-| Correlation | Interactive heatmap |
-| Text Analysis | Term frequency bar chart, regex hit counters |
-| Anomaly Detection | Z-score flagged rows in AG Grid |
-
-### 🗺️ Geospatial (`/geospatial`)
-**File:** `pages/geospatial.py`  
-**Toolkit:** `spatial.cluster_locations`, `spatial.detect_construction_conflicts`
-
-3-tab layout:
-
-| Tab | Content |
-|-----|---------|
-| Point Map | Mapbox scatter plot with borough color coding |
-| Cluster Analysis | KMeans cluster map (k=5 default) |
-| Density Heatmap | Plotly density_mapbox |
-
-### ✅ Task Board (`/tasks`)
-**File:** `pages/tasks.py`  
-**Toolkit:** `engineering.Task`, `engineering.TaskBoard` (persisted in DuckDB)
-
-- Kanban board: **Backlog → In Progress → Review → Done**
-- Add task form (title, assignee, priority, category, borough, due date)
-- Move task buttons (← →)
-- DuckDB-backed persistence via `_task_board` table
-
-### 🔄 Data Pipeline (`/pipeline`)
-**File:** `pages/pipeline.py`  
-**Toolkit:** `pipeline.*`, `cleaning.*`
-
-4-tab layout:
-
-| Tab | Content |
-|-----|---------|
-| Ingest | Socrata fetch with Dask parallel execution |
-| CDC | Change detection between old/new DataFrame snapshots |
-| Clean | Borough standardization, null removal, deduplication |
-| Deduplicate | Key-column based dedupe |
-
-### 🤖 AI Assistant (`/ai`)
-**File:** `pages/ai.py`  
-**Toolkit:** `ai.SocrataLLMChatbot`, `ai.SQLQueryEngine`
-
-- Chat interface with conversation history
-- NL→SQL translation with DuckDB execution
-- Quick prompt dropdown
-- Auto-detects LangChain availability
-
-### ⚡ Quantum (`/quantum`)
-**File:** `pages/quantum.py`  
-**Toolkit:** `ai.quantum_search`, `ai.optimize_repair_route`, `ai.optimize_crew_assignment`
-
-3-tab layout:
-
-| Tab | Content |
-|-----|---------|
-| Grover Search | Dataset column search with circuit metrics |
-| Route Optimizer | TSP route result + map |
-| Crew Assignment | Round-robin crew assignment table |
-
-### 🔬 Governance (`/governance`)
-**File:** `pages/governance.py`  
-**Toolkit:** `governance.*`, `analysis.compute_freshness_score`
-
-- Quality scorecard (completeness, consistency, validity, freshness)
-- Schema drift detection
-- AG Grid table with sortable quality dimensions
-
-### 🛠️ Engineering (`/engineering`)
-**File:** `pages/engineering.py`  
-**Toolkit:** `engineering.*`
-
-4-tab layout:
-
-| Tab | Content |
-|-----|---------|
-| Schema Registry | Dataset schema versioning viewer |
-| Cost Estimator | Per-row cost estimation with borough multipliers |
-| Contractor Scorecards | Contractor performance ranking |
-| Data Profile | DuckDB `SUMMARIZE` output |
-
-### ✨ SoQL Maestro (`/soql`)
-**File:** `pages/soql.py`  
-**Toolkit:** `core.SoQLBuilder`, `core.SocrataClient`
-
-- SQL editor (CodeMirror-style textarea)
-- Execute against DuckDB or Socrata directly
-- Template library (GROUP BY, WHERE, aggregations)
-- AG Grid results + auto-chart
-
-### 📋 Reports (`/reports`)
-**File:** `pages/reports.py`  
-**Toolkit:** `analysis.generate_program_report`, `analysis.generate_contract_report`
-
-- 5 report templates (Program KPI, Contract Status, Inquiry Response, Compliance, Data Profile)
-- Markdown preview
-- Download button
-
-### 📤 Export (`/export`)
-**File:** `pages/export.py`  
-**Toolkit:** `pipeline.ExcelWorkbookBuilder`, `pipeline.export_for_tableau`
-
-- Format selection: CSV, Parquet, JSON, Excel, SQL DDL, Markdown
-- Table selector
-- Download via `dcc.Download`
-
-### 🔗 Dev Tools (`/devtools`)
-**File:** `pages/devtools.py`  
-**Toolkit:** `core.DuckDBManager` (direct)
-
-- SQL REPL (multi-line textarea + Execute button)
-- Schema browser accordion (all DuckDB tables → column names/types)
-- DB Stats panel (table sizes, total rows)
-- Dask cluster info
-
-### ⚙️ Settings (`/settings`)
-**File:** `pages/settings.py`  
-**Toolkit:** All modules (health check)
-
-- Dependency health check (DuckDB, Dask, LangChain, Shapely, etc.)
-- Environment variable status (token presence)
-- DB path and table count display
+1. **Frontend (dcc.Graph, dcc.Store)** — User interacts with Plotly chart or filter
+2. **Callback Handler (app/callbacks/*.py)** — Receives Input, processes data via `socrata_toolkit` library
+3. **Data Layer (src/socrata_toolkit/)** — Fetches from DuckDB L2 cache or live Socrata API
+4. **Response (Output)** — Returns updated Plotly figure or dcc.Store JSON
+5. **Reactive Update** — Dash auto-updates dependent components in real-time
 
 ---
 
-## `dash_app/data/db.py` — DuckDB Connection Layer
+## Layouts & Pages
 
-Thread-safe DuckDB singleton using `threading.local()`.
+### Dashboard (Home)
+**File:** `dash_layouts.py` — home page  
+**Callbacks:** `callbacks/analytics.py`, `callbacks/visualization_callbacks.py`
+
+- KPI cards with real-time metric updates
+- Dataset health status summary
+- Audit trail of recent ingests and updates
+- Quick-action buttons
+
+### Construction Lists
+**File:** `dash_layouts.py` — construction view  
+**Callbacks:** `callbacks/analytics.py`
+
+- Borough-filtered interactive table
+- Construction project details (cost, timeline, status)
+- Drill-down drill-down capability
+
+### GIS & Spatial Analysis
+**File:** `dash_layouts_gis.py`  
+**Callbacks:** `callbacks/gis.py`
+
+- Interactive Plotly Scattermapbox (permit/inspection density)
+- DBSCAN spatial clustering overlay
+- Conflict buffer zones (permits vs. inspections)
+- TSP route optimization visualization
+- Animated borough bar charts
+
+### Advanced Analytics
+**File:** `dash_layouts_analytics_integration.py`  
+**Callbacks:** `callbacks/analytics_integration.py`
+
+- Bayesian SLA forecasting with credible intervals
+- CUSUM control charts for process monitoring
+- KMeans clustering visualizations
+- Survival curves and time-to-event analysis
+- Moran's I spatial autocorrelation tests
+- Heatmaps and correlation matrices
+
+### Contract Analytics
+**File:** `dash_layouts.py` — contracts view  
+**Callbacks:** `callbacks/analytics.py`
+
+- Contractor performance metrics (productivity, cost/unit, timeliness)
+- Spending patterns and budget tracking
+- Gantt charts for timeline visualization
+- Completion rates by borough
+
+### Reports & Export
+**File:** `dash_layouts.py` — reports view  
+**Callbacks:** `callbacks/export_callbacks.py`
+
+- PDF report generation (WeasyPrint)
+- Excel export with Mantine-styled tables (openpyxl)
+- PPTX slide deck generation (python-pptx)
+- Filtered exports by borough/date range/status
+
+---
+
+## Callback System
+
+Callbacks connect UI inputs to data processing and output generation.
 
 ```python
-from dash_app.data.db import get_conn, query_df, execute
+# Example: analytics.py — KPI update on borough filter change
+from dash import callback, Input, Output
+import plotly.graph_objects as go
 
-conn = get_conn()                          # Per-thread connection
-df = query_df("SELECT * FROM sidewalks LIMIT 100")
-execute("INSERT INTO _task_board VALUES (?)", [task_dict])
-```
-
-**Fallback behavior:** If `nyc_dash.db` is locked by another process (common on Windows), automatically falls back to `:memory:` mode. Prevents crashes during development restarts.
-
-### Key Functions
-
-| Function | Description |
-|----------|-------------|
-| `get_conn()` | Get or create thread-local DuckDB connection |
-| `query_df(sql, params)` | Execute SELECT → `pd.DataFrame` |
-| `execute(sql, params)` | Execute INSERT/UPDATE/CREATE |
-| `list_tables()` | List all DuckDB tables |
-
----
-
-## Theme System
-
-Themes are implemented as CSS custom properties in `dash_app/assets/theme.css`.
-
-```python
-# Switch theme via callback (in app.py)
 @callback(
-    Output("app-theme", "data-bs-theme"),
-    Input("theme-radio", "value")
+    Output("kpi-metrics", "children"),
+    Input("borough-filter", "value")
 )
-def switch_theme(theme):
-    return theme  # "dark" | "light" | "sepia"
+def update_kpis(selected_borough):
+    # Fetch metrics from socrata_toolkit
+    data = fetch_metrics(borough=selected_borough)
+    # Return Mantine KPI card components
+    return render_kpi_cards(data)
 ```
 
-| Theme | Background | Text | Accent |
-|-------|-----------|------|--------|
-| `dark` | `#0f1117` | `#e8eaf6` | `#7c4dff` |
-| `light` | `#f8f9fa` | `#212529` | `#0066cc` |
-| `sepia` | `#f4ecd8` | `#3b2d1f` | `#8b5e3c` |
+### Key Callback Files
+
+| File | Purpose |
+|------|---------|
+| `callbacks/analytics.py` | KPI metrics, time-series, distribution charts |
+| `callbacks/gis.py` | Spatial visualizations, maps, conflict detection |
+| `callbacks/export_callbacks.py` | PDF/Excel/PPTX generation |
+| `callbacks/visualization_callbacks.py` | Plotly figure generation and updates |
+| `callbacks/navigation.py` | Page routing and sidebar navigation |
+
+---
+
+## Data Layer Integration
+
+Callbacks access data via the `socrata_toolkit` library:
+
+```python
+from socrata_toolkit.core.client import SocrataClient
+from socrata_toolkit.analysis.metrics import compute_quality_score
+
+# Fetch live data from Socrata or L2 DuckDB cache
+client = SocrataClient(config)
+df = client.fetch_dataframe("data.cityofnewyork.us", "fourfour", max_rows=50000)
+
+# Analyze with core toolkit
+score = compute_quality_score(df, key_columns=["id"])
+```
+
+For local caching and performance:
+```python
+from socrata_toolkit.core.duckdb_store import query_parquet_cache
+
+# Query L2 DuckDB cache (Parquet files)
+df = query_parquet_cache("inspection", filters={"borough": ["MN"]})
+```
+
+---
+
+## UI Components (Mantine + Dash)
+
+Layouts use Mantine component library wrapped in Dash:
+
+```python
+from dash_mantine_components import Stack, Group, Button, Select, Card
+import dash_core_components as dcc
+import dash_html_components as html
+
+layout = Stack([
+    Group([
+        Select(id="borough-filter", placeholder="Select borough..."),
+        Button("Apply Filters", id="filter-btn")
+    ]),
+    Card(dcc.Graph(id="metric-chart")),
+])
+```
+
+**Styling:** `app/assets/custom.css` provides Mantine-compatible color schemes and responsive layouts.
+
+---
+
+## Environment & Configuration
+
+See `QUICKSTART.md` for full setup. Key variables:
+
+```bash
+# .env
+SOCRATA_APP_TOKEN=your_token_here
+ANTHROPIC_API_KEY=your_claude_key  (for NL-to-SoQL)
+MISSION_DEMO=0                     (1 = demo mode, no API calls)
+DUCKDB_PATH=data/local_db/nyc_mission_control.duckdb
+```
+
+**FastAPI Configuration:**
+- Host: `127.0.0.1` (localhost)
+- Port: `8011` (default; set `DASH_PORT=8012` to override)
+- Debug: auto-reload enabled in dev mode
+
+---
+
+## Common Tasks
+
+### Add a New Plotly Chart
+1. Create callback in `callbacks/visualization_callbacks.py`
+2. Define layout component in `dash_layouts.py` (dcc.Graph with id)
+3. Register @callback with Input (filter) and Output (figure)
+4. Return Plotly figure from socrata_toolkit.viz
+
+### Add a New Filter / Interactive Control
+1. Add dcc.Dropdown/Select/DatePickerRange to layout
+2. Create callback that listens to the control's `value`
+3. Update dependent charts via Output
+
+### Integrate a New Socrata Dataset
+1. Add dataset metadata to `config/datasets.yaml`
+2. Extend SocrataClient to fetch it: `client.fetch_dataframe(...)`
+3. Create visualization/analysis callback that uses the data
+4. Test with `MISSION_DEMO=1 python app/dash_app.py`
