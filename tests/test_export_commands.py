@@ -1,5 +1,3 @@
-import pytest
-
 import pandas as pd
 import pytest
 from dash import dcc

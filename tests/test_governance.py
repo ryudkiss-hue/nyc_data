@@ -1,8 +1,7 @@
-import pytest
-
 import json
 
 import pandas as pd
+import pytest
 
 from socrata_toolkit.governance import (
     AuditLogger,

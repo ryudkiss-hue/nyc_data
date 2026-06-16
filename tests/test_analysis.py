@@ -1,5 +1,3 @@
-import pytest
-
 import sys
 from unittest.mock import MagicMock, patch
 

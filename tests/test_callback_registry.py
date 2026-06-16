@@ -1,8 +1,8 @@
-import pytest
-
 import importlib.util
 import sys
 from unittest.mock import MagicMock
+
+import pytest
 
 # Stub heavy optional dependencies ONLY when they are not installed, so the
 # callback modules can be imported without them. Never clobber a real module

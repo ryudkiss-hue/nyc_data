@@ -9,8 +9,6 @@ we inject stub modules into sys.modules before the first import of the
 target module.
 """
 from __future__ import annotations
-import pytest
-
 
 import sys
 import types

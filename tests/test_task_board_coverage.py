@@ -5,8 +5,6 @@ milestones, DataFrame import, persistence (save/load), and export
 (DataFrame, Markdown). File I/O uses tempfile for isolation.
 """
 from __future__ import annotations
-import pytest
-
 
 import json
 import tempfile

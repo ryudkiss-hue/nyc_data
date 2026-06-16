@@ -1,6 +1,5 @@
-import pytest
-
 import pandas as pd
+import pytest
 
 from socrata_toolkit.analysis import validate_required_columns, validate_schema_types
 
