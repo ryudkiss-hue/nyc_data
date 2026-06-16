@@ -21,8 +21,13 @@ from datetime import datetime, timedelta
 
 import duckdb
 
-from socrata_toolkit.analysis.nlp_classifier import TextClassifierPipeline
 from socrata_toolkit.core.client import SocrataClient, SocrataConfig
+
+try:
+    from socrata_toolkit.analysis.nlp_classifier import TextClassifierPipeline
+    HAS_CLASSIFIER = True
+except Exception:
+    HAS_CLASSIFIER = False
 
 logging.basicConfig(
     level=logging.INFO,
@@ -30,21 +35,21 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Datasets to refresh (high-volume)
+# Datasets to refresh — date_field is the actual Socrata/DuckDB column name
 REFRESH_DATASETS = {
-    "violations": ("violation_issue_date", "6kbp-uz6m"),
-    "inspection": ("inspection_date", "dntt-gqwq"),
+    "violations": ("vissuedate", "6kbp-uz6m"),
+    "inspection": ("inspectiondate", "dntt-gqwq"),
     "dismissals": ("violation_issue_date", "p4u2-3jgx"),
     "complaints_311": ("created_date", "erm2-nwe9"),
-    "ramp_progress": ("startdate", "e7gc-ub6z"),
-    "ramp_complaints": ("date_received", "jagj-gttd"),
-    "street_permits": ("issued_date", "tqtj-sjs8"),
-    "street_construction_inspections": ("inspection_date", "ydkf-mpxb"),
-    "street_closures_block": ("closure_date", "i6b5-j7bu"),
-    "street_resurfacing_schedule": ("scheduled_start", "xnfm-u3k5"),
+    "ramp_progress": (None, "e7gc-ub6z"),          # no date column; full fetch
+    "ramp_complaints": ("complaint_date", "jagj-gttd"),
+    "street_permits": ("permitissuedate", "tqtj-sjs8"),
+    "street_construction_inspections": ("inspectiondate", "ydkf-mpxb"),
+    "street_closures_block": ("work_start_date", "i6b5-j7bu"),
+    "street_resurfacing_schedule": ("date", "xnfm-u3k5"),
     "correspondences": ("date_received", "bheb-sjfi"),
     "curb_metal_protruding": ("insp", "i2y3-sx2e"),
-    "tree_damage": ("report_date", "j6v2-6uxq"),
+    "tree_damage": ("inspect_date", "j6v2-6uxq"),
 }
 
 CLASSIFICATION_DATASETS = {
@@ -68,7 +73,7 @@ def daily_refresh():
 
     conn = duckdb.connect(db_path)
     client = SocrataClient(SocrataConfig())
-    pipeline = TextClassifierPipeline()
+    pipeline = TextClassifierPipeline() if HAS_CLASSIFIER else None
 
     yesterday = (datetime.now() - timedelta(days=1)).date()
     today = datetime.now().date()
@@ -80,8 +85,8 @@ def daily_refresh():
         try:
             logger.info(f"[REFRESH] {dataset_name}...")
 
-            # Fetch new records (since yesterday)
-            where = f"{date_field} >= '{yesterday}'"
+            # Fetch new records (since yesterday, or full fetch if no date field)
+            where = f"{date_field} >= '{yesterday}'" if date_field else None
             df = client.fetch_dataframe(
                 "data.cityofnewyork.us",
                 fourfour,
@@ -100,12 +105,12 @@ def daily_refresh():
             raw_table = f"raw.{dataset_name}"
             conn.register(f"{dataset_name}_new", df)
             conn.execute(f"""
-            INSERT OR REPLACE INTO {raw_table}
+            INSERT INTO {raw_table}
             SELECT * FROM {dataset_name}_new
             """)
 
             # Classify if applicable
-            if dataset_name in CLASSIFICATION_DATASETS:
+            if dataset_name in CLASSIFICATION_DATASETS and pipeline is not None:
                 classifier_type = CLASSIFICATION_DATASETS[dataset_name]
 
                 if classifier_type == "violations":
@@ -113,7 +118,7 @@ def daily_refresh():
                 elif classifier_type == "complaints":
                     classified_df = pipeline.classify_complaints_dataframe(df)
                 elif classifier_type == "tree_damage":
-                    classified_df = df  # Simplified for now
+                    classified_df = df
                 else:
                     classified_df = df
 
@@ -207,11 +212,11 @@ def archive_old_data(conn, days_old=30):
 
     # Datasets with date fields suitable for archival
     archive_datasets = [
-        ("violations", "violation_issue_date"),
-        ("inspection", "inspection_date"),
+        ("violations", "vissuedate"),
+        ("inspection", "inspectiondate"),
         ("dismissals", "violation_issue_date"),
         ("complaints_311", "created_date"),
-        ("street_construction_inspections", "inspection_date"),
+        ("street_construction_inspections", "inspectiondate"),
     ]
 
     logger.info(f"  Archiving records older than {cutoff_date}...")
