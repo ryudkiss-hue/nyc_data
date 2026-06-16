@@ -1,33 +1,36 @@
-# Cloud deployment (one-click)
+# Cloud Deployment
 
-Deploy **Mission Control** (Streamlit) without managing servers locally.
+📚 **See [docs/DEPLOYMENT.md](./DEPLOYMENT.md)** for the comprehensive deployment guide.
 
-## Render (recommended)
+This document provides cloud deployment instructions for:
+- **Local Development** (pip install + Streamlit)
+- **Docker Compose** (local or VM)
+- **AWS ECR** (push to registry)
+- **Google Cloud Run** (recommended for Streamlit)
+- **Azure Container Registry** (ACI/App Service)
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/ryudkiss-hue/nyc_data)
+---
 
-1. Click the button (or connect the repo in Render dashboard).
-2. Render reads `render.yaml` and builds with `pip install -e ".[mission,postgres,xlsx]"`.
-3. Set `SOCRATA_APP_TOKEN` in the service environment (optional if `MISSION_DEMO=1`).
-4. Open the generated URL (port mapped automatically).
+## Quick Links
 
-## Heroku
+| Platform | Command | Time |
+|----------|---------|------|
+| **Local** | `streamlit run app/app.py` | < 2 min |
+| **Docker** | `docker compose up mission-control` | < 5 min |
+| **Cloud Run** | `gcloud run deploy ...` | < 10 min |
+| **ECR** | `aws ecr push ...` | Custom |
 
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/ryudkiss-hue/nyc_data)
+---
 
-Uses `app.json`, `Procfile`, and the Python buildpack. After deploy:
+## What Changed in v0.4.1
 
-```bash
-heroku config:set SOCRATA_APP_TOKEN=your-token
-heroku config:set MISSION_DEMO=0
-```
+- ✅ Removed Render.com (no longer supported)
+- ✅ Removed Heroku (free tier deprecated)
+- ✅ Added DuckDB-native architecture (no external database)
+- ✅ Added comprehensive cloud deployment guide
+- ✅ Consolidated Docker images (multi-stage Dockerfile)
 
-## Docker Compose (local / VM)
-
-```bash
-docker compose up -d mission-control
-# UI: http://localhost:8501
-```
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed instructions for your platform.
 
 Optional profiles:
 
