@@ -132,9 +132,9 @@ def daily_refresh():
     logger.info("\n[VIEWS] Refreshing analytics...")
 
     try:
-        # Violations summary
+        # Violations summary — recreate view so it reflects latest raw data
         conn.execute("""
-        INSERT OR REPLACE INTO analytics.violations_by_borough
+        CREATE OR REPLACE VIEW analytics.violations_by_borough AS
         SELECT
           Borough,
           COUNT(*) as violation_count,
@@ -145,9 +145,9 @@ def daily_refresh():
         GROUP BY Borough, DATE_TRUNC('month', violation_issue_date)
         """)
 
-        # Ramp progress summary
+        # Ramp progress summary — recreate view so it reflects latest raw data
         conn.execute("""
-        INSERT OR REPLACE INTO analytics.ramp_progress_summary
+        CREATE OR REPLACE VIEW analytics.ramp_progress_summary AS
         SELECT
           Borough,
           COUNT(*) as total_ramps,
@@ -178,8 +178,8 @@ def daily_refresh():
     logger.info(f"  Database size: {db_size_mb:.1f} MB")
 
     raw_count = conn.execute("""
-    SELECT COUNT(*) as total FROM (
-        SELECT COUNT(*) FROM raw.violations
+    SELECT SUM(cnt) FROM (
+        SELECT COUNT(*) AS cnt FROM raw.violations
         UNION ALL SELECT COUNT(*) FROM raw.inspection
         UNION ALL SELECT COUNT(*) FROM raw.dismissals
         UNION ALL SELECT COUNT(*) FROM raw.complaints_311
