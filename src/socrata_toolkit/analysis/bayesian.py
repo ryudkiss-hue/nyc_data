@@ -4,12 +4,19 @@ import logging
 from dataclasses import dataclass
 from typing import Any
 
+import inspect
+
 import arviz as az
 import numpy as np
 import pandas as pd
 import pymc as pm
 
 logger = logging.getLogger(__name__)
+
+# ArviZ renamed the HDI probability argument in 0.12: prob= → hdi_prob=
+_HDI_PROB_KWARG = (
+    "hdi_prob" if "hdi_prob" in inspect.signature(az.hdi).parameters else "prob"
+)
 
 
 @dataclass
@@ -76,7 +83,7 @@ class BayesianRegressionEngine:
             )
 
         # 6. Uncertainty Quantification (94% HDI)
-        hdi = az.hdi(trace, hdi_prob=0.94)
+        hdi = az.hdi(trace, **{_HDI_PROB_KWARG: 0.94})
         hdi_dict = {}
         for var in ["Intercept", "Predictor_Effect"]:
             vals = hdi[var].values
