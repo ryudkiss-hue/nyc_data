@@ -9,6 +9,7 @@ import sys
 
 from apscheduler.schedulers.blocking import BlockingScheduler
 
+
 def run_pack() -> None:
     profile = os.environ.get("ANALYST_PROFILE", "config/analyst_profile.yaml")
     subprocess.run(

@@ -13,7 +13,37 @@ try:
 except ImportError:
     BayesianInferenceResult = None  # type: ignore[assignment,misc]
     BayesianRegressionEngine = None  # type: ignore[assignment,misc]
-from socrata_toolkit.quality.profiler import DriftReport
+from socrata_toolkit.quality.expectations import (
+    Expectation,
+    ExpectationSuite,
+    ExpectationType,
+    SeverityLevel,
+    create_311_complaints_suite,
+    create_sidewalk_inspections_suite,
+)
+from socrata_toolkit.quality.profiler import (
+    ColumnProfile,
+    DriftReport,
+    ProfileGenerator,
+)
+from socrata_toolkit.quality.profiler import (
+    TableProfile as DatasetProfile,
+)
+from socrata_toolkit.quality.reports import QualityReportGenerator
+from socrata_toolkit.quality.rules import (
+    QualityRule,
+    RuleMode,
+    RuleSeverity,
+    RuleViolations,
+    create_311_complaints_rules,
+    create_sidewalk_rules,
+)
+from socrata_toolkit.quality.sla import MetricType, SLADefinition, create_standard_slas
+from socrata_toolkit.quality.validator import (
+    QualityValidator,
+    ValidationResult,
+    ValidationResultsAggregator,
+)
 
 from .confidence_intervals import (
     bootstrap_confidence_interval,
@@ -68,34 +98,7 @@ from .metrics import (
     validate_marking_standards,
     validate_material_coverage,
 )
-from socrata_toolkit.quality.profiler import (
-    ColumnProfile,
-    ProfileGenerator,
-    TableProfile as DatasetProfile,
-)
-from socrata_toolkit.quality.rules import (
-    QualityRule,
-    RuleMode,
-    RuleSeverity,
-    RuleViolations,
-    create_311_complaints_rules,
-    create_sidewalk_rules,
-)
-from socrata_toolkit.quality.expectations import (
-    Expectation,
-    ExpectationSuite,
-    ExpectationType,
-    SeverityLevel,
-    create_311_complaints_suite,
-    create_sidewalk_inspections_suite,
-)
-from socrata_toolkit.quality.validator import (
-    QualityValidator,
-    ValidationResult,
-    ValidationResultsAggregator,
-)
-from socrata_toolkit.quality.reports import QualityReportGenerator
-from socrata_toolkit.quality.sla import MetricType, SLADefinition, create_standard_slas
+
 try:
     from socrata_toolkit.metrics import reset_global_registry
 except ImportError:
