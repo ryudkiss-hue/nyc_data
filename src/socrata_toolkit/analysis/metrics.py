@@ -775,17 +775,6 @@ class DataQualityCatalog:
     def __init__(self):
         self.entries: dict[str, dict] = {}
 
-def correlation_heatmap(df: pd.DataFrame) -> Any:
-    """Generate correlation heatmap data."""
-    if df.empty:
-        return {}
-    numeric_cols = df.select_dtypes(include=[float, int]).columns
-    if len(numeric_cols) > 0:
-        corr = df[numeric_cols].corr()
-        result = corr.to_dict()
-    else:
-        result = {}
-
 
 def create_map(df: pd.DataFrame, lat_col: str = "latitude", lon_col: str = "longitude") -> str:
     """Create a simple HTML map from geographic data."""

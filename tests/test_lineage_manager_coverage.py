@@ -6,7 +6,7 @@ OpenMetadata export, JSON round-trips, and the in-memory (no-DB) registry path.
 """
 from __future__ import annotations
 import pytest
-pytestmark = pytest.mark.skip(reason="Data Unavailable - Live telemetry required")
+
 
 import json
 from unittest.mock import MagicMock, patch

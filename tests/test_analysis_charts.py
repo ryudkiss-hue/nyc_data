@@ -1,5 +1,5 @@
 import pytest
-pytestmark = pytest.mark.skip(reason="Data Unavailable - Live telemetry required")
+
 import pytest
 
 pytest.importorskip("plotly", reason="plotly required for chart tests")

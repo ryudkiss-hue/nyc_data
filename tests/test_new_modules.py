@@ -1,5 +1,5 @@
 import pytest
-pytestmark = pytest.mark.skip(reason="Data Unavailable - Live telemetry required")
+
 """Tests for all new modules: cost estimator, change detection, contractor scorecards,
 budget forecast, map view, QGIS, PDF reports, messaging bot, 311 ingestion."""
 

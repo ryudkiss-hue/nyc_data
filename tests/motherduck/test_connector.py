@@ -1,5 +1,5 @@
 import pytest
-pytestmark = pytest.mark.skip(reason="Data Unavailable - Live telemetry required")
+
 """Tests for MotherDuck connection layer (motherduck-connect).
 
 TDD approach: tests first, implementation follows.

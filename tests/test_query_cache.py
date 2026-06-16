@@ -1,5 +1,5 @@
 import pytest
-pytestmark = pytest.mark.skip(reason="Data Unavailable - Live telemetry required")
+
 """Unit tests for query result caching (Task 1: Query Result Caching).
 
 Tests cover:

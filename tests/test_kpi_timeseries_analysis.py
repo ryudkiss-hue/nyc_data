@@ -1,5 +1,5 @@
 import pytest
-pytestmark = pytest.mark.skip(reason="Data Unavailable - Live telemetry required")
+
 """Unit & integration tests for KPI Time Series Analysis.
 
 Tests cover:

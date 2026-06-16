@@ -13,20 +13,8 @@ try:
 except ImportError:
     BayesianInferenceResult = None  # type: ignore[assignment,misc]
     BayesianRegressionEngine = None  # type: ignore[assignment,misc]
-from socrata_toolkit.quality.profiler import DriftReport
-
-from .confidence_intervals import (
-    bootstrap_confidence_interval,
-    mean_confidence_interval,
-    wilson_score_confidence_interval,
-)
-from .dataset_health import (
-    DatasetHealthClassifier,
-    DatasetHealthMetrics,
-    DatasetHealthReport,
-    HealthStatus,
-    Severity,
-)
+from socrata_toolkit.quality.profiler import ColumnProfile, DriftReport, ProfileGenerator
+from .dataset_health import HealthStatus, Severity
 from .insights import InsightsEngine, InsightsReport, generate_insights, smart_recommendations
 from .metrics import (
     Anomaly,
@@ -40,7 +28,7 @@ from .metrics import (
     DatasetFreshness,
     DatasetQualityScore,
     DataType,
-    DriftReport,
+    DriftReport as _LegacyDriftReport,
     FreshnessAlert,
     FreshnessTracker,
     MetricPoint,

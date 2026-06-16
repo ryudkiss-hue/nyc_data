@@ -1,5 +1,5 @@
 import pytest
-pytestmark = pytest.mark.skip(reason="Data Unavailable - Live telemetry required")
+
 import pandas as pd
 
 from socrata_toolkit.analysis import validate_required_columns, validate_schema_types

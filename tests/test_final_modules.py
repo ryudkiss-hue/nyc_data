@@ -1,5 +1,5 @@
 import pytest
-pytestmark = pytest.mark.skip(reason="Data Unavailable - Live telemetry required")
+
 """Tests for SLA tracking, notification rules, data dictionary, NYC datasets, sample data."""
 
 import pandas as pd

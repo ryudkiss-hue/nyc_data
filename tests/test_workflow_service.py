@@ -1,5 +1,5 @@
 import pytest
-pytestmark = pytest.mark.skip(reason="Data Unavailable - Live telemetry required")
+
 from unittest.mock import MagicMock, patch
 
 import pandas as pd

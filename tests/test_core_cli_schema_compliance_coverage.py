@@ -8,7 +8,7 @@ the real bundled ADA rule set.
 
 from __future__ import annotations
 import pytest
-pytestmark = pytest.mark.skip(reason="Data Unavailable - Live telemetry required")
+
 
 import json
 from datetime import datetime

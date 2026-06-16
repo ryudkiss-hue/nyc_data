@@ -1,7 +1,7 @@
 """Comprehensive tests for spatial.metrics module."""
 from __future__ import annotations
 import pytest
-pytestmark = pytest.mark.skip(reason="Data Unavailable - Live telemetry required")
+
 
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
