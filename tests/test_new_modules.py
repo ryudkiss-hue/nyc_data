@@ -197,7 +197,7 @@ def test_dataframe_to_pdf_fallback(tmp_path):
     path = dataframe_to_pdf(df, str(tmp_path / "report.pdf"), title="Test Report")
     # Falls back to HTML without weasyprint
     assert path.endswith(".html") or path.endswith(".pdf")
-    content = open(path).read()
+    content = open(path, errors="replace").read()
     assert "Test Report" in content
 
 
