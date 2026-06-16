@@ -39,11 +39,7 @@ class StationarityTester:
         if not HAS_STATSMODELS:
             logger.warning("statsmodels not available; stationarity tests skipped")
 
-<<<<<<< Updated upstream
     def adf_test(self, series: np.ndarray, autolag: str = "AIC") -> StationarityResult | None:
-=======
-    def adf_test(self, series: np.ndarray, autolag: str = 'AIC') -> StationarityResult | None:
->>>>>>> Stashed changes
         """Augmented Dickey-Fuller test.
 
         H0: Series has unit root (non-stationary)
@@ -79,11 +75,7 @@ class StationarityTester:
             logger.error(f"ADF test failed: {str(e)}")
             return None
 
-<<<<<<< Updated upstream
     def kpss_test(self, series: np.ndarray, regression: str = "c") -> StationarityResult | None:
-=======
-    def kpss_test(self, series: np.ndarray, regression: str = 'c') -> StationarityResult | None:
->>>>>>> Stashed changes
         """KPSS test (opposite hypothesis to ADF).
 
         H0: Series is stationary
