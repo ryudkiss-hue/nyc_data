@@ -134,30 +134,29 @@ def daily_refresh():
     logger.info("\n[VIEWS] Refreshing analytics...")
 
     try:
-        # Violations summary — recreate view so it reflects latest raw data
+        # Violations by month — recreate view so it reflects latest raw data
         conn.execute("""
         CREATE OR REPLACE VIEW analytics.violations_by_borough AS
         SELECT
-          Borough,
+          DATE_TRUNC('month', TRY_CAST(vissuedate AS DATE)) as month,
           COUNT(*) as violation_count,
-          COUNT(DISTINCT site_street_address) as affected_addresses,
-          DATE_TRUNC('month', violation_issue_date) as month
+          COUNT(DISTINCT swv_number) as unique_violations
         FROM raw.violations
-        WHERE violation_issue_date >= DATE '2024-01-01'
-        GROUP BY Borough, DATE_TRUNC('month', violation_issue_date)
+        WHERE vissuedate IS NOT NULL
+          AND TRY_CAST(vissuedate AS DATE) >= DATE '2024-01-01'
+        GROUP BY DATE_TRUNC('month', TRY_CAST(vissuedate AS DATE))
         """)
 
         # Ramp progress summary — recreate view so it reflects latest raw data
         conn.execute("""
         CREATE OR REPLACE VIEW analytics.ramp_progress_summary AS
         SELECT
-          Borough,
+          borough,
           COUNT(*) as total_ramps,
-          SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) as completed_ramps,
-          ROUND(100.0 * SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) / COUNT(*), 1) as completion_pct,
-          AVG(CAST(percent_complete AS FLOAT)) as avg_progress
+          SUM(CASE WHEN construc_2 IN ('Constructed', 'Complex Constructed') THEN 1 ELSE 0 END) as completed_ramps,
+          ROUND(100.0 * SUM(CASE WHEN construc_2 IN ('Constructed', 'Complex Constructed') THEN 1 ELSE 0 END) / COUNT(*), 1) as completion_pct
         FROM raw.ramp_progress
-        GROUP BY Borough
+        GROUP BY borough
         """)
 
         logger.info("  ✓ Views updated")
