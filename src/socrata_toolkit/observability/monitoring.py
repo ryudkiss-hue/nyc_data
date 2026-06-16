@@ -14,10 +14,6 @@ from typing import Any
 
 from ..alerts.manager import Alert, AlertManager, AlertSeverity, AlertStatus
 
-# ---------------------------------------------------------------------------
-# MonitoringResult
-# ---------------------------------------------------------------------------
-
 
 @dataclass
 class MonitoringResult:
@@ -28,11 +24,6 @@ class MonitoringResult:
     status: str  # "PASS" or "FAIL"
     alerts: list[Alert] = field(default_factory=list)
     details: dict[str, Any] = field(default_factory=dict)
-
-
-# ---------------------------------------------------------------------------
-# HealthCheck / HealthMonitor (kept for backward compatibility)
-# ---------------------------------------------------------------------------
 
 
 @dataclass

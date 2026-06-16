@@ -46,7 +46,6 @@ try:
     from statsmodels.robust import huber
     from statsmodels.stats.diagnostic import acorr_ljungbox
     from statsmodels.tsa.seasonal import STL
-
     HAS_STATSMODELS = True
 except ImportError:
     HAS_STATSMODELS = False
@@ -64,14 +63,7 @@ def _load_timeseries_modules():
             GrangerCausalityTester,
             VARAnalyzer,
         )
-
-        return (
-            StationarityTester,
-            ARIMAForecaster,
-            ModelSelection,
-            VARAnalyzer,
-            GrangerCausalityTester,
-        )
+        return StationarityTester, ARIMAForecaster, ModelSelection, VARAnalyzer, GrangerCausalityTester
     except ImportError:
         return None, None, None, None, None
 
@@ -198,7 +190,6 @@ class KPIStatisticsResult:
 @dataclass
 class AdvancedMetricsResult:
     """Result of advanced metrics computation."""
-
     shapiro_wilk_p: float | None = None
     jarque_bera_p: float | None = None
     anderson_statistic: float | None = None
@@ -677,7 +668,7 @@ class KPIStatisticsEngine:
                             cohens_d_vs_benchmark = ?,
                             seasonal_strength = ?,
                             ljung_box_p = ?,
-                            robust_regression_slope = ?,
+                            robust_slope = ?,
                             outlier_sensitivity_ratio = ?,
                             advanced_metrics_status = 'COMPUTED',
                             advanced_metrics_timestamp = CURRENT_TIMESTAMP
