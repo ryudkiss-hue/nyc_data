@@ -1,0 +1,22 @@
+{
+  "phase": 4,
+  "timestamp": "2026-06-16T18:11:41.996242",
+  "datasets_assessed": 3,
+  "results": {
+    "built": {
+      "row_count": 105990,
+      "column_count": 14,
+      "status": "ASSESSED"
+    },
+    "inspection": {
+      "row_count": 399424,
+      "column_count": 17,
+      "status": "ASSESSED"
+    },
+    "violations": {
+      "row_count": 312828,
+      "column_count": 27,
+      "status": "ASSESSED"
+    }
+  }
+}
