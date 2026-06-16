@@ -101,12 +101,13 @@ def daily_refresh():
             logger.info(f"  {len(df)} new records")
             total_new += len(df)
 
-            # Upsert into raw schema
+            # Insert only columns present in the incremental fetch (schema may vary)
             raw_table = f"raw.{dataset_name}"
+            raw_cols = ", ".join(f'"{c}"' for c in df.columns)
             conn.register(f"{dataset_name}_new", df)
             conn.execute(f"""
-            INSERT INTO {raw_table}
-            SELECT * FROM {dataset_name}_new
+            INSERT INTO {raw_table} ({raw_cols})
+            SELECT {raw_cols} FROM {dataset_name}_new
             """)
 
             # Classify if applicable
@@ -122,12 +123,13 @@ def daily_refresh():
                 else:
                     classified_df = df
 
-                # Upsert into staging
+                # Insert into staging using only columns present in classified output
                 staging_table = f"staging.{dataset_name}"
+                stg_cols = ", ".join(f'"{c}"' for c in classified_df.columns)
                 conn.register(f"{dataset_name}_classified", classified_df)
                 conn.execute(f"""
-                INSERT OR REPLACE INTO {staging_table}
-                SELECT * FROM {dataset_name}_classified
+                INSERT INTO {staging_table} ({stg_cols})
+                SELECT {stg_cols} FROM {dataset_name}_classified
                 """)
 
             successful += 1
