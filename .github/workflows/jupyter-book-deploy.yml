@@ -1,14 +1,11 @@
 name: Deploy Jupyter Book to GitHub Pages
-
-on:
+"on":
   push:
     branches:
       - main
     paths:
-      - 'jupyter_book/**'
-      - '.github/workflows/jupyter-book-deploy.yml'
-
-  # Allow manual trigger
+      - jupyter_book/**
+      - .github/workflows/jupyter-book-deploy.yml
   workflow_dispatch:
 
 permissions:
@@ -19,151 +16,33 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-
-      - name: Cache pip dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip setuptools wheel
+      - run: |
+          python -m pip install --upgrade pip
           pip install -q -r requirements-dev.txt
-          pip install -q jupyter-book jupyter nbconvert ghp-import
+          pip install -q jupyter nbconvert
 
-      - name: Execute and build notebooks
-        run: |
+      - run: |
+          mkdir -p docs/jupyter_book
           cd jupyter_book
-          # Convert notebooks to HTML for GitHub Pages
           for notebook in dashboards/*.ipynb; do
-            echo "Processing $notebook..."
             jupyter nbconvert --to html --output-dir="../docs/jupyter_book" "$notebook" || true
           done
 
-      - name: Create index.html for notebook list
-        run: |
-          mkdir -p docs/jupyter_book
-          cat > docs/jupyter_book/index.html << 'EOF'
-          <!DOCTYPE html>
-          <html>
-          <head>
-              <title>NYC SIM Toolkit — Interactive Dashboards</title>
-              <style>
-                  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 40px; max-width: 800px; }
-                  h1 { color: #333; border-bottom: 3px solid #007bff; padding-bottom: 10px; }
-                  .dashboard { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
-                  .dashboard h3 { margin-top: 0; color: #007bff; }
-                  .dashboard a { color: #007bff; text-decoration: none; font-weight: bold; }
-                  .dashboard a:hover { text-decoration: underline; }
-                  .note { background: #f0f7ff; padding: 10px; border-left: 4px solid #007bff; margin: 10px 0; }
-              </style>
-          </head>
-          <body>
-              <h1>🗽 NYC DOT SIM Toolkit — Interactive Dashboards</h1>
-
-              <div class="note">
-                  <strong>Welcome!</strong> These are interactive Jupyter notebooks with the same functionality as the Dash Mission Control app.
-                  Click any dashboard below to explore live data from NYC Open Data.
-              </div>
-
-              <h2>📊 Dashboards</h2>
-
-              <div class="dashboard">
-                  <h3>Sidewalk Inspection Dashboard</h3>
-                  <p>Real-time overview of inspection data with interactive filters by borough and date range.</p>
-                  <a href="01_inspection_dashboard.html">View Dashboard →</a>
-              </div>
-
-              <div class="dashboard">
-                  <h3>ADA Ramp Completion Analysis</h3>
-                  <p>Borough-level ramp installation progress with 95% confidence intervals.</p>
-                  <a href="02_ramp_analysis.html">View Dashboard →</a>
-              </div>
-
-              <div class="dashboard">
-                  <h3>Spatial Conflict Detection</h3>
-                  <p>Interactive map showing overlaps between construction permits and inspection locations.</p>
-                  <a href="03_gis_overview.html">View Dashboard →</a>
-              </div>
-
-              <div class="dashboard">
-                  <h3>Data Quality Scorecard</h3>
-                  <p>Assess data health across 26 datasets (completeness, validity, timeliness, consistency).</p>
-                  <a href="04_quality_scorecard.html">View Dashboard →</a>
-              </div>
-
-              <div class="dashboard">
-                  <h3>Advanced Analytics</h3>
-                  <p>CUSUM control charts, Bayesian forecasting, K-Means clustering, correlation analysis.</p>
-                  <a href="05_advanced_analytics.html">View Dashboard →</a>
-              </div>
-
-              <h2>📚 Reference</h2>
-
-              <div class="dashboard">
-                  <h3>Dataset Registry</h3>
-                  <p>Catalog of 26 NYC Open Data datasets with freshness status and quick access commands.</p>
-                  <a href="../dataset-registry.html">View Reference →</a>
-              </div>
-
-              <div class="dashboard">
-                  <h3>CLI Toolkit Reference</h3>
-                  <p>Complete command reference for the <code>socrata</code> CLI with 50+ examples.</p>
-                  <a href="../cli-reference.html">View Reference →</a>
-              </div>
-
-              <h2>💻 Run Locally</h2>
-
-              <pre><code># Install dependencies
-              pip install jupyter ipywidgets plotly
-
-# Run Jupyter
-              jupyter notebook jupyter_book/
-
-# Or run as an interactive web app
-              pip install voila
-              voila jupyter_book/dashboards/</code></pre>
-
-              <h2>📖 Learn More</h2>
-              <ul>
-                  <li><a href="https://github.com/ryudkiss-hue/nyc_data">GitHub Repository</a></li>
-                  <li><a href="https://github.com/ryudkiss-hue/nyc_data/blob/main/jupyter_book/README.md">Jupyter Book README</a></li>
-                  <li><a href="https://github.com/ryudkiss-hue/nyc_data/tree/main/docs">Full Documentation</a></li>
-              </ul>
-
-              <hr>
-              <p><small>NYC DOT Sidewalk Inspection & Management Toolkit v0.5.0 — Data from NYC Open Data</small></p>
-          </body>
-          </html>
-          EOF
-
-      - name: Upload to GitHub Pages
-        uses: actions/upload-pages-artifact@v2
+      - uses: actions/upload-pages-artifact@v2
         with:
-          path: 'docs'
+          path: docs
 
   deploy:
     needs: build
-
     runs-on: ubuntu-latest
-
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-
     steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
+      - id: deployment
         uses: actions/deploy-pages@v2
