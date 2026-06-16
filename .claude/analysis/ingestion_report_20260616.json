@@ -1,0 +1,190 @@
+{
+  "phase": 2,
+  "timestamp": "2026-06-16T17:34:55.170775",
+  "datasets_fetched": 26,
+  "datasets_failed": 0,
+  "results": {
+    "inspection": {
+      "fourfour": "dntt-gqwq",
+      "rows": 10000,
+      "cached": "data/cache/inspection.parquet",
+      "timestamp": "2026-06-16T17:32:16.713040",
+      "status": "SUCCESS"
+    },
+    "violations": {
+      "fourfour": "6kbp-uz6m",
+      "rows": 10000,
+      "cached": "data/cache/violations.parquet",
+      "timestamp": "2026-06-16T17:32:23.809957",
+      "status": "SUCCESS"
+    },
+    "built": {
+      "fourfour": "ugc8-s3f6",
+      "rows": 10000,
+      "cached": "data/cache/built.parquet",
+      "timestamp": "2026-06-16T17:32:27.102107",
+      "status": "SUCCESS"
+    },
+    "lot_info": {
+      "fourfour": "i642-2fxq",
+      "rows": 10000,
+      "cached": "data/cache/lot_info.parquet",
+      "timestamp": "2026-06-16T17:32:29.294966",
+      "status": "SUCCESS"
+    },
+    "reinspection": {
+      "fourfour": "gx72-kirf",
+      "rows": 10000,
+      "cached": "data/cache/reinspection.parquet",
+      "timestamp": "2026-06-16T17:32:33.661037",
+      "status": "SUCCESS"
+    },
+    "tree_damage": {
+      "fourfour": "j6v2-6uxq",
+      "rows": 10000,
+      "cached": "data/cache/tree_damage.parquet",
+      "timestamp": "2026-06-16T17:32:38.070305",
+      "status": "SUCCESS"
+    },
+    "dismissals": {
+      "fourfour": "p4u2-3jgx",
+      "rows": 10000,
+      "cached": "data/cache/dismissals.parquet",
+      "timestamp": "2026-06-16T17:32:44.403841",
+      "status": "SUCCESS"
+    },
+    "correspondences": {
+      "fourfour": "bheb-sjfi",
+      "rows": 10000,
+      "cached": "data/cache/correspondences.parquet",
+      "timestamp": "2026-06-16T17:32:50.029668",
+      "status": "SUCCESS"
+    },
+    "curb_metal_protruding": {
+      "fourfour": "i2y3-sx2e",
+      "rows": 10000,
+      "cached": "data/cache/curb_metal_protruding.parquet",
+      "timestamp": "2026-06-16T17:32:54.481109",
+      "status": "SUCCESS"
+    },
+    "ramp_locations": {
+      "fourfour": "ufzp-rrqu",
+      "rows": 10000,
+      "cached": "data/cache/ramp_locations.parquet",
+      "timestamp": "2026-06-16T17:33:01.694356",
+      "status": "SUCCESS"
+    },
+    "ramp_complaints": {
+      "fourfour": "jagj-gttd",
+      "rows": 6051,
+      "cached": "data/cache/ramp_complaints.parquet",
+      "timestamp": "2026-06-16T17:33:04.994396",
+      "status": "SUCCESS"
+    },
+    "ramp_progress": {
+      "fourfour": "e7gc-ub6z",
+      "rows": 10000,
+      "cached": "data/cache/ramp_progress.parquet",
+      "timestamp": "2026-06-16T17:33:10.977221",
+      "status": "SUCCESS"
+    },
+    "street_permits": {
+      "fourfour": "tqtj-sjs8",
+      "rows": 10000,
+      "cached": "data/cache/street_permits.parquet",
+      "timestamp": "2026-06-16T17:33:51.141612",
+      "status": "SUCCESS"
+    },
+    "weekly_construction": {
+      "fourfour": "r528-jcks",
+      "rows": 75,
+      "cached": "data/cache/weekly_construction.parquet",
+      "timestamp": "2026-06-16T17:33:51.638209",
+      "status": "SUCCESS"
+    },
+    "capital_blocks": {
+      "fourfour": "jvk9-k4re",
+      "rows": 10000,
+      "cached": "data/cache/capital_blocks.parquet",
+      "timestamp": "2026-06-16T17:33:57.972283",
+      "status": "SUCCESS"
+    },
+    "capital_intersections": {
+      "fourfour": "97nd-ff3i",
+      "rows": 7817,
+      "cached": "data/cache/capital_intersections.parquet",
+      "timestamp": "2026-06-16T17:34:02.579692",
+      "status": "SUCCESS"
+    },
+    "street_construction_inspections": {
+      "fourfour": "ydkf-mpxb",
+      "rows": 10000,
+      "cached": "data/cache/street_construction_inspections.parquet",
+      "timestamp": "2026-06-16T17:34:08.332798",
+      "status": "SUCCESS"
+    },
+    "street_closures_block": {
+      "fourfour": "i6b5-j7bu",
+      "rows": 3433,
+      "cached": "data/cache/street_closures_block.parquet",
+      "timestamp": "2026-06-16T17:34:10.051738",
+      "status": "SUCCESS"
+    },
+    "permit_stipulations": {
+      "fourfour": "gsgx-6efw",
+      "rows": 10000,
+      "cached": "data/cache/permit_stipulations.parquet",
+      "timestamp": "2026-06-16T17:34:14.395444",
+      "status": "SUCCESS"
+    },
+    "street_resurfacing_schedule": {
+      "fourfour": "xnfm-u3k5",
+      "rows": 10000,
+      "cached": "data/cache/street_resurfacing_schedule.parquet",
+      "timestamp": "2026-06-16T17:34:19.985830",
+      "status": "SUCCESS"
+    },
+    "street_resurfacing_inhouse": {
+      "fourfour": "ffaf-8mrv",
+      "rows": 10000,
+      "cached": "data/cache/street_resurfacing_inhouse.parquet",
+      "timestamp": "2026-06-16T17:34:24.042885",
+      "status": "SUCCESS"
+    },
+    "step_streets": {
+      "fourfour": "u9au-h79y",
+      "rows": 110,
+      "cached": "data/cache/step_streets.parquet",
+      "timestamp": "2026-06-16T17:34:24.442481",
+      "status": "SUCCESS"
+    },
+    "sidewalk_planimetric": {
+      "fourfour": "vfx9-tbb6",
+      "rows": 10000,
+      "cached": "data/cache/sidewalk_planimetric.parquet",
+      "timestamp": "2026-06-16T17:34:26.369207",
+      "status": "SUCCESS"
+    },
+    "pedestrian_demand": {
+      "fourfour": "fwpa-qxaf",
+      "rows": 10000,
+      "cached": "data/cache/pedestrian_demand.parquet",
+      "timestamp": "2026-06-16T17:34:33.159891",
+      "status": "SUCCESS"
+    },
+    "mappluto": {
+      "fourfour": "64uk-42ks",
+      "rows": 10000,
+      "cached": "data/cache/mappluto.parquet",
+      "timestamp": "2026-06-16T17:34:42.799158",
+      "status": "SUCCESS"
+    },
+    "complaints_311": {
+      "fourfour": "erm2-nwe9",
+      "rows": 10000,
+      "cached": "data/cache/complaints_311.parquet",
+      "timestamp": "2026-06-16T17:34:55.170392",
+      "status": "SUCCESS"
+    }
+  }
+}
