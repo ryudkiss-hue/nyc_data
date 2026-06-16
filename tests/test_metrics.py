@@ -3,7 +3,7 @@
 Tests cover metric registration, recording, and export formats.
 """
 
-from socrata_toolkit.analysis import (
+from socrata_toolkit.metrics import (
     DataQualityMetrics,
     MetricPoint,
     MetricsRegistry,
