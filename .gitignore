@@ -85,3 +85,4 @@ inspection_live_output.txt
 nyc_311_complaints_sample.csv
 nyc_inspection_records_sample.csv
 data_quality_metrics_summary.csv
+data/cache/

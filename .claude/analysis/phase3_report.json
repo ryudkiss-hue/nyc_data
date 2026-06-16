@@ -1,0 +1,108 @@
+{
+  "phase": 3,
+  "timestamp": "2026-06-16T17:32:50.288382",
+  "duckdb_path": "data/local_db/nyc_mission_control.duckdb",
+  "tables_loaded": 25,
+  "results": {
+    "built": {
+      "rows": 800,
+      "status": "SUCCESS"
+    },
+    "capital_intersections": {
+      "rows": 200,
+      "status": "SUCCESS"
+    },
+    "complaints_311": {
+      "rows": 5000,
+      "status": "SUCCESS"
+    },
+    "correspondences": {
+      "rows": 400,
+      "status": "SUCCESS"
+    },
+    "curb_metal_protruding": {
+      "rows": 350,
+      "status": "SUCCESS"
+    },
+    "dismissals": {
+      "rows": 10000,
+      "status": "SUCCESS"
+    },
+    "inspection": {
+      "rows": 5000,
+      "status": "SUCCESS"
+    },
+    "lot_info": {
+      "rows": 2000,
+      "status": "SUCCESS"
+    },
+    "mappluto": {
+      "rows": 5000,
+      "status": "SUCCESS"
+    },
+    "pedestrian_demand": {
+      "rows": 1500,
+      "status": "SUCCESS"
+    },
+    "permit_stipulations": {
+      "rows": 200,
+      "status": "SUCCESS"
+    },
+    "ramp_complaints": {
+      "rows": 100,
+      "status": "SUCCESS"
+    },
+    "ramp_locations": {
+      "rows": 2000,
+      "status": "SUCCESS"
+    },
+    "ramp_progress": {
+      "rows": 2500,
+      "status": "SUCCESS"
+    },
+    "reinspection": {
+      "rows": 10000,
+      "status": "SUCCESS"
+    },
+    "sidewalk_planimetric": {
+      "rows": 1000,
+      "status": "SUCCESS"
+    },
+    "step_streets": {
+      "rows": 50,
+      "status": "SUCCESS"
+    },
+    "street_closures_block": {
+      "rows": 100,
+      "status": "SUCCESS"
+    },
+    "street_construction_inspections": {
+      "rows": 10000,
+      "status": "SUCCESS"
+    },
+    "street_permits": {
+      "rows": 5000,
+      "status": "SUCCESS"
+    },
+    "street_resurfacing_inhouse": {
+      "rows": 800,
+      "status": "SUCCESS"
+    },
+    "street_resurfacing_schedule": {
+      "rows": 500,
+      "status": "SUCCESS"
+    },
+    "tree_damage": {
+      "rows": 10000,
+      "status": "SUCCESS"
+    },
+    "violations": {
+      "rows": 4000,
+      "status": "SUCCESS"
+    },
+    "weekly_construction": {
+      "rows": 50,
+      "status": "SUCCESS"
+    }
+  }
+}
