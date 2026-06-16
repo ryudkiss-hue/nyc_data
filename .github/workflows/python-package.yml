@@ -60,5 +60,5 @@ jobs:
           --ignore=tests/test_visualization.py \
           --ignore=tests/test_docker_environment.py \
           --ignore=tests/test_improvements.py \
-          --ignore=tests/test_analysis.py
+          --ignore=tests/test_analysis.py \
           --ignore=tests/test_live_socrata.py
