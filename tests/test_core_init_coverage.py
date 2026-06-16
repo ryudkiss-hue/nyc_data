@@ -1,12 +1,11 @@
 """Coverage tests for socrata_toolkit.core package-level helpers."""
 
 from __future__ import annotations
-import pytest
-
 
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
+import pytest
 
 
 class TestDuckDBExporter:

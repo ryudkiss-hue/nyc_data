@@ -9,6 +9,7 @@ import os
 import re
 from collections import defaultdict
 
+
 def extract_imports_from_file(filepath: str) -> list[tuple[str, str, list[str]]]:
     """
     Extract import statements from a file.

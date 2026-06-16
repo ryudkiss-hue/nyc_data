@@ -6,8 +6,6 @@ source modules, not the api module. Flask is required.
 """
 
 from __future__ import annotations
-import pytest
-
 
 from unittest.mock import MagicMock, patch
 

@@ -91,7 +91,6 @@ def timer_callback(func: Callable) -> Callable:
 
 def clear_cache():
     """Clear all cached values."""
-    global _CACHE_STORE
     _CACHE_STORE.clear()
     logger.info("Cache cleared")
 

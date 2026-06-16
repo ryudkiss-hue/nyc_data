@@ -1,10 +1,9 @@
 """Tests for socrata_toolkit.contracts data-contract validation."""
 
 from __future__ import annotations
-import pytest
-
 
 import pandas as pd
+import pytest
 
 from socrata_toolkit.contracts import (
     ContractViolation,

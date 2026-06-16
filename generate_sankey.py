@@ -2,8 +2,9 @@
 Generate Research Questions → Chart Recommendations Sankey Diagram as standalone HTML
 """
 
-import plotly.graph_objects as go
 import json
+
+import plotly.graph_objects as go
 
 # ============================================================================
 # SOURCE LAYER: Data Input Patterns
@@ -442,7 +443,7 @@ fig = go.Figure(data=[go.Sankey(
         source=source,
         target=target,
         value=value,
-        color=[f"rgba(200, 200, 200, 0.4)"] * len(flows),
+        color=["rgba(200, 200, 200, 0.4)"] * len(flows),
     ),
 )])
 

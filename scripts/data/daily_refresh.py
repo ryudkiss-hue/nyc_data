@@ -11,16 +11,23 @@ Usage:
   scheduler.add_job(daily_refresh, 'cron', hour=6, minute=0, timezone='UTC')
 """
 
-import sys
 import os
+import sys
+
 sys.path.insert(0, 'src')
 
-import duckdb
 import logging
 from datetime import datetime, timedelta
 
+import duckdb
+
 from socrata_toolkit.core.client import SocrataClient, SocrataConfig
-from socrata_toolkit.analysis.nlp_classifier import TextClassifierPipeline
+
+try:
+    from socrata_toolkit.analysis.nlp_classifier import TextClassifierPipeline
+    HAS_CLASSIFIER = True
+except Exception:
+    HAS_CLASSIFIER = False
 
 logging.basicConfig(
     level=logging.INFO,
@@ -28,21 +35,21 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Datasets to refresh (high-volume)
+# Datasets to refresh — date_field is the actual Socrata/DuckDB column name
 REFRESH_DATASETS = {
-    "violations": ("violation_issue_date", "6kbp-uz6m"),
-    "inspection": ("inspection_date", "dntt-gqwq"),
+    "violations": ("vissuedate", "6kbp-uz6m"),
+    "inspection": ("inspectiondate", "dntt-gqwq"),
     "dismissals": ("violation_issue_date", "p4u2-3jgx"),
     "complaints_311": ("created_date", "erm2-nwe9"),
-    "ramp_progress": ("startdate", "e7gc-ub6z"),
-    "ramp_complaints": ("date_received", "jagj-gttd"),
-    "street_permits": ("issued_date", "tqtj-sjs8"),
-    "street_construction_inspections": ("inspection_date", "ydkf-mpxb"),
-    "street_closures_block": ("closure_date", "i6b5-j7bu"),
-    "street_resurfacing_schedule": ("scheduled_start", "xnfm-u3k5"),
+    "ramp_progress": (None, "e7gc-ub6z"),          # no date column; full fetch
+    "ramp_complaints": ("complaint_date", "jagj-gttd"),
+    "street_permits": ("permitissuedate", "tqtj-sjs8"),
+    "street_construction_inspections": ("inspectiondate", "ydkf-mpxb"),
+    "street_closures_block": ("work_start_date", "i6b5-j7bu"),
+    "street_resurfacing_schedule": ("date", "xnfm-u3k5"),
     "correspondences": ("date_received", "bheb-sjfi"),
     "curb_metal_protruding": ("insp", "i2y3-sx2e"),
-    "tree_damage": ("report_date", "j6v2-6uxq"),
+    "tree_damage": ("inspect_date", "j6v2-6uxq"),
 }
 
 CLASSIFICATION_DATASETS = {
@@ -66,7 +73,7 @@ def daily_refresh():
 
     conn = duckdb.connect(db_path)
     client = SocrataClient(SocrataConfig())
-    pipeline = TextClassifierPipeline()
+    pipeline = TextClassifierPipeline() if HAS_CLASSIFIER else None
 
     yesterday = (datetime.now() - timedelta(days=1)).date()
     today = datetime.now().date()
@@ -78,8 +85,8 @@ def daily_refresh():
         try:
             logger.info(f"[REFRESH] {dataset_name}...")
 
-            # Fetch new records (since yesterday)
-            where = f"{date_field} >= '{yesterday}'"
+            # Fetch new records (since yesterday, or full fetch if no date field)
+            where = f"{date_field} >= '{yesterday}'" if date_field else None
             df = client.fetch_dataframe(
                 "data.cityofnewyork.us",
                 fourfour,
@@ -88,22 +95,23 @@ def daily_refresh():
             )
 
             if len(df) == 0:
-                logger.info(f"  (no new records)")
+                logger.info("  (no new records)")
                 continue
 
             logger.info(f"  {len(df)} new records")
             total_new += len(df)
 
-            # Upsert into raw schema
+            # Insert only columns present in the incremental fetch (schema may vary)
             raw_table = f"raw.{dataset_name}"
+            raw_cols = ", ".join(f'"{c}"' for c in df.columns)
             conn.register(f"{dataset_name}_new", df)
             conn.execute(f"""
-            INSERT OR REPLACE INTO {raw_table}
-            SELECT * FROM {dataset_name}_new
+            INSERT INTO {raw_table} ({raw_cols})
+            SELECT {raw_cols} FROM {dataset_name}_new
             """)
 
             # Classify if applicable
-            if dataset_name in CLASSIFICATION_DATASETS:
+            if dataset_name in CLASSIFICATION_DATASETS and pipeline is not None:
                 classifier_type = CLASSIFICATION_DATASETS[dataset_name]
 
                 if classifier_type == "violations":
@@ -111,16 +119,17 @@ def daily_refresh():
                 elif classifier_type == "complaints":
                     classified_df = pipeline.classify_complaints_dataframe(df)
                 elif classifier_type == "tree_damage":
-                    classified_df = df  # Simplified for now
+                    classified_df = df
                 else:
                     classified_df = df
 
-                # Upsert into staging
+                # Insert into staging using only columns present in classified output
                 staging_table = f"staging.{dataset_name}"
+                stg_cols = ", ".join(f'"{c}"' for c in classified_df.columns)
                 conn.register(f"{dataset_name}_classified", classified_df)
                 conn.execute(f"""
-                INSERT OR REPLACE INTO {staging_table}
-                SELECT * FROM {dataset_name}_classified
+                INSERT INTO {staging_table} ({stg_cols})
+                SELECT {stg_cols} FROM {dataset_name}_classified
                 """)
 
             successful += 1
@@ -132,30 +141,29 @@ def daily_refresh():
     logger.info("\n[VIEWS] Refreshing analytics...")
 
     try:
-        # Violations summary
+        # Violations by month — recreate view so it reflects latest raw data
         conn.execute("""
-        INSERT OR REPLACE INTO analytics.violations_by_borough
+        CREATE OR REPLACE VIEW analytics.violations_by_borough AS
         SELECT
-          Borough,
+          DATE_TRUNC('month', TRY_CAST(vissuedate AS DATE)) as month,
           COUNT(*) as violation_count,
-          COUNT(DISTINCT site_street_address) as affected_addresses,
-          DATE_TRUNC('month', violation_issue_date) as month
+          COUNT(DISTINCT swv_number) as unique_violations
         FROM raw.violations
-        WHERE violation_issue_date >= DATE '2024-01-01'
-        GROUP BY Borough, DATE_TRUNC('month', violation_issue_date)
+        WHERE vissuedate IS NOT NULL
+          AND TRY_CAST(vissuedate AS DATE) >= DATE '2024-01-01'
+        GROUP BY DATE_TRUNC('month', TRY_CAST(vissuedate AS DATE))
         """)
 
-        # Ramp progress summary
+        # Ramp progress summary — recreate view so it reflects latest raw data
         conn.execute("""
-        INSERT OR REPLACE INTO analytics.ramp_progress_summary
+        CREATE OR REPLACE VIEW analytics.ramp_progress_summary AS
         SELECT
-          Borough,
+          borough,
           COUNT(*) as total_ramps,
-          SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) as completed_ramps,
-          ROUND(100.0 * SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) / COUNT(*), 1) as completion_pct,
-          AVG(CAST(percent_complete AS FLOAT)) as avg_progress
+          SUM(CASE WHEN construc_2 IN ('Constructed', 'Complex Constructed') THEN 1 ELSE 0 END) as completed_ramps,
+          ROUND(100.0 * SUM(CASE WHEN construc_2 IN ('Constructed', 'Complex Constructed') THEN 1 ELSE 0 END) / COUNT(*), 1) as completion_pct
         FROM raw.ramp_progress
-        GROUP BY Borough
+        GROUP BY borough
         """)
 
         logger.info("  ✓ Views updated")
@@ -178,8 +186,8 @@ def daily_refresh():
     logger.info(f"  Database size: {db_size_mb:.1f} MB")
 
     raw_count = conn.execute("""
-    SELECT COUNT(*) as total FROM (
-        SELECT COUNT(*) FROM raw.violations
+    SELECT SUM(cnt) FROM (
+        SELECT COUNT(*) AS cnt FROM raw.violations
         UNION ALL SELECT COUNT(*) FROM raw.inspection
         UNION ALL SELECT COUNT(*) FROM raw.dismissals
         UNION ALL SELECT COUNT(*) FROM raw.complaints_311
@@ -190,7 +198,7 @@ def daily_refresh():
 
     # Summary
     logger.info("\n" + "=" * 70)
-    logger.info(f"DAILY REFRESH COMPLETE")
+    logger.info("DAILY REFRESH COMPLETE")
     logger.info("=" * 70)
     logger.info(f"New records: {total_new:,}")
     logger.info(f"Datasets updated: {successful}/{len(REFRESH_DATASETS)}")
@@ -206,11 +214,11 @@ def archive_old_data(conn, days_old=30):
 
     # Datasets with date fields suitable for archival
     archive_datasets = [
-        ("violations", "violation_issue_date"),
-        ("inspection", "inspection_date"),
+        ("violations", "vissuedate"),
+        ("inspection", "inspectiondate"),
         ("dismissals", "violation_issue_date"),
         ("complaints_311", "created_date"),
-        ("street_construction_inspections", "inspection_date"),
+        ("street_construction_inspections", "inspectiondate"),
     ]
 
     logger.info(f"  Archiving records older than {cutoff_date}...")

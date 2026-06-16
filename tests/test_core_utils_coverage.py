@@ -1,8 +1,6 @@
 """Tests for core.utils module."""
 
 from __future__ import annotations
-import pytest
-
 
 import time
 from unittest.mock import MagicMock, patch

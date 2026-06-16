@@ -40,13 +40,13 @@ HEALTHCHECK --interval=60s --timeout=10s --retries=3 \
     CMD python -c "import sys; sys.exit(0)"
 CMD ["python", "-m", "socrata_toolkit.core.cli", "analyst", "run"]
 
-# Stage 3: Mission - Manhattan Mission Control (Streamlit)
+# Stage 3: Mission - NYC DOT SIM Toolkit (Streamlit)
 FROM base AS mission
-LABEL description="Manhattan Mission Control (Streamlit)"
+LABEL description="NYC DOT SIM Toolkit (Streamlit)"
 EXPOSE 8501
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-    CMD curl -f http://localhost:8501/healthz || exit 1
-CMD ["streamlit", "run", "app/main.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.headless=true"]
+    CMD curl -f http://localhost:8501/_stcore/health || exit 1
+CMD ["streamlit", "run", "app/app.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.headless=true"]
 
 # Stage 4: Turbo - Dash platform
 FROM base AS turbo

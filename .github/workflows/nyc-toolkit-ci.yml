@@ -93,16 +93,19 @@ jobs:
           SOCRATA_APP_TOKEN: ${{ secrets.SOCRATA_APP_TOKEN }}
         run: python -m socrata_toolkit.core.cli readiness
 
-  docker-mission:
-    name: Docker (Mission Control)
+  docker-build:
+    name: Docker Build Verification
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - uses: docker/setup-buildx-action@v4
-      - name: Build mission image
+      - name: Build toolkit image (mission target)
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./Dockerfile.mission
+          file: ./Dockerfile
+          target: mission
           push: false
-          tags: nyc-dot-mission-control:ci
+          tags: nyc-dot-sim-toolkit:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

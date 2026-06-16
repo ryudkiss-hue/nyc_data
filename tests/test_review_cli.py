@@ -1,9 +1,8 @@
 from __future__ import annotations
-import pytest
-
 
 from pathlib import Path
 
+import pytest
 from click.testing import CliRunner
 
 from socrata_toolkit.core.cli import main

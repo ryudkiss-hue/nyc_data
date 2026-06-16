@@ -1,6 +1,6 @@
 import re
 
-with open('app/viz_engine.py', 'r', encoding='utf-8') as f:
+with open('app/viz_engine.py', encoding='utf-8') as f:
     text = f.read()
 
 parts = text.split('        insight = ')

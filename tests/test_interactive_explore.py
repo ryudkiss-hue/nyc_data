@@ -1,8 +1,6 @@
 """Tests for interactive exploration components and explore helpers."""
 
 from __future__ import annotations
-import pytest
-
 
 import sys
 from pathlib import Path

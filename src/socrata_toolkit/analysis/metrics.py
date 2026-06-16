@@ -504,8 +504,6 @@ class MetricsRegistry:
 
     def __init__(self, **kwargs):
         self.metrics: dict[str, MetricPoint] = {}
-        for k, v in kwargs.items():
-            setattr(self, k, v)
 
     def register(self, name: str, metric: MetricPoint):
         self.metrics[name] = metric
@@ -697,7 +695,7 @@ class BusinessRulesEngine:
         """Apply hard (critical) rules to DataFrame."""
         violations = []
         for name, rule in self.rules.items():
-            if hasattr(rule, 'mode') and rule.mode in (RuleMode.HARD,):
+            if hasattr(rule, 'mode') and getattr(rule.mode, 'value', None) == 'hard':
                 if hasattr(rule, 'rule_func') and callable(rule.rule_func):
                     try:
                         result = rule.rule_func(df)

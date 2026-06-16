@@ -1,8 +1,6 @@
 """Tests for Advanced Analytics Skills."""
 
 from __future__ import annotations
-import pytest
-
 
 import numpy as np
 import pandas as pd
