@@ -182,6 +182,10 @@ class ValidationResultsAggregator:
         return failures[-limit:]
 
 
-def run_validation(data: Any, rules: dict[str, Any]) -> bool:
-    """Run validation against a set of rules."""
+def run_validation(data: Any, rules: dict[str, Any] = None) -> bool:
+    """Run validation against a set of rules and return True if passed."""
+    if isinstance(data, pd.DataFrame):
+        validator = QualityValidator()
+        result = validator.validate(data)
+        return result.status in (ValidationStatus.PASS, ValidationStatus.WARN)
     return True

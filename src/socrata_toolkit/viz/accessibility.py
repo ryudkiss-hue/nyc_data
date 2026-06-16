@@ -8,23 +8,15 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from .branding import DOT_BLACK, PLOTLY_LAYOUT, WCAG_PALETTE
+
 logger = logging.getLogger(__name__)
 
 # WCAG 2.1 AA Compliant Color Palette for NYC DOT
-# High contrast, distinct for color-blind users
-WCAG_PALETTE = [
-    "#003366", # DOT Blue (Dark)
-    "#D63384", # Deep Pink
-    "#198754", # Success Green (Dark)
-    "#FD7E14", # Warning Orange (High Contrast)
-    "#6610F2", # Indigo
-    "#0D6EFD", # Primary Blue
-    "#20C997", # Teal
-]
-
+# Use centralized palette from branding.py
 def apply_wcag_palette(fig: Any) -> Any:
     """
-    Applies a WCAG compliant color palette to a Plotly figure.
+    Applies a WCAG compliant color palette and DOT branding to a Plotly figure.
 
     Args:
         fig: A Plotly Figure object.
@@ -34,10 +26,12 @@ def apply_wcag_palette(fig: Any) -> Any:
     """
     fig.update_layout(
         template="plotly_white",
-        colorway=WCAG_PALETTE,
-        font=dict(color="#212529") # Dark grey for text
+        **PLOTLY_LAYOUT
     )
-    logger.debug("Applied WCAG palette to figure")
+    # Ensure redundant encoding (markers + lines) for accessibility
+    fig.update_traces(marker=dict(line=dict(color=DOT_BLACK, width=1)))
+
+    logger.debug("Applied WCAG palette and DOT branding to figure")
     return fig
 
 def generate_chart_summary(fig: Any) -> str:
