@@ -1,7 +1,5 @@
 """Comprehensive tests for spatial.geodataframe module."""
 from __future__ import annotations
-import pytest
-
 
 import json
 from unittest.mock import MagicMock, patch

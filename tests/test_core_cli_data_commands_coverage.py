@@ -6,8 +6,6 @@ so we patch those in ``socrata_toolkit.core.cli`` and feed mock HTTP responses.
 """
 
 from __future__ import annotations
-import pytest
-
 
 import json
 from datetime import datetime, timezone

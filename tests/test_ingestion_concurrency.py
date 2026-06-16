@@ -1,5 +1,3 @@
-import pytest
-
 import threading
 import time
 from unittest.mock import MagicMock, patch

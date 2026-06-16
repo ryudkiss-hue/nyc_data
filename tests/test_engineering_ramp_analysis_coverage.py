@@ -5,8 +5,6 @@ The analyst.ramp_analysis module is already at 100% coverage and is
 not touched here.
 """
 from __future__ import annotations
-import pytest
-
 
 import pandas as pd
 import pytest

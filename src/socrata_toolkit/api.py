@@ -24,10 +24,10 @@ Run standalone::
 from __future__ import annotations
 
 import json
-from typing import Any, List, Optional
 from pathlib import Path
+from typing import Any, List, Optional
 
-from fastapi import FastAPI, HTTPException, Request, Body, Query, Depends
+from fastapi import Body, Depends, FastAPI, HTTPException, Query, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -93,7 +93,7 @@ async def dataset(
 ):
     from .client import SocrataClient
     client = SocrataClient()
-    
+
     # Turbo-Stream: Implementation of StreamingResponse for heavy datasets
     def generate():
         df = client.fetch_dataframe(domain, fourfour, max_rows=max_rows)
@@ -118,12 +118,13 @@ async def metadata(
 @app.post("/api/analyze")
 async def analyze(data: RowData):
     import pandas as pd
+
     from .analysis import profile_dataframe
-    
+
     df = pd.DataFrame(data.rows)
     if df.empty:
         raise HTTPException(status_code=400, detail="Empty rows provided")
-        
+
     profile = profile_dataframe(df)
     return {
         "row_count": profile.row_count,
@@ -135,8 +136,9 @@ async def analyze(data: RowData):
 @app.post("/api/quality-score")
 async def quality_score(data: RowData):
     import pandas as pd
+
     from .governance import compute_quality_score
-    
+
     df = pd.DataFrame(data.rows)
     if df.empty:
         raise HTTPException(status_code=400, detail="Empty rows provided")
@@ -157,13 +159,14 @@ async def quality_score(data: RowData):
 @app.post("/api/prioritize")
 async def prioritize(data: RowData):
     import pandas as pd
+
     from .construction_list import (
         classify_scope,
         flag_ada_locations,
         prioritize_construction_list,
         summarize_construction_list,
     )
-    
+
     df = pd.DataFrame(data.rows)
     if df.empty:
         raise HTTPException(status_code=400, detail="Empty rows provided")
@@ -174,7 +177,7 @@ async def prioritize(data: RowData):
     df = classify_scope(df)
     df = flag_ada_locations(df)
     summary = summarize_construction_list(df)
-    
+
     return {
         "summary": {
             "total_locations": summary.total_locations,
@@ -192,8 +195,9 @@ async def prioritize(data: RowData):
 @app.post("/api/triage")
 async def triage(data: RowData):
     import pandas as pd
+
     from .nlp_integration import triage_complaints
-    
+
     df = pd.DataFrame(data.rows)
     if df.empty:
         raise HTTPException(status_code=400, detail="Empty rows provided")
@@ -227,7 +231,7 @@ async def create_task(data: TaskCreate):
         board = TaskBoard.load(str(board_path))
     else:
         board = TaskBoard()
-        
+
     task = Task(
         title=data.title,
         description=data.description,

@@ -482,7 +482,7 @@ if __name__ == "__main__":
             metadata = generate_dive_metadata(kpi_name, kpi_def)
             print(f"  Metadata: {json.dumps(metadata, indent=2)}")
             # Code generation would happen here with MCP save_dive call
-            print(f"  Status: Ready for MotherDuck save (via save_dive MCP)")
+            print("  Status: Ready for MotherDuck save (via save_dive MCP)")
     else:
         # Default: show one example
         example_kpi = "phase_b_clustering_strength"

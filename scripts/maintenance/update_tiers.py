@@ -1,6 +1,6 @@
 import re
 
-with open('app/dash_layouts.py', 'r', encoding='utf-8') as f:
+with open('app/dash_layouts.py', encoding='utf-8') as f:
     text = f.read()
 
 replacements = ["viz-curb-metal", "viz-planimetric", "viz-ramp-heatmap", "isochrone", "equity"]

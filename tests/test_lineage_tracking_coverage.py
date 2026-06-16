@@ -15,8 +15,6 @@ Each test resets the module-level globals (_lineage_nodes, _lineage_persistence)
 via fixtures so tests are fully independent.
 """
 from __future__ import annotations
-import pytest
-
 
 from unittest.mock import MagicMock, patch
 

@@ -1,7 +1,5 @@
 """Comprehensive tests for spatial.metrics module."""
 from __future__ import annotations
-import pytest
-
 
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch

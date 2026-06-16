@@ -1,74 +1,50 @@
-services:
-  postgres:
-    image: postgis/postgis:15-3.3
-    environment:
-      POSTGRES_USER: ${DB_USER:-nyc_analyst}
-      POSTGRES_PASSWORD: ${DB_PASS:-secure_password}
-      POSTGRES_DB: ${DB_NAME:-nyc_data}
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-nyc_analyst} -d ${DB_NAME:-nyc_data}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+# Canonical Docker Compose for NYC DOT SIM Toolkit
+# Local development: Uses DuckDB (no external database required)
+# Cloud deployment: Uses multi-stage Dockerfile build targets
 
+services:
   mission-control:
     build:
       context: .
+      dockerfile: Dockerfile
       target: mission
+    container_name: nyc-dot-sim-toolkit
     ports:
       - "8501:8501"
     env_file:
-      - .env
+      - path: .env
+        required: false
     environment:
-      MISSION_DEMO: ${MISSION_DEMO:-0}
-      PG_DSN: postgresql://${DB_USER:-nyc_analyst}:${DB_PASS:-secure_password}@postgres:5432/${DB_NAME:-nyc_data}
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-  dash-app:
-    build:
-      context: .
-      target: turbo
-    ports:
-      - "8012:8012"
-    env_file:
-      - .env
-    environment:
-      PG_DSN: postgresql://${DB_USER:-nyc_analyst}:${DB_PASS:-secure_password}@postgres:5432/${DB_NAME:-nyc_data}
+      MISSION_DEMO: "${MISSION_DEMO:-0}"
+      SOCRATA_CACHE_DIR: "/app/data/cache"
+      DUCKDB_PATH: "/app/data/local_db/nyc_mission_control.duckdb"
     volumes:
-      - .:/app
-      - .cache/socrata_data:/app/.cache/socrata_data
-      - .cache/serverside_data:/app/.cache/serverside_data
-    depends_on:
-      postgres:
-        condition: service_healthy
+      - ./data/cache:/app/data/cache
+      - ./data/local_db:/app/data/local_db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   analyst-runner:
     build:
       context: .
+      dockerfile: Dockerfile
       target: analyst
+    container_name: nyc-dot-analyst-cli
     profiles: ["batch"]
     env_file:
-      - .env
+      - path: .env
+        required: false
     environment:
-      ANALYST_PROFILE: config/analyst_profile.example.yaml
-      PG_DSN: postgresql://${DB_USER:-nyc_analyst}:${DB_PASS:-secure_password}@postgres:5432/${DB_NAME:-nyc_data}
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-  prometheus:
-    image: prom/prometheus:v2.47.0
-    profiles: ["observability"]
-    ports:
-      - "9090:9090"
+      ANALYST_PROFILE: "config/analyst_profile.example.yaml"
+      SOCRATA_CACHE_DIR: "/app/data/cache"
+      DUCKDB_PATH: "/app/data/local_db/nyc_mission_control.duckdb"
     volumes:
-      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./data/cache:/app/data/cache
+      - ./data/local_db:/app/data/local_db
+      - ./outputs:/app/outputs
 
-volumes:
-  pgdata:
+volumes: {}

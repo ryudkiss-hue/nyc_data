@@ -1,7 +1,5 @@
 import pytest
 
-import pytest
-
 pytest.importorskip("plotly", reason="plotly required for chart tests")
 
 import pandas as pd

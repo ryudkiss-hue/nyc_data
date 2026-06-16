@@ -1,8 +1,6 @@
 """Tests for Tier 3 Analytics Dashboard components."""
 
 from __future__ import annotations
-import pytest
-
 
 import pandas as pd
 import pytest

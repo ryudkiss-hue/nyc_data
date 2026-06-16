@@ -286,6 +286,8 @@ class VisualizationEngine:
 
     @staticmethod
     def chart_grover_speedup(data_bundle) -> tuple[go.Figure, str]:
+        # Educational visualization: theoretical quantum algorithm complexity.
+        # TODO: Replace with real DuckDB query performance benchmarks (current vs. optimized scans).
         n_records = 1000000
         classical = np.arange(0, n_records, 10000)
         quantum = np.sqrt(classical)
@@ -293,7 +295,7 @@ class VisualizationEngine:
         fig.add_trace(go.Scatter(x=classical, y=classical, name="Classical Scan: O(N)", line=dict(color="#64748B", width=2)))
         fig.add_trace(go.Scatter(x=classical, y=quantum, name="Quantum Advantage: O(√N)", fill='tozeroy', fillcolor="rgba(16,185,129,0.3)", line=dict(color="#10B981", width=3)))
         fig = VisualizationEngine._apply_standard_layout(fig, "Theoretical Quantum Search Acceleration", "Municipal Database Size (N)", "Required Computational Cycles")
-        insight = "**Results:** Demonstrates the quadratic speedup possible when replacing linear O(N) database scans with amplitude amplification models.\n\n**Next Steps:** As dataset sizes approach 10M+ rows, prepare infrastructure to migrate heavy geospatial joins to quantum-simulated or highly-parallelized DuckDB environments."
+        insight = "**Results:** Educational visualization of theoretical quantum algorithm complexity. Real query performance optimization should be measured against DuckDB execution plans.\n\n**Next Steps:** Profile actual query times (EXPLAIN ANALYZE) and implement materialized views for frequently-scanned datasets."
         return fig, insight
 
     @staticmethod
@@ -312,22 +314,39 @@ class VisualizationEngine:
 
     @staticmethod
     def chart_isochrone_walkability() -> tuple[go.Figure, str]:
+        # Placeholder visualization: geometric walkability zones.
+        # TODO: Replace with real OSRM/Google Maps API isochrone data or walking-time analysis from pedestrian demand dataset.
         theta = np.linspace(0, 2*np.pi, 100)
         fig = go.Figure()
         for radius, label, color in [(0.5, "5 min", "#10B981"), (1.0, "10 min", "#F59E0B"), (1.5, "15 min", "#EF4444")]:
             fig.add_trace(go.Scatter(x=radius * np.cos(theta), y=radius * np.sin(theta), name=label, fill='toself', fillcolor=color.replace(")", ", 0.1)").replace("rgb", "rgba") if "rgb" in color else None, line=dict(color=color, width=2)))
-        fig.update_layout(title="ADA Pedestrian Catchment Isochrones", xaxis_title="Easting Radius", yaxis_title="Northing Radius", template="simple_white", hovermode="x unified")
-        insight = "**Results:** Synthetic representation of network-based walkability boundaries originating from ADA-compliant ramps. Concentric expansion visualizes accessibility drop-offs.\n\n**Next Steps:** Intersect these polygons against US Census Tract geometries to quantify the exact volume of vulnerable populations stranded outside the 15-minute boundary."
+        fig.update_layout(title="ADA Pedestrian Catchment Isochrones (Placeholder)", xaxis_title="Easting Radius", yaxis_title="Northing Radius", template="simple_white", hovermode="x unified")
+        insight = "**Results:** Placeholder representation of network-based walkability boundaries. Real implementation requires routing engine integration.\n\n**Next Steps:** Integrate OSRM or Google Maps Platform isochrone API; intersect against US Census Tract geometries to quantify accessibility gaps."
         return fig, insight
 
     @staticmethod
     def chart_equity_multiplier() -> tuple[go.Figure, str]:
-        boros = ["MANHATTAN", "BROOKLYN", "QUEENS", "BRONX", "STATEN ISLAND"]
-        multipliers = [1.0, 2.0, 1.5, 2.0, 1.0]
+        # Load equity policy from configuration file.
+        import json
+        from pathlib import Path
+
+        policy_path = Path(__file__).resolve().parent.parent / "data" / "equity_policy.json"
+        if policy_path.exists():
+            with open(policy_path) as f:
+                policy = json.load(f)
+            multipliers_data = policy.get("borough_multipliers", {})
+            boros = list(multipliers_data.keys())
+            multipliers = list(multipliers_data.values())
+            max_mult = policy.get("maximum_multiplier", 2.0)
+        else:
+            boros = ["MANHATTAN", "BROOKLYN", "QUEENS", "BRONX", "STATEN ISLAND"]
+            multipliers = [1.0, 2.0, 1.5, 2.0, 1.0]
+            max_mult = 2.0
+
         fig = px.bar(x=boros, y=multipliers, color=boros, color_discrete_sequence=px.colors.qualitative.Prism)
-        fig.add_hline(y=2.0, line_dash="dot", line_color="#EF4444", annotation_text="Absolute Maximum Boost Limit")
-        fig = VisualizationEngine._apply_standard_layout(fig, "Socio-Economic Equity Prioritization Engine", "Geographic Borough", "Active Routing Multiplier Factor (x)")
-        insight = "**Results:** Quantifies the artificial inflation of complaint priority based on algorithmic equity mapping. Bronx and Brooklyn are currently overriding standard queuing by 2.0x.\n\n**Next Steps:** Review dispatch logs to ensure this multiplier is actually translating into a shorter physical response time (MTTR) on the ground."
+        fig.add_hline(y=max_mult, line_dash="dot", line_color="#EF4444", annotation_text="Policy Maximum")
+        fig = VisualizationEngine._apply_standard_layout(fig, "Equity Prioritization: Borough Routing Multipliers", "Geographic Borough", "Complaint Priority Multiplier (x)")
+        insight = f"**Results:** Equity policy applies differential routing multipliers to prioritize underserved communities. Maximum factor is {max_mult}x.\n\n**Next Steps:** Audit dispatch logs to verify that policy-weighted complaints achieve proportionally shorter MTTR compared to standard routing."
         return fig, insight
 
     @staticmethod
@@ -350,18 +369,22 @@ class VisualizationEngine:
 
     @staticmethod
     def chart_markov_decay(data_bundle) -> tuple[go.Figure, str]:
-        """Phase 3: Markov Decay Visualizer (3D Surface)."""
+        """Markov Decay Visualizer: Infrastructure Deterioration Model.
+        TODO: Replace theoretical curve with empirical transition rates from inspection history.
+        """
+        # Placeholder: theoretical exponential decay model.
+        # Real implementation should estimate transition probabilities from historical condition scores.
         x = np.linspace(0, 20, 21)
         y = np.linspace(1, 5, 5)
         X, Y = np.meshgrid(x, y)
         Z = np.exp(-(X/5) * (Y-1))
         fig = go.Figure(data=[go.Surface(z=Z, x=X, y=Y, colorscale='Magma', opacity=0.9)])
         fig.update_layout(
-            title=dict(text='Markov Chain Transition Probability Matrix (Deterioration)', font=dict(size=18)),
-            scene=dict(xaxis_title='Lifespan Horizon (Years)', yaxis_title='Condition State Degradation (1-5)', zaxis_title='Stochastic Transition Probability'),
+            title=dict(text='Theoretical Markov Deterioration (Exponential Model)', font=dict(size=18)),
+            scene=dict(xaxis_title='Lifespan Horizon (Years)', yaxis_title='Condition State (1-5)', zaxis_title='Transition Probability'),
             margin=dict(l=0, r=0, b=0, t=50)
         )
-        insight = "**Results:** A multi-dimensional visualization of the asset deterioration curve. The slope indicates the probabilistic rate at which infrastructure drops from Excellent (1) to Failing (5) over a 20-year horizon.\n\n**Next Steps:** Use the surface intersection point at State 4 as the mathematical trigger for issuing proactive resurfacing contracts."
+        insight = "**Results:** Placeholder visualization of theoretical asset deterioration using exponential decay. Real implementation requires empirical transition matrix from historical condition scores.\n\n**Next Steps:** Fit Markov chain to actual inspection history (material type + age → observed condition progression) and use empirical transition matrix for forecasting."
         return fig, insight
 
     @staticmethod

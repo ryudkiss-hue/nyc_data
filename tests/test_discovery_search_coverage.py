@@ -12,8 +12,6 @@ Coverage strategy:
 - Test the module-level SocrataClient instantiation stays isolated.
 """
 from __future__ import annotations
-import pytest
-
 
 import sys
 import types

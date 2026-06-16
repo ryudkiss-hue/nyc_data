@@ -5,8 +5,6 @@ Covers all public methods plus key branches: cycle detection, cache hits,
 OpenMetadata export, JSON round-trips, and the in-memory (no-DB) registry path.
 """
 from __future__ import annotations
-import pytest
-
 
 import json
 from unittest.mock import MagicMock, patch
