@@ -1,6 +1,15 @@
 """
+⚠️ ARCHIVED ENTRY POINT (Superseded by app/app.py)
+
+This file is legacy and no longer maintained. Use 'streamlit run app/app.py' instead.
+
 Manhattan Mission Control: Elite Operational Engine (v2.0 - SaaS Grade)
 A unified, premium Streamlit application for NYC DOT SIM Project Analysts.
+
+MIGRATION: Run the canonical app with:
+  streamlit run app/app.py
+Or use the shim:
+  python main.py
 """
 from __future__ import annotations
 
