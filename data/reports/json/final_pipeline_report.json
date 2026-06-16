@@ -1,0 +1,129 @@
+{
+  "execution": {
+    "timestamp": "2026-06-16T18:26:06.553846",
+    "pipeline": "optimized_parallel_fetch + duckdb_load",
+    "data_source": "LIVE Socrata API"
+  },
+  "datasets": {
+    "total": 18,
+    "loaded": 18,
+    "total_rows": 3085202,
+    "all_live": true
+  },
+  "table_summary": {
+    "built": {
+      "rows": 105990,
+      "columns": 14,
+      "status": "LOADED",
+      "data_type": "LIVE"
+    },
+    "capital_intersections": {
+      "rows": 7817,
+      "columns": 29,
+      "status": "LOADED",
+      "data_type": "LIVE"
+    },
+    "correspondences": {
+      "rows": 30726,
+      "columns": 27,
+      "status": "LOADED",
+      "data_type": "LIVE"
+    },
+    "curb_metal_protruding": {
+      "rows": 23493,
+      "columns": 17,
+      "status": "LOADED",
+      "data_type": "LIVE"
+    },
+    "dismissals": {
+      "rows": 85567,
+      "columns": 29,
+      "status": "LOADED",
+      "data_type": "LIVE"
+    },
+    "inspection": {
+      "rows": 399424,
+      "columns": 17,
+      "status": "LOADED",
+      "data_type": "LIVE"
+    },
+    "lot_info": {
+      "rows": 1211601,
+      "columns": 5,
+      "status": "LOADED",
+      "data_type": "LIVE"
+    },
+    "pedestrian_demand": {
+      "rows": 127277,
+      "columns": 20,
+      "status": "LOADED",
+      "data_type": "LIVE"
+    },
+    "ramp_complaints": {
+      "rows": 6051,
+      "columns": 15,
+      "status": "LOADED",
+      "data_type": "LIVE"
+    },
+    "ramp_locations": {
+      "rows": 217679,
+      "columns": 29,
+      "status": "LOADED",
+      "data_type": "LIVE"
+    },
+    "ramp_progress": {
+      "rows": 187546,
+      "columns": 13,
+      "status": "LOADED",
+      "data_type": "LIVE"
+    },
+    "reinspection": {
+      "rows": 36656,
+      "columns": 8,
+      "status": "LOADED",
+      "data_type": "LIVE"
+    },
+    "step_streets": {
+      "rows": 110,
+      "columns": 4,
+      "status": "LOADED",
+      "data_type": "LIVE"
+    },
+    "street_closures_block": {
+      "rows": 3433,
+      "columns": 11,
+      "status": "LOADED",
+      "data_type": "LIVE"
+    },
+    "street_resurfacing_schedule": {
+      "rows": 311268,
+      "columns": 15,
+      "status": "LOADED",
+      "data_type": "LIVE"
+    },
+    "tree_damage": {
+      "rows": 17661,
+      "columns": 13,
+      "status": "LOADED",
+      "data_type": "LIVE"
+    },
+    "violations": {
+      "rows": 312828,
+      "columns": 27,
+      "status": "LOADED",
+      "data_type": "LIVE"
+    },
+    "weekly_construction": {
+      "rows": 75,
+      "columns": 4,
+      "status": "LOADED",
+      "data_type": "LIVE"
+    }
+  },
+  "analyst_ready": true,
+  "quality": {
+    "validation": "COMPLETE",
+    "schema_fix": "APPLIED",
+    "optimization": "APPLIED"
+  }
+}

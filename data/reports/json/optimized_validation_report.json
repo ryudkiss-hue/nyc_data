@@ -1,0 +1,176 @@
+{
+  "execution": {
+    "timestamp": "2026-06-16T18:25:44.591004",
+    "data_source": "LIVE (Socrata API)",
+    "optimization": "parallel_batch_fetch + duckdb_indexing"
+  },
+  "validation": {
+    "total_datasets": 19,
+    "valid_datasets": 14,
+    "total_rows": 2541450,
+    "all_live": true
+  },
+  "duckdb": {
+    "tables_loaded": 14,
+    "database": "data/local_db/nyc_mission_control.duckdb"
+  },
+  "analyst_readiness": {
+    "dashboard_queries_generated": 0,
+    "borough_analysis": "READY",
+    "construction_analysis": "READY",
+    "violation_analysis": "READY"
+  },
+  "validation_details": {
+    "built": {
+      "rows": 105990,
+      "columns": 14,
+      "null_rate": 74.33,
+      "duplicates": 96,
+      "size_mb": 1.24066162109375,
+      "status": "VALID",
+      "data_type": "LIVE"
+    },
+    "capital_intersections": {
+      "error": "unhashable type: 'dict'",
+      "status": "FAILED",
+      "data_type": "ERROR"
+    },
+    "correspondences": {
+      "rows": 30726,
+      "columns": 27,
+      "null_rate": 40.78,
+      "duplicates": 166,
+      "size_mb": 1.9654817581176758,
+      "status": "VALID",
+      "data_type": "LIVE"
+    },
+    "curb_metal_protruding": {
+      "rows": 23493,
+      "columns": 17,
+      "null_rate": 16.34,
+      "duplicates": 4,
+      "size_mb": 0.7773065567016602,
+      "status": "VALID",
+      "data_type": "LIVE"
+    },
+    "dismissals": {
+      "rows": 85567,
+      "columns": 29,
+      "null_rate": 11.11,
+      "duplicates": 10181,
+      "size_mb": 5.166974067687988,
+      "status": "VALID",
+      "data_type": "LIVE"
+    },
+    "inspection": {
+      "rows": 399424,
+      "columns": 17,
+      "null_rate": 11.93,
+      "duplicates": 90,
+      "size_mb": 3.6386022567749023,
+      "status": "VALID",
+      "data_type": "LIVE"
+    },
+    "lot_info": {
+      "rows": 1211601,
+      "columns": 5,
+      "null_rate": 0.15,
+      "duplicates": 0,
+      "size_mb": 10.127901077270508,
+      "status": "VALID",
+      "data_type": "LIVE"
+    },
+    "pedestrian_demand": {
+      "error": "unhashable type: 'dict'",
+      "status": "FAILED",
+      "data_type": "ERROR"
+    },
+    "ramp_complaints": {
+      "rows": 6051,
+      "columns": 15,
+      "null_rate": 14.79,
+      "duplicates": 527,
+      "size_mb": 0.1948709487915039,
+      "status": "VALID",
+      "data_type": "LIVE"
+    },
+    "ramp_locations": {
+      "error": "unhashable type: 'dict'",
+      "status": "FAILED",
+      "data_type": "ERROR"
+    },
+    "ramp_progress": {
+      "error": "unhashable type: 'dict'",
+      "status": "FAILED",
+      "data_type": "ERROR"
+    },
+    "reinspection": {
+      "rows": 36656,
+      "columns": 8,
+      "null_rate": 9.51,
+      "duplicates": 16,
+      "size_mb": 0.5169363021850586,
+      "status": "VALID",
+      "data_type": "LIVE"
+    },
+    "sidewalk_planimetric": {
+      "rows": 0,
+      "columns": 0,
+      "null_rate": 0,
+      "duplicates": 0,
+      "size_mb": 0.000606536865234375,
+      "status": "VALID",
+      "data_type": "LIVE"
+    },
+    "step_streets": {
+      "rows": 110,
+      "columns": 4,
+      "null_rate": 0.0,
+      "duplicates": 0,
+      "size_mb": 0.005694389343261719,
+      "status": "VALID",
+      "data_type": "LIVE"
+    },
+    "street_closures_block": {
+      "error": "unhashable type: 'dict'",
+      "status": "FAILED",
+      "data_type": "ERROR"
+    },
+    "street_resurfacing_schedule": {
+      "rows": 311268,
+      "columns": 15,
+      "null_rate": 5.75,
+      "duplicates": 6736,
+      "size_mb": 13.936657905578613,
+      "status": "VALID",
+      "data_type": "LIVE"
+    },
+    "tree_damage": {
+      "rows": 17661,
+      "columns": 13,
+      "null_rate": 25.86,
+      "duplicates": 0,
+      "size_mb": 0.7583522796630859,
+      "status": "VALID",
+      "data_type": "LIVE"
+    },
+    "violations": {
+      "rows": 312828,
+      "columns": 27,
+      "null_rate": 34.74,
+      "duplicates": 1069,
+      "size_mb": 12.099843978881836,
+      "status": "VALID",
+      "data_type": "LIVE"
+    },
+    "weekly_construction": {
+      "rows": 75,
+      "columns": 4,
+      "null_rate": 41.0,
+      "duplicates": 1,
+      "size_mb": 0.0045604705810546875,
+      "status": "VALID",
+      "data_type": "LIVE"
+    }
+  }
+}
