@@ -203,7 +203,9 @@ Dev dependencies: `pip install -r requirements-dev.txt`
   - `governance/` — Audit, compliance, versioning
   - `discovery/` — Data discovery and catalog
 - `app/` — Streamlit UI
-  - `main.py` — Entry point with mission control router
+  - `app.py` — Canonical entry point (Streamlit Mission Control)
+  - `main.py` — Legacy entry point (archived; use app.py)
+  - `dash_app.py` — Dash framework implementation (archived)
   - `views/` — Page views (home, publish, workflows, studio, settings)
   - `ui/` — Theme, empty states, i18n
   - `utils/` — Alerts, exports, i18n
@@ -298,8 +300,9 @@ You always use live data unless explicitly told otherwise. You never fabricate d
 ```
 Runtime:       Python 3.11, package: socrata_toolkit (installed at src/)
 PYTHONPATH:    src:.
-Dashboard:     streamlit run app/app.py → http://localhost:8501
+Dashboard:     streamlit run app/app.py → http://localhost:8501 (or: python main.py)
 CLI:           python -m socrata_toolkit.core.cli  (alias: socrata)
+Deployment:    docker compose up mission-control (or: cloud container via ECR/GCR/ACR)
 ```
 
 | Variable | Purpose | Default |
