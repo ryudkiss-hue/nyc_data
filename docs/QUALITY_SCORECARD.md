@@ -8,7 +8,7 @@ This toolkit targets **100 on every axis** that can be verified locally. Some ax
 socrata doctor --checklist
 socrata readiness          # overall_score >= 95, grade agency_ready
 python -m pytest tests/ -q -m "not legacy"
-python main.py             # Home → Settings → Readiness
+python app/dash_app.py     # Dashboard → Settings → Readiness (or: python main.py)
 ```
 
 See [AGENCY_RUNBOOK.md](AGENCY_RUNBOOK.md) for daily operations.
@@ -34,4 +34,4 @@ See [AGENCY_RUNBOOK.md](AGENCY_RUNBOOK.md) for daily operations.
 
 ## CLI readiness
 
-Run `socrata readiness` for live axis scores (Streamlit Mission Control checks).
+Run `socrata readiness` for live axis scores. View results in **Dash Mission Control** dashboard (Settings tab) or on command line.
