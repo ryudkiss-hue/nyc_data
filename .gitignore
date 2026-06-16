@@ -27,6 +27,7 @@ node_modules/
 .cache/
 data/local_db/
 data/local_db/socrata_cache/
+data/parquet_archive/
 # Local archive bulk (keep dash_app for CI import tests)
 legacy_archive/*
 !legacy_archive/dash_app/
