@@ -1,8 +1,6 @@
 """Tests for core.persistence module - Pipeline persistence layer."""
 
 from __future__ import annotations
-import pytest
-
 
 import json
 import tempfile

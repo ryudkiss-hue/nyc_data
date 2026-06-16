@@ -51,7 +51,7 @@ def _finalize(fig, title: str, chart_type: str, path: str | None = None, metadat
     plt = _get_plt()
     fig.tight_layout()
     res_metadata = metadata or {}
-    
+
     if path:
         fig.savefig(path, dpi=150, bbox_inches="tight")
         plt.close(fig)
@@ -80,7 +80,7 @@ def histogram(
     series = pd.to_numeric(df[column], errors="coerce").dropna()
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.hist(series, bins=bins, edgecolor="white", alpha=0.8, color=DOT_BLUE)
-    
+
     metadata = {
         "mean": float(series.mean()),
         "std": float(series.std()),
@@ -121,7 +121,7 @@ def bar_chart(
     plt = _get_plt()
     counts = df[column].value_counts().head(top_n)
     fig, ax = plt.subplots(figsize=(8, max(5, len(counts) * 0.35) if horizontal else 5))
-    
+
     metadata = {
         "top_categories": counts.to_dict(),
         "total_unique": int(df[column].nunique()),
@@ -169,7 +169,7 @@ def correlation_heatmap(
     fig.colorbar(im, ax=ax, shrink=0.8)
     chart_title = title or f"Correlation Heatmap ({method})"
     ax.set_title(chart_title)
-    
+
     metadata = {
         "matrix": corr.to_dict(),
         "columns": list(corr.columns),
@@ -240,7 +240,7 @@ def box_plot(
     data = [pd.to_numeric(df[c], errors="coerce").dropna().values for c in columns]
     fig, ax = plt.subplots(figsize=(max(6, len(columns) * 1.5), 5))
     bp = ax.boxplot(data, labels=columns, patch_artist=True)
-    
+
     metadata = {}
     for i, col in enumerate(columns):
         if len(data[i]) > 0:
@@ -299,14 +299,14 @@ def quality_dashboard(
     chart_title = title or f"Data Quality: {completeness}% Complete"
     ax.set_title(chart_title)
     missing_path = f"{path_prefix}_missing.png" if path_prefix else None
-    
+
     metadata = {
         "completeness_score": completeness,
         "total_cells": total_cells,
         "missing_cells": missing_cells,
         "missing_by_column": missing.to_dict(),
     }
-    
+
     missing_chart = _finalize(fig, chart_title, "quality_missing", missing_path, metadata=metadata)
 
     return QualityDashboard(

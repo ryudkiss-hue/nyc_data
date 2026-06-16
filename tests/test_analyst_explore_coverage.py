@@ -1,8 +1,6 @@
 """Comprehensive tests for analyst.explore module."""
 
 from __future__ import annotations
-import pytest
-
 
 import pandas as pd
 import pytest

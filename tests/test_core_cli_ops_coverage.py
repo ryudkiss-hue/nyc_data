@@ -5,8 +5,6 @@ GeoJSON-export path (geopandas), and the dataset-health manual-format fallback.
 """
 
 from __future__ import annotations
-import pytest
-
 
 import json
 import sys

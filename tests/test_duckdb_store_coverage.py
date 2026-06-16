@@ -1,8 +1,6 @@
 """Comprehensive tests for core.duckdb_store module."""
 
 from __future__ import annotations
-import pytest
-
 
 import tempfile
 from pathlib import Path

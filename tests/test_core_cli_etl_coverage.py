@@ -5,8 +5,6 @@ These commands use module-level ``_client()`` and exporter classes, so we patch
 """
 
 from __future__ import annotations
-import pytest
-
 
 import json
 from unittest.mock import MagicMock, patch

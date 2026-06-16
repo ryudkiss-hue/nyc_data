@@ -1,12 +1,11 @@
 """Coverage tests for analyst.executive and analyst.inquiries."""
 
 from __future__ import annotations
-import pytest
-
 
 from types import SimpleNamespace
 
 import pandas as pd
+import pytest
 
 # ---------------------------------------------------------------------------
 # analyst.executive.build_executive_summary

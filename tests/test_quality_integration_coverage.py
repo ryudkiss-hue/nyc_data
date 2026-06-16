@@ -1,12 +1,11 @@
 """Tests for quality.integration module - Pipeline integration and decorators."""
 
 from __future__ import annotations
-import pytest
-
 
 from unittest.mock import MagicMock
 
 import pandas as pd
+import pytest
 
 from socrata_toolkit.quality.integration import (
     QualityFramework,

@@ -538,7 +538,7 @@ def quality_scorecard(df: pd.DataFrame) -> dict:
 
     # Calculate total score - treat N/A as 0 for numeric calculation or handle missingness
     t_score = timeliness if isinstance(timeliness, (int, float)) else 0.0
-    
+
     total = round(
         completeness * 0.30
         + uniqueness * 0.20
@@ -666,7 +666,7 @@ def create_sidewalk_rules() -> BusinessRulesEngine:
 
         defects_populated = df["defects"].apply(get_len) > 0
         invalid_mask = defects_populated & (df["defect_count"] == 0)
-        
+
         invalid = df[invalid_mask]
         return invalid.get("inspection_id", invalid.index).astype(str).tolist()
 

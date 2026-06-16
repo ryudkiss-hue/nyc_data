@@ -1,6 +1,5 @@
-import pytest
-
 import pandas as pd
+import pytest
 
 from socrata_toolkit.engineering import (
     classify_scope,

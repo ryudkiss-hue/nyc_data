@@ -8,8 +8,6 @@ Tests cover:
 """
 
 from __future__ import annotations
-import pytest
-
 
 import os
 import sys
@@ -25,12 +23,6 @@ for p in (ROOT, SRC):
     if p not in sys.path:
         sys.path.insert(0, p)
 
-from socrata_toolkit.observability.monitoring import (
-    HealthCheck,
-    HealthMonitor,
-    Monitoring,
-    MonitoringResult,
-)
 from socrata_toolkit.alerts.manager import (
     Alert,
     AlertManager,
@@ -38,6 +30,12 @@ from socrata_toolkit.alerts.manager import (
     AlertStatus,
     CLINotifier,
     EmailNotifier,
+)
+from socrata_toolkit.observability.monitoring import (
+    HealthCheck,
+    HealthMonitor,
+    Monitoring,
+    MonitoringResult,
 )
 
 # ============================================================================
@@ -133,7 +131,7 @@ class TestNotifiers:
         notifier = EmailNotifier(config)
         alert = Alert.create(severity=AlertSeverity.CRITICAL, message="email msg", alert_type="email", payload={"x": 1})
         notifier.notify(alert)
-        
+
         mock_smtp.assert_called_once_with("localhost", 25)
         mock_server.starttls.assert_called_once()
         mock_server.send_message.assert_called_once()
