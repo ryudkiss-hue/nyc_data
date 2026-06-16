@@ -288,28 +288,53 @@ The AI Copilot tab still loads but shows a "no backend configured" notice. All o
 
 ---
 
-## Render Deployment
+## Cloud Deployment
 
-### Q45. How do I deploy to Render in one click?
+### Q45. How do I deploy to the cloud?
 
-The repo contains `render.yaml` (a Render blueprint). Steps:
-1. Fork/push the repo to GitHub.
-2. Go to [render.com](https://render.com) → **New** → **Blueprint** → connect your repo.
-3. Render reads `render.yaml` and provisions the service automatically.
-4. Set `SOCRATA_APP_TOKEN` in Render dashboard → Environment tab for live data.
-5. The service uses `MISSION_DEMO=1` by default so it works without a token.
+⚠️ **Render.com deployment is no longer supported.** Use **Google Cloud Run** (recommended) or **AWS ECR** instead.
 
-### Q46. Does the Render free tier support the Bayesian engine?
+See [`docs/DEPLOYMENT.md`](./DEPLOYMENT.md) for comprehensive instructions:
+- **Google Cloud Run** (recommended for Streamlit)
+- **AWS ECR** (push to registry, deploy to Fargate/ECS)
+- **Azure Container Registry** (ACI/App Service)
+- **Local Docker Compose** (development)
 
-Yes. The Apex Engine uses ADVI (~50 MB RAM) rather than NUTS (~400 MB), so it fits within Render's free tier memory limit. If you switch to NUTS sampling you will need a paid tier.
+### Q46. What are the memory and CPU requirements?
 
-### Q47. How do I set environment variables on Render?
+**Streamlit Mission Control:**
+- Minimum: 512 MB RAM, 0.25 CPU
+- Recommended: 2–4 GB RAM, 1–2 CPU
 
-In the Render dashboard: open your service → **Environment** tab → add key/value pairs. You do not need to redeploy after setting env vars; Render applies them on the next restart.
+**Analyst CLI Runner (batch):**
+- Minimum: 256 MB RAM, 0.1 CPU
+- Recommended: 1–2 GB RAM, 0.5–1 CPU
 
-### Q48. Can I use a custom domain on Render?
+See `docs/DEPLOYMENT.md` for cloud-specific sizing recommendations.
 
-Yes. In the Render dashboard go to your service → **Settings** → **Custom Domains** and follow the DNS instructions. TLS is provisioned automatically.
+### Q47. How do I set environment variables in production?
+
+**Cloud Run (Google):**
+```bash
+gcloud run deploy ... --set-env-vars KEY=VALUE
+```
+
+**ECR (AWS):**
+Set environment variables in your task definition or deployment configuration.
+
+**Azure Container Instances:**
+Set in container configuration or App Service environment variables.
+
+See `docs/DEPLOYMENT.md` for platform-specific details.
+
+### Q48. Can I use a custom domain?
+
+Yes. All cloud platforms support custom domains:
+- **Cloud Run:** Via Cloud Load Balancing + Cloud Armor
+- **AWS:** Via Route 53 + ALB
+- **Azure:** Via Traffic Manager or Application Gateway
+
+See cloud provider documentation for TLS/SSL setup.
 
 ---
 
@@ -317,7 +342,7 @@ Yes. In the Render dashboard go to your service → **Settings** → **Custom Do
 
 ### Q49. What is ADVI and why is it used instead of NUTS?
 
-ADVI (Automatic Differentiation Variational Inference) is a fast approximate inference method in PyMC. It uses ~50 MB RAM and completes in seconds. NUTS (No-U-Turn Sampler) is a full MCMC method that gives exact posterior samples but uses ~400 MB RAM and can take minutes. Mission Control defaults to ADVI so it works on Render's free tier.
+ADVI (Automatic Differentiation Variational Inference) is a fast approximate inference method in PyMC. It uses ~50 MB RAM and completes in seconds. NUTS (No-U-Turn Sampler) is a full MCMC method that gives exact posterior samples but uses ~400 MB RAM and can take minutes. Mission Control defaults to ADVI for performance on resource-constrained environments.
 
 ### Q50. The Bayesian sampling step failed. What do I do?
 
@@ -325,11 +350,11 @@ ADVI (Automatic Differentiation Variational Inference) is a fast approximate inf
 2. Verify you have at least 512 MB free RAM.
 3. Check the Streamlit logs for the specific PyMC error.
 4. If the error is `ModuleNotFoundError: No module named 'pymc'`, the heavy ML deps were not installed. Run `pip install -e ".[mission]"` with the `mission` extra.
-5. The Apex Engine degrades gracefully if PyMC is unavailable — the tab will display a warning and skip the Bayesian step.
+5. Mission Control degrades gracefully if PyMC is unavailable — features using Bayesian analysis will display a warning and skip that step.
 
 ### Q51. What happens if Prophet is not installed?
 
-The 12-month forecast chart in the Apex Engine tab is skipped with a warning. All other tabs are unaffected. Install Prophet with `pip install -e ".[mission]"`.
+Forecasting features that use Prophet will be skipped with a warning. All other dashboard features are unaffected. Install Prophet with `pip install -e ".[mission]"`.
 
 ### Q52. What is the Governance tab in the desktop/SPA app?
 
