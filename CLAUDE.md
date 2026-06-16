@@ -335,18 +335,18 @@ SLA enforcement is configured in `src/socrata_toolkit/quality/sla.py` and `src/s
 
 All datasets live on `data.cityofnewyork.us`. Reference by key.
 
-**core_smd** — primary inspection data
+**core_smd** — primary inspection & budget data
 | Key | Fourfour | Rows | Notes |
 |---|---|---|---|
 | `inspection` | dntt-gqwq | ~398K (as of 2026-06-05) | Updates daily |
 | `violations` | 6kbp-uz6m | ~312K (as of 2026-06-05) | Updates daily |
-| `built` | ugc8-s3f6 | ~105K | |
-| `lot_info` | i642-2fxq | ~1.2M | |
-| `reinspection` | gx72-kirf | ~36K | |
-| `tree_damage` | j6v2-6uxq | ~17K | |
-| `dismissals` | p4u2-3jgx | ~85K (as of 2026-06-05) | Updates daily |
-| `correspondences` | bheb-sjfi | ~30K | |
-| `curb_metal_protruding` | i2y3-sx2e | ~23K | |
+| `built` | ugc8-s3f6 | ~105K | Construction projects with cost/budget data |
+| `lot_info` | i642-2fxq | ~1.2M | Property info, assessed values |
+| `reinspection` | gx72-kirf | ~36K | Follow-up inspection results |
+| `tree_damage` | j6v2-6uxq | ~17K | Tree damage assessments |
+| `dismissals` | p4u2-3jgx | ~85K (as of 2026-06-05) | Dismissed complaints, updates daily |
+| `correspondences` | bheb-sjfi | ~30K | Communication records |
+| `curb_metal_protruding` | i2y3-sx2e | ~23K | Curb hazards |
 
 **accessibility** — ramp program
 | Key | Fourfour | Rows | Notes |
@@ -355,18 +355,18 @@ All datasets live on `data.cityofnewyork.us`. Reference by key.
 | `ramp_complaints` | jagj-gttd | ~6K (as of 2026-06-05) | Updates daily |
 | `ramp_progress` | e7gc-ub6z | ~187K (as of 2026-06-05) | Updates daily |
 
-**coordination** — permits and construction
+**coordination** — permits, construction, and budget
 | Key | Fourfour | Rows | Notes |
 |---|---|---|---|
-| `street_permits` | tqtj-sjs8 | ~3.6M | |
+| `street_permits` | tqtj-sjs8 | ~3.6M | Permits with location, cost data |
 | `weekly_construction` | r528-jcks | ~75 | ⚠️ Stale since 2017 |
 | `capital_blocks` | jvk9-k4re | 0 | ⚠️ Empty |
-| `capital_intersections` | 97nd-ff3i | ~7.8K | |
-| `street_construction_inspections` | ydkf-mpxb | ~11.5M | |
-| `street_closures_block` | i6b5-j7bu | ~4.3K | |
+| `capital_intersections` | 97nd-ff3i | ~7.8K | Capital program intersections |
+| `street_construction_inspections` | ydkf-mpxb | ~11.5M | Inspection records for construction |
+| `street_closures_block` | i6b5-j7bu | ~4.3K | Temporary street closure permits |
 | `permit_stipulations` | gsgx-6efw | — | ⚠️ API error |
-| `street_resurfacing_schedule` | xnfm-u3k5 | ~309K | |
-| `street_resurfacing_inhouse` | ffaf-8mrv | ~602K | |
+| `street_resurfacing_schedule` | xnfm-u3k5 | ~309K | Scheduled paving projects (budget planning) |
+| `street_resurfacing_inhouse` | ffaf-8mrv | ~602K | Completed paving with cost data (budget actuals) |
 
 **overlays** — context layers
 | Key | Fourfour | Rows |

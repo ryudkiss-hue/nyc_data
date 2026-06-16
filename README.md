@@ -1,74 +1,77 @@
-# NYC DOT Socrata Toolkit
+# NYC DOT SIM Toolkit
 
-[![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-blue?style=flat-square&logo=python)](https://python.org)
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-blue?style=flat-square&logo=python)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
-[![30+ Visualizations](https://img.shields.io/badge/Visualizations-30%2B-orange?style=flat-square)](app/)
-[![75+ Features](https://img.shields.io/badge/Features-75%2B-purple?style=flat-square)](src/socrata_toolkit/)
+[![Streamlit App](https://img.shields.io/badge/UI-Streamlit-red?style=flat-square)](app/app.py)
+[![30+ Charts](https://img.shields.io/badge/Visualizations-30%2B-orange?style=flat-square)](app/viz_engine.py)
 
-The **NYC DOT Socrata Toolkit** is an elite engineering engine and analytical platform for municipal data. It ingests live Socrata open data, runs Bayesian SLA forecasting, performs spatial conflict detection, and surfaces 30+ interactive visualizations — all backed by a high-performance FastAPI/Dash backend and a DuckDB L2 cache.
+**NYC DOT SIM Toolkit** is a Python-based analysis platform for NYC's Sidewalk Inspection & Management program. It ingests live Socrata open data, detects spatial conflicts between construction permits and inspections, performs data quality analysis, and surfaces interactive visualizations via Streamlit — all backed by DuckDB for high-performance local analytics.
 
----
-
-## Feature Matrix
+### Key Features
 
 | Feature | Status |
 |---------|--------|
-| Turbo-Stream Dash (FastAPI) | ✅ |
-| GIS Dashboard (10 charts) | ✅ |
-| Advanced Analytics (13 charts) | ✅ |
-| Spatial Conflict Detection | ✅ |
-| Contract Analytics & Gantt | ✅ |
-| Bayesian SLA Forecasting | ✅ |
-| DuckDB L2 Cache | ✅ |
-| Nightly Prefetch Scheduler | ✅ |
-| NL Query (Claude API) | ✅ |
-| PDF/Excel/PPTX Reports | ✅ |
-| CLI Toolkit Commands | ✅ |
-| Data Quality Scorecard | ✅ |
+| **Streamlit Dashboard** (Mission Control) | ✅ |
+| **30+ Interactive Charts** | ✅ |
+| **Spatial Conflict Detection** | ✅ |
+| **Bayesian SLA Forecasting** | ✅ |
+| **Data Quality Scoring** (0–100) | ✅ |
+| **DuckDB L2 Cache** (Parquet) | ✅ |
+| **CLI Toolkit** (socrata commands) | ✅ |
+| **PDF/Excel/PPTX Reports** | ✅ |
+| **Natural Language Queries** (Claude API) | ✅ |
+| **Schema Drift Detection** | ✅ |
+
+---
+
+## Quick Start
+
+### 1. Install
+```bash
+git clone <repo>
+cd nyc_data
+pip install -e ".[mission,xlsx]"
+```
+
+### 2. Run the Dashboard
+```bash
+# Start Streamlit Mission Control
+streamlit run app/app.py
+
+# Or use the shim
+python main.py
+```
+
+Open **http://localhost:8501** in your browser.
+
+### 3. Configure (Optional)
+For live data access (>2,000 rows), set your Socrata API token:
+```bash
+export SOCRATA_APP_TOKEN=your-token-here
+export ANTHROPIC_API_KEY=your-api-key-here
+```
+
+See **[QUICKSTART.md](QUICKSTART.md)** for detailed setup and **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** for cloud deployment.
 
 ---
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────┐
-│             NYC DOT Socrata Toolkit          │
-├──────────────┬──────────────┬────────────────┤
-│ Turbo-Stream │  CLI Toolkit │  Python API    │
-│ Dash App     │  socrata     │  socrata_      │
-│ (FastAPI)    │  commands    │  toolkit       │
-├──────────────┴──────────────┴────────────────┤
-│              Data Layer                      │
-│  ┌──────────────┐    ┌───────────────────┐   │
-│  │ Socrata SODA │    │ L2 Parquet Cache  │   │
-│  │ NYC Open Data│    │ DuckDB Store      │   │
-│  └──────────────┘    └───────────────────┘   │
-└─────────────────────────────────────────────┘
+┌────────────────────────────────────────────┐
+│      NYC DOT SIM Toolkit (v0.4.1)          │
+├────────────────┬──────────────────────────┤
+│  Streamlit UI  │  CLI Toolkit  │  Python  │
+│  (Mission      │  (socrata     │  SDK     │
+│   Control)     │   commands)   │          │
+├────────────────┴──────────────────────────┤
+│              Data Layer (DuckDB)           │
+│  ┌───────────────────┐ ┌────────────────┐  │
+│  │ Live Socrata API  │ │ L2 Parquet     │  │
+│  │ (26 datasets)     │ │ Cache (local)  │  │
+│  └───────────────────┘ └────────────────┘  │
+└────────────────────────────────────────────┘
 ```
-
----
-
-## Quickstart
-
-```bash
-# 1. Install toolkit
-pip install -e ".[mission]"
-
-# 2. Run Full-Scale Ingestion (No Limits)
-# This performs a Deep Sync of all 26 databases into DuckDB.
-python scripts/total_recall.py
-
-# 3. Launch Dash Workstation
-python app/dash_app.py
-
-# 4. Use the CLI
-socrata dataset health
-socrata nl-query "How many inspections per borough?" --dataset sidewalk_inspections
-```
-
-Open **http://localhost:8012** for the Dash interface.
-
-**With live data:** add `SOCRATA_APP_TOKEN=your_token` to a `.env` file.
 
 ---
 
@@ -133,21 +136,16 @@ All 26 datasets are defined in `config/datasets.yaml` and loaded at runtime.
 
 ---
 
-## Docker
+## Docker & Cloud Deployment
 
-### Turbo-Stream Dash (Recommended)
-The new high-performance platform with FastAPI/ASGI and hot-reloading:
-
+**Local Docker:**
 ```bash
-docker compose up -d dash-app
+docker compose up mission-control
+# UI: http://localhost:8501
 ```
-Access at **http://localhost:8012**. Changes to your code are reflected automatically.
 
-### Mission Control (Legacy)
-```bash
-docker build -f Dockerfile.mission -t mission-control .
-docker run -p 8501:8501 --env-file .env mission-control
-```
+**Cloud Deployment** (AWS ECR, Google Cloud Run, Azure ACR):
+See **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** for detailed instructions.
 
 ---
 
