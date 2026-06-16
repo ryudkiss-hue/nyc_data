@@ -1,8 +1,8 @@
-# Manhattan Mission Control
+# Manhattan Mission Control — Dash Dashboard
 
-**NYC DOT SIM — Open Data Explorer + Agency Analytics Platform**
+**NYC DOT SIM — Dash/Plotly Mission Control Dashboard**
 
-A unified 7-tab Streamlit application for NYC DOT analysts. Ingests NYC Open Data datasets via Socrata, runs Bayesian and Prophet forecasting models, visualizes spatial patterns, and provides an AI Copilot backed by Gemini, OpenAI, or Ollama.
+A production-grade **Dash/FastAPI/Plotly** application for NYC DOT analysts. Ingests live Socrata datasets, runs Bayesian and Prophet forecasting models, visualizes spatial patterns with interactive Plotly charts, and provides responsive Mantine UI with real-time callbacks.
 
 ---
 
@@ -12,79 +12,103 @@ A unified 7-tab Streamlit application for NYC DOT analysts. Ingests NYC Open Dat
 # 1. Install
 pip install -e ".[mission,postgres,xlsx]"
 
-# 2. Launch
-python main.py
+# 2. Launch (PRIMARY — Dash)
+python app/dash_app.py
+# → Opens at http://localhost:8011
 
-# 3. Open in browser
-# http://localhost:8501
+# 3. Or use launcher shim
+python main.py  # Auto-selects primary Dash
 ```
 
-Or with the full PYTHONPATH form:
+Alternative entry point (Streamlit — secondary):
 
 ```bash
-PYTHONPATH=src:. python -m streamlit run app/mission_control.py
+streamlit run app/app.py
+# → Opens at http://localhost:8501
 ```
 
 ---
 
-## Entry Point
+## Architecture
 
-**`app/mission_control.py`** — the single entry point for the production app.
+**Primary Entry Point (Dash/FastAPI):**
+```
+app/dash_app.py          ← Main Dash application with FastAPI backend
+├─ app/dash_layouts.py   ← Page layouts (dashboard, construction, gis, reports, etc.)
+├─ app/callbacks/        ← Real-time callback handlers
+│  ├─ analytics.py       ← KPI and metric callbacks
+│  ├─ gis.py             ← Spatial analysis callbacks
+│  ├─ export_callbacks.py← PDF/Excel export pipelines
+│  └─ ...
+├─ app/components/       ← Custom Dash components
+│  ├─ filter_system.py   ← Interactive filter UI
+│  ├─ kpi_cards.py       ← KPI card components
+│  └─ ...
+└─ app/assets/           ← CSS, Mantine theming, custom styles
+```
 
-| File | Role |
-|------|------|
-| `app/mission_control.py` | Streamlit entry point, 7-tab layout |
-| `app/data_loader.py` | Centralized Socrata / DuckDB loader used by all tabs |
-| `config/datasets.yaml` | Socrata dataset registry (16+ NYC DOT datasets) |
-| `src/socrata_toolkit/core/client.py` | `SocrataClient` — paginated, auth |
-| `src/socrata_toolkit/core/duckdb_store.py` | `DuckDBManager` — local DuckDB cache |
-| `outputs/logs/ingest.jsonl` | Ingest audit log |
-| `outputs/analyst_pack/` | Weekly analyst exports |
+**Secondary Entry Point (Streamlit — fallback):**
+```
+app/app.py               ← Streamlit alternative for simplified data exploration
+└─ app/views/            ← Streamlit page views (legacy support)
+```
+
+**Shared Data Layer:**
+```
+src/socrata_toolkit/     ← Core Python library
+├─ core/                 ← CLI, config, persistence
+├─ analysis/             ← Data analysis (cohorts, metrics, forecasting)
+├─ viz/                  ← Visualization builders (Plotly, statistical charts)
+├─ quality/              ← Data quality profiling and validation
+└─ spatial/              ← Geospatial analytics
+```
 
 ---
 
-## 7-Tab Feature Reference
+## Features (Dash)
 
-### 1. Home
-Dataset status cards showing load state for each configured dataset. **Load All Datasets** button triggers bulk ingestion. Audit trail of recent ingest events pulled from `outputs/logs/ingest.jsonl`.
+### 1. Dashboard (Home)
+- KPI cards with real-time metrics
+- Dataset health status
+- Audit trail of recent ingests
+- Quick-action buttons for common workflows
 
-### 2. Agency Workflows
-Multi-view workflow panel for agency operations:
-- QA/QC & Inventory Ledger
-- Spatial Conflict Detection
-- Contract & Dispatch Clearance
-- Productivity & ADA Progress
+### 2. Construction Lists
+- Interactive borough-filtered table
+- Construction project details (cost, timeline, status)
+- Drill-down to individual permit records
 
-### 3. Data Quality
-Per-dataset health scoring dashboard:
-- Null and duplicate profiling
-- SLA freshness indicator: green (<7 days), amber (<30 days), red (>30 days)
-- Anomaly detection flags
-- CSV export of quality report
+### 3. GIS & Spatial
+- Plotly Scattermapbox interactive map
+- DBSCAN spatial clustering visualization
+- Conflict buffer overlays (permits vs. inspections)
+- TSP route optimization
+- Animated borough bar charts
 
-### 4. Spatial Analytics
-- Borough bar charts
-- Plotly Scattermapbox point-density map
-- Folium bubble map
-- Conflict detection between permit and inspection geometries
+### 4. Contract Analytics
+- Contractor performance metrics
+- Spending patterns by borough
+- Timeline and completion rates
+- Gantt charts for project schedules
 
-### 5. Governance
-- Plotly lineage DAG (dataset dependency graph)
-- Dataset registry table (from `config/datasets.yaml`)
-- Ingest audit log viewer
-- SLA compliance summary
+### 5. Advanced Analytics
+- Bayesian SLA forecasting with credible intervals
+- CUSUM control charts for process monitoring
+- KMeans clustering visualizations
+- Survival curves and time-to-event analysis
+- Moran's I spatial autocorrelation
 
-### 6. AI Copilot
-Multi-backend conversational assistant:
-- Backends: **Gemini** (`GEMINI_API_KEY`), **OpenAI** (`OPENAI_API_KEY`), **Ollama** (`OLLAMA_HOST`)
-- Context-hydrated with live pipeline results from the current session
-- Quick-action chips for common analyst queries
-- Falls back gracefully if no backend is configured
+### 6. Governance & Compliance
+- Data lineage DAG (dataset dependency graph)
+- Dataset registry with schema tracking
+- Ingest audit logs
+- SLA compliance dashboard
 
-### 7. Settings & Quality
-- Readiness score (0–100)
-- Completeness checklist
-- System health panel (dependency versions, cache sizes, token status)
+### 7. Reports & Export
+- PDF report generation (WeasyPrint)
+- Excel export (openpyxl) with formatting
+- PPTX slide deck generation
+- Filtered exports by borough/date range
 
 ---
 
@@ -93,10 +117,10 @@ Multi-backend conversational assistant:
 | Variable | Purpose | Required? |
 |----------|---------|-----------|
 | `SOCRATA_APP_TOKEN` | NYC Open Data API token — raises rate limits | Optional |
-| `GEMINI_API_KEY` | AI Copilot → Gemini backend | Optional |
-| `OPENAI_API_KEY` | AI Copilot → OpenAI backend | Optional |
-| `OLLAMA_HOST` | AI Copilot → Ollama (default: `http://localhost:11434`) | Optional |
+| `ANTHROPIC_API_KEY` | Claude API for NL-to-SoQL translation | Optional |
 | `MISSION_DEMO` | `1` = demo mode, no live API calls needed | Default on Render |
+| `DASH_HOST` | Dash server host (default: `127.0.0.1`) | Optional |
+| `DASH_PORT` | Dash server port (default: `8011`) | Optional |
 
 Set variables in `.env` or export them in your shell before launching.
 
@@ -104,50 +128,61 @@ Set variables in `.env` or export them in your shell before launching.
 
 ## Deployment Options
 
-### Local (Python)
+### Local (Python — PRIMARY)
 
 ```bash
+# Install with mission extra (includes Dash, Plotly, Mantine, FastAPI, etc.)
 pip install -e ".[mission,postgres,xlsx]"
-PYTHONPATH=src:. python -m streamlit run app/mission_control.py
-# Shortcut:
+
+# Launch Dash Mission Control (primary)
+python app/dash_app.py
+# → http://localhost:8011
+
+# Or use launcher shim
 python main.py
 ```
 
 No Socrata token? Set `MISSION_DEMO=1` or leave it unset — demo mode loads automatically.
 
+### Local (Streamlit — SECONDARY FALLBACK)
+
+```bash
+# Use streamlit as an alternative (less feature-rich than Dash)
+streamlit run app/app.py
+# → http://localhost:8501
+```
+
 ### Docker
 
 ```bash
-docker build -f Dockerfile.mission -t nyc-mission .
-docker run -p 8501:8501 \
+# Build the mission-control target (Dash)
+docker build -t nyc-mission:dash --target mission .
+
+# Run with port forwarding
+docker run -p 8011:8011 \
   -e SOCRATA_APP_TOKEN=your_token \
-  nyc-mission
+  nyc-mission:dash
+
+# Or use docker-compose (recommended)
+docker compose up mission-control
 ```
 
-Open http://localhost:8501.
+Opens at http://localhost:8011 (Dash primary).
 
-### Render.com (one-click)
+### Render.com (one-click cloud deployment)
 
 `render.yaml` at the repo root is a Render blueprint. To deploy:
 
 1. Fork / push the repo to GitHub.
 2. Go to [render.com](https://render.com) → **New Blueprint** → connect the repo.
-3. Render reads `render.yaml` and auto-deploys.
+3. Render reads `render.yaml` and auto-deploys the Mission Control service.
 4. Set `SOCRATA_APP_TOKEN` in the Render dashboard (Environment tab) for live data.
 5. `MISSION_DEMO=1` is set by default so the app works without a token.
 
 **Free tier notes:**
-- Bayesian engine uses ADVI (~50 MB RAM) instead of NUTS (~400 MB), so it fits on Render's free tier.
+- Bayesian engine uses ADVI (~50 MB RAM) instead of NUTS (~400 MB), so it fits within Render's free memory limit.
 - Render spins down free services after inactivity; first load may take ~30 seconds.
-
-### Legacy Dash (archived)
-
-The old Dash app is archived at `legacy_archive/dash_app/app.py`:
-
-```bash
-python legacy_archive/dash_app/app.py
-# Opens at http://127.0.0.1:8050
-```
+- Access at `https://<your-app>.onrender.com` (auto-HTTPS via Render)
 
 ---
 

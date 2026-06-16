@@ -2,8 +2,8 @@
 
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-blue?style=flat-square&logo=python)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
-[![Streamlit App](https://img.shields.io/badge/UI-Streamlit-red?style=flat-square)](app/app.py)
-[![30+ Charts](https://img.shields.io/badge/Visualizations-30%2B-orange?style=flat-square)](app/viz_engine.py)
+[![Dash App](https://img.shields.io/badge/UI-Dash/Mantine-cyan?style=flat-square)](app/dash_app.py)
+[![30+ Charts](https://img.shields.io/badge/Visualizations-30%2B-orange?style=flat-square)](app/callbacks/)
 
 **NYC DOT SIM Toolkit** is a Python-based analysis platform for NYC's Sidewalk Inspection & Management program. It ingests live Socrata open data, detects spatial conflicts between construction permits and inspections, performs data quality analysis, and surfaces interactive visualizations via **Dash/Plotly** with a **Mantine UI** — all backed by DuckDB for high-performance local analytics and FastAPI for production-grade infrastructure.
 

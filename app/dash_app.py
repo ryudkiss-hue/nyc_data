@@ -1,15 +1,20 @@
 """
-⚠️ ARCHIVED ENTRY POINT (Superseded by app/app.py)
+Dash Mission Control — PRIMARY UI Framework
 
-This file is legacy Dash framework implementation and no longer maintained.
-The project has migrated to Streamlit for the Mission Control dashboard.
+FastAPI-backed Dash/Plotly dashboard with Mantine UI for NYC DOT SIM analysis.
+This is the primary entry point for the Mission Control dashboard.
 
-Use 'streamlit run app/app.py' instead.
+Launch:
+  python app/dash_app.py         → http://localhost:8011 (PRIMARY — Dash)
+  python main.py                  → Launcher shim (auto-selects primary UI)
+  streamlit run app/app.py        → http://localhost:8501 (SECONDARY — Streamlit alternative)
 
-MIGRATION: Run the canonical Streamlit app with:
-  streamlit run app/app.py
-Or use the shim:
-  python main.py
+Architecture:
+  - Backend: FastAPI (async, production-grade)
+  - Frontend: Dash 4.2 with Mantine UI components
+  - Charts: Plotly interactive visualizations
+  - State: dcc.Store for reactive updates
+  - Callbacks: Real-time filter + export pipelines
 """
 
 import json

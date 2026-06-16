@@ -73,15 +73,16 @@ python -m socrata_toolkit.core.cli doctor --check-db
 
 | Goal | Command | URL / output |
 |------|---------|----------------|
-| **Mission Control (Streamlit)** | `python main.py` (entry: `app/mission_control.py`) | http://localhost:8501 |
-| **Legacy Dash analyst UI** | `python legacy_archive/dash_app/app.py` | http://localhost:8050 |
+| **Mission Control (Dash — PRIMARY)** | `python app/dash_app.py` | http://localhost:8011 |
+| **Mission Control launcher** | `python main.py` | Auto-selects primary (Dash) |
+| **Streamlit (SECONDARY option)** | `streamlit run app/app.py` | http://localhost:8501 |
 | **CLI — daily sync** | `socrata sync -i erm2-nwe9 --table complaints_311` | `data/local_db/` |
 | **CLI — full pipeline** | See [Command Reference](COMMAND_REFERENCE.md) | `outputs/` |
 | **Analyst weekly pack** | `socrata analyst run --profile config/analyst_profile.yaml` | `outputs/analyst_pack/` |
 | **Nightly (Task Scheduler)** | `scripts\nightly_analyst_sync.ps1` | Same pack output |
-| **Docker (Mission Control)** | `docker build -f Dockerfile.mission -t nyc-mission .` | Port 8501 |
+| **Docker (Mission Control)** | `docker compose up mission-control` | Port 8011 (Dash primary) |
 
-> **Layout:** Python package lives in `src/socrata_toolkit/`; Streamlit UI in `app/`; archived Dash in `legacy_archive/dash_app/`.
+> **Layout:** Python package lives in `src/socrata_toolkit/`; **Dash Mission Control (primary)** in `app/dash_app.py`; Streamlit (secondary) in `app/app.py`.
 
 ## 4b. Deploy to Render (alternative to local)
 
@@ -104,10 +105,12 @@ socrata sync -i erm2-nwe9 --table complaints_311 --updated-col created_date
 socrata status
 ```
 
-2. **Open Mission Control** (Streamlit) or legacy Dash:
+2. **Open Mission Control** (Dash — recommended) or Streamlit alternative:
 
 ```bash
-python main.py
+python app/dash_app.py     # Dash Mission Control (primary)
+# or: python main.py       # Launcher shim
+# or: streamlit run app/app.py  # Streamlit (secondary option)
 # Demo/offline (no token): MISSION_DEMO=1 python main.py
 # Legacy Dash: python legacy_archive/dash_app/app.py
 ```

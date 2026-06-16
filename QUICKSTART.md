@@ -76,10 +76,14 @@ See `docs/DEPLOYMENT.md` for cloud deployment, Docker, and environment configura
 
 **Dashboard won't load:**
 ```bash
-# Check if Streamlit is running
-curl http://localhost:8501/_stcore/health
+# Check if Dash is running (primary)
+curl http://localhost:8011/
 
-# Check logs
+# Check FastAPI logs
+python app/dash_app.py  # Check terminal output for errors
+
+# Alternative: Check if Streamlit is running (secondary)
+curl http://localhost:8501/_stcore/health
 streamlit run app/app.py --logger.level=debug
 ```
 
