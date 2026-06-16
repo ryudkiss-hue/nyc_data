@@ -34,22 +34,27 @@ import duckdb
 import pandas as pd
 
 from socrata_toolkit.core.client import SocrataClient, SocrataConfig
+from socrata_toolkit.core.duckdb_analytics_models import refresh_all_analytics_views
 from socrata_toolkit.core.duckdb_pipeline import (
+    _INSPECTION_DATE_CANDIDATES,
+    _INSPECTION_KEY_CANDIDATES,
+    _PERMIT_DATE_CANDIDATES,
+    _PERMIT_KEY_CANDIDATES,
+    _RAMP_DATE_CANDIDATES,
+    _RAMP_KEY_CANDIDATES,
     SOCRATA_DATASETS,
+    _stage_table,
     get_duckdb_connection,
     initialize_database,
     load_raw_from_socrata,
     stage_inspections,
     stage_permits,
     stage_ramps,
-    _stage_table,
-    _INSPECTION_KEY_CANDIDATES,
-    _INSPECTION_DATE_CANDIDATES,
-    _PERMIT_KEY_CANDIDATES,
-    _PERMIT_DATE_CANDIDATES,
-    _RAMP_KEY_CANDIDATES,
-    _RAMP_DATE_CANDIDATES,
 )
+from socrata_toolkit.governance.core import compute_quality_score
+from socrata_toolkit.motherduck.connector import MotherDuckConnection
+from socrata_toolkit.nlp.integration import triage_complaints
+
 
 def _load_dataset_config_keys() -> list[str]:
     """Return the 24 active dataset keys from data/dataset_config.json."""
@@ -67,10 +72,6 @@ def _load_dataset_config_keys() -> list[str]:
         "step_streets", "sidewalk_planimetric", "pedestrian_demand",
         "mappluto", "complaints_311",
     ]
-from socrata_toolkit.core.duckdb_analytics_models import refresh_all_analytics_views
-from socrata_toolkit.governance.core import compute_quality_score
-from socrata_toolkit.nlp.integration import triage_complaints
-from socrata_toolkit.motherduck.connector import MotherDuckConnection
 
 # ── constants ─────────────────────────────────────────────────────────────────
 DOMAIN = "data.cityofnewyork.us"
@@ -493,7 +494,7 @@ def _print_report(report: dict) -> None:
         if v.get("status") == "success":
             print(f"    ✓ {k:<35} {v.get('rows_fetched',0):>7,} rows  [{v.get('mode','')}]")
     if err:
-        print(f"\n  ERRORS:")
+        print("\n  ERRORS:")
         for k in err:
             print(f"    ✗ {k}: {fetch[k].get('error','')}")
 
