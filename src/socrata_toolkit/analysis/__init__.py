@@ -13,8 +13,6 @@ try:
 except ImportError:
     BayesianInferenceResult = None  # type: ignore[assignment,misc]
     BayesianRegressionEngine = None  # type: ignore[assignment,misc]
-from socrata_toolkit.quality.profiler import DriftReport
-
 from .confidence_intervals import (
     bootstrap_confidence_interval,
     mean_confidence_interval,
@@ -39,6 +37,7 @@ from .metrics import (
     DataQualityTracker,
     DatasetFreshness,
     DataType,
+    DriftReport,
     FreshnessAlert,
     FreshnessTracker,
     MetricPoint,
@@ -419,6 +418,11 @@ except Exception:
 
 try:
     from ..quality.profiler import DataType  # type: ignore[no-redef]
+except Exception:
+    pass
+
+try:
+    from ..quality.profiler import DriftReport  # type: ignore[no-redef]
 except Exception:
     pass
 
