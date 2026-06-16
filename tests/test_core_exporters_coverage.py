@@ -5,6 +5,8 @@ Uses Faker for volume/integration testing and mocks for unit testing.
 """
 
 from __future__ import annotations
+import pytest
+
 
 import tempfile
 from pathlib import Path

@@ -1,3 +1,5 @@
+import pytest
+
 """
 Unit and integration tests for the 5 hidden analysis methods.
 

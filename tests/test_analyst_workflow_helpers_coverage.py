@@ -1,6 +1,8 @@
 """Coverage tests for analyst.workflow private helpers."""
 
 from __future__ import annotations
+import pytest
+
 
 import pandas as pd
 

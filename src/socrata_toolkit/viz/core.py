@@ -19,10 +19,13 @@ from __future__ import annotations
 import base64
 import io
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Any
 
 import numpy as np  # type: ignore[import]
 import pandas as pd  # type: ignore[import]
+
+from .branding import DOT_BLACK, DOT_BLUE, MATPLOTLIB_STYLE, WCAG_PALETTE
 
 
 def _get_plt():
@@ -30,30 +33,35 @@ def _get_plt():
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+    # Apply DOT Industrial Branding
+    plt.rcParams.update(MATPLOTLIB_STYLE)
     return plt
 
 @dataclass
 class ChartResult:
-    """Container for a generated chart."""
+    """Container for a generated chart with statistical metadata."""
     title: str
     chart_type: str
     path: str | None = None
     base64_png: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-def _finalize(fig, title: str, chart_type: str, path: str | None = None) -> ChartResult:
+def _finalize(fig, title: str, chart_type: str, path: str | None = None, metadata: dict[str, Any] | None = None) -> ChartResult:
     """Save or encode a matplotlib figure and return a ChartResult."""
     plt = _get_plt()
     fig.tight_layout()
+    res_metadata = metadata or {}
+    
     if path:
         fig.savefig(path, dpi=150, bbox_inches="tight")
         plt.close(fig)
-        return ChartResult(title=title, chart_type=chart_type, path=path)
+        return ChartResult(title=title, chart_type=chart_type, path=path, metadata=res_metadata)
     buf = io.BytesIO()
     fig.savefig(buf, format="png", dpi=150, bbox_inches="tight")
     plt.close(fig)
     buf.seek(0)
     b64 = base64.b64encode(buf.read()).decode("utf-8")
-    return ChartResult(title=title, chart_type=chart_type, base64_png=b64)
+    return ChartResult(title=title, chart_type=chart_type, base64_png=b64, metadata=res_metadata)
 
 # ---------------------------------------------------------------------------
 # Histogram
@@ -71,14 +79,23 @@ def histogram(
     plt = _get_plt()
     series = pd.to_numeric(df[column], errors="coerce").dropna()
     fig, ax = plt.subplots(figsize=(8, 5))
-    ax.hist(series, bins=bins, edgecolor="white", alpha=0.8, color="#4C72B0")
+    ax.hist(series, bins=bins, edgecolor="white", alpha=0.8, color=DOT_BLUE)
+    
+    metadata = {
+        "mean": float(series.mean()),
+        "std": float(series.std()),
+        "count": int(len(series)),
+        "skew": float(series.skew()),
+        "kurtosis": float(series.kurtosis()),
+    }
+
     if kde and len(series) > 2:
         try:
             from scipy.stats import gaussian_kde
             xs = np.linspace(float(series.min()), float(series.max()), 200)
             density = gaussian_kde(series)(xs)
             ax2 = ax.twinx()
-            ax2.plot(xs, density, color="#C44E52", linewidth=2)
+            ax2.plot(xs, density, color="#D63384", linewidth=2) # Contrast color
             ax2.set_ylabel("Density")
         except ImportError:
             pass  # scipy not available
@@ -86,7 +103,7 @@ def histogram(
     ax.set_title(chart_title)
     ax.set_xlabel(column)
     ax.set_ylabel("Count")
-    return _finalize(fig, chart_title, "histogram", path)
+    return _finalize(fig, chart_title, "histogram", path, metadata=metadata)
 
 # ---------------------------------------------------------------------------
 # Bar Chart
@@ -104,17 +121,23 @@ def bar_chart(
     plt = _get_plt()
     counts = df[column].value_counts().head(top_n)
     fig, ax = plt.subplots(figsize=(8, max(5, len(counts) * 0.35) if horizontal else 5))
+    
+    metadata = {
+        "top_categories": counts.to_dict(),
+        "total_unique": int(df[column].nunique()),
+    }
+
     if horizontal:
-        ax.barh(counts.index.astype(str), counts.values, color="#4C72B0")
+        ax.barh(counts.index.astype(str), counts.values, color=DOT_BLUE)
         ax.set_xlabel("Count")
         ax.invert_yaxis()
     else:
-        ax.bar(counts.index.astype(str), counts.values, color="#4C72B0")
+        ax.bar(counts.index.astype(str), counts.values, color=DOT_BLUE)
         ax.set_ylabel("Count")
         plt.xticks(rotation=45, ha="right")
     chart_title = title or f"Value Counts: {column}"
     ax.set_title(chart_title)
-    return _finalize(fig, chart_title, "bar_chart", path)
+    return _finalize(fig, chart_title, "bar_chart", path, metadata=metadata)
 
 # ---------------------------------------------------------------------------
 # Correlation Heatmap
@@ -146,7 +169,12 @@ def correlation_heatmap(
     fig.colorbar(im, ax=ax, shrink=0.8)
     chart_title = title or f"Correlation Heatmap ({method})"
     ax.set_title(chart_title)
-    return _finalize(fig, chart_title, "heatmap", path)
+    
+    metadata = {
+        "matrix": corr.to_dict(),
+        "columns": list(corr.columns),
+    }
+    return _finalize(fig, chart_title, "heatmap", path, metadata=metadata)
 
 # ---------------------------------------------------------------------------
 # Time Series Line Chart
@@ -162,11 +190,7 @@ def time_series_chart(
     title: str | None = None,
     path: str | None = None,
 ) -> ChartResult:
-    """Generate a time series line chart with optional trend line.
-
-    resample_freq: pandas frequency string ('D', 'W', 'M', 'Q', 'Y')
-    agg: aggregation function ('mean', 'sum', 'count', 'median')
-    """
+    """Generate a time series line chart with optional trend line."""
     plt = _get_plt()
     tmp = df[[date_column, value_column]].copy()
     tmp[date_column] = pd.to_datetime(tmp[date_column], errors="coerce")
@@ -175,7 +199,13 @@ def time_series_chart(
 
     resampled = tmp.resample(resample_freq).agg(agg)
     fig, ax = plt.subplots(figsize=(10, 5))
-    ax.plot(resampled.index, resampled[value_column], marker="o", markersize=3, linewidth=1.5, color="#4C72B0")
+    ax.plot(resampled.index, resampled[value_column], marker="o", markersize=3, linewidth=1.5, color=DOT_BLUE)
+
+    metadata = {
+        "resample_freq": resample_freq,
+        "agg_method": agg,
+        "n_points": len(resampled),
+    }
 
     if show_trend and len(resampled) >= 3:
         x_ord = np.arange(len(resampled), dtype=float)
@@ -184,15 +214,16 @@ def time_series_chart(
         if valid.sum() >= 2:
             coeffs = np.polyfit(x_ord[valid], y[valid], 1)
             trend_y = np.polyval(coeffs, x_ord)
-            ax.plot(resampled.index, trend_y, "--", color="#C44E52", linewidth=1.5, label="Trend")
+            ax.plot(resampled.index, trend_y, "--", color="#D63384", linewidth=1.5, label="Trend")
             ax.legend()
+            metadata["trend_slope"] = float(coeffs[0])
 
     chart_title = title or f"Time Series: {value_column} ({agg} by {resample_freq})"
     ax.set_title(chart_title)
     ax.set_xlabel("Date")
     ax.set_ylabel(value_column)
     fig.autofmt_xdate()
-    return _finalize(fig, chart_title, "time_series", path)
+    return _finalize(fig, chart_title, "time_series", path, metadata=metadata)
 
 # ---------------------------------------------------------------------------
 # Box Plot Comparison
@@ -208,14 +239,23 @@ def box_plot(
     plt = _get_plt()
     data = [pd.to_numeric(df[c], errors="coerce").dropna().values for c in columns]
     fig, ax = plt.subplots(figsize=(max(6, len(columns) * 1.5), 5))
-    bp = ax.boxplot(data, tick_labels=columns, patch_artist=True)
-    colors = ["#4C72B0", "#55A868", "#C44E52", "#8172B2", "#CCB974", "#64B5CD"]
+    bp = ax.boxplot(data, labels=columns, patch_artist=True)
+    
+    metadata = {}
+    for i, col in enumerate(columns):
+        if len(data[i]) > 0:
+            metadata[col] = {
+                "median": float(np.median(data[i])),
+                "q1": float(np.percentile(data[i], 25)),
+                "q3": float(np.percentile(data[i], 75)),
+            }
+
     for i, patch in enumerate(bp["boxes"]):
-        patch.set_facecolor(colors[i % len(colors)])
+        patch.set_facecolor(WCAG_PALETTE[i % len(WCAG_PALETTE)])
     chart_title = title or "Distribution Comparison"
     ax.set_title(chart_title)
     ax.set_ylabel("Value")
-    return _finalize(fig, chart_title, "box_plot", path)
+    return _finalize(fig, chart_title, "box_plot", path, metadata=metadata)
 
 # ---------------------------------------------------------------------------
 # Quality Dashboard
@@ -244,7 +284,8 @@ def quality_dashboard(
 
     fig, ax = plt.subplots(figsize=(8, max(4, len(missing) * 0.4)))
     if len(missing) > 0:
-        colors = ["#C44E52" if v > df.shape[0] * 0.3 else "#CCB974" if v > df.shape[0] * 0.1 else "#55A868" for v in missing.values]
+        # High contrast colors for quality
+        colors = ["#DC3545" if v > df.shape[0] * 0.3 else "#E67E22" if v > df.shape[0] * 0.1 else "#198754" for v in missing.values]
         ax.barh(missing.index.astype(str), missing.values, color=colors)
         ax.set_xlabel("Missing Values")
         # add percentage labels
@@ -253,12 +294,20 @@ def quality_dashboard(
             ax.text(v + 0.5, i, f"{pct:.1f}%", va="center", fontsize=8)
     else:
         ax.text(0.5, 0.5, "No missing values detected", transform=ax.transAxes,
-                ha="center", va="center", fontsize=14, color="#55A868")
+                ha="center", va="center", fontsize=14, color="#198754")
 
     chart_title = title or f"Data Quality: {completeness}% Complete"
     ax.set_title(chart_title)
     missing_path = f"{path_prefix}_missing.png" if path_prefix else None
-    missing_chart = _finalize(fig, chart_title, "quality_missing", missing_path)
+    
+    metadata = {
+        "completeness_score": completeness,
+        "total_cells": total_cells,
+        "missing_cells": missing_cells,
+        "missing_by_column": missing.to_dict(),
+    }
+    
+    missing_chart = _finalize(fig, chart_title, "quality_missing", missing_path, metadata=metadata)
 
     return QualityDashboard(
         missing_chart=missing_chart,

@@ -5,6 +5,8 @@ run, publish), and the nl-query execution path with a stubbed anthropic module.
 """
 
 from __future__ import annotations
+import pytest
+
 
 import json
 import sys

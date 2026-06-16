@@ -1,3 +1,5 @@
+import pytest
+
 """
 Verification tests for code review findings.
 

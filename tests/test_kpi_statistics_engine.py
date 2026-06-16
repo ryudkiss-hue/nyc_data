@@ -1,3 +1,5 @@
+import pytest
+
 """Unit & integration tests for KPI Statistics Engine.
 
 Tests cover:
@@ -6,7 +8,6 @@ Tests cover:
 - Error handling (retry logic, rollback)
 - Data quality checks
 """
-
 from unittest.mock import Mock, patch
 
 import duckdb

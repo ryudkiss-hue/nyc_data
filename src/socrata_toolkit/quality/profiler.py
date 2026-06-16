@@ -121,7 +121,14 @@ class ProfileGenerator:
 
     def compare_profiles(self, profile1: TableProfile, profile2: TableProfile) -> DriftReport:
         """Compare two TableProfiles and return a DriftReport indicating whether drift was detected."""
-        return DriftReport(is_drifted=True)
+        schema_drift = self.detect_schema_drift(profile1, profile2)
+        is_drifted = bool(schema_drift["columns_added"] or schema_drift["columns_removed"])
+        
+        details = {"schema_drift": schema_drift}
+        if profile1.row_count != profile2.row_count:
+            details["row_count_delta"] = profile2.row_count - profile1.row_count
+            
+        return DriftReport(is_drifted=is_drifted, drift_details=details)
 
     def detect_schema_drift(self, profile1: TableProfile, profile2: TableProfile) -> dict[str, Any]:
         """Return dicts of columns added and removed between two TableProfiles."""

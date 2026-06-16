@@ -1,6 +1,8 @@
 """Mission Control analytics and data loader tests (no live Socrata)."""
 
 from __future__ import annotations
+import pytest
+
 
 import pandas as pd
 

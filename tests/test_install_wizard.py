@@ -1,6 +1,8 @@
 """Tests for install_wizard (mocked prompts, temp project root)."""
 
 from __future__ import annotations
+import pytest
+
 
 from pathlib import Path
 from unittest.mock import patch

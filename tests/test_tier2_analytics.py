@@ -1,6 +1,8 @@
 """Tests for Tier 2 Analytics Dashboard components."""
 
 from __future__ import annotations
+import pytest
+
 
 import os
 

@@ -1,5 +1,7 @@
 """Comprehensive tests for analyst.sources module."""
 from __future__ import annotations
+import pytest
+
 
 import json
 import sys

@@ -1,6 +1,8 @@
 """Comprehensive tests for spatial.visualization module."""
 
 from __future__ import annotations
+import pytest
+
 
 import json
 import sys

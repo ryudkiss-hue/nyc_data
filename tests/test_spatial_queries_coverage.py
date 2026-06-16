@@ -1,5 +1,7 @@
 """Comprehensive tests for spatial.queries module."""
 from __future__ import annotations
+import pytest
+
 
 from contextlib import contextmanager
 from unittest.mock import MagicMock, patch

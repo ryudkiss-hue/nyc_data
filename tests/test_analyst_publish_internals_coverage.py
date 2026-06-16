@@ -1,6 +1,8 @@
 """Coverage tests for analyst.publish internal destination handlers."""
 
 from __future__ import annotations
+import pytest
+
 
 from unittest.mock import MagicMock, patch
 

@@ -1,3 +1,5 @@
+import pytest
+
 from socrata_toolkit.governance import (
     check_dcwp_license,
     check_parks_permit,

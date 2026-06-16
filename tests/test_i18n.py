@@ -1,6 +1,8 @@
 """i18n helper tests."""
 
 from __future__ import annotations
+import pytest
+
 
 import sys
 from unittest.mock import MagicMock, patch

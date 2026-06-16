@@ -172,17 +172,17 @@ class KPIStatisticsResult:
 @dataclass
 class AdvancedMetricsResult:
     """Result of advanced metrics computation."""
-    shapiro_wilk_p: Optional[float] = None
-    jarque_bera_p: Optional[float] = None
-    anderson_statistic: Optional[float] = None
-    is_normal: Optional[bool] = None
-    levene_p: Optional[float] = None
-    variances_equal: Optional[bool] = None
-    cohens_d: Optional[float] = None
-    seasonal_strength: Optional[float] = None
-    ljung_box_p: Optional[float] = None
-    robust_slope: Optional[float] = None
-    outlier_sensitivity: Optional[float] = None
+    shapiro_wilk_p: float | None = None
+    jarque_bera_p: float | None = None
+    anderson_statistic: float | None = None
+    is_normal: bool | None = None
+    levene_p: float | None = None
+    variances_equal: bool | None = None
+    cohens_d: float | None = None
+    seasonal_strength: float | None = None
+    ljung_box_p: float | None = None
+    robust_slope: float | None = None
+    outlier_sensitivity: float | None = None
     computation_duration_seconds: float = 0.0
     status: str = "PENDING"
     error_message: Optional[str] = None
@@ -643,7 +643,7 @@ class KPIStatisticsEngine:
                             cohens_d_vs_benchmark = ?,
                             seasonal_strength = ?,
                             ljung_box_p = ?,
-                            robust_regression_slope = ?,
+                            robust_slope = ?,
                             outlier_sensitivity_ratio = ?,
                             advanced_metrics_status = 'COMPUTED',
                             advanced_metrics_timestamp = CURRENT_TIMESTAMP

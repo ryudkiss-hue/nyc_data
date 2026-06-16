@@ -1,3 +1,5 @@
+import pytest
+
 """Tests for the analytics marts (Task 4)."""
 
 from unittest.mock import patch

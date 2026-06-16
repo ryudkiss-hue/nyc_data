@@ -1,3 +1,5 @@
+import pytest
+
 """Unit & integration tests for KPI Time Series Analysis.
 
 Tests cover:
@@ -6,7 +8,6 @@ Tests cover:
 - VAR multivariate analysis
 - Granger causality testing
 """
-
 from unittest.mock import Mock, patch
 
 import numpy as np

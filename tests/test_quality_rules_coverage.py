@@ -1,6 +1,8 @@
 """Tests for quality.rules module - Business rules engine."""
 
 from __future__ import annotations
+import pytest
+
 
 import pandas as pd
 

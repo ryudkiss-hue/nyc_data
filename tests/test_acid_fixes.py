@@ -4,6 +4,8 @@ Run with: pytest tests/test_acid_fixes.py -v
 """
 
 from __future__ import annotations
+import pytest
+
 
 import json
 import tempfile

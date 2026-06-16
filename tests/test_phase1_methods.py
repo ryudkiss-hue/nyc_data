@@ -1,3 +1,5 @@
+import pytest
+
 """Unit Tests for Phase 1 Visualization Methods.
 
 Tests for:

@@ -1,3 +1,5 @@
+import pytest
+
 import importlib.util
 import sys
 from unittest.mock import MagicMock

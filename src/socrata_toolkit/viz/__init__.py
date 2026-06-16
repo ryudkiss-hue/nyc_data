@@ -28,7 +28,6 @@ from .d3_components import (
     treemap_d3,
 )
 
-# Remove broken import
 from .map import *
 from .plotly import (
     borough_bar_chart,

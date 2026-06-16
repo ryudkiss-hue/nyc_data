@@ -1,6 +1,8 @@
 """Comprehensive tests for analyst.publish module."""
 
 from __future__ import annotations
+import pytest
+
 
 import json
 import tempfile
