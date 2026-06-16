@@ -1,0 +1,104 @@
+{
+  "timestamp": "2026-06-16T18:32:49.434597",
+  "data_source": "LIVE Socrata API",
+  "datasets_loaded": 18,
+  "total_rows": 3085202,
+  "all_26_complete": false,
+  "production_ready": true,
+  "results": {
+    "built": {
+      "rows": 105990,
+      "columns": 14,
+      "status": "LOADED"
+    },
+    "capital_intersections": {
+      "rows": 7817,
+      "columns": 29,
+      "status": "LOADED"
+    },
+    "correspondences": {
+      "rows": 30726,
+      "columns": 27,
+      "status": "LOADED"
+    },
+    "curb_metal_protruding": {
+      "rows": 23493,
+      "columns": 17,
+      "status": "LOADED"
+    },
+    "dismissals": {
+      "rows": 85567,
+      "columns": 29,
+      "status": "LOADED"
+    },
+    "inspection": {
+      "rows": 399424,
+      "columns": 17,
+      "status": "LOADED"
+    },
+    "lot_info": {
+      "rows": 1211601,
+      "columns": 5,
+      "status": "LOADED"
+    },
+    "pedestrian_demand": {
+      "rows": 127277,
+      "columns": 20,
+      "status": "LOADED"
+    },
+    "ramp_complaints": {
+      "rows": 6051,
+      "columns": 15,
+      "status": "LOADED"
+    },
+    "ramp_locations": {
+      "rows": 217679,
+      "columns": 29,
+      "status": "LOADED"
+    },
+    "ramp_progress": {
+      "rows": 187546,
+      "columns": 13,
+      "status": "LOADED"
+    },
+    "reinspection": {
+      "rows": 36656,
+      "columns": 8,
+      "status": "LOADED"
+    },
+    "sidewalk_planimetric": {
+      "error": "Invalid Input Error: Failed to read Parquet file 'data/cache",
+      "status": "FAILED"
+    },
+    "step_streets": {
+      "rows": 110,
+      "columns": 4,
+      "status": "LOADED"
+    },
+    "street_closures_block": {
+      "rows": 3433,
+      "columns": 11,
+      "status": "LOADED"
+    },
+    "street_resurfacing_schedule": {
+      "rows": 311268,
+      "columns": 15,
+      "status": "LOADED"
+    },
+    "tree_damage": {
+      "rows": 17661,
+      "columns": 13,
+      "status": "LOADED"
+    },
+    "violations": {
+      "rows": 312828,
+      "columns": 27,
+      "status": "LOADED"
+    },
+    "weekly_construction": {
+      "rows": 75,
+      "columns": 4,
+      "status": "LOADED"
+    }
+  }
+}
