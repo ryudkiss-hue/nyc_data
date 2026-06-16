@@ -18,6 +18,7 @@ sys.path.insert(0, str(_REPO_ROOT / "src"))
 
 from socrata_toolkit.core.client import SocrataClient, SocrataConfig
 
+
 def fetch_full_metadata(domain: str, fourfour: str) -> dict[str, Any]:
     """Queries Socrata for full view metadata including column descriptions and types."""
     url = f"https://{domain}/api/views/{fourfour}.json"

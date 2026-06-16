@@ -32,15 +32,16 @@ To run as systemd service (Linux):
     See docs/SCHEDULER_SERVICE_SETUP.md for systemd configuration
 """
 
+import logging
 import os
 import sys
-import logging
 from pathlib import Path
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from socrata_toolkit.core.scheduler import PipelineScheduler, ScheduleRunner
+
 
 def setup_logging(config: dict):
     """Configure logging based on scheduler config."""

@@ -1,5 +1,6 @@
 from pathlib import Path
 
+
 def cleanup_file(file_path: Path):
     content = file_path.read_text(encoding="utf-8")
     original_content = content

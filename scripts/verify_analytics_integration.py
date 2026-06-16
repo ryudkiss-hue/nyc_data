@@ -13,9 +13,10 @@ Output:
     - Performance baseline measurements
 """
 
-import sys
 import logging
+import sys
 from pathlib import Path
+from typing import List, Tuple
 
 # Setup paths
 APP_PATH = str(Path(__file__).resolve().parent.parent / "app")
@@ -159,10 +160,10 @@ def check_callback_decorators() -> Tuple[bool, List[str]]:
 
     errors = []
     try:
-        from app.callbacks.decorators import timer_callback, memoize_with_ttl
+        from app.callbacks.decorators import memoize_with_ttl, timer_callback
 
-        logger.info(f"✅ @timer_callback decorator")
-        logger.info(f"✅ @memoize_with_ttl() decorator")
+        logger.info("✅ @timer_callback decorator")
+        logger.info("✅ @memoize_with_ttl() decorator")
 
     except Exception as e:
         logger.error(f"❌ Failed to import decorators: {e}")
@@ -180,9 +181,9 @@ def check_data_service() -> Tuple[bool, List[str]]:
     try:
         from app.services.analytics_service import (
             get_dataset,
+            get_kpi_metrics,
             get_spatial_data,
             get_timeseries_data,
-            get_kpi_metrics,
             validate_filters,
         )
 
@@ -287,8 +288,9 @@ def run_mock_data_flow() -> Tuple[bool, List[str]]:
     errors = []
 
     try:
-        import pandas as pd
         import numpy as np
+        import pandas as pd
+
         from app.callbacks.analytics import AnalyticsEngine
 
         # Create mock data
@@ -307,7 +309,7 @@ def run_mock_data_flow() -> Tuple[bool, List[str]]:
         try:
             data_bundle = {"data": df_dist}
             fig, narrative = AnalyticsEngine.chart_distribution_classification(data_bundle)
-            logger.info(f"✅ Phase C (Distribution): Generated figure + narrative")
+            logger.info("✅ Phase C (Distribution): Generated figure + narrative")
             if "Distribution" not in narrative and "Error" not in narrative:
                 logger.warning(f"⚠️  Phase C narrative unexpected: {narrative[:50]}")
         except Exception as e:
@@ -332,7 +334,7 @@ def run_mock_data_flow() -> Tuple[bool, List[str]]:
 
             data_bundle = {"spatial": gdf_spatial}
             fig, narrative = AnalyticsEngine.chart_anomaly_detection(data_bundle)
-            logger.info(f"✅ Phase D (Anomaly): Generated figure + narrative")
+            logger.info("✅ Phase D (Anomaly): Generated figure + narrative")
         except Exception as e:
             logger.warning(f"⚠️  Phase D skipped (GeoPandas/Shapely): {e}")
 
@@ -347,7 +349,7 @@ def run_mock_data_flow() -> Tuple[bool, List[str]]:
 
             data_bundle = {"timeseries": df_ts}
             fig, narrative = AnalyticsEngine.chart_seasonal_decomposition(data_bundle)
-            logger.info(f"✅ Phase E (Decomposition): Generated figure + narrative")
+            logger.info("✅ Phase E (Decomposition): Generated figure + narrative")
         except Exception as e:
             logger.error(f"❌ Phase E failed: {e}")
             errors.append(f"Phase E: {e}")
@@ -371,7 +373,7 @@ def run_mock_data_flow() -> Tuple[bool, List[str]]:
             data_bundle = {"spatial": gdf_spatial}
             fig, narrative = AnalyticsEngine.chart_morans_i(data_bundle)
             if "Insufficient" not in narrative and "Error" not in narrative:
-                logger.info(f"✅ Phase B (Moran's I): Generated figure + narrative")
+                logger.info("✅ Phase B (Moran's I): Generated figure + narrative")
             else:
                 logger.warning(f"⚠️  Phase B (Moran's I): {narrative[:50]}")
         except Exception as e:
