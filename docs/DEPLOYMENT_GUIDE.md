@@ -1,15 +1,15 @@
 # NYC DOT Sidewalk Data Governance Toolkit - Deployment Guide
 
-Complete guide for deploying the NYC DOT Toolkit in local, development, and production environments.
+Complete guide for deploying the **Dash Mission Control** dashboard and Python toolkit in local, development, and production environments.
 
 ## Table of Contents
 
-1. [Quick Start](#quick-start)
+1. [Quick Start](#quick-start) — 5 minutes to running Dash
 2. [System Requirements](#system-requirements)
 3. [Installation Methods](#installation-methods)
-4. [Deployment Options](#deployment-options)
+4. [Deployment Options](#deployment-options) — Local, Docker, Cloud (AWS/Render)
 5. [Configuration](#configuration)
-6. [Usage Examples](#usage-examples)
+6. [Running the Dashboard](#running-the-dashboard) — Dash (primary) + Streamlit (secondary)
 7. [Troubleshooting](#troubleshooting)
 8. [Production Deployment](#production-deployment)
 
@@ -17,73 +17,132 @@ Complete guide for deploying the NYC DOT Toolkit in local, development, and prod
 
 ## Quick Start
 
+**Goal:** Get Dash Mission Control running in 5 minutes.
+
 ### Windows (PowerShell)
 
 ```powershell
-# 1. Clone and navigate to project
+# 1. Clone repository
 git clone <repo-url>
 cd nyc_data
 
-# 2. Run setup
-.\deploy.ps1 setup
+# 2. Install dependencies
+pip install -e ".[mission,xlsx]"
 
-# 3. Edit configuration
-notepad .env.socrata
+# 3. Edit environment (optional)
+notepad .env
 
-# 4. Start services
-.\deploy.ps1 start
+# 4. Launch Dash Mission Control (PRIMARY)
+python app/dash_app.py
 
-# 5. Open dashboard
-Start http://localhost:8501
+# 5. Open browser
+Start-Process "http://localhost:8011"
 ```
 
 ### Linux/MacOS (Bash)
 
 ```bash
-# 1. Clone and navigate to project
+# 1. Clone repository
 git clone <repo-url>
 cd nyc_data
 
-# 2. Run setup
-chmod +x deploy.sh
-./deploy.sh setup
+# 2. Install dependencies
+pip install -e ".[mission,xlsx]"
 
-# 3. Edit configuration
-nano .env.socrata
+# 3. Edit environment (optional)
+nano .env
 
-# 4. Start services
-./deploy.sh start
+# 4. Launch Dash Mission Control (PRIMARY)
+python app/dash_app.py
 
-# 5. Open dashboard
-open http://localhost:8501
+# 5. Open browser
+open http://localhost:8011
 ```
 
-### All Platforms (Python Launcher)
+### All Platforms (Docker)
 
 ```bash
-# 1. Install Python 3.9+ and Git
-
-# 2. Clone repository
+# 1. Clone repository
 git clone <repo-url>
 cd nyc_data
 
-# 3. Create virtual environment (optional but recommended)
-python -m venv venv
-source venv/bin/activate  # Linux/MacOS
-# or
-venv\Scripts\activate     # Windows
+# 2. Build Dash Mission Control image
+docker build -t nyc-mission:dash --target mission .
 
-# 4. Run setup
-python launcher.py setup all
+# 3. Run container
+docker run -p 8011:8011 \
+  -e SOCRATA_APP_TOKEN=your_token_here \
+  nyc-mission:dash
 
-# 5. Start Docker services
-python launcher.py docker up
-
-# 6. Launch web dashboard
-python launcher.py web
-
-# 7. Access dashboard at http://localhost:8501
+# 4. Open browser
+http://localhost:8011
 ```
+
+### Using Docker Compose
+
+```bash
+# 1. Clone repository
+git clone <repo-url>
+cd nyc_data
+
+# 2. Edit .env for Socrata token (optional)
+cp .env.example .env
+nano .env  # Set SOCRATA_APP_TOKEN
+
+# 3. Start Mission Control
+docker compose up mission-control
+
+# 4. Open browser
+http://localhost:8011
+```
+
+---
+
+## Running the Dashboard
+
+### Dash Mission Control (PRIMARY — Recommended)
+
+```bash
+# Direct launch
+python app/dash_app.py
+# → http://localhost:8011
+
+# Or via launcher shim
+python main.py
+# → Automatically selects Dash primary
+```
+
+**Features:**
+- FastAPI backend (async, production-grade)
+- Plotly interactive visualizations (30+ charts)
+- Mantine responsive UI components
+- Real-time callbacks for filtering and exports
+- PDF/Excel/PPTX report generation
+- GIS spatial analysis and mapping
+- Advanced analytics (Bayesian, CUSUM, KMeans, survival curves)
+
+**Performance:** ~200ms page loads, callback latency <500ms
+
+### Streamlit (SECONDARY — Alternative)
+
+```bash
+# Launch Streamlit UI
+streamlit run app/app.py
+# → http://localhost:8501
+```
+
+**Features:**
+- Simplified data exploration interface
+- 7-tab layout (Home, Workflows, Quality, Spatial, Governance, AI Copilot, Settings)
+- Interactive charts and tables
+- Natural language query interface (with Claude API)
+
+**Use when:**
+- Dash is unavailable or broken
+- Simpler UI is preferred
+- Rapid prototyping needed
+
+**Performance:** ~1–2s page loads (Streamlit is slower than Dash/FastAPI)
 
 ---
 
@@ -121,131 +180,207 @@ python launcher.py web
 
 ### Network Requirements
 
-- Port 5432: PostgreSQL (localhost only)
-- Port 6379: Redis (localhost only)
-- Port 8501: Streamlit dashboard
-- Port 8000: FastAPI server
-- Port 9090: Prometheus
-- Port 3000: Grafana
-- Port 16686: Jaeger tracing
+| Port | Service | Purpose | Required |
+|------|---------|---------|----------|
+| **8011** | **Dash FastAPI** | PRIMARY Mission Control dashboard | ✅ Yes |
+| **8501** | Streamlit | SECONDARY fallback UI option | Optional |
+| 5432 | PostgreSQL | Optional database (if using PG_DSN) | Optional |
+| 6379 | Redis | Optional caching layer | Optional |
+| 8000 | Legacy FastAPI | Deprecated, not used | No |
+| 9090 | Prometheus | Optional monitoring | Optional |
+| 3000 | Grafana | Optional dashboards | Optional |
+| 16686 | Jaeger | Optional tracing | Optional |
 
 ---
 
 ## Installation Methods
 
-### Method 1: Complete Automated Setup (Recommended)
+### Method 1: Python Native (Recommended for Development)
+
+**Best for:** Local development, quick testing  
+**Time:** 5–10 minutes  
+**Requirements:** Python 3.11+, pip, git
 
 ```bash
-# Windows
-.\deploy.ps1 setup
-.\deploy.ps1 start
+# 1. Clone repository
+git clone <repo-url>
+cd nyc_data
 
-# Linux/MacOS
-./deploy.sh setup
-./deploy.sh start
+# 2. Create virtual environment (optional but recommended)
+python -m venv venv
+source venv/bin/activate        # Linux/MacOS
+# or
+venv\Scripts\activate           # Windows
 
-# All platforms
-python launcher.py setup all
-python launcher.py docker up
-python launcher.py web
+# 3. Install with mission extra (Dash + all dependencies)
+pip install -e ".[mission,xlsx]"
+
+# 4. Configure (optional)
+cp .env.example .env
+# Edit .env and set SOCRATA_APP_TOKEN for live data (optional)
+
+# 5. Launch Dash Mission Control
+python app/dash_app.py
+# → http://localhost:8011
+
+# (Optional) Launch Streamlit alternative
+# streamlit run app/app.py
+# → http://localhost:8501
 ```
-
-**Time**: ~10 minutes
-**Complexity**: Minimal
-**Best for**: Development and testing
 
 ---
 
-### Method 2: Manual Step-by-Step
+### Method 2: Docker (Recommended for Reproducibility)
 
-#### Step 1: Install Prerequisites
+**Best for:** Consistent environment, CI/CD, production preview  
+**Time:** 10–15 minutes (first run), includes Docker build  
+**Requirements:** Docker 20.10+, docker-compose 1.29+
+
+#### Option A: Docker Compose (Easiest)
+
+```bash
+# 1. Clone repository
+git clone <repo-url>
+cd nyc_data
+
+# 2. Configure environment
+cp .env.example .env
+# Edit .env: set SOCRATA_APP_TOKEN (optional)
+
+# 3. Start Mission Control
+docker compose up mission-control
+
+# 4. Open dashboard
+http://localhost:8011
+
+# To stop:
+docker compose down
+```
+
+#### Option B: Docker Build + Run
+
+```bash
+# 1. Clone repository
+git clone <repo-url>
+cd nyc_data
+
+# 2. Build Dash Mission Control image
+docker build -t nyc-mission:dash --target mission .
+
+# 3. Run container
+docker run -p 8011:8011 \
+  -e SOCRATA_APP_TOKEN=your_token_here \
+  nyc-mission:dash
+
+# 4. Open dashboard
+http://localhost:8011
+```
+
+---
+
+### Method 3: Cloud (AWS, Render, Heroku)
+
+**Best for:** Production deployment, team access  
+**Time:** 15–30 minutes  
+**Requirements:** Cloud account (AWS, Render, etc.)
+
+See [Production Deployment](#production-deployment) section below.
+
+---
+
+### Method 4: Manual Step-by-Step (Detailed)
+
+#### Prerequisites
 
 **Windows (PowerShell as Admin)**:
 ```powershell
-# Install Docker Desktop (manual from https://www.docker.com)
-# Then verify:
-docker --version
-docker-compose --version
+# Install Docker Desktop from https://www.docker.com
+# Verify:
+docker --version      # Should be 20.10+
+docker-compose --version  # Should be 1.29+
 
-# Install Python
-python --version  # Should be 3.9+
+# Install Python 3.11+
+python --version
 ```
 
 **Linux (Ubuntu/Debian)**:
 ```bash
-# Update system
-sudo apt-get update
-sudo apt-get upgrade
+# Update and install
+sudo apt-get update && sudo apt-get upgrade
+sudo apt-get install -y git curl
 
 # Install Docker
-sudo apt-get install docker.io docker-compose
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
 sudo usermod -aG docker $USER
 
+# Install Docker Compose
+sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
 # Install Python
-sudo apt-get install python3 python3-pip python3-venv
+sudo apt-get install -y python3.11 python3-pip python3-venv
 ```
 
 **MacOS (Homebrew)**:
 ```bash
-# Install Homebrew if needed
+# Install Homebrew
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
-# Install Docker
+# Install Docker + Python
 brew install --cask docker
-brew install docker-compose
-
-# Install Python
-brew install python@3.11
+brew install docker-compose python@3.11
 ```
 
-#### Step 2: Clone Repository
+#### Clone & Setup
 
 ```bash
-git clone https://github.com/yourusername/nyc_data.git
+# Clone repository
+git clone <repo-url>
 cd nyc_data
-```
 
-#### Step 3: Create Python Virtual Environment
-
-```bash
-# Linux/MacOS
+# Create virtual environment
 python3 -m venv venv
-source venv/bin/activate
+source venv/bin/activate  # Linux/MacOS
+# or
+venv\Scripts\activate     # Windows
 
-# Windows
-python -m venv venv
-venv\Scripts\activate
+# Install dependencies
+pip install --upgrade pip setuptools
+pip install -e ".[mission,xlsx]"
 ```
 
-#### Step 4: Create Configuration File
+#### Configuration
 
 ```bash
-# Copy template
-cp .env.docker.example .env.socrata
+# Copy environment template
+cp .env.example .env
 
-# Edit with your settings
-nano .env.socrata          # Linux/MacOS
+# Edit configuration
+nano .env              # Linux/MacOS
 # or
-notepad .env.socrata       # Windows
+notepad .env           # Windows
 ```
 
 See [Configuration](#configuration) section for required variables.
 
-#### Step 5: Install Dependencies
+#### Build & Start Services
 
 ```bash
-pip install --upgrade pip
-pip install -e ".[all]"
-```
+# Build Docker image
+docker build -t nyc-mission:dash --target mission .
 
-#### Step 6: Build and Start Docker Services
+# Start services
+docker-compose up -d mission-control
 
-```bash
-docker-compose build
-docker-compose up -d
-
-# Verify services
+# Verify services running
 docker-compose ps
+
+# View logs
+docker-compose logs -f mission-control
+
+# Stop services
+docker-compose down
 ```
 
 #### Step 7: Initialize Database
