@@ -352,7 +352,7 @@ python src/socrata_toolkit/dashboards/executive_dashboard.py
 # Access: http://127.0.0.1:8050
 
 # Daily refresh (automated via cloud agent)
-python scripts/daily_refresh.py
+python scripts/data/daily_refresh.py
 # Runs: 6 AM UTC
 # Incremental fetch, spaCy classification, DuckDB upsert
 # Archive to MotherDuck L3
@@ -363,7 +363,7 @@ python scripts/daily_refresh.py
 # Schedule daily refresh
 ccr create --routine "SIM-daily-refresh" \
   --cron "0 6 * * *" \
-  --command "python scripts/daily_refresh.py"
+  --command "python scripts/data/daily_refresh.py"
 
 # Schedule weekly reports
 ccr create --routine "SIM-weekly-reports" \
