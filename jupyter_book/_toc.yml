@@ -1,0 +1,26 @@
+# Jupyter Book Table of Contents
+
+format: jb-book
+root: intro
+
+chapters:
+  - file: dashboards/01_inspection_dashboard
+    title: "Inspection Dashboard"
+
+  - file: dashboards/02_ramp_analysis
+    title: "ADA Ramp Analysis"
+
+  - file: dashboards/03_gis_overview
+    title: "Spatial Conflict Detection"
+
+  - file: dashboards/04_quality_scorecard
+    title: "Data Quality Scorecard"
+
+  - file: dashboards/05_advanced_analytics
+    title: "Advanced Analytics"
+
+  - file: reference/dataset_registry
+    title: "Dataset Registry"
+
+  - file: reference/cli_reference
+    title: "CLI Reference"
