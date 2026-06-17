@@ -1,6 +1,8 @@
 # NYC DOT Sidewalk Toolkit — Consolidated Guide
 
-**Master documentation for all 26 NYC Open Data datasets + multi-platform analytics**
+**Master documentation for all 37 NYC Open Data datasets + multi-platform analytics**
+
+**NOTE:** For current complete registry, see: [`SOCRATA_DATASETS_CONSOLIDATED.md`](docs/SOCRATA_DATASETS_CONSOLIDATED.md) (37 datasets with KPI mappings and visualizations)
 
 Last updated: 2026-06-16  
 Status: Production-ready
