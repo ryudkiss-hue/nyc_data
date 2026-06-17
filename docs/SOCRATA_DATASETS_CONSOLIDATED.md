@@ -1,24 +1,25 @@
 ---
-title: NYC Open Data (Socrata) - Complete Dataset Registry [v2.0]
-version: 2.0
+title: NYC Open Data (Socrata) - Complete Dataset Registry [v3.0]
+version: 3.0
 status: ACTIVE
 created: 2026-06-17
 last_updated: 2026-06-17
 last_verified: 2026-06-17
-author: Claude Code (Consolidated with 57 datasets)
+author: Claude Code (Consolidated with 78 datasets)
 source: NYC Open Data (data.cityofnewyork.us) — Socrata Platform
-total_datasets: 37
-active_datasets: 33
+total_datasets: 78
+active_datasets: 74
 problematic_datasets: 4
 ---
 
 # Socrata Dataset Registry: NYC DOT SIM Program [v2.0]
 
-**Complete consolidated catalog of 37 NYC Open Data datasets** serving the Sidewalk Inspection & Management (SIM) program, organized by purpose, status, and use case.
+**Complete consolidated catalog of 78 NYC Open Data datasets** (57 core + 21 Phase 1) serving the Sidewalk Inspection & Management (SIM) program, organized by purpose, status, and use case.
 
 **Version History:**
 - v1.0 (2026-06-17): Initial 26-dataset registry
 - v2.0 (2026-06-17): Expanded to 57 datasets; added contractor, equity, demographic, and detailed 311 complaint data
+- v3.0 (2026-06-17): Phase 1 integration of 21 new SIM-relevant datasets; 78 total datasets (discovery-driven)
 
 ---
 
@@ -35,8 +36,13 @@ problematic_datasets: 4
 | **311 Complaints (Detailed)** | 3 | ✅ Active | Curb_Sidewalk_Complaints, DOT_311_Complaints, 311_Complaint_Type_Descriptor |
 | **Equity & Demographic** | 6 | ✅ Active | EquityNYC_Data, Demographics_by_Borough, Demographics_Housing_Profiles, Population_Community_Districts, Census_Tracts_2020, Census_Blocks_2020 |
 | **Reference & Geographic** | 6 | ✅ Active | lot_info, curb_metal_protruding, mappluto, sidewalk_planimetric, step_streets, pedestrian_demand, accessible_pedestrian_signals |
+| **Phase 1: Permit Variants & Conflicts** | 5 | ✅ Active | street_permits_fee, street_closures_construction, street_permits_historical, street_permits_cranes, street_permits_related_agency |
+| **Phase 1: Pedestrian Infrastructure** | 6 | ✅ Active | open_streets, pedestrian_mobility_demand, accessible_signals_map, accessible_signals_table, pedestrian_plazas_polygon, pedestrian_plazas_map |
+| **Phase 1: Street Safety & Conditions** | 5 | ✅ Active | parking_meters_map, parking_meters_table, speed_reducers, leading_pedestrian_intervals, vision_zero_crossings |
+| **Phase 1: Budget & Vendor** | 3 | ✅ Active | capital_projects_dashboard, bicycle_parking, bus_pad_tracking |
+| **Phase 1: Reference & Geospatial** | 2 | ✅ Active | centerline_streets, pedestrian_ramp_audit_mbpo |
 | **Problematic (Archived)** | 4 | ⚠️ Deprecated | weekly_construction, capital_blocks, permit_stipulations, ramp_locations |
-| **TOTAL** | **37** | **33 Active + 4 Problematic** | — |
+| **TOTAL** | **78** | **74 Active + 4 Problematic** | — |
 
 ---
 
