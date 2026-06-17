@@ -263,7 +263,7 @@ def registry_audit() -> dict[str, Any]:
 
     Returns:
         Dictionary with keys:
-        - total_registry: int (26 datasets)
+        - total_registry: int (37 datasets)
         - ll251_confirmed: int (count of datasets found in LL251)
         - removal_flagged: int (count of datasets on removal list)
         - automation_status: dict mapping fourfour -> bool

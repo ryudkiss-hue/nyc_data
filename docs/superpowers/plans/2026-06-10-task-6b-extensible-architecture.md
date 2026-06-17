@@ -68,7 +68,7 @@ SOCRATA_DATASETS = {
 - [ ] **Step 2: Verify no typos**
 
 Run: `python -c "from socrata_toolkit.core.duckdb_pipeline import SOCRATA_DATASETS; print(f'{len(SOCRATA_DATASETS)} datasets registered')"`
-Expected: `26 datasets registered`
+Expected: `37 datasets registered`
 
 - [ ] **Step 3: Commit**
 
@@ -85,7 +85,7 @@ git commit -m "feat(pipeline): Register all 26 Socrata datasets in SOCRATA_DATAS
 - Create: `data/dataset_config.json`
 - Create: `data/analytics_config.json`
 
-- [ ] **Step 1: Create dataset_config.json with metadata for all 26 datasets**
+- [ ] **Step 1: Create dataset_config.json with metadata for all 37 datasets**
 
 ```json
 {
@@ -239,7 +239,7 @@ def stage_dataset(dataset_key: str) -> dict:
     Generic staging function: deduplicate any dataset using defensive column discovery.
     
     Uses DuckDB's DESCRIBE to discover schema, then candidate lists to pick dedup key/date.
-    Works for any of the 26 datasets without code changes.
+    Works for any of the 37 datasets without code changes.
     
     Reference: duckdb-docs skill for DESCRIBE syntax and column introspection patterns.
     """
@@ -332,7 +332,7 @@ Expected: All pass
 
 ```bash
 git add src/socrata_toolkit/core/duckdb_pipeline.py tests/test_duckdb_extensibility.py
-git commit -m "feat(pipeline): Implement generic stage_dataset() for all 26 datasets"
+git commit -m "feat(pipeline): Implement generic stage_dataset() for all 37 datasets"
 ```
 
 ---
@@ -400,7 +400,7 @@ git commit -m "feat(analytics): Config-driven analytics mart generation for all 
 
 ```python
 def validate_raw_counts() -> list:
-    """Validate raw counts for all 26 datasets using config thresholds."""
+    """Validate raw counts for all 37 datasets using config thresholds."""
     with open("data/dataset_config.json") as f:
         config = json.load(f)
     
@@ -496,21 +496,21 @@ def run_materialize_analytics(self):
 
 ```bash
 git add src/socrata_toolkit/core/scheduler.py
-git commit -m "feat(scheduler): Loop all 26 datasets in load/stage/materialize jobs"
+git commit -m "feat(scheduler): Loop all 37 datasets in load/stage/materialize jobs"
 ```
 
 ---
 
-### Task 7: End-to-End Integration Test (All 26 Datasets)
+### Task 7: End-to-End Integration Test (All 37 datasets)
 
 **Files:**
 - Create: `tests/test_duckdb_26dataset_pipeline.py`
 
-- [ ] **Step 1: Write comprehensive test loading, staging, and materializing all 26 datasets**
+- [ ] **Step 1: Write comprehensive test loading, staging, and materializing all 37 datasets**
 
 ```python
 def test_full_26dataset_pipeline_e2e(db_fixture):
-    """Load → stage → materialize all 26 datasets in <5 minutes."""
+    """Load → stage → materialize all 37 datasets in <5 minutes."""
     import time
     from socrata_toolkit.core.duckdb_pipeline import SOCRATA_DATASETS, load_raw_from_socrata, stage_dataset
     from socrata_toolkit.core.duckdb_analytics_models import create_marts_from_config
@@ -553,7 +553,7 @@ def test_full_26dataset_pipeline_e2e(db_fixture):
 ```bash
 pytest tests/test_duckdb_26dataset_pipeline.py -v
 git add tests/test_duckdb_26dataset_pipeline.py
-git commit -m "test(pipeline): End-to-end integration test for all 26 datasets"
+git commit -m "test(pipeline): End-to-end integration test for all 37 datasets"
 ```
 
 ---
@@ -564,14 +564,14 @@ git commit -m "test(pipeline): End-to-end integration test for all 26 datasets"
 - ✅ Generic `stage_dataset()` function (zero code changes to add a dataset)
 - ✅ Config-driven analytics marts (no more hardcoded `create_*` functions)
 - ✅ Parameterized validation using dataset_config.json
-- ✅ Scheduler loops all 26 datasets
+- ✅ Scheduler loops all 37 datasets
 - ✅ Tests for extensibility (10+ datasets in single test)
 
 **Success Criteria:**
 - Adding a 27th dataset = 1 line in SOCRATA_DATASETS + 1 entry in dataset_config.json
 - Full 26-dataset pipeline runs in <5 minutes
 - All validation checks scale automatically
-- Audit logs capture all 26 datasets
+- Audit logs capture all 37 datasets
 
 ---
 
@@ -584,3 +584,4 @@ Plan complete. Two execution options:
 **2. Inline Execution** - Execute tasks in this session using executing-plans
 
 Which approach?
+

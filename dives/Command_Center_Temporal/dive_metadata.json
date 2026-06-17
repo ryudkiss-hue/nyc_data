@@ -1,0 +1,11 @@
+{
+  "title": "NYC Ramp Temporal Performance Command Center",
+  "description": "Automated Phase E executive dashboard: Trend, Seasonality, and Forecast Analysis.",
+  "requiredResources": [
+    {
+      "name": "nyc_mission_control",
+      "alias": "nyc_mission_control"
+    }
+  ],
+  "id": "ed03b0a1-c07a-4b30-9ae3-99f0252a5ea8"
+}

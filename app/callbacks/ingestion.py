@@ -79,7 +79,7 @@ def register_ingestion_callbacks(app, dm_instance):
                     return False, False, dmc.Notification(title="Ingestion Failed", message=ingestion_status["error"], color="red", action="show")
                 if ingestion_status["finished"]:
                     ingestion_status["finished"] = False
-                    return True, False, dmc.Notification(title="Ingestion Complete", message="26 datasets loaded successfully.", color="green", action="show")
+                    return True, False, dmc.Notification(title="Ingestion Complete", message="37 datasets loaded successfully.", color="green", action="show")
             return no_update, False, no_update
 
         # Progress Feedback Logic
@@ -108,3 +108,4 @@ def register_ingestion_callbacks(app, dm_instance):
     )
     def sync_init_btn_loading(is_active, btn_ids):
         return [is_active] * len(btn_ids)
+

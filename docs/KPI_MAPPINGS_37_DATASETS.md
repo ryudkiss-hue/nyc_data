@@ -1,5 +1,5 @@
 ---
-title: KPI-to-Dataset Mappings — 40 KPIs + 11 New KPIs for 37 Datasets
+title: KPI-to-Dataset Mappings — 51 KPIs + 11 New KPIs for 37 Datasets
 version: 1.0
 status: SOURCE_OF_TRUTH
 created: 2026-06-17
@@ -17,7 +17,7 @@ total_kpis: 51 (40 original + 11 new)
 
 ## Summary: 40 Original KPIs + 11 New KPIs = 51 Total
 
-### Original 40 KPIs (26-Dataset Mapping)
+### Original 51 KPIs (26-Dataset Mapping)
 
 | KPI | Category | Datasets | Calculation | Frequency |
 |-----|----------|----------|-------------|-----------|
@@ -480,4 +480,5 @@ total_kpis: 51 (40 original + 11 new)
 ---
 
 **SOURCE OF TRUTH for all 51 KPIs** | **Version 1.0** | **2026-06-17**
+
 

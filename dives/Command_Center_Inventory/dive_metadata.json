@@ -1,0 +1,11 @@
+{
+  "title": "NYC Ramp Inventory Segmentation Command Center",
+  "description": "Automated Phase C executive dashboard: Ramp Type Certainty and Distribution Balance.",
+  "requiredResources": [
+    {
+      "name": "nyc_mission_control",
+      "alias": "nyc_mission_control"
+    }
+  ],
+  "id": "a4ebb677-bd96-4b90-9532-3d7266c7c70a"
+}

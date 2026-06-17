@@ -1,6 +1,6 @@
 """
 TOTAL RECALL: Full-Scale Socrata Ingestion Script.
-Ingests every single record for all 26 datasets into the local DuckDB store.
+Ingests every single record for all 37 datasets into the local DuckDB store.
 """
 
 import logging
@@ -94,3 +94,4 @@ def run_total_recall():
 
 if __name__ == "__main__":
     run_total_recall()
+

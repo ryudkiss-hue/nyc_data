@@ -396,7 +396,7 @@ Static geographic, property, and contextual overlays for spatial analysis and eq
 
 ## Implementation Recommendations
 
-### For Analysts Using v1.0 (26 datasets)
+### For Analysts Using v1.0 (37 datasets)
 1. **Migrate deprecated:**
    - `weekly_construction` → `street_permits`
    - `capital_blocks` → `cpdb_projects`
@@ -519,4 +519,5 @@ All datasets include:
 **Version:** 2.0  
 **Last Updated:** 2026-06-17  
 **Next Review:** 2026-07-17 (Monthly)
+
 

@@ -368,7 +368,7 @@ def stage_dataset(dataset_key: str, conn: Optional[duckdb.DuckDBPyConnection] = 
 
     Reads dataset_config.json to find key_candidates and date_candidates,
     then uses DuckDB DESCRIBE to verify columns exist, and deduplicates
-    the raw table into staging. Works for all 26 datasets without hardcoding.
+    the raw table into staging. Works for all 37 datasets without hardcoding.
 
     Args:
         dataset_key: Key in SOCRATA_DATASETS (e.g., 'inspection', 'street_permits')

@@ -1,15 +1,12 @@
 import { useSQLQuery } from "@motherduck/react-sql-query";
 import { 
-  Card, Text, Title, Group, Badge, Loader, Alert, Stack, Divider, Container, 
-  SimpleGrid, Paper, ThemeIcon, Table
-} from "@mantine/core";
+  ShieldCheck, AlertTriangle, CircleDollarSign, Scale, Filter, ListChecks, 
+  Search, TrendingUp, Activity, Info, HardHat, Construction
+} from "lucide-react";
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  Legend, ComposedChart, Line
+  Legend, LineChart, Line, ComposedChart, Cell
 } from "recharts";
-import { 
-  IconAlertCircle, IconCrane, IconChecklist, IconBinary, IconScale 
-} from "@tabler/icons-react";
 
 export const REQUIRED_DATABASES = [
   { type: 'database', path: 'md:nyc_mission_control', alias: 'nyc_mission_control' }
@@ -18,7 +15,6 @@ export const REQUIRED_DATABASES = [
 const N = (v: unknown): number => (v != null ? Number(v) : 0);
 
 export default function OperationalCoordinationMaster() {
-  // Query 1: Borough Coordination Baseline
   const { data, isLoading, isError } = useSQLQuery(`
     WITH permit_agg AS (
       SELECT boroughname as borough, COUNT(*) as active_permits
@@ -44,101 +40,86 @@ export default function OperationalCoordinationMaster() {
 
   const rows = Array.isArray(data) ? data : [];
 
+  if (isLoading) {
+    return (
+      <div style={{ padding: "100px", textAlign: "center", fontFamily: "sans-serif" }}>
+        <Activity size={64} color="#FF8C00" />
+        <h2 style={{ marginTop: "24px", color: "#666" }}>SYNCHRONIZING PERMIT CLUSTERS...</h2>
+      </div>
+    );
+  }
+
   return (
-    <Container fluid p="xl" style={{ background: "#FFFFFF", minHeight: "100vh" }}>
-      <Stack spacing="lg">
-        <Group position="apart">
-          <div>
-            <Title order={1} style={{ color: "#000000", fontWeight: 900, textTransform: "uppercase" }}>
-              Operational Coordination Scorecard
-            </Title>
-            <Text c="dimmed" size="lg">
-              Balancing active construction volume against pending infrastructure defects to optimize repair windows.
-            </Text>
+    <div style={{ background: "#FFFFFF", color: "#000000", padding: "32px", fontFamily: "sans-serif", minHeight: "100vh" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "40px", borderBottom: "4px solid #FF8C00", paddingBottom: "20px" }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: "32px", fontWeight: 900, textTransform: "uppercase" }}>Operational Coordination Scorecard</h1>
+          <p style={{ color: "#666", fontSize: "18px", marginTop: "8px" }}>Active Permits vs. Pending Defects: Resource Alignment Analysis</p>
+        </div>
+        <div style={{ padding: "4px 12px", border: "2px solid #FF8C00", borderRadius: "4px", fontSize: "12px", fontWeight: "bold", color: "#FF8C00" }}>CAPITAL COORDINATION</div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "24px", marginBottom: "40px" }}>
+        <div style={{ padding: "32px", border: "1px solid #EEE", borderRadius: "12px", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
+          <h3 style={{ margin: "0 0 24px 0", fontSize: "20px", fontWeight: 800 }}>Permit vs. Violation Density</h3>
+          <div style={{ width: "100%", height: "400px" }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={rows} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="borough" fontSize={12} fontWeight={700} axisLine={false} tickLine={false} />
+                <YAxis yAxisId="left" fontSize={12} axisLine={false} tickLine={false} />
+                <YAxis yAxisId="right" orientation="right" fontSize={12} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={{ backgroundColor: "#000", color: "#FFF", borderRadius: "8px", border: "none" }} />
+                <Legend verticalAlign="top" />
+                <Bar yAxisId="left" dataKey="open_violations" name="Open Violations" fill="#005696" radius={[6, 6, 0, 0]} />
+                <Bar yAxisId="left" dataKey="active_permits" name="Active Permits" fill="#FF8C00" radius={[6, 6, 0, 0]} />
+                <Line yAxisId="right" type="monotone" dataKey="coordination_density" name="Coordination Index" stroke="#2E7D32" strokeWidth={4} />
+              </ComposedChart>
+            </ResponsiveContainer>
           </div>
-          <Badge color="orange" size="xl" radius="sm" variant="filled">CAPITAL COORDINATION</Badge>
-        </Group>
+        </div>
 
-        <Divider color="#E0E0E0" />
+        <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+          <div style={{ padding: "32px", background: "#FFF3E0", borderLeft: "6px solid #FF8C00", borderRadius: "4px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
+              <Scale size={32} color="#FF8C00" />
+              <div>
+                <div style={{ fontSize: "12px", fontWeight: 800, color: "#666", textTransform: "uppercase" }}>Coordination Gap</div>
+                <div style={{ fontSize: "32px", fontWeight: 900 }}>High Variance</div>
+              </div>
+            </div>
+            <p style={{ margin: 0, fontSize: "14px", lineHeight: 1.6 }}>
+              The <strong>Coordination Index</strong> represents the ratio of active construction permits to pending sidewalk violations. Higher index indicates potential for "Dig Once" optimization.
+            </p>
+          </div>
 
-        {isLoading ? (
-          <Group position="center" my="xl">
-            <Loader color="orange" variant="bars" />
-            <Text weight={700}>Synthesizing Multi-Agency Permit Clusters...</Text>
-          </Group>
-        ) : (
-          <>
-            <SimpleGrid cols={2} breakpoints={[{ maxWidth: 'md', cols: 1 }]}>
-              <Card withBorder radius="md" p="lg" shadow="sm">
-                <Title order={3} mb="xl">Permit vs. Violation Density</Title>
-                <ResponsiveContainer width="100%" height={350}>
-                  <ComposedChart data={rows} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="borough" />
-                    <YAxis yAxisId="left" orientation="left" label={{ value: 'Units', angle: -90, position: 'insideLeft' }} />
-                    <YAxis yAxisId="right" orientation="right" label={{ value: 'Coordination %', angle: 90, position: 'insideRight' }} />
-                    <Tooltip contentStyle={{ backgroundColor: "#000", color: "#FFF", borderRadius: "8px" }} />
-                    <Legend />
-                    <Bar yAxisId="left" dataKey="open_violations" name="Open Violations" fill="#005696" />
-                    <Bar yAxisId="left" dataKey="active_permits" name="Active Permits" fill="#FF8C00" />
-                    <Line yAxisId="right" type="monotone" dataKey="coordination_density" name="Coordination Index" stroke="#2E7D32" strokeWidth={3} />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </Card>
+          <div style={{ padding: "24px", background: "#E8F5E9", borderLeft: "6px solid #2E7D32", borderRadius: "4px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
+              <Construction size={24} color="#2E7D32" />
+              <h4 style={{ margin: 0, fontSize: "18px", fontWeight: 800, color: "#2E7D32" }}>Resource Allocation</h4>
+            </div>
+            <p style={{ margin: 0, fontSize: "14px", lineHeight: 1.6 }}>
+              Regions with low permit density but high violations represent "Maintenance Deserts" where projects are not adequately addressing utility needs.
+            </p>
+          </div>
 
-              <Stack>
-                <Paper withBorder p="xl" radius="md" shadow="sm">
-                  <Group>
-                    <ThemeIcon size="xl" radius="md" color="orange">
-                      <IconScale size="1.5rem" />
-                    </ThemeIcon>
-                    <div>
-                      <Text size="xs" color="dimmed" weight={700} tt="uppercase">Citywide Coordination Gap</Text>
-                      <Title order={2}>High Variance</Title>
-                    </div>
-                  </Group>
-                  <Text size="sm" mt="md">
-                    The <strong>Coordination Index</strong> represents the ratio of active construction permits to pending sidewalk violations. 
-                    A higher index indicates potential for "Dig Once" optimization where sidewalk repairs can be bundled with street cuts.
-                  </Text>
-                </Paper>
+          <div style={{ padding: "24px", border: "1px solid #EEE", borderRadius: "12px" }}>
+            <h4 style={{ margin: "0 0 16px 0", fontSize: "16px", fontWeight: 800 }}>Borough Scorecard</h4>
+            {rows.map(r => (
+              <div key={r.borough} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #F4F4F4" }}>
+                <span style={{ fontSize: "13px", fontWeight: 700 }}>{r.borough}</span>
+                <span style={{ padding: "2px 10px", background: r.coordination_density > 10 ? "#E8F5E9" : "#FFEBEE", color: r.coordination_density > 10 ? "#2E7D32" : "#D32F2F", borderRadius: "12px", fontSize: "11px", fontWeight: 800 }}>
+                  {(r.open_violations / (r.active_permits || 1)).toFixed(1)}X RATIO
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
-                <Alert icon={<IconCrane size="1rem" />} title="Resource Allocation Risk" color="orange" variant="light">
-                  <Text size="sm">
-                    <strong>Coordination Alert:</strong> Regions with low permit density but high violation counts represent "Maintenance Deserts" where capital projects are not adequately addressing subsurface utility needs alongside surface accessibility.
-                  </Text>
-                </Alert>
-
-                <Card withBorder radius="md">
-                  <Title order={4} mb="xs">Borough Scorecard</Title>
-                  <Table verticalSpacing="sm">
-                    <thead>
-                      <tr>
-                        <th>Borough</th>
-                        <th>Vio/Perm Ratio</th>
-                        <th>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rows.map(r => (
-                        <tr key={r.borough}>
-                          <td>{r.borough}</td>
-                          <td>{(r.open_violations / (r.active_permits || 1)).toFixed(1)}x</td>
-                          <td>
-                            <Badge color={r.coordination_density > 10 ? "green" : "red"} variant="outline">
-                              {r.coordination_density > 10 ? "OPTIMIZED" : "STALLED"}
-                            </Badge>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </Table>
-                </Card>
-              </Stack>
-            </SimpleGrid>
-          </>
-        )}
-      </Stack>
-    </Container>
+      <div style={{ marginTop: "60px", borderTop: "1px solid #EEE", paddingTop: "20px", textAlign: "center" }}>
+        <p style={{ fontSize: "12px", color: "#AAA", fontWeight: 600, letterSpacing: "1px" }}>NYC DOT SIM DASHBOARD · CAPITAL COORDINATION · CONFIDENTIAL</p>
+      </div>
+    </div>
   );
 }

@@ -81,7 +81,7 @@ SOCRATA_DATASETS = {
 }
 ```
 
-### Extended (all 26 datasets):
+### Extended (all 37 datasets):
 ```python
 SOCRATA_DATASETS = {
     # Core SIM (Sidewalk Inspection & Management)
@@ -214,7 +214,7 @@ def stage_dataset(dataset_key: str) -> dict:
 
 **Extended:** Validation checks scale with dataset count.
 
-- **validate_raw_counts()** — now validates all 26 datasets (tolerance thresholds stored in config, not hardcoded)
+- **validate_raw_counts()** — now validates all 37 datasets (tolerance thresholds stored in config, not hardcoded)
 - **validate_staging_dedup()** — generic: verify no duplicates on primary key (key is discovered defensively)
 - **validate_data_types()** — generic: spot-check critical columns exist and match expected types
 - **validate_analytics_populated()** — dynamic: verify all configured marts are materialized
@@ -236,7 +236,7 @@ def stage_dataset(dataset_key: str) -> dict:
 4. Update scheduler to loop all datasets
 5. Test with 10 datasets, then 26
 
-**Expected:** Pipeline handles all 26 datasets, adds a new one with 1-line registry change.
+**Expected:** Pipeline handles all 37 datasets, adds a new one with 1-line registry change.
 
 ### Task 7: Orchestration + Documentation (Week 3)
 
@@ -257,7 +257,7 @@ def stage_dataset(dataset_key: str) -> dict:
 
 | Challenge | Mitigation |
 |-----------|-----------|
-| Socrata schema drift (26 datasets, different schemas) | Defensive column discovery (already proven); candidate lists per dataset type |
+| Socrata schema drift (37 datasets, different schemas) | Defensive column discovery (already proven); candidate lists per dataset type |
 | Performance (36M+ rows total) | Incremental load (fetch last-modified only); DuckDB caching; consider MotherDuck for cloud scale in Phase 2B |
 | Missing datasets (IFA budget, labor tracking) | Document as out-of-scope; provide bridging mechanisms for institutional data |
 | Role-specific analytics (different analysts need different views) | Config-driven marts; tag each mart with roles it serves |
@@ -266,11 +266,11 @@ def stage_dataset(dataset_key: str) -> dict:
 
 ## Part 9: Success Criteria
 
-- ✅ All 26 datasets load end-to-end in <5 minutes (vs <30s for 4 datasets)
+- ✅ All 37 datasets load end-to-end in <5 minutes (vs <30s for 4 datasets)
 - ✅ Adding a new dataset requires only 1 line in registry (zero code changes)
 - ✅ Both analyst workflows fully supported with domain-specific analytics products
-- ✅ All validation checks scale to 26 datasets
-- ✅ Audit trails for all 26 datasets
+- ✅ All validation checks scale to 37 datasets
+- ✅ Audit trails for all 37 datasets
 - ✅ Scheduled pipeline runs nightly, all datasets materialized by 9am
 
 ---
@@ -310,3 +310,4 @@ def stage_dataset(dataset_key: str) -> dict:
 **Design Status:** Ready for implementation planning (Task 6B, 7, 8)
 
 **Next Step:** Use superpowers:writing-plans to create detailed implementation plans for Tasks 6B, 7, 8.
+
