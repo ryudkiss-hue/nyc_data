@@ -236,6 +236,646 @@ def status_donut(
 # Save / Export
 # ---------------------------------------------------------------------------
 
+# =============================================================================
+# PHASE 1: AUTO-GENERATED VISUALIZATION FUNCTIONS (21 datasets)
+# =============================================================================
+# These functions were auto-generated from DATASET_REGISTRY.yaml
+# Last generated: 2026-06-17
+# Covers: Permits, Pedestrian Infrastructure, Safety, Budget, Geospatial
+
+
+# ---------------------------------------------------------------------------
+# Accessible Pedestrian Signals by Borough
+# ---------------------------------------------------------------------------
+
+def accessible_signals_by_borough(
+    df: pd.DataFrame,
+    borough_col: str = "borough",
+    value_col: str = "signal_count",
+    agg: str = "count",
+    title: str | None = None,
+) -> Any:
+    """Interactive bar chart: Accessible Pedestrian Signals by Borough."""
+    go, px = _get_plotly()
+    agg_df = df.groupby(borough_col)[value_col].agg(agg).reset_index()
+    agg_df.columns = [borough_col, value_col]
+
+    colors = {"MANHATTAN": "#0D6EFD", "BRONX": "#6610F2", "BROOKLYN": "#D63384",
+             "QUEENS": "#198754", "STATEN ISLAND": "#FD7E14"}
+    agg_df["color"] = agg_df[borough_col].map(colors).fillna("#6C757D")
+
+    fig = go.Figure(go.Bar(
+        x=agg_df[borough_col], y=agg_df[value_col],
+        marker_color=agg_df["color"], text=agg_df[value_col],
+        textposition="auto",
+    ))
+    fig.update_layout(
+        title=title or "Accessible Pedestrian Signals by Borough",
+        xaxis_title="borough".replace("_", " ").title(),
+        yaxis_title="signal_count".replace("_", " ").title(),
+        template="plotly_white",
+    )
+    return fig
+
+
+# ---------------------------------------------------------------------------
+# Accessible Signals by Condition Status
+# ---------------------------------------------------------------------------
+
+def accessible_signals_condition(
+    df: pd.DataFrame,
+    category_col: str = "condition_status",
+    value_col: str = "signal_count",
+    title: str | None = None,
+) -> Any:
+    """Donut chart showing distribution: Accessible Signals by Condition Status."""
+    go, px = _get_plotly()
+    agg_df = df.groupby(category_col)[value_col].agg("count").reset_index()
+
+    fig = px.pie(
+        agg_df, names=category_col, values=value_col,
+        hole=0.3, title=title or "Accessible Signals by Condition Status"
+    )
+    fig.update_layout(template="plotly_white")
+    return fig
+
+
+# ---------------------------------------------------------------------------
+# Bicycle Parking Shelters by Borough
+# ---------------------------------------------------------------------------
+
+def bicycle_parking_coverage(
+    df: pd.DataFrame,
+    borough_col: str = "borough",
+    value_col: str = "shelter_count",
+    agg: str = "count",
+    title: str | None = None,
+) -> Any:
+    """Interactive bar chart: Bicycle Parking Shelters by Borough."""
+    go, px = _get_plotly()
+    agg_df = df.groupby(borough_col)[value_col].agg(agg).reset_index()
+    agg_df.columns = [borough_col, value_col]
+
+    colors = {"MANHATTAN": "#0D6EFD", "BRONX": "#6610F2", "BROOKLYN": "#D63384",
+             "QUEENS": "#198754", "STATEN ISLAND": "#FD7E14"}
+    agg_df["color"] = agg_df[borough_col].map(colors).fillna("#6C757D")
+
+    fig = go.Figure(go.Bar(
+        x=agg_df[borough_col], y=agg_df[value_col],
+        marker_color=agg_df["color"], text=agg_df[value_col],
+        textposition="auto",
+    ))
+    fig.update_layout(
+        title=title or "Bicycle Parking Shelters by Borough",
+        xaxis_title="borough".replace("_", " ").title(),
+        yaxis_title="shelter_count".replace("_", " ").title(),
+        template="plotly_white",
+    )
+    return fig
+
+
+# ---------------------------------------------------------------------------
+# Bus Pad Construction Status Distribution
+# ---------------------------------------------------------------------------
+
+def bus_pad_construction_status(
+    df: pd.DataFrame,
+    category_col: str = "status",
+    value_col: str = "pad_count",
+    title: str | None = None,
+) -> Any:
+    """Donut chart showing distribution: Bus Pad Construction Status Distribution."""
+    go, px = _get_plotly()
+    agg_df = df.groupby(category_col)[value_col].agg("count").reset_index()
+
+    fig = px.pie(
+        agg_df, names=category_col, values=value_col,
+        hole=0.3, title=title or "Bus Pad Construction Status Distribution"
+    )
+    fig.update_layout(template="plotly_white")
+    return fig
+
+
+# ---------------------------------------------------------------------------
+# Capital Projects Pipeline Status
+# ---------------------------------------------------------------------------
+
+def capital_projects_pipeline(
+    df: pd.DataFrame,
+    borough_col: str = "status",
+    value_col: str = "project_count",
+    agg: str = "count",
+    title: str | None = None,
+) -> Any:
+    """Interactive bar chart: Capital Projects Pipeline Status."""
+    go, px = _get_plotly()
+    agg_df = df.groupby(borough_col)[value_col].agg(agg).reset_index()
+    agg_df.columns = [borough_col, value_col]
+
+    colors = {"MANHATTAN": "#0D6EFD", "BRONX": "#6610F2", "BROOKLYN": "#D63384",
+             "QUEENS": "#198754", "STATEN ISLAND": "#FD7E14"}
+    agg_df["color"] = agg_df[borough_col].map(colors).fillna("#6C757D")
+
+    fig = go.Figure(go.Bar(
+        x=agg_df[borough_col], y=agg_df[value_col],
+        marker_color=agg_df["color"], text=agg_df[value_col],
+        textposition="auto",
+    ))
+    fig.update_layout(
+        title=title or "Capital Projects Pipeline Status",
+        xaxis_title="status".replace("_", " ").title(),
+        yaxis_title="project_count".replace("_", " ").title(),
+        template="plotly_white",
+    )
+    return fig
+
+
+# ---------------------------------------------------------------------------
+# Street Centerline Network Coverage
+# ---------------------------------------------------------------------------
+
+def centerline_network_coverage(
+    df: pd.DataFrame,
+    lat_col: str = "latitude",
+    lon_col: str = "longitude",
+    color_col: str | None = "borough",
+    title: str | None = None,
+) -> Any:
+    """Scatter map showing locations: Street Centerline Network Coverage."""
+    go, px = _get_plotly()
+
+    fig = px.scatter_mapbox(
+        df, lat=lat_col, lon=lon_col, color=color_col,
+        zoom=9, title=title or "Street Centerline Network Coverage",
+        mapbox_style="open-street-map",
+    )
+    fig.update_layout(
+        height=600, margin={"r": 0, "t": 30, "l": 0, "b": 0},
+        template="plotly_white",
+    )
+    return fig
+
+
+# ---------------------------------------------------------------------------
+# Leading Pedestrian Interval Signals by Borough
+# ---------------------------------------------------------------------------
+
+def lpi_signal_coverage(
+    df: pd.DataFrame,
+    borough_col: str = "borough",
+    value_col: str = "signal_count",
+    agg: str = "count",
+    title: str | None = None,
+) -> Any:
+    """Interactive bar chart: Leading Pedestrian Interval Signals by Borough."""
+    go, px = _get_plotly()
+    agg_df = df.groupby(borough_col)[value_col].agg(agg).reset_index()
+    agg_df.columns = [borough_col, value_col]
+
+    colors = {"MANHATTAN": "#0D6EFD", "BRONX": "#6610F2", "BROOKLYN": "#D63384",
+             "QUEENS": "#198754", "STATEN ISLAND": "#FD7E14"}
+    agg_df["color"] = agg_df[borough_col].map(colors).fillna("#6C757D")
+
+    fig = go.Figure(go.Bar(
+        x=agg_df[borough_col], y=agg_df[value_col],
+        marker_color=agg_df["color"], text=agg_df[value_col],
+        textposition="auto",
+    ))
+    fig.update_layout(
+        title=title or "Leading Pedestrian Interval Signals by Borough",
+        xaxis_title="borough".replace("_", " ").title(),
+        yaxis_title="signal_count".replace("_", " ").title(),
+        template="plotly_white",
+    )
+    return fig
+
+
+# ---------------------------------------------------------------------------
+# Open Streets Program Locations
+# ---------------------------------------------------------------------------
+
+def open_streets_coverage_map(
+    df: pd.DataFrame,
+    lat_col: str = "latitude",
+    lon_col: str = "longitude",
+    color_col: str | None = "borough",
+    title: str | None = None,
+) -> Any:
+    """Scatter map showing locations: Open Streets Program Locations."""
+    go, px = _get_plotly()
+
+    fig = px.scatter_mapbox(
+        df, lat=lat_col, lon=lon_col, color=color_col,
+        zoom=9, title=title or "Open Streets Program Locations",
+        mapbox_style="open-street-map",
+    )
+    fig.update_layout(
+        height=600, margin={"r": 0, "t": 30, "l": 0, "b": 0},
+        template="plotly_white",
+    )
+    return fig
+
+
+# ---------------------------------------------------------------------------
+# Parking Meters Obstruction Zones
+# ---------------------------------------------------------------------------
+
+def parking_meters_obstruction_zones(
+    df: pd.DataFrame,
+    lat_col: str = "latitude",
+    lon_col: str = "longitude",
+    color_col: str | None = "borough",
+    title: str | None = None,
+) -> Any:
+    """Scatter map showing locations: Parking Meters Obstruction Zones."""
+    go, px = _get_plotly()
+
+    fig = px.scatter_mapbox(
+        df, lat=lat_col, lon=lon_col, color=color_col,
+        zoom=9, title=title or "Parking Meters Obstruction Zones",
+        mapbox_style="open-street-map",
+    )
+    fig.update_layout(
+        height=600, margin={"r": 0, "t": 30, "l": 0, "b": 0},
+        template="plotly_white",
+    )
+    return fig
+
+
+# ---------------------------------------------------------------------------
+# Parking Meter Density by Borough
+# ---------------------------------------------------------------------------
+
+def meter_density_by_borough(
+    df: pd.DataFrame,
+    borough_col: str = "borough",
+    value_col: str = "meter_count",
+    agg: str = "count",
+    title: str | None = None,
+) -> Any:
+    """Interactive bar chart: Parking Meter Density by Borough."""
+    go, px = _get_plotly()
+    agg_df = df.groupby(borough_col)[value_col].agg(agg).reset_index()
+    agg_df.columns = [borough_col, value_col]
+
+    colors = {"MANHATTAN": "#0D6EFD", "BRONX": "#6610F2", "BROOKLYN": "#D63384",
+             "QUEENS": "#198754", "STATEN ISLAND": "#FD7E14"}
+    agg_df["color"] = agg_df[borough_col].map(colors).fillna("#6C757D")
+
+    fig = go.Figure(go.Bar(
+        x=agg_df[borough_col], y=agg_df[value_col],
+        marker_color=agg_df["color"], text=agg_df[value_col],
+        textposition="auto",
+    ))
+    fig.update_layout(
+        title=title or "Parking Meter Density by Borough",
+        xaxis_title="borough".replace("_", " ").title(),
+        yaxis_title="meter_count".replace("_", " ").title(),
+        template="plotly_white",
+    )
+    return fig
+
+
+# ---------------------------------------------------------------------------
+# Pedestrian Mobility Demand Heatmap
+# ---------------------------------------------------------------------------
+
+def pedestrian_demand_heatmap(
+    df: pd.DataFrame,
+    x_col: str = "neighborhood",
+    y_col: str = "demand_level",
+    value_col: str = "count",
+    title: str | None = None,
+) -> Any:
+    """Heatmap showing: Pedestrian Mobility Demand Heatmap."""
+    go, px = _get_plotly()
+    pivot_df = df.pivot_table(index=y_col, columns=x_col, values=value_col, aggfunc="avg", fill_value=0)
+
+    fig = px.imshow(
+        pivot_df, title=title or "Pedestrian Mobility Demand Heatmap",
+        labels={"color": "Count"}, aspect="auto"
+    )
+    fig.update_layout(
+        xaxis_title="neighborhood".replace("_", " ").title(),
+        yaxis_title="demand_level".replace("_", " ").title(),
+        template="plotly_white",
+    )
+    return fig
+
+
+# ---------------------------------------------------------------------------
+# Pedestrian Plazas Engagement Map
+# ---------------------------------------------------------------------------
+
+def plaza_public_engagement(
+    df: pd.DataFrame,
+    lat_col: str = "latitude",
+    lon_col: str = "longitude",
+    color_col: str | None = "borough",
+    title: str | None = None,
+) -> Any:
+    """Scatter map showing locations: Pedestrian Plazas Engagement Map."""
+    go, px = _get_plotly()
+
+    fig = px.scatter_mapbox(
+        df, lat=lat_col, lon=lon_col, color=color_col,
+        zoom=9, title=title or "Pedestrian Plazas Engagement Map",
+        mapbox_style="open-street-map",
+    )
+    fig.update_layout(
+        height=600, margin={"r": 0, "t": 30, "l": 0, "b": 0},
+        template="plotly_white",
+    )
+    return fig
+
+
+# ---------------------------------------------------------------------------
+# Pedestrian Plazas by Borough
+# ---------------------------------------------------------------------------
+
+def plaza_inspection_coverage(
+    df: pd.DataFrame,
+    borough_col: str = "borough",
+    value_col: str = "plaza_count",
+    agg: str = "count",
+    title: str | None = None,
+) -> Any:
+    """Interactive bar chart: Pedestrian Plazas by Borough."""
+    go, px = _get_plotly()
+    agg_df = df.groupby(borough_col)[value_col].agg(agg).reset_index()
+    agg_df.columns = [borough_col, value_col]
+
+    colors = {"MANHATTAN": "#0D6EFD", "BRONX": "#6610F2", "BROOKLYN": "#D63384",
+             "QUEENS": "#198754", "STATEN ISLAND": "#FD7E14"}
+    agg_df["color"] = agg_df[borough_col].map(colors).fillna("#6C757D")
+
+    fig = go.Figure(go.Bar(
+        x=agg_df[borough_col], y=agg_df[value_col],
+        marker_color=agg_df["color"], text=agg_df[value_col],
+        textposition="auto",
+    ))
+    fig.update_layout(
+        title=title or "Pedestrian Plazas by Borough",
+        xaxis_title="borough".replace("_", " ").title(),
+        yaxis_title="plaza_count".replace("_", " ").title(),
+        template="plotly_white",
+    )
+    return fig
+
+
+# ---------------------------------------------------------------------------
+# Manhattan Pedestrian Ramp Audit Results
+# ---------------------------------------------------------------------------
+
+def manhattan_ramp_audit_results(
+    df: pd.DataFrame,
+    borough_col: str = "district",
+    value_col: str = "ramp_count",
+    agg: str = "count",
+    title: str | None = None,
+) -> Any:
+    """Interactive bar chart: Manhattan Pedestrian Ramp Audit Results."""
+    go, px = _get_plotly()
+    agg_df = df.groupby(borough_col)[value_col].agg(agg).reset_index()
+    agg_df.columns = [borough_col, value_col]
+
+    colors = {"MANHATTAN": "#0D6EFD", "BRONX": "#6610F2", "BROOKLYN": "#D63384",
+             "QUEENS": "#198754", "STATEN ISLAND": "#FD7E14"}
+    agg_df["color"] = agg_df[borough_col].map(colors).fillna("#6C757D")
+
+    fig = go.Figure(go.Bar(
+        x=agg_df[borough_col], y=agg_df[value_col],
+        marker_color=agg_df["color"], text=agg_df[value_col],
+        textposition="auto",
+    ))
+    fig.update_layout(
+        title=title or "Manhattan Pedestrian Ramp Audit Results",
+        xaxis_title="district".replace("_", " ").title(),
+        yaxis_title="ramp_count".replace("_", " ").title(),
+        template="plotly_white",
+    )
+    return fig
+
+
+# ---------------------------------------------------------------------------
+# Speed Reducers by Borough
+# ---------------------------------------------------------------------------
+
+def speed_reducer_coverage(
+    df: pd.DataFrame,
+    borough_col: str = "borough",
+    value_col: str = "reducer_count",
+    agg: str = "count",
+    title: str | None = None,
+) -> Any:
+    """Interactive bar chart: Speed Reducers by Borough."""
+    go, px = _get_plotly()
+    agg_df = df.groupby(borough_col)[value_col].agg(agg).reset_index()
+    agg_df.columns = [borough_col, value_col]
+
+    colors = {"MANHATTAN": "#0D6EFD", "BRONX": "#6610F2", "BROOKLYN": "#D63384",
+             "QUEENS": "#198754", "STATEN ISLAND": "#FD7E14"}
+    agg_df["color"] = agg_df[borough_col].map(colors).fillna("#6C757D")
+
+    fig = go.Figure(go.Bar(
+        x=agg_df[borough_col], y=agg_df[value_col],
+        marker_color=agg_df["color"], text=agg_df[value_col],
+        textposition="auto",
+    ))
+    fig.update_layout(
+        title=title or "Speed Reducers by Borough",
+        xaxis_title="borough".replace("_", " ").title(),
+        yaxis_title="reducer_count".replace("_", " ").title(),
+        template="plotly_white",
+    )
+    return fig
+
+
+# ---------------------------------------------------------------------------
+# Street Closures due to Construction Timeline
+# ---------------------------------------------------------------------------
+
+def street_closures_timeline(
+    df: pd.DataFrame,
+    start_col: str = "start_date",
+    end_col: str = "end_date",
+    task_col: str = "location",
+    color_col: str | None = "status",
+    title: str | None = None,
+) -> Any:
+    """Timeline chart showing: Street Closures due to Construction Timeline."""
+    go, px = _get_plotly()
+    tmp = df.copy()
+    tmp[start_col] = pd.to_datetime(tmp[start_col], errors="coerce")
+    tmp[end_col] = pd.to_datetime(tmp[end_col], errors="coerce")
+    tmp = tmp.dropna(subset=[start_col, end_col])
+
+    fig = px.timeline(
+        tmp, x_start=start_col, x_end=end_col, y=task_col,
+        color=color_col, title=title or "Street Closures due to Construction Timeline",
+    )
+    fig.update_layout(template="plotly_white")
+    return fig
+
+
+# ---------------------------------------------------------------------------
+# Crane Permits by Borough
+# ---------------------------------------------------------------------------
+
+def crane_permits_by_borough(
+    df: pd.DataFrame,
+    borough_col: str = "borough",
+    value_col: str = "crane_count",
+    agg: str = "count",
+    title: str | None = None,
+) -> Any:
+    """Interactive bar chart: Crane Permits by Borough."""
+    go, px = _get_plotly()
+    agg_df = df.groupby(borough_col)[value_col].agg(agg).reset_index()
+    agg_df.columns = [borough_col, value_col]
+
+    colors = {"MANHATTAN": "#0D6EFD", "BRONX": "#6610F2", "BROOKLYN": "#D63384",
+             "QUEENS": "#198754", "STATEN ISLAND": "#FD7E14"}
+    agg_df["color"] = agg_df[borough_col].map(colors).fillna("#6C757D")
+
+    fig = go.Figure(go.Bar(
+        x=agg_df[borough_col], y=agg_df[value_col],
+        marker_color=agg_df["color"], text=agg_df[value_col],
+        textposition="auto",
+    ))
+    fig.update_layout(
+        title=title or "Crane Permits by Borough",
+        xaxis_title="borough".replace("_", " ").title(),
+        yaxis_title="crane_count".replace("_", " ").title(),
+        template="plotly_white",
+    )
+    return fig
+
+
+# ---------------------------------------------------------------------------
+# Street Construction Permit Fees by Borough
+# ---------------------------------------------------------------------------
+
+def street_permits_fee_by_borough(
+    df: pd.DataFrame,
+    borough_col: str = "borough",
+    value_col: str = "permit_count",
+    agg: str = "sum",
+    title: str | None = None,
+) -> Any:
+    """Interactive bar chart: Street Construction Permit Fees by Borough."""
+    go, px = _get_plotly()
+    agg_df = df.groupby(borough_col)[value_col].agg(agg).reset_index()
+    agg_df.columns = [borough_col, value_col]
+
+    colors = {"MANHATTAN": "#0D6EFD", "BRONX": "#6610F2", "BROOKLYN": "#D63384",
+             "QUEENS": "#198754", "STATEN ISLAND": "#FD7E14"}
+    agg_df["color"] = agg_df[borough_col].map(colors).fillna("#6C757D")
+
+    fig = go.Figure(go.Bar(
+        x=agg_df[borough_col], y=agg_df[value_col],
+        marker_color=agg_df["color"], text=agg_df[value_col],
+        textposition="auto",
+    ))
+    fig.update_layout(
+        title=title or "Street Construction Permit Fees by Borough",
+        xaxis_title="borough".replace("_", " ").title(),
+        yaxis_title="permit_count".replace("_", " ").title(),
+        template="plotly_white",
+    )
+    return fig
+
+
+# ---------------------------------------------------------------------------
+# Historical Permit Trends (2013-2021)
+# ---------------------------------------------------------------------------
+
+def permit_trends_2013_2021(
+    df: pd.DataFrame,
+    time_col: str = "year",
+    value_col: str = "permit_count",
+    title: str | None = None,
+) -> Any:
+    """Line chart showing trends: Historical Permit Trends (2013-2021)."""
+    go, px = _get_plotly()
+
+    fig = px.line(
+        df, x=time_col, y=value_col,
+        title=title or "Historical Permit Trends (2013-2021)",
+        markers=True,
+        line_shape="linear",
+    )
+    fig.update_layout(
+        xaxis_title="year".replace("_", " ").title(),
+        yaxis_title="permit_count".replace("_", " ").title(),
+        template="plotly_white",
+        hovermode="x unified",
+    )
+    return fig
+
+
+# ---------------------------------------------------------------------------
+# Related Agency Permits by Borough and Agency
+# ---------------------------------------------------------------------------
+
+def agency_permits_heatmap(
+    df: pd.DataFrame,
+    x_col: str = "borough",
+    y_col: str = "agency_name",
+    value_col: str = "count",
+    title: str | None = None,
+) -> Any:
+    """Heatmap showing: Related Agency Permits by Borough and Agency."""
+    go, px = _get_plotly()
+    pivot_df = df.pivot_table(index=y_col, columns=x_col, values=value_col, aggfunc="count", fill_value=0)
+
+    fig = px.imshow(
+        pivot_df, title=title or "Related Agency Permits by Borough and Agency",
+        labels={"color": "Count"}, aspect="auto"
+    )
+    fig.update_layout(
+        xaxis_title="borough".replace("_", " ").title(),
+        yaxis_title="agency_name".replace("_", " ").title(),
+        template="plotly_white",
+    )
+    return fig
+
+
+# ---------------------------------------------------------------------------
+# Vision Zero Enhanced Crossings by Borough
+# ---------------------------------------------------------------------------
+
+def vision_zero_crossing_maintenance(
+    df: pd.DataFrame,
+    borough_col: str = "borough",
+    value_col: str = "crossing_count",
+    agg: str = "count",
+    title: str | None = None,
+) -> Any:
+    """Interactive bar chart: Vision Zero Enhanced Crossings by Borough."""
+    go, px = _get_plotly()
+    agg_df = df.groupby(borough_col)[value_col].agg(agg).reset_index()
+    agg_df.columns = [borough_col, value_col]
+
+    colors = {"MANHATTAN": "#0D6EFD", "BRONX": "#6610F2", "BROOKLYN": "#D63384",
+             "QUEENS": "#198754", "STATEN ISLAND": "#FD7E14"}
+    agg_df["color"] = agg_df[borough_col].map(colors).fillna("#6C757D")
+
+    fig = go.Figure(go.Bar(
+        x=agg_df[borough_col], y=agg_df[value_col],
+        marker_color=agg_df["color"], text=agg_df[value_col],
+        textposition="auto",
+    ))
+    fig.update_layout(
+        title=title or "Vision Zero Enhanced Crossings by Borough",
+        xaxis_title="borough".replace("_", " ").title(),
+        yaxis_title="crossing_count".replace("_", " ").title(),
+        template="plotly_white",
+    )
+    return fig
+
+
+
 def save_chart(fig: Any, path: str) -> str:
     """Save a Plotly figure to file (HTML, PNG, SVG, PDF).
 

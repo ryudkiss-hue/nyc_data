@@ -347,7 +347,205 @@ Static geographic, property, and contextual overlays for spatial analysis and eq
 
 ---
 
-## 8. Problematic Datasets (4 — DO NOT USE) ⚠️
+## 8. Phase 1: Permit Variants & Conflicts (5 datasets) 🆕
+
+NEW category: Specialized permit types and conflict detection data for construction management.
+
+### `street_permits_fee` (9fnm-j6if)
+- **Status:** ✅ ACTIVE | **Frequency:** Daily | **Rows:** ~TBD | **Coverage:** 2020–Present
+- **URL:** https://data.cityofnewyork.us/Transportation/Street-Construction-Permits-Fee/9fnm-j6if
+- **Purpose:** Financial tracking and contractor accountability through permit fees
+- **KPIs:** permit_fee_revenue, contractor_financial_metrics
+- **SLA:** MEDIUM (30 days) | **Quality Score:** 0.88
+- **Use Case:** Budget forecasting, vendor performance analysis
+
+### `street_closures_construction` (ezy6-djsf)
+- **Status:** ✅ ACTIVE | **Frequency:** Daily | **Rows:** ~TBD | **Coverage:** 2020–Present
+- **URL:** https://data.cityofnewyork.us/Transportation/Street-Closures-Due-to-Construction/ezy6-djsf
+- **Purpose:** Direct conflict detection for inspection scheduling and public impact
+- **KPIs:** construction_conflict_zones, closure_duration_avg, public_impact_scope
+- **SLA:** HIGH (14 days) | **Quality Score:** 0.90
+- **Use Case:** Real-time conflict resolution, inspection prioritization
+
+### `street_permits_historical` (c9sj-fmsg)
+- **Status:** ✅ ACTIVE | **Frequency:** Static | **Rows:** ~TBD | **Coverage:** 2013–2021
+- **URL:** https://data.cityofnewyork.us/Transportation/Street-Construction-Permits-2013-2021/c9sj-fmsg
+- **Purpose:** Historical permit data for time-series trend analysis (fills 2013-2022 gap)
+- **KPIs:** permit_volume_trends, seasonal_patterns, multi_year_contractor_performance
+- **SLA:** LOW (60 days) | **Quality Score:** 0.86
+- **Use Case:** Historical baseline for capacity planning, trend analysis
+
+### `street_permits_cranes` (hcv3-zacv)
+- **Status:** ✅ ACTIVE | **Frequency:** Daily | **Rows:** ~TBD | **Coverage:** 2020–Present
+- **URL:** https://data.cityofnewyork.us/Transportation/Street-Construction-Permits-Cranes/hcv3-zacv
+- **Purpose:** Specialized crane permits for intensive construction signal detection
+- **KPIs:** crane_intensive_construction_count, equipment_risk_zones
+- **SLA:** MEDIUM (30 days) | **Quality Score:** 0.87
+- **Use Case:** Hazard identification, traffic safety coordination
+
+### `street_permits_related_agency` (cj3v-xdpd)
+- **Status:** ✅ ACTIVE | **Frequency:** Daily | **Rows:** ~TBD | **Coverage:** 2020–Present
+- **URL:** https://data.cityofnewyork.us/Transportation/Street-Construction-Permits-Related-Agency/cj3v-xdpd
+- **Purpose:** Non-contractor street work permits (utilities, agencies) for complete conflict detection
+- **KPIs:** agency_coordination_events, non_contractor_conflict_zones
+- **SLA:** MEDIUM (30 days) | **Quality Score:** 0.85
+- **Use Case:** Multi-agency coordination, comprehensive conflict mapping
+
+---
+
+## 9. Phase 1: Pedestrian Infrastructure (6 datasets) 🆕
+
+NEW category: Strategic pedestrian infrastructure and demand data for SIM prioritization.
+
+### `open_streets` (uiay-nctu)
+- **Status:** ✅ ACTIVE | **Frequency:** Daily | **Rows:** ~TBD | **Coverage:** 2015–Present
+- **URL:** https://data.cityofnewyork.us/Transportation/Open-Streets-Locations/uiay-nctu
+- **Purpose:** Public engagement layer with conflict detection for inspection scheduling
+- **KPIs:** open_streets_program_coverage, public_engagement_signal
+- **SLA:** MEDIUM (30 days) | **Quality Score:** 0.91
+- **Use Case:** High-traffic area prioritization, community engagement tracking
+
+### `pedestrian_mobility_demand` (c4kr-96ik)
+- **Status:** ✅ ACTIVE | **Frequency:** Annual | **Rows:** ~TBD | **Coverage:** Current
+- **URL:** https://data.cityofnewyork.us/Transportation/Pedestrian-Mobility-Plan-Demand/c4kr-96ik
+- **Purpose:** Strategic demand layer for demand-weighted inspection scheduling and SIM priority allocation
+- **KPIs:** pedestrian_demand_priority, coverage_weighted_by_demand
+- **SLA:** LOW (60 days) | **Quality Score:** 0.89
+- **Use Case:** Strategic inspection scheduling, equity-weighted allocation
+
+### `accessible_signals_map` (umfn-twbz)
+- **Status:** ✅ ACTIVE | **Frequency:** Monthly | **Rows:** ~TBD | **Coverage:** Current
+- **URL:** https://data.cityofnewyork.us/Transportation/Accessible-Pedestrian-Signals-Map/umfn-twbz
+- **Purpose:** Interactive map visualization of APS devices for accessibility overlay
+- **KPIs:** accessible_signal_coverage, aps_device_maintenance_scope
+- **SLA:** MEDIUM (30 days) | **Quality Score:** 0.87
+- **Use Case:** ADA compliance mapping, infrastructure maintenance planning
+
+### `accessible_signals_table` (de3m-c5p4)
+- **Status:** ✅ ACTIVE | **Frequency:** Monthly | **Rows:** ~TBD | **Coverage:** Current
+- **URL:** https://data.cityofnewyork.us/Transportation/Accessible-Pedestrian-Signal-Locations/de3m-c5p4
+- **Purpose:** Tabular ADA infrastructure accountability and maintenance tracking
+- **KPIs:** aps_device_condition_assessment, maintenance_backlog
+- **SLA:** MEDIUM (30 days) | **Quality Score:** 0.86
+- **Use Case:** Condition surveys, prioritized maintenance scheduling
+
+### `pedestrian_plazas_polygon` (k5k6-6jex)
+- **Status:** ✅ ACTIVE | **Frequency:** Quarterly | **Rows:** ~TBD | **Coverage:** Current
+- **URL:** https://data.cityofnewyork.us/Transportation/NYC-DOT-Pedestrian-Plazas-Polygon/k5k6-6jex
+- **Purpose:** Polygon boundaries of specialized pedestrian infrastructure within SIM inspection scope
+- **KPIs:** plaza_inspection_coverage, specialized_infrastructure_maintenance
+- **SLA:** LOW (60 days) | **Quality Score:** 0.88
+- **Use Case:** Specialized inspection scheduling, condition monitoring
+
+### `pedestrian_plazas_map` (fnkv-pyhj)
+- **Status:** ✅ ACTIVE | **Frequency:** Quarterly | **Rows:** ~TBD | **Coverage:** Current
+- **URL:** https://data.cityofnewyork.us/Transportation/NYC-DOT-Pedestrian-Plazas-Map/fnkv-pyhj
+- **Purpose:** Alternative visualization for plaza conditions and public space management
+- **KPIs:** plaza_public_engagement, location_utilization_tracking
+- **SLA:** LOW (60 days) | **Quality Score:** 0.87
+- **Use Case:** Public-facing engagement, location performance tracking
+
+---
+
+## 10. Phase 1: Street Safety & Conditions (5 datasets) 🆕
+
+NEW category: Safety infrastructure and street condition data for comprehensive coverage.
+
+### `parking_meters_map` (mvib-nh9w)
+- **Status:** ✅ ACTIVE | **Frequency:** Monthly | **Rows:** ~TBD | **Coverage:** Current
+- **URL:** https://data.cityofnewyork.us/Transportation/Parking-Meters-Locations-Map/mvib-nh9w
+- **Purpose:** Interactive map visualization for sidewalk obstruction and public space conflict analysis
+- **KPIs:** meter_obstruction_zones, public_space_conflict_rate
+- **SLA:** MEDIUM (30 days) | **Quality Score:** 0.90
+- **Use Case:** Obstruction monitoring, inspection prioritization around meters
+
+### `parking_meters_table` (693u-uax6)
+- **Status:** ✅ ACTIVE | **Frequency:** Monthly | **Rows:** ~TBD | **Coverage:** Current
+- **URL:** https://data.cityofnewyork.us/Transportation/Parking-Meters-Locations-Table/693u-uax6
+- **Purpose:** Tabular data version for analysis and conflict detection
+- **KPIs:** meter_density_analysis, maintenance_scheduling
+- **SLA:** MEDIUM (30 days) | **Quality Score:** 0.89
+- **Use Case:** Density-based inspection planning, maintenance coordination
+
+### `speed_reducers` (9n6h-pt9g)
+- **Status:** ✅ ACTIVE | **Frequency:** Quarterly | **Rows:** ~TBD | **Coverage:** Current
+- **URL:** https://data.cityofnewyork.us/Transportation/Speed-Reducer-Tracking-System-SRTS/9n6h-pt9g
+- **Purpose:** Street safety overlay; correlates with sidewalk conditions and safety initiatives
+- **KPIs:** safety_infrastructure_maintenance, speed_reduction_compliance
+- **SLA:** LOW (60 days) | **Quality Score:** 0.84
+- **Use Case:** Safety initiative coordination, infrastructure maintenance
+
+### `leading_pedestrian_intervals` (xc4v-ntf4)
+- **Status:** ✅ ACTIVE | **Frequency:** Quarterly | **Rows:** ~TBD | **Coverage:** Current
+- **URL:** https://data.cityofnewyork.us/Transportation/Leading-Pedestrian-Interval-Signals/xc4v-ntf4
+- **Purpose:** Pedestrian safety infrastructure maintenance and coordination
+- **KPIs:** lpi_signal_coverage, pedestrian_safety_coordination
+- **SLA:** LOW (60 days) | **Quality Score:** 0.83
+- **Use Case:** Safety infrastructure tracking, maintenance planning
+
+### `vision_zero_crossings` (bssx-36gg)
+- **Status:** ✅ ACTIVE | **Frequency:** Quarterly | **Rows:** ~TBD | **Coverage:** Current
+- **URL:** https://data.cityofnewyork.us/Transportation/Vision-Zero-Enhanced-Crossings/bssx-36gg
+- **Purpose:** High-visibility crosswalks; maintenance and safety data for Vision Zero coordination
+- **KPIs:** vision_zero_crossing_maintenance, safety_initiative_scope
+- **SLA:** LOW (60 days) | **Quality Score:** 0.85
+- **Use Case:** Vision Zero initiative tracking, crossing maintenance coordination
+
+---
+
+## 11. Phase 1: Budget & Vendor (3 datasets) 🆕
+
+NEW category: Capital projects, budget, and vendor management data.
+
+### `capital_projects_dashboard` (fb86-vt7u)
+- **Status:** ✅ ACTIVE | **Frequency:** Weekly | **Rows:** ~TBD | **Coverage:** Active Projects
+- **URL:** https://data.cityofnewyork.us/City-Government/Capital-Projects-Dashboard/fb86-vt7u
+- **Purpose:** Citywide capital context for resource allocation and prioritization
+- **KPIs:** capital_project_pipeline_health, resource_allocation_context
+- **SLA:** MEDIUM (30 days) | **Quality Score:** 0.86
+- **Use Case:** Budget planning, multi-agency coordination
+
+### `bicycle_parking` (thbt-gfu9)
+- **Status:** ✅ ACTIVE | **Frequency:** Monthly | **Rows:** ~TBD | **Coverage:** Current
+- **URL:** https://data.cityofnewyork.us/Transportation/Bicycle-Parking-Shelters-Map/thbt-gfu9
+- **Purpose:** Vendor (JCDecaux) contract tracking and street furniture obstruction monitoring
+- **KPIs:** vendor_contract_coverage, street_furniture_maintenance
+- **SLA:** MEDIUM (30 days) | **Quality Score:** 0.87
+- **Use Case:** Vendor performance tracking, obstruction monitoring
+
+### `bus_pad_tracking` (eyb2-p5s8)
+- **Status:** ✅ ACTIVE | **Frequency:** Monthly | **Rows:** ~TBD | **Coverage:** Current
+- **URL:** https://data.cityofnewyork.us/Transportation/Bus-Pad-Tracking/eyb2-p5s8
+- **Purpose:** Construction and sidewalk intersection tracking with contract status
+- **KPIs:** bus_pad_construction_coordination, contract_status_tracking
+- **SLA:** MEDIUM (30 days) | **Quality Score:** 0.84
+- **Use Case:** Construction coordination, contractor accountability
+
+---
+
+## 12. Phase 1: Reference & Geospatial (2 datasets) 🆕
+
+NEW category: Foundational geospatial references for universal data joins.
+
+### `centerline_streets` (3mf9-qshr)
+- **Status:** ✅ ACTIVE | **Frequency:** Quarterly | **Rows:** ~TBD | **Coverage:** Current
+- **URL:** https://data.cityofnewyork.us/Transportation/Centerline-Street-Reference/3mf9-qshr
+- **Purpose:** Universal street reference for foundational join key across all datasets
+- **KPIs:** spatial_join_completeness, centerline_coverage
+- **SLA:** LOW (60 days) | **Quality Score:** 0.94
+- **Use Case:** Master join key, spatial analysis foundation
+
+### `pedestrian_ramp_audit_mbpo` (8kic-uvpz)
+- **Status:** ✅ ACTIVE | **Frequency:** Annual | **Rows:** ~TBD | **Coverage:** Manhattan
+- **URL:** https://data.cityofnewyork.us/Transportation/MBPO-Pedestrian-Ramp-Audit/8kic-uvpz
+- **Purpose:** Borough-specific (Manhattan) ADA compliance assessment and audit trail
+- **KPIs:** manhattan_ramp_audit_coverage, borough_specific_compliance
+- **SLA:** LOW (60 days) | **Quality Score:** 0.82
+- **Use Case:** Borough-specific compliance tracking, audit documentation
+
+---
+
+## 13. Problematic Datasets (4 — DO NOT USE) ⚠️
 
 **DEPRECATED:** These datasets are stale, empty, or inaccessible. Use recommended alternatives.
 

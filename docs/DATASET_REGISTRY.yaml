@@ -1,77 +1,2359 @@
----
-# NYC DOT SIM Division - Complete Dataset Registry
-# Single source of truth for all 78 datasets
-# Version: 1.0
-# Last updated: 2026-06-17
-
 datasets:
   inspection:
-    fourfour: "dntt-gqwq"
-    name: "Sidewalk Inspections"
-    category: "core_daily"
-    columns: ["objectid", "borough", "created_date", "violation_count", "status"]
+    fourfour: dntt-gqwq
+    name: Sidewalk Inspections
+    category: core_daily
+    columns:
+    - objectid
+    - borough
+    - created_date
+    - violation_count
+    - status
     visualization:
-      default_chart: "vertical_bar"
-      iv_column: "borough"
-      dv_column: "violation_count"
-      aggregation: "sum"
-      title: "Weekly Inspections Completed by Borough"
-    kpis: ["inspections_scheduled_week", "inspection_completion_rate", "avg_violations_per_inspection"]
-    frequency: "daily"
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: violation_count
+      aggregation: sum
+      title: Weekly Inspections Completed by Borough
+      suggested_iv: Inspection ID
+      suggested_dv: value
+      suggested_date: Inspection Date
+      has_geographic_data: false
+    kpis:
+    - inspections_scheduled_week
+    - inspection_completion_rate
+    - avg_violations_per_inspection
+    frequency: daily
     quality_score: 0.92
     sla_days: 14
-    status: "active"
-
+    status: active
+    schema:
+      columns:
+      - name: Inspection ID
+        type: text
+      - name: No Violation Found
+        type: text
+      - name: City Do It
+        type: text
+      - name: Owner Will Do It
+        type: text
+      - name: Capital Project Conflict Flag
+        type: text
+      - name: Capital Project Conflict(s)
+        type: text
+      - name: Cancel
+        type: text
+      - name: Inspection Date
+        type: calendar_date
+      - name: Is 311 Inspection
+        type: text
+      - name: Material ID
+        type: text
+      - name: Pickup Sidewalk
+        type: text
+      - name: Curb311
+        type: text
+      - name: Pickup curb
+        type: text
+      - name: Other
+        type: text
+      - name: Correspondence
+        type: text
+      - name: Damage ID
+        type: text
+      - name: Damage Type Code
+        type: text
+      row_count: 0
+    column_specs:
+      borough_column: Inspection ID
+      value_column: value
+      date_column: Inspection Date
+      all_numeric: []
+      all_text:
+      - Inspection ID
+      - No Violation Found
+      - City Do It
+      - Owner Will Do It
+      - Capital Project Conflict Flag
+      - Capital Project Conflict(s)
+      - Cancel
+      - Is 311 Inspection
+      - Material ID
+      - Pickup Sidewalk
+      - Curb311
+      - Pickup curb
+      - Other
+      - Correspondence
+      - Damage ID
+      - Damage Type Code
+      all_dates:
+      - Inspection Date
+      all_geographic: []
+      total_columns: 17
   violations:
-    fourfour: "6kbp-uz6m"
-    name: "Sidewalk Violations"
-    category: "core_daily"
-    columns: ["objectid", "created_date", "status", "severity"]
+    fourfour: 6kbp-uz6m
+    name: Sidewalk Violations
+    category: core_daily
+    columns:
+    - objectid
+    - created_date
+    - status
+    - severity
     visualization:
-      default_chart: "line"
-      iv_column: "created_date"
-      dv_column: "count"
-      title: "Violation Creation Trend (30-Day Rolling)"
-    kpis: ["violations_open_count", "violation_resolution_time", "sla_breaches"]
-    frequency: "daily"
-    quality_score: 0.90
+      default_chart: line
+      iv_column: created_date
+      dv_column: count
+      title: Violation Creation Trend (30-Day Rolling)
+      suggested_iv: BROKEN
+      suggested_dv: CB
+      suggested_date: CERTI_DATE
+      has_geographic_data: false
+    kpis:
+    - violations_open_count
+    - violation_resolution_time
+    - sla_breaches
+    frequency: daily
+    quality_score: 0.9
     sla_days: 14
-    status: "active"
-
+    status: active
+    schema:
+      columns:
+      - name: BROKEN
+        type: text
+      - name: CB
+        type: number
+      - name: CERTI_DATE
+        type: calendar_date
+      - name: CONTRACT
+        type: text
+      - name: EntryDate
+        type: calendar_date
+      - name: FLAG
+        type: text
+      - name: FRSTNAME
+        type: text
+      - name: GRACE_PD
+        type: number
+      - name: HARDWARE
+        type: text
+      - name: HOUSE_NUM
+        type: text
+      - name: INTEGRITY
+        type: text
+      - name: ONFRTOCODE
+        type: text
+      - name: ONSTNAME
+        type: text
+      - name: OTHER_DEF
+        type: text
+      - name: PATCHWORK
+        type: text
+      - name: POST_DATE
+        type: calendar_date
+      - name: SLOPE
+        type: text
+      - name: SQ_FEET
+        type: number
+      - name: SW_MISSING
+        type: text
+      - name: SWV_Number
+        type: number
+      - name: TOSTNAME
+        type: text
+      - name: TRIP_HAZ
+        type: text
+      - name: UNDERMINED
+        type: text
+      - name: VDismissDate
+        type: calendar_date
+      - name: ViolationID
+        type: number
+      - name: VIssueDate
+        type: calendar_date
+      - name: BBLID
+        type: number
+      row_count: 0
+    column_specs:
+      borough_column: BROKEN
+      value_column: CB
+      date_column: CERTI_DATE
+      all_numeric:
+      - CB
+      - GRACE_PD
+      - SQ_FEET
+      - SWV_Number
+      - ViolationID
+      - BBLID
+      all_text:
+      - BROKEN
+      - CONTRACT
+      - FLAG
+      - FRSTNAME
+      - HARDWARE
+      - HOUSE_NUM
+      - INTEGRITY
+      - ONFRTOCODE
+      - ONSTNAME
+      - OTHER_DEF
+      - PATCHWORK
+      - SLOPE
+      - SW_MISSING
+      - TOSTNAME
+      - TRIP_HAZ
+      - UNDERMINED
+      all_dates:
+      - CERTI_DATE
+      - EntryDate
+      - POST_DATE
+      - VDismissDate
+      - VIssueDate
+      all_geographic: []
+      total_columns: 27
   ramp_progress:
-    fourfour: "e7gc-ub6z"
-    name: "Pedestrian Ramp Program Progress"
-    category: "core_daily"
+    fourfour: e7gc-ub6z
+    name: Pedestrian Ramp Program Progress
+    category: core_daily
     visualization:
-      default_chart: "stacked_bar"
-      iv_column: "borough"
-      dv_column: "completion_percent"
-      title: "ADA Ramp Completion Progress by Borough"
-    kpis: ["ramp_completion_by_borough", "ramp_accessibility_score"]
-    frequency: "daily"
+      default_chart: stacked_bar
+      iv_column: borough
+      dv_column: completion_percent
+      title: ADA Ramp Completion Progress by Borough
+      suggested_iv: Borough
+      suggested_dv: Construction_Status_Value
+      suggested_date: Construction_End_Date
+      has_geographic_data: true
+    kpis:
+    - ramp_completion_by_borough
+    - ramp_accessibility_score
+    frequency: daily
     quality_score: 0.91
     sla_days: 14
-    status: "active"
-
+    status: active
+    schema:
+      columns:
+      - name: the_geom
+        type: point
+      - name: OBJECTID
+        type: number
+      - name: CornerID
+        type: number
+      - name: Street_Name1
+        type: text
+      - name: Street_Name2
+        type: text
+      - name: Borough
+        type: text
+      - name: Construction_Type
+        type: text
+      - name: Construction_End_Date
+        type: text
+      - name: Construction_Status_Value
+        type: text
+      - name: Community Districts
+        type: number
+      - name: Borough Boundaries
+        type: number
+      - name: Police Precincts
+        type: number
+      - name: City Council Districts
+        type: number
+      row_count: 0
+    column_specs:
+      borough_column: Borough
+      value_column: Construction_Status_Value
+      date_column: Construction_End_Date
+      all_numeric:
+      - OBJECTID
+      - CornerID
+      - Community Districts
+      - Borough Boundaries
+      - Police Precincts
+      - City Council Districts
+      all_text:
+      - Street_Name1
+      - Street_Name2
+      - Borough
+      - Construction_Type
+      - Construction_End_Date
+      - Construction_Status_Value
+      all_dates: []
+      all_geographic:
+      - the_geom
+      total_columns: 13
   street_permits:
-    fourfour: "tqtj-sjs8"
-    name: "Street Construction Permits (2022-Present)"
-    category: "construction"
+    fourfour: tqtj-sjs8
+    name: Street Construction Permits (2022-Present)
+    category: construction
     visualization:
-      default_chart: "vertical_bar"
-      iv_column: "borough"
-      dv_column: "count"
-      title: "Street Permits by Borough"
-    kpis: ["contractor_completion_rate", "construction_conflict_zones"]
-    frequency: "daily"
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+      title: Street Permits by Borough
+      suggested_iv: BoroughName
+      suggested_dv: PermitTotalSqFeet
+      suggested_date: EmergencyIssueDate
+      has_geographic_data: false
+    kpis:
+    - contractor_completion_rate
+    - construction_conflict_zones
+    frequency: daily
     quality_score: 0.94
     sla_days: 14
-    status: "active"
-
+    status: active
+    schema:
+      columns:
+      - name: PermitNumber
+        type: text
+      - name: ApplicationTrackingID
+        type: text
+      - name: SequenceNumber
+        type: text
+      - name: ApplicationTypeShortDesc
+        type: text
+      - name: PermitStatusID
+        type: text
+      - name: PermitStatusShortDesc
+        type: text
+      - name: PermitSeriesID
+        type: text
+      - name: PermitSeriesShortDesc
+        type: text
+      - name: PermitTypeID
+        type: text
+      - name: PermitTypeDesc
+        type: text
+      - name: PermitNumberOfZones
+        type: number
+      - name: PermitLinearFeet
+        type: number
+      - name: PermitTotalSqFeet
+        type: number
+      - name: PermitEstimatedNumberOfCuts
+        type: number
+      - name: EquipmentTypeDesc
+        type: text
+      - name: NumberOfContainers
+        type: number
+      - name: NumberOfMiniContainers
+        type: number
+      - name: SpecificStipulations
+        type: text
+      - name: PreviousPermitNumber
+        type: text
+      - name: NextPermitNumber
+        type: text
+      - name: EmergencyIssueDate
+        type: calendar_date
+      - name: PermitIssueDate
+        type: calendar_date
+      - name: IssuedWorkStartDate
+        type: calendar_date
+      - name: IssuedWorkEndDate
+        type: calendar_date
+      - name: BoroughName
+        type: text
+      - name: PermitHouseNumber
+        type: text
+      - name: OnStreetName
+        type: text
+      - name: FromStreetName
+        type: text
+      - name: ToStreetName
+        type: text
+      - name: PermitteeName
+        type: text
+      - name: PermitPurposeComments
+        type: text
+      - name: PermitLocationComments
+        type: text
+      - name: PavementShortDesc
+        type: text
+      - name: SideWalkShortDesc
+        type: text
+      - name: CreatedOn
+        type: calendar_date
+      - name: ModifiedOn
+        type: calendar_date
+      - name: OFTCode
+        type: text
+      - name: WKT
+        type: text
+      - name: LocationGeometry
+        type: text
+      row_count: 0
+    column_specs:
+      borough_column: BoroughName
+      value_column: PermitTotalSqFeet
+      date_column: EmergencyIssueDate
+      all_numeric:
+      - PermitNumberOfZones
+      - PermitLinearFeet
+      - PermitTotalSqFeet
+      - PermitEstimatedNumberOfCuts
+      - NumberOfContainers
+      - NumberOfMiniContainers
+      all_text:
+      - PermitNumber
+      - ApplicationTrackingID
+      - SequenceNumber
+      - ApplicationTypeShortDesc
+      - PermitStatusID
+      - PermitStatusShortDesc
+      - PermitSeriesID
+      - PermitSeriesShortDesc
+      - PermitTypeID
+      - PermitTypeDesc
+      - EquipmentTypeDesc
+      - SpecificStipulations
+      - PreviousPermitNumber
+      - NextPermitNumber
+      - BoroughName
+      - PermitHouseNumber
+      - OnStreetName
+      - FromStreetName
+      - ToStreetName
+      - PermitteeName
+      - PermitPurposeComments
+      - PermitLocationComments
+      - PavementShortDesc
+      - SideWalkShortDesc
+      - OFTCode
+      - WKT
+      - LocationGeometry
+      all_dates:
+      - EmergencyIssueDate
+      - PermitIssueDate
+      - IssuedWorkStartDate
+      - IssuedWorkEndDate
+      - CreatedOn
+      - ModifiedOn
+      all_geographic: []
+      total_columns: 39
+  street_construction_permits_fee:
+    fourfour: 9fnm-j6if
+    name: Street Construction Permits - Fee
+    category: permits_variants
+    kpis:
+    - permit_fee_revenue
+    - contractor_financial_metrics
+    frequency: daily
+    quality_score: 0.88
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+      aggregation: count
+      title: Street Construction Permits - Fee Analysis
+      suggested_iv: PermitNumber
+      suggested_dv: PermitFeeAmountCharged
+      suggested_date: CreatedOn
+      has_geographic_data: false
+    schema:
+      columns:
+      - name: PermitNumber
+        type: text
+      - name: FeeType
+        type: text
+      - name: PermitFeeAmountCharged
+        type: number
+      - name: CreatedOn
+        type: calendar_date
+      - name: ModifiedOn
+        type: calendar_date
+      row_count: 0
+    column_specs:
+      borough_column: PermitNumber
+      value_column: PermitFeeAmountCharged
+      date_column: CreatedOn
+      all_numeric:
+      - PermitFeeAmountCharged
+      all_text:
+      - PermitNumber
+      - FeeType
+      all_dates:
+      - CreatedOn
+      - ModifiedOn
+      all_geographic: []
+      total_columns: 5
+  street_closures_due_to_construction:
+    fourfour: ezy6-djsf
+    name: Street Closures due to Construction
+    category: permits_variants
+    kpis:
+    - construction_conflict_zones
+    - closure_duration_avg
+    frequency: daily
+    quality_score: 0.9
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+      aggregation: count
+      title: Street Closures due to Construction Analysis
+      suggested_iv: BoroughName
+      suggested_dv: value
+      suggested_date: WorkStartDate
+      has_geographic_data: false
+    schema:
+      columns:
+      - name: OnStreetName
+        type: text
+      - name: FromStreetName
+        type: text
+      - name: ToStreetName
+        type: text
+      - name: BoroughName
+        type: text
+      - name: WorkStartDate
+        type: calendar_date
+      - name: WorkEndDate
+        type: calendar_date
+      - name: Purpose
+        type: text
+      - name: OFTCode
+        type: text
+      - name: WKT
+        type: text
+      row_count: 0
+    column_specs:
+      borough_column: BoroughName
+      value_column: value
+      date_column: WorkStartDate
+      all_numeric: []
+      all_text:
+      - OnStreetName
+      - FromStreetName
+      - ToStreetName
+      - BoroughName
+      - Purpose
+      - OFTCode
+      - WKT
+      all_dates:
+      - WorkStartDate
+      - WorkEndDate
+      all_geographic: []
+      total_columns: 9
+  street_construction_permits_2013-2021:
+    fourfour: c9sj-fmsg
+    name: Street Construction Permits (2013-2021)
+    category: permits_variants
+    kpis:
+    - permit_volume_trends
+    - seasonal_patterns
+    frequency: static
+    quality_score: 0.86
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+      aggregation: count
+      title: Street Construction Permits (2013-2021) Analysis
+      suggested_iv: BoroughName
+      suggested_dv: PermitTotalSqFeet
+      suggested_date: EmergencyIssueDate
+      has_geographic_data: false
+    schema:
+      columns:
+      - name: PermitNumber
+        type: text
+      - name: ApplicationTrackingID
+        type: text
+      - name: SequenceNumber
+        type: text
+      - name: ApplicationTypeShortDesc
+        type: text
+      - name: PermitStatusID
+        type: text
+      - name: PermitStatusShortDesc
+        type: text
+      - name: PermitSeriesID
+        type: text
+      - name: PermitSeriesShortDesc
+        type: text
+      - name: PermitTypeID
+        type: text
+      - name: PermitTypeDesc
+        type: text
+      - name: PermitNumberOfZones
+        type: number
+      - name: PermitLinearFeet
+        type: number
+      - name: PermitTotalSqFeet
+        type: number
+      - name: PermitEstimatedNumberOfCuts
+        type: number
+      - name: EquipmentTypeDesc
+        type: text
+      - name: NumberOfContainers
+        type: number
+      - name: NumberOfMiniContainers
+        type: number
+      - name: SpecificStipulations
+        type: text
+      - name: PreviousPermitNumber
+        type: text
+      - name: NextPermitNumber
+        type: text
+      - name: EmergencyIssueDate
+        type: calendar_date
+      - name: PermitIssueDate
+        type: calendar_date
+      - name: IssuedWorkStartDate
+        type: calendar_date
+      - name: IssuedWorkEndDate
+        type: calendar_date
+      - name: BoroughName
+        type: text
+      - name: PermitHouseNumber
+        type: text
+      - name: OnStreetName
+        type: text
+      - name: FromStreetName
+        type: text
+      - name: ToStreetName
+        type: text
+      - name: PermitteeName
+        type: text
+      - name: PermitPurposeComments
+        type: text
+      - name: PermitLocationComments
+        type: text
+      - name: PavementShortDesc
+        type: text
+      - name: SideWalkShortDesc
+        type: text
+      - name: CreatedOn
+        type: calendar_date
+      - name: ModifiedOn
+        type: calendar_date
+      - name: OFTCode
+        type: text
+      - name: WKT
+        type: text
+      - name: LocationGeometry
+        type: text
+      row_count: 0
+    column_specs:
+      borough_column: BoroughName
+      value_column: PermitTotalSqFeet
+      date_column: EmergencyIssueDate
+      all_numeric:
+      - PermitNumberOfZones
+      - PermitLinearFeet
+      - PermitTotalSqFeet
+      - PermitEstimatedNumberOfCuts
+      - NumberOfContainers
+      - NumberOfMiniContainers
+      all_text:
+      - PermitNumber
+      - ApplicationTrackingID
+      - SequenceNumber
+      - ApplicationTypeShortDesc
+      - PermitStatusID
+      - PermitStatusShortDesc
+      - PermitSeriesID
+      - PermitSeriesShortDesc
+      - PermitTypeID
+      - PermitTypeDesc
+      - EquipmentTypeDesc
+      - SpecificStipulations
+      - PreviousPermitNumber
+      - NextPermitNumber
+      - BoroughName
+      - PermitHouseNumber
+      - OnStreetName
+      - FromStreetName
+      - ToStreetName
+      - PermitteeName
+      - PermitPurposeComments
+      - PermitLocationComments
+      - PavementShortDesc
+      - SideWalkShortDesc
+      - OFTCode
+      - WKT
+      - LocationGeometry
+      all_dates:
+      - EmergencyIssueDate
+      - PermitIssueDate
+      - IssuedWorkStartDate
+      - IssuedWorkEndDate
+      - CreatedOn
+      - ModifiedOn
+      all_geographic: []
+      total_columns: 39
+  street_construction_permits_cranes:
+    fourfour: hcv3-zacv
+    name: Street Construction Permits - Cranes
+    category: permits_variants
+    kpis:
+    - crane_intensive_construction
+    - equipment_risk_zones
+    frequency: daily
+    quality_score: 0.87
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+      aggregation: count
+      title: Street Construction Permits - Cranes Analysis
+      suggested_iv: PermitNumber
+      suggested_dv: value
+      suggested_date: CreatedOn
+      has_geographic_data: false
+    schema:
+      columns:
+      - name: PermitNumber
+        type: text
+      - name: CraneTypeShortDesc
+        type: text
+      - name: CraneSerialNumber
+        type: text
+      - name: CreatedOn
+        type: calendar_date
+      - name: ModifiedOn
+        type: calendar_date
+      row_count: 0
+    column_specs:
+      borough_column: PermitNumber
+      value_column: value
+      date_column: CreatedOn
+      all_numeric: []
+      all_text:
+      - PermitNumber
+      - CraneTypeShortDesc
+      - CraneSerialNumber
+      all_dates:
+      - CreatedOn
+      - ModifiedOn
+      all_geographic: []
+      total_columns: 5
+  street_construction_permits_related_agency:
+    fourfour: cj3v-xdpd
+    name: Street Construction Permits - Related Agency
+    category: permits_variants
+    kpis:
+    - agency_coordination_events
+    - non_contractor_conflicts
+    frequency: daily
+    quality_score: 0.85
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+      aggregation: count
+      title: Street Construction Permits - Related Agency Analysis
+      suggested_iv: PermitNumber
+      suggested_dv: value
+      suggested_date: CreatedOn
+      has_geographic_data: false
+    schema:
+      columns:
+      - name: PermitNumber
+        type: text
+      - name: PermitRelatedAgencyDesc
+        type: text
+      - name: RelatedPermitNumber
+        type: text
+      - name: CreatedOn
+        type: calendar_date
+      - name: ModifiedOn
+        type: calendar_date
+      row_count: 0
+    column_specs:
+      borough_column: PermitNumber
+      value_column: value
+      date_column: CreatedOn
+      all_numeric: []
+      all_text:
+      - PermitNumber
+      - PermitRelatedAgencyDesc
+      - RelatedPermitNumber
+      all_dates:
+      - CreatedOn
+      - ModifiedOn
+      all_geographic: []
+      total_columns: 5
+  open_streets_locations:
+    fourfour: uiay-nctu
+    name: Open Streets Locations
+    category: pedestrian_infrastructure
+    kpis:
+    - open_streets_coverage
+    - public_engagement_signal
+    frequency: daily
+    quality_score: 0.91
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+      aggregation: count
+      title: Open Streets Locations Analysis
+      suggested_iv: Borough Name
+      suggested_dv: Object ID
+      suggested_date: apprStartD
+      has_geographic_data: false
+    schema:
+      columns:
+      - name: Object ID
+        type: number
+      - name: Organization Name
+        type: text
+      - name: Approved On Street
+        type: text
+      - name: Borough Name
+        type: text
+      - name: Approved From Street
+        type: text
+      - name: Approved To Street
+        type: text
+      - name: apprDaysWe
+        type: text
+      - name: Status Type
+        type: text
+      - name: Approved Monday Open
+        type: text
+      - name: Approved Monday Close
+        type: text
+      - name: Approved Tuesday Open
+        type: text
+      - name: Approved Tuesday Close
+        type: text
+      - name: Approved Wednesday Open
+        type: text
+      - name: Approved Wednesday Close
+        type: text
+      - name: Approved Thursday Open
+        type: text
+      - name: Approved Thursday Close
+        type: text
+      - name: Approved Friday Open
+        type: text
+      - name: Approved Friday Close
+        type: text
+      - name: Approved Saturday Open
+        type: text
+      - name: Approved Saturday Close
+        type: text
+      - name: Approved Sunday Open
+        type: text
+      - name: Approved Sunday Close
+        type: text
+      - name: apprStartD
+        type: calendar_date
+      - name: apprEndDat
+        type: calendar_date
+      - name: Shape_STLe
+        type: text
+      - name: segmentidt
+        type: text
+      - name: segmentidf
+        type: text
+      - name: lionversion
+        type: text
+      - name: The_Geom
+        type: multiline
+      row_count: 0
+    column_specs:
+      borough_column: Borough Name
+      value_column: Object ID
+      date_column: apprStartD
+      all_numeric:
+      - Object ID
+      all_text:
+      - Organization Name
+      - Approved On Street
+      - Borough Name
+      - Approved From Street
+      - Approved To Street
+      - apprDaysWe
+      - Status Type
+      - Approved Monday Open
+      - Approved Monday Close
+      - Approved Tuesday Open
+      - Approved Tuesday Close
+      - Approved Wednesday Open
+      - Approved Wednesday Close
+      - Approved Thursday Open
+      - Approved Thursday Close
+      - Approved Friday Open
+      - Approved Friday Close
+      - Approved Saturday Open
+      - Approved Saturday Close
+      - Approved Sunday Open
+      - Approved Sunday Close
+      - Shape_STLe
+      - segmentidt
+      - segmentidf
+      - lionversion
+      all_dates:
+      - apprStartD
+      - apprEndDat
+      all_geographic: []
+      total_columns: 29
+  pedestrian_mobility_plan_demand:
+    fourfour: c4kr-96ik
+    name: Pedestrian Mobility Plan Demand
+    category: pedestrian_infrastructure
+    kpis:
+    - pedestrian_demand_priority
+    - demand_weighted_coverage
+    frequency: annual
+    quality_score: 0.89
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+      aggregation: count
+      title: Pedestrian Mobility Plan Demand Analysis
+    schema:
+      columns: []
+      row_count: 0
+  accessible_pedestrian_signals_map:
+    fourfour: umfn-twbz
+    name: Accessible Pedestrian Signals (Map)
+    category: pedestrian_infrastructure
+    kpis:
+    - accessible_signal_coverage
+    - aps_maintenance_scope
+    frequency: monthly
+    quality_score: 0.87
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+      aggregation: count
+      title: Accessible Pedestrian Signals (Map) Analysis
+    schema:
+      columns: []
+      row_count: 0
+  accessible_pedestrian_signals_table:
+    fourfour: de3m-c5p4
+    name: Accessible Pedestrian Signals (Table)
+    category: pedestrian_infrastructure
+    kpis:
+    - aps_device_condition
+    - maintenance_backlog
+    frequency: monthly
+    quality_score: 0.86
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+      aggregation: count
+      title: Accessible Pedestrian Signals (Table) Analysis
+      suggested_iv: Borough
+      suggested_dv: POINT_X
+      suggested_date: Date_Insta
+      has_geographic_data: true
+    schema:
+      columns:
+      - name: the_geom
+        type: point
+      - name: BoroCode
+        type: text
+      - name: BoroName
+        type: text
+      - name: BoroCD
+        type: text
+      - name: CounDist
+        type: text
+      - name: AssemDist
+        type: text
+      - name: StSenDist
+        type: text
+      - name: CongDist
+        type: text
+      - name: Location
+        type: text
+      - name: Borough
+        type: text
+      - name: Date_Insta
+        type: calendar_date
+      - name: POINT_X
+        type: number
+      - name: POINT_Y
+        type: number
+      - name: FEMAFldz
+        type: text
+      - name: FEMAFldT
+        type: text
+      - name: HrcEvac
+        type: text
+      - name: NTAname
+        type: text
+      - name: Zip Codes
+        type: number
+      - name: Community Districts
+        type: number
+      - name: Borough Boundaries
+        type: number
+      - name: City Council Districts
+        type: number
+      - name: Police Precincts
+        type: number
+      row_count: 0
+    column_specs:
+      borough_column: Borough
+      value_column: POINT_X
+      date_column: Date_Insta
+      all_numeric:
+      - POINT_X
+      - POINT_Y
+      - Zip Codes
+      - Community Districts
+      - Borough Boundaries
+      - City Council Districts
+      - Police Precincts
+      all_text:
+      - BoroCode
+      - BoroName
+      - BoroCD
+      - CounDist
+      - AssemDist
+      - StSenDist
+      - CongDist
+      - Location
+      - Borough
+      - FEMAFldz
+      - FEMAFldT
+      - HrcEvac
+      - NTAname
+      all_dates:
+      - Date_Insta
+      all_geographic:
+      - the_geom
+      total_columns: 22
+  pedestrian_plazas_polygon:
+    fourfour: k5k6-6jex
+    name: Pedestrian Plazas Polygon
+    category: pedestrian_infrastructure
+    kpis:
+    - plaza_inspection_coverage
+    - specialized_infrastructure_maint
+    frequency: monthly
+    quality_score: 0.86
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+    schema:
+      columns:
+      - name: the_geom
+        type: multipolygon
+      - name: OBJECTID
+        type: number
+      - name: BoroCD
+        type: text
+      - name: AssemDist
+        type: text
+      - name: CounDist
+        type: text
+      - name: CongDist
+        type: text
+      - name: StSenDist
+        type: text
+      - name: PlazaName
+        type: text
+      - name: OnStreet
+        type: text
+      - name: FromStreet
+        type: text
+      - name: ToStreet
+        type: text
+      - name: Partner
+        type: text
+      - name: BoroCode
+        type: text
+      - name: BoroName
+        type: text
+      - name: FEMAFldz
+        type: text
+      - name: FEMAFldT
+        type: text
+      - name: HrcEvac
+        type: text
+      - name: Shape_Leng
+        type: number
+      - name: Shape_Area
+        type: number
+      row_count: 0
+  pedestrian_plazas_map:
+    fourfour: fnkv-pyhj
+    name: Pedestrian Plazas Map
+    category: pedestrian_infrastructure
+    kpis:
+    - plaza_public_engagement
+    - location_utilization
+    frequency: monthly
+    quality_score: 0.86
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+    schema:
+      columns: []
+      row_count: 0
+  parking_meters_map:
+    fourfour: mvib-nh9w
+    name: Parking Meters Map
+    category: street_safety
+    kpis:
+    - meter_obstruction_zones
+    - public_space_conflict_rate
+    frequency: monthly
+    quality_score: 0.86
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+    schema:
+      columns: []
+      row_count: 0
+  parking_meters_table:
+    fourfour: 693u-uax6
+    name: Parking Meters Table
+    category: street_safety
+    kpis:
+    - meter_density_analysis
+    - maintenance_scheduling
+    frequency: monthly
+    quality_score: 0.86
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+    schema:
+      columns:
+      - name: ObjectID
+        type: text
+      - name: Meter Number
+        type: text
+      - name: Status
+        type: text
+      - name: Pay By Cell Number
+        type: text
+      - name: Meter_Hours
+        type: text
+      - name: Parking_Facility_Name
+        type: text
+      - name: Facility
+        type: text
+      - name: Borough
+        type: text
+      - name: On_Street
+        type: text
+      - name: Side_of_Street
+        type: text
+      - name: From_Street
+        type: text
+      - name: To_Street
+        type: text
+      - name: Latitude
+        type: number
+      - name: Longitude
+        type: number
+      - name: X
+        type: number
+      - name: Y
+        type: number
+      - name: Location
+        type: point
+      - name: Zip Codes
+        type: number
+      - name: Community Districts
+        type: number
+      - name: Borough Boundaries
+        type: number
+      - name: City Council Districts
+        type: number
+      - name: Police Precincts
+        type: number
+      row_count: 0
+  speed_reducer_tracking_system:
+    fourfour: 9n6h-pt9g
+    name: Speed Reducer Tracking System
+    category: street_safety
+    kpis:
+    - safety_infrastructure_maint
+    - speed_reduction_compliance
+    frequency: quarterly
+    quality_score: 0.84
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+      aggregation: count
+      title: Speed Reducer Tracking System Analysis
+      suggested_iv: Borough
+      suggested_dv: NumSRProposed
+      suggested_date: DateAdded
+      has_geographic_data: false
+    schema:
+      columns:
+      - name: ProjectCode
+        type: text
+      - name: GroupOwner
+        type: text
+      - name: LocationDescription
+        type: text
+      - name: Borough
+        type: text
+      - name: ProjectStatus
+        type: text
+      - name: NextStep
+        type: text
+      - name: DateAdded
+        type: calendar_date
+      - name: BCTSNum
+        type: text
+      - name: CCUNum
+        type: text
+      - name: RequestorLetterReplyDate
+        type: calendar_date
+      - name: CBLetterRequestDate
+        type: calendar_date
+      - name: CBLetterRecievedDate
+        type: calendar_date
+      - name: OldSign
+        type: text
+      - name: NewSign
+        type: text
+      - name: MarkingsDate
+        type: calendar_date
+      - name: InstallationDate
+        type: calendar_date
+      - name: SecondStudyCode
+        type: text
+      - name: ClosedDate
+        type: calendar_date
+      - name: speedCushion
+        type: text
+      - name: RequestDate
+        type: calendar_date
+      - name: RequestorType
+        type: text
+      - name: SegmentID
+        type: text
+      - name: OnStreet
+        type: text
+      - name: FromStreet
+        type: text
+      - name: ToStreet
+        type: text
+      - name: GeoBoroughName
+        type: text
+      - name: LIONKey
+        type: text
+      - name: FromLatitude
+        type: text
+      - name: FromLongitude
+        type: text
+      - name: ToLatitude
+        type: text
+      - name: ToLongitude
+        type: text
+      - name: OFT
+        type: text
+      - name: CB
+        type: text
+      - name: SegmentStatus
+        type: text
+      - name: SegmentStatusDescription
+        type: text
+      - name: DenialReason
+        type: text
+      - name: NumSRProposed
+        type: number
+      - name: TrafficDirection
+        type: text
+      - name: TrafficDirectionDesc
+        type: text
+      - name: OldSign1
+        type: text
+      - name: NewSign1
+        type: text
+      - name: OldSign2
+        type: text
+      - name: NewSign2
+        type: text
+      row_count: 0
+    column_specs:
+      borough_column: Borough
+      value_column: NumSRProposed
+      date_column: DateAdded
+      all_numeric:
+      - NumSRProposed
+      all_text:
+      - ProjectCode
+      - GroupOwner
+      - LocationDescription
+      - Borough
+      - ProjectStatus
+      - NextStep
+      - BCTSNum
+      - CCUNum
+      - OldSign
+      - NewSign
+      - SecondStudyCode
+      - speedCushion
+      - RequestorType
+      - SegmentID
+      - OnStreet
+      - FromStreet
+      - ToStreet
+      - GeoBoroughName
+      - LIONKey
+      - FromLatitude
+      - FromLongitude
+      - ToLatitude
+      - ToLongitude
+      - OFT
+      - CB
+      - SegmentStatus
+      - SegmentStatusDescription
+      - DenialReason
+      - TrafficDirection
+      - TrafficDirectionDesc
+      - OldSign1
+      - NewSign1
+      - OldSign2
+      - NewSign2
+      all_dates:
+      - DateAdded
+      - RequestorLetterReplyDate
+      - CBLetterRequestDate
+      - CBLetterRecievedDate
+      - MarkingsDate
+      - InstallationDate
+      - ClosedDate
+      - RequestDate
+      all_geographic: []
+      total_columns: 43
+  leading_pedestrian_interval_signals:
+    fourfour: xc4v-ntf4
+    name: Leading Pedestrian Interval Signals
+    category: street_safety
+    kpis:
+    - lpi_signal_coverage
+    - pedestrian_safety_coordination
+    frequency: quarterly
+    quality_score: 0.83
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+      aggregation: count
+      title: Leading Pedestrian Interval Signals Analysis
+      suggested_iv: MainStreet
+      suggested_dv: value
+      suggested_date: null
+      has_geographic_data: true
+    schema:
+      columns:
+      - name: the_geom
+        type: point
+      - name: MainStreet
+        type: text
+      - name: CrossStree
+        type: text
+      - name: Install_Da
+        type: text
+      - name: LONG
+        type: text
+      - name: LAT
+        type: text
+      - name: X
+        type: text
+      - name: Y
+        type: text
+      row_count: 0
+    column_specs:
+      borough_column: MainStreet
+      value_column: value
+      date_column: null
+      all_numeric: []
+      all_text:
+      - MainStreet
+      - CrossStree
+      - Install_Da
+      - LONG
+      - LAT
+      - X
+      - Y
+      all_dates: []
+      all_geographic:
+      - the_geom
+      total_columns: 8
+  vision_zero_enhanced_crossings:
+    fourfour: bssx-36gg
+    name: Vision Zero Enhanced Crossings
+    category: street_safety
+    kpis:
+    - vz_crossing_maintenance
+    - safety_initiative_scope
+    frequency: quarterly
+    quality_score: 0.85
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+      aggregation: count
+      title: Vision Zero Enhanced Crossings Analysis
+    schema:
+      columns: []
+      row_count: 0
+  capital_projects_dashboard:
+    fourfour: fb86-vt7u
+    name: Capital Projects Dashboard
+    category: budget_vendor
+    kpis:
+    - capital_pipeline_health
+    - resource_allocation
+    frequency: monthly
+    quality_score: 0.86
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+    schema:
+      columns:
+      - name: Reporting Period
+        type: text
+      - name: Managing Agency
+        type: text
+      - name: Sponsor Agency
+        type: text
+      - name: PID
+        type: number
+      - name: FMS ID
+        type: text
+      - name: Total Budget
+        type: number
+      - name: Spend to Date
+        type: number
+      - name: Spend to Date (%)
+        type: number
+      - name: FMS Project Name
+        type: text
+      - name: Agency Project Name
+        type: text
+      - name: Agency Project Description
+        type: text
+      - name: Current Phase
+        type: text
+      - name: Current Phase Start
+        type: calendar_date
+      - name: Forecast Current Phase End
+        type: calendar_date
+      - name: Forecast Completion
+        type: calendar_date
+      - name: Actual Design Start
+        type: calendar_date
+      - name: Actual Design End
+        type: calendar_date
+      - name: Actual Construction Procurement Start
+        type: calendar_date
+      - name: Actual Construction Procurement End
+        type: calendar_date
+      - name: Actual Construction Start
+        type: calendar_date
+      - name: Actual Construction End
+        type: calendar_date
+      - name: Borough
+        type: text
+      - name: Community Board
+        type: text
+      - name: Budget Line
+        type: text
+      - name: Ten Year Plan Category
+        type: text
+      - name: Agency Data Date
+        type: calendar_date
+      - name: FMS Data Date
+        type: calendar_date
+      row_count: 0
+  bicycle_parking_shelters:
+    fourfour: thbt-gfu9
+    name: Bicycle Parking Shelters
+    category: budget_vendor
+    kpis:
+    - vendor_contract_coverage
+    - street_furniture_maint
+    frequency: monthly
+    quality_score: 0.87
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+      aggregation: count
+      title: Bicycle Parking Shelters Analysis
+    schema:
+      columns: []
+      row_count: 0
+  bus_pad_tracking:
+    fourfour: eyb2-p5s8
+    name: Bus Pad Tracking
+    category: budget_vendor
+    kpis:
+    - bus_pad_coordination
+    - contract_status_tracking
+    frequency: monthly
+    quality_score: 0.86
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+    schema:
+      columns:
+      - name: Date Received
+        type: calendar_date
+      - name: Borough
+        type: text
+      - name: Community Board
+        type: number
+      - name: On Street
+        type: text
+      - name: Cross Street 1
+        type: text
+      - name: Cross Street 2
+        type: text
+      - name: Address
+        type: text
+      - name: Block
+        type: text
+      - name: Lot
+        type: text
+      - name: Existing Bus Pad or No Bus Pad
+        type: text
+      - name: 'If Existing: length of bus pad (Feet)'
+        type: text
+      - name: 'Bus Pad/Roadway Condition Rating: High, Medium, Low'
+        type: text
+      - name: 'Vehicular Traffic: High, Medium, Low'
+        type: text
+      - name: 'Pedestrian traffic: High, Medium, Low'
+        type: text
+      - name: Curb Type
+        type: text
+      - name: Curb Reveal (inches)
+        type: text
+      - name: Sidewalk Type
+        type: text
+      - name: Landmark Area (Yes/No)
+        type: text
+      - name: TA Structure (Yes/No)
+        type: text
+      - name: Vault (Yes/No)
+        type: text
+      - name: Repaired (Y/N)
+        type: text
+      - name: 'Contract #'
+        type: text
+      - name: Construction Date
+        type: text
+      - name: Linear FT Constructed
+        type: text
+      - name: Postcode
+        type: text
+      - name: Latitude
+        type: number
+      - name: Longitude
+        type: number
+      - name: Council District
+        type: number
+      - name: Census Tract (2020)
+        type: number
+      - name: BIN
+        type: number
+      - name: BBL
+        type: number
+      - name: NTA (2020)
+        type: text
+      row_count: 0
+  centerline_street_reference:
+    fourfour: 3mf9-qshr
+    name: Centerline (Street Reference)
+    category: reference_geospatial
+    kpis:
+    - spatial_join_completeness
+    - centerline_coverage
+    frequency: quarterly
+    quality_score: 0.94
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+      aggregation: count
+      title: Centerline (Street Reference) Analysis
+    schema:
+      columns: []
+      row_count: 0
+  mbpo_pedestrian_ramp_audit:
+    fourfour: 8kic-uvpz
+    name: MBPO Pedestrian Ramp Audit
+    category: reference_geospatial
+    kpis:
+    - manhattan_ramp_coverage
+    - borough_compliance
+    frequency: annual
+    quality_score: 0.82
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+      aggregation: count
+      title: MBPO Pedestrian Ramp Audit Analysis
+      suggested_iv: Station
+      suggested_dv: value
+      suggested_date: null
+      has_geographic_data: false
+    schema:
+      columns:
+      - name: Station
+        type: text
+      - name: Street 1
+        type: text
+      - name: Street 2
+        type: text
+      - name: Curb Cut
+        type: text
+      - name: Center Cut
+        type: text
+      - name: No Curb Cut
+        type: text
+      - name: Ramp ID (No Id means a part of center cut)
+        type: text
+      - name: Compliant
+        type: text
+      - name: Slope (1":12" or less)
+        type: text
+      - name: Slope Non-Comp
+        type: text
+      - name: Ramp Width (36" or more)
+        type: text
+      - name: Width Non-Comp
+        type: text
+      - name: Lip or Bump (1/4" or less)
+        type: text
+      - name: Lip Non-Comp
+        type: text
+      - name: Crumbling Concrete?
+        type: text
+      - name: Crumbling Non-Comp
+        type: text
+      - name: Led to Pot Hole?
+        type: text
+      - name: Pot Hole Non-Comp
+        type: text
+      - name: Detectable warnings?
+        type: text
+      - name: Warnings Non-Comp
+        type: text
+      - name: Object barriers ?
+        type: text
+      - name: Objects Non-Comp
+        type: text
+      - name: Barriers above?
+        type: text
+      - name: Ramp looks relatively "new"?
+        type: text
+      row_count: 0
+    column_specs:
+      borough_column: Station
+      value_column: value
+      date_column: null
+      all_numeric: []
+      all_text:
+      - Station
+      - Street 1
+      - Street 2
+      - Curb Cut
+      - Center Cut
+      - No Curb Cut
+      - Ramp ID (No Id means a part of center cut)
+      - Compliant
+      - Slope (1":12" or less)
+      - Slope Non-Comp
+      - Ramp Width (36" or more)
+      - Width Non-Comp
+      - Lip or Bump (1/4" or less)
+      - Lip Non-Comp
+      - Crumbling Concrete?
+      - Crumbling Non-Comp
+      - Led to Pot Hole?
+      - Pot Hole Non-Comp
+      - Detectable warnings?
+      - Warnings Non-Comp
+      - Object barriers ?
+      - Objects Non-Comp
+      - Barriers above?
+      - Ramp looks relatively "new"?
+      all_dates: []
+      all_geographic: []
+      total_columns: 24
+  street_permits_fee:
+    fourfour: 9fnm-j6if
+    name: Street Permits Fee
+    category: permits_variants
+    kpis:
+    - permit_fee_revenue
+    - avg_fee_per_permit
+    - contractor_financial_metrics
+    frequency: daily
+    quality_score: 0.86
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+    schema:
+      columns:
+      - name: PermitNumber
+        type: text
+      - name: FeeType
+        type: text
+      - name: PermitFeeAmountCharged
+        type: number
+      - name: CreatedOn
+        type: calendar_date
+      - name: ModifiedOn
+        type: calendar_date
+      row_count: 0
+  street_closures_construction:
+    fourfour: ezy6-djsf
+    name: Street Closures Construction
+    category: permits_variants
+    kpis:
+    - construction_conflict_zones
+    - closure_duration_avg
+    - closure_public_impact
+    frequency: daily
+    quality_score: 0.86
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+    schema:
+      columns:
+      - name: OnStreetName
+        type: text
+      - name: FromStreetName
+        type: text
+      - name: ToStreetName
+        type: text
+      - name: BoroughName
+        type: text
+      - name: WorkStartDate
+        type: calendar_date
+      - name: WorkEndDate
+        type: calendar_date
+      - name: Purpose
+        type: text
+      - name: OFTCode
+        type: text
+      - name: WKT
+        type: text
+      row_count: 0
+  street_permits_historical:
+    fourfour: c9sj-fmsg
+    name: Street Permits Historical
+    category: permits_variants
+    kpis:
+    - permit_volume_trends
+    - seasonal_patterns
+    - capacity_planning_baseline
+    frequency: daily
+    quality_score: 0.86
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+    schema:
+      columns:
+      - name: PermitNumber
+        type: text
+      - name: ApplicationTrackingID
+        type: text
+      - name: SequenceNumber
+        type: text
+      - name: ApplicationTypeShortDesc
+        type: text
+      - name: PermitStatusID
+        type: text
+      - name: PermitStatusShortDesc
+        type: text
+      - name: PermitSeriesID
+        type: text
+      - name: PermitSeriesShortDesc
+        type: text
+      - name: PermitTypeID
+        type: text
+      - name: PermitTypeDesc
+        type: text
+      - name: PermitNumberOfZones
+        type: number
+      - name: PermitLinearFeet
+        type: number
+      - name: PermitTotalSqFeet
+        type: number
+      - name: PermitEstimatedNumberOfCuts
+        type: number
+      - name: EquipmentTypeDesc
+        type: text
+      - name: NumberOfContainers
+        type: number
+      - name: NumberOfMiniContainers
+        type: number
+      - name: SpecificStipulations
+        type: text
+      - name: PreviousPermitNumber
+        type: text
+      - name: NextPermitNumber
+        type: text
+      - name: EmergencyIssueDate
+        type: calendar_date
+      - name: PermitIssueDate
+        type: calendar_date
+      - name: IssuedWorkStartDate
+        type: calendar_date
+      - name: IssuedWorkEndDate
+        type: calendar_date
+      - name: BoroughName
+        type: text
+      - name: PermitHouseNumber
+        type: text
+      - name: OnStreetName
+        type: text
+      - name: FromStreetName
+        type: text
+      - name: ToStreetName
+        type: text
+      - name: PermitteeName
+        type: text
+      - name: PermitPurposeComments
+        type: text
+      - name: PermitLocationComments
+        type: text
+      - name: PavementShortDesc
+        type: text
+      - name: SideWalkShortDesc
+        type: text
+      - name: CreatedOn
+        type: calendar_date
+      - name: ModifiedOn
+        type: calendar_date
+      - name: OFTCode
+        type: text
+      - name: WKT
+        type: text
+      - name: LocationGeometry
+        type: text
+      row_count: 0
+  street_permits_cranes:
+    fourfour: hcv3-zacv
+    name: Street Permits Cranes
+    category: permits_variants
+    kpis:
+    - crane_intensive_construction
+    - equipment_risk_zones
+    frequency: daily
+    quality_score: 0.86
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+    schema:
+      columns:
+      - name: PermitNumber
+        type: text
+      - name: CraneTypeShortDesc
+        type: text
+      - name: CraneSerialNumber
+        type: text
+      - name: CreatedOn
+        type: calendar_date
+      - name: ModifiedOn
+        type: calendar_date
+      row_count: 0
+  street_permits_related_agency:
+    fourfour: cj3v-xdpd
+    name: Street Permits Related Agency
+    category: permits_variants
+    kpis:
+    - agency_coordination_events
+    - non_contractor_conflicts
+    frequency: daily
+    quality_score: 0.86
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+    schema:
+      columns:
+      - name: PermitNumber
+        type: text
+      - name: PermitRelatedAgencyDesc
+        type: text
+      - name: RelatedPermitNumber
+        type: text
+      - name: CreatedOn
+        type: calendar_date
+      - name: ModifiedOn
+        type: calendar_date
+      row_count: 0
+  open_streets:
+    fourfour: uiay-nctu
+    name: Open Streets
+    category: pedestrian_infrastructure
+    kpis:
+    - open_streets_coverage
+    - public_engagement_signal
+    - os_inspection_priority
+    frequency: monthly
+    quality_score: 0.86
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+    schema:
+      columns:
+      - name: Object ID
+        type: number
+      - name: Organization Name
+        type: text
+      - name: Approved On Street
+        type: text
+      - name: Borough Name
+        type: text
+      - name: Approved From Street
+        type: text
+      - name: Approved To Street
+        type: text
+      - name: apprDaysWe
+        type: text
+      - name: Status Type
+        type: text
+      - name: Approved Monday Open
+        type: text
+      - name: Approved Monday Close
+        type: text
+      - name: Approved Tuesday Open
+        type: text
+      - name: Approved Tuesday Close
+        type: text
+      - name: Approved Wednesday Open
+        type: text
+      - name: Approved Wednesday Close
+        type: text
+      - name: Approved Thursday Open
+        type: text
+      - name: Approved Thursday Close
+        type: text
+      - name: Approved Friday Open
+        type: text
+      - name: Approved Friday Close
+        type: text
+      - name: Approved Saturday Open
+        type: text
+      - name: Approved Saturday Close
+        type: text
+      - name: Approved Sunday Open
+        type: text
+      - name: Approved Sunday Close
+        type: text
+      - name: apprStartD
+        type: calendar_date
+      - name: apprEndDat
+        type: calendar_date
+      - name: Shape_STLe
+        type: text
+      - name: segmentidt
+        type: text
+      - name: segmentidf
+        type: text
+      - name: lionversion
+        type: text
+      - name: The_Geom
+        type: multiline
+      row_count: 0
+  pedestrian_mobility_demand:
+    fourfour: c4kr-96ik
+    name: Pedestrian Mobility Demand
+    category: pedestrian_infrastructure
+    kpis:
+    - pedestrian_demand_priority
+    - demand_weighted_coverage
+    - equity_weighted_allocation
+    frequency: monthly
+    quality_score: 0.86
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+    schema:
+      columns: []
+      row_count: 0
+  accessible_signals_map:
+    fourfour: umfn-twbz
+    name: Accessible Signals Map
+    category: pedestrian_infrastructure
+    kpis:
+    - accessible_signal_coverage
+    - aps_maintenance_scope
+    frequency: monthly
+    quality_score: 0.86
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+    schema:
+      columns: []
+      row_count: 0
+  accessible_signals_table:
+    fourfour: de3m-c5p4
+    name: Accessible Signals Table
+    category: pedestrian_infrastructure
+    kpis:
+    - aps_device_condition
+    - maintenance_backlog
+    frequency: monthly
+    quality_score: 0.86
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+    schema:
+      columns:
+      - name: the_geom
+        type: point
+      - name: BoroCode
+        type: text
+      - name: BoroName
+        type: text
+      - name: BoroCD
+        type: text
+      - name: CounDist
+        type: text
+      - name: AssemDist
+        type: text
+      - name: StSenDist
+        type: text
+      - name: CongDist
+        type: text
+      - name: Location
+        type: text
+      - name: Borough
+        type: text
+      - name: Date_Insta
+        type: calendar_date
+      - name: POINT_X
+        type: number
+      - name: POINT_Y
+        type: number
+      - name: FEMAFldz
+        type: text
+      - name: FEMAFldT
+        type: text
+      - name: HrcEvac
+        type: text
+      - name: NTAname
+        type: text
+      - name: Zip Codes
+        type: number
+      - name: Community Districts
+        type: number
+      - name: Borough Boundaries
+        type: number
+      - name: City Council Districts
+        type: number
+      - name: Police Precincts
+        type: number
+      row_count: 0
+  speed_reducers:
+    fourfour: 9n6h-pt9g
+    name: Speed Reducers
+    category: street_safety
+    kpis:
+    - safety_infrastructure_maint
+    - speed_reduction_compliance
+    frequency: monthly
+    quality_score: 0.86
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+    schema:
+      columns:
+      - name: ProjectCode
+        type: text
+      - name: GroupOwner
+        type: text
+      - name: LocationDescription
+        type: text
+      - name: Borough
+        type: text
+      - name: ProjectStatus
+        type: text
+      - name: NextStep
+        type: text
+      - name: DateAdded
+        type: calendar_date
+      - name: BCTSNum
+        type: text
+      - name: CCUNum
+        type: text
+      - name: RequestorLetterReplyDate
+        type: calendar_date
+      - name: CBLetterRequestDate
+        type: calendar_date
+      - name: CBLetterRecievedDate
+        type: calendar_date
+      - name: OldSign
+        type: text
+      - name: NewSign
+        type: text
+      - name: MarkingsDate
+        type: calendar_date
+      - name: InstallationDate
+        type: calendar_date
+      - name: SecondStudyCode
+        type: text
+      - name: ClosedDate
+        type: calendar_date
+      - name: speedCushion
+        type: text
+      - name: RequestDate
+        type: calendar_date
+      - name: RequestorType
+        type: text
+      - name: SegmentID
+        type: text
+      - name: OnStreet
+        type: text
+      - name: FromStreet
+        type: text
+      - name: ToStreet
+        type: text
+      - name: GeoBoroughName
+        type: text
+      - name: LIONKey
+        type: text
+      - name: FromLatitude
+        type: text
+      - name: FromLongitude
+        type: text
+      - name: ToLatitude
+        type: text
+      - name: ToLongitude
+        type: text
+      - name: OFT
+        type: text
+      - name: CB
+        type: text
+      - name: SegmentStatus
+        type: text
+      - name: SegmentStatusDescription
+        type: text
+      - name: DenialReason
+        type: text
+      - name: NumSRProposed
+        type: number
+      - name: TrafficDirection
+        type: text
+      - name: TrafficDirectionDesc
+        type: text
+      - name: OldSign1
+        type: text
+      - name: NewSign1
+        type: text
+      - name: OldSign2
+        type: text
+      - name: NewSign2
+        type: text
+      row_count: 0
+  leading_pedestrian_intervals:
+    fourfour: xc4v-ntf4
+    name: Leading Pedestrian Intervals
+    category: street_safety
+    kpis:
+    - lpi_signal_coverage
+    - pedestrian_safety_coordination
+    frequency: monthly
+    quality_score: 0.86
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+    schema:
+      columns:
+      - name: the_geom
+        type: point
+      - name: MainStreet
+        type: text
+      - name: CrossStree
+        type: text
+      - name: Install_Da
+        type: text
+      - name: LONG
+        type: text
+      - name: LAT
+        type: text
+      - name: X
+        type: text
+      - name: Y
+        type: text
+      row_count: 0
+  vision_zero_crossings:
+    fourfour: bssx-36gg
+    name: Vision Zero Crossings
+    category: street_safety
+    kpis:
+    - vz_crossing_maintenance
+    - safety_initiative_scope
+    frequency: monthly
+    quality_score: 0.86
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+    schema:
+      columns: []
+      row_count: 0
+  bicycle_parking:
+    fourfour: thbt-gfu9
+    name: Bicycle Parking
+    category: budget_vendor
+    kpis:
+    - vendor_contract_coverage
+    - street_furniture_maint
+    frequency: monthly
+    quality_score: 0.86
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+    schema:
+      columns: []
+      row_count: 0
+  centerline_streets:
+    fourfour: 3mf9-qshr
+    name: Centerline Streets
+    category: reference_geospatial
+    kpis:
+    - spatial_join_completeness
+    - centerline_coverage
+    frequency: monthly
+    quality_score: 0.86
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+    schema:
+      columns: []
+      row_count: 0
+  pedestrian_ramp_audit_mbpo:
+    fourfour: 8kic-uvpz
+    name: Pedestrian Ramp Audit Mbpo
+    category: reference_geospatial
+    kpis:
+    - manhattan_ramp_coverage
+    - borough_compliance
+    frequency: monthly
+    quality_score: 0.86
+    status: active
+    visualization:
+      default_chart: vertical_bar
+      iv_column: borough
+      dv_column: count
+    schema:
+      columns:
+      - name: Station
+        type: text
+      - name: Street 1
+        type: text
+      - name: Street 2
+        type: text
+      - name: Curb Cut
+        type: text
+      - name: Center Cut
+        type: text
+      - name: No Curb Cut
+        type: text
+      - name: Ramp ID (No Id means a part of center cut)
+        type: text
+      - name: Compliant
+        type: text
+      - name: Slope (1":12" or less)
+        type: text
+      - name: Slope Non-Comp
+        type: text
+      - name: Ramp Width (36" or more)
+        type: text
+      - name: Width Non-Comp
+        type: text
+      - name: Lip or Bump (1/4" or less)
+        type: text
+      - name: Lip Non-Comp
+        type: text
+      - name: Crumbling Concrete?
+        type: text
+      - name: Crumbling Non-Comp
+        type: text
+      - name: Led to Pot Hole?
+        type: text
+      - name: Pot Hole Non-Comp
+        type: text
+      - name: Detectable warnings?
+        type: text
+      - name: Warnings Non-Comp
+        type: text
+      - name: Object barriers ?
+        type: text
+      - name: Objects Non-Comp
+        type: text
+      - name: Barriers above?
+        type: text
+      - name: Ramp looks relatively "new"?
+        type: text
+      row_count: 0
 metadata:
-  version: "1.0"
-  total_datasets: 78
-  active_datasets: 74
+  version: '1.0'
+  total_datasets: 40
+  active_datasets: 40
   deprecated_datasets: 4
-  last_updated: "2026-06-17"
-  description: "Single source of truth for NYC DOT dataset integration"
+  last_updated: '2026-06-17'
+  description: Single source of truth for NYC DOT dataset integration
