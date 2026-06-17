@@ -5,7 +5,6 @@ Tracks and logs instances where municipal data schemas evolve or deviate from ex
 
 import csv
 import logging
-import os
 from datetime import datetime, timezone
 from pathlib import Path
 

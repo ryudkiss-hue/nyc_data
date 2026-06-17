@@ -6,7 +6,6 @@ Pattern: Each method returns tuple[go.Figure, str] with data insight + narrative
 """
 
 import logging
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -14,7 +13,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 from app.callbacks.decorators import memoize_with_ttl, timer_callback
-from app.services.analytics_service import get_dataset, get_spatial_data, validate_filters
+from app.services.analytics_service import get_dataset, validate_filters
 
 logger = logging.getLogger(__name__)
 

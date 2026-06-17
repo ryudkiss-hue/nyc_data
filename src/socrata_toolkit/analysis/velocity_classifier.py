@@ -11,7 +11,6 @@ Classifies inspector performance into tiers (HIGH/MEDIUM/LOW) based on:
 
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any

@@ -1,5 +1,5 @@
 import dash_mantine_components as dmc
-from dash import Input, Output, State, callback, no_update
+from dash import Input, Output, State
 
 from app.dash_layouts import (
     layout_construction,

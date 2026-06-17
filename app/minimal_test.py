@@ -1,5 +1,4 @@
 import dash
-import uvicorn
 from dash import html
 from fastapi import FastAPI
 
@@ -8,8 +7,6 @@ dash_app.layout = html.Div("Minimal Test OK")
 
 app = FastAPI()
 # Manual mount to test
-from dash.middleware import DispatcherMiddleware
-from starlette.middleware.wsgi import WSGIMiddleware
 
 # This is usually how you'd mount a WSGI Dash app in FastAPI
 # but DashProxy with backend="fastapi" does it differently.

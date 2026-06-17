@@ -3,7 +3,7 @@
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-blue?style=flat-square&logo=python)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 [![Dash App](https://img.shields.io/badge/UI-Dash/Mantine-cyan?style=flat-square)](app/dash_app.py)
-[![30+ Charts](https://img.shields.io/badge/Visualizations-30%2B-orange?style=flat-square)](app/callbacks/)
+[![100+ Charts](https://img.shields.io/badge/Visualizations-100%2B-orange?style=flat-square)](app/callbacks/)
 
 **NYC DOT SIM Toolkit** is a Python-based analysis platform for NYC's Sidewalk Inspection & Management program. It ingests live Socrata open data, detects spatial conflicts between construction permits and inspections, performs data quality analysis, and surfaces interactive visualizations via **Dash/Plotly** with a **Mantine UI** — all backed by DuckDB for high-performance local analytics and FastAPI for production-grade infrastructure.
 
@@ -63,26 +63,31 @@ See **[QUICKSTART.md](QUICKSTART.md)** for detailed setup and **[docs/DEPLOYMENT
 ## Architecture
 
 ```
-┌────────────────────────────────────────────┐
-│      NYC DOT SIM Toolkit (v0.4.1)          │
-├────────────────┬──────────────────────────┤
-│  Streamlit UI  │  CLI Toolkit  │  Python  │
-│  (Mission      │  (socrata     │  SDK     │
-│   Control)     │   commands)   │          │
-├────────────────┴──────────────────────────┤
-│              Data Layer (DuckDB)           │
-│  ┌───────────────────┐ ┌────────────────┐  │
-│  │ Live Socrata API  │ │ L2 Parquet     │  │
-│  │ (26 datasets)     │ │ Cache (local)  │  │
-│  └───────────────────┘ └────────────────┘  │
-└────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────┐
+│              NYC DOT SIM Toolkit (v0.4.1)                  │
+├────────────────┬──────────────────────────┬────────────────┤
+│  Streamlit UI  │  MotherDuck Dives (New!) │  CLI Toolkit   │
+│  (Mission      │  (Interactive Analytics) │  (socrata      │
+│   Control)     │  Replaces Jupyter NB     │   commands)    │
+├────────────────┴──────────────────────────┴────────────────┤
+│                      Data Layer                            │
+│  ┌───────────────────┐ ┌────────────────┐ ┌─────────────┐  │
+│  │ Live Socrata API  │ │ DuckDB L2      │ │ MotherDuck  │  │
+│  │ (37 datasets)     │ │ Parquet Cache  │ │ Cloud       │  │
+│  └───────────────────┘ └────────────────┘ └─────────────┘  │
+└────────────────────────────────────────────────────────────┘
 ```
+
+> **Note on Legacy Dashboards:** All previous Jupyter Notebook dashboards (`01_inspection_dashboard.ipynb` through `05_advanced_analytics.ipynb`) have been moved to `jupyter_book/legacy_dashboards/` and are officially **SUPERSEDED**.
+> Moving forward, all visual and statistical reporting for NYC DOT is managed as *Dives-as-Code* in the `dives/` directory. Use the synchronization utilities in `scripts/motherduck_dives_sync/` to push/pull dynamic Recharts+Mantine components back to the MotherDuck cloud workspace.
 
 ---
 
 ## Dataset Registry
 
-All 26 datasets are defined in `config/datasets.yaml` and loaded at runtime.
+**CURRENT SOURCE OF TRUTH:** See `SOCRATA_DATASETS_CONSOLIDATED.md` for complete registry with all 37 datasets, KPI mappings, and visualization cross-references.
+
+All 37 datasets are defined in `config/datasets.yaml` and loaded at runtime.
 
 | Key | Description | Fourfour | Category |
 |-----|-------------|----------|----------|

@@ -1,8 +1,5 @@
 import dash_mantine_components as dmc
-import numpy as np
-import pandas as pd
-import plotly.graph_objects as go
-from dash import Input, Output, State, callback, dcc, html, no_update
+from dash import dcc, html
 from dash_iconify import DashIconify
 
 from app.components.filter_system import render_filter_bar

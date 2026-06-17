@@ -1,7 +1,6 @@
 """Schema Management for MotherDuck Cloud Databases."""
 
 import logging
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 

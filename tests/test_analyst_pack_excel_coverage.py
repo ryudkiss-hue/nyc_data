@@ -41,7 +41,6 @@ class TestDataframeToExcel:
         assert len(result) == 2
 
     def test_other_typeerror_reraised(self, tmp_path):
-        import pytest
 
         from socrata_toolkit.analyst.pack import _dataframe_to_excel
 

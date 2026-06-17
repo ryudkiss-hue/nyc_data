@@ -5,8 +5,7 @@ Command palette aesthetic for power users, expandable query panels.
 """
 
 import dash
-import plotly.graph_objects as go
-from dash import Input, Output, State, callback, dcc, html
+from dash import dcc, html
 
 # ============================================================================
 # THEME & STYLING

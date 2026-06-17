@@ -1,5 +1,4 @@
 import pandas as pd
-import pytest
 
 from socrata_toolkit.analysis import (
     classify_all_distributions,

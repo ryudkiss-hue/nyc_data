@@ -13,10 +13,8 @@ Classes:
 
 import logging
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
 
 import spacy
-from spacy.language import Language
 from spacy.tokens import Doc
 
 logger = logging.getLogger(__name__)
@@ -291,7 +289,6 @@ class CorrespondenceClassifier:
         Returns:
             Enriched dataframe with classification columns
         """
-        import pandas as pd
 
         # Filter to non-null text
         valid_texts = df[text_column].fillna("").astype(str)

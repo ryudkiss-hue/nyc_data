@@ -37,7 +37,6 @@ class TestParseGeomValue:
 
     def test_returns_none_for_nan(self):
         """_parse_geom_value returns None for float NaN values."""
-        import math
         assert _parse_geom_value(float("nan")) is None
 
     def test_returns_none_for_empty_string(self):

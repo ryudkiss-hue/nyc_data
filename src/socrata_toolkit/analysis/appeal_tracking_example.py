@@ -12,13 +12,11 @@ Examples:
 """
 
 from datetime import datetime, timedelta
-from typing import Dict, List
 
 import pandas as pd
 
 from socrata_toolkit.analysis.appeal_classifier import (
     AppealOutcomeClassifier,
-    AppealResolution,
     InspectorAppealAnalyzer,
 )
 from socrata_toolkit.analysis.appeal_tracking_workflow import (

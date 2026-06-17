@@ -10,7 +10,6 @@ to confirm they are real problems before implementation.
 from datetime import datetime, timedelta
 
 import pandas as pd
-import pytest
 
 
 class TestCriticalFinding1_SoQLSyntax:

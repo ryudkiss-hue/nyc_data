@@ -19,7 +19,7 @@ import dash
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-from dash import Input, Output, State, callback, dcc, html
+from dash import Input, Output, callback, dcc, html
 from shapely.geometry import Point
 
 logging.basicConfig(level=logging.INFO)
@@ -30,11 +30,6 @@ from app.callbacks.analytics import AnalyticsEngine
 from app.dash_layouts_analytics_integration import (
     render_analytics_integration_tabs,
     render_analytics_stores,
-)
-from app.services.analytics_service import (
-    get_dataset,
-    get_spatial_data,
-    get_timeseries_data,
 )
 
 # Initialize Dash app

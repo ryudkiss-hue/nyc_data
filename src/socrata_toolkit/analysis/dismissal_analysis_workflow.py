@@ -17,16 +17,15 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional, TypedDict
+from typing import Any, TypedDict
 
 import pandas as pd
 from langchain_anthropic import ChatAnthropic
 from langgraph.graph import END, StateGraph
 
 from socrata_toolkit.analysis.dismissal_classifier import (
-    DismissalCategory,
     DismissalClassification,
     DismissalReasonClassifier,
 )

@@ -1,7 +1,5 @@
 from unittest.mock import patch
 
-import pytest
-
 from app.services.nl_query import parse_complaint_to_json, triage_complaint
 
 

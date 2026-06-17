@@ -5,7 +5,6 @@ from __future__ import annotations
 import datetime
 import json
 import os
-import sys
 from pathlib import Path
 
 import streamlit as st
@@ -547,7 +546,6 @@ def _render_configuration_tab() -> None:
 
 def _render_registry_tab() -> None:
     import pandas as pd
-    import yaml
 
     st.markdown("#### Dataset Registry")
     st.caption(
@@ -827,7 +825,6 @@ def _load_sla_config() -> dict[str, int]:
 
 def _render_scheduler_tab() -> None:
     """Tab 1: Scheduler Config."""
-    import pandas as pd
 
     st.markdown("### ⏰ Nightly Scheduler")
     st.caption(
