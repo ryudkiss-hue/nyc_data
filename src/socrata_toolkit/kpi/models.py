@@ -33,6 +33,17 @@ class ThresholdConfig:
     silver_color: str = "#ffffcc"
     gold_color: str = "#ccffcc"
 
+    def validate(self) -> List[str]:
+        """Validate threshold configuration."""
+        errors = []
+        if self.silver_min <= self.bronze_min:
+            errors.append("silver_min must be > bronze_min")
+        if self.gold_min <= self.silver_min:
+            errors.append("gold_min must be > silver_min")
+        if self.max_value <= self.gold_min:
+            errors.append("max_value must be > gold_min")
+        return errors
+
     def get_level(self, value: float) -> ThresholdLevel:
         """Determine threshold level for a value."""
         if value >= self.gold_min:
@@ -69,7 +80,12 @@ class TimeSeriesMetadata:
     def validate(self) -> List[str]:
         """Validate configuration."""
         errors = []
-        if self.forecast_method not in ["linear", "exponential", "arima"]:
+        if self.forecast_method not in [
+            "linear",
+            "exponential",
+            "arima",
+            "exponential_smoothing",
+        ]:
             errors.append(
                 f"Invalid forecast_method: {self.forecast_method}"
             )
