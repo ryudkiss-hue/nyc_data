@@ -56,7 +56,7 @@ END
 **Node Details:**
 
 #### 1. `fetch_metadata` (Parallelized)
-Fetches metadata for all 37 datasets using SocrataClient:
+Fetches metadata for all 57 datasets using SocrataClient:
 - Row counts via SODA v3 query
 - Schema via /api/views/{fourfour}.json
 - Last-modified timestamps
@@ -341,7 +341,7 @@ print("✓ Workflow executed successfully")
 
 ## Performance
 
-- **Metadata fetch:** ~30-45s (parallelized, 37 datasets)
+- **Metadata fetch:** ~30-45s (parallelized, 57 datasets)
 - **Classification:** ~1s
 - **Claude decision:** ~5-10s (API latency)
 - **Total end-to-end:** ~45-60s
@@ -380,4 +380,5 @@ print("✓ Workflow executed successfully")
 For questions or enhancements:
 - File an issue in the repo
 - Contact the data team at ryudkiss@gmail.com
+
 

@@ -7,13 +7,13 @@ verified: true
 author: Claude Code
 ---
 
-# Complete Entity Relationship Diagram: NYC DOT SIM 37-Dataset Ecosystem
+# Complete Entity Relationship Diagram: NYC DOT SIM 57-dataset Ecosystem
 
 **Status:** ✅ VERIFIED & VALIDATED (All 5 domain clusters rendered successfully)
 
 ## Overview
 
-This document contains the complete, authoritative ERD for all 37 datasets in the NYC DOT Sidewalk Inspection Management (SIM) system. Due to Mermaid rendering constraints, the diagram is organized into 5 interconnected domain clusters, each with full primary key (PK) and foreign key (FK) definitions.
+This document contains the complete, authoritative ERD for all 57 datasets in the NYC DOT Sidewalk Inspection Management (SIM) system. Due to Mermaid rendering constraints, the diagram is organized into 5 interconnected domain clusters, each with full primary key (PK) and foreign key (FK) definitions.
 
 **Integration Point:** All 5 diagrams converge at `BBLID` (Brooklyn-Block-Lot ID) as the master geographic key, enabling complete cross-dataset queries and conflict detection.
 
@@ -189,7 +189,7 @@ PEDESTRIAN_DEMAND ||--o{ LOT_INFO : "location"
 
 ### Primary Geographic Keys
 
-All 37 datasets integrate via **BBLID** (Brooklyn-Block-Lot):
+All 57 datasets integrate via **BBLID** (Brooklyn-Block-Lot):
 - **Operational:** INSPECTION, VIOLATIONS, REINSPECTION, RAMP_PROGRESS, etc.
 - **Construction:** STREET_PERMITS, CAPITAL_INTERSECTIONS, CPDB_PROJECTS, etc.
 - **Geographic:** LOT_INFO (master), MAPPLUTO, SIDEWALK_PLANIMETRIC, etc.
@@ -239,3 +239,4 @@ Any schema changes, new datasets, or relationship modifications must be reflecte
 **Last Updated:** 2026-06-17  
 **Verified By:** Claude Code (Haiku 4.5)  
 **Status:** PRODUCTION-READY
+

@@ -112,7 +112,7 @@ def dataset_health_workflow_cmd(output_path: str | None, fmt: str) -> None:
     """Run full dataset health workflow with Claude analysis.
 
     This command:
-    1. Fetches metadata for all 37 datasets (parallelized)
+    1. Fetches metadata for all 57 datasets (parallelized)
     2. Classifies health status (HEALTHY/STALE/SCHEMA_DRIFT/EMPTY_OR_ERROR)
     3. Routes high-severity datasets to Claude for decision-making
     4. Generates alerts and remediation steps
@@ -256,3 +256,4 @@ if __name__ == "__main__":
     print("  - JSON output (--output file.json)")
     print("  - Multiple formats (--format json|table|markdown)")
     print("  - Continuous monitoring (--monitor)")
+

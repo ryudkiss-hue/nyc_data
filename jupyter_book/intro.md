@@ -50,7 +50,7 @@ Each dashboard is a **Jupyter notebook with ipywidgets controls**:
 | **Inspection Dashboard** | Real-time overview of sidewalk inspection data, violations, and trends |
 | **ADA Ramp Analysis** | Borough-level ramp completion rates with confidence intervals |
 | **Spatial Conflict Detection** | Interactive map showing overlaps between permits and inspections |
-| **Data Quality Scorecard** | Freshness, completeness, validity, consistency metrics for all 37 datasets |
+| **Data Quality Scorecard** | Freshness, completeness, validity, consistency metrics for all 57 datasets |
 | **Advanced Analytics** | CUSUM charts, Bayesian forecasting, KMeans clustering, survival analysis |
 
 ## Key Features
@@ -171,4 +171,5 @@ This project is provided under the MIT License. NYC Open Data is public domain.
 ---
 
 **Ready to explore?** Pick a dashboard above and start filtering! 🗽📊
+
 

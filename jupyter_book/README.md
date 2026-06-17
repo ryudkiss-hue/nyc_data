@@ -92,7 +92,7 @@ jupyter_book/
 │   ├── 04_quality_scorecard.ipynb     # Data quality assessment
 │   └── 05_advanced_analytics.ipynb    # Statistical analyses
 ├── reference/
-│   ├── dataset_registry.md            # 37 datasets catalog
+│   ├── dataset_registry.md            # 57 datasets catalog
 │   └── cli_reference.md               # CLI toolkit commands
 ├── _config.yml                        # Jupyter Book config
 ├── _toc.yml                           # Table of contents
@@ -285,5 +285,6 @@ jupyter nbconvert --to html --execute dashboards/01_inspection_dashboard.ipynb
 2. Explore the interactive filters
 3. Export data or modify charts
 4. Deploy to GitHub Pages (see Deployment Guide above)
+
 
 

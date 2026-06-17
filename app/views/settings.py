@@ -1209,7 +1209,7 @@ def _render_environment_tab() -> None:
     )
 
 def _render_dataset_health_tab() -> None:
-    """Dataset Health Dashboard: Shows all 37 datasets with health status, last update, and row count.
+    """Dataset Health Dashboard: Shows all 57 datasets with health status, last update, and row count.
 
     Health status is determined by:
     - Green (🟢 healthy): Dataset has cached data fresher than its TTL
@@ -1333,4 +1333,5 @@ def _render_dataset_health_tab() -> None:
     with col2:
         if st.button("📊 View full cache report", type="secondary"):
             st.info("See the **Cache** tab for detailed parquet cache metrics.")
+
 

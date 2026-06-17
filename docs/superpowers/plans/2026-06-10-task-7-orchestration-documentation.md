@@ -4,7 +4,7 @@
 
 **Goal:** Build the run_full_pipeline() orchestrator and comprehensive documentation for both analyst roles (Role 1: Contract Planning, Role 2: Ramp Program).
 
-**Architecture:** Single `run_full_pipeline(mode="all"|"sample")` orchestrator that coordinates load → stage → materialize → validate for all 37 datasets. Documentation maps workflows to datasets and commands for each role.
+**Architecture:** Single `run_full_pipeline(mode="all"|"sample")` orchestrator that coordinates load → stage → materialize → validate for all 57 datasets. Documentation maps workflows to datasets and commands for each role.
 
 **Tech Stack:** Python orchestration, Markdown documentation, APScheduler config reference
 
@@ -22,7 +22,7 @@
 
 ```python
 def test_run_full_pipeline_all_datasets(db_fixture):
-    """Orchestrator should coordinate full pipeline for all 37 datasets."""
+    """Orchestrator should coordinate full pipeline for all 57 datasets."""
     from socrata_toolkit.core.duckdb_pipeline import run_full_pipeline
     
     result = run_full_pipeline(mode="sample", max_rows=50000)
@@ -135,7 +135,7 @@ def run_full_pipeline(mode: str = "sample", max_rows: int = 50000, include_datas
 ```bash
 pytest tests/test_orchestrator.py -v
 git add src/socrata_toolkit/core/duckdb_pipeline.py tests/test_orchestrator.py
-git commit -m "feat(orchestration): Implement run_full_pipeline() for all 37 datasets"
+git commit -m "feat(orchestration): Implement run_full_pipeline() for all 57 datasets"
 ```
 
 ---
@@ -304,7 +304,7 @@ git commit -m "docs(analysts): Create quick-start guides for both analyst roles"
 The NYC DOT Sidewalk Pipeline runs nightly using APScheduler.
 
 ## Default Schedule (UTC)
-- 2:00 AM: Load raw data (all 37 datasets)
+- 2:00 AM: Load raw data (all 57 datasets)
 - 3:00 AM: Stage data (deduplication + joins)
 - 4:00 AM: Materialize analytics (all marts)
 - 5:00 AM: Validate quality
@@ -396,4 +396,5 @@ Plan complete. Execution options:
 
 **1. Subagent-Driven (recommended)**
 **2. Inline Execution**
+
 

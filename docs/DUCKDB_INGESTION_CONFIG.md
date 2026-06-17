@@ -1,18 +1,18 @@
 ---
-title: DuckDB/MotherDuck Ingestion Pipeline — 37-Dataset Configuration
+title: DuckDB/MotherDuck Ingestion Pipeline — 57-dataset Configuration
 version: 1.0
 status: SOURCE_OF_TRUTH
 created: 2026-06-17
 last_updated: 2026-06-17
 author: Claude Code
-purpose: Define automated daily ingestion of all 37 Socrata datasets into DuckDB/MotherDuck
+purpose: Define automated daily ingestion of all 57 Socrata datasets into DuckDB/MotherDuck
 total_datasets: 37 (ALL MANDATORY)
 refresh_strategy: Automated daily pull; all datasets required for full data integrity
 ---
 
-# DuckDB Ingestion Configuration: 37-Dataset Pipeline
+# DuckDB Ingestion Configuration: 57-dataset Pipeline
 
-**MANDATORY:** All 37 datasets required for full data integrity. No optional datasets.
+**MANDATORY:** All 57 datasets required for full data integrity. No optional datasets.
 
 **Architecture:** Socrata (source) → DuckDB (staging/cache) → MotherDuck (cloud) → Dives (visualizations)
 
@@ -560,7 +560,8 @@ while True:
 
 ---
 
-**STATUS: SOURCE OF TRUTH FOR ALL 37-DATASET INGESTION PIPELINE**
+**STATUS: SOURCE OF TRUTH FOR ALL 57-dataset INGESTION PIPELINE**
 
-**Version:** 1.0 | **Date:** 2026-06-17 | **Mandatory Status:** ALL 37 REQUIRED
+**Version:** 1.0 | **Date:** 2026-06-17 | **Mandatory Status:** all 57 REQUIRED
+
 

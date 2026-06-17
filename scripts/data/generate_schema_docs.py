@@ -1,6 +1,6 @@
 """
 Unified Schema Documentation Generator.
-Queries Socrata for the definitive schema of all 37 datasets and updates DATASETS.md.
+Queries Socrata for the definitive schema of all 57 datasets and updates DATASETS.md.
 """
 
 import os
@@ -53,7 +53,7 @@ def update_datasets_md(registry: dict[str, Any]):
 
     md_header = "# 🏛️ NYC DOT Socrata Toolkit Dataset Directory\n\n"
     md_header += f"**Last Generated:** {now}\n\n"
-    md_header += "This document serves as the definitive technical reference for all 37 datasets integrated into the toolkit.\n\n"
+    md_header += "This document serves as the definitive technical reference for all 57 datasets integrated into the toolkit.\n\n"
     md_header += "| # | Official Title | 4x4 ID | Category | Link |\n"
     md_header += "| :--- | :--- | :--- | :--- | :--- |\n"
 
@@ -90,4 +90,5 @@ if __name__ == "__main__":
 
     registry = config.get("datasets", {})
     update_datasets_md(registry)
+
 

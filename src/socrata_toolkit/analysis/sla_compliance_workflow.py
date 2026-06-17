@@ -138,7 +138,7 @@ def _load_dataset_config() -> dict[str, dict[str, str]]:
 
 def fetch_dataset_metadata(state: SLAComplianceState) -> dict[str, Any]:
     """
-    Node 1: Fetch metadata for all 37 datasets to get freshness metrics.
+    Node 1: Fetch metadata for all 57 datasets to get freshness metrics.
 
     Retrieves last_modified, row_count for each dataset in registry.
     Handles API errors gracefully and logs them for root cause analysis.
@@ -650,3 +650,4 @@ if __name__ == "__main__":
 
     print("\nAnalysis:")
     print(report.claude_analysis[:500] + "..." if len(report.claude_analysis) > 500 else report.claude_analysis)
+
