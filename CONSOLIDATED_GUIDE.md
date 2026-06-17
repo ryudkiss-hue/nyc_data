@@ -37,7 +37,7 @@ python .claude/analysis/optimized_motherduck_population.py
 
 **FALLBACK: Local DuckDB**
 ```bash
-python .claude/analysis/complete_26_dataset_pipeline.py
+duckdb ./data/local_db/nyc_mission_control.duckdb
 # 2-3 minutes, creates indices
 # Query via Python: import duckdb; conn = duckdb.connect('./data/local_db/nyc_mission_control.duckdb')
 ```
@@ -58,7 +58,7 @@ import os
 token = os.getenv('MOTHERDUCK_TOKEN')
 conn = duckdb.connect(f'md:?motherduck_token={token}')
 
-# Query any of 26 tables
+# Query any of 37 tables
 df = conn.execute("SELECT * FROM inspection LIMIT 100").df()
 ```
 
@@ -151,7 +151,7 @@ duckdb "SELECT COUNT(*) FROM read_parquet('md:inspection')"
 
 **Setup:**
 ```bash
-python .claude/analysis/complete_26_dataset_pipeline.py
+duckdb ./data/local_db/nyc_mission_control.duckdb
 # Creates indices, optimizes for analytical queries
 ```
 
@@ -215,7 +215,7 @@ df = client.query("SELECT * FROM `project.dataset.inspection`").to_dataframe()
 
 ---
 
-## 26 Datasets Overview
+## 37 Datasets Overview (See SOCRATA_DATASETS_CONSOLIDATED.md for complete registry)
 
 ### Core SIM Data (Inspections & Violations)
 - `inspection` (399K rows) — Sidewalk inspection records
@@ -362,7 +362,7 @@ See: `.claude/analysis/ENV_CONSOLIDATION.md` for full details
 | **CLAUDE.md** | Project overview & architecture |
 | **README.md** | GitHub project summary |
 | **QUICKSTART.md** | Getting started guide |
-| **jupyter_book/reference/dataset_registry.md** | All 26 datasets listed |
+| **docs/SOCRATA_DATASETS_CONSOLIDATED.md** | All 37 datasets with KPI mappings |
 | **.claude/analysis/MOTHERDUCK_STRATEGY.md** | Cloud analytics guide |
 | **.claude/analysis/GOOGLE_CLOUD_STRATEGY.md** | GCS + BigQuery guide |
 | **.claude/analysis/ENV_CONSOLIDATION.md** | Environment variables |
@@ -382,7 +382,7 @@ echo $MOTHERDUCK_TOKEN
 
 **Local DuckDB not found?**
 ```bash
-python .claude/analysis/complete_26_dataset_pipeline.py
+duckdb ./data/local_db/nyc_mission_control.duckdb
 # Creates database and indices
 ```
 
@@ -410,7 +410,7 @@ df = conn.execute("""
 1. **Setup:** `cp .env.example .env` + add your tokens
 2. **Fetch:** `python .claude/analysis/dataset_cache_monitor.py --watch 5`
 3. **Populate:** `python .claude/analysis/optimized_motherduck_population.py` (MotherDuck)
-4. **Analyze:** Start querying your 26 datasets
+4. **Analyze:** Start querying your 37 datasets
 5. **Share:** Invite team members to MotherDuck workspace
 
 ---
@@ -426,4 +426,13 @@ df = conn.execute("""
 
 **Questions?** See `.claude/analysis/` for detailed guides on each platform.
 
-**All 26 datasets ready. You are here. Go analyze.**
+**All 37 datasets ready. You are here. Go analyze.**
+
+---
+
+**IMPORTANT:** This document is part of the legacy documentation suite. For current authoritative sources, see:
+- **SOCRATA_DATASETS_CONSOLIDATED.md** — Complete 37-dataset registry with KPI mappings
+- **VISUALIZATION_REGISTRY_37_DATASETS.md** — 100+ charts and dashboard specifications
+- **KPI_MAPPINGS_37_DATASETS.md** — All 51 KPIs with calculations and ownership
+- **ERD_37_DATASETS_VERIFIED.md** — Entity relationships and primary/foreign keys
+- **DUCKDB_INGESTION_CONFIG.md** — Automated pipeline configuration
