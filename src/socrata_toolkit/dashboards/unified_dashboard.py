@@ -14,11 +14,10 @@ Features:
 """
 
 import logging
-from pathlib import Path
 
 import dash
 import dash_bootstrap_components as dbc
-from dash import Input, Output, callback, dcc, html
+from dash import Input, Output, dcc, html
 
 logger = logging.getLogger(__name__)
 

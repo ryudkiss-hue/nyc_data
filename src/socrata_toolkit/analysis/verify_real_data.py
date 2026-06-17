@@ -248,9 +248,7 @@ def verify_live_api_calls() -> dict:
     """Verify data is fetched from live API, not local cache."""
     logger.info("[VERIFY 6] Checking for live API calls...")
 
-    from urllib.parse import urlencode
 
-    import requests
 
     domain = "data.cityofnewyork.us"
     fourfour = "6kbp-uz6m"

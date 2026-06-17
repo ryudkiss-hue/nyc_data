@@ -4,9 +4,7 @@ import pytest
 
 from datetime import datetime, timezone
 
-import numpy as np
 import pandas as pd
-import pytest
 
 
 def test_run_preflight_passes_clean_data():

@@ -8,8 +8,8 @@ Reports on Moran's I spatial autocorrelation analysis.
 from datetime import datetime
 from typing import Any
 
-from .hardcoded_logic import MORANS_I_CLASSIFICATIONS, classify_morans_i, get_morans_i_config
-from .value_injector import ValueInjector, inject_into_template
+from .hardcoded_logic import classify_morans_i, get_morans_i_config
+from .value_injector import inject_into_template
 
 # ============================================================================
 # PHASE B: SCR FRAMEWORK (Situation-Complication-Resolution)

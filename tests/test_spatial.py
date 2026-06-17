@@ -21,7 +21,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
 from shapely.geometry import LineString, Point, Polygon
 
 # Import spatial modules

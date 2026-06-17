@@ -6,7 +6,6 @@ Covers Wilson Score, bootstrap, and t-test CI methods with realistic data.
 
 import numpy as np
 import pytest
-from scipy import stats
 
 from socrata_toolkit.analysis.confidence_intervals import (
     bootstrap_confidence_interval,

@@ -1,11 +1,9 @@
-from typing import Any
 
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from sklearn.decomposition import PCA
-from sklearn.linear_model import LinearRegression
 
 from socrata_toolkit.analysis.ensemble import EnsembleForecaster
 

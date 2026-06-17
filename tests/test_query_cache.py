@@ -1,4 +1,3 @@
-import pytest
 
 """Unit tests for query result caching (Task 1: Query Result Caching).
 
@@ -13,7 +12,6 @@ Tests cover:
 import time
 
 import pandas as pd
-import pytest
 
 from socrata_toolkit.motherduck.query_cache import (
     QueryCache,

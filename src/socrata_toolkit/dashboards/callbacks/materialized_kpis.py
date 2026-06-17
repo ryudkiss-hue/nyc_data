@@ -9,7 +9,7 @@ Performance: Dashboard latency reduced from ~500ms to ~50ms (10x faster).
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 

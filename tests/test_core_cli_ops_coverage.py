@@ -183,7 +183,6 @@ class TestConflictDetectGeoJSON:
 
 class TestDatasetHealthFallback:
     def test_manual_format_when_tabulate_missing(self, runner):
-        from datetime import datetime
 
         reg = {"inspection": {"fourfour": "dntt-gqwq"}}
         session = MagicMock()

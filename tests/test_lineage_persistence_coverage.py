@@ -25,7 +25,7 @@ import json
 # Patch psycopg before importing the module under test
 import sys
 from datetime import datetime, timezone
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 

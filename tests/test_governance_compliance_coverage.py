@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from socrata_toolkit.governance.compliance import (
     check_dcwp_license,
     check_parks_permit,

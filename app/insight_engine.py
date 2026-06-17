@@ -3,7 +3,6 @@ import logging
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.preprocessing import LabelEncoder
 
 logger = logging.getLogger(__name__)
 

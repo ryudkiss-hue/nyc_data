@@ -15,7 +15,6 @@ import functools
 import logging
 import time
 from dataclasses import dataclass
-from typing import Optional
 
 import duckdb
 import numpy as np
