@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from socrata_toolkit.core.pipeline import (
     _collect_columns_and_types,
     _sql_type,

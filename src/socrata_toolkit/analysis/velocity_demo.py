@@ -8,19 +8,11 @@ Run with: python -m socrata_toolkit.analysis.velocity_demo
 """
 
 import json
-from datetime import datetime, timedelta
 
 import pandas as pd
 
-from .velocity_analysis_workflow import (
-    VelocityAnalysisContext,
-    VelocityState,
-    run_velocity_analysis,
-)
-
 # Import velocity components
 from .velocity_classifier import (
-    PerformanceTier,
     VelocityClassifier,
     VelocityMetrics,
 )

@@ -1,12 +1,10 @@
 import shutil
 import time
-from pathlib import Path
 
 import pandas as pd
 import pytest
 
 from app.utils.cache_manager import CACHE_DIR, read_cache, write_cache
-from src.socrata_toolkit.core.duckdb_store import DuckDBManager, DuckDBRepository
 
 # Performance Thresholds (in seconds)
 WRITE_THRESHOLD = 2.0

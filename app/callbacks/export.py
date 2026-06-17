@@ -4,7 +4,7 @@ from pathlib import Path
 
 import dash
 import dash_mantine_components as dmc
-from dash import Input, Output, State, callback, dcc, no_update
+from dash import Input, Output, State, dcc, no_update
 
 from app.services.export_service import ExportRegistry
 

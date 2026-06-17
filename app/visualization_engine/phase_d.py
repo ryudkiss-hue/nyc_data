@@ -11,7 +11,6 @@ All charts include summary statistics below.
 import logging
 
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
 
 from socrata_toolkit.motherduck.connector import MotherDuckConnection

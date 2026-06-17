@@ -9,7 +9,6 @@ Each test uses an isolated tmp_path DuckDB database.
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
-import pytest
 
 import socrata_toolkit.core.duckdb_pipeline as dp
 
@@ -297,7 +296,6 @@ def test_full_pipeline_end_to_end(db, fixture_df, raw_inspections_df, raw_violat
     import time
 
     from socrata_toolkit.core import duckdb_analytics_models
-    from socrata_toolkit.quality import duckdb_validation
 
     start = time.time()
 

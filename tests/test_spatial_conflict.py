@@ -11,7 +11,7 @@ import pytest
 gpd = pytest.importorskip("geopandas")
 shapely = pytest.importorskip("shapely")
 
-from shapely.geometry import Point, Polygon  # noqa: E402
+from shapely.geometry import Point  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Fixtures

@@ -17,11 +17,8 @@ Architecture:
   - Callbacks: Real-time filter + export pipelines
 """
 
-import json
 import os
 import sys
-import threading
-from datetime import datetime
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -47,10 +44,8 @@ import logging
 
 import dash
 import dash_mantine_components as dmc
-import pandas as pd
 import uvicorn
-from dash import Input, Output, State, callback, dcc, html, no_update
-from fastapi import FastAPI
+from dash import dcc, html
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.callbacks.analytics import register_analytics_callbacks

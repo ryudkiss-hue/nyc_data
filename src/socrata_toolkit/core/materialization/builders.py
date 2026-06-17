@@ -1,8 +1,5 @@
 """Specific builder implementations for common mart patterns."""
 import logging
-from typing import Optional
-
-import duckdb
 
 from .builder import MartBuilder
 from .registry import BuilderRegistry
