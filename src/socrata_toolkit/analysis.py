@@ -1630,22 +1630,13 @@ except ImportError:
     quality_dashboard = None  # type: ignore
 
 # analysis_advanced full implementations win over simplified stubs above
-from .analysis_advanced import (  # noqa: E402
-    AnomalyReport as AnomalyFlagReport,  # alias to avoid clash with quality.anomalies.AnomalyReport
-)
 from .analysis_advanced import (
     CorrelationResult,
-    DistributionInfo,
-    OutlierReport,
     TimeSeriesSummary,
-    classify_all_distributions,
     classify_distribution,
     correlation_analysis,
-    detect_all_outliers,
     detect_outliers_iqr,
     detect_outliers_zscore,
-    flag_anomalies,
-    time_series_summary,
 )
 from .quality.anomalies import (  # noqa: E402
     Anomaly,
@@ -1658,9 +1649,6 @@ from .quality.validation import (  # noqa: E402
 )
 from .reporting import (  # noqa: E402
     Report,
-    generate_contract_report,
-    generate_inquiry_response,
-    generate_program_report,
 )
 
 try:

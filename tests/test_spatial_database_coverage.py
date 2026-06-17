@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from datetime import datetime
-from unittest.mock import MagicMock, PropertyMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 

@@ -7,8 +7,6 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-
 from socrata_toolkit.core.persistence import (
     delete_pipeline,
     load_pipelines,

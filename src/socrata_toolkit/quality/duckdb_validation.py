@@ -8,7 +8,7 @@ and log results to AuditLogger.
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any, Optional
 
 import duckdb

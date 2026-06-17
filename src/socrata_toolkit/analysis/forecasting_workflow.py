@@ -20,9 +20,9 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple, TypedDict
+from typing import Any, TypedDict
 
 import arviz as az
 import numpy as np
@@ -35,9 +35,7 @@ from socrata_toolkit.analysis.confidence_intervals import (
     bootstrap_confidence_interval,
 )
 from socrata_toolkit.analysis.forecast_classifier import (
-    BlockerType,
     CompletionForecastClassifier,
-    ForecastConfidence,
     RiskLevel,
 )
 from socrata_toolkit.core.client import SocrataClient, SocrataConfig

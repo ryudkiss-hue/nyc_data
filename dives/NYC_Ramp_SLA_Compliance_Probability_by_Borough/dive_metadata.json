@@ -1,0 +1,14 @@
+{
+  "id": "1159ace3-8153-456b-bd77-7924b34c3ce4",
+  "title": "NYC Ramp SLA Compliance Probability by Borough",
+  "description": "Completion rate as SLA probability proxy \u2014 likelihood of meeting program delivery targets (Phase F)",
+  "requiredResources": [
+    {
+      "name": "nyc_mission_control",
+      "alias": "nyc_mission_control",
+      "url": "md:nyc_mission_control",
+      "id": "a46b07dd-969e-476b-b3df-607bb433d27c",
+      "resource_type": "database"
+    }
+  ]
+}

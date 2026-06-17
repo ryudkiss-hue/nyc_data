@@ -23,10 +23,10 @@ import json
 import logging
 import os
 from datetime import datetime, timezone
-from typing import Any, Optional, TypedDict
+from typing import Any, TypedDict
 
 from ..core.client import SocrataClient, SocrataConfig
-from .sentiment_classifier import SentimentClassifier, SentimentResult
+from .sentiment_classifier import SentimentClassifier
 
 logger = logging.getLogger(__name__)
 

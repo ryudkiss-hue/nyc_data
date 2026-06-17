@@ -4,10 +4,9 @@ Home Page Layout for NYC DOT SIM Workflows Dashboard.
 Displays key metrics, recent activity, and navigation to analytical sections.
 """
 
-from datetime import datetime
 
 import dash_bootstrap_components as dbc
-from dash import dcc, html
+from dash import html
 
 # Define home page layout
 layout = dbc.Container([

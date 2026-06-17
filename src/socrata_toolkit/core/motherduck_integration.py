@@ -14,7 +14,7 @@ import logging
 import os
 import re
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Optional
 
 import duckdb
 

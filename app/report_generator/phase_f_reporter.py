@@ -7,7 +7,7 @@ Reports on SLA compliance, bootstrap confidence intervals, and risk assessment.
 from datetime import datetime
 from typing import Any
 
-from .hardcoded_logic import get_risk_config, get_risk_level, get_sla_config
+from .hardcoded_logic import get_risk_config, get_risk_level
 from .value_injector import inject_into_template
 
 PHASE_F_HARDCODED_TEMPLATE = """

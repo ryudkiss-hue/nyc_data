@@ -5,7 +5,6 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import pandas as pd
-import pytest
 
 # ---------------------------------------------------------------------------
 # analyst.executive.build_executive_summary

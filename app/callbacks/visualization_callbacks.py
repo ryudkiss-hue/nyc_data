@@ -18,11 +18,9 @@ All callbacks target <500ms latency.
 """
 
 import logging
-import traceback
 from typing import Any
 
 import dash_mantine_components as dmc
-import plotly.graph_objects as go
 from dash import Input, Output, callback, dcc, html
 
 from app.callbacks.analytics import AnalyticsEngine

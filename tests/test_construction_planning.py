@@ -16,7 +16,6 @@ import pytest
 from socrata_toolkit.analysis.confidence_intervals import wilson_score_confidence_interval
 from socrata_toolkit.governance.audit_logger import AuditLogger
 from socrata_toolkit.quality.domain_rules import validate_material_lifespan_rule
-from socrata_toolkit.quality.reconciliation import DataReconciliation
 from socrata_toolkit.spatial.conflict_detection import (
     SpatialConflict,
     detect_spatial_conflicts,

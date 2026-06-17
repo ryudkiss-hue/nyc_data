@@ -7,7 +7,6 @@ Reports on anomaly detection and outlier investigation recommendations.
 from datetime import datetime
 from typing import Any
 
-from .hardcoded_logic import get_outlier_config
 from .value_injector import inject_into_template
 
 PHASE_D_HARDCODED_TEMPLATE = """

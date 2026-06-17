@@ -15,8 +15,6 @@ Tests cover:
 from datetime import date, datetime, timezone
 from unittest.mock import patch
 
-import pytest
-
 from socrata_toolkit.core import ChangePattern, ChangeSummary
 from socrata_toolkit.governance import ActionType, AuditEvent, AuditTrail, ChangeType
 

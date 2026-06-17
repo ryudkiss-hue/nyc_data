@@ -17,10 +17,9 @@ import logging
 import re
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from spacy.language import Language
     from spacy.tokens import Doc
 
 logger = logging.getLogger(__name__)

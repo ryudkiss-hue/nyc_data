@@ -6,12 +6,9 @@ Hardcoded deterministic classifiers using spaCy — no LLM invocation.
 
 import logging
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 import spacy
-from spacy.language import Language
 from spacy.tokens import Doc
 
 logger = logging.getLogger(__name__)

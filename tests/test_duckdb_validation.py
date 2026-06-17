@@ -12,15 +12,11 @@ All tests use isolated tmp DuckDB databases with fixture data.
 Audit logging integration verified for each check.
 """
 
-import tempfile
 from datetime import datetime, timedelta
-from pathlib import Path
 
-import duckdb
 import pytest
 
 import socrata_toolkit.core.duckdb_pipeline as dp
-from socrata_toolkit.governance.audit_logger import AuditLogger
 from socrata_toolkit.quality.duckdb_validation import (
     _get_audit_logger,
     validate_analytics_populated,
@@ -677,13 +673,13 @@ class TestAuditLoggingIntegration:
             CREATE TABLE analytics.inspection_quality_metrics (id INTEGER)
         """)
 
-        # Run all validations
-        validate_raw_counts()
-        validate_staging_dedup()
-        validate_staging_data_types()
-        validate_analytics_populated()
-        validate_staging_to_analytics_lineage()
-        validate_data_freshness()
+        # Run all validations (pass conn to avoid dependency on DUCKDB_PATH)
+        validate_raw_counts(conn=conn)
+        validate_staging_dedup(conn=conn)
+        validate_staging_data_types(conn=conn)
+        validate_analytics_populated(conn=conn)
+        validate_staging_to_analytics_lineage(conn=conn)
+        validate_data_freshness(conn=conn)
 
         # Check audit logger has entries for all checks
         audit_logger = _get_audit_logger()
