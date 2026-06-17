@@ -17,10 +17,9 @@ Pattern:
   #          exceeding our 80% target..."
 """
 import logging
-import os
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, Optional, Tuple
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 

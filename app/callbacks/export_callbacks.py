@@ -20,15 +20,12 @@ All exports include:
 - Metadata (date, record count)
 """
 
-import base64
-import json
 import logging
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
-import pandas as pd
 import plotly.graph_objects as go
-from dash import Input, Output, State, callback, dcc, html
+from dash import Input, Output, State, callback, dcc
 
 from app.services.motherduck_service import (
     fetch_phase_b_results,

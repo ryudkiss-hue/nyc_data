@@ -1,6 +1,5 @@
 import json
 import logging
-import math
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -10,11 +9,10 @@ import numpy as np
 import pandas as pd
 
 from ..core import DTYPE_NUM
-from ..engineering.pavement import NYSDOTPavementEngine, PavementType, evaluate_pavement_safety_risk
+from ..engineering.pavement import NYSDOTPavementEngine, PavementType
 from ..governance.equity import EquityScorer
 from ..material.standards_v4 import run_vision_zero_audit
-from .inference import check_normality, run_chi_square, run_t_test
-from .metrics import compute_borough_metrics, compute_sla_trends
+from .inference import run_chi_square, run_t_test
 from .profiling import profile_dataframe
 
 logger = logging.getLogger(__name__)

@@ -1,0 +1,15 @@
+23:39:25 INFO    Refreshing 8 datasets (full_reload=True)
+Traceback (most recent call last):
+  File "C:\Users\ryudk\Desktop\nyc_data\scripts\daily_refresh.py", line 636, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "C:\Users\ryudk\Desktop\nyc_data\scripts\daily_refresh.py", line 587, in main
+    conn = get_duckdb_connection(DB_PATH)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ryudk\Desktop\nyc_data\src\socrata_toolkit\core\duckdb_pipeline.py", line 142, in get_duckdb_connection
+    _connection = duckdb.connect(db_path)
+                  ^^^^^^^^^^^^^^^^^^^^^^^
+_duckdb.IOException: IO Error: Cannot open file "C:\Users\ryudk\Desktop\nyc_data\data\local_db\nyc_mission_control.duckdb": The process cannot access the file because it is being used by another process.
+
+File is already open in 
+C:\Users\ryudk\AppData\Local\Programs\Python\Python311\python.exe (PID 44296)

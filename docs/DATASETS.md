@@ -2,7 +2,9 @@
 
 **Last Generated:** 2026-06-07 23:55:01 UTC
 
-This document serves as the definitive technical reference for all 26 datasets integrated into the toolkit.
+**DEPRECATED:** This document is superseded by `SOCRATA_DATASETS_CONSOLIDATED.md` which documents all 37 datasets with complete mappings, alternatives, and KPI cross-references.
+
+For current dataset registry and technical reference, see: [`SOCRATA_DATASETS_CONSOLIDATED.md`](SOCRATA_DATASETS_CONSOLIDATED.md)
 
 | # | Official Title | 4x4 ID | Category | Link |
 | :--- | :--- | :--- | :--- | :--- |
@@ -250,8 +252,8 @@ For more information please visit NYC DOT website: www.nyc.gov/sidewalks
 ---
 ### Pedestrian Ramp Locations (`ramp_locations`)
 
-> Pedestrian ramps provide access on and off streets and sidewalks and are an essential tool for all pedestrians. This data is a comprehensive list of all pedestrian ramps throughout New York City.
-
+> Pedestrian ramps provide access on and off streets and sidewalks and are an essential tool for all pedestrians. This data is a comprehensive list of all pedestrian ramps throughout New York City.
+
 Please note that measurements shown are not indicative of whether a particular ramp is compliant with design and construction standards pursuant to the Americans with Disabilities Act (ADA). DOT applies additional parameters in its compliance assessment of the data collected by Cyclomedia, including specific site constraints located at or near a pedestrian ramp, otherwise referred to as a technical infeasibility in the ADA. The constraints that constitute a technical infeasibility can include but are not limited to elements such as underground vaults, transit facilities, steep terrain conditions, and limited public right-of-way, which are not readily apparent through the data and imagery collected. As such, compliance determinations at some locations require further analysis and site inspection. These locations are noted as “Pending Technical Review” in the published assessment available at: https://www.nycpedramps.info/survey.
 
 | Field Name | API Name | Data Type | Description |
@@ -336,9 +338,9 @@ Dataset used to generate the Program Progress Map on the Pedestrian Ramp Program
 ---
 ### Street Construction Permits (2022 - Present) (`street_permits`)
 
-> DOT issues over 150 different types of sidewalk and roadway construction permits to utilities, contractors, government agencies and homeowners. Permits cover activities such as street openings, sidewalk construction and installing canopies over sidewalks.
-The core permit data, including permittee, type of permit, date issued, location.
-
+> DOT issues over 150 different types of sidewalk and roadway construction permits to utilities, contractors, government agencies and homeowners. Permits cover activities such as street openings, sidewalk construction and installing canopies over sidewalks.
+The core permit data, including permittee, type of permit, date issued, location.
+
 <b>Street Construction Permits 2013-2021:</b> https://data.cityofnewyork.us/Transportation/Street-Construction-Permits-2013-2021-/c9sj-fmsg
 
 | Field Name | API Name | Data Type | Description |
@@ -633,7 +635,7 @@ For more information, visit NYC DOT website: https://www.nyc.gov/html/dot/html/m
 ---
 ### NYC Planimetric Database: Sidewalk (`sidewalk_planimetric`)
 
-> Planimetric basemap polygon layer containing sidewalk features. 
+> Planimetric basemap polygon layer containing sidewalk features. 
 Please see the following link for additional documentation- https://github.com/CityOfNewYork/nyc-planimetrics/blob/master/Capture_Rules.md.
 
 | Field Name | API Name | Data Type | Description |

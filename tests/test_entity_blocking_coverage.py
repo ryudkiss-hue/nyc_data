@@ -4,7 +4,6 @@ from __future__ import annotations
 import pytest
 
 from socrata_toolkit.entity.blocking import (
-    BlockingAlgorithm,
     BlockStatistics,
     CanopyBlocker,
     HybridBlocker,

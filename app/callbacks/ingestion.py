@@ -3,7 +3,7 @@ import threading
 
 import dash
 import dash_mantine_components as dmc
-from dash import Input, Output, State, callback, no_update
+from dash import Input, Output, State, no_update
 
 from app.data_manager import DataManager
 

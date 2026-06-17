@@ -26,7 +26,7 @@ import logging
 from typing import Any
 
 import dash_mantine_components as dmc
-from dash import Input, Output, State, callback, dcc, html
+from dash import Input, Output, State, callback, html
 
 logger = logging.getLogger(__name__)
 

@@ -1,7 +1,5 @@
 """Tests for generalized materialization factory (Phase 4a: Materialization + Management)."""
 
-import json
-from pathlib import Path
 
 import duckdb
 import pytest

@@ -17,7 +17,6 @@ import pandas as pd
 import streamlit as st
 
 from socrata_toolkit.core.duckdb_store import query_parquet_cache
-from socrata_toolkit.governance.core import AuditLogger
 from socrata_toolkit.quality.reconciliation import DataReconciliation
 
 logger = logging.getLogger(__name__)

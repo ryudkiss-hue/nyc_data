@@ -485,7 +485,6 @@ def quality_scorecard(df: pd.DataFrame) -> dict:
     # Validity: % rows free of inf/nan in numeric columns
     numeric_cols = df.select_dtypes(include="number").columns.tolist()
     if numeric_cols:
-        import numpy as np
 
         validity_mask = pd.Series([True] * len(df), index=df.index)
         for col in numeric_cols:
