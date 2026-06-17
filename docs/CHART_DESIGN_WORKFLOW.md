@@ -14,7 +14,7 @@ purpose: Standardized workflow for designing, implementing, and integrating Plot
 
 **Prerequisites:**
 - Dataset is documented in SOCRATA_DATASETS_CONSOLIDATED.md
-- Chart type is specified in VISUALIZATION_REGISTRY_37_DATASETS.md
+- Chart type is specified in VISUALIZATION_REGISTRY_57_DATASETS.md
 - Sample data has been fetched and validated
 - /plotly skill is available in Claude Code
 
@@ -60,7 +60,7 @@ fig.show()
 
 #### Step 1.1: Check the VISUALIZATION_REGISTRY
 ```bash
-# In docs/VISUALIZATION_REGISTRY_37_DATASETS.md, find your dataset.
+# In docs/VISUALIZATION_REGISTRY_57_DATASETS.md, find your dataset.
 # Example: NYCDOT_Awarded_Contracts
 # ├─ Chart Type: HORIZONTAL BAR CHART
 # ├─ IV (X-Axis): Contract Value ($)
@@ -376,7 +376,7 @@ git push origin feature/contractor-awards-chart
 If your implementation differs from the spec (different colors, added drill-down, etc.):
 
 ```markdown
-# In docs/VISUALIZATION_REGISTRY_37_DATASETS.md, find the dataset section:
+# In docs/VISUALIZATION_REGISTRY_57_DATASETS.md, find the dataset section:
 
 #### X.X `contractor_awards` (9u5s-8sd8)
 ```
@@ -530,7 +530,7 @@ Do I have a spec in VISUALIZATION_REGISTRY?
 
 ### Pre-/plotly Checklist
 - [ ] Dataset in SOCRATA_DATASETS_CONSOLIDATED.md
-- [ ] Chart spec in VISUALIZATION_REGISTRY_37_DATASETS.md
+- [ ] Chart spec in VISUALIZATION_REGISTRY_57_DATASETS.md
 - [ ] Sample data fetched and validated
 - [ ] Column names and data types confirmed
 - [ ] No critical null rates (>50%)
@@ -606,7 +606,7 @@ dcc.Graph(
 
 - **Plotly Skill Guide:** `docs/PLOTLY_SKILL_INTEGRATION_GUIDE.md`
 - **Visualization Audit:** `docs/VISUALIZATION_AUDIT_PLOTLY_VS_OTHER.md`
-- **Visualization Registry:** `docs/VISUALIZATION_REGISTRY_37_DATASETS.md`
+- **Visualization Registry:** `docs/VISUALIZATION_REGISTRY_57_DATASETS.md`
 - **Plotly API:** https://plotly.com/python-api-reference/
 - **Dash Callbacks:** https://dash.plotly.com/basic-callbacks
 - **NYC DOT Dataset Consolidation:** `docs/SOCRATA_DATASETS_CONSOLIDATED.md`

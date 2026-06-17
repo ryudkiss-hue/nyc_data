@@ -423,5 +423,5 @@ For each:
 - **Plotly Express API:** https://plotly.com/python-api-reference/generated/plotly.express.html
 - **Dash Components:** https://dash.plotly.com/
 - **Folium (GIS):** https://python-visualization.github.io/folium/
-- **Visualization Registry:** `docs/VISUALIZATION_REGISTRY_37_DATASETS.md`
+- **Visualization Registry:** `docs/VISUALIZATION_REGISTRY_57_DATASETS.md`
 - **Plotly Skill Guide:** `docs/PLOTLY_SKILL_INTEGRATION_GUIDE.md` (this document)

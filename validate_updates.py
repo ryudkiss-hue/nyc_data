@@ -19,7 +19,7 @@ except Exception as e:
 
 # Validate visualization registry
 try:
-    with open('docs/VISUALIZATION_REGISTRY_37_DATASETS.md', 'r', encoding='utf-8') as f:
+    with open('docs/VISUALIZATION_REGISTRY_57_DATASETS.md', 'r', encoding='utf-8') as f:
         content = f.read()
         print("PASS: Visualization registry exists (100+ charts)")
         assert '37' in content, "37 datasets not referenced"
