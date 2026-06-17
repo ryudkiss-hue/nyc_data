@@ -346,9 +346,9 @@ SLA enforcement is configured in `src/socrata_toolkit/quality/sla.py` and `src/s
 
 ---
 
-## 📦 Dataset Registry (37 Datasets — Source of Truth)
+## 📦 Dataset Registry (57 datasets — Source of Truth)
 
-**CURRENT SOURCE OF TRUTH:** See `SOCRATA_DATASETS_CONSOLIDATED.md` for complete registry with all 37 datasets, alternatives for problematic datasets, migration guide, and cross-references to KPI mappings and visualizations.
+**CURRENT SOURCE OF TRUTH:** See `SOCRATA_DATASETS_CONSOLIDATED.md` for complete registry with all 57 datasets, alternatives for problematic datasets, migration guide, and cross-references to KPI mappings and visualizations.
 
 All datasets live on `data.cityofnewyork.us`. Reference by key.
 
@@ -588,4 +588,5 @@ When given an analytical task, follow this sequence:
 **For code:** No comments unless logic is non-obvious. Use type hints. Prefer the Python API over subprocess CLI calls inside notebooks or scripts.
 
 **For config changes:** Show before/after `.env` diff → confirm which keys are managed vs preserved → remind user to restart the app.
+
 

@@ -1,5 +1,5 @@
 ---
-title: KPI-to-Dataset Mappings — 51 KPIs + 11 New KPIs for 37 Datasets
+title: KPI-to-Dataset Mappings — 51 KPIs + 11 New KPIs for 57 datasets
 version: 1.0
 status: SOURCE_OF_TRUTH
 created: 2026-06-17
@@ -9,9 +9,9 @@ purpose: Define which datasets feed which KPIs; new KPIs for contractor, equity,
 total_kpis: 51 (40 original + 11 new)
 ---
 
-# KPI-to-Dataset Mappings: All 37 Datasets
+# KPI-to-Dataset Mappings: All 57 datasets
 
-**SOURCE OF TRUTH:** Master registry linking all 37 Socrata datasets to 51 KPIs (40 original + 11 new).
+**SOURCE OF TRUTH:** Master registry linking all 57 Socrata datasets to 51 KPIs (40 original + 11 new).
 
 ---
 
@@ -48,9 +48,9 @@ total_kpis: 51 (40 original + 11 new)
 | ramp_accessibility_score | Accessibility | ramp_progress (e7gc-ub6z), pedestrian_demand (fwpa-qxaf), demographics (EQUITY) | weighted_completion * demand_weighting * equity_weighting | Daily |
 | data_completeness | Data Quality | inspection, violations, reinspection, ramp_progress, ramp_complaints, complaints_311, built | (non_null_rows / total_rows) * 100 per dataset | Daily |
 | data_validity | Data Quality | dismissals (p4u2-3jgx), violations (6kbp-uz6m) | (valid_values / total_values) * 100 | Daily |
-| dataset_freshness | Data Quality | ALL 37 datasets | MAX(DATEDIFF(today, last_update)) | Daily |
-| duplicate_record_rate | Data Quality | ALL 37 datasets | COUNT(duplicates) / total_rows * 100 per dataset | Daily |
-| schema_drift_indicators | Data Quality | ALL 37 datasets | COUNT(unexpected_schema_changes) | Daily |
+| dataset_freshness | Data Quality | ALL 57 datasets | MAX(DATEDIFF(today, last_update)) | Daily |
+| duplicate_record_rate | Data Quality | ALL 57 datasets | COUNT(duplicates) / total_rows * 100 per dataset | Daily |
+| schema_drift_indicators | Data Quality | ALL 57 datasets | COUNT(unexpected_schema_changes) | Daily |
 | spatial_clustering_intensity | Geographic | inspections (dntt-gqwq), violations (6kbp-uz6m), mappluto (64uk-42ks), sidewalk_planimetric (vfx9-tbb6) | Moran's I autocorrelation (0.0–1.0) | Daily |
 | violation_hotspots | Geographic | violations (6kbp-uz6m), lot_info (i642-2fxq), mappluto (64uk-42ks) | DBSCAN cluster count by borough | Daily |
 | construction_conflict_zones | Geographic | street_permits (tqtj-sjs8), inspections (dntt-gqwq), street_closures_block (i6b5-j7bu), capital_intersections (97nd-ff3i) | COUNT(permit-inspection overlaps in space/time) | Daily |
@@ -58,12 +58,12 @@ total_kpis: 51 (40 original + 11 new)
 | borough_disparity_index | Geographic | violations (6kbp-uz6m), inspections (dntt-gqwq), demographics (EQUITY), pedestrian_demand (fwpa-qxaf) | VARIANCE(metric_by_borough) / mean | Daily |
 | program_sla_achievement | Compliance | violations (6kbp-uz6m), ramp_complaints (jagj-gttd), street_construction_inspections (ydkf-mpxb) | KPIs_meeting_SLA / total_KPIs * 100 | Daily |
 | escalation_count | Compliance | correspondences (bheb-sjfi), violations (6kbp-uz6m) | COUNT(escalated cases) per month | Daily |
-| month_over_month_trend | Compliance | ALL 37 datasets | % change in key metrics month-over-month | Monthly |
+| month_over_month_trend | Compliance | ALL 57 datasets | % change in key metrics month-over-month | Monthly |
 | goal_attainment | Compliance | violations (6kbp-uz6m), ramp_progress (e7gc-ub6z), built (ugc8-s3f6) | % of annual targets achieved YTD | Monthly |
 
 ---
 
-### 11 NEW KPIs for Expanded 37-Dataset Coverage 🆕
+### 11 NEW KPIs for Expanded 57-dataset Coverage 🆕
 
 #### CONTRACTOR/VENDOR KPIs (5 new)
 
@@ -480,5 +480,6 @@ total_kpis: 51 (40 original + 11 new)
 ---
 
 **SOURCE OF TRUTH for all 51 KPIs** | **Version 1.0** | **2026-06-17**
+
 
 

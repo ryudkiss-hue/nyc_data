@@ -307,7 +307,7 @@ def lazy_load_charts(scroll_pos, all_chart_ids):
 ### Pattern 3: Pre-Computed Aggregations
 
 ```python
-# Problem: Computing SLA freshness matrix from 37 datasets takes 5 seconds
+# Problem: Computing SLA freshness matrix from 57 datasets takes 5 seconds
 # Solution: Pre-compute nightly, cache result
 
 # app/services/scheduled_tasks.py
@@ -758,5 +758,6 @@ redis_keyspace_hits_total / (redis_keyspace_hits_total + redis_keyspace_misses_t
 5. **Monitor latency:** @timer_callback on every callback
 6. **Distribute load:** Pre-compute nightly, fetch cached results during day
 7. **Graceful degradation:** Always have fallback (compute on-demand if cache miss)
+
 
 

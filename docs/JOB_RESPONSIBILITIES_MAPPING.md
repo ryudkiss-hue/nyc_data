@@ -13,7 +13,7 @@ source_postings:
 
 # NYC DOT Project Analyst: Complete Responsibility Mapping
 
-**AUTHORITATIVE SOURCE:** All 51 KPIs, 37 datasets, and visualization registries are built to directly support the official job responsibilities defined in NYC job postings JID-35715 and JID-42159.
+**AUTHORITATIVE SOURCE:** All 51 KPIs, 57 datasets, and visualization registries are built to directly support the official job responsibilities defined in NYC job postings JID-35715 and JID-42159.
 
 ---
 
@@ -429,7 +429,7 @@ source_postings:
 #### Required Datasets (7)
 - **Quality Assurance:** dismissals (p4u2-3jgx), data quality metrics (all datasets via metadata)
 - **Sample Analysis Datasets:** violations (6kbp-uz6m), inspection (dntt-gqwq), street_permits (tqtj-sjs8), street_construction_inspections (ydkf-mpxb)
-- **Metadata:** dataset freshness (all 37 datasets tracked)
+- **Metadata:** dataset freshness (all 57 datasets tracked)
 
 #### Visualizations (2)
 1. **Data Quality Scorecard** (Multi-metric card) — IV: Dataset | DV: Completeness %, validity %, freshness days | Type: QA
@@ -449,7 +449,7 @@ source_postings:
 |-----------|----------|--------|
 | **All 11 Official Duties** | Mapped to KPIs, datasets, visualizations | ✅ Complete |
 | **51 Total KPIs** | Each supports 1+ official duties | ✅ Aligned |
-| **37 Datasets** | All 37 required for role execution | ✅ Mandatory |
+| **57 datasets** | all 57 required for role execution | ✅ Mandatory |
 | **Visualization Registry** | All charts support duty execution | ✅ Complete |
 | **Responsibility Matrix** | Clear owner assignments | ✅ Defined |
 | **Data Quality Gates** | Quality checks tied to each duty | ✅ Built-in |
@@ -476,7 +476,7 @@ source_postings:
 
 ## Validation Statement
 
-**The complete project ecosystem (51 KPIs, 37 datasets, 100+ visualizations, DuckDB pipeline) is designed to directly support and enable every official responsibility defined in NYC DOT Project Analyst job postings JID-35715 and JID-42159.**
+**The complete project ecosystem (51 KPIs, 57 datasets, 100+ visualizations, DuckDB pipeline) is designed to directly support and enable every official responsibility defined in NYC DOT Project Analyst job postings JID-35715 and JID-42159.**
 
 No requirement is unmet. No official duty lacks supporting infrastructure. The analyst has all data, tools, and dashboards needed to execute their role.
 
@@ -485,4 +485,5 @@ No requirement is unmet. No official duty lacks supporting infrastructure. The a
 **STATUS: AUTHORITATIVE JOB RESPONSIBILITY MAPPING**
 
 **Version:** 1.0 | **Date:** 2026-06-17 | **Validation:** Complete coverage of official NYC job postings
+
 

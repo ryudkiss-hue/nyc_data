@@ -73,7 +73,7 @@ See **[QUICKSTART.md](QUICKSTART.md)** for detailed setup and **[docs/DEPLOYMENT
 │                      Data Layer                            │
 │  ┌───────────────────┐ ┌────────────────┐ ┌─────────────┐  │
 │  │ Live Socrata API  │ │ DuckDB L2      │ │ MotherDuck  │  │
-│  │ (37 datasets)     │ │ Parquet Cache  │ │ Cloud       │  │
+│  │ (57 datasets)     │ │ Parquet Cache  │ │ Cloud       │  │
 │  └───────────────────┘ └────────────────┘ └─────────────┘  │
 └────────────────────────────────────────────────────────────┘
 ```
@@ -85,9 +85,9 @@ See **[QUICKSTART.md](QUICKSTART.md)** for detailed setup and **[docs/DEPLOYMENT
 
 ## Dataset Registry
 
-**CURRENT SOURCE OF TRUTH:** See `SOCRATA_DATASETS_CONSOLIDATED.md` for complete registry with all 37 datasets, KPI mappings, and visualization cross-references.
+**CURRENT SOURCE OF TRUTH:** See `SOCRATA_DATASETS_CONSOLIDATED.md` for complete registry with all 57 datasets, KPI mappings, and visualization cross-references.
 
-All 37 datasets are defined in `config/datasets.yaml` and loaded at runtime.
+All 57 datasets are defined in `config/datasets.yaml` and loaded at runtime.
 
 | Key | Description | Fourfour | Category |
 |-----|-------------|----------|----------|
@@ -203,3 +203,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full development guide.
 ---
 
 *Built for NYC DOT Sidewalk Inspection & Management · Powered by [NYC Open Data](https://opendata.cityofnewyork.us/)*
+

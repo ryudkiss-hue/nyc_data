@@ -1,8 +1,8 @@
 # NYC DOT Sidewalk Toolkit — Consolidated Guide
 
-**Master documentation for all 37 NYC Open Data datasets + multi-platform analytics**
+**Master documentation for all 57 NYC Open Data datasets + multi-platform analytics**
 
-**NOTE:** For current complete registry, see: [`SOCRATA_DATASETS_CONSOLIDATED.md`](docs/SOCRATA_DATASETS_CONSOLIDATED.md) (37 datasets with KPI mappings and visualizations)
+**NOTE:** For current complete registry, see: [`SOCRATA_DATASETS_CONSOLIDATED.md`](docs/SOCRATA_DATASETS_CONSOLIDATED.md) (57 datasets with KPI mappings and visualizations)
 
 Last updated: 2026-06-16  
 Status: Production-ready
@@ -215,7 +215,7 @@ df = client.query("SELECT * FROM `project.dataset.inspection`").to_dataframe()
 
 ---
 
-## 37 Datasets Overview (See SOCRATA_DATASETS_CONSOLIDATED.md for complete registry)
+## 57 datasets Overview (See SOCRATA_DATASETS_CONSOLIDATED.md for complete registry)
 
 ### Core SIM Data (Inspections & Violations)
 - `inspection` (399K rows) — Sidewalk inspection records
@@ -362,7 +362,7 @@ See: `.claude/analysis/ENV_CONSOLIDATION.md` for full details
 | **CLAUDE.md** | Project overview & architecture |
 | **README.md** | GitHub project summary |
 | **QUICKSTART.md** | Getting started guide |
-| **docs/SOCRATA_DATASETS_CONSOLIDATED.md** | All 37 datasets with KPI mappings |
+| **docs/SOCRATA_DATASETS_CONSOLIDATED.md** | All 57 datasets with KPI mappings |
 | **.claude/analysis/MOTHERDUCK_STRATEGY.md** | Cloud analytics guide |
 | **.claude/analysis/GOOGLE_CLOUD_STRATEGY.md** | GCS + BigQuery guide |
 | **.claude/analysis/ENV_CONSOLIDATION.md** | Environment variables |
@@ -410,7 +410,7 @@ df = conn.execute("""
 1. **Setup:** `cp .env.example .env` + add your tokens
 2. **Fetch:** `python .claude/analysis/dataset_cache_monitor.py --watch 5`
 3. **Populate:** `python .claude/analysis/optimized_motherduck_population.py` (MotherDuck)
-4. **Analyze:** Start querying your 37 datasets
+4. **Analyze:** Start querying your 57 datasets
 5. **Share:** Invite team members to MotherDuck workspace
 
 ---
@@ -426,13 +426,14 @@ df = conn.execute("""
 
 **Questions?** See `.claude/analysis/` for detailed guides on each platform.
 
-**All 37 datasets ready. You are here. Go analyze.**
+**All 57 datasets ready. You are here. Go analyze.**
 
 ---
 
 **IMPORTANT:** This document is part of the legacy documentation suite. For current authoritative sources, see:
-- **SOCRATA_DATASETS_CONSOLIDATED.md** — Complete 37-dataset registry with KPI mappings
+- **SOCRATA_DATASETS_CONSOLIDATED.md** — Complete 57-dataset registry with KPI mappings
 - **VISUALIZATION_REGISTRY_37_DATASETS.md** — 100+ charts and dashboard specifications
 - **KPI_MAPPINGS_37_DATASETS.md** — All 51 KPIs with calculations and ownership
 - **ERD_37_DATASETS_VERIFIED.md** — Entity relationships and primary/foreign keys
 - **DUCKDB_INGESTION_CONFIG.md** — Automated pipeline configuration
+

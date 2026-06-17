@@ -1,17 +1,17 @@
 ---
-title: Visualization Registry — All 37 Socrata Datasets
+title: Visualization Registry — all 57 Socrata Datasets
 version: 1.0
 status: SOURCE_OF_TRUTH
 created: 2026-06-17
 last_updated: 2026-06-17
 author: Claude Code
-purpose: Master chart specification for all 37 datasets; defines default visualizations, IV/DV pairs, and annotation requirements
-mandatory_status: ALL 37 DATASETS ARE MANDATORY FOR FULL DATA INTEGRITY
+purpose: Master chart specification for all 57 datasets; defines default visualizations, IV/DV pairs, and annotation requirements
+mandatory_status: ALL 57 datasetS ARE MANDATORY FOR FULL DATA INTEGRITY
 ---
 
 # Visualization Registry: 37 NYC DOT SIM Datasets
 
-**AUTHORITATIVE SOURCE:** All 37 datasets require visualization implementation per this registry. None are optional.
+**AUTHORITATIVE SOURCE:** All 57 datasets require visualization implementation per this registry. None are optional.
 
 **Chart Selection Methodology:** Based on NYC DOT chart_selection_guide.md best practices
 
@@ -19,7 +19,7 @@ mandatory_status: ALL 37 DATASETS ARE MANDATORY FOR FULL DATA INTEGRITY
 
 ---
 
-## Summary Table: All 37 Datasets → Default Visualizations
+## Summary Table: All 57 datasets → Default Visualizations
 
 | Dataset | Fourfour | Category | IV (X-Axis) | DV (Y-Axis) | Chart Type | Frequency | Mandatory |
 |---------|----------|----------|-------------|-------------|-----------|-----------|-----------|
@@ -727,7 +727,7 @@ Refresh: Static (quarterly)
 
 ## Implementation Checklist
 
-- [ ] All 37 datasets have corresponding visualization specifications
+- [ ] All 57 datasets have corresponding visualization specifications
 - [ ] Each visualization has defined IV (X-axis) and DV (Y-axis)
 - [ ] Chart type selected per chart_selection_guide.md methodology
 - [ ] All annotations documented (title, units, source, callouts)
@@ -772,7 +772,8 @@ def update_inspections_chart(date_range, filters):
 
 ---
 
-**STATUS: SOURCE OF TRUTH FOR ALL 37 DATASET VISUALIZATIONS**
+**STATUS: SOURCE OF TRUTH FOR ALL 57 dataset VISUALIZATIONS**
 
-**Version:** 1.0 | **Date:** 2026-06-17 | **Mandatory Status:** ALL 37 DATASETS REQUIRED
+**Version:** 1.0 | **Date:** 2026-06-17 | **Mandatory Status:** ALL 57 datasetS REQUIRED
+
 

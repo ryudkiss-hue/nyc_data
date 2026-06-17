@@ -5,7 +5,7 @@ status: ACTIVE
 created: 2026-06-17
 last_updated: 2026-06-17
 last_verified: 2026-06-17
-author: Claude Code (Consolidated with 37 Datasets)
+author: Claude Code (Consolidated with 57 datasets)
 source: NYC Open Data (data.cityofnewyork.us) — Socrata Platform
 total_datasets: 37
 active_datasets: 33
@@ -18,11 +18,11 @@ problematic_datasets: 4
 
 **Version History:**
 - v1.0 (2026-06-17): Initial 26-dataset registry
-- v2.0 (2026-06-17): Expanded to 37 datasets; added contractor, equity, demographic, and detailed 311 complaint data
+- v2.0 (2026-06-17): Expanded to 57 datasets; added contractor, equity, demographic, and detailed 311 complaint data
 
 ---
 
-## Quick Reference: All 37 Datasets
+## Quick Reference: All 57 datasets
 
 ### Summary Table (37 Total)
 
@@ -396,7 +396,7 @@ Static geographic, property, and contextual overlays for spatial analysis and eq
 
 ## Implementation Recommendations
 
-### For Analysts Using v1.0 (37 datasets)
+### For Analysts Using v1.0 (57 datasets)
 1. **Migrate deprecated:**
    - `weekly_construction` → `street_permits`
    - `capital_blocks` → `cpdb_projects`
@@ -469,7 +469,7 @@ equity_analysis = violations.merge(demographics, on='borough')
 
 ## FAQ
 
-### Q: Should I use all 37 datasets?
+### Q: Should I use all 57 datasets?
 **A:** No. Core operations use 7 datasets. Add contractor (3) if managing performance. Add equity (6) if required for compliance. Add 311 detailed (3) if analyzing public engagement.
 
 ### Q: Which datasets are most critical?
@@ -519,5 +519,6 @@ All datasets include:
 **Version:** 2.0  
 **Last Updated:** 2026-06-17  
 **Next Review:** 2026-07-17 (Monthly)
+
 
 
