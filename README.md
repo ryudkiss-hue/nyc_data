@@ -63,20 +63,23 @@ See **[QUICKSTART.md](QUICKSTART.md)** for detailed setup and **[docs/DEPLOYMENT
 ## Architecture
 
 ```
-┌────────────────────────────────────────────┐
-│      NYC DOT SIM Toolkit (v0.4.1)          │
-├────────────────┬──────────────────────────┤
-│  Streamlit UI  │  CLI Toolkit  │  Python  │
-│  (Mission      │  (socrata     │  SDK     │
-│   Control)     │   commands)   │          │
-├────────────────┴──────────────────────────┤
-│              Data Layer (DuckDB)           │
-│  ┌───────────────────┐ ┌────────────────┐  │
-│  │ Live Socrata API  │ │ L2 Parquet     │  │
-│  │ (26 datasets)     │ │ Cache (local)  │  │
-│  └───────────────────┘ └────────────────┘  │
-└────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────┐
+│              NYC DOT SIM Toolkit (v0.4.1)                  │
+├────────────────┬──────────────────────────┬────────────────┤
+│  Streamlit UI  │  MotherDuck Dives (New!) │  CLI Toolkit   │
+│  (Mission      │  (Interactive Analytics) │  (socrata      │
+│   Control)     │  Replaces Jupyter NB     │   commands)    │
+├────────────────┴──────────────────────────┴────────────────┤
+│                      Data Layer                            │
+│  ┌───────────────────┐ ┌────────────────┐ ┌─────────────┐  │
+│  │ Live Socrata API  │ │ DuckDB L2      │ │ MotherDuck  │  │
+│  │ (26 datasets)     │ │ Parquet Cache  │ │ Cloud       │  │
+│  └───────────────────┘ └────────────────┘ └─────────────┘  │
+└────────────────────────────────────────────────────────────┘
 ```
+
+> **Note on Legacy Dashboards:** All previous Jupyter Notebook dashboards (`01_inspection_dashboard.ipynb` through `05_advanced_analytics.ipynb`) have been moved to `jupyter_book/legacy_dashboards/` and are officially **SUPERSEDED**.
+> Moving forward, all visual and statistical reporting for NYC DOT is managed as *Dives-as-Code* in the `dives/` directory. Use the synchronization utilities in `scripts/motherduck_dives_sync/` to push/pull dynamic Recharts+Mantine components back to the MotherDuck cloud workspace.
 
 ---
 
