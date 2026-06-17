@@ -5,11 +5,11 @@ Combines NLP classification with hardcoded analysis to reduce LLM token usage.
 """
 
 import logging
-from typing import Dict, List, Optional
+from typing import Optional
 
 import pandas as pd
 
-from .nlp_classifier import ClassificationResult, TextClassifierPipeline
+from .nlp_classifier import TextClassifierPipeline
 
 logger = logging.getLogger(__name__)
 

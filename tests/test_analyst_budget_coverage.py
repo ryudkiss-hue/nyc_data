@@ -6,7 +6,6 @@ import tempfile
 from pathlib import Path
 
 import pandas as pd
-import pytest
 
 from socrata_toolkit.analyst.budget import (
     load_budget_rules,

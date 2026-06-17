@@ -7,12 +7,12 @@ Unified interface for querying NYC datasets via:
 """
 
 from .connection import (
+    ConnectionManager,
+    close_connection,
     get_connection,
-    query,
     get_platform_name,
     is_motherduck,
-    close_connection,
-    ConnectionManager,
+    query,
 )
 
 __all__ = [

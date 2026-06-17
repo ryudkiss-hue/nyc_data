@@ -23,13 +23,10 @@ MAINTENANCE INSTRUCTIONS:
 
 from __future__ import annotations
 
-from datetime import date, datetime
-
 import pytest
 
 from socrata_toolkit.engineering import (
     MaterialCategory,
-    SurfaceCondition,
 )
 
 # Import all material and standard definitions
@@ -45,7 +42,6 @@ from socrata_toolkit.standards.design import (
     ADA_COMPLIANCE_RULES,
     get_critical_rules,
     get_rule,
-    get_rules_by_severity,
 )
 
 # ============================================================================

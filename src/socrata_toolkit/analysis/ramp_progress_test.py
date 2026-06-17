@@ -13,12 +13,9 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import asdict
 
 # NOTE: Only import the classifier; don't import workflow yet (spacy dependency)
 from socrata_toolkit.analysis.ramp_status import (
-    BlockerType,
-    RampStatus,
     RampStatusClassifier,
 )
 
@@ -83,7 +80,6 @@ def test_workflow_imports():
     try:
         from socrata_toolkit.analysis.ramp_progress_workflow import (
             BoroughRampStats,
-            RampProgressState,
             create_ramp_workflow,
             run_ramp_workflow,
         )

@@ -1,6 +1,5 @@
 """Tests for Semantic Layer: Define metrics once, reuse everywhere."""
 
-from datetime import datetime, timedelta
 
 import pytest
 

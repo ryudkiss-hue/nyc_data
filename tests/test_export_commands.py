@@ -1,6 +1,4 @@
 import pandas as pd
-import pytest
-from dash import dcc
 
 from app.services.export_service import ExportCommand, ExportRegistry
 

@@ -10,11 +10,10 @@ Builds 50+ KPIs across 5 analytical areas:
 """
 
 import asyncio
-import json
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Tuple
+from datetime import datetime
+from typing import Any
 
 logger = logging.getLogger(__name__)
 

@@ -12,7 +12,6 @@ from socrata_toolkit.analysis.dismissal_analysis_workflow import (
     run_dismissal_workflow,
 )
 from socrata_toolkit.analysis.dismissal_classifier import (
-    DismissalCategory,
     DismissalReasonClassifier,
 )
 

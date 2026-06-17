@@ -7,7 +7,6 @@ Tests cover:
 """
 
 import pandas as pd
-import pytest
 
 from socrata_toolkit.analysis.allocation_classifier import (
     AllocationAction,

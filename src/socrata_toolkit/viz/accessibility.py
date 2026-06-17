@@ -8,7 +8,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from .branding import DOT_BLACK, PLOTLY_LAYOUT, WCAG_PALETTE
+from .branding import DOT_BLACK, PLOTLY_LAYOUT
 
 logger = logging.getLogger(__name__)
 

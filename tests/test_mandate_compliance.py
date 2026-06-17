@@ -1,8 +1,7 @@
 import numpy as np
 import pandas as pd
-import pytest
 
-from socrata_toolkit.analysis.inference import check_normality, run_t_test
+from socrata_toolkit.analysis.inference import check_normality
 from socrata_toolkit.analysis.profiling import profile_dataframe
 from socrata_toolkit.engineering.infrastructure import LifeCycleCostAnalysis
 from socrata_toolkit.material.standards_v4 import run_vision_zero_audit

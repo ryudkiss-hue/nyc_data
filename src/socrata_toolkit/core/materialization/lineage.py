@@ -1,7 +1,6 @@
 """Data lineage tracking: datasets → marts."""
 import json
 import logging
-from datetime import datetime
 
 import duckdb
 

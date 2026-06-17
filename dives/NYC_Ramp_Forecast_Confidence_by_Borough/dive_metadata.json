@@ -1,0 +1,14 @@
+{
+  "id": "1a1ffe64-d94f-4339-b601-c78f1e6bb5ca",
+  "title": "NYC Ramp Forecast Confidence by Borough",
+  "description": "Share of total completions occurring in the most recent 4-year window \u2014 higher = stronger recent signal (Phase E)",
+  "requiredResources": [
+    {
+      "name": "nyc_mission_control",
+      "alias": "nyc_mission_control",
+      "url": "md:nyc_mission_control",
+      "id": "a46b07dd-969e-476b-b3df-607bb433d27c",
+      "resource_type": "database"
+    }
+  ]
+}

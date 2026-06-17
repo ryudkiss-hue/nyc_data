@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pandas as pd
-import pytest
 
 
 class TestDataFreshness:
@@ -46,7 +45,6 @@ class TestExecutiveDashboard:
 
     def test_executive_dashboard_with_empty_data(self):
         """Executive dashboard should handle empty data."""
-        import streamlit as st
 
         df = pd.DataFrame()
         # This would be called from the dashboard function

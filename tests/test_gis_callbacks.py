@@ -8,7 +8,6 @@ Week 1-3 Phase 1 GIS Pilot - Test suite.
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-import pytest
 
 from app.services.gis_service import gis_service
 
