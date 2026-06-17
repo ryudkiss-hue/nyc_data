@@ -6,8 +6,6 @@ Uses Faker for volume/integration testing and mocks for unit testing.
 
 from __future__ import annotations
 
-import tempfile
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pandas as pd

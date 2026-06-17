@@ -1,4 +1,3 @@
-import pytest
 
 """Tests for SLA tracking, notification rules, data dictionary, NYC datasets, sample data."""
 

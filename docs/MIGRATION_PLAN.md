@@ -83,7 +83,7 @@ These views require **real-time filtering, multi-chart synchronization, and inst
     ┌─────────────────────────────────────────────┐
     │   DATA SOURCE (NYC Open Data / Socrata)      │
     │   ✓ DataManager orchestrates fetches         │
-    │   ✓ 26 datasets via SODA2 API                │
+    │   ✓ 37 datasets via SODA2 API                │
     └─────────────────────────────────────────────┘
 ```
 

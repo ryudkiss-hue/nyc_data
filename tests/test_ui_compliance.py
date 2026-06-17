@@ -1,12 +1,8 @@
-import json
 
 import dash_mantine_components as dmc
-import pandas as pd
 import plotly.graph_objects as go
-import pytest
 
 from app.dash_layouts import render_header, render_sidebar
-from app.viz_engine import VisualizationEngine
 
 
 def _find_values_in_component(comp, key_to_find=None, val_to_find=None):

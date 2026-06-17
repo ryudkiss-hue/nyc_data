@@ -2,8 +2,6 @@ import importlib.util
 import sys
 from unittest.mock import MagicMock
 
-import pytest
-
 # Stub heavy optional dependencies ONLY when they are not installed, so the
 # callback modules can be imported without them. Never clobber a real module
 # already present in sys.modules — doing so leaks MagicMock stand-ins into
@@ -13,8 +11,6 @@ for _mod in ("prophet", "geopandas", "shapely", "shapely.geometry"):
     if importlib.util.find_spec(_mod) is None and _mod not in sys.modules:
         sys.modules[_mod] = MagicMock()
 
-import dash
-import pytest
 from dash import Dash
 
 from app.callbacks.analytics import register_analytics_callbacks

@@ -11,9 +11,6 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from .metrics import compute_borough_metrics, compute_sla_trends
-from .profiling import profile_dataframe
-
 
 @dataclass
 class ChartResult:
@@ -32,7 +29,6 @@ class QualityDashboardResult:
 
 
 def _render_fig(fig: Any, path: str | None = None) -> tuple[str, str | None]:
-    import matplotlib.pyplot as plt
 
     buf = io.BytesIO()
     fig.savefig(buf, format="png", bbox_inches="tight", dpi=100)
@@ -50,7 +46,6 @@ def histogram(
     import matplotlib
 
     matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots(figsize=(10, 6))
     data = pd.to_numeric(df[column], errors="coerce").dropna()
@@ -72,7 +67,6 @@ def bar_chart(
     import matplotlib
 
     matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
 
     counts = df[column].value_counts().head(15)
     fig, ax = plt.subplots(figsize=(10, 6))
@@ -96,7 +90,6 @@ def box_plot(
     import matplotlib
 
     matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
 
     if isinstance(column, list):
         cols = column

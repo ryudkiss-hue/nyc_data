@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pandas as pd
-import pytest
 
 from socrata_toolkit.analyst.data_dictionary import build_data_dictionary, render_data_dictionary_md
 from socrata_toolkit.core.profiles import profile_paths

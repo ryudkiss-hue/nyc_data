@@ -1,0 +1,14 @@
+{
+  "id": "5fae6f99-c19d-461f-8d48-6ac4698d7773",
+  "title": "NYC Ramp Type Certainty by Borough",
+  "description": "Proportion of ramps with assigned construction type (Phase C)",
+  "requiredResources": [
+    {
+      "name": "nyc_mission_control",
+      "alias": "nyc_mission_control",
+      "url": "md:nyc_mission_control",
+      "id": "a46b07dd-969e-476b-b3df-607bb433d27c",
+      "resource_type": "database"
+    }
+  ]
+}

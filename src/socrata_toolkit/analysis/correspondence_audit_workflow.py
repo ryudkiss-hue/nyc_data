@@ -19,11 +19,10 @@ Graph Structure:
 
 from __future__ import annotations
 
-import json
 import logging
 import os
 from datetime import datetime, timezone
-from typing import Any, Optional, TypedDict
+from typing import Any, TypedDict
 
 import anthropic
 

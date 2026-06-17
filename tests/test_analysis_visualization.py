@@ -1,7 +1,5 @@
 """Tests for Phase 4B: Analysis layer (pre-built queries, NL interface, summaries) + Visualization (dashboards, charts)."""
 
-import json
-from pathlib import Path
 
 import duckdb
 import pytest

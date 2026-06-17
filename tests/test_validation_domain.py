@@ -1,4 +1,3 @@
-import pytest
 
 """
 Tests for Domain-Aware Validation Framework (socrata_toolkit.analysis)

@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-import pandas as pd
-import pytest
-
 from socrata_toolkit.core import DuckDBManager
 from socrata_toolkit.pipeline.sync import sync_dataset
 
