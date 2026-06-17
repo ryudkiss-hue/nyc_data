@@ -1,6 +1,5 @@
-import pytest
 
-from app.services.roi_service import ProductivityROI, ROIAggregator
+from app.services.roi_service import ROIAggregator
 
 
 def test_roi_aggregator_variations():

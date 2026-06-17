@@ -2,16 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 import pandas as pd
 import streamlit as st
 
 from app.analytics import (
-    DatasetProfile,
     ProductivityROI,
     compare_datasets,
-    profile_dataset,
     quality_summary,
 )
 from app.data_loader import (

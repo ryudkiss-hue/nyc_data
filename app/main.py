@@ -13,31 +13,11 @@ Or use the shim:
 """
 from __future__ import annotations
 
-import json
-import os
-import random
 import sys
-import threading
-import time
 import warnings
-from datetime import datetime
 from pathlib import Path
 
-import agentql
-import arviz as az
-import folium
-import numpy as np
-import pandas as pd
-import plotly.graph_objects as go
-import pydeck as pdk
-import pymc as pm
-import requests
 import streamlit as st
-import streamlit.components.v1 as components
-from dateutil.relativedelta import relativedelta
-from playwright.sync_api import sync_playwright
-from prophet import Prophet
-from streamlit.runtime.scriptrunner import add_script_run_ctx, get_script_run_ctx
 
 # Aggressively remove ghost environment paths
 ghost_paths = [p for p in sys.path if "Downloads" in p and "nyc_data" in p]
@@ -54,15 +34,6 @@ keys_to_delete = [k for k in sys.modules if k.startswith("socrata_toolkit")]
 for k in keys_to_delete:
     del sys.modules[k]
 
-from socrata_toolkit import BayesianRegressionEngine, SocrataClient, SocrataConfig
-from socrata_toolkit.engineering.infrastructure import MarkovDeteriorationModel
-from socrata_toolkit.engineering.pavement import (
-    NYSDOTPavementEngine,
-    PavementDesignParameters,
-    PavementType,
-)
-from socrata_toolkit.governance.equity import EquityScorer
-from socrata_toolkit.quality.validator import QualityValidator
 
 warnings.filterwarnings("ignore")
 

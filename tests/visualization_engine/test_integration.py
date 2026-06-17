@@ -5,7 +5,6 @@ and that the total count matches expectations.
 """
 
 import plotly.graph_objects as go
-import pytest
 
 from app.visualization_engine import (
     KPICards,

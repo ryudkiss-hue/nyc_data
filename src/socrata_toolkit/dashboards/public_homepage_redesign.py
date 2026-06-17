@@ -5,7 +5,6 @@ Community-focused with accessible explanations and real NYC imagery.
 """
 
 import dash
-import plotly.graph_objects as go
 from dash import dcc, html
 
 # ============================================================================

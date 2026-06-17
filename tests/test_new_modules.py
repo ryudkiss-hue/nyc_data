@@ -4,7 +4,6 @@ import pytest
 budget forecast, map view, QGIS, PDF reports, messaging bot, 311 ingestion."""
 
 import pandas as pd
-import pytest
 
 # -- Cost Estimator -----------------------------------------------------------
 from socrata_toolkit.engineering import (

@@ -5,10 +5,9 @@ Connects Phase 3A KPI calculations to Phase 2A Dash visualizations.
 Handles data flow: DuckDB cache → KPI calculation → Dashboard display.
 """
 
-import json
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 

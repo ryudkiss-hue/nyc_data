@@ -45,7 +45,12 @@ Mandatory validation of:
     - **Integrity Baseline:** All new datasets must pass the 360-degree integrity scan (Four Moments, Skewness, Kurtosis) before being promoted to the primary Executive Dashboard.
 - **Total Recall Mode:** The toolkit supports full-scale ingestion of every single record for all registered datasets. Use `python scripts/total_recall.py` to perform a Deep Sync of all 26 databases into the local DuckDB store, bypassing all row limits using SODA3 pagination.
 
-## 7. Engineering Mandates: Robust Ingestion & Schema Evolution
+## 7. MotherDuck Dives-as-Code & Visual Analytics Mandate
+- **Deprecation of Jupyter Dashboards:** All visual analytics have been migrated from Jupyter Notebooks to MotherDuck Dives. Notebooks in `jupyter_book/legacy_dashboards/` are officially superseded and should only be used for historical reference or scratchpad R&D.
+- **Dives-as-Code Workflow:** All executive dashboards are managed as React/SQL code in the `dives/` directory. Use the `scripts/motherduck_dives_sync` toolkit to push and pull Dives to the MotherDuck cloud workspace.
+- **Dynamic Bayesian Insights:** Every Dive must incorporate automated, dynamic textual insights that adapt to the live telemetry. Static observations are strictly forbidden. UI components must utilize the **Mantine 8.0** library for industrial branding (#000000, #FFFFFF, blue accents, Recharts).
+
+## 8. Engineering Mandates: Robust Ingestion & Schema Evolution
 - **SODA3 Query Verification**: Never assume a timestamp column exists. Before performing an incremental sync, utilize a pre-flight GET probe to verify column existence to prevent `400 Bad Request` failures on the SODA3 POST endpoint.
 - **DuckDB Schema Resilience**: All bulk ingestion must utilize the `INSERT INTO ... BY NAME` pattern. Ingestion logic must implement automated schema evolution (`ALTER TABLE ... ADD COLUMN`) to handle sparse JSON batches where columns may be absent from specific pagination chunks.
 - **DuckLake Architecture & MotherDuck Persistence**:

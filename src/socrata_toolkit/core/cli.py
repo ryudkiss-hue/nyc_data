@@ -3027,7 +3027,7 @@ def dataset_health_cmd(
                     if stale_days_val > stale_days and status == "ok":
                         status = "stale"
                         health_status_code = 1
-        except requests.RequestException as exc:
+        except requests.RequestException:
             status = "error"
             health_status_code = 1
 

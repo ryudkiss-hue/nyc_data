@@ -5,7 +5,6 @@ import pytest
 from unittest.mock import patch
 
 import pandas as pd
-import pytest
 
 import socrata_toolkit.core.duckdb_analytics_models as am
 import socrata_toolkit.core.duckdb_pipeline as dp

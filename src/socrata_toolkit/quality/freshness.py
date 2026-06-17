@@ -188,8 +188,8 @@ class FreshnessAlert:
         stale_hours = (datetime.now(timezone.utc) - df.last_updated_utc).total_seconds() / 3600
         hours_over = stale_hours - df.sla_threshold_hours
 
-        # Determine severity: critical if >24 hours over SLA, else warning
-        severity = AlertSeverity.CRITICAL if hours_over > 24 else AlertSeverity.WARNING
+        # Determine severity: critical if >=24 hours over SLA, else warning
+        severity = AlertSeverity.CRITICAL if hours_over >= 24 else AlertSeverity.WARNING
 
         return FreshnessAlert(
             alert_id=str(uuid.uuid4()),

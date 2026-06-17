@@ -1,5 +1,4 @@
 import pandas as pd
-import pytest
 
 from app.analytics import normalize_bbl
 
@@ -34,7 +33,7 @@ def test_normalize_bbl_vectorized():
 
 def test_date_parsing_guard():
     """Verify that redundant date parsing is skipped via guard clause."""
-    from app.analytics import ColumnProfile, profile_dataset
+    from app.analytics import profile_dataset
 
     # Create DF with already-parsed datetimes
     df = pd.DataFrame({"timestamp": pd.to_datetime(["2023-01-01", "2023-01-02"])})

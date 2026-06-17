@@ -5,8 +5,6 @@ from dataclasses import dataclass
 from enum import Enum, IntEnum
 from typing import Any
 
-import numpy as np
-
 logger = logging.getLogger(__name__)
 
 class SurfaceRating(IntEnum):

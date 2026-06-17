@@ -27,8 +27,6 @@ from typing import Any
 
 import pandas as pd
 
-from .accessibility import apply_wcag_palette
-from .branding import BOROUGH_COLORS, DOT_BLUE, STATUS_COLORS
 from .units import get_unit_label
 
 

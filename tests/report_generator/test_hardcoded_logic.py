@@ -4,7 +4,6 @@ Test suite for hardcoded business logic module.
 Validates that all hardcoded rules, classifications, and thresholds work correctly.
 """
 
-import pytest
 
 from app.report_generator.hardcoded_logic import (
     DISTRIBUTION_TYPES,

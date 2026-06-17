@@ -23,21 +23,17 @@ Output:
 
 from __future__ import annotations
 
-import json
 import logging
 import os
 from datetime import datetime, timezone
-from typing import Any, Optional, TypedDict
+from typing import Any, TypedDict
 
 import numpy as np
 import pandas as pd
 
 from ..core.client import SocrataClient, SocrataConfig
 from .hotspot_classifier import (
-    HotspotClassificationEngine,
     HotspotClassifier,
-    HotspotMetrics,
-    Trend,
     classify_hotspots_from_dataframe,
 )
 
