@@ -1,7 +1,5 @@
 from unittest.mock import patch
 
-import pytest
-
 from socrata_toolkit.core import SocrataClient, SocrataConfig
 
 

@@ -8,10 +8,8 @@ Includes enhanced column profiling, health scoring, and quality metrics.
 from __future__ import annotations
 
 import hashlib
-import json
 import logging
 import re
-from dataclasses import dataclass, field
 from datetime import timezone
 from functools import lru_cache
 from typing import Any
@@ -94,7 +92,6 @@ def _get_cached_date_cols(schema_hash: str, columns_tuple: tuple[str, ...]) -> l
             result.append(col)
     return result
 
-import numpy as np
 from pydantic import BaseModel, Field
 from scipy import stats
 

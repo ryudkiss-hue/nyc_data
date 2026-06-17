@@ -15,7 +15,6 @@ import logging
 from dataclasses import asdict, dataclass
 from enum import Enum
 
-import numpy as np
 import pandas as pd
 
 logger = logging.getLogger(__name__)

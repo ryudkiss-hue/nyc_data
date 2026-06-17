@@ -13,7 +13,6 @@ Coverage includes:
 
 import logging
 import sys
-from datetime import datetime, timedelta
 
 # Import test fixtures and utilities
 from pathlib import Path

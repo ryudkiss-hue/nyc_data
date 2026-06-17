@@ -23,8 +23,6 @@ from __future__ import annotations
 
 import importlib.util
 import logging
-import os
-import random
 import time
 from collections import OrderedDict
 from typing import Any, Optional
@@ -45,7 +43,6 @@ except ImportError:
     _AUDIT_OK = False
 
     def audit_op(op, **_):  # type: ignore[misc]
-        import functools
 
         def d(fn):
             return fn

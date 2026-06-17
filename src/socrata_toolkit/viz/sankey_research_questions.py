@@ -11,7 +11,6 @@ This module generates an interactive Sankey chart mapping:
 Use for understanding Chart Finder's question-to-chart routing logic.
 """
 
-from typing import Dict, List, Tuple
 
 import plotly.graph_objects as go
 

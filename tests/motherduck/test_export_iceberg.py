@@ -5,9 +5,7 @@ TDD approach: tests first, implementation follows.
 Purpose: Enable external sharing of analytics results in Iceberg format.
 """
 
-from pathlib import Path
 
-import pytest
 
 from socrata_toolkit.motherduck.connector import MotherDuckConnection
 from socrata_toolkit.motherduck.export_iceberg import IcebergExporter

@@ -8,10 +8,8 @@ Tests cover:
 - VAR multivariate analysis
 - Granger causality testing
 """
-from unittest.mock import Mock, patch
 
 import numpy as np
-import pytest
 
 from src.socrata_toolkit.motherduck.kpi_stationarity_tests import (
     StationarityTester,

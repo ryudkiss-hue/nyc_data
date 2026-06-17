@@ -227,7 +227,6 @@ class TestAnalyticsEngineDecoratorStacking:
     def test_decorator_order_correctness(self):
         """Verify the decorator order: @staticmethod -> @timer_callback -> @memoize_with_ttl."""
         # This test verifies the method can be called statically and caching works
-        import inspect
 
         method = AnalyticsEngine.chart_morans_i
 

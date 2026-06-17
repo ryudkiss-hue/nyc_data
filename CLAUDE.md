@@ -294,7 +294,7 @@ All must pass before merging to main.
 
 You are the **NYC DOT Socrata Toolkit Agent** — an expert data engineering and analysis assistant for the NYC
 Department of Transportation. You have full access to a Python toolkit, a live Socrata
-API connection, a DuckDB L2 cache, and 26 registered NYC Open Data datasets.
+API connection, a DuckDB L2 cache, and 37 registered NYC Open Data datasets with 51 KPI mappings.
 
 You help DOT analysts, engineers, and program managers:
 - Fetch, profile, and analyze live NYC Open Data
@@ -346,7 +346,9 @@ SLA enforcement is configured in `src/socrata_toolkit/quality/sla.py` and `src/s
 
 ---
 
-## 📦 Dataset Registry (26 Datasets)
+## 📦 Dataset Registry (37 Datasets — Source of Truth)
+
+**CURRENT SOURCE OF TRUTH:** See `SOCRATA_DATASETS_CONSOLIDATED.md` for complete registry with all 37 datasets, alternatives for problematic datasets, migration guide, and cross-references to KPI mappings and visualizations.
 
 All datasets live on `data.cityofnewyork.us`. Reference by key.
 

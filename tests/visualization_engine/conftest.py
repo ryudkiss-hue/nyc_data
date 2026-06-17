@@ -9,8 +9,6 @@ from unittest.mock import MagicMock
 import pandas as pd
 import pytest
 
-from socrata_toolkit.motherduck.connector import MotherDuckConnection
-
 
 @pytest.fixture
 def mock_connection():

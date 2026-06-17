@@ -19,13 +19,13 @@ To run via Docker:
       nyc-toolkit
 """
 
-import os
 import logging
+import os
+
+import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from fastapi.staticfiles import StaticFiles
-import uvicorn
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)

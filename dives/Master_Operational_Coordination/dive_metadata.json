@@ -1,0 +1,11 @@
+{
+  "title": "Operational Coordination Master Scorecard",
+  "description": "Exhaustive multi-agency analysis comparing street construction permits against active sidewalk violations to identify capital coordination opportunities.",
+  "requiredResources": [
+    {
+      "name": "nyc_mission_control",
+      "alias": "nyc_mission_control"
+    }
+  ],
+  "id": "e2d52282-bb09-4ebb-89ef-bd67ad6cd961"
+}

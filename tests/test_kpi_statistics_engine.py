@@ -8,14 +8,12 @@ Tests cover:
 - Error handling (retry logic, rollback)
 - Data quality checks
 """
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 import duckdb
-import pytest
 
 from src.socrata_toolkit.motherduck.kpi_statistics_engine import (
     AdvancedMetricsComputer,
-    AdvancedMetricsResult,
     KPIStatisticsEngine,
     KPIStatisticsResult,
 )
