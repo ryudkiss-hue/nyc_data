@@ -233,7 +233,7 @@ During implementation (Week 2-3), reference:
 
 - **Project CLAUDE.md** — API reference
   - SocrataClient methods
-  - Dataset registry (26 datasets)
+  - Dataset registry (37 datasets)
   - Python API patterns
   - CLI reference
 
@@ -329,3 +329,4 @@ This is a complete, production-ready specification. No ambiguity. No placeholder
 ⏱️ Duration: 45 hours (Weeks 2-3)  
 ✅ Success metric: <30s pipeline, 15+ tests, >40% coverage  
 📅 Handoff: Friday, Jul 5, 2026 (Week 4 dashboard integration)
+

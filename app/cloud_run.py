@@ -110,7 +110,7 @@ async def get_platform():
 
 @app.get("/api/datasets")
 async def list_datasets():
-    """List all 26 datasets with row counts."""
+    """List all 37 datasets with row counts."""
     try:
         conn = get_connection()
 
@@ -261,3 +261,4 @@ if __name__ == "__main__":
         reload=False,
         log_level="info",
     )
+

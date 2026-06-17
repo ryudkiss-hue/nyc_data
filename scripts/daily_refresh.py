@@ -62,7 +62,7 @@ def _load_dataset_config_keys() -> list[str]:
     if cfg.exists():
         data = json.loads(cfg.read_text())
         return [k for k in data if k != "_template"]
-    # Fallback: CLAUDE.md core 26 datasets minus known-broken ones
+    # Fallback: CLAUDE.md core 37 datasets minus known-broken ones
     return [
         "inspection", "violations", "built", "lot_info", "reinspection",
         "tree_damage", "dismissals", "correspondences", "curb_metal_protruding",
@@ -634,3 +634,4 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+

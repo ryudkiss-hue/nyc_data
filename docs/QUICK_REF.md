@@ -15,12 +15,12 @@ For current documentation, see:
 
 ### Task 1: SOCRATA_DATASETS Expansion
 - **File:** src/socrata_toolkit/core/duckdb_pipeline.py (lines 30-59)
-- **Change:** 4 datasets → 26 datasets → **37 datasets (current)**
+- **Change:** 4 datasets → 37 datasets → **37 datasets (current)**
 - **Status:** ✓ Complete & Superseded
 
 ### Task 2a: dataset_config.json
 - **File:** data/dataset_config.json
-- **Content:** 26 datasets + 1 template → **37 datasets (current)**
+- **Content:** 37 datasets + 1 template → **37 datasets (current)**
 - **Status:** ✓ Created and validated
 
 ### Task 2b: analytics_config.json
@@ -46,3 +46,4 @@ Tasks 3-7 (all dependent on Tasks 1-2):
 5. Task 7: E2E integration test
 
 All foundational work complete.
+
