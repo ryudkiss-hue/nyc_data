@@ -677,13 +677,13 @@ class TestAuditLoggingIntegration:
             CREATE TABLE analytics.inspection_quality_metrics (id INTEGER)
         """)
 
-        # Run all validations
-        validate_raw_counts()
-        validate_staging_dedup()
-        validate_staging_data_types()
-        validate_analytics_populated()
-        validate_staging_to_analytics_lineage()
-        validate_data_freshness()
+        # Run all validations (pass conn to avoid dependency on DUCKDB_PATH)
+        validate_raw_counts(conn=conn)
+        validate_staging_dedup(conn=conn)
+        validate_staging_data_types(conn=conn)
+        validate_analytics_populated(conn=conn)
+        validate_staging_to_analytics_lineage(conn=conn)
+        validate_data_freshness(conn=conn)
 
         # Check audit logger has entries for all checks
         audit_logger = _get_audit_logger()
