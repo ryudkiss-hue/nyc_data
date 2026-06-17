@@ -25,8 +25,8 @@ class TestLoadEnv:
     """Tests for load_env function."""
 
     def test_load_env_default_values(self):
-        """Test load_env returns dict with default values."""
-        with patch.dict(os.environ, {}, clear=True):
+        """Test load_env returns dict with default values when no env vars set."""
+        with patch.dict(os.environ, {}, clear=True), patch("dotenv.load_dotenv"):
             result = load_env()
             assert isinstance(result, dict)
             assert result["PG_DSN"] is None
