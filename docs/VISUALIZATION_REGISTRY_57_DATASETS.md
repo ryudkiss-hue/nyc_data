@@ -9,7 +9,7 @@ purpose: Master chart specification for all 57 datasets; defines default visuali
 mandatory_status: ALL 57 datasetS ARE MANDATORY FOR FULL DATA INTEGRITY
 ---
 
-# Visualization Registry: 37 NYC DOT SIM Datasets
+# Visualization Registry: 57 NYC DOT SIM Datasets
 
 **AUTHORITATIVE SOURCE:** All 57 datasets require visualization implementation per this registry. None are optional.
 

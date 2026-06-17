@@ -432,7 +432,7 @@ df = conn.execute("""
 
 **IMPORTANT:** This document is part of the legacy documentation suite. For current authoritative sources, see:
 - **SOCRATA_DATASETS_CONSOLIDATED.md** — Complete 57-dataset registry with KPI mappings
-- **VISUALIZATION_REGISTRY_37_DATASETS.md** — 100+ charts and dashboard specifications
+- **VISUALIZATION_REGISTRY_57_DATASETS.md** — 100+ charts and dashboard specifications
 - **KPI_MAPPINGS_37_DATASETS.md** — All 51 KPIs with calculations and ownership
 - **ERD_37_DATASETS_VERIFIED.md** — Entity relationships and primary/foreign keys
 - **DUCKDB_INGESTION_CONFIG.md** — Automated pipeline configuration

@@ -4,7 +4,7 @@
 
 For current documentation, see:
 - **SOCRATA_DATASETS_CONSOLIDATED.md** — Complete 57-dataset registry
-- **VISUALIZATION_REGISTRY_37_DATASETS.md** — 100+ chart specifications  
+- **VISUALIZATION_REGISTRY_57_DATASETS.md** — 100+ chart specifications  
 - **KPI_MAPPINGS_37_DATASETS.md** — All 51 KPIs with ownership
 - **ERD_37_DATASETS_VERIFIED.md** — Data relationships and schema
 - **JOB_RESPONSIBILITIES_MAPPING.md** — Role-based task definitions

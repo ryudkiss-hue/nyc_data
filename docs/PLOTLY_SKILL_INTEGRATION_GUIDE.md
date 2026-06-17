@@ -239,7 +239,7 @@ def borough_bar_chart(df, ...):
 ## Integration Points: Where Plotly Fits in the Pipeline
 
 ```
-VISUALIZATION REGISTRY (docs/VISUALIZATION_REGISTRY_37_DATASETS.md)
+VISUALIZATION REGISTRY (docs/VISUALIZATION_REGISTRY_57_DATASETS.md)
     ↓ [Specifies chart type, dimensions, colors for all 57 datasets]
     ↓
 /PLOTLY SKILL [Generates code from spec]
@@ -375,7 +375,7 @@ fig = px.bar(
 - **Plotly Express API:** https://plotly.com/python-api-reference/generated/plotly.express.html
 - **Dash Callbacks:** https://dash.plotly.com/basic-callbacks
 - **NYC DOT Color Palette:** `#003087` (blue), `#FF6319` (orange), `#C60C30` (red)
-- **Visualization Registry:** See `docs/VISUALIZATION_REGISTRY_37_DATASETS.md` for all 57 datasets + specs
+- **Visualization Registry:** See `docs/VISUALIZATION_REGISTRY_57_DATASETS.md` for all 57 datasets + specs
 
 ---
 
