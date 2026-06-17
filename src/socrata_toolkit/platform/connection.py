@@ -19,10 +19,19 @@ Usage:
 
 import os
 import logging
+import threading
 from typing import Optional
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
+
+def _scrub_sensitive_from_error(error_msg: str) -> str:
+    """Scrub plaintext tokens from error messages."""
+    token = os.getenv("MOTHERDUCK_TOKEN")
+    if token and token in error_msg:
+        error_msg = error_msg.replace(token, "***REDACTED***")
+    return error_msg
 
 
 class ConnectionManager:
@@ -38,6 +47,7 @@ class ConnectionManager:
         self.auto_fallback = auto_fallback
         self.conn = None
         self.platform = None
+        self._lock = threading.Lock()
 
     def get_connection(self, platform: Optional[str] = None):
         """
@@ -55,8 +65,10 @@ class ConnectionManager:
             raise ImportError("duckdb not installed. Install with: pip install duckdb")
 
         # If already connected, return cached connection
-        if self.conn and self.platform == platform:
-            return self.conn
+        with self._lock:
+            if self.conn:
+                if platform is None or self.platform == platform:
+                    return self.conn
 
         if platform == "motherduck":
             return self._connect_motherduck(duckdb)
@@ -87,15 +99,17 @@ class ConnectionManager:
             )
 
         try:
-            conn = duckdb.connect(f"md:?motherduck_token={token}")
+            conn = duckdb.connect("md:")
             # Test connection
             conn.execute("SELECT 1")
-            self.conn = conn
-            self.platform = "motherduck"
+            with self._lock:
+                self.conn = conn
+                self.platform = "motherduck"
             logger.info("✓ Connected to MotherDuck")
             return conn
         except Exception as e:
-            raise ConnectionError(f"Failed to connect to MotherDuck: {e}")
+            error_msg = _scrub_sensitive_from_error(str(e))
+            raise ConnectionError(f"Failed to connect to MotherDuck: {error_msg}")
 
     def _connect_duckdb(self, duckdb):
         """Connect to local DuckDB."""
@@ -109,8 +123,9 @@ class ConnectionManager:
             conn = duckdb.connect(str(db_path))
             # Verify database is initialized
             conn.execute("SELECT * FROM information_schema.tables LIMIT 1")
-            self.conn = conn
-            self.platform = "duckdb"
+            with self._lock:
+                self.conn = conn
+                self.platform = "duckdb"
             logger.info(f"✓ Connected to local DuckDB ({db_path})")
             return conn
         except Exception as e:
@@ -122,15 +137,16 @@ class ConnectionManager:
 
     def close(self):
         """Close active connection."""
-        if self.conn:
-            try:
-                self.conn.close()
-                logger.info("Connection closed")
-            except Exception as e:
-                logger.warning(f"Error closing connection: {e}")
-            finally:
-                self.conn = None
-                self.platform = None
+        with self._lock:
+            if self.conn:
+                try:
+                    self.conn.close()
+                    logger.info("Connection closed")
+                except Exception as e:
+                    logger.warning(f"Error closing connection: {e}")
+                finally:
+                    self.conn = None
+                    self.platform = None
 
 
 # Global connection manager
