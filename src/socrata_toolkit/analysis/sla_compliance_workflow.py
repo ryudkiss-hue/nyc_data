@@ -1,7 +1,7 @@
 """
 SLA Compliance Reporting Workflow - LangGraph Orchestration
 
-End-to-end workflow for monitoring SLA compliance across 26 NYC DOT datasets.
+End-to-end workflow for monitoring SLA compliance across 57 NYC DOT datasets.
 Uses LangGraph state machine to coordinate:
   1. Fetch freshness metrics for all datasets
   2. Classify against SLA tiers (HIGH 14d, MEDIUM 30d, LOW 60d)
@@ -105,7 +105,7 @@ def _load_dataset_config() -> dict[str, dict[str, str]]:
         with open(config_path) as f:
             return json.load(f)
 
-    # Fallback: hardcoded 26-dataset registry from CLAUDE.md
+    # Fallback: hardcoded 57-dataset registry from CLAUDE.md
     return {
         "inspection": {"fourfour": "dntt-gqwq"},
         "violations": {"fourfour": "6kbp-uz6m"},
