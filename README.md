@@ -3,7 +3,7 @@
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-blue?style=flat-square&logo=python)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 [![Dash App](https://img.shields.io/badge/UI-Dash/Mantine-cyan?style=flat-square)](app/dash_app.py)
-[![30+ Charts](https://img.shields.io/badge/Visualizations-30%2B-orange?style=flat-square)](app/callbacks/)
+[![100+ Charts](https://img.shields.io/badge/Visualizations-100%2B-orange?style=flat-square)](app/callbacks/)
 
 **NYC DOT SIM Toolkit** is a Python-based analysis platform for NYC's Sidewalk Inspection & Management program. It ingests live Socrata open data, detects spatial conflicts between construction permits and inspections, performs data quality analysis, and surfaces interactive visualizations via **Dash/Plotly** with a **Mantine UI** — all backed by DuckDB for high-performance local analytics and FastAPI for production-grade infrastructure.
 
@@ -73,7 +73,7 @@ See **[QUICKSTART.md](QUICKSTART.md)** for detailed setup and **[docs/DEPLOYMENT
 │                      Data Layer                            │
 │  ┌───────────────────┐ ┌────────────────┐ ┌─────────────┐  │
 │  │ Live Socrata API  │ │ DuckDB L2      │ │ MotherDuck  │  │
-│  │ (26 datasets)     │ │ Parquet Cache  │ │ Cloud       │  │
+│  │ (37 datasets)     │ │ Parquet Cache  │ │ Cloud       │  │
 │  └───────────────────┘ └────────────────┘ └─────────────┘  │
 └────────────────────────────────────────────────────────────┘
 ```
@@ -85,7 +85,9 @@ See **[QUICKSTART.md](QUICKSTART.md)** for detailed setup and **[docs/DEPLOYMENT
 
 ## Dataset Registry
 
-All 26 datasets are defined in `config/datasets.yaml` and loaded at runtime.
+**CURRENT SOURCE OF TRUTH:** See `SOCRATA_DATASETS_CONSOLIDATED.md` for complete registry with all 37 datasets, KPI mappings, and visualization cross-references.
+
+All 37 datasets are defined in `config/datasets.yaml` and loaded at runtime.
 
 | Key | Description | Fourfour | Category |
 |-----|-------------|----------|----------|
