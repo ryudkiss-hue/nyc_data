@@ -14,7 +14,6 @@ to Iceberg format on local filesystem or S3-compatible storage.
 Note: This is an optional Phase 2 feature. Actual S3 export requires credentials.
 """
 import logging
-from pathlib import Path
 from typing import Any, Optional
 
 try:

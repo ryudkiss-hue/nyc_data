@@ -13,7 +13,6 @@ Key responsibilities:
 - Prepare timeseries data with calendar join and 7-day moving average
 """
 import logging
-from typing import Optional
 
 from socrata_toolkit.motherduck.connector import MotherDuckConnection
 

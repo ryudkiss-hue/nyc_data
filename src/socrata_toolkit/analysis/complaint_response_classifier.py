@@ -17,12 +17,9 @@ Scoring:
 
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
-
-import pandas as pd
 
 
 class ComplaintCategory(str, Enum):

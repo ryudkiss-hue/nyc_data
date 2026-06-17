@@ -7,7 +7,6 @@ Run with: pytest tests/test_staging_integration.py -v
 
 import sys
 import time
-from datetime import datetime, timedelta
 
 # Setup paths
 from pathlib import Path
@@ -25,12 +24,6 @@ for p in [ROOT_PATH, SRC_PATH]:
         sys.path.insert(0, p)
 
 from app.callbacks.analytics import AnalyticsEngine
-from app.callbacks.analytics_integration import (
-    update_anomaly_detection,
-    update_bootstrap_ci_kpis,
-    update_distribution_classification,
-    update_seasonal_decomposition,
-)
 from app.dash_layouts_analytics_integration import render_analytics_integration_tabs
 from app.services.analytics_service import get_kpi_metrics, validate_filters
 

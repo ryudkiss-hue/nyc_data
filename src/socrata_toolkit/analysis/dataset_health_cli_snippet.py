@@ -12,12 +12,7 @@ Integration pattern:
 - Add 'dataset health --monitor' flag for continuous monitoring
 """
 
-import json
 import logging
-
-import click
-
-from ..analysis.dataset_health_workflow import run_dataset_health_workflow
 
 logger = logging.getLogger(__name__)
 

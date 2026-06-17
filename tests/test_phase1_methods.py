@@ -10,7 +10,6 @@ Tests for:
 
 import numpy as np
 import pandas as pd
-import pytest
 
 # ============================================================================
 # CLUSTERING DIAGNOSTICS TESTS

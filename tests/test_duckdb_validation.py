@@ -12,15 +12,11 @@ All tests use isolated tmp DuckDB databases with fixture data.
 Audit logging integration verified for each check.
 """
 
-import tempfile
 from datetime import datetime, timedelta
-from pathlib import Path
 
-import duckdb
 import pytest
 
 import socrata_toolkit.core.duckdb_pipeline as dp
-from socrata_toolkit.governance.audit_logger import AuditLogger
 from socrata_toolkit.quality.duckdb_validation import (
     _get_audit_logger,
     validate_analytics_populated,

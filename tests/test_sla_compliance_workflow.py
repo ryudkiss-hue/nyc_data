@@ -19,7 +19,6 @@ import pytest
 from socrata_toolkit.analysis.sla_status import (
     ComplianceStatus,
     RootCause,
-    SLAComplianceReport,
     SLAMetricSnapshot,
     SLAStatusClassifier,
     SLAStatusRecord,

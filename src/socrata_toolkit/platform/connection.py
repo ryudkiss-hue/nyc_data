@@ -17,10 +17,10 @@ Usage:
     conn = get_connection(platform='duckdb')      # Local
 """
 
-import os
 import logging
-from typing import Optional
+import os
 from pathlib import Path
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 

@@ -1,6 +1,6 @@
 """Visualization layer: Chart recommendations, dashboard generation, role-based views."""
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import duckdb
 

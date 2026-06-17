@@ -9,12 +9,9 @@ Data source: app_queries.v_phase_b_results
 All charts include summary statistics below.
 """
 import logging
-from datetime import datetime
-from typing import Optional
 
 import pandas as pd
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 
 from socrata_toolkit.motherduck.connector import MotherDuckConnection
 

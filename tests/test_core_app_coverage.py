@@ -6,8 +6,6 @@ import os
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
-import pytest
-from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 
 from socrata_toolkit.core.app import (
