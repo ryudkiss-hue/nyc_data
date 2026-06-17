@@ -25,8 +25,6 @@ from __future__ import annotations
 
 from typing import Any
 
-import pandas as pd
-
 __all__ = [
     "plot_elbow_curve",
     "plot_silhouette",
@@ -126,7 +124,6 @@ def plot_silhouette(results: dict[str, Any], k: int | None = None) -> Any:
     Returns:
         Plotly Figure (silhouette plot)
     """
-    import numpy as np
 
     go = _get_plotly()
 

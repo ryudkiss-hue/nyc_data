@@ -25,7 +25,7 @@ from typing import Any
 import numpy as np  # type: ignore[import]
 import pandas as pd  # type: ignore[import]
 
-from .branding import DOT_BLACK, DOT_BLUE, MATPLOTLIB_STYLE, WCAG_PALETTE
+from .branding import DOT_BLUE, MATPLOTLIB_STYLE, WCAG_PALETTE
 
 
 def _get_plt():

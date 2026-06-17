@@ -33,7 +33,6 @@ Usage:
 
 import io
 import logging
-from collections.abc import ByteString
 from datetime import datetime
 from typing import Any, Optional
 

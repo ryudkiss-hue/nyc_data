@@ -11,8 +11,7 @@ Standards: Python 3.11+, full type hints, comprehensive docstrings
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
-from typing import Optional
+from dataclasses import dataclass
 
 import pandas as pd
 

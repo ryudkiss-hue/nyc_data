@@ -6,7 +6,7 @@ import functools
 import logging
 import time
 from datetime import datetime, timedelta
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 logger = logging.getLogger(__name__)
 

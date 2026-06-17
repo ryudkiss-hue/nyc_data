@@ -3,14 +3,11 @@ from __future__ import annotations
 import base64
 import io
 import json
-import math
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from pathlib import Path
 from typing import Any
 
-import numpy as np
 import pandas as pd
 
 from ..core import COL_CLOSED, COL_COMPLAINT, COL_CREATED, COL_REPAIR
@@ -387,7 +384,6 @@ class MetricsTracker:
         return self.history.get(name, [])[-last_n:]
 
     def save(self, path: str) -> None:
-        import json
 
         data = {
             "definitions": {
@@ -429,7 +425,6 @@ class MetricsTracker:
             json.dump(data, f)
 
     def load(self, path: str) -> None:
-        import json
         from datetime import datetime as _dt
 
         with open(path) as f:
@@ -514,8 +509,6 @@ class MetricsRegistry:
 
 def correlation_heatmap(df: pd.DataFrame, title: str | None = None) -> Any:
     """Generate correlation heatmap using matplotlib. Returns ChartResult."""
-    import base64
-    import io
 
     import matplotlib
 
@@ -560,7 +553,6 @@ def detect_outliers_iqr(series: pd.Series, multiplier: float = 1.5) -> list[int]
 
 def compute_program_dashboard(df: pd.DataFrame) -> Any:
     """Compute program dashboard metrics from a DataFrame."""
-    from socrata_toolkit.analysis.reporting import DashboardSummary
 
     tracker = MetricsTracker()
     tracker.define("defect_density", 2.0, 3.0, 5.0, "lower_is_better")
@@ -636,7 +628,6 @@ class PipelineMetrics:
         self.avg_duration_sec = avg_duration_sec
 
 
-from enum import Enum
 
 
 class DataType(Enum):
@@ -659,7 +650,6 @@ class AnomalySeverity(Enum):
     CRITICAL = "critical"
 
 
-from ..quality.rules import RuleMode
 
 
 class BusinessRulesEngine:
@@ -722,8 +712,6 @@ def get_global_registry() -> MetricsRegistry:
 
 def quality_dashboard(df: pd.DataFrame) -> Any:
     """Generate quality dashboard. Returns QualityDashboardResult."""
-    import base64
-    import io
 
     import matplotlib
 
@@ -801,8 +789,6 @@ def time_series_chart(
     df: pd.DataFrame, date_col: str = "date", value_col: str = "value", title: str | None = None
 ) -> Any:
     """Generate time series chart. Returns ChartResult."""
-    import base64
-    import io
 
     import matplotlib
 

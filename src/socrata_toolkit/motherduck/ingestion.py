@@ -11,7 +11,6 @@ Key responsibilities:
 - Track data load timestamps for all records
 """
 import logging
-from typing import Optional
 
 import pandas as pd
 

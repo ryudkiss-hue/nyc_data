@@ -14,8 +14,6 @@ import sys
 import time
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 # Ensure the project root is on sys.path
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 SRC = os.path.join(ROOT, "src")
@@ -27,15 +25,12 @@ from socrata_toolkit.alerts.manager import (
     Alert,
     AlertManager,
     AlertSeverity,
-    AlertStatus,
     CLINotifier,
     EmailNotifier,
 )
 from socrata_toolkit.observability.monitoring import (
-    HealthCheck,
     HealthMonitor,
     Monitoring,
-    MonitoringResult,
 )
 
 # ============================================================================

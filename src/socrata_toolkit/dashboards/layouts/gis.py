@@ -87,7 +87,7 @@ def _dbscan_fig():
 
 
 def _animated_choropleth_fig():
-    from socrata_toolkit.viz.temporal_maps import TemporalGeospatialVisualizer, bucket_temporal_data
+    from socrata_toolkit.viz.temporal_maps import TemporalGeospatialVisualizer
     df = _demo_geo_df(600)
     # Reformat to match expected columns
     df["violation_count"] = df["violation_count"].astype(int)
@@ -164,7 +164,6 @@ def _bubble_fig():
 def _treemap_fig():
     import plotly.express as px
 
-    from socrata_toolkit.viz.advanced_multidim import sankey_flow
     df = _demo_geo_df(500)
     fig = px.treemap(
         df,

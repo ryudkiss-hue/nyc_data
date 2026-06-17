@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from socrata_toolkit.cleaning import (
     clean_column_names,
@@ -281,7 +280,6 @@ class TestRemoveOutliers:
 
     def test_custom_threshold(self):
         """Custom z_threshold can be set (e.g. 2 removes moderate deviations)."""
-        import numpy as np
 
         rng = np.random.default_rng(42)
         base = list(rng.normal(0, 1, 100))

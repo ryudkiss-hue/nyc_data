@@ -6,8 +6,6 @@ milestones, DataFrame import, persistence (save/load), and export
 """
 from __future__ import annotations
 
-import json
-import tempfile
 from pathlib import Path
 
 import pandas as pd
@@ -18,7 +16,6 @@ from socrata_toolkit.task_board import (
     DEFAULT_COLUMNS,
     PRIORITY_COLORS,
     STATUS_LABELS,
-    ActivityEntry,
     Milestone,
     Task,
     TaskBoard,

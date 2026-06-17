@@ -1,5 +1,4 @@
 import pandas as pd
-import pytest
 
 from app.services.analytics_service import (
     digital_twin_pre_screen,

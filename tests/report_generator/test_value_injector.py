@@ -4,7 +4,7 @@ Test suite for value injection system.
 Validates that dynamic values are correctly injected into templates.
 """
 
-from datetime import date, datetime
+from datetime import date
 
 import pytest
 
