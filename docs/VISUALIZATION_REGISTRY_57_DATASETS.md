@@ -47,12 +47,12 @@ mandatory_status: ALL 57 datasetS ARE MANDATORY FOR FULL DATA INTEGRITY
 | Prequalified_Firms | szkz-syh6 | Contractor | Trade Code | Firm Count | Bar (Vertical) | Static | ✅ |
 | Recent_Contract_Awards | qyyg-4tf5 | Contractor | Award Date | Contract Count | Line (Time Series) | Weekly | ✅ |
 | **311 DETAILED (3)** 🆕 |
-| Curb_Sidewalk_Complaints | huz9-8jhi | 311 Detailed | Complaint Type | Count | Bar (Horizontal) | Daily | ✅ |
-| DOT_311_Complaints | th23-npnd | 311 Detailed | Created Date | Count | Line (Time Series) | Daily | ✅ |
-| 311_Complaint_Type_Descriptor | dtbq-f5rx | 311 Detailed | Complaint Category | Frequency (%) | Stacked Bar | Daily | ✅ |
+| Curb_Sidewalk_Complaints | dntt-gqwq | 311 Detailed | Complaint Type | Count | Bar (Horizontal) | Daily | ✅ |
+| DOT_311_Complaints | erm2-nwe9 | 311 Detailed | Created Date | Count | Line (Time Series) | Daily | ✅ |
+| 311_Complaint_Type_Descriptor | erm2-nwe9 | 311 Detailed | Complaint Category | Frequency (%) | Stacked Bar | Daily | ✅ |
 | **EQUITY/DEMOGRAPHIC (6)** 🆕 |
 | EquityNYC_Data | 8ek7-jxw6 | Equity | Metric Type | Score (0-100) | Bar (Vertical) | Annual | ✅ |
-| Demographics_by_Borough | 6khm-nrue | Equity | Borough | Population Count | Bar (Vertical) | Annual | ✅ |
+| Demographics_by_Borough | cu9u-3r5e | Equity | Borough | Population Count | Bar (Vertical) | Annual | ✅ |
 | Demographic_Housing_Profiles | cu9u-3r5e | Equity | Borough | Housing Density | Bar (Vertical) | Annual | ✅ |
 | Population_Community_Districts | xi7c-iiu2 | Equity | Community District | Population Count | Bar (Horizontal) | Annual | ✅ |
 | Census_Tracts_2020 | 63ge-mke6 | Equity | Geography | Density (people/sq mi) | Choropleth | Static | ✅ |
@@ -419,7 +419,7 @@ Refresh: Weekly (Monday 6 AM update)
 
 ### 5. 311 COMPLAINTS (DETAILED) (3 datasets) 🆕
 
-#### 5.1 `Curb_Sidewalk_Complaints` (huz9-8jhi)
+#### 5.1 `Curb_Sidewalk_Complaints` (dntt-gqwq)
 ```
 Title: "Top 10 Sidewalk/Curb Complaint Types (30-Day)"
 Independent Variable (IV): Complaint Type (e.g., Cracked Sidewalk, Missing Ramp, Pothole)
@@ -429,14 +429,14 @@ Colors: NYC DOT Blue (#003087) for top 3; Gray (#888888) for others
 Annotations:
   - X-axis: "Complaint Count" (0–500+)
   - Y-axis: Complaint type names
-  - Data source: Curb_Sidewalk_Complaints (huz9-8jhi) / last 30 days
+  - Data source: Curb_Sidewalk_Complaints (dntt-gqwq) / last 30 days
   - Value labels on bars: Count + percentage of total
   - Callout: Top complaint type; % of all sidewalk complaints; citizen priority signal
 Key metric: Public feedback; problem prioritization; root cause tracking
 Refresh: Daily (6 AM update)
 ```
 
-#### 5.2 `DOT_311_Complaints_Street_Sidewalk_Signals` (th23-npnd)
+#### 5.2 `DOT_311_Complaints_Street_Sidewalk_Signals` (erm2-nwe9)
 ```
 Title: "Daily DOT 311 Complaints Trend (30-Day Rolling)"
 Independent Variable (IV): Created Date (daily aggregation)
@@ -446,7 +446,7 @@ Colors: NYC DOT Blue (#003087) line; light blue fill
 Annotations:
   - Y-axis: "Complaint Count (Daily)" (0–200)
   - X-axis: Date range (last 30 days)
-  - Data source: DOT_311_Complaints_Street_Sidewalk_Signals (th23-npnd) / as of today
+  - Data source: DOT_311_Complaints_Street_Sidewalk_Signals (erm2-nwe9) / as of today
   - Reference line: 30-day daily average in gray
   - Callout: Current 7-day average; % change vs. prior week
   - Spike annotation: Significant increase dates (if any)
@@ -454,7 +454,7 @@ Key metric: Public satisfaction; workload demand; service quality signal
 Refresh: Daily (6 AM update)
 ```
 
-#### 5.3 `311_Complaint_Type_Descriptor_Count` (dtbq-f5rx)
+#### 5.3 `311_Complaint_Type_Descriptor_Count` (erm2-nwe9)
 ```
 Title: "Complaint Category Distribution (Stacked View - All Agencies)"
 Independent Variable (IV): Complaint Category (Street Condition, Pothole, Ramp, Signal, Etc.)
@@ -464,7 +464,7 @@ Colors: NYC DOT Blue (#003087) for DOT complaints; Gray (#888888) for others
 Annotations:
   - X-axis: "Percentage of 311 Complaints (%)" (0–100%)
   - Y-axis: Complaint category names
-  - Data source: 311_Complaint_Type_Descriptor_Count (dtbq-f5rx) / all time
+  - Data source: 311_Complaint_Type_Descriptor_Count (erm2-nwe9) / all time
   - Value labels: DOT percentage + other percentage
   - Callout: DOT's complaint share by category; highest and lowest categories
 Key metric: Problem type distribution; DOT workload characterization
@@ -492,7 +492,7 @@ Key metric: Equity compliance; strategic impact; societal progress
 Refresh: Annual (Jan 1 update)
 ```
 
-#### 6.2 `Demographics_by_Borough` (6khm-nrue)
+#### 6.2 `Demographics_by_Borough` (cu9u-3r5e)
 ```
 Title: "Population Distribution by Borough (Age, Income, Race/Ethnicity)"
 Independent Variable (IV): Borough + Demographic Breakdown (Age Group, Income Bracket, Race)
@@ -502,7 +502,7 @@ Colors: NYC DOT Blue (#003087) for primary demographic; Orange (#FF6319) for sec
 Annotations:
   - Y-axis: "Population Count" or "Percentage (%)"
   - X-axis: Borough names
-  - Data source: Demographics_by_Borough (6khm-nrue) / as of latest census
+  - Data source: Demographics_by_Borough (cu9u-3r5e) / as of latest census
   - Value labels on bars
   - Callout: Most diverse borough; highest median income; highest poverty rate
 Key metric: Equity baseline; resource allocation; vulnerable population identification
