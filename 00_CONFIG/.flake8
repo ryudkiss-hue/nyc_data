@@ -1,0 +1,9 @@
+[flake8]
+exclude =
+    docs/archive/,
+    .git,
+    __pycache__,
+    build,
+    dist,
+    .eggs,
+    *.egg-info
