@@ -7,7 +7,6 @@ Tests verify:
 - Phase-specific calculations match expected formulas
 """
 
-import pandas as pd
 import pytest
 
 from socrata_toolkit.motherduck.analytics import AnalyticsBuilder

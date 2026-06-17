@@ -111,7 +111,6 @@ def parse_sim_complaints(df: pd.DataFrame, text_col: str = "description") -> pd.
     """
     Quantitatively parse Sidewalk Inspection and Management (SIM) complaints.
     """
-    import numpy as np
 
     out = df.copy()
     if text_col not in out.columns:

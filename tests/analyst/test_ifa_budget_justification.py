@@ -1,7 +1,5 @@
 """Tests for IFABudgetJustification."""
 
-import pandas as pd
-import pytest
 
 from socrata_toolkit.analyst.ifa_budget_justification import (
     COST_PER_RAMP_USD,

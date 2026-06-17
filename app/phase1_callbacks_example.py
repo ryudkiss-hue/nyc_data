@@ -9,7 +9,6 @@ Author: Claude Code
 Date: 2026-06-10
 """
 
-from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -17,7 +16,7 @@ from dash import Input, Output, dcc, html
 
 # Import analysis modules
 from socrata_toolkit.analysis.clustering_diagnostics import ClusteringDiagnostics
-from socrata_toolkit.analysis.material_analysis import MaterialDegradationAnalysis, SurvivalDataPrep
+from socrata_toolkit.analysis.material_analysis import MaterialDegradationAnalysis
 from socrata_toolkit.viz.clustering_viz import (
     plot_cluster_profiles,
     plot_elbow_curve,

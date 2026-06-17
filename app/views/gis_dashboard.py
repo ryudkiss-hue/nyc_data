@@ -13,7 +13,6 @@ import pandas as pd
 import streamlit as st
 
 from app.data_loader import (
-    DATASET_REGISTRY,
     LAT_CANDIDATES,
     LON_CANDIDATES,
     demo_mode_enabled,

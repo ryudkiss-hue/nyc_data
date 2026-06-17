@@ -1,7 +1,6 @@
 """Analytics service layer with KPI caching + connection pooling optimizations."""
 
 import logging
-import time
 from datetime import datetime, timedelta
 from typing import Optional
 
@@ -228,7 +227,6 @@ def get_kpi_metrics(filters: Optional[dict] = None) -> dict[str, tuple[float, fl
         return cached_copy
 
     try:
-        from scipy import stats
 
         from socrata_toolkit.governance import compute_quality_score
 

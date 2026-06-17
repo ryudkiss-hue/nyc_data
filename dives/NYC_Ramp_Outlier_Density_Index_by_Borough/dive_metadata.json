@@ -1,0 +1,14 @@
+{
+  "id": "4686bdb6-fbca-4cc1-9c4d-6c1e274f9e02",
+  "title": "NYC Ramp Outlier Density Index by Borough",
+  "description": "Borough ramp count relative to average \u2014 values far from 100 signal outlier inventory concentration (Phase D)",
+  "requiredResources": [
+    {
+      "name": "nyc_mission_control",
+      "alias": "nyc_mission_control",
+      "url": "md:nyc_mission_control",
+      "id": "a46b07dd-969e-476b-b3df-607bb433d27c",
+      "resource_type": "database"
+    }
+  ]
+}

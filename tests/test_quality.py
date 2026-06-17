@@ -13,7 +13,6 @@ import json
 from datetime import datetime, timedelta, timezone
 
 import pandas as pd
-import pytest
 
 from socrata_toolkit.analysis import (
     Anomaly,

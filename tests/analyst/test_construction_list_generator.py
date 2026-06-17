@@ -1,7 +1,6 @@
 """Tests for ConstructionListGenerator."""
 
 import pandas as pd
-import pytest
 
 from socrata_toolkit.analyst.construction_list_generator import (
     REPAIR_COST_BY_SCOPE,

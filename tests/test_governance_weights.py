@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 
 class TestGovernanceWeights:
     """Quality score weights must be constants, not magic numbers."""

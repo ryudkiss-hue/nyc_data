@@ -18,15 +18,12 @@ import hashlib
 import json
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Tuple
 
 import duckdb
 import pandas as pd
 
 from socrata_toolkit.analysis.nlp_classifier import TextClassifierPipeline
 from socrata_toolkit.analysis.sim_workflows_complete import (
-    WORKFLOW_REGISTRY,
-    UnifiedClassifier,
     run_sim_workflow,
 )
 from socrata_toolkit.core.client import SocrataClient, SocrataConfig

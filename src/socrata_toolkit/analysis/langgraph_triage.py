@@ -9,18 +9,15 @@ as the state machine, spaCy for deterministic classification, and Claude for rea
 
 import json
 import logging
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
-import pandas as pd
 from langchain_anthropic import ChatAnthropic
-from langchain_core.tools import tool
 from langgraph.graph import END, StateGraph
 
 from socrata_toolkit.analysis.nlp_analysis import DatasetAnalyzerWithNLP
 from socrata_toolkit.core.client import SocrataClient, SocrataConfig
-from socrata_toolkit.spatial.core import spatial_cluster
 
 logger = logging.getLogger(__name__)
 

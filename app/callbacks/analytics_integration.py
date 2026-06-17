@@ -14,10 +14,9 @@ from typing import Any
 
 import dash_mantine_components as dmc
 import plotly.graph_objects as go
-from dash import Input, Output, State, callback, dcc, html, no_update
+from dash import Input, Output, callback, dcc
 
 from app.callbacks.analytics import AnalyticsEngine
-from app.callbacks.decorators import memoize_with_ttl, timer_callback
 from app.services.analytics_service import (
     get_dataset,
     get_kpi_metrics,

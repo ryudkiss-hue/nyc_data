@@ -2,9 +2,6 @@ import threading
 import time
 from unittest.mock import MagicMock, patch
 
-import pandas as pd
-import pytest
-
 from app.data_manager import DataManager
 
 

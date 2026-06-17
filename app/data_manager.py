@@ -6,12 +6,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import diskcache
-import numpy as np
 import pandas as pd
 import yaml
 import zstandard as zstd
-
-from socrata_toolkit import SocrataClient, SocrataConfig
 
 # Setup Logging
 logging.basicConfig(level=logging.INFO)

@@ -1,7 +1,7 @@
 """Mart quality tracking: freshness, completeness, schema stability."""
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import duckdb
 

@@ -37,7 +37,6 @@ from .legal_hold_classifier import (
     LegalHoldMetrics,
     LegalHoldReport,
     RecordType,
-    Sensitivity,
 )
 
 logger = logging.getLogger(__name__)

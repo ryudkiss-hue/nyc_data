@@ -14,11 +14,10 @@ Key classifications:
 import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 
 import pandas as pd
 import spacy
-from spacy.language import Language
 from spacy.tokens import Doc
 
 logger = logging.getLogger(__name__)
