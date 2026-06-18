@@ -1,0 +1,235 @@
+{
+  "metadata": {
+    "version": "2.0",
+    "created_at": "2026-06-18",
+    "total_datasets": 57,
+    "total_rows_cached": 3100000,
+    "cached_count": 20,
+    "socrata_count": 37
+  },
+  "cached_datasets": [
+    {
+      "id": 1,
+      "name": "inspection",
+      "socrata_id": "a2nx-4u46",
+      "row_count": 250000,
+      "primary_key": "inspection_id",
+      "source": "cache",
+      "domain_schema": "sim_core"
+    },
+    {
+      "id": 2,
+      "name": "capital_intersections",
+      "socrata_id": "4kz5-n7k7",
+      "row_count": 15000,
+      "primary_key": "intersection_id",
+      "source": "cache",
+      "domain_schema": "coordination"
+    },
+    {
+      "id": 3,
+      "name": "built",
+      "socrata_id": "h2c3-nmwx",
+      "row_count": 180000,
+      "primary_key": "lot_id",
+      "source": "cache",
+      "domain_schema": "extended"
+    },
+    {
+      "id": 4,
+      "name": "pedestrian_demand",
+      "socrata_id": "y8sn-7hs2",
+      "row_count": 45000,
+      "primary_key": "location_id",
+      "source": "cache",
+      "domain_schema": "extended"
+    },
+    {
+      "id": 5,
+      "name": "mappluto",
+      "socrata_id": "bc8t-ecp7",
+      "row_count": 950000,
+      "primary_key": "bblid",
+      "source": "cache",
+      "domain_schema": "overlays"
+    },
+    {
+      "id": 6,
+      "name": "capital_blocks",
+      "socrata_id": "n3p6-zve2",
+      "row_count": 35000,
+      "primary_key": "block_id",
+      "source": "cache",
+      "domain_schema": "coordination"
+    },
+    {
+      "id": 7,
+      "name": "tree_damage",
+      "socrata_id": "p937-wjvj",
+      "row_count": 8500,
+      "primary_key": "tree_id",
+      "source": "cache",
+      "domain_schema": "overlays"
+    },
+    {
+      "id": 8,
+      "name": "correspondences",
+      "socrata_id": "h8da-3ux3",
+      "row_count": 120000,
+      "primary_key": "correspondence_id",
+      "source": "cache",
+      "domain_schema": "coordination"
+    },
+    {
+      "id": 9,
+      "name": "step_streets",
+      "socrata_id": "3qur-4mwc",
+      "row_count": 28000,
+      "primary_key": "step_id",
+      "source": "cache",
+      "domain_schema": "extended"
+    },
+    {
+      "id": 10,
+      "name": "curb_metal_protruding",
+      "socrata_id": "j5tj-3qzp",
+      "row_count": 22000,
+      "primary_key": "violation_id",
+      "source": "cache",
+      "domain_schema": "overlays"
+    },
+    {
+      "id": 11,
+      "name": "lot_info",
+      "socrata_id": "n9pm-ge6d",
+      "row_count": 850000,
+      "primary_key": "lot_id",
+      "source": "cache",
+      "domain_schema": "overlays"
+    },
+    {
+      "id": 12,
+      "name": "ramp_complaints",
+      "socrata_id": "2pxk-w7w5",
+      "row_count": 12000,
+      "primary_key": "complaint_id",
+      "source": "cache",
+      "domain_schema": "accessibility"
+    },
+    {
+      "id": 13,
+      "name": "ramp_locations",
+      "socrata_id": "2ta3-jgn7",
+      "row_count": 18000,
+      "primary_key": "ramp_id",
+      "source": "cache",
+      "domain_schema": "accessibility"
+    },
+    {
+      "id": 14,
+      "name": "ramp_progress",
+      "socrata_id": "f29h-pq2f",
+      "row_count": 6500,
+      "primary_key": "progress_id",
+      "source": "cache",
+      "domain_schema": "accessibility"
+    },
+    {
+      "id": 15,
+      "name": "reinspection",
+      "socrata_id": "9x2c-h82j",
+      "row_count": 95000,
+      "primary_key": "reinspection_id",
+      "source": "cache",
+      "domain_schema": "sim_core"
+    },
+    {
+      "id": 16,
+      "name": "street_closures_block",
+      "socrata_id": "3tr4-w5hp",
+      "row_count": 24000,
+      "primary_key": "closure_id",
+      "source": "cache",
+      "domain_schema": "coordination"
+    },
+    {
+      "id": 17,
+      "name": "sidewalk_planimetric",
+      "socrata_id": "ye5t-b8ux",
+      "row_count": 540000,
+      "primary_key": "segment_id",
+      "source": "cache",
+      "domain_schema": "overlays"
+    },
+    {
+      "id": 18,
+      "name": "street_resurfacing_schedule",
+      "socrata_id": "4mse-ku6p",
+      "row_count": 32000,
+      "primary_key": "project_id",
+      "source": "cache",
+      "domain_schema": "extended"
+    },
+    {
+      "id": 19,
+      "name": "violations",
+      "socrata_id": "a2vm-6uyb",
+      "row_count": 380000,
+      "primary_key": "violation_id",
+      "source": "cache",
+      "domain_schema": "accessibility"
+    },
+    {
+      "id": 20,
+      "name": "weekly_construction",
+      "socrata_id": "c5k9-bwvj",
+      "row_count": 15000,
+      "primary_key": "construction_id",
+      "source": "cache",
+      "domain_schema": "coordination"
+    }
+  ],
+  "socrata_remaining": [
+    {
+      "id": 21,
+      "name": "dataset_21",
+      "socrata_id": "xxxx-xxxx",
+      "row_count": 0,
+      "primary_key": "id",
+      "source": "socrata",
+      "domain_schema": "sim_core"
+    }
+  ],
+  "domain_schemas": [
+    {
+      "name": "sim_core",
+      "description": "Core inspection & management tables",
+      "tables": ["inspection", "reinspection"],
+      "primary_join_key": "inspection_id"
+    },
+    {
+      "name": "accessibility",
+      "description": "ADA & accessibility violations",
+      "tables": ["ramp_locations", "ramp_complaints", "ramp_progress", "violations"],
+      "primary_join_key": "ramp_id"
+    },
+    {
+      "name": "coordination",
+      "description": "Permit coordination & intersections",
+      "tables": ["capital_intersections", "capital_blocks", "correspondences", "street_closures_block", "weekly_construction"],
+      "primary_join_key": "lot_id"
+    },
+    {
+      "name": "overlays",
+      "description": "Spatial enrichment & tree data",
+      "tables": ["mappluto", "sidewalk_planimetric", "tree_damage", "curb_metal_protruding", "lot_info"],
+      "primary_join_key": "bblid"
+    },
+    {
+      "name": "extended",
+      "description": "Derived metrics & time-series",
+      "tables": ["street_resurfacing_schedule", "built", "pedestrian_demand", "step_streets"],
+      "primary_join_key": "lot_id"
+    }
+  ]
+}
