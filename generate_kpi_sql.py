@@ -49,13 +49,10 @@ def generate_scorecard_inserts():
     with open(datasets_file) as f:
         data = json.load(f)
 
-    # Handle both nested and flat structures
-    if 'datasets' in data:
-        datasets = data['datasets']
-    elif 'data' in data:
-        datasets = data['data']
-    else:
-        datasets = list(data.values()) if isinstance(data, dict) else data
+    # Load all datasets from config (cached + socrata_remaining)
+    datasets = []
+    datasets.extend(data.get('cached_datasets', []))
+    datasets.extend(data.get('socrata_remaining', []))
 
     inserts = []
     inserts.append("-- Generated Quality Scorecard SQL")
@@ -68,7 +65,7 @@ def generate_scorecard_inserts():
     rows = []
     for dataset in datasets:
         name = dataset.get('name', 'unknown').replace("'", "''")
-        key = dataset.get('key', 'unknown')
+        key = dataset.get('name', 'unknown')  # Use name as the key
 
         completeness = 85.0
         validity = 92.0
@@ -96,7 +93,15 @@ if __name__ == "__main__":
     print("\n=== Scorecard Generation ===")
     print(f"Generated {len(scorecard_sql.splitlines())} lines for quality scorecards")
 
-    # Verify counts
-    kpi_count = kpi_sql.count("VALUES")
-    print(f"\n✓ KPI SQL ready (255 records)")
-    print(f"✓ Scorecard SQL ready (57 datasets)")
+    # Write to files
+    kpi_path = Path('pipeline/sql/04_serving_kpis.sql')
+    scorecard_path = Path('pipeline/serving/quality_scorecard.sql')
+
+    with open(kpi_path, 'w') as f:
+        f.write(kpi_sql)
+
+    with open(scorecard_path, 'w') as f:
+        f.write(scorecard_sql)
+
+    print(f"\n[OK] KPI SQL written to {kpi_path}")
+    print(f"[OK] Scorecard SQL written to {scorecard_path}")
