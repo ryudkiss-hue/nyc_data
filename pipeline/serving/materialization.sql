@@ -29,14 +29,14 @@ SELECT
     kpi_id,
     kpi_name,
     borough,
-    DATEPART(YEAR, measurement_date) as year,
-    DATEPART(MONTH, measurement_date) as month,
+    EXTRACT(YEAR FROM  measurement_date) as year,
+    EXTRACT(MONTH FROM  measurement_date) as month,
     ROUND(AVG(value), 2) as avg_value,
     MIN(value) as min_value,
     MAX(value) as max_value,
     ROUND(STDDEV(value), 2) as std_dev
 FROM serving.kpi_metrics
-GROUP BY kpi_id, kpi_name, borough, DATEPART(YEAR, measurement_date), DATEPART(MONTH, measurement_date);
+GROUP BY kpi_id, kpi_name, borough, EXTRACT(YEAR FROM  measurement_date), EXTRACT(MONTH FROM  measurement_date);
 
 -- ============================================================================
 -- Borough-Level Time Series
@@ -95,14 +95,14 @@ ORDER BY inspection_day DESC;
 
 CREATE OR REPLACE VIEW serving.violation_resolution_weekly AS
 SELECT
-    DATEPART(YEAR, v.violation_date) as year,
-    DATEPART(WEEK, v.violation_date) as week,
+    EXTRACT(YEAR FROM  v.violation_date) as year,
+    EXTRACT(WEEK FROM  v.violation_date) as week,
     v.borough,
     COUNT(DISTINCT v.violation_id) as violations_created,
     COUNT(DISTINCT CASE WHEN v.remediation_status = 'completed' THEN v.violation_id END) as violations_resolved,
     ROUND(COUNT(DISTINCT CASE WHEN v.remediation_status = 'completed' THEN v.violation_id END) * 100.0 / COUNT(*), 2) as resolution_rate
 FROM staging.violations v
-GROUP BY DATEPART(YEAR, v.violation_date), DATEPART(WEEK, v.violation_date), v.borough
+GROUP BY EXTRACT(YEAR FROM  v.violation_date), EXTRACT(WEEK FROM  v.violation_date), v.borough
 ORDER BY year DESC, week DESC;
 
 -- ============================================================================
@@ -112,15 +112,15 @@ ORDER BY year DESC, week DESC;
 CREATE OR REPLACE VIEW serving.ramp_work_monthly AS
 SELECT
     rl.borough,
-    DATEPART(YEAR, rp.completion_date) as year,
-    DATEPART(MONTH, rp.completion_date) as month,
+    EXTRACT(YEAR FROM  rp.completion_date) as year,
+    EXTRACT(MONTH FROM  rp.completion_date) as month,
     COUNT(DISTINCT rl.ramp_id) as ramps_worked_on,
     COUNT(DISTINCT CASE WHEN rl.accessibility_compliant = TRUE THEN rl.ramp_id END) as now_compliant,
     ROUND(COUNT(DISTINCT CASE WHEN rl.accessibility_compliant = TRUE THEN rl.ramp_id END) * 100.0 / COUNT(*), 2) as compliance_rate
 FROM staging.ramp_locations rl
 LEFT JOIN staging.ramp_progress rp ON rl.ramp_id = rp.ramp_id
 WHERE rp.completion_date IS NOT NULL
-GROUP BY rl.borough, DATEPART(YEAR, rp.completion_date), DATEPART(MONTH, rp.completion_date)
+GROUP BY rl.borough, EXTRACT(YEAR FROM  rp.completion_date), EXTRACT(MONTH FROM  rp.completion_date)
 ORDER BY year DESC, month DESC;
 
 -- ============================================================================
@@ -150,8 +150,8 @@ ORDER BY days_since_update;
 CREATE OR REPLACE VIEW serving.dashboard_summary AS
 SELECT
     CAST(CURRENT_DATE AS DATE) as date,
-    (SELECT COUNT(DISTINCT inspection_id) FROM staging.inspection WHERE DATEPART(MONTH, inspection_date) = DATEPART(MONTH, CURRENT_DATE)) as inspections_this_month,
-    (SELECT COUNT(DISTINCT violation_id) FROM staging.violations WHERE violation_date >= DATEADD(DAY, -30, CURRENT_DATE)) as violations_last_30_days,
+    (SELECT COUNT(DISTINCT inspection_id) FROM staging.inspection WHERE EXTRACT(MONTH FROM  inspection_date) = EXTRACT(MONTH FROM  CURRENT_DATE)) as inspections_this_month,
+    (SELECT COUNT(DISTINCT violation_id) FROM staging.violations WHERE violation_date >= (30, CURRENT_DATE)) as violations_last_30_days,
     (SELECT COUNT(DISTINCT ramp_id) FROM staging.ramp_locations WHERE accessibility_compliant = TRUE) as compliant_ramps,
     (SELECT COUNT(DISTINCT ramp_id) FROM staging.ramp_locations) as total_ramps,
     (SELECT AVG(composite_score) FROM serving.quality_scorecards WHERE measurement_date = CAST(CURRENT_DATE AS DATE)) as avg_quality_score,
@@ -165,31 +165,31 @@ SELECT
 
 CREATE OR REPLACE VIEW serving.weekly_performance_report AS
 SELECT
-    DATEPART(YEAR, CURRENT_DATE) as year,
-    DATEPART(WEEK, CURRENT_DATE) as week,
+    EXTRACT(YEAR FROM  CURRENT_DATE) as year,
+    EXTRACT(WEEK FROM  CURRENT_DATE) as week,
     'Inspections' as metric,
     COUNT(DISTINCT i.inspection_id) as value
 FROM staging.inspection i
-WHERE DATEPART(WEEK, i.inspection_date) = DATEPART(WEEK, CURRENT_DATE)
-AND DATEPART(YEAR, i.inspection_date) = DATEPART(YEAR, CURRENT_DATE)
+WHERE EXTRACT(WEEK FROM  i.inspection_date) = EXTRACT(WEEK FROM  CURRENT_DATE)
+AND EXTRACT(YEAR FROM  i.inspection_date) = EXTRACT(YEAR FROM  CURRENT_DATE)
 UNION ALL
 SELECT
-    DATEPART(YEAR, CURRENT_DATE),
-    DATEPART(WEEK, CURRENT_DATE),
+    EXTRACT(YEAR FROM  CURRENT_DATE),
+    EXTRACT(WEEK FROM  CURRENT_DATE),
     'Violations',
     COUNT(DISTINCT v.violation_id)
 FROM staging.violations v
-WHERE DATEPART(WEEK, v.violation_date) = DATEPART(WEEK, CURRENT_DATE)
-AND DATEPART(YEAR, v.violation_date) = DATEPART(YEAR, CURRENT_DATE)
+WHERE EXTRACT(WEEK FROM  v.violation_date) = EXTRACT(WEEK FROM  CURRENT_DATE)
+AND EXTRACT(YEAR FROM  v.violation_date) = EXTRACT(YEAR FROM  CURRENT_DATE)
 UNION ALL
 SELECT
-    DATEPART(YEAR, CURRENT_DATE),
-    DATEPART(WEEK, CURRENT_DATE),
+    EXTRACT(YEAR FROM  CURRENT_DATE),
+    EXTRACT(WEEK FROM  CURRENT_DATE),
     'Ramps',
     COUNT(DISTINCT rl.ramp_id)
 FROM staging.ramp_locations rl
-WHERE DATEPART(WEEK, rl.created_date) = DATEPART(WEEK, CURRENT_DATE)
-AND DATEPART(YEAR, rl.created_date) = DATEPART(YEAR, CURRENT_DATE);
+WHERE EXTRACT(WEEK FROM  rl.created_date) = EXTRACT(WEEK FROM  CURRENT_DATE)
+AND EXTRACT(YEAR FROM  rl.created_date) = EXTRACT(YEAR FROM  CURRENT_DATE);
 
 -- ============================================================================
 -- Archive Historical Snapshots (rotate weekly)
@@ -199,10 +199,10 @@ AND DATEPART(YEAR, rl.created_date) = DATEPART(YEAR, CURRENT_DATE);
 CREATE OR REPLACE VIEW serving.kpi_archive_candidates AS
 SELECT *
 FROM serving.kpi_metrics
-WHERE measurement_date < DATEADD(DAY, -90, CURRENT_DATE);
+WHERE measurement_date < (90, CURRENT_DATE);
 
 -- Move quality records older than 180 days to archive
 CREATE OR REPLACE VIEW serving.quality_archive_candidates AS
 SELECT *
 FROM serving.quality_scorecards
-WHERE measurement_date < DATEADD(DAY, -180, CURRENT_DATE);
+WHERE measurement_date < (180, CURRENT_DATE);

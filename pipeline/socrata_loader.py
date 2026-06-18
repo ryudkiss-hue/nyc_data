@@ -203,23 +203,11 @@ class SocrataLoader:
         try:
             logger.info(f"Loading from Socrata: {dataset_name} ({socrata_id})")
 
-            # Try to import SocrataClient from existing toolkit
-            try:
-                from socrata_toolkit.core.client import SocrataClient, SocrataConfig
-                config = SocrataConfig(domain=self.socrata_domain, app_token=self.app_token)
-                client = SocrataClient(config)
-            except ImportError:
-                logger.error("SocrataClient not available - implement API calls directly")
-                return LoadResult(
-                    dataset_name=dataset_name,
-                    success=False,
-                    error="SocrataClient import failed",
-                    source="socrata"
-                )
-
-            # Fetch data with pagination
+            # Fetch data with pagination using direct HTTP API
             offset = 0
             tables = []
+
+            base_url = f"https://{self.socrata_domain}/api/views/{socrata_id}/rows.json"
 
             while True:
                 # Rate limiting
@@ -227,18 +215,23 @@ class SocrataLoader:
 
                 logger.debug(f"Fetching batch at offset {offset}")
 
-                # Build SoQL query with pagination
-                query = f"SELECT * OFFSET {offset} LIMIT {self.batch_size}"
-
                 try:
-                    df = client.fetch_dataframe(
-                        self.socrata_domain,
-                        socrata_id,
-                        where=None,
-                        select=None,
-                        max_rows=self.batch_size,
-                        offset=offset
-                    )
+                    params = {
+                        "$offset": offset,
+                        "$limit": self.batch_size
+                    }
+                    if self.app_token:
+                        params["$$app_token"] = self.app_token
+
+                    response = requests.get(base_url, params=params, timeout=30)
+                    response.raise_for_status()
+
+                    rows = response.json()
+                    if not rows:
+                        logger.debug(f"No more rows at offset {offset}")
+                        break
+
+                    df = pd.DataFrame(rows)
 
                     if df is None or len(df) == 0:
                         logger.debug(f"No more rows at offset {offset}")

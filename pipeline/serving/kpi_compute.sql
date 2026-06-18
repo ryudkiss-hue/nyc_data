@@ -16,7 +16,7 @@ SELECT
     250.0 as threshold,
     CASE WHEN COUNT(DISTINCT i.inspection_id) >= 250 THEN 'on_target' ELSE 'at_risk' END as status
 FROM staging.inspection i
-WHERE DATEPART(MONTH, i.inspection_date) = DATEPART(MONTH, CURRENT_DATE)
+WHERE EXTRACT(MONTH FROM  i.inspection_date) = EXTRACT(MONTH FROM  CURRENT_DATE)
 GROUP BY i.borough;
 
 -- ============================================================================
@@ -33,7 +33,7 @@ SELECT
     3.0 as threshold,
     CASE WHEN AVG(DATEDIFF(DAY, v.violation_date, COALESCE(v.remediation_date, CURRENT_DATE))) <= 3.0 THEN 'on_target' ELSE 'at_risk' END as status
 FROM staging.violations v
-WHERE v.violation_date >= DATEADD(MONTH, -1, CURRENT_DATE)
+WHERE v.violation_date >= ((1, CURRENT_DATE)
 GROUP BY v.borough;
 
 -- ============================================================================
@@ -50,7 +50,7 @@ SELECT
     95.0 as threshold,
     CASE WHEN (COUNT(CASE WHEN v.remediation_status = 'completed' THEN 1 END) * 100.0) / COUNT(*) >= 95.0 THEN 'on_target' ELSE 'at_risk' END as status
 FROM staging.violations v
-WHERE v.violation_date >= DATEADD(MONTH, -3, CURRENT_DATE)
+WHERE v.violation_date >= ((3, CURRENT_DATE)
 GROUP BY v.borough;
 
 -- ============================================================================
@@ -122,7 +122,7 @@ SELECT
     100.0 as threshold,
     CASE WHEN COUNT(DISTINCT c.correspondence_id) >= 100 THEN 'on_target' ELSE 'at_risk' END as status
 FROM staging.correspondences c
-WHERE DATEPART(MONTH, c.created_date) = DATEPART(MONTH, CURRENT_DATE);
+WHERE EXTRACT(MONTH FROM  c.created_date) = EXTRACT(MONTH FROM  CURRENT_DATE);
 
 -- KPI 8: Street Closure Duration
 INSERT INTO serving.kpi_metrics (kpi_id, kpi_name, borough, measurement_date, value, threshold, status)
@@ -135,7 +135,7 @@ SELECT
     14.0 as threshold,
     CASE WHEN AVG(DATEDIFF(DAY, cs.start_date, COALESCE(cs.end_date, CURRENT_DATE))) <= 14 THEN 'on_target' ELSE 'at_risk' END as status
 FROM staging.street_closures_block cs
-WHERE cs.start_date >= DATEADD(MONTH, -1, CURRENT_DATE);
+WHERE cs.start_date >= ((1, CURRENT_DATE);
 
 -- KPI 9: Data Freshness
 INSERT INTO serving.kpi_metrics (kpi_id, kpi_name, borough, measurement_date, value, threshold, status)
