@@ -6,7 +6,7 @@
 -- KPI 1: Inspections Completed (by borough)
 -- ============================================================================
 
-INSERT INTO serving.kpi_metrics (kpi_id, kpi_name, borough, measurement_date, value, threshold, status)
+INSERT INTO serving.kpi_borough_results (kpi_id, kpi_name, borough, measurement_date, value, threshold, status)
 SELECT
     1 as kpi_id,
     'Inspections Completed' as kpi_name,
@@ -23,7 +23,7 @@ GROUP BY i.borough;
 -- KPI 2: Average Response Time (by borough)
 -- ============================================================================
 
-INSERT INTO serving.kpi_metrics (kpi_id, kpi_name, borough, measurement_date, value, threshold, status)
+INSERT INTO serving.kpi_borough_results (kpi_id, kpi_name, borough, measurement_date, value, threshold, status)
 SELECT
     2 as kpi_id,
     'Average Response Time' as kpi_name,
@@ -40,7 +40,7 @@ GROUP BY v.borough;
 -- KPI 3: Violation Resolution Rate (by borough)
 -- ============================================================================
 
-INSERT INTO serving.kpi_metrics (kpi_id, kpi_name, borough, measurement_date, value, threshold, status)
+INSERT INTO serving.kpi_borough_results (kpi_id, kpi_name, borough, measurement_date, value, threshold, status)
 SELECT
     3 as kpi_id,
     'Violation Resolution Rate' as kpi_name,
@@ -57,7 +57,7 @@ GROUP BY v.borough;
 -- KPI 4: Accessibility Compliance (by borough)
 -- ============================================================================
 
-INSERT INTO serving.kpi_metrics (kpi_id, kpi_name, borough, measurement_date, value, threshold, status)
+INSERT INTO serving.kpi_borough_results (kpi_id, kpi_name, borough, measurement_date, value, threshold, status)
 SELECT
     4 as kpi_id,
     'Accessibility Compliance' as kpi_name,
@@ -73,7 +73,7 @@ GROUP BY rl.borough;
 -- KPI 5: Data Completeness (across all datasets)
 -- ============================================================================
 
-INSERT INTO serving.kpi_metrics (kpi_id, kpi_name, borough, measurement_date, value, threshold, status)
+INSERT INTO serving.kpi_borough_results (kpi_id, kpi_name, borough, measurement_date, value, threshold, status)
 SELECT
     5 as kpi_id,
     'Data Completeness' as kpi_name,
@@ -94,7 +94,7 @@ FROM (
 -- KPI 6: Ramp Repair Queue (by borough)
 -- ============================================================================
 
-INSERT INTO serving.kpi_metrics (kpi_id, kpi_name, borough, measurement_date, value, threshold, status)
+INSERT INTO serving.kpi_borough_results (kpi_id, kpi_name, borough, measurement_date, value, threshold, status)
 SELECT
     6 as kpi_id,
     'Ramp Repair Queue' as kpi_name,
@@ -112,7 +112,7 @@ GROUP BY rl.borough;
 -- ============================================================================
 
 -- KPI 7: Permit Issuance Rate
-INSERT INTO serving.kpi_metrics (kpi_id, kpi_name, borough, measurement_date, value, threshold, status)
+INSERT INTO serving.kpi_borough_results (kpi_id, kpi_name, borough, measurement_date, value, threshold, status)
 SELECT
     7 as kpi_id,
     'Permit Issuance Rate' as kpi_name,
@@ -125,7 +125,7 @@ FROM staging.correspondences c
 WHERE EXTRACT(MONTH FROM  c.created_date) = EXTRACT(MONTH FROM  CURRENT_DATE);
 
 -- KPI 8: Street Closure Duration
-INSERT INTO serving.kpi_metrics (kpi_id, kpi_name, borough, measurement_date, value, threshold, status)
+INSERT INTO serving.kpi_borough_results (kpi_id, kpi_name, borough, measurement_date, value, threshold, status)
 SELECT
     8 as kpi_id,
     'Street Closure Duration' as kpi_name,
@@ -138,7 +138,7 @@ FROM staging.street_closures_block cs
 WHERE cs.start_date >= ((1, CURRENT_DATE);
 
 -- KPI 9: Data Freshness
-INSERT INTO serving.kpi_metrics (kpi_id, kpi_name, borough, measurement_date, value, threshold, status)
+INSERT INTO serving.kpi_borough_results (kpi_id, kpi_name, borough, measurement_date, value, threshold, status)
 SELECT
     9 as kpi_id,
     'Data Freshness' as kpi_name,

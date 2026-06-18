@@ -33,8 +33,10 @@ class StateManager:
     Enables resumable execution and failure recovery.
     """
 
-    def __init__(self, state_dir: str = "pipeline/state"):
+    def __init__(self, state_dir: str = None):
         """Initialize state manager."""
+        if state_dir is None:
+            state_dir = str(Path(__file__).parent.parent / "state")
         self.state_dir = Path(state_dir)
         self.state_dir.mkdir(parents=True, exist_ok=True)
         self.checkpoints: List[PipelineCheckpoint] = []

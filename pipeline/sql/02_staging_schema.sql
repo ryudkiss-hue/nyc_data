@@ -11,12 +11,9 @@ CREATE SCHEMA IF NOT EXISTS staging;
 -- SIM Core Domain Tables
 -- ============================================================================
 
-CREATE TABLE IF NOT EXISTS staging.inspection AS
-SELECT * FROM (
-  SELECT ROW_NUMBER() OVER (PARTITION BY inspection_id ORDER BY 1 DESC) as _rn,
-         * EXCLUDE (_rn)
-  FROM raw.inspection
-) WHERE _rn = 1;
+CREATE OR REPLACE TABLE staging.inspection AS
+SELECT * FROM raw.inspection
+QUALIFY ROW_NUMBER() OVER (PARTITION BY inspection_id ORDER BY 1 DESC) = 1;
 
 CREATE TABLE IF NOT EXISTS staging.violations AS
 SELECT * FROM (

@@ -17,7 +17,7 @@ SELECT
         UNION ALL SELECT COUNT(*) FROM staging.ramp_locations
         -- ... union all other 54 datasets
     ) rc) as row_count
-FROM serving.kpi_metrics
+FROM serving.kpi_borough_results
 WHERE measurement_date = CAST(CURRENT_DATE AS DATE);
 
 -- ============================================================================
@@ -35,7 +35,7 @@ SELECT
     MIN(value) as min_value,
     MAX(value) as max_value,
     ROUND(STDDEV(value), 2) as std_dev
-FROM serving.kpi_metrics
+FROM serving.kpi_borough_results
 GROUP BY kpi_id, kpi_name, borough, EXTRACT(YEAR FROM  measurement_date), EXTRACT(MONTH FROM  measurement_date);
 
 -- ============================================================================
@@ -51,7 +51,7 @@ SELECT
     COUNT(CASE WHEN status = 'on_target' THEN 1 END) as on_target_count,
     COUNT(CASE WHEN status = 'at_risk' THEN 1 END) as at_risk_count,
     ROUND(COUNT(CASE WHEN status = 'on_target' THEN 1 END) * 100.0 / COUNT(*), 2) as on_target_percentage
-FROM serving.kpi_metrics
+FROM serving.kpi_borough_results
 GROUP BY borough, measurement_date
 ORDER BY measurement_date DESC, borough;
 
@@ -155,7 +155,7 @@ SELECT
     (SELECT COUNT(DISTINCT ramp_id) FROM staging.ramp_locations WHERE accessibility_compliant = TRUE) as compliant_ramps,
     (SELECT COUNT(DISTINCT ramp_id) FROM staging.ramp_locations) as total_ramps,
     (SELECT AVG(composite_score) FROM serving.quality_scorecards WHERE measurement_date = CAST(CURRENT_DATE AS DATE)) as avg_quality_score,
-    (SELECT COUNT(*) FROM serving.kpi_metrics WHERE measurement_date = CAST(CURRENT_DATE AS DATE) AND status = 'on_target') as kpis_on_target,
+    (SELECT COUNT(*) FROM serving.kpi_borough_results WHERE measurement_date = CAST(CURRENT_DATE AS DATE) AND status = 'on_target') as kpis_on_target,
     255 as total_kpis,
     57 as datasets_loaded;
 
@@ -198,7 +198,7 @@ AND EXTRACT(YEAR FROM  rl.created_date) = EXTRACT(YEAR FROM  CURRENT_DATE);
 -- Move KPI records older than 90 days to archive
 CREATE OR REPLACE VIEW serving.kpi_archive_candidates AS
 SELECT *
-FROM serving.kpi_metrics
+FROM serving.kpi_borough_results
 WHERE measurement_date < (90, CURRENT_DATE);
 
 -- Move quality records older than 180 days to archive
