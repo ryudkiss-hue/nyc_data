@@ -62,6 +62,19 @@ class MotherDuckPipeline:
             cache_dir=self.cache_dir
         )
 
+        # Load and validate dataset config (Issue #4: Config-dataset sync)
+        logger.info("Loading dataset configuration from pipeline/config/socrata_datasets.json...")
+        self.config_datasets = self.socrata_loader.load_config('pipeline/config/socrata_datasets.json')
+        if not self.config_datasets:
+            logger.error("CRITICAL: Dataset config is empty or missing")
+            raise RuntimeError("Cannot proceed without dataset configuration")
+
+        # Expected dataset counts from config
+        self.expected_cached = len([d for d in self.config_datasets if d.source == 'cache'])
+        self.expected_socrata = len([d for d in self.config_datasets if d.source == 'socrata'])
+        self.expected_total = len(self.config_datasets)
+        logger.info(f"Config loaded: {self.expected_cached} cached + {self.expected_socrata} Socrata = {self.expected_total} total datasets")
+
     def log_stage(self, stage_name: str, status: str, **kwargs):
         """Log stage execution details."""
         self.execution_log['stages'][stage_name] = {
@@ -118,8 +131,13 @@ class MotherDuckPipeline:
                               error="No data loaded")
                 return False
 
+            # Issue #4: Validate against config expectations
+            if tables_loaded < self.expected_cached:
+                logger.warning(f"Config mismatch: Expected {self.expected_cached} cached datasets, loaded {tables_loaded}")
+
             self.log_stage('load_cached_parquet', 'success',
                           tables_loaded=tables_loaded,
+                          expected_cached=self.expected_cached,
                           total_rows=total_rows,
                           load_time_seconds=round(load_time, 2),
                           cache_location=str(cache_raw))
