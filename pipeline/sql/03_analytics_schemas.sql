@@ -33,7 +33,7 @@ CREATE OR REPLACE VIEW sim_core.inspection_violations_relationship AS
 SELECT
   i.inspection_id,
   COUNT(DISTINCT v.violation_id) as violation_count,
-  STRING_AGG(DISTINCT v.remediation_status, ', ') as statuses
+  STRING_AGG(v.remediation_status, ', ' ORDER BY v.remediation_status) as statuses
 FROM staging.inspection i
 LEFT JOIN staging.violations v ON i.inspection_id = v.inspection_id
 GROUP BY i.inspection_id;
@@ -70,7 +70,7 @@ FROM staging.street_permits;
 
 CREATE OR REPLACE VIEW coordination.construction_activity_timeline AS
 SELECT
-  DATE_TRUNC('month', inspection_date)::DATE as month,
+  DATE_TRUNC('month', inspection_date) as month,
   COUNT(DISTINCT inspection_id) as monthly_inspections
 FROM staging.street_construction_inspections
 WHERE inspection_date IS NOT NULL
