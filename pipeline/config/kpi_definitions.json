@@ -1,0 +1,471 @@
+{
+  "metadata": {
+    "version": "2.0",
+    "total_kpis": 51,
+    "total_kpi_records": 255,
+    "boroughs": 5,
+    "created_at": "2026-06-18"
+  },
+  "boroughs": ["manhattan", "brooklyn", "queens", "bronx", "staten_island"],
+  "kpis": [
+    {
+      "kpi_id": 1,
+      "name": "Inspections Completed",
+      "category": "volume",
+      "description": "Total number of sidewalk inspections completed",
+      "unit": "count",
+      "threshold": 250,
+      "sla_level": "HIGH"
+    },
+    {
+      "kpi_id": 2,
+      "name": "Average Response Time",
+      "category": "timeliness",
+      "description": "Average days from violation detection to remediation",
+      "unit": "days",
+      "threshold": 3.0,
+      "sla_level": "HIGH"
+    },
+    {
+      "kpi_id": 3,
+      "name": "Violation Resolution Rate",
+      "category": "quality",
+      "description": "Percentage of violations resolved within SLA",
+      "unit": "percent",
+      "threshold": 95.0,
+      "sla_level": "HIGH"
+    },
+    {
+      "kpi_id": 4,
+      "name": "Accessibility Compliance",
+      "category": "compliance",
+      "description": "Percentage of ramp locations meeting ADA standards",
+      "unit": "percent",
+      "threshold": 90.0,
+      "sla_level": "HIGH"
+    },
+    {
+      "kpi_id": 5,
+      "name": "Data Completeness",
+      "category": "quality",
+      "description": "Percentage of non-null required fields",
+      "unit": "percent",
+      "threshold": 98.0,
+      "sla_level": "MEDIUM"
+    },
+    {
+      "kpi_id": 6,
+      "name": "Ramp Repair Queue",
+      "category": "volume",
+      "description": "Number of ramps waiting for repair",
+      "unit": "count",
+      "threshold": 50,
+      "sla_level": "MEDIUM"
+    },
+    {
+      "kpi_id": 7,
+      "name": "Permit Issuance Rate",
+      "category": "volume",
+      "description": "Number of permits issued per month",
+      "unit": "count",
+      "threshold": 100,
+      "sla_level": "MEDIUM"
+    },
+    {
+      "kpi_id": 8,
+      "name": "Street Closure Duration",
+      "category": "efficiency",
+      "description": "Average days a street remains closed",
+      "unit": "days",
+      "threshold": 14,
+      "sla_level": "MEDIUM"
+    },
+    {
+      "kpi_id": 9,
+      "name": "Data Freshness",
+      "category": "timeliness",
+      "description": "Days since last data update",
+      "unit": "days",
+      "threshold": 7,
+      "sla_level": "HIGH"
+    },
+    {
+      "kpi_id": 10,
+      "name": "Conflict Detection Rate",
+      "category": "quality",
+      "description": "Number of project conflicts identified",
+      "unit": "count",
+      "threshold": 0,
+      "sla_level": "HIGH"
+    },
+    {
+      "kpi_id": 11,
+      "name": "Tree Damage Claims",
+      "category": "volume",
+      "description": "Number of tree damage incidents reported",
+      "unit": "count",
+      "threshold": 50,
+      "sla_level": "MEDIUM"
+    },
+    {
+      "kpi_id": 12,
+      "name": "Budget Variance",
+      "category": "financial",
+      "description": "Project budget variance percentage",
+      "unit": "percent",
+      "threshold": 5.0,
+      "sla_level": "MEDIUM"
+    },
+    {
+      "kpi_id": 13,
+      "name": "Schedule Adherence",
+      "category": "efficiency",
+      "description": "Percentage of projects on-time",
+      "unit": "percent",
+      "threshold": 85.0,
+      "sla_level": "MEDIUM"
+    },
+    {
+      "kpi_id": 14,
+      "name": "Inspector Utilization",
+      "category": "efficiency",
+      "description": "Percentage of inspector hours utilized",
+      "unit": "percent",
+      "threshold": 80.0,
+      "sla_level": "LOW"
+    },
+    {
+      "kpi_id": 15,
+      "name": "Reinspection Success Rate",
+      "category": "quality",
+      "description": "Percentage of remediation verified on reinspection",
+      "unit": "percent",
+      "threshold": 92.0,
+      "sla_level": "HIGH"
+    },
+    {
+      "kpi_id": 16,
+      "name": "Curb Condition Index",
+      "category": "quality",
+      "description": "Composite curb quality score (0-100)",
+      "unit": "score",
+      "threshold": 75.0,
+      "sla_level": "MEDIUM"
+    },
+    {
+      "kpi_id": 17,
+      "name": "Sidewalk Condition Index",
+      "category": "quality",
+      "description": "Composite sidewalk quality score (0-100)",
+      "unit": "score",
+      "threshold": 70.0,
+      "sla_level": "MEDIUM"
+    },
+    {
+      "kpi_id": 18,
+      "name": "Permit Overlap Incidents",
+      "category": "coordination",
+      "description": "Number of overlapping project areas",
+      "unit": "count",
+      "threshold": 0,
+      "sla_level": "HIGH"
+    },
+    {
+      "kpi_id": 19,
+      "name": "Maintenance Cost per Block",
+      "category": "financial",
+      "description": "Average maintenance cost per block",
+      "unit": "dollars",
+      "threshold": 5000.0,
+      "sla_level": "LOW"
+    },
+    {
+      "kpi_id": 20,
+      "name": "Complaint Resolution Time",
+      "category": "timeliness",
+      "description": "Average days to resolve complaints",
+      "unit": "days",
+      "threshold": 10.0,
+      "sla_level": "MEDIUM"
+    },
+    {
+      "kpi_id": 21,
+      "name": "Inspector Certification",
+      "category": "compliance",
+      "description": "Percentage of certified inspectors",
+      "unit": "percent",
+      "threshold": 100.0,
+      "sla_level": "HIGH"
+    },
+    {
+      "kpi_id": 22,
+      "name": "Hazard Resolution",
+      "category": "safety",
+      "description": "Percentage of hazards resolved within 24h",
+      "unit": "percent",
+      "threshold": 100.0,
+      "sla_level": "HIGH"
+    },
+    {
+      "kpi_id": 23,
+      "name": "Public Service Requests",
+      "category": "volume",
+      "description": "Number of public service requests received",
+      "unit": "count",
+      "threshold": 500,
+      "sla_level": "MEDIUM"
+    },
+    {
+      "kpi_id": 24,
+      "name": "Data Quality Score",
+      "category": "quality",
+      "description": "Composite data quality score (0-100)",
+      "unit": "score",
+      "threshold": 95.0,
+      "sla_level": "MEDIUM"
+    },
+    {
+      "kpi_id": 25,
+      "name": "Vendor Performance",
+      "category": "efficiency",
+      "description": "Average vendor performance rating",
+      "unit": "rating",
+      "threshold": 4.0,
+      "sla_level": "MEDIUM"
+    },
+    {
+      "kpi_id": 26,
+      "name": "Project Completion Rate",
+      "category": "efficiency",
+      "description": "Percentage of projects completed",
+      "unit": "percent",
+      "threshold": 90.0,
+      "sla_level": "HIGH"
+    },
+    {
+      "kpi_id": 27,
+      "name": "Risk Incident Count",
+      "category": "safety",
+      "description": "Number of safety incidents",
+      "unit": "count",
+      "threshold": 0,
+      "sla_level": "HIGH"
+    },
+    {
+      "kpi_id": 28,
+      "name": "Environmental Compliance",
+      "category": "compliance",
+      "description": "Percentage of environmental compliance checks passed",
+      "unit": "percent",
+      "threshold": 100.0,
+      "sla_level": "HIGH"
+    },
+    {
+      "kpi_id": 29,
+      "name": "Permit Duration Variance",
+      "category": "efficiency",
+      "description": "Average permit processing time variance",
+      "unit": "days",
+      "threshold": 3.0,
+      "sla_level": "MEDIUM"
+    },
+    {
+      "kpi_id": 30,
+      "name": "Intersection Congestion Index",
+      "category": "coordination",
+      "description": "Traffic impact score during construction",
+      "unit": "index",
+      "threshold": 50.0,
+      "sla_level": "MEDIUM"
+    },
+    {
+      "kpi_id": 31,
+      "name": "ADA Ramp Density",
+      "category": "accessibility",
+      "description": "Number of ADA ramps per block",
+      "unit": "count",
+      "threshold": 2.0,
+      "sla_level": "MEDIUM"
+    },
+    {
+      "kpi_id": 32,
+      "name": "Violation Trend",
+      "category": "quality",
+      "description": "Month-over-month violation change rate",
+      "unit": "percent",
+      "threshold": -5.0,
+      "sla_level": "MEDIUM"
+    },
+    {
+      "kpi_id": 33,
+      "name": "Cost Efficiency Ratio",
+      "category": "financial",
+      "description": "Cost per unit of work completed",
+      "unit": "ratio",
+      "threshold": 1.0,
+      "sla_level": "LOW"
+    },
+    {
+      "kpi_id": 34,
+      "name": "Safety Hazard Response",
+      "category": "safety",
+      "description": "Average response time to hazards",
+      "unit": "hours",
+      "threshold": 2.0,
+      "sla_level": "HIGH"
+    },
+    {
+      "kpi_id": 35,
+      "name": "Permit Accuracy",
+      "category": "quality",
+      "description": "Percentage of accurate permit data",
+      "unit": "percent",
+      "threshold": 99.0,
+      "sla_level": "HIGH"
+    },
+    {
+      "kpi_id": 36,
+      "name": "Sidewalk Inspection Coverage",
+      "category": "volume",
+      "description": "Percentage of blocks inspected",
+      "unit": "percent",
+      "threshold": 85.0,
+      "sla_level": "HIGH"
+    },
+    {
+      "kpi_id": 37,
+      "name": "Ramp Accessibility Score",
+      "category": "accessibility",
+      "description": "Composite accessibility score (0-100)",
+      "unit": "score",
+      "threshold": 85.0,
+      "sla_level": "MEDIUM"
+    },
+    {
+      "kpi_id": 38,
+      "name": "Coordination Efficiency",
+      "category": "coordination",
+      "description": "Percentage of successful inter-agency coordination",
+      "unit": "percent",
+      "threshold": 90.0,
+      "sla_level": "MEDIUM"
+    },
+    {
+      "kpi_id": 39,
+      "name": "Budget Utilization",
+      "category": "financial",
+      "description": "Percentage of allocated budget spent",
+      "unit": "percent",
+      "threshold": 95.0,
+      "sla_level": "LOW"
+    },
+    {
+      "kpi_id": 40,
+      "name": "Project Risk Score",
+      "category": "safety",
+      "description": "Composite project risk assessment (0-100)",
+      "unit": "score",
+      "threshold": 30.0,
+      "sla_level": "MEDIUM"
+    },
+    {
+      "kpi_id": 41,
+      "name": "Data Consistency Index",
+      "category": "quality",
+      "description": "Cross-dataset consistency score (0-100)",
+      "unit": "score",
+      "threshold": 97.0,
+      "sla_level": "MEDIUM"
+    },
+    {
+      "kpi_id": 42,
+      "name": "Inspection Frequency",
+      "category": "volume",
+      "description": "Average inspections per block per year",
+      "unit": "count",
+      "threshold": 2.0,
+      "sla_level": "MEDIUM"
+    },
+    {
+      "kpi_id": 43,
+      "name": "Permit Issuance Accuracy",
+      "category": "quality",
+      "description": "Percentage of correctly issued permits",
+      "unit": "percent",
+      "threshold": 99.0,
+      "sla_level": "HIGH"
+    },
+    {
+      "kpi_id": 44,
+      "name": "Conflict Resolution Time",
+      "category": "coordination",
+      "description": "Average days to resolve project conflicts",
+      "unit": "days",
+      "threshold": 5.0,
+      "sla_level": "MEDIUM"
+    },
+    {
+      "kpi_id": 45,
+      "name": "Environmental Impact Score",
+      "category": "compliance",
+      "description": "Environmental impact assessment score",
+      "unit": "score",
+      "threshold": 75.0,
+      "sla_level": "MEDIUM"
+    },
+    {
+      "kpi_id": 46,
+      "name": "Community Complaint Rate",
+      "category": "volume",
+      "description": "Number of community complaints per 1000 residents",
+      "unit": "rate",
+      "threshold": 5.0,
+      "sla_level": "MEDIUM"
+    },
+    {
+      "kpi_id": 47,
+      "name": "Inspector Productivity",
+      "category": "efficiency",
+      "description": "Average inspections per inspector per week",
+      "unit": "count",
+      "threshold": 10.0,
+      "sla_level": "MEDIUM"
+    },
+    {
+      "kpi_id": 48,
+      "name": "Schedule Performance Index",
+      "category": "efficiency",
+      "description": "Actual progress vs planned progress ratio",
+      "unit": "ratio",
+      "threshold": 1.0,
+      "sla_level": "MEDIUM"
+    },
+    {
+      "kpi_id": 49,
+      "name": "Quality Control Pass Rate",
+      "category": "quality",
+      "description": "Percentage of QC inspections passed",
+      "unit": "percent",
+      "threshold": 95.0,
+      "sla_level": "HIGH"
+    },
+    {
+      "kpi_id": 50,
+      "name": "Data Governance Score",
+      "category": "compliance",
+      "description": "Data governance compliance score (0-100)",
+      "unit": "score",
+      "threshold": 95.0,
+      "sla_level": "MEDIUM"
+    },
+    {
+      "kpi_id": 51,
+      "name": "System Uptime",
+      "category": "technical",
+      "description": "Percentage of system uptime",
+      "unit": "percent",
+      "threshold": 99.5,
+      "sla_level": "HIGH"
+    }
+  ]
+}
