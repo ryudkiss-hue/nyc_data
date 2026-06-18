@@ -45,6 +45,16 @@ _lazy_map: dict[str, str] = {
     "GeometricAuditResult": "material:GeometricAuditResult",
     "run_vision_zero_audit": "material:run_vision_zero_audit",
 
+    # kpi (Pillar: kpi - Phase 1)
+    "KPIRegistry": "kpi:KPIRegistry",
+    "KPIDefinition": "kpi:KPIDefinition",
+    "KPIResult": "kpi:KPIResult",
+    "Trend": "kpi:Trend",
+    "KPIValue": "kpi:KPIValue",
+    "ThresholdLevel": "kpi:ThresholdLevel",
+    "TimeSeriesMetadata": "kpi:TimeSeriesMetadata",
+    "DimensionConfig": "kpi:DimensionConfig",
+
     # ... (other mappings remain consistent)
 }
 
