@@ -125,8 +125,91 @@ SELECT
 FROM staging.lot_info
 WHERE assessed_value IS NOT NULL;
 
--- Summary: 5 domain schemas created with 10+ views
+-- Borough Summary Views (Phase 3B-4)
+-- ============================================================================
+
+CREATE OR REPLACE VIEW extended.manhattan_summary AS
+SELECT
+  'MANHATTAN' as borough,
+  COUNT(DISTINCT i.inspection_id) as total_inspections,
+  COUNT(DISTINCT CASE WHEN v.violation_id IS NOT NULL THEN i.inspection_id END) as inspections_with_violations,
+  COUNT(DISTINCT v.violation_id) as total_violations,
+  COUNT(DISTINCT CASE WHEN rp.ramp_id IS NOT NULL THEN rp.ramp_id END) as total_ramps,
+  COUNT(DISTINCT CASE WHEN rp.completion_status = 'completed' THEN rp.ramp_id END) as completed_ramps,
+  ROUND(100.0 * COUNT(DISTINCT CASE WHEN rp.completion_status = 'completed' THEN rp.ramp_id END) /
+        NULLIF(COUNT(DISTINCT CASE WHEN rp.ramp_id IS NOT NULL THEN rp.ramp_id END), 0), 2) as ramp_completion_rate
+FROM staging.inspection i
+LEFT JOIN staging.violations v ON i.inspection_id = v.inspection_id
+LEFT JOIN staging.ramp_progress rp ON UPPER(rp.borough) = 'MANHATTAN'
+WHERE UPPER(i.borough) = 'MANHATTAN'
+GROUP BY borough;
+
+CREATE OR REPLACE VIEW extended.brooklyn_summary AS
+SELECT
+  'BROOKLYN' as borough,
+  COUNT(DISTINCT i.inspection_id) as total_inspections,
+  COUNT(DISTINCT CASE WHEN v.violation_id IS NOT NULL THEN i.inspection_id END) as inspections_with_violations,
+  COUNT(DISTINCT v.violation_id) as total_violations,
+  COUNT(DISTINCT CASE WHEN rp.ramp_id IS NOT NULL THEN rp.ramp_id END) as total_ramps,
+  COUNT(DISTINCT CASE WHEN rp.completion_status = 'completed' THEN rp.ramp_id END) as completed_ramps,
+  ROUND(100.0 * COUNT(DISTINCT CASE WHEN rp.completion_status = 'completed' THEN rp.ramp_id END) /
+        NULLIF(COUNT(DISTINCT CASE WHEN rp.ramp_id IS NOT NULL THEN rp.ramp_id END), 0), 2) as ramp_completion_rate
+FROM staging.inspection i
+LEFT JOIN staging.violations v ON i.inspection_id = v.inspection_id
+LEFT JOIN staging.ramp_progress rp ON UPPER(rp.borough) = 'BROOKLYN'
+WHERE UPPER(i.borough) = 'BROOKLYN'
+GROUP BY borough;
+
+CREATE OR REPLACE VIEW extended.queens_summary AS
+SELECT
+  'QUEENS' as borough,
+  COUNT(DISTINCT i.inspection_id) as total_inspections,
+  COUNT(DISTINCT CASE WHEN v.violation_id IS NOT NULL THEN i.inspection_id END) as inspections_with_violations,
+  COUNT(DISTINCT v.violation_id) as total_violations,
+  COUNT(DISTINCT CASE WHEN rp.ramp_id IS NOT NULL THEN rp.ramp_id END) as total_ramps,
+  COUNT(DISTINCT CASE WHEN rp.completion_status = 'completed' THEN rp.ramp_id END) as completed_ramps,
+  ROUND(100.0 * COUNT(DISTINCT CASE WHEN rp.completion_status = 'completed' THEN rp.ramp_id END) /
+        NULLIF(COUNT(DISTINCT CASE WHEN rp.ramp_id IS NOT NULL THEN rp.ramp_id END), 0), 2) as ramp_completion_rate
+FROM staging.inspection i
+LEFT JOIN staging.violations v ON i.inspection_id = v.inspection_id
+LEFT JOIN staging.ramp_progress rp ON UPPER(rp.borough) = 'QUEENS'
+WHERE UPPER(i.borough) = 'QUEENS'
+GROUP BY borough;
+
+CREATE OR REPLACE VIEW extended.bronx_summary AS
+SELECT
+  'BRONX' as borough,
+  COUNT(DISTINCT i.inspection_id) as total_inspections,
+  COUNT(DISTINCT CASE WHEN v.violation_id IS NOT NULL THEN i.inspection_id END) as inspections_with_violations,
+  COUNT(DISTINCT v.violation_id) as total_violations,
+  COUNT(DISTINCT CASE WHEN rp.ramp_id IS NOT NULL THEN rp.ramp_id END) as total_ramps,
+  COUNT(DISTINCT CASE WHEN rp.completion_status = 'completed' THEN rp.ramp_id END) as completed_ramps,
+  ROUND(100.0 * COUNT(DISTINCT CASE WHEN rp.completion_status = 'completed' THEN rp.ramp_id END) /
+        NULLIF(COUNT(DISTINCT CASE WHEN rp.ramp_id IS NOT NULL THEN rp.ramp_id END), 0), 2) as ramp_completion_rate
+FROM staging.inspection i
+LEFT JOIN staging.violations v ON i.inspection_id = v.inspection_id
+LEFT JOIN staging.ramp_progress rp ON UPPER(rp.borough) = 'BRONX'
+WHERE UPPER(i.borough) = 'BRONX'
+GROUP BY borough;
+
+CREATE OR REPLACE VIEW extended.staten_island_summary AS
+SELECT
+  'STATEN_ISLAND' as borough,
+  COUNT(DISTINCT i.inspection_id) as total_inspections,
+  COUNT(DISTINCT CASE WHEN v.violation_id IS NOT NULL THEN i.inspection_id END) as inspections_with_violations,
+  COUNT(DISTINCT v.violation_id) as total_violations,
+  COUNT(DISTINCT CASE WHEN rp.ramp_id IS NOT NULL THEN rp.ramp_id END) as total_ramps,
+  COUNT(DISTINCT CASE WHEN rp.completion_status = 'completed' THEN rp.ramp_id END) as completed_ramps,
+  ROUND(100.0 * COUNT(DISTINCT CASE WHEN rp.completion_status = 'completed' THEN rp.ramp_id END) /
+        NULLIF(COUNT(DISTINCT CASE WHEN rp.ramp_id IS NOT NULL THEN rp.ramp_id END), 0), 2) as ramp_completion_rate
+FROM staging.inspection i
+LEFT JOIN staging.violations v ON i.inspection_id = v.inspection_id
+LEFT JOIN staging.ramp_progress rp ON UPPER(rp.borough) = 'STATEN_ISLAND'
+WHERE UPPER(i.borough) = 'STATEN_ISLAND'
+GROUP BY borough;
+
+-- Summary: 5 domain schemas created with 15+ views (including 5 borough summaries)
 -- Domains: sim_core, accessibility, coordination, overlays, extended
--- Views support: inspections, violations, ramps, permits, construction, coverage
+-- Views support: inspections, violations, ramps, permits, construction, coverage, borough analytics
 -- Exit code: 0 (success)
 
