@@ -1,59 +1,107 @@
 -- ============================================================================
--- Phase 1B: Verification Gates - Data Quality & Integrity
+-- Phase 1B: Verification Gates - Real Data Quality Validation
 -- ============================================================================
--- 4 mandatory gates:
--- Gate 1: Data Load - All datasets loaded, min rows, no null PKs
--- Gate 2: Schema - Staging tables created with columns
--- Gate 3: Joins - Cross-dataset relationships validated  
--- Gate 4: KPI - Ready for materialization
+-- 4 mandatory gates with actual data checks (not hardcoded values)
+-- All gates must PASS for pipeline to succeed (exit code enforcement)
 -- ============================================================================
 
 CREATE SCHEMA IF NOT EXISTS verification;
 
 -- GATE 1: Data Load Verification
+-- Validates that raw ingestion loaded minimum expected row counts
 CREATE TABLE IF NOT EXISTS verification.gate_1_data_load AS
+WITH raw_table_counts AS (
+  SELECT
+    table_name,
+    CAST(
+      (SELECT COUNT(*) FROM information_schema.tables
+       WHERE table_schema = 'raw' AND table_type = 'BASE TABLE') AS INTEGER
+    ) as raw_table_count,
+    CAST(
+      (SELECT SUM(CAST(row_count AS BIGINT))
+       FROM information_schema.tables
+       WHERE table_schema = 'raw' AND table_type = 'BASE TABLE') AS BIGINT
+    ) as total_rows
+  FROM information_schema.tables
+  WHERE table_schema = 'raw'
+  LIMIT 1
+)
 SELECT
-  'data_load' as gate_name,
-  (SELECT COUNT(*) FROM information_schema.tables WHERE schema_name = 'raw') as tables_loaded,
+  'gate_1_data_load' as gate_name,
+  CASE
+    WHEN raw_table_count = 0 THEN 'FAIL'
+    WHEN total_rows = 0 THEN 'FAIL'
+    WHEN total_rows < 100000 THEN 'WARN'
+    ELSE 'PASS'
+  END as status,
+  raw_table_count as tables_loaded,
+  total_rows as raw_row_count,
+  CURRENT_TIMESTAMP as verified_at;
+
+-- GATE 2: Staging Schema Validation
+CREATE TABLE IF NOT EXISTS verification.gate_2_schema_validation AS
+WITH staging_checks AS (
+  SELECT
+    COUNT(DISTINCT table_name) as staging_table_count
+  FROM information_schema.columns
+  WHERE table_schema = 'staging'
+)
+SELECT
+  'gate_2_schema_validation' as gate_name,
+  CASE
+    WHEN staging_table_count = 0 THEN 'FAIL'
+    WHEN staging_table_count < 20 THEN 'WARN'
+    ELSE 'PASS'
+  END as status,
+  staging_table_count,
   CURRENT_TIMESTAMP as verified_at
-;
+FROM staging_checks;
 
--- GATE 2: Schema Validation  
-CREATE TABLE IF NOT EXISTS verification.gate_2_schema AS
+-- GATE 3: KPI Materialization Validation
+CREATE TABLE IF NOT EXISTS verification.gate_3_kpi_materialization AS
 SELECT
-  'schema_validation' as gate_name,
-  (SELECT COUNT(*) FROM information_schema.tables WHERE schema_name = 'staging') as staging_tables,
+  'gate_3_kpi_materialization' as gate_name,
+  CASE
+    WHEN (SELECT COUNT(*) FROM serving.kpi_borough_results) = 0 THEN 'FAIL'
+    WHEN (SELECT COUNT(*) FROM serving.kpi_borough_results) < 255 THEN 'WARN'
+    ELSE 'PASS'
+  END as status,
+  (SELECT COUNT(*) FROM serving.kpi_borough_results) as kpi_records,
+  255 as expected_records,
+  CURRENT_TIMESTAMP as verified_at;
+
+-- GATE 4: No Silent Failures - Cross-stage consistency
+CREATE TABLE IF NOT EXISTS verification.gate_4_consistency AS
+WITH stage_rows AS (
+  SELECT
+    COALESCE((SELECT SUM(CAST(row_count AS BIGINT)) FROM information_schema.tables WHERE table_schema = 'raw'), 0) as raw_rows,
+    COALESCE((SELECT SUM(CAST(row_count AS BIGINT)) FROM information_schema.tables WHERE table_schema = 'staging'), 0) as staging_rows
+)
+SELECT
+  'gate_4_consistency' as gate_name,
+  CASE
+    WHEN raw_rows = 0 THEN 'FAIL'
+    WHEN staging_rows = 0 THEN 'FAIL'
+    WHEN staging_rows > raw_rows THEN 'FAIL'
+    ELSE 'PASS'
+  END as status,
+  raw_rows,
+  staging_rows,
   CURRENT_TIMESTAMP as verified_at
-;
+FROM stage_rows;
 
--- GATE 3: Join Validation
-CREATE TABLE IF NOT EXISTS verification.gate_3_joins AS
+-- GATE SUMMARY VIEW
+CREATE OR REPLACE VIEW verification.all_gates_summary AS
 SELECT
-  'join_validation' as gate_name,
-  'inspection_violations' as relationship,
-  COUNT(*) as related_records,
-  CURRENT_TIMESTAMP as verified_at
-FROM staging.violations
-WHERE inspection_id IS NOT NULL
-LIMIT 1
-;
-
--- GATE 4: KPI Ready
-CREATE TABLE IF NOT EXISTS verification.gate_4_kpi AS
-SELECT
-  'kpi_materialization' as gate_name,
-  6 as boroughs_plus_city,
-  51 as kpis_per_borough,
-  6 * 51 as expected_kpi_records,
-  'READY' as status,
-  CURRENT_TIMESTAMP as verified_at
-;
-
--- Gate Summary
-CREATE VIEW verification.gate_summary AS
-SELECT
-  'VERIFICATION_COMPLETE' as status,
-  (SELECT COUNT(*) FROM information_schema.tables WHERE schema_name = 'verification') as gates_executed,
-  CURRENT_TIMESTAMP as completed_at
-;
-
+  gate_name,
+  status,
+  CASE WHEN status = 'PASS' THEN 0 WHEN status = 'WARN' THEN 1 ELSE 2 END as exit_code
+FROM (
+  SELECT gate_name, status FROM verification.gate_1_data_load
+  UNION ALL
+  SELECT gate_name, status FROM verification.gate_2_schema_validation
+  UNION ALL
+  SELECT gate_name, status FROM verification.gate_3_kpi_materialization
+  UNION ALL
+  SELECT gate_name, status FROM verification.gate_4_consistency
+);

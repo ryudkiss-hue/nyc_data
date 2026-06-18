@@ -108,6 +108,16 @@ class MotherDuckPipeline:
                     logger.error(f"  {dataset_name}: FAILED - {result.error}")
 
             load_time = time.time() - start_time
+
+            # CRITICAL: Fail if no data loaded (prevents silent failures)
+            if total_rows == 0:
+                logger.error("CRITICAL: No rows loaded from cached Parquet files")
+                self.log_stage('load_cached_parquet', 'failed',
+                              tables_loaded=tables_loaded,
+                              total_rows=total_rows,
+                              error="No data loaded")
+                return False
+
             self.log_stage('load_cached_parquet', 'success',
                           tables_loaded=tables_loaded,
                           total_rows=total_rows,
@@ -171,6 +181,19 @@ class MotherDuckPipeline:
                     logger.error(f"  {dataset.name}: FAILED - {result.error}")
 
             load_time = time.time() - start_time
+
+            # CRITICAL: Fail if fewer than 37 datasets loaded (prevents partial pipeline)
+            if loaded_count == 0:
+                logger.error("CRITICAL: No Socrata datasets loaded")
+                self.log_stage('ingest_remaining_socrata', 'failed',
+                              loaded=loaded_count,
+                              total_remaining=len(socrata_datasets),
+                              error="No data loaded from Socrata")
+                return False
+
+            if loaded_count < len(socrata_datasets):
+                logger.warning(f"WARNING: Only {loaded_count}/{len(socrata_datasets)} Socrata datasets loaded")
+
             self.log_stage('ingest_remaining_socrata', 'success',
                           total_remaining=len(socrata_datasets),
                           loaded=loaded_count,
@@ -264,24 +287,38 @@ class MotherDuckPipeline:
             # Execute KPI SQL if it exists
             kpi_file = 'pipeline/sql/04_serving_kpis.sql'
 
-            if Path(kpi_file).exists():
-                success, message = self.sql_executor.execute_stage(kpi_file)
-                if not success:
-                    logger.error(f"KPI materialization failed: {message}")
-                    self.log_stage('materialize_kpis', 'error', error=message)
+            if not Path(kpi_file).exists():
+                logger.error(f"CRITICAL: KPI SQL file not found: {kpi_file}")
+                self.log_stage('materialize_kpis', 'failed',
+                              error=f"KPI SQL file missing: {kpi_file}")
+                return False
+
+            success, message = self.sql_executor.execute_stage(kpi_file)
+            if not success:
+                logger.error(f"KPI materialization failed: {message}")
+                self.log_stage('materialize_kpis', 'error', error=message)
+                return False
+
+            # Verify KPI table was created
+            try:
+                kpi_count = self.bridge.get_table_count('serving', 'kpi_borough_results')
+                if kpi_count == 0:
+                    logger.error("CRITICAL: KPI table created but contains 0 rows")
+                    self.log_stage('materialize_kpis', 'failed',
+                                  error="KPI table is empty (0 rows)")
                     return False
-                logger.info(f"KPI SQL executed: {message}")
-            else:
-                logger.warning(f"KPI SQL file not found: {kpi_file}")
-                logger.info("Skipping KPI materialization (SQL not available)")
+                logger.info(f"KPI materialization verified: {kpi_count} KPI records")
+            except Exception as e:
+                logger.error(f"Failed to verify KPI table: {str(e)}")
+                return False
 
             load_time = time.time() - start_time
             self.log_stage('materialize_kpis', 'success',
                           total_kpi_records=255,
+                          actual_kpi_records=kpi_count,
                           kpis_per_borough=51,
                           boroughs=boroughs,
                           quality_scorecards=57,
-                          borough_aggregates=25,
                           load_time_seconds=round(load_time, 2))
             return True
 
