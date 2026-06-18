@@ -1,0 +1,3 @@
+{"ts": 1781741474.6612506, "event": "fetch_live", "dataset": "lot_info", "rows": 2, "seconds": 0.66, "where": ""}
+{"ts": 1781741507.2441988, "event": "fetch_parquet_l2", "dataset": "lot_info", "rows": 2}
+{"ts": 1781742182.9089577, "event": "fetch_parquet", "dataset": "lot_info", "rows": 2}
