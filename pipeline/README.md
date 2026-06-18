@@ -43,39 +43,36 @@ Stage 4: SERVING (KPI Materialization)
 
 ## Directory Structure
 
+**v2.0 MVP Implementation:**
+
 ```
 pipeline/
-├── run_pipeline.py          # Main pipeline orchestrator
-├── README.md                # This file
-├── sql/
-│   ├── 01_raw_schema.sql    # Stage 1: Load cached + Socrata
-│   ├── 02_staging_schema.sql    # Stage 2: Dedupe & type cast
-│   ├── 03_analytics_schemas.sql # Stage 3: 5 domain schemas
-│   ├── 04_serving_kpis.sql      # Stage 4: KPI materialization
-│   └── 05_verification_gates.sql # Stage 5: 4 verification gates
-├── config/
-│   ├── pipeline_config.json     # Pipeline settings
-│   ├── socrata_datasets.json    # 57 dataset references
-│   └── kpi_definitions.json     # 51 KPI definitions
-├── staging/
-│   ├── dataframe_operations.py  # Optional pandas/polars transformations
-│   └── type_mapping.json        # Socrata → SQL type mappings
-├── analytics/
-│   ├── view_definitions.sql     # Domain schema views
-│   └── relationship_validation.sql
-├── serving/
-│   ├── kpi_compute.sql          # KPI calculation logic
-│   ├── quality_scorecard.sql    # Quality scoring
-│   └── materialization.sql      # Time-series snapshots
-├── validation/
-│   ├── gate_1_data_load.sql     # Verification gate 1
-│   ├── gate_2_schema.sql        # Verification gate 2
-│   ├── gate_3_joins.sql         # Verification gate 3
-│   └── gate_4_kpi.sql           # Verification gate 4
-└── logs/
-    ├── pipeline.log             # Execution log
-    └── execution.json           # Structured execution metadata
+├── run_pipeline.py                  # Main orchestrator (6 stages, 4 verification gates)
+├── README.md                        # This file
+├── .gitignore                       # Git ignore rules
+├── sql/                             # SQL transformation templates
+│   ├── 01_raw_schema.sql            # Stage 1: Load 20 cached + 37 Socrata datasets
+│   ├── 02_staging_schema.sql        # Stage 2: Dedupe & type cast, preserve column names
+│   ├── 03_analytics_schemas.sql     # Stage 3: 5 domain schemas (sim_core, accessibility, coordination, overlays, extended)
+│   ├── 04_serving_kpis.sql          # Stage 4: 255 KPIs + 57 scorecards + 25 borough aggregates
+│   └── 05_verification_gates.sql    # Stage 5: 4 mandatory verification gates (data_load, schema, joins, kpi)
+├── config/                          # (Reserved for future: pipeline config, dataset registry, KPI definitions)
+├── staging/                         # (Reserved for future: type mappings, transformation logic)
+├── analytics/                       # (Reserved for future: view definitions, join validation)
+├── serving/                         # (Reserved for future: KPI computation, quality scoring, materialization)
+├── validation/                      # (Reserved for future: detailed SQL gate implementations)
+└── logs/                            # Execution artifacts (auto-created)
+    ├── pipeline.log                 # Execution log (appended per run)
+    └── execution.json               # Structured metadata from latest run
 ```
+
+**What's Implemented:**
+- ✓ `run_pipeline.py` — Fully functional orchestrator
+- ✓ 5 SQL templates — Raw, staging, analytics, serving, verification gates
+- ✓ Logging infrastructure — JSON + text logs
+
+**Future Expansion:**
+Config and implementation directories are reserved for detailed SQL, Python transformations, and configuration files as the pipeline evolves.
 
 ---
 
@@ -114,7 +111,7 @@ python pipeline/run_pipeline.py
 ...
 2026-06-18T08:15:00 | INFO     | ======================================================================
 2026-06-18T08:15:00 | INFO     | PIPELINE EXECUTION SUMMARY
-2026-06-18T08:15:00 | INFO     | ✅ All stages completed successfully
+2026-06-18T08:15:00 | INFO     | SUCCESS: All stages completed successfully
 2026-06-18T08:15:00 | INFO     | Execution log saved to pipeline/logs/execution.json
 ```
 
