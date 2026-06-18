@@ -19,6 +19,19 @@ from motherduck_bridge import MotherDuckBridge
 from sql_executor import SQLExecutor, PipelineStageExecutor
 from socrata_loader import SocrataLoader
 
+# Wire in 7 advanced modules (Phase 3C-2: Mandatory Scripts)
+try:
+    from modules.state_manager import StateManager, ExecutionContext
+    from modules.alerting_system import AlertManager, Alert, AlertLevel, AlertChannel
+    from modules.incremental_loader import IncrementalLoader
+    from modules.cdc_manager import CDCManager
+    from modules.orchestration_coordinator import OrchestrationCoordinator
+    from modules.scheduler_manager import SchedulerManager
+    from modules.performance_optimizer import PerformanceOptimizer
+    ADVANCED_MODULES_AVAILABLE = True
+except ImportError as e:
+    ADVANCED_MODULES_AVAILABLE = False
+
 # Setup logging
 Path('pipeline/logs').mkdir(parents=True, exist_ok=True)
 logging.basicConfig(
@@ -151,6 +164,8 @@ class MotherDuckPipeline:
     def ingest_remaining_socrata(self) -> bool:
         """Ingest remaining 37 datasets from Socrata in controlled batches."""
         start_time = time.time()
+        self.execution_context.start_stage('ingest_remaining_socrata')
+
         try:
             logger.info("Ingesting remaining 37 datasets from Socrata...")
 
@@ -160,6 +175,13 @@ class MotherDuckPipeline:
 
             if not datasets:
                 logger.warning("No datasets loaded from config")
+                self.execution_context.fail_stage("Config file missing or empty")
+                self.alert_manager.send_alert(Alert(
+                    level=AlertLevel.ERROR,
+                    title="Socrata Ingestion Failed",
+                    message="Dataset configuration missing or empty",
+                    component="ingest_remaining_socrata"
+                ))
                 return False
 
             # Filter to Socrata datasets only (those not already cached)
@@ -203,6 +225,13 @@ class MotherDuckPipeline:
             # CRITICAL: Fail if fewer than 37 datasets loaded (prevents partial pipeline)
             if loaded_count == 0:
                 logger.error("CRITICAL: No Socrata datasets loaded")
+                self.execution_context.fail_stage("Zero Socrata datasets loaded")
+                self.alert_manager.send_alert(Alert(
+                    level=AlertLevel.CRITICAL,
+                    title="Socrata Ingestion Failed",
+                    message=f"Zero datasets loaded from Socrata API. Total attempted: {len(socrata_datasets)}",
+                    component="ingest_remaining_socrata"
+                ))
                 self.log_stage('ingest_remaining_socrata', 'failed',
                               loaded=loaded_count,
                               total_remaining=len(socrata_datasets),
@@ -211,6 +240,11 @@ class MotherDuckPipeline:
 
             if loaded_count < len(socrata_datasets):
                 logger.warning(f"WARNING: Only {loaded_count}/{len(socrata_datasets)} Socrata datasets loaded")
+
+            self.execution_context.complete_stage(rows_processed=sum(
+                self.execution_log['datasets'].get(d.name, {}).get('rows', 0)
+                for d in socrata_datasets if self.execution_log['datasets'].get(d.name, {}).get('status') == 'loaded'
+            ), duration=load_time)
 
             self.log_stage('ingest_remaining_socrata', 'success',
                           total_remaining=len(socrata_datasets),
@@ -222,12 +256,21 @@ class MotherDuckPipeline:
 
         except Exception as e:
             logger.error(f"Failed to ingest Socrata: {str(e)}")
+            self.execution_context.fail_stage(f"Exception: {str(e)}")
+            self.alert_manager.send_alert(Alert(
+                level=AlertLevel.ERROR,
+                title="Socrata Ingestion Exception",
+                message=str(e),
+                component="ingest_remaining_socrata"
+            ))
             self.log_stage('ingest_remaining_socrata', 'error', error=str(e))
             return False
 
     def stage_datasets(self) -> bool:
         """Deduplicate, type cast, and promote to staging schema."""
         start_time = time.time()
+        self.execution_context.start_stage('stage_datasets')
+
         try:
             logger.info("Staging all 57 datasets (dedupe, type cast, preserve names)...")
 
@@ -238,6 +281,13 @@ class MotherDuckPipeline:
                 success, message = self.sql_executor.execute_stage(staging_file)
                 if not success:
                     logger.error(f"Staging failed: {message}")
+                    self.execution_context.fail_stage(f"Staging SQL failed: {message}")
+                    self.alert_manager.send_alert(Alert(
+                        level=AlertLevel.ERROR,
+                        title="Staging Failed",
+                        message=message,
+                        component="stage_datasets"
+                    ))
                     self.log_stage('staging_datasets', 'error', error=message)
                     return False
                 logger.info(f"Staging SQL executed: {message}")
@@ -246,6 +296,8 @@ class MotherDuckPipeline:
                 logger.info("Skipping staging (will use raw data directly)")
 
             load_time = time.time() - start_time
+            self.execution_context.complete_stage(rows_processed=0, duration=load_time)
+
             self.log_stage('staging_datasets', 'success',
                           total_tables=57,
                           dedup_method='column_0_as_primary_key',
@@ -255,12 +307,21 @@ class MotherDuckPipeline:
 
         except Exception as e:
             logger.error(f"Failed to stage datasets: {str(e)}")
+            self.execution_context.fail_stage(f"Exception: {str(e)}")
+            self.alert_manager.send_alert(Alert(
+                level=AlertLevel.ERROR,
+                title="Staging Exception",
+                message=str(e),
+                component="stage_datasets"
+            ))
             self.log_stage('staging_datasets', 'error', error=str(e))
             return False
 
     def build_analytics_schemas(self) -> bool:
         """Build 5 domain schemas with 100+ views and relationships."""
         start_time = time.time()
+        self.execution_context.start_stage('build_analytics_schemas')
+
         try:
             logger.info("Building 5 domain schemas...")
             domains = ['sim_core', 'accessibility', 'coordination', 'overlays', 'extended']
@@ -272,6 +333,13 @@ class MotherDuckPipeline:
                 success, message = self.sql_executor.execute_stage(analytics_file)
                 if not success:
                     logger.error(f"Analytics schemas failed: {message}")
+                    self.execution_context.fail_stage(f"Analytics SQL failed: {message}")
+                    self.alert_manager.send_alert(Alert(
+                        level=AlertLevel.ERROR,
+                        title="Analytics Schemas Failed",
+                        message=message,
+                        component="build_analytics_schemas"
+                    ))
                     self.log_stage('build_analytics_schemas', 'error', error=message)
                     return False
                 logger.info(f"Analytics SQL executed: {message}")
@@ -283,6 +351,8 @@ class MotherDuckPipeline:
                     logger.info(f"  Created schema: {domain}")
 
             load_time = time.time() - start_time
+            self.execution_context.complete_stage(rows_processed=0, duration=load_time)
+
             self.log_stage('build_analytics_schemas', 'success',
                           domains=domains,
                           total_views=100,
@@ -292,12 +362,21 @@ class MotherDuckPipeline:
 
         except Exception as e:
             logger.error(f"Failed to build analytics schemas: {str(e)}")
+            self.execution_context.fail_stage(f"Exception: {str(e)}")
+            self.alert_manager.send_alert(Alert(
+                level=AlertLevel.ERROR,
+                title="Analytics Schemas Exception",
+                message=str(e),
+                component="build_analytics_schemas"
+            ))
             self.log_stage('build_analytics_schemas', 'error', error=str(e))
             return False
 
     def materialize_kpis(self) -> bool:
         """Materialize 255 KPI records and 57 quality scorecards."""
         start_time = time.time()
+        self.execution_context.start_stage('materialize_kpis')
+
         try:
             logger.info("Materializing 255 KPIs (51 KPIs × 5 boroughs) and 57 quality scorecards...")
             boroughs = ['manhattan', 'brooklyn', 'queens', 'bronx', 'staten_island']
@@ -307,6 +386,13 @@ class MotherDuckPipeline:
 
             if not Path(kpi_file).exists():
                 logger.error(f"CRITICAL: KPI SQL file not found: {kpi_file}")
+                self.execution_context.fail_stage(f"KPI SQL file missing: {kpi_file}")
+                self.alert_manager.send_alert(Alert(
+                    level=AlertLevel.CRITICAL,
+                    title="KPI Materialization Failed",
+                    message=f"SQL file not found: {kpi_file}",
+                    component="materialize_kpis"
+                ))
                 self.log_stage('materialize_kpis', 'failed',
                               error=f"KPI SQL file missing: {kpi_file}")
                 return False
@@ -314,6 +400,13 @@ class MotherDuckPipeline:
             success, message = self.sql_executor.execute_stage(kpi_file)
             if not success:
                 logger.error(f"KPI materialization failed: {message}")
+                self.execution_context.fail_stage(f"KPI SQL execution failed: {message}")
+                self.alert_manager.send_alert(Alert(
+                    level=AlertLevel.ERROR,
+                    title="KPI Materialization Failed",
+                    message=message,
+                    component="materialize_kpis"
+                ))
                 self.log_stage('materialize_kpis', 'error', error=message)
                 return False
 
@@ -322,15 +415,31 @@ class MotherDuckPipeline:
                 kpi_count = self.bridge.get_table_count('serving', 'kpi_borough_results')
                 if kpi_count == 0:
                     logger.error("CRITICAL: KPI table created but contains 0 rows")
+                    self.execution_context.fail_stage("KPI table is empty (0 rows)")
+                    self.alert_manager.send_alert(Alert(
+                        level=AlertLevel.CRITICAL,
+                        title="KPI Materialization Empty",
+                        message="KPI table has 0 rows",
+                        component="materialize_kpis"
+                    ))
                     self.log_stage('materialize_kpis', 'failed',
                                   error="KPI table is empty (0 rows)")
                     return False
                 logger.info(f"KPI materialization verified: {kpi_count} KPI records")
             except Exception as e:
                 logger.error(f"Failed to verify KPI table: {str(e)}")
+                self.execution_context.fail_stage(f"KPI verification failed: {str(e)}")
+                self.alert_manager.send_alert(Alert(
+                    level=AlertLevel.ERROR,
+                    title="KPI Verification Exception",
+                    message=str(e),
+                    component="materialize_kpis"
+                ))
                 return False
 
             load_time = time.time() - start_time
+            self.execution_context.complete_stage(rows_processed=kpi_count, duration=load_time)
+
             self.log_stage('materialize_kpis', 'success',
                           total_kpi_records=255,
                           actual_kpi_records=kpi_count,
@@ -342,12 +451,21 @@ class MotherDuckPipeline:
 
         except Exception as e:
             logger.error(f"Failed to materialize KPIs: {str(e)}")
+            self.execution_context.fail_stage(f"Exception: {str(e)}")
+            self.alert_manager.send_alert(Alert(
+                level=AlertLevel.ERROR,
+                title="KPI Materialization Exception",
+                message=str(e),
+                component="materialize_kpis"
+            ))
             self.log_stage('materialize_kpis', 'error', error=str(e))
             return False
 
     def verify_gates(self) -> bool:
         """Run 4 mandatory verification gates."""
         start_time = time.time()
+        self.execution_context.start_stage('verify_gates')
+
         try:
             logger.info("Running 4 verification gates...")
 
@@ -365,6 +483,13 @@ class MotherDuckPipeline:
                 success, message = self.sql_executor.execute_stage(gates_file)
                 if not success:
                     logger.error(f"Gate verification failed: {message}")
+                    self.execution_context.fail_stage(f"Gate verification SQL failed: {message}")
+                    self.alert_manager.send_alert(Alert(
+                        level=AlertLevel.ERROR,
+                        title="Verification Gates Failed",
+                        message=message,
+                        component="verify_gates"
+                    ))
                     self.log_stage('verification_gates', 'error', error=message)
                     return False
                 logger.info(f"Gate verification SQL executed: {message}")
@@ -377,6 +502,8 @@ class MotherDuckPipeline:
                 logger.info(f"  [{gate_name}] {gate_check}")
 
             load_time = time.time() - start_time
+            self.execution_context.complete_stage(rows_processed=0, duration=load_time)
+
             self.log_stage('verification_gates', 'success',
                           gates_passed=len(gates),
                           gates=gates,
@@ -385,6 +512,13 @@ class MotherDuckPipeline:
 
         except Exception as e:
             logger.error(f"Verification failed: {str(e)}")
+            self.execution_context.fail_stage(f"Exception: {str(e)}")
+            self.alert_manager.send_alert(Alert(
+                level=AlertLevel.ERROR,
+                title="Verification Gates Exception",
+                message=str(e),
+                component="verify_gates"
+            ))
             self.log_stage('verification_gates', 'error', error=str(e))
             return False
 
