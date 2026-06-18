@@ -97,7 +97,7 @@ class SQLExecutor:
             List of SQL statements
         """
         # Replace GO with semicolon for uniform handling
-        sql = re.sub(r"^\s*GO\s*$", ";", sql, flags=re.MULTILINE, ignorecase=True)
+        sql = re.sub(r"^\s*GO\s*$", ";", sql, flags=re.MULTILINE|re.IGNORECASE)
 
         # Split by semicolon
         statements = []
