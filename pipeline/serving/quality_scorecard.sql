@@ -164,7 +164,7 @@ ORDER BY c.dataset_name;
 -- Borough-Level Quality Aggregates
 -- ============================================================================
 
-INSERT INTO serving.borough_aggregates (borough, metric_name, value, measurement_date)
+INSERT INTO serving.quality_scorecards (borough, metric_name, value, measurement_date)
 SELECT
     'manhattan' as borough,
     'avg_quality_score' as metric_name,

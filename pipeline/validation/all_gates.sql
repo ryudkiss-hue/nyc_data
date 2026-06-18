@@ -132,7 +132,7 @@ SELECT
     COUNT(*) as kpi_records,
     255 as expected_records,
     CASE WHEN COUNT(*) = 255 THEN 'PASS' ELSE 'FAIL' END as status
-FROM serving.kpi_metrics
+FROM serving.kpi_borough_results
 WHERE measurement_date = CAST(CURRENT_DATE AS DATE);
 
 SELECT
@@ -149,7 +149,7 @@ SELECT
     5 as expected_boroughs,
     COUNT(*) as aggregate_records,
     CASE WHEN COUNT(DISTINCT borough) = 5 AND COUNT(*) >= 5 THEN 'PASS' ELSE 'FAIL' END as status
-FROM serving.borough_aggregates
+FROM serving.quality_scorecards
 WHERE measurement_date = CAST(CURRENT_DATE AS DATE);
 
 SELECT
@@ -178,5 +178,5 @@ FROM (
     UNION ALL
     SELECT 'joins', CASE WHEN (SELECT COUNT(DISTINCT inspection_id) FROM staging.inspection) > 0 THEN 'PASS' ELSE 'FAIL' END
     UNION ALL
-    SELECT 'kpi', CASE WHEN (SELECT COUNT(*) FROM serving.kpi_metrics WHERE measurement_date = CAST(CURRENT_DATE AS DATE)) > 0 THEN 'PASS' ELSE 'FAIL' END
+    SELECT 'kpi', CASE WHEN (SELECT COUNT(*) FROM serving.kpi_borough_results WHERE measurement_date = CAST(CURRENT_DATE AS DATE)) > 0 THEN 'PASS' ELSE 'FAIL' END
 ) gate_results;

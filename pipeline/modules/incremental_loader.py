@@ -33,15 +33,17 @@ class IncrementalLoader:
     Uses watermarks to track progress and support resumable loads.
     """
 
-    def __init__(self, bridge, state_dir: str = "pipeline/state"):
+    def __init__(self, bridge, state_dir: str = None):
         """
         Initialize incremental loader.
-        
+
         Args:
             bridge: MotherDuckBridge instance
             state_dir: Directory for watermark state files
         """
         self.bridge = bridge
+        if state_dir is None:
+            state_dir = str(Path(__file__).parent.parent / "state")
         self.state_dir = Path(state_dir)
         self.state_dir.mkdir(parents=True, exist_ok=True)
         self.watermarks: Dict[str, LoadWatermark] = {}
