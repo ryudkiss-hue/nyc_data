@@ -65,7 +65,8 @@ class MotherDuckBridge:
         try:
             if self.use_motherduck:
                 logger.info(f"Connecting to MotherDuck with database: {self.db_name}")
-                connection_string = f"md:{self.db_name}?token={self.motherduck_token}"
+                # Phase 3D-1: Add custom_user_agent per MotherDuck best practices
+                connection_string = f"md:{self.db_name}?token={self.motherduck_token}&custom_user_agent=agent-skills/2.2.0(harness-claude;llm-haiku)"
                 self.connection = duckdb.connect(connection_string, timeout=self.connection_timeout)
                 self.is_local = False
                 logger.info("Successfully connected to MotherDuck")

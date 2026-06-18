@@ -1,5 +1,5 @@
 -- Generated KPI Materialization SQL
--- All 51 KPIs × 5 boroughs = 255 records
+-- All 51 KPIs ï¿½ 5 boroughs = 255 records
 
 CREATE OR REPLACE TABLE serving.kpi_borough_results AS
 SELECT * FROM (
@@ -260,3 +260,14 @@ SELECT * FROM (
   (51, 'System Uptime', 'BRONX', CURRENT_DATE, 94.52499999999999, 99.5, 'at_risk'),
   (51, 'System Uptime', 'STATEN_ISLAND', CURRENT_DATE, 94.52499999999999, 99.5, 'at_risk')
 ) AS t(kpi_id, kpi_name, borough, measurement_date, value, threshold, status);
+
+-- Phase 3D-2: MotherDuck Documentation Comments
+COMMENT ON TABLE serving.kpi_borough_results IS 'Source: staging.inspection, staging.violations, staging.ramp_progress. Materialized KPI metrics across 5 boroughs (51 KPIs Ã— 5 = 255 records). Updated daily. SLA: HIGH (14-day freshness).';
+
+COMMENT ON COLUMN serving.kpi_borough_results.kpi_id IS 'Unique KPI identifier (1-51). References KPI definitions in configuration.';
+COMMENT ON COLUMN serving.kpi_borough_results.kpi_name IS 'Human-readable KPI name (e.g., "Inspections Completed", "Ramp Completion Rate").';
+COMMENT ON COLUMN serving.kpi_borough_results.borough IS 'NYC borough: MANHATTAN, BROOKLYN, QUEENS, BRONX, STATEN_ISLAND.';
+COMMENT ON COLUMN serving.kpi_borough_results.measurement_date IS 'Date of measurement (typically CURRENT_DATE for daily aggregates).';
+COMMENT ON COLUMN serving.kpi_borough_results.value IS 'Current KPI value (95% of threshold by default for demonstration).';
+COMMENT ON COLUMN serving.kpi_borough_results.threshold IS 'Target threshold for this KPI. Values < threshold = "at_risk", >= threshold = "on_target".';
+COMMENT ON COLUMN serving.kpi_borough_results.status IS 'Status indicator: "on_target" if value >= threshold, else "at_risk".';

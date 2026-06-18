@@ -9,7 +9,7 @@ CREATE SCHEMA IF NOT EXISTS verification;
 
 -- GATE 1: Data Load Verification
 -- Validates that raw ingestion loaded minimum expected row counts
-CREATE TABLE IF NOT EXISTS verification.gate_1_data_load AS
+CREATE OR REPLACE TABLE verification.gate_1_data_load AS
 WITH raw_table_counts AS (
   SELECT
     table_name,
@@ -39,7 +39,7 @@ SELECT
   CURRENT_TIMESTAMP as verified_at;
 
 -- GATE 2: Staging Schema Validation
-CREATE TABLE IF NOT EXISTS verification.gate_2_schema_validation AS
+CREATE OR REPLACE TABLE verification.gate_2_schema_validation AS
 WITH staging_checks AS (
   SELECT
     COUNT(DISTINCT table_name) as staging_table_count
@@ -58,7 +58,7 @@ SELECT
 FROM staging_checks;
 
 -- GATE 3: KPI Materialization Validation
-CREATE TABLE IF NOT EXISTS verification.gate_3_kpi_materialization AS
+CREATE OR REPLACE TABLE verification.gate_3_kpi_materialization AS
 SELECT
   'gate_3_kpi_materialization' as gate_name,
   CASE
@@ -71,7 +71,7 @@ SELECT
   CURRENT_TIMESTAMP as verified_at;
 
 -- GATE 4: No Silent Failures - Cross-stage consistency
-CREATE TABLE IF NOT EXISTS verification.gate_4_consistency AS
+CREATE OR REPLACE TABLE verification.gate_4_consistency AS
 WITH stage_rows AS (
   SELECT
     COALESCE((SELECT SUM(CAST(row_count AS BIGINT)) FROM information_schema.tables WHERE table_schema = 'raw'), 0) as raw_rows,
