@@ -62,3 +62,16 @@ SELECT * FROM (
   ('performance_metrics', 'performance_metrics', 85.0, 92.0, 88.0, 95.0, ROUND(89.0, 1), 'GOOD', CURRENT_DATE),
   ('stakeholder_feedback', 'stakeholder_feedback', 85.0, 92.0, 88.0, 95.0, ROUND(89.0, 1), 'GOOD', CURRENT_DATE)
 ) AS t(dataset_key, dataset_name, completeness, validity, consistency, freshness, overall_score, rating, measured_at);
+
+-- Phase 3D-2: MotherDuck Documentation Comments
+COMMENT ON TABLE serving.quality_scorecards IS 'Quality metrics for all 57 datasets. Weighted scoring: 35% completeness + 25% validity + 25% consistency + 15% freshness. Sources: raw.*, staging.* tables. Updated daily. Ratings: EXCELLENT (≥90), GOOD (≥80), FAIR (<80).';
+
+COMMENT ON COLUMN serving.quality_scorecards.dataset_key IS 'Unique dataset identifier (e.g., "inspection", "ramp_progress"). Matches key in socrata_datasets.json.';
+COMMENT ON COLUMN serving.quality_scorecards.dataset_name IS 'Human-readable dataset name.';
+COMMENT ON COLUMN serving.quality_scorecards.completeness IS 'Proportion of non-null values in key columns (0-100 scale).';
+COMMENT ON COLUMN serving.quality_scorecards.validity IS 'Proportion of rows where TRY_CAST(column, expected_type) succeeds (0-100 scale).';
+COMMENT ON COLUMN serving.quality_scorecards.consistency IS 'Measure of deduplication: 100 - (duplicate_rate × 100).';
+COMMENT ON COLUMN serving.quality_scorecards.freshness IS 'SLA compliance: 100 if last_update <= SLA threshold, else 100 - penalty. SLA thresholds: HIGH=14d, MEDIUM=30d, LOW=60d.';
+COMMENT ON COLUMN serving.quality_scorecards.overall_score IS 'Weighted composite score (0-100). Formula: completeness×0.35 + validity×0.25 + consistency×0.25 + freshness×0.15.';
+COMMENT ON COLUMN serving.quality_scorecards.rating IS 'Categorical rating: EXCELLENT (≥90), GOOD (≥80), FAIR (<80).';
+COMMENT ON COLUMN serving.quality_scorecards.measured_at IS 'Timestamp of measurement (typically CURRENT_DATE for daily scorecard updates).';
