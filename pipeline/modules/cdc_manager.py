@@ -4,6 +4,8 @@ Tracks changes using hash-based row comparison.
 Detects inserts, updates, and deletes efficiently.
 """
 
+from __future__ import annotations
+
 import hashlib
 import logging
 from dataclasses import dataclass
