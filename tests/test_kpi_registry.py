@@ -13,7 +13,7 @@ Tests cover:
 
 import pytest
 import tempfile
-from datetime import datetime
+from datetime import datetime, timezone, timezone
 from pathlib import Path
 
 from socrata_toolkit.kpi.models import (
@@ -225,7 +225,7 @@ class TestKPIValue:
 
     def test_creation(self):
         """Test creating KPI value."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         val = KPIValue(value=85.5, timestamp=now, period="current")
         assert val.value == 85.5
         assert val.timestamp == now
@@ -235,7 +235,7 @@ class TestKPIValue:
         """Test KPI value with dimension."""
         val = KPIValue(
             value=90.0,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             dimension_name="borough",
             dimension_value="MN",
         )
