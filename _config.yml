@@ -1,0 +1,82 @@
+# Jekyll Configuration for GitHub Pages
+# This configures how documentation is published to GitHub Pages
+
+# Site settings
+title: NYC DOT SIM Toolkit
+description: Unified KPI registry and analytics platform for NYC Sidewalk Inspection & Management
+baseurl: "/nyc_data"
+url: "https://ryudkiss-hue.github.io"
+
+# Theme
+theme: jekyll-theme-minimal
+remote_theme: pages-themes/minimal@v0.2.0
+
+# Plugins
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+  - jekyll-sitemap
+  - jekyll-github-metadata
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+lsi: false
+safe: true
+
+# Exclude from site
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor/
+  - .git/
+  - .github/
+  - src/
+  - app/
+  - tests/
+  - data/
+  - scripts/
+  - 00_CONFIG/
+  - 00_BUILD_SCRIPTS/
+  - 00_UTILITIES/
+  - 00_EXAMPLES/
+  - 00_ARCHIVE_SUPERSEDED/
+  - .claude/
+  - outputs/
+  - .cache/
+
+# Include
+include:
+  - .gitignore
+  - _pages
+
+# Navigation (shown in theme)
+# Edit in START_HERE.md or MASTER_DOCUMENTATION_INDEX.md
+
+# Permalink format
+permalink: /:title/
+
+# Collections
+collections:
+  docs:
+    output: true
+    permalink: /:path/
+
+# Kramdown settings
+kramdown:
+  input: GFM
+  hard_wrap: true
+
+# SEO
+google_analytics: ""  # Set if needed
+github_username: ryudkiss-hue
+github_repo: nyc_data
+
+# Defaults
+defaults:
+  - scope:
+      path: "00_DOCUMENTATION"
+    values:
+      layout: default
+      category: documentation
