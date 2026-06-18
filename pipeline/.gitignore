@@ -1,0 +1,17 @@
+# Logs and execution artifacts
+logs/
+*.log
+execution.json
+
+# Cache and temporary files
+cache/
+*.parquet
+*.tmp
+.cache/
+__pycache__/
+*.pyc
+
+# IDE and system files
+.DS_Store
+.vscode/
+*.swp
