@@ -6,10 +6,10 @@ Handles checkpoints, lineage tracking, and recovery.
 
 import json
 import logging
-from pathlib import Path
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Dict, Optional, List
+from pathlib import Path
+from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -48,13 +48,13 @@ class StateManager:
 
         try:
             if checkpoints_file.exists():
-                with open(checkpoints_file, 'r') as f:
+                with open(checkpoints_file) as f:
                     data = json.load(f)
                     self.checkpoints = [PipelineCheckpoint(**cp) for cp in data]
                 logger.info(f"Loaded {len(self.checkpoints)} checkpoints")
 
             if metadata_file.exists():
-                with open(metadata_file, 'r') as f:
+                with open(metadata_file) as f:
                     self.metadata = json.load(f)
                 logger.info(f"Loaded metadata: {self.metadata}")
         except Exception as e:

@@ -6,10 +6,10 @@ Supports resumable loads with state persistence.
 
 import json
 import logging
-from pathlib import Path
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Optional, Dict, Any
+from pathlib import Path
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -50,15 +50,15 @@ class IncrementalLoader:
     def _load_watermarks(self):
         """Load watermarks from state file."""
         watermark_file = self.state_dir / "watermarks.json"
-        
+
         if watermark_file.exists():
             try:
-                with open(watermark_file, 'r') as f:
+                with open(watermark_file) as f:
                     data = json.load(f)
-                
+
                 for dataset_name, watermark_data in data.items():
                     self.watermarks[dataset_name] = LoadWatermark(**watermark_data)
-                
+
                 logger.info(f"Loaded watermarks for {len(self.watermarks)} datasets")
             except Exception as e:
                 logger.warning(f"Failed to load watermarks: {str(e)}")
@@ -66,13 +66,13 @@ class IncrementalLoader:
     def _save_watermarks(self):
         """Persist watermarks to state file."""
         watermark_file = self.state_dir / "watermarks.json"
-        
+
         try:
             data = {name: asdict(wm) for name, wm in self.watermarks.items()}
-            
+
             with open(watermark_file, 'w') as f:
                 json.dump(data, f, indent=2, default=str)
-            
+
             logger.info(f"Saved watermarks for {len(self.watermarks)} datasets")
         except Exception as e:
             logger.error(f"Failed to save watermarks: {str(e)}")
@@ -81,17 +81,17 @@ class IncrementalLoader:
         """Get watermark for a dataset."""
         if dataset_name not in self.watermarks:
             self.watermarks[dataset_name] = LoadWatermark(dataset_name=dataset_name)
-        
+
         return self.watermarks[dataset_name]
 
     def update_watermark(self, dataset_name: str, **kwargs):
         """Update watermark for a dataset."""
         wm = self.get_watermark(dataset_name)
-        
+
         for key, value in kwargs.items():
             if hasattr(wm, key):
                 setattr(wm, key, value)
-        
+
         self._save_watermarks()
 
     def should_load(self, dataset_name: str, force: bool = False) -> bool:
@@ -106,15 +106,15 @@ class IncrementalLoader:
         """
         if force:
             return True
-        
+
         wm = self.get_watermark(dataset_name)
-        
+
         if wm.status == 'pending' or wm.status == 'failed':
             return True
-        
+
         if wm.last_load_date is None:
             return True
-        
+
         # Check if next_load_time has passed
         if wm.next_load_time:
             try:
@@ -123,7 +123,7 @@ class IncrementalLoader:
                     return True
             except:
                 pass
-        
+
         return False
 
     def build_incremental_query(
@@ -139,13 +139,13 @@ class IncrementalLoader:
         Adds WHERE clause to only fetch new/updated records.
         """
         wm = self.get_watermark(dataset_name)
-        
+
         if wm.status == 'completed' and wm.last_load_date and date_column:
             # Load only records after last load date
             query = f"{base_query} WHERE {date_column} > '{wm.last_load_date}'"
             logger.info(f"Incremental query for {dataset_name}: {query[:80]}...")
             return query
-        
+
         # Full load if no watermark
         logger.info(f"Full load for {dataset_name} (no prior watermark)")
         return base_query
@@ -153,14 +153,14 @@ class IncrementalLoader:
     def calculate_load_summary(self, dataset_name: str, row_count: int, elapsed_seconds: float):
         """Calculate and log load summary."""
         rate = row_count / elapsed_seconds if elapsed_seconds > 0 else 0
-        
+
         summary = {
             'dataset': dataset_name,
             'rows_loaded': row_count,
             'load_time_seconds': elapsed_seconds,
             'rows_per_second': round(rate, 2)
         }
-        
+
         logger.info(f"Load summary: {summary}")
         return summary
 
@@ -174,7 +174,7 @@ class IncrementalLoader:
             'total_rows_loaded': sum(wm.rows_loaded for wm in self.watermarks.values()),
             'datasets': {}
         }
-        
+
         for dataset_name, wm in self.watermarks.items():
             report['datasets'][dataset_name] = {
                 'status': wm.status,
@@ -182,7 +182,7 @@ class IncrementalLoader:
                 'last_load_date': wm.last_load_date,
                 'load_duration': wm.load_duration_seconds
             }
-        
+
         return report
 
 
@@ -202,10 +202,10 @@ class IncrementalStrategy:
     ) -> str:
         """Date-based incremental - fetch records after last load date."""
         wm = loader.get_watermark(dataset_name)
-        
+
         if wm.last_load_date:
             return f"SELECT * FROM raw.{dataset_name} WHERE {date_column} > '{wm.last_load_date}'"
-        
+
         return f"SELECT * FROM raw.{dataset_name}"
 
     @staticmethod
@@ -216,9 +216,9 @@ class IncrementalStrategy:
     ) -> str:
         """ID-based incremental - fetch records after last load ID."""
         wm = loader.get_watermark(dataset_name)
-        
+
         if wm.last_load_id:
             return f"SELECT * FROM raw.{dataset_name} WHERE {id_column} > '{wm.last_load_id}'"
-        
+
         return f"SELECT * FROM raw.{dataset_name}"
 

@@ -4,7 +4,7 @@ Query optimization, materialization strategies, and index recommendations.
 """
 
 import logging
-from typing import List, Dict, Tuple
+from typing import Dict, List, Tuple
 
 logger = logging.getLogger(__name__)
 

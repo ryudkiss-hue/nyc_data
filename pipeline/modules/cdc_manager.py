@@ -7,7 +7,7 @@ Detects inserts, updates, and deletes efficiently.
 import hashlib
 import logging
 from dataclasses import dataclass
-from typing import List, Dict, Tuple, Optional
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -62,20 +62,20 @@ class CDCManager:
             }
         """
         logger.info(f"Detecting changes: {old_table} → {new_table}")
-        
+
         changes = {'inserts': [], 'updates': [], 'deletes': []}
-        
+
         # Fetch old and new data
         old_rows = self.bridge.query(f"SELECT * FROM {schema}.{old_table}")
         new_rows = self.bridge.query(f"SELECT * FROM {schema}.{new_table}")
-        
+
         # Build maps by primary key
         old_map = {str(row[pk_column]): row for row in old_rows} if old_rows else {}
         new_map = {str(row[pk_column]): row for row in new_rows} if new_rows else {}
-        
+
         old_keys = set(old_map.keys())
         new_keys = set(new_map.keys())
-        
+
         # Detect inserts (in new but not in old)
         for pk in new_keys - old_keys:
             changes['inserts'].append(
@@ -85,7 +85,7 @@ class CDCManager:
                     after_hash=self.compute_row_hash(new_map[pk])
                 )
             )
-        
+
         # Detect deletes (in old but not in new)
         for pk in old_keys - new_keys:
             changes['deletes'].append(
@@ -95,12 +95,12 @@ class CDCManager:
                     before_hash=self.compute_row_hash(old_map[pk])
                 )
             )
-        
+
         # Detect updates (in both, but different hashes)
         for pk in old_keys & new_keys:
             old_hash = self.compute_row_hash(old_map[pk])
             new_hash = self.compute_row_hash(new_map[pk])
-            
+
             if old_hash != new_hash:
                 changes['updates'].append(
                     ChangeRecord(
@@ -110,26 +110,26 @@ class CDCManager:
                         after_hash=new_hash
                     )
                 )
-        
+
         logger.info(f"Changes detected: {len(changes['inserts'])} inserts, "
                    f"{len(changes['updates'])} updates, {len(changes['deletes'])} deletes")
-        
+
         return changes
 
     def generate_change_report(self, changes: Dict[str, List[ChangeRecord]]) -> Dict:
         """Generate summary report of detected changes."""
         return {
-            'total_changes': (len(changes['inserts']) + 
-                            len(changes['updates']) + 
+            'total_changes': (len(changes['inserts']) +
+                            len(changes['updates']) +
                             len(changes['deletes'])),
             'inserts': len(changes['inserts']),
             'updates': len(changes['updates']),
             'deletes': len(changes['deletes']),
-            'insert_ratio': (len(changes['inserts']) / 
+            'insert_ratio': (len(changes['inserts']) /
                            sum(len(v) for v in changes.values()) if sum(len(v) for v in changes.values()) > 0 else 0),
-            'update_ratio': (len(changes['updates']) / 
+            'update_ratio': (len(changes['updates']) /
                            sum(len(v) for v in changes.values()) if sum(len(v) for v in changes.values()) > 0 else 0),
-            'delete_ratio': (len(changes['deletes']) / 
+            'delete_ratio': (len(changes['deletes']) /
                            sum(len(v) for v in changes.values()) if sum(len(v) for v in changes.values()) > 0 else 0)
         }
 
@@ -146,7 +146,7 @@ class CDCManager:
         if not changes['inserts'] and not changes['updates'] and not changes['deletes']:
             logger.info("No changes to apply")
             return True
-        
+
         try:
             # Delete removed records
             for change in changes['deletes']:
@@ -155,11 +155,11 @@ class CDCManager:
                 if not result.success:
                     logger.error(f"Failed to delete {change.primary_key}: {result.error}")
                     return False
-            
+
             # Insert and update handled by staging layer
             logger.info(f"Applied {len(changes['inserts']) + len(changes['updates'])} changes to {staging_table}")
             return True
-        
+
         except Exception as e:
             logger.error(f"Failed to apply changes: {str(e)}")
             return False
@@ -182,7 +182,7 @@ class ChangeDataCaptureStrategy:
         """Timestamp-based CDC - detects changes since timestamp."""
         query = f"SELECT * FROM {table} WHERE {timestamp_col} >= '{since}' ORDER BY {timestamp_col}"
         rows = bridge.query(query)
-        
+
         return {
             'inserts': len(rows),
             'updates': 0,
