@@ -25,8 +25,8 @@ try:
     from modules.alerting_system import AlertManager, Alert, AlertLevel, AlertChannel
     from modules.incremental_loader import IncrementalLoader
     from modules.cdc_manager import CDCManager
-    from modules.orchestration_coordinator import OrchestrationCoordinator
-    from modules.scheduler_manager import SchedulerManager
+    from modules.orchestration_coordinator import PipelineOrchestrator
+    from modules.scheduler_manager import PipelineScheduler
     from modules.performance_optimizer import PerformanceOptimizer
     ADVANCED_MODULES_AVAILABLE = True
 except ImportError as e:
