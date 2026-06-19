@@ -1,0 +1,343 @@
+{
+  "dives_framework": {
+    "version": "1.0",
+    "created_at": "2026-06-18",
+    "description": "MotherDuck Dives Specification - Structured exploration artifacts from unified 57-dataset lake",
+    "total_dives": 12,
+    "governance_integration": "All dives classified by category, audience, refresh schedule, and governance rules"
+  },
+
+  "exploratory_dives": {
+    "description": "Ad-hoc analysis and hypothesis testing (30-day retention, creator access only)",
+    "retention_days": 30,
+    "access_level": "creator_only",
+    "documentation": "optional",
+    "refresh_schedule": "on_demand",
+    "dives": [
+      {
+        "id": "dive_001",
+        "name": "quick_borough_comparison",
+        "title": "Quick Borough Comparison",
+        "description": "Compare violation closure rates, ramp completion, inspection costs across 5 boroughs",
+        "source_datasets": ["violations", "ramp_progress", "inspection", "cost_tracking"],
+        "source_schemas": ["staging", "sim_core", "accessibility"],
+        "query_type": "exploratory_dashboard",
+        "kpis_referenced": ["violation_closure_rate", "ramp_completion_rate", "inspection_cost_per_unit"],
+        "created_date": "2026-06-18",
+        "last_updated": "2026-06-18",
+        "audience": "analysts",
+        "expected_runtime_seconds": 5
+      },
+      {
+        "id": "dive_002",
+        "name": "outlier_investigation",
+        "title": "Outlier Investigation",
+        "description": "Find anomalies in inspection costs, violation closure times, ramp installation delays",
+        "source_datasets": ["inspection", "violations", "ramp_progress", "cost_tracking"],
+        "source_schemas": ["staging"],
+        "query_type": "statistical_analysis",
+        "methodology": "3-sigma outlier detection on rolling 30-day window",
+        "created_date": "2026-06-18",
+        "audience": "analysts",
+        "expected_runtime_seconds": 10
+      },
+      {
+        "id": "dive_003",
+        "name": "seasonal_pattern_detection",
+        "title": "Seasonal Pattern Detection",
+        "description": "Identify seasonal trends in violations, ramp complaints, construction activity",
+        "source_datasets": ["violations", "ramp_complaints", "street_permits", "street_construction_inspections"],
+        "source_schemas": ["staging"],
+        "query_type": "time_series_analysis",
+        "methodology": "STL decomposition, seasonal strength calculation",
+        "created_date": "2026-06-18",
+        "audience": "analysts",
+        "expected_runtime_seconds": 15
+      }
+    ]
+  },
+
+  "operational_dives": {
+    "description": "Regular monitoring dashboards (indefinite retention, team access, daily/weekly refresh)",
+    "retention_days": null,
+    "access_level": "team_access",
+    "documentation": "required",
+    "dives": [
+      {
+        "id": "dive_101",
+        "name": "daily_inspection_status",
+        "title": "Daily Inspection Status",
+        "description": "Inspection completions, violations found, closure rate, by borough and inspector",
+        "source_datasets": ["inspection", "violations", "dismissals"],
+        "source_schemas": ["sim_core.inspection_summary", "sim_core.violation_timeline"],
+        "refresh_schedule": "daily_09:00_UTC",
+        "refresh_frequency_minutes": 1440,
+        "owner": "Inspection Program Manager",
+        "kpis_referenced": [
+          "violation_closure_rate",
+          "inspection_timeliness",
+          "sla_compliance_rate"
+        ],
+        "charts": [
+          "violation_closure_by_borough (bar)",
+          "violations_by_severity_trend (line)",
+          "inspector_performance_heatmap (heatmap)",
+          "dismissal_rate_by_type (pie)"
+        ],
+        "documentation": "Tracks daily inspection completions, violations found, and closure rate. Used for operational monitoring and field supervision.",
+        "quality_gates": [
+          "data_freshness <= 24 hours",
+          "row_count_delta < 20% from previous day"
+        ]
+      },
+      {
+        "id": "dive_102",
+        "name": "weekly_permit_pipeline",
+        "title": "Weekly Permit Pipeline",
+        "description": "Active permits, processing time, approval rates, by permit type and borough",
+        "source_datasets": ["street_permits", "capital_intersections"],
+        "source_schemas": ["coordination.permit_lifecycle"],
+        "refresh_schedule": "weekly_monday_10:00_UTC",
+        "refresh_frequency_minutes": 10080,
+        "owner": "Construction Coordination Manager",
+        "kpis_referenced": [
+          "permit_approval_time",
+          "construction_timeline_variance"
+        ],
+        "charts": [
+          "permits_by_status (funnel)",
+          "approval_time_distribution (histogram)",
+          "permit_processing_trend (line)"
+        ],
+        "documentation": "Tracks active permits in pipeline, approval timelines, and processing efficiency.",
+        "quality_gates": [
+          "data_freshness <= 7 days",
+          "permit_count consistency"
+        ]
+      },
+      {
+        "id": "dive_103",
+        "name": "ramp_program_status",
+        "title": "Ramp Program Status",
+        "description": "Installation progress by neighborhood and borough, budget tracking, complaint trends",
+        "source_datasets": ["ramp_progress", "ramp_locations", "ramp_complaints", "cost_tracking"],
+        "source_schemas": ["accessibility.ramp_completion_status", "accessibility.complaint_triage"],
+        "refresh_schedule": "daily_06:00_UTC",
+        "refresh_frequency_minutes": 1440,
+        "owner": "Accessibility Program Director",
+        "kpis_referenced": [
+          "ramp_completion_rate",
+          "ramp_installation_pace",
+          "accessibility_improvement_index"
+        ],
+        "charts": [
+          "completion_rate_by_borough (bar)",
+          "installation_pace_trend (line)",
+          "complaint_volume_trend (area)",
+          "budget_vs_actual (combo)"
+        ],
+        "documentation": "Real-time ramp installation progress, budget tracking, and complaint monitoring.",
+        "quality_gates": [
+          "data_freshness <= 24 hours",
+          "minimum_sample_size: 50 ramps per borough"
+        ]
+      }
+    ]
+  },
+
+  "analytical_dives": {
+    "description": "Deep investigation for reporting (indefinite retention, team access, documented methodology)",
+    "retention_days": null,
+    "access_level": "team_access",
+    "documentation": "required",
+    "dives": [
+      {
+        "id": "dive_201",
+        "name": "ramp_completion_trend_analysis",
+        "title": "Ramp Completion Comprehensive Analysis",
+        "description": "Historical trends, forecasting, bottleneck identification by neighborhood and program type",
+        "source_datasets": ["ramp_progress", "ramp_locations", "ramp_complaints", "accessibility_audits"],
+        "source_schemas": ["accessibility.ramp_completion_status"],
+        "refresh_schedule": "weekly_monday_10:00_UTC",
+        "owner": "Accessibility Program Director",
+        "methodology": "Time series decomposition, ARIMA forecasting, KMeans bottleneck clustering",
+        "kpis_referenced": [
+          "ramp_completion_rate",
+          "ramp_installation_pace",
+          "accessibility_readiness_index"
+        ],
+        "charts": [
+          "completion_rate_trend_with_forecast (line with CI)",
+          "bottleneck_analysis_map (GIS)",
+          "program_type_comparison (grouped bar)",
+          "installation_velocity_heatmap (heatmap)"
+        ],
+        "documentation": "Detailed analysis of ramp completion rates by borough, neighborhood, and installation type. Includes trend analysis, bottleneck identification, and forecasting.",
+        "quality_gates": [
+          "minimum_sample_size: 50 ramps per borough",
+          "confidence_interval: 95%",
+          "data_freshness <= 7 days"
+        ]
+      },
+      {
+        "id": "dive_202",
+        "name": "permit_workflow_efficiency",
+        "title": "Permit Workflow Efficiency Analysis",
+        "description": "Processing time analysis, variance by permit type, bottleneck detection",
+        "source_datasets": ["street_permits", "permit_history"],
+        "source_schemas": ["coordination.permit_lifecycle"],
+        "refresh_schedule": "weekly_friday_14:00_UTC",
+        "owner": "Construction Coordination Manager",
+        "methodology": "Process mining, variance analysis, bottleneck detection",
+        "kpis_referenced": ["permit_approval_time"],
+        "charts": [
+          "processing_time_by_type (box plot)",
+          "approval_workflow_sankey (sankey)",
+          "cycle_time_trend (line)",
+          "bottleneck_pareto (bar)"
+        ],
+        "documentation": "Process efficiency analysis identifying approval bottlenecks and variance by permit type."
+      },
+      {
+        "id": "dive_203",
+        "name": "violation_resolution_patterns",
+        "title": "Violation Resolution Pattern Analysis",
+        "description": "Closure rate by violation type and borough, SLA compliance, inspector performance",
+        "source_datasets": ["violations", "inspection", "dismissals"],
+        "source_schemas": ["sim_core.violation_timeline", "sim_core.resolution_funnel"],
+        "refresh_schedule": "weekly_wednesday_10:00_UTC",
+        "owner": "Inspection Program Manager",
+        "methodology": "Funnel analysis, survival curves, SLA compliance tracking",
+        "kpis_referenced": [
+          "violation_closure_rate",
+          "sla_compliance_rate"
+        ],
+        "charts": [
+          "resolution_funnel_by_type (funnel)",
+          "closure_time_distribution (histogram)",
+          "survival_curve_by_borough (survival)",
+          "sla_compliance_scorecard (KPI)"
+        ],
+        "documentation": "Detailed closure rate analysis by violation type, borough, and inspector. SLA compliance and bottleneck identification."
+      }
+    ]
+  },
+
+  "strategic_dives": {
+    "description": "Executive briefing and decision support (indefinite retention, exec-only access, sign-off required)",
+    "retention_days": null,
+    "access_level": "executives_only",
+    "documentation": "required",
+    "sign_off_required": true,
+    "sign_off_approver": "Commissioner",
+    "dives": [
+      {
+        "id": "dive_301",
+        "name": "strategic_goal_progress",
+        "title": "Strategic Goal Progress Tracking",
+        "description": "Multi-dimensional goal tracking across all programs with achievement index",
+        "source_datasets": [
+          "inspection", "violations", "ramp_progress", "street_permits", "cost_tracking",
+          "street_construction_inspections", "accessibility_audits"
+        ],
+        "source_schemas": ["sim_core", "accessibility", "coordination", "extended"],
+        "refresh_schedule": "quarterly_first_monday_09:00_UTC",
+        "owner": "Deputy Commissioner",
+        "methodology": "Composite KPI scoring, goal achievement indexing, risk flagging",
+        "kpis_referenced": [
+          "ramp_completion_rate",
+          "violation_closure_rate",
+          "sla_compliance_rate",
+          "budget_variance",
+          "data_quality_score"
+        ],
+        "charts": [
+          "strategic_goal_dashboard (KPI scorecard)",
+          "achievement_vs_target (gauge)",
+          "multi_program_overview (multi-axis)",
+          "risk_heatmap (heatmap)"
+        ],
+        "documentation": "Executive briefing covering strategic goal progress, key metrics, risk areas, and recommendations. Combines data from all major programs.",
+        "quality_gates": [
+          "all_kpis_on_schedule",
+          "no_breaking_alerts",
+          "executive_review_complete"
+        ]
+      },
+      {
+        "id": "dive_302",
+        "name": "commissioner_briefing",
+        "title": "Commissioner Strategic Briefing",
+        "description": "Executive summary: program performance, budget status, SLA compliance, risk areas, recommendations",
+        "source_datasets": [
+          "inspection", "violations", "ramp_progress", "street_permits", "cost_tracking",
+          "street_construction_inspections", "accessibility_audits", "public_complaints"
+        ],
+        "source_schemas": ["sim_core", "accessibility", "coordination", "overlays", "extended"],
+        "refresh_schedule": "monthly_first_monday_14:00_UTC",
+        "owner": "Deputy Commissioner",
+        "audience": "executive_leadership",
+        "sign_off_approver": "Commissioner",
+        "methodology": "Executive scorecard, trend analysis, risk assessment",
+        "charts": [
+          "executive_scorecard (KPI matrix)",
+          "program_trends (line multi-series)",
+          "budget_status (stacked area)",
+          "risk_assessment (risk matrix)"
+        ],
+        "documentation": "Concise executive briefing with strategic context, goal progress, risk areas, and recommended actions.",
+        "quality_gates": [
+          "all_kpis_current",
+          "no_critical_alerts",
+          "executive_sign_off_obtained"
+        ]
+      },
+      {
+        "id": "dive_303",
+        "name": "data_health_executive_review",
+        "title": "Data Health Executive Review",
+        "description": "Comprehensive data quality, governance compliance, and system health assessment for leadership",
+        "source_datasets": [
+          "inspection", "violations", "ramp_progress", "street_permits", "street_construction_inspections",
+          "accessibility_audits", "cost_tracking"
+        ],
+        "source_schemas": ["sim_core", "accessibility", "coordination", "extended"],
+        "refresh_schedule": "monthly_second_friday_10:00_UTC",
+        "owner": "Chief Data Officer",
+        "audience": "executive_leadership",
+        "sign_off_approver": "Commissioner",
+        "methodology": "Quality scorecard composite, SLA compliance index, governance audit summary",
+        "kpis_referenced": [
+          "data_quality_score",
+          "sla_compliance_rate"
+        ],
+        "charts": [
+          "data_quality_scorecard (KPI gauge)",
+          "sla_compliance_by_dataset (heatmap)",
+          "data_freshness_timeline (line)",
+          "governance_audit_summary (bar)",
+          "system_health_index (radial)"
+        ],
+        "documentation": "Executive-level data health assessment covering data quality metrics, SLA compliance, governance audit results, and system reliability indicators.",
+        "quality_gates": [
+          "all_datasets_included",
+          "audit_trail_complete",
+          "executive_review_obtained"
+        ]
+      }
+    ]
+  },
+
+  "dive_governance_rules": {
+    "rule_1": "Every dive must reference source dataset(s) and domain schema",
+    "rule_2": "Exploratory dives expire after 30 days of inactivity",
+    "rule_3": "Operational/analytical dives require documented refresh schedule",
+    "rule_4": "Strategic dives require executive sign-off before publication",
+    "rule_5": "All dives track lineage back to raw datasets",
+    "rule_6": "Calculated fields in dives must show derivation formula",
+    "rule_7": "Sensitive data dives automatically redact PII per sensitivity level",
+    "rule_8": "Version history maintained for all operational+ dives",
+    "rule_9": "All dives integrated with governance audit logging",
+    "rule_10": "Dive refresh schedule enforced via APScheduler (if deployed)"
+  }
+}

@@ -1,0 +1,690 @@
+{
+  "governance_framework": {
+    "version": "1.0",
+    "created_at": "2026-06-18",
+    "name": "NYC DOT Unified Data Governance & Lineage Framework",
+    "scope": "All 57 source datasets + 51 KPIs + 5 domain schemas + all MotherDuck dives",
+    "principles": [
+      "Single source of truth for all data assets",
+      "Complete lineage from raw data through KPI materialization",
+      "Qualitative categorization per data management best practices",
+      "Governance rules tied to data sensitivity, quality, and SLA",
+      "Discovery artifacts (dives) integrated into governance model",
+      "Role-based access control across all tiers"
+    ]
+  },
+
+  "data_classification_standard": {
+    "sensitivity_levels": {
+      "public": {
+        "level": 1,
+        "description": "Publicly available, no access restrictions",
+        "examples": ["mappluto", "sidewalk_planimetric", "tree_inventory"],
+        "retention_policy": "indefinite",
+        "audit_logging": "optional"
+      },
+      "internal": {
+        "level": 2,
+        "description": "Internal DOT use only, restricted to employees",
+        "examples": ["inspection", "violations", "ramp_progress"],
+        "retention_policy": "7 years",
+        "audit_logging": "required"
+      },
+      "restricted": {
+        "level": 3,
+        "description": "Restricted access, PII or sensitive operational data",
+        "examples": ["public_complaints", "contractor_performance"],
+        "retention_policy": "5 years",
+        "audit_logging": "required_detailed"
+      },
+      "confidential": {
+        "level": 4,
+        "description": "Highly sensitive, executive/legal only",
+        "examples": ["cost_tracking", "regulatory_approvals"],
+        "retention_policy": "3 years",
+        "audit_logging": "required_immutable"
+      }
+    },
+
+    "data_quality_tiers": {
+      "tier_a_authoritative": {
+        "definition": "Source of truth, production-critical, audited",
+        "quality_gates": [
+          "100% primary key uniqueness",
+          "Zero null values in required fields",
+          "SLA compliance enforced (HIGH/MEDIUM)",
+          "Data dictionary complete",
+          "Monthly quality scorecard >95"
+        ],
+        "governance_owner": "department_head",
+        "change_control": "strict",
+        "datasets": ["inspection", "violations", "ramp_progress", "dismissals", "street_permits", "lot_info"]
+      },
+      "tier_b_operational": {
+        "definition": "Operational data, validated, SLA-tracked",
+        "quality_gates": [
+          "95%+ primary key uniqueness",
+          "<5% null values",
+          "SLA compliance monitored",
+          "Data dictionary complete",
+          "Monthly quality scorecard >80"
+        ],
+        "governance_owner": "analytics_manager",
+        "change_control": "moderate",
+        "datasets": ["street_construction_inspections", "ramp_complaints", "capital_intersections", "street_closures_block"]
+      },
+      "tier_c_enrichment": {
+        "definition": "Supporting/enrichment data, best-effort SLA",
+        "quality_gates": [
+          "90%+ primary key uniqueness",
+          "Data dictionary recommended",
+          "SLA compliance optional",
+          "Monthly quality scorecard >70"
+        ],
+        "governance_owner": "data_steward",
+        "change_control": "flexible",
+        "datasets": ["mappluto", "sidewalk_planimetric", "pedestrian_demand", "tree_inventory"]
+      },
+      "tier_d_reference": {
+        "definition": "Reference/lookup data, minimal governance",
+        "quality_gates": [
+          "Documented source",
+          "Version control required"
+        ],
+        "governance_owner": "domain_expert",
+        "change_control": "light",
+        "datasets": ["step_streets", "tree_damage", "curb_inventory"]
+      }
+    },
+
+    "business_domain_mapping": {
+      "sim_core": {
+        "steward": "Inspection Program Manager",
+        "datasets": ["inspection", "reinspection", "violations", "dismissals", "public_complaints", "service_requests", "safety_incidents"],
+        "sensitivity": "internal|restricted",
+        "quality_tier": "tier_a|tier_b",
+        "governing_policy": "NYC DOT Inspection Standards",
+        "update_frequency": "daily",
+        "business_value": "critical"
+      },
+      "accessibility": {
+        "steward": "Accessibility Program Director",
+        "datasets": ["ramp_locations", "ramp_complaints", "ramp_progress", "ramp_specifications", "violation_attachments", "accessibility_audits"],
+        "sensitivity": "internal|restricted",
+        "quality_tier": "tier_a|tier_b",
+        "governing_policy": "ADA Compliance & Ramp Program Standards",
+        "update_frequency": "daily|weekly",
+        "business_value": "critical"
+      },
+      "coordination": {
+        "steward": "Construction Coordination Manager",
+        "datasets": ["street_permits", "street_construction_inspections", "capital_intersections", "capital_blocks", "street_closures_block", "permit_status_history", "environmental_compliance", "traffic_impact"],
+        "sensitivity": "internal|public",
+        "quality_tier": "tier_a|tier_b|tier_c",
+        "governing_policy": "Permit Coordination & Construction Management",
+        "update_frequency": "weekly",
+        "business_value": "critical"
+      },
+      "overlays": {
+        "steward": "GIS & Mapping Manager",
+        "datasets": ["mappluto", "sidewalk_planimetric", "tree_inventory", "tree_damage", "curb_inventory", "lot_info", "block_face_data", "spatial_geometry", "surface_condition_history"],
+        "sensitivity": "public|internal",
+        "quality_tier": "tier_b|tier_c|tier_d",
+        "governing_policy": "NYC Open Data Standards",
+        "update_frequency": "quarterly",
+        "business_value": "high"
+      },
+      "extended": {
+        "steward": "Planning & Analysis Manager",
+        "datasets": ["street_resurfacing_schedule", "street_resurfacing_inhouse", "built", "pedestrian_demand", "project_scheduling", "project_budget", "equipment_inventory", "noise_monitoring", "air_quality", "cost_tracking", "funding_sources"],
+        "sensitivity": "internal|confidential",
+        "quality_tier": "tier_b|tier_c",
+        "governing_policy": "Budget & Planning Standards",
+        "update_frequency": "weekly|monthly",
+        "business_value": "high"
+      }
+    }
+  },
+
+  "kpi_governance_model": {
+    "total_kpis": 51,
+    "classification_dimensions": {
+      "business_outcome": {
+        "service_delivery": {
+          "definition": "KPIs measuring core service performance",
+          "examples": ["ramp_completion_rate", "violation_closure_rate", "inspection_timeliness"],
+          "owner_type": "program_manager",
+          "frequency": "daily|weekly"
+        },
+        "operational_efficiency": {
+          "definition": "KPIs measuring operational performance",
+          "examples": ["inspection_cost_per_unit", "average_resolution_time", "resource_utilization"],
+          "owner_type": "operations_manager",
+          "frequency": "weekly|monthly"
+        },
+        "compliance_governance": {
+          "definition": "KPIs measuring regulatory/policy compliance",
+          "examples": ["sla_compliance_rate", "accessibility_audit_pass_rate", "budget_variance"],
+          "owner_type": "compliance_officer",
+          "frequency": "monthly|quarterly"
+        },
+        "strategic_impact": {
+          "definition": "KPIs tied to strategic initiatives",
+          "examples": ["new_ramp_installation_rate", "accessibility_improvement_index", "community_satisfaction"],
+          "owner_type": "executive_sponsor",
+          "frequency": "quarterly|annually"
+        }
+      },
+
+      "measurement_type": {
+        "rate": {
+          "definition": "Percentage or ratio metrics",
+          "examples": ["ramp_completion_rate", "violation_closure_rate", "sla_compliance_rate"],
+          "calculation": "count_achieved / count_total * 100",
+          "confidence_interval": "wilson_score_binomial"
+        },
+        "count": {
+          "definition": "Volume or aggregate metrics",
+          "examples": ["total_inspections_completed", "ramps_installed_this_period", "complaints_received"],
+          "calculation": "SUM(events) FILTER BY period",
+          "confidence_interval": "poisson"
+        },
+        "trend": {
+          "definition": "Change over time metrics",
+          "examples": ["inspection_trend_direction", "violation_trend_slope", "ramp_installation_acceleration"],
+          "calculation": "linear_regression(time_series)",
+          "confidence_interval": "95pct_ci"
+        },
+        "index": {
+          "definition": "Composite/normalized metrics",
+          "examples": ["data_quality_score", "operational_health_index", "accessibility_readiness_index"],
+          "calculation": "weighted_combination(sub_metrics)",
+          "confidence_interval": "bootstrap"
+        }
+      },
+
+      "data_freshness": {
+        "real_time": {
+          "sla": "≤1 hour",
+          "update_mechanism": "event_driven",
+          "kpis": ["open_permits_count", "active_inspections", "ramp_complaints_pending"]
+        },
+        "daily": {
+          "sla": "≤24 hours",
+          "update_mechanism": "daily_refresh",
+          "kpis": ["violations_resolved_today", "inspection_completion_rate", "ramp_progress_daily"]
+        },
+        "weekly": {
+          "sla": "≤7 days",
+          "update_mechanism": "weekly_batch",
+          "kpis": ["weekly_inspection_average", "ramp_installation_pace", "permit_processing_time"]
+        },
+        "monthly": {
+          "sla": "≤30 days",
+          "update_mechanism": "month_end_close",
+          "kpis": ["monthly_budget_variance", "cost_per_inspection", "contractor_performance_score"]
+        },
+        "quarterly": {
+          "sla": "≤90 days",
+          "update_mechanism": "quarter_end_reconciliation",
+          "kpis": ["sla_compliance_rate", "data_quality_score", "strategic_goal_progress"]
+        }
+      },
+
+      "audience_tier": {
+        "operational": {
+          "users": ["inspectors", "supervisors", "field_managers"],
+          "frequency": "real_time|daily",
+          "detail_level": "granular",
+          "access": "role_based_field_level"
+        },
+        "management": {
+          "users": ["program_managers", "department_heads"],
+          "frequency": "daily|weekly",
+          "detail_level": "summary|summary_with_detail",
+          "access": "role_based_program_level"
+        },
+        "executive": {
+          "users": ["executives", "commissioners"],
+          "frequency": "weekly|monthly",
+          "detail_level": "dashboard|executive_summary",
+          "access": "role_based_executive_level"
+        },
+        "public": {
+          "users": ["community", "external_partners"],
+          "frequency": "monthly|quarterly",
+          "detail_level": "aggregated|anonymized",
+          "access": "public_open_data"
+        }
+      }
+    },
+
+    "kpi_lineage_sample": {
+      "example_kpi_1": {
+        "name": "ramp_completion_rate",
+        "definition": "Percentage of ADA ramps completed vs. planned",
+        "source_datasets": ["ramp_progress", "ramp_locations"],
+        "domain_schema": "accessibility",
+        "calculation": "SELECT COUNT(*) FILTER (status='completed') / COUNT(*) FROM ramp_progress",
+        "quality_gates": [
+          "ramp_progress.row_count > 0",
+          "ramp_locations.row_count > 0",
+          "data_freshness <= 1 day"
+        ],
+        "owner": "Accessibility Program Director",
+        "business_outcome": "service_delivery",
+        "measurement_type": "rate",
+        "data_freshness": "daily",
+        "audience_tier": ["operational", "management", "executive"],
+        "refresh_schedule": "daily_06:00_utc",
+        "sla": "HIGH"
+      },
+      "example_kpi_2": {
+        "name": "violation_closure_rate_by_borough",
+        "definition": "Rate of violations closed within SLA by borough",
+        "source_datasets": ["violations", "inspection"],
+        "domain_schema": "sim_core",
+        "calculation": "SELECT borough, COUNT(*) FILTER (days_to_close <= sla_threshold) / COUNT(*) FROM violations JOIN inspection USING (inspection_id)",
+        "quality_gates": [
+          "violations.row_count > 1000",
+          "inspection.row_count > 1000",
+          "data_freshness <= 1 day",
+          "primary_key_uniqueness >= 99%"
+        ],
+        "owner": "Inspection Program Manager",
+        "business_outcome": "operational_efficiency",
+        "measurement_type": "rate",
+        "data_freshness": "daily",
+        "audience_tier": ["management", "executive"],
+        "refresh_schedule": "daily_08:00_utc",
+        "sla": "HIGH"
+      }
+    }
+  },
+
+  "schema_governance_layers": {
+    "raw_schema": {
+      "purpose": "Unmodified data directly from source systems",
+      "governance_rules": [
+        "No transformations, filtering, or calculations",
+        "Retain all source columns and data types",
+        "Add audit columns: source_timestamp, load_timestamp, record_hash",
+        "Partition by date for performance",
+        "Retention: 1 year (archive older data)"
+      ],
+      "access_control": {
+        "read": ["analysts", "data_engineers", "data_scientists"],
+        "write": "data_pipeline_service_account_only",
+        "delete": "retention_policy_automation"
+      },
+      "quality_gates": [
+        "Row count matches source system",
+        "No duplicate records (PK uniqueness 100%)",
+        "Null rate acceptable per SLA"
+      ]
+    },
+
+    "staging_schema": {
+      "purpose": "Cleaned, deduplicated, type-cast data ready for analytics",
+      "governance_rules": [
+        "Deduplicate by primary key (keep latest by timestamp)",
+        "Cast to correct data types (use TRY_CAST for safety)",
+        "Null handling per data dictionary specification",
+        "Add calculated columns: _rn (row_number), _valid_from, _valid_to",
+        "Partition by date and domain_schema",
+        "Retention: 2 years (supports historical analysis)"
+      ],
+      "access_control": {
+        "read": ["analysts", "data_scientists", "kpi_calculations"],
+        "write": "data_pipeline_service_account_only",
+        "delete": "retention_policy_automation"
+      },
+      "quality_gates": [
+        "Row count: 95-110% of raw (allows for dedup)",
+        "PK uniqueness = 100%",
+        "No nulls in required fields",
+        "Data types match specification"
+      ]
+    },
+
+    "analytics_domain_schemas": {
+      "sim_core_schema": {
+        "purpose": "Analytics views for inspection, violations, and service management",
+        "governed_tables": [
+          "inspection_summary (rolled-up counts, rates by inspector/borough/time)",
+          "violation_timeline (violation lifecycle with SLA tracking)",
+          "resolution_funnel (stages of closure process)",
+          "inspector_performance (KPIs per inspector)"
+        ],
+        "governance_rules": [
+          "Pre-computed aggregations for common queries",
+          "Grain specified in table name/description",
+          "All calculations documented in view definition",
+          "Calculated fields have _calc suffix",
+          "Retention: indefinite (analytical history)"
+        ],
+        "access_control": "read: all_internal_users",
+        "quality_gates": [
+          "Monthly reconciliation vs. staging layer",
+          "Data latency <= 24 hours",
+          "Row count stability (no >20% swings without explanation)"
+        ]
+      },
+      "accessibility_schema": {
+        "purpose": "Analytics views for ramp program and ADA compliance",
+        "governed_tables": [
+          "ramp_completion_status (by neighborhood, borough, program)",
+          "complaint_triage (categorized, prioritized complaints)",
+          "accessibility_readiness_index (composite score)",
+          "audit_findings_summary (by finding type, severity)"
+        ],
+        "governance_rules": [
+          "Borough-level and sub-borough aggregations",
+          "SLA tracking built into every view",
+          "Compliance flags automated",
+          "Retention: indefinite"
+        ],
+        "access_control": "read: accessibility_team + executives",
+        "quality_gates": [
+          "Quarterly reconciliation with source system",
+          "Audit trail for compliance findings"
+        ]
+      },
+      "coordination_schema": {
+        "purpose": "Analytics views for permits, construction, and coordination",
+        "governed_tables": [
+          "permit_lifecycle (issued→completed with milestones)",
+          "construction_timeline (start→completion tracking)",
+          "conflict_matrix (permit overlaps, dependencies)",
+          "environmental_compliance_status (regulatory requirements)"
+        ],
+        "governance_rules": [
+          "Permit and construction status must be consistent",
+          "Environmental flags tied to regulatory database",
+          "Conflict detection automated",
+          "Retention: 7 years (legal requirement)"
+        ],
+        "access_control": "read: coordination_team + legal",
+        "quality_gates": [
+          "Weekly reconciliation with permit system",
+          "Conflict detection accuracy audit quarterly"
+        ]
+      },
+      "overlays_schema": {
+        "purpose": "Spatial enrichment and reference data analytics",
+        "governed_tables": [
+          "block_face_inventory (every NYC block face)",
+          "tree_asset_registry (tree locations with maintenance history)",
+          "curb_segment_registry (curb usage inventory)",
+          "spatial_conflicts (geometries that overlap)"
+        ],
+        "governance_rules": [
+          "Coordinates validated against NYC GIS standard",
+          "Geometries use EPSG:2263 (NAD83 / NY Long Island)",
+          "All spatial joins use indexed geometries",
+          "Retention: 5 years (sufficient for historical analysis)"
+        ],
+        "access_control": "read: gis_team + analysts",
+        "quality_gates": [
+          "Quarterly spatial accuracy audit (sampled features)",
+          "No null geometries in core tables",
+          "Geometry validity check on ingestion"
+        ]
+      },
+      "extended_schema": {
+        "purpose": "Analytics for budget, scheduling, and planning",
+        "governed_tables": [
+          "project_financial_summary (budget, actuals, variance)",
+          "resource_allocation (equipment, staff, budget)",
+          "schedule_variance (planned vs. actual delivery)",
+          "cost_analytics (unit cost trends, efficiency metrics)"
+        ],
+        "governance_rules": [
+          "Budget numbers reconcile with accounting system monthly",
+          "Project status reflects single source of truth",
+          "Cost allocations auditable to GL accounts",
+          "Retention: indefinite (financial/audit requirement)"
+        ],
+        "access_control": "read: finance_team + executives, write: finance_approval_required",
+        "quality_gates": [
+          "Monthly reconciliation with accounting system",
+          "Cost allocation audit trail required",
+          "Budget vs. actual variance flagged if >10%"
+        ]
+      }
+    }
+  },
+
+  "dive_governance_model": {
+    "definition": "Structured MotherDuck dives are discovery/exploration artifacts created from unified 57-dataset lake",
+
+    "dive_taxonomy": {
+      "category_exploratory": {
+        "purpose": "Ad-hoc exploration and hypothesis testing",
+        "retention": "30 days (if not promoted)",
+        "access": "creator_only",
+        "documentation": "optional",
+        "examples": ["quick_borough_comparison", "outlier_investigation"]
+      },
+
+      "category_operational": {
+        "purpose": "Regular operational monitoring dashboards",
+        "retention": "indefinite",
+        "access": "team_access",
+        "documentation": "required (purpose, usage, refresh schedule)",
+        "refresh_schedule": "daily|weekly",
+        "owner": "department_head",
+        "examples": ["daily_inspection_status", "weekly_permit_pipeline"]
+      },
+
+      "category_analytical": {
+        "purpose": "Deep analytical investigations for reporting",
+        "retention": "indefinite",
+        "access": "team_access",
+        "documentation": "required (methodology, assumptions, caveats)",
+        "refresh_schedule": "weekly|monthly",
+        "owner": "analytics_manager",
+        "examples": ["ramp_completion_trend_analysis", "permit_workflow_efficiency"]
+      },
+
+      "category_strategic": {
+        "purpose": "Executive briefing and strategic decision support",
+        "retention": "indefinite",
+        "access": "executives_only",
+        "documentation": "required (business context, recommendations)",
+        "refresh_schedule": "monthly|quarterly",
+        "owner": "executive_sponsor",
+        "sign_off_required": true,
+        "examples": ["strategic_goal_progress", "commissioner_briefing"]
+      }
+    },
+
+    "dive_governance_rules": [
+      "Every dive must reference source dataset(s) and domain schema",
+      "Exploratory dives expire after 30 days of inactivity",
+      "Operational/analytical dives require documented refresh schedule",
+      "Strategic dives require executive sign-off before publication",
+      "All dives track lineage back to raw datasets",
+      "Calculated fields in dives must show derivation formula",
+      "Sensitive data dives automatically redact PII per sensitivity level",
+      "Version history maintained for all operational+ dives"
+    ],
+
+    "sample_governance_dives": [
+      {
+        "dive_id": "operational_daily_inspection_status",
+        "name": "Daily Inspection Status Dashboard",
+        "category": "operational",
+        "source_datasets": ["inspection", "violations", "dismissals"],
+        "domain_schema": "sim_core",
+        "owner": "Inspection Program Manager",
+        "refresh_schedule": "daily_09:00_utc",
+        "access": ["inspection_team", "supervisors", "management"],
+        "documentation": "Tracks daily inspection completions, violations found, and closure rate. Used for operational monitoring and field supervision.",
+        "quality_gates": [
+          "data_freshness <= 24 hours",
+          "row_count delta < 20% from previous day"
+        ]
+      },
+      {
+        "dive_id": "analytical_ramp_completion_deep_dive",
+        "name": "Ramp Completion Comprehensive Analysis",
+        "category": "analytical",
+        "source_datasets": ["ramp_progress", "ramp_locations", "ramp_complaints", "accessibility_audits"],
+        "domain_schema": "accessibility",
+        "owner": "Accessibility Program Director",
+        "refresh_schedule": "weekly_monday_10:00_utc",
+        "access": ["accessibility_team", "management"],
+        "documentation": "Detailed analysis of ramp completion rates by borough, neighborhood, and installation type. Includes trend analysis, bottleneck identification, and forecasting.",
+        "quality_gates": [
+          "minimum_sample_size: 50 ramps per borough",
+          "confidence_interval: 95%",
+          "data_freshness <= 7 days"
+        ]
+      },
+      {
+        "dive_id": "strategic_commissioner_briefing",
+        "name": "Commissioner Strategic Briefing",
+        "category": "strategic",
+        "source_datasets": ["inspection", "violations", "ramp_progress", "street_permits", "cost_tracking"],
+        "domain_schema": "sim_core|accessibility|coordination|extended",
+        "owner": "Deputy Commissioner",
+        "refresh_schedule": "monthly_first_monday_14:00_utc",
+        "access": ["executive_leadership"],
+        "sign_off_required": true,
+        "sign_off_approver": "Commissioner",
+        "documentation": "Executive briefing covering strategic goal progress, key metrics, risk areas, and recommendations. Combines data from all major programs.",
+        "quality_gates": [
+          "all_kpis_on_schedule",
+          "no_breaking_alerts",
+          "executive_review_complete"
+        ]
+      }
+    ]
+  },
+
+  "governance_enforcement_matrix": {
+    "data_quality_monitoring": {
+      "mechanism": "automated_gates_at_each_layer",
+      "rules": [
+        {
+          "layer": "raw",
+          "check": "row_count_delta",
+          "threshold": ">30% change",
+          "action": "halt_pipeline_alert_data_eng"
+        },
+        {
+          "layer": "staging",
+          "check": "null_rate_per_column",
+          "threshold": "exceeds_sla",
+          "action": "halt_pipeline_alert_data_steward"
+        },
+        {
+          "layer": "analytics",
+          "check": "reconciliation_vs_staging",
+          "threshold": ">5% variance",
+          "action": "alert_owner_require_investigation"
+        }
+      ]
+    },
+
+    "access_control_enforcement": {
+      "mechanism": "role_based_access_at_database_level",
+      "rules": [
+        {
+          "schema": "raw",
+          "role": "analyst",
+          "permission": "read"
+        },
+        {
+          "schema": "staging",
+          "role": "analyst",
+          "permission": "read"
+        },
+        {
+          "schema": "analytics",
+          "role": "all_internal",
+          "permission": "read"
+        },
+        {
+          "schema": "confidential_analytics",
+          "role": "executive",
+          "permission": "read"
+        }
+      ]
+    },
+
+    "audit_logging": {
+      "mechanism": "immutable_audit_trail",
+      "captures": [
+        "all_data_access (read/write/delete)",
+        "kpi_calculation_runs (inputs, outputs, dependencies)",
+        "schema_changes (who, when, what changed)",
+        "dive_creation_and_modifications",
+        "quality_gate_violations",
+        "access_control_violations"
+      ],
+      "retention": "7 years"
+    }
+  },
+
+  "governance_roles_and_responsibilities": {
+    "data_governance_board": {
+      "members": ["Deputy Commissioner", "Analytics Director", "GIS Manager", "Finance Director"],
+      "frequency": "monthly",
+      "responsibilities": [
+        "Approve schema changes in analytics layer",
+        "Review and sign-off on strategic dives",
+        "Resolve data governance disputes",
+        "Approve new KPIs and changes to existing KPIs",
+        "Monitor compliance with governance framework"
+      ]
+    },
+
+    "dataset_stewards": {
+      "role": "Per domain_schema (sim_core, accessibility, coordination, overlays, extended)",
+      "responsibilities": [
+        "Ensure data quality for assigned datasets",
+        "Document data lineage and transformations",
+        "Approve changes to data model",
+        "Resolve data quality issues",
+        "Train users on correct data usage"
+      ],
+      "sla": "Quality issues responded to within 24 hours"
+    },
+
+    "kpi_owners": {
+      "role": "Owner of specific KPI calculations",
+      "responsibilities": [
+        "Define KPI calculation and maintain specification",
+        "Monitor KPI quality and refresh schedule",
+        "Communicate KPI results to stakeholders",
+        "Investigate anomalies and variances",
+        "Update KPI as business requirements change"
+      ],
+      "sla": "KPI delays reported within 4 hours of SLA miss"
+    },
+
+    "data_engineers": {
+      "role": "Build and maintain data infrastructure",
+      "responsibilities": [
+        "Implement quality gates and SLA enforcement",
+        "Optimize data pipeline performance",
+        "Troubleshoot data quality failures",
+        "Maintain lineage tracking",
+        "Ensure compliance with governance framework"
+      ]
+    },
+
+    "analysts_and_data_scientists": {
+      "role": "Use data for analysis and exploration",
+      "responsibilities": [
+        "Follow documented data definitions",
+        "Understand data limitations and SLAs",
+        "Report data quality issues immediately",
+        "Document analytical assumptions",
+        "Request new KPIs through formal process"
+      ]
+    }
+  }
+}

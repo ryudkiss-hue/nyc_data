@@ -18,6 +18,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from motherduck_bridge import MotherDuckBridge
 from sql_executor import SQLExecutor, PipelineStageExecutor
 from socrata_loader import SocrataLoader
+from governance import GovernanceFramework, GovernanceValidator
 
 # Wire in 7 advanced modules (Phase 3C-2: Mandatory Scripts)
 try:
@@ -87,6 +88,60 @@ class MotherDuckPipeline:
         self.expected_socrata = len([d for d in self.config_datasets if d.source == 'socrata'])
         self.expected_total = len(self.config_datasets)
         logger.info(f"Config loaded: {self.expected_cached} cached + {self.expected_socrata} Socrata = {self.expected_total} total datasets")
+
+        # Initialize state management and execution context (Phase 3C-2: Wire advanced modules)
+        if ADVANCED_MODULES_AVAILABLE:
+            self.state_manager = StateManager(state_dir='pipeline/state')
+            self.execution_context = ExecutionContext(
+                state_manager=self.state_manager,
+                pipeline_id=f"pipeline-{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            )
+            self.alert_manager = AlertManager()
+            logger.info(f"Execution context initialized: {self.execution_context.pipeline_id}")
+        else:
+            self.state_manager = None
+            self.execution_context = None
+            self.alert_manager = None
+            logger.warning("Advanced modules not available - state management disabled")
+
+        # Initialize governance framework
+        try:
+            self.governance = GovernanceFramework()
+            self.governance_validator = GovernanceValidator(self.governance)
+            logger.info("Governance framework initialized (personal solo-user, indefinite retention)")
+            self.governance.log_audit('pipeline_started', {
+                'pipeline_id': self.execution_context.pipeline_id if self.execution_context else 'no_context',
+                'datasets': self.expected_total,
+                'governance_mode': 'personal_solo_user'
+            })
+        except Exception as e:
+            logger.error(f"Failed to initialize governance framework: {e}")
+            self.governance = None
+            self.governance_validator = None
+
+    def _start_stage(self, stage_name: str):
+        """Safe wrapper for starting a pipeline stage."""
+        if self.execution_context:
+            self.execution_context.start_stage(stage_name)
+        else:
+            logger.info(f"Starting stage: {stage_name}")
+
+    def _complete_stage(self, rows_processed: int = 0, duration: float = 0.0):
+        """Safe wrapper for completing a pipeline stage."""
+        if self.execution_context:
+            self.execution_context.complete_stage(rows_processed=rows_processed, duration=duration)
+
+    def _fail_stage(self, error: str):
+        """Safe wrapper for failing a pipeline stage."""
+        if self.execution_context:
+            self.execution_context.fail_stage(error)
+        else:
+            logger.error(f"Stage failed: {error}")
+
+    def _send_alert(self, alert):
+        """Safe wrapper for sending alerts."""
+        if self.alert_manager:
+            self.alert_manager.send_alert(alert)
 
     def log_stage(self, stage_name: str, status: str, **kwargs):
         """Log stage execution details."""
@@ -164,7 +219,7 @@ class MotherDuckPipeline:
     def ingest_remaining_socrata(self) -> bool:
         """Ingest remaining 37 datasets from Socrata in controlled batches."""
         start_time = time.time()
-        self.execution_context.start_stage('ingest_remaining_socrata')
+        self._start_stage('ingest_remaining_socrata')
 
         try:
             logger.info("Ingesting remaining 37 datasets from Socrata...")
@@ -175,8 +230,8 @@ class MotherDuckPipeline:
 
             if not datasets:
                 logger.warning("No datasets loaded from config")
-                self.execution_context.fail_stage("Config file missing or empty")
-                self.alert_manager.send_alert(Alert(
+                self._fail_stage("Config file missing or empty")
+                self._send_alert(Alert(
                     level=AlertLevel.ERROR,
                     title="Socrata Ingestion Failed",
                     message="Dataset configuration missing or empty",
@@ -225,8 +280,8 @@ class MotherDuckPipeline:
             # CRITICAL: Fail if fewer than 37 datasets loaded (prevents partial pipeline)
             if loaded_count == 0:
                 logger.error("CRITICAL: No Socrata datasets loaded")
-                self.execution_context.fail_stage("Zero Socrata datasets loaded")
-                self.alert_manager.send_alert(Alert(
+                self._fail_stage("Zero Socrata datasets loaded")
+                self._send_alert(Alert(
                     level=AlertLevel.CRITICAL,
                     title="Socrata Ingestion Failed",
                     message=f"Zero datasets loaded from Socrata API. Total attempted: {len(socrata_datasets)}",
@@ -241,7 +296,7 @@ class MotherDuckPipeline:
             if loaded_count < len(socrata_datasets):
                 logger.warning(f"WARNING: Only {loaded_count}/{len(socrata_datasets)} Socrata datasets loaded")
 
-            self.execution_context.complete_stage(rows_processed=sum(
+            self._complete_stage(rows_processed=sum(
                 self.execution_log['datasets'].get(d.name, {}).get('rows', 0)
                 for d in socrata_datasets if self.execution_log['datasets'].get(d.name, {}).get('status') == 'loaded'
             ), duration=load_time)
@@ -256,8 +311,8 @@ class MotherDuckPipeline:
 
         except Exception as e:
             logger.error(f"Failed to ingest Socrata: {str(e)}")
-            self.execution_context.fail_stage(f"Exception: {str(e)}")
-            self.alert_manager.send_alert(Alert(
+            self._fail_stage(f"Exception: {str(e)}")
+            self._send_alert(Alert(
                 level=AlertLevel.ERROR,
                 title="Socrata Ingestion Exception",
                 message=str(e),
@@ -269,7 +324,7 @@ class MotherDuckPipeline:
     def stage_datasets(self) -> bool:
         """Deduplicate, type cast, and promote to staging schema."""
         start_time = time.time()
-        self.execution_context.start_stage('stage_datasets')
+        self._start_stage('stage_datasets')
 
         try:
             logger.info("Staging all 57 datasets (dedupe, type cast, preserve names)...")
@@ -281,8 +336,8 @@ class MotherDuckPipeline:
                 success, message = self.sql_executor.execute_stage(staging_file)
                 if not success:
                     logger.error(f"Staging failed: {message}")
-                    self.execution_context.fail_stage(f"Staging SQL failed: {message}")
-                    self.alert_manager.send_alert(Alert(
+                    self._fail_stage(f"Staging SQL failed: {message}")
+                    self._send_alert(Alert(
                         level=AlertLevel.ERROR,
                         title="Staging Failed",
                         message=message,
@@ -296,7 +351,7 @@ class MotherDuckPipeline:
                 logger.info("Skipping staging (will use raw data directly)")
 
             load_time = time.time() - start_time
-            self.execution_context.complete_stage(rows_processed=0, duration=load_time)
+            self._complete_stage(rows_processed=0, duration=load_time)
 
             self.log_stage('staging_datasets', 'success',
                           total_tables=57,
@@ -307,8 +362,8 @@ class MotherDuckPipeline:
 
         except Exception as e:
             logger.error(f"Failed to stage datasets: {str(e)}")
-            self.execution_context.fail_stage(f"Exception: {str(e)}")
-            self.alert_manager.send_alert(Alert(
+            self._fail_stage(f"Exception: {str(e)}")
+            self._send_alert(Alert(
                 level=AlertLevel.ERROR,
                 title="Staging Exception",
                 message=str(e),
@@ -320,7 +375,7 @@ class MotherDuckPipeline:
     def build_analytics_schemas(self) -> bool:
         """Build 5 domain schemas with 100+ views and relationships."""
         start_time = time.time()
-        self.execution_context.start_stage('build_analytics_schemas')
+        self._start_stage('build_analytics_schemas')
 
         try:
             logger.info("Building 5 domain schemas...")
@@ -333,8 +388,8 @@ class MotherDuckPipeline:
                 success, message = self.sql_executor.execute_stage(analytics_file)
                 if not success:
                     logger.error(f"Analytics schemas failed: {message}")
-                    self.execution_context.fail_stage(f"Analytics SQL failed: {message}")
-                    self.alert_manager.send_alert(Alert(
+                    self._fail_stage(f"Analytics SQL failed: {message}")
+                    self._send_alert(Alert(
                         level=AlertLevel.ERROR,
                         title="Analytics Schemas Failed",
                         message=message,
@@ -351,7 +406,7 @@ class MotherDuckPipeline:
                     logger.info(f"  Created schema: {domain}")
 
             load_time = time.time() - start_time
-            self.execution_context.complete_stage(rows_processed=0, duration=load_time)
+            self._complete_stage(rows_processed=0, duration=load_time)
 
             self.log_stage('build_analytics_schemas', 'success',
                           domains=domains,
@@ -362,8 +417,8 @@ class MotherDuckPipeline:
 
         except Exception as e:
             logger.error(f"Failed to build analytics schemas: {str(e)}")
-            self.execution_context.fail_stage(f"Exception: {str(e)}")
-            self.alert_manager.send_alert(Alert(
+            self._fail_stage(f"Exception: {str(e)}")
+            self._send_alert(Alert(
                 level=AlertLevel.ERROR,
                 title="Analytics Schemas Exception",
                 message=str(e),
@@ -375,7 +430,7 @@ class MotherDuckPipeline:
     def materialize_kpis(self) -> bool:
         """Materialize 255 KPI records and 57 quality scorecards."""
         start_time = time.time()
-        self.execution_context.start_stage('materialize_kpis')
+        self._start_stage('materialize_kpis')
 
         try:
             logger.info("Materializing 255 KPIs (51 KPIs × 5 boroughs) and 57 quality scorecards...")
@@ -386,8 +441,8 @@ class MotherDuckPipeline:
 
             if not Path(kpi_file).exists():
                 logger.error(f"CRITICAL: KPI SQL file not found: {kpi_file}")
-                self.execution_context.fail_stage(f"KPI SQL file missing: {kpi_file}")
-                self.alert_manager.send_alert(Alert(
+                self._fail_stage(f"KPI SQL file missing: {kpi_file}")
+                self._send_alert(Alert(
                     level=AlertLevel.CRITICAL,
                     title="KPI Materialization Failed",
                     message=f"SQL file not found: {kpi_file}",
@@ -400,8 +455,8 @@ class MotherDuckPipeline:
             success, message = self.sql_executor.execute_stage(kpi_file)
             if not success:
                 logger.error(f"KPI materialization failed: {message}")
-                self.execution_context.fail_stage(f"KPI SQL execution failed: {message}")
-                self.alert_manager.send_alert(Alert(
+                self._fail_stage(f"KPI SQL execution failed: {message}")
+                self._send_alert(Alert(
                     level=AlertLevel.ERROR,
                     title="KPI Materialization Failed",
                     message=message,
@@ -415,8 +470,8 @@ class MotherDuckPipeline:
                 kpi_count = self.bridge.get_table_count('serving', 'kpi_borough_results')
                 if kpi_count == 0:
                     logger.error("CRITICAL: KPI table created but contains 0 rows")
-                    self.execution_context.fail_stage("KPI table is empty (0 rows)")
-                    self.alert_manager.send_alert(Alert(
+                    self._fail_stage("KPI table is empty (0 rows)")
+                    self._send_alert(Alert(
                         level=AlertLevel.CRITICAL,
                         title="KPI Materialization Empty",
                         message="KPI table has 0 rows",
@@ -428,8 +483,8 @@ class MotherDuckPipeline:
                 logger.info(f"KPI materialization verified: {kpi_count} KPI records")
             except Exception as e:
                 logger.error(f"Failed to verify KPI table: {str(e)}")
-                self.execution_context.fail_stage(f"KPI verification failed: {str(e)}")
-                self.alert_manager.send_alert(Alert(
+                self._fail_stage(f"KPI verification failed: {str(e)}")
+                self._send_alert(Alert(
                     level=AlertLevel.ERROR,
                     title="KPI Verification Exception",
                     message=str(e),
@@ -438,7 +493,7 @@ class MotherDuckPipeline:
                 return False
 
             load_time = time.time() - start_time
-            self.execution_context.complete_stage(rows_processed=kpi_count, duration=load_time)
+            self._complete_stage(rows_processed=kpi_count, duration=load_time)
 
             self.log_stage('materialize_kpis', 'success',
                           total_kpi_records=255,
@@ -451,8 +506,8 @@ class MotherDuckPipeline:
 
         except Exception as e:
             logger.error(f"Failed to materialize KPIs: {str(e)}")
-            self.execution_context.fail_stage(f"Exception: {str(e)}")
-            self.alert_manager.send_alert(Alert(
+            self._fail_stage(f"Exception: {str(e)}")
+            self._send_alert(Alert(
                 level=AlertLevel.ERROR,
                 title="KPI Materialization Exception",
                 message=str(e),
@@ -464,7 +519,7 @@ class MotherDuckPipeline:
     def verify_gates(self) -> bool:
         """Run 4 mandatory verification gates."""
         start_time = time.time()
-        self.execution_context.start_stage('verify_gates')
+        self._start_stage('verify_gates')
 
         try:
             logger.info("Running 4 verification gates...")
@@ -483,8 +538,8 @@ class MotherDuckPipeline:
                 success, message = self.sql_executor.execute_stage(gates_file)
                 if not success:
                     logger.error(f"Gate verification failed: {message}")
-                    self.execution_context.fail_stage(f"Gate verification SQL failed: {message}")
-                    self.alert_manager.send_alert(Alert(
+                    self._fail_stage(f"Gate verification SQL failed: {message}")
+                    self._send_alert(Alert(
                         level=AlertLevel.ERROR,
                         title="Verification Gates Failed",
                         message=message,
@@ -502,7 +557,7 @@ class MotherDuckPipeline:
                 logger.info(f"  [{gate_name}] {gate_check}")
 
             load_time = time.time() - start_time
-            self.execution_context.complete_stage(rows_processed=0, duration=load_time)
+            self._complete_stage(rows_processed=0, duration=load_time)
 
             self.log_stage('verification_gates', 'success',
                           gates_passed=len(gates),
@@ -512,8 +567,8 @@ class MotherDuckPipeline:
 
         except Exception as e:
             logger.error(f"Verification failed: {str(e)}")
-            self.execution_context.fail_stage(f"Exception: {str(e)}")
-            self.alert_manager.send_alert(Alert(
+            self._fail_stage(f"Exception: {str(e)}")
+            self._send_alert(Alert(
                 level=AlertLevel.ERROR,
                 title="Verification Gates Exception",
                 message=str(e),
