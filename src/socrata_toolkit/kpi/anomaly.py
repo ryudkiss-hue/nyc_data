@@ -90,10 +90,10 @@ class AnomalyDetector:
             )
 
         # Calculate z-score
-        z_score = (observed - mean) / stdev
+        z_score = float((observed - mean) / stdev)
 
         # Classify severity
-        is_anomaly = abs(z_score) > self.z_threshold
+        is_anomaly = bool(abs(z_score) > self.z_threshold)
         severity = self._classify_severity(z_score)
 
         logger.debug(f"KPI {kpi_id}: z_score={z_score:.2f}, severity={severity}, anomaly={is_anomaly}")

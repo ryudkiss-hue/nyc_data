@@ -251,6 +251,10 @@ class TestMaterializationOrchestrator:
     def mock_orchestrator(self):
         """Mock orchestrator with minimal dependencies."""
         db_manager = Mock()
+        # Make db_manager.get_connection() return a context manager
+        mock_conn = MagicMock()
+        db_manager.get_connection.return_value = mock_conn
+
         registry = Mock()
 
         orchestrator = MaterializationOrchestrator(db_manager, registry)

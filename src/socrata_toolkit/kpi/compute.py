@@ -83,12 +83,11 @@ class KPIComputer:
 
         if not historical or len(historical) == 0:
             return Trend(
-                period_over_period_pct=0.0,
-                month_over_month={},
-                historical_avg_variance=0.0,
+                period_over_period=0.0,
+                historical_average_variance=0.0,
                 forecast_next_period=current_value,
                 anomaly_flagged=False,
-                z_score=0.0
+                anomaly_z_score=0.0
             )
 
         # Period-over-period (previous period vs current)
@@ -100,19 +99,12 @@ class KPIComputer:
         avg = np.mean(values)
         avg_variance = ((current_value - avg) / avg * 100.0) if avg != 0 else 0.0
 
-        # Month-over-month tracking (dict of last 12 months)
-        month_over_month = {
-            h.period.isoformat(): h.value
-            for h in historical[-12:]
-        }
-
         return Trend(
-            period_over_period_pct=pct_change,
-            month_over_month=month_over_month,
-            historical_avg_variance=avg_variance,
+            period_over_period=pct_change,
+            historical_average_variance=avg_variance,
             forecast_next_period=current_value,
             anomaly_flagged=False,
-            z_score=0.0
+            anomaly_z_score=0.0
         )
 
     def determine_status(self, kpi_def: KPIDefinition, current: float,

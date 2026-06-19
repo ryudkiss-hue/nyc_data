@@ -134,22 +134,21 @@ class ForecastingEngine:
         residuals = fitted.resid
         rmse = np.sqrt(np.mean(residuals ** 2))
         z_95 = 1.96
-        ci_lower = (predicted_mean - z_95 * rmse).values if hasattr(predicted_mean, 'values') else predicted_mean - z_95 * rmse
-        ci_upper = (predicted_mean + z_95 * rmse).values if hasattr(predicted_mean, 'values') else predicted_mean + z_95 * rmse
-        predicted_mean = predicted_mean.values if hasattr(predicted_mean, 'values') else predicted_mean
+        predicted_mean_values = predicted_mean.values if hasattr(predicted_mean, 'values') else predicted_mean
+        ci_lower = (predicted_mean_values - z_95 * rmse).tolist() if isinstance(predicted_mean_values, np.ndarray) else [v - z_95 * rmse for v in predicted_mean_values]
+        ci_upper = (predicted_mean_values + z_95 * rmse).tolist() if isinstance(predicted_mean_values, np.ndarray) else [v + z_95 * rmse for v in predicted_mean_values]
+        forecast_values = predicted_mean_values.tolist() if isinstance(predicted_mean_values, np.ndarray) else predicted_mean_values
 
         # Compute confidence score (1 - normalized RMSE)
-        residuals = fitted.resid
-        rmse = np.sqrt(np.mean(residuals ** 2))
         mean_val = np.mean(series)
         confidence_score = max(0.0, 1.0 - (rmse / mean_val if mean_val > 0 else 1.0))
 
         return ForecastResult(
             kpi_id=kpi_id,
             period=date.today(),
-            forecast_values=predicted_mean.tolist(),
-            ci_lower=ci.iloc[:, 0].tolist(),
-            ci_upper=ci.iloc[:, 1].tolist(),
+            forecast_values=forecast_values,
+            ci_lower=ci_lower,
+            ci_upper=ci_upper,
             confidence_score=confidence_score,
             method='exponential_smoothing',
             is_stationary=self._check_stationarity(series),

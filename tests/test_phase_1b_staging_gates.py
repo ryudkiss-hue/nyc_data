@@ -105,9 +105,9 @@ def test_analytics_schema_creation():
 def test_kpi_materialization_readiness():
     """Test KPI serving layer SQL."""
     print("\n[TEST] KPI Materialization Readiness")
-    
+
     bridge = MotherDuckBridge(use_motherduck=False, db_name="test_kpi")
-    
+
     # Create minimal staging tables
     bridge.create_schema("staging")
     bridge.create_table("staging", "inspection", {
@@ -118,9 +118,10 @@ def test_kpi_materialization_readiness():
         "violation_id": "VARCHAR",
         "inspection_id": "VARCHAR"
     })
-    
-    # Parse KPI SQL
-    executor = PipelineStageExecutor(bridge)
+
+    # Parse KPI SQL with correct path
+    sql_dir = str(Path(__file__).parent.parent / "pipeline" / "sql")
+    executor = PipelineStageExecutor(bridge, sql_dir=sql_dir)
     statements = executor.executor.parse_file("04_serving_kpis.sql")
     
     assert len(statements) > 0, "No statements parsed from KPI SQL"
