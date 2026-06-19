@@ -212,10 +212,11 @@ class TestKPIComputer:
 
     def test_compute_trend_period_over_period(self, computer):
         """Calculate period-over-period change."""
+        from datetime import datetime, timezone
         current = 105.0
         historical = [
-            KPIValue(date(2026, 5, 1), 100.0),
-            KPIValue(date(2026, 4, 1), 98.0)
+            KPIValue(value=100.0, timestamp=datetime(2026, 5, 1, tzinfo=timezone.utc)),
+            KPIValue(value=98.0, timestamp=datetime(2026, 4, 1, tzinfo=timezone.utc))
         ]
 
         trend = computer.compute_trend('TEST-001', current, historical)
