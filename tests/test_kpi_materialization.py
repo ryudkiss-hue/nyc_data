@@ -221,14 +221,14 @@ class TestKPIComputer:
         trend = computer.compute_trend('TEST-001', current, historical)
 
         assert trend is not None
-        assert trend.period_over_period_pct > 0  # Increased
+        assert trend.period_over_period > 0  # Increased
 
     def test_compute_trend_with_empty_history(self, computer):
         """Handle empty historical data."""
         trend = computer.compute_trend('TEST-002', 100.0, [])
 
         assert trend is not None
-        assert trend.period_over_period_pct == 0.0
+        assert trend.period_over_period == 0.0
 
     def test_build_computation_result(self, computer, mock_kpi_def):
         """Assemble complete computation result."""
