@@ -1,0 +1,317 @@
+{
+  "ingestion_group": {
+    "name": "nyc_dot_complete_data_lake",
+    "version": "3.0",
+    "created_at": "2026-06-18",
+    "description": "Unified ingestion of all 57 NYC DOT datasets as single coherent group",
+    "total_datasets": 57,
+    "total_estimated_rows": 12500000,
+    "ingestion_strategy": "unified_tiered_batching",
+    "caching_strategy": "intelligent_layered"
+  },
+  "ingestion_tiers": {
+    "tier_0_critical": {
+      "description": "Core operational datasets - ingest first, highest priority",
+      "batch_size": 5,
+      "parallel_workers": 2,
+      "update_frequency": "daily",
+      "cache_policy": "prefetch_full",
+      "datasets": [
+        {
+          "id": 1,
+          "name": "inspection",
+          "fourfour": "a2nx-4u46",
+          "row_count": 399427,
+          "size_tier": "large",
+          "primary_key": "objectid",
+          "domain_schema": "sim_core",
+          "update_frequency": "daily",
+          "sla_tier": "HIGH",
+          "cache_tier": "prefetch_full",
+          "priority_score": 100
+        },
+        {
+          "id": 2,
+          "name": "violations",
+          "fourfour": "6kbp-uz6m",
+          "row_count": 312828,
+          "size_tier": "large",
+          "primary_key": "objectid",
+          "domain_schema": "accessibility",
+          "update_frequency": "daily",
+          "sla_tier": "HIGH",
+          "cache_tier": "prefetch_full",
+          "priority_score": 99
+        },
+        {
+          "id": 3,
+          "name": "ramp_progress",
+          "fourfour": "e7gc-ub6z",
+          "row_count": 187000,
+          "size_tier": "medium",
+          "primary_key": "objectid",
+          "domain_schema": "accessibility",
+          "update_frequency": "daily",
+          "sla_tier": "HIGH",
+          "cache_tier": "prefetch_full",
+          "priority_score": 98
+        },
+        {
+          "id": 4,
+          "name": "ramp_complaints",
+          "fourfour": "jagj-gttd",
+          "row_count": 6000,
+          "size_tier": "small",
+          "primary_key": "objectid",
+          "domain_schema": "accessibility",
+          "update_frequency": "daily",
+          "sla_tier": "HIGH",
+          "cache_tier": "prefetch_full",
+          "priority_score": 97
+        },
+        {
+          "id": 5,
+          "name": "dismissals",
+          "fourfour": "p4u2-3jgx",
+          "row_count": 85000,
+          "size_tier": "medium",
+          "primary_key": "objectid",
+          "domain_schema": "sim_core",
+          "update_frequency": "daily",
+          "sla_tier": "HIGH",
+          "cache_tier": "prefetch_full",
+          "priority_score": 96
+        }
+      ]
+    },
+    "tier_1_high_priority": {
+      "description": "Important operational datasets - ingest in second batch",
+      "batch_size": 8,
+      "parallel_workers": 3,
+      "update_frequency": "weekly",
+      "cache_policy": "prefetch_incremental",
+      "datasets": [
+        {
+          "id": 6,
+          "name": "street_permits",
+          "fourfour": "tqtj-sjs8",
+          "row_count": 3600000,
+          "size_tier": "xlarge",
+          "primary_key": "permit_id",
+          "domain_schema": "coordination",
+          "update_frequency": "weekly",
+          "sla_tier": "MEDIUM",
+          "cache_tier": "prefetch_incremental",
+          "priority_score": 85
+        },
+        {
+          "id": 7,
+          "name": "street_construction_inspections",
+          "fourtfour": "ydkf-mpxb",
+          "row_count": 11500000,
+          "size_tier": "xlarge",
+          "primary_key": "inspection_id",
+          "domain_schema": "coordination",
+          "update_frequency": "weekly",
+          "sla_tier": "MEDIUM",
+          "cache_tier": "prefetch_incremental",
+          "priority_score": 84
+        },
+        {
+          "id": 8,
+          "name": "built",
+          "fourfour": "ugc8-s3f6",
+          "row_count": 105990,
+          "size_tier": "medium",
+          "primary_key": "lot_id",
+          "domain_schema": "extended",
+          "update_frequency": "weekly",
+          "sla_tier": "MEDIUM",
+          "cache_tier": "prefetch_incremental",
+          "priority_score": 83
+        },
+        {
+          "id": 9,
+          "name": "lot_info",
+          "fourfour": "i642-2fxq",
+          "row_count": 1200000,
+          "size_tier": "xlarge",
+          "primary_key": "lot_id",
+          "domain_schema": "overlays",
+          "update_frequency": "monthly",
+          "sla_tier": "MEDIUM",
+          "cache_tier": "prefetch_incremental",
+          "priority_score": 82
+        },
+        {
+          "id": 10,
+          "name": "complaints_311",
+          "fourfour": "erm2-nwe9",
+          "row_count": 21300000,
+          "size_tier": "xlarge",
+          "primary_key": "complaint_id",
+          "domain_schema": "sim_core",
+          "update_frequency": "daily",
+          "sla_tier": "HIGH",
+          "cache_tier": "lazy_load",
+          "priority_score": 75
+        },
+        {
+          "id": 11,
+          "name": "street_resurfacing_inhouse",
+          "fourfour": "ffaf-8mrv",
+          "row_count": 602000,
+          "size_tier": "xlarge",
+          "primary_key": "project_id",
+          "domain_schema": "extended",
+          "update_frequency": "weekly",
+          "sla_tier": "MEDIUM",
+          "cache_tier": "prefetch_incremental",
+          "priority_score": 81
+        },
+        {
+          "id": 12,
+          "name": "reinspection",
+          "fourtfour": "gx72-kirf",
+          "row_count": 36000,
+          "size_tier": "small",
+          "primary_key": "objectid",
+          "domain_schema": "sim_core",
+          "update_frequency": "weekly",
+          "sla_tier": "MEDIUM",
+          "cache_tier": "prefetch_incremental",
+          "priority_score": 80
+        },
+        {
+          "id": 13,
+          "name": "correspondences",
+          "fourtfour": "bheb-sjfi",
+          "row_count": 30000,
+          "size_tier": "small",
+          "primary_key": "correspondence_id",
+          "domain_schema": "coordination",
+          "update_frequency": "weekly",
+          "sla_tier": "MEDIUM",
+          "cache_tier": "prefetch_incremental",
+          "priority_score": 79
+        }
+      ]
+    },
+    "tier_2_standard": {
+      "description": "Standard enrichment datasets - ingest in third batch",
+      "batch_size": 12,
+      "parallel_workers": 4,
+      "update_frequency": "monthly",
+      "cache_policy": "lazy_load",
+      "datasets": [
+        {"id": 14, "name": "ramp_locations", "fourtfour": "ufzp-rrqu", "row_count": 217000, "size_tier": "medium", "primary_key": "ramp_id", "domain_schema": "accessibility", "update_frequency": "static", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 70},
+        {"id": 15, "name": "mappluto", "fourtfour": "64uk-42ks", "row_count": 858000, "size_tier": "large", "primary_key": "bblid", "domain_schema": "overlays", "update_frequency": "quarterly", "sla_tier": "MEDIUM", "cache_tier": "lazy_load", "priority_score": 68},
+        {"id": 16, "name": "sidewalk_planimetric", "fourtfour": "vfx9-tbb6", "row_count": 50000, "size_tier": "medium", "primary_key": "segment_id", "domain_schema": "overlays", "update_frequency": "quarterly", "sla_tier": "MEDIUM", "cache_tier": "lazy_load", "priority_score": 67},
+        {"id": 17, "name": "pedestrian_demand", "fourtfour": "fwpa-qxaf", "row_count": 127000, "size_tier": "medium", "primary_key": "location_id", "domain_schema": "extended", "update_frequency": "quarterly", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 66},
+        {"id": 18, "name": "capital_intersections", "fourtfour": "97nd-ff3i", "row_count": 7800, "size_tier": "small", "primary_key": "intersection_id", "domain_schema": "coordination", "update_frequency": "quarterly", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 65},
+        {"id": 19, "name": "street_closures_block", "fourtfour": "i6b5-j7bu", "row_count": 4300, "size_tier": "small", "primary_key": "closure_id", "domain_schema": "coordination", "update_frequency": "weekly", "sla_tier": "MEDIUM", "cache_tier": "lazy_load", "priority_score": 64},
+        {"id": 20, "name": "street_resurfacing_schedule", "fourtfour": "xnfm-u3k5", "row_count": 309000, "size_tier": "large", "primary_key": "project_id", "domain_schema": "extended", "update_frequency": "weekly", "sla_tier": "MEDIUM", "cache_tier": "lazy_load", "priority_score": 63},
+        {"id": 21, "name": "step_streets", "fourtfour": "u9au-h79y", "row_count": 110, "size_tier": "tiny", "primary_key": "step_id", "domain_schema": "overlays", "update_frequency": "static", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 50},
+        {"id": 22, "name": "tree_damage", "fourtfour": "j6v2-6uxq", "row_count": 17000, "size_tier": "small", "primary_key": "tree_id", "domain_schema": "overlays", "update_frequency": "quarterly", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 51},
+        {"id": 23, "name": "curb_metal_protruding", "fourtfour": "i2y3-sx2e", "row_count": 23000, "size_tier": "small", "primary_key": "violation_id", "domain_schema": "overlays", "update_frequency": "quarterly", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 52},
+        {"id": 24, "name": "capital_blocks", "fourtfour": "jvk9-k4re", "row_count": 0, "size_tier": "empty", "primary_key": "block_id", "domain_schema": "coordination", "update_frequency": "static", "sla_tier": "LOW", "cache_tier": "skip", "priority_score": 10},
+        {"id": 25, "name": "weekly_construction", "fourtfour": "r528-jcks", "row_count": 75, "size_tier": "tiny", "primary_key": "construction_id", "domain_schema": "coordination", "update_frequency": "static", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 11}
+      ]
+    },
+    "tier_3_supplemental": {
+      "description": "Supplemental & reference datasets - ingest last, can be deferred",
+      "batch_size": 20,
+      "parallel_workers": 2,
+      "update_frequency": "on_demand",
+      "cache_policy": "lazy_load",
+      "datasets": [
+        {"id": 26, "name": "permit_stipulations", "fourtfour": "gsgx-6efw", "row_count": 0, "size_tier": "empty", "primary_key": "stipulation_id", "domain_schema": "coordination", "update_frequency": "unknown", "sla_tier": "UNKNOWN", "cache_tier": "skip", "priority_score": 5, "note": "API error - requires investigation"},
+        {"id": 27, "name": "inspection_photos", "fourtfour": "custom_synthetic", "row_count": 150000, "size_tier": "medium", "primary_key": "photo_id", "domain_schema": "sim_core", "update_frequency": "weekly", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 40},
+        {"id": 28, "name": "violation_details", "fourtfour": "custom_synthetic", "row_count": 85000, "size_tier": "medium", "primary_key": "detail_id", "domain_schema": "accessibility", "update_frequency": "weekly", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 41},
+        {"id": 29, "name": "ramp_maintenance_log", "fourtfour": "custom_synthetic", "row_count": 52000, "size_tier": "medium", "primary_key": "log_id", "domain_schema": "accessibility", "update_frequency": "monthly", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 42},
+        {"id": 30, "name": "permit_history", "fourtfour": "custom_synthetic", "row_count": 310000, "size_tier": "large", "primary_key": "history_id", "domain_schema": "coordination", "update_frequency": "weekly", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 39},
+        {"id": 31, "name": "construction_metrics", "fourtfour": "custom_synthetic", "row_count": 195000, "size_tier": "medium", "primary_key": "metric_id", "domain_schema": "coordination", "update_frequency": "weekly", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 38},
+        {"id": 32, "name": "block_face_inventory", "fourtfour": "custom_synthetic", "row_count": 280000, "size_tier": "large", "primary_key": "face_id", "domain_schema": "overlays", "update_frequency": "quarterly", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 37},
+        {"id": 33, "name": "tree_inventory", "fourtfour": "custom_synthetic", "row_count": 340000, "size_tier": "large", "primary_key": "tree_id", "domain_schema": "overlays", "update_frequency": "quarterly", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 36},
+        {"id": 34, "name": "curb_inventory", "fourtfour": "custom_synthetic", "row_count": 650000, "size_tier": "large", "primary_key": "curb_id", "domain_schema": "overlays", "update_frequency": "quarterly", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 35},
+        {"id": 35, "name": "project_budget", "fourtfour": "custom_synthetic", "row_count": 62000, "size_tier": "medium", "primary_key": "budget_id", "domain_schema": "extended", "update_frequency": "monthly", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 34},
+        {"id": 36, "name": "vendor_performance", "fourtfour": "custom_synthetic", "row_count": 28000, "size_tier": "small", "primary_key": "vendor_id", "domain_schema": "extended", "update_frequency": "monthly", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 33},
+        {"id": 37, "name": "equipment_log", "fourtfour": "custom_synthetic", "row_count": 42000, "size_tier": "small", "primary_key": "equipment_id", "domain_schema": "extended", "update_frequency": "monthly", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 32},
+        {"id": 38, "name": "safety_incidents", "fourtfour": "custom_synthetic", "row_count": 18500, "size_tier": "small", "primary_key": "incident_id", "domain_schema": "sim_core", "update_frequency": "weekly", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 31},
+        {"id": 39, "name": "environmental_compliance", "fourtfour": "custom_synthetic", "row_count": 55000, "size_tier": "medium", "primary_key": "compliance_id", "domain_schema": "coordination", "update_frequency": "monthly", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 30},
+        {"id": 40, "name": "traffic_impact", "fourtfour": "custom_synthetic", "row_count": 175000, "size_tier": "medium", "primary_key": "impact_id", "domain_schema": "coordination", "update_frequency": "weekly", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 29},
+        {"id": 41, "name": "noise_monitoring", "fourtfour": "custom_synthetic", "row_count": 92000, "size_tier": "medium", "primary_key": "noise_id", "domain_schema": "extended", "update_frequency": "weekly", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 28},
+        {"id": 42, "name": "air_quality", "fourtfour": "custom_synthetic", "row_count": 38000, "size_tier": "small", "primary_key": "quality_id", "domain_schema": "extended", "update_frequency": "weekly", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 27},
+        {"id": 43, "name": "public_complaints", "fourtfour": "custom_synthetic", "row_count": 245000, "size_tier": "large", "primary_key": "complaint_id", "domain_schema": "sim_core", "update_frequency": "weekly", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 26},
+        {"id": 44, "name": "community_outreach", "fourtfour": "custom_synthetic", "row_count": 68000, "size_tier": "medium", "primary_key": "outreach_id", "domain_schema": "coordination", "update_frequency": "monthly", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 25},
+        {"id": 45, "name": "contractor_evaluation", "fourtfour": "custom_synthetic", "row_count": 12500, "size_tier": "small", "primary_key": "evaluation_id", "domain_schema": "extended", "update_frequency": "quarterly", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 24},
+        {"id": 46, "name": "cost_tracking", "fourtfour": "custom_synthetic", "row_count": 185000, "size_tier": "medium", "primary_key": "cost_id", "domain_schema": "extended", "update_frequency": "monthly", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 23},
+        {"id": 47, "name": "funding_sources", "fourtfour": "custom_synthetic", "row_count": 22000, "size_tier": "small", "primary_key": "fund_id", "domain_schema": "extended", "update_frequency": "quarterly", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 22},
+        {"id": 48, "name": "regulatory_approvals", "fourtfour": "custom_synthetic", "row_count": 8500, "size_tier": "small", "primary_key": "approval_id", "domain_schema": "coordination", "update_frequency": "monthly", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 21},
+        {"id": 49, "name": "accessibility_audits", "fourtfour": "custom_synthetic", "row_count": 75000, "size_tier": "medium", "primary_key": "audit_id", "domain_schema": "accessibility", "update_frequency": "quarterly", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 20},
+        {"id": 50, "name": "service_requests", "fourtfour": "custom_synthetic", "row_count": 410000, "size_tier": "large", "primary_key": "request_id", "domain_schema": "sim_core", "update_frequency": "daily", "sla_tier": "MEDIUM", "cache_tier": "lazy_load", "priority_score": 60},
+        {"id": 51, "name": "performance_metrics", "fourtfour": "custom_synthetic", "row_count": 125000, "size_tier": "medium", "primary_key": "metric_id", "domain_schema": "extended", "update_frequency": "weekly", "sla_tier": "MEDIUM", "cache_tier": "lazy_load", "priority_score": 61},
+        {"id": 52, "name": "stakeholder_feedback", "fourtfour": "custom_synthetic", "row_count": 35000, "size_tier": "small", "primary_key": "feedback_id", "domain_schema": "coordination", "update_frequency": "monthly", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 19},
+        {"id": 53, "name": "inspection_history", "fourtfour": "custom_synthetic", "row_count": 500000, "size_tier": "large", "primary_key": "history_id", "domain_schema": "sim_core", "update_frequency": "weekly", "sla_tier": "MEDIUM", "cache_tier": "lazy_load", "priority_score": 62},
+        {"id": 54, "name": "violation_photos", "fourtfour": "custom_synthetic", "row_count": 280000, "size_tier": "large", "primary_key": "photo_id", "domain_schema": "accessibility", "update_frequency": "weekly", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 18},
+        {"id": 55, "name": "ramp_specifications", "fourtfour": "custom_synthetic", "row_count": 18000, "size_tier": "small", "primary_key": "spec_id", "domain_schema": "accessibility", "update_frequency": "static", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 17},
+        {"id": 56, "name": "surface_conditions", "fourtfour": "custom_synthetic", "row_count": 380000, "size_tier": "large", "primary_key": "condition_id", "domain_schema": "overlays", "update_frequency": "quarterly", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 16},
+        {"id": 57, "name": "spatial_geometry", "fourtfour": "custom_synthetic", "row_count": 520000, "size_tier": "large", "primary_key": "geom_id", "domain_schema": "overlays", "update_frequency": "quarterly", "sla_tier": "LOW", "cache_tier": "lazy_load", "priority_score": 15}
+      ]
+    }
+  },
+  "domain_schemas": [
+    {
+      "name": "sim_core",
+      "description": "Core SIM inspection, management, and service request data",
+      "tables_count": 8,
+      "total_rows": "~2.5M",
+      "primary_join_key": "objectid",
+      "update_frequency": "daily"
+    },
+    {
+      "name": "accessibility",
+      "description": "ADA compliance, ramp program, accessibility violations and audits",
+      "tables_count": 8,
+      "total_rows": "~800K",
+      "primary_join_key": "ramp_id|violation_id",
+      "update_frequency": "daily"
+    },
+    {
+      "name": "coordination",
+      "description": "Permit coordination, construction, intersections, and regulatory",
+      "tables_count": 12,
+      "total_rows": "~16M",
+      "primary_join_key": "lot_id|permit_id",
+      "update_frequency": "weekly"
+    },
+    {
+      "name": "overlays",
+      "description": "Spatial enrichment, tree data, curb inventory, surface conditions",
+      "tables_count": 9,
+      "total_rows": "~4.7M",
+      "primary_join_key": "bblid|segment_id",
+      "update_frequency": "quarterly"
+    },
+    {
+      "name": "extended",
+      "description": "Project budget, scheduling, equipment, metrics, and derived time-series",
+      "tables_count": 12,
+      "total_rows": "~2.5M",
+      "primary_join_key": "project_id|metric_id",
+      "update_frequency": "weekly"
+    }
+  ],
+  "unified_ingestion_rules": {
+    "rule_1": "All 57 datasets treated as single coherent ingestion unit - no artificial split",
+    "rule_2": "Tier-based parallelization: critical datasets load first, supplemental last",
+    "rule_3": "Smart batching: tier_0 (5 per batch), tier_1 (8 per batch), tier_2 (12 per batch), tier_3 (20 per batch)",
+    "rule_4": "Cache policy per dataset: prefetch_full (tier_0), prefetch_incremental (tier_1), lazy_load (tier_2-3)",
+    "rule_5": "Empty/broken datasets (capital_blocks, permit_stipulations) flagged but not blocking",
+    "rule_6": "SLA enforcement: HIGH datasets must refresh within 14 days, MEDIUM within 30 days, LOW within 60 days",
+    "rule_7": "All datasets land in 'raw' schema, staged to 'staging', analytics in domain-specific schemas",
+    "rule_8": "Unified checkpoint & lineage tracking across all 57 datasets",
+    "rule_9": "No 'cached vs Socrata' distinction - all use same ingestion, caching, and materialization pipeline",
+    "rule_10": "Metadata completeness required: fourfour, row_count, primary_key, domain_schema for every dataset"
+  }
+}
