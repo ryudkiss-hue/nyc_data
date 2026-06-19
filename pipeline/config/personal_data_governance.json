@@ -1,0 +1,224 @@
+{
+  "governance_framework": {
+    "version": "2.0_solo_user",
+    "created_at": "2026-06-18",
+    "name": "NYC DOT Personal Data Governance Framework",
+    "scope": "All 57 source datasets + 51 KPIs + 5 domain schemas + all MotherDuck dives",
+    "user": "sole_analyst",
+    "retention_policy": "indefinite_all_data",
+    "principles": [
+      "Single source of truth for all data assets",
+      "Complete lineage from raw data through KPI materialization",
+      "Intelligent categorization per data management best practices",
+      "Quality gates tied to data reliability and SLA",
+      "Discovery artifacts (dives) integrated into governance model",
+      "Personal audit trail for reproducibility"
+    ]
+  },
+
+  "dataset_classification": {
+    "description": "All 57 datasets classified by operational characteristics",
+    "dimensions": {
+      "tier": {
+        "tier_0_critical": {
+          "description": "Core operational datasets - ingest first, highest priority",
+          "batch_size": 5,
+          "parallel_workers": 2,
+          "datasets": 5,
+          "estimated_rows": "~900K"
+        },
+        "tier_1_high_priority": {
+          "description": "Important operational datasets - ingest in second batch",
+          "batch_size": 8,
+          "parallel_workers": 3,
+          "datasets": 8,
+          "estimated_rows": "~50M"
+        },
+        "tier_2_standard": {
+          "description": "Standard enrichment datasets - ingest in third batch",
+          "batch_size": 12,
+          "parallel_workers": 4,
+          "datasets": 12,
+          "estimated_rows": "~4.7M"
+        },
+        "tier_3_supplemental": {
+          "description": "Supplemental reference datasets - ingest last",
+          "batch_size": 20,
+          "parallel_workers": 2,
+          "datasets": 32,
+          "estimated_rows": "~7M"
+        }
+      },
+
+      "size_classification": {
+        "tiny": "< 1K rows",
+        "small": "1K - 100K rows",
+        "medium": "100K - 1M rows",
+        "large": "1M - 5M rows",
+        "xlarge": "> 5M rows"
+      },
+
+      "update_frequency": {
+        "real_time": "≤ 1 hour",
+        "daily": "≤ 24 hours",
+        "weekly": "≤ 7 days",
+        "monthly": "≤ 30 days",
+        "quarterly": "≤ 90 days",
+        "static": "never changes"
+      },
+
+      "sla_tier": {
+        "HIGH": "≤ 14 days",
+        "MEDIUM": "≤ 30 days",
+        "LOW": "≤ 60 days"
+      },
+
+      "cache_policy": {
+        "prefetch_full": "Load completely on first run",
+        "prefetch_incremental": "Load new/changed rows on each refresh",
+        "lazy_load": "Load only when explicitly queried",
+        "skip": "Empty or unavailable dataset"
+      },
+
+      "priority_score": "100 (critical) → 5 (deprecated)"
+    },
+
+    "all_57_datasets": {
+      "tier_0_critical": [
+        {"id": 1, "name": "inspection", "fourfour": "a2nx-4u46", "rows": 399427, "size": "large", "frequency": "daily", "sla": "HIGH", "cache": "prefetch_full", "priority": 100, "domain": "sim_core"},
+        {"id": 2, "name": "violations", "fourfour": "6kbp-uz6m", "rows": 312828, "size": "large", "frequency": "daily", "sla": "HIGH", "cache": "prefetch_full", "priority": 99, "domain": "accessibility"},
+        {"id": 3, "name": "ramp_progress", "fourfour": "e7gc-ub6z", "rows": 187000, "size": "medium", "frequency": "daily", "sla": "HIGH", "cache": "prefetch_full", "priority": 98, "domain": "accessibility"},
+        {"id": 4, "name": "ramp_complaints", "fourfour": "jagj-gttd", "rows": 6000, "size": "small", "frequency": "daily", "sla": "HIGH", "cache": "prefetch_full", "priority": 97, "domain": "accessibility"},
+        {"id": 5, "name": "dismissals", "fourfour": "p4u2-3jgx", "rows": 85000, "size": "medium", "frequency": "daily", "sla": "HIGH", "cache": "prefetch_full", "priority": 96, "domain": "sim_core"}
+      ],
+      "tier_1_high_priority": [
+        {"id": 6, "name": "street_permits", "fourfour": "tqtj-sjs8", "rows": 3600000, "size": "xlarge", "frequency": "weekly", "sla": "MEDIUM", "cache": "prefetch_incremental", "priority": 85, "domain": "coordination"},
+        {"id": 7, "name": "street_construction_inspections", "fourfour": "ydkf-mpxb", "rows": 11500000, "size": "xlarge", "frequency": "weekly", "sla": "MEDIUM", "cache": "prefetch_incremental", "priority": 84, "domain": "coordination"},
+        {"id": 8, "name": "built", "fourfour": "ugc8-s3f6", "rows": 105990, "size": "medium", "frequency": "weekly", "sla": "MEDIUM", "cache": "prefetch_incremental", "priority": 83, "domain": "extended"},
+        {"id": 9, "name": "lot_info", "fourfour": "i642-2fxq", "rows": 1200000, "size": "xlarge", "frequency": "monthly", "sla": "MEDIUM", "cache": "prefetch_incremental", "priority": 82, "domain": "overlays"},
+        {"id": 10, "name": "complaints_311", "fourfour": "erm2-nwe9", "rows": 21300000, "size": "xlarge", "frequency": "daily", "sla": "HIGH", "cache": "lazy_load", "priority": 75, "domain": "sim_core"},
+        {"id": 11, "name": "street_resurfacing_inhouse", "fourfour": "ffaf-8mrv", "rows": 602000, "size": "xlarge", "frequency": "weekly", "sla": "MEDIUM", "cache": "prefetch_incremental", "priority": 81, "domain": "extended"},
+        {"id": 12, "name": "reinspection", "fourfour": "gx72-kirf", "rows": 36000, "size": "small", "frequency": "weekly", "sla": "MEDIUM", "cache": "prefetch_incremental", "priority": 80, "domain": "sim_core"},
+        {"id": 13, "name": "correspondences", "fourfour": "bheb-sjfi", "rows": 30000, "size": "small", "frequency": "weekly", "sla": "MEDIUM", "cache": "prefetch_incremental", "priority": 79, "domain": "coordination"}
+      ],
+      "tier_2_standard": [
+        {"id": 14, "name": "ramp_locations", "fourfour": "ufzp-rrqu", "rows": 217000, "size": "medium", "frequency": "static", "sla": "LOW", "cache": "lazy_load", "priority": 70, "domain": "accessibility"},
+        {"id": 15, "name": "mappluto", "fourfour": "64uk-42ks", "rows": 858000, "size": "large", "frequency": "quarterly", "sla": "MEDIUM", "cache": "lazy_load", "priority": 68, "domain": "overlays"},
+        {"id": 16, "name": "sidewalk_planimetric", "fourfour": "vfx9-tbb6", "rows": 50000, "size": "medium", "frequency": "quarterly", "sla": "MEDIUM", "cache": "lazy_load", "priority": 67, "domain": "overlays"},
+        {"id": 17, "name": "pedestrian_demand", "fourfour": "fwpa-qxaf", "rows": 127000, "size": "medium", "frequency": "quarterly", "sla": "LOW", "cache": "lazy_load", "priority": 66, "domain": "extended"},
+        {"id": 18, "name": "capital_intersections", "fourfour": "97nd-ff3i", "rows": 7800, "size": "small", "frequency": "quarterly", "sla": "LOW", "cache": "lazy_load", "priority": 65, "domain": "coordination"},
+        {"id": 19, "name": "street_closures_block", "fourfour": "i6b5-j7bu", "rows": 4300, "size": "small", "frequency": "weekly", "sla": "MEDIUM", "cache": "lazy_load", "priority": 64, "domain": "coordination"},
+        {"id": 20, "name": "street_resurfacing_schedule", "fourfour": "xnfm-u3k5", "rows": 309000, "size": "large", "frequency": "weekly", "sla": "MEDIUM", "cache": "lazy_load", "priority": 63, "domain": "extended"},
+        {"id": 21, "name": "step_streets", "fourfour": "u9au-h79y", "rows": 110, "size": "tiny", "frequency": "static", "sla": "LOW", "cache": "lazy_load", "priority": 50, "domain": "overlays"},
+        {"id": 22, "name": "tree_damage", "fourfour": "j6v2-6uxq", "rows": 17000, "size": "small", "frequency": "quarterly", "sla": "LOW", "cache": "lazy_load", "priority": 51, "domain": "overlays"},
+        {"id": 23, "name": "curb_metal_protruding", "fourfour": "i2y3-sx2e", "rows": 23000, "size": "small", "frequency": "quarterly", "sla": "LOW", "cache": "lazy_load", "priority": 52, "domain": "overlays"},
+        {"id": 24, "name": "capital_blocks", "fourfour": "jvk9-k4re", "rows": 0, "size": "empty", "frequency": "static", "sla": "LOW", "cache": "skip", "priority": 10, "domain": "coordination", "note": "empty dataset"},
+        {"id": 25, "name": "weekly_construction", "fourfour": "r528-jcks", "rows": 75, "size": "tiny", "frequency": "static", "sla": "LOW", "cache": "lazy_load", "priority": 11, "domain": "coordination", "note": "stale since 2017"}
+      ],
+      "tier_3_supplemental": [
+        {"id": 26, "name": "permit_stipulations", "fourfour": "gsgx-6efw", "rows": 0, "size": "empty", "frequency": "unknown", "sla": "UNKNOWN", "cache": "skip", "priority": 5, "domain": "coordination", "note": "API error"},
+        {"id": 27, "name": "inspection_photos", "fourfour": "custom", "rows": 150000, "size": "medium", "frequency": "weekly", "sla": "LOW", "cache": "lazy_load", "priority": 40, "domain": "sim_core"},
+        {"id": 28, "name": "violation_details", "fourfour": "custom", "rows": 85000, "size": "medium", "frequency": "weekly", "sla": "LOW", "cache": "lazy_load", "priority": 41, "domain": "accessibility"},
+        {"id": 29, "name": "ramp_maintenance_log", "fourfour": "custom", "rows": 52000, "size": "medium", "frequency": "monthly", "sla": "LOW", "cache": "lazy_load", "priority": 42, "domain": "accessibility"},
+        {"id": 30, "name": "permit_history", "fourfour": "custom", "rows": 310000, "size": "large", "frequency": "weekly", "sla": "LOW", "cache": "lazy_load", "priority": 39, "domain": "coordination"},
+        {"id": 31, "name": "construction_metrics", "fourtfour": "custom", "rows": 195000, "size": "medium", "frequency": "weekly", "sla": "LOW", "cache": "lazy_load", "priority": 38, "domain": "coordination"},
+        {"id": 32, "name": "block_face_inventory", "fourtfour": "custom", "rows": 280000, "size": "large", "frequency": "quarterly", "sla": "LOW", "cache": "lazy_load", "priority": 37, "domain": "overlays"},
+        {"id": 33, "name": "tree_inventory", "fourtfour": "custom", "rows": 340000, "size": "large", "frequency": "quarterly", "sla": "LOW", "cache": "lazy_load", "priority": 36, "domain": "overlays"},
+        {"id": 34, "name": "curb_inventory", "fourtfour": "custom", "rows": 650000, "size": "large", "frequency": "quarterly", "sla": "LOW", "cache": "lazy_load", "priority": 35, "domain": "overlays"},
+        {"id": 35, "name": "project_budget", "fourtfour": "custom", "rows": 62000, "size": "medium", "frequency": "monthly", "sla": "LOW", "cache": "lazy_load", "priority": 34, "domain": "extended"},
+        {"id": 36, "name": "vendor_performance", "fourtfour": "custom", "rows": 28000, "size": "small", "frequency": "monthly", "sla": "LOW", "cache": "lazy_load", "priority": 33, "domain": "extended"},
+        {"id": 37, "name": "equipment_log", "fourtfour": "custom", "rows": 42000, "size": "small", "frequency": "monthly", "sla": "LOW", "cache": "lazy_load", "priority": 32, "domain": "extended"},
+        {"id": 38, "name": "safety_incidents", "fourtfour": "custom", "rows": 18500, "size": "small", "frequency": "weekly", "sla": "LOW", "cache": "lazy_load", "priority": 31, "domain": "sim_core"},
+        {"id": 39, "name": "environmental_compliance", "fourtfour": "custom", "rows": 55000, "size": "medium", "frequency": "monthly", "sla": "LOW", "cache": "lazy_load", "priority": 30, "domain": "coordination"},
+        {"id": 40, "name": "traffic_impact", "fourtfour": "custom", "rows": 175000, "size": "medium", "frequency": "weekly", "sla": "LOW", "cache": "lazy_load", "priority": 29, "domain": "coordination"},
+        {"id": 41, "name": "noise_monitoring", "fourtfour": "custom", "rows": 92000, "size": "medium", "frequency": "weekly", "sla": "LOW", "cache": "lazy_load", "priority": 28, "domain": "extended"},
+        {"id": 42, "name": "air_quality", "fourtfour": "custom", "rows": 38000, "size": "small", "frequency": "weekly", "sla": "LOW", "cache": "lazy_load", "priority": 27, "domain": "extended"},
+        {"id": 43, "name": "public_complaints", "fourtfour": "custom", "rows": 245000, "size": "large", "frequency": "weekly", "sla": "LOW", "cache": "lazy_load", "priority": 26, "domain": "sim_core"},
+        {"id": 44, "name": "community_outreach", "fourtfour": "custom", "rows": 68000, "size": "medium", "frequency": "monthly", "sla": "LOW", "cache": "lazy_load", "priority": 25, "domain": "coordination"},
+        {"id": 45, "name": "contractor_evaluation", "fourtfour": "custom", "rows": 12500, "size": "small", "frequency": "quarterly", "sla": "LOW", "cache": "lazy_load", "priority": 24, "domain": "extended"},
+        {"id": 46, "name": "cost_tracking", "fourtfour": "custom", "rows": 185000, "size": "medium", "frequency": "monthly", "sla": "LOW", "cache": "lazy_load", "priority": 23, "domain": "extended"},
+        {"id": 47, "name": "funding_sources", "fourtfour": "custom", "rows": 22000, "size": "small", "frequency": "quarterly", "sla": "LOW", "cache": "lazy_load", "priority": 22, "domain": "extended"},
+        {"id": 48, "name": "regulatory_approvals", "fourtfour": "custom", "rows": 8500, "size": "small", "frequency": "monthly", "sla": "LOW", "cache": "lazy_load", "priority": 21, "domain": "coordination"},
+        {"id": 49, "name": "accessibility_audits", "fourtfour": "custom", "rows": 75000, "size": "medium", "frequency": "quarterly", "sla": "LOW", "cache": "lazy_load", "priority": 20, "domain": "accessibility"},
+        {"id": 50, "name": "service_requests", "fourtfour": "custom", "rows": 410000, "size": "large", "frequency": "daily", "sla": "MEDIUM", "cache": "lazy_load", "priority": 60, "domain": "sim_core"},
+        {"id": 51, "name": "performance_metrics", "fourtfour": "custom", "rows": 125000, "size": "medium", "frequency": "weekly", "sla": "MEDIUM", "cache": "lazy_load", "priority": 61, "domain": "extended"},
+        {"id": 52, "name": "stakeholder_feedback", "fourtfour": "custom", "rows": 35000, "size": "small", "frequency": "monthly", "sla": "LOW", "cache": "lazy_load", "priority": 19, "domain": "coordination"},
+        {"id": 53, "name": "inspection_history", "fourtfour": "custom", "rows": 500000, "size": "large", "frequency": "weekly", "sla": "MEDIUM", "cache": "lazy_load", "priority": 62, "domain": "sim_core"},
+        {"id": 54, "name": "violation_photos", "fourtfour": "custom", "rows": 280000, "size": "large", "frequency": "weekly", "sla": "LOW", "cache": "lazy_load", "priority": 18, "domain": "accessibility"},
+        {"id": 55, "name": "ramp_specifications", "fourtfour": "custom", "rows": 18000, "size": "small", "frequency": "static", "sla": "LOW", "cache": "lazy_load", "priority": 17, "domain": "accessibility"},
+        {"id": 56, "name": "surface_conditions", "fourtfour": "custom", "rows": 380000, "size": "large", "frequency": "quarterly", "sla": "LOW", "cache": "lazy_load", "priority": 16, "domain": "overlays"},
+        {"id": 57, "name": "spatial_geometry", "fourtfour": "custom", "rows": 520000, "size": "large", "frequency": "quarterly", "sla": "LOW", "cache": "lazy_load", "priority": 15, "domain": "overlays"}
+      ]
+    }
+  },
+
+  "kpi_classification": {
+    "total_kpis": 51,
+    "by_business_outcome": {
+      "service_delivery": "ramp_completion_rate, violation_closure_rate, inspection_timeliness, ramp_installation_pace",
+      "operational_efficiency": "inspection_cost_per_unit, average_resolution_time, resource_utilization, contractor_efficiency",
+      "compliance_governance": "sla_compliance_rate, accessibility_audit_pass_rate, budget_variance, permit_approval_time",
+      "strategic_impact": "new_ramp_installation_rate, accessibility_improvement_index, community_satisfaction, strategic_goal_progress"
+    },
+    "by_measurement_type": {
+      "rate_percent": 18,
+      "count_absolute": 15,
+      "trend_direction_slope": 10,
+      "index_composite": 8
+    },
+    "by_data_freshness": {
+      "real_time_1h": 3,
+      "daily_24h": 8,
+      "weekly_7d": 15,
+      "monthly_30d": 18,
+      "quarterly_90d": 7
+    },
+    "lineage_sample": "Every KPI traces back to 1-3 source datasets from the 57 unified datasets. Calculation rules, quality gates, and refresh schedule documented."
+  },
+
+  "schema_layers": {
+    "raw_schema": {
+      "purpose": "Unmodified source data",
+      "tables": 57,
+      "retention": "indefinite",
+      "quality_gates": [
+        "row_count matches source",
+        "PK uniqueness 100%",
+        "audit columns present (source_timestamp, load_timestamp, record_hash)"
+      ]
+    },
+    "staging_schema": {
+      "purpose": "Cleaned, deduplicated, type-cast",
+      "tables": 57,
+      "retention": "indefinite",
+      "quality_gates": [
+        "PK uniqueness 100%",
+        "row_count 95-110% of raw",
+        "no nulls in required fields"
+      ]
+    },
+    "analytics_domain_schemas": {
+      "sim_core": "8 tables, inspection/violation/service analytics",
+      "accessibility": "6 tables, ramp program and ADA compliance",
+      "coordination": "8 tables, permits, construction, regulatory",
+      "overlays": "9 tables, spatial enrichment and reference",
+      "extended": "11 tables, budget, scheduling, planning",
+      "retention": "indefinite"
+    }
+  },
+
+  "dive_categories": {
+    "exploratory": "Ad-hoc analysis, personal exploration",
+    "operational": "Regular monitoring dashboards",
+    "analytical": "Deep investigation for reporting",
+    "strategic": "Executive briefing and decision support"
+  },
+
+  "governance_rules": {
+    "retention": "indefinite_all_data",
+    "access_control": "none_solo_user",
+    "audit_logging": "personal_reproducibility_tracking",
+    "quality_gates": "automated_data_validation",
+    "archival": "keep_everything_forever"
+  }
+}
