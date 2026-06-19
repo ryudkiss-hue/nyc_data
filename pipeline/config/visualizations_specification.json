@@ -418,6 +418,98 @@
           "type": "table",
           "columns": ["gate", "status", "datasets_passed", "datasets_failed"],
           "conditional_formatting": "status"
+        },
+        {
+          "id": "chart_607",
+          "title": "Data Freshness Distribution Analysis",
+          "type": "histogram",
+          "data": "data_age_hours_by_dataset",
+          "statistics": ["mean", "median", "mode", "std_dev", "skewness", "kurtosis"],
+          "annotations": ["mean_line", "median_line", "std_dev_bands", "percentile_lines"]
+        },
+        {
+          "id": "chart_608",
+          "title": "Row Count Variance by Dataset",
+          "type": "box",
+          "x_axis": "dataset_category",
+          "y_axis": "row_count_variance_percent",
+          "statistics": ["q1", "median", "q3", "iqr", "outliers"],
+          "annotations": ["outlier_threshold", "iqr_bands", "mean_marker"]
+        },
+        {
+          "id": "chart_609",
+          "title": "Data Quality Correlation Analysis",
+          "type": "scatter",
+          "x_axis": "data_freshness_days",
+          "y_axis": "quality_score",
+          "statistics": ["correlation_coefficient", "r_squared", "p_value"],
+          "annotations": ["regression_line", "confidence_band", "outlier_highlighting"]
+        }
+      ]
+    },
+    {
+      "id": "dashboard_008",
+      "name": "Advanced Analytics",
+      "title": "Advanced Statistical Analysis Dashboard",
+      "description": "Deep statistical analysis including distributions, correlations, and outlier detection",
+      "route": "/advanced-analytics",
+      "icon": "chart-line",
+      "access_level": "internal",
+      "refresh_interval_seconds": 3600,
+      "charts": [
+        {
+          "id": "chart_701",
+          "title": "Inspection Cost Distribution",
+          "type": "histogram",
+          "data": "inspection_cost_per_unit",
+          "statistics": ["mean", "median", "mode", "std_dev", "variance", "skewness", "kurtosis"],
+          "bins": 25,
+          "annotations": ["four_moments_display", "mean_line", "median_line", "outlier_threshold"]
+        },
+        {
+          "id": "chart_702",
+          "title": "Violation Resolution Time by Type",
+          "type": "violin",
+          "x_axis": "violation_type",
+          "y_axis": "days_to_resolution",
+          "statistics": ["mean", "median", "quartiles", "distribution_shape"],
+          "annotations": ["inner_box", "percentile_bands", "outlier_points"]
+        },
+        {
+          "id": "chart_703",
+          "title": "Ramp Installation Cost Correlation",
+          "type": "scatter",
+          "x_axis": "ramp_area_sqft",
+          "y_axis": "installation_cost",
+          "statistics": ["pearson_r", "spearman_rho", "p_value", "r_squared"],
+          "trendline": "ols",
+          "annotations": ["regression_line", "95_percent_confidence_band", "prediction_interval"]
+        },
+        {
+          "id": "chart_704",
+          "title": "Budget Variance Distribution",
+          "type": "box",
+          "data": "budget_variance_percent_by_project",
+          "statistics": ["median", "q1", "q3", "iqr", "whiskers", "outliers"],
+          "annotations": ["iqr_region", "outlier_flagging", "mean_line"]
+        },
+        {
+          "id": "chart_705",
+          "title": "Data Quality Score Correlation Matrix",
+          "type": "heatmap",
+          "data": "quality_dimensions_correlation",
+          "statistics": ["pearson_correlations", "p_values", "sample_sizes"],
+          "annotations": ["correlation_values", "significance_stars"]
+        },
+        {
+          "id": "chart_706",
+          "title": "SLA Compliance Time Series",
+          "type": "line",
+          "data": ["target_sla", "actual_sla", "variance"],
+          "x_axis": "date",
+          "statistics": ["trend_slope", "r_squared", "moving_average", "forecast"],
+          "trendline": "exponential_smoothing",
+          "annotations": ["best_fit_line", "confidence_intervals", "moving_average_band"]
         }
       ]
     }
@@ -428,37 +520,145 @@
       "bar": {
         "library": "plotly.express.bar",
         "use_cases": ["comparing categories", "showing distributions", "budget variance"],
-        "interactivity": ["hover_details", "click_drill_down", "legend_toggle"]
+        "interactivity": ["hover_details", "click_drill_down", "legend_toggle"],
+        "components": {
+          "visual": ["bars", "axis_labels", "title", "legend", "gridlines"],
+          "statistics": ["count", "mean", "std_dev", "min", "max"],
+          "summary_stats": ["n", "mean", "median", "mode", "std", "var", "skew", "kurtosis"],
+          "annotations": ["value_labels", "trend_line", "target_line", "reference_line"]
+        }
       },
       "line": {
         "library": "plotly.express.line",
         "use_cases": ["time series", "trends", "monitoring"],
-        "interactivity": ["range_slider", "hover_details", "legend_toggle"]
+        "interactivity": ["range_slider", "hover_details", "legend_toggle"],
+        "components": {
+          "visual": ["line_trace", "markers", "axis_labels", "title", "legend", "gridlines"],
+          "statistics": ["trend_direction", "slope", "r_squared", "confidence_interval"],
+          "summary_stats": ["min", "max", "mean", "median", "trend_acceleration"],
+          "annotations": ["best_fit_line", "confidence_band", "forecast_line", "target_line"]
+        }
       },
-      "pie": {
-        "library": "plotly.express.pie",
-        "use_cases": ["composition", "budget allocation", "market share"],
-        "interactivity": ["click_drill_down", "hover_percentage"]
+      "histogram": {
+        "library": "plotly.express.histogram",
+        "use_cases": ["distributions", "frequency analysis", "outlier detection"],
+        "interactivity": ["bin_adjustment", "hover_details", "legend_toggle"],
+        "components": {
+          "visual": ["bars", "axis_labels", "title", "legend", "gridlines"],
+          "statistics": ["mean_line", "median_line", "std_dev_bands", "min", "max"],
+          "summary_stats": ["n", "mean", "median", "mode", "std", "var", "skew", "kurtosis"],
+          "annotations": ["four_moments", "percentile_lines", "outlier_threshold"]
+        }
+      },
+      "box": {
+        "library": "plotly.express.box",
+        "use_cases": ["quartile analysis", "outlier detection", "distribution comparison"],
+        "interactivity": ["hover_details", "legend_toggle", "click_group"],
+        "components": {
+          "visual": ["box", "whiskers", "median_line", "outliers", "axis_labels", "title"],
+          "statistics": ["q1", "median", "q3", "iqr", "min", "max", "outlier_threshold"],
+          "summary_stats": ["four_moments", "percentiles_25_50_75", "whisker_calculation", "outlier_count"],
+          "annotations": ["mean_marker", "outlier_points", "legend_with_counts"]
+        }
+      },
+      "scatter": {
+        "library": "plotly.express.scatter",
+        "use_cases": ["correlation analysis", "trend identification", "outlier detection"],
+        "interactivity": ["hover_details", "click_points", "legend_toggle"],
+        "components": {
+          "visual": ["points", "axis_labels", "title", "legend", "gridlines"],
+          "statistics": ["correlation_coefficient", "r_squared", "slope", "intercept"],
+          "summary_stats": ["pearson_r", "p_value", "confidence_interval", "regression_line"],
+          "annotations": ["best_fit_line", "confidence_band", "outlier_highlighting", "quadrant_lines"]
+        }
       },
       "heatmap": {
         "library": "plotly.express.imshow",
         "use_cases": ["correlations", "performance grid", "quality matrix"],
-        "interactivity": ["hover_values", "color_scale_toggle"]
+        "interactivity": ["hover_values", "color_scale_toggle"],
+        "components": {
+          "visual": ["cells", "color_scale", "axis_labels", "title", "colorbar"],
+          "statistics": ["correlation_values", "min", "max", "mean"],
+          "summary_stats": ["descriptive_stats_per_cell"],
+          "annotations": ["value_labels", "significant_threshold_highlighting"]
+        }
       },
       "funnel": {
         "library": "plotly.express.funnel",
         "use_cases": ["process stages", "permit lifecycle", "conversion"],
-        "interactivity": ["hover_details", "stage_analysis"]
+        "interactivity": ["hover_details", "stage_analysis"],
+        "components": {
+          "visual": ["funnel_segments", "axis_labels", "title", "legend"],
+          "statistics": ["count_per_stage", "drop_rate", "conversion_rate"],
+          "summary_stats": ["stage_counts", "percentage_remaining", "drop_off_points"],
+          "annotations": ["percentage_labels", "drop_rate_callouts"]
+        }
+      },
+      "pie": {
+        "library": "plotly.express.pie",
+        "use_cases": ["composition", "budget allocation", "market share"],
+        "interactivity": ["click_drill_down", "hover_percentage"],
+        "components": {
+          "visual": ["slices", "labels", "title", "legend"],
+          "statistics": ["percentage", "count", "cumulative_percentage"],
+          "summary_stats": ["total_count", "top_n_segments", "other_category_summary"],
+          "annotations": ["percentage_labels", "value_labels", "cumulative_line"]
+        }
+      },
+      "gauge": {
+        "library": "plotly.graph_objects.Indicator",
+        "use_cases": ["KPI cards", "progress tracking", "compliance monitoring"],
+        "interactivity": ["hover_tooltip"],
+        "components": {
+          "visual": ["gauge_arc", "needle", "axis_labels", "title", "reference_lines"],
+          "statistics": ["current_value", "target_value", "delta_value"],
+          "summary_stats": ["percentage_of_target", "trend_direction", "variance"],
+          "annotations": ["target_line", "threshold_zones", "trend_arrow"]
+        }
+      },
+      "sunburst": {
+        "library": "plotly.express.sunburst",
+        "use_cases": ["hierarchical composition", "resource allocation", "drill-down analysis"],
+        "interactivity": ["click_drill_down", "hover_details"],
+        "components": {
+          "visual": ["nested_arcs", "labels", "color_scale", "title"],
+          "statistics": ["value_per_segment", "percentage_of_parent"],
+          "summary_stats": ["hierarchy_depth", "total_value", "segment_distribution"],
+          "annotations": ["percentage_labels", "value_labels"]
+        }
       },
       "gis_scatter": {
         "library": "plotly.express.scatter_mapbox",
         "use_cases": ["location data", "asset mapping", "spatial analysis"],
-        "interactivity": ["hover_details", "zoom_pan", "click_popup"]
+        "interactivity": ["hover_details", "zoom_pan", "click_popup"],
+        "components": {
+          "visual": ["points", "basemap", "color_scale", "size_legend", "title"],
+          "statistics": ["point_density", "spatial_distribution", "clustering_metrics"],
+          "summary_stats": ["point_count_by_category", "spatial_autocorrelation"],
+          "annotations": ["cluster_circles", "heatmap_overlay", "legend_with_counts"]
+        }
       },
       "gis_polygon": {
         "library": "plotly.graph_objects.Choropleth",
         "use_cases": ["geographic areas", "conflict zones", "permit areas"],
-        "interactivity": ["hover_details", "zoom_pan", "color_scale"]
+        "interactivity": ["hover_details", "zoom_pan", "color_scale"],
+        "components": {
+          "visual": ["polygons", "color_scale", "basemap", "title", "colorbar"],
+          "statistics": ["value_per_polygon", "min", "max", "mean", "std_dev"],
+          "summary_stats": ["descriptive_stats_per_region", "quartile_distribution"],
+          "annotations": ["legend_with_scale", "significant_area_highlighting"]
+        }
+      },
+      "violin": {
+        "library": "plotly.express.violin",
+        "use_cases": ["distribution shape comparison", "density analysis", "outlier detection"],
+        "interactivity": ["hover_details", "legend_toggle"],
+        "components": {
+          "visual": ["violin_shape", "box_inside", "points", "axis_labels", "title"],
+          "statistics": ["density_curve", "quartiles", "mean", "median"],
+          "summary_stats": ["four_moments", "kurtosis", "skewness", "distribution_shape"],
+          "annotations": ["mean_marker", "median_line", "percentile_bands"]
+        }
       }
     }
   },

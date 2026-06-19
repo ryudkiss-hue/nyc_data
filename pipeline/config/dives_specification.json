@@ -291,6 +291,39 @@
           "no_critical_alerts",
           "executive_sign_off_obtained"
         ]
+      },
+      {
+        "id": "dive_303",
+        "name": "data_health_executive_review",
+        "title": "Data Health Executive Review",
+        "description": "Comprehensive data quality, governance compliance, and system health assessment for leadership",
+        "source_datasets": [
+          "inspection", "violations", "ramp_progress", "street_permits", "street_construction_inspections",
+          "accessibility_audits", "cost_tracking"
+        ],
+        "source_schemas": ["sim_core", "accessibility", "coordination", "extended"],
+        "refresh_schedule": "monthly_second_friday_10:00_UTC",
+        "owner": "Chief Data Officer",
+        "audience": "executive_leadership",
+        "sign_off_approver": "Commissioner",
+        "methodology": "Quality scorecard composite, SLA compliance index, governance audit summary",
+        "kpis_referenced": [
+          "data_quality_score",
+          "sla_compliance_rate"
+        ],
+        "charts": [
+          "data_quality_scorecard (KPI gauge)",
+          "sla_compliance_by_dataset (heatmap)",
+          "data_freshness_timeline (line)",
+          "governance_audit_summary (bar)",
+          "system_health_index (radial)"
+        ],
+        "documentation": "Executive-level data health assessment covering data quality metrics, SLA compliance, governance audit results, and system reliability indicators.",
+        "quality_gates": [
+          "all_datasets_included",
+          "audit_trail_complete",
+          "executive_review_obtained"
+        ]
       }
     ]
   },
