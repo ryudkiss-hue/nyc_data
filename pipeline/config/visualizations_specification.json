@@ -1,0 +1,493 @@
+{
+  "visualizations_framework": {
+    "version": "2.0",
+    "created_at": "2026-06-18",
+    "description": "Plotly/Dash Visualization Specification for NYC DOT Mission Control",
+    "framework": "Plotly Express + Dash + Mantine UI",
+    "total_dashboards": 7,
+    "total_charts": 45,
+    "backend": "FastAPI + DuckDB",
+    "styling": "Mantine component library with custom CSS"
+  },
+
+  "dashboard_layouts": [
+    {
+      "id": "dashboard_001",
+      "name": "Mission Control Home",
+      "title": "NYC DOT Mission Control",
+      "description": "Central operational command center with real-time KPIs and alerts",
+      "route": "/",
+      "icon": "home",
+      "access_level": "internal",
+      "refresh_interval_seconds": 300,
+      "layout": {
+        "rows": 3,
+        "columns": 3,
+        "components": [
+          {
+            "type": "kpi_scorecard",
+            "position": "top_left",
+            "title": "Inspection Completion Rate",
+            "kpi": "violation_closure_rate",
+            "metric_type": "percentage",
+            "target": 85,
+            "current_value": "{{kpi_value}}",
+            "trend": "up",
+            "sparkline": true
+          },
+          {
+            "type": "kpi_scorecard",
+            "position": "top_center",
+            "title": "Ramp Installation Progress",
+            "kpi": "ramp_completion_rate",
+            "metric_type": "percentage",
+            "target": 80,
+            "current_value": "{{kpi_value}}",
+            "trend": "up"
+          },
+          {
+            "type": "kpi_scorecard",
+            "position": "top_right",
+            "title": "Budget Compliance",
+            "kpi": "budget_variance",
+            "metric_type": "percentage",
+            "target": 0,
+            "current_value": "{{kpi_value}}",
+            "trend": "neutral"
+          },
+          {
+            "type": "chart",
+            "position": "middle_left",
+            "title": "Violation Closure by Borough",
+            "chart_type": "bar",
+            "data_source": "sim_core.violation_timeline",
+            "x_axis": "borough",
+            "y_axis": "closure_rate",
+            "groupby": ["violation_type"],
+            "height": "medium"
+          },
+          {
+            "type": "chart",
+            "position": "middle_center",
+            "title": "Ramp Completion Trend",
+            "chart_type": "line",
+            "data_source": "accessibility.ramp_completion_status",
+            "x_axis": "month",
+            "y_axis": ["completion_rate", "installation_pace"],
+            "legend": "right",
+            "height": "medium"
+          },
+          {
+            "type": "chart",
+            "position": "middle_right",
+            "title": "SLA Compliance Scorecard",
+            "chart_type": "gauge",
+            "data_source": "serving.kpi_borough_results",
+            "kpi_id": "KPI-009",
+            "min": 0,
+            "max": 100,
+            "target": 95,
+            "height": "medium"
+          },
+          {
+            "type": "chart",
+            "position": "bottom_left",
+            "title": "Active Permits by Status",
+            "chart_type": "funnel",
+            "data_source": "coordination.permit_lifecycle",
+            "stages": ["issued", "approved", "active", "completed"],
+            "height": "medium"
+          },
+          {
+            "type": "chart",
+            "position": "bottom_center",
+            "title": "Data Quality Score",
+            "chart_type": "radial",
+            "data_source": "serving.quality_scorecards",
+            "dimensions": ["completeness", "validity", "consistency", "freshness"],
+            "height": "medium"
+          },
+          {
+            "type": "alerts",
+            "position": "bottom_right",
+            "title": "System Alerts",
+            "alert_sources": ["sla_breaches", "quality_gates", "governance_violations"],
+            "height": "medium"
+          }
+        ]
+      }
+    },
+    {
+      "id": "dashboard_002",
+      "name": "Inspection Operations",
+      "title": "Inspection Operations Dashboard",
+      "description": "Real-time inspection status, violation tracking, and inspector performance",
+      "route": "/inspection",
+      "icon": "clipboard-check",
+      "access_level": "internal",
+      "refresh_interval_seconds": 300,
+      "charts": [
+        {
+          "id": "chart_101",
+          "title": "Violations Found Today",
+          "type": "stat",
+          "kpi": "violations_found_today",
+          "comparison": "yesterday"
+        },
+        {
+          "id": "chart_102",
+          "title": "Violations by Severity",
+          "type": "pie",
+          "data": "violations_by_severity",
+          "colors": ["#FF6B6B", "#FFA500", "#FFD700", "#90EE90"]
+        },
+        {
+          "id": "chart_103",
+          "title": "Closure Rate by Borough",
+          "type": "bar",
+          "data": "closure_rate_by_borough",
+          "colors": ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd"]
+        },
+        {
+          "id": "chart_104",
+          "title": "Inspector Performance Heatmap",
+          "type": "heatmap",
+          "x_axis": "inspector_id",
+          "y_axis": "week",
+          "value": "violations_resolved"
+        },
+        {
+          "id": "chart_105",
+          "title": "SLA Compliance Trend",
+          "type": "line",
+          "data": "sla_compliance_rate_daily",
+          "target_line": 95
+        }
+      ]
+    },
+    {
+      "id": "dashboard_003",
+      "name": "Accessibility Program",
+      "title": "Ramp Program Operations",
+      "description": "Ramp installation progress, budget tracking, complaint management",
+      "route": "/accessibility",
+      "icon": "wheelchair",
+      "access_level": "internal",
+      "refresh_interval_seconds": 600,
+      "charts": [
+        {
+          "id": "chart_201",
+          "title": "Ramp Completion Rate by Borough",
+          "type": "bar",
+          "data": "ramp_completion_by_borough",
+          "colors": ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd"]
+        },
+        {
+          "id": "chart_202",
+          "title": "Installation Timeline",
+          "type": "line",
+          "data": ["planned", "actual"],
+          "x_axis": "month"
+        },
+        {
+          "id": "chart_203",
+          "title": "Budget vs Actual",
+          "type": "combo",
+          "data": ["budget", "actual", "variance"],
+          "secondary_y": ["variance"]
+        },
+        {
+          "id": "chart_204",
+          "title": "Complaint Volume Trend",
+          "type": "area",
+          "data": "ramp_complaints_daily"
+        },
+        {
+          "id": "chart_205",
+          "title": "Accessibility Readiness Index",
+          "type": "gauge",
+          "current": "{{kpi_value}}",
+          "target": 85,
+          "colors": ["#FF6B6B", "#FFA500", "#FFD700", "#90EE90"]
+        },
+        {
+          "id": "chart_206",
+          "title": "Installation Map",
+          "type": "gis_scatter",
+          "data": "ramp_locations_with_status",
+          "color": "status"
+        }
+      ]
+    },
+    {
+      "id": "dashboard_004",
+      "name": "Construction Coordination",
+      "title": "Permit & Construction Dashboard",
+      "description": "Permit processing, construction timeline, conflict detection",
+      "route": "/coordination",
+      "icon": "building-construction",
+      "access_level": "internal",
+      "refresh_interval_seconds": 3600,
+      "charts": [
+        {
+          "id": "chart_301",
+          "title": "Permits by Status",
+          "type": "funnel",
+          "stages": ["issued", "approved", "active", "completed"]
+        },
+        {
+          "id": "chart_302",
+          "title": "Approval Time Distribution",
+          "type": "histogram",
+          "data": "permit_approval_time_days",
+          "bins": 20
+        },
+        {
+          "id": "chart_303",
+          "title": "Active Construction Projects",
+          "type": "bar",
+          "data": "projects_by_status",
+          "stacked": true
+        },
+        {
+          "id": "chart_304",
+          "title": "Permit Processing Trend",
+          "type": "line",
+          "data": ["issued", "approved", "completed"],
+          "x_axis": "month"
+        },
+        {
+          "id": "chart_305",
+          "title": "Construction Conflicts Map",
+          "type": "gis_polygon",
+          "data": "conflict_buffers",
+          "color": "conflict_count"
+        }
+      ]
+    },
+    {
+      "id": "dashboard_005",
+      "name": "Budget & Planning",
+      "title": "Budget & Financial Dashboard",
+      "description": "Budget tracking, cost analysis, project financial summary",
+      "route": "/budget",
+      "icon": "chart-pie",
+      "access_level": "internal",
+      "refresh_interval_seconds": 86400,
+      "charts": [
+        {
+          "id": "chart_401",
+          "title": "Budget Allocation by Program",
+          "type": "pie",
+          "data": "budget_by_program"
+        },
+        {
+          "id": "chart_402",
+          "title": "Budget vs Actual",
+          "type": "combo",
+          "data": ["budget", "actual"],
+          "type_mapping": {"budget": "bar", "actual": "line"}
+        },
+        {
+          "id": "chart_403",
+          "title": "Cost per Inspection Trend",
+          "type": "line",
+          "data": "cost_per_unit_monthly",
+          "target_line": "budget_per_unit"
+        },
+        {
+          "id": "chart_404",
+          "title": "Project Financial Summary",
+          "type": "table",
+          "columns": ["project_id", "budget", "actual", "variance", "status"],
+          "sort": "variance_desc"
+        },
+        {
+          "id": "chart_405",
+          "title": "Resource Allocation",
+          "type": "sunburst",
+          "hierarchy": ["program", "project", "resource_type"]
+        }
+      ]
+    },
+    {
+      "id": "dashboard_006",
+      "name": "GIS Analytics",
+      "title": "Spatial Analytics Dashboard",
+      "description": "Geographic analysis, spatial conflicts, asset inventory, block face coverage",
+      "route": "/gis",
+      "icon": "map",
+      "access_level": "internal",
+      "refresh_interval_seconds": 3600,
+      "charts": [
+        {
+          "id": "chart_501",
+          "title": "Inspection Density Map",
+          "type": "gis_heatmap",
+          "data": "inspection_points",
+          "aggregation": "density"
+        },
+        {
+          "id": "chart_502",
+          "title": "Violation Hotspots",
+          "type": "gis_scatter",
+          "data": "violation_locations",
+          "color": "severity"
+        },
+        {
+          "id": "chart_503",
+          "title": "Active Permits Map",
+          "type": "gis_polygon",
+          "data": "permit_areas",
+          "color": "permit_type"
+        },
+        {
+          "id": "chart_504",
+          "title": "Ramp Installation Map",
+          "type": "gis_scatter",
+          "data": "ramp_locations",
+          "color": "installation_status"
+        },
+        {
+          "id": "chart_505",
+          "title": "Tree Asset Inventory",
+          "type": "gis_scatter",
+          "data": "tree_locations",
+          "color": "maintenance_status"
+        },
+        {
+          "id": "chart_506",
+          "title": "Spatial Conflicts",
+          "type": "gis_polygon",
+          "data": "conflict_buffers",
+          "color": "conflict_type"
+        }
+      ]
+    },
+    {
+      "id": "dashboard_007",
+      "name": "Data Quality & Governance",
+      "title": "Data Quality & Governance Dashboard",
+      "description": "Quality scorecard, SLA compliance, governance audit trail, data freshness",
+      "route": "/data-quality",
+      "icon": "shield-check",
+      "access_level": "internal",
+      "refresh_interval_seconds": 3600,
+      "charts": [
+        {
+          "id": "chart_601",
+          "title": "Data Quality Score",
+          "type": "gauge",
+          "current": "{{overall_quality_score}}",
+          "target": 85,
+          "colors": ["#FF6B6B", "#FFA500", "#FFD700", "#90EE90"]
+        },
+        {
+          "id": "chart_602",
+          "title": "Quality Scorecard by Dataset",
+          "type": "heatmap",
+          "x_axis": "dataset",
+          "y_axis": "quality_dimension",
+          "value": "score"
+        },
+        {
+          "id": "chart_603",
+          "title": "SLA Compliance by Dataset",
+          "type": "bar",
+          "data": "sla_compliance_by_dataset",
+          "color": "sla_tier"
+        },
+        {
+          "id": "chart_604",
+          "title": "Data Freshness by Domain",
+          "type": "bar",
+          "data": "data_age_by_domain",
+          "colors": ["#90EE90", "#FFD700", "#FFA500", "#FF6B6B"]
+        },
+        {
+          "id": "chart_605",
+          "title": "Governance Audit Trail",
+          "type": "table",
+          "columns": ["timestamp", "event_type", "dataset", "status"],
+          "sort": "timestamp_desc",
+          "limit": 20
+        },
+        {
+          "id": "chart_606",
+          "title": "Quality Gate Results",
+          "type": "table",
+          "columns": ["gate", "status", "datasets_passed", "datasets_failed"],
+          "conditional_formatting": "status"
+        }
+      ]
+    }
+  ],
+
+  "chart_specifications": {
+    "chart_types": {
+      "bar": {
+        "library": "plotly.express.bar",
+        "use_cases": ["comparing categories", "showing distributions", "budget variance"],
+        "interactivity": ["hover_details", "click_drill_down", "legend_toggle"]
+      },
+      "line": {
+        "library": "plotly.express.line",
+        "use_cases": ["time series", "trends", "monitoring"],
+        "interactivity": ["range_slider", "hover_details", "legend_toggle"]
+      },
+      "pie": {
+        "library": "plotly.express.pie",
+        "use_cases": ["composition", "budget allocation", "market share"],
+        "interactivity": ["click_drill_down", "hover_percentage"]
+      },
+      "heatmap": {
+        "library": "plotly.express.imshow",
+        "use_cases": ["correlations", "performance grid", "quality matrix"],
+        "interactivity": ["hover_values", "color_scale_toggle"]
+      },
+      "funnel": {
+        "library": "plotly.express.funnel",
+        "use_cases": ["process stages", "permit lifecycle", "conversion"],
+        "interactivity": ["hover_details", "stage_analysis"]
+      },
+      "gis_scatter": {
+        "library": "plotly.express.scatter_mapbox",
+        "use_cases": ["location data", "asset mapping", "spatial analysis"],
+        "interactivity": ["hover_details", "zoom_pan", "click_popup"]
+      },
+      "gis_polygon": {
+        "library": "plotly.graph_objects.Choropleth",
+        "use_cases": ["geographic areas", "conflict zones", "permit areas"],
+        "interactivity": ["hover_details", "zoom_pan", "color_scale"]
+      }
+    }
+  },
+
+  "dashboard_integration": {
+    "backend": "FastAPI endpoint: /api/dashboard/{dashboard_id}",
+    "data_source": "DuckDB serving schema (analytics views + KPI materialization)",
+    "refresh_mechanism": "Callback-based auto-refresh via Dash clientside callbacks",
+    "styling": "Mantine UI components + custom CSS from app/assets/",
+    "authentication": "Required (internal DOT staff only)",
+    "audit_logging": "All dashboard views logged via governance audit trail"
+  },
+
+  "performance_requirements": {
+    "page_load_time_seconds": 3,
+    "chart_render_time_seconds": 2,
+    "data_query_timeout_seconds": 30,
+    "auto_refresh_max_interval_seconds": 3600,
+    "concurrent_users": 50
+  },
+
+  "visualization_best_practices": {
+    "rule_1": "All charts reference serving schema or materialized KPI views",
+    "rule_2": "Every chart includes data freshness indicator",
+    "rule_3": "Geographic charts use NYC standard CRS (EPSG:2263)",
+    "rule_4": "Color schemes follow NYC DOT brand colors + accessibility standards",
+    "rule_5": "All KPI cards show target line and trend indicator",
+    "rule_6": "Charts auto-export to PNG/SVG for reporting",
+    "rule_7": "Drill-down interactions maintain filter context",
+    "rule_8": "Mobile-responsive layouts for tablet/phone viewing"
+  }
+}
