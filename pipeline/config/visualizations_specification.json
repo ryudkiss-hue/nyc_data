@@ -1,0 +1,693 @@
+{
+  "visualizations_framework": {
+    "version": "2.0",
+    "created_at": "2026-06-18",
+    "description": "Plotly/Dash Visualization Specification for NYC DOT Mission Control",
+    "framework": "Plotly Express + Dash + Mantine UI",
+    "total_dashboards": 7,
+    "total_charts": 45,
+    "backend": "FastAPI + DuckDB",
+    "styling": "Mantine component library with custom CSS"
+  },
+
+  "dashboard_layouts": [
+    {
+      "id": "dashboard_001",
+      "name": "Mission Control Home",
+      "title": "NYC DOT Mission Control",
+      "description": "Central operational command center with real-time KPIs and alerts",
+      "route": "/",
+      "icon": "home",
+      "access_level": "internal",
+      "refresh_interval_seconds": 300,
+      "layout": {
+        "rows": 3,
+        "columns": 3,
+        "components": [
+          {
+            "type": "kpi_scorecard",
+            "position": "top_left",
+            "title": "Inspection Completion Rate",
+            "kpi": "violation_closure_rate",
+            "metric_type": "percentage",
+            "target": 85,
+            "current_value": "{{kpi_value}}",
+            "trend": "up",
+            "sparkline": true
+          },
+          {
+            "type": "kpi_scorecard",
+            "position": "top_center",
+            "title": "Ramp Installation Progress",
+            "kpi": "ramp_completion_rate",
+            "metric_type": "percentage",
+            "target": 80,
+            "current_value": "{{kpi_value}}",
+            "trend": "up"
+          },
+          {
+            "type": "kpi_scorecard",
+            "position": "top_right",
+            "title": "Budget Compliance",
+            "kpi": "budget_variance",
+            "metric_type": "percentage",
+            "target": 0,
+            "current_value": "{{kpi_value}}",
+            "trend": "neutral"
+          },
+          {
+            "type": "chart",
+            "position": "middle_left",
+            "title": "Violation Closure by Borough",
+            "chart_type": "bar",
+            "data_source": "sim_core.violation_timeline",
+            "x_axis": "borough",
+            "y_axis": "closure_rate",
+            "groupby": ["violation_type"],
+            "height": "medium"
+          },
+          {
+            "type": "chart",
+            "position": "middle_center",
+            "title": "Ramp Completion Trend",
+            "chart_type": "line",
+            "data_source": "accessibility.ramp_completion_status",
+            "x_axis": "month",
+            "y_axis": ["completion_rate", "installation_pace"],
+            "legend": "right",
+            "height": "medium"
+          },
+          {
+            "type": "chart",
+            "position": "middle_right",
+            "title": "SLA Compliance Scorecard",
+            "chart_type": "gauge",
+            "data_source": "serving.kpi_borough_results",
+            "kpi_id": "KPI-009",
+            "min": 0,
+            "max": 100,
+            "target": 95,
+            "height": "medium"
+          },
+          {
+            "type": "chart",
+            "position": "bottom_left",
+            "title": "Active Permits by Status",
+            "chart_type": "funnel",
+            "data_source": "coordination.permit_lifecycle",
+            "stages": ["issued", "approved", "active", "completed"],
+            "height": "medium"
+          },
+          {
+            "type": "chart",
+            "position": "bottom_center",
+            "title": "Data Quality Score",
+            "chart_type": "radial",
+            "data_source": "serving.quality_scorecards",
+            "dimensions": ["completeness", "validity", "consistency", "freshness"],
+            "height": "medium"
+          },
+          {
+            "type": "alerts",
+            "position": "bottom_right",
+            "title": "System Alerts",
+            "alert_sources": ["sla_breaches", "quality_gates", "governance_violations"],
+            "height": "medium"
+          }
+        ]
+      }
+    },
+    {
+      "id": "dashboard_002",
+      "name": "Inspection Operations",
+      "title": "Inspection Operations Dashboard",
+      "description": "Real-time inspection status, violation tracking, and inspector performance",
+      "route": "/inspection",
+      "icon": "clipboard-check",
+      "access_level": "internal",
+      "refresh_interval_seconds": 300,
+      "charts": [
+        {
+          "id": "chart_101",
+          "title": "Violations Found Today",
+          "type": "stat",
+          "kpi": "violations_found_today",
+          "comparison": "yesterday"
+        },
+        {
+          "id": "chart_102",
+          "title": "Violations by Severity",
+          "type": "pie",
+          "data": "violations_by_severity",
+          "colors": ["#FF6B6B", "#FFA500", "#FFD700", "#90EE90"]
+        },
+        {
+          "id": "chart_103",
+          "title": "Closure Rate by Borough",
+          "type": "bar",
+          "data": "closure_rate_by_borough",
+          "colors": ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd"]
+        },
+        {
+          "id": "chart_104",
+          "title": "Inspector Performance Heatmap",
+          "type": "heatmap",
+          "x_axis": "inspector_id",
+          "y_axis": "week",
+          "value": "violations_resolved"
+        },
+        {
+          "id": "chart_105",
+          "title": "SLA Compliance Trend",
+          "type": "line",
+          "data": "sla_compliance_rate_daily",
+          "target_line": 95
+        }
+      ]
+    },
+    {
+      "id": "dashboard_003",
+      "name": "Accessibility Program",
+      "title": "Ramp Program Operations",
+      "description": "Ramp installation progress, budget tracking, complaint management",
+      "route": "/accessibility",
+      "icon": "wheelchair",
+      "access_level": "internal",
+      "refresh_interval_seconds": 600,
+      "charts": [
+        {
+          "id": "chart_201",
+          "title": "Ramp Completion Rate by Borough",
+          "type": "bar",
+          "data": "ramp_completion_by_borough",
+          "colors": ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd"]
+        },
+        {
+          "id": "chart_202",
+          "title": "Installation Timeline",
+          "type": "line",
+          "data": ["planned", "actual"],
+          "x_axis": "month"
+        },
+        {
+          "id": "chart_203",
+          "title": "Budget vs Actual",
+          "type": "combo",
+          "data": ["budget", "actual", "variance"],
+          "secondary_y": ["variance"]
+        },
+        {
+          "id": "chart_204",
+          "title": "Complaint Volume Trend",
+          "type": "area",
+          "data": "ramp_complaints_daily"
+        },
+        {
+          "id": "chart_205",
+          "title": "Accessibility Readiness Index",
+          "type": "gauge",
+          "current": "{{kpi_value}}",
+          "target": 85,
+          "colors": ["#FF6B6B", "#FFA500", "#FFD700", "#90EE90"]
+        },
+        {
+          "id": "chart_206",
+          "title": "Installation Map",
+          "type": "gis_scatter",
+          "data": "ramp_locations_with_status",
+          "color": "status"
+        }
+      ]
+    },
+    {
+      "id": "dashboard_004",
+      "name": "Construction Coordination",
+      "title": "Permit & Construction Dashboard",
+      "description": "Permit processing, construction timeline, conflict detection",
+      "route": "/coordination",
+      "icon": "building-construction",
+      "access_level": "internal",
+      "refresh_interval_seconds": 3600,
+      "charts": [
+        {
+          "id": "chart_301",
+          "title": "Permits by Status",
+          "type": "funnel",
+          "stages": ["issued", "approved", "active", "completed"]
+        },
+        {
+          "id": "chart_302",
+          "title": "Approval Time Distribution",
+          "type": "histogram",
+          "data": "permit_approval_time_days",
+          "bins": 20
+        },
+        {
+          "id": "chart_303",
+          "title": "Active Construction Projects",
+          "type": "bar",
+          "data": "projects_by_status",
+          "stacked": true
+        },
+        {
+          "id": "chart_304",
+          "title": "Permit Processing Trend",
+          "type": "line",
+          "data": ["issued", "approved", "completed"],
+          "x_axis": "month"
+        },
+        {
+          "id": "chart_305",
+          "title": "Construction Conflicts Map",
+          "type": "gis_polygon",
+          "data": "conflict_buffers",
+          "color": "conflict_count"
+        }
+      ]
+    },
+    {
+      "id": "dashboard_005",
+      "name": "Budget & Planning",
+      "title": "Budget & Financial Dashboard",
+      "description": "Budget tracking, cost analysis, project financial summary",
+      "route": "/budget",
+      "icon": "chart-pie",
+      "access_level": "internal",
+      "refresh_interval_seconds": 86400,
+      "charts": [
+        {
+          "id": "chart_401",
+          "title": "Budget Allocation by Program",
+          "type": "pie",
+          "data": "budget_by_program"
+        },
+        {
+          "id": "chart_402",
+          "title": "Budget vs Actual",
+          "type": "combo",
+          "data": ["budget", "actual"],
+          "type_mapping": {"budget": "bar", "actual": "line"}
+        },
+        {
+          "id": "chart_403",
+          "title": "Cost per Inspection Trend",
+          "type": "line",
+          "data": "cost_per_unit_monthly",
+          "target_line": "budget_per_unit"
+        },
+        {
+          "id": "chart_404",
+          "title": "Project Financial Summary",
+          "type": "table",
+          "columns": ["project_id", "budget", "actual", "variance", "status"],
+          "sort": "variance_desc"
+        },
+        {
+          "id": "chart_405",
+          "title": "Resource Allocation",
+          "type": "sunburst",
+          "hierarchy": ["program", "project", "resource_type"]
+        }
+      ]
+    },
+    {
+      "id": "dashboard_006",
+      "name": "GIS Analytics",
+      "title": "Spatial Analytics Dashboard",
+      "description": "Geographic analysis, spatial conflicts, asset inventory, block face coverage",
+      "route": "/gis",
+      "icon": "map",
+      "access_level": "internal",
+      "refresh_interval_seconds": 3600,
+      "charts": [
+        {
+          "id": "chart_501",
+          "title": "Inspection Density Map",
+          "type": "gis_heatmap",
+          "data": "inspection_points",
+          "aggregation": "density"
+        },
+        {
+          "id": "chart_502",
+          "title": "Violation Hotspots",
+          "type": "gis_scatter",
+          "data": "violation_locations",
+          "color": "severity"
+        },
+        {
+          "id": "chart_503",
+          "title": "Active Permits Map",
+          "type": "gis_polygon",
+          "data": "permit_areas",
+          "color": "permit_type"
+        },
+        {
+          "id": "chart_504",
+          "title": "Ramp Installation Map",
+          "type": "gis_scatter",
+          "data": "ramp_locations",
+          "color": "installation_status"
+        },
+        {
+          "id": "chart_505",
+          "title": "Tree Asset Inventory",
+          "type": "gis_scatter",
+          "data": "tree_locations",
+          "color": "maintenance_status"
+        },
+        {
+          "id": "chart_506",
+          "title": "Spatial Conflicts",
+          "type": "gis_polygon",
+          "data": "conflict_buffers",
+          "color": "conflict_type"
+        }
+      ]
+    },
+    {
+      "id": "dashboard_007",
+      "name": "Data Quality & Governance",
+      "title": "Data Quality & Governance Dashboard",
+      "description": "Quality scorecard, SLA compliance, governance audit trail, data freshness",
+      "route": "/data-quality",
+      "icon": "shield-check",
+      "access_level": "internal",
+      "refresh_interval_seconds": 3600,
+      "charts": [
+        {
+          "id": "chart_601",
+          "title": "Data Quality Score",
+          "type": "gauge",
+          "current": "{{overall_quality_score}}",
+          "target": 85,
+          "colors": ["#FF6B6B", "#FFA500", "#FFD700", "#90EE90"]
+        },
+        {
+          "id": "chart_602",
+          "title": "Quality Scorecard by Dataset",
+          "type": "heatmap",
+          "x_axis": "dataset",
+          "y_axis": "quality_dimension",
+          "value": "score"
+        },
+        {
+          "id": "chart_603",
+          "title": "SLA Compliance by Dataset",
+          "type": "bar",
+          "data": "sla_compliance_by_dataset",
+          "color": "sla_tier"
+        },
+        {
+          "id": "chart_604",
+          "title": "Data Freshness by Domain",
+          "type": "bar",
+          "data": "data_age_by_domain",
+          "colors": ["#90EE90", "#FFD700", "#FFA500", "#FF6B6B"]
+        },
+        {
+          "id": "chart_605",
+          "title": "Governance Audit Trail",
+          "type": "table",
+          "columns": ["timestamp", "event_type", "dataset", "status"],
+          "sort": "timestamp_desc",
+          "limit": 20
+        },
+        {
+          "id": "chart_606",
+          "title": "Quality Gate Results",
+          "type": "table",
+          "columns": ["gate", "status", "datasets_passed", "datasets_failed"],
+          "conditional_formatting": "status"
+        },
+        {
+          "id": "chart_607",
+          "title": "Data Freshness Distribution Analysis",
+          "type": "histogram",
+          "data": "data_age_hours_by_dataset",
+          "statistics": ["mean", "median", "mode", "std_dev", "skewness", "kurtosis"],
+          "annotations": ["mean_line", "median_line", "std_dev_bands", "percentile_lines"]
+        },
+        {
+          "id": "chart_608",
+          "title": "Row Count Variance by Dataset",
+          "type": "box",
+          "x_axis": "dataset_category",
+          "y_axis": "row_count_variance_percent",
+          "statistics": ["q1", "median", "q3", "iqr", "outliers"],
+          "annotations": ["outlier_threshold", "iqr_bands", "mean_marker"]
+        },
+        {
+          "id": "chart_609",
+          "title": "Data Quality Correlation Analysis",
+          "type": "scatter",
+          "x_axis": "data_freshness_days",
+          "y_axis": "quality_score",
+          "statistics": ["correlation_coefficient", "r_squared", "p_value"],
+          "annotations": ["regression_line", "confidence_band", "outlier_highlighting"]
+        }
+      ]
+    },
+    {
+      "id": "dashboard_008",
+      "name": "Advanced Analytics",
+      "title": "Advanced Statistical Analysis Dashboard",
+      "description": "Deep statistical analysis including distributions, correlations, and outlier detection",
+      "route": "/advanced-analytics",
+      "icon": "chart-line",
+      "access_level": "internal",
+      "refresh_interval_seconds": 3600,
+      "charts": [
+        {
+          "id": "chart_701",
+          "title": "Inspection Cost Distribution",
+          "type": "histogram",
+          "data": "inspection_cost_per_unit",
+          "statistics": ["mean", "median", "mode", "std_dev", "variance", "skewness", "kurtosis"],
+          "bins": 25,
+          "annotations": ["four_moments_display", "mean_line", "median_line", "outlier_threshold"]
+        },
+        {
+          "id": "chart_702",
+          "title": "Violation Resolution Time by Type",
+          "type": "violin",
+          "x_axis": "violation_type",
+          "y_axis": "days_to_resolution",
+          "statistics": ["mean", "median", "quartiles", "distribution_shape"],
+          "annotations": ["inner_box", "percentile_bands", "outlier_points"]
+        },
+        {
+          "id": "chart_703",
+          "title": "Ramp Installation Cost Correlation",
+          "type": "scatter",
+          "x_axis": "ramp_area_sqft",
+          "y_axis": "installation_cost",
+          "statistics": ["pearson_r", "spearman_rho", "p_value", "r_squared"],
+          "trendline": "ols",
+          "annotations": ["regression_line", "95_percent_confidence_band", "prediction_interval"]
+        },
+        {
+          "id": "chart_704",
+          "title": "Budget Variance Distribution",
+          "type": "box",
+          "data": "budget_variance_percent_by_project",
+          "statistics": ["median", "q1", "q3", "iqr", "whiskers", "outliers"],
+          "annotations": ["iqr_region", "outlier_flagging", "mean_line"]
+        },
+        {
+          "id": "chart_705",
+          "title": "Data Quality Score Correlation Matrix",
+          "type": "heatmap",
+          "data": "quality_dimensions_correlation",
+          "statistics": ["pearson_correlations", "p_values", "sample_sizes"],
+          "annotations": ["correlation_values", "significance_stars"]
+        },
+        {
+          "id": "chart_706",
+          "title": "SLA Compliance Time Series",
+          "type": "line",
+          "data": ["target_sla", "actual_sla", "variance"],
+          "x_axis": "date",
+          "statistics": ["trend_slope", "r_squared", "moving_average", "forecast"],
+          "trendline": "exponential_smoothing",
+          "annotations": ["best_fit_line", "confidence_intervals", "moving_average_band"]
+        }
+      ]
+    }
+  ],
+
+  "chart_specifications": {
+    "chart_types": {
+      "bar": {
+        "library": "plotly.express.bar",
+        "use_cases": ["comparing categories", "showing distributions", "budget variance"],
+        "interactivity": ["hover_details", "click_drill_down", "legend_toggle"],
+        "components": {
+          "visual": ["bars", "axis_labels", "title", "legend", "gridlines"],
+          "statistics": ["count", "mean", "std_dev", "min", "max"],
+          "summary_stats": ["n", "mean", "median", "mode", "std", "var", "skew", "kurtosis"],
+          "annotations": ["value_labels", "trend_line", "target_line", "reference_line"]
+        }
+      },
+      "line": {
+        "library": "plotly.express.line",
+        "use_cases": ["time series", "trends", "monitoring"],
+        "interactivity": ["range_slider", "hover_details", "legend_toggle"],
+        "components": {
+          "visual": ["line_trace", "markers", "axis_labels", "title", "legend", "gridlines"],
+          "statistics": ["trend_direction", "slope", "r_squared", "confidence_interval"],
+          "summary_stats": ["min", "max", "mean", "median", "trend_acceleration"],
+          "annotations": ["best_fit_line", "confidence_band", "forecast_line", "target_line"]
+        }
+      },
+      "histogram": {
+        "library": "plotly.express.histogram",
+        "use_cases": ["distributions", "frequency analysis", "outlier detection"],
+        "interactivity": ["bin_adjustment", "hover_details", "legend_toggle"],
+        "components": {
+          "visual": ["bars", "axis_labels", "title", "legend", "gridlines"],
+          "statistics": ["mean_line", "median_line", "std_dev_bands", "min", "max"],
+          "summary_stats": ["n", "mean", "median", "mode", "std", "var", "skew", "kurtosis"],
+          "annotations": ["four_moments", "percentile_lines", "outlier_threshold"]
+        }
+      },
+      "box": {
+        "library": "plotly.express.box",
+        "use_cases": ["quartile analysis", "outlier detection", "distribution comparison"],
+        "interactivity": ["hover_details", "legend_toggle", "click_group"],
+        "components": {
+          "visual": ["box", "whiskers", "median_line", "outliers", "axis_labels", "title"],
+          "statistics": ["q1", "median", "q3", "iqr", "min", "max", "outlier_threshold"],
+          "summary_stats": ["four_moments", "percentiles_25_50_75", "whisker_calculation", "outlier_count"],
+          "annotations": ["mean_marker", "outlier_points", "legend_with_counts"]
+        }
+      },
+      "scatter": {
+        "library": "plotly.express.scatter",
+        "use_cases": ["correlation analysis", "trend identification", "outlier detection"],
+        "interactivity": ["hover_details", "click_points", "legend_toggle"],
+        "components": {
+          "visual": ["points", "axis_labels", "title", "legend", "gridlines"],
+          "statistics": ["correlation_coefficient", "r_squared", "slope", "intercept"],
+          "summary_stats": ["pearson_r", "p_value", "confidence_interval", "regression_line"],
+          "annotations": ["best_fit_line", "confidence_band", "outlier_highlighting", "quadrant_lines"]
+        }
+      },
+      "heatmap": {
+        "library": "plotly.express.imshow",
+        "use_cases": ["correlations", "performance grid", "quality matrix"],
+        "interactivity": ["hover_values", "color_scale_toggle"],
+        "components": {
+          "visual": ["cells", "color_scale", "axis_labels", "title", "colorbar"],
+          "statistics": ["correlation_values", "min", "max", "mean"],
+          "summary_stats": ["descriptive_stats_per_cell"],
+          "annotations": ["value_labels", "significant_threshold_highlighting"]
+        }
+      },
+      "funnel": {
+        "library": "plotly.express.funnel",
+        "use_cases": ["process stages", "permit lifecycle", "conversion"],
+        "interactivity": ["hover_details", "stage_analysis"],
+        "components": {
+          "visual": ["funnel_segments", "axis_labels", "title", "legend"],
+          "statistics": ["count_per_stage", "drop_rate", "conversion_rate"],
+          "summary_stats": ["stage_counts", "percentage_remaining", "drop_off_points"],
+          "annotations": ["percentage_labels", "drop_rate_callouts"]
+        }
+      },
+      "pie": {
+        "library": "plotly.express.pie",
+        "use_cases": ["composition", "budget allocation", "market share"],
+        "interactivity": ["click_drill_down", "hover_percentage"],
+        "components": {
+          "visual": ["slices", "labels", "title", "legend"],
+          "statistics": ["percentage", "count", "cumulative_percentage"],
+          "summary_stats": ["total_count", "top_n_segments", "other_category_summary"],
+          "annotations": ["percentage_labels", "value_labels", "cumulative_line"]
+        }
+      },
+      "gauge": {
+        "library": "plotly.graph_objects.Indicator",
+        "use_cases": ["KPI cards", "progress tracking", "compliance monitoring"],
+        "interactivity": ["hover_tooltip"],
+        "components": {
+          "visual": ["gauge_arc", "needle", "axis_labels", "title", "reference_lines"],
+          "statistics": ["current_value", "target_value", "delta_value"],
+          "summary_stats": ["percentage_of_target", "trend_direction", "variance"],
+          "annotations": ["target_line", "threshold_zones", "trend_arrow"]
+        }
+      },
+      "sunburst": {
+        "library": "plotly.express.sunburst",
+        "use_cases": ["hierarchical composition", "resource allocation", "drill-down analysis"],
+        "interactivity": ["click_drill_down", "hover_details"],
+        "components": {
+          "visual": ["nested_arcs", "labels", "color_scale", "title"],
+          "statistics": ["value_per_segment", "percentage_of_parent"],
+          "summary_stats": ["hierarchy_depth", "total_value", "segment_distribution"],
+          "annotations": ["percentage_labels", "value_labels"]
+        }
+      },
+      "gis_scatter": {
+        "library": "plotly.express.scatter_mapbox",
+        "use_cases": ["location data", "asset mapping", "spatial analysis"],
+        "interactivity": ["hover_details", "zoom_pan", "click_popup"],
+        "components": {
+          "visual": ["points", "basemap", "color_scale", "size_legend", "title"],
+          "statistics": ["point_density", "spatial_distribution", "clustering_metrics"],
+          "summary_stats": ["point_count_by_category", "spatial_autocorrelation"],
+          "annotations": ["cluster_circles", "heatmap_overlay", "legend_with_counts"]
+        }
+      },
+      "gis_polygon": {
+        "library": "plotly.graph_objects.Choropleth",
+        "use_cases": ["geographic areas", "conflict zones", "permit areas"],
+        "interactivity": ["hover_details", "zoom_pan", "color_scale"],
+        "components": {
+          "visual": ["polygons", "color_scale", "basemap", "title", "colorbar"],
+          "statistics": ["value_per_polygon", "min", "max", "mean", "std_dev"],
+          "summary_stats": ["descriptive_stats_per_region", "quartile_distribution"],
+          "annotations": ["legend_with_scale", "significant_area_highlighting"]
+        }
+      },
+      "violin": {
+        "library": "plotly.express.violin",
+        "use_cases": ["distribution shape comparison", "density analysis", "outlier detection"],
+        "interactivity": ["hover_details", "legend_toggle"],
+        "components": {
+          "visual": ["violin_shape", "box_inside", "points", "axis_labels", "title"],
+          "statistics": ["density_curve", "quartiles", "mean", "median"],
+          "summary_stats": ["four_moments", "kurtosis", "skewness", "distribution_shape"],
+          "annotations": ["mean_marker", "median_line", "percentile_bands"]
+        }
+      }
+    }
+  },
+
+  "dashboard_integration": {
+    "backend": "FastAPI endpoint: /api/dashboard/{dashboard_id}",
+    "data_source": "DuckDB serving schema (analytics views + KPI materialization)",
+    "refresh_mechanism": "Callback-based auto-refresh via Dash clientside callbacks",
+    "styling": "Mantine UI components + custom CSS from app/assets/",
+    "authentication": "Required (internal DOT staff only)",
+    "audit_logging": "All dashboard views logged via governance audit trail"
+  },
+
+  "performance_requirements": {
+    "page_load_time_seconds": 3,
+    "chart_render_time_seconds": 2,
+    "data_query_timeout_seconds": 30,
+    "auto_refresh_max_interval_seconds": 3600,
+    "concurrent_users": 50
+  },
+
+  "visualization_best_practices": {
+    "rule_1": "All charts reference serving schema or materialized KPI views",
+    "rule_2": "Every chart includes data freshness indicator",
+    "rule_3": "Geographic charts use NYC standard CRS (EPSG:2263)",
+    "rule_4": "Color schemes follow NYC DOT brand colors + accessibility standards",
+    "rule_5": "All KPI cards show target line and trend indicator",
+    "rule_6": "Charts auto-export to PNG/SVG for reporting",
+    "rule_7": "Drill-down interactions maintain filter context",
+    "rule_8": "Mobile-responsive layouts for tablet/phone viewing"
+  }
+}
