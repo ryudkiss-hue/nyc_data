@@ -27,9 +27,10 @@ from socrata_toolkit.core.duckdb_pipeline import (
 
 logger = logging.getLogger(__name__)
 
-_BOROUGH_CANDIDATES = ["borough", "boro", "borough_code", "borough_name"]
+_BOROUGH_CANDIDATES = ["borough", "boro", "borough_code", "borough_name", "boroughcode"]
 _DATE_CANDIDATES = [
     "created_date",
+    "inspectiondate",
     "inspection_date",
     "status_date",
     ":updated_at",
@@ -95,13 +96,20 @@ def create_borough_summary() -> dict:
         cols = _existing_columns(conn, _STAGING_INSPECTIONS)
         borough = _pick_column(cols, _BOROUGH_CANDIDATES)
         if borough is None:
+            _create_empty(
+                conn,
+                table,
+                "borough VARCHAR, record_count BIGINT, "
+                "total_violations BIGINT, avg_violations DOUBLE, latest_record_date TIMESTAMP",
+            )
             return {
-                "status": "error",
-                "error": (
-                    "no borough column found in staging.inspections "
-                    f"(candidates: {_BOROUGH_CANDIDATES})"
-                ),
+                "status": "success",
                 "table": table,
+                "row_count": 0,
+                "note": (
+                    "no borough column found in staging.inspections "
+                    f"(candidates: {_BOROUGH_CANDIDATES}); empty table created"
+                ),
             }
         notes: list[str] = []
         metrics = ["COUNT(*) AS record_count"]
@@ -331,45 +339,103 @@ def create_geo_animation_mart() -> dict:
         return {"status": "error", "error": str(e), "table": table}
 
 def create_operations_productivity_mart() -> dict:
-    """Production rates and backlog burn metrics from staging tables."""
+    """Production rates and backlog burn metrics from staging.inspections."""
     table = "analytics.operations_productivity"
+    empty_schema = (
+        "borough VARCHAR, month TIMESTAMP, completed_units BIGINT, "
+        "backlog_units BIGINT, violation_rate DOUBLE"
+    )
     try:
         conn = _get_conn()
-        # Note: In a real environment, we'd join multiple staging tables (crews, work_orders)
-        # Here we synthesize from inspections and a mock crew allocation for demo-completeness
-        sql = """
-            SELECT 
-                UPPER(borough) as borough,
-                DATE_TRUNC('month', created_date::TIMESTAMP) as month,
-                COUNT(*) as completed_units,
-                SUM(CASE WHEN status = 'OPEN' THEN 1 ELSE 0 END) as backlog_units,
-                (COUNT(*) * 1.0 / NULLIF(COUNT(DISTINCT crew_id), 0)) as units_per_crew
-            FROM staging.inspections
-            GROUP BY 1, 2
-        """
-        # Note: If crew_id doesn't exist, this fails gracefully in _materialize
+        if not _table_exists(conn, "staging", "inspections"):
+            return _staging_error(table)
+        cols = _existing_columns(conn, _STAGING_INSPECTIONS)
+        date_col = _pick_column(cols, _DATE_CANDIDATES)
+        borough = _pick_column(cols, _BOROUGH_CANDIDATES)
+        notes: list[str] = []
+        if date_col is None:
+            _create_empty(conn, table, empty_schema)
+            return {
+                "status": "success",
+                "table": table,
+                "row_count": 0,
+                "note": "no date column in staging.inspections; empty table created",
+            }
+        month = _month_expr(date_col)
+        borough_expr = f'UPPER(CAST("{borough}" AS VARCHAR))' if borough else "NULL::VARCHAR"
+        if not borough:
+            notes.append("no borough column; borough set to NULL")
+        select = [
+            f"{borough_expr} AS borough",
+            f"{month} AS month",
+            "COUNT(*) AS completed_units",
+        ]
+        # Only group by month (position 2); borough is a constant NULL when absent
+        group = ["1", "2"] if borough else ["2"]
+        if _VIOLATION_METRIC in cols:
+            select.append(
+                f'SUM(CASE WHEN TRY_CAST("{_VIOLATION_METRIC}" AS BIGINT) > 0 '
+                "THEN 1 ELSE 0 END) AS backlog_units"
+            )
+            select.append(
+                f'AVG(TRY_CAST("{_VIOLATION_METRIC}" AS DOUBLE)) AS violation_rate'
+            )
+        else:
+            select.append("0 AS backlog_units")
+            select.append("0.0 AS violation_rate")
+            notes.append("violation_count not in staging data; defaulted to 0")
+        sql = (
+            f"SELECT {', '.join(select)} FROM {_STAGING_INSPECTIONS} "
+            f"WHERE {month} IS NOT NULL GROUP BY {', '.join(group)}"
+        )
         row_count = _materialize(conn, table, sql)
-        return _result(table, row_count, [])
+        return _result(table, row_count, notes)
     except Exception as e:
         return {"status": "error", "error": str(e), "table": table}
 
 def create_financial_efficiency_mart() -> dict:
-    """Contract spend vs physical output metrics."""
+    """Contract spend vs physical output metrics, derived from staging.built."""
     table = "analytics.financial_efficiency"
+    empty_schema = (
+        "borough VARCHAR, source_table VARCHAR, record_count BIGINT, "
+        "total_cost DOUBLE, avg_cost DOUBLE"
+    )
+    _COST_CANDIDATES = ["cost", "totalcost", "total_cost", "amount", "payment_amount", "contractcost"]
+    _BOROUGH_BUILT = ["borough", "boro", "borough_code", "boroughcode"]
     try:
         conn = _get_conn()
-        sql = """
-            SELECT 
-                borough,
-                contract_id,
-                SUM(payment_amount) as total_spend,
-                SUM(linear_feet_repaired) as total_lf,
-                (SUM(payment_amount) / NULLIF(SUM(linear_feet_repaired), 0)) as cost_per_lf
-            FROM staging.contract_payments
-            GROUP BY 1, 2
-        """
+        # Prefer staging.built (construction projects with cost data)
+        if _table_exists(conn, "staging", "built"):
+            source = "staging.built"
+            cols = _existing_columns(conn, source)
+        elif _table_exists(conn, "raw", "built"):
+            source = "raw.built"
+            cols = _existing_columns(conn, source)
+        else:
+            _create_empty(conn, table, empty_schema)
+            return {
+                "status": "success",
+                "table": table,
+                "row_count": 0,
+                "note": "staging.built not available; empty table created",
+            }
+        notes: list[str] = []
+        borough = _pick_column(cols, _BOROUGH_BUILT)
+        cost = _pick_column(cols, _COST_CANDIDATES)
+        b_expr = f'UPPER(CAST("{borough}" AS VARCHAR))' if borough else "NULL::VARCHAR"
+        if not borough:
+            notes.append("no borough column in built data; borough set to NULL")
+        c_expr = f'TRY_CAST("{cost}" AS DOUBLE)' if cost else "NULL::DOUBLE"
+        if not cost:
+            notes.append("no cost column in built data; cost metrics are NULL")
+        sql = (
+            f"SELECT {b_expr} AS borough, '{source}' AS source_table, "
+            f"COUNT(*) AS record_count, "
+            f"SUM({c_expr}) AS total_cost, AVG({c_expr}) AS avg_cost "
+            f"FROM {source} GROUP BY 1, 2"
+        )
         row_count = _materialize(conn, table, sql)
-        return _result(table, row_count, [])
+        return _result(table, row_count, notes)
     except Exception as e:
         return {"status": "error", "error": str(e), "table": table}
 

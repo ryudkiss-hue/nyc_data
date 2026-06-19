@@ -77,8 +77,8 @@ def _load_dataset_config_keys() -> list[str]:
 DOMAIN = "data.cityofnewyork.us"
 DB_PATH = os.getenv("DUCKDB_PATH", str(ROOT / "data/local_db/nyc_mission_control.duckdb"))
 
-# Datasets skipped unconditionally: empty or inaccessible via API
-SKIP_DATASETS = {"capital_blocks", "permit_stipulations"}
+# Datasets skipped unconditionally: empty, inaccessible, or geo-only (no flat JSON rows)
+SKIP_DATASETS = {"capital_blocks", "permit_stipulations", "sidewalk_planimetric"}
 
 # Datasets known stale but still attempted (errors captured, not fatal)
 WARN_STALE = {"ramp_locations", "weekly_construction"}
