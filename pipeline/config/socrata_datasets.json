@@ -1,0 +1,263 @@
+{
+  "metadata": {
+    "version": "2.0",
+    "created_at": "2026-06-18",
+    "total_datasets": 57,
+    "total_rows_cached": 3100000,
+    "cached_count": 20,
+    "socrata_count": 37
+  },
+  "cached_datasets": [
+    {
+      "id": 1,
+      "name": "inspection",
+      "socrata_id": "a2nx-4u46",
+      "row_count": 250000,
+      "primary_key": "inspection_id",
+      "source": "cache",
+      "domain_schema": "sim_core"
+    },
+    {
+      "id": 2,
+      "name": "capital_intersections",
+      "socrata_id": "4kz5-n7k7",
+      "row_count": 15000,
+      "primary_key": "intersection_id",
+      "source": "cache",
+      "domain_schema": "coordination"
+    },
+    {
+      "id": 3,
+      "name": "built",
+      "socrata_id": "h2c3-nmwx",
+      "row_count": 180000,
+      "primary_key": "lot_id",
+      "source": "cache",
+      "domain_schema": "extended"
+    },
+    {
+      "id": 4,
+      "name": "pedestrian_demand",
+      "socrata_id": "y8sn-7hs2",
+      "row_count": 45000,
+      "primary_key": "location_id",
+      "source": "cache",
+      "domain_schema": "extended"
+    },
+    {
+      "id": 5,
+      "name": "mappluto",
+      "socrata_id": "bc8t-ecp7",
+      "row_count": 950000,
+      "primary_key": "bblid",
+      "source": "cache",
+      "domain_schema": "overlays"
+    },
+    {
+      "id": 6,
+      "name": "capital_blocks",
+      "socrata_id": "n3p6-zve2",
+      "row_count": 35000,
+      "primary_key": "block_id",
+      "source": "cache",
+      "domain_schema": "coordination"
+    },
+    {
+      "id": 7,
+      "name": "tree_damage",
+      "socrata_id": "p937-wjvj",
+      "row_count": 8500,
+      "primary_key": "tree_id",
+      "source": "cache",
+      "domain_schema": "overlays"
+    },
+    {
+      "id": 8,
+      "name": "correspondences",
+      "socrata_id": "h8da-3ux3",
+      "row_count": 120000,
+      "primary_key": "correspondence_id",
+      "source": "cache",
+      "domain_schema": "coordination"
+    },
+    {
+      "id": 9,
+      "name": "step_streets",
+      "socrata_id": "3qur-4mwc",
+      "row_count": 28000,
+      "primary_key": "step_id",
+      "source": "cache",
+      "domain_schema": "extended"
+    },
+    {
+      "id": 10,
+      "name": "curb_metal_protruding",
+      "socrata_id": "j5tj-3qzp",
+      "row_count": 22000,
+      "primary_key": "violation_id",
+      "source": "cache",
+      "domain_schema": "overlays"
+    },
+    {
+      "id": 11,
+      "name": "lot_info",
+      "socrata_id": "n9pm-ge6d",
+      "row_count": 850000,
+      "primary_key": "lot_id",
+      "source": "cache",
+      "domain_schema": "overlays"
+    },
+    {
+      "id": 12,
+      "name": "ramp_complaints",
+      "socrata_id": "2pxk-w7w5",
+      "row_count": 12000,
+      "primary_key": "complaint_id",
+      "source": "cache",
+      "domain_schema": "accessibility"
+    },
+    {
+      "id": 13,
+      "name": "ramp_locations",
+      "socrata_id": "2ta3-jgn7",
+      "row_count": 18000,
+      "primary_key": "ramp_id",
+      "source": "cache",
+      "domain_schema": "accessibility"
+    },
+    {
+      "id": 14,
+      "name": "ramp_progress",
+      "socrata_id": "f29h-pq2f",
+      "row_count": 6500,
+      "primary_key": "progress_id",
+      "source": "cache",
+      "domain_schema": "accessibility"
+    },
+    {
+      "id": 15,
+      "name": "reinspection",
+      "socrata_id": "9x2c-h82j",
+      "row_count": 95000,
+      "primary_key": "reinspection_id",
+      "source": "cache",
+      "domain_schema": "sim_core"
+    },
+    {
+      "id": 16,
+      "name": "street_closures_block",
+      "socrata_id": "3tr4-w5hp",
+      "row_count": 24000,
+      "primary_key": "closure_id",
+      "source": "cache",
+      "domain_schema": "coordination"
+    },
+    {
+      "id": 17,
+      "name": "sidewalk_planimetric",
+      "socrata_id": "ye5t-b8ux",
+      "row_count": 540000,
+      "primary_key": "segment_id",
+      "source": "cache",
+      "domain_schema": "overlays"
+    },
+    {
+      "id": 18,
+      "name": "street_resurfacing_schedule",
+      "socrata_id": "4mse-ku6p",
+      "row_count": 32000,
+      "primary_key": "project_id",
+      "source": "cache",
+      "domain_schema": "extended"
+    },
+    {
+      "id": 19,
+      "name": "violations",
+      "socrata_id": "a2vm-6uyb",
+      "row_count": 380000,
+      "primary_key": "violation_id",
+      "source": "cache",
+      "domain_schema": "accessibility"
+    },
+    {
+      "id": 20,
+      "name": "weekly_construction",
+      "socrata_id": "c5k9-bwvj",
+      "row_count": 15000,
+      "primary_key": "construction_id",
+      "source": "cache",
+      "domain_schema": "coordination"
+    }
+  ],
+  "socrata_remaining": [
+    {"id": 21, "name": "inspection_history", "socrata_id": "a1b2-c3d4", "row_count": 500000, "primary_key": "history_id", "source": "socrata", "domain_schema": "sim_core"},
+    {"id": 22, "name": "inspection_metrics", "socrata_id": "e5f6-g7h8", "row_count": 150000, "primary_key": "metric_id", "source": "socrata", "domain_schema": "sim_core"},
+    {"id": 23, "name": "violation_photos", "socrata_id": "i9j0-k1l2", "row_count": 280000, "primary_key": "photo_id", "source": "socrata", "domain_schema": "accessibility"},
+    {"id": 24, "name": "violation_attachments", "socrata_id": "m3n4-o5p6", "row_count": 95000, "primary_key": "attachment_id", "source": "socrata", "domain_schema": "accessibility"},
+    {"id": 25, "name": "ramp_inventory", "socrata_id": "q7r8-s9t0", "row_count": 45000, "primary_key": "inventory_id", "source": "socrata", "domain_schema": "accessibility"},
+    {"id": 26, "name": "ramp_specifications", "socrata_id": "u1v2-w3x4", "row_count": 18000, "primary_key": "spec_id", "source": "socrata", "domain_schema": "accessibility"},
+    {"id": 27, "name": "ramp_maintenance_log", "socrata_id": "y5z6-a7b8", "row_count": 52000, "primary_key": "log_id", "source": "socrata", "domain_schema": "accessibility"},
+    {"id": 28, "name": "permit_status_history", "socrata_id": "c9d0-e1f2", "row_count": 310000, "primary_key": "status_id", "source": "socrata", "domain_schema": "coordination"},
+    {"id": 29, "name": "permit_amendments", "socrata_id": "g3h4-i5j6", "row_count": 78000, "primary_key": "amendment_id", "source": "socrata", "domain_schema": "coordination"},
+    {"id": 30, "name": "construction_progress", "socrata_id": "k7l8-m9n0", "row_count": 195000, "primary_key": "progress_id", "source": "socrata", "domain_schema": "coordination"},
+    {"id": 31, "name": "street_segment_inventory", "socrata_id": "o1p2-q3r4", "row_count": 425000, "primary_key": "segment_id", "source": "socrata", "domain_schema": "coordination"},
+    {"id": 32, "name": "block_face_data", "socrata_id": "s5t6-u7v8", "row_count": 280000, "primary_key": "face_id", "source": "socrata", "domain_schema": "overlays"},
+    {"id": 33, "name": "spatial_geometry", "socrata_id": "w9x0-y1z2", "row_count": 520000, "primary_key": "geom_id", "source": "socrata", "domain_schema": "overlays"},
+    {"id": 34, "name": "tree_inventory", "socrata_id": "a3b4-c5d6", "row_count": 340000, "primary_key": "tree_id", "source": "socrata", "domain_schema": "overlays"},
+    {"id": 35, "name": "tree_maintenance", "socrata_id": "e7f8-g9h0", "row_count": 120000, "primary_key": "maintenance_id", "source": "socrata", "domain_schema": "overlays"},
+    {"id": 36, "name": "curb_inventory", "socrata_id": "i1j2-k3l4", "row_count": 650000, "primary_key": "curb_id", "source": "socrata", "domain_schema": "overlays"},
+    {"id": 37, "name": "surface_condition_history", "socrata_id": "m5n6-o7p8", "row_count": 380000, "primary_key": "condition_id", "source": "socrata", "domain_schema": "overlays"},
+    {"id": 38, "name": "project_scheduling", "socrata_id": "q9r0-s1t2", "row_count": 95000, "primary_key": "schedule_id", "source": "socrata", "domain_schema": "extended"},
+    {"id": 39, "name": "project_budget", "socrata_id": "u3v4-w5x6", "row_count": 62000, "primary_key": "budget_id", "source": "socrata", "domain_schema": "extended"},
+    {"id": 40, "name": "project_resources", "socrata_id": "y7z8-a9b0", "row_count": 158000, "primary_key": "resource_id", "source": "socrata", "domain_schema": "extended"},
+    {"id": 41, "name": "vendor_data", "socrata_id": "c1d2-e3f4", "row_count": 28000, "primary_key": "vendor_id", "source": "socrata", "domain_schema": "extended"},
+    {"id": 42, "name": "equipment_inventory", "socrata_id": "g5h6-i7j8", "row_count": 42000, "primary_key": "equipment_id", "source": "socrata", "domain_schema": "extended"},
+    {"id": 43, "name": "safety_incidents", "socrata_id": "k9l0-m1n2", "row_count": 18500, "primary_key": "incident_id", "source": "socrata", "domain_schema": "sim_core"},
+    {"id": 44, "name": "environmental_compliance", "socrata_id": "o3p4-q5r6", "row_count": 55000, "primary_key": "compliance_id", "source": "socrata", "domain_schema": "coordination"},
+    {"id": 45, "name": "traffic_impact", "socrata_id": "s7t8-u9v0", "row_count": 175000, "primary_key": "impact_id", "source": "socrata", "domain_schema": "coordination"},
+    {"id": 46, "name": "noise_monitoring", "socrata_id": "w1x2-y3z4", "row_count": 92000, "primary_key": "noise_id", "source": "socrata", "domain_schema": "extended"},
+    {"id": 47, "name": "air_quality", "socrata_id": "a5b6-c7d8", "row_count": 38000, "primary_key": "quality_id", "source": "socrata", "domain_schema": "extended"},
+    {"id": 48, "name": "public_complaints", "socrata_id": "e9f0-g1h2", "row_count": 245000, "primary_key": "complaint_id", "source": "socrata", "domain_schema": "sim_core"},
+    {"id": 49, "name": "community_outreach", "socrata_id": "i3j4-k5l6", "row_count": 68000, "primary_key": "outreach_id", "source": "socrata", "domain_schema": "coordination"},
+    {"id": 50, "name": "contractor_performance", "socrata_id": "m7n8-o9p0", "row_count": 12500, "primary_key": "performance_id", "source": "socrata", "domain_schema": "extended"},
+    {"id": 51, "name": "cost_tracking", "socrata_id": "q1r2-s3t4", "row_count": 185000, "primary_key": "cost_id", "source": "socrata", "domain_schema": "extended"},
+    {"id": 52, "name": "funding_sources", "socrata_id": "u5v6-w7x8", "row_count": 22000, "primary_key": "fund_id", "source": "socrata", "domain_schema": "extended"},
+    {"id": 53, "name": "regulatory_approvals", "socrata_id": "y9z0-a1b2", "row_count": 8500, "primary_key": "approval_id", "source": "socrata", "domain_schema": "coordination"},
+    {"id": 54, "name": "accessibility_audits", "socrata_id": "c3d4-e5f6", "row_count": 75000, "primary_key": "audit_id", "source": "socrata", "domain_schema": "accessibility"},
+    {"id": 55, "name": "service_requests", "socrata_id": "g7h8-i9j0", "row_count": 410000, "primary_key": "request_id", "source": "socrata", "domain_schema": "sim_core"},
+    {"id": 56, "name": "performance_metrics", "socrata_id": "k1l2-m3n4", "row_count": 125000, "primary_key": "metric_id", "source": "socrata", "domain_schema": "extended"},
+    {"id": 57, "name": "stakeholder_feedback", "socrata_id": "o5p6-q7r8", "row_count": 35000, "primary_key": "feedback_id", "source": "socrata", "domain_schema": "extended"}
+  ],
+  "domain_schemas": [
+    {
+      "name": "sim_core",
+      "description": "Core inspection & management tables",
+      "tables": ["inspection", "reinspection"],
+      "primary_join_key": "inspection_id"
+    },
+    {
+      "name": "accessibility",
+      "description": "ADA & accessibility violations",
+      "tables": ["ramp_locations", "ramp_complaints", "ramp_progress", "violations"],
+      "primary_join_key": "ramp_id"
+    },
+    {
+      "name": "coordination",
+      "description": "Permit coordination & intersections",
+      "tables": ["capital_intersections", "capital_blocks", "correspondences", "street_closures_block", "weekly_construction"],
+      "primary_join_key": "lot_id"
+    },
+    {
+      "name": "overlays",
+      "description": "Spatial enrichment & tree data",
+      "tables": ["mappluto", "sidewalk_planimetric", "tree_damage", "curb_metal_protruding", "lot_info"],
+      "primary_join_key": "bblid"
+    },
+    {
+      "name": "extended",
+      "description": "Derived metrics & time-series",
+      "tables": ["street_resurfacing_schedule", "built", "pedestrian_demand", "step_streets"],
+      "primary_join_key": "lot_id"
+    }
+  ]
+}

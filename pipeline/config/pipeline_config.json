@@ -1,0 +1,118 @@
+{
+  "pipeline": {
+    "version": "2.0",
+    "name": "NYC DOT MotherDuck Pipeline",
+    "environment": "production",
+    "created_at": "2026-06-18"
+  },
+  "motherduck": {
+    "database_name": "nyc_dot_analytics",
+    "schemas": {
+      "raw": "Landing zone for all 57 datasets",
+      "staging": "Deduplicated and type-cast data",
+      "sim_core": "Inspection & management domain",
+      "accessibility": "ADA & accessibility violations",
+      "coordination": "Permit coordination & conflicts",
+      "overlays": "Spatial enrichment & tree data",
+      "extended": "Derived metrics & time-series",
+      "serving": "Materialized KPIs & dashboards"
+    }
+  },
+  "ingestion": {
+    "cache_directory": "~/Desktop/nyc_data_cache",
+    "cached_datasets_count": 20,
+    "socrata_remaining_count": 37,
+    "batch_size_socrata": 10,
+    "row_batch_size": 200000,
+    "row_limit": null,
+    "parallel_workers": 5,
+    "timeout_seconds": 3600
+  },
+  "staging": {
+    "deduplication": {
+      "method": "primary_key",
+      "primary_key_column": 0,
+      "drop_nulls": true
+    },
+    "type_casting": {
+      "method": "try_cast",
+      "fallback_strategy": "string"
+    },
+    "column_preservation": {
+      "keep_original_names": true,
+      "preserve_all_columns": true
+    }
+  },
+  "analytics": {
+    "domain_schemas": [
+      "sim_core",
+      "accessibility",
+      "coordination",
+      "overlays",
+      "extended"
+    ],
+    "view_count": 100,
+    "join_keys": [
+      "inspection_id",
+      "permit_id",
+      "ramp_id",
+      "lot_id",
+      "bblid"
+    ]
+  },
+  "serving": {
+    "kpi_definitions_file": "config/kpi_definitions.json",
+    "total_kpis": 51,
+    "boroughs": ["manhattan", "brooklyn", "queens", "bronx", "staten_island"],
+    "kpi_records": 255,
+    "quality_scorecards": 57,
+    "borough_aggregates": 25,
+    "materialization": {
+      "frequency": "daily",
+      "time_zone": "America/New_York",
+      "retention_days": 365
+    }
+  },
+  "verification": {
+    "gates_enabled": true,
+    "gates": [
+      {
+        "name": "data_load",
+        "description": "All 57 datasets loaded, >=10M total rows",
+        "critical": true
+      },
+      {
+        "name": "schema",
+        "description": "Staging has all columns, proper types, no data loss",
+        "critical": true
+      },
+      {
+        "name": "joins",
+        "description": "Cross-dataset relationships validated",
+        "critical": true
+      },
+      {
+        "name": "kpi",
+        "description": "255 KPI records + 57 scorecards computed",
+        "critical": true
+      }
+    ],
+    "exit_code_enforcement": true,
+    "silent_failure_detection": true
+  },
+  "logging": {
+    "log_file": "pipeline/logs/pipeline.log",
+    "json_log_file": "pipeline/logs/execution.json",
+    "log_level": "INFO",
+    "rotation": {
+      "max_bytes": 10485760,
+      "backup_count": 5
+    }
+  },
+  "constraints": {
+    "no_row_limits": true,
+    "no_data_loss": true,
+    "no_metadata_loss": true,
+    "verified_dedup": true
+  }
+}

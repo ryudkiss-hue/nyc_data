@@ -18,6 +18,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from motherduck_bridge import MotherDuckBridge
 from sql_executor import SQLExecutor, PipelineStageExecutor
 from socrata_loader import SocrataLoader
+from governance import GovernanceFramework, GovernanceValidator
 
 # Wire in 7 advanced modules (Phase 3C-2: Mandatory Scripts)
 try:
@@ -102,6 +103,21 @@ class MotherDuckPipeline:
             self.execution_context = None
             self.alert_manager = None
             logger.warning("Advanced modules not available - state management disabled")
+
+        # Initialize governance framework
+        try:
+            self.governance = GovernanceFramework()
+            self.governance_validator = GovernanceValidator(self.governance)
+            logger.info("Governance framework initialized (personal solo-user, indefinite retention)")
+            self.governance.log_audit('pipeline_started', {
+                'pipeline_id': self.execution_context.pipeline_id if self.execution_context else 'no_context',
+                'datasets': self.expected_total,
+                'governance_mode': 'personal_solo_user'
+            })
+        except Exception as e:
+            logger.error(f"Failed to initialize governance framework: {e}")
+            self.governance = None
+            self.governance_validator = None
 
     def _start_stage(self, stage_name: str):
         """Safe wrapper for starting a pipeline stage."""

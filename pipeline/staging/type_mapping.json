@@ -1,0 +1,181 @@
+{
+  "metadata": {
+    "version": "2.0",
+    "description": "Socrata to SQL type mappings for NYC DOT datasets",
+    "created_at": "2026-06-18"
+  },
+  "socrata_to_sql": {
+    "text": {
+      "sql_type": "VARCHAR(8000)",
+      "try_cast": "TRY_CAST(column AS VARCHAR(8000))",
+      "validation": "length <= 8000"
+    },
+    "number": {
+      "sql_type": "DOUBLE",
+      "try_cast": "TRY_CAST(column AS DOUBLE)",
+      "validation": "is_numeric"
+    },
+    "calendar_date": {
+      "sql_type": "DATE",
+      "try_cast": "TRY_CAST(column AS DATE)",
+      "validation": "is_valid_date",
+      "formats": ["YYYY-MM-DD", "MM/DD/YYYY"]
+    },
+    "floating_timestamp": {
+      "sql_type": "TIMESTAMP",
+      "try_cast": "TRY_CAST(column AS TIMESTAMP)",
+      "validation": "is_valid_timestamp",
+      "formats": ["YYYY-MM-DD HH:MM:SS", "ISO8601"]
+    },
+    "checkbox": {
+      "sql_type": "BOOLEAN",
+      "try_cast": "TRY_CAST(column AS BOOLEAN)",
+      "validation": "is_boolean"
+    },
+    "location": {
+      "sql_type": "VARCHAR(1000)",
+      "try_cast": "TRY_CAST(column AS VARCHAR(1000))",
+      "components": ["latitude", "longitude"],
+      "validation": "valid_coordinates"
+    },
+    "url": {
+      "sql_type": "VARCHAR(2000)",
+      "try_cast": "TRY_CAST(column AS VARCHAR(2000))",
+      "validation": "is_valid_url"
+    },
+    "email": {
+      "sql_type": "VARCHAR(254)",
+      "try_cast": "TRY_CAST(column AS VARCHAR(254))",
+      "validation": "is_valid_email"
+    },
+    "phone": {
+      "sql_type": "VARCHAR(20)",
+      "try_cast": "TRY_CAST(column AS VARCHAR(20))",
+      "validation": "is_valid_phone"
+    },
+    "json": {
+      "sql_type": "JSON",
+      "try_cast": "TRY_CAST(column AS JSON)",
+      "validation": "is_valid_json"
+    },
+    "geometry": {
+      "sql_type": "GEOMETRY",
+      "try_cast": "ST_GeomFromText(column)",
+      "validation": "is_valid_geometry"
+    }
+  },
+  "dataset_specific_mappings": {
+    "inspection": {
+      "inspection_id": {
+        "socrata_type": "text",
+        "sql_type": "VARCHAR(50)",
+        "primary_key": true,
+        "nullable": false
+      },
+      "inspection_date": {
+        "socrata_type": "calendar_date",
+        "sql_type": "DATE",
+        "nullable": false
+      },
+      "violation_count": {
+        "socrata_type": "number",
+        "sql_type": "INTEGER",
+        "nullable": true
+      },
+      "location": {
+        "socrata_type": "location",
+        "sql_type": "GEOMETRY",
+        "nullable": true
+      }
+    },
+    "ramp_locations": {
+      "ramp_id": {
+        "socrata_type": "text",
+        "sql_type": "VARCHAR(50)",
+        "primary_key": true,
+        "nullable": false
+      },
+      "location": {
+        "socrata_type": "location",
+        "sql_type": "GEOMETRY",
+        "nullable": false
+      },
+      "accessibility_compliant": {
+        "socrata_type": "checkbox",
+        "sql_type": "BOOLEAN",
+        "nullable": true
+      }
+    },
+    "mappluto": {
+      "bblid": {
+        "socrata_type": "text",
+        "sql_type": "VARCHAR(10)",
+        "primary_key": true,
+        "nullable": false
+      },
+      "lot_area": {
+        "socrata_type": "number",
+        "sql_type": "DOUBLE",
+        "nullable": true
+      },
+      "building_area": {
+        "socrata_type": "number",
+        "sql_type": "DOUBLE",
+        "nullable": true
+      }
+    },
+    "violations": {
+      "violation_id": {
+        "socrata_type": "text",
+        "sql_type": "VARCHAR(50)",
+        "primary_key": true,
+        "nullable": false
+      },
+      "violation_date": {
+        "socrata_type": "calendar_date",
+        "sql_type": "DATE",
+        "nullable": false
+      },
+      "violation_description": {
+        "socrata_type": "text",
+        "sql_type": "VARCHAR(8000)",
+        "nullable": true
+      },
+      "accessibility_related": {
+        "socrata_type": "checkbox",
+        "sql_type": "BOOLEAN",
+        "nullable": true
+      }
+    }
+  },
+  "null_handling": {
+    "strategy": "preserve",
+    "empty_string_to_null": false,
+    "whitespace_only_to_null": true
+  },
+  "validation_rules": {
+    "primary_keys": {
+      "allow_null": false,
+      "allow_duplicates": false,
+      "check_constraint": "NOT NULL UNIQUE"
+    },
+    "foreign_keys": {
+      "allow_null": true,
+      "referential_integrity": "check",
+      "cascade_rules": "restrict"
+    },
+    "text_fields": {
+      "max_length_check": true,
+      "trim_whitespace": true,
+      "remove_control_characters": true
+    },
+    "numeric_fields": {
+      "range_check": true,
+      "null_as_zero": false
+    },
+    "date_fields": {
+      "valid_range": "1900-01-01 to 2100-12-31",
+      "null_handling": "preserve"
+    }
+  }
+}
