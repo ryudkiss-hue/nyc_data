@@ -2,6 +2,26 @@
 
 Guidance for Claude Code when working with this repository.
 
+## ⚡ MANDATORY REQUIREMENTS (User Directive 2026-06-18)
+
+**CI FAILURE PROTOCOL - NON-NEGOTIABLE**
+
+If GitHub run or test fails or throws warnings:
+- ✅ ALWAYS address it automatically
+- ✅ NO exceptions
+- ✅ NO delays
+- ✅ NO justifications
+
+Any CI failure, test failure, warning, linting error, or build failure must be:
+1. Immediately investigated for root cause
+2. Automatically fixed in code
+3. Verified to confirm the fix works
+4. Committed and pushed to main
+
+This is the highest priority quality gate. See MANDATORY_CI_FAILURE_PROTOCOL in memory for details.
+
+---
+
 ## What this project is
 
 NYC DOT Sidewalk Inspection & Management Toolkit — a **Dash/Plotly-based Mission Control dashboard** for analyzing SIM unit data from NYC Open Data, with a Python CLI toolkit for analysts and responsive Mantine UI.
