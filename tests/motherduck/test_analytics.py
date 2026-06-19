@@ -7,6 +7,7 @@ Tests verify:
 - Phase-specific calculations match expected formulas
 """
 
+import os
 import pytest
 
 from socrata_toolkit.motherduck.analytics import AnalyticsBuilder
@@ -18,9 +19,16 @@ from socrata_toolkit.motherduck.staging import StagingTransformer
 @pytest.fixture
 def motherduck_conn():
     """Fixture providing a local DuckDB connection (no MotherDuck token needed)."""
-    conn = MotherDuckConnection(token=None, database_path=":memory:")
-    yield conn
-    conn.close()
+    # Temporarily remove MOTHERDUCK_TOKEN to force local DuckDB
+    old_token = os.environ.pop("MOTHERDUCK_TOKEN", None)
+    try:
+        conn = MotherDuckConnection(token="", database_path=":memory:")
+        yield conn
+        conn.close()
+    finally:
+        # Restore token if it was set
+        if old_token:
+            os.environ["MOTHERDUCK_TOKEN"] = old_token
 
 
 @pytest.fixture

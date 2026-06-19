@@ -70,7 +70,7 @@ class MotherDuckConnection:
                 database_path="/data/nyc_analytics.duckdb"
             )
         """
-        self.token = token or os.getenv("MOTHERDUCK_TOKEN")
+        self.token = token if token is not None else os.getenv("MOTHERDUCK_TOKEN")
         self.database = database
         self.database_path = database_path or ":memory:"
         self.user_agent = self.USER_AGENT
@@ -86,7 +86,7 @@ class MotherDuckConnection:
         Falls back to local DuckDB if token is missing or connection fails.
         """
         try:
-            if self.token:
+            if self.token and self.token.strip():
                 # Connect to MotherDuck cloud
                 os.environ["MOTHERDUCK_TOKEN"] = self.token
                 connection_string = f"md:{self.database}"
