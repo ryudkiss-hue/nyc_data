@@ -128,15 +128,17 @@ THEME = {
 
 dm = DataManager(read_only=True)
 
-# Initialize cache audit table for observability tracking
+# Initialize cache audit table for observability tracking (after DataManager to avoid DB lock)
 from app.utils.cache_manager import init_cache_audit_table
 try:
-    from socrata_toolkit.core.duckdb_store import DuckDBManager
-    db_manager = DuckDBManager()
-    init_cache_audit_table(db_manager)
-    logger.info("Cache audit table initialized successfully")
+    # Use DataManager's existing connection to avoid locking issues
+    if hasattr(dm, 'manager') and dm.manager is not None:
+        init_cache_audit_table(dm.manager)
+        logger.info("Cache audit table initialized successfully")
+    else:
+        logger.info("DataManager not ready for cache_audit init")
 except Exception as e:
-    logger.warning(f"Could not initialize cache_audit table: {e}. Continuing with degraded observability.")
+    logger.debug(f"Cache audit initialization deferred (non-critical): {e}")
 
 # ==========================================
 # --- APP CORE LAYOUT ---
