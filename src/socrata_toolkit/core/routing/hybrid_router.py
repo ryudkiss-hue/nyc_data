@@ -1,4 +1,3 @@
-from typing import List
 from .models import MatchResult
 from .programmatic_router import ProgrammaticRouter
 from .claude_semantic_router import ClaudeSemanticRouter
@@ -60,12 +59,16 @@ class HybridRouter:
         if prog_result.question_id == claude_result.question_id:
             # Agreement: ensemble confidence
             ensemble_confidence = (prog_result.confidence + claude_result.confidence) / 2
+            source = (
+                f'hybrid_agreement (programmatic={prog_result.confidence:.2f}, '
+                f'claude={claude_result.confidence:.2f})'
+            )
 
             return MatchResult(
                 question_id=prog_result.question_id,
                 confidence=ensemble_confidence,
                 strategy='ensemble_agreed',
-                source=f'hybrid_agreement (programmatic={prog_result.confidence:.2f}, claude={claude_result.confidence:.2f})',
+                source=source,
                 alternatives=[]
             )
         else:
