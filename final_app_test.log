@@ -1,0 +1,14 @@
+2026-06-20 06:36:21.891 WARNING streamlit.runtime.caching.cache_data_api: No runtime found, using MemoryCacheStorageManager
+2026-06-20 06:36:21.896 WARNING streamlit.runtime.caching.cache_data_api: No runtime found, using MemoryCacheStorageManager
+2026-06-20 06:36:21.897 WARNING streamlit.runtime.caching.cache_data_api: No runtime found, using MemoryCacheStorageManager
+INFO:socrata_toolkit.core.duckdb_store:Connecting to DuckDB at ./data/local_db/nyc_mission_control.duckdb
+INFO:socrata_toolkit.core.duckdb_store:DuckDB spatial extension loaded successfully.
+INFO:__main__:Cache audit table initialized successfully
+INFO:app.callbacks.visualization_callbacks:Visualization callbacks registered (Phase B-F)
+INFO:app.callbacks.analytics:Analytics callbacks registered
+INFO:     Started server process [40644]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    [Errno 10048] error while attempting to bind on address ('127.0.0.1', 8011): [winerror 10048] only one usage of each socket address (protocol/network address/port) is normally permitted
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.

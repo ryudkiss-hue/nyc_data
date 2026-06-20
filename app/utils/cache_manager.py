@@ -23,11 +23,6 @@ else:  # Unix/Linux/macOS
     import fcntl
 
 try:
-    import streamlit as st
-except ImportError:  # pragma: no cover
-    st = None  # type: ignore
-
-try:
     from apscheduler.schedulers.background import BackgroundScheduler
 except ImportError:  # pragma: no cover
     BackgroundScheduler = None  # type: ignore
@@ -601,6 +596,12 @@ def start_prefetch_scheduler(dataset_keys: list[str], interval_minutes: int = 60
             'Install with: pip install apscheduler'
         )
         return
+
+    # Lazy import Streamlit only when needed (not imported at module load time)
+    try:
+        import streamlit as st
+    except ImportError:
+        st = None
 
     # Avoid duplicate starts inside a single Streamlit session
     if st is not None:
