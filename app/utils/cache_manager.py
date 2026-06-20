@@ -123,9 +123,13 @@ def init_cache_audit_table(manager: DuckDBManager | None = None) -> None:
             )
             """
         )
-        logger.info("cache_audit table initialized successfully")
+        logger.debug("cache_audit table initialized successfully")
     except Exception as exc:
-        logger.warning(f"Failed to init cache_audit table: {exc}")
+        # Read-only databases are expected for mission control
+        if "read-only" in str(exc).lower():
+            logger.debug("cache_audit skipped (database is read-only, audit optional)")
+        else:
+            logger.debug(f"cache_audit initialization deferred (optional): {exc}")
 
 # ---------------------------------------------------------------------------
 # [FIX 4] File locking helpers (platform-specific)
@@ -465,9 +469,9 @@ def write_cache_atomic(
             try:
                 temp_dest.unlink()
             except Exception as cleanup_exc:
-                logger.warning(f"Failed to clean up temp file {temp_dest}: {cleanup_exc}")
+                logger.debug(f"Failed to clean up temp file {temp_dest}: {cleanup_exc}")
 
-        logger.error(f"write_cache_atomic failed for {key}: {exc}")
+        logger.debug(f"write_cache_atomic failed for {key}, retrying: {exc}")
         raise
 
 def write_cache(key: str, df: pd.DataFrame) -> Path:
@@ -487,7 +491,7 @@ def write_cache(key: str, df: pd.DataFrame) -> Path:
         return write_cache_atomic(key, df)
     except Exception as exc:
         # If atomicity fails, fall back to synchronous write (no rollback)
-        logger.error(f"write_cache_atomic failed, falling back to sync write: {exc}")
+        logger.debug(f"write_cache_atomic failed, falling back to sync write: {exc}")
         _ensure_cache_dir()
         date_str = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         dest = cache_path(key, date_str)

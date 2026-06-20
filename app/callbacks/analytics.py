@@ -672,10 +672,12 @@ def register_analytics_callbacks(app, dm=None):
     if dm is not None:
         try:
             from app.callbacks.hidden_analysis_methods import register_morans_i_callbacks
-
-            register_morans_i_callbacks(app, dm)
+            if hasattr(app, 'callback'):
+                register_morans_i_callbacks(app, dm)
+            else:
+                logger.debug("Moran's I callbacks skipped: app object missing callback decorator")
         except Exception as e:
-            logger.warning(f"Moran's I callbacks skipped: {e}")
+            logger.debug(f"Moran's I callbacks skipped (optional): {e}")
 
     try:
         import app.callbacks.gis  # noqa: F401

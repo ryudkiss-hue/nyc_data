@@ -19,12 +19,18 @@ Architecture:
 
 import os
 import sys
+import warnings
 from pathlib import Path
 
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
+
+# Suppress Streamlit warnings (Dash app doesn't use Streamlit)
+warnings.filterwarnings("ignore", category=UserWarning, module="streamlit.*")
+import logging
+logging.getLogger("streamlit").setLevel(logging.ERROR)
 
 # Bulletproof path resolution for local modules
 _app_path = str(Path(__file__).resolve().parent.absolute())

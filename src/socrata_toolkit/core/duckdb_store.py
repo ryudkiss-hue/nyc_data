@@ -177,7 +177,7 @@ class DuckDBManager:
                             self._conn.execute("INSTALL motherduck;")
                             self._conn.execute("LOAD motherduck;")
                         except Exception as exc:
-                            logger.warning("Could not initialize MotherDuck extension: %s", exc)
+                            logger.debug("MotherDuck extension unavailable (optional): %s", exc)
                     else:
                         self._conn = duckdb.connect(connection_path, read_only=is_read_only)
 
