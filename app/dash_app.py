@@ -128,6 +128,16 @@ THEME = {
 
 dm = DataManager(read_only=True)
 
+# Initialize cache audit table for observability tracking
+from app.utils.cache_manager import init_cache_audit_table
+try:
+    from socrata_toolkit.core.duckdb_store import DuckDBManager
+    db_manager = DuckDBManager()
+    init_cache_audit_table(db_manager)
+    logger.info("Cache audit table initialized successfully")
+except Exception as e:
+    logger.warning(f"Could not initialize cache_audit table: {e}. Continuing with degraded observability.")
+
 # ==========================================
 # --- APP CORE LAYOUT ---
 # ==========================================

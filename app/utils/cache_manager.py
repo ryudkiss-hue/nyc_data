@@ -395,10 +395,7 @@ def write_cache_atomic(
     )
 
     try:
-        # Step 1: Begin transaction
-        manager.execute_atomic("BEGIN TRANSACTION")
-
-        # Step 2: Write Parquet to temporary location
+        # Step 1: Write Parquet to temporary location
         # This can still fail (disk full, permission denied)
         try:
             df.to_parquet(temp_dest, index=False, compression="gzip")
@@ -411,7 +408,7 @@ def write_cache_atomic(
                     pass
             raise
 
-        # Step 3: Atomic rename (OS-level atomicity)
+        # Step 2: Atomic rename (OS-level atomicity)
         # This succeeds or fails atomically; no partial state
         try:
             temp_dest.replace(dest)
@@ -424,24 +421,27 @@ def write_cache_atomic(
                     pass
             raise
 
-        # Step 4: Update audit log in DuckDB
+        # Step 3: Update audit log in DuckDB (transactional via execute_atomic)
         # This is the watermark: other processes see this entry = data is durable
-        manager.execute_atomic(
-            """
-            INSERT INTO cache_audit (key, path, rows, fetched_at, expires_at, ttl_hours)
-            VALUES (?, ?, ?, ?, ?, ?)
-            """,
-            [
-                key,
-                str(dest),
-                len(df),
-                now.isoformat(),
-                expires.isoformat(),
-                ttl_hours,
-            ],
-        )
+        try:
+            manager.execute_atomic(
+                """
+                INSERT INTO cache_audit (key, path, rows, fetched_at, expires_at, ttl_hours)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                [
+                    key,
+                    str(dest),
+                    len(df),
+                    now.isoformat(),
+                    expires.isoformat(),
+                    ttl_hours,
+                ],
+            )
+        except Exception as audit_exc:
+            logger.warning(f"Could not record audit entry for {key}: {audit_exc}. Continuing without audit.")
 
-        # Step 5: Update in-memory manifest (fallback for non-DuckDB readers)
+        # Step 4: Update in-memory manifest (fallback for non-DuckDB readers)
         manifest = cache_manifest()
         manifest[key] = {
             "path": str(dest),
@@ -452,23 +452,14 @@ def write_cache_atomic(
         }
         _save_manifest(manifest)
 
-        # Step 6: Eviction (best-effort, doesn't rollback)
+        # Step 5: Eviction (best-effort, doesn't rollback)
         # Safe to do outside transaction: doesn't affect atomicity
         evict_old_cache()
-
-        # Step 7: Commit transaction
-        manager.execute_atomic("COMMIT")
 
         logger.info(f"write_cache_atomic: {key} -> {dest} ({len(df)} rows)")
         return dest
 
     except Exception as exc:
-        # Rollback on any error (including step 1-5 failures)
-        try:
-            manager.execute_atomic("ROLLBACK")
-        except Exception as rollback_exc:
-            logger.error(f"Failed to rollback transaction: {rollback_exc}")
-
         # Clean up temp file if it still exists
         if temp_dest.exists():
             try:
