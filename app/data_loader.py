@@ -342,14 +342,19 @@ def pick_column(df: pd.DataFrame, candidates: tuple[str, ...]) -> str | None:
 
 
 def _cache_decorator():
-    # Lazy import Streamlit only when cache decorator is needed (Streamlit-only feature)
-    try:
-        import streamlit as st
-    except ImportError:
-        st = None
+    # Only use Streamlit cache if Streamlit is ALREADY loaded in sys.modules
+    # This avoids importing Streamlit during Dash app initialization
+    import sys
 
-    if st is not None and hasattr(st, "cache_data"):
-        return st.cache_data(ttl=CACHE_TTL_SECONDS, show_spinner="Fetching from Socrata…")
+    if "streamlit" in sys.modules:
+        try:
+            import streamlit as st
+            if hasattr(st, "cache_data"):
+                return st.cache_data(ttl=CACHE_TTL_SECONDS, show_spinner="Fetching from Socrata…")
+        except Exception:
+            pass
+
+    # Default: no-op decorator (used by Dash app which doesn't need Streamlit caching)
     return lambda f: f
 
 
