@@ -1,0 +1,71 @@
+{
+  "KPI-089": {
+    "kpi_id": "KPI-089",
+    "kpi_name": "Violations Fixed by Borough & Month",
+    "abbreviation": "VFB",
+    "summary": "Monthly count of violations marked fixed, broken down by NYC borough",
+    "category": "Quality & Compliance",
+    "analyst_duties": ["duty_001", "duty_003"],
+    "datasets": [
+      {"key": "violations", "fourfour": "6kbp-uz6m", "role": "primary"},
+      {"key": "dismissals", "fourfour": "p4u2-3jgx", "role": "supporting"}
+    ],
+    "sql_pattern": "SELECT borough, DATE_TRUNC('month', fixed_date) AS month, COUNT(*) AS fixed_count FROM violations WHERE status='FIXED' GROUP BY borough, month ORDER BY month DESC",
+    "primary_dimension": "borough",
+    "visualization_metadata": ["monthly_fix_rate_chart", "violations_heatmap"],
+    "related_kpis": ["KPI-045", "KPI-067", "KPI-123"],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.92
+  },
+  "KPI-045": {
+    "kpi_id": "KPI-045",
+    "kpi_name": "Structural Damage by Borough & Cause",
+    "abbreviation": "SDB",
+    "summary": "Classification and breakdown of structural damage reports by borough and damage cause type",
+    "category": "Asset Condition",
+    "analyst_duties": ["duty_002"],
+    "datasets": [
+      {"key": "violations", "fourfour": "6kbp-uz6m", "role": "primary"}
+    ],
+    "sql_pattern": "SELECT borough, damage_cause, COUNT(*) AS count FROM violations WHERE damage_type='structural' GROUP BY borough, damage_cause ORDER BY count DESC",
+    "primary_dimension": "borough",
+    "visualization_metadata": ["damage_breakdown_chart", "damage_by_cause"],
+    "related_kpis": ["KPI-089"],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.88
+  },
+  "KPI-067": {
+    "kpi_id": "KPI-067",
+    "kpi_name": "Contractor Performance Metrics",
+    "abbreviation": "CPM",
+    "summary": "Performance metrics for contractors including completion rates and quality scores",
+    "category": "Operations",
+    "analyst_duties": ["duty_004"],
+    "datasets": [
+      {"key": "built", "fourfour": "ugc8-s3f6", "role": "primary"}
+    ],
+    "sql_pattern": "SELECT contractor_id, COUNT(*) AS total_projects, SUM(CASE WHEN status='COMPLETE' THEN 1 ELSE 0 END) AS completed FROM built GROUP BY contractor_id",
+    "primary_dimension": "contractor",
+    "visualization_metadata": ["contractor_scorecard", "performance_trend"],
+    "related_kpis": ["KPI-089", "KPI-045"],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.85
+  },
+  "KPI-123": {
+    "kpi_id": "KPI-123",
+    "kpi_name": "Violations Seasonal Decomposition",
+    "abbreviation": "VSD",
+    "summary": "Time-series decomposition of violations into trend, seasonal, and residual components",
+    "category": "Analytics",
+    "analyst_duties": ["duty_005"],
+    "datasets": [
+      {"key": "violations", "fourfour": "6kbp-uz6m", "role": "primary"}
+    ],
+    "sql_pattern": "SELECT DATE_TRUNC('week', created_date) AS week, COUNT(*) AS violation_count FROM violations GROUP BY DATE_TRUNC('week', created_date) ORDER BY week",
+    "primary_dimension": "time",
+    "visualization_metadata": ["trend_chart", "seasonal_plot"],
+    "related_kpis": ["KPI-089"],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.90
+  }
+}
