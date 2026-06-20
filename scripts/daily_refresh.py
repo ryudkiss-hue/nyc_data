@@ -77,8 +77,8 @@ def _load_dataset_config_keys() -> list[str]:
 DOMAIN = "data.cityofnewyork.us"
 DB_PATH = os.getenv("DUCKDB_PATH", str(ROOT / "data/local_db/nyc_mission_control.duckdb"))
 
-# Datasets skipped unconditionally: empty or inaccessible via API
-SKIP_DATASETS = {"capital_blocks", "permit_stipulations"}
+# Datasets skipped unconditionally: empty, inaccessible, or geo-only (no flat JSON rows)
+SKIP_DATASETS = {"capital_blocks", "permit_stipulations", "sidewalk_planimetric"}
 
 # Datasets known stale but still attempted (errors captured, not fatal)
 WARN_STALE = {"ramp_locations", "weekly_construction"}
@@ -136,6 +136,20 @@ def _find_text_column(df: pd.DataFrame) -> str | None:
     return None
 
 
+def _aligned_col_list(
+    conn: duckdb.DuckDBPyConnection,
+    schema: str,
+    table: str,
+    df: pd.DataFrame,
+) -> str:
+    """Return a quoted comma-separated list of columns present in both the table and df."""
+    existing = {r[0] for r in conn.execute(f"DESCRIBE {schema}.{table}").fetchall()}
+    shared = [c for c in df.columns if c in existing]
+    if not shared:
+        shared = list(df.columns)
+    return ", ".join(f'"{c}"' for c in shared)
+
+
 def _upsert_incremental(
     conn: duckdb.DuckDBPyConnection,
     table: str,
@@ -155,10 +169,12 @@ def _upsert_incremental(
                 f"DELETE FROM raw.{table} WHERE \"{key_col}\" IN "
                 f"(SELECT \"{key_col}\" FROM _inc_df)"
             )
-            conn.execute(f"INSERT INTO raw.{table} SELECT * FROM _inc_df")
+            cols = _aligned_col_list(conn, "raw", table, df)
+            conn.execute(f"INSERT INTO raw.{table} ({cols}) SELECT {cols} FROM _inc_df")
             inserted = len(df)
         else:
-            conn.execute(f"INSERT INTO raw.{table} SELECT * FROM _inc_df")
+            cols = _aligned_col_list(conn, "raw", table, df)
+            conn.execute(f"INSERT INTO raw.{table} ({cols}) SELECT {cols} FROM _inc_df")
             inserted = len(df)
     finally:
         conn.unregister("_inc_df")
@@ -194,9 +210,12 @@ def step_fetch_incremental(
         t0 = time.monotonic()
         try:
             raw_table = socrata_key  # raw schema uses SOCRATA_DATASETS key
+            # Cap initial full-reload to 100K rows to avoid hanging on huge datasets
+            # (street_permits=3.6M, complaints_311=21M). Use --full-reload for uncapped load.
+            FULL_RELOAD_CAP = None if full_reload else 100_000
             if full_reload or not _table_exists(conn, "raw", raw_table):
-                log.info("[%s] full reload (fourfour=%s)", key, fourfour)
-                result = load_raw_from_socrata(socrata_key, max_rows=None)
+                log.info("[%s] full reload (fourfour=%s, cap=%s)", key, fourfour, FULL_RELOAD_CAP)
+                result = load_raw_from_socrata(socrata_key, max_rows=FULL_RELOAD_CAP)
                 if result.get("status") == "error":
                     raise RuntimeError(result.get("error", "unknown error"))
                 row_count = result.get("row_count", 0)
