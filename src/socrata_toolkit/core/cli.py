@@ -34,32 +34,13 @@ def load_embeddings_cache(cache_path: str = "cache/kpi_embeddings.json") -> dict
         return json.load(f)
 
 
-def main():
-    """Main CLI entry point"""
-    parser = argparse.ArgumentParser(
-        description="NYC DOT SIM Natural Language Query Interface"
-    )
-
-    parser.add_argument("question", help="Natural language question to route")
-    parser.add_argument("--expand", action="store_true", help="Include Tier 2 Claude expansion")
-    parser.add_argument("--helpful", action="store_true", help="Mark result as helpful")
-    parser.add_argument("--wrong", action="store_true", help="Mark result as wrong")
-    parser.add_argument("--corrected-kpi", type=str, default=None, help="Corrected KPI ID")
-    parser.add_argument("--registry", type=str, default="config/kpi_registry.json", help="Path to KPI registry")
-    parser.add_argument("--db", type=str, default="data/local_db/router_observability.duckdb", help="Path to DuckDB store")
-    parser.add_argument("--json", action="store_true", help="Output as JSON")
-
-    args = parser.parse_args()
-
-    # Load configuration
+def execute_nlquery(args):
+    """Execute natural language query"""
     kpi_registry = load_kpi_registry(args.registry)
     research_questions = load_research_questions()
     embeddings_cache = load_embeddings_cache()
 
-    # Generate unique decision ID
     decision_id = str(uuid.uuid4())
-
-    # Execute query
     result = run_nl_query(
         question=args.question,
         kpi_registry=kpi_registry,
@@ -71,7 +52,6 @@ def main():
         corrected_kpi_id=args.corrected_kpi
     )
 
-    # Store in observability
     store = DuckDBObservabilityStore(args.db)
     try:
         store.record_routing_decision(
@@ -95,7 +75,6 @@ def main():
     finally:
         store.close()
 
-    # Output result
     if args.json:
         print(json.dumps(result, indent=2))
     else:
@@ -104,6 +83,89 @@ def main():
             print(f"Confidence: {result.get('confidence'):.2%}")
         else:
             print(f"\nNo match found")
+
+
+def execute_evaluate(args):
+    """Execute evaluation subcommand"""
+    sys.path.insert(0, 'src')
+    from socrata_toolkit.training.evaluate_router import evaluate_router
+
+    with open(args.registry) as f:
+        registry = json.load(f)
+
+    variants = []
+    with open(args.variants) as f:
+        for line in f:
+            variants.append(json.loads(line))
+
+    result = evaluate_router(registry, variants)
+    print(f"Router Accuracy: {result['accuracy']:.2%}")
+    print(f"Correct: {result['correct']}/{result['total']}")
+    print(json.dumps(result['confusion_matrix'], indent=2))
+
+
+def execute_train(args):
+    """Execute training subcommand"""
+    sys.path.insert(0, 'src')
+    from socrata_toolkit.training.train_router_weights import train_router_weights
+
+    store = DuckDBObservabilityStore(args.db)
+    feedback = store.get_recent_feedback(limit=1000)
+    store.close()
+
+    result = train_router_weights(feedback, iterations=args.iterations)
+    print(f"Training complete - {args.iterations} iterations")
+    print(f"Final Accuracy: {result['accuracy']:.2%}")
+    print(f"Updated Weights: {json.dumps(result['updated_weights'], indent=2)}")
+
+
+def execute_demo(args):
+    """Execute demo subcommand"""
+    sys.path.insert(0, 'src')
+    from training.demo_workflow import run_demo
+    run_demo()
+
+
+def main():
+    """Main CLI entry point with subcommands"""
+    parser = argparse.ArgumentParser(
+        description="NYC DOT SIM Natural Language Query Interface"
+    )
+
+    subparsers = parser.add_subparsers(dest='command', help='Available commands')
+
+    nlquery_parser = subparsers.add_parser('query', help='Ask a natural language question')
+    nlquery_parser.add_argument("question", help="Natural language question")
+    nlquery_parser.add_argument("--expand", action="store_true")
+    nlquery_parser.add_argument("--helpful", action="store_true")
+    nlquery_parser.add_argument("--wrong", action="store_true")
+    nlquery_parser.add_argument("--corrected-kpi", type=str, default=None)
+    nlquery_parser.add_argument("--registry", type=str, default="config/kpi_registry.json")
+    nlquery_parser.add_argument("--db", type=str, default="data/local_db/router_observability.duckdb")
+    nlquery_parser.add_argument("--json", action="store_true")
+
+    eval_parser = subparsers.add_parser('evaluate', help='Evaluate router accuracy')
+    eval_parser.add_argument("--registry", type=str, default="config/kpi_registry_full.json")
+    eval_parser.add_argument("--variants", type=str, default="training/question_variants_full.jsonl")
+
+    train_parser = subparsers.add_parser('train', help='Optimize router weights')
+    train_parser.add_argument("--db", type=str, default="data/local_db/router_observability.duckdb")
+    train_parser.add_argument("--iterations", type=int, default=10)
+
+    subparsers.add_parser('demo', help='Run end-to-end demo')
+
+    args = parser.parse_args()
+
+    if args.command == 'evaluate':
+        execute_evaluate(args)
+    elif args.command == 'train':
+        execute_train(args)
+    elif args.command == 'demo':
+        execute_demo(args)
+    elif args.command == 'query':
+        execute_nlquery(args)
+    else:
+        parser.print_help()
 
 
 if __name__ == "__main__":
