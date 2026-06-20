@@ -17,9 +17,13 @@ Architecture:
   - Callbacks: Real-time filter + export pipelines
 """
 
+# Suppress Streamlit warnings BEFORE any imports (Dash app doesn't use Streamlit)
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, message=".*No runtime found.*")
+warnings.filterwarnings("ignore", module="streamlit.*")
+
 import os
 import sys
-import warnings
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -27,10 +31,11 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-# Suppress Streamlit warnings (Dash app doesn't use Streamlit)
-warnings.filterwarnings("ignore", category=UserWarning, module="streamlit.*")
+# Configure logging to suppress Streamlit
 import logging
-logging.getLogger("streamlit").setLevel(logging.ERROR)
+logging.getLogger("streamlit").setLevel(logging.CRITICAL)
+logging.getLogger("streamlit.runtime").setLevel(logging.CRITICAL)
+logging.getLogger("streamlit.runtime.caching").setLevel(logging.CRITICAL)
 
 # Bulletproof path resolution for local modules
 _app_path = str(Path(__file__).resolve().parent.absolute())
