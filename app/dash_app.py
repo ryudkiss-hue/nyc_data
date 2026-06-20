@@ -17,6 +17,14 @@ Architecture:
   - Callbacks: Real-time filter + export pipelines
 """
 
+# Suppress Streamlit warnings (installed but not used by Dash app)
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, message=".*No runtime found.*")
+warnings.filterwarnings("ignore", module="streamlit.*")
+import logging
+for logger_name in ["streamlit", "streamlit.runtime", "streamlit.runtime.caching", "streamlit.runtime.caching.cache_data_api"]:
+    logging.getLogger(logger_name).setLevel(logging.CRITICAL)
+
 import os
 import sys
 from pathlib import Path
