@@ -1,0 +1,752 @@
+{
+  "KPI-089": {
+    "kpi_id": "KPI-089",
+    "kpi_name": "Violations Fixed by Borough & Month",
+    "abbreviation": "VFB",
+    "summary": "Violations Fixed by Borough & Month - tracking metrics",
+    "category": "Operations",
+    "analyst_duties": [
+      "duty_001"
+    ],
+    "datasets": [
+      {
+        "key": "violations",
+        "fourfour": "6kbp-uz6m",
+        "role": "primary"
+      }
+    ],
+    "sql_pattern": "SELECT * FROM violations",
+    "primary_dimension": "borough",
+    "visualization_metadata": [
+      "VFB_chart"
+    ],
+    "related_kpis": [],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.85
+  },
+  "KPI-045": {
+    "kpi_id": "KPI-045",
+    "kpi_name": "Structural Damage by Borough & Cause",
+    "abbreviation": "SDB",
+    "summary": "Structural Damage by Borough & Cause - tracking metrics",
+    "category": "Operations",
+    "analyst_duties": [
+      "duty_001"
+    ],
+    "datasets": [
+      {
+        "key": "violations",
+        "fourfour": "6kbp-uz6m",
+        "role": "primary"
+      }
+    ],
+    "sql_pattern": "SELECT * FROM violations",
+    "primary_dimension": "borough",
+    "visualization_metadata": [
+      "SDB_chart"
+    ],
+    "related_kpis": [],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.85
+  },
+  "KPI-067": {
+    "kpi_id": "KPI-067",
+    "kpi_name": "Contractor Performance Metrics",
+    "abbreviation": "CPM",
+    "summary": "Contractor Performance Metrics - tracking metrics",
+    "category": "Operations",
+    "analyst_duties": [
+      "duty_001"
+    ],
+    "datasets": [
+      {
+        "key": "built",
+        "fourfour": "ugc8-s3f6",
+        "role": "primary"
+      }
+    ],
+    "sql_pattern": "SELECT * FROM built",
+    "primary_dimension": "borough",
+    "visualization_metadata": [
+      "CPM_chart"
+    ],
+    "related_kpis": [],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.85
+  },
+  "KPI-123": {
+    "kpi_id": "KPI-123",
+    "kpi_name": "Violations Seasonal Decomposition",
+    "abbreviation": "VSD",
+    "summary": "Violations Seasonal Decomposition - tracking metrics",
+    "category": "Operations",
+    "analyst_duties": [
+      "duty_001"
+    ],
+    "datasets": [
+      {
+        "key": "violations",
+        "fourfour": "6kbp-uz6m",
+        "role": "primary"
+      }
+    ],
+    "sql_pattern": "SELECT * FROM violations",
+    "primary_dimension": "borough",
+    "visualization_metadata": [
+      "VSD_chart"
+    ],
+    "related_kpis": [],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.85
+  },
+  "KPI-156": {
+    "kpi_id": "KPI-156",
+    "kpi_name": "Ramp Completion Rate by Borough",
+    "abbreviation": "RCR",
+    "summary": "Ramp Completion Rate by Borough - tracking metrics",
+    "category": "Operations",
+    "analyst_duties": [
+      "duty_001"
+    ],
+    "datasets": [
+      {
+        "key": "ramp_progress",
+        "fourfour": "e7gc-ub6z",
+        "role": "primary"
+      }
+    ],
+    "sql_pattern": "SELECT * FROM ramp_progress",
+    "primary_dimension": "borough",
+    "visualization_metadata": [
+      "RCR_chart"
+    ],
+    "related_kpis": [],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.85
+  },
+  "KPI-178": {
+    "kpi_id": "KPI-178",
+    "kpi_name": "311 Complaints Response Time",
+    "abbreviation": "CRT",
+    "summary": "311 Complaints Response Time - tracking metrics",
+    "category": "Operations",
+    "analyst_duties": [
+      "duty_001"
+    ],
+    "datasets": [
+      {
+        "key": "complaints_311",
+        "fourfour": "erm2-nwe9",
+        "role": "primary"
+      }
+    ],
+    "sql_pattern": "SELECT * FROM complaints_311",
+    "primary_dimension": "borough",
+    "visualization_metadata": [
+      "CRT_chart"
+    ],
+    "related_kpis": [],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.85
+  },
+  "KPI-201": {
+    "kpi_id": "KPI-201",
+    "kpi_name": "Sidewalk Condition Index (SCI)",
+    "abbreviation": "SCI",
+    "summary": "Sidewalk Condition Index (SCI) - tracking metrics",
+    "category": "Operations",
+    "analyst_duties": [
+      "duty_001"
+    ],
+    "datasets": [
+      {
+        "key": "violations",
+        "fourfour": "6kbp-uz6m",
+        "role": "primary"
+      }
+    ],
+    "sql_pattern": "SELECT * FROM violations",
+    "primary_dimension": "borough",
+    "visualization_metadata": [
+      "SCI_chart"
+    ],
+    "related_kpis": [],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.85
+  },
+  "KPI-223": {
+    "kpi_id": "KPI-223",
+    "kpi_name": "Permit Processing Timeline",
+    "abbreviation": "PPT",
+    "summary": "Permit Processing Timeline - tracking metrics",
+    "category": "Operations",
+    "analyst_duties": [
+      "duty_001"
+    ],
+    "datasets": [
+      {
+        "key": "street_permits",
+        "fourfour": "tqtj-sjs8",
+        "role": "primary"
+      }
+    ],
+    "sql_pattern": "SELECT * FROM street_permits",
+    "primary_dimension": "borough",
+    "visualization_metadata": [
+      "PPT_chart"
+    ],
+    "related_kpis": [],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.85
+  },
+  "KPI-245": {
+    "kpi_id": "KPI-245",
+    "kpi_name": "Accessibility Compliance Rate",
+    "abbreviation": "ACR",
+    "summary": "Accessibility Compliance Rate - tracking metrics",
+    "category": "Operations",
+    "analyst_duties": [
+      "duty_001"
+    ],
+    "datasets": [
+      {
+        "key": "ramp_progress",
+        "fourfour": "e7gc-ub6z",
+        "role": "primary"
+      }
+    ],
+    "sql_pattern": "SELECT * FROM ramp_progress",
+    "primary_dimension": "borough",
+    "visualization_metadata": [
+      "ACR_chart"
+    ],
+    "related_kpis": [],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.85
+  },
+  "KPI-267": {
+    "kpi_id": "KPI-267",
+    "kpi_name": "Construction Cost Variance",
+    "abbreviation": "CCV",
+    "summary": "Construction Cost Variance - tracking metrics",
+    "category": "Operations",
+    "analyst_duties": [
+      "duty_001"
+    ],
+    "datasets": [
+      {
+        "key": "built",
+        "fourfour": "ugc8-s3f6",
+        "role": "primary"
+      }
+    ],
+    "sql_pattern": "SELECT * FROM built",
+    "primary_dimension": "borough",
+    "visualization_metadata": [
+      "CCV_chart"
+    ],
+    "related_kpis": [],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.85
+  },
+  "KPI-289": {
+    "kpi_id": "KPI-289",
+    "kpi_name": "Inspection Completion Rate",
+    "abbreviation": "ICR",
+    "summary": "Inspection Completion Rate - tracking metrics",
+    "category": "Operations",
+    "analyst_duties": [
+      "duty_001"
+    ],
+    "datasets": [
+      {
+        "key": "violations",
+        "fourfour": "6kbp-uz6m",
+        "role": "primary"
+      }
+    ],
+    "sql_pattern": "SELECT * FROM violations",
+    "primary_dimension": "borough",
+    "visualization_metadata": [
+      "ICR_chart"
+    ],
+    "related_kpis": [],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.85
+  },
+  "KPI-301": {
+    "kpi_id": "KPI-301",
+    "kpi_name": "Budget Allocation Efficiency",
+    "abbreviation": "BAE",
+    "summary": "Budget Allocation Efficiency - tracking metrics",
+    "category": "Operations",
+    "analyst_duties": [
+      "duty_001"
+    ],
+    "datasets": [
+      {
+        "key": "built",
+        "fourfour": "ugc8-s3f6",
+        "role": "primary"
+      }
+    ],
+    "sql_pattern": "SELECT * FROM built",
+    "primary_dimension": "borough",
+    "visualization_metadata": [
+      "BAE_chart"
+    ],
+    "related_kpis": [],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.85
+  },
+  "KPI-323": {
+    "kpi_id": "KPI-323",
+    "kpi_name": "Asset Deterioration Rate",
+    "abbreviation": "ADR",
+    "summary": "Asset Deterioration Rate - tracking metrics",
+    "category": "Operations",
+    "analyst_duties": [
+      "duty_001"
+    ],
+    "datasets": [
+      {
+        "key": "violations",
+        "fourfour": "6kbp-uz6m",
+        "role": "primary"
+      }
+    ],
+    "sql_pattern": "SELECT * FROM violations",
+    "primary_dimension": "borough",
+    "visualization_metadata": [
+      "ADR_chart"
+    ],
+    "related_kpis": [],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.85
+  },
+  "KPI-345": {
+    "kpi_id": "KPI-345",
+    "kpi_name": "Contractor Compliance Rate",
+    "abbreviation": "CCR",
+    "summary": "Contractor Compliance Rate - tracking metrics",
+    "category": "Operations",
+    "analyst_duties": [
+      "duty_001"
+    ],
+    "datasets": [
+      {
+        "key": "street_construction_inspections",
+        "fourfour": "ydkf-mpxb",
+        "role": "primary"
+      }
+    ],
+    "sql_pattern": "SELECT * FROM street_construction_inspections",
+    "primary_dimension": "borough",
+    "visualization_metadata": [
+      "CCR_chart"
+    ],
+    "related_kpis": [],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.85
+  },
+  "KPI-367": {
+    "kpi_id": "KPI-367",
+    "kpi_name": "Equity Disparity Index",
+    "abbreviation": "EDI",
+    "summary": "Equity Disparity Index - tracking metrics",
+    "category": "Operations",
+    "analyst_duties": [
+      "duty_001"
+    ],
+    "datasets": [
+      {
+        "key": "complaints_311",
+        "fourfour": "erm2-nwe9",
+        "role": "primary"
+      }
+    ],
+    "sql_pattern": "SELECT * FROM complaints_311",
+    "primary_dimension": "borough",
+    "visualization_metadata": [
+      "EDI_chart"
+    ],
+    "related_kpis": [],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.85
+  },
+  "KPI-389": {
+    "kpi_id": "KPI-389",
+    "kpi_name": "Ramp ADA Compliance",
+    "abbreviation": "RAC",
+    "summary": "Ramp ADA Compliance - tracking metrics",
+    "category": "Operations",
+    "analyst_duties": [
+      "duty_001"
+    ],
+    "datasets": [
+      {
+        "key": "ramp_progress",
+        "fourfour": "e7gc-ub6z",
+        "role": "primary"
+      }
+    ],
+    "sql_pattern": "SELECT * FROM ramp_progress",
+    "primary_dimension": "borough",
+    "visualization_metadata": [
+      "RAC_chart"
+    ],
+    "related_kpis": [],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.85
+  },
+  "KPI-401": {
+    "kpi_id": "KPI-401",
+    "kpi_name": "Traffic Impact Mitigation",
+    "abbreviation": "TIM",
+    "summary": "Traffic Impact Mitigation - tracking metrics",
+    "category": "Operations",
+    "analyst_duties": [
+      "duty_001"
+    ],
+    "datasets": [
+      {
+        "key": "street_closures_block",
+        "fourfour": "i6b5-j7bu",
+        "role": "primary"
+      }
+    ],
+    "sql_pattern": "SELECT * FROM street_closures_block",
+    "primary_dimension": "borough",
+    "visualization_metadata": [
+      "TIM_chart"
+    ],
+    "related_kpis": [],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.85
+  },
+  "KPI-423": {
+    "kpi_id": "KPI-423",
+    "kpi_name": "Sidewalk Inventory Completeness",
+    "abbreviation": "SIC",
+    "summary": "Sidewalk Inventory Completeness - tracking metrics",
+    "category": "Operations",
+    "analyst_duties": [
+      "duty_001"
+    ],
+    "datasets": [
+      {
+        "key": "sidewalk_planimetric",
+        "fourfour": "vfx9-tbb6",
+        "role": "primary"
+      }
+    ],
+    "sql_pattern": "SELECT * FROM sidewalk_planimetric",
+    "primary_dimension": "borough",
+    "visualization_metadata": [
+      "SIC_chart"
+    ],
+    "related_kpis": [],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.85
+  },
+  "KPI-445": {
+    "kpi_id": "KPI-445",
+    "kpi_name": "Quality Scorecard Composite",
+    "abbreviation": "QSC",
+    "summary": "Quality Scorecard Composite - tracking metrics",
+    "category": "Operations",
+    "analyst_duties": [
+      "duty_001"
+    ],
+    "datasets": [
+      {
+        "key": "violations",
+        "fourfour": "6kbp-uz6m",
+        "role": "primary"
+      }
+    ],
+    "sql_pattern": "SELECT * FROM violations",
+    "primary_dimension": "borough",
+    "visualization_metadata": [
+      "QSC_chart"
+    ],
+    "related_kpis": [],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.85
+  },
+  "KPI-467": {
+    "kpi_id": "KPI-467",
+    "kpi_name": "Community Board Satisfaction",
+    "abbreviation": "CBS",
+    "summary": "Community Board Satisfaction - tracking metrics",
+    "category": "Operations",
+    "analyst_duties": [
+      "duty_001"
+    ],
+    "datasets": [
+      {
+        "key": "complaints_311",
+        "fourfour": "erm2-nwe9",
+        "role": "primary"
+      }
+    ],
+    "sql_pattern": "SELECT * FROM complaints_311",
+    "primary_dimension": "borough",
+    "visualization_metadata": [
+      "CBS_chart"
+    ],
+    "related_kpis": [],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.85
+  },
+  "KPI-489": {
+    "kpi_id": "KPI-489",
+    "kpi_name": "Borough Equity Investment",
+    "abbreviation": "BEI",
+    "summary": "Borough Equity Investment - tracking metrics",
+    "category": "Operations",
+    "analyst_duties": [
+      "duty_001"
+    ],
+    "datasets": [
+      {
+        "key": "built",
+        "fourfour": "ugc8-s3f6",
+        "role": "primary"
+      }
+    ],
+    "sql_pattern": "SELECT * FROM built",
+    "primary_dimension": "borough",
+    "visualization_metadata": [
+      "BEI_chart"
+    ],
+    "related_kpis": [],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.85
+  },
+  "KPI-501": {
+    "kpi_id": "KPI-501",
+    "kpi_name": "Dismissal Rate Trend",
+    "abbreviation": "DRT",
+    "summary": "Dismissal Rate Trend - tracking metrics",
+    "category": "Operations",
+    "analyst_duties": [
+      "duty_001"
+    ],
+    "datasets": [
+      {
+        "key": "dismissals",
+        "fourfour": "p4u2-3jgx",
+        "role": "primary"
+      }
+    ],
+    "sql_pattern": "SELECT * FROM dismissals",
+    "primary_dimension": "borough",
+    "visualization_metadata": [
+      "DRT_chart"
+    ],
+    "related_kpis": [],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.85
+  },
+  "KPI-523": {
+    "kpi_id": "KPI-523",
+    "kpi_name": "Permit Denial Rate",
+    "abbreviation": "PDR",
+    "summary": "Permit Denial Rate - tracking metrics",
+    "category": "Operations",
+    "analyst_duties": [
+      "duty_001"
+    ],
+    "datasets": [
+      {
+        "key": "street_permits",
+        "fourfour": "tqtj-sjs8",
+        "role": "primary"
+      }
+    ],
+    "sql_pattern": "SELECT * FROM street_permits",
+    "primary_dimension": "borough",
+    "visualization_metadata": [
+      "PDR_chart"
+    ],
+    "related_kpis": [],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.85
+  },
+  "KPI-545": {
+    "kpi_id": "KPI-545",
+    "kpi_name": "Ramp Maintenance Schedule",
+    "abbreviation": "RMS",
+    "summary": "Ramp Maintenance Schedule - tracking metrics",
+    "category": "Operations",
+    "analyst_duties": [
+      "duty_001"
+    ],
+    "datasets": [
+      {
+        "key": "ramp_progress",
+        "fourfour": "e7gc-ub6z",
+        "role": "primary"
+      }
+    ],
+    "sql_pattern": "SELECT * FROM ramp_progress",
+    "primary_dimension": "borough",
+    "visualization_metadata": [
+      "RMS_chart"
+    ],
+    "related_kpis": [],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.85
+  },
+  "KPI-567": {
+    "kpi_id": "KPI-567",
+    "kpi_name": "Sidewalk Pedestrian Safety",
+    "abbreviation": "SPS",
+    "summary": "Sidewalk Pedestrian Safety - tracking metrics",
+    "category": "Operations",
+    "analyst_duties": [
+      "duty_001"
+    ],
+    "datasets": [
+      {
+        "key": "complaints_311",
+        "fourfour": "erm2-nwe9",
+        "role": "primary"
+      }
+    ],
+    "sql_pattern": "SELECT * FROM complaints_311",
+    "primary_dimension": "borough",
+    "visualization_metadata": [
+      "SPS_chart"
+    ],
+    "related_kpis": [],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.85
+  },
+  "KPI-589": {
+    "kpi_id": "KPI-589",
+    "kpi_name": "Construction Schedule Adherence",
+    "abbreviation": "CSA",
+    "summary": "Construction Schedule Adherence - tracking metrics",
+    "category": "Operations",
+    "analyst_duties": [
+      "duty_001"
+    ],
+    "datasets": [
+      {
+        "key": "built",
+        "fourfour": "ugc8-s3f6",
+        "role": "primary"
+      }
+    ],
+    "sql_pattern": "SELECT * FROM built",
+    "primary_dimension": "borough",
+    "visualization_metadata": [
+      "CSA_chart"
+    ],
+    "related_kpis": [],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.85
+  },
+  "KPI-601": {
+    "kpi_id": "KPI-601",
+    "kpi_name": "Violation Citation Accuracy",
+    "abbreviation": "VCA",
+    "summary": "Violation Citation Accuracy - tracking metrics",
+    "category": "Operations",
+    "analyst_duties": [
+      "duty_001"
+    ],
+    "datasets": [
+      {
+        "key": "violations",
+        "fourfour": "6kbp-uz6m",
+        "role": "primary"
+      }
+    ],
+    "sql_pattern": "SELECT * FROM violations",
+    "primary_dimension": "borough",
+    "visualization_metadata": [
+      "VCA_chart"
+    ],
+    "related_kpis": [],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.85
+  },
+  "KPI-623": {
+    "kpi_id": "KPI-623",
+    "kpi_name": "Street Resurfacing ROI",
+    "abbreviation": "SRR",
+    "summary": "Street Resurfacing ROI - tracking metrics",
+    "category": "Operations",
+    "analyst_duties": [
+      "duty_001"
+    ],
+    "datasets": [
+      {
+        "key": "street_resurfacing_inhouse",
+        "fourfour": "ffaf-8mrv",
+        "role": "primary"
+      }
+    ],
+    "sql_pattern": "SELECT * FROM street_resurfacing_inhouse",
+    "primary_dimension": "borough",
+    "visualization_metadata": [
+      "SRR_chart"
+    ],
+    "related_kpis": [],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.85
+  },
+  "KPI-645": {
+    "kpi_id": "KPI-645",
+    "kpi_name": "Complaint Resolution Equity",
+    "abbreviation": "CRE",
+    "summary": "Complaint Resolution Equity - tracking metrics",
+    "category": "Operations",
+    "analyst_duties": [
+      "duty_001"
+    ],
+    "datasets": [
+      {
+        "key": "complaints_311",
+        "fourfour": "erm2-nwe9",
+        "role": "primary"
+      }
+    ],
+    "sql_pattern": "SELECT * FROM complaints_311",
+    "primary_dimension": "borough",
+    "visualization_metadata": [
+      "CRE_chart"
+    ],
+    "related_kpis": [],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.85
+  },
+  "KPI-667": {
+    "kpi_id": "KPI-667",
+    "kpi_name": "Accessibility Gap Analysis",
+    "abbreviation": "AGA",
+    "summary": "Accessibility Gap Analysis - tracking metrics",
+    "category": "Operations",
+    "analyst_duties": [
+      "duty_001"
+    ],
+    "datasets": [
+      {
+        "key": "ramp_progress",
+        "fourfour": "e7gc-ub6z",
+        "role": "primary"
+      }
+    ],
+    "sql_pattern": "SELECT * FROM ramp_progress",
+    "primary_dimension": "borough",
+    "visualization_metadata": [
+      "AGA_chart"
+    ],
+    "related_kpis": [],
+    "last_updated": "2026-06-20",
+    "quality_score": 0.85
+  }
+}
