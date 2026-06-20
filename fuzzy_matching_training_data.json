@@ -1,0 +1,2259 @@
+{
+  "labeled_questions": [
+    {
+      "kpi_id": "KPI-001",
+      "kpi_name": "SCI (Borough)",
+      "question_variant": "What is the current SCI by borough?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "lot_info", "census_blocks_2020"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-001",
+      "kpi_name": "SCI (Borough)",
+      "question_variant": "Show me sidewalk condition index for each borough",
+      "variant_type": "synonym_swap",
+      "datasets": ["violations", "lot_info", "census_blocks_2020"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-001",
+      "kpi_name": "SCI (Borough)",
+      "question_variant": "How's the SCI doing in each borough?",
+      "variant_type": "casual",
+      "datasets": ["violations", "lot_info", "census_blocks_2020"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-001",
+      "kpi_name": "SCI (Borough)",
+      "question_variant": "Average sidewalk condition score by borough",
+      "variant_type": "technical",
+      "datasets": ["violations", "lot_info", "census_blocks_2020"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-001",
+      "kpi_name": "SCI (Borough)",
+      "question_variant": "SCI metrics for all boroughs",
+      "variant_type": "abbreviation",
+      "datasets": ["violations", "lot_info", "census_blocks_2020"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-002",
+      "kpi_name": "SCI (Community Board)",
+      "question_variant": "What is the sidewalk condition index by community board?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "lot_info", "census_blocks_2020"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-002",
+      "kpi_name": "SCI (Community Board)",
+      "question_variant": "Show SCI per community district",
+      "variant_type": "synonym_swap",
+      "datasets": ["violations", "lot_info", "census_blocks_2020"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-002",
+      "kpi_name": "SCI (Community Board)",
+      "question_variant": "Which community boards have the worst sidewalk conditions?",
+      "variant_type": "casual",
+      "datasets": ["violations", "lot_info", "census_blocks_2020"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-002",
+      "kpi_name": "SCI (Community Board)",
+      "question_variant": "Community board breakdown of condition scores",
+      "variant_type": "technical",
+      "datasets": ["violations", "lot_info", "census_blocks_2020"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-003",
+      "kpi_name": "SCI (ZIP Code)",
+      "question_variant": "What is the sidewalk condition index by ZIP code?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "lot_info", "census_blocks_2020"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-003",
+      "kpi_name": "SCI (ZIP Code)",
+      "question_variant": "Show me SCI for each ZIP code",
+      "variant_type": "casual",
+      "datasets": ["violations", "lot_info", "census_blocks_2020"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-003",
+      "kpi_name": "SCI (ZIP Code)",
+      "question_variant": "Sidewalk condition scores by postal code",
+      "variant_type": "synonym_swap",
+      "datasets": ["violations", "lot_info", "census_blocks_2020"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-003",
+      "kpi_name": "SCI (ZIP Code)",
+      "question_variant": "ZIP code-level condition analysis",
+      "variant_type": "technical",
+      "datasets": ["violations", "lot_info", "census_blocks_2020"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-004",
+      "kpi_name": "SCI Distribution",
+      "question_variant": "How are sidewalks distributed across condition bands?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "lot_info", "census_blocks_2020"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-004",
+      "kpi_name": "SCI Distribution",
+      "question_variant": "What percentage of sidewalks are in good vs bad condition?",
+      "variant_type": "casual",
+      "datasets": ["violations", "lot_info", "census_blocks_2020"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-004",
+      "kpi_name": "SCI Distribution",
+      "question_variant": "Count of segments by condition range (0-20, 20-40, etc)",
+      "variant_type": "technical",
+      "datasets": ["violations", "lot_info", "census_blocks_2020"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-004",
+      "kpi_name": "SCI Distribution",
+      "question_variant": "SCI histogram by borough",
+      "variant_type": "abbreviation",
+      "datasets": ["violations", "lot_info", "census_blocks_2020"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-005",
+      "kpi_name": "SCI Trend (YoY)",
+      "question_variant": "What is the year-over-year change in SCI?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "lot_info", "census_blocks_2020"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-005",
+      "kpi_name": "SCI Trend (YoY)",
+      "question_variant": "Show SCI trends over the past 5 years",
+      "variant_type": "casual",
+      "datasets": ["violations", "lot_info", "census_blocks_2020"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-005",
+      "kpi_name": "SCI Trend (YoY)",
+      "question_variant": "Year-over-year sidewalk condition changes by borough",
+      "variant_type": "technical",
+      "datasets": ["violations", "lot_info", "census_blocks_2020"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-006",
+      "kpi_name": "Deterioration Rate (%)",
+      "question_variant": "What is the sidewalk deterioration rate per year?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-006",
+      "kpi_name": "Deterioration Rate (%)",
+      "question_variant": "How fast are sidewalks getting worse?",
+      "variant_type": "casual",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-006",
+      "kpi_name": "Deterioration Rate (%)",
+      "question_variant": "Calculate percentage decline in condition per year",
+      "variant_type": "technical",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-006",
+      "kpi_name": "Deterioration Rate (%)",
+      "question_variant": "Deterioration % YoY by borough",
+      "variant_type": "abbreviation",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-007",
+      "kpi_name": "Segments Worsening",
+      "question_variant": "How many sidewalk segments are getting worse?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-007",
+      "kpi_name": "Segments Worsening",
+      "question_variant": "Count of segments with declining conditions",
+      "variant_type": "technical",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-007",
+      "kpi_name": "Segments Worsening",
+      "question_variant": "Which areas are deteriorating fastest?",
+      "variant_type": "casual",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-008",
+      "kpi_name": "Segments Improving",
+      "question_variant": "How many sidewalk segments are improving?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-008",
+      "kpi_name": "Segments Improving",
+      "question_variant": "Show segments with improving conditions",
+      "variant_type": "casual",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-008",
+      "kpi_name": "Segments Improving",
+      "question_variant": "Segments showing condition improvement",
+      "variant_type": "technical",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-009",
+      "kpi_name": "Deterioration Acceleration",
+      "question_variant": "Is deterioration accelerating or slowing?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-009",
+      "kpi_name": "Deterioration Acceleration",
+      "question_variant": "What is the second derivative of condition decline?",
+      "variant_type": "technical",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-009",
+      "kpi_name": "Deterioration Acceleration",
+      "question_variant": "Is the rate of deterioration increasing?",
+      "variant_type": "casual",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-010",
+      "kpi_name": "Avg Lifespan (Concrete)",
+      "question_variant": "What is the average lifespan of concrete sidewalks?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "lot_info"],
+      "analyst_duty": "duty_003"
+    },
+    {
+      "kpi_id": "KPI-010",
+      "kpi_name": "Avg Lifespan (Concrete)",
+      "question_variant": "How long do concrete sidewalks typically last?",
+      "variant_type": "casual",
+      "datasets": ["violations", "lot_info"],
+      "analyst_duty": "duty_003"
+    },
+    {
+      "kpi_id": "KPI-010",
+      "kpi_name": "Avg Lifespan (Concrete)",
+      "question_variant": "Years until concrete PCI drops below 50",
+      "variant_type": "technical",
+      "datasets": ["violations", "lot_info"],
+      "analyst_duty": "duty_003"
+    },
+    {
+      "kpi_id": "KPI-010",
+      "kpi_name": "Avg Lifespan (Concrete)",
+      "question_variant": "Concrete sidewalk useful life estimate",
+      "variant_type": "abbreviation",
+      "datasets": ["violations", "lot_info"],
+      "analyst_duty": "duty_003"
+    },
+    {
+      "kpi_id": "KPI-011",
+      "kpi_name": "Avg Lifespan (Asphalt)",
+      "question_variant": "What is the average lifespan of asphalt sidewalks?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "lot_info"],
+      "analyst_duty": "duty_003"
+    },
+    {
+      "kpi_id": "KPI-011",
+      "kpi_name": "Avg Lifespan (Asphalt)",
+      "question_variant": "How long before asphalt surfaces fail?",
+      "variant_type": "casual",
+      "datasets": ["violations", "lot_info"],
+      "analyst_duty": "duty_003"
+    },
+    {
+      "kpi_id": "KPI-011",
+      "kpi_name": "Avg Lifespan (Asphalt)",
+      "question_variant": "Expected useful life of asphalt material",
+      "variant_type": "technical",
+      "datasets": ["violations", "lot_info"],
+      "analyst_duty": "duty_003"
+    },
+    {
+      "kpi_id": "KPI-012",
+      "kpi_name": "Avg Lifespan (Brick/Paver)",
+      "question_variant": "What is the average lifespan of brick and paver sidewalks?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "lot_info"],
+      "analyst_duty": "duty_003"
+    },
+    {
+      "kpi_id": "KPI-012",
+      "kpi_name": "Avg Lifespan (Brick/Paver)",
+      "question_variant": "How long do brick sidewalks last?",
+      "variant_type": "casual",
+      "datasets": ["violations", "lot_info"],
+      "analyst_duty": "duty_003"
+    },
+    {
+      "kpi_id": "KPI-012",
+      "kpi_name": "Avg Lifespan (Brick/Paver)",
+      "question_variant": "Brick and paver material lifecycle analysis",
+      "variant_type": "technical",
+      "datasets": ["violations", "lot_info"],
+      "analyst_duty": "duty_003"
+    },
+    {
+      "kpi_id": "KPI-013",
+      "kpi_name": "End-of-Life Count",
+      "question_variant": "How many segments are approaching end of life?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "lot_info"],
+      "analyst_duty": "duty_003"
+    },
+    {
+      "kpi_id": "KPI-013",
+      "kpi_name": "End-of-Life Count",
+      "question_variant": "How many segments need replacement within 2 years?",
+      "variant_type": "casual",
+      "datasets": ["violations", "lot_info"],
+      "analyst_duty": "duty_003"
+    },
+    {
+      "kpi_id": "KPI-013",
+      "kpi_name": "End-of-Life Count",
+      "question_variant": "Count segments with remaining lifespan <2 years",
+      "variant_type": "technical",
+      "datasets": ["violations", "lot_info"],
+      "analyst_duty": "duty_003"
+    },
+    {
+      "kpi_id": "KPI-014",
+      "kpi_name": "Crack Progression (PCI/year)",
+      "question_variant": "How fast do cracks deteriorate sidewalk condition?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-014",
+      "kpi_name": "Crack Progression (PCI/year)",
+      "question_variant": "What is the annual PCI decline from cracking?",
+      "variant_type": "technical",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-014",
+      "kpi_name": "Crack Progression (PCI/year)",
+      "question_variant": "Crack-related deterioration rate",
+      "variant_type": "abbreviation",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-015",
+      "kpi_name": "Trip Hazard Progression (PCI/year)",
+      "question_variant": "How fast do trip hazards worsen condition?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-015",
+      "kpi_name": "Trip Hazard Progression (PCI/year)",
+      "question_variant": "Annual condition decline from trip hazards",
+      "variant_type": "technical",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-015",
+      "kpi_name": "Trip Hazard Progression (PCI/year)",
+      "question_variant": "Trip hazard deterioration per year",
+      "variant_type": "casual",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-016",
+      "kpi_name": "Settlement Progression (PCI/year)",
+      "question_variant": "How quickly does settlement degrade sidewalks?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-016",
+      "kpi_name": "Settlement Progression (PCI/year)",
+      "question_variant": "Settlement-related PCI decline annually",
+      "variant_type": "technical",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-017",
+      "kpi_name": "Tree Damage Progression (PCI/year)",
+      "question_variant": "How fast do tree roots damage sidewalks?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-017",
+      "kpi_name": "Tree Damage Progression (PCI/year)",
+      "question_variant": "Annual condition loss from tree damage",
+      "variant_type": "technical",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-017",
+      "kpi_name": "Tree Damage Progression (PCI/year)",
+      "question_variant": "Tree root deterioration impact",
+      "variant_type": "casual",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-018",
+      "kpi_name": "Fastest-Deteriorating Distress Type",
+      "question_variant": "Which distress type causes the fastest deterioration?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-018",
+      "kpi_name": "Fastest-Deteriorating Distress Type",
+      "question_variant": "Rank distress types by deterioration speed",
+      "variant_type": "technical",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-018",
+      "kpi_name": "Fastest-Deteriorating Distress Type",
+      "question_variant": "What damages sidewalks the fastest?",
+      "variant_type": "casual",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-019",
+      "kpi_name": "MRI (Borough)",
+      "question_variant": "What percentage of sidewalks need repairs by borough?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "dismissals"],
+      "analyst_duty": "duty_002"
+    },
+    {
+      "kpi_id": "KPI-019",
+      "kpi_name": "MRI (Borough)",
+      "question_variant": "Maintenance and repair index by borough",
+      "variant_type": "technical",
+      "datasets": ["violations", "dismissals"],
+      "analyst_duty": "duty_002"
+    },
+    {
+      "kpi_id": "KPI-019",
+      "kpi_name": "MRI (Borough)",
+      "question_variant": "How many sidewalks need work?",
+      "variant_type": "casual",
+      "datasets": ["violations", "dismissals"],
+      "analyst_duty": "duty_002"
+    },
+    {
+      "kpi_id": "KPI-019",
+      "kpi_name": "MRI (Borough)",
+      "question_variant": "MRI score per borough",
+      "variant_type": "abbreviation",
+      "datasets": ["violations", "dismissals"],
+      "analyst_duty": "duty_002"
+    },
+    {
+      "kpi_id": "KPI-020",
+      "kpi_name": "Repair Success Rate",
+      "question_variant": "What percentage of repairs are successful and don't re-occur?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "dismissals"],
+      "analyst_duty": "duty_002"
+    },
+    {
+      "kpi_id": "KPI-020",
+      "kpi_name": "Repair Success Rate",
+      "question_variant": "How often do repairs hold up without rework?",
+      "variant_type": "casual",
+      "datasets": ["violations", "dismissals"],
+      "analyst_duty": "duty_002"
+    },
+    {
+      "kpi_id": "KPI-020",
+      "kpi_name": "Repair Success Rate",
+      "question_variant": "Repairs lasting 24+ months without re-occurrence",
+      "variant_type": "technical",
+      "datasets": ["violations", "dismissals"],
+      "analyst_duty": "duty_002"
+    },
+    {
+      "kpi_id": "KPI-021",
+      "kpi_name": "Time-to-Repair (avg)",
+      "question_variant": "What is the average time from violation to repair completion?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "dismissals"],
+      "analyst_duty": "duty_002"
+    },
+    {
+      "kpi_id": "KPI-021",
+      "kpi_name": "Time-to-Repair (avg)",
+      "question_variant": "How long does it take to fix violations on average?",
+      "variant_type": "casual",
+      "datasets": ["violations", "dismissals"],
+      "analyst_duty": "duty_002"
+    },
+    {
+      "kpi_id": "KPI-021",
+      "kpi_name": "Time-to-Repair (avg)",
+      "question_variant": "Average days from complaint to completion (target ≤56)",
+      "variant_type": "technical",
+      "datasets": ["violations", "dismissals"],
+      "analyst_duty": "duty_002"
+    },
+    {
+      "kpi_id": "KPI-022",
+      "kpi_name": "Time-to-Repair (median)",
+      "question_variant": "What is the median repair turnaround time?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "dismissals"],
+      "analyst_duty": "duty_002"
+    },
+    {
+      "kpi_id": "KPI-022",
+      "kpi_name": "Time-to-Repair (median)",
+      "question_variant": "Typical time to fix a violation (target ≤42 days)",
+      "variant_type": "technical",
+      "datasets": ["violations", "dismissals"],
+      "analyst_duty": "duty_002"
+    },
+    {
+      "kpi_id": "KPI-022",
+      "kpi_name": "Time-to-Repair (median)",
+      "question_variant": "Median repair time in days",
+      "variant_type": "casual",
+      "datasets": ["violations", "dismissals"],
+      "analyst_duty": "duty_002"
+    },
+    {
+      "kpi_id": "KPI-023",
+      "kpi_name": "Rework Rate",
+      "question_variant": "What percentage of repairs need to be re-done?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "dismissals"],
+      "analyst_duty": "duty_002"
+    },
+    {
+      "kpi_id": "KPI-023",
+      "kpi_name": "Rework Rate",
+      "question_variant": "How often do repairs fail within 12 months?",
+      "variant_type": "casual",
+      "datasets": ["violations", "dismissals"],
+      "analyst_duty": "duty_002"
+    },
+    {
+      "kpi_id": "KPI-023",
+      "kpi_name": "Rework Rate",
+      "question_variant": "Repairs requiring re-repair within 12 months (target <5%)",
+      "variant_type": "technical",
+      "datasets": ["violations", "dismissals"],
+      "analyst_duty": "duty_002"
+    },
+    {
+      "kpi_id": "KPI-024",
+      "kpi_name": "First-Time Fix Rate",
+      "question_variant": "What percentage of repairs are successful on the first attempt?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "dismissals"],
+      "analyst_duty": "duty_002"
+    },
+    {
+      "kpi_id": "KPI-024",
+      "kpi_name": "First-Time Fix Rate",
+      "question_variant": "How many repairs succeed without rework?",
+      "variant_type": "casual",
+      "datasets": ["violations", "dismissals"],
+      "analyst_duty": "duty_002"
+    },
+    {
+      "kpi_id": "KPI-024",
+      "kpi_name": "First-Time Fix Rate",
+      "question_variant": "First-time fix rate target >95%",
+      "variant_type": "technical",
+      "datasets": ["violations", "dismissals"],
+      "analyst_duty": "duty_002"
+    },
+    {
+      "kpi_id": "KPI-025",
+      "kpi_name": "Tree Root Damage % of Total Damage",
+      "question_variant": "What percentage of sidewalk damage is caused by tree roots?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-025",
+      "kpi_name": "Tree Root Damage % of Total Damage",
+      "question_variant": "How much damage do trees cause?",
+      "variant_type": "casual",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-025",
+      "kpi_name": "Tree Root Damage % of Total Damage",
+      "question_variant": "Tree root damage as percentage of all defects",
+      "variant_type": "technical",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-026",
+      "kpi_name": "Tree Species Causing Most Damage (ranked)",
+      "question_variant": "Which tree species cause the most sidewalk damage?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-026",
+      "kpi_name": "Tree Species Causing Most Damage (ranked)",
+      "question_variant": "Rank tree species by damage potential",
+      "variant_type": "technical",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-026",
+      "kpi_name": "Tree Species Causing Most Damage (ranked)",
+      "question_variant": "What trees damage sidewalks the most?",
+      "variant_type": "casual",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-027",
+      "kpi_name": "Damage Prevention ROI",
+      "question_variant": "What is the return on investment for preventative maintenance?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "street_permits"],
+      "analyst_duty": "duty_003"
+    },
+    {
+      "kpi_id": "KPI-027",
+      "kpi_name": "Damage Prevention ROI",
+      "question_variant": "Does prevention save money compared to reactive repairs?",
+      "variant_type": "casual",
+      "datasets": ["violations", "street_permits"],
+      "analyst_duty": "duty_003"
+    },
+    {
+      "kpi_id": "KPI-027",
+      "kpi_name": "Damage Prevention ROI",
+      "question_variant": "Preventative maintenance cost vs repair cost savings",
+      "variant_type": "technical",
+      "datasets": ["violations", "street_permits"],
+      "analyst_duty": "duty_003"
+    },
+    {
+      "kpi_id": "KPI-028",
+      "kpi_name": "Compound Poisson Model Accuracy",
+      "question_variant": "How accurate is the Compound Poisson deterioration model?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-028",
+      "kpi_name": "Compound Poisson Model Accuracy",
+      "question_variant": "Model accuracy vs actual deterioration observed",
+      "variant_type": "technical",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-029",
+      "kpi_name": "Seal-coat ROI",
+      "question_variant": "What is the return on investment for seal-coating?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["in_house_resurfacing", "violations"],
+      "analyst_duty": "duty_003"
+    },
+    {
+      "kpi_id": "KPI-029",
+      "kpi_name": "Seal-coat ROI",
+      "question_variant": "Seal coat cost effectiveness analysis",
+      "variant_type": "technical",
+      "datasets": ["in_house_resurfacing", "violations"],
+      "analyst_duty": "duty_003"
+    },
+    {
+      "kpi_id": "KPI-029",
+      "kpi_name": "Seal-coat ROI",
+      "question_variant": "Does seal coating save money long-term?",
+      "variant_type": "casual",
+      "datasets": ["in_house_resurfacing", "violations"],
+      "analyst_duty": "duty_003"
+    },
+    {
+      "kpi_id": "KPI-030",
+      "kpi_name": "Mill-and-fill ROI",
+      "question_variant": "What is the return on investment for mill-and-fill repairs?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["in_house_resurfacing", "violations"],
+      "analyst_duty": "duty_003"
+    },
+    {
+      "kpi_id": "KPI-030",
+      "kpi_name": "Mill-and-fill ROI",
+      "question_variant": "Mill-and-fill cost benefit analysis",
+      "variant_type": "technical",
+      "datasets": ["in_house_resurfacing", "violations"],
+      "analyst_duty": "duty_003"
+    },
+    {
+      "kpi_id": "KPI-031",
+      "kpi_name": "Full Replacement ROI by material type",
+      "question_variant": "What is the ROI for full sidewalk replacement by material?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["in_house_resurfacing", "violations"],
+      "analyst_duty": "duty_003"
+    },
+    {
+      "kpi_id": "KPI-031",
+      "kpi_name": "Full Replacement ROI by material type",
+      "question_variant": "Cost-benefit of full replacement vs incremental repairs",
+      "variant_type": "technical",
+      "datasets": ["in_house_resurfacing", "violations"],
+      "analyst_duty": "duty_003"
+    },
+    {
+      "kpi_id": "KPI-036",
+      "kpi_name": "Compliant Ramps (%)",
+      "question_variant": "What percentage of intersections have ADA-compliant ramps?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["ramp_progress", "street_permits", "street_centerline"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-036",
+      "kpi_name": "Compliant Ramps (%)",
+      "question_variant": "How many ramps meet ADA standards?",
+      "variant_type": "casual",
+      "datasets": ["ramp_progress", "street_permits", "street_centerline"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-036",
+      "kpi_name": "Compliant Ramps (%)",
+      "question_variant": "Intersections with full ADA curb ramp compliance",
+      "variant_type": "technical",
+      "datasets": ["ramp_progress", "street_permits", "street_centerline"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-036",
+      "kpi_name": "Compliant Ramps (%)",
+      "question_variant": "ADA ramp compliance target 100%",
+      "variant_type": "abbreviation",
+      "datasets": ["ramp_progress", "street_permits", "street_centerline"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-037",
+      "kpi_name": "Compliant Ramps (Count)",
+      "question_variant": "How many ramps are ADA-compliant?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["ramp_progress", "street_permits", "street_centerline"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-037",
+      "kpi_name": "Compliant Ramps (Count)",
+      "question_variant": "Total count of compliant curb ramps",
+      "variant_type": "technical",
+      "datasets": ["ramp_progress", "street_permits", "street_centerline"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-037",
+      "kpi_name": "Compliant Ramps (Count)",
+      "question_variant": "How many ramps are installed and working?",
+      "variant_type": "casual",
+      "datasets": ["ramp_progress", "street_permits", "street_centerline"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-038",
+      "kpi_name": "Missing Ramps (Count)",
+      "question_variant": "How many intersections are missing curb ramps?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["ramp_progress", "street_permits", "street_centerline"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-038",
+      "kpi_name": "Missing Ramps (Count)",
+      "question_variant": "Intersections without any ramp",
+      "variant_type": "technical",
+      "datasets": ["ramp_progress", "street_permits", "street_centerline"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-038",
+      "kpi_name": "Missing Ramps (Count)",
+      "question_variant": "Where are ramps needed?",
+      "variant_type": "casual",
+      "datasets": ["ramp_progress", "street_permits", "street_centerline"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-039",
+      "kpi_name": "Non-Compliant Ramps (%)",
+      "question_variant": "What percentage of ramps fail ADA compliance tests?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["ramp_progress", "street_permits"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-039",
+      "kpi_name": "Non-Compliant Ramps (%)",
+      "question_variant": "How many ramps don't meet ADA standards?",
+      "variant_type": "casual",
+      "datasets": ["ramp_progress", "street_permits"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-039",
+      "kpi_name": "Non-Compliant Ramps (%)",
+      "question_variant": "Ramps failing slope, width, or tactile tests",
+      "variant_type": "technical",
+      "datasets": ["ramp_progress", "street_permits"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-040",
+      "kpi_name": "Slope Violations (Count)",
+      "question_variant": "How many ramps have slopes exceeding 1:12?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["ramp_progress"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-040",
+      "kpi_name": "Slope Violations (Count)",
+      "question_variant": "Ramps with slopes too steep for ADA",
+      "variant_type": "technical",
+      "datasets": ["ramp_progress"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-040",
+      "kpi_name": "Slope Violations (Count)",
+      "question_variant": "Which ramps are too steep?",
+      "variant_type": "casual",
+      "datasets": ["ramp_progress"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-041",
+      "kpi_name": "Width Violations (Count)",
+      "question_variant": "How many ramps are narrower than 36 inches?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["ramp_progress"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-041",
+      "kpi_name": "Width Violations (Count)",
+      "question_variant": "Ramps failing the 36-inch width requirement",
+      "variant_type": "technical",
+      "datasets": ["ramp_progress"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-041",
+      "kpi_name": "Width Violations (Count)",
+      "question_variant": "Which ramps are too narrow?",
+      "variant_type": "casual",
+      "datasets": ["ramp_progress"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-042",
+      "kpi_name": "Tactile Warning Violations (Count)",
+      "question_variant": "How many ramps are missing detectable warning surfaces?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["ramp_progress"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-042",
+      "kpi_name": "Tactile Warning Violations (Count)",
+      "question_variant": "Ramps without tactile warning pads",
+      "variant_type": "technical",
+      "datasets": ["ramp_progress"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-042",
+      "kpi_name": "Tactile Warning Violations (Count)",
+      "question_variant": "Which ramps lack warning surfaces?",
+      "variant_type": "casual",
+      "datasets": ["ramp_progress"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-043",
+      "kpi_name": "Missing Sidewalk (%)",
+      "question_variant": "What percentage of streets lack sidewalks?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "sidewalk_planimetric", "census_blocks_2020"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-043",
+      "kpi_name": "Missing Sidewalk (%)",
+      "question_variant": "How much street network has no sidewalk coverage?",
+      "variant_type": "casual",
+      "datasets": ["violations", "sidewalk_planimetric", "census_blocks_2020"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-043",
+      "kpi_name": "Missing Sidewalk (%)",
+      "question_variant": "Percentage of streets with no sidewalk",
+      "variant_type": "technical",
+      "datasets": ["violations", "sidewalk_planimetric", "census_blocks_2020"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-044",
+      "kpi_name": "Accessibility Barrier Density",
+      "question_variant": "How many accessibility barriers exist per mile of street?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "sidewalk_planimetric"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-044",
+      "kpi_name": "Accessibility Barrier Density",
+      "question_variant": "Barrier concentration by street mile",
+      "variant_type": "technical",
+      "datasets": ["violations", "sidewalk_planimetric"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-044",
+      "kpi_name": "Accessibility Barrier Density",
+      "question_variant": "Where are pedestrian obstacles most dense?",
+      "variant_type": "casual",
+      "datasets": ["violations", "sidewalk_planimetric"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-045",
+      "kpi_name": "Highest-Barrier Neighborhoods",
+      "question_variant": "Which neighborhoods have the highest concentration of pedestrian barriers?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "sidewalk_planimetric", "census_blocks_2020"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-045",
+      "kpi_name": "Highest-Barrier Neighborhoods",
+      "question_variant": "Rank community boards by barrier density",
+      "variant_type": "technical",
+      "datasets": ["violations", "sidewalk_planimetric", "census_blocks_2020"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-045",
+      "kpi_name": "Highest-Barrier Neighborhoods",
+      "question_variant": "Which areas have the worst accessibility?",
+      "variant_type": "casual",
+      "datasets": ["violations", "sidewalk_planimetric", "census_blocks_2020"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-046",
+      "kpi_name": "Barrier-to-Segment Ratio",
+      "question_variant": "What is the ratio of barriers to total sidewalk segments?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "sidewalk_planimetric"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-046",
+      "kpi_name": "Barrier-to-Segment Ratio",
+      "question_variant": "Barriers as percentage of total segments",
+      "variant_type": "technical",
+      "datasets": ["violations", "sidewalk_planimetric"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-046",
+      "kpi_name": "Barrier-to-Segment Ratio",
+      "question_variant": "What proportion of sidewalks have barriers?",
+      "variant_type": "casual",
+      "datasets": ["violations", "sidewalk_planimetric"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-089",
+      "kpi_name": "Assessment Coverage (%)",
+      "question_variant": "What percentage of sidewalk segments have current assessments?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "street_centerline"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-089",
+      "kpi_name": "Assessment Coverage (%)",
+      "question_variant": "How many segments have condition data ≤2 years old?",
+      "variant_type": "casual",
+      "datasets": ["violations", "street_centerline"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-089",
+      "kpi_name": "Assessment Coverage (%)",
+      "question_variant": "Data completeness: segments with recent assessments",
+      "variant_type": "technical",
+      "datasets": ["violations", "street_centerline"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-089",
+      "kpi_name": "Assessment Coverage (%)",
+      "question_variant": "Assessment coverage target 100%",
+      "variant_type": "abbreviation",
+      "datasets": ["violations", "street_centerline"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-090",
+      "kpi_name": "Stale Assessment (%)",
+      "question_variant": "What percentage of segments have stale assessments (>2 years old)?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "street_centerline"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-090",
+      "kpi_name": "Stale Assessment (%)",
+      "question_variant": "How many segments need reassessment?",
+      "variant_type": "casual",
+      "datasets": ["violations", "street_centerline"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-090",
+      "kpi_name": "Stale Assessment (%)",
+      "question_variant": "Data staleness: segments not assessed recently",
+      "variant_type": "technical",
+      "datasets": ["violations", "street_centerline"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-091",
+      "kpi_name": "Assessment Gaps (Count)",
+      "question_variant": "How many sidewalk segments have never been assessed?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "street_centerline"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-091",
+      "kpi_name": "Assessment Gaps (Count)",
+      "question_variant": "Where is data completely missing?",
+      "variant_type": "casual",
+      "datasets": ["violations", "street_centerline"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-091",
+      "kpi_name": "Assessment Gaps (Count)",
+      "question_variant": "Segments with no assessment history",
+      "variant_type": "technical",
+      "datasets": ["violations", "street_centerline"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-092",
+      "kpi_name": "Last Assessment Age (days)",
+      "question_variant": "How many days ago was the most recent sidewalk assessment?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "street_centerline"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-092",
+      "kpi_name": "Last Assessment Age (days)",
+      "question_variant": "When was data last collected?",
+      "variant_type": "casual",
+      "datasets": ["violations", "street_centerline"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-092",
+      "kpi_name": "Last Assessment Age (days)",
+      "question_variant": "Days since last assessment (target <730 days)",
+      "variant_type": "technical",
+      "datasets": ["violations", "street_centerline"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-093",
+      "kpi_name": "Assessment Frequency (per segment/year)",
+      "question_variant": "How often is each sidewalk segment assessed per year?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "street_centerline"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-093",
+      "kpi_name": "Assessment Frequency (per segment/year)",
+      "question_variant": "Inspection frequency by segment",
+      "variant_type": "technical",
+      "datasets": ["violations", "street_centerline"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-093",
+      "kpi_name": "Assessment Frequency (per segment/year)",
+      "question_variant": "How regularly are sidewalks being inspected?",
+      "variant_type": "casual",
+      "datasets": ["violations", "street_centerline"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-094",
+      "kpi_name": "IRR (Cohen's Kappa)",
+      "question_variant": "What is the inter-rater reliability of condition assessments?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-094",
+      "kpi_name": "IRR (Cohen's Kappa)",
+      "question_variant": "How consistent are different inspectors?",
+      "variant_type": "casual",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-094",
+      "kpi_name": "IRR (Cohen's Kappa)",
+      "question_variant": "Cohen's Kappa: inspector consistency metric (target >0.85)",
+      "variant_type": "technical",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-094",
+      "kpi_name": "IRR (Cohen's Kappa)",
+      "question_variant": "IRR score for data quality",
+      "variant_type": "abbreviation",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-095",
+      "kpi_name": "Inspector Bias (Leniency)",
+      "question_variant": "Do some inspectors grade more leniently than others?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-095",
+      "kpi_name": "Inspector Bias (Leniency)",
+      "question_variant": "Average condition score by inspector (target ±5% of mean)",
+      "variant_type": "technical",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-095",
+      "kpi_name": "Inspector Bias (Leniency)",
+      "question_variant": "Which inspectors are too generous?",
+      "variant_type": "casual",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-096",
+      "kpi_name": "Inspector Bias (Strictness)",
+      "question_variant": "What is the variance in inspector scoring?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-096",
+      "kpi_name": "Inspector Bias (Strictness)",
+      "question_variant": "Inspector score variance (target <10%)",
+      "variant_type": "technical",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-096",
+      "kpi_name": "Inspector Bias (Strictness)",
+      "question_variant": "How strict are different inspectors?",
+      "variant_type": "casual",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-097",
+      "kpi_name": "Classification Agreement (%)",
+      "question_variant": "How often do multiple inspectors classify the same defect the same way?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-097",
+      "kpi_name": "Classification Agreement (%)",
+      "question_variant": "Defect classification consistency (target >90%)",
+      "variant_type": "technical",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-097",
+      "kpi_name": "Classification Agreement (%)",
+      "question_variant": "Do inspectors agree on defect types?",
+      "variant_type": "casual",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-098",
+      "kpi_name": "Schema Drift Violations",
+      "question_variant": "Have any data fields changed unexpectedly?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-098",
+      "kpi_name": "Schema Drift Violations",
+      "question_variant": "Schema changes detected in the dataset",
+      "variant_type": "technical",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-098",
+      "kpi_name": "Schema Drift Violations",
+      "question_variant": "Data structure changes or field name updates",
+      "variant_type": "casual",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-141",
+      "kpi_name": "Maintenance Budget (Annual)",
+      "question_variant": "What is the annual budget needed to maintain current condition levels?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "street_permits", "in_house_resurfacing"],
+      "analyst_duty": "duty_006"
+    },
+    {
+      "kpi_id": "KPI-141",
+      "kpi_name": "Maintenance Budget (Annual)",
+      "question_variant": "How much does it cost to prevent deterioration each year?",
+      "variant_type": "casual",
+      "datasets": ["violations", "street_permits", "in_house_resurfacing"],
+      "analyst_duty": "duty_006"
+    },
+    {
+      "kpi_id": "KPI-141",
+      "kpi_name": "Maintenance Budget (Annual)",
+      "question_variant": "Annual maintenance cost to hold condition steady",
+      "variant_type": "technical",
+      "datasets": ["violations", "street_permits", "in_house_resurfacing"],
+      "analyst_duty": "duty_006"
+    },
+    {
+      "kpi_id": "KPI-142",
+      "kpi_name": "Replacement Budget (Annual)",
+      "question_variant": "What is the annual budget needed to replace failing segments?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "street_permits", "in_house_resurfacing"],
+      "analyst_duty": "duty_006"
+    },
+    {
+      "kpi_id": "KPI-142",
+      "kpi_name": "Replacement Budget (Annual)",
+      "question_variant": "Cost to replace all PCI <40 segments annually",
+      "variant_type": "technical",
+      "datasets": ["violations", "street_permits", "in_house_resurfacing"],
+      "analyst_duty": "duty_006"
+    },
+    {
+      "kpi_id": "KPI-142",
+      "kpi_name": "Replacement Budget (Annual)",
+      "question_variant": "How much to fix bad sidewalks each year?",
+      "variant_type": "casual",
+      "datasets": ["violations", "street_permits", "in_house_resurfacing"],
+      "analyst_duty": "duty_006"
+    },
+    {
+      "kpi_id": "KPI-143",
+      "kpi_name": "Total Capital Needed (5-year)",
+      "question_variant": "What is the total 5-year capital requirement?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "street_permits", "in_house_resurfacing"],
+      "analyst_duty": "duty_006"
+    },
+    {
+      "kpi_id": "KPI-143",
+      "kpi_name": "Total Capital Needed (5-year)",
+      "question_variant": "5-year maintenance + replacement budget",
+      "variant_type": "technical",
+      "datasets": ["violations", "street_permits", "in_house_resurfacing"],
+      "analyst_duty": "duty_006"
+    },
+    {
+      "kpi_id": "KPI-143",
+      "kpi_name": "Total Capital Needed (5-year)",
+      "question_variant": "How much budget for 5 years of work?",
+      "variant_type": "casual",
+      "datasets": ["violations", "street_permits", "in_house_resurfacing"],
+      "analyst_duty": "duty_006"
+    },
+    {
+      "kpi_id": "KPI-144",
+      "kpi_name": "Deferred Maintenance Cost",
+      "question_variant": "What is the cost of deferred maintenance backlog?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "street_permits", "in_house_resurfacing"],
+      "analyst_duty": "duty_006"
+    },
+    {
+      "kpi_id": "KPI-144",
+      "kpi_name": "Deferred Maintenance Cost",
+      "question_variant": "Cost to catch up if we've been underfunded",
+      "variant_type": "technical",
+      "datasets": ["violations", "street_permits", "in_house_resurfacing"],
+      "analyst_duty": "duty_006"
+    },
+    {
+      "kpi_id": "KPI-144",
+      "kpi_name": "Deferred Maintenance Cost",
+      "question_variant": "What is the maintenance backlog worth?",
+      "variant_type": "casual",
+      "datasets": ["violations", "street_permits", "in_house_resurfacing"],
+      "analyst_duty": "duty_006"
+    },
+    {
+      "kpi_id": "KPI-145",
+      "kpi_name": "Cost per Segment (Average)",
+      "question_variant": "What is the average cost per segment?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "street_permits", "in_house_resurfacing"],
+      "analyst_duty": "duty_006"
+    },
+    {
+      "kpi_id": "KPI-145",
+      "kpi_name": "Cost per Segment (Average)",
+      "question_variant": "Average cost per sidewalk segment",
+      "variant_type": "technical",
+      "datasets": ["violations", "street_permits", "in_house_resurfacing"],
+      "analyst_duty": "duty_006"
+    },
+    {
+      "kpi_id": "KPI-145",
+      "kpi_name": "Cost per Segment (Average)",
+      "question_variant": "How much does each segment cost to fix?",
+      "variant_type": "casual",
+      "datasets": ["violations", "street_permits", "in_house_resurfacing"],
+      "analyst_duty": "duty_006"
+    },
+    {
+      "kpi_id": "KPI-146",
+      "kpi_name": "Preventative Maintenance ROI (%)",
+      "question_variant": "What is the return on investment for preventative maintenance?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "in_house_resurfacing", "complaints_311"],
+      "analyst_duty": "duty_006"
+    },
+    {
+      "kpi_id": "KPI-146",
+      "kpi_name": "Preventative Maintenance ROI (%)",
+      "question_variant": "Is prevention worth the cost vs reactive repair?",
+      "variant_type": "casual",
+      "datasets": ["violations", "in_house_resurfacing", "complaints_311"],
+      "analyst_duty": "duty_006"
+    },
+    {
+      "kpi_id": "KPI-146",
+      "kpi_name": "Preventative Maintenance ROI (%)",
+      "question_variant": "Preventative vs failure repair cost-benefit",
+      "variant_type": "technical",
+      "datasets": ["violations", "in_house_resurfacing", "complaints_311"],
+      "analyst_duty": "duty_006"
+    },
+    {
+      "kpi_id": "KPI-147",
+      "kpi_name": "Injuries Prevented per $1M spent",
+      "question_variant": "How many injuries are prevented per million dollars spent?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "in_house_resurfacing", "complaints_311"],
+      "analyst_duty": "duty_006"
+    },
+    {
+      "kpi_id": "KPI-147",
+      "kpi_name": "Injuries Prevented per $1M spent",
+      "question_variant": "Injury reduction per $1M of maintenance investment",
+      "variant_type": "technical",
+      "datasets": ["violations", "in_house_resurfacing", "complaints_311"],
+      "analyst_duty": "duty_006"
+    },
+    {
+      "kpi_id": "KPI-147",
+      "kpi_name": "Injuries Prevented per $1M spent",
+      "question_variant": "What's the safety benefit of spending on sidewalks?",
+      "variant_type": "casual",
+      "datasets": ["violations", "in_house_resurfacing", "complaints_311"],
+      "analyst_duty": "duty_006"
+    },
+    {
+      "kpi_id": "KPI-148",
+      "kpi_name": "Quality-of-Life Improvement (walkability score)",
+      "question_variant": "How much does sidewalk investment improve walkability?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "in_house_resurfacing"],
+      "analyst_duty": "duty_006"
+    },
+    {
+      "kpi_id": "KPI-148",
+      "kpi_name": "Quality-of-Life Improvement (walkability score)",
+      "question_variant": "Walkability score improvement from repairs",
+      "variant_type": "technical",
+      "datasets": ["violations", "in_house_resurfacing"],
+      "analyst_duty": "duty_006"
+    },
+    {
+      "kpi_id": "KPI-148",
+      "kpi_name": "Quality-of-Life Improvement (walkability score)",
+      "question_variant": "Do repairs make neighborhoods more walkable?",
+      "variant_type": "casual",
+      "datasets": ["violations", "in_house_resurfacing"],
+      "analyst_duty": "duty_006"
+    },
+    {
+      "kpi_id": "KPI-149",
+      "kpi_name": "Payback Period (years)",
+      "question_variant": "What is the payback period for sidewalk investments?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "in_house_resurfacing"],
+      "analyst_duty": "duty_006"
+    },
+    {
+      "kpi_id": "KPI-149",
+      "kpi_name": "Payback Period (years)",
+      "question_variant": "How many years until sidewalk investment pays for itself?",
+      "variant_type": "casual",
+      "datasets": ["violations", "in_house_resurfacing"],
+      "analyst_duty": "duty_006"
+    },
+    {
+      "kpi_id": "KPI-149",
+      "kpi_name": "Payback Period (years)",
+      "question_variant": "Years until ROI breakeven on infrastructure investment",
+      "variant_type": "technical",
+      "datasets": ["violations", "in_house_resurfacing"],
+      "analyst_duty": "duty_006"
+    },
+    {
+      "kpi_id": "KPI-191",
+      "kpi_name": "Ramps Completed",
+      "question_variant": "How many curb ramps have been completed?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["ramp_progress", "ramp_complaints"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-191",
+      "kpi_name": "Ramps Completed",
+      "question_variant": "Count of installed and functional ramps",
+      "variant_type": "technical",
+      "datasets": ["ramp_progress", "ramp_complaints"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-191",
+      "kpi_name": "Ramps Completed",
+      "question_variant": "How many ramps are done?",
+      "variant_type": "casual",
+      "datasets": ["ramp_progress", "ramp_complaints"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-192",
+      "kpi_name": "Ramps In Progress",
+      "question_variant": "How many ramps are currently under construction?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["ramp_progress"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-192",
+      "kpi_name": "Ramps In Progress",
+      "question_variant": "Ramps currently being built",
+      "variant_type": "technical",
+      "datasets": ["ramp_progress"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-192",
+      "kpi_name": "Ramps In Progress",
+      "question_variant": "How many ramps are being worked on?",
+      "variant_type": "casual",
+      "datasets": ["ramp_progress"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-193",
+      "kpi_name": "Ramps Planned",
+      "question_variant": "How many ramps have been approved but not yet started?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["ramp_progress"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-193",
+      "kpi_name": "Ramps Planned",
+      "question_variant": "Approved ramps waiting to begin",
+      "variant_type": "technical",
+      "datasets": ["ramp_progress"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-193",
+      "kpi_name": "Ramps Planned",
+      "question_variant": "Which ramps are next in line?",
+      "variant_type": "casual",
+      "datasets": ["ramp_progress"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-194",
+      "kpi_name": "Ramps Deferred",
+      "question_variant": "How many ramps have been deferred indefinitely?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["ramp_progress"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-194",
+      "kpi_name": "Ramps Deferred",
+      "question_variant": "Approved but indefinitely delayed ramps",
+      "variant_type": "technical",
+      "datasets": ["ramp_progress"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-194",
+      "kpi_name": "Ramps Deferred",
+      "question_variant": "How many ramps got stuck?",
+      "variant_type": "casual",
+      "datasets": ["ramp_progress"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-195",
+      "kpi_name": "Completion Rate (%)",
+      "question_variant": "What is the ramp completion rate vs the committed schedule?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["ramp_progress"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-195",
+      "kpi_name": "Completion Rate (%)",
+      "question_variant": "How many ramps did we complete on schedule?",
+      "variant_type": "casual",
+      "datasets": ["ramp_progress"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-195",
+      "kpi_name": "Completion Rate (%)",
+      "question_variant": "Actual vs committed ramp completion percentage",
+      "variant_type": "technical",
+      "datasets": ["ramp_progress"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-196",
+      "kpi_name": "Schedule Variance (days)",
+      "question_variant": "How many days ahead or behind schedule are ramp projects?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["ramp_progress"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-196",
+      "kpi_name": "Schedule Variance (days)",
+      "question_variant": "Ramp projects: days ahead/behind schedule",
+      "variant_type": "technical",
+      "datasets": ["ramp_progress"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-196",
+      "kpi_name": "Schedule Variance (days)",
+      "question_variant": "Are ramp projects on time?",
+      "variant_type": "casual",
+      "datasets": ["ramp_progress"],
+      "analyst_duty": "duty_004"
+    },
+    {
+      "kpi_id": "KPI-236",
+      "kpi_name": "Time to Inspection (days)",
+      "question_variant": "What is the average time from complaint to first inspection?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["complaints_311", "violations", "dismissals"],
+      "analyst_duty": "duty_007"
+    },
+    {
+      "kpi_id": "KPI-236",
+      "kpi_name": "Time to Inspection (days)",
+      "question_variant": "How quickly do we inspect complaints? (target ≤14 days)",
+      "variant_type": "technical",
+      "datasets": ["complaints_311", "violations", "dismissals"],
+      "analyst_duty": "duty_007"
+    },
+    {
+      "kpi_id": "KPI-236",
+      "kpi_name": "Time to Inspection (days)",
+      "question_variant": "Days to respond to a complaint",
+      "variant_type": "casual",
+      "datasets": ["complaints_311", "violations", "dismissals"],
+      "analyst_duty": "duty_007"
+    },
+    {
+      "kpi_id": "KPI-237",
+      "kpi_name": "Time to Completion (days)",
+      "question_variant": "What is the average time from inspection to repair completion?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["complaints_311", "violations", "dismissals"],
+      "analyst_duty": "duty_007"
+    },
+    {
+      "kpi_id": "KPI-237",
+      "kpi_name": "Time to Completion (days)",
+      "question_variant": "How long to complete repairs? (target ≤56 days)",
+      "variant_type": "technical",
+      "datasets": ["complaints_311", "violations", "dismissals"],
+      "analyst_duty": "duty_007"
+    },
+    {
+      "kpi_id": "KPI-237",
+      "kpi_name": "Time to Completion (days)",
+      "question_variant": "Average repair completion time",
+      "variant_type": "casual",
+      "datasets": ["complaints_311", "violations", "dismissals"],
+      "analyst_duty": "duty_007"
+    },
+    {
+      "kpi_id": "KPI-238",
+      "kpi_name": "Time to Completion (median)",
+      "question_variant": "What is the median repair turnaround time?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["complaints_311", "violations", "dismissals"],
+      "analyst_duty": "duty_007"
+    },
+    {
+      "kpi_id": "KPI-238",
+      "kpi_name": "Time to Completion (median)",
+      "question_variant": "Median repair time (target ≤42 days)",
+      "variant_type": "technical",
+      "datasets": ["complaints_311", "violations", "dismissals"],
+      "analyst_duty": "duty_007"
+    },
+    {
+      "kpi_id": "KPI-238",
+      "kpi_name": "Time to Completion (median)",
+      "question_variant": "Typical time to fix a violation",
+      "variant_type": "casual",
+      "datasets": ["complaints_311", "violations", "dismissals"],
+      "analyst_duty": "duty_007"
+    },
+    {
+      "kpi_id": "KPI-239",
+      "kpi_name": "SLA Compliance (%)",
+      "question_variant": "What percentage of repairs complete within the SLA target?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["complaints_311", "violations", "dismissals"],
+      "analyst_duty": "duty_007"
+    },
+    {
+      "kpi_id": "KPI-239",
+      "kpi_name": "SLA Compliance (%)",
+      "question_variant": "SLA compliance target >95%",
+      "variant_type": "technical",
+      "datasets": ["complaints_311", "violations", "dismissals"],
+      "analyst_duty": "duty_007"
+    },
+    {
+      "kpi_id": "KPI-239",
+      "kpi_name": "SLA Compliance (%)",
+      "question_variant": "How often do we meet our repair deadlines?",
+      "variant_type": "casual",
+      "datasets": ["complaints_311", "violations", "dismissals"],
+      "analyst_duty": "duty_007"
+    },
+    {
+      "kpi_id": "KPI-240",
+      "kpi_name": "Bottleneck Duration (days)",
+      "question_variant": "What is the longest step in the complaint-to-repair workflow?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["complaints_311", "violations", "dismissals"],
+      "analyst_duty": "duty_007"
+    },
+    {
+      "kpi_id": "KPI-240",
+      "kpi_name": "Bottleneck Duration (days)",
+      "question_variant": "Where does the process take longest?",
+      "variant_type": "casual",
+      "datasets": ["complaints_311", "violations", "dismissals"],
+      "analyst_duty": "duty_007"
+    },
+    {
+      "kpi_id": "KPI-240",
+      "kpi_name": "Bottleneck Duration (days)",
+      "question_variant": "Critical path analysis: longest workflow step",
+      "variant_type": "technical",
+      "datasets": ["complaints_311", "violations", "dismissals"],
+      "analyst_duty": "duty_007"
+    },
+    {
+      "kpi_id": "KPI-271",
+      "kpi_name": "Pedestrian Injuries (per 10K pedestrian-trips)",
+      "question_variant": "What is the pedestrian injury rate per 10,000 trips?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["complaints_311", "violations"],
+      "analyst_duty": "duty_008"
+    },
+    {
+      "kpi_id": "KPI-271",
+      "kpi_name": "Pedestrian Injuries (per 10K pedestrian-trips)",
+      "question_variant": "How many pedestrians are injured on our sidewalks?",
+      "variant_type": "casual",
+      "datasets": ["complaints_311", "violations"],
+      "analyst_duty": "duty_008"
+    },
+    {
+      "kpi_id": "KPI-271",
+      "kpi_name": "Pedestrian Injuries (per 10K pedestrian-trips)",
+      "question_variant": "Injury rate normalized by pedestrian volume",
+      "variant_type": "technical",
+      "datasets": ["complaints_311", "violations"],
+      "analyst_duty": "duty_008"
+    },
+    {
+      "kpi_id": "KPI-272",
+      "kpi_name": "Injury Correlation (injuries vs. sidewalk condition SCI)",
+      "question_variant": "Is there a correlation between sidewalk condition and injuries?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["complaints_311", "violations"],
+      "analyst_duty": "duty_008"
+    },
+    {
+      "kpi_id": "KPI-272",
+      "kpi_name": "Injury Correlation (injuries vs. sidewalk condition SCI)",
+      "question_variant": "Do bad sidewalks cause more injuries?",
+      "variant_type": "casual",
+      "datasets": ["complaints_311", "violations"],
+      "analyst_duty": "duty_008"
+    },
+    {
+      "kpi_id": "KPI-272",
+      "kpi_name": "Injury Correlation (injuries vs. sidewalk condition SCI)",
+      "question_variant": "Correlation coefficient: sidewalk condition vs injury rate",
+      "variant_type": "technical",
+      "datasets": ["complaints_311", "violations"],
+      "analyst_duty": "duty_008"
+    },
+    {
+      "kpi_id": "KPI-273",
+      "kpi_name": "Vision Zero Corridor Coverage",
+      "question_variant": "What percentage of Vision Zero corridors have updated sidewalks?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "complaints_311"],
+      "analyst_duty": "duty_008"
+    },
+    {
+      "kpi_id": "KPI-273",
+      "kpi_name": "Vision Zero Corridor Coverage",
+      "question_variant": "Are high-crash areas getting better sidewalks?",
+      "variant_type": "casual",
+      "datasets": ["violations", "complaints_311"],
+      "analyst_duty": "duty_008"
+    },
+    {
+      "kpi_id": "KPI-273",
+      "kpi_name": "Vision Zero Corridor Coverage",
+      "question_variant": "Percentage of Vision Zero priority corridors with recent improvements",
+      "variant_type": "technical",
+      "datasets": ["violations", "complaints_311"],
+      "analyst_duty": "duty_008"
+    },
+    {
+      "kpi_id": "KPI-296",
+      "kpi_name": "Prediction Accuracy (ML models)",
+      "question_variant": "How accurate are deterioration predictions?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-296",
+      "kpi_name": "Prediction Accuracy (ML models)",
+      "question_variant": "What is the model accuracy for forecasting deterioration?",
+      "variant_type": "technical",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-296",
+      "kpi_name": "Prediction Accuracy (ML models)",
+      "question_variant": "Can we predict which sidewalks will fail?",
+      "variant_type": "casual",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-050",
+      "kpi_name": "Equity Investment Analysis",
+      "question_variant": "How is sidewalk investment distributed across neighborhoods by need?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "census_blocks_2020"],
+      "analyst_duty": "duty_009"
+    },
+    {
+      "kpi_id": "KPI-050",
+      "kpi_name": "Equity Investment Analysis",
+      "question_variant": "Are we funding neighborhoods proportional to their needs?",
+      "variant_type": "casual",
+      "datasets": ["violations", "census_blocks_2020"],
+      "analyst_duty": "duty_009"
+    },
+    {
+      "kpi_id": "KPI-050",
+      "kpi_name": "Equity Investment Analysis",
+      "question_variant": "Budget allocation equity: spend per capita by district",
+      "variant_type": "technical",
+      "datasets": ["violations", "census_blocks_2020"],
+      "analyst_duty": "duty_009"
+    },
+    {
+      "kpi_id": "KPI-060",
+      "kpi_name": "Demographic Correlations",
+      "question_variant": "Is there a correlation between sidewalk condition and neighborhood demographics?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "census_blocks_2020"],
+      "analyst_duty": "duty_009"
+    },
+    {
+      "kpi_id": "KPI-060",
+      "kpi_name": "Demographic Correlations",
+      "question_variant": "Do wealthier neighborhoods have better sidewalks?",
+      "variant_type": "casual",
+      "datasets": ["violations", "census_blocks_2020"],
+      "analyst_duty": "duty_009"
+    },
+    {
+      "kpi_id": "KPI-060",
+      "kpi_name": "Demographic Correlations",
+      "question_variant": "Analysis: condition vs race/income/age by district",
+      "variant_type": "technical",
+      "datasets": ["violations", "census_blocks_2020"],
+      "analyst_duty": "duty_009"
+    },
+    {
+      "kpi_id": "KPI-070",
+      "kpi_name": "Underserved Population Metrics",
+      "question_variant": "Which populations have the least access to good sidewalks?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "census_blocks_2020", "sidewalk_planimetric"],
+      "analyst_duty": "duty_009"
+    },
+    {
+      "kpi_id": "KPI-070",
+      "kpi_name": "Underserved Population Metrics",
+      "question_variant": "Where are accessibility gaps most severe?",
+      "variant_type": "casual",
+      "datasets": ["violations", "census_blocks_2020", "sidewalk_planimetric"],
+      "analyst_duty": "duty_009"
+    },
+    {
+      "kpi_id": "KPI-070",
+      "kpi_name": "Underserved Population Metrics",
+      "question_variant": "Underserved areas: crowdsourced complaints + population density",
+      "variant_type": "technical",
+      "datasets": ["violations", "census_blocks_2020", "sidewalk_planimetric"],
+      "analyst_duty": "duty_009"
+    },
+    {
+      "kpi_id": "KPI-080",
+      "kpi_name": "Sidewalk Reach Quotient",
+      "question_variant": "What percentage of the population has access to good-condition sidewalks?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "census_blocks_2020", "sidewalk_planimetric"],
+      "analyst_duty": "duty_009"
+    },
+    {
+      "kpi_id": "KPI-080",
+      "kpi_name": "Sidewalk Reach Quotient",
+      "question_variant": "Population-weighted sidewalk accessibility by profile",
+      "variant_type": "technical",
+      "datasets": ["violations", "census_blocks_2020", "sidewalk_planimetric"],
+      "analyst_duty": "duty_009"
+    },
+    {
+      "kpi_id": "KPI-080",
+      "kpi_name": "Sidewalk Reach Quotient",
+      "question_variant": "How many New Yorkers have good sidewalks nearby?",
+      "variant_type": "casual",
+      "datasets": ["violations", "census_blocks_2020", "sidewalk_planimetric"],
+      "analyst_duty": "duty_009"
+    },
+    {
+      "kpi_id": "KPI-110",
+      "kpi_name": "Data Integration Completeness",
+      "question_variant": "What is the success rate of data joins across datasets?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "street_centerline", "census_blocks_2020"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-110",
+      "kpi_name": "Data Integration Completeness",
+      "question_variant": "How well do datasets match each other?",
+      "variant_type": "casual",
+      "datasets": ["violations", "street_centerline", "census_blocks_2020"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-110",
+      "kpi_name": "Data Integration Completeness",
+      "question_variant": "Data join success rate and match rates across sources",
+      "variant_type": "technical",
+      "datasets": ["violations", "street_centerline", "census_blocks_2020"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-120",
+      "kpi_name": "Underutilized Data Discovery",
+      "question_variant": "Are there data assets we're not currently using?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "complaints_311"],
+      "analyst_duty": "duty_010"
+    },
+    {
+      "kpi_id": "KPI-120",
+      "kpi_name": "Underutilized Data Discovery",
+      "question_variant": "What datasets could improve our analysis?",
+      "variant_type": "casual",
+      "datasets": ["violations", "complaints_311"],
+      "analyst_duty": "duty_010"
+    },
+    {
+      "kpi_id": "KPI-120",
+      "kpi_name": "Underutilized Data Discovery",
+      "question_variant": "Inventory of unused data assets and recommendations",
+      "variant_type": "technical",
+      "datasets": ["violations", "complaints_311"],
+      "analyst_duty": "duty_010"
+    },
+    {
+      "kpi_id": "KPI-150",
+      "kpi_name": "Replacement Pipeline",
+      "question_variant": "Which segments need to be replaced in each year?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "street_permits"],
+      "analyst_duty": "duty_006"
+    },
+    {
+      "kpi_id": "KPI-150",
+      "kpi_name": "Replacement Pipeline",
+      "question_variant": "5-year replacement schedule by segment priority",
+      "variant_type": "technical",
+      "datasets": ["violations", "street_permits"],
+      "analyst_duty": "duty_006"
+    },
+    {
+      "kpi_id": "KPI-150",
+      "kpi_name": "Replacement Pipeline",
+      "question_variant": "What sidewalks should we replace next?",
+      "variant_type": "casual",
+      "datasets": ["violations", "street_permits"],
+      "analyst_duty": "duty_006"
+    },
+    {
+      "kpi_id": "KPI-166",
+      "kpi_name": "SLA Compliance (Response Times)",
+      "question_variant": "What is our SLA compliance for response times?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "dismissals"],
+      "analyst_duty": "duty_007"
+    },
+    {
+      "kpi_id": "KPI-166",
+      "kpi_name": "SLA Compliance (Response Times)",
+      "question_variant": "Do we meet our service level targets?",
+      "variant_type": "casual",
+      "datasets": ["violations", "dismissals"],
+      "analyst_duty": "duty_007"
+    },
+    {
+      "kpi_id": "KPI-166",
+      "kpi_name": "SLA Compliance (Response Times)",
+      "question_variant": "SLA compliance: meeting response and completion targets",
+      "variant_type": "technical",
+      "datasets": ["violations", "dismissals"],
+      "analyst_duty": "duty_007"
+    },
+    {
+      "kpi_id": "KPI-181",
+      "kpi_name": "Budget Allocation Equity",
+      "question_variant": "Is budget allocation equitable across neighborhoods?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["street_permits", "census_blocks_2020"],
+      "analyst_duty": "duty_006"
+    },
+    {
+      "kpi_id": "KPI-181",
+      "kpi_name": "Budget Allocation Equity",
+      "question_variant": "Spend per capita by district analysis",
+      "variant_type": "technical",
+      "datasets": ["street_permits", "census_blocks_2020"],
+      "analyst_duty": "duty_006"
+    },
+    {
+      "kpi_id": "KPI-181",
+      "kpi_name": "Budget Allocation Equity",
+      "question_variant": "Do all neighborhoods get their fair share of investment?",
+      "variant_type": "casual",
+      "datasets": ["street_permits", "census_blocks_2020"],
+      "analyst_duty": "duty_006"
+    },
+    {
+      "kpi_id": "KPI-241",
+      "kpi_name": "Inspector Productivity (Miles/day)",
+      "question_variant": "How many miles does each inspector cover per day?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_007"
+    },
+    {
+      "kpi_id": "KPI-241",
+      "kpi_name": "Inspector Productivity (Miles/day)",
+      "question_variant": "Inspector coverage: miles per day",
+      "variant_type": "technical",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_007"
+    },
+    {
+      "kpi_id": "KPI-241",
+      "kpi_name": "Inspector Productivity (Miles/day)",
+      "question_variant": "How productive are our inspectors?",
+      "variant_type": "casual",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_007"
+    },
+    {
+      "kpi_id": "KPI-250",
+      "kpi_name": "Contractor Performance (Rework Rate)",
+      "question_variant": "What is the contractor rework rate?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations", "dismissals"],
+      "analyst_duty": "duty_002"
+    },
+    {
+      "kpi_id": "KPI-250",
+      "kpi_name": "Contractor Performance (Rework Rate)",
+      "question_variant": "How often do contractor repairs fail?",
+      "variant_type": "casual",
+      "datasets": ["violations", "dismissals"],
+      "analyst_duty": "duty_002"
+    },
+    {
+      "kpi_id": "KPI-250",
+      "kpi_name": "Contractor Performance (Rework Rate)",
+      "question_variant": "Contractor quality: rework and failure rates",
+      "variant_type": "technical",
+      "datasets": ["violations", "dismissals"],
+      "analyst_duty": "duty_002"
+    },
+    {
+      "kpi_id": "KPI-260",
+      "kpi_name": "Workforce Metrics (Headcount)",
+      "question_variant": "How many staff do we need to meet targets?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_011"
+    },
+    {
+      "kpi_id": "KPI-260",
+      "kpi_name": "Workforce Metrics (Headcount)",
+      "question_variant": "Workforce sizing analysis for current demand",
+      "variant_type": "technical",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_011"
+    },
+    {
+      "kpi_id": "KPI-260",
+      "kpi_name": "Workforce Metrics (Headcount)",
+      "question_variant": "Are we understaffed or overstaffed?",
+      "variant_type": "casual",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_011"
+    },
+    {
+      "kpi_id": "KPI-274",
+      "kpi_name": "Automation Accuracy (Computer Vision vs. Human)",
+      "question_variant": "How accurate is computer vision for condition assessment?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-274",
+      "kpi_name": "Automation Accuracy (Computer Vision vs. Human)",
+      "question_variant": "Can AI replace human inspectors?",
+      "variant_type": "casual",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-274",
+      "kpi_name": "Automation Accuracy (Computer Vision vs. Human)",
+      "question_variant": "Computer vision accuracy vs human baseline",
+      "variant_type": "technical",
+      "datasets": ["violations"],
+      "analyst_duty": "duty_001"
+    },
+    {
+      "kpi_id": "KPI-286",
+      "kpi_name": "Crowdsourced Data Quality",
+      "question_variant": "How reliable are crowdsourced complaints?",
+      "variant_type": "direct_phrasing",
+      "datasets": ["complaints_311", "violations"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-286",
+      "kpi_name": "Crowdsourced Data Quality",
+      "question_variant": "311 data quality: bias analysis and completeness",
+      "variant_type": "technical",
+      "datasets": ["complaints_311", "violations"],
+      "analyst_duty": "duty_005"
+    },
+    {
+      "kpi_id": "KPI-286",
+      "kpi_name": "Crowdsourced Data Quality",
+      "question_variant": "Do we get complaints from all neighborhoods equally?",
+      "variant_type": "casual",
+      "datasets": ["complaints_311", "violations"],
+      "analyst_duty": "duty_005"
+    }
+  ],
+  "summary": {
+    "total_kpis": 115,
+    "total_variants_generated": 485,
+    "variants_per_kpi_avg": 4.2,
+    "variant_types": {
+      "direct_phrasing": 155,
+      "synonym_swap": 52,
+      "abbreviation": 33,
+      "casual": 148,
+      "technical": 97
+    },
+    "categories": {
+      "A_Sidewalk_Condition_Maintenance": 95,
+      "B_Accessibility_Equity": 95,
+      "C_Data_Quality": 95,
+      "D_Asset_Management": 105,
+      "E_Ramp_Program": 35,
+      "F_Operational_Efficiency": 30,
+      "G_H_Integration_Innovation": 30
+    },
+    "generation_strategy": "Question templates applied systematically across 8 KPI categories with domain-specific variant generators for each category (e.g., budget questions, accessibility compliance questions, data quality questions, ramp program questions). Variants include direct phrasings, common synonyms, abbreviations, casual/conversational styles, and technical/formal language.",
+    "training_data_purpose": "Labeled dataset for fuzzy matching algorithm weight calibration. Each variant represents a natural language question an analyst might ask to find a specific KPI. Used to train ranking and scoring functions that route analyst questions to correct KPIs.",
+    "next_steps": [
+      "1. Import JSON into fuzzy matching engine with TF-IDF vectorization",
+      "2. Train ranking model with variant types as features (direct=high weight, casual=lower weight, abbreviation=fuzzy match)",
+      "3. Validate with holdout test set of 50+ new analyst questions",
+      "4. Calibrate confidence thresholds for ambiguous questions (e.g., 'budget' maps to multiple KPIs)",
+      "5. Deploy in NL-to-KPI routing module of Dash Mission Control"
+    ]
+  },
+  "metadata": {
+    "generated_date": "2026-06-19",
+    "source_file": "sim_research_questions_to_kpi_mapping.md",
+    "kpi_extraction_method": "Exhaustive catalog of 309+ KPIs across Categories A-H mapped from 60+ research questions",
+    "variant_generation_method": "Template-based with domain-specific customization per category",
+    "total_datasets_referenced": 18,
+    "analyst_duties_covered": 11,
+    "completeness_notes": "Generated 485 variants for 115 representative KPIs (37% of 309+ total). Subset includes all high-impact KPIs from Categories A-E (condition, accessibility, quality, asset management, ramps) plus key selections from Categories F-H (operational, innovation). Ready to extend to remaining 194 KPIs using same template patterns."
+  }
+}

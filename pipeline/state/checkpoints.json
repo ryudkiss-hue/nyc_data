@@ -1,0 +1,22 @@
+[
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-06-18T22:28:21.561662",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "failed",
+    "timestamp": "2026-06-18T22:28:21.561679",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.0,
+    "error_message": "Zero Socrata datasets loaded"
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-06-18T22:29:55.460847",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "failed",
+    "timestamp": "2026-06-18T22:29:55.460859",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.0,
+    "error_message": "Zero Socrata datasets loaded"
+  }
+]

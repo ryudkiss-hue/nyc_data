@@ -3,6 +3,7 @@ import json
 import sys
 import uuid
 from pathlib import Path
+
 from .cli_nlquery import run_nl_query
 from .observability.duckdb_store import DuckDBObservabilityStore
 
@@ -82,7 +83,7 @@ def execute_nlquery(args):
             print(f"\nMatched: {result.get('kpi_name')}")
             print(f"Confidence: {result.get('confidence'):.2%}")
         else:
-            print(f"\nNo match found")
+            print("\nNo match found")
 
 
 def execute_evaluate(args):

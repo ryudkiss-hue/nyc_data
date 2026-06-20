@@ -42,7 +42,7 @@ class HybridRouter:
         claude_result = self.claude.match(user_question)
 
         # Handle case where one or both fail
-        if prog_result.question_id is None and claude_result.question_id is None:
+        if prog_result is None and claude_result is None:
             return MatchResult(
                 question_id=None,
                 confidence=0.0,
@@ -50,10 +50,21 @@ class HybridRouter:
                 source='hybrid_no_match'
             )
 
-        if prog_result.question_id is None:
-            prog_result = claude_result
-        elif claude_result.question_id is None:
-            claude_result = prog_result
+        if prog_result is None or prog_result.question_id is None:
+            if claude_result is not None:
+                prog_result = claude_result
+        if claude_result is None or claude_result.question_id is None:
+            if prog_result is not None:
+                claude_result = prog_result
+
+        # If both still None, no match
+        if prog_result is None or claude_result is None:
+            return MatchResult(
+                question_id=None,
+                confidence=0.0,
+                strategy='none',
+                source='hybrid_no_match'
+            )
 
         # Check agreement
         if prog_result.question_id == claude_result.question_id:

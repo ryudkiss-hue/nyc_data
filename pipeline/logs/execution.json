@@ -1,155 +1,311 @@
 {
   "pipeline_version": "2.0",
-  "started_at": "2026-06-18T09:10:39.390949",
+  "started_at": "2026-06-18T22:29:32.888487",
   "stages": {
     "load_cached_parquet": {
       "status": "success",
-      "timestamp": "2026-06-18T09:10:39.392273",
+      "timestamp": "2026-06-18T22:29:55.460077",
       "tables_loaded": 20,
+      "expected_cached": 20,
+      "total_rows": 3921830,
+      "load_time_seconds": 22.54,
       "cache_location": "C:\\Users\\ryudk\\Desktop\\nyc_data_cache\\raw"
     },
     "ingest_remaining_socrata": {
-      "status": "success",
-      "timestamp": "2026-06-18T09:10:39.392780",
+      "status": "failed",
+      "timestamp": "2026-06-18T22:30:14.029638",
+      "loaded": 0,
       "total_remaining": 37,
-      "batch_size": 10,
-      "estimated_batches": 4
-    },
-    "staging_datasets": {
-      "status": "success",
-      "timestamp": "2026-06-18T09:10:39.393141",
-      "total_tables": 57,
-      "dedup_method": "column_0_as_primary_key",
-      "type_casting": "try_cast_with_socrata_types"
-    },
-    "build_analytics_schemas": {
-      "status": "success",
-      "timestamp": "2026-06-18T09:10:39.393575",
-      "domains": [
-        "sim_core",
-        "accessibility",
-        "coordination",
-        "overlays",
-        "extended"
-      ],
-      "total_views": 100,
-      "join_keys": [
-        "inspection_id",
-        "permit_id",
-        "ramp_id",
-        "lot_id",
-        "bblid"
-      ]
-    },
-    "materialize_kpis": {
-      "status": "success",
-      "timestamp": "2026-06-18T09:10:39.393799",
-      "total_kpi_records": 255,
-      "kpis_per_borough": 51,
-      "boroughs": [
-        "manhattan",
-        "brooklyn",
-        "queens",
-        "bronx",
-        "staten_island"
-      ],
-      "quality_scorecards": 57,
-      "borough_aggregates": 25
-    },
-    "verification_gates": {
-      "status": "success",
-      "timestamp": "2026-06-18T09:10:39.397613",
-      "gates_passed": 4,
-      "gates": {
-        "data_load": "All 57 datasets loaded, \u226510M total rows, no nulls in PKs",
-        "schema": "Staging has all columns, proper types, no data loss",
-        "joins": "Cross-dataset relationships validated",
-        "kpi": "255 KPI records + 57 scorecards computed, no silent failures"
-      }
+      "error": "No data loaded from Socrata"
     }
   },
   "datasets": {
     "built": {
       "source": "cache",
-      "status": "loaded"
+      "status": "loaded",
+      "rows": 105990
     },
     "capital_blocks": {
       "source": "cache",
-      "status": "loaded"
+      "status": "loaded",
+      "rows": 12056
     },
     "capital_intersections": {
       "source": "cache",
-      "status": "loaded"
+      "status": "loaded",
+      "rows": 7817
     },
     "correspondences": {
       "source": "cache",
-      "status": "loaded"
+      "status": "loaded",
+      "rows": 30726
     },
     "curb_metal_protruding": {
       "source": "cache",
-      "status": "loaded"
+      "status": "loaded",
+      "rows": 23498
     },
     "inspection": {
       "source": "cache",
-      "status": "loaded"
+      "status": "loaded",
+      "rows": 399427
     },
     "lot_info": {
       "source": "cache",
-      "status": "loaded"
+      "status": "loaded",
+      "rows": 1211601
     },
     "mappluto": {
       "source": "cache",
-      "status": "loaded"
+      "status": "loaded",
+      "rows": 858602
     },
     "pedestrian_demand": {
       "source": "cache",
-      "status": "loaded"
+      "status": "loaded",
+      "rows": 127277
     },
     "ramp_complaints": {
       "source": "cache",
-      "status": "loaded"
+      "status": "loaded",
+      "rows": 6051
     },
     "ramp_locations": {
       "source": "cache",
-      "status": "loaded"
+      "status": "loaded",
+      "rows": 217679
     },
     "ramp_progress": {
       "source": "cache",
-      "status": "loaded"
+      "status": "loaded",
+      "rows": 187546
     },
     "reinspection": {
       "source": "cache",
-      "status": "loaded"
+      "status": "loaded",
+      "rows": 36656
     },
     "sidewalk_planimetric": {
       "source": "cache",
-      "status": "loaded"
+      "status": "loaded",
+      "rows": 50865
     },
     "step_streets": {
       "source": "cache",
-      "status": "loaded"
+      "status": "loaded",
+      "rows": 110
     },
     "street_closures_block": {
       "source": "cache",
-      "status": "loaded"
+      "status": "loaded",
+      "rows": 3433
     },
     "street_resurfacing_schedule": {
       "source": "cache",
-      "status": "loaded"
+      "status": "loaded",
+      "rows": 311932
     },
     "tree_damage": {
       "source": "cache",
-      "status": "loaded"
+      "status": "loaded",
+      "rows": 17661
     },
     "violations": {
       "source": "cache",
-      "status": "loaded"
+      "status": "loaded",
+      "rows": 312828
     },
     "weekly_construction": {
       "source": "cache",
-      "status": "loaded"
+      "status": "loaded",
+      "rows": 75
+    },
+    "inspection_history": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "inspection_metrics": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "violation_photos": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "violation_attachments": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "ramp_inventory": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "ramp_specifications": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "ramp_maintenance_log": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "permit_status_history": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "permit_amendments": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "construction_progress": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "street_segment_inventory": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "block_face_data": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "spatial_geometry": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "tree_inventory": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "tree_maintenance": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "curb_inventory": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "surface_condition_history": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "project_scheduling": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "project_budget": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "project_resources": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "vendor_data": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "equipment_inventory": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "safety_incidents": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "environmental_compliance": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "traffic_impact": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "noise_monitoring": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "air_quality": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "public_complaints": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "community_outreach": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "contractor_performance": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "cost_tracking": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "funding_sources": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "regulatory_approvals": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "accessibility_audits": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "service_requests": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "performance_metrics": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
+    },
+    "stakeholder_feedback": {
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: name 'requests' is not defined"
     }
   },
-  "completed_at": "2026-06-18T09:10:39.397892",
-  "status": "success"
+  "completed_at": "2026-06-18T22:30:14.030429",
+  "status": "failed"
 }

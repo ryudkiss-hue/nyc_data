@@ -340,3 +340,673 @@
 2026-06-18 20:51:41,866 | INFO     | [AUDIT] pipeline_started: {"pipeline_id": "pipeline-20260618_205141", "datasets": 57, "governance_mode": "personal_solo_user"}
 2026-06-18 20:51:41,866 | INFO     | [AUDIT] verification_test: {"version": "2.0", "status": "verified"}
 2026-06-18 20:51:41,917 | INFO     | Database connection closed
+2026-06-18 22:27:54,549 | INFO     | Initializing MotherDuck bridge for database: nyc_dot_analytics
+2026-06-18 22:27:54,550 | WARNING  | MotherDuck connection failed: MotherDuck not configured
+2026-06-18 22:27:54,551 | INFO     | Falling back to local DuckDB at: nyc_dot_analytics
+2026-06-18 22:27:54,633 | INFO     | Successfully connected to local DuckDB: nyc_dot_analytics.duckdb
+2026-06-18 22:27:54,634 | INFO     | Socrata loader initialized (cache: C:\Users\ryudk\Desktop\nyc_data_cache)
+2026-06-18 22:27:54,634 | INFO     | Loading dataset configuration from pipeline/config/socrata_datasets.json...
+2026-06-18 22:27:54,637 | INFO     | Loaded config with 57 datasets
+2026-06-18 22:27:54,638 | INFO     | Config loaded: 20 cached + 37 Socrata = 57 total datasets
+2026-06-18 22:27:54,639 | INFO     | Alert manager initialized
+2026-06-18 22:27:54,639 | INFO     | Execution context initialized: pipeline-20260618_222754
+2026-06-18 22:27:54,643 | INFO     | Loaded governance framework from pipeline\config\personal_data_governance.json
+2026-06-18 22:27:54,643 | INFO     | Governance framework initialized (personal solo-user, indefinite retention)
+2026-06-18 22:27:54,643 | INFO     | [AUDIT] pipeline_started: {"pipeline_id": "pipeline-20260618_222754", "datasets": 57, "governance_mode": "personal_solo_user"}
+2026-06-18 22:27:54,643 | INFO     | Starting NYC DOT MotherDuck Pipeline v2.0
+2026-06-18 22:27:54,644 | INFO     | Target database: nyc_dot_analytics
+2026-06-18 22:27:54,644 | INFO     | Cache location: C:\Users\ryudk\Desktop\nyc_data_cache
+2026-06-18 22:27:54,644 | INFO     | MotherDuck enabled: False
+2026-06-18 22:27:54,644 | INFO     | Database type: Local DuckDB
+2026-06-18 22:27:54,645 | INFO     | ======================================================================
+2026-06-18 22:27:54,645 | INFO     | ======================================================================
+2026-06-18 22:27:54,645 | INFO     | STAGE: Load 20 cached Parquet files
+2026-06-18 22:27:54,645 | INFO     | ======================================================================
+2026-06-18 22:27:54,645 | INFO     | Loading 20 cached Parquet files from local cache...
+2026-06-18 22:27:54,647 | INFO     | Found 20 Parquet files to load
+2026-06-18 22:27:54,648 | INFO     | Loading cache: built
+2026-06-18 22:27:54,648 | INFO     | Loading from cache: built
+2026-06-18 22:27:55,814 | INFO     | SQL executed successfully (-1 rows, 2.03ms)
+2026-06-18 22:27:55,815 | INFO     | Schema created/verified: raw
+2026-06-18 22:27:55,927 | INFO     | SQL executed successfully (-1 rows, 18.81ms)
+2026-06-18 22:27:55,927 | INFO     | Loaded from cache: built (105990 rows, 1279.07ms)
+2026-06-18 22:27:55,928 | INFO     |   built: 105990 rows
+2026-06-18 22:27:55,928 | INFO     | Loading cache: capital_blocks
+2026-06-18 22:27:55,929 | INFO     | Loading from cache: capital_blocks
+2026-06-18 22:27:56,022 | INFO     | SQL executed successfully (-1 rows, 1.07ms)
+2026-06-18 22:27:56,023 | INFO     | Schema created/verified: raw
+2026-06-18 22:27:56,148 | INFO     | SQL executed successfully (-1 rows, 29.81ms)
+2026-06-18 22:27:56,148 | INFO     | Loaded from cache: capital_blocks (12056 rows, 218.89ms)
+2026-06-18 22:27:56,148 | INFO     |   capital_blocks: 12056 rows
+2026-06-18 22:27:56,148 | INFO     | Loading cache: capital_intersections
+2026-06-18 22:27:56,162 | INFO     | Loading from cache: capital_intersections
+2026-06-18 22:27:56,221 | INFO     | SQL executed successfully (-1 rows, 1.10ms)
+2026-06-18 22:27:56,221 | INFO     | Schema created/verified: raw
+2026-06-18 22:27:56,362 | INFO     | SQL executed successfully (-1 rows, 37.96ms)
+2026-06-18 22:27:56,363 | INFO     | Loaded from cache: capital_intersections (7817 rows, 200.89ms)
+2026-06-18 22:27:56,363 | INFO     |   capital_intersections: 7817 rows
+2026-06-18 22:27:56,363 | INFO     | Loading cache: correspondences
+2026-06-18 22:27:56,377 | INFO     | Loading from cache: correspondences
+2026-06-18 22:27:56,594 | INFO     | SQL executed successfully (-1 rows, 1.24ms)
+2026-06-18 22:27:56,595 | INFO     | Schema created/verified: raw
+2026-06-18 22:27:56,770 | INFO     | SQL executed successfully (-1 rows, 31.64ms)
+2026-06-18 22:27:56,770 | INFO     | Loaded from cache: correspondences (30726 rows, 393.45ms)
+2026-06-18 22:27:56,771 | INFO     |   correspondences: 30726 rows
+2026-06-18 22:27:56,771 | INFO     | Loading cache: curb_metal_protruding
+2026-06-18 22:27:56,786 | INFO     | Loading from cache: curb_metal_protruding
+2026-06-18 22:27:56,912 | INFO     | SQL executed successfully (-1 rows, 0.46ms)
+2026-06-18 22:27:56,912 | INFO     | Schema created/verified: raw
+2026-06-18 22:27:57,037 | INFO     | SQL executed successfully (-1 rows, 42.95ms)
+2026-06-18 22:27:57,038 | INFO     | Loaded from cache: curb_metal_protruding (23498 rows, 252.19ms)
+2026-06-18 22:27:57,038 | INFO     |   curb_metal_protruding: 23498 rows
+2026-06-18 22:27:57,038 | INFO     | Loading cache: inspection
+2026-06-18 22:27:57,052 | INFO     | Loading from cache: inspection
+2026-06-18 22:27:58,566 | INFO     | SQL executed successfully (-1 rows, 1.32ms)
+2026-06-18 22:27:58,567 | INFO     | Schema created/verified: raw
+2026-06-18 22:27:58,661 | INFO     | SQL executed successfully (-1 rows, 23.46ms)
+2026-06-18 22:27:58,661 | INFO     | Loaded from cache: inspection (399427 rows, 1609.15ms)
+2026-06-18 22:27:58,661 | INFO     |   inspection: 399427 rows
+2026-06-18 22:27:58,661 | INFO     | Loading cache: lot_info
+2026-06-18 22:27:58,662 | INFO     | Loading from cache: lot_info
+2026-06-18 22:28:02,196 | INFO     | SQL executed successfully (-1 rows, 1.69ms)
+2026-06-18 22:28:02,196 | INFO     | Schema created/verified: raw
+2026-06-18 22:28:02,254 | INFO     | SQL executed successfully (-1 rows, 11.63ms)
+2026-06-18 22:28:02,255 | INFO     | Loaded from cache: lot_info (1211601 rows, 3593.12ms)
+2026-06-18 22:28:02,255 | INFO     |   lot_info: 1211601 rows
+2026-06-18 22:28:02,255 | INFO     | Loading cache: mappluto
+2026-06-18 22:28:02,255 | INFO     | Loading from cache: mappluto
+2026-06-18 22:28:13,589 | INFO     | SQL executed successfully (-1 rows, 1.04ms)
+2026-06-18 22:28:13,589 | INFO     | Schema created/verified: raw
+2026-06-18 22:28:14,620 | INFO     | SQL executed successfully (-1 rows, 246.99ms)
+2026-06-18 22:28:14,620 | INFO     | Loaded from cache: mappluto (858602 rows, 12364.76ms)
+2026-06-18 22:28:14,621 | INFO     |   mappluto: 858602 rows
+2026-06-18 22:28:14,621 | INFO     | Loading cache: pedestrian_demand
+2026-06-18 22:28:14,628 | INFO     | Loading from cache: pedestrian_demand
+2026-06-18 22:28:15,300 | INFO     | SQL executed successfully (-1 rows, 0.89ms)
+2026-06-18 22:28:15,301 | INFO     | Schema created/verified: raw
+2026-06-18 22:28:15,419 | INFO     | SQL executed successfully (-1 rows, 37.53ms)
+2026-06-18 22:28:15,420 | INFO     | Loaded from cache: pedestrian_demand (127277 rows, 791.96ms)
+2026-06-18 22:28:15,420 | INFO     |   pedestrian_demand: 127277 rows
+2026-06-18 22:28:15,420 | INFO     | Loading cache: ramp_complaints
+2026-06-18 22:28:15,421 | INFO     | Loading from cache: ramp_complaints
+2026-06-18 22:28:15,452 | INFO     | SQL executed successfully (-1 rows, 0.86ms)
+2026-06-18 22:28:15,453 | INFO     | Schema created/verified: raw
+2026-06-18 22:28:15,521 | INFO     | SQL executed successfully (-1 rows, 17.43ms)
+2026-06-18 22:28:15,521 | INFO     | Loaded from cache: ramp_complaints (6051 rows, 100.81ms)
+2026-06-18 22:28:15,522 | INFO     |   ramp_complaints: 6051 rows
+2026-06-18 22:28:15,522 | INFO     | Loading cache: ramp_locations
+2026-06-18 22:28:15,523 | INFO     | Loading from cache: ramp_locations
+2026-06-18 22:28:16,792 | INFO     | SQL executed successfully (-1 rows, 1.95ms)
+2026-06-18 22:28:16,792 | INFO     | Schema created/verified: raw
+2026-06-18 22:28:16,936 | INFO     | SQL executed successfully (-1 rows, 32.89ms)
+2026-06-18 22:28:16,936 | INFO     | Loaded from cache: ramp_locations (217679 rows, 1413.12ms)
+2026-06-18 22:28:16,936 | INFO     |   ramp_locations: 217679 rows
+2026-06-18 22:28:16,937 | INFO     | Loading cache: ramp_progress
+2026-06-18 22:28:16,953 | INFO     | Loading from cache: ramp_progress
+2026-06-18 22:28:17,700 | INFO     | SQL executed successfully (-1 rows, 1.01ms)
+2026-06-18 22:28:17,700 | INFO     | Schema created/verified: raw
+2026-06-18 22:28:17,781 | INFO     | SQL executed successfully (-1 rows, 18.42ms)
+2026-06-18 22:28:17,782 | INFO     | Loaded from cache: ramp_progress (187546 rows, 828.79ms)
+2026-06-18 22:28:17,782 | INFO     |   ramp_progress: 187546 rows
+2026-06-18 22:28:17,782 | INFO     | Loading cache: reinspection
+2026-06-18 22:28:17,783 | INFO     | Loading from cache: reinspection
+2026-06-18 22:28:17,882 | INFO     | SQL executed successfully (-1 rows, 1.10ms)
+2026-06-18 22:28:17,882 | INFO     | Schema created/verified: raw
+2026-06-18 22:28:17,933 | INFO     | SQL executed successfully (-1 rows, 14.35ms)
+2026-06-18 22:28:17,933 | INFO     | Loaded from cache: reinspection (36656 rows, 150.42ms)
+2026-06-18 22:28:17,933 | INFO     |   reinspection: 36656 rows
+2026-06-18 22:28:17,934 | INFO     | Loading cache: sidewalk_planimetric
+2026-06-18 22:28:17,948 | INFO     | Loading from cache: sidewalk_planimetric
+2026-06-18 22:28:18,016 | INFO     | SQL executed successfully (-1 rows, 0.74ms)
+2026-06-18 22:28:18,016 | INFO     | Schema created/verified: raw
+2026-06-18 22:28:18,037 | INFO     | SQL executed successfully (-1 rows, 6.34ms)
+2026-06-18 22:28:18,038 | INFO     | Loaded from cache: sidewalk_planimetric (50865 rows, 89.90ms)
+2026-06-18 22:28:18,038 | INFO     |   sidewalk_planimetric: 50865 rows
+2026-06-18 22:28:18,038 | INFO     | Loading cache: step_streets
+2026-06-18 22:28:18,039 | INFO     | Loading from cache: step_streets
+2026-06-18 22:28:18,047 | INFO     | SQL executed successfully (-1 rows, 0.86ms)
+2026-06-18 22:28:18,048 | INFO     | Schema created/verified: raw
+2026-06-18 22:28:18,065 | INFO     | SQL executed successfully (-1 rows, 4.10ms)
+2026-06-18 22:28:18,066 | INFO     | Loaded from cache: step_streets (110 rows, 26.68ms)
+2026-06-18 22:28:18,066 | INFO     |   step_streets: 110 rows
+2026-06-18 22:28:18,066 | INFO     | Loading cache: street_closures_block
+2026-06-18 22:28:18,066 | INFO     | Loading from cache: street_closures_block
+2026-06-18 22:28:18,087 | INFO     | SQL executed successfully (-1 rows, 0.86ms)
+2026-06-18 22:28:18,087 | INFO     | Schema created/verified: raw
+2026-06-18 22:28:18,158 | INFO     | SQL executed successfully (-1 rows, 15.10ms)
+2026-06-18 22:28:18,159 | INFO     | Loaded from cache: street_closures_block (3433 rows, 92.33ms)
+2026-06-18 22:28:18,159 | INFO     |   street_closures_block: 3433 rows
+2026-06-18 22:28:18,159 | INFO     | Loading cache: street_resurfacing_schedule
+2026-06-18 22:28:18,160 | INFO     | Loading from cache: street_resurfacing_schedule
+2026-06-18 22:28:19,270 | INFO     | SQL executed successfully (-1 rows, 1.42ms)
+2026-06-18 22:28:19,271 | INFO     | Schema created/verified: raw
+2026-06-18 22:28:19,391 | INFO     | SQL executed successfully (-1 rows, 26.53ms)
+2026-06-18 22:28:19,392 | INFO     | Loaded from cache: street_resurfacing_schedule (311932 rows, 1231.22ms)
+2026-06-18 22:28:19,392 | INFO     |   street_resurfacing_schedule: 311932 rows
+2026-06-18 22:28:19,392 | INFO     | Loading cache: tree_damage
+2026-06-18 22:28:19,392 | INFO     | Loading from cache: tree_damage
+2026-06-18 22:28:19,470 | INFO     | SQL executed successfully (-1 rows, 0.61ms)
+2026-06-18 22:28:19,470 | INFO     | Schema created/verified: raw
+2026-06-18 22:28:19,551 | INFO     | SQL executed successfully (-1 rows, 24.50ms)
+2026-06-18 22:28:19,551 | INFO     | Loaded from cache: tree_damage (17661 rows, 158.58ms)
+2026-06-18 22:28:19,551 | INFO     |   tree_damage: 17661 rows
+2026-06-18 22:28:19,551 | INFO     | Loading cache: violations
+2026-06-18 22:28:19,552 | INFO     | Loading from cache: violations
+2026-06-18 22:28:21,380 | INFO     | SQL executed successfully (-1 rows, 1.23ms)
+2026-06-18 22:28:21,381 | INFO     | Schema created/verified: raw
+2026-06-18 22:28:21,527 | INFO     | SQL executed successfully (-1 rows, 35.29ms)
+2026-06-18 22:28:21,527 | INFO     | Loaded from cache: violations (312828 rows, 1974.89ms)
+2026-06-18 22:28:21,527 | INFO     |   violations: 312828 rows
+2026-06-18 22:28:21,527 | INFO     | Loading cache: weekly_construction
+2026-06-18 22:28:21,540 | INFO     | Loading from cache: weekly_construction
+2026-06-18 22:28:21,549 | INFO     | SQL executed successfully (-1 rows, 0.88ms)
+2026-06-18 22:28:21,549 | INFO     | Schema created/verified: raw
+2026-06-18 22:28:21,559 | INFO     | SQL executed successfully (-1 rows, 3.09ms)
+2026-06-18 22:28:21,560 | INFO     | Loaded from cache: weekly_construction (75 rows, 19.59ms)
+2026-06-18 22:28:21,560 | INFO     |   weekly_construction: 75 rows
+2026-06-18 22:28:21,560 | INFO     | [load_cached_parquet] SUCCESS
+2026-06-18 22:28:21,560 | INFO     | ======================================================================
+2026-06-18 22:28:21,561 | INFO     | STAGE: Ingest remaining 37 from Socrata
+2026-06-18 22:28:21,561 | INFO     | ======================================================================
+2026-06-18 22:28:21,566 | INFO     | Persisted pipeline state
+2026-06-18 22:28:21,566 | INFO     | Created checkpoint: ingest_remaining_socrata_2026-06-18T22:28:21.561662
+2026-06-18 22:28:21,567 | INFO     | Starting stage: ingest_remaining_socrata
+2026-06-18 22:28:21,567 | INFO     | Ingesting remaining 37 datasets from Socrata...
+2026-06-18 22:28:21,569 | INFO     | Loaded config with 57 datasets
+2026-06-18 22:28:21,569 | INFO     | Found 37 Socrata datasets to ingest
+2026-06-18 22:28:21,569 | INFO     | Batch 1: Loading inspection_history (1/37)
+2026-06-18 22:28:21,569 | INFO     | Loading from Socrata: inspection_history (a1b2-c3d4)
+2026-06-18 22:28:22,070 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:22,070 | ERROR    |   inspection_history: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:22,070 | INFO     | Batch 1: Loading inspection_metrics (2/37)
+2026-06-18 22:28:22,071 | INFO     | Loading from Socrata: inspection_metrics (e5f6-g7h8)
+2026-06-18 22:28:22,571 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:22,572 | ERROR    |   inspection_metrics: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:22,572 | INFO     | Batch 1: Loading violation_photos (3/37)
+2026-06-18 22:28:22,572 | INFO     | Loading from Socrata: violation_photos (i9j0-k1l2)
+2026-06-18 22:28:23,073 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:23,074 | ERROR    |   violation_photos: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:23,074 | INFO     | Batch 1: Loading violation_attachments (4/37)
+2026-06-18 22:28:23,074 | INFO     | Loading from Socrata: violation_attachments (m3n4-o5p6)
+2026-06-18 22:28:23,575 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:23,575 | ERROR    |   violation_attachments: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:23,576 | INFO     | Batch 1: Loading ramp_inventory (5/37)
+2026-06-18 22:28:23,576 | INFO     | Loading from Socrata: ramp_inventory (q7r8-s9t0)
+2026-06-18 22:28:24,076 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:24,077 | ERROR    |   ramp_inventory: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:24,077 | INFO     | Batch 1: Loading ramp_specifications (6/37)
+2026-06-18 22:28:24,077 | INFO     | Loading from Socrata: ramp_specifications (u1v2-w3x4)
+2026-06-18 22:28:24,578 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:24,578 | ERROR    |   ramp_specifications: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:24,579 | INFO     | Batch 1: Loading ramp_maintenance_log (7/37)
+2026-06-18 22:28:24,579 | INFO     | Loading from Socrata: ramp_maintenance_log (y5z6-a7b8)
+2026-06-18 22:28:25,080 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:25,081 | ERROR    |   ramp_maintenance_log: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:25,082 | INFO     | Batch 1: Loading permit_status_history (8/37)
+2026-06-18 22:28:25,082 | INFO     | Loading from Socrata: permit_status_history (c9d0-e1f2)
+2026-06-18 22:28:25,583 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:25,583 | ERROR    |   permit_status_history: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:25,584 | INFO     | Batch 1: Loading permit_amendments (9/37)
+2026-06-18 22:28:25,584 | INFO     | Loading from Socrata: permit_amendments (g3h4-i5j6)
+2026-06-18 22:28:26,085 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:26,085 | ERROR    |   permit_amendments: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:26,085 | INFO     | Batch 1: Loading construction_progress (10/37)
+2026-06-18 22:28:26,085 | INFO     | Loading from Socrata: construction_progress (k7l8-m9n0)
+2026-06-18 22:28:26,586 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:26,587 | ERROR    |   construction_progress: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:26,587 | INFO     | Batch 2: Loading street_segment_inventory (11/37)
+2026-06-18 22:28:26,587 | INFO     | Loading from Socrata: street_segment_inventory (o1p2-q3r4)
+2026-06-18 22:28:27,087 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:27,088 | ERROR    |   street_segment_inventory: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:27,088 | INFO     | Batch 2: Loading block_face_data (12/37)
+2026-06-18 22:28:27,088 | INFO     | Loading from Socrata: block_face_data (s5t6-u7v8)
+2026-06-18 22:28:27,589 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:27,589 | ERROR    |   block_face_data: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:27,590 | INFO     | Batch 2: Loading spatial_geometry (13/37)
+2026-06-18 22:28:27,590 | INFO     | Loading from Socrata: spatial_geometry (w9x0-y1z2)
+2026-06-18 22:28:28,090 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:28,091 | ERROR    |   spatial_geometry: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:28,091 | INFO     | Batch 2: Loading tree_inventory (14/37)
+2026-06-18 22:28:28,091 | INFO     | Loading from Socrata: tree_inventory (a3b4-c5d6)
+2026-06-18 22:28:28,592 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:28,593 | ERROR    |   tree_inventory: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:28,593 | INFO     | Batch 2: Loading tree_maintenance (15/37)
+2026-06-18 22:28:28,593 | INFO     | Loading from Socrata: tree_maintenance (e7f8-g9h0)
+2026-06-18 22:28:29,095 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:29,095 | ERROR    |   tree_maintenance: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:29,095 | INFO     | Batch 2: Loading curb_inventory (16/37)
+2026-06-18 22:28:29,095 | INFO     | Loading from Socrata: curb_inventory (i1j2-k3l4)
+2026-06-18 22:28:29,596 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:29,597 | ERROR    |   curb_inventory: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:29,597 | INFO     | Batch 2: Loading surface_condition_history (17/37)
+2026-06-18 22:28:29,597 | INFO     | Loading from Socrata: surface_condition_history (m5n6-o7p8)
+2026-06-18 22:28:30,098 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:30,098 | ERROR    |   surface_condition_history: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:30,099 | INFO     | Batch 2: Loading project_scheduling (18/37)
+2026-06-18 22:28:30,099 | INFO     | Loading from Socrata: project_scheduling (q9r0-s1t2)
+2026-06-18 22:28:30,600 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:30,600 | ERROR    |   project_scheduling: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:30,600 | INFO     | Batch 2: Loading project_budget (19/37)
+2026-06-18 22:28:30,601 | INFO     | Loading from Socrata: project_budget (u3v4-w5x6)
+2026-06-18 22:28:31,101 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:31,102 | ERROR    |   project_budget: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:31,102 | INFO     | Batch 2: Loading project_resources (20/37)
+2026-06-18 22:28:31,102 | INFO     | Loading from Socrata: project_resources (y7z8-a9b0)
+2026-06-18 22:28:31,603 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:31,603 | ERROR    |   project_resources: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:31,603 | INFO     | Batch 3: Loading vendor_data (21/37)
+2026-06-18 22:28:31,603 | INFO     | Loading from Socrata: vendor_data (c1d2-e3f4)
+2026-06-18 22:28:32,104 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:32,105 | ERROR    |   vendor_data: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:32,106 | INFO     | Batch 3: Loading equipment_inventory (22/37)
+2026-06-18 22:28:32,106 | INFO     | Loading from Socrata: equipment_inventory (g5h6-i7j8)
+2026-06-18 22:28:32,607 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:32,608 | ERROR    |   equipment_inventory: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:32,608 | INFO     | Batch 3: Loading safety_incidents (23/37)
+2026-06-18 22:28:32,608 | INFO     | Loading from Socrata: safety_incidents (k9l0-m1n2)
+2026-06-18 22:28:33,110 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:33,110 | ERROR    |   safety_incidents: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:33,110 | INFO     | Batch 3: Loading environmental_compliance (24/37)
+2026-06-18 22:28:33,111 | INFO     | Loading from Socrata: environmental_compliance (o3p4-q5r6)
+2026-06-18 22:28:33,611 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:33,612 | ERROR    |   environmental_compliance: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:33,612 | INFO     | Batch 3: Loading traffic_impact (25/37)
+2026-06-18 22:28:33,612 | INFO     | Loading from Socrata: traffic_impact (s7t8-u9v0)
+2026-06-18 22:28:34,112 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:34,113 | ERROR    |   traffic_impact: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:34,114 | INFO     | Batch 3: Loading noise_monitoring (26/37)
+2026-06-18 22:28:34,114 | INFO     | Loading from Socrata: noise_monitoring (w1x2-y3z4)
+2026-06-18 22:28:34,615 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:34,615 | ERROR    |   noise_monitoring: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:34,615 | INFO     | Batch 3: Loading air_quality (27/37)
+2026-06-18 22:28:34,615 | INFO     | Loading from Socrata: air_quality (a5b6-c7d8)
+2026-06-18 22:28:35,116 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:35,116 | ERROR    |   air_quality: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:35,117 | INFO     | Batch 3: Loading public_complaints (28/37)
+2026-06-18 22:28:35,117 | INFO     | Loading from Socrata: public_complaints (e9f0-g1h2)
+2026-06-18 22:28:35,617 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:35,618 | ERROR    |   public_complaints: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:35,618 | INFO     | Batch 3: Loading community_outreach (29/37)
+2026-06-18 22:28:35,618 | INFO     | Loading from Socrata: community_outreach (i3j4-k5l6)
+2026-06-18 22:28:36,119 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:36,120 | ERROR    |   community_outreach: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:36,120 | INFO     | Batch 3: Loading contractor_performance (30/37)
+2026-06-18 22:28:36,120 | INFO     | Loading from Socrata: contractor_performance (m7n8-o9p0)
+2026-06-18 22:28:36,620 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:36,621 | ERROR    |   contractor_performance: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:36,621 | INFO     | Batch 4: Loading cost_tracking (31/37)
+2026-06-18 22:28:36,621 | INFO     | Loading from Socrata: cost_tracking (q1r2-s3t4)
+2026-06-18 22:28:37,122 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:37,122 | ERROR    |   cost_tracking: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:37,123 | INFO     | Batch 4: Loading funding_sources (32/37)
+2026-06-18 22:28:37,123 | INFO     | Loading from Socrata: funding_sources (u5v6-w7x8)
+2026-06-18 22:28:37,624 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:37,624 | ERROR    |   funding_sources: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:37,624 | INFO     | Batch 4: Loading regulatory_approvals (33/37)
+2026-06-18 22:28:37,625 | INFO     | Loading from Socrata: regulatory_approvals (y9z0-a1b2)
+2026-06-18 22:28:38,125 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:38,126 | ERROR    |   regulatory_approvals: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:38,126 | INFO     | Batch 4: Loading accessibility_audits (34/37)
+2026-06-18 22:28:38,126 | INFO     | Loading from Socrata: accessibility_audits (c3d4-e5f6)
+2026-06-18 22:28:38,627 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:38,627 | ERROR    |   accessibility_audits: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:38,627 | INFO     | Batch 4: Loading service_requests (35/37)
+2026-06-18 22:28:38,627 | INFO     | Loading from Socrata: service_requests (g7h8-i9j0)
+2026-06-18 22:28:39,128 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:39,128 | ERROR    |   service_requests: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:39,129 | INFO     | Batch 4: Loading performance_metrics (36/37)
+2026-06-18 22:28:39,129 | INFO     | Loading from Socrata: performance_metrics (k1l2-m3n4)
+2026-06-18 22:28:39,629 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:39,630 | ERROR    |   performance_metrics: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:39,630 | INFO     | Batch 4: Loading stakeholder_feedback (37/37)
+2026-06-18 22:28:39,630 | INFO     | Loading from Socrata: stakeholder_feedback (o5p6-q7r8)
+2026-06-18 22:28:40,131 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:28:40,131 | ERROR    |   stakeholder_feedback: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:28:40,132 | ERROR    | CRITICAL: No Socrata datasets loaded
+2026-06-18 22:28:40,135 | INFO     | Persisted pipeline state
+2026-06-18 22:28:40,136 | ERROR    | Checkpoint failed: ingest_remaining_socrata_2026-06-18T22:28:21.561662 - Zero Socrata datasets loaded
+2026-06-18 22:28:40,136 | ERROR    | Failed stage: ingest_remaining_socrata - Zero Socrata datasets loaded
+2026-06-18 22:28:40,136 | INFO     | [ingest_remaining_socrata] FAILED
+2026-06-18 22:28:40,136 | ERROR    | FAILED: Pipeline failed at ingest_remaining_socrata
+2026-06-18 22:28:40,136 | INFO     | ======================================================================
+2026-06-18 22:28:40,136 | INFO     | PIPELINE EXECUTION SUMMARY
+2026-06-18 22:28:40,137 | INFO     | ======================================================================
+2026-06-18 22:28:40,137 | ERROR    | FAILED: Pipeline failed at ingest_remaining_socrata
+2026-06-18 22:28:40,144 | INFO     | Execution log saved to pipeline\logs\execution.json
+2026-06-18 22:28:42,496 | INFO     | Database connection closed
+2026-06-18 22:29:32,888 | INFO     | Initializing MotherDuck bridge for database: nyc_dot_analytics
+2026-06-18 22:29:32,888 | WARNING  | MotherDuck connection failed: MotherDuck not configured
+2026-06-18 22:29:32,888 | INFO     | Falling back to local DuckDB at: nyc_dot_analytics
+2026-06-18 22:29:32,914 | INFO     | Successfully connected to local DuckDB: nyc_dot_analytics.duckdb
+2026-06-18 22:29:32,915 | INFO     | Socrata loader initialized (cache: C:\Users\ryudk\Desktop\nyc_data_cache)
+2026-06-18 22:29:32,915 | INFO     | Loading dataset configuration from pipeline/config/socrata_datasets.json...
+2026-06-18 22:29:32,916 | INFO     | Loaded config with 57 datasets
+2026-06-18 22:29:32,916 | INFO     | Config loaded: 20 cached + 37 Socrata = 57 total datasets
+2026-06-18 22:29:32,916 | INFO     | Loaded 1 checkpoints
+2026-06-18 22:29:32,917 | INFO     | Loaded metadata: {}
+2026-06-18 22:29:32,917 | INFO     | Alert manager initialized
+2026-06-18 22:29:32,917 | INFO     | Execution context initialized: pipeline-20260618_222932
+2026-06-18 22:29:32,918 | INFO     | Loaded governance framework from pipeline\config\personal_data_governance.json
+2026-06-18 22:29:32,918 | INFO     | Governance framework initialized (personal solo-user, indefinite retention)
+2026-06-18 22:29:32,918 | INFO     | [AUDIT] pipeline_started: {"pipeline_id": "pipeline-20260618_222932", "datasets": 57, "governance_mode": "personal_solo_user"}
+2026-06-18 22:29:32,918 | INFO     | Starting NYC DOT MotherDuck Pipeline v2.0
+2026-06-18 22:29:32,918 | INFO     | Target database: nyc_dot_analytics
+2026-06-18 22:29:32,918 | INFO     | Cache location: C:\Users\ryudk\Desktop\nyc_data_cache
+2026-06-18 22:29:32,918 | INFO     | MotherDuck enabled: False
+2026-06-18 22:29:32,918 | INFO     | Database type: Local DuckDB
+2026-06-18 22:29:32,918 | INFO     | ======================================================================
+2026-06-18 22:29:32,918 | INFO     | ======================================================================
+2026-06-18 22:29:32,918 | INFO     | STAGE: Load 20 cached Parquet files
+2026-06-18 22:29:32,918 | INFO     | ======================================================================
+2026-06-18 22:29:32,918 | INFO     | Loading 20 cached Parquet files from local cache...
+2026-06-18 22:29:32,919 | INFO     | Found 20 Parquet files to load
+2026-06-18 22:29:32,919 | INFO     | Loading cache: built
+2026-06-18 22:29:32,919 | INFO     | Loading from cache: built
+2026-06-18 22:29:33,064 | INFO     | SQL executed successfully (-1 rows, 0.55ms)
+2026-06-18 22:29:33,064 | INFO     | Schema created/verified: raw
+2026-06-18 22:29:33,098 | INFO     | SQL executed successfully (-1 rows, 7.30ms)
+2026-06-18 22:29:33,098 | INFO     | Loaded from cache: built (105990 rows, 178.84ms)
+2026-06-18 22:29:33,098 | INFO     |   built: 105990 rows
+2026-06-18 22:29:33,098 | INFO     | Loading cache: capital_blocks
+2026-06-18 22:29:33,098 | INFO     | Loading from cache: capital_blocks
+2026-06-18 22:29:33,127 | INFO     | SQL executed successfully (-1 rows, 0.60ms)
+2026-06-18 22:29:33,127 | INFO     | Schema created/verified: raw
+2026-06-18 22:29:33,165 | INFO     | SQL executed successfully (-1 rows, 11.10ms)
+2026-06-18 22:29:33,165 | INFO     | Loaded from cache: capital_blocks (12056 rows, 67.06ms)
+2026-06-18 22:29:33,165 | INFO     |   capital_blocks: 12056 rows
+2026-06-18 22:29:33,165 | INFO     | Loading cache: capital_intersections
+2026-06-18 22:29:33,165 | INFO     | Loading from cache: capital_intersections
+2026-06-18 22:29:33,188 | INFO     | SQL executed successfully (-1 rows, 0.38ms)
+2026-06-18 22:29:33,188 | INFO     | Schema created/verified: raw
+2026-06-18 22:29:33,230 | INFO     | SQL executed successfully (-1 rows, 9.72ms)
+2026-06-18 22:29:33,230 | INFO     | Loaded from cache: capital_intersections (7817 rows, 64.94ms)
+2026-06-18 22:29:33,230 | INFO     |   capital_intersections: 7817 rows
+2026-06-18 22:29:33,230 | INFO     | Loading cache: correspondences
+2026-06-18 22:29:33,230 | INFO     | Loading from cache: correspondences
+2026-06-18 22:29:33,287 | INFO     | SQL executed successfully (-1 rows, 0.31ms)
+2026-06-18 22:29:33,288 | INFO     | Schema created/verified: raw
+2026-06-18 22:29:33,321 | INFO     | SQL executed successfully (-1 rows, 7.68ms)
+2026-06-18 22:29:33,321 | INFO     | Loaded from cache: correspondences (30726 rows, 90.83ms)
+2026-06-18 22:29:33,321 | INFO     |   correspondences: 30726 rows
+2026-06-18 22:29:33,321 | INFO     | Loading cache: curb_metal_protruding
+2026-06-18 22:29:33,322 | INFO     | Loading from cache: curb_metal_protruding
+2026-06-18 22:29:33,352 | INFO     | SQL executed successfully (-1 rows, 0.32ms)
+2026-06-18 22:29:33,352 | INFO     | Schema created/verified: raw
+2026-06-18 22:29:33,376 | INFO     | SQL executed successfully (-1 rows, 6.01ms)
+2026-06-18 22:29:33,376 | INFO     | Loaded from cache: curb_metal_protruding (23498 rows, 54.36ms)
+2026-06-18 22:29:33,376 | INFO     |   curb_metal_protruding: 23498 rows
+2026-06-18 22:29:33,376 | INFO     | Loading cache: inspection
+2026-06-18 22:29:33,376 | INFO     | Loading from cache: inspection
+2026-06-18 22:29:33,850 | INFO     | SQL executed successfully (-1 rows, 0.34ms)
+2026-06-18 22:29:33,851 | INFO     | Schema created/verified: raw
+2026-06-18 22:29:33,884 | INFO     | SQL executed successfully (-1 rows, 8.96ms)
+2026-06-18 22:29:33,884 | INFO     | Loaded from cache: inspection (399427 rows, 508.01ms)
+2026-06-18 22:29:33,884 | INFO     |   inspection: 399427 rows
+2026-06-18 22:29:33,884 | INFO     | Loading cache: lot_info
+2026-06-18 22:29:33,884 | INFO     | Loading from cache: lot_info
+2026-06-18 22:29:35,629 | INFO     | SQL executed successfully (-1 rows, 1.41ms)
+2026-06-18 22:29:35,630 | INFO     | Schema created/verified: raw
+2026-06-18 22:29:35,701 | INFO     | SQL executed successfully (-1 rows, 18.34ms)
+2026-06-18 22:29:35,702 | INFO     | Loaded from cache: lot_info (1211601 rows, 1817.53ms)
+2026-06-18 22:29:35,702 | INFO     |   lot_info: 1211601 rows
+2026-06-18 22:29:35,703 | INFO     | Loading cache: mappluto
+2026-06-18 22:29:35,703 | INFO     | Loading from cache: mappluto
+2026-06-18 22:29:47,420 | INFO     | SQL executed successfully (-1 rows, 0.97ms)
+2026-06-18 22:29:47,421 | INFO     | Schema created/verified: raw
+2026-06-18 22:29:48,312 | INFO     | SQL executed successfully (-1 rows, 229.39ms)
+2026-06-18 22:29:48,313 | INFO     | Loaded from cache: mappluto (858602 rows, 12609.87ms)
+2026-06-18 22:29:48,313 | INFO     |   mappluto: 858602 rows
+2026-06-18 22:29:48,313 | INFO     | Loading cache: pedestrian_demand
+2026-06-18 22:29:48,313 | INFO     | Loading from cache: pedestrian_demand
+2026-06-18 22:29:49,124 | INFO     | SQL executed successfully (-1 rows, 0.96ms)
+2026-06-18 22:29:49,125 | INFO     | Schema created/verified: raw
+2026-06-18 22:29:49,227 | INFO     | SQL executed successfully (-1 rows, 25.40ms)
+2026-06-18 22:29:49,227 | INFO     | Loaded from cache: pedestrian_demand (127277 rows, 914.06ms)
+2026-06-18 22:29:49,228 | INFO     |   pedestrian_demand: 127277 rows
+2026-06-18 22:29:49,228 | INFO     | Loading cache: ramp_complaints
+2026-06-18 22:29:49,228 | INFO     | Loading from cache: ramp_complaints
+2026-06-18 22:29:49,251 | INFO     | SQL executed successfully (-1 rows, 0.82ms)
+2026-06-18 22:29:49,251 | INFO     | Schema created/verified: raw
+2026-06-18 22:29:49,333 | INFO     | SQL executed successfully (-1 rows, 20.55ms)
+2026-06-18 22:29:49,334 | INFO     | Loaded from cache: ramp_complaints (6051 rows, 105.97ms)
+2026-06-18 22:29:49,334 | INFO     |   ramp_complaints: 6051 rows
+2026-06-18 22:29:49,334 | INFO     | Loading cache: ramp_locations
+2026-06-18 22:29:49,334 | INFO     | Loading from cache: ramp_locations
+2026-06-18 22:29:50,502 | INFO     | SQL executed successfully (-1 rows, 1.07ms)
+2026-06-18 22:29:50,503 | INFO     | Schema created/verified: raw
+2026-06-18 22:29:50,648 | INFO     | SQL executed successfully (-1 rows, 35.83ms)
+2026-06-18 22:29:50,648 | INFO     | Loaded from cache: ramp_locations (217679 rows, 1313.69ms)
+2026-06-18 22:29:50,648 | INFO     |   ramp_locations: 217679 rows
+2026-06-18 22:29:50,649 | INFO     | Loading cache: ramp_progress
+2026-06-18 22:29:50,649 | INFO     | Loading from cache: ramp_progress
+2026-06-18 22:29:51,357 | INFO     | SQL executed successfully (-1 rows, 1.08ms)
+2026-06-18 22:29:51,358 | INFO     | Schema created/verified: raw
+2026-06-18 22:29:51,442 | INFO     | SQL executed successfully (-1 rows, 19.56ms)
+2026-06-18 22:29:51,442 | INFO     | Loaded from cache: ramp_progress (187546 rows, 793.29ms)
+2026-06-18 22:29:51,442 | INFO     |   ramp_progress: 187546 rows
+2026-06-18 22:29:51,443 | INFO     | Loading cache: reinspection
+2026-06-18 22:29:51,443 | INFO     | Loading from cache: reinspection
+2026-06-18 22:29:51,539 | INFO     | SQL executed successfully (-1 rows, 0.95ms)
+2026-06-18 22:29:51,540 | INFO     | Schema created/verified: raw
+2026-06-18 22:29:51,590 | INFO     | SQL executed successfully (-1 rows, 12.26ms)
+2026-06-18 22:29:51,590 | INFO     | Loaded from cache: reinspection (36656 rows, 147.15ms)
+2026-06-18 22:29:51,590 | INFO     |   reinspection: 36656 rows
+2026-06-18 22:29:51,590 | INFO     | Loading cache: sidewalk_planimetric
+2026-06-18 22:29:51,591 | INFO     | Loading from cache: sidewalk_planimetric
+2026-06-18 22:29:51,644 | INFO     | SQL executed successfully (-1 rows, 0.87ms)
+2026-06-18 22:29:51,645 | INFO     | Schema created/verified: raw
+2026-06-18 22:29:51,666 | INFO     | SQL executed successfully (-1 rows, 5.09ms)
+2026-06-18 22:29:51,667 | INFO     | Loaded from cache: sidewalk_planimetric (50865 rows, 75.95ms)
+2026-06-18 22:29:51,667 | INFO     |   sidewalk_planimetric: 50865 rows
+2026-06-18 22:29:51,667 | INFO     | Loading cache: step_streets
+2026-06-18 22:29:51,667 | INFO     | Loading from cache: step_streets
+2026-06-18 22:29:51,675 | INFO     | SQL executed successfully (-1 rows, 0.91ms)
+2026-06-18 22:29:51,676 | INFO     | Schema created/verified: raw
+2026-06-18 22:29:51,690 | INFO     | SQL executed successfully (-1 rows, 3.92ms)
+2026-06-18 22:29:51,690 | INFO     | Loaded from cache: step_streets (110 rows, 23.01ms)
+2026-06-18 22:29:51,691 | INFO     |   step_streets: 110 rows
+2026-06-18 22:29:51,691 | INFO     | Loading cache: street_closures_block
+2026-06-18 22:29:51,691 | INFO     | Loading from cache: street_closures_block
+2026-06-18 22:29:51,709 | INFO     | SQL executed successfully (-1 rows, 0.82ms)
+2026-06-18 22:29:51,709 | INFO     | Schema created/verified: raw
+2026-06-18 22:29:51,780 | INFO     | SQL executed successfully (-1 rows, 17.12ms)
+2026-06-18 22:29:51,780 | INFO     | Loaded from cache: street_closures_block (3433 rows, 89.33ms)
+2026-06-18 22:29:51,781 | INFO     |   street_closures_block: 3433 rows
+2026-06-18 22:29:51,781 | INFO     | Loading cache: street_resurfacing_schedule
+2026-06-18 22:29:51,781 | INFO     | Loading from cache: street_resurfacing_schedule
+2026-06-18 22:29:53,178 | INFO     | SQL executed successfully (-1 rows, 0.85ms)
+2026-06-18 22:29:53,179 | INFO     | Schema created/verified: raw
+2026-06-18 22:29:53,307 | INFO     | SQL executed successfully (-1 rows, 29.30ms)
+2026-06-18 22:29:53,307 | INFO     | Loaded from cache: street_resurfacing_schedule (311932 rows, 1525.97ms)
+2026-06-18 22:29:53,307 | INFO     |   street_resurfacing_schedule: 311932 rows
+2026-06-18 22:29:53,307 | INFO     | Loading cache: tree_damage
+2026-06-18 22:29:53,308 | INFO     | Loading from cache: tree_damage
+2026-06-18 22:29:53,389 | INFO     | SQL executed successfully (-1 rows, 0.76ms)
+2026-06-18 22:29:53,389 | INFO     | Schema created/verified: raw
+2026-06-18 22:29:53,459 | INFO     | SQL executed successfully (-1 rows, 20.69ms)
+2026-06-18 22:29:53,459 | INFO     | Loaded from cache: tree_damage (17661 rows, 151.65ms)
+2026-06-18 22:29:53,459 | INFO     |   tree_damage: 17661 rows
+2026-06-18 22:29:53,460 | INFO     | Loading cache: violations
+2026-06-18 22:29:53,460 | INFO     | Loading from cache: violations
+2026-06-18 22:29:55,250 | INFO     | SQL executed successfully (-1 rows, 0.92ms)
+2026-06-18 22:29:55,250 | INFO     | Schema created/verified: raw
+2026-06-18 22:29:55,434 | INFO     | SQL executed successfully (-1 rows, 46.21ms)
+2026-06-18 22:29:55,434 | INFO     | Loaded from cache: violations (312828 rows, 1974.22ms)
+2026-06-18 22:29:55,434 | INFO     |   violations: 312828 rows
+2026-06-18 22:29:55,435 | INFO     | Loading cache: weekly_construction
+2026-06-18 22:29:55,435 | INFO     | Loading from cache: weekly_construction
+2026-06-18 22:29:55,443 | INFO     | SQL executed successfully (-1 rows, 0.69ms)
+2026-06-18 22:29:55,443 | INFO     | Schema created/verified: raw
+2026-06-18 22:29:55,459 | INFO     | SQL executed successfully (-1 rows, 3.76ms)
+2026-06-18 22:29:55,459 | INFO     | Loaded from cache: weekly_construction (75 rows, 24.29ms)
+2026-06-18 22:29:55,459 | INFO     |   weekly_construction: 75 rows
+2026-06-18 22:29:55,460 | INFO     | [load_cached_parquet] SUCCESS
+2026-06-18 22:29:55,460 | INFO     | ======================================================================
+2026-06-18 22:29:55,460 | INFO     | STAGE: Ingest remaining 37 from Socrata
+2026-06-18 22:29:55,460 | INFO     | ======================================================================
+2026-06-18 22:29:55,463 | INFO     | Persisted pipeline state
+2026-06-18 22:29:55,463 | INFO     | Created checkpoint: ingest_remaining_socrata_2026-06-18T22:29:55.460847
+2026-06-18 22:29:55,463 | INFO     | Starting stage: ingest_remaining_socrata
+2026-06-18 22:29:55,464 | INFO     | Ingesting remaining 37 datasets from Socrata...
+2026-06-18 22:29:55,464 | INFO     | Loaded config with 57 datasets
+2026-06-18 22:29:55,464 | INFO     | Found 37 Socrata datasets to ingest
+2026-06-18 22:29:55,464 | INFO     | Batch 1: Loading inspection_history (1/37)
+2026-06-18 22:29:55,465 | INFO     | Loading from Socrata: inspection_history (a1b2-c3d4)
+2026-06-18 22:29:55,966 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:29:55,966 | ERROR    |   inspection_history: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:29:55,966 | INFO     | Batch 1: Loading inspection_metrics (2/37)
+2026-06-18 22:29:55,966 | INFO     | Loading from Socrata: inspection_metrics (e5f6-g7h8)
+2026-06-18 22:29:56,467 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:29:56,467 | ERROR    |   inspection_metrics: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:29:56,468 | INFO     | Batch 1: Loading violation_photos (3/37)
+2026-06-18 22:29:56,468 | INFO     | Loading from Socrata: violation_photos (i9j0-k1l2)
+2026-06-18 22:29:56,969 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:29:56,970 | ERROR    |   violation_photos: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:29:56,970 | INFO     | Batch 1: Loading violation_attachments (4/37)
+2026-06-18 22:29:56,970 | INFO     | Loading from Socrata: violation_attachments (m3n4-o5p6)
+2026-06-18 22:29:57,471 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:29:57,472 | ERROR    |   violation_attachments: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:29:57,472 | INFO     | Batch 1: Loading ramp_inventory (5/37)
+2026-06-18 22:29:57,472 | INFO     | Loading from Socrata: ramp_inventory (q7r8-s9t0)
+2026-06-18 22:29:57,973 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:29:57,973 | ERROR    |   ramp_inventory: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:29:57,973 | INFO     | Batch 1: Loading ramp_specifications (6/37)
+2026-06-18 22:29:57,973 | INFO     | Loading from Socrata: ramp_specifications (u1v2-w3x4)
+2026-06-18 22:29:58,474 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:29:58,474 | ERROR    |   ramp_specifications: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:29:58,475 | INFO     | Batch 1: Loading ramp_maintenance_log (7/37)
+2026-06-18 22:29:58,475 | INFO     | Loading from Socrata: ramp_maintenance_log (y5z6-a7b8)
+2026-06-18 22:29:58,976 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:29:58,976 | ERROR    |   ramp_maintenance_log: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:29:58,977 | INFO     | Batch 1: Loading permit_status_history (8/37)
+2026-06-18 22:29:58,977 | INFO     | Loading from Socrata: permit_status_history (c9d0-e1f2)
+2026-06-18 22:29:59,477 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:29:59,478 | ERROR    |   permit_status_history: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:29:59,478 | INFO     | Batch 1: Loading permit_amendments (9/37)
+2026-06-18 22:29:59,478 | INFO     | Loading from Socrata: permit_amendments (g3h4-i5j6)
+2026-06-18 22:29:59,978 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:29:59,979 | ERROR    |   permit_amendments: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:29:59,979 | INFO     | Batch 1: Loading construction_progress (10/37)
+2026-06-18 22:29:59,979 | INFO     | Loading from Socrata: construction_progress (k7l8-m9n0)
+2026-06-18 22:30:00,480 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:30:00,481 | ERROR    |   construction_progress: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:30:00,481 | INFO     | Batch 2: Loading street_segment_inventory (11/37)
+2026-06-18 22:30:00,481 | INFO     | Loading from Socrata: street_segment_inventory (o1p2-q3r4)
+2026-06-18 22:30:00,982 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:30:00,982 | ERROR    |   street_segment_inventory: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:30:00,983 | INFO     | Batch 2: Loading block_face_data (12/37)
+2026-06-18 22:30:00,983 | INFO     | Loading from Socrata: block_face_data (s5t6-u7v8)
+2026-06-18 22:30:01,483 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:30:01,484 | ERROR    |   block_face_data: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:30:01,484 | INFO     | Batch 2: Loading spatial_geometry (13/37)
+2026-06-18 22:30:01,484 | INFO     | Loading from Socrata: spatial_geometry (w9x0-y1z2)
+2026-06-18 22:30:01,985 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:30:01,985 | ERROR    |   spatial_geometry: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:30:01,985 | INFO     | Batch 2: Loading tree_inventory (14/37)
+2026-06-18 22:30:01,985 | INFO     | Loading from Socrata: tree_inventory (a3b4-c5d6)
+2026-06-18 22:30:02,486 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:30:02,487 | ERROR    |   tree_inventory: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:30:02,487 | INFO     | Batch 2: Loading tree_maintenance (15/37)
+2026-06-18 22:30:02,487 | INFO     | Loading from Socrata: tree_maintenance (e7f8-g9h0)
+2026-06-18 22:30:02,988 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:30:02,989 | ERROR    |   tree_maintenance: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:30:02,989 | INFO     | Batch 2: Loading curb_inventory (16/37)
+2026-06-18 22:30:02,989 | INFO     | Loading from Socrata: curb_inventory (i1j2-k3l4)
+2026-06-18 22:30:03,490 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:30:03,490 | ERROR    |   curb_inventory: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:30:03,491 | INFO     | Batch 2: Loading surface_condition_history (17/37)
+2026-06-18 22:30:03,491 | INFO     | Loading from Socrata: surface_condition_history (m5n6-o7p8)
+2026-06-18 22:30:03,992 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:30:03,992 | ERROR    |   surface_condition_history: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:30:03,993 | INFO     | Batch 2: Loading project_scheduling (18/37)
+2026-06-18 22:30:03,993 | INFO     | Loading from Socrata: project_scheduling (q9r0-s1t2)
+2026-06-18 22:30:04,493 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:30:04,494 | ERROR    |   project_scheduling: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:30:04,494 | INFO     | Batch 2: Loading project_budget (19/37)
+2026-06-18 22:30:04,494 | INFO     | Loading from Socrata: project_budget (u3v4-w5x6)
+2026-06-18 22:30:04,995 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:30:04,996 | ERROR    |   project_budget: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:30:04,996 | INFO     | Batch 2: Loading project_resources (20/37)
+2026-06-18 22:30:04,996 | INFO     | Loading from Socrata: project_resources (y7z8-a9b0)
+2026-06-18 22:30:05,497 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:30:05,497 | ERROR    |   project_resources: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:30:05,498 | INFO     | Batch 3: Loading vendor_data (21/37)
+2026-06-18 22:30:05,498 | INFO     | Loading from Socrata: vendor_data (c1d2-e3f4)
+2026-06-18 22:30:05,999 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:30:05,999 | ERROR    |   vendor_data: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:30:05,999 | INFO     | Batch 3: Loading equipment_inventory (22/37)
+2026-06-18 22:30:05,999 | INFO     | Loading from Socrata: equipment_inventory (g5h6-i7j8)
+2026-06-18 22:30:06,500 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:30:06,500 | ERROR    |   equipment_inventory: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:30:06,501 | INFO     | Batch 3: Loading safety_incidents (23/37)
+2026-06-18 22:30:06,501 | INFO     | Loading from Socrata: safety_incidents (k9l0-m1n2)
+2026-06-18 22:30:07,001 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:30:07,002 | ERROR    |   safety_incidents: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:30:07,002 | INFO     | Batch 3: Loading environmental_compliance (24/37)
+2026-06-18 22:30:07,002 | INFO     | Loading from Socrata: environmental_compliance (o3p4-q5r6)
+2026-06-18 22:30:07,503 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:30:07,504 | ERROR    |   environmental_compliance: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:30:07,504 | INFO     | Batch 3: Loading traffic_impact (25/37)
+2026-06-18 22:30:07,504 | INFO     | Loading from Socrata: traffic_impact (s7t8-u9v0)
+2026-06-18 22:30:08,005 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:30:08,005 | ERROR    |   traffic_impact: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:30:08,006 | INFO     | Batch 3: Loading noise_monitoring (26/37)
+2026-06-18 22:30:08,006 | INFO     | Loading from Socrata: noise_monitoring (w1x2-y3z4)
+2026-06-18 22:30:08,506 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:30:08,507 | ERROR    |   noise_monitoring: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:30:08,507 | INFO     | Batch 3: Loading air_quality (27/37)
+2026-06-18 22:30:08,507 | INFO     | Loading from Socrata: air_quality (a5b6-c7d8)
+2026-06-18 22:30:09,008 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:30:09,009 | ERROR    |   air_quality: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:30:09,009 | INFO     | Batch 3: Loading public_complaints (28/37)
+2026-06-18 22:30:09,009 | INFO     | Loading from Socrata: public_complaints (e9f0-g1h2)
+2026-06-18 22:30:09,510 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:30:09,510 | ERROR    |   public_complaints: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:30:09,510 | INFO     | Batch 3: Loading community_outreach (29/37)
+2026-06-18 22:30:09,510 | INFO     | Loading from Socrata: community_outreach (i3j4-k5l6)
+2026-06-18 22:30:10,011 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:30:10,011 | ERROR    |   community_outreach: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:30:10,012 | INFO     | Batch 3: Loading contractor_performance (30/37)
+2026-06-18 22:30:10,012 | INFO     | Loading from Socrata: contractor_performance (m7n8-o9p0)
+2026-06-18 22:30:10,512 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:30:10,513 | ERROR    |   contractor_performance: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:30:10,513 | INFO     | Batch 4: Loading cost_tracking (31/37)
+2026-06-18 22:30:10,514 | INFO     | Loading from Socrata: cost_tracking (q1r2-s3t4)
+2026-06-18 22:30:11,014 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:30:11,015 | ERROR    |   cost_tracking: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:30:11,015 | INFO     | Batch 4: Loading funding_sources (32/37)
+2026-06-18 22:30:11,015 | INFO     | Loading from Socrata: funding_sources (u5v6-w7x8)
+2026-06-18 22:30:11,516 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:30:11,516 | ERROR    |   funding_sources: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:30:11,517 | INFO     | Batch 4: Loading regulatory_approvals (33/37)
+2026-06-18 22:30:11,517 | INFO     | Loading from Socrata: regulatory_approvals (y9z0-a1b2)
+2026-06-18 22:30:12,018 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:30:12,018 | ERROR    |   regulatory_approvals: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:30:12,018 | INFO     | Batch 4: Loading accessibility_audits (34/37)
+2026-06-18 22:30:12,018 | INFO     | Loading from Socrata: accessibility_audits (c3d4-e5f6)
+2026-06-18 22:30:12,519 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:30:12,520 | ERROR    |   accessibility_audits: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:30:12,520 | INFO     | Batch 4: Loading service_requests (35/37)
+2026-06-18 22:30:12,520 | INFO     | Loading from Socrata: service_requests (g7h8-i9j0)
+2026-06-18 22:30:13,021 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:30:13,021 | ERROR    |   service_requests: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:30:13,021 | INFO     | Batch 4: Loading performance_metrics (36/37)
+2026-06-18 22:30:13,021 | INFO     | Loading from Socrata: performance_metrics (k1l2-m3n4)
+2026-06-18 22:30:13,522 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:30:13,523 | ERROR    |   performance_metrics: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:30:13,523 | INFO     | Batch 4: Loading stakeholder_feedback (37/37)
+2026-06-18 22:30:13,523 | INFO     | Loading from Socrata: stakeholder_feedback (o5p6-q7r8)
+2026-06-18 22:30:14,024 | ERROR    | Error fetching batch at offset 0: name 'requests' is not defined
+2026-06-18 22:30:14,024 | ERROR    |   stakeholder_feedback: FAILED - Failed to fetch first batch: name 'requests' is not defined
+2026-06-18 22:30:14,024 | ERROR    | CRITICAL: No Socrata datasets loaded
+2026-06-18 22:30:14,028 | INFO     | Persisted pipeline state
+2026-06-18 22:30:14,029 | ERROR    | Checkpoint failed: ingest_remaining_socrata_2026-06-18T22:29:55.460847 - Zero Socrata datasets loaded
+2026-06-18 22:30:14,029 | ERROR    | Failed stage: ingest_remaining_socrata - Zero Socrata datasets loaded
+2026-06-18 22:30:14,029 | INFO     | [ingest_remaining_socrata] FAILED
+2026-06-18 22:30:14,029 | ERROR    | FAILED: Pipeline failed at ingest_remaining_socrata
+2026-06-18 22:30:14,029 | INFO     | ======================================================================
+2026-06-18 22:30:14,030 | INFO     | PIPELINE EXECUTION SUMMARY
+2026-06-18 22:30:14,030 | INFO     | ======================================================================
+2026-06-18 22:30:14,030 | ERROR    | FAILED: Pipeline failed at ingest_remaining_socrata
+2026-06-18 22:30:14,034 | INFO     | Execution log saved to pipeline\logs\execution.json
+2026-06-18 22:30:15,576 | INFO     | Database connection closed
