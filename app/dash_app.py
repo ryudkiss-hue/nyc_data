@@ -18,12 +18,16 @@ Architecture:
 """
 
 # Suppress Streamlit warnings BEFORE any imports (Dash app doesn't use Streamlit)
+import os
+import sys
+
+# Set environment variables to suppress Streamlit before importing anything
+os.environ["STREAMLIT_LOGGER_LEVEL"] = "critical"
+
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning, message=".*No runtime found.*")
 warnings.filterwarnings("ignore", module="streamlit.*")
 
-import os
-import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
