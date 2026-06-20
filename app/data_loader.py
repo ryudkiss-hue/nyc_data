@@ -51,11 +51,6 @@ except ImportError:  # pragma: no cover
     load_dotenv = None  # type: ignore
 
 try:
-    import streamlit as st
-except ImportError:  # pragma: no cover
-    st = None  # type: ignore
-
-try:
     from sodapy import Socrata
 except ImportError:
     Socrata = None  # type: ignore
@@ -347,6 +342,12 @@ def pick_column(df: pd.DataFrame, candidates: tuple[str, ...]) -> str | None:
 
 
 def _cache_decorator():
+    # Lazy import Streamlit only when cache decorator is needed (Streamlit-only feature)
+    try:
+        import streamlit as st
+    except ImportError:
+        st = None
+
     if st is not None and hasattr(st, "cache_data"):
         return st.cache_data(ttl=CACHE_TTL_SECONDS, show_spinner="Fetching from Socrata…")
     return lambda f: f
