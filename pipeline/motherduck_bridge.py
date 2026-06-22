@@ -4,12 +4,13 @@ Handles connections, authentication, SQL execution, and transaction management f
 Supports both MotherDuck (cloud) and local DuckDB for testing.
 """
 
-import os
 import logging
-import duckdb
-from typing import Optional, List, Dict, Any
+import os
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+import duckdb
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +68,10 @@ class MotherDuckBridge:
                 logger.info(f"Connecting to MotherDuck with database: {self.db_name}")
                 # Phase 3D-1: Add custom_user_agent per MotherDuck best practices
                 connection_string = f"md:{self.db_name}?token={self.motherduck_token}&custom_user_agent=agent-skills/2.2.0(harness-claude;llm-haiku)"
-                self.connection = duckdb.connect(connection_string, timeout=self.connection_timeout)
+                # Note: duckdb.connect() accepts only (database, read_only, config);
+                # it has no 'timeout' kwarg. Passing one raises TypeError and
+                # silently drops the session to local DuckDB.
+                self.connection = duckdb.connect(connection_string)
                 self.is_local = False
                 logger.info("Successfully connected to MotherDuck")
                 return True
@@ -168,7 +172,7 @@ class MotherDuckBridge:
             ExecutionResult from the last statement
         """
         try:
-            with open(file_path, "r") as f:
+            with open(file_path) as f:
                 sql = f.read()
 
             logger.info(f"Executing SQL file: {file_path}")

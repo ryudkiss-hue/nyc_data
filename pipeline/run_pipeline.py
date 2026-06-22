@@ -4,31 +4,31 @@ NYC DOT MotherDuck Pipeline - 57 Dataset Ingestion & Materialization
 Metadata-first, zero data loss, zero row limits. All 57 datasets, 255 KPIs, 5 domain schemas.
 """
 
-import os
-import sys
 import json
 import logging
-from pathlib import Path
-from datetime import datetime
+import os
+import sys
 import time
+from datetime import datetime
+from pathlib import Path
 
 # Add pipeline modules to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from motherduck_bridge import MotherDuckBridge
-from sql_executor import SQLExecutor, PipelineStageExecutor
-from socrata_loader import SocrataLoader
 from governance import GovernanceFramework, GovernanceValidator
+from motherduck_bridge import MotherDuckBridge
+from socrata_loader import SocrataLoader
+from sql_executor import PipelineStageExecutor, SQLExecutor
 
 # Wire in 7 advanced modules (Phase 3C-2: Mandatory Scripts)
 try:
-    from modules.state_manager import StateManager, ExecutionContext
-    from modules.alerting_system import AlertManager, Alert, AlertLevel, AlertChannel
-    from modules.incremental_loader import IncrementalLoader
+    from modules.alerting_system import Alert, AlertChannel, AlertLevel, AlertManager
     from modules.cdc_manager import CDCManager
+    from modules.incremental_loader import IncrementalLoader
     from modules.orchestration_coordinator import PipelineOrchestrator
-    from modules.scheduler_manager import PipelineScheduler
     from modules.performance_optimizer import PerformanceOptimizer
+    from modules.scheduler_manager import PipelineScheduler
+    from modules.state_manager import ExecutionContext, StateManager
     ADVANCED_MODULES_AVAILABLE = True
 except ImportError as e:
     ADVANCED_MODULES_AVAILABLE = False
@@ -154,10 +154,21 @@ class MotherDuckPipeline:
         logger.info(f"[{stage_name}] {status_text}")
 
     def load_cached_parquet(self) -> bool:
-        """Load 20 cached Parquet files from local cache."""
+        """Load cached Parquet files from local cache.
+
+        When the config declares no cached datasets (all-Socrata config), this
+        stage is a no-op success so the pipeline proceeds to Socrata ingestion.
+        """
         start_time = time.time()
         try:
-            logger.info("Loading 20 cached Parquet files from local cache...")
+            if self.expected_cached == 0:
+                logger.info("No cached datasets configured; skipping cached-parquet stage.")
+                self.log_stage('load_cached_parquet', 'success',
+                              tables_loaded=0, expected_cached=0, total_rows=0,
+                              note="skipped — all-Socrata config")
+                return True
+
+            logger.info(f"Loading {self.expected_cached} cached Parquet files from local cache...")
             cache_raw = Path(self.cache_dir) / 'raw'
 
             if not cache_raw.exists():
@@ -579,11 +590,11 @@ class MotherDuckPipeline:
 
     def run(self) -> int:
         """Execute full pipeline."""
-        logger.info(f"Starting NYC DOT MotherDuck Pipeline v2.0")
+        logger.info("Starting NYC DOT MotherDuck Pipeline v2.0")
         logger.info(f"Target database: {self.db_name}")
         logger.info(f"Cache location: {self.cache_dir}")
         logger.info(f"MotherDuck enabled: {bool(self.motherduck_token)}")
-        logger.info(f"Database type: {'MotherDuck' if self.bridge.is_local == False else 'Local DuckDB'}")
+        logger.info(f"Database type: {'Local DuckDB' if self.bridge.is_local else 'MotherDuck'}")
         logger.info(f"{'='*70}")
 
         stages = [

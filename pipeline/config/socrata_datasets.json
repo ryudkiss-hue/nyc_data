@@ -1,499 +1,156 @@
 {
   "metadata": {
-    "version": "3.0-authoritative",
+    "version": "4.0-verified",
     "created_at": "2026-06-22",
-    "source": "Local Law 251 inventory (authoritative)",
-    "description": "All DOT datasets from NYC Local Law 251 - ALWAYS ACCURATE",
-    "sync_mechanism": "Run pipeline/config/sync_socrata_config.py daily",
-    "total_datasets": 54
+    "source": "Local Law 251 registry (verified IDs + canonical table names)",
+    "description": "Canonical short table names mapped to registry-verified Socrata IDs. Synthetic placeholder datasets removed.",
+    "total_datasets": 16
   },
   "cached_datasets": [],
   "socrata_remaining": [
     {
       "id": 1,
-      "name": "Bi-Annual Pedestrian Counts",
-      "socrata_id": 1,
+      "name": "inspection",
+      "socrata_id": "dntt-gqwq",
       "row_count": 0,
-      "primary_key": "id",
+      "primary_key": "inspection_id",
       "source": "socrata",
-      "domain_schema": "transportation"
+      "domain_schema": "sim_core"
     },
     {
       "id": 2,
-      "name": "Bi-Annual Pedestrian Counts (Map)",
-      "socrata_id": 2,
+      "name": "violations",
+      "socrata_id": "6kbp-uz6m",
       "row_count": 0,
-      "primary_key": "id",
+      "primary_key": "violation_id",
       "source": "socrata",
-      "domain_schema": "transportation"
+      "domain_schema": "accessibility"
     },
     {
       "id": 3,
-      "name": "Bike Share Inspections (Historical)",
-      "socrata_id": 3,
+      "name": "reinspection",
+      "socrata_id": "gx72-kirf",
       "row_count": 0,
-      "primary_key": "id",
+      "primary_key": "reinspection_id",
       "source": "socrata",
-      "domain_schema": "transportation"
+      "domain_schema": "sim_core"
     },
     {
       "id": 4,
-      "name": "Carshare Locations - Curbside",
-      "socrata_id": 4,
+      "name": "lot_info",
+      "socrata_id": "i642-2fxq",
       "row_count": 0,
-      "primary_key": "id",
+      "primary_key": "lot_id",
       "source": "socrata",
-      "domain_schema": "transportation"
+      "domain_schema": "overlays"
     },
     {
       "id": 5,
-      "name": "Carshare Locations - Curbside (Map)",
-      "socrata_id": 5,
+      "name": "built",
+      "socrata_id": "ugc8-s3f6",
       "row_count": 0,
-      "primary_key": "id",
+      "primary_key": "lot_id",
       "source": "socrata",
-      "domain_schema": "transportation"
+      "domain_schema": "extended"
     },
     {
       "id": 6,
-      "name": "Carshare Locations - Municipal Garages and Lots",
-      "socrata_id": 6,
+      "name": "dismissals",
+      "socrata_id": "p4u2-3jgx",
       "row_count": 0,
-      "primary_key": "id",
+      "primary_key": "dismissal_id",
       "source": "socrata",
-      "domain_schema": "transportation"
+      "domain_schema": "sim_core"
     },
     {
       "id": 7,
-      "name": "Carshare Locations - Municipal Garages and Lots (Map)",
-      "socrata_id": 7,
+      "name": "tree_damage",
+      "socrata_id": "j6v2-6uxq",
       "row_count": 0,
-      "primary_key": "id",
+      "primary_key": "tree_id",
       "source": "socrata",
-      "domain_schema": "transportation"
+      "domain_schema": "overlays"
     },
     {
       "id": 8,
-      "name": "Commercial Bicycle Unit Inspections (Historical)",
-      "socrata_id": 8,
+      "name": "correspondences",
+      "socrata_id": "bheb-sjfi",
       "row_count": 0,
-      "primary_key": "id",
+      "primary_key": "correspondence_id",
       "source": "socrata",
-      "domain_schema": "transportation"
+      "domain_schema": "coordination"
     },
     {
       "id": 9,
-      "name": "Concrete/Hardware Weekly Repair Schedule",
-      "socrata_id": 9,
+      "name": "ramp_progress",
+      "socrata_id": "e7gc-ub6z",
       "row_count": 0,
-      "primary_key": "id",
+      "primary_key": "progress_id",
       "source": "socrata",
-      "domain_schema": "transportation"
+      "domain_schema": "accessibility"
     },
     {
       "id": 10,
-      "name": "Curb Metal Protruding Data",
-      "socrata_id": 10,
+      "name": "ramp_complaints",
+      "socrata_id": "jagj-gttd",
       "row_count": 0,
-      "primary_key": "id",
+      "primary_key": "complaint_id",
       "source": "socrata",
-      "domain_schema": "transportation"
+      "domain_schema": "accessibility"
     },
     {
       "id": 11,
-      "name": "Encroachments and Defacements",
-      "socrata_id": 11,
+      "name": "ramp_locations",
+      "socrata_id": "ufzp-rrqu",
       "row_count": 0,
-      "primary_key": "id",
+      "primary_key": "ramp_id",
       "source": "socrata",
-      "domain_schema": "transportation"
+      "domain_schema": "accessibility"
     },
     {
       "id": 12,
-      "name": "LockerNYC Locations",
-      "socrata_id": 12,
+      "name": "curb_metal_protruding",
+      "socrata_id": "i2y3-sx2e",
       "row_count": 0,
-      "primary_key": "id",
+      "primary_key": "violation_id",
       "source": "socrata",
-      "domain_schema": "transportation"
+      "domain_schema": "overlays"
     },
     {
       "id": 13,
-      "name": "LockerNYC Locations (Map)",
-      "socrata_id": 13,
+      "name": "step_streets",
+      "socrata_id": "u9au-h79y",
       "row_count": 0,
-      "primary_key": "id",
+      "primary_key": "step_id",
       "source": "socrata",
-      "domain_schema": "transportation"
+      "domain_schema": "extended"
     },
     {
       "id": 14,
-      "name": "LockerNYC Reservations",
-      "socrata_id": 14,
+      "name": "street_resurfacing_schedule",
+      "socrata_id": "xnfm-u3k5",
       "row_count": 0,
-      "primary_key": "id",
+      "primary_key": "project_id",
       "source": "socrata",
-      "domain_schema": "transportation"
+      "domain_schema": "extended"
     },
     {
       "id": 15,
-      "name": "Newsrack Inspections",
-      "socrata_id": 15,
+      "name": "weekly_construction",
+      "socrata_id": "r528-jcks",
       "row_count": 0,
-      "primary_key": "id",
+      "primary_key": "construction_id",
       "source": "socrata",
-      "domain_schema": "transportation"
+      "domain_schema": "coordination"
     },
     {
       "id": 16,
-      "name": "Open Restaurants Inspections",
-      "socrata_id": 16,
+      "name": "pedestrian_demand",
+      "socrata_id": "fwpa-qxaf",
       "row_count": 0,
-      "primary_key": "id",
+      "primary_key": "location_id",
       "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 17,
-      "name": "Pedestrian Mobility Plan Pedestrian Demand",
-      "socrata_id": 17,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 18,
-      "name": "Pedestrian Mobility Plan Pedestrian Demand - (Map)",
-      "socrata_id": 18,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 19,
-      "name": "Pedestrian Ramp - Program Progress",
-      "socrata_id": 19,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 20,
-      "name": "Pedestrian Ramp - Program Progress (Map)",
-      "socrata_id": 20,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 21,
-      "name": "Pedestrian Ramp Complaints",
-      "socrata_id": 21,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 22,
-      "name": "Pedestrian Ramp Locations",
-      "socrata_id": 22,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 23,
-      "name": "Pedestrian Ramp Locations (Map)",
-      "socrata_id": 23,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 24,
-      "name": "Pedestrian Space Added",
-      "socrata_id": 24,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "city_government"
-    },
-    {
-      "id": 25,
-      "name": "Seating Locations",
-      "socrata_id": 25,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 26,
-      "name": "Seating Locations (Map)",
-      "socrata_id": 26,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 27,
-      "name": "Shared E-Scooter Parking Corrals",
-      "socrata_id": 27,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 28,
-      "name": "Sidewalk Correspondences",
-      "socrata_id": 28,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 29,
-      "name": "Sidewalk Dismissal Inspection Tracking",
-      "socrata_id": 29,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 30,
-      "name": "Sidewalk Management Database - All Tree Damage (ATD)",
-      "socrata_id": 30,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 31,
-      "name": "Sidewalk Management Database - Built",
-      "socrata_id": 31,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 32,
-      "name": "Sidewalk Management Database - Inspection",
-      "socrata_id": 32,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 33,
-      "name": "Sidewalk Management Database - Lot Info",
-      "socrata_id": 33,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 34,
-      "name": "Sidewalk Management Database - ReInspection",
-      "socrata_id": 34,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 35,
-      "name": "Sidewalk Management Database - Violations",
-      "socrata_id": 35,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 36,
-      "name": "Sidewalk Weekly Construction Schedule",
-      "socrata_id": 36,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 37,
-      "name": "Speed Reducer Tracking System (SRTS)",
-      "socrata_id": 37,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 38,
-      "name": "Street Construction Inspections and Corrective Action Requests",
-      "socrata_id": 38,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 39,
-      "name": "Street Construction Permits (2013-2021)",
-      "socrata_id": 39,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 40,
-      "name": "Street Construction Permits (2022 - Present)",
-      "socrata_id": 40,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 41,
-      "name": "Street Construction Permits - Cranes",
-      "socrata_id": 41,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 42,
-      "name": "Street Construction Permits - Fee",
-      "socrata_id": 42,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 43,
-      "name": "Street Construction Permits - Related Agency",
-      "socrata_id": 43,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 44,
-      "name": "Street Construction Permits - Stipulations (2020 - Present)",
-      "socrata_id": 44,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 45,
-      "name": "Street Construction Permits - Stipulations (Historical)",
-      "socrata_id": 45,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 46,
-      "name": "Street Seats (2014 - 2019)",
-      "socrata_id": 46,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 47,
-      "name": "Street Seats (2021 - 2024)",
-      "socrata_id": 47,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 48,
-      "name": "Street Seats (Map) 2014-2019",
-      "socrata_id": 48,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 49,
-      "name": "Street and Highway Capital Reconstruction Projects - Block",
-      "socrata_id": 49,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 50,
-      "name": "Street and Highway Capital Reconstruction Projects - Block (Map)",
-      "socrata_id": 50,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 51,
-      "name": "Street and Highway Capital Reconstruction Projects - Intersection",
-      "socrata_id": 51,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 52,
-      "name": "Street and Highway Capital Reconstruction Projects - Intersection (Map)",
-      "socrata_id": 52,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 53,
-      "name": "VZV Enhanced Crossings",
-      "socrata_id": 53,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
-    },
-    {
-      "id": 54,
-      "name": "VZV Enhanced Crossings",
-      "socrata_id": 54,
-      "row_count": 0,
-      "primary_key": "id",
-      "source": "socrata",
-      "domain_schema": "transportation"
+      "domain_schema": "extended"
     }
   ]
 }

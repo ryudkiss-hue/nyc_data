@@ -4,14 +4,16 @@ Fetches datasets from NYC Open Data Socrata API and loads to MotherDuck.
 Implements pagination, batching, validation, and local caching.
 """
 
-import os
 import json
 import logging
+import os
 import time
-from typing import List, Dict, Optional, Tuple
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from dataclasses import dataclass, asdict
+from typing import Dict, List, Optional, Tuple
+
 import pandas as pd
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +89,7 @@ class SocrataLoader:
             List of DatasetMetadata
         """
         try:
-            with open(config_path, "r") as f:
+            with open(config_path) as f:
                 config = json.load(f)
 
             datasets = []
@@ -207,7 +209,11 @@ class SocrataLoader:
             offset = 0
             tables = []
 
-            base_url = f"https://{self.socrata_domain}/api/views/{socrata_id}/rows.json"
+            # Use the SODA resource endpoint, which returns proper named-column
+            # JSON records (list of dicts). The /api/views/{id}/rows.json
+            # endpoint returns positional arrays wrapped in {meta, data} and
+            # yields unnamed columns — do not use it for ingestion.
+            base_url = f"https://{self.socrata_domain}/resource/{socrata_id}.json"
 
             while True:
                 # Rate limiting
