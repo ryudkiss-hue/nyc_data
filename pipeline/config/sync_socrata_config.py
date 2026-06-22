@@ -16,10 +16,11 @@ This ensures:
 """
 
 import json
-import requests
 import sys
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+
+import requests
 
 # Configuration
 LL251_ID = "5tqd-u88y"  # Local Law 251 - Published Data Asset Inventory
@@ -98,15 +99,15 @@ def main():
     print("SOCRATA CONFIG SYNC - Local Law 251 Authority")
     print("=" * 80)
     print()
-    print(f"Fetching Local Law 251 inventory...")
+    print("Fetching Local Law 251 inventory...")
     inventory = fetch_ll251_inventory()
     print(f"  Fetched {len(inventory)} total NYC datasets")
 
-    print(f"Extracting DOT sidewalk/inspection datasets...")
+    print("Extracting DOT sidewalk/inspection datasets...")
     datasets = extract_dot_datasets(inventory)
     print(f"  Found {len(datasets)} DOT datasets")
 
-    print(f"Updating configuration...")
+    print("Updating configuration...")
     config = update_config(datasets)
     print(f"  Wrote {len(datasets)} datasets to {CONFIG_FILE}")
 
@@ -115,8 +116,26 @@ def main():
     print(f"  Total datasets: {config['metadata']['total_datasets']}")
     print(f"  Last synced: {config['metadata']['last_synced']}")
     print(f"  Source: {config['metadata']['source']}")
+
+    # Also refresh the full authoritative metadata registry (all 3,000+ NYC
+    # datasets + DOT column schemas). One daily job keeps both current.
     print()
-    print("Configuration will ALWAYS stay accurate with latest NYC Open Data.")
+    print("Refreshing authoritative metadata registry...")
+    try:
+        import sys
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+        from pipeline.data.nyc_open_data_registry import NYCDataRegistry
+
+        registry = NYCDataRegistry(auto_sync=False)
+        registry.sync()  # incremental: re-fetches columns only for changed datasets
+        rmeta = registry.registry["metadata"]
+        print(f"  Registry datasets: {rmeta['total_datasets']}")
+        print(f"  Registry last synced: {rmeta['last_synced']}")
+    except Exception as e:
+        print(f"  WARNING: registry refresh failed ({e}); config still updated")
+
+    print()
+    print("Configuration and registry will ALWAYS stay accurate with latest NYC Open Data.")
 
 if __name__ == "__main__":
     main()
