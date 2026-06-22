@@ -16,8 +16,8 @@ Usage:
 """
 
 import logging
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Add parent to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -29,39 +29,51 @@ logger = logging.getLogger(__name__)
 # Global registry instance
 _REGISTRY = None
 
-def initialize_app() -> NYCDataRegistry:
+def initialize_app(auto_sync: bool = True) -> NYCDataRegistry:
     """
-    Initialize app by loading and syncing authoritative registry.
+    Initialize app by loading the authoritative registry and (best-effort)
+    syncing changed metadata from the source of truth.
+
+    Resilience contract: the committed registry JSON is the permanent baseline.
+    If the network sync fails (offline, Socrata down, timeout), the app still
+    starts using the on-disk registry. Sync errors are logged, never raised.
+
+    Args:
+        auto_sync: If True, pull from the source of truth on init and update
+            any changed metadata. Set False to load the on-disk baseline only.
 
     Returns:
         NYCDataRegistry instance (also stored globally)
     """
     global _REGISTRY
 
-    logger.info("=" * 80)
     logger.info("APP INITIALIZATION: Loading NYC Open Data Registry")
-    logger.info("=" * 80)
 
-    try:
-        # Create registry (will auto-sync if needed)
-        _REGISTRY = NYCDataRegistry(auto_sync=True)
+    # Step 1: Always load the on-disk baseline first (no network). This
+    # guarantees the app has accurate metadata even if sync later fails.
+    _REGISTRY = NYCDataRegistry(auto_sync=False)
+    baseline_count = _REGISTRY.registry["metadata"]["total_datasets"]
+    logger.info(f"Loaded registry baseline: {baseline_count} datasets")
 
-        logger.info("=" * 80)
-        logger.info("REGISTRY STATUS")
-        logger.info("=" * 80)
-        logger.info(f"Total datasets loaded: {_REGISTRY.registry['metadata']['total_datasets']}")
-        logger.info(f"Last synced: {_REGISTRY.registry['metadata']['last_synced']}")
-        logger.info(f"Agencies: {len(_REGISTRY.registry['index']['by_agency'])}")
-        logger.info(f"Keywords indexed: {len(_REGISTRY.registry['index']['by_keywords'])}")
-        logger.info("=" * 80)
-        logger.info("App ready: Use get_registry() to access metadata")
-        logger.info("=" * 80)
+    # Step 2: Best-effort sync of changed metadata from the source of truth.
+    if auto_sync and _REGISTRY._should_sync():
+        try:
+            logger.info("Syncing changed metadata from source of truth...")
+            _REGISTRY.sync()
+            logger.info("Registry sync complete")
+        except Exception as e:
+            logger.warning(
+                f"Registry sync failed ({e}); continuing with on-disk baseline "
+                f"({baseline_count} datasets). Accuracy preserved from last sync."
+            )
 
-        return _REGISTRY
-
-    except Exception as e:
-        logger.error(f"CRITICAL: Failed to initialize registry: {e}")
-        raise
+    meta = _REGISTRY.registry["metadata"]
+    logger.info(
+        f"Registry ready: {meta['total_datasets']} datasets, "
+        f"{len(_REGISTRY.registry['index']['by_agency'])} agencies, "
+        f"last synced {meta['last_synced']}"
+    )
+    return _REGISTRY
 
 def get_registry() -> NYCDataRegistry:
     """Get the global registry instance."""

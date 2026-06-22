@@ -142,6 +142,19 @@ THEME = {
 
 dm = DataManager(read_only=True)
 
+# Load the authoritative NYC Open Data registry (source of truth for dataset
+# metadata, column schemas, and freshness). Baseline-first + best-effort sync:
+# a network failure never blocks app startup. See app/initialization.py.
+try:
+    from app.initialization import initialize_app
+    _registry = initialize_app(auto_sync=True)
+    logger.info(
+        f"Metadata registry ready: "
+        f"{_registry.registry['metadata']['total_datasets']} datasets"
+    )
+except Exception as e:
+    logger.warning(f"Registry initialization deferred (non-critical): {e}")
+
 # Initialize cache audit table for observability tracking (after DataManager to avoid DB lock)
 from app.utils.cache_manager import init_cache_audit_table
 try:

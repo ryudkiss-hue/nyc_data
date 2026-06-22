@@ -37,9 +37,10 @@ Usage:
 
 import json
 import logging
-from pathlib import Path
 from datetime import datetime, timezone
-from typing import List, Dict, Optional
+from pathlib import Path
+from typing import Dict, List, Optional
+
 import requests
 
 logger = logging.getLogger(__name__)
@@ -52,13 +53,22 @@ class NYCDataRegistry:
     DOMAIN = "data.cityofnewyork.us"
     API_BASE = f"https://{DOMAIN}/api/catalog/v1"
 
-    def __init__(self, auto_sync: bool = True):
+    # Agencies whose full column schemas are eagerly fetched on every sync.
+    # Substring match against the LL251 "datasetinformation_agency" field.
+    PRIORITY_AGENCIES = ("Department of Transportation",)
+
+    def __init__(self, auto_sync: bool = True, priority_agencies: tuple = None):
         """
         Initialize registry.
 
         Args:
             auto_sync: If True, sync with Socrata on initialization
+            priority_agencies: Agency name substrings whose full column schemas
+                are fetched eagerly. Defaults to PRIORITY_AGENCIES (DOT). Other
+                agencies get base metadata only; columns are lazy-fetched on
+                first get_dataset() access.
         """
+        self.priority_agencies = priority_agencies or self.PRIORITY_AGENCIES
         self.registry = self._load_registry()
         if auto_sync and self._should_sync():
             self.sync()
@@ -169,12 +179,19 @@ class NYCDataRegistry:
                 "downloads": ll251_row.get("downloads", 0),
             }
 
-            # Fetch column information from Socrata (if metadata changed)
-            if self._needs_column_update(current, metadata):
-                columns = self._fetch_dataset_columns(dataset_id)
-                metadata["columns"] = columns
-            else:
+            # Eager-fetch full column schemas only for priority agencies (DOT).
+            # Other agencies keep base metadata; columns lazy-load on access.
+            is_priority = any(a in metadata["agency"] for a in self.priority_agencies)
+            if is_priority and self._needs_column_update(current, metadata):
+                metadata["columns"] = self._fetch_dataset_columns(dataset_id)
+                metadata["columns_fetched"] = True
+            elif is_priority:
                 metadata["columns"] = current.get("columns", [])
+                metadata["columns_fetched"] = current.get("columns_fetched", False)
+            else:
+                # Preserve any previously lazy-fetched columns
+                metadata["columns"] = current.get("columns", [])
+                metadata["columns_fetched"] = current.get("columns_fetched", False)
 
             return metadata
 
@@ -192,20 +209,28 @@ class NYCDataRegistry:
         return False
 
     def _fetch_dataset_columns(self, dataset_id: str) -> List[Dict]:
-        """Fetch column definitions for a dataset."""
+        """Fetch column definitions for a dataset via the Socrata views metadata API.
+
+        Uses https://{domain}/api/views/{id}.json which returns the canonical
+        column list with field names, datatypes, and descriptions. (The catalog
+        API does not expose per-column schema, so it must not be used here.)
+        """
         try:
-            url = f"{self.API_BASE}/{dataset_id}"
-            response = requests.get(url, timeout=10)
+            url = f"https://{self.DOMAIN}/api/views/{dataset_id}.json"
+            response = requests.get(url, timeout=15)
             response.raise_for_status()
             data = response.json()
 
             columns = []
-            for col in data.get("resource", {}).get("columns", []):
+            for col in data.get("columns", []):
+                # Skip Socrata internal/system columns (negative ids)
+                if isinstance(col.get("id"), int) and col["id"] < 0:
+                    continue
                 columns.append({
                     "name": col.get("name", ""),
-                    "field_name": col.get("field_name", ""),
-                    "datatype": col.get("datatype", ""),
-                    "description": col.get("description", "")
+                    "field_name": col.get("fieldName", ""),
+                    "datatype": col.get("dataTypeName", ""),
+                    "description": col.get("description", ""),
                 })
             return columns
 
@@ -248,9 +273,26 @@ class NYCDataRegistry:
         logger.info(f"Registry saved to {self.REGISTRY_FILE}")
 
     # Query methods
-    def get_dataset(self, socrata_id: str) -> Optional[Dict]:
-        """Get dataset by Socrata ID."""
-        return self.registry["datasets"].get(socrata_id)
+    def get_dataset(self, socrata_id: str, with_columns: bool = True) -> Optional[Dict]:
+        """Get dataset by Socrata ID.
+
+        Args:
+            socrata_id: The dataset's Socrata 4x4 identifier.
+            with_columns: If True and columns have not been fetched yet
+                (non-priority agency), lazy-fetch them now and persist.
+        """
+        dataset = self.registry["datasets"].get(socrata_id)
+        if dataset is None:
+            return None
+
+        if with_columns and not dataset.get("columns_fetched"):
+            columns = self._fetch_dataset_columns(socrata_id)
+            if columns:
+                dataset["columns"] = columns
+                dataset["columns_fetched"] = True
+                self._save_registry()
+
+        return dataset
 
     def filter_by_agency(self, agency: str) -> List[Dict]:
         """Get all datasets from a specific agency."""

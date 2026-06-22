@@ -48,6 +48,57 @@ class DataManager:
     def get_dataset_registry(self):
         return self.datasets_config.get("datasets", {})
 
+    @property
+    def metadata_registry(self):
+        """Lazy-loaded authoritative NYC Open Data registry (source of truth).
+
+        Loads the on-disk registry baseline without triggering a network sync,
+        so DataManager construction stays fast and offline-safe. The registry
+        provides verified Socrata IDs, column schemas, and freshness metadata.
+        """
+        reg = getattr(self, "_metadata_registry", None)
+        if reg is None:
+            from pipeline.data.nyc_open_data_registry import NYCDataRegistry
+            reg = NYCDataRegistry(auto_sync=False)
+            self._metadata_registry = reg
+        return reg
+
+    def get_authoritative_metadata(self, fourfour):
+        """Return verified metadata (name, agency, columns, freshness) for a
+        Socrata dataset id from the authoritative registry, or None if unknown."""
+        return self.metadata_registry.get_dataset(fourfour, with_columns=True)
+
+    def check_freshness(self, fourfour, sla_days=14):
+        """Freshness quality gate against the authoritative registry.
+
+        Returns a dict: {fourfour, last_updated, age_days, sla_days, status}
+        where status is one of FRESH / STALE / UNKNOWN. STALE reflects upstream
+        NYC Open Data publication lag, not a code failure.
+        """
+        from datetime import datetime, timezone
+        ds = self.metadata_registry.get_dataset(fourfour, with_columns=False)
+        result = {
+            "fourfour": fourfour,
+            "last_updated": None,
+            "age_days": None,
+            "sla_days": sla_days,
+            "status": "UNKNOWN",
+        }
+        if not ds or not ds.get("last_updated"):
+            return result
+        try:
+            last = datetime.fromisoformat(ds["last_updated"].replace("Z", "+00:00"))
+            # LL251 timestamps are UTC but often tz-naive; normalize to aware.
+            if last.tzinfo is None:
+                last = last.replace(tzinfo=timezone.utc)
+            age = (datetime.now(timezone.utc) - last).days
+            result["last_updated"] = ds["last_updated"]
+            result["age_days"] = age
+            result["status"] = "FRESH" if age <= sla_days else "STALE"
+        except (ValueError, AttributeError):
+            pass
+        return result
+
     def _fetch_single_dataset(self, key, info, actual_limit, force_refresh, cctx, dctx):
         """Worker function for parallel fetching."""
         fourfour = info["fourfour"]
