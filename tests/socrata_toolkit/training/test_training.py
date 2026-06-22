@@ -1,7 +1,9 @@
 import pytest
-from socrata_toolkit.training.variant_augmentor import VariantAugmentor
-from socrata_toolkit.training.router_trainer import RouterTrainer
+
 from socrata_toolkit.core.routing.programmatic_router import ProgrammaticRouter
+from socrata_toolkit.training.router_trainer import RouterTrainer
+from socrata_toolkit.training.variant_augmentor import VariantAugmentor
+
 
 @pytest.fixture
 def sample_kpi_registry():
@@ -26,7 +28,7 @@ def test_variant_augmentor_generates_synthetic(sample_kpi_registry):
 
     # Should generate 4 variants (one per template)
     assert len(synthetic) >= 4
-    assert all(v['synthetic'] == True for v in synthetic)
+    assert all(v['synthetic'] for v in synthetic)
     assert all('question_variant' in v for v in synthetic)
 
 def test_variant_augmentor_respects_seed_covered(sample_kpi_registry):

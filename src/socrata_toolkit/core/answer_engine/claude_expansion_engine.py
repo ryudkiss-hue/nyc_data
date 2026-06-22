@@ -1,6 +1,8 @@
-from typing import Dict, Any, Optional
 import json
+from typing import Any, Dict, Optional
+
 from ..routing.models import ExpansionResult
+
 
 class ClaudeExpansionEngine:
     """

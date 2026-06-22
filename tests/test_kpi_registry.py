@@ -11,10 +11,11 @@ Tests cover:
 - Registry validation and health checks
 """
 
-import pytest
 import tempfile
-from datetime import datetime, timezone, timezone
+from datetime import datetime, timezone
 from pathlib import Path
+
+import pytest
 
 from socrata_toolkit.kpi.models import (
     DimensionConfig,

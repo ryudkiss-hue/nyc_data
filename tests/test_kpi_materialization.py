@@ -8,14 +8,15 @@ Test coverage:
 - End-to-end materialization flow
 """
 
-import pytest
-from datetime import date, datetime, timezone, timedelta
-import numpy as np
-from unittest.mock import Mock, MagicMock
+from datetime import date, datetime, timedelta, timezone
+from unittest.mock import MagicMock, Mock
 
-from socrata_toolkit.kpi.forecasting import ForecastingEngine, create_forecasting_engine
+import numpy as np
+import pytest
+
 from socrata_toolkit.kpi.anomaly import AnomalyDetector, create_anomaly_detector
 from socrata_toolkit.kpi.compute import KPIComputer, create_kpi_computer
+from socrata_toolkit.kpi.forecasting import ForecastingEngine, create_forecasting_engine
 from socrata_toolkit.kpi.materialization import MaterializationOrchestrator
 from socrata_toolkit.kpi.models import KPIDefinition, KPIValue
 

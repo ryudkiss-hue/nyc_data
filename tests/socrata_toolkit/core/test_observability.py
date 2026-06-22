@@ -1,7 +1,9 @@
-import pytest
 import tempfile
 import uuid
 from pathlib import Path
+
+import pytest
+
 from socrata_toolkit.core.observability.duckdb_store import DuckDBObservabilityStore
 
 
@@ -89,7 +91,7 @@ def test_record_feedback():
         ).fetchall()
 
         assert len(result) == 1
-        assert result[0][0] == True
+        assert result[0][0]
 
         store.close()
 

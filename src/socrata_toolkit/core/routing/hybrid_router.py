@@ -1,6 +1,7 @@
+from .claude_semantic_router import ClaudeSemanticRouter
 from .models import MatchResult
 from .programmatic_router import ProgrammaticRouter
-from .claude_semantic_router import ClaudeSemanticRouter
+
 
 class HybridRouter:
     """

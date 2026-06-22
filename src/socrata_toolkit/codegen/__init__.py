@@ -23,11 +23,11 @@ Usage:
 
 from __future__ import annotations
 
-from .chart_generator import ChartGenerator
 from .callback_generator import CallbackGenerator
-from .layout_generator import LayoutGenerator
-from .kpi_generator import KPIGenerator
+from .chart_generator import ChartGenerator
 from .docs_generator import DocsGenerator
+from .kpi_generator import KPIGenerator
+from .layout_generator import LayoutGenerator
 from .registry_loader import RegistryLoader
 
 __all__ = [

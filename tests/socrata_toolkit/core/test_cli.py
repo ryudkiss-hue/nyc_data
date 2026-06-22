@@ -1,5 +1,7 @@
 import pytest
+
 from socrata_toolkit.core.cli_nlquery import run_nl_query
+
 
 @pytest.fixture
 def sample_kpi_registry():
@@ -76,7 +78,7 @@ def test_cli_feedback_helpful(sample_kpi_registry):
         mark_helpful=True
     )
 
-    assert result.get('feedback_recorded') == True
+    assert result.get('feedback_recorded')
 
 def test_cli_feedback_wrong(sample_kpi_registry):
     """Test marking feedback as wrong"""
@@ -87,4 +89,4 @@ def test_cli_feedback_wrong(sample_kpi_registry):
         corrected_kpi_id="KPI-045"
     )
 
-    assert result.get('feedback_recorded') == True
+    assert result.get('feedback_recorded')

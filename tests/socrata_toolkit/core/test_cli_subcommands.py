@@ -1,5 +1,6 @@
 import pytest
 
+
 def test_cli_subcommand_evaluate_exists():
     """Test evaluate subcommand is available"""
     from socrata_toolkit.training.evaluate_router import evaluate_router

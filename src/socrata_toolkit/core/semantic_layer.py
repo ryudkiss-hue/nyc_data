@@ -352,6 +352,6 @@ def create_default_registry() -> MetricsRegistry:
             sla_direction="lower_is_better",
         )
     )
-    
+
     # ... (Rest of existing default metrics)
     return registry

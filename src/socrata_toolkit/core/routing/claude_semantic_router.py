@@ -1,6 +1,8 @@
 import math
 from typing import Dict, List, Optional
+
 from .models import MatchResult
+
 
 class ClaudeSemanticRouter:
     """

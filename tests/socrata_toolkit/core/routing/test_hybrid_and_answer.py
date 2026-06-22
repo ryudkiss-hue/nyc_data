@@ -1,8 +1,10 @@
 import pytest
+
+from socrata_toolkit.core.answer_engine.prebuilt_answer_engine import PreBuiltAnswerEngine
+from socrata_toolkit.core.routing.claude_semantic_router import ClaudeSemanticRouter
 from socrata_toolkit.core.routing.hybrid_router import HybridRouter
 from socrata_toolkit.core.routing.programmatic_router import ProgrammaticRouter
-from socrata_toolkit.core.routing.claude_semantic_router import ClaudeSemanticRouter
-from socrata_toolkit.core.answer_engine.prebuilt_answer_engine import PreBuiltAnswerEngine
+
 
 def test_hybrid_router_agreement(sample_kpi_registry):
     """Test ensemble when both strategies agree"""

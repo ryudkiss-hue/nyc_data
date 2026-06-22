@@ -7,9 +7,9 @@ Manages DuckDB analytics schema for KPI materialization:
 - kpi_latest: Current status snapshot
 """
 
-from typing import Optional, List
-from datetime import datetime, date, timezone
 import logging
+from datetime import date, datetime, timezone
+from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 

@@ -1,5 +1,7 @@
 from typing import Dict, List, Tuple
+
 from ..core.routing.programmatic_router import ProgrammaticRouter
+
 
 class RouterTrainer:
     """

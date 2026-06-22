@@ -44,7 +44,7 @@ class HealthMonitor:
 
     def record_check(self, service: str, status: str, latency_ms: float | None = None):
         """Record a health check result."""
-        check = HealthCheck(service, status, datetime.utcnow(), latency_ms)
+        check = HealthCheck(service, status, datetime.now(timezone.utc), latency_ms)
         self.checks.append(check)
 
     def get_status(self, service: str) -> str | None:

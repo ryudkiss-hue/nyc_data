@@ -84,7 +84,7 @@ class KPIRegistry:
         logger.info(f"Loading KPI registry from {registry_path}")
 
         try:
-            with open(registry_path, "r") as f:
+            with open(registry_path) as f:
                 data = yaml.safe_load(f)
 
             if not data or "datasets" not in data:

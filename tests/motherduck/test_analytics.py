@@ -8,6 +8,7 @@ Tests verify:
 """
 
 import os
+
 import pytest
 
 from socrata_toolkit.motherduck.analytics import AnalyticsBuilder

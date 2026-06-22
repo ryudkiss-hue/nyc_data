@@ -17,9 +17,10 @@ Supported chart types (11):
 11. Choropleth - Geographic distribution
 """
 
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass
 import logging
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
+
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 

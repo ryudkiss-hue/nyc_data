@@ -1,11 +1,13 @@
 import pytest
+
+from socrata_toolkit.core.answer_engine.claude_expansion_engine import ClaudeExpansionEngine
+from socrata_toolkit.core.answer_engine.prebuilt_answer_engine import PreBuiltAnswerEngine
+from socrata_toolkit.core.feedback.feedback_collector import FeedbackCollector
+from socrata_toolkit.core.routing.claude_semantic_router import ClaudeSemanticRouter
 from socrata_toolkit.core.routing.hybrid_router import HybridRouter
 from socrata_toolkit.core.routing.programmatic_router import ProgrammaticRouter
-from socrata_toolkit.core.routing.claude_semantic_router import ClaudeSemanticRouter
-from socrata_toolkit.core.answer_engine.prebuilt_answer_engine import PreBuiltAnswerEngine
-from socrata_toolkit.core.answer_engine.claude_expansion_engine import ClaudeExpansionEngine
 from socrata_toolkit.core.suggestion.npl_suggester import NPLSuggester
-from socrata_toolkit.core.feedback.feedback_collector import FeedbackCollector
+
 
 @pytest.fixture
 def full_system(sample_kpi_registry, sample_research_questions):
@@ -74,13 +76,13 @@ def test_feedback_collection(full_system):
     collector.mark_helpful("test question", "KPI-089")
     feedback = collector.get_feedback()
     assert len(feedback) == 1
-    assert feedback[0]['helpful'] == True
+    assert feedback[0]['helpful']
 
     # Mark wrong
     collector.mark_wrong("another question", "KPI-045", "KPI-089")
     feedback = collector.get_feedback()
     assert len(feedback) == 2
-    assert feedback[1]['helpful'] == False
+    assert not feedback[1]['helpful']
     assert feedback[1]['corrected_kpi_id'] == "KPI-089"
 
     # Check threshold

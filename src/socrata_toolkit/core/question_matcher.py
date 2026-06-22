@@ -16,10 +16,10 @@ Architecture: Deep module
 - Locality: All matching logic centralized; strategies don't scatter
 """
 
-from dataclasses import dataclass
-from typing import List, Tuple, Optional, Dict
 import re
+from dataclasses import dataclass
 from enum import Enum
+from typing import Dict, List, Optional, Tuple
 
 
 class MatchStrategy(Enum):

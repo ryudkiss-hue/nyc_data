@@ -80,8 +80,8 @@ class ChartFactory:
     def __init__(self):
         """Initialize factory with Plotly imports."""
         try:
-            import plotly.graph_objects as go
             import plotly.express as px
+            import plotly.graph_objects as go
 
             self.go = go
             self.px = px

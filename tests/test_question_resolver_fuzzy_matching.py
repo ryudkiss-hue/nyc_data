@@ -11,18 +11,19 @@ Tests cover:
 7. Confidence scoring and strategy attribution
 """
 
-import pytest
-from pathlib import Path
 import sys
+from pathlib import Path
+
+import pytest
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from socrata_toolkit.core.question_resolver import (
-    QuestionKPIResolver,
-    MatchDetail,
-    ResearchCategory,
     AnalysisSkill,
+    MatchDetail,
+    QuestionKPIResolver,
+    ResearchCategory,
 )
 
 

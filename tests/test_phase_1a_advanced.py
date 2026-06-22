@@ -3,18 +3,18 @@ Phase 1A Advanced Tests
 Stress testing, edge cases, and error recovery for Phase 1A components.
 """
 
-import sys
 import os
-from pathlib import Path
-import time
 import random
 import string
+import sys
+import time
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / 'pipeline'))
 
 from motherduck_bridge import MotherDuckBridge
-from sql_executor import SQLExecutor
 from socrata_loader import SocrataLoader
+from sql_executor import SQLExecutor
 
 
 class TestStressCases:

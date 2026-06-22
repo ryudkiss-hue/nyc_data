@@ -12,7 +12,7 @@ def evaluate_router(
 ) -> Dict[str, Any]:
     """
     Evaluate router accuracy on variant dataset.
-    
+
     Returns: {
         'accuracy': float,
         'confusion_matrix': {kpi_id: {correct: int, wrong: int}},

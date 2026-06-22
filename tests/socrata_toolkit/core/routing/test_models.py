@@ -1,5 +1,7 @@
 import pytest
-from socrata_toolkit.core.routing.models import MatchResult, AnswerResult, ExpansionResult
+
+from socrata_toolkit.core.routing.models import AnswerResult, ExpansionResult, MatchResult
+
 
 def test_match_result_dataclass():
     result = MatchResult(

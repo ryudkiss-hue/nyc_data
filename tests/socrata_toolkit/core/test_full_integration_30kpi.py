@@ -1,7 +1,10 @@
-import pytest
 import json
 from pathlib import Path
+
+import pytest
+
 from socrata_toolkit.core.cli_nlquery import run_nl_query
+
 
 @pytest.fixture
 def full_kpi_registry():
@@ -28,7 +31,7 @@ def test_tier1_with_full_registry(full_kpi_registry):
         kpi_registry=full_kpi_registry,
         expand=False
     )
-    
+
     assert result is not None
     assert 'matched_kpi' in result
 
@@ -41,7 +44,7 @@ def test_tier2_with_full_registry(full_kpi_registry, full_research_questions):
         embeddings_cache={},
         expand=True
     )
-    
+
     assert result is not None
 
 def test_feedback_collection_with_full_registry(full_kpi_registry):
@@ -51,5 +54,5 @@ def test_feedback_collection_with_full_registry(full_kpi_registry):
         kpi_registry=full_kpi_registry,
         mark_helpful=True
     )
-    
-    assert result.get('feedback_recorded') == True
+
+    assert result.get('feedback_recorded')
