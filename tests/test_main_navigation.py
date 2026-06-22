@@ -14,21 +14,22 @@ Test coverage:
 Run: pytest tests/test_main_navigation.py -v
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
 import dash_mantine_components as dmc
+import pytest
 from dash import dcc, html
 
 from app.components.main_navigation import (
+    _render_nav_button,
+    _render_nav_footer,
+    _render_nav_header,
+    get_navigation_css,
     get_navigation_items,
+    register_navigation_callbacks,
     render_main_navigation,
     render_mobile_navigation_trigger,
     render_navigation_store,
-    _render_nav_header,
-    _render_nav_button,
-    _render_nav_footer,
-    get_navigation_css,
-    register_navigation_callbacks,
 )
 
 
@@ -457,7 +458,7 @@ class TestNavigationSnapshots:
         nav2 = render_main_navigation()
 
         # Both should be dmc.Stack
-        assert type(nav1) == type(nav2)
+        assert type(nav1) is type(nav2)
 
         # Both should have the same number of children
         assert len(nav1.children) == len(nav2.children)

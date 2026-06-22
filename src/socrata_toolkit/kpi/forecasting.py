@@ -6,14 +6,15 @@ Generates 3-month ahead forecasts with 95% confidence intervals using:
 - Automatic model selection based on historical data characteristics
 """
 
-from typing import List, Tuple, Optional
+import logging
 from dataclasses import dataclass
 from datetime import date, timedelta
-import logging
+from typing import List, Optional, Tuple
+
 import numpy as np
+from statsmodels.tsa.holtwinters import ExponentialSmoothing
 from statsmodels.tsa.seasonal import seasonal_decompose
 from statsmodels.tsa.stattools import adfuller
-from statsmodels.tsa.holtwinters import ExponentialSmoothing
 
 logger = logging.getLogger(__name__)
 

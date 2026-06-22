@@ -12,12 +12,12 @@ Architecture: Deep module with small, well-defined interface.
 v2.0: Enhanced with fuzzy matching (QuestionMatcher), BM25 weighting, and memora context.
 """
 
+import json
+import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List, Optional, Set, Dict, Tuple
-import json
 from pathlib import Path
-import logging
+from typing import Dict, List, Optional, Set, Tuple
 
 logger = logging.getLogger(__name__)
 

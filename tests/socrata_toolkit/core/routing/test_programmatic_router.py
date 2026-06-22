@@ -1,6 +1,8 @@
 import pytest
-from socrata_toolkit.core.routing.programmatic_router import ProgrammaticRouter
+
 from socrata_toolkit.core.routing.models import MatchResult
+from socrata_toolkit.core.routing.programmatic_router import ProgrammaticRouter
+
 
 def test_programmatic_router_bm25_exact_match(sample_kpi_registry):
     """Test BM25 matches exact question"""

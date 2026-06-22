@@ -1,6 +1,8 @@
 import re
 from typing import Dict, List, Optional, Tuple
+
 from .models import MatchResult
+
 
 class ProgrammaticRouter:
     """

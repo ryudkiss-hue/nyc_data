@@ -3,8 +3,8 @@ Phase 1A Integration Tests
 Comprehensive testing of MotherDuck Bridge, SQL Executor, and Socrata Loader modules.
 """
 
-import sys
 import os
+import sys
 import uuid
 from pathlib import Path
 
@@ -23,8 +23,8 @@ def cleanup_test_databases():
 cleanup_test_databases()
 
 from motherduck_bridge import MotherDuckBridge
-from sql_executor import SQLExecutor
 from socrata_loader import SocrataLoader
+from sql_executor import SQLExecutor
 
 
 class TestMotherDuckBridge:
@@ -37,7 +37,7 @@ class TestMotherDuckBridge:
         """Test local DuckDB connection (fallback)."""
         bridge = MotherDuckBridge(use_motherduck=False, db_name=f"test_local_{self.unique_id}")
         assert bridge.connection is not None, "Connection should not be None"
-        assert bridge.is_local == True, "Should be local DuckDB"
+        assert bridge.is_local, "Should be local DuckDB"
         bridge.close()
 
     def test_schema_creation(self):

@@ -14,8 +14,8 @@ Architecture: Deep module
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Set, Optional, Tuple
 from enum import Enum
+from typing import Dict, List, Optional, Set, Tuple
 
 
 class ResearchDomain(Enum):

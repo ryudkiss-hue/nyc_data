@@ -9,20 +9,24 @@ Coordinates the full pipeline:
 6. Persist to analytics schema
 """
 
-from typing import List, Dict, Optional
-from datetime import date, datetime, timezone
-from dataclasses import dataclass
 import logging
 import uuid
+from dataclasses import dataclass
+from datetime import date, datetime, timezone
+from typing import Dict, List, Optional
 
-from socrata_toolkit.kpi.registry import KPIRegistry
-from socrata_toolkit.kpi.database import (
-    initialize_analytics_schema, upsert_kpi_time_series, upsert_forecast,
-    upsert_anomaly, upsert_kpi_latest, get_kpi_time_series
-)
-from socrata_toolkit.kpi.compute import KPIComputer, create_kpi_computer
-from socrata_toolkit.kpi.forecasting import ForecastingEngine, create_forecasting_engine
 from socrata_toolkit.kpi.anomaly import AnomalyDetector, create_anomaly_detector
+from socrata_toolkit.kpi.compute import KPIComputer, create_kpi_computer
+from socrata_toolkit.kpi.database import (
+    get_kpi_time_series,
+    initialize_analytics_schema,
+    upsert_anomaly,
+    upsert_forecast,
+    upsert_kpi_latest,
+    upsert_kpi_time_series,
+)
+from socrata_toolkit.kpi.forecasting import ForecastingEngine, create_forecasting_engine
+from socrata_toolkit.kpi.registry import KPIRegistry
 
 logger = logging.getLogger(__name__)
 

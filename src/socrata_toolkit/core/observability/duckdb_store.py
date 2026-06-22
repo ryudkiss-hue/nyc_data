@@ -1,7 +1,9 @@
-import duckdb
-from typing import Dict, Optional, List
+from datetime import UTC, datetime
 from pathlib import Path
-from datetime import datetime
+from typing import Dict, List, Optional
+
+import duckdb
+
 
 class DuckDBObservabilityStore:
     """
@@ -85,7 +87,7 @@ class DuckDBObservabilityStore:
             ensemble_status,
             latency_ms,
             router_source,
-            datetime.utcnow().isoformat()
+            datetime.now(UTC).isoformat()
         ])
 
     def record_feedback(
@@ -107,7 +109,7 @@ class DuckDBObservabilityStore:
             helpful,
             corrected_kpi_id,
             feedback_text,
-            datetime.utcnow().isoformat()
+            datetime.now(UTC).isoformat()
         ])
 
     def record_weight_update(
@@ -125,7 +127,7 @@ class DuckDBObservabilityStore:
             VALUES (?, ?, ?, ?, ?, ?)
         """, [
             weight_id,
-            datetime.utcnow().isoformat(),
+            datetime.now(UTC).isoformat(),
             strategy,
             weight,
             source,

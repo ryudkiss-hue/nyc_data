@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, TypedDict
 
 import pandas as pd
@@ -459,7 +459,7 @@ def generate_report_node(state: ComplaintResponseState) -> ComplaintResponseStat
     logger.info("Generating final report...")
 
     report = {
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "total_complaints_analyzed": state.get("total_complaints", 0),
         "summary": {
             "classifications": state.get("classification_summary", {}),
@@ -528,7 +528,7 @@ def _extract_complaint_metrics(
     # Days open
     days_open = 0.0
     if created_date:
-        days_open = (datetime.utcnow() - created_date).total_seconds() / 86400
+        days_open = (datetime.now(UTC) - created_date).total_seconds() / 86400
 
     # Status flags
     is_resolved = complaint_row.get("status", "").lower() in ["closed", "resolved"]

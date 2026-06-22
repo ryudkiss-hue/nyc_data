@@ -29,6 +29,7 @@ MODEL_DEFAULT = "gpt-3.5-turbo"
 
 from .api import create_app
 from .client import SocrataClient, SocrataConfig
+
 # Config imports handled separately per module
 from .db_helpers import build_fts_index_sql, ensure_fts_index
 from .duckdb_store import DuckDBManager, DuckDBRepository, get_bundle_dir

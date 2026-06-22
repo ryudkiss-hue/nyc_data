@@ -11,9 +11,10 @@ Architecture: Deep module with small, well-defined interface.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Any, Optional
 from enum import Enum
-from .question_resolver import AnalysisSkill, QuestionResolution, DatasetReference
+from typing import Any, Dict, List, Optional
+
+from .question_resolver import AnalysisSkill, DatasetReference, QuestionResolution
 
 
 @dataclass

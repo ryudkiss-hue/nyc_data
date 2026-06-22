@@ -25,11 +25,12 @@ Usage:
 """
 
 import json
-import yaml
-import urllib.request
 import urllib.error
+import urllib.request
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional
+
+import yaml
 
 
 class DatasetIntegrationManager:
@@ -195,7 +196,7 @@ class DatasetIntegrationManager:
 
                 updated += 1
             else:
-                print(f"[FAIL]")
+                print("[FAIL]")
                 errors += 1
 
         # Save updated registry

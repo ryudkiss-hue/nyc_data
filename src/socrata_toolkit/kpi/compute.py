@@ -7,13 +7,14 @@ Executes KPI definitions and computes:
 - Dimension breakdowns
 """
 
-from typing import Optional, List, Dict
-from datetime import date, datetime, timezone
-from dataclasses import dataclass
 import logging
+from dataclasses import dataclass
+from datetime import date, datetime, timezone
+from typing import Dict, List, Optional
+
 import numpy as np
 
-from socrata_toolkit.kpi.models import KPIDefinition, Trend, KPIValue
+from socrata_toolkit.kpi.models import KPIDefinition, KPIValue, Trend
 
 logger = logging.getLogger(__name__)
 

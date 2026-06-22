@@ -35,10 +35,10 @@ Usage:
 
 from __future__ import annotations
 
-from .chart_factory import ChartFactory, ChartSpec
 from .callback_factory import CallbackFactory
-from .kpi_engine import KPIEngine, KPIResult
+from .chart_factory import ChartFactory, ChartSpec
 from .dataset_loader import DatasetLoader, DatasetResult
+from .kpi_engine import KPIEngine, KPIResult
 from .schema_registry import SchemaRegistry, ValidationResult
 
 __all__ = [

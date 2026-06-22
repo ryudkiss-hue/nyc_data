@@ -1,6 +1,7 @@
-from typing import List, Dict, Optional
-from dataclasses import dataclass, asdict
-from datetime import datetime
+from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
+from typing import Dict, List, Optional
+
 
 @dataclass
 class FeedbackRecord:
@@ -9,6 +10,7 @@ class FeedbackRecord:
     matched_kpi_id: str
     helpful: bool
     corrected_kpi_id: Optional[str] = None
+
 
 class FeedbackCollector:
     """
@@ -27,7 +29,7 @@ class FeedbackCollector:
     def mark_helpful(self, question: str, matched_kpi_id: str):
         """Mark a routing result as helpful"""
         record = FeedbackRecord(
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
             question=question,
             matched_kpi_id=matched_kpi_id,
             helpful=True
@@ -37,7 +39,7 @@ class FeedbackCollector:
     def mark_wrong(self, question: str, matched_kpi_id: str, corrected_kpi_id: str):
         """Mark a routing result as wrong and provide correction"""
         record = FeedbackRecord(
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
             question=question,
             matched_kpi_id=matched_kpi_id,
             helpful=False,
