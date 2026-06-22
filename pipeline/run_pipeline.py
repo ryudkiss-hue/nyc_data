@@ -344,7 +344,7 @@ class MotherDuckPipeline:
             staging_file = 'pipeline/sql/02_staging_schema.sql'
 
             if Path(staging_file).exists():
-                success, message = self.sql_executor.execute_stage(staging_file)
+                success, message = self.sql_executor.execute_stage(Path(staging_file).name)
                 if not success:
                     logger.error(f"Staging failed: {message}")
                     self._fail_stage(f"Staging SQL failed: {message}")
@@ -396,7 +396,7 @@ class MotherDuckPipeline:
             analytics_file = 'pipeline/sql/03_analytics_schemas.sql'
 
             if Path(analytics_file).exists():
-                success, message = self.sql_executor.execute_stage(analytics_file)
+                success, message = self.sql_executor.execute_stage(Path(analytics_file).name)
                 if not success:
                     logger.error(f"Analytics schemas failed: {message}")
                     self._fail_stage(f"Analytics SQL failed: {message}")
@@ -463,7 +463,7 @@ class MotherDuckPipeline:
                               error=f"KPI SQL file missing: {kpi_file}")
                 return False
 
-            success, message = self.sql_executor.execute_stage(kpi_file)
+            success, message = self.sql_executor.execute_stage(Path(kpi_file).name)
             if not success:
                 logger.error(f"KPI materialization failed: {message}")
                 self._fail_stage(f"KPI SQL execution failed: {message}")
@@ -478,7 +478,7 @@ class MotherDuckPipeline:
 
             # Verify KPI table was created
             try:
-                kpi_count = self.bridge.get_table_count('serving', 'kpi_borough_results')
+                kpi_count = self.bridge.get_table_count('serving', 'kpi_summary')
                 if kpi_count == 0:
                     logger.error("CRITICAL: KPI table created but contains 0 rows")
                     self._fail_stage("KPI table is empty (0 rows)")
@@ -507,11 +507,7 @@ class MotherDuckPipeline:
             self._complete_stage(rows_processed=kpi_count, duration=load_time)
 
             self.log_stage('materialize_kpis', 'success',
-                          total_kpi_records=255,
                           actual_kpi_records=kpi_count,
-                          kpis_per_borough=51,
-                          boroughs=boroughs,
-                          quality_scorecards=57,
                           load_time_seconds=round(load_time, 2))
             return True
 
@@ -536,17 +532,17 @@ class MotherDuckPipeline:
             logger.info("Running 4 verification gates...")
 
             gates = {
-                'data_load': 'All 57 datasets loaded, ≥10M total rows, no nulls in PKs',
-                'schema': 'Staging has all columns, proper types, no data loss',
-                'joins': 'Cross-dataset relationships validated',
-                'kpi': '255 KPI records + 57 scorecards computed, no silent failures'
+                'gate_1_data_load': 'Core raw tables (inspection, violations, ramp_progress) hold real rows',
+                'gate_2_staging': 'Staging tables built from raw for core datasets',
+                'gate_3_analytics': 'Analytics views return non-zero results',
+                'gate_4_kpis': 'KPIs materialized (>=10) with no null values'
             }
 
             # Execute gate verification SQL if it exists
             gates_file = 'pipeline/sql/05_verification_gates.sql'
 
             if Path(gates_file).exists():
-                success, message = self.sql_executor.execute_stage(gates_file)
+                success, message = self.sql_executor.execute_stage(Path(gates_file).name)
                 if not success:
                     logger.error(f"Gate verification failed: {message}")
                     self._fail_stage(f"Gate verification SQL failed: {message}")
@@ -563,9 +559,27 @@ class MotherDuckPipeline:
                 logger.warning(f"Gate verification SQL file not found: {gates_file}")
                 logger.info("Skipping SQL gate verification (no verification SQL available)")
 
+            # Enforce gate results — fail the stage if ANY gate reports FAIL.
+            # This is the no-silent-failures guarantee: gates must actually pass,
+            # not merely execute.
+            try:
+                failed = self.bridge.connection.execute(
+                    "SELECT gate_name FROM verification.gate_results WHERE status = 'FAIL'"
+                ).fetchall()
+                if failed:
+                    names = ', '.join(f[0] for f in failed)
+                    logger.error(f"Verification gates FAILED: {names}")
+                    self._fail_stage(f"Gates failed: {names}")
+                    self.log_stage('verification_gates', 'failed', failed_gates=names)
+                    return False
+            except Exception as e:
+                logger.error(f"Could not evaluate gate_results: {e}")
+                self._fail_stage(f"Gate evaluation error: {e}")
+                return False
+
             # Log gate checks
             for gate_name, gate_check in gates.items():
-                logger.info(f"  [{gate_name}] {gate_check}")
+                logger.info(f"  [{gate_name}] PASS — {gate_check}")
 
             load_time = time.time() - start_time
             self._complete_stage(rows_processed=0, duration=load_time)

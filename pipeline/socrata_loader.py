@@ -281,9 +281,12 @@ class SocrataLoader:
             # Create schema
             self.bridge.create_schema(schema_name)
 
-            # Register dataframe and create table
+            # Register dataframe and create table.
+            # CREATE OR REPLACE (not IF NOT EXISTS): a re-run must overwrite any
+            # prior table, otherwise stale/broken data is silently retained and
+            # the freshly fetched rows are discarded.
             self.bridge.connection.register(f"{dataset_name}_temp", combined_df)
-            sql = f"CREATE TABLE IF NOT EXISTS {schema_name}.{dataset_name} AS SELECT * FROM {dataset_name}_temp"
+            sql = f"CREATE OR REPLACE TABLE {schema_name}.{dataset_name} AS SELECT * FROM {dataset_name}_temp"
             result = self.bridge.execute_sql(sql)
 
             if not result.success:

@@ -1,215 +1,76 @@
 -- ============================================================================
--- Phase 1B: Analytics Schemas - Domain Models
+-- Analytics Schemas - REAL domain views (auto-generated 2026-06-22)
 -- ============================================================================
--- Purpose: Build 5 domain schemas with views and relationships
--- Domains: sim_core, accessibility, coordination, overlays, extended
+-- Computed from staging tables using ACTUAL Socrata columns (verified live).
+-- Replaces prior version that referenced invented columns (inspection_id,
+-- remediation_status, violation_id) which do not exist in the real data.
+-- ============================================================================
 
 CREATE SCHEMA IF NOT EXISTS sim_core;
 CREATE SCHEMA IF NOT EXISTS accessibility;
 CREATE SCHEMA IF NOT EXISTS coordination;
-CREATE SCHEMA IF NOT EXISTS overlays;
-CREATE SCHEMA IF NOT EXISTS extended;
 
--- SIM Core Domain Views
--- ============================================================================
-
-CREATE OR REPLACE VIEW sim_core.inspections_summary AS
+-- SIM Core: Inspection summary -----------------------------------------------
+CREATE OR REPLACE VIEW sim_core.inspection_summary AS
 SELECT
-  COUNT(DISTINCT i.inspection_id) as total_inspections,
-  COUNT(DISTINCT i.borough) as boroughs_covered,
-  MIN(i.inspection_date) as earliest_inspection,
-  MAX(i.inspection_date) as latest_inspection
-FROM staging.inspection i;
+  COUNT(*)                                                           AS total_inspections,
+  COUNT(*) FILTER (WHERE noviolationfound = 'Yes')                   AS no_violation_found,
+  ROUND(100.0 * COUNT(*) FILTER (WHERE noviolationfound = 'Yes') / NULLIF(COUNT(*),0), 1) AS pct_no_violation,
+  COUNT(*) FILTER (WHERE is_311_inspection = 'Yes')                  AS inspections_311,
+  ROUND(100.0 * COUNT(*) FILTER (WHERE is_311_inspection = 'Yes') / NULLIF(COUNT(*),0), 1) AS pct_311_driven
+FROM staging.inspection;
 
-CREATE OR REPLACE VIEW sim_core.violations_by_status AS
+-- SIM Core: Violation summary ------------------------------------------------
+CREATE OR REPLACE VIEW sim_core.violation_summary AS
 SELECT
-  remediation_status,
-  COUNT(*) as count,
-  ROUND(100.0 * COUNT(*) / SUM(COUNT(*)) OVER (), 2) as percentage
-FROM staging.violations
-GROUP BY remediation_status;
+  COUNT(*)                                                           AS total_violations,
+  COUNT(*) FILTER (WHERE vdismissdate IS NOT NULL AND vdismissdate <> '') AS resolved_violations,
+  COUNT(*) FILTER (WHERE vdismissdate IS NULL OR vdismissdate = '')  AS open_violations,
+  ROUND(100.0 * COUNT(*) FILTER (WHERE vdismissdate IS NOT NULL AND vdismissdate <> '') / NULLIF(COUNT(*),0), 1) AS resolution_rate_pct,
+  ROUND(SUM(TRY_CAST(sq_feet AS DOUBLE)))                            AS total_defect_sqft
+FROM staging.violations;
 
-CREATE OR REPLACE VIEW sim_core.inspection_violations_relationship AS
+-- SIM Core: Violation distress breakdown (x-marked flags) ---------------------
+CREATE OR REPLACE VIEW sim_core.violation_distress AS
+SELECT 'trip_hazard'     AS distress_type, COUNT(*) FILTER (WHERE lower(trip_haz)  = 'x') AS violation_count FROM staging.violations
+UNION ALL SELECT 'sidewalk_missing', COUNT(*) FILTER (WHERE lower(sw_missing) = 'x') FROM staging.violations
+UNION ALL SELECT 'undermined',       COUNT(*) FILTER (WHERE lower(undermined) = 'x') FROM staging.violations
+UNION ALL SELECT 'slope',            COUNT(*) FILTER (WHERE lower(slope)      = 'x') FROM staging.violations
+UNION ALL SELECT 'patchwork',        COUNT(*) FILTER (WHERE lower(patchwork)  = 'x') FROM staging.violations
+UNION ALL SELECT 'broken',           COUNT(*) FILTER (WHERE lower(broken)     = 'x') FROM staging.violations
+UNION ALL SELECT 'hardware',         COUNT(*) FILTER (WHERE lower(hardware)   = 'x') FROM staging.violations;
+
+-- SIM Core: Dismissal (repair-completion) outcomes ---------------------------
+CREATE OR REPLACE VIEW sim_core.dismissal_outcomes AS
 SELECT
-  i.inspection_id,
-  COUNT(DISTINCT v.violation_id) as violation_count,
-  STRING_AGG(v.remediation_status, ', ' ORDER BY v.remediation_status) as statuses
-FROM staging.inspection i
-LEFT JOIN staging.violations v ON i.inspection_id = v.inspection_id
-GROUP BY i.inspection_id;
+  COUNT(*)                                                                          AS total_dismissals,
+  COUNT(*) FILTER (WHERE upper(pass_fail) LIKE 'PASS%')                             AS passed,
+  COUNT(*) FILTER (WHERE upper(pass_fail) LIKE 'FAIL%')                             AS failed,
+  ROUND(100.0 * COUNT(*) FILTER (WHERE upper(pass_fail) LIKE 'PASS%')
+        / NULLIF(COUNT(*) FILTER (WHERE pass_fail IS NOT NULL),0), 1)              AS pass_rate_pct
+FROM staging.dismissals;
 
--- Accessibility Domain Views
--- ============================================================================
+CREATE OR REPLACE VIEW sim_core.dismissals_by_borough AS
+SELECT UPPER(TRIM(borough)) AS borough, COUNT(*) AS dismissals,
+       ROUND(100.0 * COUNT(*) FILTER (WHERE upper(pass_fail) LIKE 'PASS%') / NULLIF(COUNT(*),0),1) AS pass_rate_pct
+FROM staging.dismissals WHERE borough IS NOT NULL GROUP BY 1 ORDER BY 2 DESC;
 
-CREATE OR REPLACE VIEW accessibility.ramp_completion_summary AS
+-- Accessibility: Ramp program ------------------------------------------------
+CREATE OR REPLACE VIEW accessibility.ramps_by_borough AS
+SELECT UPPER(TRIM(borough)) AS borough, COUNT(*) AS ramps_tracked
+FROM staging.ramp_progress WHERE borough IS NOT NULL GROUP BY 1 ORDER BY 2 DESC;
+
+CREATE OR REPLACE VIEW accessibility.ramp_program_summary AS
 SELECT
-  COUNT(DISTINCT p.ramp_id) as total_ramps,
-  COUNT(CASE WHEN p.completion_status = 'completed' THEN 1 END) as completed_ramps,
-  ROUND(100.0 * COUNT(CASE WHEN p.completion_status = 'completed' THEN 1 END) / 
-        NULLIF(COUNT(DISTINCT p.ramp_id), 0), 2) as completion_rate
-FROM staging.ramp_progress p;
+  (SELECT COUNT(*) FROM staging.ramp_progress)  AS total_ramps_tracked,
+  (SELECT COUNT(*) FROM staging.ramp_complaints) AS total_ramp_complaints,
+  (SELECT COUNT(*) FROM staging.ramp_locations)  AS total_ramp_locations;
 
-CREATE OR REPLACE VIEW accessibility.ramp_issues_analysis AS
+-- Coordination: Capital construction outcomes -------------------------------
+CREATE OR REPLACE VIEW coordination.construction_summary AS
 SELECT
-  p.ramp_id,
-  p.status as current_status,
-  COUNT(c.complaint_id) as complaint_count
-FROM staging.ramp_progress p
-LEFT JOIN staging.ramp_complaints c ON p.ramp_id = c.ramp_id
-GROUP BY p.ramp_id, p.status;
-
--- Coordination Domain Views
--- ============================================================================
-
-CREATE OR REPLACE VIEW coordination.permit_overview AS
-SELECT
-  COUNT(DISTINCT permit_id) as total_permits,
-  COUNT(DISTINCT CASE WHEN status = 'active' THEN permit_id END) as active_permits,
-  SUM(CASE WHEN cost IS NOT NULL THEN cost ELSE 0 END) as total_cost
-FROM staging.street_permits;
-
-CREATE OR REPLACE VIEW coordination.construction_activity_timeline AS
-SELECT
-  DATE_TRUNC('month', inspection_date) as month,
-  COUNT(DISTINCT inspection_id) as monthly_inspections
-FROM staging.street_construction_inspections
-WHERE inspection_date IS NOT NULL
-GROUP BY month
-ORDER BY month DESC;
-
--- Overlays Domain Views
--- ============================================================================
-
-CREATE OR REPLACE VIEW overlays.street_coverage AS
-SELECT
-  COUNT(DISTINCT street_name) as streets_with_data,
-  COUNT(*) as total_segments,
-  AVG(segment_length) as avg_segment_length
-FROM staging.sidewalk_planimetric
-WHERE street_name IS NOT NULL;
-
-CREATE OR REPLACE VIEW overlays.demand_vs_coverage AS
-SELECT
-  sp.street_name,
-  COUNT(sp.segment_id) as coverage_segments,
-  SUM(pd.pedestrian_volume) as total_demand
-FROM staging.sidewalk_planimetric sp
-LEFT JOIN staging.pedestrian_demand pd ON sp.segment_id = pd.segment_id
-GROUP BY sp.street_name;
-
--- Extended Domain Views
--- ============================================================================
-
-CREATE OR REPLACE VIEW extended.borough_statistics AS
-SELECT
-  borough,
-  COUNT(DISTINCT inspection_id) as total_inspections,
-  COUNT(DISTINCT CASE WHEN violation_count > 0 THEN inspection_id END) as inspections_with_violations
-FROM (
-  SELECT
-    i.borough,
-    i.inspection_id,
-    COUNT(v.violation_id) as violation_count
-  FROM staging.inspection i
-  LEFT JOIN staging.violations v ON i.inspection_id = v.inspection_id
-  GROUP BY i.borough, i.inspection_id
-)
-GROUP BY borough;
-
-CREATE OR REPLACE VIEW extended.property_insights AS
-SELECT
-  COUNT(DISTINCT bblid) as total_properties,
-  COUNT(CASE WHEN assessed_value > 0 THEN bblid END) as assessed_properties,
-  AVG(assessed_value) as avg_assessed_value,
-  MAX(assessed_value) as max_assessed_value
-FROM staging.lot_info
-WHERE assessed_value IS NOT NULL;
-
--- Borough Summary Views (Phase 3B-4)
--- ============================================================================
-
-CREATE OR REPLACE VIEW extended.manhattan_summary AS
-SELECT
-  'MANHATTAN' as borough,
-  COUNT(DISTINCT i.inspection_id) as total_inspections,
-  COUNT(DISTINCT CASE WHEN v.violation_id IS NOT NULL THEN i.inspection_id END) as inspections_with_violations,
-  COUNT(DISTINCT v.violation_id) as total_violations,
-  COUNT(DISTINCT CASE WHEN rp.ramp_id IS NOT NULL THEN rp.ramp_id END) as total_ramps,
-  COUNT(DISTINCT CASE WHEN rp.completion_status = 'completed' THEN rp.ramp_id END) as completed_ramps,
-  ROUND(100.0 * COUNT(DISTINCT CASE WHEN rp.completion_status = 'completed' THEN rp.ramp_id END) /
-        NULLIF(COUNT(DISTINCT CASE WHEN rp.ramp_id IS NOT NULL THEN rp.ramp_id END), 0), 2) as ramp_completion_rate
-FROM staging.inspection i
-LEFT JOIN staging.violations v ON i.inspection_id = v.inspection_id
-LEFT JOIN staging.ramp_progress rp ON UPPER(rp.borough) = 'MANHATTAN'
-WHERE UPPER(i.borough) = 'MANHATTAN'
-GROUP BY borough;
-
-CREATE OR REPLACE VIEW extended.brooklyn_summary AS
-SELECT
-  'BROOKLYN' as borough,
-  COUNT(DISTINCT i.inspection_id) as total_inspections,
-  COUNT(DISTINCT CASE WHEN v.violation_id IS NOT NULL THEN i.inspection_id END) as inspections_with_violations,
-  COUNT(DISTINCT v.violation_id) as total_violations,
-  COUNT(DISTINCT CASE WHEN rp.ramp_id IS NOT NULL THEN rp.ramp_id END) as total_ramps,
-  COUNT(DISTINCT CASE WHEN rp.completion_status = 'completed' THEN rp.ramp_id END) as completed_ramps,
-  ROUND(100.0 * COUNT(DISTINCT CASE WHEN rp.completion_status = 'completed' THEN rp.ramp_id END) /
-        NULLIF(COUNT(DISTINCT CASE WHEN rp.ramp_id IS NOT NULL THEN rp.ramp_id END), 0), 2) as ramp_completion_rate
-FROM staging.inspection i
-LEFT JOIN staging.violations v ON i.inspection_id = v.inspection_id
-LEFT JOIN staging.ramp_progress rp ON UPPER(rp.borough) = 'BROOKLYN'
-WHERE UPPER(i.borough) = 'BROOKLYN'
-GROUP BY borough;
-
-CREATE OR REPLACE VIEW extended.queens_summary AS
-SELECT
-  'QUEENS' as borough,
-  COUNT(DISTINCT i.inspection_id) as total_inspections,
-  COUNT(DISTINCT CASE WHEN v.violation_id IS NOT NULL THEN i.inspection_id END) as inspections_with_violations,
-  COUNT(DISTINCT v.violation_id) as total_violations,
-  COUNT(DISTINCT CASE WHEN rp.ramp_id IS NOT NULL THEN rp.ramp_id END) as total_ramps,
-  COUNT(DISTINCT CASE WHEN rp.completion_status = 'completed' THEN rp.ramp_id END) as completed_ramps,
-  ROUND(100.0 * COUNT(DISTINCT CASE WHEN rp.completion_status = 'completed' THEN rp.ramp_id END) /
-        NULLIF(COUNT(DISTINCT CASE WHEN rp.ramp_id IS NOT NULL THEN rp.ramp_id END), 0), 2) as ramp_completion_rate
-FROM staging.inspection i
-LEFT JOIN staging.violations v ON i.inspection_id = v.inspection_id
-LEFT JOIN staging.ramp_progress rp ON UPPER(rp.borough) = 'QUEENS'
-WHERE UPPER(i.borough) = 'QUEENS'
-GROUP BY borough;
-
-CREATE OR REPLACE VIEW extended.bronx_summary AS
-SELECT
-  'BRONX' as borough,
-  COUNT(DISTINCT i.inspection_id) as total_inspections,
-  COUNT(DISTINCT CASE WHEN v.violation_id IS NOT NULL THEN i.inspection_id END) as inspections_with_violations,
-  COUNT(DISTINCT v.violation_id) as total_violations,
-  COUNT(DISTINCT CASE WHEN rp.ramp_id IS NOT NULL THEN rp.ramp_id END) as total_ramps,
-  COUNT(DISTINCT CASE WHEN rp.completion_status = 'completed' THEN rp.ramp_id END) as completed_ramps,
-  ROUND(100.0 * COUNT(DISTINCT CASE WHEN rp.completion_status = 'completed' THEN rp.ramp_id END) /
-        NULLIF(COUNT(DISTINCT CASE WHEN rp.ramp_id IS NOT NULL THEN rp.ramp_id END), 0), 2) as ramp_completion_rate
-FROM staging.inspection i
-LEFT JOIN staging.violations v ON i.inspection_id = v.inspection_id
-LEFT JOIN staging.ramp_progress rp ON UPPER(rp.borough) = 'BRONX'
-WHERE UPPER(i.borough) = 'BRONX'
-GROUP BY borough;
-
-CREATE OR REPLACE VIEW extended.staten_island_summary AS
-SELECT
-  'STATEN_ISLAND' as borough,
-  COUNT(DISTINCT i.inspection_id) as total_inspections,
-  COUNT(DISTINCT CASE WHEN v.violation_id IS NOT NULL THEN i.inspection_id END) as inspections_with_violations,
-  COUNT(DISTINCT v.violation_id) as total_violations,
-  COUNT(DISTINCT CASE WHEN rp.ramp_id IS NOT NULL THEN rp.ramp_id END) as total_ramps,
-  COUNT(DISTINCT CASE WHEN rp.completion_status = 'completed' THEN rp.ramp_id END) as completed_ramps,
-  ROUND(100.0 * COUNT(DISTINCT CASE WHEN rp.completion_status = 'completed' THEN rp.ramp_id END) /
-        NULLIF(COUNT(DISTINCT CASE WHEN rp.ramp_id IS NOT NULL THEN rp.ramp_id END), 0), 2) as ramp_completion_rate
-FROM staging.inspection i
-LEFT JOIN staging.violations v ON i.inspection_id = v.inspection_id
-LEFT JOIN staging.ramp_progress rp ON UPPER(rp.borough) = 'STATEN_ISLAND'
-WHERE UPPER(i.borough) = 'STATEN_ISLAND'
-GROUP BY borough;
-
--- Summary: 5 domain schemas created with 15+ views (including 5 borough summaries)
--- Domains: sim_core, accessibility, coordination, overlays, extended
--- Views support: inspections, violations, ramps, permits, construction, coverage, borough analytics
--- Exit code: 0 (success)
-
+  COUNT(*)                                                  AS built_records,
+  ROUND(SUM(TRY_CAST(totalcosttoconstruct AS DOUBLE)))      AS total_construct_cost,
+  ROUND(SUM(TRY_CAST(totalsqftsidewalkrepaired AS DOUBLE))) AS total_sqft_repaired,
+  ROUND(SUM(TRY_CAST(totallfcurbrepaired AS DOUBLE)))       AS total_lf_curb_repaired
+FROM staging.built;
