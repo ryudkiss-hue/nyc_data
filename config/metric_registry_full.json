@@ -1,7 +1,7 @@
 {
-  "KPI-089": {
-    "kpi_id": "KPI-089",
-    "kpi_name": "Violations Fixed by Borough & Month",
+  "METRIC-089": {
+    "metric_id": "METRIC-089",
+    "metric_name": "Violations Fixed by Borough & Month",
     "abbreviation": "VFB",
     "summary": "Violations Fixed by Borough & Month - tracking metrics",
     "category": "Operations",
@@ -20,13 +20,13 @@
     "visualization_metadata": [
       "VFB_chart"
     ],
-    "related_kpis": [],
+    "related_metrics": [],
     "last_updated": "2026-06-20",
     "quality_score": 0.85
   },
-  "KPI-045": {
-    "kpi_id": "KPI-045",
-    "kpi_name": "Structural Damage by Borough & Cause",
+  "METRIC-045": {
+    "metric_id": "METRIC-045",
+    "metric_name": "Structural Damage by Borough & Cause",
     "abbreviation": "SDB",
     "summary": "Structural Damage by Borough & Cause - tracking metrics",
     "category": "Operations",
@@ -45,13 +45,13 @@
     "visualization_metadata": [
       "SDB_chart"
     ],
-    "related_kpis": [],
+    "related_metrics": [],
     "last_updated": "2026-06-20",
     "quality_score": 0.85
   },
-  "KPI-067": {
-    "kpi_id": "KPI-067",
-    "kpi_name": "Contractor Performance Metrics",
+  "METRIC-067": {
+    "metric_id": "METRIC-067",
+    "metric_name": "Contractor Performance Metrics",
     "abbreviation": "CPM",
     "summary": "Contractor Performance Metrics - tracking metrics",
     "category": "Operations",
@@ -70,13 +70,13 @@
     "visualization_metadata": [
       "CPM_chart"
     ],
-    "related_kpis": [],
+    "related_metrics": [],
     "last_updated": "2026-06-20",
     "quality_score": 0.85
   },
-  "KPI-123": {
-    "kpi_id": "KPI-123",
-    "kpi_name": "Violations Seasonal Decomposition",
+  "METRIC-123": {
+    "metric_id": "METRIC-123",
+    "metric_name": "Violations Seasonal Decomposition",
     "abbreviation": "VSD",
     "summary": "Violations Seasonal Decomposition - tracking metrics",
     "category": "Operations",
@@ -95,13 +95,13 @@
     "visualization_metadata": [
       "VSD_chart"
     ],
-    "related_kpis": [],
+    "related_metrics": [],
     "last_updated": "2026-06-20",
     "quality_score": 0.85
   },
-  "KPI-156": {
-    "kpi_id": "KPI-156",
-    "kpi_name": "Ramp Completion Rate by Borough",
+  "METRIC-156": {
+    "metric_id": "METRIC-156",
+    "metric_name": "Ramp Completion Rate by Borough",
     "abbreviation": "RCR",
     "summary": "Ramp Completion Rate by Borough - tracking metrics",
     "category": "Operations",
@@ -120,13 +120,13 @@
     "visualization_metadata": [
       "RCR_chart"
     ],
-    "related_kpis": [],
+    "related_metrics": [],
     "last_updated": "2026-06-20",
     "quality_score": 0.85
   },
-  "KPI-178": {
-    "kpi_id": "KPI-178",
-    "kpi_name": "311 Complaints Response Time",
+  "METRIC-178": {
+    "metric_id": "METRIC-178",
+    "metric_name": "311 Complaints Response Time",
     "abbreviation": "CRT",
     "summary": "311 Complaints Response Time - tracking metrics",
     "category": "Operations",
@@ -145,13 +145,13 @@
     "visualization_metadata": [
       "CRT_chart"
     ],
-    "related_kpis": [],
+    "related_metrics": [],
     "last_updated": "2026-06-20",
     "quality_score": 0.85
   },
-  "KPI-201": {
-    "kpi_id": "KPI-201",
-    "kpi_name": "Sidewalk Condition Index (SCI)",
+  "METRIC-201": {
+    "metric_id": "METRIC-201",
+    "metric_name": "Sidewalk Condition Index (SCI)",
     "abbreviation": "SCI",
     "summary": "Sidewalk Condition Index (SCI) - tracking metrics",
     "category": "Operations",
@@ -170,13 +170,13 @@
     "visualization_metadata": [
       "SCI_chart"
     ],
-    "related_kpis": [],
+    "related_metrics": [],
     "last_updated": "2026-06-20",
     "quality_score": 0.85
   },
-  "KPI-223": {
-    "kpi_id": "KPI-223",
-    "kpi_name": "Permit Processing Timeline",
+  "METRIC-223": {
+    "metric_id": "METRIC-223",
+    "metric_name": "Permit Processing Timeline",
     "abbreviation": "PPT",
     "summary": "Permit Processing Timeline - tracking metrics",
     "category": "Operations",
@@ -195,13 +195,13 @@
     "visualization_metadata": [
       "PPT_chart"
     ],
-    "related_kpis": [],
+    "related_metrics": [],
     "last_updated": "2026-06-20",
     "quality_score": 0.85
   },
-  "KPI-245": {
-    "kpi_id": "KPI-245",
-    "kpi_name": "Accessibility Compliance Rate",
+  "METRIC-245": {
+    "metric_id": "METRIC-245",
+    "metric_name": "Accessibility Compliance Rate",
     "abbreviation": "ACR",
     "summary": "Accessibility Compliance Rate - tracking metrics",
     "category": "Operations",
@@ -220,13 +220,13 @@
     "visualization_metadata": [
       "ACR_chart"
     ],
-    "related_kpis": [],
+    "related_metrics": [],
     "last_updated": "2026-06-20",
     "quality_score": 0.85
   },
-  "KPI-267": {
-    "kpi_id": "KPI-267",
-    "kpi_name": "Construction Cost Variance",
+  "METRIC-267": {
+    "metric_id": "METRIC-267",
+    "metric_name": "Construction Cost Variance",
     "abbreviation": "CCV",
     "summary": "Construction Cost Variance - tracking metrics",
     "category": "Operations",
@@ -245,13 +245,13 @@
     "visualization_metadata": [
       "CCV_chart"
     ],
-    "related_kpis": [],
+    "related_metrics": [],
     "last_updated": "2026-06-20",
     "quality_score": 0.85
   },
-  "KPI-289": {
-    "kpi_id": "KPI-289",
-    "kpi_name": "Inspection Completion Rate",
+  "METRIC-289": {
+    "metric_id": "METRIC-289",
+    "metric_name": "Inspection Completion Rate",
     "abbreviation": "ICR",
     "summary": "Inspection Completion Rate - tracking metrics",
     "category": "Operations",
@@ -270,13 +270,13 @@
     "visualization_metadata": [
       "ICR_chart"
     ],
-    "related_kpis": [],
+    "related_metrics": [],
     "last_updated": "2026-06-20",
     "quality_score": 0.85
   },
-  "KPI-301": {
-    "kpi_id": "KPI-301",
-    "kpi_name": "Budget Allocation Efficiency",
+  "METRIC-301": {
+    "metric_id": "METRIC-301",
+    "metric_name": "Budget Allocation Efficiency",
     "abbreviation": "BAE",
     "summary": "Budget Allocation Efficiency - tracking metrics",
     "category": "Operations",
@@ -295,13 +295,13 @@
     "visualization_metadata": [
       "BAE_chart"
     ],
-    "related_kpis": [],
+    "related_metrics": [],
     "last_updated": "2026-06-20",
     "quality_score": 0.85
   },
-  "KPI-323": {
-    "kpi_id": "KPI-323",
-    "kpi_name": "Asset Deterioration Rate",
+  "METRIC-323": {
+    "metric_id": "METRIC-323",
+    "metric_name": "Asset Deterioration Rate",
     "abbreviation": "ADR",
     "summary": "Asset Deterioration Rate - tracking metrics",
     "category": "Operations",
@@ -320,13 +320,13 @@
     "visualization_metadata": [
       "ADR_chart"
     ],
-    "related_kpis": [],
+    "related_metrics": [],
     "last_updated": "2026-06-20",
     "quality_score": 0.85
   },
-  "KPI-345": {
-    "kpi_id": "KPI-345",
-    "kpi_name": "Contractor Compliance Rate",
+  "METRIC-345": {
+    "metric_id": "METRIC-345",
+    "metric_name": "Contractor Compliance Rate",
     "abbreviation": "CCR",
     "summary": "Contractor Compliance Rate - tracking metrics",
     "category": "Operations",
@@ -345,13 +345,13 @@
     "visualization_metadata": [
       "CCR_chart"
     ],
-    "related_kpis": [],
+    "related_metrics": [],
     "last_updated": "2026-06-20",
     "quality_score": 0.85
   },
-  "KPI-367": {
-    "kpi_id": "KPI-367",
-    "kpi_name": "Equity Disparity Index",
+  "METRIC-367": {
+    "metric_id": "METRIC-367",
+    "metric_name": "Equity Disparity Index",
     "abbreviation": "EDI",
     "summary": "Equity Disparity Index - tracking metrics",
     "category": "Operations",
@@ -370,13 +370,13 @@
     "visualization_metadata": [
       "EDI_chart"
     ],
-    "related_kpis": [],
+    "related_metrics": [],
     "last_updated": "2026-06-20",
     "quality_score": 0.85
   },
-  "KPI-389": {
-    "kpi_id": "KPI-389",
-    "kpi_name": "Ramp ADA Compliance",
+  "METRIC-389": {
+    "metric_id": "METRIC-389",
+    "metric_name": "Ramp ADA Compliance",
     "abbreviation": "RAC",
     "summary": "Ramp ADA Compliance - tracking metrics",
     "category": "Operations",
@@ -395,13 +395,13 @@
     "visualization_metadata": [
       "RAC_chart"
     ],
-    "related_kpis": [],
+    "related_metrics": [],
     "last_updated": "2026-06-20",
     "quality_score": 0.85
   },
-  "KPI-401": {
-    "kpi_id": "KPI-401",
-    "kpi_name": "Traffic Impact Mitigation",
+  "METRIC-401": {
+    "metric_id": "METRIC-401",
+    "metric_name": "Traffic Impact Mitigation",
     "abbreviation": "TIM",
     "summary": "Traffic Impact Mitigation - tracking metrics",
     "category": "Operations",
@@ -420,13 +420,13 @@
     "visualization_metadata": [
       "TIM_chart"
     ],
-    "related_kpis": [],
+    "related_metrics": [],
     "last_updated": "2026-06-20",
     "quality_score": 0.85
   },
-  "KPI-423": {
-    "kpi_id": "KPI-423",
-    "kpi_name": "Sidewalk Inventory Completeness",
+  "METRIC-423": {
+    "metric_id": "METRIC-423",
+    "metric_name": "Sidewalk Inventory Completeness",
     "abbreviation": "SIC",
     "summary": "Sidewalk Inventory Completeness - tracking metrics",
     "category": "Operations",
@@ -445,13 +445,13 @@
     "visualization_metadata": [
       "SIC_chart"
     ],
-    "related_kpis": [],
+    "related_metrics": [],
     "last_updated": "2026-06-20",
     "quality_score": 0.85
   },
-  "KPI-445": {
-    "kpi_id": "KPI-445",
-    "kpi_name": "Quality Scorecard Composite",
+  "METRIC-445": {
+    "metric_id": "METRIC-445",
+    "metric_name": "Quality Scorecard Composite",
     "abbreviation": "QSC",
     "summary": "Quality Scorecard Composite - tracking metrics",
     "category": "Operations",
@@ -470,13 +470,13 @@
     "visualization_metadata": [
       "QSC_chart"
     ],
-    "related_kpis": [],
+    "related_metrics": [],
     "last_updated": "2026-06-20",
     "quality_score": 0.85
   },
-  "KPI-467": {
-    "kpi_id": "KPI-467",
-    "kpi_name": "Community Board Satisfaction",
+  "METRIC-467": {
+    "metric_id": "METRIC-467",
+    "metric_name": "Community Board Satisfaction",
     "abbreviation": "CBS",
     "summary": "Community Board Satisfaction - tracking metrics",
     "category": "Operations",
@@ -495,13 +495,13 @@
     "visualization_metadata": [
       "CBS_chart"
     ],
-    "related_kpis": [],
+    "related_metrics": [],
     "last_updated": "2026-06-20",
     "quality_score": 0.85
   },
-  "KPI-489": {
-    "kpi_id": "KPI-489",
-    "kpi_name": "Borough Equity Investment",
+  "METRIC-489": {
+    "metric_id": "METRIC-489",
+    "metric_name": "Borough Equity Investment",
     "abbreviation": "BEI",
     "summary": "Borough Equity Investment - tracking metrics",
     "category": "Operations",
@@ -520,13 +520,13 @@
     "visualization_metadata": [
       "BEI_chart"
     ],
-    "related_kpis": [],
+    "related_metrics": [],
     "last_updated": "2026-06-20",
     "quality_score": 0.85
   },
-  "KPI-501": {
-    "kpi_id": "KPI-501",
-    "kpi_name": "Dismissal Rate Trend",
+  "METRIC-501": {
+    "metric_id": "METRIC-501",
+    "metric_name": "Dismissal Rate Trend",
     "abbreviation": "DRT",
     "summary": "Dismissal Rate Trend - tracking metrics",
     "category": "Operations",
@@ -545,13 +545,13 @@
     "visualization_metadata": [
       "DRT_chart"
     ],
-    "related_kpis": [],
+    "related_metrics": [],
     "last_updated": "2026-06-20",
     "quality_score": 0.85
   },
-  "KPI-523": {
-    "kpi_id": "KPI-523",
-    "kpi_name": "Permit Denial Rate",
+  "METRIC-523": {
+    "metric_id": "METRIC-523",
+    "metric_name": "Permit Denial Rate",
     "abbreviation": "PDR",
     "summary": "Permit Denial Rate - tracking metrics",
     "category": "Operations",
@@ -570,13 +570,13 @@
     "visualization_metadata": [
       "PDR_chart"
     ],
-    "related_kpis": [],
+    "related_metrics": [],
     "last_updated": "2026-06-20",
     "quality_score": 0.85
   },
-  "KPI-545": {
-    "kpi_id": "KPI-545",
-    "kpi_name": "Ramp Maintenance Schedule",
+  "METRIC-545": {
+    "metric_id": "METRIC-545",
+    "metric_name": "Ramp Maintenance Schedule",
     "abbreviation": "RMS",
     "summary": "Ramp Maintenance Schedule - tracking metrics",
     "category": "Operations",
@@ -595,13 +595,13 @@
     "visualization_metadata": [
       "RMS_chart"
     ],
-    "related_kpis": [],
+    "related_metrics": [],
     "last_updated": "2026-06-20",
     "quality_score": 0.85
   },
-  "KPI-567": {
-    "kpi_id": "KPI-567",
-    "kpi_name": "Sidewalk Pedestrian Safety",
+  "METRIC-567": {
+    "metric_id": "METRIC-567",
+    "metric_name": "Sidewalk Pedestrian Safety",
     "abbreviation": "SPS",
     "summary": "Sidewalk Pedestrian Safety - tracking metrics",
     "category": "Operations",
@@ -620,13 +620,13 @@
     "visualization_metadata": [
       "SPS_chart"
     ],
-    "related_kpis": [],
+    "related_metrics": [],
     "last_updated": "2026-06-20",
     "quality_score": 0.85
   },
-  "KPI-589": {
-    "kpi_id": "KPI-589",
-    "kpi_name": "Construction Schedule Adherence",
+  "METRIC-589": {
+    "metric_id": "METRIC-589",
+    "metric_name": "Construction Schedule Adherence",
     "abbreviation": "CSA",
     "summary": "Construction Schedule Adherence - tracking metrics",
     "category": "Operations",
@@ -645,13 +645,13 @@
     "visualization_metadata": [
       "CSA_chart"
     ],
-    "related_kpis": [],
+    "related_metrics": [],
     "last_updated": "2026-06-20",
     "quality_score": 0.85
   },
-  "KPI-601": {
-    "kpi_id": "KPI-601",
-    "kpi_name": "Violation Citation Accuracy",
+  "METRIC-601": {
+    "metric_id": "METRIC-601",
+    "metric_name": "Violation Citation Accuracy",
     "abbreviation": "VCA",
     "summary": "Violation Citation Accuracy - tracking metrics",
     "category": "Operations",
@@ -670,13 +670,13 @@
     "visualization_metadata": [
       "VCA_chart"
     ],
-    "related_kpis": [],
+    "related_metrics": [],
     "last_updated": "2026-06-20",
     "quality_score": 0.85
   },
-  "KPI-623": {
-    "kpi_id": "KPI-623",
-    "kpi_name": "Street Resurfacing ROI",
+  "METRIC-623": {
+    "metric_id": "METRIC-623",
+    "metric_name": "Street Resurfacing ROI",
     "abbreviation": "SRR",
     "summary": "Street Resurfacing ROI - tracking metrics",
     "category": "Operations",
@@ -695,13 +695,13 @@
     "visualization_metadata": [
       "SRR_chart"
     ],
-    "related_kpis": [],
+    "related_metrics": [],
     "last_updated": "2026-06-20",
     "quality_score": 0.85
   },
-  "KPI-645": {
-    "kpi_id": "KPI-645",
-    "kpi_name": "Complaint Resolution Equity",
+  "METRIC-645": {
+    "metric_id": "METRIC-645",
+    "metric_name": "Complaint Resolution Equity",
     "abbreviation": "CRE",
     "summary": "Complaint Resolution Equity - tracking metrics",
     "category": "Operations",
@@ -720,13 +720,13 @@
     "visualization_metadata": [
       "CRE_chart"
     ],
-    "related_kpis": [],
+    "related_metrics": [],
     "last_updated": "2026-06-20",
     "quality_score": 0.85
   },
-  "KPI-667": {
-    "kpi_id": "KPI-667",
-    "kpi_name": "Accessibility Gap Analysis",
+  "METRIC-667": {
+    "metric_id": "METRIC-667",
+    "metric_name": "Accessibility Gap Analysis",
     "abbreviation": "AGA",
     "summary": "Accessibility Gap Analysis - tracking metrics",
     "category": "Operations",
@@ -745,7 +745,7 @@
     "visualization_metadata": [
       "AGA_chart"
     ],
-    "related_kpis": [],
+    "related_metrics": [],
     "last_updated": "2026-06-20",
     "quality_score": 0.85
   }

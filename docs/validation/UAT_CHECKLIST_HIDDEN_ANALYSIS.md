@@ -98,17 +98,17 @@
 
 ### 5. Bootstrap Confidence Intervals
 
-**Purpose:** Quantify uncertainty in KPI estimates
+**Purpose:** Quantify uncertainty in Metric estimates
 
 **Test Steps:**
 - [ ] Load metric data (condition scores, completion rates, etc.)
 - [ ] Compute 95% confidence intervals (1000 resamples)
-- [ ] Verify CI bands appear on KPI cards
+- [ ] Verify CI bands appear on Metric cards
 - [ ] Check coverage (95% of true values in interval)
 - [ ] Measure latency (target: <1.5s)
 
 **Expected Results:**
-- CI bands display on KPI cards (lower/upper bounds)
+- CI bands display on Metric cards (lower/upper bounds)
 - CI width reasonable (not too tight or too loose)
 - Coverage: ~95% of estimates capture true parameter
 - Latency: 0.8-1.4s actual

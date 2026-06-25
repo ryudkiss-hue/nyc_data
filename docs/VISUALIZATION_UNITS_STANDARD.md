@@ -182,7 +182,7 @@ fig.update_layout(
 )
 ```
 
-### Gauge / KPI
+### Gauge / Metric
 ```python
 fig.add_trace(go.Indicator(
     title={"text": "Completion Rate (%) — 95% CI"},        # ✓ Unit in title

@@ -1,15 +1,15 @@
--- KPI Computation for NYC DOT Pipeline
--- 51 KPIs × 5 boroughs = 255 KPI records
--- All KPIs computed from staging layer with zero data loss
+-- Metric Computation for NYC DOT Pipeline
+-- 51 Metrics × 5 boroughs = 255 Metric records
+-- All Metrics computed from staging layer with zero data loss
 
 -- ============================================================================
--- KPI 1: Inspections Completed (by borough)
+-- Metric 1: Inspections Completed (by borough)
 -- ============================================================================
 
-INSERT INTO serving.kpi_borough_results (kpi_id, kpi_name, borough, measurement_date, value, threshold, status)
+INSERT INTO serving.metric_borough_results (metric_id, metric_name, borough, measurement_date, value, threshold, status)
 SELECT
-    1 as kpi_id,
-    'Inspections Completed' as kpi_name,
+    1 as metric_id,
+    'Inspections Completed' as metric_name,
     i.borough,
     CAST(CURRENT_DATE AS DATE) as measurement_date,
     COUNT(DISTINCT i.inspection_id) as value,
@@ -20,13 +20,13 @@ WHERE EXTRACT(MONTH FROM  i.inspection_date) = EXTRACT(MONTH FROM  CURRENT_DATE)
 GROUP BY i.borough;
 
 -- ============================================================================
--- KPI 2: Average Response Time (by borough)
+-- Metric 2: Average Response Time (by borough)
 -- ============================================================================
 
-INSERT INTO serving.kpi_borough_results (kpi_id, kpi_name, borough, measurement_date, value, threshold, status)
+INSERT INTO serving.metric_borough_results (metric_id, metric_name, borough, measurement_date, value, threshold, status)
 SELECT
-    2 as kpi_id,
-    'Average Response Time' as kpi_name,
+    2 as metric_id,
+    'Average Response Time' as metric_name,
     v.borough,
     CAST(CURRENT_DATE AS DATE) as measurement_date,
     AVG(DATEDIFF(DAY, v.violation_date, COALESCE(v.remediation_date, CURRENT_DATE))) as value,
@@ -37,13 +37,13 @@ WHERE v.violation_date >= ((1, CURRENT_DATE)
 GROUP BY v.borough;
 
 -- ============================================================================
--- KPI 3: Violation Resolution Rate (by borough)
+-- Metric 3: Violation Resolution Rate (by borough)
 -- ============================================================================
 
-INSERT INTO serving.kpi_borough_results (kpi_id, kpi_name, borough, measurement_date, value, threshold, status)
+INSERT INTO serving.metric_borough_results (metric_id, metric_name, borough, measurement_date, value, threshold, status)
 SELECT
-    3 as kpi_id,
-    'Violation Resolution Rate' as kpi_name,
+    3 as metric_id,
+    'Violation Resolution Rate' as metric_name,
     v.borough,
     CAST(CURRENT_DATE AS DATE) as measurement_date,
     (COUNT(CASE WHEN v.remediation_status = 'completed' THEN 1 END) * 100.0) / COUNT(*) as value,
@@ -54,13 +54,13 @@ WHERE v.violation_date >= ((3, CURRENT_DATE)
 GROUP BY v.borough;
 
 -- ============================================================================
--- KPI 4: Accessibility Compliance (by borough)
+-- Metric 4: Accessibility Compliance (by borough)
 -- ============================================================================
 
-INSERT INTO serving.kpi_borough_results (kpi_id, kpi_name, borough, measurement_date, value, threshold, status)
+INSERT INTO serving.metric_borough_results (metric_id, metric_name, borough, measurement_date, value, threshold, status)
 SELECT
-    4 as kpi_id,
-    'Accessibility Compliance' as kpi_name,
+    4 as metric_id,
+    'Accessibility Compliance' as metric_name,
     rl.borough,
     CAST(CURRENT_DATE AS DATE) as measurement_date,
     (COUNT(CASE WHEN rl.accessibility_compliant = TRUE THEN 1 END) * 100.0) / COUNT(*) as value,
@@ -70,13 +70,13 @@ FROM staging.ramp_locations rl
 GROUP BY rl.borough;
 
 -- ============================================================================
--- KPI 5: Data Completeness (across all datasets)
+-- Metric 5: Data Completeness (across all datasets)
 -- ============================================================================
 
-INSERT INTO serving.kpi_borough_results (kpi_id, kpi_name, borough, measurement_date, value, threshold, status)
+INSERT INTO serving.metric_borough_results (metric_id, metric_name, borough, measurement_date, value, threshold, status)
 SELECT
-    5 as kpi_id,
-    'Data Completeness' as kpi_name,
+    5 as metric_id,
+    'Data Completeness' as metric_name,
     'citywide' as borough,
     CAST(CURRENT_DATE AS DATE) as measurement_date,
     AVG(completeness_score) as value,
@@ -91,13 +91,13 @@ FROM (
 ) completeness_data;
 
 -- ============================================================================
--- KPI 6: Ramp Repair Queue (by borough)
+-- Metric 6: Ramp Repair Queue (by borough)
 -- ============================================================================
 
-INSERT INTO serving.kpi_borough_results (kpi_id, kpi_name, borough, measurement_date, value, threshold, status)
+INSERT INTO serving.metric_borough_results (metric_id, metric_name, borough, measurement_date, value, threshold, status)
 SELECT
-    6 as kpi_id,
-    'Ramp Repair Queue' as kpi_name,
+    6 as metric_id,
+    'Ramp Repair Queue' as metric_name,
     rl.borough,
     CAST(CURRENT_DATE AS DATE) as measurement_date,
     COUNT(DISTINCT CASE WHEN rc.remediation_status = 'pending' THEN rc.complaint_id END) as value,
@@ -108,14 +108,14 @@ LEFT JOIN staging.ramp_complaints rc ON rl.ramp_id = rc.ramp_id
 GROUP BY rl.borough;
 
 -- ============================================================================
--- KPI 7-51: Additional KPIs (abbreviated - structure follows pattern above)
+-- Metric 7-51: Additional Metrics (abbreviated - structure follows pattern above)
 -- ============================================================================
 
--- KPI 7: Permit Issuance Rate
-INSERT INTO serving.kpi_borough_results (kpi_id, kpi_name, borough, measurement_date, value, threshold, status)
+-- Metric 7: Permit Issuance Rate
+INSERT INTO serving.metric_borough_results (metric_id, metric_name, borough, measurement_date, value, threshold, status)
 SELECT
-    7 as kpi_id,
-    'Permit Issuance Rate' as kpi_name,
+    7 as metric_id,
+    'Permit Issuance Rate' as metric_name,
     'citywide' as borough,
     CAST(CURRENT_DATE AS DATE) as measurement_date,
     COUNT(DISTINCT c.correspondence_id) as value,
@@ -124,11 +124,11 @@ SELECT
 FROM staging.correspondences c
 WHERE EXTRACT(MONTH FROM  c.created_date) = EXTRACT(MONTH FROM  CURRENT_DATE);
 
--- KPI 8: Street Closure Duration
-INSERT INTO serving.kpi_borough_results (kpi_id, kpi_name, borough, measurement_date, value, threshold, status)
+-- Metric 8: Street Closure Duration
+INSERT INTO serving.metric_borough_results (metric_id, metric_name, borough, measurement_date, value, threshold, status)
 SELECT
-    8 as kpi_id,
-    'Street Closure Duration' as kpi_name,
+    8 as metric_id,
+    'Street Closure Duration' as metric_name,
     'citywide' as borough,
     CAST(CURRENT_DATE AS DATE) as measurement_date,
     AVG(DATEDIFF(DAY, cs.start_date, COALESCE(cs.end_date, CURRENT_DATE))) as value,
@@ -137,11 +137,11 @@ SELECT
 FROM staging.street_closures_block cs
 WHERE cs.start_date >= ((1, CURRENT_DATE);
 
--- KPI 9: Data Freshness
-INSERT INTO serving.kpi_borough_results (kpi_id, kpi_name, borough, measurement_date, value, threshold, status)
+-- Metric 9: Data Freshness
+INSERT INTO serving.metric_borough_results (metric_id, metric_name, borough, measurement_date, value, threshold, status)
 SELECT
-    9 as kpi_id,
-    'Data Freshness' as kpi_name,
+    9 as metric_id,
+    'Data Freshness' as metric_name,
     'citywide' as borough,
     CAST(CURRENT_DATE AS DATE) as measurement_date,
     DATEDIFF(DAY, MAX(GREATEST(
@@ -154,8 +154,8 @@ SELECT
 FROM staging.inspection i, staging.violations v, staging.ramp_locations rl;
 
 -- ============================================================================
--- KPI 10-51: Remaining 42 KPIs follow similar pattern
--- Full implementation would include all 51 KPIs across categories:
+-- Metric 10-51: Remaining 42 Metrics follow similar pattern
+-- Full implementation would include all 51 Metrics across categories:
 -- - Volume: inspections, permits, complaints, requests
 -- - Quality: completeness, violation trends, data consistency
 -- - Timeliness: response times, data freshness, processing times
@@ -166,8 +166,8 @@ FROM staging.inspection i, staging.violations v, staging.ramp_locations rl;
 -- - Coordination: conflicts, overlaps, inter-agency coordination
 -- ============================================================================
 
--- Template for remaining KPIs (KPI 10-51)
--- PATTERN: SELECT kpi_id, name, borough, date, value, threshold, status
--- The exact SQL for each KPI follows the same pattern as above
+-- Template for remaining Metrics (Metric 10-51)
+-- PATTERN: SELECT metric_id, name, borough, date, value, threshold, status
+-- The exact SQL for each Metric follows the same pattern as above
 -- Detailed computations would aggregate from staging tables
--- Each KPI includes borough-level and citywide metrics where applicable
+-- Each Metric includes borough-level and citywide metrics where applicable

@@ -245,7 +245,7 @@ app/
 │   ├── gis_3d.py                   # GIS 3D building visualization
 │   ├── analytics_stats.py           # Stats view callbacks
 │   ├── contracts_labor.py           # Contracts/Labor callbacks
-│   ├── dashboard_executive.py       # KPI cards, global filters
+│   ├── dashboard_executive.py       # Metric cards, global filters
 │   ├── navigation.py                # (Existing) Routing logic
 │   ├── export.py                    # (Existing) Export buttons
 │   └── cache.py                     # Callback-level caching helpers

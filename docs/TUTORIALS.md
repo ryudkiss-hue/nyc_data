@@ -37,7 +37,7 @@ Navigate to: **http://localhost:8011**
 
 #### 4. Explore (1 minute)
 
-- **Home Tab** — View KPI cards and dataset health
+- **Home Tab** — View Metric cards and dataset health
 - **Construction Tab** — Browse construction projects
 - **GIS Tab** — View spatial maps and conflicts
 - **Analytics Tab** — Advanced charts and metrics
@@ -53,7 +53,7 @@ streamlit run app/app.py
 ### Success Indicators
 
 ✅ Dashboard loads at http://localhost:8011  
-✅ Home tab shows KPI cards  
+✅ Home tab shows Metric cards  
 ✅ GIS tab displays interactive map  
 ✅ Charts render without errors  
 
@@ -503,7 +503,7 @@ socrata db-status
 
 ## Tutorial 7: Generate Monthly Report
 
-**Goal:** Create executive summary with KPIs and visualizations.  
+**Goal:** Create executive summary with Metrics and visualizations.  
 **Time:** 15 minutes  
 **Prerequisites:** Tutorials 1–3
 
@@ -526,7 +526,7 @@ socrata quality-score data.cityofnewyork.us dntt-gqwq \
 #### 2. Visualize Key Metrics (5 minutes)
 
 In Dash **Dashboard** tab:
-1. View KPI cards (top of page)
+1. View Metric cards (top of page)
 2. Click "Export to PDF"
 3. Select metrics to include
 4. Export as `monthly_dashboard.pdf`

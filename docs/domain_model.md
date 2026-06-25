@@ -4,7 +4,7 @@
 
 This document describes the Phase 1 foundational implementation of the NYC Street Design Manual (SDM) as a first-class data model. The domain model codifies NYC DOT guidance on sidewalk materials, defects, pavement markings, ADA compliance, and contractor qualifications.
 
-**Status**: Phase 1 Foundation - Blocking all downstream transformation, KPI, and serving layers  
+**Status**: Phase 1 Foundation - Blocking all downstream transformation, Metric, and serving layers  
 **Last Updated**: 2024-2026  
 **Maintained By**: NYC DOT Sidewalk Toolkit Team
 
@@ -19,7 +19,7 @@ This document describes the Phase 1 foundational implementation of the NYC Stree
 5. [ADA Compliance Mapping](#ada-compliance-mapping)
 6. [Pavement Markings Standards](#pavement-markings-standards)
 7. [Contractor Classifications](#contractor-classifications)
-8. [KPI Definitions](#kpi-definitions)
+8. [Metric Definitions](#metric-definitions)
 9. [Validation Rules & Quality Gates](#validation-rules--quality-gates)
 10. [Schema Registry & Change Detection](#schema-registry--change-detection)
 11. [Example Queries & Use Cases](#example-queries--use-cases)
@@ -60,7 +60,7 @@ The NYC Domain Model consists of **immutable reference dimensions** that codify 
 
 - **Schema Registry** (`socrata_toolkit/schema_registry.py`): Tracks schema versions, detects breaking changes
 - **Validation Framework** (`socrata_toolkit/validation.py`): Enforces material taxonomy, ADA compliance, geospatial bounds
-- **KPI Computation** (`socrata_toolkit/dot_sidewalk.py`): Material-aware KPI calculation with full lineage
+- **Metric Computation** (`socrata_toolkit/dot_sidewalk.py`): Material-aware Metric calculation with full lineage
 - **Domain Model Audit Log**: Records all changes to reference dimensions
 
 ---
@@ -272,9 +272,9 @@ Codifies contractor expertise, certifications, and specializations for repair wo
 
 ---
 
-## KPI Definitions
+## Metric Definitions
 
-### Legacy KPIs (Backward Compatible)
+### Legacy Metrics (Backward Compatible)
 
 These metrics are maintained for backward compatibility but are material-agnostic:
 
@@ -284,9 +284,9 @@ These metrics are maintained for backward compatibility but are material-agnosti
 - **First Pass Yield**: First-pass inspections / total inspections
 - **Rework Factor**: Rework spend / total spend
 
-### Material-Aware KPIs (Phase 1 New)
+### Material-Aware Metrics (Phase 1 New)
 
-These KPIs stratify performance by material type per SDM classifications:
+These Metrics stratify performance by material type per SDM classifications:
 
 #### Defect Metrics
 
@@ -367,9 +367,9 @@ hazard_response_time_days: float  # Average days to address hazardous defects
 
 **Use Case**: Safety/liability tracking, legal compliance
 
-### KPI Lineage
+### Metric Lineage
 
-All KPIs include comprehensive lineage metadata:
+All Metrics include comprehensive lineage metadata:
 
 ```python
 lineage_metadata: dict = {
@@ -456,7 +456,7 @@ The validation framework enforces data quality gates based on domain models:
 
 ### Purpose
 
-The Schema Registry tracks schema versions, detects breaking changes, and enforces contracts on ingested datasets. This blocks downstream KPI and transformation pipelines when data contracts are violated.
+The Schema Registry tracks schema versions, detects breaking changes, and enforces contracts on ingested datasets. This blocks downstream Metric and transformation pipelines when data contracts are violated.
 
 ### Breaking vs. Non-Breaking Changes
 
@@ -536,13 +536,13 @@ All schema changes are logged to `schema_registry/schema_changes_audit.jsonl`:
 
 ```python
 import pandas as pd
-from socrata_toolkit.dot_sidewalk import compute_material_aware_kpis
+from socrata_toolkit.dot_sidewalk import compute_material_aware_metrics
 
 # Load sidewalk segment data
 df = pd.read_csv("sidewalk_segments.csv")
 
-# Compute material-aware KPIs
-kpi = compute_material_aware_kpis(
+# Compute material-aware Metrics
+metric = compute_material_aware_metrics(
     df,
     period_label="2024-Q1",
     material_col="material",
@@ -551,13 +551,13 @@ kpi = compute_material_aware_kpis(
 )
 
 # Access material-specific defect rates
-print(f"Asphalt defect rate: {kpi.defect_rate_asphalt:.2f}%")
-print(f"Concrete defect rate: {kpi.defect_rate_concrete:.2f}%")
-print(f"Permeable surfaces defect rate: {kpi.defect_rate_permeable:.2f}%")
+print(f"Asphalt defect rate: {metric.defect_rate_asphalt:.2f}%")
+print(f"Concrete defect rate: {metric.defect_rate_concrete:.2f}%")
+print(f"Permeable surfaces defect rate: {metric.defect_rate_permeable:.2f}%")
 
 # Export to CSV for reporting
-df_kpi = pd.DataFrame([kpi.to_dict()])
-df_kpi.to_csv("kpi_q1_2024.csv", index=False)
+df_metric = pd.DataFrame([metric.to_dict()])
+df_metric.to_csv("metric_q1_2024.csv", index=False)
 ```
 
 ### Use Case 2: ADA Compliance Tracking
@@ -587,8 +587,8 @@ LIMIT 10;
 **Question**: "Which contractors perform best on concrete repairs? Which ones need monitoring?"
 
 ```python
-# Using material-aware KPIs
-contractor_quality = kpi.contractor_quality_by_material
+# Using material-aware Metrics
+contractor_quality = metric.contractor_quality_by_material
 
 for material, contractors in contractor_quality.items():
     print(f"\n{material}:")
@@ -602,13 +602,13 @@ for material, contractors in contractor_quality.items():
 
 ```python
 # Access hazardous defect coverage
-total_hazard_ft = sum(kpi.hazardous_defect_coverage.values())
+total_hazard_ft = sum(metric.hazardous_defect_coverage.values())
 print(f"Total hazardous linear feet: {total_hazard_ft:,.0f} ft")
-print(f"Hazardous defect count: {kpi.hazardous_defect_count}")
+print(f"Hazardous defect count: {metric.hazardous_defect_count}")
 
 # By material
 for material, linear_ft in sorted(
-    kpi.hazardous_defect_coverage.items(), 
+    metric.hazardous_defect_coverage.items(), 
     key=lambda x: x[1], 
     reverse=True
 ):
@@ -621,7 +621,7 @@ for material, linear_ft in sorted(
 
 ```python
 # Access material longevity data
-for material, stats in kpi.material_longevity.items():
+for material, stats in metric.material_longevity.items():
     print(f"{material}:")
     print(f"  Segments: {stats['segment_count']}")
     print(f"  Total linear feet: {stats['total_linear_feet']:,.0f}")
@@ -632,7 +632,7 @@ for material, stats in kpi.material_longevity.items():
 
 ### Use Case 6: Schema Change Impact Analysis
 
-**Question**: "A new dataset version was just released. Did any breaking changes that impact our KPI calculations?"
+**Question**: "A new dataset version was just released. Did any breaking changes that impact our Metric calculations?"
 
 ```python
 from socrata_toolkit.schema_registry import SchemaRegistry
@@ -657,7 +657,7 @@ except SchemaRegistry.BreakingChangeAlert as alert:
 
 This Phase 1 foundation enables Phase 2 deliverables:
 
-- **Observability & Lineage**: Full KPI computation tracing with schema registry
+- **Observability & Lineage**: Full Metric computation tracing with schema registry
 - **Transformation Layer**: Material-aware ETL with validation gates
 - **API & Serving**: Material-stratified endpoints with compliance metadata
 - **Monitoring & Alerting**: Schema drift detection, ADA compliance tracking

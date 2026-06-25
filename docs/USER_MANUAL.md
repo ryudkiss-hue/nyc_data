@@ -115,13 +115,13 @@ Each run writes `outputs/analyst_pack/{YYYY-MM-DD}/`:
 | `construction_list_diff.md` | Week-over-week changes vs previous pack |
 | `conflicts_summary.md` / `conflicts_review.xlsx` | Permit conflicts and review queue |
 | `contract_status.md` / `contract_analytics.json` | Progress, budget CPI, productivity |
-| `program_kpi.json` | Red/yellow/green program metrics |
+| `program_metric.json` | Red/yellow/green program metrics |
 | `executive_summary.html` | One-pager for managers |
 | `inquiry_drafts/*.md` | Template-based inquiry letters |
 | `manifest.json` | Sources, row counts, warnings, partial failures, version |
 | `data_dictionary.md` / `data_dictionary.json` | Column stats per source (trust / QA) |
 | `decisions_export.xlsx` / `decisions_summary.md` | Review decisions exported into the pack (optional) |
-| `role_kpi_dashboard.json` | Role-specific KPIs when `role:` is set in profile |
+| `role_metric_dashboard.json` | Role-specific Metrics when `role:` is set in profile |
 | `role_task_status.md` | Job-duty checklist vs pack artifacts |
 
 Profile flags: `offline: true` skips Socrata; `budget_codes: config/budget_codes.yaml` adds validation warnings.
@@ -189,7 +189,7 @@ Before your first production week, walk through the one-page readiness list:
 Quick self-check:
 
 1. Wizard completed (`.env` + `config/analyst_profile.yaml` or profile under `config/profiles/<name>/`).
-2. `socrata analyst run` produces `outputs/analyst_pack/YYYY-MM-DD/` with construction list, contracts, KPIs, and inquiries.
+2. `socrata analyst run` produces `outputs/analyst_pack/YYYY-MM-DD/` with construction list, contracts, Metrics, and inquiries.
 3. Dash opens all sidebar pages without errors; Settings theme/offline persist after reload.
 4. Optional: `socrata analyst publish --dry-run` and `socrata review list --pack-date YYYY-MM-DD`.
 

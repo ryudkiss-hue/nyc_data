@@ -444,8 +444,8 @@ def _render_forecasting(df: pd.DataFrame, date_col: str, metrics: list[str]) -> 
     csv = fc_df.to_csv(index=False).encode()
     st.download_button("📥 Download Forecast CSV", csv, f"forecast_{metric}.csv", "text/csv")
 
-def _render_kpi_targets(df: pd.DataFrame, date_col: str, metrics: list[str]) -> None:
-    st.subheader("KPI Targets vs Actuals")
+def _render_metric_targets(df: pd.DataFrame, date_col: str, metrics: list[str]) -> None:
+    st.subheader("Metric Targets vs Actuals")
 
     if not metrics or df.empty:
         st.info("Load data and select metrics.")
@@ -456,7 +456,7 @@ def _render_kpi_targets(df: pd.DataFrame, date_col: str, metrics: list[str]) -> 
     df = df.dropna(subset=[date_col]).sort_values(date_col)
     df["month"] = df[date_col].dt.to_period("M").astype(str)
 
-    metric = st.selectbox("Metric", metrics, key="kpi_metric")
+    metric = st.selectbox("Metric", metrics, key="metric_metric")
     if metric not in df.columns:
         return
 
@@ -473,7 +473,7 @@ def _render_kpi_targets(df: pd.DataFrame, date_col: str, metrics: list[str]) -> 
         target_df[["month", "target"]],
         num_rows="fixed",
         use_container_width=True,
-        key="kpi_targets",
+        key="metric_targets",
         column_config={"target": st.column_config.NumberColumn("Target", min_value=0, step=1)},
     )
 
@@ -523,7 +523,7 @@ def _render_kpi_targets(df: pd.DataFrame, date_col: str, metrics: list[str]) -> 
 
 def render_forecasting_page() -> None:
     st.header("📈 Trend Analysis & Forecasting")
-    st.caption("Time-series analysis, seasonality detection, and forecasting for SIM Program KPIs.")
+    st.caption("Time-series analysis, seasonality detection, and forecasting for SIM Program Metrics.")
 
     st.sidebar.markdown("**Data Source**")
     source = st.sidebar.radio("Source", ["Socrata (live)", "Upload CSV/Excel"], key="fc_src")
@@ -577,7 +577,7 @@ def render_forecasting_page() -> None:
         "📉 Trends",
         "📅 Seasonality",
         "🔮 Forecast",
-        "🎯 KPI Targets",
+        "🎯 Metric Targets",
     ])
 
     with tab1:
@@ -587,4 +587,4 @@ def render_forecasting_page() -> None:
     with tab3:
         _render_forecasting(df, date_col, selected_metrics)
     with tab4:
-        _render_kpi_targets(df, date_col, selected_metrics)
+        _render_metric_targets(df, date_col, selected_metrics)

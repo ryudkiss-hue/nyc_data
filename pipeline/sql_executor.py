@@ -223,7 +223,7 @@ class PipelineStageExecutor:
         ("01_raw_schema.sql", "Load raw data from Socrata + Parquet cache"),
         ("02_staging_schema.sql", "Deduplicate and type-cast to staging"),
         ("03_analytics_schemas.sql", "Build 5 domain schemas"),
-        ("04_serving_kpis.sql", "Compute 255 KPI records"),
+        ("04_serving_metrics.sql", "Compute 255 Metric records"),
         ("05_verification_gates.sql", "Run verification gates"),
     ]
 

@@ -24,7 +24,7 @@
 - ⚠️ Distribution Classification — Has title ✓, missing xaxis/yaxis labels
 - ✅ Spatial Anomalies — Has title ✓, axes ✓
 - ✅ Seasonal Decomposition — Has title ✓, axes ✓
-- ⚠️ Bootstrap CI — KPI cards (needs review)
+- ⚠️ Bootstrap CI — Metric cards (needs review)
 
 ### Area 3: Dash Pilot GIS
 **Location:** `app/services/gis_service.py`, `app/callbacks/gis.py`
@@ -131,7 +131,7 @@ fig.add_annotation(
 
 **2. Hidden Analysis - Bootstrap CI**
 - File: `app/callbacks/hidden_analysis_methods.py` (around line 896)
-- Issue: KPI card missing context
+- Issue: Metric card missing context
 - Fix: Add descriptive title with metric and confidence level
 - Est. Time: 5 min
 

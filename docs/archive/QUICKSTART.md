@@ -46,7 +46,7 @@ docker compose up mission-control
 ## What You Can Do
 
 Once the dashboard loads, you can:
-- **Home** — View project status and KPIs
+- **Home** — View project status and Metrics
 - **Construction Lists** — Browse construction projects by borough
 - **GIS & Conflicts** — Visualize spatial overlaps between permits and inspections
 - **Contract Analytics** — Analyze contractor performance and spending

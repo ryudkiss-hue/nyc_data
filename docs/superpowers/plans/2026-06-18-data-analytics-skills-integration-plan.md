@@ -36,11 +36,11 @@ This plan translates the approved 3-phase design into 38 concrete, executable ta
 - Fields: boroughs (MN, BX, BK, QN, SI), sla_definitions (HIGH=14d, MEDIUM=30d, LOW=60d), quality_weights (35% completeness, 25% validity, 25% consistency, 15% freshness), stakeholder_personas
 - Success criteria: 5 boroughs with consistent abbreviations, quality weights sum to 100%, all personas defined, Pydantic validation passes
 
-#### P1A-3: Create kpis.json (5 hours)
-- Document all 51 KPI definitions with formulas, source datasets, borough aggregation rules
-- Fields: kpi_id, name, formula, source_datasets[], borough_level, quality_tier, ownership
-- Data source: Extract from existing skill references and KPI documentation
-- Success criteria: All 51 KPIs documented with formulas, each KPI references valid source dataset(s), borough aggregation specified, all formulas syntactically valid
+#### P1A-3: Create metrics.json (5 hours)
+- Document all 51 Metric definitions with formulas, source datasets, borough aggregation rules
+- Fields: metric_id, name, formula, source_datasets[], borough_level, quality_tier, ownership
+- Data source: Extract from existing skill references and Metric documentation
+- Success criteria: All 51 Metrics documented with formulas, each Metric references valid source dataset(s), borough aggregation specified, all formulas syntactically valid
 
 #### P1A-4: Create quality_gates.json (3 hours)
 - Define validation rules for data quality checks
@@ -56,7 +56,7 @@ This plan translates the approved 3-phase design into 38 concrete, executable ta
   - `__init__()` — loads all 4 JSON files, validates schemas
   - `get_dataset(key: str) -> Dict`
   - `get_borough_list() -> List[str]`
-  - `get_kpi_formula(kpi_id: str) -> str`
+  - `get_metric_formula(metric_id: str) -> str`
   - `get_quality_gates(dataset_key: str = None) -> List[Dict]`
   - `validate_dataset_exists(key: str) -> bool`
   - `validate_analysis_context(datasets_used, quality_gates) -> Tuple[bool, List[str]]`
@@ -65,7 +65,7 @@ This plan translates the approved 3-phase design into 38 concrete, executable ta
 #### P1B-2: Create Pydantic models for config validation (3 hours)
 - Define strict type checking for all config structures
 - Location: `src/config_models.py`
-- Models: Dataset, BusinessRules, KPI, QualityGate, ConfigSchema
+- Models: Dataset, BusinessRules, Metric, QualityGate, ConfigSchema
 - Success criteria: All 4 config JSON files validate successfully, custom validators for business logic, helpful error messages, used by ConfigSystem
 
 ### Phase 1C: Skills Integration (Week 2 - Days 1-4) — 33 hours (parallelizable)
@@ -111,14 +111,14 @@ For each skill category, refactor to use ConfigSystem instead of hardcoded thres
 - Test cases:
   1. All 57 datasets have valid fourfour IDs and primary keys
   2. No conflicting borough definitions across configs
-  3. All 51 KPIs reference valid datasets
+  3. All 51 Metrics reference valid datasets
   4. Quality gates reference valid datasets
   5. Quality weights sum to 100%
   6. ConfigSystem loads all files without errors
   7. No hardcoded values in skill code (grep verification)
   8. All 31 skills import ConfigSystem successfully
   9. Configs pass Pydantic validation
-  10. Cross-references consistent (dataset→kpi→gate)
+  10. Cross-references consistent (dataset→metric→gate)
 - Success criteria: 10/10 tests passing
 
 #### P1D-2: Manual skill verification (4 hours)
@@ -692,7 +692,7 @@ P3E-1,2,3,4 (Final testing, 20h)
 **Config Files (Phase 1):**
 - `/config/datasets.json`
 - `/config/business_rules.json`
-- `/config/kpis.json`
+- `/config/metrics.json`
 - `/config/quality_gates.json`
 
 **Python Modules:**

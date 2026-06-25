@@ -12,7 +12,7 @@ All files located in: `C:\Users\ryudk\Desktop\nyc_data\`
 | File | Size | Lines | Purpose |
 |------|------|-------|---------|
 | **START_HERE.md** | 14.1 KB | 325 | Entry point: roadmap, timeline, immediate next steps |
-| **EXPANDED_KPI_CHART_REGISTRY.md** | 34.6 KB | 1,049 | Source of truth: 51 KPIs, 45 chart types, complete configs |
+| **EXPANDED_METRIC_CHART_REGISTRY.md** | 34.6 KB | 1,049 | Source of truth: 51 Metrics, 45 chart types, complete configs |
 | **SOLO_DEVELOPER_GUIDE.md** | 18.4 KB | 405 | Permission slip & personal workflow (violations addressed) |
 
 ### Navigation & Context (Reference as Needed)
@@ -42,9 +42,9 @@ All files located in: `C:\Users\ryudk\Desktop\nyc_data\`
 | **Appendices** | 4 (in Registry) |
 | **Code Examples** | 50+ |
 | **JSON Templates** | 11 complete |
-| **Python Examples** | 5 (KPICard, 3 callbacks, 1 grid) |
+| **Python Examples** | 5 (MetricCard, 3 callbacks, 1 grid) |
 | **Plotly Types Catalogued** | 45 |
-| **KPIs Mapped** | 51 |
+| **Metrics Mapped** | 51 |
 | **Primary Chart Types** | 11 |
 
 ---
@@ -54,22 +54,22 @@ All files located in: `C:\Users\ryudk\Desktop\nyc_data\`
 ### Day 1 (Today): Orientation
 1. **START_HERE.md** (10 min) — Understand scope, timeline, next steps
 2. **SOLO_DEVELOPER_GUIDE.md** (20 min) — Violations addressed, your autonomy
-3. **EXPANDED_KPI_CHART_REGISTRY.md Ch. 1-3** (30 min) — Learn scope
+3. **EXPANDED_METRIC_CHART_REGISTRY.md Ch. 1-3** (30 min) — Learn scope
 
 **Total: 1 hour to understand everything**
 
 ### Day 2: First Implementation
-1. Pick first KPI from Registry Ch. 3 (e.g., PRM-001)
+1. Pick first Metric from Registry Ch. 3 (e.g., PRM-001)
 2. Find chart type in Registry Ch. 4
 3. Copy template from Appendix A or B
 4. Build locally, test, commit
 
-**Total: 35 minutes to implement first KPI**
+**Total: 35 minutes to implement first Metric**
 
 ### Days 3-14: Scale to All 51
 Repeat Day 2 process 50 more times (faster after first few)
 
-**Total: 35 min × 51 KPIs = ~30 hours = 1 week focused work**
+**Total: 35 min × 51 Metrics = ~30 hours = 1 week focused work**
 
 ### Weeks 2-7: Polish, Style, Deploy
 - Styling (colors, responsive design)
@@ -94,7 +94,7 @@ Repeat Day 2 process 50 more times (faster after first few)
 
 ---
 
-### EXPANDED_KPI_CHART_REGISTRY.md [YOUR DAILY REFERENCE]
+### EXPANDED_METRIC_CHART_REGISTRY.md [YOUR DAILY REFERENCE]
 **Chapter 1:** Plotly Trace Type Catalog (45 chart types)
 - All chart types extracted from plot-schema.json
 - Animation support (yes/no per type)
@@ -109,14 +109,14 @@ Repeat Day 2 process 50 more times (faster after first few)
 - Heatmap, Sunburst, Pie/Donut, Treemap
 - Each with complete config template
 
-**Chapter 3:** KPI-to-Chart Mapping Matrix (51 KPIs)
-- 51 KPI rows: ID | Name | Primary Chart | Alternatives | Data Shape | Configs
+**Chapter 3:** METRIC-to-Chart Mapping Matrix (51 Metrics)
+- 51 Metric rows: ID | Name | Primary Chart | Alternatives | Data Shape | Configs
 - Organized by category (Permits, Infrastructure, Safety, Budget, Compliance)
 - All data requirements specified
 - Targets and thresholds noted
 
 **Chapter 4:** Chart Type Detailed Configurations (11 primary)
-1. Gauge Chart (scalar KPIs, threshold-based)
+1. Gauge Chart (scalar Metrics, threshold-based)
 2. Bar Chart (categorical comparisons, rankings)
 3. Heatmap (2D matrices, borough × metric)
 4. Line Chart (time-series, forecasts)
@@ -171,19 +171,19 @@ Each with:
 - All 11 primary chart types with complete specs
 
 **Appendix B:** Python Component Code
-- KPICard class (full implementation, Mantine themed)
-- KPI dashboard grid (responsive, auto-fit layout)
+- MetricCard class (full implementation, Mantine themed)
+- Metric dashboard grid (responsive, auto-fit layout)
 - Callback pattern: Update on filter change
 - Callback pattern: Drill-down on click
 - Callback pattern: Hover tooltip
 
 **Appendix C:** Data Schema Requirements
-- Scalar KPI shape
-- Time-series KPI shape
-- Category KPI shape
-- 2D matrix KPI shape
-- Hierarchical KPI shape
-- Geographic KPI shape
+- Scalar Metric shape
+- Time-series Metric shape
+- Category Metric shape
+- 2D matrix Metric shape
+- Hierarchical Metric shape
+- Geographic Metric shape
 
 **Appendix D:** Plotly Schema Extraction Reference
 - Animation configuration (frame, transition, mode)
@@ -191,7 +191,7 @@ Each with:
 - Hovertemplate syntax
 - All from actual plot-schema.json
 
-**Use this:** Daily reference when implementing KPIs, designing charts, debugging
+**Use this:** Daily reference when implementing Metrics, designing charts, debugging
 
 ---
 
@@ -205,7 +205,7 @@ Each with:
 - When to reference Registry vs ignore it
 - Troubleshooting deviations
 - Your personal style guide (naming conventions, colors, durations, data fetching, testing, commits)
-- Realistic timeline (35 min per KPI, 1 week focused, 2-3 weeks real)
+- Realistic timeline (35 min per Metric, 1 week focused, 2-3 weeks real)
 - Final permission slip (you can deviate, just be intentional)
 
 **Use this:** When you want permission to do something differently, understanding your autonomy, building decision log
@@ -264,8 +264,8 @@ Each with:
 
 ## KEY STATISTICS
 
-### KPI Coverage
-- Total KPIs: 51
+### Metric Coverage
+- Total Metrics: 51
 - All mapped to optimal chart types: ✅
 - All mapped to alternatives: ✅
 - Data shapes documented: ✅
@@ -274,13 +274,13 @@ Each with:
 ### Chart Type Coverage
 - Plotly types catalogued: 45
 - Primary chart templates: 11 (complete)
-- Alternative charts per KPI: 2-4
+- Alternative charts per Metric: 2-4
 - Code examples per type: 2-3
 - All 11 types tested: ✅
 
 ### Code Examples
 - Complete JSON configs: 11
-- Python component code: 5 (KPICard class, 3 callbacks, 1 grid)
+- Python component code: 5 (MetricCard class, 3 callbacks, 1 grid)
 - Data schema examples: 6 (all data shapes)
 - Callback patterns: 3 (update, drill-down, hover)
 - Mantine theme example: 1
@@ -320,8 +320,8 @@ Instead, focus is 100% on: chart specification, component implementation, person
 **I don't know where to start:**
 → START_HERE.md (10 min read, gives you a roadmap)
 
-**I'm building my first KPI:**
-→ EXPANDED_KPI_CHART_REGISTRY.md Ch. 3, find your KPI → Ch. 4 for chart type → Appendix B for component code
+**I'm building my first Metric:**
+→ EXPANDED_METRIC_CHART_REGISTRY.md Ch. 3, find your Metric → Ch. 4 for chart type → Appendix B for component code
 
 **I want to deviate from the Registry:**
 → SOLO_DEVELOPER_GUIDE.md (read the section on when you can safely deviate)
@@ -333,22 +333,22 @@ Instead, focus is 100% on: chart specification, component implementation, person
 → DOCUMENTATION_MIGRATION_GUIDE.md (maps old concepts to new locations)
 
 **I need a specific chart type:**
-→ EXPANDED_KPI_CHART_REGISTRY.md Ch. 4 (11 primary types with complete configs)
+→ EXPANDED_METRIC_CHART_REGISTRY.md Ch. 4 (11 primary types with complete configs)
 
 **I want animation examples:**
-→ EXPANDED_KPI_CHART_REGISTRY.md Ch. 6 + Appendix A
+→ EXPANDED_METRIC_CHART_REGISTRY.md Ch. 6 + Appendix A
 
 **I need callback examples:**
-→ EXPANDED_KPI_CHART_REGISTRY.md Appendix B (3 complete callback patterns)
+→ EXPANDED_METRIC_CHART_REGISTRY.md Appendix B (3 complete callback patterns)
 
 **I'm checking accessibility:**
-→ EXPANDED_KPI_CHART_REGISTRY.md Ch. 8 + Appendix B (ARIA examples, semantic HTML)
+→ EXPANDED_METRIC_CHART_REGISTRY.md Ch. 8 + Appendix B (ARIA examples, semantic HTML)
 
 **I'm optimizing performance:**
-→ EXPANDED_KPI_CHART_REGISTRY.md Ch. 8 (WebGL, caching, lazy loading)
+→ EXPANDED_METRIC_CHART_REGISTRY.md Ch. 8 (WebGL, caching, lazy loading)
 
 **I need a component to copy:**
-→ EXPANDED_KPI_CHART_REGISTRY.md Appendix B (KPICard class, grid layout)
+→ EXPANDED_METRIC_CHART_REGISTRY.md Appendix B (MetricCard class, grid layout)
 
 **I want a decision log template:**
 → SOLO_DEVELOPER_GUIDE.md (example decision log provided)
@@ -361,21 +361,21 @@ Instead, focus is 100% on: chart specification, component implementation, person
 ## NEXT IMMEDIATE ACTIONS
 
 1. **Today:** Read START_HERE.md (10 min) + SOLO_DEVELOPER_GUIDE.md (20 min)
-2. **Tomorrow:** Skim EXPANDED_KPI_CHART_REGISTRY.md Ch. 1-3 (30 min)
-3. **Day 3:** Pick first KPI, implement per START_HERE.md instructions
+2. **Tomorrow:** Skim EXPANDED_METRIC_CHART_REGISTRY.md Ch. 1-3 (30 min)
+3. **Day 3:** Pick first Metric, implement per START_HERE.md instructions
 
 ---
 
 ## SUCCESS LOOKS LIKE
 
 When you're done:
-- [ ] All 51 KPIs implemented
+- [ ] All 51 Metrics implemented
 - [ ] All responsive (mobile/tablet/desktop)
 - [ ] All accessible (keyboard nav, screen reader)
 - [ ] All fast (<1s per chart, <2s dashboard load)
 - [ ] All themed consistently (Registry colors + your customizations)
 - [ ] All animated smoothly (Registry durations, or your documented choices)
-- [ ] Git history is clean (51 commits, one per KPI)
+- [ ] Git history is clean (51 commits, one per Metric)
 - [ ] You're genuinely proud of what you built
 
 ---
@@ -384,7 +384,7 @@ When you're done:
 
 | Document | Version | Date |
 |----------|---------|------|
-| EXPANDED_KPI_CHART_REGISTRY.md | 2.1 | 2026-06-17 |
+| EXPANDED_METRIC_CHART_REGISTRY.md | 2.1 | 2026-06-17 |
 | MASTER_DOCUMENTATION_INDEX.md | 1.0 | 2026-06-17 |
 | DOCUMENTATION_MIGRATION_GUIDE.md | 1.0 | 2026-06-17 |
 | SOLO_DEVELOPER_GUIDE.md | 1.0 | 2026-06-17 |

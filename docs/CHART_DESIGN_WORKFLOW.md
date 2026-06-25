@@ -228,7 +228,7 @@ Can you update the code to include these?
 
 # Example location:
 # ├─ borough_bar_chart (line 43)
-# ├─ kpi_gauge (line 78)
+# ├─ metric_gauge (line 78)
 # ├─ contract_gantt (line 117)
 # ├─ priority_heatmap (line 151)
 # ├─ trend_line (line 177)
@@ -488,12 +488,12 @@ Do I have a spec in VISUALIZATION_REGISTRY?
 
 ---
 
-### Adding a KPI Gauge (10 min)
+### Adding a Metric Gauge (10 min)
 
 1. Invoke /plotly: "Gauge chart, [metric], target=[value], zones=[thresholds]"
-2. Copy code to `plotly_charts.py` (or `kpi_cards.py` if using Dash cards)
+2. Copy code to `plotly_charts.py` (or `metric_cards.py` if using Dash cards)
 3. Link to scheduler/pipeline if metric needs daily refresh
-4. Register in `kpi_cards.py`
+4. Register in `metric_cards.py`
 5. Test + commit
 
 **Example:** Current ramp completion rate (%) with target 80%

@@ -102,7 +102,7 @@ This design addresses five integration bottlenecks in the 31 data analytics skil
 ├─────────────────────────────────────────────────────────┤
 │ • config/datasets.json (57 datasets)                    │
 │ • config/business_rules.json (NYC DOT context)          │
-│ • config/kpis.json (51 KPIs)                            │
+│ • config/metrics.json (51 Metrics)                            │
 │ • config/quality_gates.json (validation rules)          │
 │ • config/skill_registry.json (Phase 2 - skill metadata) │
 │ • config/workflow_templates.json (Phase 3 - workflows)  │
@@ -171,9 +171,9 @@ Example structure:
 - Quality scoring weights (35% completeness, 25% validity, 25% consistency, 15% freshness)
 - Stakeholder personas (Commissioner, Deputy Commissioner, Analyst)
 
-**`config/kpis.json` (51 KPI definitions)**
-- KPI ID, name, formula
-- Source dataset for each KPI
+**`config/metrics.json` (51 Metric definitions)**
+- Metric ID, name, formula
+- Source dataset for each Metric
 - Borough-level aggregation capability
 - Quality tier and ownership
 
@@ -190,12 +190,12 @@ class ConfigSystem:
     def __init__(self):
         self.datasets = load_json('config/datasets.json')
         self.business_rules = load_json('config/business_rules.json')
-        self.kpis = load_json('config/kpis.json')
+        self.metrics = load_json('config/metrics.json')
         self.quality_gates = load_json('config/quality_gates.json')
     
     def get_dataset(self, key) → Dataset
     def get_borough_list() → List[str]
-    def get_kpi_formula(self, kpi_id) → str
+    def get_metric_formula(self, metric_id) → str
     def validate_analysis_context(self, datasets_used, output_format) → (bool, List[str])
 ```
 
@@ -228,7 +228,7 @@ class ProgrammaticEDASkill:
 
 - `config/datasets.json` — All 57 datasets
 - `config/business_rules.json` — NYC DOT rules
-- `config/kpis.json` — All 51 KPIs
+- `config/metrics.json` — All 51 Metrics
 - `config/quality_gates.json` — Validation rules
 - `src/config_system.py` — Config loader
 - All 31 skills updated to use ConfigSystem
@@ -459,7 +459,7 @@ Produces: borough_metrics_table, comparison_chart, business_impact_summary
 ## Testing & Verification
 
 ### Phase 1 Verification
-- `test_config_consistency.py` — No contradictions in datasets, KPIs, metrics
+- `test_config_consistency.py` — No contradictions in datasets, Metrics, metrics
 - Manual check: All 31 skills import ConfigSystem successfully
 - Runtime test: ConfigSystem loads all 4 JSON files without errors
 

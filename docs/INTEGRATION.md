@@ -60,7 +60,7 @@ The toolkit integrates with production-grade monitoring:
 
 ## 6. Phase-Based Migration
 Integration follows a non-breaking additive pattern:
-1. **Phase 1**: Core validation and KPI logic.
+1. **Phase 1**: Core validation and Metric logic.
 2. **Phase 2**: Operational logging and metrics.
 3. **Phase 3**: Airflow orchestration and automated scheduling.
 4. **Phase 4**: API-first exposure of all materialized views.

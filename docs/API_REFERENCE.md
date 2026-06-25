@@ -12,7 +12,7 @@ The `socrata_toolkit` is a modular, Pillar-Architecture Python library for inges
 |--------|------|--------|-------------|
 | [`core`](./modules/core.md) | `socrata_toolkit/core.py` | Core | Socrata client, SoQL builder, DuckDB management, schema registry, exporters |
 | [`analysis`](./modules/analysis.md) | `socrata_toolkit/analysis.py` | Analytics | Profiling, anomaly detection, SLA, text analytics, visualizations |
-| [`engineering`](./modules/engineering.md) | `socrata_toolkit/engineering.py` | Engineering | Cost estimation, sidewalk KPIs, construction list management, task board |
+| [`engineering`](./modules/engineering.md) | `socrata_toolkit/engineering.py` | Engineering | Cost estimation, sidewalk Metrics, construction list management, task board |
 | [`pipeline`](./modules/pipeline.md) | `socrata_toolkit/pipeline.md` | Pipeline | CDC, ingestion, deduplication, BI export, sync, streaming |
 | [`governance`](./modules/governance.md) | `socrata_toolkit/governance.py` | Governance | Quality scoring, audit logging, lineage, alerting, compliance |
 | [`spatial`](./modules/spatial.md) | `socrata_toolkit/spatial.py` | Spatial | Clustering, spatial joins, conflict detection, hotspot analysis |
@@ -48,7 +48,7 @@ pip install -e ".[geo,nlp,xlsx]" # Specific extras
 socrata_toolkit/
 ├── core.py        ← SocrataClient, SoQLBuilder, DuckDB layer, Schema Registry
 ├── analysis.py    ← Profiling, anomalies, SLA, visualizations
-├── engineering.py ← KPIs, cost estimation, task board
+├── engineering.py ← Metrics, cost estimation, task board
 ├── pipeline.py    ← CDC, ingestion, BI export
 ├── governance.py  ← Quality scoring, audit, lineage
 ├── spatial.py     ← Clustering, joins, hotspots

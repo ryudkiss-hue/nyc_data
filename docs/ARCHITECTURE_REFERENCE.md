@@ -167,9 +167,9 @@ class DashboardConfig:
 #### 18 Interactive Dashboards (All Plotly/Dash)
 
 **Tier 1: Executive (5 Dashboards)**
-1. **Executive Dashboard** — System KPIs, uptime, cost, accuracy
+1. **Executive Dashboard** — System Metrics, uptime, cost, accuracy
    - Charts: Violations by borough (stacked bar), SLA metrics (grouped bar), Cost breakdown (pie), Uptime trend (line)
-   - KPI Cards: System Status, Uptime %, Accuracy %, Cost/Month
+   - Metric Cards: System Status, Uptime %, Accuracy %, Cost/Month
    - Refresh: Every 30 seconds
    - Port: 8050
 
@@ -185,7 +185,7 @@ class DashboardConfig:
    - Drill-down: Click error type → see affected workflows
 
 4. **Executive Role Dashboard** — C-suite focused metrics
-   - Only strategic KPIs: Budget, ROI, Risk level, Uptime
+   - Only strategic Metrics: Budget, ROI, Risk level, Uptime
    - No technical details
    - Refresh: Every 60 seconds
 
@@ -236,7 +236,7 @@ class DashboardConfig:
 15. **Master Dashboard** — System overview and navigation
     - Status grid of all 15 primary dashboards
     - Quick links to each dashboard
-    - System-wide KPIs
+    - System-wide Metrics
 
 **Tier 4: Technical (2 Dashboards)**
 16. **Architecture Dashboard** — System design (static)
@@ -278,7 +278,7 @@ python src/socrata_toolkit/dashboards/executive_dashboard.py
 # Returns: {
 #   "metadata": {...},
 #   "charts": [{name, data, options}, ...],
-#   "kpis": [{label, value, trend}, ...],
+#   "metrics": [{label, value, trend}, ...],
 #   "generated_at": "2026-06-11T14:00:00Z"
 # }
 ```
@@ -287,7 +287,7 @@ python src/socrata_toolkit/dashboards/executive_dashboard.py
 ```python
 # Export button in each dashboard
 # Multi-sheet: one per chart
-# Includes summary sheet with KPIs
+# Includes summary sheet with Metrics
 ```
 
 **Markdown (.md)**

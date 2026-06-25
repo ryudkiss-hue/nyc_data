@@ -5,7 +5,7 @@ status: SOURCE_OF_TRUTH
 created: 2026-06-17
 last_updated: 2026-06-17
 author: Claude Code
-purpose: Map official NYC job posting duties to KPIs, datasets, visualizations, and responsible teams
+purpose: Map official NYC job posting duties to Metrics, datasets, visualizations, and responsible teams
 source_postings:
   - jid-35715: "Project Analyst - SW (Sidewalk Program)" 
   - jid-42159: "SW - Project Analyst (Sidewalk Infrastructure)"
@@ -13,13 +13,13 @@ source_postings:
 
 # NYC DOT Project Analyst: Complete Responsibility Mapping
 
-**AUTHORITATIVE SOURCE:** All 51 KPIs, 57 datasets, and visualization registries are built to directly support the official job responsibilities defined in NYC job postings JID-35715 and JID-42159.
+**AUTHORITATIVE SOURCE:** All 51 Metrics, 57 datasets, and visualization registries are built to directly support the official job responsibilities defined in NYC job postings JID-35715 and JID-42159.
 
 ---
 
 ## Executive Summary: Job Scope → System Alignment
 
-| Official Job Duty | # KPIs Supporting | # Datasets Required | Visualizations | Dashboard |
+| Official Job Duty | # Metrics Supporting | # Datasets Required | Visualizations | Dashboard |
 |---|---|---|---|---|
 | **Analyze sidewalk repair locations (GIS)** | 8 | 12 | 6 | Geographic Analysis |
 | **Create construction lists & identify conflicts** | 6 | 9 | 5 | Construction Coordination |
@@ -43,7 +43,7 @@ source_postings:
 
 **Core Business Need:** Identify neighborhoods/blocks with highest sidewalk deterioration to optimize inspection scheduling and resource allocation.
 
-#### Supporting KPIs (8)
+#### Supporting Metrics (8)
 - `coverage_gap_blocks` — Blocks not yet inspected; identifies geographic gaps
 - `violation_hotspots` — Clusters of violations showing repair concentration
 - `spatial_clustering_intensity` — Moran's I intensity; highlights geographic clusters
@@ -82,7 +82,7 @@ source_postings:
 
 **Core Business Need:** Identify geographic/temporal overlaps between inspection work, construction permits, and capital projects to prevent conflicts and optimize scheduling.
 
-#### Supporting KPIs (6)
+#### Supporting Metrics (6)
 - `construction_conflict_zones` — Active permit-inspection overlaps
 - `contractor_completion_rate` — Are conflicts being resolved on time?
 - `contractor_capacity_utilization` — Which contractors have capacity for conflict resolution?
@@ -117,7 +117,7 @@ source_postings:
 
 **Core Business Need:** Track contractor performance, budget utilization, and work completion to manage contracts effectively and forecast costs.
 
-#### Supporting KPIs (9)
+#### Supporting Metrics (9)
 - `monthly_spend_trend` — Budget tracking month-over-month
 - `contract_spend_variance` — Budget variance alerts
 - `contractor_completion_rate` — Work completion %
@@ -138,7 +138,7 @@ source_postings:
 #### Visualizations (7)
 1. **Monthly Spend Trend** (Line + bar) — IV: Month | DV: Cost ($) | Type: Time series
 2. **Budget Variance Dashboard** (Gauge + bar) — IV: Contract type | DV: Variance % | Type: Status
-3. **Contractor Completion Rate Card** (KPI card + table) — IV: Contractor | DV: Completion % | Type: Scorecard
+3. **Contractor Completion Rate Card** (Metric card + table) — IV: Contractor | DV: Completion % | Type: Scorecard
 4. **Quality Score Comparison** (Horizontal bar) — IV: Contractor | DV: Quality % | Type: Performance
 5. **SLA Compliance Tracking** (Line) — IV: Week | DV: Compliance % | Type: Compliance
 6. **Cost Per Violation Resolved** (Trend) — IV: Month | DV: Cost ($) | Type: Efficiency
@@ -158,7 +158,7 @@ source_postings:
 
 **Core Business Need:** Identify bottlenecks, inefficiencies, and optimization opportunities in the inspection/repair workflow.
 
-#### Supporting KPIs (8)
+#### Supporting Metrics (8)
 - `inspection_completion_rate` — Are inspections finishing on schedule?
 - `reinspection_rate` — Are we reworking too much? (quality issue signal)
 - `violation_resolution_time` — How long do violations take to resolve?
@@ -181,7 +181,7 @@ source_postings:
 3. **Violation Resolution Time Distribution** (Box plot) — IV: Borough | DV: Days to resolve | Type: Distribution
 4. **Violations Per Inspector** (Bar) — IV: Inspector | DV: Count | Type: Productivity
 5. **Contractor Quality Variance** (Scatter + line) — IV: Contractor | DV: Defect rate | Type: Consistency
-6. **Month-over-Month Improvement Tracker** (Multi-metric card) — IV: Metric | DV: % change | Type: KPI trend
+6. **Month-over-Month Improvement Tracker** (Multi-metric card) — IV: Metric | DV: % change | Type: Metric trend
 7. **Goal Attainment Progress** (Progress bar) — IV: Annual goal | DV: % YTD achieved | Type: Strategic
 
 #### Responsible Teams
@@ -198,7 +198,7 @@ source_postings:
 
 **Core Business Need:** Provide timely responses to ad-hoc questions about contract status, capacity, scope, and timelines.
 
-#### Supporting KPIs (5)
+#### Supporting Metrics (5)
 - `contractor_capacity_utilization` — "Do we have capacity?" answer
 - `contractor_sla_compliance` — "Can they deliver on time?" answer
 - `contract_spend_variance` — "Are we on budget?" answer
@@ -213,7 +213,7 @@ source_postings:
 
 #### Visualizations (4)
 1. **Active Contracts Dashboard** (Table) — IV: Contractor name | DV: Contract value, status, completion % | Type: Reference
-2. **Capacity Available** (Single-number KPI) — IV: N/A | DV: Available work items | Type: Status
+2. **Capacity Available** (Single-number Metric) — IV: N/A | DV: Available work items | Type: Status
 3. **SLA Compliance by Contractor** (Table) — IV: Contractor | DV: Compliance %, on-time %, issues | Type: Reference
 4. **Inquiry Response Time** (SLA tracker) — IV: Inquiry date | DV: Response time | Type: Service level
 
@@ -231,7 +231,7 @@ source_postings:
 
 **Core Business Need:** Track overall program health through comprehensive metrics dashboard; detect anomalies and trends.
 
-#### Supporting KPIs (12)
+#### Supporting Metrics (12)
 - `program_sla_achievement` — Overall program meeting SLAs?
 - `violations_open_count` — Workload volume
 - `violations_by_severity` — Risk profile
@@ -255,7 +255,7 @@ source_postings:
 - **Communications:** correspondences (bheb-sjfi)
 
 #### Visualizations (10)
-1. **Program Health Scorecard** (Multi-KPI card) — IV: N/A | DV: Program SLA %, violation count, spend | Type: Executive summary
+1. **Program Health Scorecard** (Multi-Metric card) — IV: N/A | DV: Program SLA %, violation count, spend | Type: Executive summary
 2. **Key Metrics Dashboard** (Grid) — IV: Metric | DV: Current value, target, trend | Type: Balanced scorecard
 3. **Open Violations Trend** (Area chart) — IV: Date | DV: Count by severity | Type: Workload
 4. **Contractor Performance Leaderboard** (Ranked table) — IV: Contractor | DV: Completion %, quality, SLA | Type: Rankings
@@ -281,7 +281,7 @@ source_postings:
 
 **Core Business Need:** Use spatial tools to identify and resolve overlaps between construction, inspections, capital projects, and utility work.
 
-#### Supporting KPIs (7)
+#### Supporting Metrics (7)
 - `construction_conflict_zones` — Where are the overlaps?
 - `spatial_clustering_intensity` — Are violations clustered (warrant coordinated response)?
 - `violation_hotspots` — Geographic concentration of work
@@ -319,7 +319,7 @@ source_postings:
 
 **Core Business Need:** Conduct deep-dive analysis on program aspects to support decision-making and process improvement.
 
-#### Supporting KPIs (8)
+#### Supporting Metrics (8)
 - `violations_by_defect_type` — What are the root causes?
 - `spending_by_defect_type` — Where is money being spent?
 - `violation_dismissal_rate` — Data quality / accuracy signals?
@@ -359,7 +359,7 @@ source_postings:
 
 **Core Business Need:** Respond quickly to urgent questions about construction status, priorities, and escalations.
 
-#### Supporting KPIs (4)
+#### Supporting Metrics (4)
 - `construction_conflict_zones` — "Where are active conflicts?" answer
 - `escalation_count` — Tracking urgent issues
 - `contractor_capacity_utilization` — "Can we handle this work?" answer
@@ -389,7 +389,7 @@ source_postings:
 
 **Core Business Need:** Track ADA compliance and accessibility improvements; support pedestrian safety initiatives.
 
-#### Supporting KPIs (5)
+#### Supporting Metrics (5)
 - `ramp_completion_by_borough` — ADA mandate progress by borough
 - `ramp_complaint_response_time` — Accessibility complaint response speed
 - `ramp_accessibility_score` — Composite equity-weighted accessibility
@@ -421,7 +421,7 @@ source_postings:
 
 **Core Business Need:** QA on analytical work; provide leadership guidance on findings and next steps.
 
-#### Supporting KPIs (3 examples; quality gate across all 51)
+#### Supporting Metrics (3 examples; quality gate across all 51)
 - `data_completeness` — Is the analysis based on complete data?
 - `data_validity` — Data quality sufficient for decision-making?
 - `program_sla_achievement` — Are recommendations on track to meet goals?
@@ -447,8 +447,8 @@ source_postings:
 
 | Dimension | Coverage | Status |
 |-----------|----------|--------|
-| **All 11 Official Duties** | Mapped to KPIs, datasets, visualizations | ✅ Complete |
-| **51 Total KPIs** | Each supports 1+ official duties | ✅ Aligned |
+| **All 11 Official Duties** | Mapped to Metrics, datasets, visualizations | ✅ Complete |
+| **51 Total Metrics** | Each supports 1+ official duties | ✅ Aligned |
 | **57 datasets** | all 57 required for role execution | ✅ Mandatory |
 | **Visualization Registry** | All charts support duty execution | ✅ Complete |
 | **Responsibility Matrix** | Clear owner assignments | ✅ Defined |
@@ -460,7 +460,7 @@ source_postings:
 ## Implementation Checklist
 
 - [x] All 11 official job duties mapped to supporting systems
-- [x] Each KPI linked to ≥1 official duty
+- [x] Each Metric linked to ≥1 official duty
 - [x] Each dataset linked to ≥1 official duty
 - [x] Visualizations created to execute each duty
 - [x] Responsible teams/owners identified
@@ -476,7 +476,7 @@ source_postings:
 
 ## Validation Statement
 
-**The complete project ecosystem (51 KPIs, 57 datasets, 100+ visualizations, DuckDB pipeline) is designed to directly support and enable every official responsibility defined in NYC DOT Project Analyst job postings JID-35715 and JID-42159.**
+**The complete project ecosystem (51 Metrics, 57 datasets, 100+ visualizations, DuckDB pipeline) is designed to directly support and enable every official responsibility defined in NYC DOT Project Analyst job postings JID-35715 and JID-42159.**
 
 No requirement is unmet. No official duty lacks supporting infrastructure. The analyst has all data, tools, and dashboards needed to execute their role.
 

@@ -55,7 +55,7 @@ Is your data time-based (dates, timestamps)?
 │      │    ├─ Static snapshot → Donut/Pie
 │      │    └─ Time-series parts → Stacked Bar/Area
 │      │
-│      └─ NO → Is it a single KPI or metric?
+│      └─ NO → Is it a single Metric or metric?
 │           ├─ YES → Gauge Chart (with threshold zones)
 │           └─ NO → Scatter/Bubble (if 2 dimensions); Box Plot (if distribution)
 ```
@@ -205,13 +205,13 @@ def borough_bar_chart(df, ...):
 
 ---
 
-### Scenario 5: Adding a New KPI Gauge to Dashboard
+### Scenario 5: Adding a New Metric Gauge to Dashboard
 
 **Task:** Add a single gauge showing current ramp completion rate.
 
 **Step-by-step:**
 
-1. **Clarify KPI spec:**
+1. **Clarify Metric spec:**
    - Metric: Ramp completion rate (%)
    - Target: 80%
    - Threshold zones: Green (>80%), Yellow (60-80%), Red (<60%)
@@ -231,7 +231,7 @@ def borough_bar_chart(df, ...):
 
 3. **Review and integrate:**
    - /plotly returns gauge code using `plotly.graph_objects.Indicator`
-   - Add to `app/visualization_engine/kpi_cards.py`
+   - Add to `app/visualization_engine/metric_cards.py`
    - Link to scheduler for daily updates
 
 ---
@@ -296,7 +296,7 @@ DASHBOARD (http://localhost:8011) [Live interactive charts]
 | Chart | Dataset | Type | Location | Status |
 |-------|---------|------|----------|--------|
 | borough_bar_chart | inspection, violations, etc. | Bar | `plotly_charts.py:43` | ✅ Active |
-| kpi_gauge | Multiple (KPIs) | Gauge | `plotly_charts.py:78` | ✅ Active |
+| metric_gauge | Multiple (Metrics) | Gauge | `plotly_charts.py:78` | ✅ Active |
 | contract_gantt | Built/permits | Gantt | `plotly_charts.py:117` | ✅ Active |
 | priority_heatmap | By status/borough | Heatmap | `plotly_charts.py:151` | ✅ Active |
 | trend_line | Time-series data | Line | `plotly_charts.py:177` | ✅ Active |

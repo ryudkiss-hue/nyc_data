@@ -18,7 +18,7 @@ This document maps sections from the official NYC Street Design Manual (https://
 
 **Implementation:**
 - Core philosophy embedded in `MaterialSpecification.applicable_ada_rules`
-- Material-aware KPI system enables design principle compliance tracking
+- Material-aware Metric system enables design principle compliance tracking
 - All material definitions reference "NYC Street Design Manual Section X"
 
 **Key Principle:** "Create streets that are safe, accessible, and sustainable for all users"
@@ -459,7 +459,7 @@ MATERIAL_APPLICABLE_RULES: dict[MaterialCategory, list[str]] = {
 | `material_definitions.py` | Material specifications | Section 4 (Materials) |
 | `design_rules.py` | ADA and NYC rules | Sections 5-11 |
 | `material_compliance.py` | Compliance checking | Section 10 (Inspection) |
-| `dot_sidewalk.py` | KPI integration | Section 10 (Asset mgmt) |
+| `dot_sidewalk.py` | Metric integration | Section 10 (Asset mgmt) |
 
 ### Data Flow
 
@@ -476,7 +476,7 @@ Surface Assessments (Field Inspection Data)
     ↓
 Compliance Checking (Material + Rules)
     ↓
-KPI Reporting (Actionable Intelligence)
+Metric Reporting (Actionable Intelligence)
 ```
 
 ---

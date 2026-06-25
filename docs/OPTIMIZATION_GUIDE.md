@@ -8,7 +8,7 @@
 
 ## Table of Contents
 
-1. [Async KPI Computation Pattern](#async-kpi-computation-pattern)
+1. [Async Metric Computation Pattern](#async-metric-computation-pattern)
 2. [Materialized View Strategy](#materialized-view-strategy)
 3. [Cache Invalidation Policy](#cache-invalidation-policy)
 4. [Dashboard Response Optimization](#dashboard-response-optimization)
@@ -17,7 +17,7 @@
 
 ---
 
-## Async KPI Computation Pattern
+## Async Metric Computation Pattern
 
 ### Architecture Overview
 
@@ -30,24 +30,24 @@ DuckDB L1 (Hot Cache)
 Analytics Compute Layer (Async Background Task)
     │
     ├─ Runs nightly (23:00 UTC)
-    ├─ Computes 50+ KPIs in parallel
+    ├─ Computes 50+ Metrics in parallel
     ├─ Materializes results to analytics_cloud schema
     └─ Takes ~30-45 seconds (does not block dashboard)
     
 MotherDuck L2/L3 (Cloud Cache)
     │
-    └─ Stores pre-computed KPI tables
+    └─ Stores pre-computed Metric tables
     └─ 95%+ cache hit rate on dashboard requests
 ```
 
 ### Implementation Pattern
 
-Pre-computed KPIs materialized in `analytics_cloud` schema with 24-hour refresh cycle. Dashboard queries read from cache in <5ms.
+Pre-computed Metrics materialized in `analytics_cloud` schema with 24-hour refresh cycle. Dashboard queries read from cache in <5ms.
 
 **Key Components:**
-- AnalyticsMaterializer: Computes all KPI categories in async task
-- MaterializedKPIStore: Manages pre-computed table lifecycle
-- AnalyticsBridge: Provides cached KPI access to dashboard
+- AnalyticsMaterializer: Computes all Metric categories in async task
+- MaterializedMetricStore: Manages pre-computed table lifecycle
+- AnalyticsBridge: Provides cached Metric access to dashboard
 
 ### Scheduling the Async Task
 
@@ -60,18 +60,18 @@ APScheduler-based nightly refresh:
 ### Code Example
 
 ```python
-from src.socrata_toolkit.dashboards.callbacks.materialized_kpis import MaterializedKPIStore
+from src.socrata_toolkit.dashboards.callbacks.materialized_metrics import MaterializedMetricStore
 from src.socrata_toolkit.dashboards.callbacks.analytics_bridge import AnalyticsBridge
 
 # Initialize materialization store
-kpi_store = MaterializedKPIStore(motherduck_client)
+metric_store = MaterializedMetricStore(motherduck_client)
 
-# Compute and materialize KPIs asynchronously
-kpi_results = kpi_store.materialize_kpis(computed_kpis)
+# Compute and materialize Metrics asynchronously
+metric_results = metric_store.materialize_metrics(computed_metrics)
 
 # Dashboard uses analytics bridge for cached lookups
 bridge = AnalyticsBridge(motherduck_client)
-violations = bridge.get_violation_kpis()  # <1ms hit rate
+violations = bridge.get_violation_metrics()  # <1ms hit rate
 ```
 
 **Location:** `src/socrata_toolkit/dashboards/callbacks/`
@@ -86,11 +86,11 @@ Analytics tables live in `analytics_cloud` schema:
 
 | Table | Purpose | Refresh |
 |-------|---------|---------|
-| violations_kpis_mat | Violation metrics + borough distribution | Daily |
-| ramps_kpis_mat | Ramp completion rates + borough breakdown | Daily |
-| permits_kpis_mat | Permit analysis + spatial metrics | Daily |
-| quality_kpis_mat | Data quality scores | Daily |
-| spatial_kpis_mat | Conflict detection pre-computed results | Daily |
+| violations_metrics_mat | Violation metrics + borough distribution | Daily |
+| ramps_metrics_mat | Ramp completion rates + borough breakdown | Daily |
+| permits_metrics_mat | Permit analysis + spatial metrics | Daily |
+| quality_metrics_mat | Data quality scores | Daily |
+| spatial_metrics_mat | Conflict detection pre-computed results | Daily |
 
 ### Pre-Aggregation Strategy
 
@@ -120,7 +120,7 @@ Why 5 minutes?
 - Balances freshness vs. cache hit rate
 - Most dashboards don't require <5min staleness
 - Reduces computation overhead while keeping data fresh
-- Typical hit rate: 95%+ across all KPI categories
+- Typical hit rate: 95%+ across all Metric categories
 
 **Cache Configuration:**
 - TTL: 300 seconds (5 minutes)
@@ -130,9 +130,9 @@ Why 5 minutes?
 ### Event-Driven Invalidation
 
 Manual refresh triggers:
-1. User clicks dashboard "Refresh" button → Invalidates specific KPI
-2. Dataset update detected via Socrata webhook → Invalidates related KPIs
-3. Scheduled materialization completes → Refreshes all KPIs
+1. User clicks dashboard "Refresh" button → Invalidates specific Metric
+2. Dataset update detected via Socrata webhook → Invalidates related Metrics
+3. Scheduled materialization completes → Refreshes all Metrics
 4. Error in computation → Falls back to previous cached value
 
 ### Invalidation Pattern
@@ -159,7 +159,7 @@ def invalidate_cache(self, key: str):
 
 ### Real-Time Data Binding Pattern
 
-**Old approach:** Compute KPIs on every dashboard callback  
+**Old approach:** Compute Metrics on every dashboard callback  
 **New approach:** Bind to pre-computed materialized views
 
 Instead of expensive on-demand computation:
@@ -172,14 +172,14 @@ Use cached lookups:
 query materialized view → return cached result (<50ms)
 ```
 
-**Result:** 500ms → 50ms for simple KPI displays (10x faster)
+**Result:** 500ms → 50ms for simple Metric displays (10x faster)
 
 ### Lazy Loading Strategy
 
-Load KPIs only when needed:
-- Initial page load: Return basic KPIs from cache
-- User clicks "Show Details": Load complex KPIs asynchronously
-- User selects borough filter: Load borough-specific KPIs
+Load Metrics only when needed:
+- Initial page load: Return basic Metrics from cache
+- User clicks "Show Details": Load complex Metrics asynchronously
+- User selects borough filter: Load borough-specific Metrics
 
 Reduces initial dashboard load time and memory footprint.
 
@@ -205,7 +205,7 @@ Manage MotherDuck connections in a thread-safe pool:
 **2. Materialization Latency (Target: <45s)**
 - Computation time: 30-45 seconds per cycle
 - Alert if exceeds 60 seconds
-- Action: Optimize KPI computation; check MotherDuck connection
+- Action: Optimize Metric computation; check MotherDuck connection
 
 **3. Dashboard P50 Latency (Target: <100ms)**
 - Baseline: 45ms (with cache hits)
@@ -237,17 +237,17 @@ Manage MotherDuck connections in a thread-safe pool:
 
 ### Phase 4: Predictive Prefetch (Q3 2026)
 
-**Load KPIs before user requests them**
+**Load Metrics before user requests them**
 
 - Prefetch at predictable peak hours (12:00 UTC for violations/permits, 08:00 UTC for ramps)
 - Prefetch based on user history (correlate dashboards users view together)
-- Reduces perceived latency to <10ms for preloaded KPIs
+- Reduces perceived latency to <10ms for preloaded Metrics
 
 ### Phase 5: Compressed Materialized Views (Q3 2026)
 
 **Reduce storage overhead by 60-70%**
 
-- Store materialized KPIs in Parquet format
+- Store materialized Metrics in Parquet format
 - Snappy compression reduces disk I/O
 - Minimal latency impact (<1-2ms additional decompression)
 - Storage reduction: analytics_cloud schema 850GB → 250-350GB
@@ -256,15 +256,15 @@ Manage MotherDuck connections in a thread-safe pool:
 
 **Multi-level cache with automatic spillover**
 
-- L1 (in-memory): 5-min TTL, 99%+ hit rate (hot KPIs)
-- L2 (MotherDuck): 1-hour TTL, 85-95% hit rate (warm KPIs)
+- L1 (in-memory): 5-min TTL, 99%+ hit rate (hot Metrics)
+- L2 (MotherDuck): 1-hour TTL, 85-95% hit rate (warm Metrics)
 - L3 (cloud storage): 365-day retention for historical analysis
 
 ---
 
 ## Implementation Checklist
 
-- [x] Async KPI materialization (deployed 2026-06-10)
+- [x] Async Metric materialization (deployed 2026-06-10)
 - [x] Materialized view layer (deployed 2026-06-10)
 - [x] 5-minute cache TTL with 95%+ hit rate (deployed 2026-06-10)
 - [x] Connection pooling (40% overhead reduction) (deployed 2026-06-10)
@@ -279,7 +279,7 @@ Manage MotherDuck connections in a thread-safe pool:
 ## Summary
 
 **Optimizations Deployed (Phase 3B):**
-1. Async KPI computation (decoupled from dashboard)
+1. Async Metric computation (decoupled from dashboard)
 2. Materialized views (O(1) lookups)
 3. 5-minute cache TTL (95%+ hit rate)
 4. Connection pooling (40% overhead reduction)

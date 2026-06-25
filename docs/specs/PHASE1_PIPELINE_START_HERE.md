@@ -181,7 +181,7 @@ python -c "import duckdb; print(duckdb.__version__)"
    - `staging.ramps` (~210K rows, -3% from raw)
 
 3. **analytics** — Pre-computed views for dashboard
-   - `analytics.borough_summary` (5 rows: KPIs by borough)
+   - `analytics.borough_summary` (5 rows: Metrics by borough)
    - `analytics.time_series_snapshots` (monthly trends)
    - `analytics.material_analysis_mart` (failure rates by material)
    - `analytics.clustering_features` (k-means input)

@@ -74,7 +74,7 @@ print(response.to_markdown())
 ```python
 from socrata_toolkit.program_metrics import *
 
-dashboard = compute_program_dashboard(kpi_data)
+dashboard = compute_program_dashboard(metric_data)
 print(f"Health: {dashboard.overall_health}")
 # green_count, yellow_count, red_count
 ```
@@ -116,9 +116,9 @@ MSProjectExporter().from_contracts(contracts_df)
 | `socrata pipeline <domain> <4x4> --json-out data.json` | Full pipeline |
 | `socrata doctor` | Check installation |
 
-## Standard KPIs
+## Standard Metrics
 
-| KPI | Target | Formula |
+| Metric | Target | Formula |
 |-----|--------|---------|
 | Defect Density | < 2.0 violations/mile | SUM(violations) / SUM(curb_miles) |
 | Throughput Velocity | > 200 ft/day | SUM(built_linear_feet) / SUM(days) |

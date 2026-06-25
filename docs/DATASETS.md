@@ -2,7 +2,7 @@
 
 **Last Generated:** 2026-06-07 23:55:01 UTC
 
-**DEPRECATED:** This document is superseded by `SOCRATA_DATASETS_CONSOLIDATED.md` which documents all 37 datasets with complete mappings, alternatives, and KPI cross-references.
+**DEPRECATED:** This document is superseded by `SOCRATA_DATASETS_CONSOLIDATED.md` which documents all 37 datasets with complete mappings, alternatives, and Metric cross-references.
 
 For current dataset registry and technical reference, see: [`SOCRATA_DATASETS_CONSOLIDATED.md`](SOCRATA_DATASETS_CONSOLIDATED.md)
 

@@ -413,7 +413,7 @@ class AnalyticsEngine:
     @memoize_with_ttl(seconds=600)
     def chart_bootstrap_ci(data_bundle: dict) -> tuple[go.Figure, str]:
         """
-        Compute bootstrap confidence interval for KPI metrics.
+        Compute bootstrap confidence interval for Metric metrics.
 
         Returns:
             tuple[go.Figure, str]: (gauge with CI bands, S-DIKW narrative)
@@ -423,7 +423,7 @@ class AnalyticsEngine:
         try:
             metrics = data_bundle.get("metrics", {})
             if not metrics:
-                return go.Figure(), "No KPI metrics available for confidence interval computation."
+                return go.Figure(), "No Metric metrics available for confidence interval computation."
 
             # Use first available metric
             metric_name = list(metrics.keys())[0]

@@ -224,7 +224,7 @@ All 6 implementation parts are fully specified with:
 
 | View | Input | Rows | Purpose |
 |------|-------|------|---------|
-| borough_summary | staging.inspections | 5 | KPIs by borough (MN, BK, QN, BX, SI) |
+| borough_summary | staging.inspections | 5 | Metrics by borough (MN, BK, QN, BX, SI) |
 | time_series_snapshots | staging.inspections | 12+ | Monthly trends with YoY comparison |
 | material_analysis_mart | staging.inspections | 10+ | Failure rates by material type |
 | clustering_features | staging.inspections | ~390K | Feature matrix for k-means |

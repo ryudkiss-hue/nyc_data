@@ -70,7 +70,7 @@ from app.callbacks.ingestion import register_ingestion_callbacks
 # Import Modular Callbacks
 from app.callbacks.navigation import register_navigation_callbacks
 from app.components.filter_system import register_filter_callbacks
-from app.components.kpi_cards import register_kpi_callbacks
+from app.components.metric_cards import register_metric_callbacks
 from app.dash_layouts import (
     layout_construction,
     layout_copilot,
@@ -249,7 +249,7 @@ register_analytics_callbacks(app, dm)
 register_export_callbacks(app, dm)
 register_copilot_callbacks(app)
 register_filter_callbacks()
-register_kpi_callbacks()
+register_metric_callbacks()
 
 if __name__ == "__main__":
     # Item 125: High-Performance ASGI Server (Uvicorn)

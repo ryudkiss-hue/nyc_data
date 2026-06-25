@@ -1,15 +1,15 @@
 -- Daily Time-Series Materialization
--- Snapshot creation for KPI tracking and trend analysis
+-- Snapshot creation for Metric tracking and trend analysis
 
 -- ============================================================================
--- Daily KPI Snapshot
+-- Daily Metric Snapshot
 -- ============================================================================
 
-INSERT INTO serving.daily_snapshots (measurement_date, kpi_count, avg_kpi_value, datasets_loaded, row_count)
+INSERT INTO serving.daily_snapshots (measurement_date, metric_count, avg_metric_value, datasets_loaded, row_count)
 SELECT
     CAST(CURRENT_DATE AS DATE) as measurement_date,
-    COUNT(DISTINCT kpi_id * 5) as kpi_count,  -- 51 KPIs × 5 boroughs
-    ROUND(AVG(value), 2) as avg_kpi_value,
+    COUNT(DISTINCT metric_id * 5) as metric_count,  -- 51 Metrics × 5 boroughs
+    ROUND(AVG(value), 2) as avg_metric_value,
     57 as datasets_loaded,
     (SELECT SUM(row_count) FROM (
         SELECT COUNT(*) as row_count FROM staging.inspection
@@ -17,17 +17,17 @@ SELECT
         UNION ALL SELECT COUNT(*) FROM staging.ramp_locations
         -- ... union all other 54 datasets
     ) rc) as row_count
-FROM serving.kpi_borough_results
+FROM serving.metric_borough_results
 WHERE measurement_date = CAST(CURRENT_DATE AS DATE);
 
 -- ============================================================================
--- Monthly KPI Trend
+-- Monthly Metric Trend
 -- ============================================================================
 
-CREATE OR REPLACE VIEW serving.kpi_monthly_trend AS
+CREATE OR REPLACE VIEW serving.metric_monthly_trend AS
 SELECT
-    kpi_id,
-    kpi_name,
+    metric_id,
+    metric_name,
     borough,
     EXTRACT(YEAR FROM  measurement_date) as year,
     EXTRACT(MONTH FROM  measurement_date) as month,
@@ -35,8 +35,8 @@ SELECT
     MIN(value) as min_value,
     MAX(value) as max_value,
     ROUND(STDDEV(value), 2) as std_dev
-FROM serving.kpi_borough_results
-GROUP BY kpi_id, kpi_name, borough, EXTRACT(YEAR FROM  measurement_date), EXTRACT(MONTH FROM  measurement_date);
+FROM serving.metric_borough_results
+GROUP BY metric_id, metric_name, borough, EXTRACT(YEAR FROM  measurement_date), EXTRACT(MONTH FROM  measurement_date);
 
 -- ============================================================================
 -- Borough-Level Time Series
@@ -46,12 +46,12 @@ CREATE OR REPLACE VIEW serving.borough_performance_trend AS
 SELECT
     borough,
     measurement_date,
-    COUNT(DISTINCT kpi_id) as kpis_tracked,
+    COUNT(DISTINCT metric_id) as metrics_tracked,
     ROUND(AVG(value), 2) as avg_performance,
     COUNT(CASE WHEN status = 'on_target' THEN 1 END) as on_target_count,
     COUNT(CASE WHEN status = 'at_risk' THEN 1 END) as at_risk_count,
     ROUND(COUNT(CASE WHEN status = 'on_target' THEN 1 END) * 100.0 / COUNT(*), 2) as on_target_percentage
-FROM serving.kpi_borough_results
+FROM serving.metric_borough_results
 GROUP BY borough, measurement_date
 ORDER BY measurement_date DESC, borough;
 
@@ -155,8 +155,8 @@ SELECT
     (SELECT COUNT(DISTINCT ramp_id) FROM staging.ramp_locations WHERE accessibility_compliant = TRUE) as compliant_ramps,
     (SELECT COUNT(DISTINCT ramp_id) FROM staging.ramp_locations) as total_ramps,
     (SELECT AVG(composite_score) FROM serving.quality_scorecards WHERE measurement_date = CAST(CURRENT_DATE AS DATE)) as avg_quality_score,
-    (SELECT COUNT(*) FROM serving.kpi_borough_results WHERE measurement_date = CAST(CURRENT_DATE AS DATE) AND status = 'on_target') as kpis_on_target,
-    255 as total_kpis,
+    (SELECT COUNT(*) FROM serving.metric_borough_results WHERE measurement_date = CAST(CURRENT_DATE AS DATE) AND status = 'on_target') as metrics_on_target,
+    255 as total_metrics,
     57 as datasets_loaded;
 
 -- ============================================================================
@@ -195,10 +195,10 @@ AND EXTRACT(YEAR FROM  rl.created_date) = EXTRACT(YEAR FROM  CURRENT_DATE);
 -- Archive Historical Snapshots (rotate weekly)
 -- ============================================================================
 
--- Move KPI records older than 90 days to archive
-CREATE OR REPLACE VIEW serving.kpi_archive_candidates AS
+-- Move Metric records older than 90 days to archive
+CREATE OR REPLACE VIEW serving.metric_archive_candidates AS
 SELECT *
-FROM serving.kpi_borough_results
+FROM serving.metric_borough_results
 WHERE measurement_date < (90, CURRENT_DATE);
 
 -- Move quality records older than 180 days to archive

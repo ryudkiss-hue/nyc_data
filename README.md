@@ -1,6 +1,6 @@
 # NYC DOT SIM Dual-Tier Fuzzy Router
 
-A production-ready natural language question-answering system for NYC Department of Transportation analysts. Routes analyst questions to pre-built KPI answers (Tier 1) with optional Claude-powered synthesis (Tier 2).
+A production-ready natural language question-answering system for NYC Department of Transportation analysts. Routes analyst questions to pre-built Metric answers (Tier 1) with optional Claude-powered synthesis (Tier 2).
 
 ## Quick Start
 
@@ -56,13 +56,13 @@ socrata-nlquery "Why violations spiking?" --expand
 
 # Mark feedback
 socrata-nlquery "violations" --helpful
-socrata-nlquery "violations" --wrong --corrected-kpi KPI-045
+socrata-nlquery "violations" --wrong --corrected-metric METRIC-045
 
 # JSON output (for scripting)
 socrata-nlquery "question" --json
 
 # Evaluation & training
-socrata-nlquery evaluate --registry config/kpi_registry_full.json
+socrata-nlquery evaluate --registry config/metric_registry_full.json
 socrata-nlquery train --feedback-source data/local_db/router_observability.duckdb
 
 # Run demo

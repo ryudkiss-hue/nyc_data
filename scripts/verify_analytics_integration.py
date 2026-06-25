@@ -181,7 +181,7 @@ def check_data_service() -> Tuple[bool, List[str]]:
     try:
         from app.services.analytics_service import (
             get_dataset,
-            get_kpi_metrics,
+            get_metric_metrics,
             get_spatial_data,
             get_timeseries_data,
             validate_filters,
@@ -191,7 +191,7 @@ def check_data_service() -> Tuple[bool, List[str]]:
             ("get_dataset", "Fetch dataset"),
             ("get_spatial_data", "Fetch spatial data"),
             ("get_timeseries_data", "Fetch time series"),
-            ("get_kpi_metrics", "Fetch KPI metrics"),
+            ("get_metric_metrics", "Fetch Metric metrics"),
             ("validate_filters", "Validate filters"),
         ]
 
@@ -219,7 +219,7 @@ def check_integration_callbacks() -> Tuple[bool, List[str]]:
             "update_distribution_classification",
             "update_anomaly_detection",
             "update_seasonal_decomposition",
-            "update_bootstrap_ci_kpis",
+            "update_bootstrap_ci_metrics",
             "update_morans_i",
             "trigger_all_updates",
         ]
@@ -260,8 +260,8 @@ def check_component_ids() -> Tuple[bool, List[str]]:
             "outputs": ["decomposition-chart-container", "decomposition-narrative"],
         },
         "Phase F": {
-            "inputs": ["store-global-filters", "kpi-refresh-interval"],
-            "outputs": ["kpi-bootstrap-figures", "kpi-bootstrap-summary"],
+            "inputs": ["store-global-filters", "metric-refresh-interval"],
+            "outputs": ["metric-bootstrap-figures", "metric-bootstrap-summary"],
         },
         "Phase B": {
             "inputs": ["store-global-filters", "morans-i-column-select"],
@@ -354,7 +354,7 @@ def run_mock_data_flow() -> Tuple[bool, List[str]]:
             logger.error(f"❌ Phase E failed: {e}")
             errors.append(f"Phase E: {e}")
 
-        # Phase F: KPI metrics
+        # Phase F: Metric metrics
         try:
             metrics = {
                 "completion_rate": (0.874, 0.852, 0.891),

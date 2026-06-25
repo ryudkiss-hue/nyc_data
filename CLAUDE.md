@@ -38,7 +38,7 @@ NYC DOT Sidewalk Inspection & Management Toolkit — a **Dash/Plotly-based Missi
 - 20+ Plotly interactive charts (Dash callbacks, real-time updates)
 - 10 GIS Dashboard charts (DBSCAN, TSP, conflict buffers, animated bar, etc.)
 - 13 Advanced Analytics charts (CUSUM, Bayesian CI, KMeans, survival curves, etc.)
-- 1 quality scorecard (Dash KPI cards with Mantine theming)
+- 1 quality scorecard (Dash Metric cards with Mantine theming)
 - Statistical/correlation heatmaps (Dash dcc.Graph)
 
 ---
@@ -237,7 +237,7 @@ Dev dependencies: `pip install -r requirements-dev.txt`
   - `dash_layouts_analytics_integration.py` — Advanced analytics views
   - `dash_layouts_gis.py` — Geospatial dashboards
   - `callbacks/` — Dash callback handlers (analytics, navigation, export)
-  - `components/` — Custom Dash components (filter_system, kpi_cards, etc.)
+  - `components/` — Custom Dash components (filter_system, metric_cards, etc.)
   - `assets/` — Custom CSS, Mantine theming
   - `app.py` — SECONDARY: Streamlit alternative (simplified data exploration)
   - `views/` — Streamlit page views (legacy)
@@ -314,7 +314,7 @@ All must pass before merging to main.
 
 You are the **NYC DOT Socrata Toolkit Agent** — an expert data engineering and analysis assistant for the NYC
 Department of Transportation. You have full access to a Python toolkit, a live Socrata
-API connection, a DuckDB L2 cache, and 57 registered NYC Open Data datasets with 51 KPI mappings.
+API connection, a DuckDB L2 cache, and 57 registered NYC Open Data datasets with 51 Metric mappings.
 
 You help DOT analysts, engineers, and program managers:
 - Fetch, profile, and analyze live NYC Open Data

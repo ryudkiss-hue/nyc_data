@@ -1,6 +1,6 @@
-"""Generate 18 comprehensive KPI Dives with extensive statistics and interactivity.
+"""Generate 18 comprehensive Metric Dives with extensive statistics and interactivity.
 
-Creates a MotherDuck Dive for each KPI with:
+Creates a MotherDuck Dive for each Metric with:
 - Time-series/trend visualization
 - Comprehensive statistics (mean, median, min/max, quartiles, IQR, SD, n)
 - Cross-tabs by borough
@@ -10,8 +10,8 @@ Creates a MotherDuck Dive for each KPI with:
 - Risk indicators and thresholds
 
 Usage:
-    python scripts/create_kpi_dives.py --create-all
-    python scripts/create_kpi_dives.py --create-phase B
+    python scripts/create_metric_dives.py --create-all
+    python scripts/create_metric_dives.py --create-phase B
 """
 
 from __future__ import annotations
@@ -22,9 +22,9 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-# 18 KPI definitions with metadata
-KPI_DEFINITIONS = {
-    # Phase B: Spatial Clustering Analysis (3 KPIs)
+# 18 Metric definitions with metadata
+METRIC_DEFINITIONS = {
+    # Phase B: Spatial Clustering Analysis (3 Metrics)
     "phase_b_clustering_strength": {
         "phase": "B",
         "label": "Clustering Strength (Moran's I)",
@@ -55,7 +55,7 @@ KPI_DEFINITIONS = {
         "risk_threshold": 40,
         "icon": "alert-circle",
     },
-    # Phase C: Distribution Analysis (4 KPIs)
+    # Phase C: Distribution Analysis (4 Metrics)
     "phase_c_concentration_index": {
         "phase": "C",
         "label": "Concentration Index",
@@ -96,7 +96,7 @@ KPI_DEFINITIONS = {
         "risk_threshold": 0.5,
         "icon": "balance-scale",
     },
-    # Phase D: Anomaly Detection (3 KPIs)
+    # Phase D: Anomaly Detection (3 Metrics)
     "phase_d_outlier_concentration": {
         "phase": "D",
         "label": "Outlier Concentration",
@@ -127,7 +127,7 @@ KPI_DEFINITIONS = {
         "risk_threshold": 5,
         "icon": "star",
     },
-    # Phase E: Time Series Decomposition (4 KPIs)
+    # Phase E: Time Series Decomposition (4 Metrics)
     "phase_e_trend_direction": {
         "phase": "E",
         "label": "Trend Direction",
@@ -168,7 +168,7 @@ KPI_DEFINITIONS = {
         "risk_threshold": 0.5,
         "icon": "aperture",
     },
-    # Phase F: SLA Compliance & Risk (4 KPIs)
+    # Phase F: SLA Compliance & Risk (4 Metrics)
     "phase_f_sla_probability": {
         "phase": "F",
         "label": "SLA Breach Probability",
@@ -222,35 +222,35 @@ import {{
 
 const REQUIRED_DATABASES = ['md:app_queries']
 
-export default function KPIDive{{ kpi_name, label, phase, unit, benchmark_val, risk_threshold }} {{
+export default function MetricDive{{ metric_name, label, phase, unit, benchmark_val, risk_threshold }} {{
   const [selectedBorough, setSelectedBorough] = useState(null)
 
-  // Core KPI time-series and statistics query
+  // Core Metric time-series and statistics query
   const statsQuery = `
-    WITH kpi_data AS (
+    WITH metric_data AS (
       SELECT
         borough,
-        kpi_value,
+        metric_value,
         analytics_timestamp,
-        ROW_NUMBER() OVER (PARTITION BY borough ORDER BY kpi_value) as rank,
+        ROW_NUMBER() OVER (PARTITION BY borough ORDER BY metric_value) as rank,
         COUNT(*) OVER (PARTITION BY borough) as n
-      FROM app_queries.v_kpi_dashboard
-      WHERE kpi_name = '${{kpi_name}}'
+      FROM app_queries.v_metric_dashboard
+      WHERE metric_name = '${{metric_name}}'
     ),
     borough_stats AS (
       SELECT
         borough,
         COUNT(*) as n,
-        AVG(kpi_value) as mean,
-        MEDIAN(kpi_value) as median,
-        PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY kpi_value) as q1,
-        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY kpi_value) as q3,
-        MIN(kpi_value) as min_val,
-        MAX(kpi_value) as max_val,
-        STDDEV_POP(kpi_value) as stddev,
+        AVG(metric_value) as mean,
+        MEDIAN(metric_value) as median,
+        PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY metric_value) as q1,
+        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY metric_value) as q3,
+        MIN(metric_value) as min_val,
+        MAX(metric_value) as max_val,
+        STDDEV_POP(metric_value) as stddev,
         -- Simpson's Diversity Index (for distribution)
         1 - SUM(POW(COUNT(*)/COUNT(*) OVER(PARTITION BY borough), 2)) as simpsons_diversity
-      FROM kpi_data
+      FROM metric_data
       GROUP BY borough
     )
     SELECT * FROM borough_stats
@@ -262,17 +262,17 @@ export default function KPIDive{{ kpi_name, label, phase, unit, benchmark_val, r
   // Cross-tab by borough (comparative view)
   const crosstabQuery = `
     SELECT
-      kpi_name,
+      metric_name,
       borough,
-      ROUND(kpi_value, 2) as kpi_value,
+      ROUND(metric_value, 2) as metric_value,
       CASE
-        WHEN kpi_value >= ${{benchmark_val}} THEN 'On Target'
-        WHEN kpi_value >= ${{risk_threshold}} THEN 'At Risk'
+        WHEN metric_value >= ${{benchmark_val}} THEN 'On Target'
+        WHEN metric_value >= ${{risk_threshold}} THEN 'At Risk'
         ELSE 'Critical'
       END as status,
       analytics_timestamp
-    FROM app_queries.v_kpi_dashboard
-    WHERE kpi_name = '${{kpi_name}}'
+    FROM app_queries.v_metric_dashboard
+    WHERE metric_name = '${{metric_name}}'
     ORDER BY borough, analytics_timestamp DESC
     LIMIT 100
   `
@@ -376,7 +376,7 @@ export default function KPIDive{{ kpi_name, label, phase, unit, benchmark_val, r
                   <div key={{borough}} className="flex justify-between items-center p-2 border rounded">
                     <span className="font-medium">{{"${"}borough{"}"}} </span>
                     <span className={{"${"}`px-3 py-1 text-xs font-semibold rounded ${{statusColor}}{"}"}}>
-                      {{"${"}status{"}"}} ({{"${"}latestValue?.kpi_value.toFixed(2) || 'N/A'{"}"}} {{unit}})
+                      {{"${"}status{"}"}} ({{"${"}latestValue?.metric_value.toFixed(2) || 'N/A'{"}"}} {{unit}})
                     </span>
                   </div>
                 )
@@ -397,7 +397,7 @@ export default function KPIDive{{ kpi_name, label, phase, unit, benchmark_val, r
               <YAxis />
               <Tooltip formatter={{(val) => val.toFixed(2)}} />
               <Legend />
-              <Bar dataKey="kpi_value" fill="#3b82f6" name={{"${"}}KPI Value{"}{"}"}} />
+              <Bar dataKey="metric_value" fill="#3b82f6" name={{"${"}}Metric Value{"}{"}"}} />
               <ReferenceLine y={{{{benchmark_val}}}} stroke="#10b981" label="Benchmark" />
               <ReferenceLine y={{{{risk_threshold}}}} stroke="#f59e0b" label="Risk Threshold" strokeDasharray="5 5" />
             </BarChart>
@@ -418,11 +418,11 @@ export default function KPIDive{{ kpi_name, label, phase, unit, benchmark_val, r
           </div>
           <div>
             <div className="font-semibold text-gray-700">Data Source</div>
-            <div>v_kpi_dashboard (app_queries)</div>
+            <div>v_metric_dashboard (app_queries)</div>
           </div>
           <div>
             <div className="font-semibold text-gray-700">Updated</div>
-            <div>Real-time from analytics.kpi_metrics</div>
+            <div>Real-time from analytics.metric_metrics</div>
           </div>
         </div>
       </div>
@@ -432,63 +432,63 @@ export default function KPIDive{{ kpi_name, label, phase, unit, benchmark_val, r
 '''
 
 
-def create_kpi_dive_code(kpi_name: str, kpi_def: dict[str, Any]) -> str:
-    """Generate a complete Dive component for one KPI.
+def create_metric_dive_code(metric_name: str, metric_def: dict[str, Any]) -> str:
+    """Generate a complete Dive component for one Metric.
 
     Args:
-        kpi_name: Key name of KPI (e.g. 'phase_b_clustering_strength')
-        kpi_def: Metadata dict with label, phase, unit, benchmark, risk_threshold
+        metric_name: Key name of Metric (e.g. 'phase_b_clustering_strength')
+        metric_def: Metadata dict with label, phase, unit, benchmark, risk_threshold
 
     Returns:
         Complete JSX/React code ready for MotherDuck Dive save
     """
     code = DIVE_TEMPLATE.format(
-        kpi_name=kpi_name,
-        label=kpi_def["label"],
-        phase=kpi_def["phase"],
-        unit=kpi_def["unit"],
-        benchmark_val=kpi_def["benchmark"],
-        risk_threshold=kpi_def["risk_threshold"],
+        metric_name=metric_name,
+        label=metric_def["label"],
+        phase=metric_def["phase"],
+        unit=metric_def["unit"],
+        benchmark_val=metric_def["benchmark"],
+        risk_threshold=metric_def["risk_threshold"],
     )
     return code
 
 
-def generate_dive_metadata(kpi_name: str, kpi_def: dict[str, Any]) -> dict[str, Any]:
+def generate_dive_metadata(metric_name: str, metric_def: dict[str, Any]) -> dict[str, Any]:
     """Generate MotherDuck Dive metadata/descriptor.
 
     Returns:
         Dict with title, description, tags, etc. for dive save
     """
     return {
-        "title": f"KPI: {kpi_def['label']}",
-        "description": kpi_def["description"],
-        "tags": [f"phase-{kpi_def['phase'].lower()}", "kpi", "analytics", "sla"],
-        "category": f"Phase {kpi_def['phase']} Analytics",
-        "benchmark_value": kpi_def["benchmark"],
-        "risk_threshold": kpi_def["risk_threshold"],
-        "unit": kpi_def["unit"],
-        "kpi_id": kpi_name,
+        "title": f"Metric: {metric_def['label']}",
+        "description": metric_def["description"],
+        "tags": [f"phase-{metric_def['phase'].lower()}", "metric", "analytics", "sla"],
+        "category": f"Phase {metric_def['phase']} Analytics",
+        "benchmark_value": metric_def["benchmark"],
+        "risk_threshold": metric_def["risk_threshold"],
+        "unit": metric_def["unit"],
+        "metric_id": metric_name,
     }
 
 
 if __name__ == "__main__":
     import sys
 
-    # Example: generate code for one KPI
+    # Example: generate code for one Metric
     if len(sys.argv) > 1 and sys.argv[1] == "--create-all":
-        print("Generating all 18 KPI Dives...")
-        for kpi_name, kpi_def in KPI_DEFINITIONS.items():
-            print(f"\n{kpi_name}: {kpi_def['label']}")
-            metadata = generate_dive_metadata(kpi_name, kpi_def)
+        print("Generating all 18 Metric Dives...")
+        for metric_name, metric_def in METRIC_DEFINITIONS.items():
+            print(f"\n{metric_name}: {metric_def['label']}")
+            metadata = generate_dive_metadata(metric_name, metric_def)
             print(f"  Metadata: {json.dumps(metadata, indent=2)}")
             # Code generation would happen here with MCP save_dive call
             print("  Status: Ready for MotherDuck save (via save_dive MCP)")
     else:
         # Default: show one example
-        example_kpi = "phase_b_clustering_strength"
-        example_def = KPI_DEFINITIONS[example_kpi]
-        print(f"Example KPI Dive: {example_kpi}")
+        example_metric = "phase_b_clustering_strength"
+        example_def = METRIC_DEFINITIONS[example_metric]
+        print(f"Example Metric Dive: {example_metric}")
         print(f"Label: {example_def['label']}")
         print(f"Description: {example_def['description']}")
-        metadata = generate_dive_metadata(example_kpi, example_def)
+        metadata = generate_dive_metadata(example_metric, example_def)
         print(f"\nMetadata:\n{json.dumps(metadata, indent=2)}")

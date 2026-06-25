@@ -1,4 +1,4 @@
-"""Enhanced KPI Dives with comprehensive statistical metrics and box plots.
+"""Enhanced Metric Dives with comprehensive statistical metrics and box plots.
 
 Includes 60 statistical metrics across:
 - Central tendency: mean, median, mode, trimmed mean
@@ -23,12 +23,12 @@ COMPREHENSIVE_METRICS_SQL = """
 WITH raw_data AS (
   SELECT
     borough,
-    kpi_value,
+    metric_value,
     analytics_timestamp,
-    ROW_NUMBER() OVER (PARTITION BY borough ORDER BY kpi_value) as rank,
+    ROW_NUMBER() OVER (PARTITION BY borough ORDER BY metric_value) as rank,
     COUNT(*) OVER (PARTITION BY borough) as n
-  FROM app_queries.v_kpi_dashboard
-  WHERE kpi_name = '{kpi_name}'
+  FROM app_queries.v_metric_dashboard
+  WHERE metric_name = '{metric_name}'
 ),
 comprehensive_stats AS (
   SELECT
@@ -36,62 +36,62 @@ comprehensive_stats AS (
 
     -- LOCATION/CENTRAL TENDENCY
     COUNT(*) as n,
-    AVG(kpi_value) as mean,
-    MEDIAN(kpi_value) as median,
+    AVG(metric_value) as mean,
+    MEDIAN(metric_value) as median,
     -- Mode (most frequent value, approximate)
-    MODE(kpi_value) OVER (PARTITION BY borough) as mode_val,
+    MODE(metric_value) OVER (PARTITION BY borough) as mode_val,
     -- Trimmed mean (5% from each tail)
     AVG(CASE
       WHEN rank > CEIL(n * 0.05) AND rank < FLOOR(n * 0.95) + 1
-      THEN kpi_value
+      THEN metric_value
     END) OVER (PARTITION BY borough) as trimmed_mean_90,
 
     -- SPREAD/DISPERSION
-    PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY kpi_value) as q1,
-    PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY kpi_value) as q3,
-    PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY kpi_value) -
-      PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY kpi_value) as iqr,
-    MIN(kpi_value) as min_val,
-    MAX(kpi_value) as max_val,
-    MAX(kpi_value) - MIN(kpi_value) as range,
-    STDDEV_POP(kpi_value) as stddev_pop,
-    STDDEV_SAMP(kpi_value) as stddev_samp,
-    VARIANCE(kpi_value) as variance,
-    ABS(STDDEV_POP(kpi_value) / AVG(kpi_value)) as coeff_variation,  -- CV
-    STDDEV_POP(kpi_value) / SQRT(COUNT(*)) as standard_error,  -- SE
+    PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY metric_value) as q1,
+    PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY metric_value) as q3,
+    PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY metric_value) -
+      PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY metric_value) as iqr,
+    MIN(metric_value) as min_val,
+    MAX(metric_value) as max_val,
+    MAX(metric_value) - MIN(metric_value) as range,
+    STDDEV_POP(metric_value) as stddev_pop,
+    STDDEV_SAMP(metric_value) as stddev_samp,
+    VARIANCE(metric_value) as variance,
+    ABS(STDDEV_POP(metric_value) / AVG(metric_value)) as coeff_variation,  -- CV
+    STDDEV_POP(metric_value) / SQRT(COUNT(*)) as standard_error,  -- SE
     -- Mean Absolute Deviation (robust)
-    AVG(ABS(kpi_value - AVG(kpi_value) OVER (PARTITION BY borough)))
+    AVG(ABS(metric_value - AVG(metric_value) OVER (PARTITION BY borough)))
       OVER (PARTITION BY borough) as mad,
 
     -- DISTRIBUTION SHAPE
     -- Skewness: (mean - median) / SD
     CASE
-      WHEN STDDEV_POP(kpi_value) > 0
-      THEN (AVG(kpi_value) - MEDIAN(kpi_value)) / STDDEV_POP(kpi_value)
+      WHEN STDDEV_POP(metric_value) > 0
+      THEN (AVG(metric_value) - MEDIAN(metric_value)) / STDDEV_POP(metric_value)
       ELSE 0
     END as skewness_index,
     -- Kurtosis (excess)
-    KURTOSIS(kpi_value) as kurtosis_excess,
+    KURTOSIS(metric_value) as kurtosis_excess,
 
     -- OUTLIER DETECTION
     COUNT(CASE
-      WHEN ABS((kpi_value - AVG(kpi_value)) / STDDEV_POP(kpi_value)) > 3
+      WHEN ABS((metric_value - AVG(metric_value)) / STDDEV_POP(metric_value)) > 3
       THEN 1
     END) OVER (PARTITION BY borough) as outlier_count_3sd,
     COUNT(CASE
-      WHEN kpi_value < PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY kpi_value) - 1.5 *
-             (PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY kpi_value) - PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY kpi_value))
-           OR kpi_value > PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY kpi_value) + 1.5 *
-             (PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY kpi_value) - PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY kpi_value))
+      WHEN metric_value < PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY metric_value) - 1.5 *
+             (PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY metric_value) - PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY metric_value))
+           OR metric_value > PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY metric_value) + 1.5 *
+             (PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY metric_value) - PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY metric_value))
       THEN 1
     END) OVER (PARTITION BY borough) as outlier_count_iqr,
 
     -- QUANTILES & PERCENTILES
-    PERCENTILE_CONT(0.05) WITHIN GROUP (ORDER BY kpi_value) as p05,
-    PERCENTILE_CONT(0.10) WITHIN GROUP (ORDER BY kpi_value) as p10,
-    PERCENTILE_CONT(0.90) WITHIN GROUP (ORDER BY kpi_value) as p90,
-    PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY kpi_value) as p95,
-    PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY kpi_value) as p99,
+    PERCENTILE_CONT(0.05) WITHIN GROUP (ORDER BY metric_value) as p05,
+    PERCENTILE_CONT(0.10) WITHIN GROUP (ORDER BY metric_value) as p10,
+    PERCENTILE_CONT(0.90) WITHIN GROUP (ORDER BY metric_value) as p90,
+    PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY metric_value) as p95,
+    PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY metric_value) as p99,
 
     -- DIVERSITY METRICS
     -- Simpson's Diversity Index (for borough diversity)
@@ -100,21 +100,21 @@ comprehensive_stats AS (
 
     -- COMPARATIVE METRICS
     -- Ratio to benchmark ({benchmark_val})
-    AVG(kpi_value) / {benchmark_val} as benchmark_ratio,
+    AVG(metric_value) / {benchmark_val} as benchmark_ratio,
     -- % difference from benchmark
-    ((AVG(kpi_value) - {benchmark_val}) / {benchmark_val} * 100) as pct_from_benchmark,
+    ((AVG(metric_value) - {benchmark_val}) / {benchmark_val} * 100) as pct_from_benchmark,
 
     -- RISK METRICS
     -- Probability of exceeding risk threshold ({risk_threshold})
-    COUNT(CASE WHEN kpi_value > {risk_threshold} THEN 1 END) * 100 / COUNT(*)
+    COUNT(CASE WHEN metric_value > {risk_threshold} THEN 1 END) * 100 / COUNT(*)
       as pct_exceeding_risk_threshold,
     -- Risk percentile (95th percentile as worst-case scenario)
-    PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY kpi_value) as risk_percentile_95,
+    PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY metric_value) as risk_percentile_95,
 
     -- TEMPORAL METRICS (if timestamps available)
     -- Trend: linear regression slope (simplified as last - first)
-    (LAST_VALUE(kpi_value) OVER (PARTITION BY borough ORDER BY analytics_timestamp) -
-     FIRST_VALUE(kpi_value) OVER (PARTITION BY borough ORDER BY analytics_timestamp)) /
+    (LAST_VALUE(metric_value) OVER (PARTITION BY borough ORDER BY analytics_timestamp) -
+     FIRST_VALUE(metric_value) OVER (PARTITION BY borough ORDER BY analytics_timestamp)) /
     NULLIF(DATEDIFF('day',
       FIRST_VALUE(analytics_timestamp) OVER (PARTITION BY borough ORDER BY analytics_timestamp),
       LAST_VALUE(analytics_timestamp) OVER (PARTITION BY borough ORDER BY analytics_timestamp)), 0)
@@ -138,7 +138,7 @@ import {{
 
 const REQUIRED_DATABASES = ['md:app_queries']
 
-export default function EnhancedKPIDive{{ kpi_name, label, phase, unit, benchmark_val, risk_threshold }} {{
+export default function EnhancedMetricDive{{ metric_name, label, phase, unit, benchmark_val, risk_threshold }} {{
   const [selectedBorough, setSelectedBorough] = useState(null)
   const [metric_to_highlight, setMetric_to_highlight] = useState('skewness')
 
@@ -147,39 +147,39 @@ export default function EnhancedKPIDive{{ kpi_name, label, phase, unit, benchmar
     WITH raw_data AS (
       SELECT
         borough,
-        kpi_value,
+        metric_value,
         analytics_timestamp,
-        ROW_NUMBER() OVER (PARTITION BY borough ORDER BY kpi_value) as rank,
+        ROW_NUMBER() OVER (PARTITION BY borough ORDER BY metric_value) as rank,
         COUNT(*) OVER (PARTITION BY borough) as n
-      FROM app_queries.v_kpi_dashboard
-      WHERE kpi_name = '${{kpi_name}}'
+      FROM app_queries.v_metric_dashboard
+      WHERE metric_name = '${{metric_name}}'
     ),
     comprehensive_stats AS (
       SELECT
         borough,
         COUNT(*) as n,
-        AVG(kpi_value) as mean,
-        MEDIAN(kpi_value) as median,
-        MODE(kpi_value) as mode_val,
-        PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY kpi_value) as q1,
-        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY kpi_value) as q3,
-        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY kpi_value) -
-          PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY kpi_value) as iqr,
-        MIN(kpi_value) as min_val,
-        MAX(kpi_value) as max_val,
-        STDDEV_POP(kpi_value) as stddev,
-        VARIANCE(kpi_value) as variance,
-        ABS(STDDEV_POP(kpi_value) / AVG(kpi_value)) as cv,
-        STDDEV_POP(kpi_value) / SQRT(COUNT(*)) as stderr,
-        CASE WHEN STDDEV_POP(kpi_value) > 0
-             THEN (AVG(kpi_value) - MEDIAN(kpi_value)) / STDDEV_POP(kpi_value)
+        AVG(metric_value) as mean,
+        MEDIAN(metric_value) as median,
+        MODE(metric_value) as mode_val,
+        PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY metric_value) as q1,
+        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY metric_value) as q3,
+        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY metric_value) -
+          PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY metric_value) as iqr,
+        MIN(metric_value) as min_val,
+        MAX(metric_value) as max_val,
+        STDDEV_POP(metric_value) as stddev,
+        VARIANCE(metric_value) as variance,
+        ABS(STDDEV_POP(metric_value) / AVG(metric_value)) as cv,
+        STDDEV_POP(metric_value) / SQRT(COUNT(*)) as stderr,
+        CASE WHEN STDDEV_POP(metric_value) > 0
+             THEN (AVG(metric_value) - MEDIAN(metric_value)) / STDDEV_POP(metric_value)
              ELSE 0 END as skewness,
-        KURTOSIS(kpi_value) as kurtosis,
-        COUNT(CASE WHEN ABS((kpi_value - AVG(kpi_value)) / STDDEV_POP(kpi_value)) > 3 THEN 1 END) as outlier_count,
-        PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY kpi_value) as p95,
-        AVG(kpi_value) / ${{benchmark_val}} as benchmark_ratio,
-        ((AVG(kpi_value) - ${{benchmark_val}}) / ${{benchmark_val}} * 100) as pct_diff_benchmark,
-        COUNT(CASE WHEN kpi_value > ${{risk_threshold}} THEN 1 END) * 100.0 / COUNT(*) as pct_exceeding_risk
+        KURTOSIS(metric_value) as kurtosis,
+        COUNT(CASE WHEN ABS((metric_value - AVG(metric_value)) / STDDEV_POP(metric_value)) > 3 THEN 1 END) as outlier_count,
+        PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY metric_value) as p95,
+        AVG(metric_value) / ${{benchmark_val}} as benchmark_ratio,
+        ((AVG(metric_value) - ${{benchmark_val}}) / ${{benchmark_val}} * 100) as pct_diff_benchmark,
+        COUNT(CASE WHEN metric_value > ${{risk_threshold}} THEN 1 END) * 100.0 / COUNT(*) as pct_exceeding_risk
       FROM raw_data
       GROUP BY borough
     )
@@ -220,7 +220,7 @@ export default function EnhancedKPIDive{{ kpi_name, label, phase, unit, benchmar
           <span className="text-sm text-slate-600 ml-auto">Unit: <code>${{unit}}</code></span>
         </div>
         <p className="text-slate-700 text-sm leading-relaxed">
-          Comprehensive KPI analysis with 60+ statistical metrics including distribution shape (skewness, kurtosis),
+          Comprehensive Metric analysis with 60+ statistical metrics including distribution shape (skewness, kurtosis),
           risk assessment, outlier detection, diversity indices, and comparative benchmarking.
         </p>
       </div>
@@ -404,8 +404,8 @@ export default function EnhancedKPIDive{{ kpi_name, label, phase, unit, benchmar
 
       {{/* Footer */}}
       <div className="bg-slate-200 p-4 rounded-lg text-xs text-slate-700">
-        <strong>Data Source:</strong> v_kpi_dashboard (app_queries) | <strong>Metrics:</strong> 60+ statistical measures |
-        <strong>Updated:</strong> Real-time from analytics.kpi_metrics
+        <strong>Data Source:</strong> v_metric_dashboard (app_queries) | <strong>Metrics:</strong> 60+ statistical measures |
+        <strong>Updated:</strong> Real-time from analytics.metric_metrics
       </div>
     </div>
   )
@@ -413,7 +413,7 @@ export default function EnhancedKPIDive{{ kpi_name, label, phase, unit, benchmar
 '''
 
 if __name__ == "__main__":
-    print("Enhanced KPI Dive Template with:")
+    print("Enhanced Metric Dive Template with:")
     print("✓ Box plots with whiskers and outlier markers")
     print("✓ 60+ comprehensive statistical metrics")
     print("✓ Distribution shape indicators (skewness, kurtosis)")

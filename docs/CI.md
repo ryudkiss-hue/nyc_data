@@ -68,7 +68,7 @@ ruff check src/socrata_toolkit tests app/  # Lint: E,F,W,I,UP,B rules
 #### 4. **Dash Mission Control** (Primary UI)
 - Dash app initialization (app/dash_app.py)
 - Callback handlers (app/callbacks/*.py) — analytics, gis, export, navigation
-- Component rendering (app/components/*.py) — filters, KPI cards, spatial maps
+- Component rendering (app/components/*.py) — filters, Metric cards, spatial maps
 - FastAPI backend integration
 - Mantine UI theming
 - **Tests:** `tests/test_callback_registry.py`, `tests/test_gis_callbacks.py`, `tests/test_mission_control.py`

@@ -18,7 +18,7 @@ This guide explains the 5 advanced analytical methods now available in the Dash 
 | **Distribution Classification** | Understand data shape | Analytics → "Data Shapes" tab | [Details](#distribution-classification) |
 | **Anomaly Detection** | Find spatial outliers | Quality Dashboard → "Data Quality" card | [Details](#multivariate-anomaly-detection) |
 | **Seasonal Decomposition** | Break down time series | Labor View → "Temporal Patterns" tab | [Details](#seasonal-decomposition) |
-| **Bootstrap CI** | Add uncertainty bands to metrics | KPI Cards (existing) | [Details](#bootstrap-confidence-intervals) |
+| **Bootstrap CI** | Add uncertainty bands to metrics | Metric Cards (existing) | [Details](#bootstrap-confidence-intervals) |
 
 ---
 
@@ -286,11 +286,11 @@ Scenario: Understanding inspection volume over time
 
 ### What It Does
 
-Adds **uncertainty bands** to KPI gauges, showing the range where the true value likely falls.
+Adds **uncertainty bands** to Metric gauges, showing the range where the true value likely falls.
 
 ### Where to Find It
 
-**KPI Cards** (existing cards, now enhanced with CI bands)
+**Metric Cards** (existing cards, now enhanced with CI bands)
 
 ### Interpretation Guide
 
@@ -306,7 +306,7 @@ Adds **uncertainty bands** to KPI gauges, showing the range where the true value
 
 ### How to Use It
 
-1. **Look at existing KPI gauge:** (e.g., "Completion Rate")
+1. **Look at existing Metric gauge:** (e.g., "Completion Rate")
 2. **See the CI band:** Colored band around the needle
 3. **Read the limits:**
    - Narrow band = confident (large sample, low variance)
@@ -320,7 +320,7 @@ Adds **uncertainty bands** to KPI gauges, showing the range where the true value
 
 ```
 Scenario: Understanding completion rate uncertainty
-1. View KPI card: "Ramp Completion Rate"
+1. View Metric card: "Ramp Completion Rate"
 2. See gauge showing 84.2%
 3. See CI band: [81.5%, 87.3%]
 4. Interpretation:

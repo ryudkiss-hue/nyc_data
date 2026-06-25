@@ -4,7 +4,7 @@ This guide gets a **Project Analyst (Sidewalk)** from zero to a working install 
 
 ## Who this is for
 
-NYC DOT staff who manage sidewalk inspection data, construction lists, contract reporting, and program KPIs across the five boroughs.
+NYC DOT staff who manage sidewalk inspection data, construction lists, contract reporting, and program Metrics across the five boroughs.
 
 ## Prerequisites
 

@@ -63,7 +63,7 @@
 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Errors and logs |
 | [FAQ.md](FAQ.md) | Frequently asked questions |
 | [COMPLETENESS.md](COMPLETENESS.md) | Agency sign-off checklist |
-| [METRICS_GLOSSARY.md](METRICS_GLOSSARY.md) | KPI definitions |
+| [METRICS_GLOSSARY.md](METRICS_GLOSSARY.md) | Metric definitions |
 | [USER_MANUAL.md](USER_MANUAL.md) | Full feature reference |
 
 ---

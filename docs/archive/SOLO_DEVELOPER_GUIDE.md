@@ -25,7 +25,7 @@ You are building this **for yourself, by yourself**. This changes everything:
 - Documentation (so future-you understands present-you's decisions)
 - A rapid implementation path (so you ship fast)
 
-The EXPANDED_KPI_CHART_REGISTRY.md is YOUR personal spec. Treat it as:
+The EXPANDED_METRIC_CHART_REGISTRY.md is YOUR personal spec. Treat it as:
 - Your implementation checklist
 - Your style guide
 - Your decision log
@@ -106,7 +106,7 @@ fig.update_layout(
 - Learning Dash callback structure
 - Understanding state management (Input/Output/State)
 - Copy-pasting working code
-- Consistency across 51 KPIs (so they all work same way)
+- Consistency across 51 Metrics (so they all work same way)
 
 **You Can Deviate When:**
 - A different pattern is simpler for YOUR use case
@@ -125,10 +125,10 @@ fig.update_layout(
 # Combine all filters into single data structure, trigger one callback
 # Reduces complexity, easier to maintain solo
 @callback(
-    Output("kpi-grid", "children"),
+    Output("metric-grid", "children"),
     Input("filters-json", "data")  # All filters in one State
 )
-def update_kpis(filters_dict):
+def update_metrics(filters_dict):
     borough = filters_dict["borough"]
     date_range = filters_dict["date_range"]
     # Your custom logic here
@@ -137,12 +137,12 @@ def update_kpis(filters_dict):
 ---
 
 ### Violation 4: References to Superseded Docs
-**Statement:** "🚫 References to superseded docs (KPI_METRICS_REFERENCE, PHASE1_KPI_MAPPINGS, etc.)"
+**Statement:** "🚫 References to superseded docs (METRIC_METRICS_REFERENCE, PHASE1_METRIC_MAPPINGS, etc.)"
 
 **Reality Check:** You're solo. You don't need to maintain multiple docs.
 
 **For Your Workflow:**
-1. **Keep EXPANDED_KPI_CHART_REGISTRY.md** — Your reference manual
+1. **Keep EXPANDED_METRIC_CHART_REGISTRY.md** — Your reference manual
 2. **Archive old docs** — But keep them (you might want to reference old rationale)
 3. **Don't feel guilty** — You're not "violating" anything; you're choosing the simplest approach
 
@@ -150,13 +150,13 @@ def update_kpis(filters_dict):
 ```python
 # GOOD: Reference your Registry
 """
-Gauge configuration per EXPANDED_KPI_CHART_REGISTRY.md Chapter 4
+Gauge configuration per EXPANDED_METRIC_CHART_REGISTRY.md Chapter 4
 """
 fig = create_gauge(value=87.5, target=85)
 
 # ALSO GOOD: Old docs for context
 """
-KPI definition from PHASE1_KPI_MAPPINGS.md: ramp completion rate
+Metric definition from PHASE1_METRIC_MAPPINGS.md: ramp completion rate
 Calculation: COUNT(completed) / COUNT(total)
 """
 
@@ -176,8 +176,8 @@ Calculation: COUNT(completed) / COUNT(total)
 ### How to Use the Registry (Solo Edition)
 
 **Your Registry Usage Pattern:**
-1. **At start of week:** Skim Chapter 3 (which KPIs am I implementing?)
-2. **Implementing a KPI:** Go to Chapter 4, copy template
+1. **At start of week:** Skim Chapter 3 (which Metrics am I implementing?)
+2. **Implementing a Metric:** Go to Chapter 4, copy template
 3. **Styling:** Consult Chapter 5 for color palette, adjust as needed
 4. **Stuck on something:** Search Chapters 1-9 for answer, try Appendix examples
 5. **Experimenting:** Keep Registry patterns handy but feel free to deviate
@@ -196,7 +196,7 @@ Since this is your solo project, you set the rules. Here's what I recommend:
 
 ### Rule 1: Registry is Your Baseline, Not Your Ceiling
 ```
-Start with: EXPANDED_KPI_CHART_REGISTRY.md Chapter 4 template
+Start with: EXPANDED_METRIC_CHART_REGISTRY.md Chapter 4 template
 Deviation allowed if: It's documented and works on your machine
 Test on: Your local environment (that's your production)
 Version: You track in git commit messages, not a changelog
@@ -249,34 +249,34 @@ Don't do:
 
 ## PRACTICAL IMPLEMENTATION CHECKLIST (For You)
 
-Use this checklist to build your 51 KPIs. Customize it to match your style.
+Use this checklist to build your 51 Metrics. Customize it to match your style.
 
 ### Phase 1: Setup (Week 1)
-- [ ] Review EXPANDED_KPI_CHART_REGISTRY.md Ch. 1-3 (understand scope)
+- [ ] Review EXPANDED_METRIC_CHART_REGISTRY.md Ch. 1-3 (understand scope)
 - [ ] Pick your 11 chart types to implement (default: all from Ch. 4)
 - [ ] Decide on color palette (use Registry or customize)
 - [ ] Set up local dev environment (git, venv, plotly/dash)
-- [ ] Create one test KPI from Ch. 4 template (verify your setup)
+- [ ] Create one test Metric from Ch. 4 template (verify your setup)
 
 ### Phase 2: Implementation (Weeks 2-5)
-Each iteration: **Pick 10 KPIs → Implement → Test → Move to next batch**
+Each iteration: **Pick 10 Metrics → Implement → Test → Move to next batch**
 
-**Per KPI (repeat 51 times):**
-- [ ] Find KPI in Registry Ch. 3 (copy data shape, primary chart, target)
-- [ ] Create config file: `src/socrata_toolkit/viz/kpi_{id}.json` (use Ch. 4 template)
-- [ ] Create component: `app/components/kpi_{id}.py` (use Appendix B template)
-- [ ] Wire callback: `app/callbacks/kpi_{id}.py` (use Ch. 7 or your pattern)
+**Per Metric (repeat 51 times):**
+- [ ] Find Metric in Registry Ch. 3 (copy data shape, primary chart, target)
+- [ ] Create config file: `src/socrata_toolkit/viz/metric_{id}.json` (use Ch. 4 template)
+- [ ] Create component: `app/components/metric_{id}.py` (use Appendix B template)
+- [ ] Wire callback: `app/callbacks/metric_{id}.py` (use Ch. 7 or your pattern)
 - [ ] Test locally: data loads, chart renders, no errors
-- [ ] Commit: `git add . && git commit -m "Implement {kpi_name}"`
+- [ ] Commit: `git add . && git commit -m "Implement {metric_name}"`
 
-**Performance check every 10 KPIs:**
+**Performance check every 10 Metrics:**
 - Open dashboard
 - Measure load time (target: <2s for all 10)
 - Check CPU usage (should be <30% while idle)
 - Verify no console errors
 
 ### Phase 3: Styling & Polish (Week 5-6)
-- [ ] Apply your color palette to all 51 KPIs
+- [ ] Apply your color palette to all 51 Metrics
 - [ ] Test on mobile (is it readable at 320px?)
 - [ ] Test on tablet (is it readable at 768px?)
 - [ ] Test on desktop (does it look good at 1440px?)
@@ -284,7 +284,7 @@ Each iteration: **Pick 10 KPIs → Implement → Test → Move to next batch**
 - [ ] Add hover templates (use Ch. 4 templates or customize)
 
 ### Phase 4: Testing & Verification (Week 7)
-- [ ] Load all 51 KPIs, measure performance (target: <1s per chart)
+- [ ] Load all 51 Metrics, measure performance (target: <1s per chart)
 - [ ] Test accessibility: keyboard nav, screen reader (do best effort)
 - [ ] Test with real data: does it render correctly?
 - [ ] Test edge cases: empty data, missing fields, outliers
@@ -295,7 +295,7 @@ Each iteration: **Pick 10 KPIs → Implement → Test → Move to next batch**
 - [ ] Make sure you're happy with it (genuinely like what you built)
 - [ ] Deploy to your environment
 - [ ] Test in production (does it still work?)
-- [ ] Commit: `git commit -m "Production ready: all 51 KPIs live"`
+- [ ] Commit: `git commit -m "Production ready: all 51 Metrics live"`
 
 ---
 
@@ -307,7 +307,7 @@ Keep a personal decision log in your repo. This is for YOU to remember why you d
 # PERSONAL DECISION LOG (NYC DOT SIM Dashboard)
 
 ## Colors
-- Using EXPANDED_KPI_CHART_REGISTRY palette (#2ecc71, #f39c12, #e74c3c)
+- Using EXPANDED_METRIC_CHART_REGISTRY palette (#2ecc71, #f39c12, #e74c3c)
 - Why: Matches NYC brand, colorblind-friendly, tested on my monitor
 
 ## Animations
@@ -319,10 +319,10 @@ Keep a personal decision log in your repo. This is for YOU to remember why you d
 ## Callbacks
 - Using Appendix B pattern (multiple @callback with State)
 - Why: Learned from examples, fits my mental model of reactive updates
-- Alternative considered: Event-driven (too complex for 51 KPIs)
+- Alternative considered: Event-driven (too complex for 51 Metrics)
 
 ## Components
-- KPICard from Appendix B (only customized colors)
+- MetricCard from Appendix B (only customized colors)
 - Dashboard grid from Ch. 5 (responsive breakpoints: 1/2/3/4 cols)
 - Why: Registry templates were production-ready, no need to reinvent
 
@@ -390,16 +390,16 @@ If you deviate from Registry and hit problems, here's how to debug:
 
 ## YOUR PERSONAL STYLE GUIDE
 
-After you've built a few KPIs, you'll develop preferences. Document them:
+After you've built a few Metrics, you'll develop preferences. Document them:
 
 ```python
-# MY PERSONAL STYLE GUIDE (for consistency across all 51 KPIs)
+# MY PERSONAL STYLE GUIDE (for consistency across all 51 Metrics)
 
 # Naming conventions
-# - KPI IDs: Always CamelCase (e.g., PRM001, not prm-001 or prmA)
-# - Component IDs: Always kebab-case with prefix (e.g., kpi-card-prmA001)
-# - Function names: Always verb_noun (e.g., update_gauge, fetch_kpi_data)
-# - File names: Always snake_case (e.g., kpi_prmA001_config.json)
+# - Metric IDs: Always CamelCase (e.g., PRM001, not prm-001 or prmA)
+# - Component IDs: Always kebab-case with prefix (e.g., metric-card-prmA001)
+# - Function names: Always verb_noun (e.g., update_gauge, fetch_metric_data)
+# - File names: Always snake_case (e.g., metric_prmA001_config.json)
 
 # Color usage
 # - Green (#2ecc71) for success/on-target
@@ -424,9 +424,9 @@ After you've built a few KPIs, you'll develop preferences. Document them:
 # - Always measure performance with Chrome DevTools
 
 # Git commits
-# - Use imperative mood ("Add gauge for KPI X", not "Added")
-# - One KPI per commit
-# - Reference Registry chapter if relevant ("Per EXPANDED_KPI_CHART_REGISTRY Ch. 4")
+# - Use imperative mood ("Add gauge for Metric X", not "Added")
+# - One Metric per commit
+# - Reference Registry chapter if relevant ("Per EXPANDED_METRIC_CHART_REGISTRY Ch. 4")
 ```
 
 ---
@@ -435,19 +435,19 @@ After you've built a few KPIs, you'll develop preferences. Document them:
 
 With the Registry as your template, here's realistic timing for YOU (solo developer):
 
-| Task | Time per KPI | Total (51 KPIs) |
+| Task | Time per Metric | Total (51 Metrics) |
 |------|--------------|-----------------|
 | Copy template + customize | 10 min | 8.5 hours |
 | Data fetching logic | 15 min | 12.75 hours |
 | Styling + colors | 5 min | 4.25 hours |
 | Testing on machine | 5 min | 4.25 hours |
-| **Total per KPI** | **35 min** | **29.75 hours** |
+| **Total per Metric** | **35 min** | **29.75 hours** |
 
 **Realistic schedule:** 40 hours of focused work = 1 week (5 days × 8 hours)
 
 **Actual timeline:** Probably 2-3 weeks because:
 - You'll hit unexpected issues (data format mismatch, missing fields)
-- You'll want to refine after first 10 KPIs
+- You'll want to refine after first 10 Metrics
 - You'll optimize performance midway
 - You'll take breaks and get fresh ideas
 
@@ -494,9 +494,9 @@ Quick links to what matters:
 | A complete gauge example | Registry Ch. 4 or Appendix A | <2 min |
 | Color codes | Registry Ch. 5 | <1 min |
 | Callback pattern | Registry Appendix B | <5 min |
-| KPI definition | Registry Ch. 3 | <1 min |
+| Metric definition | Registry Ch. 3 | <1 min |
 | Animation duration | Registry Ch. 6 | <1 min |
-| Data shape for KPI | Registry Ch. 3 | <1 min |
+| Data shape for Metric | Registry Ch. 3 | <1 min |
 | Full component code | Registry Appendix B | <5 min |
 | Plotly reference | Registry Appendix D | <5 min |
 
@@ -506,7 +506,7 @@ Quick links to what matters:
 
 ## CHECKLIST: YOU'RE READY TO BUILD
 
-- [ ] You've read EXPANDED_KPI_CHART_REGISTRY.md Chapter 1-3
+- [ ] You've read EXPANDED_METRIC_CHART_REGISTRY.md Chapter 1-3
 - [ ] You've skimmed Chapter 4 (at least one chart type)
 - [ ] You've copied one template and tried it (probably broke something, fixed it)
 - [ ] You understand you can deviate when it makes sense
@@ -515,7 +515,7 @@ Quick links to what matters:
 - [ ] You have access to data (or dummy data works)
 - [ ] You're ready to go
 
-**If all ✓:** Start with Registry Ch. 3, pick KPI #1, and build.
+**If all ✓:** Start with Registry Ch. 3, pick Metric #1, and build.
 
 ---
 
@@ -524,7 +524,7 @@ Quick links to what matters:
 **Purpose:** Permission to use Registry smartly, not rigidly  
 **Status:** You're cleared to build  
 **Timeline:** 7 weeks to production, probably 2-3 weeks realistic  
-**Outcome:** 51 KPIs live, looking good, you're proud of it  
+**Outcome:** 51 Metrics live, looking good, you're proud of it  
 
 ---
 

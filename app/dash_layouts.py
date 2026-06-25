@@ -3,7 +3,7 @@ from dash import dcc, html
 from dash_iconify import DashIconify
 
 from app.components.filter_system import render_filter_bar
-from app.components.kpi_cards import render_kpi_dashboard
+from app.components.metric_cards import render_metric_dashboard
 
 # ==========================================
 # --- ELITE ASSET WRAPPER ---
@@ -567,7 +567,7 @@ def render_sidebar():
     )
 
 
-def create_kpi_card(label, value, color="black", delta=None):
+def create_metric_card(label, value, color="black", delta=None):
     delta_html = (
         dmc.Text(delta, size="xs", c="green" if "+" in str(delta) else "red") if delta else None
     )
@@ -596,7 +596,7 @@ def layout_dashboard():
         children=[
             dmc.Text("EXECUTIVE TELEMETRICS", fw=900, size="xl", mb="lg", c="black"),
             render_filter_bar(),
-            render_kpi_dashboard(),
+            render_metric_dashboard(),
             dmc.Space(h="xl"),
             visualization_asset(
                 "viz-velocity",
@@ -696,7 +696,7 @@ def layout_reports():
                         withBorder=True,
                         p="lg",
                         children=[
-                            dmc.Text("Program KPI", fw=700),
+                            dmc.Text("Program Metric", fw=700),
                             dmc.Button("Generate MD", mt="md"),
                         ],
                     ),

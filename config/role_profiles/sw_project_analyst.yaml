@@ -29,12 +29,12 @@ duties:
     pack_outputs: [conflicts_summary.md, conflicts_review.xlsx, construction_list.xlsx]
   - id: analytical_studies
     text: Perform moderate to complex analytical studies, reviews, and assignments
-    workflow_steps: [program_kpi, construction_diff]
-    pack_outputs: [program_kpi.json, construction_list_diff.md, contract_analytics.json]
+    workflow_steps: [program_metric, construction_diff]
+    pack_outputs: [program_metric.json, construction_list_diff.md, contract_analytics.json]
   - id: review_progress_reports
     text: Review analytical reports and administrative progress; recommend to supervisor
-    workflow_steps: [executive_summary, contract_report, program_kpi]
-    pack_outputs: [executive_summary.md, contract_status.md, program_kpi.json]
+    workflow_steps: [executive_summary, contract_report, program_metric]
+    pack_outputs: [executive_summary.md, contract_status.md, program_metric.json]
   - id: high_priority_inquiries
     text: Respond to construction and high priority inquiries
     workflow_steps: [inquiry_templates, prioritize]
@@ -47,7 +47,7 @@ duties:
     workflow_steps: [prioritize, conflicts]
     pack_outputs: [construction_list.xlsx, conflicts_review.xlsx]
 
-kpis:
+metrics:
   - name: high_priority_backlog
     description: Open high-severity inspection locations (severity >= 4) pending construction
     formula: "count(inspections where severity >= 4) minus locations on construction_list"

@@ -99,8 +99,8 @@ def inject_custom_css():
                 max-width: 1400px;
             }}
 
-            /* Elite Dark Mode KPI Cards */
-            .kpi-card {{
+            /* Elite Dark Mode Metric Cards */
+            .metric-card {{
                 background: {COLORS['card_bg']};
                 backdrop-filter: blur(8px);
                 border: 1px solid {COLORS['border']};
@@ -113,12 +113,12 @@ def inject_custom_css():
                 flex-direction: column;
                 justify-content: center;
             }}
-            .kpi-card:hover {{
+            .metric-card:hover {{
                 transform: translateY(-4px) scale(1.02);
                 border-color: {COLORS['primary']};
                 box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.3);
             }}
-            .kpi-label {{
+            .metric-label {{
                 font-size: 0.75rem;
                 font-weight: 600;
                 color: {COLORS['text_muted']};
@@ -126,7 +126,7 @@ def inject_custom_css():
                 letter-spacing: 0.05em;
                 margin-bottom: 0.25rem;
             }}
-            .kpi-value {{
+            .metric-value {{
                 font-size: 2rem;
                 font-weight: 800;
                 color: {COLORS['primary']};
@@ -163,11 +163,11 @@ def _init_state():
     if "theme" not in st.session_state:
         st.session_state.theme = "light"
 
-def render_kpi_card(title: str, value: str, tooltip: str = ""):
+def render_metric_card(title: str, value: str, tooltip: str = ""):
     st.markdown(f'''
-    <div class="kpi-card" title="{tooltip}">
-        <div class="kpi-label">{title}</div>
-        <div class="kpi-value">{value}</div>
+    <div class="metric-card" title="{tooltip}">
+        <div class="metric-label">{title}</div>
+        <div class="metric-value">{value}</div>
     </div>
     ''', unsafe_allow_html=True)
 
@@ -201,10 +201,10 @@ def main():
 
         st.divider()
 
-        kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
-        with kpi_col1: render_kpi_card("Active Datasets", "26", tooltip="Live SODA2 Endpoints")
-        with kpi_col2: render_kpi_card("System Health", "Optimal", tooltip="All Services Online")
-        with kpi_col3: render_kpi_card("Pipeline", "Standby", tooltip="Awaiting Initialization")
+        metric_col1, metric_col2, metric_col3 = st.columns(3)
+        with metric_col1: render_metric_card("Active Datasets", "26", tooltip="Live SODA2 Endpoints")
+        with metric_col2: render_metric_card("System Health", "Optimal", tooltip="All Services Online")
+        with metric_col3: render_metric_card("Pipeline", "Standby", tooltip="Awaiting Initialization")
 
         st.write("")
         st.write("")

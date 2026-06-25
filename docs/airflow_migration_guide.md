@@ -589,27 +589,27 @@ def check_schema_compliance(ti):
     return {"schema_version": schema.version}
 ```
 
-### Computing KPIs
+### Computing Metrics
 
 ```python
-from socrata_toolkit.dot_sidewalk import MaterialAwareSidewalkKPI
+from socrata_toolkit.dot_sidewalk import MaterialAwareSidewalkMetric
 
-def compute_kpis(ti):
-    """Compute sidewalk KPIs using Phase 1 module"""
+def compute_metrics(ti):
+    """Compute sidewalk Metrics using Phase 1 module"""
     
     # Load incident and repair data
     incidents = get_incidents_from_db()
     repairs = get_repairs_from_db()
     
-    # Create KPI computer from Phase 1
-    kpi = MaterialAwareSidewalkKPI(
+    # Create Metric computer from Phase 1
+    metric = MaterialAwareSidewalkMetric(
         incidents_df=incidents,
         repairs_df=repairs,
         jurisdiction='NYC'
     )
     
-    # Compute KPIs
-    results = kpi.compute()
+    # Compute Metrics
+    results = metric.compute()
     
     # Results include:
     # - response_time_mean, response_time_median
@@ -837,7 +837,7 @@ def test_example_dag_dependencies(dagbag):
 # ✓ GOOD: Descriptive, snake_case, includes data source
 'incident_ingestion_daily'
 'repair_scheduling_optimization'
-'kpi_materialization_hourly'
+'metric_materialization_hourly'
 
 # ✗ BAD: Unclear, camelCase, generic
 'dag1'
@@ -919,9 +919,9 @@ def resilient_fetch_with_circuit_breaker():
 
 ```python
 # ✓ GOOD: Clear purpose, parameters, returns
-def compute_kpi_metrics(incident_df: pd.DataFrame) -> Dict[str, float]:
+def compute_metric_metrics(incident_df: pd.DataFrame) -> Dict[str, float]:
     """
-    Compute sidewalk incident KPI metrics.
+    Compute sidewalk incident Metric metrics.
     
     Args:
         incident_df: DataFrame with incident records containing:

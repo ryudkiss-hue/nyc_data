@@ -56,7 +56,7 @@ bi_export:
   enabled: true
   dest_root: "Z:/Sidewalk/BI/Staging/analyst_pack"
   include:
-    - program_kpi.json
+    - program_metric.json
     - contract_analytics.json
     - construction_list.xlsx
 ```

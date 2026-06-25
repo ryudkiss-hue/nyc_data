@@ -42,46 +42,46 @@ const FMT = (b) => b === "STATEN ISLAND" ? "SI" : b.charAt(0) + b.slice(1).toLow
 export default function Dashboard() {{
   const [state, setState] = useDiveState({{ borough: "CITYWIDE" }});
 
-  const {{ data: kpiData, isLoading: kpiLoading }} = useSQLQuery(`
-    SELECT kpi_name, label, avg(kpi_value) as avg_val, max(benchmark) as bench, unit
-    FROM "nyc_mission_control"."app_queries"."v_kpi_dashboard"
+  const {{ data: metricData, isLoading: metricLoading }} = useSQLQuery(`
+    SELECT metric_name, label, avg(metric_value) as avg_val, max(benchmark) as bench, unit
+    FROM "nyc_mission_control"."app_queries"."v_metric_dashboard"
     WHERE phase = '{phase}'
     ${{state.borough !== "CITYWIDE" ? `AND borough = '${{state.borough}}'` : ''}}
     GROUP BY 1, 2, 5
   `);
 
   const {{ data: boroData, isLoading: boroLoading }} = useSQLQuery(`
-    SELECT borough, kpi_name, kpi_value
-    FROM "nyc_mission_control"."app_queries"."v_kpi_dashboard"
+    SELECT borough, metric_name, metric_value
+    FROM "nyc_mission_control"."app_queries"."v_metric_dashboard"
     WHERE phase = '{phase}'
-    ORDER BY borough, kpi_name
+    ORDER BY borough, metric_name
   `);
 
   const {{ data: statData, isLoading: statLoading }} = useSQLQuery(`
     SELECT 
-      kpi_name,
+      metric_name,
       label,
-      avg(kpi_value) as mean,
-      stddev(kpi_value) as variance,
-      max(kpi_value) as extreme_max,
-      min(kpi_value) as extreme_min
-    FROM "nyc_mission_control"."app_queries"."v_kpi_dashboard"
+      avg(metric_value) as mean,
+      stddev(metric_value) as variance,
+      max(metric_value) as extreme_max,
+      min(metric_value) as extreme_min
+    FROM "nyc_mission_control"."app_queries"."v_metric_dashboard"
     WHERE phase = '{phase}'
     GROUP BY 1, 2
   `);
 
-  const isLoading = kpiLoading || boroLoading || statLoading;
-  const kpis = Array.isArray(kpiData) ? kpiData : [];
+  const isLoading = metricLoading || boroLoading || statLoading;
+  const metrics = Array.isArray(metricData) ? metricData : [];
   const boroRows = Array.isArray(boroData) ? boroData : [];
   const statRows = Array.isArray(statData) ? statData : [];
 
-  const mainKpi = kpis[0] ?? {{}};
+  const mainKpi = metrics[0] ?? {{}};
   
   const chartData = Array.from(new Set(boroRows.map(r => r.borough))).map(b => ({{
     name: b,
     shortName: FMT(b),
-    val1: N(boroRows.find(r => r.borough === b && r.kpi_name === kpis[0]?.kpi_name)?.kpi_value),
-    val2: N(boroRows.find(r => r.borough === b && r.kpi_name === kpis[1]?.kpi_name)?.kpi_value)
+    val1: N(boroRows.find(r => r.borough === b && r.metric_name === metrics[0]?.metric_name)?.metric_value),
+    val2: N(boroRows.find(r => r.borough === b && r.metric_name === metrics[1]?.metric_name)?.metric_value)
   }}));
 
   if (isLoading) {{
@@ -118,8 +118,8 @@ export default function Dashboard() {{
       </div>
 
       <div style={{{{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "24px", marginBottom: "40px" }}}}>
-        {{kpis.map((k, idx) => (
-          <div key={{k.kpi_name}} style={{{{ padding: "24px", background: "#F8F9FA", borderTop: `6px solid ${{idx % 2 === 0 ? "#005696" : "#D32F2F"}}`, borderRadius: "8px", boxShadow: "0 4px 6px rgba(0,0,0,0.05)" }}}}>
+        {{metrics.map((k, idx) => (
+          <div key={{k.metric_name}} style={{{{ padding: "24px", background: "#F8F9FA", borderTop: `6px solid ${{idx % 2 === 0 ? "#005696" : "#D32F2F"}}`, borderRadius: "8px", boxShadow: "0 4px 6px rgba(0,0,0,0.05)" }}}}>
             <div style={{{{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}}}>
               <div style={{{{ fontSize: "12px", fontWeight: 800, color: "#666", textTransform: "uppercase" }}}}>{{k.label}}</div>
               {{idx % 2 === 0 ? <TrendingUp color="#005696" /> : <Activity color="#D32F2F" />}}
@@ -142,8 +142,8 @@ export default function Dashboard() {{
                 <YAxis yAxisId="right" orientation="right" fontSize={{12}} axisLine={{false}} tickLine={{false}} />
                 <Tooltip contentStyle={{{{ backgroundColor: "#000", color: "#FFF", borderRadius: "8px", border: "none" }}}} />
                 <Legend verticalAlign="top" height={{36}}/>
-                <Bar yAxisId="left" dataKey="val1" name={{kpis[0]?.label || "Metric 1"}} fill="#005696" radius={{{{6, 6, 0, 0}}}} />
-                <Line yAxisId="right" type="monotone" dataKey="val2" name={{kpis[1]?.label || "Metric 2"}} stroke="#D32F2F" strokeWidth={{4}} dot={{{{ r: 6, fill: "#D32F2F" }}}} />
+                <Bar yAxisId="left" dataKey="val1" name={{metrics[0]?.label || "Metric 1"}} fill="#005696" radius={{{{6, 6, 0, 0}}}} />
+                <Line yAxisId="right" type="monotone" dataKey="val2" name={{metrics[1]?.label || "Metric 2"}} stroke="#D32F2F" strokeWidth={{4}} dot={{{{ r: 6, fill: "#D32F2F" }}}} />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
@@ -156,7 +156,7 @@ export default function Dashboard() {{
               <h4 style={{{{ margin: 0, fontSize: "18px", fontWeight: 800, color: "#005696" }}}}>Automated Bayesian Audit</h4>
             </div>
             <p style={{{{ margin: 0, fontSize: "14px", lineHeight: 1.6 }}}}>
-              Phase {phase} telemetry for <strong>{{state.borough}}</strong> indicates a high degree of variance in <strong>{{kpis[0]?.label}}</strong>. 
+              Phase {phase} telemetry for <strong>{{state.borough}}</strong> indicates a high degree of variance in <strong>{{metrics[0]?.label}}</strong>. 
               Statistical posterior distribution suggest a mean of <strong>{{N(statRows[0]?.mean).toFixed(2)}}</strong> citywide.
             </p>
           </div>
@@ -164,7 +164,7 @@ export default function Dashboard() {{
           <div style={{{{ padding: "24px", border: "1px solid #EEE", borderRadius: "12px" }}}}>
             <h4 style={{{{ margin: "0 0 16px 0", fontSize: "16px", fontWeight: 800 }}}}>Reliability Metrics</h4>
             {{statRows.map(row => (
-              <div key={{row.kpi_name}} style={{{{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #F4F4F4" }}}}>
+              <div key={{row.metric_name}} style={{{{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #F4F4F4" }}}}>
                 <span style={{{{ fontSize: "13px", fontWeight: 600 }}}}>{{row.label}}</span>
                 <span style={{{{ fontSize: "13px", fontWeight: 800, color: "#005696" }}}}>{{N(row.mean).toFixed(1)}}</span>
               </div>

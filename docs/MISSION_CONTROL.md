@@ -36,13 +36,13 @@ streamlit run app/app.py
 app/dash_app.py          ← Main Dash application with FastAPI backend
 ├─ app/dash_layouts.py   ← Page layouts (dashboard, construction, gis, reports, etc.)
 ├─ app/callbacks/        ← Real-time callback handlers
-│  ├─ analytics.py       ← KPI and metric callbacks
+│  ├─ analytics.py       ← Metric and metric callbacks
 │  ├─ gis.py             ← Spatial analysis callbacks
 │  ├─ export_callbacks.py← PDF/Excel export pipelines
 │  └─ ...
 ├─ app/components/       ← Custom Dash components
 │  ├─ filter_system.py   ← Interactive filter UI
-│  ├─ kpi_cards.py       ← KPI card components
+│  ├─ metric_cards.py       ← Metric card components
 │  └─ ...
 └─ app/assets/           ← CSS, Mantine theming, custom styles
 ```
@@ -68,7 +68,7 @@ src/socrata_toolkit/     ← Core Python library
 ## Features (Dash)
 
 ### 1. Dashboard (Home)
-- KPI cards with real-time metrics
+- Metric cards with real-time metrics
 - Dataset health status
 - Audit trail of recent ingests
 - Quick-action buttons for common workflows
@@ -327,7 +327,7 @@ PYTHONPATH=src:. python -m streamlit run app/mission_control.py --server.port 85
 | Module | Charts available |
 |---|---|
 | `socrata_toolkit.viz.core` | Histogram, bar, heatmap, time series, box plot, quality dashboard |
-| `socrata_toolkit.viz.plotly` | Borough bar, KPI gauge, Gantt, priority heatmap, trend, donut |
+| `socrata_toolkit.viz.plotly` | Borough bar, Metric gauge, Gantt, priority heatmap, trend, donut |
 | `socrata_toolkit.viz.map` | Folium interactive map, cluster map |
 | `socrata_toolkit.viz` | `treemap_chart()`, `animated_scatter_chart()` (via analysis module) |
 

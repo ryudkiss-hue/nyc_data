@@ -2,8 +2,8 @@
 Main Navigation System: 4-view Role-Based Dashboard Router
 
 Implements a sidebar navigation component for switching between 4 role-based views:
-  1. Executive Summary — Leadership dashboards (7 headline KPIs)
-  2. Operations — Daily ops monitoring (15 KPIs: inspection+violation+contractor)
+  1. Executive Summary — Leadership dashboards (7 headline Metrics)
+  2. Operations — Daily ops monitoring (15 Metrics: inspection+violation+contractor)
   3. Analyst Tools — Deep analysis & work order assignment (8 dashboards + tools)
   4. Data — Quality & governance (data health, geographic, schema drift)
 
@@ -68,7 +68,7 @@ def get_navigation_items() -> List[Dict[str, Any]]:
             "view": "executive",
             "route": "/views/executive",
             "icon": "mdi:chart-line",
-            "description": "Leadership overview - 7 headline KPIs",
+            "description": "Leadership overview - 7 headline Metrics",
             "color": "blue",
             "badge": None,
         },
@@ -78,7 +78,7 @@ def get_navigation_items() -> List[Dict[str, Any]]:
             "view": "operations",
             "route": "/views/operations",
             "icon": "mdi:factory",
-            "description": "Daily ops monitoring - 15 KPIs (inspection+violation+contractor)",
+            "description": "Daily ops monitoring - 15 Metrics (inspection+violation+contractor)",
             "color": "orange",
             "badge": None,
         },

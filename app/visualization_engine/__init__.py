@@ -8,7 +8,7 @@ Implements interactive Plotly charts for all 73 visualizations across 6 analytic
 - Phase D: Geographic Anomalies & Maps (15 charts)
 - Phase E: Time Series Decomposition (16 charts)
 - Phase F: Bootstrap CI & SLA Gauges (17 charts)
-- KPI Cards: Dashboard metrics (18 cards)
+- Metric Cards: Dashboard metrics (18 cards)
 - Universal Stats: Reusable statistics display component
 
 All data comes from MotherDuck (app_queries schema).
@@ -21,8 +21,8 @@ TOTAL VISUALIZATIONS: 73
 - Phase E: 16 charts
 - Phase F: 17 charts
 
-TOTAL KPI CARDS: 18
-- 18 KPIs × 5 boroughs = 90 total card instances
+TOTAL Metric CARDS: 18
+- 18 Metrics × 5 boroughs = 90 total card instances
 
 Example usage:
     from app.visualization_engine import PhaseBVisualizations, StatisticsPanel
@@ -40,7 +40,7 @@ Example usage:
         # Display fig.to_html() + html_stats in Dash callback
 """
 
-from .kpi_cards import KPICards
+from .metric_cards import MetricCards
 from .phase_b import PhaseBVisualizations
 from .phase_c import PhaseCVisualizations
 from .phase_d import PhaseDVisualizations
@@ -54,7 +54,7 @@ __all__ = [
     "PhaseDVisualizations",
     "PhaseEVisualizations",
     "PhaseFVisualizations",
-    "KPICards",
+    "MetricCards",
     "StatisticsPanel",
 ]
 

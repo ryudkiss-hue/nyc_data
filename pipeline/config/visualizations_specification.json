@@ -15,7 +15,7 @@
       "id": "dashboard_001",
       "name": "Mission Control Home",
       "title": "NYC DOT Mission Control",
-      "description": "Central operational command center with real-time KPIs and alerts",
+      "description": "Central operational command center with real-time Metrics and alerts",
       "route": "/",
       "icon": "home",
       "access_level": "internal",
@@ -25,34 +25,34 @@
         "columns": 3,
         "components": [
           {
-            "type": "kpi_scorecard",
+            "type": "metric_scorecard",
             "position": "top_left",
             "title": "Inspection Completion Rate",
-            "kpi": "violation_closure_rate",
+            "metric": "violation_closure_rate",
             "metric_type": "percentage",
             "target": 85,
-            "current_value": "{{kpi_value}}",
+            "current_value": "{{metric_value}}",
             "trend": "up",
             "sparkline": true
           },
           {
-            "type": "kpi_scorecard",
+            "type": "metric_scorecard",
             "position": "top_center",
             "title": "Ramp Installation Progress",
-            "kpi": "ramp_completion_rate",
+            "metric": "ramp_completion_rate",
             "metric_type": "percentage",
             "target": 80,
-            "current_value": "{{kpi_value}}",
+            "current_value": "{{metric_value}}",
             "trend": "up"
           },
           {
-            "type": "kpi_scorecard",
+            "type": "metric_scorecard",
             "position": "top_right",
             "title": "Budget Compliance",
-            "kpi": "budget_variance",
+            "metric": "budget_variance",
             "metric_type": "percentage",
             "target": 0,
-            "current_value": "{{kpi_value}}",
+            "current_value": "{{metric_value}}",
             "trend": "neutral"
           },
           {
@@ -82,8 +82,8 @@
             "position": "middle_right",
             "title": "SLA Compliance Scorecard",
             "chart_type": "gauge",
-            "data_source": "serving.kpi_borough_results",
-            "kpi_id": "KPI-009",
+            "data_source": "serving.metric_borough_results",
+            "metric_id": "METRIC-009",
             "min": 0,
             "max": 100,
             "target": 95,
@@ -131,7 +131,7 @@
           "id": "chart_101",
           "title": "Violations Found Today",
           "type": "stat",
-          "kpi": "violations_found_today",
+          "metric": "violations_found_today",
           "comparison": "yesterday"
         },
         {
@@ -206,7 +206,7 @@
           "id": "chart_205",
           "title": "Accessibility Readiness Index",
           "type": "gauge",
-          "current": "{{kpi_value}}",
+          "current": "{{metric_value}}",
           "target": 85,
           "colors": ["#FF6B6B", "#FFA500", "#FFD700", "#90EE90"]
         },
@@ -607,7 +607,7 @@
       },
       "gauge": {
         "library": "plotly.graph_objects.Indicator",
-        "use_cases": ["KPI cards", "progress tracking", "compliance monitoring"],
+        "use_cases": ["Metric cards", "progress tracking", "compliance monitoring"],
         "interactivity": ["hover_tooltip"],
         "components": {
           "visual": ["gauge_arc", "needle", "axis_labels", "title", "reference_lines"],
@@ -665,7 +665,7 @@
 
   "dashboard_integration": {
     "backend": "FastAPI endpoint: /api/dashboard/{dashboard_id}",
-    "data_source": "DuckDB serving schema (analytics views + KPI materialization)",
+    "data_source": "DuckDB serving schema (analytics views + Metric materialization)",
     "refresh_mechanism": "Callback-based auto-refresh via Dash clientside callbacks",
     "styling": "Mantine UI components + custom CSS from app/assets/",
     "authentication": "Required (internal DOT staff only)",
@@ -681,11 +681,11 @@
   },
 
   "visualization_best_practices": {
-    "rule_1": "All charts reference serving schema or materialized KPI views",
+    "rule_1": "All charts reference serving schema or materialized Metric views",
     "rule_2": "Every chart includes data freshness indicator",
     "rule_3": "Geographic charts use NYC standard CRS (EPSG:2263)",
     "rule_4": "Color schemes follow NYC DOT brand colors + accessibility standards",
-    "rule_5": "All KPI cards show target line and trend indicator",
+    "rule_5": "All Metric cards show target line and trend indicator",
     "rule_6": "Charts auto-export to PNG/SVG for reporting",
     "rule_7": "Drill-down interactions maintain filter context",
     "rule_8": "Mobile-responsive layouts for tablet/phone viewing"

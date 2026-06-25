@@ -1,4 +1,4 @@
-"""Analytics service layer with KPI caching + connection pooling optimizations."""
+"""Analytics service layer with Metric caching + connection pooling optimizations."""
 
 import logging
 from datetime import datetime, timedelta
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class CacheManager:
-    """KPI cache with TTL validation."""
+    """Metric cache with TTL validation."""
 
     def __init__(self, ttl_seconds: int = 300):
         """Initialize cache with TTL (default: 5 minutes)."""
@@ -204,21 +204,21 @@ def get_timeseries_data(
 
 
 # ============================================================================
-# KPI HELPERS
+# Metric HELPERS
 # ============================================================================
 
 
-def get_kpi_metrics(filters: Optional[dict] = None) -> dict[str, tuple[float, float, float]]:
+def get_metric_metrics(filters: Optional[dict] = None) -> dict[str, tuple[float, float, float]]:
     """
-    Get KPI values with bootstrap confidence intervals.
+    Get Metric values with bootstrap confidence intervals.
     Uses 5-minute cache to reduce database queries by ~95%.
 
     Returns:
-        Dict of KPI name → (point_estimate, ci_lower, ci_upper)
+        Dict of Metric name → (point_estimate, ci_lower, ci_upper)
         Response marked with 'cached: bool' flag for visibility
     """
     # Check cache first (Phase 3B optimization)
-    cache_key = f"kpi_metrics_{str(filters)}"
+    cache_key = f"metric_metrics_{str(filters)}"
     cached = _cache_manager._get_cached(cache_key)
     if cached is not None:
         # Remove old _cached flag and set to True
@@ -253,11 +253,11 @@ def get_kpi_metrics(filters: Optional[dict] = None) -> dict[str, tuple[float, fl
 
         # Store in cache (Phase 3B optimization - cache all responses)
         _cache_manager._set_cache(cache_key, metrics)
-        logger.info(f"Computed {len(metrics)} KPI metrics (fresh, cached)")
+        logger.info(f"Computed {len(metrics)} Metric metrics (fresh, cached)")
         return {**metrics, "_cached": False}
 
     except Exception as e:
-        logger.error(f"Error computing KPI metrics: {e}")
+        logger.error(f"Error computing Metric metrics: {e}")
         return {"_unavailable": True, "_cached": False}
 
 

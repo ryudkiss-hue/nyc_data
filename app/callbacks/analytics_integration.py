@@ -4,7 +4,7 @@ Integrates all 5 AnalyticsEngine chart methods into Dash views.
 - Phase C: Distribution Classification → Analytics View
 - Phase D: Anomaly Detection → Quality Dashboard
 - Phase E: Seasonal Decomposition → Labor/Temporal View
-- Phase F: Bootstrap CI → Executive KPI Dashboard
+- Phase F: Bootstrap CI → Executive Metric Dashboard
 
 Pattern: Each callback fetches data → calls AnalyticsEngine method → renders Figure + Narrative
 """
@@ -19,7 +19,7 @@ from dash import Input, Output, callback, dcc
 from app.callbacks.analytics import AnalyticsEngine
 from app.services.analytics_service import (
     get_dataset,
-    get_kpi_metrics,
+    get_metric_metrics,
     get_spatial_data,
     get_timeseries_data,
     validate_filters,
@@ -272,32 +272,32 @@ def update_seasonal_decomposition(filters: dict, date_col: str = None, value_col
 # =============================================================================
 
 @callback(
-    Output("kpi-bootstrap-figures", "children"),
-    Output("kpi-bootstrap-summary", "children"),
+    Output("metric-bootstrap-figures", "children"),
+    Output("metric-bootstrap-summary", "children"),
     Input("store-global-filters", "data"),
-    Input("kpi-refresh-interval", "n_intervals"),
+    Input("metric-refresh-interval", "n_intervals"),
     prevent_initial_call=False,
 )
-def update_bootstrap_ci_kpis(filters: dict, n_intervals: int = 0) -> tuple[Any, str]:
+def update_bootstrap_ci_metrics(filters: dict, n_intervals: int = 0) -> tuple[Any, str]:
     """
-    Update KPI gauges with Bootstrap Confidence Intervals.
-    Wraps existing KPI metrics with uncertainty quantification.
+    Update Metric gauges with Bootstrap Confidence Intervals.
+    Wraps existing Metric metrics with uncertainty quantification.
 
     Args:
         filters: Global filter state
         n_intervals: Refresh counter for polling
 
     Returns:
-        tuple[dmc.SimpleGrid, str]: Grid of KPI gauges with CI bands + summary narrative
+        tuple[dmc.SimpleGrid, str]: Grid of Metric gauges with CI bands + summary narrative
     """
     try:
-        # Fetch KPI metrics (with CI already computed by get_kpi_metrics)
-        metrics = get_kpi_metrics(filters)
+        # Fetch Metric metrics (with CI already computed by get_metric_metrics)
+        metrics = get_metric_metrics(filters)
 
         if not metrics or len(metrics) == 0:
             return (
-                dmc.Stack([dmc.Text("No KPI metrics available.", c="orange")]),
-                "KPI analysis requires valid data."
+                dmc.Stack([dmc.Text("No Metric metrics available.", c="orange")]),
+                "Metric analysis requires valid data."
             )
 
         # Remove metadata flag
@@ -331,23 +331,23 @@ def update_bootstrap_ci_kpis(filters: dict, n_intervals: int = 0) -> tuple[Any, 
             narratives.append(narrative)
 
         # Assemble into responsive grid
-        kpi_grid = dmc.SimpleGrid(
+        metric_grid = dmc.SimpleGrid(
             cols={"base": 1, "sm": 2, "md": 4},
             spacing="md",
             children=gauge_figures
         )
 
         # Combined narrative
-        summary = "Bootstrap confidence intervals provide uncertainty quantification for all KPI metrics. Narrow intervals indicate stable metrics; wide intervals suggest high variability."
+        summary = "Bootstrap confidence intervals provide uncertainty quantification for all Metric metrics. Narrow intervals indicate stable metrics; wide intervals suggest high variability."
 
-        logger.info(f"Bootstrap CI KPIs rendered ({len(metrics)} metrics)")
-        return kpi_grid, summary
+        logger.info(f"Bootstrap CI Metrics rendered ({len(metrics)} metrics)")
+        return metric_grid, summary
 
     except Exception as e:
         logger.error(f"Bootstrap CI error: {e}", exc_info=True)
         return (
             dmc.Stack([dmc.Text(f"Error: {str(e)}", c="red")]),
-            f"Error in KPI analysis: {str(e)}"
+            f"Error in Metric analysis: {str(e)}"
         )
 
 # =============================================================================

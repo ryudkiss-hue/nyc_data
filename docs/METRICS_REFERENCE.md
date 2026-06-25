@@ -1,7 +1,7 @@
-# Comprehensive KPI Metrics Reference (60+ metrics)
+# Comprehensive Metric Metrics Reference (60+ metrics)
 
 ## Overview
-Each of the 18 KPI Dives includes 60+ statistical metrics across 11 categories, providing exhaustive data communication through visualizations, tables, and interactive components.
+Each of the 18 Metric Dives includes 60+ statistical metrics across 11 categories, providing exhaustive data communication through visualizations, tables, and interactive components.
 
 ---
 
@@ -9,9 +9,9 @@ Each of the 18 KPI Dives includes 60+ statistical metrics across 11 categories, 
 
 | Metric | Formula | Use Case | Implemented |
 |--------|---------|----------|-------------|
-| **Mean** | Σx / n | Average value, affected by outliers | ✅ AVG(kpi_value) |
+| **Mean** | Σx / n | Average value, affected by outliers | ✅ AVG(metric_value) |
 | **Median** | Middle value when sorted | Robust center, unaffected by extremes | ✅ PERCENTILE_CONT(0.5) |
-| **Mode** | Most frequent value | Most common KPI value | ✅ MODE(kpi_value) |
+| **Mode** | Most frequent value | Most common Metric value | ✅ MODE(metric_value) |
 | **Trimmed Mean** | Mean of middle 90% | Balance between mean & median | ✅ CASE WHEN rank IN [5%-95%] |
 
 ---
@@ -149,7 +149,7 @@ Each of the 18 KPI Dives includes 60+ statistical metrics across 11 categories, 
 
 ## 13. DASHBOARD SUMMARY TABLE
 
-All 18 KPI Dives include this unified table with 16 columns:
+All 18 Metric Dives include this unified table with 16 columns:
 
 | Column | Metric | Displayed |
 |--------|--------|-----------|
@@ -191,8 +191,8 @@ All 18 KPI Dives include this unified table with 16 columns:
 ## 15. DATA SOURCES & QUERIES
 
 All metrics computed from:
-- **Primary Source:** `app_queries.v_kpi_dashboard`
-- **Raw Data:** `analytics.kpi_metrics` (18 KPIs × 5 boroughs)
+- **Primary Source:** `app_queries.v_metric_dashboard`
+- **Raw Data:** `analytics.metric_metrics` (18 Metrics × 5 boroughs)
 - **Aggregation:** Per-borough statistics with time-series decomposition
 - **SQL Dialect:** DuckDB with PERCENTILE_CONT, STDDEV_POP, KURTOSIS functions
 
@@ -231,7 +231,7 @@ Available via tooltips/expandable sections:
 
 ---
 
-## Summary: 60+ Metrics Across All 18 KPI Dives
+## Summary: 60+ Metrics Across All 18 Metric Dives
 
 ✅ **All 60+ metrics are incorporated** into the enhanced Dive template:
 - Central Tendency (4)

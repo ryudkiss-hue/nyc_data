@@ -1,4 +1,4 @@
-"""Advanced analytics view — KPI Trends, Cohort Analysis, Anomaly Detection,
+"""Advanced analytics view — Metric Trends, Cohort Analysis, Anomaly Detection,
 Borough Rankings, Inspector Scorecard, SLA Tracker, Cross-Dataset, Segmentation,
 and Bayesian / SLA advanced analytics (Bayesian completion-time, SLA breach curve,
 Monte Carlo timeline, inspector benchmarking, survival curve, CI forecast)."""
@@ -233,8 +233,8 @@ def _km_survival(durations: np.ndarray) -> pd.DataFrame:
 # Tab renderers
 # ---------------------------------------------------------------------------
 
-def _render_kpi_trends(df: pd.DataFrame) -> None:
-    """Tab 1 — KPI Trends (items 48, 49, 67)."""
+def _render_metric_trends(df: pd.DataFrame) -> None:
+    """Tab 1 — Metric Trends (items 48, 49, 67)."""
     # Clear previous CUSUM anomalies to prevent stale sidebar badge state
     st.session_state["cusum_anomalies"] = []
 
@@ -247,7 +247,7 @@ def _render_kpi_trends(df: pd.DataFrame) -> None:
     borough_col = _pick_col_icontains(df, "borough")
     block_col = _pick_col_icontains(df, "block")
 
-    # --- KPI metric cards ---
+    # --- Metric metric cards ---
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Total records", f"{len(df):,}")
     if score_col:
@@ -2230,7 +2230,7 @@ def render_analytics_advanced_page() -> None:
             st.error(f"Failed to load inspections: {exc}")
 
     tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11 = st.tabs([
-        "📈 KPI Trends",
+        "📈 Metric Trends",
         "👥 Cohort Analysis",
         "🔍 Anomaly Detection",
         "🏆 Borough Rankings",
@@ -2244,7 +2244,7 @@ def render_analytics_advanced_page() -> None:
     ])
 
     with tab1:
-        _render_kpi_trends(inspections_df)
+        _render_metric_trends(inspections_df)
 
     with tab2:
         _render_cohort_analysis(inspections_df)

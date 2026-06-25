@@ -15,7 +15,7 @@
       "coordination": "Permit coordination & conflicts",
       "overlays": "Spatial enrichment & tree data",
       "extended": "Derived metrics & time-series",
-      "serving": "Materialized KPIs & dashboards"
+      "serving": "Materialized Metrics & dashboards"
     }
   },
   "ingestion": {
@@ -61,10 +61,10 @@
     ]
   },
   "serving": {
-    "kpi_definitions_file": "config/kpi_definitions.json",
-    "total_kpis": 51,
+    "metric_definitions_file": "config/metric_definitions.json",
+    "total_metrics": 51,
     "boroughs": ["manhattan", "brooklyn", "queens", "bronx", "staten_island"],
-    "kpi_records": 255,
+    "metric_records": 255,
     "quality_scorecards": 57,
     "borough_aggregates": 25,
     "materialization": {
@@ -92,8 +92,8 @@
         "critical": true
       },
       {
-        "name": "kpi",
-        "description": "255 KPI records + 57 scorecards computed",
+        "name": "metric",
+        "description": "255 Metric records + 57 scorecards computed",
         "critical": true
       }
     ],

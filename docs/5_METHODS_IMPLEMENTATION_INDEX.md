@@ -86,7 +86,7 @@ Start here if you want to **understand the project**:
 - **Code:** `register_decomposition_callbacks()` in hidden_analysis_methods.py
 
 ### 5. Bootstrap Confidence Intervals
-- **Location in UI:** KPI Cards (existing gauges enhanced)
+- **Location in UI:** Metric Cards (existing gauges enhanced)
 - **What it does:** Add uncertainty bands to metrics
 - **Output:** Gauge with CI annotation
 - **Performance:** ~250ms for 10K rows
@@ -157,7 +157,7 @@ Start here if you want to **understand the project**:
    - Analytics → Data Shapes (Distribution)
    - Quality → Data Quality (Anomalies)
    - Labor → Temporal Patterns (Decomposition)
-   - KPI Cards (Bootstrap CI)
+   - Metric Cards (Bootstrap CI)
 3. Read docs/5_HIDDEN_METHODS_GUIDE.md for interpretation help
 
 ### As a Developer

@@ -23,7 +23,7 @@ socrata search -q "sidewalk repair" -d data.cityofnewyork.us -l 10
 # Fetch dataset to file
 socrata fetch -i erm2-nwe9 -d data.cityofnewyork.us -l 5000 -f csv -o complaints.csv
 
-# Program KPI dashboard from local CSV
+# Program Metric dashboard from local CSV
 socrata analyze --file data/samples/sidewalk_inspections_full.csv
 
 # Incremental DuckDB sync (nightly)

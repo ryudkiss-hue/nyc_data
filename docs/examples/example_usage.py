@@ -4,7 +4,7 @@
 Demonstrates:
 1. Loading and generating artifacts from DATASET_REGISTRY.yaml
 2. Creating charts with ChartFactory
-3. Computing KPIs with KPIEngine
+3. Computing Metrics with MetricEngine
 4. Loading and validating data with DatasetLoader
 5. Adding a new dataset with full regeneration
 
@@ -23,7 +23,7 @@ from socrata_toolkit.integration import DatasetIntegrationManager
 from socrata_toolkit.abstraction_layers import (
     ChartFactory,
     ChartSpec,
-    KPIEngine,
+    MetricEngine,
     DatasetLoader,
     SchemaRegistry,
 )
@@ -96,10 +96,10 @@ def example_2_create_charts():
     print("\n✓ Created horizontal bar chart")
 
 
-def example_3_compute_kpis():
-    """Example 3: Compute KPIs with KPIEngine."""
+def example_3_compute_metrics():
+    """Example 3: Compute Metrics with MetricEngine."""
     print("\n" + "="*70)
-    print("EXAMPLE 3: Compute KPIs with KPIEngine")
+    print("EXAMPLE 3: Compute Metrics with MetricEngine")
     print("="*70)
 
     mgr = DatasetIntegrationManager("docs/DATASET_REGISTRY.yaml")
@@ -116,26 +116,26 @@ def example_3_compute_kpis():
     print(f"  Rows: {len(df)}")
     print(f"  Columns: {df.columns.tolist()}")
 
-    # Compute KPI
-    result = mgr.kpi_engine.compute(
+    # Compute Metric
+    result = mgr.metric_engine.compute(
         dataset_key="inspection",
-        kpi_name="inspections_scheduled_week",
+        metric_name="inspections_scheduled_week",
         data=df,
     )
 
-    print(f"\n✓ Computed KPI: {result.kpi_name}")
+    print(f"\n✓ Computed Metric: {result.metric_name}")
     print(f"  Value: {result.value} {result.unit}")
     print(f"  Sample size: {result.sample_size}")
     print(f"  Timestamp: {result.timestamp}")
 
-    # Compute another KPI
-    result2 = mgr.kpi_engine.compute(
+    # Compute another Metric
+    result2 = mgr.metric_engine.compute(
         dataset_key="inspection",
-        kpi_name="inspection_completion_rate",
+        metric_name="inspection_completion_rate",
         data=df,
     )
 
-    print(f"\n✓ Computed KPI: {result2.kpi_name}")
+    print(f"\n✓ Computed Metric: {result2.metric_name}")
     print(f"  Value: {result2.value} {result2.unit}")
     print(f"  Target: {result2.metadata.get('target')}")
 
@@ -189,7 +189,7 @@ def example_5_add_dataset():
     mgr.add_dataset(
         fourfour="h933-akrx",
         name="Street Pavement Ratings",
-        kpis=["pavement_avg_rating", "rating_by_borough"],
+        metrics=["pavement_avg_rating", "rating_by_borough"],
         status="active",
         frequency="monthly",
         quality_score=0.88,
@@ -211,7 +211,7 @@ def example_5_add_dataset():
     # 2. Regenerate plotly_charts.py
     # 3. Regenerate visualization_callbacks.py
     # 4. Regenerate dash_layouts_sections.py
-    # 5. Regenerate kpi_stubs.py
+    # 5. Regenerate metric_stubs.py
     # 6. Regenerate documentation
     """)
 
@@ -248,9 +248,9 @@ def example_6_registry_structure():
     print(f"  IV: {viz['iv_column']}, DV: {viz['dv_column']}")
     print(f"  Title: {viz['title_template']}")
 
-    print(f"\nKPIs ({len(inspection_config['kpis'])}):")
-    for kpi in inspection_config['kpis']:
-        print(f"  - {kpi}")
+    print(f"\nMetrics ({len(inspection_config['metrics'])}):")
+    for metric in inspection_config['metrics']:
+        print(f"  - {metric}")
 
 
 def main():
@@ -270,7 +270,7 @@ def main():
         print(f"✗ Example 2 failed: {e}")
 
     try:
-        example_3_compute_kpis()
+        example_3_compute_metrics()
     except Exception as e:
         print(f"✗ Example 3 failed: {e}")
 

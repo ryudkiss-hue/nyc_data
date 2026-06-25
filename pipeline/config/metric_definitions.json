@@ -1,15 +1,15 @@
 {
   "metadata": {
     "version": "2.0",
-    "total_kpis": 51,
-    "total_kpi_records": 255,
+    "total_metrics": 51,
+    "total_metric_records": 255,
     "boroughs": 5,
     "created_at": "2026-06-18"
   },
   "boroughs": ["manhattan", "brooklyn", "queens", "bronx", "staten_island"],
-  "kpis": [
+  "metrics": [
     {
-      "kpi_id": 1,
+      "metric_id": 1,
       "name": "Inspections Completed",
       "category": "volume",
       "description": "Total number of sidewalk inspections completed",
@@ -18,7 +18,7 @@
       "sla_level": "HIGH"
     },
     {
-      "kpi_id": 2,
+      "metric_id": 2,
       "name": "Average Response Time",
       "category": "timeliness",
       "description": "Average days from violation detection to remediation",
@@ -27,7 +27,7 @@
       "sla_level": "HIGH"
     },
     {
-      "kpi_id": 3,
+      "metric_id": 3,
       "name": "Violation Resolution Rate",
       "category": "quality",
       "description": "Percentage of violations resolved within SLA",
@@ -36,7 +36,7 @@
       "sla_level": "HIGH"
     },
     {
-      "kpi_id": 4,
+      "metric_id": 4,
       "name": "Accessibility Compliance",
       "category": "compliance",
       "description": "Percentage of ramp locations meeting ADA standards",
@@ -45,7 +45,7 @@
       "sla_level": "HIGH"
     },
     {
-      "kpi_id": 5,
+      "metric_id": 5,
       "name": "Data Completeness",
       "category": "quality",
       "description": "Percentage of non-null required fields",
@@ -54,7 +54,7 @@
       "sla_level": "MEDIUM"
     },
     {
-      "kpi_id": 6,
+      "metric_id": 6,
       "name": "Ramp Repair Queue",
       "category": "volume",
       "description": "Number of ramps waiting for repair",
@@ -63,7 +63,7 @@
       "sla_level": "MEDIUM"
     },
     {
-      "kpi_id": 7,
+      "metric_id": 7,
       "name": "Permit Issuance Rate",
       "category": "volume",
       "description": "Number of permits issued per month",
@@ -72,7 +72,7 @@
       "sla_level": "MEDIUM"
     },
     {
-      "kpi_id": 8,
+      "metric_id": 8,
       "name": "Street Closure Duration",
       "category": "efficiency",
       "description": "Average days a street remains closed",
@@ -81,7 +81,7 @@
       "sla_level": "MEDIUM"
     },
     {
-      "kpi_id": 9,
+      "metric_id": 9,
       "name": "Data Freshness",
       "category": "timeliness",
       "description": "Days since last data update",
@@ -90,7 +90,7 @@
       "sla_level": "HIGH"
     },
     {
-      "kpi_id": 10,
+      "metric_id": 10,
       "name": "Conflict Detection Rate",
       "category": "quality",
       "description": "Number of project conflicts identified",
@@ -99,7 +99,7 @@
       "sla_level": "HIGH"
     },
     {
-      "kpi_id": 11,
+      "metric_id": 11,
       "name": "Tree Damage Claims",
       "category": "volume",
       "description": "Number of tree damage incidents reported",
@@ -108,7 +108,7 @@
       "sla_level": "MEDIUM"
     },
     {
-      "kpi_id": 12,
+      "metric_id": 12,
       "name": "Budget Variance",
       "category": "financial",
       "description": "Project budget variance percentage",
@@ -117,7 +117,7 @@
       "sla_level": "MEDIUM"
     },
     {
-      "kpi_id": 13,
+      "metric_id": 13,
       "name": "Schedule Adherence",
       "category": "efficiency",
       "description": "Percentage of projects on-time",
@@ -126,7 +126,7 @@
       "sla_level": "MEDIUM"
     },
     {
-      "kpi_id": 14,
+      "metric_id": 14,
       "name": "Inspector Utilization",
       "category": "efficiency",
       "description": "Percentage of inspector hours utilized",
@@ -135,7 +135,7 @@
       "sla_level": "LOW"
     },
     {
-      "kpi_id": 15,
+      "metric_id": 15,
       "name": "Reinspection Success Rate",
       "category": "quality",
       "description": "Percentage of remediation verified on reinspection",
@@ -144,7 +144,7 @@
       "sla_level": "HIGH"
     },
     {
-      "kpi_id": 16,
+      "metric_id": 16,
       "name": "Curb Condition Index",
       "category": "quality",
       "description": "Composite curb quality score (0-100)",
@@ -153,7 +153,7 @@
       "sla_level": "MEDIUM"
     },
     {
-      "kpi_id": 17,
+      "metric_id": 17,
       "name": "Sidewalk Condition Index",
       "category": "quality",
       "description": "Composite sidewalk quality score (0-100)",
@@ -162,7 +162,7 @@
       "sla_level": "MEDIUM"
     },
     {
-      "kpi_id": 18,
+      "metric_id": 18,
       "name": "Permit Overlap Incidents",
       "category": "coordination",
       "description": "Number of overlapping project areas",
@@ -171,7 +171,7 @@
       "sla_level": "HIGH"
     },
     {
-      "kpi_id": 19,
+      "metric_id": 19,
       "name": "Maintenance Cost per Block",
       "category": "financial",
       "description": "Average maintenance cost per block",
@@ -180,7 +180,7 @@
       "sla_level": "LOW"
     },
     {
-      "kpi_id": 20,
+      "metric_id": 20,
       "name": "Complaint Resolution Time",
       "category": "timeliness",
       "description": "Average days to resolve complaints",
@@ -189,7 +189,7 @@
       "sla_level": "MEDIUM"
     },
     {
-      "kpi_id": 21,
+      "metric_id": 21,
       "name": "Inspector Certification",
       "category": "compliance",
       "description": "Percentage of certified inspectors",
@@ -198,7 +198,7 @@
       "sla_level": "HIGH"
     },
     {
-      "kpi_id": 22,
+      "metric_id": 22,
       "name": "Hazard Resolution",
       "category": "safety",
       "description": "Percentage of hazards resolved within 24h",
@@ -207,7 +207,7 @@
       "sla_level": "HIGH"
     },
     {
-      "kpi_id": 23,
+      "metric_id": 23,
       "name": "Public Service Requests",
       "category": "volume",
       "description": "Number of public service requests received",
@@ -216,7 +216,7 @@
       "sla_level": "MEDIUM"
     },
     {
-      "kpi_id": 24,
+      "metric_id": 24,
       "name": "Data Quality Score",
       "category": "quality",
       "description": "Composite data quality score (0-100)",
@@ -225,7 +225,7 @@
       "sla_level": "MEDIUM"
     },
     {
-      "kpi_id": 25,
+      "metric_id": 25,
       "name": "Vendor Performance",
       "category": "efficiency",
       "description": "Average vendor performance rating",
@@ -234,7 +234,7 @@
       "sla_level": "MEDIUM"
     },
     {
-      "kpi_id": 26,
+      "metric_id": 26,
       "name": "Project Completion Rate",
       "category": "efficiency",
       "description": "Percentage of projects completed",
@@ -243,7 +243,7 @@
       "sla_level": "HIGH"
     },
     {
-      "kpi_id": 27,
+      "metric_id": 27,
       "name": "Risk Incident Count",
       "category": "safety",
       "description": "Number of safety incidents",
@@ -252,7 +252,7 @@
       "sla_level": "HIGH"
     },
     {
-      "kpi_id": 28,
+      "metric_id": 28,
       "name": "Environmental Compliance",
       "category": "compliance",
       "description": "Percentage of environmental compliance checks passed",
@@ -261,7 +261,7 @@
       "sla_level": "HIGH"
     },
     {
-      "kpi_id": 29,
+      "metric_id": 29,
       "name": "Permit Duration Variance",
       "category": "efficiency",
       "description": "Average permit processing time variance",
@@ -270,7 +270,7 @@
       "sla_level": "MEDIUM"
     },
     {
-      "kpi_id": 30,
+      "metric_id": 30,
       "name": "Intersection Congestion Index",
       "category": "coordination",
       "description": "Traffic impact score during construction",
@@ -279,7 +279,7 @@
       "sla_level": "MEDIUM"
     },
     {
-      "kpi_id": 31,
+      "metric_id": 31,
       "name": "ADA Ramp Density",
       "category": "accessibility",
       "description": "Number of ADA ramps per block",
@@ -288,7 +288,7 @@
       "sla_level": "MEDIUM"
     },
     {
-      "kpi_id": 32,
+      "metric_id": 32,
       "name": "Violation Trend",
       "category": "quality",
       "description": "Month-over-month violation change rate",
@@ -297,7 +297,7 @@
       "sla_level": "MEDIUM"
     },
     {
-      "kpi_id": 33,
+      "metric_id": 33,
       "name": "Cost Efficiency Ratio",
       "category": "financial",
       "description": "Cost per unit of work completed",
@@ -306,7 +306,7 @@
       "sla_level": "LOW"
     },
     {
-      "kpi_id": 34,
+      "metric_id": 34,
       "name": "Safety Hazard Response",
       "category": "safety",
       "description": "Average response time to hazards",
@@ -315,7 +315,7 @@
       "sla_level": "HIGH"
     },
     {
-      "kpi_id": 35,
+      "metric_id": 35,
       "name": "Permit Accuracy",
       "category": "quality",
       "description": "Percentage of accurate permit data",
@@ -324,7 +324,7 @@
       "sla_level": "HIGH"
     },
     {
-      "kpi_id": 36,
+      "metric_id": 36,
       "name": "Sidewalk Inspection Coverage",
       "category": "volume",
       "description": "Percentage of blocks inspected",
@@ -333,7 +333,7 @@
       "sla_level": "HIGH"
     },
     {
-      "kpi_id": 37,
+      "metric_id": 37,
       "name": "Ramp Accessibility Score",
       "category": "accessibility",
       "description": "Composite accessibility score (0-100)",
@@ -342,7 +342,7 @@
       "sla_level": "MEDIUM"
     },
     {
-      "kpi_id": 38,
+      "metric_id": 38,
       "name": "Coordination Efficiency",
       "category": "coordination",
       "description": "Percentage of successful inter-agency coordination",
@@ -351,7 +351,7 @@
       "sla_level": "MEDIUM"
     },
     {
-      "kpi_id": 39,
+      "metric_id": 39,
       "name": "Budget Utilization",
       "category": "financial",
       "description": "Percentage of allocated budget spent",
@@ -360,7 +360,7 @@
       "sla_level": "LOW"
     },
     {
-      "kpi_id": 40,
+      "metric_id": 40,
       "name": "Project Risk Score",
       "category": "safety",
       "description": "Composite project risk assessment (0-100)",
@@ -369,7 +369,7 @@
       "sla_level": "MEDIUM"
     },
     {
-      "kpi_id": 41,
+      "metric_id": 41,
       "name": "Data Consistency Index",
       "category": "quality",
       "description": "Cross-dataset consistency score (0-100)",
@@ -378,7 +378,7 @@
       "sla_level": "MEDIUM"
     },
     {
-      "kpi_id": 42,
+      "metric_id": 42,
       "name": "Inspection Frequency",
       "category": "volume",
       "description": "Average inspections per block per year",
@@ -387,7 +387,7 @@
       "sla_level": "MEDIUM"
     },
     {
-      "kpi_id": 43,
+      "metric_id": 43,
       "name": "Permit Issuance Accuracy",
       "category": "quality",
       "description": "Percentage of correctly issued permits",
@@ -396,7 +396,7 @@
       "sla_level": "HIGH"
     },
     {
-      "kpi_id": 44,
+      "metric_id": 44,
       "name": "Conflict Resolution Time",
       "category": "coordination",
       "description": "Average days to resolve project conflicts",
@@ -405,7 +405,7 @@
       "sla_level": "MEDIUM"
     },
     {
-      "kpi_id": 45,
+      "metric_id": 45,
       "name": "Environmental Impact Score",
       "category": "compliance",
       "description": "Environmental impact assessment score",
@@ -414,7 +414,7 @@
       "sla_level": "MEDIUM"
     },
     {
-      "kpi_id": 46,
+      "metric_id": 46,
       "name": "Community Complaint Rate",
       "category": "volume",
       "description": "Number of community complaints per 1000 residents",
@@ -423,7 +423,7 @@
       "sla_level": "MEDIUM"
     },
     {
-      "kpi_id": 47,
+      "metric_id": 47,
       "name": "Inspector Productivity",
       "category": "efficiency",
       "description": "Average inspections per inspector per week",
@@ -432,7 +432,7 @@
       "sla_level": "MEDIUM"
     },
     {
-      "kpi_id": 48,
+      "metric_id": 48,
       "name": "Schedule Performance Index",
       "category": "efficiency",
       "description": "Actual progress vs planned progress ratio",
@@ -441,7 +441,7 @@
       "sla_level": "MEDIUM"
     },
     {
-      "kpi_id": 49,
+      "metric_id": 49,
       "name": "Quality Control Pass Rate",
       "category": "quality",
       "description": "Percentage of QC inspections passed",
@@ -450,7 +450,7 @@
       "sla_level": "HIGH"
     },
     {
-      "kpi_id": 50,
+      "metric_id": 50,
       "name": "Data Governance Score",
       "category": "compliance",
       "description": "Data governance compliance score (0-100)",
@@ -459,7 +459,7 @@
       "sla_level": "MEDIUM"
     },
     {
-      "kpi_id": 51,
+      "metric_id": 51,
       "name": "System Uptime",
       "category": "technical",
       "description": "Percentage of system uptime",

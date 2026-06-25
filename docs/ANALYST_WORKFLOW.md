@@ -21,11 +21,11 @@ Weekly outputs land in `outputs/analyst_pack/{YYYY-MM-DD}/`.
 | Week-over-week list changes | `construction_diff` | `construction_list_diff.md` |
 | Construction lists + GIS conflicts | `conflicts` | `conflicts_summary.md`, `conflicts_review.xlsx` |
 | Contract progress / budget / productivity | `contract_report` | `contract_status.md`, `contract_analytics.json` |
-| Program metrics tracking | `program_kpi` | `program_kpi.json` |
+| Program metrics tracking | `program_metric` | `program_metric.json` |
 | Executive handoff | `executive_summary` | `executive_summary.html`, `executive_summary.md` |
 | Contract-planning inquiries | `inquiry_templates` | `inquiry_drafts/*.md` (from `config/inquiry_templates/`) |
 | Manager handoff | `manifest.json` | Sources, row counts, warnings, partial failures, toolkit version |
-| Role duties & KPIs (optional `role:` in profile) | role profile YAML | `role_kpi_dashboard.json`, `role_task_status.md` |
+| Role duties & Metrics (optional `role:` in profile) | role profile YAML | `role_metric_dashboard.json`, `role_task_status.md` |
 
 ## SW Project Analyst role (jid-42159)
 
@@ -35,8 +35,8 @@ Business title **SW - PROJECT ANALYST** (Staff Analyst, job level 02). Serves th
 |--------------|--------------|------------------|
 | IFA justifications & reports | `executive_summary`, `contract_report` | `executive_summary.html`, `contract_status.md` |
 | Project conflict analysis | `prioritize`, `conflicts` | `conflicts_summary.md`, `conflicts_review.xlsx` |
-| Analytical studies & reviews | `program_kpi`, `construction_diff` | `program_kpi.json`, `construction_list_diff.md` |
-| Review progress; recommend to supervisor | `executive_summary`, `program_kpi` | `role_task_status.md`, `executive_summary.md` |
+| Analytical studies & reviews | `program_metric`, `construction_diff` | `program_metric.json`, `construction_list_diff.md` |
+| Review progress; recommend to supervisor | `executive_summary`, `program_metric` | `role_task_status.md`, `executive_summary.md` |
 | High-priority construction inquiries | `inquiry_templates`, `prioritize` | `inquiry_drafts/high_priority_construction.md` |
 | Ramp make-safe / curb metal programs | `prioritize`, `conflicts` | `construction_list.xlsx` (ADA / severity queue) |
 

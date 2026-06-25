@@ -102,7 +102,7 @@ Fall (Sep-Nov) - BUILD-UP SEASON
   Rationale: Prepare for winter; catch backlog before peak hits
 
   Actions:
-  • Begin winter material stockpiling
+  • Begin winter material stocmetricling
   • Service equipment for cold weather
   • Hire seasonal staff for winter (2-month lead time)
   • Accelerate preventive maintenance to avoid winter issues

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Implement a dual-tier question-answering system that routes analyst questions to pre-built KPI answers (Tier 1, instant) with optional Claude synthesis and NLP-based next-question suggestions (Tier 2, on-demand).
+**Goal:** Implement a dual-tier question-answering system that routes analyst questions to pre-built Metric answers (Tier 1, instant) with optional Claude synthesis and NLP-based next-question suggestions (Tier 2, on-demand).
 
 **Architecture:** Two-stage routing engine (programmatic + Claude embeddings, ensembled) feeds pre-materialized answer registry. Optional Claude expansion synthesizes query results and suggests follow-up analyses via NLP matching against research question registry. Feedback loop captures analyst markings and incrementally updates router weights.
 
@@ -10,13 +10,13 @@
 
 ## Global Constraints
 
-- All 309 KPIs must be covered (no sampling)
+- All 309 Metrics must be covered (no sampling)
 - Pre-train router before deployment (generate 900 synthetic variants, achieve ≥82% holdout accuracy)
 - No LLM calls in Tier 1 (instant only)
 - Claude expansion (Tier 2) only on --expand flag
 - Feedback loop applies weight deltas immediately (incremental Bayesian, no batching)
 - DuckDB observability schema required for all routing decisions
-- All KPI metadata version-controlled in `config/kpi_registry.json`
+- All Metric metadata version-controlled in `config/metric_registry.json`
 - Existing `question_matcher.py` preserved (refactor into new modular components, don't replace)
 
 ---
@@ -34,7 +34,7 @@ src/socrata_toolkit/core/
   │   └── models.py                    # MatchResult, AnswerResult dataclasses
   ├── answer_engine/
   │   ├── __init__.py
-  │   ├── prebuilt_answer_engine.py   # KPI registry lookup
+  │   ├── prebuilt_answer_engine.py   # Metric registry lookup
   │   └── claude_expansion_engine.py  # Query execution + Claude synthesis
   ├── suggestion/
   │   ├── __init__.py
@@ -57,7 +57,7 @@ src/socrata_toolkit/training/
 ### Configuration
 ```
 config/
-  └── kpi_registry.json               # 309 KPIs + metadata (migrated from existing)
+  └── metric_registry.json               # 309 Metrics + metadata (migrated from existing)
 ```
 
 ### Training Data
@@ -99,7 +99,7 @@ tests/socrata_toolkit/core/
 
 **Interfaces:**
 - Produces: `MatchResult(question_id, confidence, strategy, source, alternatives)`
-- Produces: `AnswerResult(kpi_id, kpi_name, summary, datasets, sql_pattern, visualizations, confidence, source)`
+- Produces: `AnswerResult(metric_id, metric_name, summary, datasets, sql_pattern, visualizations, confidence, source)`
 - Produces: `ExpansionResult(synthesis, suggested_questions, query_results_summary)`
 
 - [ ] **Step 1: Write data models test**
@@ -111,20 +111,20 @@ from socrata_toolkit.core.routing.models import MatchResult, AnswerResult, Expan
 
 def test_match_result_dataclass():
     result = MatchResult(
-        question_id="KPI-089",
+        question_id="METRIC-089",
         confidence=0.82,
         strategy="ensemble",
         source="programmatic+claude",
-        alternatives=["KPI-045", "KPI-067"]
+        alternatives=["METRIC-045", "METRIC-067"]
     )
-    assert result.question_id == "KPI-089"
+    assert result.question_id == "METRIC-089"
     assert result.confidence == 0.82
     assert len(result.alternatives) == 2
 
 def test_answer_result_dataclass():
     answer = AnswerResult(
-        kpi_id="KPI-089",
-        kpi_name="Violations Fixed by Borough & Month",
+        metric_id="METRIC-089",
+        metric_name="Violations Fixed by Borough & Month",
         summary="Monthly count of violations marked fixed",
         datasets=[{"key": "violations", "fourfour": "6kbp-uz6m"}],
         sql_pattern="SELECT borough, COUNT(*) FROM violations WHERE status='FIXED'",
@@ -132,14 +132,14 @@ def test_answer_result_dataclass():
         confidence=0.82,
         source="hybrid_router"
     )
-    assert answer.kpi_id == "KPI-089"
+    assert answer.metric_id == "METRIC-089"
     assert len(answer.datasets) == 1
 
 def test_expansion_result_dataclass():
     expansion = ExpansionResult(
         synthesis="Violations spiked 45% in June...",
         suggested_questions=[
-            {"question": "What causes structural damage?", "related_kpi": "KPI-045"}
+            {"question": "What causes structural damage?", "related_metric": "METRIC-045"}
         ],
         query_results_summary="45% increase in June vs May"
     )
@@ -174,21 +174,21 @@ class MatchResult:
 @dataclass
 class AnswerResult:
     """Pre-built answer (Tier 1 output)"""
-    kpi_id: str
-    kpi_name: str
+    metric_id: str
+    metric_name: str
     summary: str
     datasets: List[Dict[str, str]]  # [{key, fourfour, role}]
     sql_pattern: str
     visualizations: List[str]
     confidence: float
     source: str
-    related_kpis: List[str] = field(default_factory=list)
+    related_metrics: List[str] = field(default_factory=list)
 
 @dataclass
 class ExpansionResult:
     """Claude expansion output (Tier 2)"""
     synthesis: str
-    suggested_questions: List[Dict[str, str]]  # [{question, related_kpi, command}]
+    suggested_questions: List[Dict[str, str]]  # [{question, related_metric, command}]
     query_results_summary: str
 ```
 
@@ -215,12 +215,12 @@ import json
 from pathlib import Path
 
 @pytest.fixture
-def sample_kpi_registry():
-    """Sample KPI registry for testing"""
+def sample_metric_registry():
+    """Sample Metric registry for testing"""
     return {
-        "KPI-089": {
-            "kpi_id": "KPI-089",
-            "kpi_name": "Violations Fixed by Borough & Month",
+        "METRIC-089": {
+            "metric_id": "METRIC-089",
+            "metric_name": "Violations Fixed by Borough & Month",
             "summary": "Monthly count of violations marked fixed",
             "datasets": [
                 {"key": "violations", "fourfour": "6kbp-uz6m", "role": "primary"},
@@ -228,16 +228,16 @@ def sample_kpi_registry():
             ],
             "sql_pattern": "SELECT borough, DATE_TRUNC('month', fixed_date) AS month, COUNT(*) AS fixed_count FROM violations WHERE status='FIXED' GROUP BY borough, month",
             "visualizations": ["monthly_fix_rate_chart", "violations_heatmap"],
-            "related_kpis": ["KPI-045", "KPI-067"]
+            "related_metrics": ["METRIC-045", "METRIC-067"]
         },
-        "KPI-045": {
-            "kpi_id": "KPI-045",
-            "kpi_name": "Structural Damage by Borough & Cause",
+        "METRIC-045": {
+            "metric_id": "METRIC-045",
+            "metric_name": "Structural Damage by Borough & Cause",
             "summary": "Classification of structural damage",
             "datasets": [{"key": "violations", "fourfour": "6kbp-uz6m", "role": "primary"}],
             "sql_pattern": "SELECT borough, damage_cause, COUNT(*) FROM violations WHERE damage_type='structural' GROUP BY borough, damage_cause",
             "visualizations": ["damage_breakdown_chart"],
-            "related_kpis": ["KPI-089"]
+            "related_metrics": ["METRIC-089"]
         }
     }
 
@@ -248,12 +248,12 @@ def sample_research_questions():
         {
             "question_id": "Q1",
             "text": "Why are violations spiking in Manhattan?",
-            "related_kpi": "KPI-089"
+            "related_metric": "METRIC-089"
         },
         {
             "question_id": "Q2",
             "text": "What is causing the structural damage spike?",
-            "related_kpi": "KPI-045"
+            "related_metric": "METRIC-045"
         }
     ]
 ```
@@ -296,30 +296,30 @@ import pytest
 from socrata_toolkit.core.routing.programmatic_router import ProgrammaticRouter
 from socrata_toolkit.core.routing.models import MatchResult
 
-def test_programmatic_router_bm25_exact_match(sample_kpi_registry):
+def test_programmatic_router_bm25_exact_match(sample_metric_registry):
     """Test BM25 matches exact question"""
-    router = ProgrammaticRouter(sample_kpi_registry)
+    router = ProgrammaticRouter(sample_metric_registry)
     
     question = "violations fixed by borough"
     result = router.match(question)
     
-    assert result.question_id == "KPI-089"
+    assert result.question_id == "METRIC-089"
     assert result.confidence > 0.7
     assert "bm25" in result.strategy.lower()
 
-def test_programmatic_router_jaccard_overlap(sample_kpi_registry):
+def test_programmatic_router_jaccard_overlap(sample_metric_registry):
     """Test Jaccard coefficient for token overlap"""
-    router = ProgrammaticRouter(sample_kpi_registry)
+    router = ProgrammaticRouter(sample_metric_registry)
     
     question = "how many violations were fixed in boroughs"
     result = router.match(question)
     
-    assert result.question_id == "KPI-089"
+    assert result.question_id == "METRIC-089"
     assert result.confidence > 0.6
 
-def test_programmatic_router_no_match(sample_kpi_registry):
-    """Test behavior when question doesn't match any KPI"""
-    router = ProgrammaticRouter(sample_kpi_registry)
+def test_programmatic_router_no_match(sample_metric_registry):
+    """Test behavior when question doesn't match any Metric"""
+    router = ProgrammaticRouter(sample_metric_registry)
     
     question = "xyz abc 123 qwerty"
     result = router.match(question)
@@ -356,14 +356,14 @@ class ProgrammaticRouter:
         'jaccard': 0.10
     }
     
-    def __init__(self, kpi_registry: Dict[str, Dict]):
+    def __init__(self, metric_registry: Dict[str, Dict]):
         """
-        Initialize router with KPI registry.
+        Initialize router with Metric registry.
         
         Args:
-            kpi_registry: Dict mapping kpi_id -> {kpi_name, summary, ...}
+            metric_registry: Dict mapping metric_id -> {metric_name, summary, ...}
         """
-        self.registry = kpi_registry
+        self.registry = metric_registry
         self._build_indexes()
     
     def _build_indexes(self):
@@ -371,18 +371,18 @@ class ProgrammaticRouter:
         self.question_tokens = {}
         self.question_text = {}
         
-        for kpi_id, metadata in self.registry.items():
-            kpi_name = metadata.get('kpi_name', '')
+        for metric_id, metadata in self.registry.items():
+            metric_name = metadata.get('metric_name', '')
             summary = metadata.get('summary', '')
-            combined_text = f"{kpi_name} {summary}".lower()
+            combined_text = f"{metric_name} {summary}".lower()
             
             tokens = self._tokenize(combined_text)
-            self.question_tokens[kpi_id] = set(tokens)
-            self.question_text[kpi_id] = combined_text
+            self.question_tokens[metric_id] = set(tokens)
+            self.question_text[metric_id] = combined_text
     
     def match(self, user_question: str, top_k: int = 1) -> MatchResult:
         """
-        Match user question to registered KPIs using multiple strategies.
+        Match user question to registered Metrics using multiple strategies.
         
         Returns best match with confidence score. Strategies run in parallel
         and results are combined via weighted voting.
@@ -419,13 +419,13 @@ class ProgrammaticRouter:
                 source='programmatic'
             )
         
-        best_kpi_id, (best_score, best_strategy) = max(
+        best_metric_id, (best_score, best_strategy) = max(
             composite_scores.items(),
             key=lambda x: x[1][0]
         )
         
         return MatchResult(
-            question_id=best_kpi_id,
+            question_id=best_metric_id,
             confidence=best_score,
             strategy=best_strategy,
             source='programmatic'
@@ -436,17 +436,17 @@ class ProgrammaticRouter:
         scores = {}
         user_tokens = self._tokenize(user_question.lower())
         
-        for kpi_id, kpi_tokens in self.question_tokens.items():
-            if not kpi_tokens:
+        for metric_id, metric_tokens in self.question_tokens.items():
+            if not metric_tokens:
                 continue
             
             # Count matching tokens
-            matches = sum(1 for token in user_tokens if token in kpi_tokens)
+            matches = sum(1 for token in user_tokens if token in metric_tokens)
             
             if matches > 0:
                 # BM25-like scoring: matches / total_unique_tokens
-                score = matches / len(set(user_tokens) | kpi_tokens)
-                scores[kpi_id] = score
+                score = matches / len(set(user_tokens) | metric_tokens)
+                scores[metric_id] = score
         
         return scores if scores else None
     
@@ -454,16 +454,16 @@ class ProgrammaticRouter:
         """Jaccard coefficient: intersection / union"""
         scores = {}
         
-        for kpi_id, kpi_tokens in self.question_tokens.items():
-            if not kpi_tokens:
+        for metric_id, metric_tokens in self.question_tokens.items():
+            if not metric_tokens:
                 continue
             
-            intersection = len(user_tokens & kpi_tokens)
-            union = len(user_tokens | kpi_tokens)
+            intersection = len(user_tokens & metric_tokens)
+            union = len(user_tokens | metric_tokens)
             jaccard = intersection / union if union > 0 else 0
             
             if jaccard > 0:
-                scores[kpi_id] = jaccard
+                scores[metric_id] = jaccard
         
         return scores if scores else None
     
@@ -471,17 +471,17 @@ class ProgrammaticRouter:
         """FastText proxy: token frequency similarity"""
         scores = {}
         
-        for kpi_id, kpi_tokens in self.question_tokens.items():
-            if not kpi_tokens:
+        for metric_id, metric_tokens in self.question_tokens.items():
+            if not metric_tokens:
                 continue
             
             # Overlap ratio (simplified fasttext proxy)
-            overlap = len(user_tokens & kpi_tokens)
-            max_len = max(len(user_tokens), len(kpi_tokens))
+            overlap = len(user_tokens & metric_tokens)
+            max_len = max(len(user_tokens), len(metric_tokens))
             score = overlap / max_len if max_len > 0 else 0
             
             if score > 0:
-                scores[kpi_id] = score
+                scores[metric_id] = score
         
         return scores if scores else None
     
@@ -492,23 +492,23 @@ class ProgrammaticRouter:
         for strategy, scores in strategy_results.items():
             weight = self.STRATEGY_WEIGHTS.get(strategy, 0.5)
             
-            for kpi_id, score in scores.items():
-                if kpi_id not in composite:
-                    composite[kpi_id] = (0.0, strategy)
+            for metric_id, score in scores.items():
+                if metric_id not in composite:
+                    composite[metric_id] = (0.0, strategy)
                 
                 weighted = score * weight
-                current_score, current_strategy = composite[kpi_id]
+                current_score, current_strategy = composite[metric_id]
                 
                 if weighted > current_score:
-                    composite[kpi_id] = (weighted, strategy)
+                    composite[metric_id] = (weighted, strategy)
         
         # Normalize to 0-1
         if composite:
             max_score = max(s for s, _ in composite.values())
             if max_score > 0:
                 composite = {
-                    kpi_id: (s / max_score, strat)
-                    for kpi_id, (s, strat) in composite.items()
+                    metric_id: (s / max_score, strat)
+                    for metric_id, (s, strat) in composite.items()
                 }
         
         return composite
@@ -546,7 +546,7 @@ git commit -m "feat: implement programmatic router (BM25, FastText, Jaccard)"
 **Files:**
 - Create: `src/socrata_toolkit/core/routing/claude_semantic_router.py`
 - Create: `tests/socrata_toolkit/core/routing/test_claude_semantic_router.py`
-- Create: `cache/kpi_embeddings_sample.json` (sample cache for testing)
+- Create: `cache/metric_embeddings_sample.json` (sample cache for testing)
 
 **Interfaces:**
 - Consumes: `MatchResult` (from Task 1)
@@ -556,18 +556,18 @@ git commit -m "feat: implement programmatic router (BM25, FastText, Jaccard)"
 - [ ] **Step 1: Create sample embeddings cache for testing**
 
 ```python
-# Create cache/kpi_embeddings_sample.json
+# Create cache/metric_embeddings_sample.json
 import json
 from pathlib import Path
 
 # For testing: create mock embeddings (vectors of dimension 1536 per Claude API)
 mock_embeddings = {
-    "KPI-089": [0.1, 0.2, 0.3] * 512,  # Mock 1536-dim vector
-    "KPI-045": [0.15, 0.25, 0.35] * 512
+    "METRIC-089": [0.1, 0.2, 0.3] * 512,  # Mock 1536-dim vector
+    "METRIC-045": [0.15, 0.25, 0.35] * 512
 }
 
 Path("cache").mkdir(exist_ok=True)
-with open("cache/kpi_embeddings_sample.json", "w") as f:
+with open("cache/metric_embeddings_sample.json", "w") as f:
     json.dump(mock_embeddings, f)
 ```
 
@@ -579,18 +579,18 @@ import pytest
 from socrata_toolkit.core.routing.claude_semantic_router import ClaudeSemanticRouter
 from socrata_toolkit.core.routing.models import MatchResult
 
-def test_claude_router_cached_embedding(sample_kpi_registry):
+def test_claude_router_cached_embedding(sample_metric_registry):
     """Test Claude router uses cached embeddings"""
     # Mock embeddings
     embeddings_cache = {
-        "KPI-089": [0.1, 0.2, 0.3],
-        "KPI-045": [0.15, 0.25, 0.35]
+        "METRIC-089": [0.1, 0.2, 0.3],
+        "METRIC-045": [0.15, 0.25, 0.35]
     }
     
-    router = ClaudeSemanticRouter(sample_kpi_registry, embeddings_cache)
+    router = ClaudeSemanticRouter(sample_metric_registry, embeddings_cache)
     result = router.match("violations fixed by borough")
     
-    assert result.question_id in ["KPI-089", "KPI-045"]
+    assert result.question_id in ["METRIC-089", "METRIC-045"]
     assert result.confidence > 0.5
     assert "claude" in result.source.lower()
 
@@ -621,20 +621,20 @@ class ClaudeSemanticRouter:
     Embeddings are pre-computed and cached; no runtime API calls.
     """
     
-    def __init__(self, kpi_registry: Dict[str, Dict], embeddings_cache: Dict[str, List[float]]):
+    def __init__(self, metric_registry: Dict[str, Dict], embeddings_cache: Dict[str, List[float]]):
         """
-        Initialize with KPI registry and cached embeddings.
+        Initialize with Metric registry and cached embeddings.
         
         Args:
-            kpi_registry: Dict mapping kpi_id -> metadata
-            embeddings_cache: Dict mapping kpi_id -> embedding vector (1536-dim)
+            metric_registry: Dict mapping metric_id -> metadata
+            embeddings_cache: Dict mapping metric_id -> embedding vector (1536-dim)
         """
-        self.registry = kpi_registry
+        self.registry = metric_registry
         self.embeddings_cache = embeddings_cache
     
     def match(self, user_question: str) -> Optional[MatchResult]:
         """
-        Match user question to KPIs via embedding similarity.
+        Match user question to Metrics via embedding similarity.
         NOTE: For production, user_question embedding would come from Claude API.
         For now, return best match from cache via similarity scoring.
         """
@@ -644,7 +644,7 @@ class ClaudeSemanticRouter:
         # In production: user_question_embedding = claude_client.embed(user_question)
         # For now: approximate by finding most similar cached embedding
         
-        best_kpi_id = None
+        best_metric_id = None
         best_similarity = -1.0
         
         # Find closest embedding by brute-force similarity
@@ -655,18 +655,18 @@ class ClaudeSemanticRouter:
         # Simple heuristic: longest embedding in cache as proxy for question embedding
         question_embedding = max(cached_embeddings, key=len)
         
-        for kpi_id, embedding in self.embeddings_cache.items():
+        for metric_id, embedding in self.embeddings_cache.items():
             similarity = self._cosine_similarity(question_embedding, embedding)
             
             if similarity > best_similarity:
                 best_similarity = similarity
-                best_kpi_id = kpi_id
+                best_metric_id = metric_id
         
-        if best_kpi_id is None:
+        if best_metric_id is None:
             return None
         
         return MatchResult(
-            question_id=best_kpi_id,
+            question_id=best_metric_id,
             confidence=best_similarity,
             strategy='embedding_similarity',
             source='claude'
@@ -703,7 +703,7 @@ python -m pytest tests/socrata_toolkit/core/routing/test_claude_semantic_router.
 ```bash
 git add src/socrata_toolkit/core/routing/claude_semantic_router.py \
         tests/socrata_toolkit/core/routing/test_claude_semantic_router.py \
-        cache/kpi_embeddings_sample.json
+        cache/metric_embeddings_sample.json
 git commit -m "feat: implement Claude semantic router with embedding cache"
 ```
 
@@ -729,34 +729,34 @@ from socrata_toolkit.core.routing.hybrid_router import HybridRouter
 from socrata_toolkit.core.routing.programmatic_router import ProgrammaticRouter
 from socrata_toolkit.core.routing.claude_semantic_router import ClaudeSemanticRouter
 
-def test_hybrid_router_agreement(sample_kpi_registry):
+def test_hybrid_router_agreement(sample_metric_registry):
     """Test ensemble when both strategies agree"""
-    prog_router = ProgrammaticRouter(sample_kpi_registry)
+    prog_router = ProgrammaticRouter(sample_metric_registry)
     
     embeddings = {
-        "KPI-089": [0.1, 0.2, 0.3] * 512,
-        "KPI-045": [0.15, 0.25, 0.35] * 512
+        "METRIC-089": [0.1, 0.2, 0.3] * 512,
+        "METRIC-045": [0.15, 0.25, 0.35] * 512
     }
-    claude_router = ClaudeSemanticRouter(sample_kpi_registry, embeddings)
+    claude_router = ClaudeSemanticRouter(sample_metric_registry, embeddings)
     
     hybrid = HybridRouter(prog_router, claude_router, threshold=0.70)
     result = hybrid.match("violations fixed by borough")
     
-    # If both suggest KPI-089, ensemble should be HIGH_CONFIDENCE
-    assert result.question_id == "KPI-089"
+    # If both suggest METRIC-089, ensemble should be HIGH_CONFIDENCE
+    assert result.question_id == "METRIC-089"
     assert "HIGH_CONFIDENCE" in result.source or result.confidence > 0.75
 
-def test_hybrid_router_disagreement(sample_kpi_registry):
+def test_hybrid_router_disagreement(sample_metric_registry):
     """Test ensemble when strategies disagree"""
     # Create routers that will disagree
-    prog_router = ProgrammaticRouter(sample_kpi_registry)
+    prog_router = ProgrammaticRouter(sample_metric_registry)
     
-    # Embeddings favor KPI-045
+    # Embeddings favor METRIC-045
     embeddings = {
-        "KPI-089": [0.1, 0.2, 0.3] * 512,
-        "KPI-045": [0.9, 0.9, 0.9] * 512  # Very different
+        "METRIC-089": [0.1, 0.2, 0.3] * 512,
+        "METRIC-045": [0.9, 0.9, 0.9] * 512  # Very different
     }
-    claude_router = ClaudeSemanticRouter(sample_kpi_registry, embeddings)
+    claude_router = ClaudeSemanticRouter(sample_metric_registry, embeddings)
     
     hybrid = HybridRouter(prog_router, claude_router, threshold=0.70)
     result = hybrid.match("xyz abc")
@@ -787,7 +787,7 @@ class HybridRouter:
     
     Strategy:
     - Run both in parallel
-    - If both match same KPI: HIGH_CONFIDENCE (ensemble score = avg)
+    - If both match same Metric: HIGH_CONFIDENCE (ensemble score = avg)
     - If they disagree: REQUIRES_CLARIFICATION (return both candidates)
     """
     
@@ -882,20 +882,20 @@ git commit -m "feat: implement hybrid router with ensemble orchestration"
 **Files:**
 - Create: `src/socrata_toolkit/core/answer_engine/prebuilt_answer_engine.py`
 - Create: `tests/socrata_toolkit/core/answer_engine/test_prebuilt_answer_engine.py`
-- Migrate: `config/kpi_registry.json` (from existing config, structured per design)
+- Migrate: `config/metric_registry.json` (from existing config, structured per design)
 
 **Interfaces:**
-- Consumes: `MatchResult` (from Task 1), KPI registry JSON
-- Produces: `PreBuiltAnswerEngine` class with `get_answer(kpi_id: str) -> AnswerResult` method
+- Consumes: `MatchResult` (from Task 1), Metric registry JSON
+- Produces: `PreBuiltAnswerEngine` class with `get_answer(metric_id: str) -> AnswerResult` method
 
-- [ ] **Step 1: Create KPI registry structure**
+- [ ] **Step 1: Create Metric registry structure**
 
 ```python
-# config/kpi_registry.json (excerpt with 3 KPIs)
+# config/metric_registry.json (excerpt with 3 Metrics)
 {
-  "KPI-089": {
-    "kpi_id": "KPI-089",
-    "kpi_name": "Violations Fixed by Borough & Month",
+  "METRIC-089": {
+    "metric_id": "METRIC-089",
+    "metric_name": "Violations Fixed by Borough & Month",
     "summary": "Monthly count of violations marked fixed, broken down by NYC borough",
     "category": "Quality & Compliance",
     "analyst_duties": ["duty_001", "duty_003"],
@@ -922,13 +922,13 @@ git commit -m "feat: implement hybrid router with ensemble orchestration"
         "breakdown": "borough"
       }
     ],
-    "related_kpis": ["KPI-045", "KPI-067", "KPI-123"],
+    "related_metrics": ["METRIC-045", "METRIC-067", "METRIC-123"],
     "last_updated": "2026-06-20",
     "quality_score": 0.92
   },
-  "KPI-045": {
-    "kpi_id": "KPI-045",
-    "kpi_name": "Structural Damage by Borough & Cause",
+  "METRIC-045": {
+    "metric_id": "METRIC-045",
+    "metric_name": "Structural Damage by Borough & Cause",
     "summary": "Classification and breakdown of structural damage reports",
     "category": "Asset Condition",
     "analyst_duties": ["duty_002"],
@@ -939,7 +939,7 @@ git commit -m "feat: implement hybrid router with ensemble orchestration"
     "visualization_metadata": [
       {"title": "Damage Breakdown by Borough", "type": "bar_chart"}
     ],
-    "related_kpis": ["KPI-089"],
+    "related_metrics": ["METRIC-089"],
     "last_updated": "2026-06-20",
     "quality_score": 0.88
   }
@@ -954,36 +954,36 @@ import pytest
 from socrata_toolkit.core.answer_engine.prebuilt_answer_engine import PreBuiltAnswerEngine
 from socrata_toolkit.core.answer_engine.models import AnswerResult
 
-def test_prebuilt_answer_lookup(sample_kpi_registry):
-    """Test retrieving pre-built answer for matched KPI"""
-    engine = PreBuiltAnswerEngine(sample_kpi_registry)
+def test_prebuilt_answer_lookup(sample_metric_registry):
+    """Test retrieving pre-built answer for matched Metric"""
+    engine = PreBuiltAnswerEngine(sample_metric_registry)
     
-    answer = engine.get_answer("KPI-089")
+    answer = engine.get_answer("METRIC-089")
     
-    assert answer.kpi_id == "KPI-089"
-    assert answer.kpi_name == "Violations Fixed by Borough & Month"
+    assert answer.metric_id == "METRIC-089"
+    assert answer.metric_name == "Violations Fixed by Borough & Month"
     assert len(answer.datasets) >= 1
     assert "borough" in answer.sql_pattern.lower()
 
 def test_prebuilt_answer_not_found():
-    """Test behavior when KPI not in registry"""
+    """Test behavior when Metric not in registry"""
     engine = PreBuiltAnswerEngine({})
     
     answer = engine.get_answer("NONEXISTENT")
     
     assert answer is None
 
-def test_prebuilt_answer_contains_all_fields(sample_kpi_registry):
+def test_prebuilt_answer_contains_all_fields(sample_metric_registry):
     """Test answer has all required fields"""
-    engine = PreBuiltAnswerEngine(sample_kpi_registry)
-    answer = engine.get_answer("KPI-089")
+    engine = PreBuiltAnswerEngine(sample_metric_registry)
+    answer = engine.get_answer("METRIC-089")
     
-    assert answer.kpi_id is not None
-    assert answer.kpi_name is not None
+    assert answer.metric_id is not None
+    assert answer.metric_name is not None
     assert answer.summary is not None
     assert answer.sql_pattern is not None
     assert answer.visualizations is not None
-    assert isinstance(answer.related_kpis, list)
+    assert isinstance(answer.related_metrics, list)
 ```
 
 - [ ] **Step 3: Run test to verify it fails**
@@ -1003,45 +1003,45 @@ from ..routing.models import AnswerResult
 
 class PreBuiltAnswerEngine:
     """
-    Lookup pre-built answers from KPI registry.
+    Lookup pre-built answers from Metric registry.
     No LLM calls; fully deterministic and version-controlled.
     """
     
-    def __init__(self, kpi_registry: Dict[str, Dict]):
+    def __init__(self, metric_registry: Dict[str, Dict]):
         """
-        Initialize with KPI registry.
+        Initialize with Metric registry.
         
         Args:
-            kpi_registry: Dict mapping kpi_id -> KPI metadata
+            metric_registry: Dict mapping metric_id -> Metric metadata
         """
-        self.registry = kpi_registry
+        self.registry = metric_registry
     
-    def get_answer(self, kpi_id: str) -> Optional[AnswerResult]:
+    def get_answer(self, metric_id: str) -> Optional[AnswerResult]:
         """
-        Retrieve pre-built answer for a matched KPI.
+        Retrieve pre-built answer for a matched Metric.
         
         Args:
-            kpi_id: The matched KPI ID (e.g., "KPI-089")
+            metric_id: The matched Metric ID (e.g., "METRIC-089")
         
         Returns:
             AnswerResult with datasets, SQL pattern, visualizations, etc.
-            Returns None if KPI not found.
+            Returns None if Metric not found.
         """
-        if kpi_id not in self.registry:
+        if metric_id not in self.registry:
             return None
         
-        metadata = self.registry[kpi_id]
+        metadata = self.registry[metric_id]
         
         return AnswerResult(
-            kpi_id=metadata.get('kpi_id'),
-            kpi_name=metadata.get('kpi_name'),
+            metric_id=metadata.get('metric_id'),
+            metric_name=metadata.get('metric_name'),
             summary=metadata.get('summary', ''),
             datasets=metadata.get('datasets', []),
             sql_pattern=metadata.get('sql_pattern', ''),
             visualizations=metadata.get('visualization_metadata', []),
             confidence=1.0,  # Pre-built answers have full confidence
             source='prebuilt_answer_engine',
-            related_kpis=metadata.get('related_kpis', [])
+            related_metrics=metadata.get('related_metrics', [])
         )
 
 
@@ -1070,8 +1070,8 @@ python -m pytest tests/socrata_toolkit/core/answer_engine/test_prebuilt_answer_e
 git add src/socrata_toolkit/core/answer_engine/prebuilt_answer_engine.py \
         src/socrata_toolkit/core/answer_engine/__init__.py \
         tests/socrata_toolkit/core/answer_engine/test_prebuilt_answer_engine.py \
-        config/kpi_registry.json
-git commit -m "feat: implement pre-built answer engine with KPI registry"
+        config/metric_registry.json
+git commit -m "feat: implement pre-built answer engine with Metric registry"
 ```
 
 ---
@@ -1095,14 +1095,14 @@ git commit -m "feat: implement pre-built answer engine with KPI registry"
 import pytest
 from socrata_toolkit.training.variant_augmentor import VariantAugmentor
 
-def test_variant_augmentor_synthetic_generation(sample_kpi_registry):
-    """Test synthetic variant generation for missing KPIs"""
-    augmentor = VariantAugmentor(sample_kpi_registry)
+def test_variant_augmentor_synthetic_generation(sample_metric_registry):
+    """Test synthetic variant generation for missing Metrics"""
+    augmentor = VariantAugmentor(sample_metric_registry)
     
-    # Assume seed has 90 KPIs, registry has 92 (2 missing)
+    # Assume seed has 90 Metrics, registry has 92 (2 missing)
     synthetic = augmentor.generate_synthetic_variants()
     
-    # Should generate ~6 variants for 2 missing KPIs (3-5 per KPI)
+    # Should generate ~6 variants for 2 missing Metrics (3-5 per Metric)
     assert len(synthetic) >= 6
     assert all(v['synthetic'] == True for v in synthetic)
     assert all('question_variant' in v for v in synthetic)
@@ -1111,14 +1111,14 @@ def test_variant_augmentor_combines_seed_and_synthetic():
     """Test combining seed and synthetic variants"""
     augmentor = VariantAugmentor({})
     
-    seed = [{"kpi_id": "KPI-1", "question_variant": "test"}]
-    synthetic = [{"kpi_id": "KPI-2", "question_variant": "test2", "synthetic": True}]
+    seed = [{"metric_id": "METRIC-1", "question_variant": "test"}]
+    synthetic = [{"metric_id": "METRIC-2", "question_variant": "test2", "synthetic": True}]
     
     combined = augmentor.combine_variants(seed, synthetic)
     
     assert len(combined) == 2
-    assert combined[0]['kpi_id'] == "KPI-1"
-    assert combined[1]['kpi_id'] == "KPI-2"
+    assert combined[0]['metric_id'] == "METRIC-1"
+    assert combined[1]['metric_id'] == "METRIC-2"
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -1136,54 +1136,54 @@ from typing import Dict, List, Any
 
 class VariantAugmentor:
     """
-    Generates synthetic question variants for KPIs missing training data.
+    Generates synthetic question variants for Metrics missing training data.
     """
     
     # Templates for generating variants
     TEMPLATES = {
-        'direct_phrasing': "What is the {kpi_name}?",
-        'technical': "{kpi_name} metrics across {dimension}",
-        'casual': "How's the {kpi_name} doing?",
-        'abbreviation': "{kpi_abbr} by {dimension}",
+        'direct_phrasing': "What is the {metric_name}?",
+        'technical': "{metric_name} metrics across {dimension}",
+        'casual': "How's the {metric_name} doing?",
+        'abbreviation': "{metric_abbr} by {dimension}",
     }
     
-    def __init__(self, kpi_registry: Dict[str, Dict]):
-        self.registry = kpi_registry
+    def __init__(self, metric_registry: Dict[str, Dict]):
+        self.registry = metric_registry
     
-    def generate_synthetic_variants(self, seed_covered_kpis: set = None) -> List[Dict[str, Any]]:
+    def generate_synthetic_variants(self, seed_covered_metrics: set = None) -> List[Dict[str, Any]]:
         """
-        Generate synthetic variants for KPIs not in seed dataset.
+        Generate synthetic variants for Metrics not in seed dataset.
         
         Args:
-            seed_covered_kpis: Set of KPI IDs already in seed (default: all in registry)
+            seed_covered_metrics: Set of Metric IDs already in seed (default: all in registry)
         
         Returns:
             List of synthetic variant dicts
         """
-        if seed_covered_kpis is None:
-            seed_covered_kpis = set(self.registry.keys())
+        if seed_covered_metrics is None:
+            seed_covered_metrics = set(self.registry.keys())
         
         synthetic = []
         
-        for kpi_id, metadata in self.registry.items():
-            if kpi_id in seed_covered_kpis:
+        for metric_id, metadata in self.registry.items():
+            if metric_id in seed_covered_metrics:
                 continue  # Skip already covered
             
-            kpi_name = metadata.get('kpi_name', kpi_id)
-            kpi_abbr = metadata.get('abbreviation', kpi_name[:3].upper())
+            metric_name = metadata.get('metric_name', metric_id)
+            metric_abbr = metadata.get('abbreviation', metric_name[:3].upper())
             dimension = metadata.get('primary_dimension', 'borough')
             
             # Generate variant for each template
             for template_type, template in self.TEMPLATES.items():
                 variant_text = template.format(
-                    kpi_name=kpi_name,
-                    kpi_abbr=kpi_abbr,
+                    metric_name=metric_name,
+                    metric_abbr=metric_abbr,
                     dimension=dimension
                 )
                 
                 synthetic.append({
-                    'kpi_id': kpi_id,
-                    'kpi_name': kpi_name,
+                    'metric_id': metric_id,
+                    'metric_name': metric_name,
                     'question_variant': variant_text,
                     'variant_type': template_type,
                     'synthetic': True,
@@ -1215,8 +1215,8 @@ class RouterTrainer:
     Validates accuracy before deployment.
     """
     
-    def __init__(self, kpi_registry: Dict[str, Dict]):
-        self.registry = kpi_registry
+    def __init__(self, metric_registry: Dict[str, Dict]):
+        self.registry = metric_registry
     
     def evaluate_accuracy(
         self,
@@ -1228,7 +1228,7 @@ class RouterTrainer:
         
         Args:
             router: Trained ProgrammaticRouter
-            variants: List of {kpi_id, question_variant} dicts
+            variants: List of {metric_id, question_variant} dicts
         
         Returns:
             Accuracy: % of variants correctly routed
@@ -1236,12 +1236,12 @@ class RouterTrainer:
         correct = 0
         
         for variant in variants:
-            expected_kpi = variant['kpi_id']
+            expected_metric = variant['metric_id']
             question = variant['question_variant']
             
             result = router.match(question)
             
-            if result.question_id == expected_kpi:
+            if result.question_id == expected_metric:
                 correct += 1
         
         accuracy = correct / len(variants) if variants else 0.0
@@ -1309,7 +1309,7 @@ def test_feedback_collector_marks_helpful():
     collector = FeedbackCollector()
     
     routing = MatchResult(
-        question_id="KPI-089",
+        question_id="METRIC-089",
         confidence=0.82,
         strategy="ensemble",
         source="hybrid"
@@ -1330,7 +1330,7 @@ def test_feedback_collector_marks_wrong():
     collector = FeedbackCollector()
     
     routing = MatchResult(
-        question_id="KPI-089",
+        question_id="METRIC-089",
         confidence=0.82,
         strategy="ensemble",
         source="hybrid"
@@ -1339,12 +1339,12 @@ def test_feedback_collector_marks_wrong():
     collector.mark_wrong(
         question="test question",
         routing_result=routing,
-        corrected_kpi_id="KPI-045"
+        corrected_metric_id="METRIC-045"
     )
     
     feedback = collector.get_feedback()
     assert feedback[0]['helpful'] == False
-    assert feedback[0]['corrected_kpi_id'] == "KPI-045"
+    assert feedback[0]['corrected_metric_id'] == "METRIC-045"
 
 def test_feedback_collector_accumulation():
     """Test accumulating feedback until threshold"""
@@ -1353,7 +1353,7 @@ def test_feedback_collector_accumulation():
     for i in range(2):
         collector.mark_helpful(
             f"question {i}",
-            MatchResult("KPI-089", 0.8, "ensemble", "hybrid")
+            MatchResult("METRIC-089", 0.8, "ensemble", "hybrid")
         )
     
     should_trigger = collector.should_retrain()
@@ -1361,7 +1361,7 @@ def test_feedback_collector_accumulation():
     
     collector.mark_helpful(
         "question 3",
-        MatchResult("KPI-089", 0.8, "ensemble", "hybrid")
+        MatchResult("METRIC-089", 0.8, "ensemble", "hybrid")
     )
     
     should_trigger = collector.should_retrain()
@@ -1388,9 +1388,9 @@ from ..routing.models import MatchResult
 class FeedbackRecord:
     timestamp: str
     question: str
-    matched_kpi_id: str
+    matched_metric_id: str
     helpful: bool
-    corrected_kpi_id: Optional[str] = None
+    corrected_metric_id: Optional[str] = None
 
 class FeedbackCollector:
     """
@@ -1411,19 +1411,19 @@ class FeedbackCollector:
         record = FeedbackRecord(
             timestamp=datetime.utcnow().isoformat(),
             question=question,
-            matched_kpi_id=routing_result.question_id,
+            matched_metric_id=routing_result.question_id,
             helpful=True
         )
         self.feedback.append(record)
     
-    def mark_wrong(self, question: str, routing_result: MatchResult, corrected_kpi_id: str):
+    def mark_wrong(self, question: str, routing_result: MatchResult, corrected_metric_id: str):
         """Mark a routing result as wrong and provide correction"""
         record = FeedbackRecord(
             timestamp=datetime.utcnow().isoformat(),
             question=question,
-            matched_kpi_id=routing_result.question_id,
+            matched_metric_id=routing_result.question_id,
             helpful=False,
-            corrected_kpi_id=corrected_kpi_id
+            corrected_metric_id=corrected_metric_id
         )
         self.feedback.append(record)
     
@@ -1462,7 +1462,7 @@ class BayesianUpdater:
         Update weights based on single feedback item.
         
         Args:
-            feedback_record: {question, matched_kpi_id, corrected_kpi_id, helpful}
+            feedback_record: {question, matched_metric_id, corrected_metric_id, helpful}
         
         Returns:
             Updated weights as dict
@@ -1543,7 +1543,7 @@ import pytest
 from socrata_toolkit.core.answer_engine.claude_expansion_engine import ClaudeExpansionEngine
 from socrata_toolkit.core.answer_engine.models import ExpansionResult
 
-def test_claude_expansion_synthesis(sample_kpi_registry):
+def test_claude_expansion_synthesis(sample_metric_registry):
     """Test Claude synthesis of query results"""
     engine = ClaudeExpansionEngine(api_key="sk-test")  # Mock key
     
@@ -1556,7 +1556,7 @@ def test_claude_expansion_synthesis(sample_kpi_registry):
     # Mock Claude response
     expansion = engine.expand(
         question="Why are violations spiking in Manhattan?",
-        kpi_name="Violations Fixed by Borough & Month",
+        metric_name="Violations Fixed by Borough & Month",
         query_results=query_results
     )
     
@@ -1598,7 +1598,7 @@ class ClaudeExpansionEngine:
     def expand(
         self,
         question: str,
-        kpi_name: str,
+        metric_name: str,
         query_results: Dict[str, Any]
     ) -> ExpansionResult:
         """
@@ -1606,7 +1606,7 @@ class ClaudeExpansionEngine:
         
         Args:
             question: Original analyst question
-            kpi_name: Matched KPI name
+            metric_name: Matched Metric name
             query_results: Query result data (JSON-serializable)
         
         Returns:
@@ -1615,7 +1615,7 @@ class ClaudeExpansionEngine:
         # In production: call Claude API
         # For now: return mock expansion for testing
         
-        synthesis = self._mock_synthesize(question, kpi_name, query_results)
+        synthesis = self._mock_synthesize(question, metric_name, query_results)
         suggested = self._extract_suggestions(synthesis)
         
         return ExpansionResult(
@@ -1624,10 +1624,10 @@ class ClaudeExpansionEngine:
             query_results_summary=self._summarize_results(query_results)
         )
     
-    def _mock_synthesize(self, question: str, kpi_name: str, results: Dict) -> str:
+    def _mock_synthesize(self, question: str, metric_name: str, results: Dict) -> str:
         """Mock Claude synthesis for testing"""
         return (
-            f"Analysis of {kpi_name}: Based on query results, "
+            f"Analysis of {metric_name}: Based on query results, "
             f"{results} indicates a notable trend. "
             f"Consider exploring related metrics for deeper understanding."
         )
@@ -1640,14 +1640,14 @@ class ClaudeExpansionEngine:
         if "structural" in synthesis.lower():
             suggestions.append({
                 "question": "What is causing the structural damage spike?",
-                "related_kpi": "KPI-045",
+                "related_metric": "METRIC-045",
                 "command": "socrata nl-query 'structural damage trends'"
             })
         
         if "contractor" in synthesis.lower():
             suggestions.append({
                 "question": "Are contractor quality metrics correlated?",
-                "related_kpi": "KPI-067",
+                "related_metric": "METRIC-067",
                 "command": "socrata nl-query 'contractor performance metrics'"
             })
         
@@ -1700,7 +1700,7 @@ git commit -m "feat: implement Claude expansion engine for Tier 2 synthesis"
 
 **Interfaces:**
 - Consumes: Claude synthesis (text), research questions registry
-- Produces: List of suggested questions + related KPIs
+- Produces: List of suggested questions + related Metrics
 
 - [ ] **Step 1: Write failing test for NLP suggester**
 
@@ -1718,12 +1718,12 @@ def test_npl_suggester_finds_related_questions(sample_research_questions):
     
     assert len(suggestions) > 0
     assert all('question' in s for s in suggestions)
-    assert all('related_kpi' in s for s in suggestions)
+    assert all('related_metric' in s for s in suggestions)
 
 def test_npl_suggester_limits_results():
     """Test limiting returned suggestions"""
     questions = [
-        {"question_id": f"Q{i}", "text": f"Question {i}", "related_kpi": f"KPI-{i}"}
+        {"question_id": f"Q{i}", "text": f"Question {i}", "related_metric": f"METRIC-{i}"}
         for i in range(10)
     ]
     
@@ -1756,14 +1756,14 @@ class NPLSuggester:
     
     # Keywords that trigger specific question suggestions
     KEYWORD_MAPPING = {
-        'structural': 'KPI-045',
-        'damage': 'KPI-045',
-        'contractor': 'KPI-067',
-        'quality': 'KPI-067',
-        'seasonal': 'KPI-123',
-        'trend': 'KPI-123',
-        'ramp': 'KPI-200',
-        'accessibility': 'KPI-200'
+        'structural': 'METRIC-045',
+        'damage': 'METRIC-045',
+        'contractor': 'METRIC-067',
+        'quality': 'METRIC-067',
+        'seasonal': 'METRIC-123',
+        'trend': 'METRIC-123',
+        'ramp': 'METRIC-200',
+        'accessibility': 'METRIC-200'
     }
     
     def __init__(self, research_questions: List[Dict]):
@@ -1771,7 +1771,7 @@ class NPLSuggester:
         Initialize with research questions registry.
         
         Args:
-            research_questions: List of {question_id, text, related_kpi}
+            research_questions: List of {question_id, text, related_metric}
         """
         self.questions = research_questions
         self._build_keyword_index()
@@ -1798,7 +1798,7 @@ class NPLSuggester:
             limit: Max # of suggestions to return
         
         Returns:
-            List of suggested questions with related KPIs
+            List of suggested questions with related Metrics
         """
         synthesis_lower = synthesis.lower()
         scored_questions = {}
@@ -1825,7 +1825,7 @@ class NPLSuggester:
         for score, q in sorted_qs[:limit]:
             suggestions.append({
                 "question": q.get('text'),
-                "related_kpi": q.get('related_kpi'),
+                "related_metric": q.get('related_metric'),
                 "command": f"socrata nl-query '{q.get('text')}'"
             })
         
@@ -1882,14 +1882,14 @@ from socrata_toolkit.core.answer_engine.prebuilt_answer_engine import PreBuiltAn
 from socrata_toolkit.core.answer_engine.claude_expansion_engine import ClaudeExpansionEngine
 from socrata_toolkit.core.suggestion.npl_suggester import NPLSuggester
 
-def test_full_tier1_flow(sample_kpi_registry, sample_research_questions):
+def test_full_tier1_flow(sample_metric_registry, sample_research_questions):
     """Test complete Tier 1 flow: question -> router -> answer"""
     # Setup
-    prog_router = ProgrammaticRouter(sample_kpi_registry)
-    embeddings = {k: [0.1] * 1536 for k in sample_kpi_registry.keys()}
-    claude_router = ClaudeSemanticRouter(sample_kpi_registry, embeddings)
+    prog_router = ProgrammaticRouter(sample_metric_registry)
+    embeddings = {k: [0.1] * 1536 for k in sample_metric_registry.keys()}
+    claude_router = ClaudeSemanticRouter(sample_metric_registry, embeddings)
     hybrid = HybridRouter(prog_router, claude_router)
-    answer_engine = PreBuiltAnswerEngine(sample_kpi_registry)
+    answer_engine = PreBuiltAnswerEngine(sample_metric_registry)
     
     # Execute Tier 1
     question = "How many violations were fixed by borough?"
@@ -1898,17 +1898,17 @@ def test_full_tier1_flow(sample_kpi_registry, sample_research_questions):
     
     answer = answer_engine.get_answer(match_result.question_id)
     assert answer is not None
-    assert answer.kpi_name == "Violations Fixed by Borough & Month"
+    assert answer.metric_name == "Violations Fixed by Borough & Month"
     assert len(answer.datasets) > 0
 
-def test_full_tier2_flow(sample_kpi_registry, sample_research_questions):
+def test_full_tier2_flow(sample_metric_registry, sample_research_questions):
     """Test complete Tier 2 flow: Tier 1 + Claude expansion + suggestions"""
     # Setup (same as Tier 1)
-    prog_router = ProgrammaticRouter(sample_kpi_registry)
-    embeddings = {k: [0.1] * 1536 for k in sample_kpi_registry.keys()}
-    claude_router = ClaudeSemanticRouter(sample_kpi_registry, embeddings)
+    prog_router = ProgrammaticRouter(sample_metric_registry)
+    embeddings = {k: [0.1] * 1536 for k in sample_metric_registry.keys()}
+    claude_router = ClaudeSemanticRouter(sample_metric_registry, embeddings)
     hybrid = HybridRouter(prog_router, claude_router)
-    answer_engine = PreBuiltAnswerEngine(sample_kpi_registry)
+    answer_engine = PreBuiltAnswerEngine(sample_metric_registry)
     expansion_engine = ClaudeExpansionEngine()
     suggester = NPLSuggester(sample_research_questions)
     
@@ -1919,7 +1919,7 @@ def test_full_tier2_flow(sample_kpi_registry, sample_research_questions):
     
     # Execute Tier 2 (expansion)
     mock_results = {"borough": ["MN"], "fixed_count": [120]}
-    expansion = expansion_engine.expand(question, answer.kpi_name, mock_results)
+    expansion = expansion_engine.expand(question, answer.metric_name, mock_results)
     assert expansion.synthesis is not None
     
     # Get suggestions
@@ -1962,24 +1962,24 @@ import pytest
 import json
 from socrata_toolkit.core.cli_nlquery import run_nl_query
 
-def test_nl_query_tier1(sample_kpi_registry, capsys):
+def test_nl_query_tier1(sample_metric_registry, capsys):
     """Test CLI Tier 1 output"""
     result = run_nl_query(
         question="How many violations fixed by borough?",
-        kpi_registry=sample_kpi_registry,
+        metric_registry=sample_metric_registry,
         expand=False
     )
     
-    assert 'matched_kpi' in result
+    assert 'matched_metric' in result
     assert 'datasets' in result
     assert 'sql_pattern' in result
-    assert result['matched_kpi'] == 'KPI-089'
+    assert result['matched_metric'] == 'METRIC-089'
 
-def test_nl_query_tier2(sample_kpi_registry, sample_research_questions):
+def test_nl_query_tier2(sample_metric_registry, sample_research_questions):
     """Test CLI Tier 2 expansion"""
     result = run_nl_query(
         question="Why are violations spiking?",
-        kpi_registry=sample_kpi_registry,
+        metric_registry=sample_metric_registry,
         research_questions=sample_research_questions,
         expand=True
     )
@@ -2012,26 +2012,26 @@ from .feedback.feedback_collector import FeedbackCollector
 
 def run_nl_query(
     question: str,
-    kpi_registry: Dict,
+    metric_registry: Dict,
     research_questions: Optional[List[Dict]] = None,
     embeddings_cache: Optional[Dict] = None,
     expand: bool = False,
     mark_helpful: bool = False,
     mark_wrong: bool = False,
-    corrected_kpi_id: Optional[str] = None
+    corrected_metric_id: Optional[str] = None
 ) -> Dict:
     """
     Execute natural language query with optional Tier 2 expansion.
     
     Args:
         question: Analyst's natural language question
-        kpi_registry: Full KPI registry
+        metric_registry: Full Metric registry
         research_questions: Research questions for suggestions (required if expand=True)
         embeddings_cache: Claude embeddings cache (required for router)
         expand: If True, execute Tier 2 (Claude expansion + suggestions)
         mark_helpful: If True, mark result as helpful
         mark_wrong: If True, mark result as wrong
-        corrected_kpi_id: Corrected KPI ID if mark_wrong=True
+        corrected_metric_id: Corrected Metric ID if mark_wrong=True
     
     Returns:
         Dict with Tier 1 + optional Tier 2 output
@@ -2042,35 +2042,35 @@ def run_nl_query(
         research_questions = []
     
     # Initialize components
-    prog_router = ProgrammaticRouter(kpi_registry)
-    claude_router = ClaudeSemanticRouter(kpi_registry, embeddings_cache)
+    prog_router = ProgrammaticRouter(metric_registry)
+    claude_router = ClaudeSemanticRouter(metric_registry, embeddings_cache)
     hybrid_router = HybridRouter(prog_router, claude_router)
-    answer_engine = PreBuiltAnswerEngine(kpi_registry)
+    answer_engine = PreBuiltAnswerEngine(metric_registry)
     
     # Execute Tier 1
     match_result = hybrid_router.match(question)
     
     if match_result.question_id is None:
         tier1_output = {
-            "matched_kpi": None,
+            "matched_metric": None,
             "confidence": 0.0,
             "datasets": [],
             "sql_pattern": None,
             "visualizations": [],
-            "error": "No matching KPI found"
+            "error": "No matching Metric found"
         }
     else:
         answer = answer_engine.get_answer(match_result.question_id)
         tier1_output = {
-            "matched_kpi": answer.kpi_id,
-            "kpi_name": answer.kpi_name,
+            "matched_metric": answer.metric_id,
+            "metric_name": answer.metric_name,
             "summary": answer.summary,
             "confidence": match_result.confidence,
             "datasets": answer.datasets,
             "sql_pattern": answer.sql_pattern,
             "visualizations": answer.visualizations,
             "routing_source": match_result.source,
-            "related_kpis": answer.related_kpis
+            "related_metrics": answer.related_metrics
         }
     
     # Tier 2 (optional)
@@ -2082,7 +2082,7 @@ def run_nl_query(
         
         # Mock query results (in production: execute SQL)
         mock_results = {"count": 120, "trend": "increasing"}
-        expansion = expansion_engine.expand(question, answer.kpi_name, mock_results)
+        expansion = expansion_engine.expand(question, answer.metric_name, mock_results)
         suggestions = suggester.suggest_next_questions(expansion.synthesis)
         
         output['tier_2_expansion'] = {
@@ -2097,7 +2097,7 @@ def run_nl_query(
         if mark_helpful:
             collector.mark_helpful(question, match_result)
         elif mark_wrong:
-            collector.mark_wrong(question, match_result, corrected_kpi_id)
+            collector.mark_wrong(question, match_result, corrected_metric_id)
         
         output['feedback_recorded'] = True
     
@@ -2168,7 +2168,7 @@ This plan implements a complete dual-tier fuzzy router system with 12 tasks:
 2. **Programmatic router** — BM25/FastText/Jaccard strategies with Bayesian weights
 3. **Claude router** — Semantic embeddings with caching
 4. **Hybrid router** — Ensemble orchestration with agreement detection
-5. **Pre-built answer engine** — KPI registry lookup (Tier 1)
+5. **Pre-built answer engine** — Metric registry lookup (Tier 1)
 6. **Variant augmentation** — Generate 900 synthetic variants, train weights
 7. **Feedback loop** — Collect analyst feedback, incremental Bayesian updates
 8. **Claude expansion** — Query synthesis (Tier 2)

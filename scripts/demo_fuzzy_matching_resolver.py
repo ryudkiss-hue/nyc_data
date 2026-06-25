@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Demo: Enhanced QuestionKPIResolver with Fuzzy Matching + Memora Context Enrichment
+Demo: Enhanced QuestionMetricResolver with Fuzzy Matching + Memora Context Enrichment
 
 This script demonstrates:
 1. Exact question matching
@@ -25,7 +25,7 @@ if sys.platform == "win32":
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from socrata_toolkit.core.question_resolver import QuestionKPIResolver
+from socrata_toolkit.core.question_resolver import QuestionMetricResolver
 
 
 def demo_exact_matching():
@@ -34,7 +34,7 @@ def demo_exact_matching():
     print("DEMO 1: Exact Question Matching")
     print("=" * 80)
 
-    resolver = QuestionKPIResolver(enable_fuzzy_matching=True)
+    resolver = QuestionMetricResolver(enable_fuzzy_matching=True)
 
     exact_questions = [
         "What is the current Sidewalk Condition Index (SCI) across all boroughs?",
@@ -59,7 +59,7 @@ def demo_fuzzy_matching():
     print("DEMO 2: Fuzzy Matching with Diverse Question Variations")
     print("=" * 80)
 
-    resolver = QuestionKPIResolver(enable_fuzzy_matching=True)
+    resolver = QuestionMetricResolver(enable_fuzzy_matching=True)
 
     fuzzy_questions = [
         # A1 variations (Sidewalk Condition)
@@ -99,7 +99,7 @@ def demo_bm25_weighting():
     print("DEMO 3: BM25 Weighting (80%) + FastText (15%) + Jaccard (5%)")
     print("=" * 80)
 
-    resolver = QuestionKPIResolver(enable_fuzzy_matching=True)
+    resolver = QuestionMetricResolver(enable_fuzzy_matching=True)
 
     test_question = "What is the current Sidewalk Condition Index (SCI) across all boroughs?"
     match_detail = resolver._fuzzy_match_with_bm25(test_question)
@@ -122,7 +122,7 @@ def demo_memora_enrichment():
     print("DEMO 4: Memora Context Enrichment")
     print("=" * 80)
 
-    resolver = QuestionKPIResolver(enable_fuzzy_matching=True)
+    resolver = QuestionMetricResolver(enable_fuzzy_matching=True)
 
     print("\nGlossary Terms:")
     for term, definition in resolver.memora_context.get("glossary_terms", {}).items():
@@ -147,7 +147,7 @@ def demo_confidence_comparison():
     print("DEMO 5: Confidence Scoring — Exact vs. Fuzzy Matches")
     print("=" * 80)
 
-    resolver = QuestionKPIResolver(enable_fuzzy_matching=True)
+    resolver = QuestionMetricResolver(enable_fuzzy_matching=True)
 
     test_pairs = [
         (
@@ -182,7 +182,7 @@ def demo_dataset_mapping():
     print("DEMO 6: Dataset Mapping for Resolved Question")
     print("=" * 80)
 
-    resolver = QuestionKPIResolver(enable_fuzzy_matching=True)
+    resolver = QuestionMetricResolver(enable_fuzzy_matching=True)
 
     question = "What is the current Sidewalk Condition Index (SCI) across all boroughs?"
     resolution = resolver.resolve_question(question)
@@ -199,12 +199,12 @@ def demo_dataset_mapping():
             if dataset.key_columns:
                 print(f"    Key columns: {', '.join(dataset.key_columns[:3])}...")
 
-        print(f"\nKPIs to Calculate:")
-        for kpi in resolution.kpis:
-            print(f"  • {kpi.kpi_id}: {kpi.metric_name}")
-            print(f"    Formula: {kpi.formula}")
-            if kpi.target_value:
-                print(f"    Target: {kpi.target_value}")
+        print(f"\nMetrics to Calculate:")
+        for metric in resolution.metrics:
+            print(f"  • {metric.metric_id}: {metric.metric_name}")
+            print(f"    Formula: {metric.formula}")
+            if metric.target_value:
+                print(f"    Target: {metric.target_value}")
 
         print(f"\nAnalysis Skills:")
         print(f"  Primary: {resolution.primary_skill.value}")
@@ -218,7 +218,7 @@ def demo_all_questions_by_category():
     print("DEMO 7: All Registered Questions by Category")
     print("=" * 80)
 
-    resolver = QuestionKPIResolver(enable_fuzzy_matching=True)
+    resolver = QuestionMetricResolver(enable_fuzzy_matching=True)
 
     all_questions = resolver.get_all_questions()
     by_category = {}
@@ -238,7 +238,7 @@ def demo_all_questions_by_category():
 def main():
     """Run all demos"""
     print("\n" + "=" * 80)
-    print("Enhanced QuestionKPIResolver with Fuzzy Matching + Memora Enrichment")
+    print("Enhanced QuestionMetricResolver with Fuzzy Matching + Memora Enrichment")
     print("=" * 80)
 
     demo_exact_matching()

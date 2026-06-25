@@ -30,7 +30,7 @@ app/
 ├── dash_layouts_analytics_integration.py  ← Advanced analytics layouts
 ├── dash_layouts_gis.py        ← Geospatial dashboard layouts
 ├── callbacks/                 ← Real-time callback handlers (reactive updates)
-│   ├── analytics.py           ← KPI and metric analytics callbacks
+│   ├── analytics.py           ← Metric and metric analytics callbacks
 │   ├── analytics_integration.py← Advanced analytics integrations
 │   ├── gis.py                 ← Spatial analysis callbacks
 │   ├── export_callbacks.py    ← PDF/Excel/PPTX export pipelines
@@ -39,7 +39,7 @@ app/
 │   └── ...
 ├── components/                ← Custom Dash component definitions
 │   ├── filter_system.py       ← Interactive filter UI components
-│   ├── kpi_cards.py           ← KPI metric card components
+│   ├── metric_cards.py           ← Metric metric card components
 │   ├── spatial_map.py         ← Map visualization components
 │   └── ...
 ├── assets/                    ← Static assets
@@ -66,7 +66,7 @@ app/
 **File:** `dash_layouts.py` — home page  
 **Callbacks:** `callbacks/analytics.py`, `callbacks/visualization_callbacks.py`
 
-- KPI cards with real-time metric updates
+- Metric cards with real-time metric updates
 - Dataset health status summary
 - Audit trail of recent ingests and updates
 - Quick-action buttons
@@ -125,26 +125,26 @@ app/
 Callbacks connect UI inputs to data processing and output generation.
 
 ```python
-# Example: analytics.py — KPI update on borough filter change
+# Example: analytics.py — Metric update on borough filter change
 from dash import callback, Input, Output
 import plotly.graph_objects as go
 
 @callback(
-    Output("kpi-metrics", "children"),
+    Output("metric-metrics", "children"),
     Input("borough-filter", "value")
 )
-def update_kpis(selected_borough):
+def update_metrics(selected_borough):
     # Fetch metrics from socrata_toolkit
     data = fetch_metrics(borough=selected_borough)
-    # Return Mantine KPI card components
-    return render_kpi_cards(data)
+    # Return Mantine Metric card components
+    return render_metric_cards(data)
 ```
 
 ### Key Callback Files
 
 | File | Purpose |
 |------|---------|
-| `callbacks/analytics.py` | KPI metrics, time-series, distribution charts |
+| `callbacks/analytics.py` | Metric metrics, time-series, distribution charts |
 | `callbacks/gis.py` | Spatial visualizations, maps, conflict detection |
 | `callbacks/export_callbacks.py` | PDF/Excel/PPTX generation |
 | `callbacks/visualization_callbacks.py` | Plotly figure generation and updates |

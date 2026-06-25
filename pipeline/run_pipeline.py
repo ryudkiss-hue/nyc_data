@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 NYC DOT MotherDuck Pipeline - 57 Dataset Ingestion & Materialization
-Metadata-first, zero data loss, zero row limits. All 57 datasets, 255 KPIs, 5 domain schemas.
+Metadata-first, zero data loss, zero row limits. All 57 datasets, 255 Metrics, 5 domain schemas.
 """
 
 import json
@@ -488,89 +488,89 @@ class MotherDuckPipeline:
             self.log_stage('build_analytics_schemas', 'error', error=str(e))
             return False
 
-    def materialize_kpis(self) -> bool:
-        """Materialize 255 KPI records and 57 quality scorecards."""
+    def materialize_metrics(self) -> bool:
+        """Materialize 255 Metric records and 57 quality scorecards."""
         start_time = time.time()
-        self._start_stage('materialize_kpis')
+        self._start_stage('materialize_metrics')
 
         try:
-            logger.info("Materializing 255 KPIs (51 KPIs × 5 boroughs) and 57 quality scorecards...")
+            logger.info("Materializing 255 Metrics (51 Metrics × 5 boroughs) and 57 quality scorecards...")
             boroughs = ['manhattan', 'brooklyn', 'queens', 'bronx', 'staten_island']
 
-            # Execute KPI SQL if it exists
-            kpi_file = 'pipeline/sql/04_serving_kpis.sql'
+            # Execute Metric SQL if it exists
+            metric_file = 'pipeline/sql/04_serving_metrics.sql'
 
-            if not Path(kpi_file).exists():
-                logger.error(f"CRITICAL: KPI SQL file not found: {kpi_file}")
-                self._fail_stage(f"KPI SQL file missing: {kpi_file}")
+            if not Path(metric_file).exists():
+                logger.error(f"CRITICAL: Metric SQL file not found: {metric_file}")
+                self._fail_stage(f"Metric SQL file missing: {metric_file}")
                 self._send_alert(Alert(
                     level=AlertLevel.CRITICAL,
-                    title="KPI Materialization Failed",
-                    message=f"SQL file not found: {kpi_file}",
-                    component="materialize_kpis"
+                    title="Metric Materialization Failed",
+                    message=f"SQL file not found: {metric_file}",
+                    component="materialize_metrics"
                 ))
-                self.log_stage('materialize_kpis', 'failed',
-                              error=f"KPI SQL file missing: {kpi_file}")
+                self.log_stage('materialize_metrics', 'failed',
+                              error=f"Metric SQL file missing: {metric_file}")
                 return False
 
-            success, message = self.sql_executor.execute_stage(Path(kpi_file).name)
+            success, message = self.sql_executor.execute_stage(Path(metric_file).name)
             if not success:
-                logger.error(f"KPI materialization failed: {message}")
-                self._fail_stage(f"KPI SQL execution failed: {message}")
+                logger.error(f"Metric materialization failed: {message}")
+                self._fail_stage(f"Metric SQL execution failed: {message}")
                 self._send_alert(Alert(
                     level=AlertLevel.ERROR,
-                    title="KPI Materialization Failed",
+                    title="Metric Materialization Failed",
                     message=message,
-                    component="materialize_kpis"
+                    component="materialize_metrics"
                 ))
-                self.log_stage('materialize_kpis', 'error', error=message)
+                self.log_stage('materialize_metrics', 'error', error=message)
                 return False
 
-            # Verify KPI table was created
+            # Verify Metric table was created
             try:
-                kpi_count = self.bridge.get_table_count('serving', 'kpi_summary')
-                if kpi_count == 0:
-                    logger.error("CRITICAL: KPI table created but contains 0 rows")
-                    self._fail_stage("KPI table is empty (0 rows)")
+                metric_count = self.bridge.get_table_count('serving', 'metric_summary')
+                if metric_count == 0:
+                    logger.error("CRITICAL: Metric table created but contains 0 rows")
+                    self._fail_stage("Metric table is empty (0 rows)")
                     self._send_alert(Alert(
                         level=AlertLevel.CRITICAL,
-                        title="KPI Materialization Empty",
-                        message="KPI table has 0 rows",
-                        component="materialize_kpis"
+                        title="Metric Materialization Empty",
+                        message="Metric table has 0 rows",
+                        component="materialize_metrics"
                     ))
-                    self.log_stage('materialize_kpis', 'failed',
-                                  error="KPI table is empty (0 rows)")
+                    self.log_stage('materialize_metrics', 'failed',
+                                  error="Metric table is empty (0 rows)")
                     return False
-                logger.info(f"KPI materialization verified: {kpi_count} KPI records")
+                logger.info(f"Metric materialization verified: {metric_count} Metric records")
             except Exception as e:
-                logger.error(f"Failed to verify KPI table: {str(e)}")
-                self._fail_stage(f"KPI verification failed: {str(e)}")
+                logger.error(f"Failed to verify Metric table: {str(e)}")
+                self._fail_stage(f"Metric verification failed: {str(e)}")
                 self._send_alert(Alert(
                     level=AlertLevel.ERROR,
-                    title="KPI Verification Exception",
+                    title="Metric Verification Exception",
                     message=str(e),
-                    component="materialize_kpis"
+                    component="materialize_metrics"
                 ))
                 return False
 
             load_time = time.time() - start_time
-            self._complete_stage(rows_processed=kpi_count, duration=load_time)
+            self._complete_stage(rows_processed=metric_count, duration=load_time)
 
-            self.log_stage('materialize_kpis', 'success',
-                          actual_kpi_records=kpi_count,
+            self.log_stage('materialize_metrics', 'success',
+                          actual_metric_records=metric_count,
                           load_time_seconds=round(load_time, 2))
             return True
 
         except Exception as e:
-            logger.error(f"Failed to materialize KPIs: {str(e)}")
+            logger.error(f"Failed to materialize Metrics: {str(e)}")
             self._fail_stage(f"Exception: {str(e)}")
             self._send_alert(Alert(
                 level=AlertLevel.ERROR,
-                title="KPI Materialization Exception",
+                title="Metric Materialization Exception",
                 message=str(e),
-                component="materialize_kpis"
+                component="materialize_metrics"
             ))
-            self.log_stage('materialize_kpis', 'error', error=str(e))
+            self.log_stage('materialize_metrics', 'error', error=str(e))
             return False
 
     def verify_gates(self) -> bool:
@@ -585,7 +585,7 @@ class MotherDuckPipeline:
                 'gate_1_data_load': 'Core raw tables (inspection, violations, ramp_progress) hold real rows',
                 'gate_2_staging': 'Staging tables built from raw for core datasets',
                 'gate_3_analytics': 'Analytics views return non-zero results',
-                'gate_4_kpis': 'KPIs materialized (>=10) with no null values'
+                'gate_4_metrics': 'Metrics materialized (>=10) with no null values'
             }
 
             # Execute gate verification SQL if it exists
@@ -666,7 +666,7 @@ class MotherDuckPipeline:
             ('ingest_remaining_socrata', 'Ingest remaining 37 from Socrata'),
             ('stage_datasets', 'Stage: dedupe & type cast all 57'),
             ('build_analytics_schemas', 'Build: 5 domain schemas + 100+ views'),
-            ('materialize_kpis', 'Serve: 255 KPIs + 57 scorecards'),
+            ('materialize_metrics', 'Serve: 255 Metrics + 57 scorecards'),
             ('verify_gates', 'Verify: 4 gates with exit code enforcement'),
         ]
 

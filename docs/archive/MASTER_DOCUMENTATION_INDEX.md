@@ -22,8 +22,8 @@
 
 ## 📦 Architecture & Design (Phase 1)
 
-- **[EXPANDED_KPI_CHART_REGISTRY.md](EXPANDED_KPI_CHART_REGISTRY.md)** — 51 KPIs + 45 chart types (primary reference)
-- **[KPI_REGISTRY_COMPREHENSIVE_DESIGN.md](../KPI_REGISTRY_COMPREHENSIVE_DESIGN.md)** — Phase 1 architecture
+- **[EXPANDED_METRIC_CHART_REGISTRY.md](EXPANDED_METRIC_CHART_REGISTRY.md)** — 51 Metrics + 45 chart types (primary reference)
+- **[METRIC_REGISTRY_COMPREHENSIVE_DESIGN.md](../METRIC_REGISTRY_COMPREHENSIVE_DESIGN.md)** — Phase 1 architecture
 - **[PHASE_1_SPECIFICATION.md](../PHASE_1_SPECIFICATION.md)** — Implementation spec
 
 ---
@@ -82,7 +82,7 @@
 ├── QUICKSTART.md
 ├── DEPLOYMENT_GUIDE.md (NEW)
 ├── CLAUDE.md
-├── EXPANDED_KPI_CHART_REGISTRY.md
+├── EXPANDED_METRIC_CHART_REGISTRY.md
 ├── SOLO_DEVELOPER_GUIDE.md
 ├── CONTRIBUTING.md
 ├── CHANGELOG.md
@@ -108,7 +108,7 @@ Root/ (Compatibility copies)
 - ✅ Project overview & architecture
 - ✅ Installation & quick start (5 min)
 - ✅ Deployment (GitHub Pages + Cloud Run)
-- ✅ 51 KPI definitions with chart mappings
+- ✅ 51 Metric definitions with chart mappings
 - ✅ Development workflow & permissions
 - ✅ CI/CD automation
 - ✅ Troubleshooting guide
@@ -123,8 +123,8 @@ Check the relevant section above, or:
 - **Setup issues** → QUICKSTART.md
 - **Development** → CLAUDE.md + SOLO_DEVELOPER_GUIDE.md
 - **Deployment** → DEPLOYMENT_GUIDE.md
-- **KPIs** → EXPANDED_KPI_CHART_REGISTRY.md
-- **Architecture** → KPI_REGISTRY_COMPREHENSIVE_DESIGN.md
+- **Metrics** → EXPANDED_METRIC_CHART_REGISTRY.md
+- **Architecture** → METRIC_REGISTRY_COMPREHENSIVE_DESIGN.md
 
 ---
 

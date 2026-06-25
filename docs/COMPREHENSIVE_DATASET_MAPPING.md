@@ -662,7 +662,7 @@ RECOMMENDATIONS
 
 ## Dashboard Indicators (All 24 Datasets)
 
-| KPI | Primary Datasets | Supporting Datasets | Target |
+| Metric | Primary Datasets | Supporting Datasets | Target |
 |-----|---|---|---|
 | **Violations Resolved Rate** | violations, inspection | dismissals, reinspection, complaints_311 | 85% |
 | **Ramp Completion Rate** | ramp_progress | ramp_locations, ramp_complaints, step_streets | 5% increase/year |

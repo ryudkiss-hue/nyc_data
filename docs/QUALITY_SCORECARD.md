@@ -17,7 +17,7 @@ See [AGENCY_RUNBOOK.md](AGENCY_RUNBOOK.md) for daily operations.
 
 | Axis | What “100” means | How we measure |
 |------|------------------|----------------|
-| **Accessibility** | WCAG-minded: skip link, focus rings, KPI text+icon (not color-only), reduced motion, table captions, `aria-live` toasts | `socrata readiness` + manual keyboard pass |
+| **Accessibility** | WCAG-minded: skip link, focus rings, Metric text+icon (not color-only), reduced motion, table captions, `aria-live` toasts | `socrata readiness` + manual keyboard pass |
 | **Functionality** | Analyst pack, publish, review, import shims, profiles, demo pack | Doctor + pytest |
 | **Presentation / UX** | Socrata ingestion matrix, ROI header, four workflow views | `python main.py` + `config/datasets.yaml` |
 | **Packaging** | Wizard, installer script, `main.py` / `mission` CLI | `scripts/build_installer.ps1` |
@@ -25,7 +25,7 @@ See [AGENCY_RUNBOOK.md](AGENCY_RUNBOOK.md) for daily operations.
 | **Documentation** | SIMPLE_START, USER_MANUAL, FAQ, ANALYST_WORKFLOW | File presence in readiness |
 | **Security** | Secrets in env only, no tokens in logs | Manual + publish dry-run |
 | **Performance** | Per-workflow lazy load, parquet cache, demo mode | `MISSION_DEMO=1` or no token |
-| **Job fit (SW)** | Role profiles jid-35715 / jid-42159, role KPIs | `config/role_profiles/` + Metrics page |
+| **Job fit (SW)** | Role profiles jid-35715 / jid-42159, role Metrics | `config/role_profiles/` + Metrics page |
 
 ## Automated vs manual
 

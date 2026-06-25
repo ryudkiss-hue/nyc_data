@@ -1,4 +1,4 @@
-# `socrata_toolkit.engineering` — KPIs, Cost & Construction
+# `socrata_toolkit.engineering` — Metrics, Cost & Construction
 
 **File:** `socrata_toolkit/engineering.py` | **Pillar:** Engineering  
 **Dependencies:** `pandas`, `uuid`
@@ -73,12 +73,12 @@ Returns `{total_workload, completed_workload, remaining_workload}` summary.
 
 ---
 
-## Sidewalk KPIs
+## Sidewalk Metrics
 
-### `MaterialAwareSidewalkKPI` (dataclass)
+### `MaterialAwareSidewalkMetric` (dataclass)
 ```python
 @dataclass
-class MaterialAwareSidewalkKPI:
+class MaterialAwareSidewalkMetric:
     timestamp: datetime; period_label: str
     defect_density: float          # defects per curb mile
     ada_compliance_rate: float     # 0–100
@@ -87,15 +87,15 @@ class MaterialAwareSidewalkKPI:
     lineage_metadata: dict
 ```
 
-### `compute_material_aware_kpis(df, period="all-time") → MaterialAwareSidewalkKPI`
-Full KPI computation with material tracking.
+### `compute_material_aware_metrics(df, period="all-time") → MaterialAwareSidewalkMetric`
+Full Metric computation with material tracking.
 ```python
-kpis = compute_material_aware_kpis(df, period="FY2024")
-print(kpis.defect_density)
+metrics = compute_material_aware_metrics(df, period="FY2024")
+print(metrics.defect_density)
 ```
 
-### `compute_sidewalk_kpis(df, defect_col, curb_miles_col) → SimpleNamespace`
-Lightweight legacy KPI: returns `{defect_density}`.
+### `compute_sidewalk_metrics(df, defect_col, curb_miles_col) → SimpleNamespace`
+Lightweight legacy Metric: returns `{defect_density}`.
 
 ---
 

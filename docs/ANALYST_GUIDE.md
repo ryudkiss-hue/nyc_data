@@ -1,4 +1,4 @@
-# KPI Dives Analyst Guide
+# Metric Dives Analyst Guide
 
 **For NYC DOT Data Analysts & Program Managers**
 
@@ -6,13 +6,13 @@
 
 ## Quick Start
 
-Each KPI Dive shows **40+ statistical metrics** across **5 NYC boroughs**. This guide helps you understand what each metric means and when to act on it.
+Each Metric Dive shows **40+ statistical metrics** across **5 NYC boroughs**. This guide helps you understand what each metric means and when to act on it.
 
 ### The 10 Summary Cards (Top of Every Dive)
 
 | Card | Metric | What It Means | When to Worry |
 |------|--------|---------------|---------------|
-| **1. Mean** (Blue) | Average value | Typical KPI level across borough | Significantly below benchmark |
+| **1. Mean** (Blue) | Average value | Typical Metric level across borough | Significantly below benchmark |
 | **2. Median** (Green) | Middle value | Central tendency, robust to outliers | Different from mean (suggests outliers) |
 | **3. Std Dev** (Purple) | Spread around mean | How much variation exists | > 30% of mean = high volatility |
 | **4. CV** (Orange) | Std Dev ÷ Mean × 100 | **Relative volatility** (unit-free) | CV > 30% = unstable, hard to forecast |
@@ -232,7 +232,7 @@ Every Dive card is color-coded:
 
 ## Common Questions
 
-**Q: "My KPI is at 75. Benchmark is 80. Is that bad?"**
+**Q: "My Metric is at 75. Benchmark is 80. Is that bad?"**
 
 A: Look at the Risk Status card. If it's green, you're within acceptable range (±10%). Yellow means it's borderline. Red means action needed.
 
@@ -242,11 +242,11 @@ A: High outliers are pulling the mean up. The typical value is actually lower (m
 
 **Q: "CV is 40%. Is that a problem?"**
 
-A: Above 30% = high volatility. This KPI is unstable. Check the Outliers card and Skewness card to understand why. If skewness is high, outliers are driving it.
+A: Above 30% = high volatility. This Metric is unstable. Check the Outliers card and Skewness card to understand why. If skewness is high, outliers are driving it.
 
 **Q: "Standard Deviation is 10. Is that high?"**
 
-A: Depends on the unit. A Std Dev of 10 for a KPI measured in thousands is tiny. A Std Dev of 10 for a 0–100 scale is enormous. Check CV% instead—it's unit-free and comparable.
+A: Depends on the unit. A Std Dev of 10 for a Metric measured in thousands is tiny. A Std Dev of 10 for a 0–100 scale is enormous. Check CV% instead—it's unit-free and comparable.
 
 **Q: "Trend is improving but Confidence band is very wide. Should I celebrate?"**
 
@@ -293,7 +293,7 @@ Each Dive supports exports:
 
 ### Stationarity Tests
 
-**What it is:** Tests whether a KPI is stationary (constant mean/variance over time) or has trends/cycles.
+**What it is:** Tests whether a Metric is stationary (constant mean/variance over time) or has trends/cycles.
 
 | Test | H0 | Decision | Meaning |
 |------|--|----|-------|
@@ -329,12 +329,12 @@ Clustering Strength (Manhattan):
 
 ### VAR Multivariate Analysis
 
-**What it is:** Vector Autoregression — models how multiple KPIs influence each other over time.
+**What it is:** Vector Autoregression — models how multiple Metrics influence each other over time.
 
 **Use cases:**
-- Detect KPI relationships: "Does adoption rate predict SLA breach?"
-- System-wide forecasting: Forecast all KPIs together, not in isolation
-- Granger causality: Which KPI "leads" which?
+- Detect Metric relationships: "Does adoption rate predict SLA breach?"
+- System-wide forecasting: Forecast all Metrics together, not in isolation
+- Granger causality: Which Metric "leads" which?
 
 **Lag order:** Like p in ARIMA, but for a system. Higher = more complex relationships, but risks overfitting.
 
@@ -357,7 +357,7 @@ Clustering Strength (Manhattan):
 
 ## Summary
 
-Each KPI Dive gives you 40+ metrics to understand your data deeply:
+Each Metric Dive gives you 40+ metrics to understand your data deeply:
 - **Summary cards** (top) = quick health check
 - **Charts** = visual patterns
 - **Statistics table** = detailed numbers per borough

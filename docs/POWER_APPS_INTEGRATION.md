@@ -57,7 +57,7 @@ How to integrate the NYC DOT Toolkit with Microsoft Power Apps for a native Micr
 │                                                               │
 │  Reporting Layer (Power BI)                                │
 │  ├─ Real-time dashboards                                   │
-│  ├─ KPI tracking                                            │
+│  ├─ Metric tracking                                            │
 │  ├─ Compliance reports                                      │
 │  └─ Direct database connection (live queries)              │
 │                                                               │
@@ -316,7 +316,7 @@ Dashboard pages:
 **Dashboard Tasks:**
 1. Connect to PostgreSQL
 2. Create data model
-3. Build KPI measures
+3. Build Metric measures
 4. Design report pages
 5. Configure auto-refresh
 

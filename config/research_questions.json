@@ -2,37 +2,37 @@
   {
     "question_id": "Q1",
     "text": "Why are violations spiking in Manhattan?",
-    "related_kpi": "KPI-089",
+    "related_metric": "METRIC-089",
     "category": "Root Cause Analysis"
   },
   {
     "question_id": "Q2",
     "text": "What is causing the structural damage spike?",
-    "related_kpi": "KPI-045",
+    "related_metric": "METRIC-045",
     "category": "Asset Condition"
   },
   {
     "question_id": "Q3",
     "text": "Are contractor quality metrics correlated with violation rates?",
-    "related_kpi": "KPI-067",
+    "related_metric": "METRIC-067",
     "category": "Operations"
   },
   {
     "question_id": "Q4",
     "text": "What are the seasonal patterns in violations?",
-    "related_kpi": "KPI-123",
+    "related_metric": "METRIC-123",
     "category": "Trend Analysis"
   },
   {
     "question_id": "Q5",
     "text": "How many violations were fixed by borough last month?",
-    "related_kpi": "KPI-089",
+    "related_metric": "METRIC-089",
     "category": "Quality Metrics"
   },
   {
     "question_id": "Q6",
     "text": "Which boroughs have the highest structural damage rates?",
-    "related_kpi": "KPI-045",
+    "related_metric": "METRIC-045",
     "category": "Geographic Analysis"
   }
 ]

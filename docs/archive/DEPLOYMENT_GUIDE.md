@@ -80,7 +80,7 @@ App Layout
 ├── FastAPI Backend (/api/)
 │   ├── /api/health — Health check
 │   ├── /api/docs — OpenAPI docs
-│   ├── /api/metrics — KPI endpoints
+│   ├── /api/metrics — Metric endpoints
 │   └── /api/spatial — Conflict detection
 │
 └── Static Assets
@@ -92,7 +92,7 @@ App Layout
 
 ```bash
 curl https://nyc-sidewalk-toolkit-XXXXX.run.app/api/health
-# Returns: {"status": "healthy", "kpi_count": 51, "dataset_count": 78}
+# Returns: {"status": "healthy", "metric_count": 51, "dataset_count": 78}
 ```
 
 ### View Logs

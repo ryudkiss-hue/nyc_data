@@ -7,7 +7,7 @@ Provides high-level functions to fetch data from serving views:
 - fetch_phase_d_results() → v_phase_d_results (anomalies)
 - fetch_phase_e_decomposition() → v_phase_e_decomposition (time series)
 - fetch_phase_f_bootstrap_ci() → v_phase_f_bootstrap_ci (SLA forecast)
-- fetch_kpi_data() → v_kpi_dashboard (18 KPIs)
+- fetch_metric_data() → v_metric_dashboard (18 Metrics)
 
 All functions apply global filters (boroughs, date_range, metric_type) before querying.
 
@@ -196,15 +196,15 @@ def fetch_phase_f_bootstrap_ci(filters: dict[str, Any]) -> Optional[pd.DataFrame
         logger.error(f"Error fetching Phase F bootstrap CI: {e}")
         return None
 
-def fetch_kpi_data(filters: dict[str, Any]) -> Optional[pd.DataFrame]:
+def fetch_metric_data(filters: dict[str, Any]) -> Optional[pd.DataFrame]:
     """
-    Fetch KPI data for dashboard cards.
+    Fetch Metric data for dashboard cards.
 
     Args:
         filters: Global filter state
 
     Returns:
-        pd.DataFrame: KPI data from v_kpi_dashboard (18 KPIs × 5 boroughs = 90 rows)
+        pd.DataFrame: Metric data from v_metric_dashboard (18 Metrics × 5 boroughs = 90 rows)
                      Columns: metric_id, metric_name, borough, value, change_pct, ...
 
     Expected structure:
@@ -218,13 +218,13 @@ def fetch_kpi_data(filters: dict[str, Any]) -> Optional[pd.DataFrame]:
     """
     try:
         conn = get_motherduck_connection()
-        query = "SELECT * FROM app_queries.v_kpi_dashboard"
+        query = "SELECT * FROM app_queries.v_metric_dashboard"
         query = _apply_filters(query, filters)
         df = conn.execute(query).df()
-        logger.info(f"Fetched {len(df)} KPI records")
+        logger.info(f"Fetched {len(df)} Metric records")
         return df
     except Exception as e:
-        logger.error(f"Error fetching KPI data: {e}")
+        logger.error(f"Error fetching Metric data: {e}")
         return None
 
 def fetch_dataset(filters: dict[str, Any], dataset_key: str = "inspection") -> Optional[pd.DataFrame]:
@@ -277,7 +277,7 @@ def validate_connection() -> bool:
             "app_queries.v_phase_d_results",
             "app_queries.v_phase_e_decomposition",
             "app_queries.v_phase_f_bootstrap_ci",
-            "app_queries.v_kpi_dashboard",
+            "app_queries.v_metric_dashboard",
         ]
 
         for view in views:

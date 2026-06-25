@@ -3,7 +3,7 @@
 **Status:** Production Ready v2.0  
 **Last Updated:** 2026-06-18  
 **Datasets:** 57 (20 cached locally + 37 from Socrata)  
-**KPIs:** 255 (51 KPIs × 5 boroughs)  
+**Metrics:** 255 (51 Metrics × 5 boroughs)  
 **Quality:** 4 mandatory verification gates with exit code enforcement
 
 ---
@@ -32,8 +32,8 @@ Stage 3: ANALYTICS (Domain Models)
   └─ extended: derived metrics & time-series
   └─ Total: 100+ views with proper joins
 
-Stage 4: SERVING (KPI Materialization)
-  ├─ 255 KPI records (51 KPIs × 5 boroughs)
+Stage 4: SERVING (Metric Materialization)
+  ├─ 255 Metric records (51 Metrics × 5 boroughs)
   ├─ 57 quality scorecards (0-100 composite)
   ├─ 25 borough aggregates
   └─ Daily time-series snapshots
@@ -54,12 +54,12 @@ pipeline/
 │   ├── 01_raw_schema.sql            # Stage 1: Load 20 cached + 37 Socrata datasets
 │   ├── 02_staging_schema.sql        # Stage 2: Dedupe & type cast, preserve column names
 │   ├── 03_analytics_schemas.sql     # Stage 3: 5 domain schemas (sim_core, accessibility, coordination, overlays, extended)
-│   ├── 04_serving_kpis.sql          # Stage 4: 255 KPIs + 57 scorecards + 25 borough aggregates
-│   └── 05_verification_gates.sql    # Stage 5: 4 mandatory verification gates (data_load, schema, joins, kpi)
-├── config/                          # (Reserved for future: pipeline config, dataset registry, KPI definitions)
+│   ├── 04_serving_metrics.sql          # Stage 4: 255 Metrics + 57 scorecards + 25 borough aggregates
+│   └── 05_verification_gates.sql    # Stage 5: 4 mandatory verification gates (data_load, schema, joins, metric)
+├── config/                          # (Reserved for future: pipeline config, dataset registry, Metric definitions)
 ├── staging/                         # (Reserved for future: type mappings, transformation logic)
 ├── analytics/                       # (Reserved for future: view definitions, join validation)
-├── serving/                         # (Reserved for future: KPI computation, quality scoring, materialization)
+├── serving/                         # (Reserved for future: Metric computation, quality scoring, materialization)
 ├── validation/                      # (Reserved for future: detailed SQL gate implementations)
 └── logs/                            # Execution artifacts (auto-created)
     ├── pipeline.log                 # Execution log (appended per run)
@@ -234,4 +234,4 @@ with open('pipeline/logs/execution.json') as f:
 2. ⏳ SQL transformation templates ready  
 3. ⏳ Run `python pipeline/run_pipeline.py`  
 4. ⏳ Verify all 4 gates pass (check `execution.json`)  
-5. ⏳ Query serving tables for KPI dashboards
+5. ⏳ Query serving tables for Metric dashboards

@@ -1,11 +1,11 @@
 {
-  "batch_name": "NYC DOT KPI Analytics Dives",
-  "description": "18 comprehensive KPI Dives with statistics, diversity metrics, and risk assessment",
+  "batch_name": "NYC DOT Metric Analytics Dives",
+  "description": "18 comprehensive Metric Dives with statistics, diversity metrics, and risk assessment",
   "version": "1.0.0",
   "created_date": "2026-06-11",
   "dives": [
     {
-      "kpi_id": "phase_b_clustering_strength",
+      "metric_id": "phase_b_clustering_strength",
       "title": "Phase B: Clustering Strength (Moran's I)",
       "description": "Spatial autocorrelation index quantifying geographic clustering of violations. Includes borough-level statistics, quartile analysis, Simpson's Diversity Index for distribution evenness, and risk thresholds.",
       "phase": "B",
@@ -21,11 +21,11 @@
         "Time-series trend of recent values",
         "Interactive borough selection"
       ],
-      "tags": ["phase-b", "spatial", "clustering", "kpi", "analytics"],
+      "tags": ["phase-b", "spatial", "clustering", "metric", "analytics"],
       "metric_type": "clustering_score"
     },
     {
-      "kpi_id": "phase_b_confidence",
+      "metric_id": "phase_b_confidence",
       "title": "Phase B: Clustering Confidence (p-value)",
       "description": "Statistical significance of spatial clustering patterns. Bootstrap-derived confidence with comprehensive distributional analysis and diversity metrics.",
       "phase": "B",
@@ -41,11 +41,11 @@
         "Trend visualization with reference lines",
         "Detailed metadata and methodology"
       ],
-      "tags": ["phase-b", "spatial", "significance", "kpi"],
+      "tags": ["phase-b", "spatial", "significance", "metric"],
       "metric_type": "confidence"
     },
     {
-      "kpi_id": "phase_b_resource_gap",
+      "metric_id": "phase_b_resource_gap",
       "title": "Phase B: Resource Gap Index",
       "description": "Deviation between inspection frequency and violation density by borough. Identifies under-resourced areas with statistical rigor and diversity analysis.",
       "phase": "B",
@@ -61,11 +61,11 @@
         "Risk heatmap by borough",
         "Actionable resource reallocation recommendations"
       ],
-      "tags": ["phase-b", "resources", "allocation", "kpi"],
+      "tags": ["phase-b", "resources", "allocation", "metric"],
       "metric_type": "index"
     },
     {
-      "kpi_id": "phase_c_concentration_index",
+      "metric_id": "phase_c_concentration_index",
       "title": "Phase C: Concentration Index (Gini-like)",
       "description": "Percentage of violations concentrated in top 20% of locations. Measures inequality in violation distribution with rich statistical breakdowns.",
       "phase": "C",
@@ -82,11 +82,11 @@
         "Risk escalation curve",
         "Historical trend line"
       ],
-      "tags": ["phase-c", "distribution", "concentration", "kpi"],
+      "tags": ["phase-c", "distribution", "concentration", "metric"],
       "metric_type": "percentage"
     },
     {
-      "kpi_id": "phase_c_segmentation_potential",
+      "metric_id": "phase_c_segmentation_potential",
       "title": "Phase C: Segmentation Potential Score",
       "description": "Ability to cleanly separate violations by work scope (ada, sidewalk, ramp). Measures clustering quality of scope categories.",
       "phase": "C",
@@ -103,11 +103,11 @@
         "Scope-specific analysis tables",
         "Segmentation recommendations"
       ],
-      "tags": ["phase-c", "segmentation", "scope", "kpi"],
+      "tags": ["phase-c", "segmentation", "scope", "metric"],
       "metric_type": "potential_score"
     },
     {
-      "kpi_id": "phase_c_type_certainty",
+      "metric_id": "phase_c_type_certainty",
       "title": "Phase C: Type Certainty (Entropy-based)",
       "description": "Confidence in violation classification using entropy measures. Quantifies uncertainty in scope assignment across boroughs.",
       "phase": "C",
@@ -124,11 +124,11 @@
         "Cross-borough comparison heatmap",
         "Classification quality indicators"
       ],
-      "tags": ["phase-c", "classification", "certainty", "kpi"],
+      "tags": ["phase-c", "classification", "certainty", "metric"],
       "metric_type": "confidence"
     },
     {
-      "kpi_id": "phase_c_distribution_balance",
+      "metric_id": "phase_c_distribution_balance",
       "title": "Phase C: Distribution Balance (Shannon Index)",
       "description": "Evenness of violation distribution across boroughs and scopes. Shannon entropy-based measurement of distribution diversity.",
       "phase": "C",
@@ -145,11 +145,11 @@
         "Cross-borough and cross-scope tables",
         "Distribution imbalance alerts"
       ],
-      "tags": ["phase-c", "diversity", "distribution", "shannon", "kpi"],
+      "tags": ["phase-c", "diversity", "distribution", "shannon", "metric"],
       "metric_type": "diversity"
     },
     {
-      "kpi_id": "phase_d_outlier_concentration",
+      "metric_id": "phase_d_outlier_concentration",
       "title": "Phase D: Outlier Concentration (z > 2.0)",
       "description": "Count of statistically significant anomalies identified via z-score analysis. Measures geographic and temporal hotspots.",
       "phase": "D",
@@ -167,11 +167,11 @@
         "Hotspot map by borough",
         "Risk escalation scoring"
       ],
-      "tags": ["phase-d", "anomaly", "outliers", "zscores", "kpi"],
+      "tags": ["phase-d", "anomaly", "outliers", "zscores", "metric"],
       "metric_type": "count"
     },
     {
-      "kpi_id": "phase_d_adoption_rate",
+      "metric_id": "phase_d_adoption_rate",
       "title": "Phase D: Risk Adoption Rate",
       "description": "Percentage of high-risk locations where recommended remediation has been implemented. Measures stakeholder response.",
       "phase": "D",
@@ -189,11 +189,11 @@
         "Barrier analysis (why non-adoption)",
         "Engagement recommendations"
       ],
-      "tags": ["phase-d", "adoption", "engagement", "kpi"],
+      "tags": ["phase-d", "adoption", "engagement", "metric"],
       "metric_type": "percentage"
     },
     {
-      "kpi_id": "phase_d_priority_score",
+      "metric_id": "phase_d_priority_score",
       "title": "Phase D: Priority Weighting (1-10 scale)",
       "description": "Average priority score across identified anomalies. Composite risk indicator combining severity, urgency, and resource requirements.",
       "phase": "D",
@@ -211,11 +211,11 @@
         "High-priority location count",
         "Prioritization recommendations"
       ],
-      "tags": ["phase-d", "priority", "severity", "kpi"],
+      "tags": ["phase-d", "priority", "severity", "metric"],
       "metric_type": "score"
     },
     {
-      "kpi_id": "phase_e_trend_direction",
+      "metric_id": "phase_e_trend_direction",
       "title": "Phase E: Trend Direction (linear slope)",
       "description": "Linear trend slope in violations over past 90 days. Positive = worsening, negative = improving trend.",
       "phase": "E",
@@ -233,11 +233,11 @@
         "Trend acceleration/deceleration",
         "Forecast impact on SLA targets"
       ],
-      "tags": ["phase-e", "trend", "timeseries", "forecast", "kpi"],
+      "tags": ["phase-e", "trend", "timeseries", "forecast", "metric"],
       "metric_type": "trend"
     },
     {
-      "kpi_id": "phase_e_seasonality_strength",
+      "metric_id": "phase_e_seasonality_strength",
       "title": "Phase E: Seasonality Index",
       "description": "Strength of seasonal pattern in inspection and violation cycles. Quantifies predictable cyclical behavior.",
       "phase": "E",
@@ -255,11 +255,11 @@
         "Peak/trough identification",
         "Resource planning implications"
       ],
-      "tags": ["phase-e", "seasonality", "cycles", "timeseries", "kpi"],
+      "tags": ["phase-e", "seasonality", "cycles", "timeseries", "metric"],
       "metric_type": "index"
     },
     {
-      "kpi_id": "phase_e_resource_gap",
+      "metric_id": "phase_e_resource_gap",
       "title": "Phase E: Resource Demand Forecast Gap",
       "description": "Forecast comparison: inspection capacity needed vs. current allocation. % over/under requirement projection.",
       "phase": "E",
@@ -277,11 +277,11 @@
         "Staffing requirement projections",
         "Budget impact estimates"
       ],
-      "tags": ["phase-e", "resources", "forecast", "budget", "kpi"],
+      "tags": ["phase-e", "resources", "forecast", "budget", "metric"],
       "metric_type": "percentage"
     },
     {
-      "kpi_id": "phase_e_forecast_confidence",
+      "metric_id": "phase_e_forecast_confidence",
       "title": "Phase E: Forecast Confidence (CI width ratio)",
       "description": "Prediction interval width relative to point estimate. Tighter CI = higher confidence in forecast.",
       "phase": "E",
@@ -299,11 +299,11 @@
         "Forecast reliability indicators",
         "Data quality assessment"
       ],
-      "tags": ["phase-e", "forecast", "confidence", "bootstrap", "kpi"],
+      "tags": ["phase-e", "forecast", "confidence", "bootstrap", "metric"],
       "metric_type": "confidence"
     },
     {
-      "kpi_id": "phase_f_sla_probability",
+      "metric_id": "phase_f_sla_probability",
       "title": "Phase F: SLA Breach Probability (%)",
       "description": "Bootstrap-derived probability of missing 14-day SLA target. Critical risk metric for service level compliance.",
       "phase": "F",
@@ -321,11 +321,11 @@
         "Time-to-SLA countdown by borough",
         "Risk escalation alerts"
       ],
-      "tags": ["phase-f", "sla", "compliance", "risk", "bootstrap", "kpi"],
+      "tags": ["phase-f", "sla", "compliance", "risk", "bootstrap", "metric"],
       "metric_type": "probability"
     },
     {
-      "kpi_id": "phase_f_risk_score",
+      "metric_id": "phase_f_risk_score",
       "title": "Phase F: Operational Risk Score (0-100)",
       "description": "Composite risk index combining violations, trends, SLA probability, and resource gaps. Holistic operational risk assessment.",
       "phase": "F",
@@ -343,11 +343,11 @@
         "Risk trend (improving/deteriorating)",
         "Mitigation roadmap by borough"
       ],
-      "tags": ["phase-f", "risk", "composite", "operational", "kpi"],
+      "tags": ["phase-f", "risk", "composite", "operational", "metric"],
       "metric_type": "risk"
     },
     {
-      "kpi_id": "phase_f_ci_coverage",
+      "metric_id": "phase_f_ci_coverage",
       "title": "Phase F: 95% CI Coverage (width ratio)",
       "description": "Bootstrap confidence interval width as percentage of point estimate. Measures forecast uncertainty bounds.",
       "phase": "F",
@@ -365,11 +365,11 @@
         "Data quality implications",
         "Recommendations for reducing bounds"
       ],
-      "tags": ["phase-f", "confidence", "bootstrap", "intervals", "kpi"],
+      "tags": ["phase-f", "confidence", "bootstrap", "intervals", "metric"],
       "metric_type": "percentage"
     },
     {
-      "kpi_id": "phase_f_investment_justification",
+      "metric_id": "phase_f_investment_justification",
       "title": "Phase F: Investment ROI Score (violations/$1K)",
       "description": "Expected reduction in violations per $1,000 invested. Bootstrap-derived ROI for budget allocation decisions.",
       "phase": "F",
@@ -388,14 +388,14 @@
         "Budget allocation recommendations",
         "Payback period projections"
       ],
-      "tags": ["phase-f", "roi", "investment", "budget", "bootstrap", "kpi"],
+      "tags": ["phase-f", "roi", "investment", "budget", "bootstrap", "metric"],
       "metric_type": "roi"
     }
   ],
   "shared_schema": {
     "database": "md:app_queries",
-    "views": ["v_kpi_dashboard"],
-    "source_table": "analytics.kpi_metrics",
+    "views": ["v_metric_dashboard"],
+    "source_table": "analytics.metric_metrics",
     "borough_dimension": ["MN", "BX", "BK", "QN", "SI"],
     "statistics_computed": [
       "mean",

@@ -690,7 +690,7 @@ Update each view function with complete implementation. Replace skeleton borough
 
 ```python
 def create_borough_summary(conn) -> Dict:
-    """Borough-level KPI aggregation.
+    """Borough-level Metric aggregation.
     
     Creates a view with per-borough inspection statistics, violation counts,
     completion rates, and SLA metrics.
@@ -1575,7 +1575,7 @@ git commit -m "Add integration and performance tests for full pipeline"
 
 1. **raw schema**: Direct copies from Socrata API (immutable)
 2. **staging schema**: Cleaned, deduplicated, joined tables
-3. **analytics schema**: Pre-computed KPIs and marts for visualization
+3. **analytics schema**: Pre-computed Metrics and marts for visualization
 
 ## Data Flow
 

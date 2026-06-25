@@ -13,12 +13,12 @@ from app.ui.empty_states import render_empty_state, render_guided_tour
 from app.utils.i18n import t
 
 # ---------------------------------------------------------------------------
-# Live KPI helpers
+# Live Metric helpers
 # ---------------------------------------------------------------------------
 
 @st.cache_data(ttl=300)
-def _fetch_live_kpi_data() -> dict:
-    """Fetch raw KPI counts from the Socrata cache/manifest.
+def _fetch_live_metric_data() -> dict:
+    """Fetch raw Metric counts from the Socrata cache/manifest.
 
     Uses only already-cached parquet data to avoid blocking the page load.
     Falls back to zeros if data is not available (no live Socrata call needed
@@ -123,38 +123,38 @@ def _fetch_live_kpi_data() -> dict:
 
     return result
 
-def _make_live_kpis_fragment():
-    """Build and return the live-KPI render function.
+def _make_live_metrics_fragment():
+    """Build and return the live-Metric render function.
 
     Wraps with ``@st.fragment(run_every=300)`` when available (Streamlit ≥ 1.33),
     otherwise returns a plain callable.
     """
 
-    def _render_live_kpis_inner() -> None:
-        st.markdown("#### 🔴 Live KPIs")
+    def _render_live_metrics_inner() -> None:
+        st.markdown("#### 🔴 Live Metrics")
         st.caption("Auto-refreshes every 5 minutes from local cache")
 
-        with st.status("Loading KPI data…", expanded=False) as status_box:
-            kpi_data = _fetch_live_kpi_data()
-            status_box.update(label="KPI data loaded", state="complete", expanded=False)
+        with st.status("Loading Metric data…", expanded=False) as status_box:
+            metric_data = _fetch_live_metric_data()
+            status_box.update(label="Metric data loaded", state="complete", expanded=False)
 
         k1, k2, k3, k4 = st.columns(4)
 
-        pending = kpi_data.get("pending_inspections")
+        pending = metric_data.get("pending_inspections")
         k1.metric(
             "Pending Inspections",
             f"{pending:,}" if pending is not None else "—",
             help="Open inspections where status != Closed/Resolved (from local cache)",
         )
 
-        conflicts = kpi_data.get("active_conflicts")
+        conflicts = metric_data.get("active_conflicts")
         k2.metric(
             "Active Conflicts",
             f"{conflicts:,}" if conflicts is not None else "—",
             help="Active/open work orders or permits that may overlap (from local cache)",
         )
 
-        sla = kpi_data.get("sla_health_pct")
+        sla = metric_data.get("sla_health_pct")
         k3.metric(
             "SLA Health %",
             f"{sla:.1f}%" if sla is not None else "—",
@@ -163,7 +163,7 @@ def _make_live_kpis_fragment():
             help="% of closed inspections resolved within 30-day SLA proxy (from local cache)",
         )
 
-        cache_age = kpi_data.get("cache_age_hours")
+        cache_age = metric_data.get("cache_age_hours")
         if cache_age is None:
             age_label = "No cache"
         elif cache_age < 1:
@@ -176,17 +176,17 @@ def _make_live_kpis_fragment():
             help="Hours since last Socrata fetch (from cache manifest)",
         )
 
-        if all(v is None for v in kpi_data.values()):
+        if all(v is None for v in metric_data.values()):
             st.caption(
-                "ℹ️ No cached data found. Run a workflow to populate KPIs."
+                "ℹ️ No cached data found. Run a workflow to populate Metrics."
             )
 
     if hasattr(st, "fragment"):
-        return st.fragment(run_every=300)(_render_live_kpis_inner)
-    return _render_live_kpis_inner
+        return st.fragment(run_every=300)(_render_live_metrics_inner)
+    return _render_live_metrics_inner
 
 # Build the fragment once at module import so we reuse the decorated version.
-render_live_kpis = _make_live_kpis_fragment()
+render_live_metrics = _make_live_metrics_fragment()
 
 # ---------------------------------------------------------------------------
 # Home page
@@ -240,8 +240,8 @@ def render_home_page() -> None:
 
     st.divider()
 
-    # ---- Live KPI tiles (fragment rerender every 5 min) ----
-    render_live_kpis()
+    # ---- Live Metric tiles (fragment rerender every 5 min) ----
+    render_live_metrics()
 
     st.divider()
 

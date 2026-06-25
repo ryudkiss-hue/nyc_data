@@ -82,7 +82,7 @@ Completeness = (10,000 - 75 - 5) / 10,000 = 99.2%
 **Calculation**: `(Unique records / Total records) × 100`
 
 **Business Context**:
-- Duplicate records skew analytics and KPIs
+- Duplicate records skew analytics and Metrics
 - Entity resolution identifies logical duplicates
 - Target: 99.98%+
 - Alert threshold: >0.1% duplicates
@@ -365,7 +365,7 @@ Projected (12 months): 1.38M/day
 **Calculation**: `(Duplicate records / Total records) × 100`
 
 **Business Context**:
-- Duplicates skew analytics and KPIs
+- Duplicates skew analytics and Metrics
 - Target: <0.1%
 - Alert threshold: >0.5%
 

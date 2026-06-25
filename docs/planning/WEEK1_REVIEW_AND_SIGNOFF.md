@@ -160,7 +160,7 @@
 - **Date:** June 11, 2026, 8am
 - **Method:** Direct 100% cutover (no gradual ramp)
 - **Support:** Full engineering team on standby 24/7
-- **Monitoring:** Continuous KPI tracking + daily reviews
+- **Monitoring:** Continuous Metric tracking + daily reviews
 
 **Questions for Review:**
 - [ ] Are you ready for immediate 100% Dash deployment on June 11?

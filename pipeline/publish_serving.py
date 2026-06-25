@@ -1,7 +1,7 @@
 """Publish the small serving layer LOCAL -> MotherDuck (the only cloud write).
 
 "Build local, serve light": the heavy ~5 GB warehouse stays local; this pushes
-just the curated serving outputs (KPI catalog, borough/time-series, spatial
+just the curated serving outputs (Metric catalog, borough/time-series, spatial
 metrics) + the lightweight geo attribute dims (~50 MB) to MotherDuck so the Dash
 dashboard reads from the cloud. Read-serving only — never hits the compute limit.
 

@@ -6,7 +6,7 @@ Exposes advanced analytical capabilities:
 2. Distribution Classification (Analytics → Data Shapes)
 3. Multivariate Anomaly Detection (Quality Dashboard)
 4. Seasonal Decomposition (Labor View)
-5. Bootstrap Confidence Intervals (KPI Cards)
+5. Bootstrap Confidence Intervals (Metric Cards)
 """
 
 import logging
@@ -837,15 +837,15 @@ def register_bootstrap_callbacks(app, dm_instance):
     """Register bootstrap confidence interval callbacks."""
 
     @app.callback(
-        Output("kpi-gauge-completion-rate", "figure"),
+        Output("metric-gauge-completion-rate", "figure"),
         Input("store-global-filters", "data"),
         prevent_initial_call=False,
     )
     @timer_callback
     @memoize_with_ttl(seconds=600)
-    def update_kpi_with_ci(filters):
+    def update_metric_with_ci(filters):
         """
-        Create KPI gauge with bootstrap confidence interval band.
+        Create Metric gauge with bootstrap confidence interval band.
 
         Returns:
             Gauge figure with CI band
@@ -916,7 +916,7 @@ def register_bootstrap_callbacks(app, dm_instance):
             return fig
 
         except Exception as e:
-            logger.error(f"Error in update_kpi_with_ci: {e}")
+            logger.error(f"Error in update_metric_with_ci: {e}")
             return create_error_figure(str(e))
 
 # ==========================================

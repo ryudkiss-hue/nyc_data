@@ -161,7 +161,7 @@ charts = [
     "Z-Score Strip (standardized outliers)",
 
     # Executive/Dashboard (4 charts)
-    "KPI Card (single metric)",
+    "Metric Card (single metric)",
     "Gauge Chart (target tracking)",
     "Metric Sparkline (mini trend)",
     "Scorecard (quality metrics)",
@@ -220,7 +220,7 @@ flows = [
     ("Q9: Owner compliance rates?", "Bar Chart (side-by-side)", 8),
     ("Q9: Owner compliance rates?", "Diverging Stacked Bar (positive/negative)", 7),
     ("Q9: Owner compliance rates?", "Dot Plot (precise comparison)", 6),
-    ("Q9: Owner compliance rates?", "KPI Card (single metric)", 5),
+    ("Q9: Owner compliance rates?", "Metric Card (single metric)", 5),
 
     # Q10: Repeat offenders?
     ("Q10: Repeat offenders?", "Outlier Scatter (flagged points)", 8),
@@ -265,7 +265,7 @@ flows = [
     ("Q16: Cost distribution?", "Bubble Chart (3D scatter)", 5),
 
     # Q17: Overall compliance rate?
-    ("Q17: Overall compliance rate?", "KPI Card (single metric)", 10),
+    ("Q17: Overall compliance rate?", "Metric Card (single metric)", 10),
     ("Q17: Overall compliance rate?", "Gauge Chart (target tracking)", 8),
     ("Q17: Overall compliance rate?", "Metric Sparkline (mini trend)", 5),
 

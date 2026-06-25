@@ -5,7 +5,7 @@
 **NYC DOT SIM Toolkit** — A unified Python platform for analyzing NYC's Sidewalk Inspection & Management (SIM) data. Combines:
 - **Live Socrata API** (78 datasets)
 - **Dash Mission Control** (interactive dashboards)
-- **51 KPI Registry** (unified KPI definitions) ← **NEW in Phase 1**
+- **51 Metric Registry** (unified Metric definitions) ← **NEW in Phase 1**
 - **MotherDuck analytics** (cloud-native SQL)
 - **FastAPI backend** (production-ready)
 
@@ -13,8 +13,8 @@
 
 ## ✅ What's Done (Phase 1)
 
-### Unified KPI Registry (COMPLETE)
-- ✅ **51 KPIs consolidated** from 5 scattered modules into single source of truth
+### Unified Metric Registry (COMPLETE)
+- ✅ **51 Metrics consolidated** from 5 scattered modules into single source of truth
 - ✅ **Type-safe models** (dataclasses with full type hints)
 - ✅ **Comprehensive tests** (56 tests, 100% pass rate, ~95% coverage)
 - ✅ **Zero deprecation warnings** (Python 3.14 compliant)
@@ -56,9 +56,9 @@ export MOTHERDUCK_TOKEN=your-token
 | **QUICKSTART.md** | Step-by-step setup guide | `00_DOCUMENTATION/` |
 | **DEPLOYMENT_GUIDE.md** | GitHub Pages & Cloud Run setup | `00_DOCUMENTATION/` |
 | **CLAUDE.md** | Development guidance | Root (also `00_DOCUMENTATION/`) |
-| **EXPANDED_KPI_CHART_REGISTRY.md** | 51 KPIs + 45 chart types | `00_DOCUMENTATION/` |
+| **EXPANDED_METRIC_CHART_REGISTRY.md** | 51 Metrics + 45 chart types | `00_DOCUMENTATION/` |
 | **SOLO_DEVELOPER_GUIDE.md** | Solo development workflow | `00_DOCUMENTATION/` |
-| **KPI_REGISTRY_COMPREHENSIVE_DESIGN.md** | KPI architecture (Phase 1) | `PHASE_1_SPECIFICATION.md` |
+| **METRIC_REGISTRY_COMPREHENSIVE_DESIGN.md** | Metric architecture (Phase 1) | `PHASE_1_SPECIFICATION.md` |
 
 **Organized in:** `00_DOCUMENTATION/` (34 files, indexed in MASTER_DOCUMENTATION_INDEX.md)
 
@@ -74,7 +74,7 @@ NYC DOT SIM Toolkit (v0.5.0)
 │   └── MotherDuck Cloud Analytics
 │
 ├── Computation Layer (Phase 1 ✅)
-│   ├── KPIRegistry (51 KPIs consolidated)
+│   ├── MetricRegistry (51 Metrics consolidated)
 │   ├── TimeSeriesMetadata (forecasting config)
 │   ├── ThresholdConfig (bronze/silver/gold levels)
 │   └── DimensionConfig (dimension breakdowns)
@@ -97,10 +97,10 @@ NYC DOT SIM Toolkit (v0.5.0)
 ## 📋 Phase 1 Completion Checklist
 
 ### Code Delivered
-- ✅ `src/socrata_toolkit/kpi/__init__.py` (Module export)
-- ✅ `src/socrata_toolkit/kpi/models.py` (365 lines, all dataclasses)
-- ✅ `src/socrata_toolkit/kpi/registry.py` (520 lines, singleton pattern)
-- ✅ `tests/test_kpi_registry.py` (600+ lines, 56 tests)
+- ✅ `src/socrata_toolkit/metric/__init__.py` (Module export)
+- ✅ `src/socrata_toolkit/metric/models.py` (365 lines, all dataclasses)
+- ✅ `src/socrata_toolkit/metric/registry.py` (520 lines, singleton pattern)
+- ✅ `tests/test_metric_registry.py` (600+ lines, 56 tests)
 
 ### Quality Metrics
 - ✅ 56/56 tests passing (100% pass rate)
@@ -138,28 +138,28 @@ NYC DOT SIM Toolkit (v0.5.0)
 
 ### Run Tests
 ```bash
-# Phase 1 KPI tests only
-python -m pytest tests/test_kpi_registry.py -v
+# Phase 1 Metric tests only
+python -m pytest tests/test_metric_registry.py -v
 
 # Full suite
 python -m pytest tests/ -q --tb=short
 
 # Specific test
-python -m pytest tests/test_kpi_registry.py::TestKPIRegistry::test_load_all_51_kpis -v
+python -m pytest tests/test_metric_registry.py::TestMetricRegistry::test_load_all_51_metrics -v
 ```
 
-### Import KPI Registry
+### Import Metric Registry
 ```python
-from socrata_toolkit.kpi import KPIRegistry, KPIDefinition, KPIResult
+from socrata_toolkit.metric import MetricRegistry, MetricDefinition, MetricResult
 
-registry = KPIRegistry.instance()
+registry = MetricRegistry.instance()
 registry.load_definitions()  # Load from DATASET_REGISTRY.yaml
 
-kpi = registry.get_kpi("defect_density")
-print(f"Target: {kpi.target}, Unit: {kpi.unit}")
+metric = registry.get_metric("defect_density")
+print(f"Target: {metric.target}, Unit: {metric.unit}")
 
-# Get all KPIs by category
-violations_kpis = registry.get_kpis_by_category("violations")
+# Get all Metrics by category
+violations_metrics = registry.get_metrics_by_category("violations")
 ```
 
 ### Deploy to Cloud Run
@@ -189,9 +189,9 @@ python -m socrata_toolkit.core.cli dataset health --all --sort-by staleness
 
 **If you're developing:**
 1. [SOLO_DEVELOPER_GUIDE.md](SOLO_DEVELOPER_GUIDE.md) — Workflow & permissions
-2. [EXPANDED_KPI_CHART_REGISTRY.md](EXPANDED_KPI_CHART_REGISTRY.md) — Chart types & KPI mappings
-3. `src/socrata_toolkit/kpi/models.py` — Code reference
-4. `tests/test_kpi_registry.py` — Usage examples
+2. [EXPANDED_METRIC_CHART_REGISTRY.md](EXPANDED_METRIC_CHART_REGISTRY.md) — Chart types & Metric mappings
+3. `src/socrata_toolkit/metric/models.py` — Code reference
+4. `tests/test_metric_registry.py` — Usage examples
 
 **If you're deploying:**
 1. [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) — Full guide
@@ -234,8 +234,8 @@ curl https://data.cityofnewyork.us/api/3/
 
 - **Questions?** Check [QUICKSTART.md](QUICKSTART.md) or [README.md](README.md)
 - **Documentation:** All docs in `00_DOCUMENTATION/` (index: MASTER_DOCUMENTATION_INDEX.md)
-- **Code reference:** Docstrings in `src/socrata_toolkit/kpi/`
-- **Tests:** `tests/test_kpi_registry.py` has usage examples
+- **Code reference:** Docstrings in `src/socrata_toolkit/metric/`
+- **Tests:** `tests/test_metric_registry.py` has usage examples
 
 ---
 

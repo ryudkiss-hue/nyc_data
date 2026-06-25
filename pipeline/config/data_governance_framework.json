@@ -3,10 +3,10 @@
     "version": "1.0",
     "created_at": "2026-06-18",
     "name": "NYC DOT Unified Data Governance & Lineage Framework",
-    "scope": "All 57 source datasets + 51 KPIs + 5 domain schemas + all MotherDuck dives",
+    "scope": "All 57 source datasets + 51 Metrics + 5 domain schemas + all MotherDuck dives",
     "principles": [
       "Single source of truth for all data assets",
-      "Complete lineage from raw data through KPI materialization",
+      "Complete lineage from raw data through Metric materialization",
       "Qualitative categorization per data management best practices",
       "Governance rules tied to data sensitivity, quality, and SLA",
       "Discovery artifacts (dives) integrated into governance model",
@@ -146,30 +146,30 @@
     }
   },
 
-  "kpi_governance_model": {
-    "total_kpis": 51,
+  "metric_governance_model": {
+    "total_metrics": 51,
     "classification_dimensions": {
       "business_outcome": {
         "service_delivery": {
-          "definition": "KPIs measuring core service performance",
+          "definition": "Metrics measuring core service performance",
           "examples": ["ramp_completion_rate", "violation_closure_rate", "inspection_timeliness"],
           "owner_type": "program_manager",
           "frequency": "daily|weekly"
         },
         "operational_efficiency": {
-          "definition": "KPIs measuring operational performance",
+          "definition": "Metrics measuring operational performance",
           "examples": ["inspection_cost_per_unit", "average_resolution_time", "resource_utilization"],
           "owner_type": "operations_manager",
           "frequency": "weekly|monthly"
         },
         "compliance_governance": {
-          "definition": "KPIs measuring regulatory/policy compliance",
+          "definition": "Metrics measuring regulatory/policy compliance",
           "examples": ["sla_compliance_rate", "accessibility_audit_pass_rate", "budget_variance"],
           "owner_type": "compliance_officer",
           "frequency": "monthly|quarterly"
         },
         "strategic_impact": {
-          "definition": "KPIs tied to strategic initiatives",
+          "definition": "Metrics tied to strategic initiatives",
           "examples": ["new_ramp_installation_rate", "accessibility_improvement_index", "community_satisfaction"],
           "owner_type": "executive_sponsor",
           "frequency": "quarterly|annually"
@@ -207,27 +207,27 @@
         "real_time": {
           "sla": "≤1 hour",
           "update_mechanism": "event_driven",
-          "kpis": ["open_permits_count", "active_inspections", "ramp_complaints_pending"]
+          "metrics": ["open_permits_count", "active_inspections", "ramp_complaints_pending"]
         },
         "daily": {
           "sla": "≤24 hours",
           "update_mechanism": "daily_refresh",
-          "kpis": ["violations_resolved_today", "inspection_completion_rate", "ramp_progress_daily"]
+          "metrics": ["violations_resolved_today", "inspection_completion_rate", "ramp_progress_daily"]
         },
         "weekly": {
           "sla": "≤7 days",
           "update_mechanism": "weekly_batch",
-          "kpis": ["weekly_inspection_average", "ramp_installation_pace", "permit_processing_time"]
+          "metrics": ["weekly_inspection_average", "ramp_installation_pace", "permit_processing_time"]
         },
         "monthly": {
           "sla": "≤30 days",
           "update_mechanism": "month_end_close",
-          "kpis": ["monthly_budget_variance", "cost_per_inspection", "contractor_performance_score"]
+          "metrics": ["monthly_budget_variance", "cost_per_inspection", "contractor_performance_score"]
         },
         "quarterly": {
           "sla": "≤90 days",
           "update_mechanism": "quarter_end_reconciliation",
-          "kpis": ["sla_compliance_rate", "data_quality_score", "strategic_goal_progress"]
+          "metrics": ["sla_compliance_rate", "data_quality_score", "strategic_goal_progress"]
         }
       },
 
@@ -259,8 +259,8 @@
       }
     },
 
-    "kpi_lineage_sample": {
-      "example_kpi_1": {
+    "metric_lineage_sample": {
+      "example_metric_1": {
         "name": "ramp_completion_rate",
         "definition": "Percentage of ADA ramps completed vs. planned",
         "source_datasets": ["ramp_progress", "ramp_locations"],
@@ -279,7 +279,7 @@
         "refresh_schedule": "daily_06:00_utc",
         "sla": "HIGH"
       },
-      "example_kpi_2": {
+      "example_metric_2": {
         "name": "violation_closure_rate_by_borough",
         "definition": "Rate of violations closed within SLA by borough",
         "source_datasets": ["violations", "inspection"],
@@ -335,7 +335,7 @@
         "Retention: 2 years (supports historical analysis)"
       ],
       "access_control": {
-        "read": ["analysts", "data_scientists", "kpi_calculations"],
+        "read": ["analysts", "data_scientists", "metric_calculations"],
         "write": "data_pipeline_service_account_only",
         "delete": "retention_policy_automation"
       },
@@ -354,7 +354,7 @@
           "inspection_summary (rolled-up counts, rates by inspector/borough/time)",
           "violation_timeline (violation lifecycle with SLA tracking)",
           "resolution_funnel (stages of closure process)",
-          "inspector_performance (KPIs per inspector)"
+          "inspector_performance (Metrics per inspector)"
         ],
         "governance_rules": [
           "Pre-computed aggregations for common queries",
@@ -555,7 +555,7 @@
         "sign_off_approver": "Commissioner",
         "documentation": "Executive briefing covering strategic goal progress, key metrics, risk areas, and recommendations. Combines data from all major programs.",
         "quality_gates": [
-          "all_kpis_on_schedule",
+          "all_metrics_on_schedule",
           "no_breaking_alerts",
           "executive_review_complete"
         ]
@@ -618,7 +618,7 @@
       "mechanism": "immutable_audit_trail",
       "captures": [
         "all_data_access (read/write/delete)",
-        "kpi_calculation_runs (inputs, outputs, dependencies)",
+        "metric_calculation_runs (inputs, outputs, dependencies)",
         "schema_changes (who, when, what changed)",
         "dive_creation_and_modifications",
         "quality_gate_violations",
@@ -636,7 +636,7 @@
         "Approve schema changes in analytics layer",
         "Review and sign-off on strategic dives",
         "Resolve data governance disputes",
-        "Approve new KPIs and changes to existing KPIs",
+        "Approve new Metrics and changes to existing Metrics",
         "Monitor compliance with governance framework"
       ]
     },
@@ -653,16 +653,16 @@
       "sla": "Quality issues responded to within 24 hours"
     },
 
-    "kpi_owners": {
-      "role": "Owner of specific KPI calculations",
+    "metric_owners": {
+      "role": "Owner of specific Metric calculations",
       "responsibilities": [
-        "Define KPI calculation and maintain specification",
-        "Monitor KPI quality and refresh schedule",
-        "Communicate KPI results to stakeholders",
+        "Define Metric calculation and maintain specification",
+        "Monitor Metric quality and refresh schedule",
+        "Communicate Metric results to stakeholders",
         "Investigate anomalies and variances",
-        "Update KPI as business requirements change"
+        "Update Metric as business requirements change"
       ],
-      "sla": "KPI delays reported within 4 hours of SLA miss"
+      "sla": "Metric delays reported within 4 hours of SLA miss"
     },
 
     "data_engineers": {
@@ -683,7 +683,7 @@
         "Understand data limitations and SLAs",
         "Report data quality issues immediately",
         "Document analytical assumptions",
-        "Request new KPIs through formal process"
+        "Request new Metrics through formal process"
       ]
     }
   }

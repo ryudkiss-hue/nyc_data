@@ -50,11 +50,11 @@ export default function DiveComponent() {{
   const rows = Array.isArray(data) ? data : [];
   const meta = rows[0] ?? {{}};
   const bench = N(meta.benchmark);
-  const chartData = rows.map(r => ({{ name: r.borough === "STATEN ISLAND" ? "SI" : r.borough.slice(0,3), value: N(r.kpi_value), full: r.borough }}));
+  const chartData = rows.map(r => ({{ name: r.borough === "STATEN ISLAND" ? "SI" : r.borough.slice(0,3), value: N(r.metric_value), full: r.borough }}));
 
   // Dynamic Analytical Insight
-  const maxRow = rows.reduce((prev, curr) => (N(prev.kpi_value) > N(curr.kpi_value)) ? prev : curr, rows[0] || {{}});
-  const avgValue = rows.length > 0 ? rows.reduce((acc, curr) => acc + N(curr.kpi_value), 0) / rows.length : 0;
+  const maxRow = rows.reduce((prev, curr) => (N(prev.metric_value) > N(curr.metric_value)) ? prev : curr, rows[0] || {{}});
+  const avgValue = rows.length > 0 ? rows.reduce((acc, curr) => acc + N(curr.metric_value), 0) / rows.length : 0;
   
   if (isLoading) {{
     return (
@@ -94,8 +94,8 @@ export default function DiveComponent() {{
           <div key={{r.borough}} style={{{{ padding: "20px", border: "1px solid #EEE", borderRadius: "8px", borderLeft: "4px solid #005696", boxShadow: "0 2px 4px rgba(0,0,0,0.05)" }}}}>
             <div style={{{{ fontSize: "11px", fontWeight: 700, color: "#666", textTransform: "uppercase" }}}}>{{FMT(r.borough)}}</div>
             <div style={{{{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "12px" }}}}>
-              <div style={{{{ fontSize: "24px", fontWeight: 800 }}}}>{{N(r.kpi_value).toFixed(2)}}</div>
-              <div style={{{{ padding: "2px 8px", background: N(r.kpi_value) > bench ? "#FFEBEE" : "#F5F5F5", color: N(r.kpi_value) > bench ? "#D32F2F" : "#666", borderRadius: "4px", fontSize: "10px", fontWeight: "bold" }}}}>
+              <div style={{{{ fontSize: "24px", fontWeight: 800 }}}}>{{N(r.metric_value).toFixed(2)}}</div>
+              <div style={{{{ padding: "2px 8px", background: N(r.metric_value) > bench ? "#FFEBEE" : "#F5F5F5", color: N(r.metric_value) > bench ? "#D32F2F" : "#666", borderRadius: "4px", fontSize: "10px", fontWeight: "bold" }}}}>
                 {{meta.unit}}
               </div>
             </div>
@@ -129,7 +129,7 @@ export default function DiveComponent() {{
           <h5 style={{{{ margin: 0, fontSize: "16px", fontWeight: 700, color: "#005696" }}}}>Automated Bayesian Insight</h5>
         </div>
         <p style={{{{ margin: 0, fontSize: "14px", lineHeight: 1.6 }}}}>
-          The current telemetry indicates <strong>{{FMT(maxRow.borough)}}</strong> leads the metric with a value of <strong>{{N(maxRow.kpi_value).toFixed(2)}} {{meta.unit}}</strong>. 
+          The current telemetry indicates <strong>{{FMT(maxRow.borough)}}</strong> leads the metric with a value of <strong>{{N(maxRow.metric_value).toFixed(2)}} {{meta.unit}}</strong>. 
           The citywide average stands at <strong>{{avgValue.toFixed(2)}} {{meta.unit}}</strong>. 
           {{bench > 0 && `The compliance benchmark of ${{bench}} provides the threshold for variance analysis.`}}
           These figures are dynamically derived from live Socrata ingestion via DuckDB L2 caching.

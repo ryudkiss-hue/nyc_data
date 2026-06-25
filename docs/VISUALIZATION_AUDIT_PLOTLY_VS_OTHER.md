@@ -28,7 +28,7 @@ purpose: Inventory all 57 dataset visualizations; classify by rendering library;
 | **Plotly Graph Objects** | 9 | 14% | Heatmap, Gauge, Scatter | ✅ Moderate (more config) |
 | **GIS/Choropleth** | 6 | 10% | Folium, Mapbox, Plotly Geo | ⚠️ Complex (geometry handling) |
 | **D3/Custom** | 3 | 5% | Network graphs, TSP visualizations | ❌ High (custom JS) |
-| **Dash KPI Cards** | 5 | 8% | Scorecards, metric displays | ✅ Easy (Mantine components) |
+| **Dash Metric Cards** | 5 | 8% | Scorecards, metric displays | ✅ Easy (Mantine components) |
 | **Deprecated/None** | 7 | 12% | Archived datasets | — | — |
 
 ---
@@ -178,8 +178,8 @@ purpose: Inventory all 57 dataset visualizations; classify by rendering library;
 **GIS-based (6 charts):**
 - (Various spatial datasets handled in `src/socrata_toolkit/spatial/`)
 
-**Dashboard KPI Cards (5 metrics):**
-- (Quality scorecard components in `app/visualization_engine/kpi_cards.py`)
+**Dashboard Metric Cards (5 metrics):**
+- (Quality scorecard components in `app/visualization_engine/metric_cards.py`)
 
 ---
 
@@ -244,9 +244,9 @@ No visualizations planned. These are deprecated or have data quality issues.
 - Need domain knowledge of Plotly API
 - Harder to maintain
 
-**When to use:** Gauges (KPI displays), Heatmaps, Confidence intervals with custom annotations.
+**When to use:** Gauges (Metric displays), Heatmaps, Confidence intervals with custom annotations.
 
-**NYC DOT use:** `kpi_gauge()`, `priority_heatmap()`, SLA forecasting displays.
+**NYC DOT use:** `metric_gauge()`, `priority_heatmap()`, SLA forecasting displays.
 
 ---
 
@@ -299,7 +299,7 @@ No visualizations planned. These are deprecated or have data quality issues.
 
 ---
 
-### Dash KPI Cards / Mantine Components (5 charts) 📊 **FOR DASHBOARDS**
+### Dash Metric Cards / Mantine Components (5 charts) 📊 **FOR DASHBOARDS**
 
 **Pros:**
 - Simple, fast to render
@@ -311,7 +311,7 @@ No visualizations planned. These are deprecated or have data quality issues.
 - Limited to metric displays (not full charts)
 - Can't do drill-down or cross-filtering
 
-**When to use:** KPI scorecards, summary metrics, dashboards.
+**When to use:** Metric scorecards, summary metrics, dashboards.
 
 **NYC DOT use:** Quality scorecards, SLA status summaries.
 

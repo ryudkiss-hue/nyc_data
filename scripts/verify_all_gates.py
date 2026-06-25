@@ -56,26 +56,26 @@ def run_gate_2(conn: duckdb.DuckDBPyConnection) -> Tuple[bool, str]:
 
 
 def run_gate_3(conn: duckdb.DuckDBPyConnection) -> Tuple[bool, str]:
-    """Gate 3: KPI materialization table exists with rows."""
+    """Gate 3: Metric materialization table exists with rows."""
     try:
         result = conn.execute("""
-            SELECT COUNT(*) as kpi_count
+            SELECT COUNT(*) as metric_count
             FROM information_schema.tables
-            WHERE table_schema = 'serving' AND table_name = 'kpi_borough_results'
+            WHERE table_schema = 'serving' AND table_name = 'metric_borough_results'
         """).fetchall()
 
         if not result or result[0][0] == 0:
-            return False, "Gate 3 FAILED: serving.kpi_borough_results does not exist"
+            return False, "Gate 3 FAILED: serving.metric_borough_results does not exist"
 
-        kpi_result = conn.execute("""
-            SELECT COUNT(*) as row_count FROM serving.kpi_borough_results
+        metric_result = conn.execute("""
+            SELECT COUNT(*) as row_count FROM serving.metric_borough_results
         """).fetchall()
 
-        if not kpi_result or kpi_result[0][0] == 0:
-            return False, "Gate 3 FAILED: serving.kpi_borough_results exists but has 0 rows"
+        if not metric_result or metric_result[0][0] == 0:
+            return False, "Gate 3 FAILED: serving.metric_borough_results exists but has 0 rows"
 
-        kpi_rows = kpi_result[0][0]
-        return True, f"Gate 3 PASSED: KPI table has {kpi_rows} records"
+        metric_rows = metric_result[0][0]
+        return True, f"Gate 3 PASSED: Metric table has {metric_rows} records"
     except Exception as e:
         return False, f"Gate 3 FAILED: {str(e)}"
 
@@ -120,7 +120,7 @@ def main() -> int:
     gates = [
         ("Gate 1: Raw Data Load", run_gate_1),
         ("Gate 2: Staging Deduplication", run_gate_2),
-        ("Gate 3: KPI Materialization", run_gate_3),
+        ("Gate 3: Metric Materialization", run_gate_3),
         ("Gate 4: Cross-Stage Consistency", run_gate_4),
     ]
 

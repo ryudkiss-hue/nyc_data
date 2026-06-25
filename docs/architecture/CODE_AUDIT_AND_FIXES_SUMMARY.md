@@ -41,7 +41,7 @@ Comprehensive deep audit (60+ minutes) of all 5 implementation areas identified 
 **Before:** 1 line (stub)  
 **After:** 210 lines (fully implemented)  
 **Implemented:**
-- `create_borough_summary()` - Borough KPI view
+- `create_borough_summary()` - Borough Metric view
 - `create_time_series_snapshots()` - Monthly trend view
 - `create_material_analysis_mart()` - Material failure analysis view
 - `create_clustering_features()` - Feature matrix for ML
@@ -176,7 +176,7 @@ fix(pipeline): implement complete DuckDB pipeline with ETL orchestration
   
 - duckdb_analytics_models.py: 210 lines
   * 5 pre-computed analytics views
-  * Borough KPIs, time-series, material analysis, clustering, geo animation
+  * Borough Metrics, time-series, material analysis, clustering, geo animation
   
 - duckdb_validation.py: 165 lines
   * Complete validation framework

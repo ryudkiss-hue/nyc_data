@@ -35,7 +35,7 @@ Complete implementation of all 5 methods:
   - Adjustable period (weekly, monthly, yearly)
 
 - **Bootstrap Confidence Intervals** (lines 813-887)
-  - KPI gauge with CI band annotation
+  - Metric gauge with CI band annotation
   - 95% confidence level
   - Point estimate + [lower, upper] bounds
 
@@ -224,7 +224,7 @@ All latency targets exceeded:
    - 4-panel subplot shows original, trend, seasonal, residual
    - Adjustable period (weekly, monthly, yearly)
 
-5. **Bootstrap CI:** KPI Cards (existing cards)
+5. **Bootstrap CI:** Metric Cards (existing cards)
    - Gauges now show CI band (shaded region)
    - Text shows [lower, upper] bounds
    - 95% confidence level
@@ -395,7 +395,7 @@ git commit -m "feat: Implement 5 hidden analysis methods in Dash UI
 - Distribution classification (Analytics view)
 - Multivariate anomaly detection (Quality Dashboard)
 - Seasonal decomposition (Labor View)
-- Bootstrap confidence intervals (KPI Cards)
+- Bootstrap confidence intervals (Metric Cards)
 
 All 40+ tests pass. Performance targets met (<500ms P95).
 Documentation complete."

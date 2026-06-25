@@ -181,7 +181,7 @@ Manual: NYC Street Design Manual 4th Edition, Section 4.1, Page XX
 Change: HMA thickness updated from 2.0" to 2.5"
 Impact: 
   - Updated ASPH_STANDARD in material/definitions.py
-  - All dependent KPI calculations use new value
+  - All dependent Metric calculations use new value
   - Lifecycle cost estimates may change
 
 Verified by: [Your Name]

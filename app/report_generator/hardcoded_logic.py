@@ -154,7 +154,7 @@ SEASONAL_RESOURCE_ALLOCATION: dict[str, dict] = {
         'typical_amplitude': 0.40,  # 40% increase typical
         'resource_increase_formula': 'baseline * (1 + amplitude)',
         'recommended_staffing': 'Increase crew hours by {increase_pct:.0f}% during winter',
-        'material_stockpile': 'Pre-position salt, sand, patching materials 30 days before peak',
+        'material_stocmetricle': 'Pre-position salt, sand, patching materials 30 days before peak',
         'equipment_prep': 'Service snow removal equipment, ensure adequate tire treads',
         'forecast_model': 'Bayesian seasonal autoregressive with weather integration'
     },
@@ -163,7 +163,7 @@ SEASONAL_RESOURCE_ALLOCATION: dict[str, dict] = {
         'typical_amplitude': -0.25,  # 25% decline typical
         'resource_increase_formula': 'baseline * (1 + amplitude)',
         'recommended_staffing': 'Reduce crew hours by {increase_pct:.0f}% as weather improves',
-        'material_stockpile': 'Deplete winter stockpiles, prepare for spring cleaning',
+        'material_stocmetricle': 'Deplete winter stocmetricles, prepare for spring cleaning',
         'equipment_prep': 'Clean and maintain equipment, prepare for summer use',
         'forecast_model': 'Account for delayed damage from winter conditions'
     },
@@ -172,7 +172,7 @@ SEASONAL_RESOURCE_ALLOCATION: dict[str, dict] = {
         'typical_amplitude': -0.05,  # Slight decline or stable
         'resource_increase_formula': 'baseline * (1 + amplitude)',
         'recommended_staffing': 'Maintain baseline staffing',
-        'material_stockpile': 'Minimal stockpile needed',
+        'material_stocmetricle': 'Minimal stocmetricle needed',
         'equipment_prep': 'Routine preventive maintenance',
         'forecast_model': 'Expect low seasonality; focus on trend'
     },
@@ -181,7 +181,7 @@ SEASONAL_RESOURCE_ALLOCATION: dict[str, dict] = {
         'typical_amplitude': 0.15,  # 15% increase typical
         'resource_increase_formula': 'baseline * (1 + amplitude)',
         'recommended_staffing': 'Increase crew hours by {increase_pct:.0f}% as fall weather arrives',
-        'material_stockpile': 'Begin stockpiling winter materials',
+        'material_stocmetricle': 'Begin stocmetricling winter materials',
         'equipment_prep': 'Service equipment for winter season',
         'forecast_model': 'Prepare for winter peak'
     }

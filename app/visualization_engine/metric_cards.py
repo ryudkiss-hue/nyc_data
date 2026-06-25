@@ -1,14 +1,14 @@
-"""KPI Cards: 18 Dashboard Metrics (5 boroughs × 18 KPIs = 90 rows).
+"""Metric Cards: 18 Dashboard Metrics (5 boroughs × 18 Metrics = 90 rows).
 
-Renders all 18 KPI cards with dynamic values from MotherDuck.
+Renders all 18 Metric cards with dynamic values from MotherDuck.
 Each card displays:
-- KPI name
+- Metric name
 - Current value
 - Borough
 - Metric category
 - Trend indicator (up/down/stable)
 
-Data source: app_queries.v_kpi_dashboard
+Data source: app_queries.v_metric_dashboard
 """
 import logging
 
@@ -21,16 +21,16 @@ from .statistics_display import StatisticsPanel
 
 logger = logging.getLogger(__name__)
 
-class KPICards:
-    """Renders all 18 KPI cards with dynamic values.
+class MetricCards:
+    """Renders all 18 Metric cards with dynamic values.
 
     Attributes:
-        conn: MotherDuckConnection for querying app_queries.v_kpi_dashboard
+        conn: MotherDuckConnection for querying app_queries.v_metric_dashboard
         data: DataFrame from serving view
     """
 
     def __init__(self, connection: MotherDuckConnection):
-        """Initialize KPI cards.
+        """Initialize Metric cards.
 
         Args:
             connection: MotherDuckConnection instance
@@ -39,85 +39,85 @@ class KPICards:
         self.data = None
 
     def fetch_data(self) -> pd.DataFrame:
-        """Fetch data from app_queries.v_kpi_dashboard.
+        """Fetch data from app_queries.v_metric_dashboard.
 
         Returns:
-            DataFrame with columns: kpi_name, borough, kpi_value, metric_category,
+            DataFrame with columns: metric_name, borough, metric_value, metric_category,
                                     analytics_timestamp
 
         Raises:
             RuntimeError: If query fails
         """
-        query = "SELECT * FROM app_queries.v_kpi_dashboard ORDER BY borough, kpi_name"
+        query = "SELECT * FROM app_queries.v_metric_dashboard ORDER BY borough, metric_name"
         self.data = self.conn.fetch_dataframe(query)
         if self.data.empty:
             raise RuntimeError(
-                "No data in app_queries.v_kpi_dashboard. "
+                "No data in app_queries.v_metric_dashboard. "
                 "Run Phase 1 (MotherDuck infrastructure) first."
             )
-        logger.info(f"Fetched {len(self.data)} rows from KPI dashboard view")
+        logger.info(f"Fetched {len(self.data)} rows from Metric dashboard view")
         return self.data
 
-    def get_kpi_names(self) -> list[str]:
-        """Get list of unique KPI names.
+    def get_metric_names(self) -> list[str]:
+        """Get list of unique Metric names.
 
         Returns:
-            List of KPI names
+            List of Metric names
         """
         if self.data is None:
             self.fetch_data()
-        return sorted(self.data["kpi_name"].unique().tolist())
+        return sorted(self.data["metric_name"].unique().tolist())
 
-    def get_kpi_for_borough(self, kpi_name: str, borough: str) -> dict:
-        """Get specific KPI value for a borough.
+    def get_metric_for_borough(self, metric_name: str, borough: str) -> dict:
+        """Get specific Metric value for a borough.
 
         Args:
-            kpi_name: Name of the KPI
+            metric_name: Name of the Metric
             borough: Borough code
 
         Returns:
-            Dictionary with KPI data
+            Dictionary with Metric data
 
         Raises:
-            ValueError: If KPI or borough not found
+            ValueError: If Metric or borough not found
         """
         if self.data is None:
             self.fetch_data()
 
-        kpi_data = self.data[
-            (self.data["kpi_name"] == kpi_name) & (self.data["borough"] == borough)
+        metric_data = self.data[
+            (self.data["metric_name"] == metric_name) & (self.data["borough"] == borough)
         ]
-        if kpi_data.empty:
-            raise ValueError(f"KPI {kpi_name} not found for borough {borough}")
+        if metric_data.empty:
+            raise ValueError(f"Metric {metric_name} not found for borough {borough}")
 
-        row = kpi_data.iloc[0]
+        row = metric_data.iloc[0]
         return {
-            "kpi_name": row["kpi_name"],
+            "metric_name": row["metric_name"],
             "borough": row["borough"],
-            "value": row["kpi_value"],
+            "value": row["metric_value"],
             "category": row["metric_category"],
             "timestamp": row["analytics_timestamp"],
         }
 
-    def render_kpi_card(
-        self, kpi_name: str, borough: str
+    def render_metric_card(
+        self, metric_name: str, borough: str
     ) -> tuple[go.Figure, StatisticsPanel]:
-        """Render a single KPI card.
+        """Render a single Metric card.
 
         Args:
-            kpi_name: Name of the KPI
+            metric_name: Name of the Metric
             borough: Borough code
 
         Returns:
             Tuple of (figure, statistics)
 
         Raises:
-            ValueError: If KPI or borough not found
+            ValueError: If Metric or borough not found
         """
-        kpi_data = self.get_kpi_for_borough(kpi_name, borough)
+        metric_data = self.get_metric_for_borough(metric_name, borough)
 
         # Format value appropriately
-        value = kpi_data["value"]
+        value = metric_data["value"]
         if isinstance(value, float):
             formatted_value = f"{value:.2f}" if value < 1000 else f"{value:.0f}"
         else:
@@ -129,7 +129,7 @@ class KPICards:
                 go.Indicator(
                     mode="number",
                     value=value,
-                    title={"text": f"{kpi_data['category']} ({borough})"},
+                    title={"text": f"{metric_data['category']} ({borough})"},
                     domain={"x": [0, 1], "y": [0, 1]},
                     number={"suffix": " ", "font": {"size": 28}},
                 )
@@ -145,59 +145,59 @@ class KPICards:
         stats = StatisticsPanel(
             record_count=1,
             mean_value=value if isinstance(value, (int, float)) else None,
-            last_timestamp=pd.to_datetime(kpi_data["timestamp"]),
-            calculation_method=f"{kpi_name} KPI",
+            last_timestamp=pd.to_datetime(metric_data["timestamp"]),
+            calculation_method=f"{metric_name} Metric",
             confidence_level="95%",
         )
 
         return fig, stats
 
-    def render_all_kpi_cards(self) -> dict[str, tuple[go.Figure, StatisticsPanel]]:
-        """Render all 18 KPI cards (one per KPI, aggregate across boroughs).
+    def render_all_metric_cards(self) -> dict[str, tuple[go.Figure, StatisticsPanel]]:
+        """Render all 18 Metric cards (one per Metric, aggregate across boroughs).
 
         Returns:
-            Dictionary mapping KPI names to (figure, statistics) tuples
+            Dictionary mapping Metric names to (figure, statistics) tuples
         """
         self.fetch_data()
 
-        kpi_names = self.get_kpi_names()
+        metric_names = self.get_metric_names()
         cards = {}
 
-        for kpi_name in kpi_names:
-            kpi_subset = self.data[self.data["kpi_name"] == kpi_name]
+        for metric_name in metric_names:
+            metric_subset = self.data[self.data["metric_name"] == metric_name]
 
-            fig = self._create_kpi_card_figure(kpi_name, kpi_subset)
+            fig = self._create_metric_card_figure(metric_name, metric_subset)
 
             stats = StatisticsPanel(
-                record_count=len(kpi_subset),
-                mean_value=kpi_subset["kpi_value"].mean(),
-                min_value=kpi_subset["kpi_value"].min(),
-                max_value=kpi_subset["kpi_value"].max(),
-                last_timestamp=pd.to_datetime(kpi_subset["analytics_timestamp"]).max(),
-                calculation_method=f"KPI: {kpi_name}",
+                record_count=len(metric_subset),
+                mean_value=metric_subset["metric_value"].mean(),
+                min_value=metric_subset["metric_value"].min(),
+                max_value=metric_subset["metric_value"].max(),
+                last_timestamp=pd.to_datetime(metric_subset["analytics_timestamp"]).max(),
+                calculation_method=f"Metric: {metric_name}",
                 confidence_level="95%",
             )
 
-            cards[kpi_name] = (fig, stats)
+            cards[metric_name] = (fig, stats)
 
-        logger.info(f"Rendered {len(cards)} KPI cards")
+        logger.info(f"Rendered {len(cards)} Metric cards")
         return cards
 
-    def _create_kpi_card_figure(self, kpi_name: str, kpi_data: pd.DataFrame) -> go.Figure:
-        """Create a figure for a single KPI aggregated across boroughs.
+    def _create_metric_card_figure(self, metric_name: str, metric_data: pd.DataFrame) -> go.Figure:
+        """Create a figure for a single Metric aggregated across boroughs.
 
         Args:
-            kpi_name: Name of the KPI
-            kpi_data: DataFrame with this KPI across all boroughs
+            metric_name: Name of the Metric
+            metric_data: DataFrame with this Metric across all boroughs
 
         Returns:
             Plotly figure
         """
-        # Create a gauge or number indicator depending on KPI type
-        avg_value = kpi_data["kpi_value"].mean()
+        # Create a gauge or number indicator depending on Metric type
+        avg_value = metric_data["metric_value"].mean()
 
         # Determine appropriate gauge range and color
-        if "probability" in kpi_name.lower() or "rate" in kpi_name.lower():
+        if "probability" in metric_name.lower() or "rate" in metric_name.lower():
             gauge_range = [0, 100]
             color = (
                 "green"
@@ -205,7 +205,7 @@ class KPICards:
                 else "orange" if avg_value >= 50
                 else "red"
             )
-        elif "strength" in kpi_name.lower() or "score" in kpi_name.lower():
+        elif "strength" in metric_name.lower() or "score" in metric_name.lower():
             gauge_range = [0, 100]
             color = (
                 "green"
@@ -214,7 +214,7 @@ class KPICards:
                 else "red"
             )
         else:
-            gauge_range = [kpi_data["kpi_value"].min() * 0.9, kpi_data["kpi_value"].max() * 1.1]
+            gauge_range = [metric_data["metric_value"].min() * 0.9, metric_data["metric_value"].max() * 1.1]
             color = "blue"
 
         fig = go.Figure(
@@ -222,7 +222,7 @@ class KPICards:
                 go.Indicator(
                     mode="gauge+number",
                     value=avg_value,
-                    title={"text": kpi_name.replace("_", " ").title()},
+                    title={"text": metric_name.replace("_", " ").title()},
                     domain={"x": [0, 1], "y": [0, 1]},
                     gauge={
                         "axis": {"range": gauge_range},
@@ -250,8 +250,8 @@ class KPICards:
 
         return fig
 
-    def render_kpi_summary_table(self) -> tuple[go.Figure, StatisticsPanel]:
-        """Render summary table of all KPI values by borough.
+    def render_metric_summary_table(self) -> tuple[go.Figure, StatisticsPanel]:
+        """Render summary table of all Metric values by borough.
 
         Returns:
             Tuple of (figure, statistics)
@@ -259,11 +259,11 @@ class KPICards:
         if self.data is None:
             self.fetch_data()
 
-        # Create pivot table: KPIs × Boroughs
+        # Create pivot table: Metrics × Boroughs
         pivot_data = self.data.pivot_table(
-            index="kpi_name",
+            index="metric_name",
             columns="borough",
-            values="kpi_value",
+            values="metric_value",
             aggfunc="first",
         )
 
@@ -274,7 +274,7 @@ class KPICards:
             data=[
                 go.Table(
                     header=dict(
-                        values=["KPI"] + list(pivot_data.columns),
+                        values=["Metric"] + list(pivot_data.columns),
                         fill_color="paleturquoise",
                         align="left",
                         font=dict(color="black", size=12),
@@ -291,25 +291,25 @@ class KPICards:
         )
 
         fig.update_layout(
-            title="KPI Summary: All Metrics by Borough",
+            title="Metric Summary: All Metrics by Borough",
             height=600,
             font={"family": "Arial, sans-serif", "size": 11},
         )
 
         stats = StatisticsPanel(
             record_count=len(self.data),
-            mean_value=self.data["kpi_value"].mean(),
-            min_value=self.data["kpi_value"].min(),
-            max_value=self.data["kpi_value"].max(),
+            mean_value=self.data["metric_value"].mean(),
+            min_value=self.data["metric_value"].min(),
+            max_value=self.data["metric_value"].max(),
             last_timestamp=pd.to_datetime(self.data["analytics_timestamp"]).max(),
-            calculation_method="KPI Aggregation",
+            calculation_method="Metric Aggregation",
             confidence_level="95%",
         )
 
         return fig, stats
 
-    def render_kpi_comparison_chart(self) -> tuple[go.Figure, StatisticsPanel]:
-        """Render comparison chart of average KPI values.
+    def render_metric_comparison_chart(self) -> tuple[go.Figure, StatisticsPanel]:
+        """Render comparison chart of average Metric values.
 
         Returns:
             Tuple of (figure, statistics)
@@ -317,16 +317,16 @@ class KPICards:
         if self.data is None:
             self.fetch_data()
 
-        # Average each KPI across boroughs
-        kpi_avg = self.data.groupby("kpi_name")["kpi_value"].mean().sort_values()
+        # Average each Metric across boroughs
+        metric_avg = self.data.groupby("metric_name")["metric_value"].mean().sort_values()
 
         fig = go.Figure(
             data=go.Bar(
-                x=kpi_avg.values,
-                y=kpi_avg.index,
+                x=metric_avg.values,
+                y=metric_avg.index,
                 orientation="h",
                 marker=dict(
-                    color=kpi_avg.values,
+                    color=metric_avg.values,
                     colorscale="Viridis",
                     showscale=True,
                     colorbar=dict(title="Avg Value"),
@@ -335,25 +335,25 @@ class KPICards:
         )
 
         fig.update_layout(
-            title="KPI Comparison: Average Values Across Boroughs",
+            title="Metric Comparison: Average Values Across Boroughs",
             xaxis_title="Average Value",
-            yaxis_title="KPI",
+            yaxis_title="Metric",
             height=500,
             font={"family": "Arial, sans-serif", "size": 11},
         )
 
         stats = StatisticsPanel(
             record_count=len(self.data),
-            mean_value=self.data["kpi_value"].mean(),
+            mean_value=self.data["metric_value"].mean(),
             last_timestamp=pd.to_datetime(self.data["analytics_timestamp"]).max(),
-            calculation_method="KPI Average Aggregation",
+            calculation_method="Metric Average Aggregation",
             confidence_level="95%",
         )
 
         return fig, stats
 
-    def render_borough_kpi_radar(self, borough: str) -> tuple[go.Figure, StatisticsPanel]:
-        """Render radar chart of all KPIs for a specific borough.
+    def render_borough_metric_radar(self, borough: str) -> tuple[go.Figure, StatisticsPanel]:
+        """Render radar chart of all Metrics for a specific borough.
 
         Args:
             borough: Borough code (MN, BK, BX, QN, SI)
@@ -374,7 +374,7 @@ class KPICards:
         # Normalize values to 0-100 scale for radar
         normalized_values = []
         for _, row in borough_data.iterrows():
-            val = row["kpi_value"]
+            val = row["metric_value"]
             if isinstance(val, (int, float)):
                 # Simple normalization
                 norm_val = min(100, max(0, val))
@@ -385,7 +385,7 @@ class KPICards:
         fig = go.Figure(
             data=go.Scatterpolar(
                 r=normalized_values,
-                theta=borough_data["kpi_name"],
+                theta=borough_data["metric_name"],
                 fill="toself",
                 name=borough,
                 line=dict(color="blue"),
@@ -394,18 +394,18 @@ class KPICards:
 
         fig.update_layout(
             polar=dict(radialaxis=dict(visible=True, range=[0, 100])),
-            title=f"KPI Radar Chart: {borough}",
+            title=f"Metric Radar Chart: {borough}",
             height=500,
             font={"family": "Arial, sans-serif", "size": 11},
         )
 
         stats = StatisticsPanel(
             record_count=len(borough_data),
-            mean_value=borough_data["kpi_value"].mean(),
-            min_value=borough_data["kpi_value"].min(),
-            max_value=borough_data["kpi_value"].max(),
+            mean_value=borough_data["metric_value"].mean(),
+            min_value=borough_data["metric_value"].min(),
+            max_value=borough_data["metric_value"].max(),
             last_timestamp=pd.to_datetime(borough_data["analytics_timestamp"]).max(),
-            calculation_method=f"KPI Radar for {borough}",
+            calculation_method=f"Metric Radar for {borough}",
             confidence_level="95%",
         )
 
@@ -423,8 +423,8 @@ class KPICards:
         radars = {}
 
         for borough in boroughs:
-            fig, stats = self.render_borough_kpi_radar(borough)
+            fig, stats = self.render_borough_metric_radar(borough)
             radars[f"radar_{borough}"] = (fig, stats)
 
-        logger.info(f"Rendered {len(radars)} KPI radar charts")
+        logger.info(f"Rendered {len(radars)} Metric radar charts")
         return radars

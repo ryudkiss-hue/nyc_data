@@ -24,7 +24,7 @@ This roadmap structures the 100 identified improvements into five logical, itera
 *Focus: Reducing cognitive load for field and executive stakeholders.*
 *   **Tier 1 Items:** 61, 62, 63, 69, 70, 72, 73, 74, 75, 76
 *   **Goal:** Designing interfaces that guide attention to critical operational decisions.
-*   **Highlights:** Narrative arc dashboard structures, direct label encoding for colorblind accessibility, and the 3-Level KPI hierarchy.
+*   **Highlights:** Narrative arc dashboard structures, direct label encoding for colorblind accessibility, and the 3-Level Metric hierarchy.
 
 ## Phase 5: Enterprise Heuristics & Resilience (Operational Excellence)
 *Focus: Establishing long-term, maintainable systems.*

@@ -11,7 +11,7 @@
 
 ### Superseded Files Archived
 12 outdated documents moved to `00_ARCHIVE_SUPERSEDED/`:
-- UNIFIED_KPI_REGISTRY_MASTER_PLAN.md ❌ (superseded by EXPANDED_KPI_CHART_REGISTRY.md)
+- UNIFIED_METRIC_REGISTRY_MASTER_PLAN.md ❌ (superseded by EXPANDED_METRIC_CHART_REGISTRY.md)
 - CONSOLIDATED_GUIDE.md ❌ (superseded by START_HERE.md + SOLO_DEVELOPER_GUIDE.md)
 - IMPLEMENTATION_GUIDE.md ❌ (superseded by multiple new docs)
 - Plus 9 others (see archive folder for complete list)
@@ -32,7 +32,7 @@ nyc_data/
 │
 ├── 00_DOCUMENTATION/             [📖 READ THIS FIRST]
 │   ├── START_HERE.md            [🔴 YOUR ENTRY POINT]
-│   ├── EXPANDED_KPI_CHART_REGISTRY.md  [🔴 YOUR DAILY REFERENCE]
+│   ├── EXPANDED_METRIC_CHART_REGISTRY.md  [🔴 YOUR DAILY REFERENCE]
 │   ├── SOLO_DEVELOPER_GUIDE.md        [🔴 YOUR PERMISSION]
 │   ├── MASTER_DOCUMENTATION_INDEX.md  [Navigation guide]
 │   ├── DOCUMENTATION_MIGRATION_GUIDE.md [Context only]
@@ -93,7 +93,7 @@ nyc_data/
 
 ### 🔴 RED: Read These First
 - `00_DOCUMENTATION/START_HERE.md` — Your roadmap (open this first)
-- `00_DOCUMENTATION/EXPANDED_KPI_CHART_REGISTRY.md` — Your daily reference
+- `00_DOCUMENTATION/EXPANDED_METRIC_CHART_REGISTRY.md` — Your daily reference
 - `00_DOCUMENTATION/SOLO_DEVELOPER_GUIDE.md` — Your permission slip
 
 ### 🟡 YELLOW: Reference as Needed
@@ -122,10 +122,10 @@ nyc_data/
 1. **Open file:** `00_DOCUMENTATION/START_HERE.md`
 2. **Read:** First 10 minutes
 3. **Understand:** Your timeline (7 weeks, probably 2-3 real)
-4. **Pick:** First KPI from Registry Ch. 3
+4. **Pick:** First Metric from Registry Ch. 3
 5. **Build:** Following Registry templates
 6. **Repeat:** 50 more times
-7. **Ship:** All 51 KPIs live
+7. **Ship:** All 51 Metrics live
 
 ---
 
@@ -164,7 +164,7 @@ SECURITY.md
 CONTRIBUTING.md
 DEPLOYMENT_CHECKLIST.md
 START_HERE.md
-EXPANDED_KPI_CHART_REGISTRY.md
+EXPANDED_METRIC_CHART_REGISTRY.md
 SOLO_DEVELOPER_GUIDE.md
 MASTER_DOCUMENTATION_INDEX.md
 DOCUMENTATION_MIGRATION_GUIDE.md
@@ -201,7 +201,7 @@ run_app.ps1
 ### Moved to 00_UTILITIES/
 ```
 check_datasets.py
-check_v_kpi.py
+check_v_metric.py
 fetch_socrata_metadata.py
 generate_phase1_visualizations.py
 generate_sankey.py
@@ -221,7 +221,7 @@ example_usage.py
 
 ### Moved to 00_ARCHIVE_SUPERSEDED/
 ```
-UNIFIED_KPI_REGISTRY_MASTER_PLAN.md
+UNIFIED_METRIC_REGISTRY_MASTER_PLAN.md
 CONSOLIDATED_GUIDE.md
 IMPLEMENTATION_GUIDE.md
 ARCHITECTURE_REFACTORING_COMPLETE.md
@@ -265,7 +265,7 @@ Important: **No files were deleted.** Everything is:
    - Outcome: Clear understanding of next 7 weeks
 
 3. **Begin Phase 3:** You're ready to build
-   - Use `EXPANDED_KPI_CHART_REGISTRY.md` as daily reference
+   - Use `EXPANDED_METRIC_CHART_REGISTRY.md` as daily reference
    - Use `SOLO_DEVELOPER_GUIDE.md` when uncertain
    - Focus on implementation (all the planning is done)
 
@@ -275,8 +275,8 @@ Important: **No files were deleted.** Everything is:
 
 If something is unclear:
 - **"What should I read?"** → `00_DOCUMENTATION/MASTER_DOCUMENTATION_INDEX.md`
-- **"Where's the old plan?"** → `00_ARCHIVE_SUPERSEDED/UNIFIED_KPI_REGISTRY_MASTER_PLAN.md`
-- **"How do I implement X?"** → `00_DOCUMENTATION/EXPANDED_KPI_CHART_REGISTRY.md` Chapter 4
+- **"Where's the old plan?"** → `00_ARCHIVE_SUPERSEDED/UNIFIED_METRIC_REGISTRY_MASTER_PLAN.md`
+- **"How do I implement X?"** → `00_DOCUMENTATION/EXPANDED_METRIC_CHART_REGISTRY.md` Chapter 4
 - **"Can I do it differently?"** → `00_DOCUMENTATION/SOLO_DEVELOPER_GUIDE.md`
 
 ---

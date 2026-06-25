@@ -32,11 +32,11 @@ Complete inventory of all 65+ visualizations with column dependencies, data type
 | **Example Dataset** | `inspection`, `violations`, `ramp_progress` |
 | **Dependencies** | plotly.express |
 
-### KPI Gauge
+### Metric Gauge
 | Attribute | Value |
 |-----------|-------|
 | **Module** | `viz/plotly.py` |
-| **Function** | `kpi_gauge()` |
+| **Function** | `metric_gauge()` |
 | **Input Cols (Required)** | None (takes scalar values) |
 | **Input Params** | `value` (float), `title` (str), `target` (float), `min_val`, `max_val` |
 | **Data Types** | numeric |
@@ -460,7 +460,7 @@ Complete inventory of all 65+ visualizations with column dependencies, data type
 | `repair_cost` | USD | Bubble, SPLOM, parallel coords, radar (if metric) | inspection, built | Financial impact |
 | `condition_score` | 0–100 | SPLOM, parallel coords, radar, ridge, violin | inspection | Quality metric (inverse of violations) |
 | `age_years` | years | SPLOM, parallel coords, bubble | inspection | Predictive feature |
-| `completion_rate` | 0–1 or 0–100% | KPI gauge, radar, status donut | ramp_progress, capital_blocks | Progress tracking |
+| `completion_rate` | 0–1 or 0–100% | Metric gauge, radar, status donut | ramp_progress, capital_blocks | Progress tracking |
 | `inspections` | count | Parallel coords, SPLOM (if in dataset) | inspection | Volume of inspection effort |
 | `dismissals` | count | Funnel, status donut | dismissals | Rejection rate |
 

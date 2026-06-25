@@ -51,7 +51,7 @@ get_navigation_items()  # Returns:
         "view": "executive",
         "route": "/views/executive",
         "icon": "mdi:chart-line",
-        "description": "Leadership overview - 7 headline KPIs",
+        "description": "Leadership overview - 7 headline Metrics",
         "color": "blue",
         "badge": None,
     },
@@ -61,7 +61,7 @@ get_navigation_items()  # Returns:
         "view": "operations",
         "route": "/views/operations",
         "icon": "mdi:factory",
-        "description": "Daily ops monitoring - 15 KPIs",
+        "description": "Daily ops monitoring - 15 Metrics",
         "color": "orange",
         "badge": None,
     },
@@ -205,14 +205,14 @@ def register_navigation_callbacks(app):
 ### View 1: Executive Summary
 
 **Audience:** Leadership, program managers
-**Content:** 7 headline KPIs + summary charts
+**Content:** 7 headline Metrics + summary charts
 
 ```python
 def render_layout_executive():
     """
-    Executive Summary (7-KPI snapshot).
+    Executive Summary (7-Metric snapshot).
     
-    KPIs:
+    Metrics:
     - inspection_coverage
     - sla_compliance
     - critical_violations_pending
@@ -224,7 +224,7 @@ def render_layout_executive():
     return dmc.Stack(
         children=[
             dmc.Title("Executive Summary", order=1),
-            render_kpi_dashboard(),  # 7 KPIs only
+            render_metric_dashboard(),  # 7 Metrics only
             # Summary charts (charts TBD in Task 12)
         ]
     )
@@ -233,27 +233,27 @@ def render_layout_executive():
 ### View 2: Operations
 
 **Audience:** Operations managers, supervisors
-**Content:** 15 KPIs + operational dashboards
+**Content:** 15 Metrics + operational dashboards
 
 ```python
 def render_layout_operations():
     """
-    Operations Dashboard (15 KPIs: 5 inspection + 6 violation + 5 contractor).
+    Operations Dashboard (15 Metrics: 5 inspection + 6 violation + 5 contractor).
     
     Components:
-    - Inspection metrics (5 KPIs)
-    - Violation tracking (6 KPIs)
-    - Contractor coordination (5 KPIs)
+    - Inspection metrics (5 Metrics)
+    - Violation tracking (6 Metrics)
+    - Contractor coordination (5 Metrics)
     """
     return dmc.Stack(
         children=[
             dmc.Title("Operations", order=1),
-            # Inspection KPI section
-            render_inspection_kpis(),  # 5 KPIs
-            # Violation KPI section
-            render_violation_kpis(),  # 6 KPIs
-            # Contractor KPI section
-            render_contractor_kpis(),  # 5 KPIs
+            # Inspection Metric section
+            render_inspection_metrics(),  # 5 Metrics
+            # Violation Metric section
+            render_violation_metrics(),  # 6 Metrics
+            # Contractor Metric section
+            render_contractor_metrics(),  # 5 Metrics
         ]
     )
 ```
@@ -366,8 +366,8 @@ def render_layout_data():
   - [ ] Test mobile hamburger menu
 
 - [ ] Task 12: Create view-specific layouts
-  - [ ] `render_layout_executive()` (7 KPIs)
-  - [ ] `render_layout_operations()` (15 KPIs)
+  - [ ] `render_layout_executive()` (7 Metrics)
+  - [ ] `render_layout_operations()` (15 Metrics)
   - [ ] `render_layout_analyst()` (8 dashboards + 2 tools)
   - [ ] `render_layout_data()` (quality + geographic)
   - [ ] Integrate existing components (Tasks 6-9)

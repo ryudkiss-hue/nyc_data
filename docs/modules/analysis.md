@@ -194,7 +194,7 @@ print(snap.status)  # "red"
 ```
 
 ### `compute_program_dashboard(df) → SimpleNamespace`
-Compute KPI dashboard from a violations DataFrame.
+Compute Metric dashboard from a violations DataFrame.
 Returns: `{metrics, overall_health, green_count, yellow_count, red_count}`.
 
 ---

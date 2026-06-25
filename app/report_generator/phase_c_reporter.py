@@ -249,7 +249,7 @@ class PhaseCReporter:
             "3. Create segment-specific crew schedules and protocols\n"
             "4. Train crews on segment-specific challenges\n"
             "5. Implement phased rollout by segment\n"
-            "6. Monitor KPIs (closure time, cost, crew utilization)"
+            "6. Monitor Metrics (closure time, cost, crew utilization)"
         )
 
     def _generate_borough_impact(self) -> str:

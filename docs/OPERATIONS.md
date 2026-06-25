@@ -51,7 +51,7 @@ socrata analyst run --profile config/analyst_profile.yaml
 - `construction_list.xlsx`: Prioritized repair locations.
 - `conflicts_summary.md`: Permit and capital project conflicts.
 - `contract_status.md`: Progress, budget CPI, and productivity metrics.
-- `program_kpi.json`: Red/yellow/green program health metrics.
+- `program_metric.json`: Red/yellow/green program health metrics.
 
 ### Review & Decision Support
 Decisions are stored in a local DuckDB instance (`outputs/.state/profiles/<name>/decisions.duckdb`):

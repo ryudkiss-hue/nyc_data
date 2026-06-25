@@ -21,7 +21,7 @@ bi_export:
   # Optional: subset of artifacts. If omitted, exports all supported artifacts found.
   include:
     - construction_list.xlsx
-    - program_kpi.json
+    - program_metric.json
     - contract_analytics.json
     - executive_summary.md
 

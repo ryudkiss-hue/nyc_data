@@ -73,28 +73,28 @@ docker-compose exec postgres psql -U airflow -d airflow -c \
   "SELECT * FROM task_instance WHERE dag_id='repair_scheduling' AND state='sensing';"
 ```
 
-#### 3. kpi_materialization
+#### 3. metric_materialization
 
-**Purpose**: Compute KPIs for API queries (hourly)
+**Purpose**: Compute Metrics for API queries (hourly)
 
 **SLA Configuration**:
-- **Dag SLA**: 30 minutes (KPI computation)
+- **Dag SLA**: 30 minutes (Metric computation)
 - **Task SLAs**:
   - `get_incidents`: 5 minutes (read from database)
   - `get_repairs`: 5 minutes (read from database)
-  - `compute_sidewalk_kpi`: 15 minutes (KPI computation)
-  - `publish_kpi`: 5 minutes (write to API materialization tables)
+  - `compute_sidewalk_metric`: 15 minutes (Metric computation)
+  - `publish_metric`: 5 minutes (write to API materialization tables)
 
 **Schedule**: Every hour (on the hour)
 
-**Monitor KPI Quality**:
+**Monitor Metric Quality**:
 ```bash
-# View KPI computation duration
-docker-compose exec scheduler airflow tasks logs kpi_materialization compute_sidewalk_kpi 2026-05-10
+# View Metric computation duration
+docker-compose exec scheduler airflow tasks logs metric_materialization compute_sidewalk_metric 2026-05-10
 
 # Check for data quality issues
 docker-compose exec postgres psql -U airflow -d nyc_sidewalk -c \
-  "SELECT * FROM kpi_materialization ORDER BY computed_at DESC LIMIT 5;"
+  "SELECT * FROM metric_materialization ORDER BY computed_at DESC LIMIT 5;"
 ```
 
 ### SLA Violation Handling
@@ -114,7 +114,7 @@ SELECT
   timestamp, 
   description 
 FROM sla_miss 
-WHERE dag_id IN ('incident_ingestion', 'repair_scheduling', 'kpi_materialization')
+WHERE dag_id IN ('incident_ingestion', 'repair_scheduling', 'metric_materialization')
 ORDER BY timestamp DESC 
 LIMIT 20;"
 
@@ -277,21 +277,21 @@ watch -n 10 'docker-compose exec postgres psql -U airflow -d airflow -c \
    WHERE dag_id='\''repair_scheduling'\'';"'
 ```
 
-### Backfill KPI Materialization
+### Backfill Metric Materialization
 
-Recalculate KPIs for past period:
+Recalculate Metrics for past period:
 
 ```bash
 # Backfill last 7 days (hourly = 168 runs)
 docker-compose exec scheduler airflow dags backfill \
-  --dag-id kpi_materialization \
+  --dag-id metric_materialization \
   --start-date 2026-05-03 \
   --end-date 2026-05-10 \
   --reset-dag-run
 
 # Backfill specific hours only
 for hour in {0..23}; do
-  docker-compose exec scheduler airflow dags trigger kpi_materialization \
+  docker-compose exec scheduler airflow dags trigger metric_materialization \
     --exec-date 2026-05-10T${hour}:00:00Z
 done
 ```
@@ -308,7 +308,7 @@ SELECT
   SUM(CASE WHEN state='failed' THEN 1 ELSE 0 END) as fail_count,
   ROUND(100.0 * SUM(CASE WHEN state='success' THEN 1 ELSE 0 END) / COUNT(*), 2) as success_rate
 FROM task_instance
-WHERE dag_id IN ('incident_ingestion', 'repair_scheduling', 'kpi_materialization')
+WHERE dag_id IN ('incident_ingestion', 'repair_scheduling', 'metric_materialization')
 AND execution_date BETWEEN '2026-04-10' AND '2026-05-10'
 GROUP BY dag_id
 ORDER BY dag_id;"
@@ -317,7 +317,7 @@ ORDER BY dag_id;"
 # dag_id                  | total_runs | success_count | fail_count | success_rate
 # incident_ingestion      | 120        | 120           | 0          | 100.00
 # repair_scheduling       | 30         | 30            | 0          | 100.00
-# kpi_materialization     | 168        | 168           | 0          | 100.00
+# metric_materialization     | 168        | 168           | 0          | 100.00
 ```
 
 ---
@@ -483,7 +483,7 @@ airflow/logs/
 │   ├── validate_data/
 │   └── upsert_incidents/
 ├── repair_scheduling/
-└── kpi_materialization/
+└── metric_materialization/
 ```
 
 ### Log Parsing for Errors
@@ -625,7 +625,7 @@ bash init_airflow.sh
 
 ### Recover from Checkpoint Data Corruption
 
-Incident, repair, and KPI data use checkpoints to track processed records. If corrupted:
+Incident, repair, and Metric data use checkpoints to track processed records. If corrupted:
 
 ```bash
 # View checkpoint table

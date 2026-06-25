@@ -20,9 +20,9 @@ Purpose: Produce a short, prioritized digest of operational items for program ma
 
 Steps:
 1. Run the nightly batch job (Postgres) which materializes `construction_lists` and `alerts` tables.
-2. Generate the burndown and KPI summary using `socrata_toolkit.ops.generate_burndown()`.
+2. Generate the burndown and Metric summary using `socrata_toolkit.ops.generate_burndown()`.
 3. Use `socrata_toolkit.alerts.AlertManager` to assemble alerts into a single email and CLI summary.
-4. Email recipients (configurable) receive attachments: `daily_construction_list.csv`, `kpi_summary.json`.
+4. Email recipients (configurable) receive attachments: `daily_construction_list.csv`, `metric_summary.json`.
 
 CLI example (local run):
 ```bash

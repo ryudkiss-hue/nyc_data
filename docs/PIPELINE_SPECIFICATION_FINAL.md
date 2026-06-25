@@ -12,7 +12,7 @@
 2. [Architecture Overview](#architecture-overview)
 3. [Dataset Registry](#dataset-registry)
 4. [Pipeline Stages](#pipeline-stages)
-5. [KPI Definitions](#kpi-definitions)
+5. [Metric Definitions](#metric-definitions)
 6. [Verification Gates](#verification-gates)
 7. [Deployment & Operations](#deployment--operations)
 8. [Troubleshooting](#troubleshooting)
@@ -23,7 +23,7 @@
 
 The **NYC DOT MotherDuck Pipeline** ingests, transforms, and serves data from 57 Socrata datasets (20 cached locally, 37 from live API) into a cloud-native analytics platform. The pipeline materializes:
 
-- **255 KPI records** (51 KPIs × 5 boroughs: Manhattan, Brooklyn, Queens, Bronx, Staten Island)
+- **255 Metric records** (51 Metrics × 5 boroughs: Manhattan, Brooklyn, Queens, Bronx, Staten Island)
 - **57 quality scorecards** (completeness, validity, consistency, freshness metrics per dataset)
 - **4 mandatory verification gates** to prevent silent failures and ensure data integrity
 - **Zero row limits** – all datasets loaded entirely, with no truncation
@@ -47,7 +47,7 @@ INGESTION          STAGING              ANALYTICS           SERVING
 │  raw schema  │ → │ staging      │ → │ 5 domain    │ → │ serving      │
 │              │   │ schema       │   │ schemas     │   │ schema       │
 │ 57 datasets  │   │ (deduped)    │   │ (100+ views)│   │ (materialized│
-│ (100%+ rows) │   │ (normalized) │   │ (joins)     │   │  KPIs)       │
+│ (100%+ rows) │   │ (normalized) │   │ (joins)     │   │  Metrics)       │
 └──────────────┘   └──────────────┘   └──────────────┘   └──────────────┘
 ```
 
@@ -59,8 +59,8 @@ INGESTION          STAGING              ANALYTICS           SERVING
 | 2. Ingest Socrata | Fetch remaining 37 datasets from live API (paginated, rate-limited) | ~2-5m | Socrata API + token | `raw.*` tables (37 datasets) | FAIL if 0 rows → no downstream stages |
 | 3. Stage Datasets | Deduplicate & type-cast all 57 datasets | ~1-2m | `raw.*` tables | `staging.*` tables | FAIL if columns missing or types incompatible |
 | 4. Build Analytics | Create 5 domain schemas with 100+ views (SIM Core, Accessibility, Coordination, Overlays, Extended) | ~30-60s | `staging.*` tables | Domain views (100+ total) | FAIL if domain schema creation fails |
-| 5. Materialize KPIs | Generate 255 KPI records + 57 quality scorecards | ~10-20s | `staging.*` + `staging.quality_scorecards` | `serving.kpi_borough_results` (255 rows) + `serving.quality_scorecards` (57 rows) | FAIL if KPI table has 0 rows |
-| 6. Verify Gates | Run 4 mandatory gates (data load, schema validation, KPI materialization, consistency) | ~5-10s | `raw.*`, `staging.*`, `serving.*` | Gate results with PASS/FAIL/WARN status | FAIL if ANY gate fails → exit code 1 |
+| 5. Materialize Metrics | Generate 255 Metric records + 57 quality scorecards | ~10-20s | `staging.*` + `staging.quality_scorecards` | `serving.metric_borough_results` (255 rows) + `serving.quality_scorecards` (57 rows) | FAIL if Metric table has 0 rows |
+| 6. Verify Gates | Run 4 mandatory gates (data load, schema validation, Metric materialization, consistency) | ~5-10s | `raw.*`, `staging.*`, `serving.*` | Gate results with PASS/FAIL/WARN status | FAIL if ANY gate fails → exit code 1 |
 
 ---
 
@@ -189,33 +189,33 @@ QUALIFY ROW_NUMBER() OVER (PARTITION BY <primary_key> ORDER BY 1 DESC) = 1;
 
 ---
 
-### Stage 5: Materialize KPIs
+### Stage 5: Materialize Metrics
 
-**File:** `pipeline/sql/04_serving_kpis.sql` + `pipeline/serving/quality_scorecard.sql`
+**File:** `pipeline/sql/04_serving_metrics.sql` + `pipeline/serving/quality_scorecard.sql`
 
-#### KPI Borough Results (255 records)
+#### Metric Borough Results (255 records)
 
 ```sql
-CREATE OR REPLACE TABLE serving.kpi_borough_results AS
+CREATE OR REPLACE TABLE serving.metric_borough_results AS
 SELECT * FROM (
   VALUES
   (1, 'Inspections Completed', 'MANHATTAN', CURRENT_DATE, 237.5, 250, 'at_risk'),
   (2, 'Average Response Time', 'BROOKLYN', CURRENT_DATE, 2.85, 3.0, 'at_risk'),
   ...
   (51, 'System Uptime', 'STATEN_ISLAND', CURRENT_DATE, 94.525, 99.5, 'at_risk')
-) AS t(kpi_id, kpi_name, borough, measurement_date, value, threshold, status);
+) AS t(metric_id, metric_name, borough, measurement_date, value, threshold, status);
 ```
 
 **Columns:**
-- `kpi_id` (1-51): KPI identifier
-- `kpi_name`: Human-readable name
+- `metric_id` (1-51): Metric identifier
+- `metric_name`: Human-readable name
 - `borough`: MANHATTAN, BROOKLYN, QUEENS, BRONX, STATEN_ISLAND
 - `measurement_date`: Typically CURRENT_DATE
 - `value`: Current metric value (95% of threshold by default in demo mode)
 - `threshold`: Target threshold
 - `status`: 'on_target' (value >= threshold) or 'at_risk' (value < threshold)
 
-**KPIs 1-51 Coverage:**
+**Metrics 1-51 Coverage:**
 1. Inspections Completed
 2. Average Response Time
 3. Violation Resolution Rate
@@ -226,7 +226,7 @@ SELECT * FROM (
 8. Street Closure Duration
 9. Data Freshness
 10. Conflict Detection Rate
-11-51. (Additional KPIs per config)
+11-51. (Additional Metrics per config)
 
 #### Quality Scorecards (57 records)
 
@@ -292,16 +292,16 @@ FROM information_schema.columns WHERE table_schema = 'staging';
 
 ---
 
-#### Gate 3: KPI Materialization
+#### Gate 3: Metric Materialization
 
 ```sql
-CREATE OR REPLACE TABLE verification.gate_3_kpi_materialization AS
+CREATE OR REPLACE TABLE verification.gate_3_metric_materialization AS
 SELECT
-  COUNT(*) as kpi_records
-FROM serving.kpi_borough_results;
+  COUNT(*) as metric_records
+FROM serving.metric_borough_results;
 ```
 
-**Pass Criteria:** kpi_records ≥ 255
+**Pass Criteria:** metric_records ≥ 255
 
 ---
 
@@ -322,15 +322,15 @@ SELECT
 
 ---
 
-## KPI Definitions
+## Metric Definitions
 
-All 51 KPIs are defined in `pipeline/config/kpi_definitions.json`. Structure:
+All 51 Metrics are defined in `pipeline/config/metric_definitions.json`. Structure:
 
 ```json
 {
-  "kpis": [
+  "metrics": [
     {
-      "kpi_id": 1,
+      "metric_id": 1,
       "name": "Inspections Completed",
       "threshold": 250,
       "unit": "count",
@@ -345,13 +345,13 @@ All 51 KPIs are defined in `pipeline/config/kpi_definitions.json`. Structure:
 ```
 
 **Key Fields:**
-- `kpi_id`: Unique identifier (1-51)
+- `metric_id`: Unique identifier (1-51)
 - `name`: Display name
 - `threshold`: Target value (used in Gate 6 and at_risk/on_target logic)
 - `unit`: Unit of measurement (count, percent, days, etc.)
 - `source_tables`: Staging tables required
 - `formula`: SQL aggregation logic
-- `borough_grouping`: If true, materialize for each of 5 boroughs (all KPIs do this)
+- `borough_grouping`: If true, materialize for each of 5 boroughs (all Metrics do this)
 - `sla`: Service level (HIGH=14d, MEDIUM=30d, LOW=60d)
 
 ---
@@ -364,7 +364,7 @@ The 4 mandatory verification gates prevent silent failures and ensure data integ
 
 1. **Gate 1 (Data Load)**: Verify that raw ingestion succeeded with meaningful data
 2. **Gate 2 (Schema)**: Verify that staging layer exists and is complete
-3. **Gate 3 (KPI)**: Verify that KPI materialization produced expected record count
+3. **Gate 3 (Metric)**: Verify that Metric materialization produced expected record count
 4. **Gate 4 (Consistency)**: Verify cross-stage row count logic (staging ≤ raw)
 
 ### Exit Code Enforcement
@@ -422,13 +422,13 @@ p.load_cached_parquet()
 p.ingest_remaining_socrata()
 p.stage_datasets()
 p.build_analytics_schemas()
-p.materialize_kpis()
+p.materialize_metrics()
 p.verify_gates()
 
 # Or SQL directly
 duckdb :memory: < pipeline/sql/02_staging_schema.sql
 duckdb :memory: < pipeline/sql/03_analytics_schemas.sql
-duckdb :memory: < pipeline/sql/04_serving_kpis.sql
+duckdb :memory: < pipeline/sql/04_serving_metrics.sql
 duckdb :memory: < pipeline/sql/05_verification_gates.sql
 ```
 
@@ -517,18 +517,18 @@ pipeline/
 ├── socrata_loader.py                    # Data ingestion (HTTP pagination)
 ├── sql_executor.py                      # SQL execution wrapper
 ├── generate_staging_schema.py            # Auto-generate staging DDL from config
-├── generate_kpi_sql.py                  # Auto-generate KPI materializtion SQL
+├── generate_metric_sql.py                  # Auto-generate Metric materializtion SQL
 │
 ├── config/
 │   ├── socrata_datasets.json            # 57 dataset registry + primary keys
-│   ├── kpi_definitions.json             # 51 KPI definitions
+│   ├── metric_definitions.json             # 51 Metric definitions
 │   ├── sla_config.json                  # SLA thresholds (HIGH=14d, etc.)
 │
 ├── sql/
 │   ├── 01_raw_schema.sql                # Raw layer schema (minimal)
 │   ├── 02_staging_schema.sql            # Staging dedup (auto-generated)
 │   ├── 03_analytics_schemas.sql         # 5 domain schemas + 100+ views
-│   ├── 04_serving_kpis.sql              # KPI materialization (auto-generated)
+│   ├── 04_serving_metrics.sql              # Metric materialization (auto-generated)
 │   ├── 05_verification_gates.sql        # 4 mandatory gates
 │
 ├── serving/

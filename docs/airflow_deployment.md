@@ -174,7 +174,7 @@ docker-compose exec scheduler airflow dags list
 # Should output all three DAGs:
 # - incident_ingestion
 # - repair_scheduling
-# - kpi_materialization
+# - metric_materialization
 ```
 
 ### Step 7: Trigger Test DAG Run
@@ -263,7 +263,7 @@ curl http://localhost:8080/api/v1/pools
    - Click "Trigger DAG" → start manual run
 
 2. **Graph View**: Visualize task dependencies
-   - Shows incident → repair → KPI flow
+   - Shows incident → repair → Metric flow
    - Color-coded by task status
 
 3. **Admin Panel**:
@@ -315,7 +315,7 @@ airflow_dag_duration_seconds{dag_id="repair_scheduling"}
 
 # Task metrics
 airflow_task_duration_seconds{dag_id="incident_ingestion",task_id="fetch_incidents"}
-airflow_task_fail_total{dag_id="kpi_materialization"}
+airflow_task_fail_total{dag_id="metric_materialization"}
 
 # Database metrics
 airflow_pool_queued_tasks{pool_id="contractor_pool"}

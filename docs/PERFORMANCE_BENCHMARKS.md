@@ -8,16 +8,16 @@
 
 ## Executive Summary
 
-Phase 3B performance optimizations deliver **10x faster dashboard latency** through async KPI materialization and connection pooling:
+Phase 3B performance optimizations deliver **10x faster dashboard latency** through async Metric materialization and connection pooling:
 
 | Metric | Before | After | Improvement |
 |--------|--------|-------|-------------|
-| Dashboard load (simple KPI) | 500ms | 50ms | **10x** |
+| Dashboard load (simple Metric) | 500ms | 50ms | **10x** |
 | Dashboard load (complex view) | 500ms | 150ms | **3.3x** |
-| Query latency (cached KPI) | 45ms | <5ms | **9x** |
+| Query latency (cached Metric) | 45ms | <5ms | **9x** |
 | Cache hit rate | N/A | 95%+ | — |
 | Connection overhead | 120ms/req | 70ms/req | **40% reduction** |
-| KPI refresh time | On-demand | <30s async | Decoupled |
+| Metric refresh time | On-demand | <30s async | Decoupled |
 
 ---
 
@@ -25,7 +25,7 @@ Phase 3B performance optimizations deliver **10x faster dashboard latency** thro
 
 ### Dashboard Latency Analysis
 
-**Test scenario:** User loads Violations Dashboard with 5 KPI cards + 3 charts
+**Test scenario:** User loads Violations Dashboard with 5 Metric cards + 3 charts
 
 Timeline:
 - Page load: 50ms
@@ -34,7 +34,7 @@ Timeline:
 - Total: 500ms + network latency
 
 **Bottlenecks identified:**
-1. KPIs computed on-demand during dashboard render
+1. Metrics computed on-demand during dashboard render
 2. Sequential API calls (no parallelization)
 3. 4-5 independent MotherDuck queries per page load
 4. No caching layer between queries and UI
@@ -50,16 +50,16 @@ Timeline:
 
 ### Dashboard Latency Analysis
 
-**Test scenario:** Same as before (5 KPI cards + 3 charts)
+**Test scenario:** Same as before (5 Metric cards + 3 charts)
 
 Timeline:
 - Page load: 50ms
 - Initial render: 30ms
-- Materialized KPI fetch (cached): <5ms total
+- Materialized Metric fetch (cached): <5ms total
 - Total: 50ms (**10x faster!**)
 
 **Optimizations deployed:**
-1. Pre-computed KPIs materialized in `analytics_cloud` schema
+1. Pre-computed Metrics materialized in `analytics_cloud` schema
 2. 5-minute cache TTL with 95%+ hit rate
 3. Async refresh task (independent of dashboard requests)
 4. Connection pool reduces MotherDuck connection time
@@ -73,16 +73,16 @@ Timeline:
 
 ## Performance Optimization Details
 
-### 1. Async KPI Computation
+### 1. Async Metric Computation
 
-**Pattern:** Materialized KPI Views + Async Refresh Task
+**Pattern:** Materialized Metric Views + Async Refresh Task
 
-- KPI computation decoupled from dashboard requests
+- Metric computation decoupled from dashboard requests
 - Dashboard receives results from cache (O(1) lookup)
 - Refresh happens on schedule (nightly + manual trigger)
 - No user-facing latency during refresh
 
-### 2. Real-Time KPI Caching (5-Minute TTL)
+### 2. Real-Time Metric Caching (5-Minute TTL)
 
 **Cache Configuration:**
 - TTL: 5 minutes (balances freshness vs. load)
@@ -114,11 +114,11 @@ Materialized Tables Created:
 
 | Table | Schema | Refresh | Purpose |
 |-------|--------|---------|---------|
-| violations_kpis_mat | analytics_cloud | Daily | Violation metrics |
-| ramps_kpis_mat | analytics_cloud | Daily | Ramp completion KPIs |
-| permits_kpis_mat | analytics_cloud | Daily | Permit analysis KPIs |
-| quality_kpis_mat | analytics_cloud | Daily | Data quality scores |
-| spatial_kpis_mat | analytics_cloud | Daily | Conflict detection results |
+| violations_metrics_mat | analytics_cloud | Daily | Violation metrics |
+| ramps_metrics_mat | analytics_cloud | Daily | Ramp completion Metrics |
+| permits_metrics_mat | analytics_cloud | Daily | Permit analysis Metrics |
+| quality_metrics_mat | analytics_cloud | Daily | Data quality scores |
+| spatial_metrics_mat | analytics_cloud | Daily | Conflict detection results |
 
 ---
 
@@ -153,7 +153,7 @@ Materialized Tables Created:
 
 **After (Phase 3B):**
 - Shared connection pool (amortized): 25MB
-- KPI cache (5-min TTL): 8MB
+- Metric cache (5-min TTL): 8MB
 - Session state: 2MB
 - UI component state: 2MB
 - **Total: ~37MB per user (54% reduction)**
@@ -162,19 +162,19 @@ Materialized Tables Created:
 
 ## Query Optimization Breakdown
 
-### Violation Count KPI (Most Common)
+### Violation Count Metric (Most Common)
 
 **Before:** On-demand calculation (~280ms)
 **After:** Materialized view lookup (<1ms with cache hit)
 **Improvement:** **280x faster**
 
-### Borough Distribution KPI (Complex)
+### Borough Distribution Metric (Complex)
 
 **Before:** On-demand grouping + aggregation (~350ms)
 **After:** Pre-aggregated materialized table (<5ms)
 **Improvement:** **70x faster**
 
-### Spatial Conflict Detection KPI (Most Expensive)
+### Spatial Conflict Detection Metric (Most Expensive)
 
 **Before:** On-demand spatial join (~1000ms)
 **After:** Pre-computed conflict table (<5ms)
@@ -203,7 +203,7 @@ Materialized Tables Created:
 | Date | Event | Latency Before | Latency After | Status |
 |------|-------|-----------------|----------------|--------|
 | 2026-06-01 | Phase 2A deployed | 500ms | — | Baseline |
-| 2026-06-05 | Phase 3A partial | 480ms | 480ms | KPI definitions only |
+| 2026-06-05 | Phase 3A partial | 480ms | 480ms | Metric definitions only |
 | 2026-06-08 | Phase 3B async compute | — | 150ms | With cache misses |
 | 2026-06-10 | Full Phase 3B + caching | 500ms | 50ms | **Production ready** |
 | 2026-06-11 | Load test + validation | — | 180ms (P50) | **All metrics green** |
@@ -216,14 +216,14 @@ Materialized Tables Created:
 
 1. Monitor cache hit rates daily — Set alert if drops below 90%
 2. Review materialized table sizes weekly — Ensure analytics_cloud schema doesn't exceed 5GB
-3. Validate KPI refresh completion — Log async materialization status nightly
+3. Validate Metric refresh completion — Log async materialization status nightly
 4. Track connection pool health — Alert if pool exhaustion > 5% of requests
 
 ### For Future Optimization
 
-1. Implement predictive prefetch — Load KPIs 2 minutes before anticipated user demand
+1. Implement predictive prefetch — Load Metrics 2 minutes before anticipated user demand
 2. Add query result caching — Cache frequently-run Socrata SOQL queries
-3. Compress cached KPI tables — Reduce materialized view storage by 40-60% with Parquet compression
+3. Compress cached Metric tables — Reduce materialized view storage by 40-60% with Parquet compression
 4. Implement tiered caching — L1 (in-memory 5min), L2 (MotherDuck 1hr), L3 (cloud storage 365d)
 
 ---

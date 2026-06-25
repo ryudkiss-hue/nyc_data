@@ -42,14 +42,14 @@ SELECT
        THEN 'PASS' ELSE 'FAIL' END AS status,
   CURRENT_TIMESTAMP AS verified_at;
 
--- GATE 4: KPIs materialized with real, non-null values -----------------------
-CREATE OR REPLACE TABLE verification.gate_4_kpis AS
+-- GATE 4: Metrics materialized with real, non-null values -----------------------
+CREATE OR REPLACE TABLE verification.gate_4_metrics AS
 SELECT
-  'gate_4_kpis' AS gate_name,
-  (SELECT COUNT(*) FROM serving.kpi_summary) AS kpi_count,
-  (SELECT COUNT(*) FROM serving.kpi_summary WHERE value IS NULL) AS null_value_kpis,
-  CASE WHEN (SELECT COUNT(*) FROM serving.kpi_summary) >= 10
-        AND (SELECT COUNT(*) FROM serving.kpi_summary WHERE value IS NULL) = 0
+  'gate_4_metrics' AS gate_name,
+  (SELECT COUNT(*) FROM serving.metric_summary) AS metric_count,
+  (SELECT COUNT(*) FROM serving.metric_summary WHERE value IS NULL) AS null_value_metrics,
+  CASE WHEN (SELECT COUNT(*) FROM serving.metric_summary) >= 10
+        AND (SELECT COUNT(*) FROM serving.metric_summary WHERE value IS NULL) = 0
        THEN 'PASS' ELSE 'FAIL' END AS status,
   CURRENT_TIMESTAMP AS verified_at;
 
@@ -58,4 +58,4 @@ CREATE OR REPLACE TABLE verification.gate_results AS
 SELECT gate_name, status, verified_at FROM verification.gate_1_data_load
 UNION ALL SELECT gate_name, status, verified_at FROM verification.gate_2_staging
 UNION ALL SELECT gate_name, status, verified_at FROM verification.gate_3_analytics
-UNION ALL SELECT gate_name, status, verified_at FROM verification.gate_4_kpis;
+UNION ALL SELECT gate_name, status, verified_at FROM verification.gate_4_metrics;

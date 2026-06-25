@@ -113,7 +113,7 @@ CORS_ORIGINS="http://localhost:3000 http://localhost:8000"
 RATE_LIMIT_REQUESTS=100
 
 # Cache TTL (in seconds)
-CACHE_TTL_SUMMARY_KPIS=7200
+CACHE_TTL_SUMMARY_MetricS=7200
 CACHE_TTL_SEGMENT_DETAILS=86400
 CACHE_TTL_CONTRACTOR_METRICS=21600
 CACHE_TTL_INCIDENT_LISTS=3600
@@ -267,7 +267,7 @@ docker push registry.example.com/api:latest
 | `LOG_FORMAT` | string | json | Log format (json, text) |
 | `CORS_ORIGINS` | string | * | CORS origins (space-separated) |
 | `RATE_LIMIT_REQUESTS` | int | 100 | Requests per minute limit |
-| `CACHE_TTL_SUMMARY_KPIS` | int | 7200 | Summary KPI cache TTL (seconds) |
+| `CACHE_TTL_SUMMARY_MetricS` | int | 7200 | Summary Metric cache TTL (seconds) |
 | `CACHE_TTL_SEGMENT_DETAILS` | int | 86400 | Segment detail cache TTL |
 | `CACHE_TTL_CONTRACTOR_METRICS` | int | 21600 | Contractor metrics cache TTL |
 | `CACHE_TTL_INCIDENT_LISTS` | int | 3600 | Incident list cache TTL |
@@ -910,7 +910,7 @@ EXPLAIN ANALYZE <your-query>
 docker stats
 
 # Reduce cache TTLs in .env
-CACHE_TTL_SUMMARY_KPIS=3600  # 1 hour instead of 2
+CACHE_TTL_SUMMARY_MetricS=3600  # 1 hour instead of 2
 
 # Check for memory leaks
 python -m memory_profiler socrata_toolkit/api/main.py

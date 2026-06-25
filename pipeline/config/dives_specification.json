@@ -22,7 +22,7 @@
         "source_datasets": ["violations", "ramp_progress", "inspection", "cost_tracking"],
         "source_schemas": ["staging", "sim_core", "accessibility"],
         "query_type": "exploratory_dashboard",
-        "kpis_referenced": ["violation_closure_rate", "ramp_completion_rate", "inspection_cost_per_unit"],
+        "metrics_referenced": ["violation_closure_rate", "ramp_completion_rate", "inspection_cost_per_unit"],
         "created_date": "2026-06-18",
         "last_updated": "2026-06-18",
         "audience": "analysts",
@@ -73,7 +73,7 @@
         "refresh_schedule": "daily_09:00_UTC",
         "refresh_frequency_minutes": 1440,
         "owner": "Inspection Program Manager",
-        "kpis_referenced": [
+        "metrics_referenced": [
           "violation_closure_rate",
           "inspection_timeliness",
           "sla_compliance_rate"
@@ -100,7 +100,7 @@
         "refresh_schedule": "weekly_monday_10:00_UTC",
         "refresh_frequency_minutes": 10080,
         "owner": "Construction Coordination Manager",
-        "kpis_referenced": [
+        "metrics_referenced": [
           "permit_approval_time",
           "construction_timeline_variance"
         ],
@@ -125,7 +125,7 @@
         "refresh_schedule": "daily_06:00_UTC",
         "refresh_frequency_minutes": 1440,
         "owner": "Accessibility Program Director",
-        "kpis_referenced": [
+        "metrics_referenced": [
           "ramp_completion_rate",
           "ramp_installation_pace",
           "accessibility_improvement_index"
@@ -161,7 +161,7 @@
         "refresh_schedule": "weekly_monday_10:00_UTC",
         "owner": "Accessibility Program Director",
         "methodology": "Time series decomposition, ARIMA forecasting, KMeans bottleneck clustering",
-        "kpis_referenced": [
+        "metrics_referenced": [
           "ramp_completion_rate",
           "ramp_installation_pace",
           "accessibility_readiness_index"
@@ -189,7 +189,7 @@
         "refresh_schedule": "weekly_friday_14:00_UTC",
         "owner": "Construction Coordination Manager",
         "methodology": "Process mining, variance analysis, bottleneck detection",
-        "kpis_referenced": ["permit_approval_time"],
+        "metrics_referenced": ["permit_approval_time"],
         "charts": [
           "processing_time_by_type (box plot)",
           "approval_workflow_sankey (sankey)",
@@ -208,7 +208,7 @@
         "refresh_schedule": "weekly_wednesday_10:00_UTC",
         "owner": "Inspection Program Manager",
         "methodology": "Funnel analysis, survival curves, SLA compliance tracking",
-        "kpis_referenced": [
+        "metrics_referenced": [
           "violation_closure_rate",
           "sla_compliance_rate"
         ],
@@ -216,7 +216,7 @@
           "resolution_funnel_by_type (funnel)",
           "closure_time_distribution (histogram)",
           "survival_curve_by_borough (survival)",
-          "sla_compliance_scorecard (KPI)"
+          "sla_compliance_scorecard (Metric)"
         ],
         "documentation": "Detailed closure rate analysis by violation type, borough, and inspector. SLA compliance and bottleneck identification."
       }
@@ -243,8 +243,8 @@
         "source_schemas": ["sim_core", "accessibility", "coordination", "extended"],
         "refresh_schedule": "quarterly_first_monday_09:00_UTC",
         "owner": "Deputy Commissioner",
-        "methodology": "Composite KPI scoring, goal achievement indexing, risk flagging",
-        "kpis_referenced": [
+        "methodology": "Composite Metric scoring, goal achievement indexing, risk flagging",
+        "metrics_referenced": [
           "ramp_completion_rate",
           "violation_closure_rate",
           "sla_compliance_rate",
@@ -252,14 +252,14 @@
           "data_quality_score"
         ],
         "charts": [
-          "strategic_goal_dashboard (KPI scorecard)",
+          "strategic_goal_dashboard (Metric scorecard)",
           "achievement_vs_target (gauge)",
           "multi_program_overview (multi-axis)",
           "risk_heatmap (heatmap)"
         ],
         "documentation": "Executive briefing covering strategic goal progress, key metrics, risk areas, and recommendations. Combines data from all major programs.",
         "quality_gates": [
-          "all_kpis_on_schedule",
+          "all_metrics_on_schedule",
           "no_breaking_alerts",
           "executive_review_complete"
         ]
@@ -280,14 +280,14 @@
         "sign_off_approver": "Commissioner",
         "methodology": "Executive scorecard, trend analysis, risk assessment",
         "charts": [
-          "executive_scorecard (KPI matrix)",
+          "executive_scorecard (Metric matrix)",
           "program_trends (line multi-series)",
           "budget_status (stacked area)",
           "risk_assessment (risk matrix)"
         ],
         "documentation": "Concise executive briefing with strategic context, goal progress, risk areas, and recommended actions.",
         "quality_gates": [
-          "all_kpis_current",
+          "all_metrics_current",
           "no_critical_alerts",
           "executive_sign_off_obtained"
         ]
@@ -307,12 +307,12 @@
         "audience": "executive_leadership",
         "sign_off_approver": "Commissioner",
         "methodology": "Quality scorecard composite, SLA compliance index, governance audit summary",
-        "kpis_referenced": [
+        "metrics_referenced": [
           "data_quality_score",
           "sla_compliance_rate"
         ],
         "charts": [
-          "data_quality_scorecard (KPI gauge)",
+          "data_quality_scorecard (Metric gauge)",
           "sla_compliance_by_dataset (heatmap)",
           "data_freshness_timeline (line)",
           "governance_audit_summary (bar)",

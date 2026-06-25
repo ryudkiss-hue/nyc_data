@@ -4,14 +4,14 @@
 Runs the full end-to-end pipeline against ./nyc_dot_analytics.duckdb (cwd = repo
 root), the same local file run_pipeline.py's MotherDuckBridge falls back to when
 MOTHERDUCK_TOKEN is unset. MOTHERDUCK_TOKEN is force-removed from the child env so
-every stage — including the geo/KPI builders — uses the local DuckDB file.
+every stage — including the geo/Metric builders — uses the local DuckDB file.
 
 Stages (stop on first failure):
-  1. run_pipeline.py            ingest -> staging -> analytics -> SQL KPIs -> 4 gates
+  1. run_pipeline.py            ingest -> staging -> analytics -> SQL Metrics -> 4 gates
   2. geo/conform.py             borough/NTA/BBL/segment/date stamping
   3. geo/split_layers.py        spatial length/area metrics
-  4. kpi/build_kpis.py          KPI catalog + by-borough
-  5. kpi/build_kpis_advanced.py advanced KPIs
+  4. metric/build_metrics.py          Metric catalog + by-borough
+  5. metric/build_metrics_advanced.py advanced Metrics
 
 Exit 0 only if every stage succeeds; otherwise 1.
 """
@@ -27,8 +27,8 @@ STAGES = [
     ("ingest:ct66_daily", ["pipeline/ingest_ct66_daily.py"]),  # 20.5M counts -> daily aggregate
     ("geo:conform", ["pipeline/geo/conform.py"]),
     ("geo:split_layers", ["pipeline/geo/split_layers.py"]),
-    ("kpi:build_kpis", ["pipeline/kpi/build_kpis.py"]),
-    ("kpi:build_kpis_advanced", ["pipeline/kpi/build_kpis_advanced.py"]),
+    ("metric:build_metrics", ["pipeline/metric/build_metrics.py"]),
+    ("metric:build_metrics_advanced", ["pipeline/metric/build_metrics_advanced.py"]),
     ("compact", ["pipeline/compact_local.py"]),  # reclaim space, drop scratch schemas
     ("publish:serving", ["pipeline/publish_serving.py"]),  # push small serving layer -> MotherDuck
 ]
@@ -37,7 +37,7 @@ STAGES = [
 def main() -> int:
     env = dict(os.environ)
     env.pop("MOTHERDUCK_TOKEN", None)  # run_pipeline reads env directly
-    env["NYC_FORCE_LOCAL"] = "1"  # geo/KPI builders re-load .env, so force local explicitly
+    env["NYC_FORCE_LOCAL"] = "1"  # geo/Metric builders re-load .env, so force local explicitly
     env["NYC_INCREMENTAL"] = "1"  # skip datasets whose Socrata last_updated is unchanged
 
     db = ROOT / "nyc_dot_analytics.duckdb"

@@ -4,7 +4,7 @@ Provides layout generators for:
 - Phase C: Distribution Classification (Analytics View)
 - Phase D: Anomaly Detection (Quality Dashboard)
 - Phase E: Seasonal Decomposition (Temporal Patterns View)
-- Phase F: Bootstrap CI (KPI Dashboard)
+- Phase F: Bootstrap CI (Metric Dashboard)
 """
 
 import dash_mantine_components as dmc
@@ -381,9 +381,9 @@ def layout_phase_e_decomposition():
 def layout_phase_f_bootstrap_ci():
     """
     Phase F: Bootstrap Confidence Intervals Section.
-    Wraps KPI metrics with uncertainty quantification.
+    Wraps Metric metrics with uncertainty quantification.
 
-    Location: Executive Dashboard, KPI section
+    Location: Executive Dashboard, Metric section
     """
     return dmc.Stack(
         [
@@ -396,7 +396,7 @@ def layout_phase_f_bootstrap_ci():
                             dmc.Stack(
                                 [
                                     dmc.Text(
-                                        "KPI Metrics with Confidence Intervals", fw=700, size="lg"
+                                        "Metric Metrics with Confidence Intervals", fw=700, size="lg"
                                     ),
                                     dmc.Text(
                                         "Monitor key metrics with statistical uncertainty quantification",
@@ -420,7 +420,7 @@ def layout_phase_f_bootstrap_ci():
                         span={"base": 12, "sm": 6},
                         children=[
                             dmc.NumberInput(
-                                id="kpi-bootstrap-samples",
+                                id="metric-bootstrap-samples",
                                 value=10000,
                                 min=1000,
                                 max=50000,
@@ -433,7 +433,7 @@ def layout_phase_f_bootstrap_ci():
                         span={"base": 12, "sm": 6},
                         children=[
                             dmc.Select(
-                                id="kpi-confidence-level",
+                                id="metric-confidence-level",
                                 value="95",
                                 data=[
                                     {"value": "90", "label": "90%"},
@@ -450,11 +450,11 @@ def layout_phase_f_bootstrap_ci():
             ),
             # Refresh trigger (polling)
             dcc.Interval(
-                id="kpi-refresh-interval",
+                id="metric-refresh-interval",
                 interval=30000,  # 30 seconds
                 n_intervals=0,
             ),
-            # KPI Grid
+            # Metric Grid
             dmc.Paper(
                 withBorder=True,
                 p="md",
@@ -462,7 +462,7 @@ def layout_phase_f_bootstrap_ci():
                 shadow="sm",
                 children=[
                     html.Div(
-                        id="kpi-bootstrap-figures",
+                        id="metric-bootstrap-figures",
                         children=[
                             dmc.Skeleton(height=300, circle=False, mb="md"),
                             dmc.Skeleton(height=300, circle=False, mb="md"),
@@ -478,8 +478,8 @@ def layout_phase_f_bootstrap_ci():
                     dmc.AccordionItem(
                         children=[
                             dmc.Text(
-                                id="kpi-bootstrap-summary",
-                                children="Bootstrap CI summarizes uncertainty in KPI estimates.",
+                                id="metric-bootstrap-summary",
+                                children="Bootstrap CI summarizes uncertainty in Metric estimates.",
                                 size="sm",
                                 style={"lineHeight": "1.6"},
                             )
@@ -632,7 +632,7 @@ def render_analytics_integration_tabs() -> dmc.Tabs:
                         leftSection=DashIconify(icon="mdi:chart-line"),
                     ),
                     dmc.TabsTab(
-                        "KPI CI (F)", value="phase-f", leftSection=DashIconify(icon="mdi:gauge")
+                        "Metric CI (F)", value="phase-f", leftSection=DashIconify(icon="mdi:gauge")
                     ),
                     dmc.TabsTab(
                         "Spatial (B)",

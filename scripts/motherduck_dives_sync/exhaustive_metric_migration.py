@@ -7,20 +7,20 @@ token = os.getenv("MOTHERDUCK_TOKEN")
 
 con = duckdb.connect(f"md:nyc_mission_control?motherduck_token={token}")
 
-print("--- EXHAUSTIVE KPI MIGRATION (Phase G) ---")
+print("--- EXHAUSTIVE Metric MIGRATION (Phase G) ---")
 
 # 1. Create Analytics Schema if not exists
 con.execute("CREATE SCHEMA IF NOT EXISTS analytics")
 
-# 2. Update/Create v_kpi_dashboard with Exhaustive Metrics
+# 2. Update/Create v_metric_dashboard with Exhaustive Metrics
 # This view unions all metric sources into a standard long format
-kpi_view_sql = """
-CREATE OR REPLACE VIEW app_queries.v_kpi_dashboard AS
+metric_view_sql = """
+CREATE OR REPLACE VIEW app_queries.v_metric_dashboard AS
 -- Phase F: Compliance & SLA (Existing + New)
 SELECT 
-    'phase_f_sla_probability' as kpi_name,
+    'phase_f_sla_probability' as metric_name,
     borough,
-    (SUM(CASE WHEN days_to_inspect <= 45 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) as kpi_value,
+    (SUM(CASE WHEN days_to_inspect <= 45 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) as metric_value,
     now() as analytics_timestamp,
     'F' as phase,
     'SLA Compliance Probability' as label,
@@ -34,9 +34,9 @@ GROUP BY 1, 2
 UNION ALL
 
 SELECT 
-    'phase_f_investment_justification' as kpi_name,
+    'phase_f_investment_justification' as metric_name,
     borough,
-    (SUM(CASE WHEN ifa_eligible='Y' THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) as kpi_value,
+    (SUM(CASE WHEN ifa_eligible='Y' THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) as metric_value,
     now() as analytics_timestamp,
     'F' as phase,
     'Investment Justification Rate' as label,
@@ -51,9 +51,9 @@ GROUP BY 1, 2
 UNION ALL
 
 SELECT 
-    'phase_e_production_rate' as kpi_name,
+    'phase_e_production_rate' as metric_name,
     borough,
-    AVG(completed_units * 10.0) as kpi_value, -- Scaling for demo
+    AVG(completed_units * 10.0) as metric_value, -- Scaling for demo
     now() as analytics_timestamp,
     'E' as phase,
     'Production Rate (LF)' as label,
@@ -67,9 +67,9 @@ GROUP BY 1, 2
 UNION ALL
 
 SELECT 
-    'phase_e_backlog_burn_rate' as kpi_name,
+    'phase_e_backlog_burn_rate' as metric_name,
     borough,
-    (SUM(completed_units) * 100.0 / NULLIF(SUM(backlog_units + completed_units), 0)) as kpi_value,
+    (SUM(completed_units) * 100.0 / NULLIF(SUM(backlog_units + completed_units), 0)) as metric_value,
     now() as analytics_timestamp,
     'E' as phase,
     'Backlog Burn Rate' as label,
@@ -84,9 +84,9 @@ GROUP BY 1, 2
 UNION ALL
 
 SELECT 
-    'phase_d_hpr_resolution' as kpi_name,
+    'phase_d_hpr_resolution' as metric_name,
     borough,
-    AVG(7.5) as kpi_value, -- Placeholder for response time logic
+    AVG(7.5) as metric_value, -- Placeholder for response time logic
     now() as analytics_timestamp,
     'D' as phase,
     'HPR Resolution Speed' as label,
@@ -101,9 +101,9 @@ GROUP BY 1, 2
 UNION ALL
 
 SELECT 
-    'phase_c_list_validity' as kpi_name,
+    'phase_c_list_validity' as metric_name,
     borough,
-    98.2 as kpi_value, -- Static high-integrity for list valid
+    98.2 as metric_value, -- Static high-integrity for list valid
     now() as analytics_timestamp,
     'C' as phase,
     'List Integrity Score' as label,
@@ -118,9 +118,9 @@ GROUP BY 1, 2
 UNION ALL
 
 SELECT 
-    'phase_b_cost_efficiency' as kpi_name,
+    'phase_b_cost_efficiency' as metric_name,
     borough,
-    AVG(cost_per_lf) as kpi_value,
+    AVG(cost_per_lf) as metric_value,
     now() as analytics_timestamp,
     'B' as phase,
     'Unit Cost (LF)' as label,
@@ -135,9 +135,9 @@ GROUP BY 1, 2
 UNION ALL
 
 SELECT 
-    'phase_a_completeness' as kpi_name,
+    'phase_a_completeness' as metric_name,
     borough,
-    99.5 as kpi_value,
+    99.5 as metric_value,
     now() as analytics_timestamp,
     'A' as phase,
     'Data Completeness' as label,
@@ -150,8 +150,8 @@ GROUP BY 1, 2
 """
 
 try:
-    con.execute(kpi_view_sql)
-    print("Successfully updated app_queries.v_kpi_dashboard with Exhaustive KPI Suite.")
+    con.execute(metric_view_sql)
+    print("Successfully updated app_queries.v_metric_dashboard with Exhaustive Metric Suite.")
 except Exception as e:
     print(f"Error updating view: {e}")
 

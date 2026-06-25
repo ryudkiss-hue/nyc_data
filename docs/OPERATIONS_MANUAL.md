@@ -31,7 +31,7 @@ The NYC DOT Sidewalk Data Governance Toolkit is an enterprise data platform serv
 
 - **Data Collection**: Field inspections, repairs, contracts
 - **Data Governance**: Schema validation, change tracking, audit trails
-- **Analytics**: Real-time dashboards, compliance reporting, KPI tracking
+- **Analytics**: Real-time dashboards, compliance reporting, Metric tracking
 - **Automation**: Workflow triggers, notification routing, document generation
 
 ## Key Metrics

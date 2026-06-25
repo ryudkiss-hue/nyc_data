@@ -208,7 +208,7 @@ All questions your Chart Finder should recognize and route to appropriate visual
 1. **Bar Chart (side-by-side)** — Owner type × compliance rate; easy comparison
 2. **Diverging Stacked Bar (positive/negative)** — Compliant % vs non-compliant %; shows balance
 3. **Dot Plot (precise comparison)** — Precise values; minimal visual clutter
-4. **KPI Card (single metric)** — Overall compliance rate; executive summary
+4. **Metric Card (single metric)** — Overall compliance rate; executive summary
 
 **Example Question Variants:**
 - "How compliant are city-owned properties?"
@@ -371,7 +371,7 @@ All questions your Chart Finder should recognize and route to appropriate visual
 **Analytical Intent:** Executive summary; what % of violations are resolved?
 
 **Primary Charts:**
-1. **KPI Card (single metric)** — Large number; "78% compliance rate"
+1. **Metric Card (single metric)** — Large number; "78% compliance rate"
 2. **Gauge Chart (target tracking)** — Visual speedometer; show vs. target
 3. **Metric Sparkline (mini trend)** — Compliance rate over past 12 months
 

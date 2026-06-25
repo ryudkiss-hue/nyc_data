@@ -249,7 +249,7 @@ Create file: `UAT_CHECKLIST_HIDDEN_ANALYSIS.md`
 5. Bootstrap Confidence Intervals
    - [ ] Load metric data
    - [ ] Compute 95% CI
-   - [ ] Verify CI bands on KPI cards
+   - [ ] Verify CI bands on Metric cards
    - [ ] Check coverage valid
    - [ ] Latency <1.5s
 
@@ -751,7 +751,7 @@ git add tests/test_duckdb_analytics_models.py
 git commit -m "test(analytics): add comprehensive tests for analytics views materialization
 
 Tests:
-- test_create_borough_summary: KPI aggregation working
+- test_create_borough_summary: Metric aggregation working
 - test_all_analytics_views: All 5 views materialize correctly
 
 Tests: 5/5 passing"

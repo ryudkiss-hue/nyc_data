@@ -25,7 +25,7 @@ Located in: `src/socrata_toolkit/analysis/`
 | `ensemble.py` | Multi-model ensemble methods | `ensemble_predict()`, `combine_predictions()` |
 | `inference.py` | Statistical hypothesis testing, significance | `t_test()`, `chi_square()`, `anova()` |
 | `insights.py` | Insight extraction and reporting | `extract_insights()`, `anomaly_insights()` |
-| `program.py` | Program-level analysis (aggregate metrics) | `program_dashboard()`, `program_kpis()` |
+| `program.py` | Program-level analysis (aggregate metrics) | `program_dashboard()`, `program_metrics()` |
 | `incremental.py` | Streaming/incremental data processing | `incremental_fit()`, `update_model()` |
 
 ### Domain-Specific: Complaint & Appeal Workflows

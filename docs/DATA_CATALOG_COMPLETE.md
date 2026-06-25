@@ -3,7 +3,7 @@
 **Version:** 2.0 (Integrated with Governance Framework v1.0)  
 **Last Updated:** 2026-06-18  
 **Total Datasets:** 57  
-**Total KPIs:** 51  
+**Total Metrics:** 51  
 **Domain Schemas:** 5  
 **Retention Policy:** Indefinite (personal solo-user mode)
 
@@ -13,11 +13,11 @@
 
 - **[Datasets by Domain Schema](#datasets-by-domain-schema)** — All 57 datasets organized by business domain
 - **[Dataset Index](#complete-dataset-index)** — Alphabetical reference with fourfour IDs
-- **[KPI Materialization](#kpi-materialization-catalog)** — 51 KPIs with lineage to source datasets
+- **[Metric Materialization](#metric-materialization-catalog)** — 51 Metrics with lineage to source datasets
 - **[Analytics Schemas](#analytics-schemas-catalog)** — 5 domain schemas with table definitions
 - **[Data Dives](#data-dives-catalog)** — 4 dive categories for exploration and analysis
 - **[Governance Integration](#governance-integration)** — Classification, quality tiers, SLA tracking
-- **[Data Lineage](#data-lineage)** — Complete source → staging → analytics → KPI flow
+- **[Data Lineage](#data-lineage)** — Complete source → staging → analytics → Metric flow
 
 ---
 
@@ -52,7 +52,7 @@
 - `service_requests`: Service requests and maintenance tasks
 - `inspection_history`: Historical inspection records for trend analysis
 
-**Downstream KPIs:**
+**Downstream Metrics:**
 - violation_closure_rate_by_borough (rate)
 - inspection_timeliness (trend)
 - sla_compliance_rate (rate)
@@ -88,7 +88,7 @@
 - `accessibility_audits`: Audit findings and compliance assessments
 - `violation_attachments`: Photos and documentation of accessibility violations
 
-**Downstream KPIs:**
+**Downstream Metrics:**
 - ramp_completion_rate (rate)
 - ramp_installation_pace (count)
 - accessibility_audit_pass_rate (rate)
@@ -131,7 +131,7 @@
 - `environmental_compliance`: Environmental review and compliance status
 - `traffic_impact`: Traffic impact assessments and mitigation
 
-**Downstream KPIs:**
+**Downstream Metrics:**
 - permit_approval_time (trend)
 - construction_timeline_variance (trend)
 - conflict_matrix_overlap_rate (rate)
@@ -176,7 +176,7 @@
 - `block_face_inventory`: Block face inventory for street assets
 - `surface_condition_history`: Historical surface condition assessments
 
-**Downstream KPIs:**
+**Downstream Metrics:**
 - spatial_conflict_density (count)
 - tree_asset_utilization_rate (rate)
 - curb_usage_efficiency (index)
@@ -221,7 +221,7 @@
 - `noise_monitoring`: Construction noise monitoring data
 - `air_quality`: Air quality monitoring during construction
 
-**Downstream KPIs:**
+**Downstream Metrics:**
 - cost_per_inspection (rate)
 - budget_variance (trend)
 - project_schedule_variance (trend)
@@ -283,47 +283,47 @@ Datasets 26-57: Photos, logs, budgets, vendors, equipment, safety, environmental
 
 ---
 
-## KPI Materialization Catalog
+## Metric Materialization Catalog
 
-### Service Delivery KPIs
+### Service Delivery Metrics
 
-| KPI ID | Name | Source Datasets | Calculation | Frequency | SLA | Domain |
+| Metric ID | Name | Source Datasets | Calculation | Frequency | SLA | Domain |
 |--------|------|-----------------|-------------|-----------|-----|--------|
-| KPI-001 | ramp_completion_rate | ramp_progress, ramp_locations | COUNT(*) FILTER status='completed' / COUNT(*) | daily | HIGH | accessibility |
-| KPI-002 | violation_closure_rate | violations | COUNT(*) FILTER closed_date IS NOT NULL / COUNT(*) | daily | HIGH | sim_core |
-| KPI-003 | inspection_timeliness | inspection | PERCENTILE_CONT(days_to_complete, 0.75) | weekly | MEDIUM | sim_core |
-| KPI-004 | ramp_installation_pace | ramp_progress | COUNT(*) FILTER DATE_TRUNC('month', created_date) | monthly | MEDIUM | accessibility |
+| METRIC-001 | ramp_completion_rate | ramp_progress, ramp_locations | COUNT(*) FILTER status='completed' / COUNT(*) | daily | HIGH | accessibility |
+| METRIC-002 | violation_closure_rate | violations | COUNT(*) FILTER closed_date IS NOT NULL / COUNT(*) | daily | HIGH | sim_core |
+| METRIC-003 | inspection_timeliness | inspection | PERCENTILE_CONT(days_to_complete, 0.75) | weekly | MEDIUM | sim_core |
+| METRIC-004 | ramp_installation_pace | ramp_progress | COUNT(*) FILTER DATE_TRUNC('month', created_date) | monthly | MEDIUM | accessibility |
 
-### Operational Efficiency KPIs
+### Operational Efficiency Metrics
 
-| KPI ID | Name | Source Datasets | Calculation | Frequency | SLA | Domain |
+| Metric ID | Name | Source Datasets | Calculation | Frequency | SLA | Domain |
 |--------|------|-----------------|-------------|-----------|-----|--------|
-| KPI-005 | inspection_cost_per_unit | inspection, cost_tracking | SUM(total_cost) / COUNT(*) | monthly | MEDIUM | sim_core |
-| KPI-006 | average_resolution_time | violations | AVG(CAST(days_to_close AS FLOAT)) | weekly | MEDIUM | accessibility |
-| KPI-007 | resource_utilization | equipment_log, project_resources | SUM(hours_used) / SUM(hours_available) | monthly | MEDIUM | extended |
-| KPI-008 | contractor_efficiency | vendor_performance | AVG(performance_score) | monthly | MEDIUM | extended |
+| METRIC-005 | inspection_cost_per_unit | inspection, cost_tracking | SUM(total_cost) / COUNT(*) | monthly | MEDIUM | sim_core |
+| METRIC-006 | average_resolution_time | violations | AVG(CAST(days_to_close AS FLOAT)) | weekly | MEDIUM | accessibility |
+| METRIC-007 | resource_utilization | equipment_log, project_resources | SUM(hours_used) / SUM(hours_available) | monthly | MEDIUM | extended |
+| METRIC-008 | contractor_efficiency | vendor_performance | AVG(performance_score) | monthly | MEDIUM | extended |
 
-### Compliance & Governance KPIs
+### Compliance & Governance Metrics
 
-| KPI ID | Name | Source Datasets | Calculation | Frequency | SLA | Domain |
+| Metric ID | Name | Source Datasets | Calculation | Frequency | SLA | Domain |
 |--------|------|-----------------|-------------|-----------|-----|--------|
-| KPI-009 | sla_compliance_rate | inspection, ramp_progress, violations | COUNT(*) FILTER date_diff <= sla_threshold / COUNT(*) | monthly | HIGH | sim_core |
-| KPI-010 | accessibility_audit_pass_rate | accessibility_audits | COUNT(*) FILTER result='pass' / COUNT(*) | quarterly | MEDIUM | accessibility |
-| KPI-011 | budget_variance | cost_tracking, project_budget | (actual_cost - budgeted_cost) / budgeted_cost | monthly | MEDIUM | extended |
-| KPI-012 | permit_approval_time | street_permits | AVG(days_to_approval) | weekly | MEDIUM | coordination |
+| METRIC-009 | sla_compliance_rate | inspection, ramp_progress, violations | COUNT(*) FILTER date_diff <= sla_threshold / COUNT(*) | monthly | HIGH | sim_core |
+| METRIC-010 | accessibility_audit_pass_rate | accessibility_audits | COUNT(*) FILTER result='pass' / COUNT(*) | quarterly | MEDIUM | accessibility |
+| METRIC-011 | budget_variance | cost_tracking, project_budget | (actual_cost - budgeted_cost) / budgeted_cost | monthly | MEDIUM | extended |
+| METRIC-012 | permit_approval_time | street_permits | AVG(days_to_approval) | weekly | MEDIUM | coordination |
 
-### Strategic Impact KPIs
+### Strategic Impact Metrics
 
-| KPI ID | Name | Source Datasets | Calculation | Frequency | SLA | Domain |
+| Metric ID | Name | Source Datasets | Calculation | Frequency | SLA | Domain |
 |--------|------|-----------------|-------------|-----------|-----|--------|
-| KPI-013 | new_ramp_installation_rate | ramp_progress | COUNT(*) FILTER status='completed' AND created_date > (now - interval 30 day) | monthly | MEDIUM | accessibility |
-| KPI-014 | accessibility_improvement_index | accessibility_audits, violations | (pass_rate * 100) + (completion_rate * 100) | quarterly | MEDIUM | accessibility |
-| KPI-015 | community_satisfaction | public_complaints | (resolved_count - reopened_count) / total_count | quarterly | LOW | sim_core |
-| KPI-016 | strategic_goal_progress | all_domains | Composite index across all KPIs | quarterly | MEDIUM | sim_core |
+| METRIC-013 | new_ramp_installation_rate | ramp_progress | COUNT(*) FILTER status='completed' AND created_date > (now - interval 30 day) | monthly | MEDIUM | accessibility |
+| METRIC-014 | accessibility_improvement_index | accessibility_audits, violations | (pass_rate * 100) + (completion_rate * 100) | quarterly | MEDIUM | accessibility |
+| METRIC-015 | community_satisfaction | public_complaints | (resolved_count - reopened_count) / total_count | quarterly | LOW | sim_core |
+| METRIC-016 | strategic_goal_progress | all_domains | Composite index across all Metrics | quarterly | MEDIUM | sim_core |
 
-**Total KPIs Materialized:** 51 across 4 business outcome categories  
-**Borough Breakdowns:** Each KPI × 5 boroughs (Manhattan, Bronx, Brooklyn, Queens, Staten Island) = 255 KPI records  
-**Quality Assurance:** All KPIs include 95% confidence intervals using Wilson Score binomial CI for rates, Poisson for counts, bootstrap for composites
+**Total Metrics Materialized:** 51 across 4 business outcome categories  
+**Borough Breakdowns:** Each Metric × 5 boroughs (Manhattan, Bronx, Brooklyn, Queens, Staten Island) = 255 Metric records  
+**Quality Assurance:** All Metrics include 95% confidence intervals using Wilson Score binomial CI for rates, Poisson for counts, bootstrap for composites
 
 ---
 
@@ -354,7 +354,7 @@ Datasets 26-57: Photos, logs, budgets, vendors, equipment, safety, environmental
 - `inspection_summary`: rolled-up counts, rates by inspector/borough/time
 - `violation_timeline`: violation lifecycle with SLA tracking
 - `resolution_funnel`: stages of closure process
-- `inspector_performance`: KPIs per inspector
+- `inspector_performance`: Metrics per inspector
 **Update Frequency:** Daily  
 **Primary Keys:** inspection_id, violation_id
 
@@ -501,7 +501,7 @@ Datasets 26-57: Photos, logs, budgets, vendors, equipment, safety, environmental
 - Lineage transitions (source→target transformations)
 - Quality gate violations
 - Access control violations
-- KPI calculation runs (inputs, outputs, dependencies)
+- Metric calculation runs (inputs, outputs, dependencies)
 
 **Retention:** Indefinite (personal solo-user mode)  
 **Format:** JSONL (one event per line)  
@@ -511,7 +511,7 @@ Datasets 26-57: Photos, logs, budgets, vendors, equipment, safety, environmental
 
 ## Data Lineage
 
-### Source → Raw → Staging → Analytics → KPI Flow
+### Source → Raw → Staging → Analytics → Metric Flow
 
 ```
 Socrata Sources (57)
@@ -519,22 +519,22 @@ Socrata Sources (57)
     ├─→ raw.inspection (399K rows)
     │   ├─→ staging.inspection (399K rows, deduplicated)
     │   └─→ sim_core.inspection_summary (aggregated by inspector/borough/time)
-    │       └─→ KPI-001: violation_closure_rate
-    │           KPI-002: inspection_timeliness
-    │           KPI-009: sla_compliance_rate
+    │       └─→ METRIC-001: violation_closure_rate
+    │           METRIC-002: inspection_timeliness
+    │           METRIC-009: sla_compliance_rate
     │
     ├─→ raw.violations (313K rows)
     │   ├─→ staging.violations (313K rows, deduplicated)
     │   └─→ sim_core.violation_timeline (with SLA tracking)
-    │       └─→ KPI-002: violation_closure_rate
-    │           KPI-010: accessibility_audit_pass_rate
+    │       └─→ METRIC-002: violation_closure_rate
+    │           METRIC-010: accessibility_audit_pass_rate
     │
     ├─→ raw.ramp_progress (187K rows)
     │   ├─→ staging.ramp_progress (187K rows, deduplicated)
     │   └─→ accessibility.ramp_completion_status (by neighborhood/borough)
-    │       └─→ KPI-001: ramp_completion_rate
-    │           KPI-004: ramp_installation_pace
-    │           KPI-014: accessibility_improvement_index
+    │       └─→ METRIC-001: ramp_completion_rate
+    │           METRIC-004: ramp_installation_pace
+    │           METRIC-014: accessibility_improvement_index
     │
     └─→ ... (54 more datasets following same pattern)
 ```
@@ -546,7 +546,7 @@ Socrata Sources (57)
 street_permits (3.6M) → raw.street_permits
     ├─→ staging.street_permits
     └─→ coordination.permit_lifecycle
-        └─→ KPI-012: permit_approval_time
+        └─→ METRIC-012: permit_approval_time
             └─→ Commissioner Briefing Dashboard
 ```
 
@@ -555,8 +555,8 @@ street_permits (3.6M) → raw.street_permits
 street_permits (3.6M) + cost_tracking (185K) → raw layer
     ├─→ staging layer (deduplicated)
     └─→ extended.project_financial_summary
-        ├─→ KPI-005: inspection_cost_per_unit
-        ├─→ KPI-011: budget_variance
+        ├─→ METRIC-005: inspection_cost_per_unit
+        ├─→ METRIC-011: budget_variance
         └─→ Executive Budget Review Dashboard
 ```
 
@@ -565,7 +565,7 @@ street_permits (3.6M) + cost_tracking (185K) → raw layer
 All 57 datasets → quality_assessment
     ├─→ completeness (non-null %), validity (TRY_CAST success), consistency (duplicate %), freshness (days since update)
     └─→ sim_core.quality_scorecard
-        └─→ KPI: data_quality_score (composite: 35% completeness + 25% validity + 25% consistency + 15% freshness)
+        └─→ Metric: data_quality_score (composite: 35% completeness + 25% validity + 25% consistency + 15% freshness)
 ```
 
 ---
@@ -586,7 +586,7 @@ All SQL queries against DuckDB default to `main.staging` schema (cleaned, dedupl
 ```sql
 SELECT * FROM staging.inspection LIMIT 10;           -- Cleaned SIM data
 SELECT * FROM sim_core.inspection_summary;             -- Pre-aggregated analytics
-SELECT * FROM serving.kpi_borough_results WHERE kpi_id = 'KPI-001';  -- KPI values
+SELECT * FROM serving.metric_borough_results WHERE metric_id = 'METRIC-001';  -- Metric values
 ```
 
 ### Governance Verification

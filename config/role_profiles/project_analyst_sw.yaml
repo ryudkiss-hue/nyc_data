@@ -28,12 +28,12 @@ duties:
     pack_outputs: [construction_list.xlsx, conflicts_summary.md, construction_list_diff.md]
   - id: contract_progress_reporting
     text: Analytical reports on contract progress, budget dollars, and productivity
-    workflow_steps: [contract_report, program_kpi]
-    pack_outputs: [contract_status.md, contract_analytics.json, program_kpi.json]
+    workflow_steps: [contract_report, program_metric]
+    pack_outputs: [contract_status.md, contract_analytics.json, program_metric.json]
   - id: efficiency_studies
     text: Routine analytical studies for contract efficiency and work productivity
-    workflow_steps: [program_kpi]
-    pack_outputs: [program_kpi.json, contract_analytics.json]
+    workflow_steps: [program_metric]
+    pack_outputs: [program_metric.json, contract_analytics.json]
   - id: contract_planning_inquiries
     text: Responds to contract planning related inquiries
     workflow_steps: [inquiry_templates]
@@ -43,10 +43,10 @@ duties:
       - budget_variance.md
   - id: program_metrics_tracking
     text: Tracks program metrics — construction data, contract performance, budget codes
-    workflow_steps: [program_kpi]
-    pack_outputs: [program_kpi.json]
+    workflow_steps: [program_metric]
+    pack_outputs: [program_metric.json]
 
-kpis:
+metrics:
   - name: contract_completion_pct
     description: Average percent complete across active contracts
     formula: "mean(actual_sqft / planned_sqft * 100)"
@@ -86,10 +86,10 @@ kpis:
     warning_threshold: 12
     critical_threshold: 20
   - name: program_health_score
-    description: Green KPI count as percent of standard program_kpi metrics
-    formula: "green_count / metric_count * 100 from program_kpi.json"
+    description: Green Metric count as percent of standard program_metric metrics
+    formula: "green_count / metric_count * 100 from program_metric.json"
     data_source:
-      artifact: program_kpi.json
+      artifact: program_metric.json
     direction: higher_is_better
     target: 80
     warning_threshold: 60

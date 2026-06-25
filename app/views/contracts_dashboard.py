@@ -463,12 +463,12 @@ def _render_export(df_contracts: pd.DataFrame, df_productivity: pd.DataFrame) ->
         st.success(f"Report ready: {len(sheets)} sheets covering {sum(len(d) for d in sheets.values()):,} rows.")
 
 # ---------------------------------------------------------------------------
-# Item 28 — Contractor weighted KPI scorecard
+# Item 28 — Contractor weighted Metric scorecard
 # ---------------------------------------------------------------------------
 
 def _render_contractor_scorecard(df: pd.DataFrame) -> None:
-    """Composite KPI = velocity x quality x timeliness, ranked per contractor."""
-    st.markdown("### 🏆 Contractor Weighted KPI Scorecard")
+    """Composite Metric = velocity x quality x timeliness, ranked per contractor."""
+    st.markdown("### 🏆 Contractor Weighted Metric Scorecard")
     st.caption(
         "Composite score (0–100) = velocity × quality × timeliness, equally weighted. "
         "Velocity = avg completion; timeliness = share of contracts on schedule; "
@@ -531,8 +531,8 @@ def _render_contractor_scorecard(df: pd.DataFrame) -> None:
             orientation="h",
             color="composite",
             color_continuous_scale="RdYlGn",
-            title="Composite KPI Score by Contractor",
-            labels={"composite": "Composite KPI (0–100)", "contractor": "Contractor"},
+            title="Composite Metric Score by Contractor",
+            labels={"composite": "Composite Metric (0–100)", "contractor": "Contractor"},
             height=max(320, len(score) * 36),
         )
         fig.update_layout(yaxis={"categoryorder": "total ascending"}, coloraxis_showscale=False)
@@ -920,10 +920,10 @@ def render_contracts_page() -> None:
     )
     st.markdown("---")
 
-    # --- New Layout: Level 1 - Core Metrics (KPI Hierarchy) ---
-    st.markdown("### 📊 Level 1: Core KPI Metrics")
-    kpi_cont = st.container(border=True)
-    with kpi_cont:
+    # --- New Layout: Level 1 - Core Metrics (Metric Hierarchy) ---
+    st.markdown("### 📊 Level 1: Core Metric Metrics")
+    metric_cont = st.container(border=True)
+    with metric_cont:
         c1, c2, c3, c4 = st.columns(4)
         if not df_contracts.empty:
             today = pd.Timestamp.today()

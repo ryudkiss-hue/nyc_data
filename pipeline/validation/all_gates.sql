@@ -123,16 +123,16 @@ SELECT
 FROM staging.mappluto;
 
 -- ============================================================================
--- GATE 4: KPI VERIFICATION
--- Check: 255 KPI records + 57 scorecards computed, no silent failures
+-- GATE 4: Metric VERIFICATION
+-- Check: 255 Metric records + 57 scorecards computed, no silent failures
 -- ============================================================================
 
 SELECT
-    'GATE_4: KPI_RECORDS' as check_name,
-    COUNT(*) as kpi_records,
+    'GATE_4: METRIC_RECORDS' as check_name,
+    COUNT(*) as metric_records,
     255 as expected_records,
     CASE WHEN COUNT(*) = 255 THEN 'PASS' ELSE 'FAIL' END as status
-FROM serving.kpi_borough_results
+FROM serving.metric_borough_results
 WHERE measurement_date = CAST(CURRENT_DATE AS DATE);
 
 SELECT
@@ -178,5 +178,5 @@ FROM (
     UNION ALL
     SELECT 'joins', CASE WHEN (SELECT COUNT(DISTINCT inspection_id) FROM staging.inspection) > 0 THEN 'PASS' ELSE 'FAIL' END
     UNION ALL
-    SELECT 'kpi', CASE WHEN (SELECT COUNT(*) FROM serving.kpi_borough_results WHERE measurement_date = CAST(CURRENT_DATE AS DATE)) > 0 THEN 'PASS' ELSE 'FAIL' END
+    SELECT 'metric', CASE WHEN (SELECT COUNT(*) FROM serving.metric_borough_results WHERE measurement_date = CAST(CURRENT_DATE AS DATE)) > 0 THEN 'PASS' ELSE 'FAIL' END
 ) gate_results;

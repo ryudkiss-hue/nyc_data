@@ -10,7 +10,7 @@ This document outlines the architecture and operational playbook for turning raw
 ## Components
 - Ingest: SocrataClient streaming fetch (page-by-page), transform to canonical schema.
 - Store: Postgres/PostGIS for authoritative storage; Mongo for denormalized operational state.
-- Analyze: Use Python modules (`ops`, `conflict`, `relevance`) to compute KPIs and rankings.
+- Analyze: Use Python modules (`ops`, `conflict`, `relevance`) to compute Metrics and rankings.
 - Notify: `alerts.AlertManager` routes to CLI, email, and DB.
 
 ## Nightly job outline
@@ -18,7 +18,7 @@ This document outlines the architecture and operational playbook for turning raw
 2. Load into staging tables using `PostgresExporter.copy_upsert_batches()`.
 3. Refresh materialized `construction_lists` view.
 4. Run `PostGISConflictResolver` against `permits` and `active_projects`.
-5. Produce KPIs and push alerts through the `AlertManager`.
+5. Produce Metrics and push alerts through the `AlertManager`.
 
 ## Recommended Postgres schema additions
 - `alerts` table: persistent store of issued alerts (see `docs/sop_faq.md`).

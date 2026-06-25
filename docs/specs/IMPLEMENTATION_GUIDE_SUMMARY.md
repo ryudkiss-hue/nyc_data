@@ -28,7 +28,7 @@ A production data pipeline that loads NYC sidewalk inspection data from Socrata 
 │  └─ staging.ramps (~210K deduplicated)                        │
 │         ↓                                                       │
 │  [MATERIALIZE] 5 analytics views                              │
-│  ├─ analytics.borough_summary (KPIs by borough)               │
+│  ├─ analytics.borough_summary (Metrics by borough)               │
 │  ├─ analytics.time_series_snapshots (monthly trends)          │
 │  ├─ analytics.material_analysis_mart (failure rates by type)  │
 │  ├─ analytics.clustering_features (feature matrix)            │

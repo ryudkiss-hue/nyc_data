@@ -59,7 +59,7 @@ steps:
   prioritize: true
   construction_diff: true
   contract_report: true
-  program_kpi: true
+  program_metric: true
   inquiry_templates: true
   executive_summary: true
   conflicts:

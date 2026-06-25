@@ -1,9 +1,9 @@
-# EXPANDED KPI & CHART REGISTRY
+# EXPANDED Metric & CHART REGISTRY
 ## NYC DOT SIM Dashboard — Comprehensive Plotly/Dash Configuration Guide
 
 **Version:** 2.0  
 **Date:** 2026-06-17  
-**Scope:** 51 KPIs × 45 Plotly chart types × Animation/interaction configs  
+**Scope:** 51 Metrics × 45 Plotly chart types × Animation/interaction configs  
 **Schema Source:** `plot-schema.json` (98,670 lines, complete Plotly 2.0 spec)
 
 ---
@@ -12,7 +12,7 @@
 
 1. [Executive Summary](#executive-summary)
 2. [Plotly Trace Type Catalog](#plotly-trace-type-catalog)
-3. [KPI-to-Chart Mapping Matrix](#kpi-to-chart-mapping-matrix)
+3. [METRIC-to-Chart Mapping Matrix](#metric-to-chart-mapping-matrix)
 4. [Chart Type Detailed Configurations](#chart-type-detailed-configurations)
 5. [Dash Component Patterns](#dash-component-patterns)
 6. [NYC DOT Theme Integration](#nyc-dot-theme-integration)
@@ -33,10 +33,10 @@
 - **Hover Templates:** Per-trace customization support
 - **Transition/Animation:** 38 easing functions with frame-based keyframe support
 
-### KPI & Chart Alignment
-- **Total KPIs:** 51 (across 21 datasets)
+### Metric & Chart Alignment
+- **Total Metrics:** 51 (across 21 datasets)
 - **Primary Chart Types:** 11 (gauge, trend, bar, heatmap, box, scatter, waterfall, sunburst, candlestick, funnel, sankey)
-- **Alternative Charts:** 2–4 per KPI for exploratory analysis
+- **Alternative Charts:** 2–4 per Metric for exploratory analysis
 - **Data Shapes Supported:** scalar, time-series, multi-dimensional, hierarchical, flow
 
 ### NYC DOT Theme
@@ -76,7 +76,7 @@ All 45 Plotly trace types extracted from plot-schema.json:
 20. **waterfall** - Variance decomposition
 
 ### Statistical/Specialized (9 types)
-21. **indicator** - KPI cards, gauges, numbers
+21. **indicator** - Metric cards, gauges, numbers
 22. **densitymap** / **densitymapbox** - Kernel density on map
 23. **contour** - 2D contour lines
 24. **contourcarpet** - Carpet plot contours
@@ -111,11 +111,11 @@ All 45 Plotly trace types extracted from plot-schema.json:
 
 ---
 
-## KPI-TO-CHART MAPPING MATRIX (51 KPIs)
+## METRIC-TO-CHART MAPPING MATRIX (51 Metrics)
 
-### Category 1: Permits & Conflicts (13 KPIs)
+### Category 1: Permits & Conflicts (13 Metrics)
 
-| KPI ID | KPI Name | Primary Chart | Data Shape | Config Highlights |
+| Metric ID | Metric Name | Primary Chart | Data Shape | Config Highlights |
 |--------|----------|---------------|-----------|-------------------|
 | PRM-001 | permit_fee_revenue | Bar (monthly) | Time-series | X: month, Y: $M, trend overlay |
 | PRM-002 | avg_fee_per_permit | Gauge | Scalar | Range: $0-$50K, target: $5K |
@@ -130,9 +130,9 @@ All 45 Plotly trace types extracted from plot-schema.json:
 | CLS-002 | closure_duration_avg | Gauge | Scalar + groups | Range: 0-30 days, by borough | CLS-003 | closure_by_borough | Bar | Categorical | Pie alternative, % distribution |
 | CLS-004 | closure_public_impact | Gauge | Scalar + components | Unit: days × blocks impacted |
 
-### Category 2: Pedestrian Infrastructure (14 KPIs)
+### Category 2: Pedestrian Infrastructure (14 Metrics)
 
-| KPI ID | KPI Name | Primary Chart | Data Shape | Config Highlights |
+| Metric ID | Metric Name | Primary Chart | Data Shape | Config Highlights |
 |--------|----------|---------------|-----------|-------------------|
 | PED-001 | open_streets_coverage | Gauge | Scalar + time-series | Target: increasing trend |
 | PED-002 | public_engagement_signal | Gauge | Scalar | Unit: visitors/day, target: >1000 |
@@ -149,9 +149,9 @@ All 45 Plotly trace types extracted from plot-schema.json:
 | ADA-002 | lpi_signal_coverage | Gauge | Scalar | Target: >50%, expansion trend |
 | ADA-003 | vz_crossing_maintenance | Gauge | Categorical | % faded, target: <10% |
 
-### Category 3: Street Safety & Conditions (12 KPIs)
+### Category 3: Street Safety & Conditions (12 Metrics)
 
-| KPI ID | KPI Name | Primary Chart | Data Shape | Config Highlights |
+| Metric ID | Metric Name | Primary Chart | Data Shape | Config Highlights |
 |--------|----------|---------------|-----------|-------------------|
 | PARK-001 | meter_obstruction_zones | Choropleth | Spatial | Block-level, highlight >5 meters |
 | PARK-002 | meter_density_analysis | Bar | Categorical | By borough, Manhattan: 8,432 |
@@ -164,9 +164,9 @@ All 45 Plotly trace types extracted from plot-schema.json:
 | VZ-001 | vz_crossing_maintenance | Gauge | Categorical | Paint condition, target: <10% faded |
 | VZ-002 | safety_initiative_scope | Pie | Hierarchical | By focus area, 234 crossings |
 
-### Category 4: Budget & Vendor (7 KPIs)
+### Category 4: Budget & Vendor (7 Metrics)
 
-| KPI ID | KPI Name | Primary Chart | Data Shape | Config Highlights |
+| Metric ID | Metric Name | Primary Chart | Data Shape | Config Highlights |
 |--------|----------|---------------|-----------|-------------------|
 | CAP-001 | capital_pipeline_health | Funnel | Categorical | Planning → Active → Complete stages |
 | CAP-002 | resource_allocation | Gauge | Scalar + category | Target: >15% DOT, pie alt |
@@ -176,9 +176,9 @@ All 45 Plotly trace types extracted from plot-schema.json:
 | COORD-001 | bus_pad_contract_status | Funnel | Categorical | Status pipeline, 542 total |
 | COORD-002 | agency_coordination_events | Bar | Categorical | By agency, time-series alt |
 
-### Category 5: Reference & Compliance (5 KPIs)
+### Category 5: Reference & Compliance (5 Metrics)
 
-| KPI ID | KPI Name | Primary Chart | Data Shape | Config Highlights |
+| Metric ID | Metric Name | Primary Chart | Data Shape | Config Highlights |
 |--------|----------|---------------|-----------|-------------------|
 | GEO-001 | spatial_join_completeness | Gauge | Scalar + time-series | Target: >99%, geocoding %  |
 | GEO-002 | centerline_coverage | Gauge | Scalar | 6,300 segments, >98% coverage |
@@ -190,9 +190,9 @@ All 45 Plotly trace types extracted from plot-schema.json:
 
 ## CHART CONFIGURATION TEMPLATES
 
-### 1. Gauge Chart (KPI Primary)
+### 1. Gauge Chart (Metric Primary)
 
-**Use:** All scalar KPIs with targets
+**Use:** All scalar Metrics with targets
 
 ```python
 {
@@ -441,7 +441,7 @@ Bounce: `bounce, bounce-in, bounce-out, bounce-in-out`
 ```python
 @callback(
     Output("detail-chart", "figure"),
-    Input("kpi-gauge", "clickData")
+    Input("metric-gauge", "clickData")
 )
 def drill_down(clickData):
     # Fetch detail data and return detail chart
@@ -456,7 +456,7 @@ def drill_down(clickData):
     Input("refresh-interval", "n_intervals")
 )
 def animate_update(n):
-    value = fetch_kpi_value()
+    value = fetch_metric_value()
     fig.update_layout(transition={"duration": 500, "easing": "cubic-in-out"})
     return fig
 ```
@@ -505,14 +505,14 @@ def show_tooltip(hoverData):
 **Desktop (1024px+):** 3-4 columns, chart height=500px
 
 ```css
-.kpi-grid {
+.metric-grid {
   display: grid;
   gap: 16px;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
 
 @media (max-width: 767px) {
-  .kpi-grid { grid-template-columns: 1fr; }
+  .metric-grid { grid-template-columns: 1fr; }
 }
 ```
 
@@ -531,7 +531,7 @@ def show_tooltip(hoverData):
 ## PERFORMANCE BEST PRACTICES
 
 1. **WebGL for large datasets:** Use scattergl for >10K points
-2. **Caching:** Cache KPI fetches for 5 minutes
+2. **Caching:** Cache Metric fetches for 5 minutes
 3. **Lazy loading:** Load charts progressively
 4. **Optimize layout:** Minimize redraw on update
 5. **Monitor performance:** Target <1s per chart render
@@ -541,14 +541,14 @@ def show_tooltip(hoverData):
 ## IMPLEMENTATION CHECKLIST
 
 - [ ] Extract all Plotly configurations from plot-schema.json
-- [ ] Create gauge templates for all 51 KPIs
+- [ ] Create gauge templates for all 51 Metrics
 - [ ] Build secondary charts (bar, heatmap, line, funnel, etc.)
 - [ ] Implement Dash callbacks for interactivity
 - [ ] Integrate Mantine theme and colors
 - [ ] Add ARIA labels and accessibility
 - [ ] Test animations and transitions
 - [ ] Optimize for mobile/tablet/desktop
-- [ ] Wire KPI data from database
+- [ ] Wire Metric data from database
 - [ ] Deploy to production
 
 ---
@@ -793,7 +793,7 @@ def show_tooltip(hoverData):
 
 ## APPENDIX B: PYTHON DASH COMPONENT EXAMPLES
 
-### KPI Card Component with Mantine
+### Metric Card Component with Mantine
 
 ```python
 import dash_mantine_components as dmc
@@ -801,14 +801,14 @@ from dash import dcc, html, callback, Input, Output
 import plotly.graph_objs as go
 from typing import Optional, Dict, Any
 
-class KPICard(dmc.Card):
-    """Reusable KPI card component with gauge chart."""
+class MetricCard(dmc.Card):
+    """Reusable Metric card component with gauge chart."""
     
     def __init__(
         self,
         id: str,
         title: str,
-        kpi_value: float,
+        metric_value: float,
         unit: str,
         target: float,
         status: str,  # 'on-target' | 'at-risk' | 'critical'
@@ -844,7 +844,7 @@ class KPICard(dmc.Card):
                             dmc.Text(title, size="sm", weight=500, color="gray"),
                             dmc.Group([
                                 dmc.Text(
-                                    f"{kpi_value}{unit}",
+                                    f"{metric_value}{unit}",
                                     size="xl",
                                     weight=700,
                                     color=status_config['text']
@@ -883,10 +883,10 @@ class KPICard(dmc.Card):
         )
 
 # Usage Example
-kpi_card = KPICard(
-    id="kpi-card-001",
+metric_card = MetricCard(
+    id="metric-card-001",
     title="Ramp Completion Rate",
-    kpi_value=87.5,
+    metric_value=87.5,
     unit="%",
     target=85,
     status="on-target",
@@ -914,21 +914,21 @@ kpi_card = KPICard(
 
 ---
 
-### KPI Dashboard Grid Layout
+### Metric Dashboard Grid Layout
 
 ```python
 import dash_mantine_components as dmc
 from dash import dcc, html, callback, Input, Output, State
 
-def create_kpi_dashboard(kpis: list) -> html.Div:
-    """Create responsive KPI dashboard grid."""
+def create_metric_dashboard(metrics: list) -> html.Div:
+    """Create responsive Metric dashboard grid."""
     
     return html.Div([
         dmc.Container([
             dmc.Stack([
                 # Header
                 dmc.Group([
-                    dmc.Text("KPI Dashboard", size="xl", weight=700),
+                    dmc.Text("Metric Dashboard", size="xl", weight=700),
                     dmc.Group([
                         dmc.Select(
                             id="borough-filter",
@@ -945,23 +945,23 @@ def create_kpi_dashboard(kpis: list) -> html.Div:
                     ], spacing="md")
                 ], spacing="lg", position="apart"),
                 
-                # KPI Grid
+                # Metric Grid
                 dmc.SimpleGrid(
-                    children=[KPICard(**kpi_config) for kpi_config in kpis],
+                    children=[MetricCard(**metric_config) for metric_config in metrics],
                     cols={"base": 1, "sm": 2, "md": 3, "lg": 4},
                     spacing="md",
-                    id="kpi-grid"
+                    id="metric-grid"
                 )
             ], spacing="lg")
         ], size="lg", py="xl")
     ])
 
 # Usage
-kpi_data = [
+metric_data = [
     {
-        "id": "kpi-001",
+        "id": "metric-001",
         "title": "Ramp Completion",
-        "kpi_value": 87.5,
+        "metric_value": 87.5,
         "unit": "%",
         "target": 85,
         "status": "on-target",
@@ -969,9 +969,9 @@ kpi_data = [
         "trend_pct": 2.5
     },
     {
-        "id": "kpi-002",
+        "id": "metric-002",
         "title": "Permit Volume",
-        "kpi_value": 450,
+        "metric_value": 450,
         "unit": "",
         "target": 400,
         "status": "on-target",
@@ -980,12 +980,12 @@ kpi_data = [
     }
 ]
 
-dashboard = create_kpi_dashboard(kpi_data)
+dashboard = create_metric_dashboard(metric_data)
 ```
 
 ---
 
-### Callback Pattern: Update KPIs on Filter Change
+### Callback Pattern: Update Metrics on Filter Change
 
 ```python
 from dash import callback, Input, Output, State
@@ -993,13 +993,13 @@ import pandas as pd
 from datetime import datetime, timedelta
 
 @callback(
-    Output("kpi-grid", "children"),
+    Output("metric-grid", "children"),
     Input("borough-filter", "value"),
     Input("date-range", "value"),
     prevent_initial_call=False
 )
-def update_kpis_on_filter(borough, date_range):
-    """Update all KPIs when borough or date range changes."""
+def update_metrics_on_filter(borough, date_range):
+    """Update all Metrics when borough or date range changes."""
     
     # Set default date range (last 90 days)
     if not date_range or not date_range[1]:
@@ -1009,44 +1009,44 @@ def update_kpis_on_filter(borough, date_range):
         start_date = pd.to_datetime(date_range[0])
         end_date = pd.to_datetime(date_range[1])
     
-    # Fetch KPI data
-    kpi_results = []
-    for kpi_id in ["PRM-001", "PRM-002", "PRM-003"]:
-        value = fetch_kpi(kpi_id, borough, start_date, end_date)
-        trend = calculate_trend(kpi_id, borough, start_date, end_date)
-        status = determine_status(kpi_id, value)
+    # Fetch Metric data
+    metric_results = []
+    for metric_id in ["PRM-001", "PRM-002", "PRM-003"]:
+        value = fetch_metric(metric_id, borough, start_date, end_date)
+        trend = calculate_trend(metric_id, borough, start_date, end_date)
+        status = determine_status(metric_id, value)
         
-        kpi_results.append(KPICard(
-            id=f"kpi-card-{kpi_id}",
-            title=KPI_NAMES[kpi_id],
-            kpi_value=value["value"],
+        metric_results.append(MetricCard(
+            id=f"metric-card-{metric_id}",
+            title=METRIC_NAMES[metric_id],
+            metric_value=value["value"],
             unit=value["unit"],
-            target=KPI_TARGETS[kpi_id],
+            target=METRIC_TARGETS[metric_id],
             status=status,
             trend_direction=trend["direction"],
             trend_pct=trend["percent"]
         ))
     
-    return kpi_results
+    return metric_results
 
 
-def fetch_kpi(kpi_id: str, borough: str, start_date, end_date) -> dict:
-    """Fetch KPI value from database."""
+def fetch_metric(metric_id: str, borough: str, start_date, end_date) -> dict:
+    """Fetch Metric value from database."""
     # Query implementation
     pass
 
 
-def calculate_trend(kpi_id: str, borough: str, start_date, end_date) -> dict:
+def calculate_trend(metric_id: str, borough: str, start_date, end_date) -> dict:
     """Calculate trend direction and percentage change."""
     # Trend calculation logic
     return {"direction": "up", "percent": 2.5}
 
 
-def determine_status(kpi_id: str, value: dict) -> str:
-    """Determine KPI status based on value and target."""
-    if value >= KPI_TARGETS[kpi_id]:
+def determine_status(metric_id: str, value: dict) -> str:
+    """Determine Metric status based on value and target."""
+    if value >= METRIC_TARGETS[metric_id]:
         return "on-target"
-    elif value >= KPI_TARGETS[kpi_id] * 0.8:
+    elif value >= METRIC_TARGETS[metric_id] * 0.8:
         return "at-risk"
     else:
         return "critical"
@@ -1061,34 +1061,34 @@ def determine_status(kpi_id: str, value: dict) -> str:
     Output("detail-modal", "opened"),
     Output("detail-chart", "figure"),
     Output("detail-table", "data"),
-    Input("kpi-grid", "clickData"),
+    Input("metric-grid", "clickData"),
     State("borough-filter", "value"),
     prevent_initial_call=True
 )
-def drill_down_on_kpi_click(clickData, borough):
-    """Open detail view when KPI card clicked."""
+def drill_down_on_metric_click(clickData, borough):
+    """Open detail view when Metric card clicked."""
     
     if not clickData:
         return False, {}, []
     
-    # Extract KPI ID from clicked element
-    kpi_id = clickData.get("kpi_id", "PRM-001")
+    # Extract Metric ID from clicked element
+    metric_id = clickData.get("metric_id", "PRM-001")
     
     # Fetch detail data
-    detail_df = fetch_detail_data(kpi_id, borough)
+    detail_df = fetch_detail_data(metric_id, borough)
     
-    # Create detail chart based on KPI type
-    if kpi_id in ["PRM-001", "PRM-005"]:  # Time-series KPIs
-        detail_fig = create_trend_chart(detail_df, kpi_id)
-    elif kpi_id in ["PRM-003", "CLS-003"]:  # Category KPIs
-        detail_fig = create_bar_chart(detail_df, kpi_id)
+    # Create detail chart based on Metric type
+    if metric_id in ["PRM-001", "PRM-005"]:  # Time-series Metrics
+        detail_fig = create_trend_chart(detail_df, metric_id)
+    elif metric_id in ["PRM-003", "CLS-003"]:  # Category Metrics
+        detail_fig = create_bar_chart(detail_df, metric_id)
     else:
-        detail_fig = create_generic_scatter(detail_df, kpi_id)
+        detail_fig = create_generic_scatter(detail_df, metric_id)
     
     return True, detail_fig, detail_df.to_dict("records")
 
 
-def create_trend_chart(df: pd.DataFrame, kpi_id: str):
+def create_trend_chart(df: pd.DataFrame, metric_id: str):
     """Create trend line chart for detail view."""
     return {
         "data": [{
@@ -1101,9 +1101,9 @@ def create_trend_chart(df: pd.DataFrame, kpi_id: str):
             "fillcolor": "rgba(52,152,219,0.1)"
         }],
         "layout": {
-            "title": f"{KPI_NAMES[kpi_id]} (Detail View)",
+            "title": f"{METRIC_NAMES[metric_id]} (Detail View)",
             "xaxis": {"title": "Date"},
-            "yaxis": {"title": f"Value ({KPI_UNITS[kpi_id]})"},
+            "yaxis": {"title": f"Value ({METRIC_UNITS[metric_id]})"},
             "hovermode": "x unified"
         }
     }
@@ -1111,14 +1111,14 @@ def create_trend_chart(df: pd.DataFrame, kpi_id: str):
 
 ---
 
-## APPENDIX C: DATA SCHEMA FOR KPI COMPUTATION
+## APPENDIX C: DATA SCHEMA FOR Metric COMPUTATION
 
-### KPI Data Shape Requirements
+### Metric Data Shape Requirements
 
 ```python
-# Scalar KPI (Gauge)
+# Scalar Metric (Gauge)
 {
-    "kpi_id": "PRM-001",
+    "metric_id": "PRM-001",
     "borough": "MN",
     "value": 87.5,
     "unit": "%",
@@ -1127,7 +1127,7 @@ def create_trend_chart(df: pd.DataFrame, kpi_id: str):
     "source": "live_database"
 }
 
-# Time-Series KPI (Trend Line)
+# Time-Series Metric (Trend Line)
 [
     {"date": "2026-01-01", "value": 80, "target": 85},
     {"date": "2026-02-01", "value": 83, "target": 85},
@@ -1135,28 +1135,28 @@ def create_trend_chart(df: pd.DataFrame, kpi_id: str):
     {"date": "2026-04-01", "value": 87, "target": 85},
 ]
 
-# Category KPI (Bar Chart)
+# Category Metric (Bar Chart)
 [
     {"category": "MN", "value": 450, "target": 400},
     {"category": "BX", "value": 290, "target": 400},
     {"category": "BK", "value": 380, "target": 400},
 ]
 
-# 2D Matrix KPI (Heatmap)
+# 2D Matrix Metric (Heatmap)
 {
     "rows": ["MN", "BX", "BK"],
     "cols": ["Pothole", "Crack", "Raised"],
     "values": [[120, 45, 30], [90, 60, 25], [75, 50, 20]]
 }
 
-# Hierarchical KPI (Sunburst)
+# Hierarchical Metric (Sunburst)
 {
     "labels": ["Total", "Permits", "Inspections"],
     "parents": ["", "Total", "Total"],
     "values": [100, 60, 40]
 }
 
-# Geographic KPI (Choropleth)
+# Geographic Metric (Choropleth)
 {
     "locations": ["MN", "BX", "BK", "QN", "SI"],
     "values": [450, 290, 380, 320, 210]

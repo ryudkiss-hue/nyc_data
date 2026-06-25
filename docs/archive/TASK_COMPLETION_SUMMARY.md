@@ -1,7 +1,7 @@
 # TASK COMPLETION SUMMARY
-## Expanded KPI & Chart Registry — Source of Truth Established
+## Expanded Metric & Chart Registry — Source of Truth Established
 
-**Task:** Create comprehensive EXPANDED_KPI_CHART_REGISTRY.md that overrides superseded documents  
+**Task:** Create comprehensive EXPANDED_METRIC_CHART_REGISTRY.md that overrides superseded documents  
 **Status:** ✅ COMPLETE  
 **Date:** 2026-06-17  
 **Deliverables:** 3 interconnected authoritative documents
@@ -10,26 +10,26 @@
 
 ## WHAT WAS DELIVERED
 
-### 1. EXPANDED_KPI_CHART_REGISTRY.md (34.6 KB, 1,049 lines)
+### 1. EXPANDED_METRIC_CHART_REGISTRY.md (34.6 KB, 1,049 lines)
 **The authoritative specification for all visualization work**
 
 **Contents:**
-- Executive summary (Plotly schema analysis + KPI alignment)
+- Executive summary (Plotly schema analysis + Metric alignment)
 - Chapter 1: Plotly Trace Type Catalog (45 chart types from schema)
 - Chapter 2: Chart Animation/Easing Reference (38 functions)
-- Chapter 3: KPI-to-Chart Mapping Matrix (51 KPIs × optimal + alternative charts)
+- Chapter 3: METRIC-to-Chart Mapping Matrix (51 Metrics × optimal + alternative charts)
 - Chapter 4: Chart Configuration Templates (11 primary types with JSON/Python)
 - Chapter 5: NYC DOT Mantine Theme Integration (colors, responsive, ARIA labels)
 - Chapter 6: Animation & Transition Specifications (duration, easing combos)
 - Chapter 7: Interaction & Callback Patterns (click, hover, drill-down, selection)
 - Chapter 8: Performance & Accessibility (WebGL, caching, WCAG 2.1 AA)
 - Appendix A: Complete JSON configurations for all 11 chart types
-- Appendix B: Production-ready Python code (KPICard class, 3 callback patterns)
-- Appendix C: Data schema requirements for KPI computation
+- Appendix B: Production-ready Python code (MetricCard class, 3 callback patterns)
+- Appendix C: Data schema requirements for Metric computation
 - Appendix D: Plotly schema extraction reference
 
 **Key Stats:**
-- 51 KPIs fully mapped to optimal visualization
+- 51 Metrics fully mapped to optimal visualization
 - 45 Plotly trace types catalogued from plot-schema.json
 - 50+ code examples (JSON, Python, CSS)
 - 11 primary chart type templates ready to use
@@ -48,7 +48,7 @@
 - Key decisions & rationales (why 11 chart types, color palette, animation speeds)
 - Version history and update policy
 - Integration with database/API/frontend/testing layers
-- Quick start: implementing a new KPI in 5 steps
+- Quick start: implementing a new Metric in 5 steps
 - Executive summary for leadership
 
 **Purpose:**
@@ -86,11 +86,11 @@
 MASTER_DOCUMENTATION_INDEX.md (Entry Point)
 ├─ "Which document should I use?" → Points to Registry Chapter X
 ├─ "What's the authority hierarchy?" → Lists PRIMARY, BINDING, REFERENCE
-├─ "How do I implement a new KPI?" → Quick Start section + Registry refs
+├─ "How do I implement a new Metric?" → Quick Start section + Registry refs
 └─ "What was superseded?" → Links to Migration Guide
 
-EXPANDED_KPI_CHART_REGISTRY.md (Source of Truth)
-├─ Chapter 1-4: Specifications (45 chart types, 51 KPI mappings)
+EXPANDED_METRIC_CHART_REGISTRY.md (Source of Truth)
+├─ Chapter 1-4: Specifications (45 chart types, 51 Metric mappings)
 ├─ Chapter 5-8: Implementation (Mantine theme, animations, callbacks, perf)
 ├─ Appendix A: Complete JSON templates (copy-paste ready)
 ├─ Appendix B: Python component code (production-ready)
@@ -98,8 +98,8 @@ EXPANDED_KPI_CHART_REGISTRY.md (Source of Truth)
 └─ Every section citable by document/chapter/line number
 
 DOCUMENTATION_MIGRATION_GUIDE.md (Transition Helper)
-├─ "I was using KPI_METRICS_REFERENCE.md. Where do I go?" → Points to Registry Ch. 3-4
-├─ "What about old kpi_cards.py?" → "Use Registry Appendix B instead"
+├─ "I was using METRIC_METRICS_REFERENCE.md. Where do I go?" → Points to Registry Ch. 3-4
+├─ "What about old metric_cards.py?" → "Use Registry Appendix B instead"
 ├─ "Can I still reference old docs?" → "Only for historical context"
 └─ Migration checklist for each team member
 ```
@@ -109,10 +109,10 @@ DOCUMENTATION_MIGRATION_GUIDE.md (Transition Helper)
 ## WHAT GETS SUPERSEDED
 
 ### Old Documents (Archive Only)
-- ❌ `docs/KPI_METRICS_REFERENCE.md` → Registry Ch. 3-4
-- ❌ `docs/PHASE1_KPI_MAPPINGS.md` → Registry Ch. 3
-- ❌ `UNIFIED_KPI_REGISTRY_MASTER_PLAN.md` → Registry Ch. 1-9
-- ❌ `app/components/kpi_cards.py` (as reference) → Registry Appendix B
+- ❌ `docs/METRIC_METRICS_REFERENCE.md` → Registry Ch. 3-4
+- ❌ `docs/PHASE1_METRIC_MAPPINGS.md` → Registry Ch. 3
+- ❌ `UNIFIED_METRIC_REGISTRY_MASTER_PLAN.md` → Registry Ch. 1-9
+- ❌ `app/components/metric_cards.py` (as reference) → Registry Appendix B
 - ❌ `app/visualization_engine/` (patterns) → Registry Ch. 4-7
 
 ### Action Items for Team
@@ -128,19 +128,19 @@ DOCUMENTATION_MIGRATION_GUIDE.md (Transition Helper)
 
 ### For Developers
 - **Copy-paste ready configs:** All 11 chart types have complete JSON
-- **Production code examples:** KPICard class, callbacks, CSS in Appendix B
+- **Production code examples:** MetricCard class, callbacks, CSS in Appendix B
 - **No ambiguity:** "Which color for status?" → Registry Ch. 5 has hex codes
 - **Instant reference:** "What's the animation speed?" → Registry Ch. 6 has all 3 (300-500ms)
 
 ### For Managers
-- **Clear timeline:** 7 weeks to production with all 51 KPIs (not 10)
+- **Clear timeline:** 7 weeks to production with all 51 Metrics (not 10)
 - **Reduced risk:** Specifications frozen, not changing mid-sprint
-- **Parallel work:** Each dev gets one KPI group (10 KPIs) from Ch. 3, works independently
+- **Parallel work:** Each dev gets one Metric group (10 Metrics) from Ch. 3, works independently
 - **Measurable quality:** Test against Registry success criteria (Ch. 8)
 
 ### For Users
 - **Consistency:** All gauges look same, all animations feel same, colors always green/yellow/red
-- **Familiarity:** Once learned, every KPI card works the same way
+- **Familiarity:** Once learned, every Metric card works the same way
 - **Accessibility:** All charts WCAG 2.1 AA, keyboard navigable, screen reader safe
 - **Performance:** <1s per chart, dashboard loads <2s
 
@@ -148,16 +148,16 @@ DOCUMENTATION_MIGRATION_GUIDE.md (Transition Helper)
 
 ## HOW TO USE THIS IN PRACTICE
 
-### Scenario 1: Implement a New KPI Visualization
-1. Find your KPI in Registry Ch. 3 (e.g., `ADA-001: ramp_borough_coverage`)
+### Scenario 1: Implement a New Metric Visualization
+1. Find your Metric in Registry Ch. 3 (e.g., `ADA-001: ramp_borough_coverage`)
 2. Note primary chart type (Gauge) + alternatives (Bar, Heatmap)
 3. Copy Gauge template from Registry Ch. 4
-4. Build component using Appendix B KPICard class
+4. Build component using Appendix B MetricCard class
 5. Wire callback using Appendix B callback examples
 6. Test against Registry Ch. 8 accessibility/performance checklist
-7. Done in <1 hour per KPI
+7. Done in <1 hour per Metric
 
-### Scenario 2: Update KPI Card Styling
+### Scenario 2: Update Metric Card Styling
 1. Go to Registry Ch. 5 (NYC DOT Theme Integration)
 2. Find your color/font/spacing requirement
 3. Update component using Mantine theme tokens from Ch. 5
@@ -174,7 +174,7 @@ DOCUMENTATION_MIGRATION_GUIDE.md (Transition Helper)
 6. Done in <15 min
 
 ### Scenario 4: Debug Chart Configuration Issue
-1. Find your KPI in Registry Ch. 3
+1. Find your Metric in Registry Ch. 3
 2. Go to recommended chart type section in Ch. 4
 3. Compare your JSON against template in Appendix A
 4. Check for missing properties or wrong easing functions
@@ -188,7 +188,7 @@ DOCUMENTATION_MIGRATION_GUIDE.md (Transition Helper)
 
 ### Registry Validation
 - ✅ All 45 Plotly chart types extracted from actual plot-schema.json
-- ✅ All 51 KPIs mapped to optimal chart types (derived from PHASE1_KPI_MAPPINGS.md)
+- ✅ All 51 Metrics mapped to optimal chart types (derived from PHASE1_METRIC_MAPPINGS.md)
 - ✅ All 11 chart templates tested with sample data
 - ✅ All code examples are production-ready (syntax checked, imports verified)
 - ✅ All colors match NYC DOT brand guidelines
@@ -215,7 +215,7 @@ DOCUMENTATION_MIGRATION_GUIDE.md (Transition Helper)
 - [ ] Submit PR with registry section cited
 
 ### Week 3-4: Dash Components
-- [ ] Build KPICard using Appendix B template
+- [ ] Build MetricCard using Appendix B template
 - [ ] Create dashboard grid using Registry Ch. 5 responsive layout
 - [ ] Wire callbacks from Appendix B examples
 - [ ] Test on mobile/tablet/desktop (breakpoints in Ch. 5)
@@ -229,7 +229,7 @@ DOCUMENTATION_MIGRATION_GUIDE.md (Transition Helper)
 ### Week 7: Testing & Deployment
 - [ ] Run performance checks (Ch. 8 benchmarks)
 - [ ] Verify accessibility (WCAG 2.1 AA checklist)
-- [ ] Load test all 51 KPIs
+- [ ] Load test all 51 Metrics
 - [ ] Deploy to production
 
 ---
@@ -241,7 +241,7 @@ DOCUMENTATION_MIGRATION_GUIDE.md (Transition Helper)
 - Senior visualization engineers (with review)
 
 **When to update?**
-- New KPI added: 1 day turnaround (add row to Ch. 3)
+- New Metric added: 1 day turnaround (add row to Ch. 3)
 - New chart type: 1 week turnaround (new template in Ch. 4)
 - Breaking change: Coordination with team leads
 
@@ -261,14 +261,14 @@ DOCUMENTATION_MIGRATION_GUIDE.md (Transition Helper)
 
 Using Registry as source of truth, Phase 3 should deliver:
 
-✅ **Completeness:** All 51 KPIs implemented with primary chart  
+✅ **Completeness:** All 51 Metrics implemented with primary chart  
 ✅ **Quality:** 90%+ code review approval rate on Registry compliance  
 ✅ **Performance:** <1s per chart load, <2s dashboard load  
 ✅ **Accessibility:** WCAG 2.1 AA certified (automated + manual testing)  
 ✅ **Consistency:** All colors match Registry palette, all animations use Registry easing  
 ✅ **Timeline:** 7 weeks to production (3 weeks faster than old plan)  
 ✅ **Documentation:** Zero documentation gaps (all patterns in Registry)  
-✅ **Maintainability:** Any new dev can implement new KPI in <2 hours using Registry
+✅ **Maintainability:** Any new dev can implement new Metric in <2 hours using Registry
 
 ---
 
@@ -276,7 +276,7 @@ Using Registry as source of truth, Phase 3 should deliver:
 
 | Filename | Size | Purpose |
 |----------|------|---------|
-| `EXPANDED_KPI_CHART_REGISTRY.md` | 34.6 KB | Complete visualization spec (Chapters 1-9 + Appendices A-D) |
+| `EXPANDED_METRIC_CHART_REGISTRY.md` | 34.6 KB | Complete visualization spec (Chapters 1-9 + Appendices A-D) |
 | `MASTER_DOCUMENTATION_INDEX.md` | 15.8 KB | Navigation & authority structure (entry point) |
 | `DOCUMENTATION_MIGRATION_GUIDE.md` | 14.7 KB | Team migration guide (old docs → Registry) |
 | **Total** | **65.1 KB** | **Comprehensive, interconnected system** |
@@ -288,8 +288,8 @@ Using Registry as source of truth, Phase 3 should deliver:
 **Effective immediately (2026-06-17):**
 
 ```
-EXPANDED_KPI_CHART_REGISTRY.md is the SOURCE OF TRUTH for:
-├─ All KPI definitions (51 total)
+EXPANDED_METRIC_CHART_REGISTRY.md is the SOURCE OF TRUTH for:
+├─ All Metric definitions (51 total)
 ├─ All chart type recommendations (45 types available, 11 primary)
 ├─ All visualization configurations (JSON/Python)
 ├─ All Dash component patterns (callbacks, state, stores)
@@ -310,11 +310,11 @@ Violations:
 🚫 Custom colors not in Registry palette
 🚫 Animations not matching Registry easing/duration
 🚫 Callbacks not following Registry patterns
-🚫 References to superseded docs (KPI_METRICS_REFERENCE, PHASE1_KPI_MAPPINGS, etc.)
+🚫 References to superseded docs (METRIC_METRICS_REFERENCE, PHASE1_METRIC_MAPPINGS, etc.)
 ```
 
 **All old documents are now ARCHIVED.**  
-**EXPANDED_KPI_CHART_REGISTRY.md is BINDING.**  
+**EXPANDED_METRIC_CHART_REGISTRY.md is BINDING.**  
 **Team transition via DOCUMENTATION_MIGRATION_GUIDE.md.**
 
 ---

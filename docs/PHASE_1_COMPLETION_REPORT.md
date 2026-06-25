@@ -1,20 +1,20 @@
-# Phase 1: KPI Foundation - Completion Report
+# Phase 1: Metric Foundation - Completion Report
 
 **Status:** COMPLETE  
 **Date:** 2026-06-17  
-**Scope:** Unified KPI Registry with 51 KPI definitions  
+**Scope:** Unified Metric Registry with 51 Metric definitions  
 **Success Criteria:** ✅ All met
 
 ---
 
 ## EXECUTIVE SUMMARY
 
-Phase 1 successfully establishes the foundation for the unified KPI Registry. All 51 KPIs have been consolidated into a single source of truth with complete type-safe data models, comprehensive validation, and a thread-safe singleton registry class.
+Phase 1 successfully establishes the foundation for the unified Metric Registry. All 51 Metrics have been consolidated into a single source of truth with complete type-safe data models, comprehensive validation, and a thread-safe singleton registry class.
 
 **Key Deliverables:**
-- ✅ KPI module (`src/socrata_toolkit/kpi/`) with 3 files (600+ lines)
+- ✅ Metric module (`src/socrata_toolkit/metric/`) with 3 files (600+ lines)
 - ✅ Comprehensive unit tests (56 tests, 100% pass rate)
-- ✅ Data model validation for all KPI definitions
+- ✅ Data model validation for all Metric definitions
 - ✅ Registry loading from DATASET_REGISTRY.yaml
 - ✅ Query methods for filtering by category, dataset, dashboard section
 
@@ -22,15 +22,15 @@ Phase 1 successfully establishes the foundation for the unified KPI Registry. Al
 
 ## DELIVERABLE BREAKDOWN
 
-### 1. `src/socrata_toolkit/kpi/__init__.py` ✅
+### 1. `src/socrata_toolkit/metric/__init__.py` ✅
 **Status:** Complete  
 **Size:** 44 lines  
 
 Module initialization with public API exports:
-- `KPIRegistry` — Singleton registry class
-- `KPIDefinition` — Complete KPI spec dataclass
-- `KPIResult` — Dashboard contract dataclass
-- `Trend`, `KPIValue` — Trend and value models
+- `MetricRegistry` — Singleton registry class
+- `MetricDefinition` — Complete Metric spec dataclass
+- `MetricResult` — Dashboard contract dataclass
+- `Trend`, `MetricValue` — Trend and value models
 - `ThresholdLevel`, `ThresholdConfig` — Threshold enums and config
 - `TimeSeriesMetadata`, `DimensionConfig` — Time-series and dimension config
 
@@ -41,11 +41,11 @@ Module initialization with public API exports:
 
 ---
 
-### 2. `src/socrata_toolkit/kpi/models.py` ✅
+### 2. `src/socrata_toolkit/metric/models.py` ✅
 **Status:** Complete  
 **Size:** 365 lines  
 
-All data models from KPI_REGISTRY_COMPREHENSIVE_DESIGN.md:
+All data models from METRIC_REGISTRY_COMPREHENSIVE_DESIGN.md:
 
 #### Enums & Config Classes:
 - **ThresholdLevel** — bronze/silver/gold enum
@@ -63,20 +63,20 @@ All data models from KPI_REGISTRY_COMPREHENSIVE_DESIGN.md:
   - Aggregations: sum, avg, count, max, min
   - Validation: name required, valid aggregation
 
-#### Core KPI Models:
-- **KPIDefinition** — Complete KPI specification
+#### Core Metric Models:
+- **MetricDefinition** — Complete Metric specification
   - ~20 fields covering metadata, thresholds, time-series, dimensions, visualization
   - Methods: `validate()`, `is_valid()`
   - All required fields validated
 
-- **KPIValue** — Single value snapshot with timestamp and dimension support
+- **MetricValue** — Single value snapshot with timestamp and dimension support
   
 - **Trend** — Trend information
   - PeriodOverPeriod, variance from historical average
   - Forecast with confidence intervals
   - Anomaly detection flags (z-score, severity)
 
-- **KPIResult** — Dashboard contract (computation result)
+- **MetricResult** — Dashboard contract (computation result)
   - Current value, target, status (green/yellow/red)
   - Trend information with forecast
   - Time-series data and dimension breakdowns
@@ -92,11 +92,11 @@ All data models from KPI_REGISTRY_COMPREHENSIVE_DESIGN.md:
 
 ---
 
-### 3. `src/socrata_toolkit/kpi/registry.py` ✅
+### 3. `src/socrata_toolkit/metric/registry.py` ✅
 **Status:** Complete  
 **Size:** 520 lines  
 
-KPIRegistry singleton class with full lifecycle:
+MetricRegistry singleton class with full lifecycle:
 
 #### Core Functionality:
 - **Singleton Pattern** — Thread-safe instance() and load() class methods
@@ -105,12 +105,12 @@ KPIRegistry singleton class with full lifecycle:
   - Graceful error handling
 
 #### Query Methods:
-- `get_kpi(kpi_id)` — Retrieve by ID
-- `get_all_kpis()` — List all KPIs
-- `get_kpis_by_category(category)` — Filter by permits/pedestrian/safety/budget/compliance
-- `get_kpis_by_dataset(dataset_key)` — Filter by source dataset
-- `get_kpis_by_dashboard(section)` — Filter by dashboard section
-- `get_chart_recommendations(kpi_id)` — Primary + alternative chart types
+- `get_metric(metric_id)` — Retrieve by ID
+- `get_all_metrics()` — List all Metrics
+- `get_metrics_by_category(category)` — Filter by permits/pedestrian/safety/budget/compliance
+- `get_metrics_by_dataset(dataset_key)` — Filter by source dataset
+- `get_metrics_by_dashboard(section)` — Filter by dashboard section
+- `get_chart_recommendations(metric_id)` — Primary + alternative chart types
 
 #### Validation & Management:
 - `validate_registry()` — Comprehensive health check
@@ -123,21 +123,21 @@ KPIRegistry singleton class with full lifecycle:
 - `__len__()`, `__iter__()` — Collection protocol support
 
 #### Metadata Inference:
-- `_map_category()` — Map dataset categories to KPI categories
-- `_get_chart_type()` — Map KPI IDs to Plotly chart types
+- `_map_category()` — Map dataset categories to Metric categories
+- `_get_chart_type()` — Map Metric IDs to Plotly chart types
 - `_get_alternative_charts()` — Suggest alternate visualization
-- `_get_kpi_name()` — Generate human-readable names from KPI IDs
-- `_build_kpi_definition()` — Construct KPI from dataset config
+- `_get_metric_name()` — Generate human-readable names from Metric IDs
+- `_build_metric_definition()` — Construct Metric from dataset config
 
 **Quality:**
 - Complete logging on load/validation steps
 - Robust error handling with informative messages
 - Thread-safe with lock-based singleton
-- 40+ KPIs with mapped metadata
+- 40+ Metrics with mapped metadata
 
 ---
 
-### 4. `tests/test_kpi_registry.py` ✅
+### 4. `tests/test_metric_registry.py` ✅
 **Status:** Complete  
 **Size:** 600+ lines  
 **Pass Rate:** 56/56 (100%)  
@@ -158,13 +158,13 @@ Comprehensive test suite covering all models and registry:
    - Missing name, invalid aggregation
    - All valid aggregations (sum, avg, count, max, min)
 
-4. **TestKPIDefinition** (6 tests)
+4. **TestMetricDefinition** (6 tests)
    - Creation, validation
-   - Missing required fields (kpi_id, category)
+   - Missing required fields (metric_id, category)
    - Direction validation
    - Dimensions and thresholds
 
-5. **TestKPIValue** (2 tests)
+5. **TestMetricValue** (2 tests)
    - Creation with timestamps
    - Dimension support
 
@@ -172,18 +172,18 @@ Comprehensive test suite covering all models and registry:
    - Creation, forecast data
    - Anomaly flags and z-scores
 
-7. **TestKPIResult** (3 tests)
+7. **TestMetricResult** (3 tests)
    - Creation, serialization to dict
    - Status color mapping (green/yellow/red)
 
-8. **TestKPIRegistry** (7 tests)
+8. **TestMetricRegistry** (7 tests)
    - Singleton instance pattern
    - YAML loading error handling
-   - Query methods (get_kpi, get_all_kpis)
+   - Query methods (get_metric, get_all_metrics)
    - Validation and health checks
 
-9. **TestKPIRegistryIntegration** (6 tests)
-   - Manual KPI creation
+9. **TestMetricRegistryIntegration** (6 tests)
+   - Manual Metric creation
    - Filtering by category, dataset, dashboard
    - Chart recommendations
    - Registry validation summary
@@ -191,20 +191,20 @@ Comprehensive test suite covering all models and registry:
 
 10. **TestCategoryMapping** (2 tests)
     - Dataset category mapping
-    - KPI prefix inference
+    - Metric prefix inference
 
 11. **TestChartTypeMapping** (4 tests)
-    - Chart type selection for various KPI IDs
+    - Chart type selection for various Metric IDs
     - Alternative chart suggestions
 
-12. **TestKPINameGeneration** (3 tests)
-    - Name generation from KPI IDs
+12. **TestMetricNameGeneration** (3 tests)
+    - Name generation from Metric IDs
     - Prefix-based naming
 
 13. **TestEdgeCases** (4 tests)
     - Empty dimensions list
     - Large threshold values
-    - Negative and zero KPI values
+    - Negative and zero Metric values
 
 **Coverage:**
 - All data model classes
@@ -226,31 +226,31 @@ Comprehensive test suite covering all models and registry:
 
 ### Registry Health Check
 ```
-Total KPIs Mapped: 51 (all 51 from EXPANDED_KPI_CHART_REGISTRY.md)
+Total Metrics Mapped: 51 (all 51 from EXPANDED_METRIC_CHART_REGISTRY.md)
 Duplicate IDs: 0
 Missing Required Fields: 0
 Invalid Definitions: 0
 
 By Category:
-- Permits & Conflicts: 13 KPIs (PRM-001 through CLS-004)
-- Pedestrian Infrastructure: 14 KPIs (PED-001 through ADA-003)
-- Street Safety & Conditions: 12 KPIs (PARK-001 through VZ-002)
-- Budget & Vendor: 7 KPIs (CAP-001 through COORD-002)
-- Reference & Compliance: 5 KPIs (GEO-001 through CMP-003)
+- Permits & Conflicts: 13 Metrics (PRM-001 through CLS-004)
+- Pedestrian Infrastructure: 14 Metrics (PED-001 through ADA-003)
+- Street Safety & Conditions: 12 Metrics (PARK-001 through VZ-002)
+- Budget & Vendor: 7 Metrics (CAP-001 through COORD-002)
+- Reference & Compliance: 5 Metrics (GEO-001 through CMP-003)
 
 Chart Types Mapped:
-- indicator/gauge: 30 KPIs
-- bar: 10 KPIs
-- scatter: 3 KPIs
-- heatmap: 1 KPI
-- choropleth: 3 KPIs
-- pie: 2 KPIs
-- funnel: 2 KPIs
+- indicator/gauge: 30 Metrics
+- bar: 10 Metrics
+- scatter: 3 Metrics
+- heatmap: 1 Metric
+- choropleth: 3 Metrics
+- pie: 2 Metrics
+- funnel: 2 Metrics
 ```
 
 ### Test Coverage Summary
 ```
-Test File: tests/test_kpi_registry.py
+Test File: tests/test_metric_registry.py
 Total Tests: 56
 Passed: 56 (100%)
 Failed: 0
@@ -276,7 +276,7 @@ Imports: Clean, organized by stdlib → third-party → local
 
 | Criterion | Status | Evidence |
 |-----------|--------|----------|
-| All 51 KPIs consolidated | ✅ | Chart type mapping covers 51 unique KPI IDs |
+| All 51 Metrics consolidated | ✅ | Chart type mapping covers 51 unique Metric IDs |
 | No duplicate IDs | ✅ | Registry validation reports 0 duplicates |
 | Type-safe dataclasses | ✅ | 100% type hints on all fields and methods |
 | Comprehensive validation | ✅ | validate() methods on all config classes |
@@ -291,22 +291,22 @@ Imports: Clean, organized by stdlib → third-party → local
 
 ## FILES CREATED (4)
 
-1. **src/socrata_toolkit/kpi/__init__.py** (44 lines)
+1. **src/socrata_toolkit/metric/__init__.py** (44 lines)
    - Module initialization and public API
-   - Exports: KPIRegistry, KPIDefinition, KPIResult, Trend, etc.
+   - Exports: MetricRegistry, MetricDefinition, MetricResult, Trend, etc.
 
-2. **src/socrata_toolkit/kpi/models.py** (365 lines)
+2. **src/socrata_toolkit/metric/models.py** (365 lines)
    - Data models: ThresholdConfig, TimeSeriesMetadata, DimensionConfig
-   - KPI models: KPIDefinition, KPIValue, Trend, KPIResult
+   - Metric models: MetricDefinition, MetricValue, Trend, MetricResult
    - Full validation and type hints
 
-3. **src/socrata_toolkit/kpi/registry.py** (520 lines)
-   - KPIRegistry singleton with YAML loading
-   - Query methods: get_kpi(), get_kpis_by_category(), etc.
+3. **src/socrata_toolkit/metric/registry.py** (520 lines)
+   - MetricRegistry singleton with YAML loading
+   - Query methods: get_metric(), get_metrics_by_category(), etc.
    - Validation and health checks
    - Chart type and category mapping
 
-4. **tests/test_kpi_registry.py** (600+ lines)
+4. **tests/test_metric_registry.py** (600+ lines)
    - 56 comprehensive unit tests
    - 100% pass rate
    - ~95% code coverage
@@ -315,38 +315,38 @@ Imports: Clean, organized by stdlib → third-party → local
 
 ## GIT COMMITS
 
-1. **Commit 44808f1** — feat(kpi-registry): initialize KPI module and data models
+1. **Commit 44808f1** — feat(metric-registry): initialize Metric module and data models
    - 3 files changed, 790 insertions
    - Created __init__.py, models.py, registry.py
 
-2. **Commit 4203ce6** — test(kpi-registry): add comprehensive unit tests
+2. **Commit 4203ce6** — test(metric-registry): add comprehensive unit tests
    - 2 files changed, 646 insertions
-   - Created test_kpi_registry.py (56 tests)
+   - Created test_metric_registry.py (56 tests)
    - Fixed TimeSeriesMetadata validation
 
 ---
 
 ## INTEGRATION POINTS FOR PHASE 2
 
-The KPI Registry now provides a solid foundation for:
+The Metric Registry now provides a solid foundation for:
 
 ### Materialization (Phase 2)
-- KPIRegistry loads all 51 KPI definitions with source datasets
-- Each KPI specifies source_dataset_key and source_fourfour for data fetch
-- KPIResult contract ready for computed values with trends and forecasts
+- MetricRegistry loads all 51 Metric definitions with source datasets
+- Each Metric specifies source_dataset_key and source_fourfour for data fetch
+- MetricResult contract ready for computed values with trends and forecasts
 
 ### Visualization (Phase 3)
-- Chart type mappings already defined for all 51 KPIs
-- Primary + alternative chart types in KPIDefinition.primary_chart_type
+- Chart type mappings already defined for all 51 Metrics
+- Primary + alternative chart types in MetricDefinition.primary_chart_type
 - ThresholdConfig enables colored gauge charts with multi-level bands
 
 ### MotherDuck Dives (Phase 4)
-- 51 KPI IDs ready for parameterized dive templates
+- 51 Metric IDs ready for parameterized dive templates
 - Dimension breakdowns in DimensionConfig for drilling
 - Time-series config specifies forecasting method and windows
 
 ### NLP & Integration (Phase 5)
-- KPIResult includes generated_insights field for NLP output
+- MetricResult includes generated_insights field for NLP output
 - Trend information (POP, variance, forecast) ready for insight generation
 - Serialization via to_dict() for API responses
 
@@ -355,9 +355,9 @@ The KPI Registry now provides a solid foundation for:
 ## NEXT STEPS (Phase 2)
 
 1. **Materialization Orchestrator**
-   - Load KPIs from registry
+   - Load Metrics from registry
    - Fetch data from Socrata using source_fourfour codes
-   - Compute KPI values and trends
+   - Compute Metric values and trends
 
 2. **Computation Services**
    - Time-series forecasting (linear, exponential, ARIMA)
@@ -372,10 +372,10 @@ The KPI Registry now provides a solid foundation for:
 
 ## CONCLUSION
 
-Phase 1 successfully builds the foundation for the unified KPI Registry. All 51 KPIs are now consolidated into type-safe, validated data structures with comprehensive testing. The registry is ready to power Phase 2 materialization, Phase 3 visualization, and downstream analytics.
+Phase 1 successfully builds the foundation for the unified Metric Registry. All 51 Metrics are now consolidated into type-safe, validated data structures with comprehensive testing. The registry is ready to power Phase 2 materialization, Phase 3 visualization, and downstream analytics.
 
 **Key Achievements:**
-- ✅ Unified data model for 51 diverse KPIs
+- ✅ Unified data model for 51 diverse Metrics
 - ✅ Type-safe with 100% validation coverage
 - ✅ Thread-safe singleton registry with YAML loading
 - ✅ Comprehensive test suite (56 tests, 100% pass)

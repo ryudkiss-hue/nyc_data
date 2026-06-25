@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-This design specifies a **two-tier question-answering system** for the NYC DOT SIM analyst CLI (`socrata nl-query`). The system routes natural language questions to pre-materialized KPIs, datasets, and visualizations (Tier 1 — instant, governed), with optional Claude-powered synthesis and NLP-driven next-question suggestions (Tier 2 — on-demand, exploratory).
+This design specifies a **two-tier question-answering system** for the NYC DOT SIM analyst CLI (`socrata nl-query`). The system routes natural language questions to pre-materialized Metrics, datasets, and visualizations (Tier 1 — instant, governed), with optional Claude-powered synthesis and NLP-driven next-question suggestions (Tier 2 — on-demand, exploratory).
 
 **Key outcomes:**
 - Analysts get instant answers without LLM latency (Tier 1)
@@ -22,15 +22,15 @@ This design specifies a **two-tier question-answering system** for the NYC DOT S
 ## 1. Problem Statement
 
 **Current State:**
-- 309+ KPIs exist across the NYC DOT SIM domain
+- 309+ Metrics exist across the NYC DOT SIM domain
 - 60+ research questions documented
-- 51 KPIs materialized in production pipeline
-- Analysts have no discovery mechanism — must manually search docs/code for relevant datasets and KPIs
+- 51 Metrics materialized in production pipeline
+- Analysts have no discovery mechanism — must manually search docs/code for relevant datasets and Metrics
 - Result: 30+ minutes lost to "which dataset?" phase before analysis starts
 
 **Desired State:**
 - Analyst asks natural language question: `socrata nl-query "Why are violations spiking in Manhattan?"`
-- System instantly routes to relevant KPI, datasets, SQL pattern, and visualization
+- System instantly routes to relevant Metric, datasets, SQL pattern, and visualization
 - Analyst can use pre-built assets immediately (5-minute time-to-productivity)
 - Optional: analyst can ask for deeper synthesis ("Tell me more") → Claude expands on the answer with insights and suggests follow-up analyses
 
@@ -71,7 +71,7 @@ This design specifies a **two-tier question-answering system** for the NYC DOT S
       ┌──────────────▼──────────────────────┐
       │ ★ TIER 1: PRE-BUILT ANSWER         │
       │ (instant, governed, no LLM)        │
-      │ - Matched KPI + summary            │
+      │ - Matched Metric + summary            │
       │ - Datasets + SQL pattern           │
       │ - Pre-built visualization metadata │
       │ - Confidence + router source       │
@@ -110,14 +110,14 @@ This design specifies a **two-tier question-answering system** for the NYC DOT S
 1. Analyst: socrata nl-query "How many violations fixed by borough?"
 2. Router: Run BM25 + FastText + Jaccard (parallel, ~100ms)
            Run Claude embeddings (cached, ~200ms)
-           Ensemble: Both suggest KPI-089? Confidence = avg(0.82, 0.80) = 0.81
-3. PreBuiltAnswer Engine: Lookup KPI-089 in registry
+           Ensemble: Both suggest METRIC-089? Confidence = avg(0.82, 0.80) = 0.81
+3. PreBuiltAnswer Engine: Lookup METRIC-089 in registry
                           Fetch datasets, SQL, visualization, summary
                           Return JSON (no query execution yet)
 4. CLI Output: 
    {
-     "matched_kpi": "KPI-089",
-     "kpi_name": "Violations Fixed by Borough & Month",
+     "matched_metric": "METRIC-089",
+     "metric_name": "Violations Fixed by Borough & Month",
      "summary": "Monthly count of violations marked fixed, by borough",
      "datasets": ["violations", "dismissals"],
      "sql_pattern": "SELECT borough, DATE_TRUNC('month', fixed_date) AS month, COUNT(*) AS fixed_count...",
@@ -140,7 +140,7 @@ Analyst then:
 3. Query Executor: Execute pre-built SQL
                    Results: Borough MN saw 45% increase in June vs May
 4. Claude Synthesis:
-   Input: Question + SQL results + KPI context
+   Input: Question + SQL results + Metric context
    Output: "Violations spiked 45% in Manhattan in June. Analysis shows
             this correlates with structural damage reports in neighborhoods
             X, Y, Z. Historical trend indicates seasonal pattern, but this
@@ -148,9 +148,9 @@ Analyst then:
             investigating contractor quality metrics."
 5. NLP Matcher: Parse Claude insights
                 Match against 60+ research questions registry
-                Find related KPIs: KPI-045 (structural damage), 
-                                   KPI-067 (contractor metrics),
-                                   KPI-123 (seasonal patterns)
+                Find related Metrics: METRIC-045 (structural damage), 
+                                   METRIC-067 (contractor metrics),
+                                   METRIC-123 (seasonal patterns)
 6. CLI Output:
    {
      [Same as Path 1...]
@@ -160,12 +160,12 @@ Analyst then:
        "suggested_next_questions": [
          {
            "question": "What is causing the structural damage spike?",
-           "related_kpi": "KPI-045",
+           "related_metric": "METRIC-045",
            "command": "socrata nl-query 'structural damage trends in MN'"
          },
          {
            "question": "Are contractor quality metrics correlated?",
-           "related_kpi": "KPI-067",
+           "related_metric": "METRIC-067",
            "command": "socrata nl-query 'contractor performance metrics'"
          }
        ]
@@ -175,7 +175,7 @@ Analyst then:
 
 Analyst can:
   - Accept synthesis as-is
-  - Click through to suggested questions (auto-routes to new KPIs)
+  - Click through to suggested questions (auto-routes to new Metrics)
   - Diverge with follow-up questions
 ```
 
@@ -206,7 +206,7 @@ Analyst can:
 **Tier 2: Claude Embeddings**
 - File: `src/socrata_toolkit/core/claude_semantic_router.py`
 - Strategy: Vector similarity (cached embeddings)
-- Cache: Pre-computed embeddings for 309 KPIs (loaded at startup)
+- Cache: Pre-computed embeddings for 309 Metrics (loaded at startup)
 - Latency: ~200ms (cache lookup + cosine similarity)
 - Provider abstraction: Can swap Claude for Gemini/others via config
 
@@ -231,18 +231,18 @@ else:
 **Component:** `src/socrata_toolkit/core/prebuilt_answer_engine.py`
 
 **Responsibilities:**
-- Lookup matched KPI in registry
+- Lookup matched Metric in registry
 - Fetch datasets, SQL pattern, visualization metadata, summary
 - Return structured AnswerResult (no execution, no LLM)
 - Fully deterministic and auditable
 
-**Registry Source:** `config/kpi_registry.json` (version-controlled)
+**Registry Source:** `config/metric_registry.json` (version-controlled)
 
 **Registry Structure:**
 ```json
 {
-  "kpi_id": "KPI-089",
-  "kpi_name": "Violations Fixed by Borough & Month",
+  "metric_id": "METRIC-089",
+  "metric_name": "Violations Fixed by Borough & Month",
   "summary": "Monthly count of violations marked fixed, by NYC borough",
   "category": "Quality & Compliance",
   "analyst_duties": ["duty_001", "duty_003"],
@@ -275,7 +275,7 @@ else:
       "values": "fixed_count"
     }
   ],
-  "related_kpis": ["KPI-045", "KPI-067", "KPI-123"],
+  "related_metrics": ["METRIC-045", "METRIC-067", "METRIC-123"],
   "last_updated": "2026-06-20",
   "quality_score": 0.92
 }
@@ -295,7 +295,7 @@ else:
 ```
 You are a NYC DOT data analyst.
 Question: {user_question}
-KPI: {kpi_name}
+Metric: {metric_name}
 Query Results: {query_results_json}
 
 Provide a 2-3 sentence synthesis explaining:
@@ -316,7 +316,7 @@ Be specific with numbers and borough/category names.
 - Parse Claude synthesis for key terms/insights
 - Match against 60+ research questions registry
 - Rank by relevance
-- Map to related KPIs
+- Map to related Metrics
 
 **Process:**
 ```python
@@ -332,11 +332,11 @@ matching_questions = research_question_registry.find_similar(insights)
 #      "Historical seasonal patterns?"
 #    ]
 
-# 3. Map to KPIs
+# 3. Map to Metrics
 suggestions = [
   {
     "question": q,
-    "related_kpi": research_registry.question_to_kpi(q),
+    "related_metric": research_registry.question_to_metric(q),
     "command": f"socrata nl-query '{q}'"
   }
   for q in matching_questions[:3]  # Top 3
@@ -349,7 +349,7 @@ suggestions = [
 
 **Responsibilities:**
 - Capture analyst markings (--helpful / --wrong)
-- Store in DuckDB: `routing_feedback(question, matched_kpi_id, actual_kpi_id, timestamp, helpful)`
+- Store in DuckDB: `routing_feedback(question, matched_metric_id, actual_metric_id, timestamp, helpful)`
 - Accumulate feedback
 - Trigger incremental weight updates
 
@@ -365,7 +365,7 @@ suggestions = [
 CREATE TABLE routing_decisions (
   id UUID PRIMARY KEY,
   question TEXT,
-  matched_kpi_id VARCHAR,
+  matched_metric_id VARCHAR,
   confidence FLOAT,
   ensemble_status VARCHAR,  -- HIGH_CONFIDENCE or REQUIRES_CLARIFICATION
   latency_ms INT,
@@ -378,7 +378,7 @@ CREATE TABLE routing_feedback (
   id UUID PRIMARY KEY,
   routing_decision_id UUID REFERENCES routing_decisions(id),
   analyst_marked_helpful BOOLEAN,
-  corrected_kpi_id VARCHAR,
+  corrected_metric_id VARCHAR,
   feedback_text TEXT,
   created_at TIMESTAMP
 );
@@ -402,12 +402,12 @@ CREATE TABLE weight_history (
 
 **Current State:**
 - 277 seed variants (from existing fuzzy_matching_training_data.json)
-- 90 KPIs covered
-- 3.1 variants per KPI on average
+- 90 Metrics covered
+- 3.1 variants per Metric on average
 
 **Goal:**
-- Cover all 309 KPIs
-- ~3-5 variants per KPI
+- Cover all 309 Metrics
+- ~3-5 variants per Metric
 - Total: 1,000 variants
 
 **Process:**
@@ -423,35 +423,35 @@ casual = [v for v in seed_variants if v['variant_type'] == 'casual']
 
 # Extract patterns (templating)
 templates = {
-  'direct_phrasing': "What is the {kpi_name}?",
-  'technical': "{kpi_name} metrics across {dimension}",
-  'casual': "How's the {kpi_name} doing?",
-  'abbreviation': "{kpi_abbr} by {dimension}",
+  'direct_phrasing': "What is the {metric_name}?",
+  'technical': "{metric_name} metrics across {dimension}",
+  'casual': "How's the {metric_name} doing?",
+  'abbreviation': "{metric_abbr} by {dimension}",
 }
 ```
 
-**Step 2: Generate Synthetic Variants for 219 Missing KPIs**
+**Step 2: Generate Synthetic Variants for 219 Missing Metrics**
 ```python
-registry = load_kpi_registry()  # 309 KPIs
-covered_kpis = {v['kpi_id'] for v in seed_variants}
-missing_kpis = [k for k in registry.keys() if k not in covered_kpis]  # ~219
+registry = load_metric_registry()  # 309 Metrics
+covered_metrics = {v['metric_id'] for v in seed_variants}
+missing_metrics = [k for k in registry.keys() if k not in covered_metrics]  # ~219
 
 synthetic = []
-for kpi in missing_kpis:
+for metric in missing_metrics:
     for template_name, template in templates.items():
         variant = template.format(
-            kpi_name=kpi.name,
-            kpi_abbr=kpi.abbreviation,
-            dimension=kpi.primary_dimension
+            metric_name=metric.name,
+            metric_abbr=metric.abbreviation,
+            dimension=metric.primary_dimension
         )
         synthetic.append({
-            'kpi_id': kpi.id,
-            'kpi_name': kpi.name,
+            'metric_id': metric.id,
+            'metric_name': metric.name,
             'question_variant': variant,
             'variant_type': template_name,
             'synthetic': True,
-            'datasets': kpi.datasets,
-            'analyst_duty': kpi.duties[0]
+            'datasets': metric.datasets,
+            'analyst_duty': metric.duties[0]
         })
 
 # ~900 synthetic variants generated
@@ -497,15 +497,15 @@ final_accuracy = evaluate(holdout_set, optimal_weights)  # Expected ≥82%
 
 **Step 5: Pre-Cache Claude Embeddings**
 ```python
-# For all 309 KPIs, pre-compute embeddings
+# For all 309 Metrics, pre-compute embeddings
 embeddings_cache = {}
-for kpi in registry:
-    text = f"{kpi.name}. {kpi.summary}"
-    embedding = claude_client.embed(text)  # ~100 KPIs takes ~30 seconds
-    embeddings_cache[kpi.id] = embedding
+for metric in registry:
+    text = f"{metric.name}. {metric.summary}"
+    embedding = claude_client.embed(text)  # ~100 Metrics takes ~30 seconds
+    embeddings_cache[metric.id] = embedding
 
 # Save to file, load at startup
-save_json(embeddings_cache, "cache/kpi_embeddings.json")
+save_json(embeddings_cache, "cache/metric_embeddings.json")
 ```
 
 ### 4.2 Pre-Deployment Checklist
@@ -515,7 +515,7 @@ save_json(embeddings_cache, "cache/kpi_embeddings.json")
 - [ ] Combine 277 seed + 900 synthetic = 1,177 variants
 - [ ] Train and optimize weights on 1,177 variants
 - [ ] Validate final accuracy on holdout (≥82%)
-- [ ] Pre-cache Claude embeddings for 309 KPIs
+- [ ] Pre-cache Claude embeddings for 309 Metrics
 - [ ] Build DuckDB observability schema
 - [ ] Deploy with trained router
 
@@ -528,7 +528,7 @@ save_json(embeddings_cache, "cache/kpi_embeddings.json")
 ```bash
 $ socrata nl-query "How many violations fixed by borough?"
 
-✓ MATCHED: KPI-089 (Violations Fixed by Borough & Month)
+✓ MATCHED: METRIC-089 (Violations Fixed by Borough & Month)
   Confidence: 0.81 | Source: ensemble (programmatic=0.82, claude=0.80)
 
 📊 DATASETS:
@@ -574,19 +574,19 @@ sourcing changes in Q2 2026.
 
 🔗 SUGGESTED NEXT QUESTIONS:
    [1] "What is causing the structural damage spike?"
-       → KPI-045: Structural Damage by Borough & Cause
+       → METRIC-045: Structural Damage by Borough & Cause
        Command: socrata nl-query 'structural damage trends MN'
        
    [2] "Are contractor quality metrics correlated?"
-       → KPI-067: Contractor Performance Metrics
+       → METRIC-067: Contractor Performance Metrics
        Command: socrata nl-query 'contractor performance by region'
        
    [3] "Historical seasonal patterns?"
-       → KPI-123: Violations Seasonal Decomposition
+       → METRIC-123: Violations Seasonal Decomposition
        Command: socrata nl-query 'seasonal trends violations'
 
 👍 Mark helpful with: socrata nl-query <question> --helpful
-👎 Mark wrong with:   socrata nl-query <question> --wrong --correct-kpi KPI-XXX
+👎 Mark wrong with:   socrata nl-query <question> --wrong --correct-metric METRIC-XXX
 ```
 
 ---
@@ -630,7 +630,7 @@ sourcing changes in Q2 2026.
 | Risk | Impact | Mitigation |
 |------|--------|-----------|
 | Synthetic variants are low quality | Router accuracy < 80% | Validate synthetic quality before training (Step 3) |
-| Claude embeddings stale | Tier 2 misses updates to KPIs | Re-cache embeddings weekly; monitor embedding drift |
+| Claude embeddings stale | Tier 2 misses updates to Metrics | Re-cache embeddings weekly; monitor embedding drift |
 | Feedback loop too slow | Weight updates lag behind live issues | Use incremental updates (not batch); apply delta immediately |
 | Ensemble disagreement high | Analyst confused by two suggestions | Set threshold to >90% for "requires clarification" case; document handling |
 | Tier 2 latency too high (>5sec) | Analysts don't use --expand | Use cached embeddings; optimize Claude prompt for speed |

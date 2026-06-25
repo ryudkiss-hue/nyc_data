@@ -103,14 +103,14 @@ class GovernanceFramework:
         logger.info(f"Saved {len(self.audit_log)} audit entries to {output_path}")
         self.audit_log = []
 
-    def get_kpi_definition(self, kpi_name: str) -> Optional[Dict[str, Any]]:
-        """Get KPI definition and lineage"""
-        kpis = self.framework.get('kpi_classification', {})
+    def get_metric_definition(self, metric_name: str) -> Optional[Dict[str, Any]]:
+        """Get Metric definition and lineage"""
+        metrics = self.framework.get('metric_classification', {})
         return {
-            'name': kpi_name,
+            'name': metric_name,
             'framework_info': {
-                'total_kpis': kpis.get('total_kpis'),
-                'classifications_available': list(kpis.keys())
+                'total_metrics': metrics.get('total_metrics'),
+                'classifications_available': list(metrics.keys())
             }
         }
 

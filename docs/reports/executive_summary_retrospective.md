@@ -1,4 +1,4 @@
-# Executive Summary: NYC DOT SIM Toolkit Optimization & KPI Alignment
+# Executive Summary: NYC DOT SIM Toolkit Optimization & Metric Alignment
 *Date: June 8, 2026 | To: SIM Senior Analyst / Supervisor | From: Project Analyst (SW)*
 
 ## 1. Situation Statement
@@ -10,10 +10,10 @@ The SIM division has experienced a significant surge in capital funding and cont
 *   **Automated Conflict Detection:** High-density **WebGL-accelerated spatial joins** now automatically flag utility permit overlaps with weekly paving schedules, eliminating manual GIS cross-referencing for over 10,000 permits per month.
 *   **Operational Triage Efficiency:** **NLP-based 311 parsing** has automated the severity scoring of citizen complaints, reducing the inspection-triage cycle by an estimated 3 days per record.
 
-## 3. Visualization Ranking: Project Analyst KPI Alignment
+## 3. Visualization Ranking: Project Analyst Metric Alignment
 *Charts ranked by direct impact on the Project Analyst (SW) core responsibilities (GIS, Budget, Productivity, Planning).*
 
-| Rank | Visualization Name | KPI Alignment | Strategic Value |
+| Rank | Visualization Name | Metric Alignment | Strategic Value |
 | :--- | :--- | :--- | :--- |
 | **1** | **Spatial Conflict Map (`heatmap`)** | GIS & Construction List Planning | Prevents costly Mobilization/Stop-Work clashes. |
 | **2** | **Budget Burn Rate (`ps_burn`)** | Personnel Budget Code Tracking | Guarantees Q4 operational liquidity. |

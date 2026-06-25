@@ -372,7 +372,7 @@ socrata-toolkit lineage add-source \
 # Register downstream consumers
 socrata-toolkit lineage add-consumer \
   --dataset street_cleaning \
-  --consumer-dataset cleaning_kpis \
+  --consumer-dataset cleaning_metrics \
   --transformation "Aggregate by borough and day"
 ```
 
@@ -391,7 +391,7 @@ socrata-toolkit lineage tree street_cleaning
 # Expected output:
 # operational_schedule
 #   └─> street_cleaning (Extract active)
-#       └─> cleaning_kpis (Aggregate)
+#       └─> cleaning_metrics (Aggregate)
 ```
 
 ---

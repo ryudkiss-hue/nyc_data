@@ -26,7 +26,7 @@ Welcome to the unified documentation for the **NYC DOT Sidewalk Data Governance 
 ## 🛠️ Technical Pillars
 
 1.  **Core**: API client, DuckDB persistence, and a 60+ command CLI.
-2.  **Analysis**: Statistical profiling (Four Moments), anomaly detection, and borough KPIs.
+2.  **Analysis**: Statistical profiling (Four Moments), anomaly detection, and borough Metrics.
 3.  **Governance**: Automated lineage tracking and schema drift detection.
 4.  **Engineering**: Specialized logic for sidewalk repair lifecycles, ESAL calculations, and ESAL-based deterioration modeling.
 5.  **Visualization**: 30+ interactive Plotly, Folium, and Pydeck map layouts.

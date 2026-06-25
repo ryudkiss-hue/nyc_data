@@ -392,7 +392,7 @@ Includes extraction, manufacturing, transportation, installation:
 
 ---
 
-## Integration with KPI System
+## Integration with Metric System
 
 Material taxonomy enables stratified performance analysis:
 

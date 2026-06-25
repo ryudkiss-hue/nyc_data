@@ -19,7 +19,7 @@ The NYC DOT Sidewalk Operational Intelligence API provides REST access to:
 - **Sidewalk segments** with material classification and condition metrics
 - **Incident reports** linked to segments and defect types
 - **Repair schedules** with contractor assignments and cost tracking
-- **KPI metrics** aggregated by material type, location, and contractor
+- **Metric metrics** aggregated by material type, location, and contractor
 - **ADA compliance** scores with failure details
 - **Audit logs** for compliance and traceability
 - **Data exports** in CSV and JSON formats
@@ -149,7 +149,7 @@ The API implements role-based access control (RBAC) with three levels:
 
 | Role | Permissions | Use Case |
 |------|-------------|----------|
-| **VIEWER** | Read-only: segments, incidents, repairs, KPIs, contractors, audit logs | Monitoring dashboards |
+| **VIEWER** | Read-only: segments, incidents, repairs, Metrics, contractors, audit logs | Monitoring dashboards |
 | **ANALYST** | VIEWER + write repairs, assign repairs, export data | Operations team |
 | **ADMIN** | All permissions including delete | System administrators |
 
@@ -161,7 +161,7 @@ The API implements role-based access control (RBAC) with three levels:
 | GET /incidents | ✓ | ✓ | ✓ |
 | POST /incidents/{id}/assign-repair | ✗ | ✓ | ✓ |
 | PATCH /repairs/{id}/status | ✗ | ✓ | ✓ |
-| GET /kpis/* | ✓ | ✓ | ✓ |
+| GET /metrics/* | ✓ | ✓ | ✓ |
 | GET /export/* | ✗ | ✓ | ✓ |
 | GET /audit-log | ✓ | ✓ | ✓ |
 
@@ -332,28 +332,28 @@ curl -X PATCH \
   "http://localhost:8000/api/v1/repairs/rep_123/status?new_status=in_progress"
 ```
 
-### D. KPIs & Metrics (`/api/v1/kpis`)
+### D. Metrics & Metrics (`/api/v1/metrics`)
 
-#### KPI Summary
+#### Metric Summary
 
 ```
-GET /api/v1/kpis/summary
+GET /api/v1/metrics/summary
 ```
 
-Returns complete citywide KPI snapshot with material metrics, ADA compliance, hazard coverage.
+Returns complete citywide Metric snapshot with material metrics, ADA compliance, hazard coverage.
 
 Cache: 2 hours
 
 Example:
 ```bash
 curl -H "Authorization: Bearer $TOKEN" \
-  http://localhost:8000/api/v1/kpis/summary
+  http://localhost:8000/api/v1/metrics/summary
 ```
 
 #### Material Metrics
 
 ```
-GET /api/v1/kpis/by-material
+GET /api/v1/metrics/by-material
 ```
 
 Query Parameters:
@@ -362,7 +362,7 @@ Query Parameters:
 Example:
 ```bash
 curl -H "Authorization: Bearer $TOKEN" \
-  "http://localhost:8000/api/v1/kpis/by-material?material_type=asphalt"
+  "http://localhost:8000/api/v1/metrics/by-material?material_type=asphalt"
 ```
 
 Response:
@@ -389,19 +389,19 @@ Response:
 #### ADA Compliance
 
 ```
-GET /api/v1/kpis/ada-compliance
+GET /api/v1/metrics/ada-compliance
 ```
 
 #### Hazard Coverage
 
 ```
-GET /api/v1/kpis/hazard-coverage
+GET /api/v1/metrics/hazard-coverage
 ```
 
 #### Cost Analytics
 
 ```
-GET /api/v1/kpis/cost-analytics
+GET /api/v1/metrics/cost-analytics
 ```
 
 ### E. Contractors (`/api/v1/contractors`)
@@ -458,10 +458,10 @@ Returns CSV file with headers: segment_id, material_type, length_feet, updated_a
 GET /api/v1/export/incidents/csv
 ```
 
-#### Export KPIs JSON
+#### Export Metrics JSON
 
 ```
-GET /api/v1/export/kpis/json
+GET /api/v1/export/metrics/json
 ```
 
 ## Pagination & Filtering
@@ -565,7 +565,7 @@ The API caches responses with TTL management based on data type:
 
 | Data Type | TTL | Refresh | Cache Key Pattern |
 |-----------|-----|---------|-------------------|
-| Summary KPIs | 2 hours | Daily via Phase 3 DAG | `kpi:summary` |
+| Summary Metrics | 2 hours | Daily via Phase 3 DAG | `metric:summary` |
 | Segment Details | 24 hours | Static data | `segment:{segment_id}` |
 | Contractor Metrics | 6 hours | Weekly repair DAG | `contractor:{contractor_id}` |
 | Incident Lists | 1 hour | Daily incident DAG | `incidents:list` |
@@ -586,7 +586,7 @@ Cache-Control: max-age=3600
 Write operations automatically invalidate related cache:
 
 - POST `/incidents/{id}/assign-repair` → Clears `repair:*`
-- PATCH `/repairs/{id}/status` → Clears `repair:*`, `kpi:*`
+- PATCH `/repairs/{id}/status` → Clears `repair:*`, `metric:*`
 
 ### Graceful Degradation
 
@@ -666,9 +666,9 @@ else:
 ```javascript
 const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
 
-async function getKPISummary() {
+async function getMetricSummary() {
   const response = await fetch(
-    'http://localhost:8000/api/v1/kpis/summary',
+    'http://localhost:8000/api/v1/metrics/summary',
     {
       method: 'GET',
       headers: {
@@ -688,11 +688,11 @@ async function getKPISummary() {
 }
 
 // Usage
-getKPISummary()
-  .then(kpis => {
-    console.log('Material metrics:', kpis.material_metrics);
-    console.log('ADA compliance:', kpis.ada_metrics);
-    console.log('Hazard coverage:', kpis.hazard_metrics);
+getMetricSummary()
+  .then(metrics => {
+    console.log('Material metrics:', metrics.material_metrics);
+    console.log('ADA compliance:', metrics.ada_metrics);
+    console.log('Hazard coverage:', metrics.hazard_metrics);
   })
   .catch(error => console.error(error));
 ```
@@ -743,7 +743,7 @@ All logs will include this request ID for tracing end-to-end.
 
 1. **Use pagination**: Always set reasonable limit (50-100) to avoid timeouts
 2. **Filter early**: Use query parameters to filter data at the source
-3. **Cache summary KPIs**: Summary endpoint has 2-hour cache, good for dashboards
+3. **Cache summary Metrics**: Summary endpoint has 2-hour cache, good for dashboards
 4. **Batch export**: Use CSV export for bulk data rather than multiple GET requests
 5. **Monitor freshness**: Check `data_freshness_seconds` in responses to understand data age
 6. **Connection pooling**: Client libraries handle this automatically

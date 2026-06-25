@@ -28,12 +28,12 @@ The **NYC DOT MotherDuck Pipeline** is a cloud-native, batch ETL system that ing
 
 1. **Ingests** 57 datasets (3.1M+ rows) from mixed sources (20 cached Parquet, 37 live API)
 2. **Transforms** data through 4-layer architecture (raw → staging → analytics → serving)
-3. **Materializes** 255 KPI records and 57 quality scorecards for operational dashboards
+3. **Materializes** 255 Metric records and 57 quality scorecards for operational dashboards
 4. **Validates** data integrity with 4 mandatory verification gates
 5. **Tracks** execution state for resumable/restartable operations
 
 **Intended Use:**
-- Power Mission Control dashboard with real-time KPI metrics
+- Power Mission Control dashboard with real-time Metric metrics
 - Enable analysts to query historical SIM inspection data
 - Monitor data quality and freshness across Socrata sources
 - Generate borough-level ramp completion reports with confidence intervals
@@ -71,15 +71,15 @@ Rating: EXCELLENT (≥90), GOOD (≥80), FAIR (<80)
 | **raw** | Upserted ingestion (no dedup) | 3.1M+ | Append-only; purge after 90d |
 | **staging** | Deduplicated, typed (QUALIFY pattern) | 2.8M+ (90% of raw) | Rolling; refresh daily |
 | **analytics** | Domain schemas (sim_core, accessibility, coordination, overlays, extended) with 100+ views | Varies by view | Compute on demand |
-| **serving** | Materialized KPIs and quality metrics | 255 KPI records + 57 quality scorecards | Updated daily |
+| **serving** | Materialized Metrics and quality metrics | 255 Metric records + 57 quality scorecards | Updated daily |
 
 ### Key Tables
 
-#### serving.kpi_borough_results
-- **Columns:** kpi_id, kpi_name, borough, measurement_date, value, threshold, status
-- **Rows:** 255 (51 KPIs × 5 boroughs)
+#### serving.metric_borough_results
+- **Columns:** metric_id, metric_name, borough, measurement_date, value, threshold, status
+- **Rows:** 255 (51 Metrics × 5 boroughs)
 - **Refresh:** Daily at midnight (configurable)
-- **Uniqueness:** (kpi_id, borough, measurement_date)
+- **Uniqueness:** (metric_id, borough, measurement_date)
 
 #### serving.quality_scorecards
 - **Columns:** dataset_key, dataset_name, completeness, validity, consistency, freshness, overall_score, rating, measured_at
@@ -114,11 +114,11 @@ performance_metrics, stakeholder_feedback
 
 ---
 
-## KPI Metrics (51 Total)
+## Metric Metrics (51 Total)
 
 ### Category: Inspection Operations
 
-| KPI ID | Name | Unit | Threshold | Source Tables |
+| Metric ID | Name | Unit | Threshold | Source Tables |
 |--------|------|------|-----------|---|
 | 1 | Inspections Completed | count | 250 | staging.inspection |
 | 2 | Average Response Time | days | 3.0 | staging.inspection |
@@ -128,24 +128,24 @@ performance_metrics, stakeholder_feedback
 
 ### Category: Accessibility & Compliance
 
-| KPI ID | Name | Unit | Threshold | Source Tables |
+| Metric ID | Name | Unit | Threshold | Source Tables |
 |--------|------|------|-----------|---|
 | 4 | Accessibility Compliance | % | 90.0 | staging.ramp_progress |
 | 6 | Ramp Repair Queue | count | 50 | staging.ramp_complaints |
 
 ### Category: Permits & Construction
 
-| KPI ID | Name | Unit | Threshold | Source Tables |
+| Metric ID | Name | Unit | Threshold | Source Tables |
 |--------|------|------|-----------|---|
 | 7 | Permit Issuance Rate | % | 100.0 | staging.street_permits |
 | 8 | Street Closure Duration | days | 14.0 | staging.street_closures_block |
 
 ### Category: Data Governance
 
-| KPI ID | Name | Unit | Threshold | Source Tables |
+| Metric ID | Name | Unit | Threshold | Source Tables |
 |--------|------|------|-----------|---|
 | 5 | Data Completeness | % | 98.0 | (all staging) |
-| 11-51 | (Additional operational KPIs) | varies | varies | See kpi_definitions.json |
+| 11-51 | (Additional operational Metrics) | varies | varies | See metric_definitions.json |
 
 ---
 
@@ -168,8 +168,8 @@ RAW LAYER (raw.*, 57 tables, 3.1M rows)
 STAGING LAYER (staging.*, 57 tables, 2.8M rows)
     ↓ [Stage 4: build_analytics_schemas]
 ANALYTICS LAYER (5 domains, 100+ views)
-    ↓ [Stage 5: materialize_kpis]
-SERVING LAYER (serving.kpi_borough_results, serving.quality_scorecards)
+    ↓ [Stage 5: materialize_metrics]
+SERVING LAYER (serving.metric_borough_results, serving.quality_scorecards)
     ↓ [Stage 6: verify_gates]
 VALIDATION RESULT (4 gates, exit code 0 or 1)
 ```
@@ -260,9 +260,9 @@ Stored in `pipeline/logs/execution.json` after each run:
 ### Performance Tuning
 
 **Query Optimization Tips:**
-1. Use serving layer (KPIs, quality_scorecards) for dashboards, not raw queries
+1. Use serving layer (Metrics, quality_scorecards) for dashboards, not raw queries
 2. Add WHERE predicates on measurement_date or borough to reduce full scans
-3. Leverage index on (kpi_id, borough) for fast KPI lookups
+3. Leverage index on (metric_id, borough) for fast Metric lookups
 4. Use DuckDB's PARQUET reader for direct Parquet queries (bypass DuckDB staging)
 
 ### Monitoring & Alerts
@@ -302,22 +302,22 @@ Stored in `pipeline/logs/execution.json` after each run:
 ### Related Pipelines
 
 - **Socrata Toolkit CLI** (`src/socrata_toolkit/`) — Python library for Socrata data analysis
-- **Mission Control Dashboard** (`app/dash_app.py`) — Consumer of KPI and quality metrics
+- **Mission Control Dashboard** (`app/dash_app.py`) — Consumer of Metric and quality metrics
 - **Data Analytics Skills** (`data-analytics-skills/`) — Portable analytical workflows
 
 ---
 
 ## Data Dictionary
 
-### Column Definitions (KPI Table)
+### Column Definitions (Metric Table)
 
 | Column | Type | Example | Description |
 |--------|------|---------|---|
-| kpi_id | INTEGER | 1 | Unique KPI identifier (1-51) |
-| kpi_name | VARCHAR | "Inspections Completed" | Human-readable KPI name |
+| metric_id | INTEGER | 1 | Unique Metric identifier (1-51) |
+| metric_name | VARCHAR | "Inspections Completed" | Human-readable Metric name |
 | borough | VARCHAR | "MANHATTAN" | NYC borough (5 values) |
 | measurement_date | DATE | 2026-06-18 | Date of measurement |
-| value | DECIMAL(10,2) | 237.5 | Current KPI value |
+| value | DECIMAL(10,2) | 237.5 | Current Metric value |
 | threshold | DECIMAL(10,2) | 250.0 | Target threshold |
 | status | VARCHAR | "at_risk" | Status: "on_target" or "at_risk" |
 
@@ -329,7 +329,7 @@ Stored in `pipeline/logs/execution.json` after each run:
 |---------|------|---------|--------|
 | 1.0 | 2026-03-15 | Initial Phase 1 implementation (raw → staging) | Claude Haiku |
 | 1.5 | 2026-04-20 | Added analytics schemas & borough-level views | Claude Haiku |
-| 2.0 | 2026-06-18 | Complete Phase 3 with KPIs, gates, advanced modules | Claude Haiku |
+| 2.0 | 2026-06-18 | Complete Phase 3 with Metrics, gates, advanced modules | Claude Haiku |
 
 ---
 

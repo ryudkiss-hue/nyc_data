@@ -144,7 +144,7 @@ def route_gis_request(user_id):
 
 ## Monitoring Dashboard
 
-### Key Performance Indicators (KPIs)
+### Key Performance Indicators (Metrics)
 
 ```
 DASH GIS PILOT - Week 1 Monitoring

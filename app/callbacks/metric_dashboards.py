@@ -1,6 +1,6 @@
-"""Dash callbacks for KPI dashboard integration.
+"""Dash callbacks for Metric dashboard integration.
 
-Connects KPI materialization pipeline to interactive Dash visualizations.
+Connects Metric materialization pipeline to interactive Dash visualizations.
 Enables real-time filtering, drill-down, and dimension selection.
 """
 
@@ -10,64 +10,64 @@ from datetime import date
 from dash import Input, Output, State, dcc, html, callback
 import plotly.graph_objects as go
 
-from socrata_toolkit.kpi.registry import KPIRegistry
+from socrata_toolkit.metric.registry import MetricRegistry
 from socrata_toolkit.viz.chart_factory import ChartFactory
 
 logger = logging.getLogger(__name__)
 
 
-class KPIPDashboard:
-    """Dashboard controller for KPI visualizations."""
+class MetricPDashboard:
+    """Dashboard controller for Metric visualizations."""
 
-    def __init__(self, registry: KPIRegistry, duckdb_manager):
+    def __init__(self, registry: MetricRegistry, duckdb_manager):
         self.registry = registry
         self.db = duckdb_manager
         self.chart_factory = ChartFactory()
 
-    def render_kpi_overview(self) -> html.Div:
-        """Render KPI overview page with key metrics."""
+    def render_metric_overview(self) -> html.Div:
+        """Render Metric overview page with key metrics."""
 
         return html.Div([
-            html.H1('KPI Dashboard Overview', className='page-title'),
+            html.H1('Metric Dashboard Overview', className='page-title'),
 
-            # KPI Grid (4-column)
+            # Metric Grid (4-column)
             html.Div(
-                id='kpi-grid',
-                className='kpi-grid',
+                id='metric-grid',
+                className='metric-grid',
                 children=[]  # Populated by callback
             ),
 
-            dcc.Store(id='selected-kpi-store'),
+            dcc.Store(id='selected-metric-store'),
         ])
 
-    def render_kpi_detail(self) -> html.Div:
-        """Render detailed KPI view with forecast and anomalies."""
+    def render_metric_detail(self) -> html.Div:
+        """Render detailed Metric view with forecast and anomalies."""
 
         return html.Div([
-            html.H2(id='kpi-title', className='page-title'),
+            html.H2(id='metric-title', className='page-title'),
 
             html.Div(
-                className='kpi-detail-grid',
+                className='metric-detail-grid',
                 children=[
                     # Current status
                     html.Div(
-                        id='kpi-status',
-                        className='kpi-card',
+                        id='metric-status',
+                        className='metric-card',
                     ),
                     # Gauge chart
                     html.Div(
-                        dcc.Graph(id='kpi-gauge'),
+                        dcc.Graph(id='metric-gauge'),
                         className='chart-container'
                     ),
                 ]
             ),
 
             html.Div(
-                className='kpi-detail-grid',
+                className='metric-detail-grid',
                 children=[
                     # Time-series with forecast
                     html.Div(
-                        dcc.Graph(id='kpi-forecast-chart'),
+                        dcc.Graph(id='metric-forecast-chart'),
                         className='chart-container-wide'
                     ),
                 ]
@@ -80,24 +80,24 @@ class KPIPDashboard:
             ),
 
             html.Div(
-                dcc.Graph(id='kpi-dimension-chart'),
+                dcc.Graph(id='metric-dimension-chart'),
                 className='chart-container-wide'
             ),
         ])
 
-    def get_kpi_cards(self) -> List[html.Div]:
-        """Generate KPI card components from registry."""
+    def get_metric_cards(self) -> List[html.Div]:
+        """Generate Metric card components from registry."""
 
         cards = []
-        for kpi in self.registry.get_all_kpis()[:12]:  # First 12 KPIs
+        for metric in self.registry.get_all_metrics()[:12]:  # First 12 Metrics
             card = html.Div(
                 [
-                    html.H3(kpi.name),
-                    html.Div(id=f'kpi-value-{kpi.kpi_id}', className='kpi-value'),
-                    html.Div(id=f'kpi-status-{kpi.kpi_id}', className='kpi-status-badge'),
+                    html.H3(metric.name),
+                    html.Div(id=f'metric-value-{metric.metric_id}', className='metric-value'),
+                    html.Div(id=f'metric-status-{metric.metric_id}', className='metric-status-badge'),
                 ],
-                className='kpi-card',
-                id=f'kpi-card-{kpi.kpi_id}'
+                className='metric-card',
+                id=f'metric-card-{metric.metric_id}'
             )
             cards.append(card)
 
@@ -107,56 +107,56 @@ class KPIPDashboard:
         """Register Dash callbacks for interactivity."""
 
         @app.callback(
-            Output('kpi-grid', 'children'),
+            Output('metric-grid', 'children'),
             Input('url', 'pathname')
         )
-        def update_kpi_grid(_):
-            """Update KPI grid on page load."""
-            return self.get_kpi_cards()
+        def update_metric_grid(_):
+            """Update Metric grid on page load."""
+            return self.get_metric_cards()
 
         @app.callback(
-            [Output('kpi-gauge', 'figure'),
-             Output('kpi-forecast-chart', 'figure'),
-             Output('kpi-dimension-chart', 'figure')],
-            Input('selected-kpi-store', 'data')
+            [Output('metric-gauge', 'figure'),
+             Output('metric-forecast-chart', 'figure'),
+             Output('metric-dimension-chart', 'figure')],
+            Input('selected-metric-store', 'data')
         )
-        def update_kpi_charts(selected_kpi_id):
-            """Update all charts when KPI selection changes."""
+        def update_metric_charts(selected_metric_id):
+            """Update all charts when Metric selection changes."""
 
-            if not selected_kpi_id:
+            if not selected_metric_id:
                 # Return empty figures
                 return (go.Figure(), go.Figure(), go.Figure())
 
             try:
-                # Fetch KPI data from analytics
+                # Fetch Metric data from analytics
                 with self.db.get_connection() as conn:
                     # Gauge chart
                     result = conn.execute(f"""
-                        SELECT current_value, target FROM analytics.kpi_latest
-                        WHERE kpi_id = '{selected_kpi_id}'
+                        SELECT current_value, target FROM analytics.metric_latest
+                        WHERE metric_id = '{selected_metric_id}'
                     """).fetchall()
 
                     if not result:
                         return (go.Figure(), go.Figure(), go.Figure())
 
                     current_val, target = result[0]
-                    kpi = self.registry.get_kpi(selected_kpi_id)
+                    metric = self.registry.get_metric(selected_metric_id)
 
                     # Create gauge
                     gauge_spec = self.chart_factory.create_gauge_chart(
-                        selected_kpi_id, current_val, target, kpi.name
+                        selected_metric_id, current_val, target, metric.name
                     )
 
                     # Forecast chart
                     ts_data = conn.execute(f"""
-                        SELECT period, current_value FROM analytics.kpi_time_series
-                        WHERE kpi_id = '{selected_kpi_id}' ORDER BY period
+                        SELECT period, current_value FROM analytics.metric_time_series
+                        WHERE metric_id = '{selected_metric_id}' ORDER BY period
                     """).fetchall()
 
                     forecast_data = conn.execute(f"""
                         SELECT forecast_period, forecast_value, forecast_ci_lower, forecast_ci_upper
-                        FROM analytics.kpi_forecasts
-                        WHERE kpi_id = '{selected_kpi_id}' ORDER BY forecast_period
+                        FROM analytics.metric_forecasts
+                        WHERE metric_id = '{selected_metric_id}' ORDER BY forecast_period
                     """).fetchall()
 
                     periods = [str(p[0]) for p in ts_data] if ts_data else []
@@ -168,19 +168,19 @@ class KPIPDashboard:
                     ci_upper = [p[3] for p in forecast_data] if forecast_data else []
 
                     forecast_spec = self.chart_factory.create_line_chart(
-                        selected_kpi_id, periods, values,
+                        selected_metric_id, periods, values,
                         forecast_periods=forecast_periods,
                         forecast_values=forecast_values,
                         ci_lower=ci_lower,
                         ci_upper=ci_upper,
-                        title=f'{kpi.name} - Actual vs Forecast'
+                        title=f'{metric.name} - Actual vs Forecast'
                     )
 
                     # Dimension breakdown chart (borough example)
                     dim_data = conn.execute(f"""
                         SELECT dimension_value, metric_value
-                        FROM analytics.kpi_dimensions
-                        WHERE kpi_id = '{selected_kpi_id}' AND dimension_name = 'borough'
+                        FROM analytics.metric_dimensions
+                        WHERE metric_id = '{selected_metric_id}' AND dimension_name = 'borough'
                         ORDER BY metric_value DESC
                     """).fetchall()
 
@@ -188,12 +188,12 @@ class KPIPDashboard:
                         dims = [str(d[0]) for d in dim_data]
                         dim_vals = [d[1] for d in dim_data]
                         dim_spec = self.chart_factory.create_bar_chart(
-                            selected_kpi_id, dims, dim_vals,
-                            title=f'{kpi.name} by Borough'
+                            selected_metric_id, dims, dim_vals,
+                            title=f'{metric.name} by Borough'
                         )
                     else:
                         dim_spec = ChartFactory.create_bar_chart(
-                            selected_kpi_id, [], [],
+                            selected_metric_id, [], [],
                             title='No dimension data'
                         )
 
@@ -204,6 +204,6 @@ class KPIPDashboard:
                 return (go.Figure(), go.Figure(), go.Figure())
 
 
-def create_kpi_dashboard(registry: KPIRegistry, duckdb_manager) -> KPIPDashboard:
-    """Factory for KPI dashboard."""
-    return KPIPDashboard(registry, duckdb_manager)
+def create_metric_dashboard(registry: MetricRegistry, duckdb_manager) -> MetricPDashboard:
+    """Factory for Metric dashboard."""
+    return MetricPDashboard(registry, duckdb_manager)

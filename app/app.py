@@ -334,7 +334,7 @@ def _render_onboarding() -> None:
         with st.sidebar.expander("👋 Welcome to NYC DOT SIM Toolkit", expanded=True):
             st.markdown(
                 """**Quick Start:**
-- 🏠 **Home** — KPI overview and system status
+- 🏠 **Home** — Metric overview and system status
 - 🗺️ **GIS** — Map inspections, detect conflicts
 - 📋 **Contracts** — Violations, dismissals, tree damage
 - 📈 **Forecasting** — Prediction and trends
