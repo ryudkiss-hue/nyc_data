@@ -30,6 +30,7 @@ STAGES = [
     ("kpi:build_kpis", ["pipeline/kpi/build_kpis.py"]),
     ("kpi:build_kpis_advanced", ["pipeline/kpi/build_kpis_advanced.py"]),
     ("compact", ["pipeline/compact_local.py"]),  # reclaim space, drop scratch schemas
+    ("publish:serving", ["pipeline/publish_serving.py"]),  # push small serving layer -> MotherDuck
 ]
 
 
