@@ -366,9 +366,14 @@ SLA enforcement is configured in `src/socrata_toolkit/quality/sla.py` and `src/s
 
 ---
 
-## 📦 Dataset Registry (57 datasets — Source of Truth)
+## 📦 Dataset Registry (90 datasets — Source of Truth)
 
-**CURRENT SOURCE OF TRUTH:** See `SOCRATA_DATASETS_CONSOLIDATED.md` for complete registry with all 57 datasets, alternatives for problematic datasets, migration guide, and cross-references to KPI mappings and visualizations.
+**CURRENT SOURCE OF TRUTH (auto-generated, always current):**
+- **`pipeline/data/DATA_CATALOG.md`** — human-readable catalog of all **90** configured datasets (verified Socrata IDs, column counts, freshness).
+- **`pipeline/data/nyc_open_data_registry.json`** — machine registry with full column schemas, pulled via the Socrata **Discovery/Catalog API** (bulk, chunked `ids`).
+- **`pipeline/config/socrata_datasets.json`** — pipeline config (90 datasets, primary **and foreign** keys, domain schema, server-side filters).
+
+These regenerate on every sync via `pipeline/regenerate_from_registry.py`, so they never drift. `docs/SOCRATA_DATASETS_CONSOLIDATED.md` is retained as **historical narrative** only (superseded 2026-06-22). The static table below is a quick reference for the core SIM datasets; see the live catalog for the full 90 (incl. the 2026-06-22 gap-fill: demographics, heat-vulnerability, pedestrian crashes, street-tree census, forestry, sidewalk cafes, water/sewer + street-construction permits, DOB stalled sites).
 
 All datasets live on `data.cityofnewyork.us`. Reference by key.
 
@@ -397,8 +402,8 @@ All datasets live on `data.cityofnewyork.us`. Reference by key.
 |---|---|---|---|
 | `street_permits` | tqtj-sjs8 | ~3.6M | Permits with location, cost data |
 | `weekly_construction` | r528-jcks | ~75 | ⚠️ Stale since 2017 |
-| `capital_blocks` | jvk9-k4re | 0 | ⚠️ Empty |
-| `capital_intersections` | 97nd-ff3i | ~7.8K | Capital program intersections |
+| `capital_blocks` | jvk9-k4re | ~12K | Capital reconstruction projects (block-level); now populated (verified 2026-06-23). Geo: boroughnam + the_geom + street names |
+| `capital_intersections` | 97nd-ff3i | ~7.8K | Capital program intersections; geo: boroughnam + the_geom + lat/long |
 | `street_construction_inspections` | ydkf-mpxb | ~11.5M | Inspection records for construction |
 | `street_closures_block` | i6b5-j7bu | ~4.3K | Temporary street closure permits |
 | `permit_stipulations` | gsgx-6efw | — | ⚠️ API error |
@@ -426,7 +431,7 @@ Problematic datasets that require awareness when planning analysis. These are tr
 |---|---|---|---|---|
 | `ramp_locations` | ufzp-rrqu | Stale | 2021-01-01 | No updates since 2021. Consider using `ramp_progress` or `ramp_complaints` instead for current ramp data. |
 | `weekly_construction` | r528-jcks | Stale | 2017-01-01 | Archived dataset with no updates since 2017. Use `street_construction_inspections` or `street_permits` for active construction data. |
-| `capital_blocks` | jvk9-k4re | Empty | 2026-06-05 | Dataset contains 0 rows. Use `capital_intersections` (~7.8K rows) instead. |
+| `capital_blocks` | jvk9-k4re | ✅ Resolved | 2026-06-23 | Previously empty (2026-06-05); now populated with ~12K rows (ingested as `street_and_highway_capital_reconstruction_projec_2`). No longer a known issue. |
 | `permit_stipulations` | gsgx-6efw | Error | 2026-06-05 | API returns HTTP 403 (Forbidden). Requires investigation of data permissions or schema changes. Contact NYC Open Data support. |
 
 **How to use this section:**
@@ -548,7 +553,7 @@ When given an analytical task, follow this sequence:
 
 2. **CHECK dataset health first** for any dataset you intend to use:
    - Fresh? (stale >SLA threshold = flag it)
-   - Empty? (`capital_blocks` is known empty)
+   - Empty? (check row counts; e.g. `capital_blocks` was empty pre-2026-06-23, now ~12K)
    - Accessible? (`permit_stipulations` currently returns API error)
 
 3. **FETCH the minimum rows needed.** Use `--where` filters and `--select` projections. Never pull a full 21M-row dataset when 10K suffices.

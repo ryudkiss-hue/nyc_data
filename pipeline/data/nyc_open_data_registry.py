@@ -37,6 +37,7 @@ Usage:
 
 import json
 import logging
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -44,6 +45,10 @@ from typing import Dict, List, Optional
 import requests
 
 logger = logging.getLogger(__name__)
+
+# Max dataset ids per Discovery/Catalog API call when bulk-fetching metadata.
+# The catalog accepts repeated `ids` params (union); chunking keeps URLs sane.
+CATALOG_ID_CHUNK = 50
 
 class NYCDataRegistry:
     """Authoritative registry of NYC Open Data datasets."""
@@ -69,9 +74,14 @@ class NYCDataRegistry:
                 first get_dataset() access.
         """
         self.priority_agencies = priority_agencies or self.PRIORITY_AGENCIES
+        # App token (optional) raises rate limits; used as a header on all calls.
+        self.app_token = os.getenv("SOCRATA_APP_TOKEN", "")
         self.registry = self._load_registry()
         if auto_sync and self._should_sync():
             self.sync()
+
+    def _headers(self) -> Dict[str, str]:
+        return {"X-App-Token": self.app_token} if self.app_token else {}
 
     def _load_registry(self) -> Dict:
         """Load registry from local cache or create empty."""
@@ -132,8 +142,32 @@ class NYCDataRegistry:
                 dataset = self._build_dataset_metadata(row, dataset_id, current)
 
                 if dataset:
+                    # Flag priority-agency datasets that need a column (re)fetch.
+                    is_priority = any(a in dataset.get("agency", "")
+                                      for a in self.priority_agencies)
+                    if is_priority and self._needs_column_update(current, dataset):
+                        dataset["columns_fetched"] = False
                     self.registry["datasets"][dataset_id] = dataset
                     updated_count += 1
+
+            # Bulk-fetch columns for all priority datasets that need them, in one
+            # chunked Discovery API pass (Socrata's recommended bulk-read path).
+            need_cols = [
+                did for did, ds in self.registry["datasets"].items()
+                if any(a in ds.get("agency", "") for a in self.priority_agencies)
+                and not ds.get("columns_fetched")
+            ]
+            if need_cols:
+                logger.info(f"Bulk-fetching columns for {len(need_cols)} priority datasets...")
+                assets = self.fetch_assets_bulk(need_cols)
+                for did, res in assets.items():
+                    cols = self._columns_from_resource(res)
+                    if cols:
+                        self.registry["datasets"][did]["columns"] = cols
+                        self.registry["datasets"][did]["columns_fetched"] = True
+                        # Refresh freshness from the same call (data_updated_at)
+                        if res.get("data_updated_at"):
+                            self.registry["datasets"][did]["last_updated"] = res["data_updated_at"]
 
             # Update indices
             self._rebuild_indices()
@@ -179,20 +213,11 @@ class NYCDataRegistry:
                 "downloads": ll251_row.get("downloads", 0),
             }
 
-            # Eager-fetch full column schemas only for priority agencies (DOT).
-            # Other agencies keep base metadata; columns lazy-load on access.
-            is_priority = any(a in metadata["agency"] for a in self.priority_agencies)
-            if is_priority and self._needs_column_update(current, metadata):
-                metadata["columns"] = self._fetch_dataset_columns(dataset_id)
-                metadata["columns_fetched"] = True
-            elif is_priority:
-                metadata["columns"] = current.get("columns", [])
-                metadata["columns_fetched"] = current.get("columns_fetched", False)
-            else:
-                # Preserve any previously lazy-fetched columns
-                metadata["columns"] = current.get("columns", [])
-                metadata["columns_fetched"] = current.get("columns_fetched", False)
-
+            # Preserve any previously fetched columns. Priority-agency column
+            # schemas are (re)fetched in a single bulk pass in sync(), not here,
+            # so one chunked Discovery API call covers all of them.
+            metadata["columns"] = current.get("columns", [])
+            metadata["columns_fetched"] = current.get("columns_fetched", False)
             return metadata
 
         except Exception as e:
@@ -208,22 +233,88 @@ class NYCDataRegistry:
             return True
         return False
 
-    def _fetch_dataset_columns(self, dataset_id: str) -> List[Dict]:
-        """Fetch column definitions for a dataset via the Socrata views metadata API.
+    @staticmethod
+    def _columns_from_resource(resource: Dict) -> List[Dict]:
+        """Build column dicts from a Discovery API `resource` object.
 
-        Uses https://{domain}/api/views/{id}.json which returns the canonical
-        column list with field names, datatypes, and descriptions. (The catalog
-        API does not expose per-column schema, so it must not be used here.)
+        The catalog returns column metadata as parallel arrays
+        (columns_name / columns_field_name / columns_datatype /
+        columns_description). Zip them into our canonical column shape.
+        """
+        names = resource.get("columns_name", []) or []
+        fields = resource.get("columns_field_name", []) or []
+        types = resource.get("columns_datatype", []) or []
+        descs = resource.get("columns_description", []) or []
+        n = max(len(names), len(fields), len(types), len(descs))
+
+        def at(arr, i):
+            return arr[i] if i < len(arr) else ""
+
+        cols = []
+        for i in range(n):
+            fn = at(fields, i)
+            if not fn:
+                continue
+            cols.append({
+                "name": at(names, i),
+                "field_name": fn,
+                "datatype": at(types, i),
+                "description": at(descs, i),
+            })
+        return cols
+
+    def fetch_assets_bulk(self, dataset_ids: List[str]) -> Dict[str, Dict]:
+        """Fetch asset + column metadata for many datasets in one path.
+
+        Uses the Discovery/Catalog API with the repeated `ids` filter, which
+        returns BOTH asset-level metadata and per-column schema inline
+        (columns_field_name/datatype/description) — Socrata's recommended way to
+        READ metadata at scale. Requests are chunked to keep URLs bounded.
+
+        Returns: {dataset_id: resource_dict}
+        """
+        out: Dict[str, Dict] = {}
+        ids = [i for i in dataset_ids if i]
+        for start in range(0, len(ids), CATALOG_ID_CHUNK):
+            chunk = ids[start:start + CATALOG_ID_CHUNK]
+            params = [("domains", self.DOMAIN)] + [("ids", i) for i in chunk]
+            try:
+                resp = requests.get(self.API_BASE, params=params,
+                                    headers=self._headers(), timeout=60)
+                resp.raise_for_status()
+                for result in resp.json().get("results", []):
+                    res = result.get("resource", {})
+                    rid = res.get("id")
+                    if rid:
+                        out[rid] = res
+            except Exception as e:
+                logger.warning(f"Bulk catalog fetch failed for chunk {start//CATALOG_ID_CHUNK}: {e}")
+        return out
+
+    def _fetch_dataset_columns(self, dataset_id: str) -> List[Dict]:
+        """Fetch column definitions for a single dataset.
+
+        Primary: the Discovery/Catalog API (one call, returns column field
+        names/types/descriptions inline). Fallback: the Views API
+        (/api/views/{id}.json) if the catalog returns no columns.
         """
         try:
-            url = f"https://{self.DOMAIN}/api/views/{dataset_id}.json"
-            response = requests.get(url, timeout=15)
-            response.raise_for_status()
-            data = response.json()
+            assets = self.fetch_assets_bulk([dataset_id])
+            res = assets.get(dataset_id)
+            if res:
+                cols = self._columns_from_resource(res)
+                if cols:
+                    return cols
+        except Exception as e:
+            logger.debug(f"Catalog column fetch failed for {dataset_id}: {e}")
 
+        # Fallback: Views API
+        try:
+            url = f"https://{self.DOMAIN}/api/views/{dataset_id}.json"
+            response = requests.get(url, headers=self._headers(), timeout=15)
+            response.raise_for_status()
             columns = []
-            for col in data.get("columns", []):
-                # Skip Socrata internal/system columns (negative ids)
+            for col in response.json().get("columns", []):
                 if isinstance(col.get("id"), int) and col["id"] < 0:
                     continue
                 columns.append({
@@ -233,7 +324,6 @@ class NYCDataRegistry:
                     "description": col.get("description", ""),
                 })
             return columns
-
         except Exception as e:
             logger.debug(f"Could not fetch columns for {dataset_id}: {e}")
             return []

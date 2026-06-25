@@ -254,22 +254,62 @@ class MotherDuckPipeline:
             socrata_datasets = [d for d in datasets if d.source == 'socrata']
             logger.info(f"Found {len(socrata_datasets)} Socrata datasets to ingest")
 
+            # Incremental mode (NYC_INCREMENTAL=1, set by the nightly run): skip a
+            # dataset whose Socrata last_updated is unchanged since last ingest AND
+            # whose raw table still has rows. Watermarks persist in data/.
+            import json as _json
+            incremental = os.getenv("NYC_INCREMENTAL") == "1"
+            wm_path = Path("data/ingest_watermarks.json")
+            watermarks = {}
+            if wm_path.exists():
+                try:
+                    watermarks = _json.loads(wm_path.read_text())
+                except Exception:
+                    watermarks = {}
+            freshness = {}
+            try:
+                reg = _json.loads(Path("pipeline/data/nyc_open_data_registry.json").read_text())["datasets"]
+                freshness = {k: v.get("last_updated", "") for k, v in reg.items()}
+            except Exception:
+                pass
+
+            def _has_rows(name):
+                try:
+                    return self.bridge.connection.execute(
+                        f'SELECT 1 FROM raw."{name}" LIMIT 1').fetchone() is not None
+                except Exception:
+                    return False
+
             # Load in batches
             batch_size = 10
             loaded_count = 0
             failed_count = 0
+            skipped_count = 0
 
             for i, dataset in enumerate(socrata_datasets):
                 batch_num = (i // batch_size) + 1
+
+                cur = freshness.get(dataset.socrata_id, "")
+                if (incremental and cur and watermarks.get(dataset.socrata_id) == cur
+                        and _has_rows(dataset.name)):
+                    skipped_count += 1
+                    self.execution_log['datasets'][dataset.name] = {
+                        'source': 'socrata', 'status': 'skipped_fresh'}
+                    logger.info(f"  {dataset.name}: skipped (unchanged since {cur[:10]})")
+                    continue
+
                 logger.info(f"Batch {batch_num}: Loading {dataset.name} ({i+1}/{len(socrata_datasets)})")
 
-                # Try to load
+                # Try to load (passing optional server-side filter, e.g. 311)
                 result = self.socrata_loader.load_from_socrata(
                     dataset.name,
-                    dataset.socrata_id
+                    dataset.socrata_id,
+                    soql_where=getattr(dataset, "soql_where", None),
                 )
 
                 if result.success:
+                    if cur:
+                        watermarks[dataset.socrata_id] = cur
                     loaded_count += 1
                     self.execution_log['datasets'][dataset.name] = {
                         'source': 'socrata',
@@ -288,8 +328,18 @@ class MotherDuckPipeline:
 
             load_time = time.time() - start_time
 
-            # CRITICAL: Fail if fewer than 37 datasets loaded (prevents partial pipeline)
-            if loaded_count == 0:
+            # Persist watermarks (incremental state) for the next nightly run.
+            try:
+                wm_path.parent.mkdir(parents=True, exist_ok=True)
+                wm_path.write_text(_json.dumps(watermarks, indent=1))
+            except Exception as e:
+                logger.warning(f"Could not write watermarks: {e}")
+            if skipped_count:
+                logger.info(f"Incremental: {skipped_count} unchanged datasets skipped, {loaded_count} (re)loaded")
+
+            # CRITICAL: Fail only if nothing loaded AND nothing was validly skipped
+            # (all-skipped = everything already fresh, which is success).
+            if loaded_count == 0 and skipped_count == 0:
                 logger.error("CRITICAL: No Socrata datasets loaded")
                 self._fail_stage("Zero Socrata datasets loaded")
                 self._send_alert(Alert(

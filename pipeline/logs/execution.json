@@ -1,311 +1,617 @@
 {
   "pipeline_version": "2.0",
-  "started_at": "2026-06-18T22:29:32.888487",
+  "started_at": "2026-06-24T01:28:45.912790",
   "stages": {
     "load_cached_parquet": {
       "status": "success",
-      "timestamp": "2026-06-18T22:29:55.460077",
-      "tables_loaded": 20,
-      "expected_cached": 20,
-      "total_rows": 3921830,
-      "load_time_seconds": 22.54,
-      "cache_location": "C:\\Users\\ryudk\\Desktop\\nyc_data_cache\\raw"
+      "timestamp": "2026-06-24T01:28:45.970517",
+      "tables_loaded": 0,
+      "expected_cached": 0,
+      "total_rows": 0,
+      "note": "skipped \u2014 all-Socrata config"
     },
     "ingest_remaining_socrata": {
-      "status": "failed",
-      "timestamp": "2026-06-18T22:30:14.029638",
-      "loaded": 0,
-      "total_remaining": 37,
-      "error": "No data loaded from Socrata"
+      "status": "success",
+      "timestamp": "2026-06-24T17:33:26.977466",
+      "total_remaining": 117,
+      "loaded": 116,
+      "failed": 1,
+      "batch_size": 10,
+      "load_time_seconds": 57880.99
+    },
+    "staging_datasets": {
+      "status": "error",
+      "timestamp": "2026-06-24T17:33:46.293657",
+      "error": "Execution error at statement 7: SQL execution error: Binder Error: Referenced column inspectionid not found in FROM clause and can't find in alias map.\n\nLINE 3: QUALIFY ROW_NUMBER() OVER (PARTITION BY \"inspectionid\" ORDER BY 1 DESC) = 1\n                                                ^"
     }
   },
   "datasets": {
-    "built": {
-      "source": "cache",
-      "status": "loaded",
-      "rows": 105990
-    },
-    "capital_blocks": {
-      "source": "cache",
-      "status": "loaded",
-      "rows": 12056
-    },
-    "capital_intersections": {
-      "source": "cache",
-      "status": "loaded",
-      "rows": 7817
-    },
-    "correspondences": {
-      "source": "cache",
-      "status": "loaded",
-      "rows": 30726
-    },
-    "curb_metal_protruding": {
-      "source": "cache",
-      "status": "loaded",
-      "rows": 23498
-    },
     "inspection": {
-      "source": "cache",
+      "source": "socrata",
       "status": "loaded",
-      "rows": 399427
+      "rows": 399659
+    },
+    "violations": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 312928
+    },
+    "reinspection": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 36659
     },
     "lot_info": {
-      "source": "cache",
+      "source": "socrata",
       "status": "loaded",
       "rows": 1211601
     },
-    "mappluto": {
-      "source": "cache",
+    "built": {
+      "source": "socrata",
       "status": "loaded",
-      "rows": 858602
+      "rows": 105990
     },
-    "pedestrian_demand": {
-      "source": "cache",
+    "dismissals": {
+      "source": "socrata",
       "status": "loaded",
-      "rows": 127277
+      "rows": 85567
+    },
+    "tree_damage": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 17661
+    },
+    "correspondences": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 30726
+    },
+    "ramp_progress": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 187546
     },
     "ramp_complaints": {
-      "source": "cache",
+      "source": "socrata",
       "status": "loaded",
       "rows": 6051
     },
     "ramp_locations": {
-      "source": "cache",
+      "source": "socrata",
       "status": "loaded",
       "rows": 217679
     },
-    "ramp_progress": {
-      "source": "cache",
+    "curb_metal_protruding": {
+      "source": "socrata",
       "status": "loaded",
-      "rows": 187546
-    },
-    "reinspection": {
-      "source": "cache",
-      "status": "loaded",
-      "rows": 36656
-    },
-    "sidewalk_planimetric": {
-      "source": "cache",
-      "status": "loaded",
-      "rows": 50865
+      "rows": 23506
     },
     "step_streets": {
-      "source": "cache",
-      "status": "loaded",
-      "rows": 110
-    },
-    "street_closures_block": {
-      "source": "cache",
-      "status": "loaded",
-      "rows": 3433
+      "source": "socrata",
+      "status": "failed",
+      "error": "Failed to fetch first batch: HTTPError: 400 Client Error: Bad Request for url: https://data.cityofnewyork.us/resource/u9au-h79y.json?%24select=%3Aid%2Cboro_cb%2Con_street%2Cfrom%2Cto&%24order=%3Aid&%24limit=200000"
     },
     "street_resurfacing_schedule": {
-      "source": "cache",
+      "source": "socrata",
       "status": "loaded",
-      "rows": 311932
-    },
-    "tree_damage": {
-      "source": "cache",
-      "status": "loaded",
-      "rows": 17661
-    },
-    "violations": {
-      "source": "cache",
-      "status": "loaded",
-      "rows": 312828
+      "rows": 312455
     },
     "weekly_construction": {
-      "source": "cache",
+      "source": "socrata",
       "status": "loaded",
       "rows": 75
     },
-    "inspection_history": {
+    "pedestrian_demand": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 127277
     },
-    "inspection_metrics": {
+    "vzv_enhanced_crossings": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 197
     },
-    "violation_photos": {
+    "holiday_construction_embargo_intersection": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 7544
     },
-    "violation_attachments": {
+    "vzv_street_improvement_projects_sip_corridor": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 991
     },
-    "ramp_inventory": {
+    "bi_annual_pedestrian_counts": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 114
     },
-    "ramp_specifications": {
+    "bikes_in_buildings_requests": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 2365
     },
-    "ramp_maintenance_log": {
+    "vzv_priority_intersections": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 304
     },
-    "permit_status_history": {
+    "street_pavement_ratings": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 502834
     },
-    "permit_amendments": {
+    "vzv_bike_priority_areas": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 10
     },
-    "construction_progress": {
+    "accessible_pedestrian_signal_locations": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 4207
     },
-    "street_segment_inventory": {
+    "parking_permit_for_people_with_disabilities_pppd": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 684220
     },
-    "block_face_data": {
+    "vzv_leading_pedestrian_interval_signals": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 6765
     },
-    "spatial_geometry": {
+    "seating_locations": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 3546
     },
-    "tree_inventory": {
+    "vzv_safe_streets_for_seniors": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 34
     },
-    "tree_maintenance": {
+    "exclusive_pedestrian_signal_barnes_dance_locatio": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 735
     },
-    "curb_inventory": {
+    "street_direction_change_requests_2019_present": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 260
     },
-    "surface_condition_history": {
+    "vzv_street_improvement_projects_sip_intersection": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 424
     },
-    "project_scheduling": {
+    "street_construction_permits_cranes": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 52044
     },
-    "project_budget": {
+    "bicycle_parking_shelters": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 17
     },
-    "project_resources": {
+    "protected_streets_intersection_dataset": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 12112
     },
-    "vendor_data": {
+    "bicycle_and_pedestrian_count_sensors": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 66
     },
-    "equipment_inventory": {
+    "nyc_dot_pedestrian_plazas_point_feature": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 90
     },
-    "safety_incidents": {
+    "shared_e_scooter_parking_corrals": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 487
     },
-    "environmental_compliance": {
+    "pedestrian_space_added": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 60
     },
-    "traffic_impact": {
+    "parking_permit_for_people_with_disabilities_pppd_2": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 1299635
     },
-    "noise_monitoring": {
+    "street_closures_due_to_construction_activities_b": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 3462
     },
-    "air_quality": {
+    "vzv_street_team_flyers": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 886
     },
-    "public_complaints": {
+    "intercity_bus_stop_permits": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 2957
     },
-    "community_outreach": {
+    "street_closures_due_to_construction_activities_b_2": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 473557
     },
-    "contractor_performance": {
+    "open_streets_locations": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 379
     },
-    "cost_tracking": {
+    "parking_meters_parknyc_block_faces": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 11185
     },
-    "funding_sources": {
+    "dot_in_house_street_resurfacing_projects": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 603599
     },
-    "regulatory_approvals": {
+    "protected_streets_block_dataset": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 24464
     },
-    "accessibility_audits": {
+    "bicycle_parking": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 47267
     },
-    "service_requests": {
+    "street_closures_due_to_construction_activities_b_3": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 1275
     },
-    "performance_metrics": {
+    "bus_lanes_local_streets": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 4068
     },
-    "stakeholder_feedback": {
+    "street_pothole_work_orders_closed_dataset": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: name 'requests' is not defined"
+      "status": "loaded",
+      "rows": 404416
+    },
+    "new_york_city_bike_routes": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 28983
+    },
+    "carshare_locations_curbside": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 353
+    },
+    "street_and_highway_capital_reconstruction_projec": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 7817
+    },
+    "temporary_parking_permit_for_people_with_disabil": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 22178
+    },
+    "street_seats_2021_2024": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 45
+    },
+    "holiday_construction_embargo_block": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 14652
+    },
+    "street_and_highway_capital_reconstruction_projec_2": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 12056
+    },
+    "street_network_changes": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 281
+    },
+    "newsrack_inspections": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 6859
+    },
+    "nyc_dot_pedestrian_plazas_polygon": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 93
+    },
+    "encroachments_and_defacements": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 1347057
+    },
+    "complaints_311": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 1359900
+    },
+    "street_centerline": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 122248
+    },
+    "nta_2020": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 262
+    },
+    "census_demographics_nta": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 197
+    },
+    "heat_vulnerability_index": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 184
+    },
+    "motor_vehicle_collisions_crashes": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 133807
+    },
+    "motor_vehicle_collisions_person": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 148048
+    },
+    "sidewalk_cafes": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 20065
+    },
+    "street_tree_census_2015": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 683788
+    },
+    "forestry_inspections": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 1953442
+    },
+    "water_sewer_permits": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 351247
+    },
+    "street_construction_permits": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 3722154
+    },
+    "dob_stalled_construction_sites": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 1441169
+    },
+    "sidewalk_planimetric": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 50865
+    },
+    "curbs_planimetric": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 217662
+    },
+    "roadbed_planimetric": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 104961
+    },
+    "median_planimetric": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 19346
+    },
+    "boardwalk_planimetric": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 139
+    },
+    "open_space_parks_planimetric": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 13205
+    },
+    "elevation_points_planimetric": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 1471855
+    },
+    "vzv_arterial_slow_zones": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 28
+    },
+    "vzv_neighborhood_slow_zones": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 28
+    },
+    "vzv_priority_corridors": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 199
+    },
+    "vzv_priority_zones_areas": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 5
+    },
+    "vzv_speed_humps": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 4275
+    },
+    "speed_reducer_tracking_srts": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 59561
+    },
+    "vzv_speed_limits": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 141444
+    },
+    "vzv_turn_traffic_calming": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 1493
+    },
+    "vzv_signal_timing_25mph": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 444
+    },
+    "vzv_senior_centers": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 2317
+    },
+    "vzv_workshops_locations": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 9
+    },
+    "vision_zero_base_report": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 771
+    },
+    "raised_crosswalk_locations": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 143
+    },
+    "public_plazas_planimetric": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 1762
+    },
+    "privately_owned_public_spaces_pops": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 392
+    },
+    "bus_stop_shelters": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 3381
+    },
+    "walk_to_a_park_service_area": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 1
+    },
+    "mbpo_pedestrian_ramp_report": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 277
+    },
+    "capital_projects_dashboard": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 50724
+    },
+    "cpdb_projects": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 12587
+    },
+    "cpdb_projects_points": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 2747
+    },
+    "cpdb_projects_polygons": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 1753
+    },
+    "cpdb_commitments": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 37968
+    },
+    "capital_dashboard_budget_spend_fy": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 257384
+    },
+    "capital_dashboard_spend_history": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 47675
+    },
+    "capital_dashboard_schedule_history": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 20195
+    },
+    "state_of_good_repair_needs": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 43063
+    },
+    "interagency_coordination_construction_permits": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 952
+    },
+    "capital_commitment_plan": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 59077
+    },
+    "capital_commitment_actuals": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 864
+    },
+    "capital_budget": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 15742
+    },
+    "capital_project_detail_dollars": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 72437
+    },
+    "capital_project_detail_milestones": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 497727
+    },
+    "ten_year_capital_strategy": {
+      "source": "socrata",
+      "status": "loaded",
+      "rows": 2255
     }
   },
-  "completed_at": "2026-06-18T22:30:14.030429",
+  "completed_at": "2026-06-24T17:33:46.294410",
   "status": "failed"
 }

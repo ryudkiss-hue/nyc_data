@@ -134,8 +134,21 @@ def main():
     except Exception as e:
         print(f"  WARNING: registry refresh failed ({e}); config still updated")
 
+    # Propagate registry changes to ALL derived project files (config metadata,
+    # staging SQL, data catalog). This is what keeps every project file in sync
+    # with the source-of-truth registry automatically.
     print()
-    print("Configuration and registry will ALWAYS stay accurate with latest NYC Open Data.")
+    print("Regenerating derived project files from registry...")
+    try:
+        import sys
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+        from pipeline.regenerate_from_registry import main as regenerate
+        regenerate()
+    except Exception as e:
+        print(f"  WARNING: artifact regeneration failed ({e}); registry still updated")
+
+    print()
+    print("Configuration, registry, and derived files will ALWAYS stay in sync with NYC Open Data.")
 
 if __name__ == "__main__":
     main()

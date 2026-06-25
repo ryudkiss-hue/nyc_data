@@ -1,16 +1,45 @@
 ---
-title: NYC Open Data (Socrata) - Complete Dataset Registry [v3.0]
-version: 3.0
-status: ACTIVE
+title: NYC Open Data (Socrata) - Complete Dataset Registry [v4.0]
+version: 4.0
+status: HISTORICAL — see live catalog below
 created: 2026-06-17
-last_updated: 2026-06-17
-last_verified: 2026-06-17
-author: Claude Code (Consolidated with 78 datasets)
+last_updated: 2026-06-22
+last_verified: 2026-06-22
+author: Claude Code
 source: NYC Open Data (data.cityofnewyork.us) — Socrata Platform
-total_datasets: 78
-active_datasets: 74
-problematic_datasets: 4
+total_datasets: 90
+live_source_of_truth: pipeline/data/DATA_CATALOG.md
 ---
+
+> ## ⚠️ v4.0 — LIVE SOURCE OF TRUTH MOVED
+> As of **2026-06-22**, the authoritative dataset catalog is **auto-generated**
+> and always current:
+> - **`pipeline/data/DATA_CATALOG.md`** — human-readable catalog of all **90**
+>   configured datasets (verified Socrata IDs, column counts, freshness).
+> - **`pipeline/data/nyc_open_data_registry.json`** — machine registry (full
+>   column schemas, pulled via the Socrata Discovery/Catalog API).
+> - **`pipeline/config/socrata_datasets.json`** — pipeline config (90 datasets,
+>   primary + foreign keys).
+>
+> These regenerate on every sync via `pipeline/regenerate_from_registry.py`, so
+> they never drift. The narrative tables below are retained for **history** and
+> may name datasets that were re-scoped; trust the live catalog for current state.
+>
+> **2026-06-22 gap-fill (+10 datasets, →90 total)** added via the Discovery API to
+> close duty/research-question gaps:
+>
+> | Dataset (table) | Socrata ID | Gap closed |
+> |---|---|---|
+> | `census_demographics_nta` | rnsn-acs2 | Equity / demographics (NTA join) |
+> | `heat_vulnerability_index` | 4mhf-duep | Climate / equity |
+> | `motor_vehicle_collisions_crashes` | h9gi-nx95 | Vision Zero (pedestrian-filtered) |
+> | `motor_vehicle_collisions_person` | f55k-p6yu | Vision Zero ped injuries/deaths |
+> | `sidewalk_cafes` | ptd9-4c6m | Sidewalk obstruction/occupancy |
+> | `street_tree_census_2015` | uvpi-gqnh | Tree–sidewalk conflict |
+> | `forestry_inspections` | 4pt5-3vv4 | Current tree inspection activity |
+> | `water_sewer_permits` | hphy-6g7m | Utility street cuts |
+> | `street_construction_permits` | tqtj-sjs8 | Street/sidewalk openings |
+> | `dob_stalled_construction_sites` | i296-73x5 | Construction sheds (proxy) |
 
 # Socrata Dataset Registry: NYC DOT SIM Program [v2.0]
 
@@ -20,6 +49,7 @@ problematic_datasets: 4
 - v1.0 (2026-06-17): Initial 26-dataset registry
 - v2.0 (2026-06-17): Expanded to 57 datasets; added contractor, equity, demographic, and detailed 311 complaint data
 - v3.0 (2026-06-17): Phase 1 integration of 21 new SIM-relevant datasets; 78 total datasets (discovery-driven)
+- v4.0 (2026-06-22): Live catalog moved to auto-generated `pipeline/data/DATA_CATALOG.md` (90 datasets); +10 gap-fill datasets (see banner above)
 
 ---
 

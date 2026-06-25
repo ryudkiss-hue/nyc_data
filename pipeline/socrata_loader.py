@@ -8,7 +8,7 @@ import json
 import logging
 import os
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, fields
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -28,6 +28,8 @@ class DatasetMetadata:
     primary_key: str
     source: str  # 'cache' or 'socrata'
     domain_schema: str
+    soql_where: Optional[str] = None   # optional server-side row filter (e.g. 311)
+    ll251_name: Optional[str] = None   # original Local Law 251 dataset name
 
 
 @dataclass
@@ -94,13 +96,18 @@ class SocrataLoader:
 
             datasets = []
 
-            # Load cached datasets
-            for dataset_dict in config.get("cached_datasets", []):
-                datasets.append(DatasetMetadata(**dataset_dict))
+            # Tolerate unknown keys so config schema can evolve without breaking
+            # ingestion (the registry-driven regenerator may add new metadata).
+            known = {f.name for f in fields(DatasetMetadata)}
 
-            # Load remaining Socrata datasets
+            def _coerce(d):
+                return DatasetMetadata(**{k: v for k, v in d.items() if k in known})
+
+            for dataset_dict in config.get("cached_datasets", []):
+                datasets.append(_coerce(dataset_dict))
+
             for dataset_dict in config.get("socrata_remaining", []):
-                datasets.append(DatasetMetadata(**dataset_dict))
+                datasets.append(_coerce(dataset_dict))
 
             logger.info(f"Loaded config with {len(datasets)} datasets")
             return datasets
@@ -146,9 +153,10 @@ class SocrataLoader:
             self.bridge.create_schema(schema_name)
 
             # Create table from dataframe
-            self.bridge.connection.register(f"{dataset_name}_temp", df)
-            sql = f"CREATE TABLE IF NOT EXISTS {schema_name}.{dataset_name} AS SELECT * FROM {dataset_name}_temp"
+            self.bridge.connection.register("_cache_temp", df)
+            sql = f'CREATE OR REPLACE TABLE {schema_name}."{dataset_name}" AS SELECT * FROM _cache_temp'
             result = self.bridge.execute_sql(sql)
+            self.bridge.connection.unregister("_cache_temp")
 
             if not result.success:
                 return LoadResult(
@@ -185,7 +193,8 @@ class SocrataLoader:
         dataset_name: str,
         socrata_id: str,
         schema_name: str = "raw",
-        limit: Optional[int] = None
+        limit: Optional[int] = None,
+        soql_where: Optional[str] = None,
     ) -> LoadResult:
         """
         Load dataset from Socrata API with pagination.
@@ -195,19 +204,29 @@ class SocrataLoader:
             socrata_id: Socrata dataset ID (4x4)
             schema_name: Target schema in database
             limit: Max rows to load (None = all)
+            soql_where: Optional SoQL $where filter (server-side row filtering,
+                e.g. for large datasets like 311 where only sidewalk/curb
+                complaint types are in scope). May be given as a bare predicate
+                or prefixed with "$where=".
 
         Returns:
             LoadResult
         """
         start_time = time.time()
         total_rows = 0
+        # Quoted, fully-qualified target — handles names that start with a digit
+        # (e.g. 9_11_authorized_bus_parking_permit) or contain reserved words.
+        qualified = f'{schema_name}."{dataset_name}"'
 
         try:
             logger.info(f"Loading from Socrata: {dataset_name} ({socrata_id})")
 
-            # Fetch data with pagination using direct HTTP API
-            offset = 0
-            tables = []
+            # Create schema up front; stream batches straight into the table so a
+            # single huge CTAS never has to materialize the whole dataset in
+            # memory (root cause of the prior DuckDB Out-of-Memory failures).
+            self.bridge.create_schema(schema_name)
+            # Lower the insert memory footprint; best-effort (ignore if unsupported).
+            self.bridge.execute_sql("SET preserve_insertion_order=false")
 
             # Use the SODA resource endpoint, which returns proper named-column
             # JSON records (list of dicts). The /api/views/{id}/rows.json
@@ -215,93 +234,164 @@ class SocrataLoader:
             # yields unnamed columns — do not use it for ingestion.
             base_url = f"https://{self.socrata_domain}/resource/{socrata_id}.json"
 
+            offset = 0
+            last_id = None
+            table_created = False
+            cache_batches = []
+            cache_capped = False  # stop accumulating in-memory cache for huge sets
+
+            where_base = soql_where
+            if where_base and where_base.startswith("$where="):
+                where_base = where_base[len("$where="):]
+
+            # Keyset pagination on the universal ":id" system field is robust at
+            # any depth (no offset degradation, survives long-running loads, no
+            # lease/timeouts from deep skips). ":id" can't be combined with "*"
+            # in $select, so probe the column list once to build an explicit
+            # projection. Falls back to offset paging if the probe fails.
+            select_cols = None
+            try:
+                # Use the FULL column schema from the views-metadata API — NOT a
+                # 1-row data probe. Socrata omits null fields per-row, so a sample
+                # drops sparse columns (e.g. tree_damage.inspectionid), corrupting
+                # the table. Backtick-quote names so reserved words (from/to) are
+                # valid in $select.
+                meta = requests.get(
+                    f"https://{self.socrata_domain}/api/views/{socrata_id}.json",
+                    headers={"X-App-Token": self.app_token} if self.app_token else {},
+                    timeout=60)
+                meta.raise_for_status()
+                fields = [c.get("fieldName") for c in meta.json().get("columns", [])
+                          if c.get("fieldName") and not c["fieldName"].startswith(":@")]
+                if fields:
+                    select_cols = ",".join(f"`{c}`" for c in fields)
+            except Exception as e:
+                logger.warning(f"Column schema fetch failed for {dataset_name}: {e!r}; using offset paging")
+            use_keyset = bool(select_cols)
+            logger.info(f"{dataset_name}: {'keyset(:id)' if use_keyset else 'offset'} pagination")
+
             while True:
                 # Rate limiting
                 time.sleep(self.rate_limit_delay)
 
-                logger.debug(f"Fetching batch at offset {offset}")
+                # Fetch one page with retry + backoff (transient network errors).
+                rows = None
+                last_err = None
+                for attempt in range(4):
+                    try:
+                        if use_keyset:
+                            where = where_base
+                            if last_id is not None:
+                                kw = f":id > '{last_id}'"
+                                where = f"({where_base}) AND {kw}" if where_base else kw
+                            params = {"$select": f":id,{select_cols}", "$order": ":id",
+                                      "$limit": self.batch_size}
+                            if where:
+                                params["$where"] = where
+                        else:
+                            params = {"$offset": offset, "$limit": self.batch_size}
+                            if where_base:
+                                params["$where"] = where_base
+                        if self.app_token:
+                            params["$$app_token"] = self.app_token
 
-                try:
-                    params = {
-                        "$offset": offset,
-                        "$limit": self.batch_size
-                    }
-                    if self.app_token:
-                        params["$$app_token"] = self.app_token
-
-                    response = requests.get(base_url, params=params, timeout=30)
-                    response.raise_for_status()
-
-                    rows = response.json()
-                    if not rows:
-                        logger.debug(f"No more rows at offset {offset}")
+                        response = requests.get(base_url, params=params, timeout=120)
+                        response.raise_for_status()
+                        rows = response.json()
                         break
+                    except Exception as e:
+                        last_err = e
+                        wait = 2 ** attempt
+                        logger.warning(
+                            f"Fetch attempt {attempt+1} failed for {dataset_name}: "
+                            f"{e!r}; retrying in {wait}s"
+                        )
+                        time.sleep(wait)
 
-                    df = pd.DataFrame(rows)
-
-                    if df is None or len(df) == 0:
-                        logger.debug(f"No more rows at offset {offset}")
-                        break
-
-                    tables.append(df)
-                    total_rows += len(df)
-                    logger.debug(f"Fetched {len(df)} rows (total: {total_rows})")
-
-                    if limit and total_rows >= limit:
-                        logger.info(f"Reached limit of {limit} rows")
-                        break
-
-                    offset += self.batch_size
-
-                except Exception as e:
-                    logger.error(f"Error fetching batch at offset {offset}: {str(e)}")
+                if rows is None:
+                    msg = f"{type(last_err).__name__}: {last_err}"
+                    logger.error(f"Error fetching page for {dataset_name}: {msg}")
                     if total_rows == 0:
                         return LoadResult(
                             dataset_name=dataset_name,
                             success=False,
-                            error=f"Failed to fetch first batch: {str(e)}",
-                            source="socrata"
+                            error=f"Failed to fetch first batch: {msg}",
+                            source="socrata",
                         )
-                    else:
-                        # Partial success
-                        break
+                    break  # partial success: keep what we ingested
 
-            # Combine tables and load to database
-            if not tables:
+                if not rows:
+                    break
+
+                page_n = len(rows)
+                df = pd.DataFrame(rows)
+                if df is None or len(df) == 0:
+                    break
+
+                # Keyset cursor: remember the last :id, then drop it (not a data col).
+                if use_keyset:
+                    last_id = rows[-1].get(":id")
+                    if ":id" in df.columns:
+                        df = df.drop(columns=[":id"])
+
+                # Stream this batch into the DB immediately, then free it.
+                self.bridge.connection.register("_ingest_temp", df)
+                if not table_created:
+                    sql = f"CREATE OR REPLACE TABLE {qualified} AS SELECT * FROM _ingest_temp"
+                    table_created = True
+                else:
+                    # Reconcile schema drift: sparse datasets (e.g. 311) introduce
+                    # new columns in later pages. INSERT ... BY NAME rejects source
+                    # columns absent from the target, so add them first (NULLs for
+                    # prior rows). BY NAME also tolerates missing columns.
+                    self._reconcile_columns(qualified, df)
+                    sql = f"INSERT INTO {qualified} BY NAME SELECT * FROM _ingest_temp"
+                result = self.bridge.execute_sql(sql)
+                self.bridge.connection.unregister("_ingest_temp")
+
+                if not result.success:
+                    if total_rows == 0:
+                        return LoadResult(
+                            dataset_name=dataset_name,
+                            success=False,
+                            error=result.error,
+                            source="socrata",
+                        )
+                    logger.error(f"Insert failed at offset {offset}: {result.error}")
+                    break
+
+                total_rows += len(df)
+                if not cache_capped:
+                    cache_batches.append(df)
+                    # Cap in-memory cache accumulation to avoid pandas OOM on
+                    # multi-million-row datasets; the DB already has all rows.
+                    if total_rows > 1_500_000:
+                        cache_batches = []
+                        cache_capped = True
+                logger.debug(f"Ingested {len(df)} rows (total: {total_rows})")
+
+                if limit and total_rows >= limit:
+                    logger.info(f"Reached limit of {limit} rows")
+                    break
+
+                # A short page means we've reached the end (both paging modes).
+                if page_n < self.batch_size:
+                    break
+                offset += self.batch_size
+
+            if total_rows == 0:
                 return LoadResult(
                     dataset_name=dataset_name,
                     success=False,
                     error="No data fetched from Socrata",
-                    source="socrata"
+                    source="socrata",
                 )
 
-            combined_df = pd.concat(tables, ignore_index=True)
-            logger.info(f"Combined {len(tables)} batches into {len(combined_df)} rows")
-
-            # Create schema
-            self.bridge.create_schema(schema_name)
-
-            # Register dataframe and create table.
-            # CREATE OR REPLACE (not IF NOT EXISTS): a re-run must overwrite any
-            # prior table, otherwise stale/broken data is silently retained and
-            # the freshly fetched rows are discarded.
-            self.bridge.connection.register(f"{dataset_name}_temp", combined_df)
-            sql = f"CREATE OR REPLACE TABLE {schema_name}.{dataset_name} AS SELECT * FROM {dataset_name}_temp"
-            result = self.bridge.execute_sql(sql)
-
-            if not result.success:
-                return LoadResult(
-                    dataset_name=dataset_name,
-                    success=False,
-                    error=result.error,
-                    source="socrata"
-                )
-
-            # Cache the data
-            self._cache_dataframe(combined_df, dataset_name)
+            # Cache the data (skipped for very large datasets to bound memory).
+            if cache_batches and not cache_capped:
+                self._cache_dataframe(pd.concat(cache_batches, ignore_index=True), dataset_name)
 
             load_time_ms = (time.time() - start_time) * 1000
-
             logger.info(f"Loaded from Socrata: {dataset_name} ({total_rows} rows, {load_time_ms:.2f}ms)")
 
             return LoadResult(
@@ -321,6 +411,31 @@ class SocrataLoader:
                 error=str(e),
                 source="socrata"
             )
+
+    def _reconcile_columns(self, qualified: str, df: pd.DataFrame):
+        """Add any DataFrame columns missing from the target table.
+
+        Socrata records are sparse: a column may first appear in a later page
+        (e.g. 311 'facility_type'). New columns are added as VARCHAR (all
+        Socrata JSON values arrive as strings); existing rows get NULL.
+        """
+        try:
+            existing = {
+                c[0] for c in self.bridge.connection.execute(
+                    f"SELECT * FROM {qualified} LIMIT 0"
+                ).description
+            }
+        except Exception as e:
+            logger.debug(f"Could not introspect {qualified} for reconcile: {e}")
+            return
+        for col in df.columns:
+            if col not in existing:
+                alter = f'ALTER TABLE {qualified} ADD COLUMN "{col}" VARCHAR'
+                res = self.bridge.execute_sql(alter)
+                if res.success:
+                    logger.info(f"Schema drift: added column '{col}' to {qualified}")
+                else:
+                    logger.warning(f"Failed to add column '{col}' to {qualified}: {res.error}")
 
     def _cache_dataframe(self, df: pd.DataFrame, dataset_name: str):
         """

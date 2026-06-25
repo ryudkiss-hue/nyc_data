@@ -18,5 +18,145 @@
     "rows_failed": 0,
     "duration_seconds": 0.0,
     "error_message": "Zero Socrata datasets loaded"
+  },
+  {
+    "checkpoint_id": "stage_datasets_2026-06-22T19:05:50.483441",
+    "stage_name": "stage_datasets",
+    "status": "completed",
+    "timestamp": "2026-06-22T19:05:50.483443",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 275.2814118862152,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "build_analytics_schemas_2026-06-22T19:10:25.769126",
+    "stage_name": "build_analytics_schemas",
+    "status": "completed",
+    "timestamp": "2026-06-22T19:10:25.769133",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 2.875974178314209,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "materialize_kpis_2026-06-22T19:10:28.647857",
+    "stage_name": "materialize_kpis",
+    "status": "completed",
+    "timestamp": "2026-06-22T19:10:28.647862",
+    "rows_processed": 13,
+    "rows_failed": 0,
+    "duration_seconds": 1.8260855674743652,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "verify_gates_2026-06-22T19:10:30.476884",
+    "stage_name": "verify_gates",
+    "status": "completed",
+    "timestamp": "2026-06-22T19:10:30.476887",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 1.6087753772735596,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "stage_datasets_2026-06-23T01:20:05.689782",
+    "stage_name": "stage_datasets",
+    "status": "completed",
+    "timestamp": "2026-06-23T01:20:05.689789",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 963.4216516017914,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "build_analytics_schemas_2026-06-23T01:36:09.116478",
+    "stage_name": "build_analytics_schemas",
+    "status": "completed",
+    "timestamp": "2026-06-23T01:36:09.116485",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 4.3446290493011475,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "materialize_kpis_2026-06-23T01:36:13.465917",
+    "stage_name": "materialize_kpis",
+    "status": "completed",
+    "timestamp": "2026-06-23T01:36:13.465922",
+    "rows_processed": 13,
+    "rows_failed": 0,
+    "duration_seconds": 2.769202947616577,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "verify_gates_2026-06-23T01:36:16.240502",
+    "stage_name": "verify_gates",
+    "status": "completed",
+    "timestamp": "2026-06-23T01:36:16.240514",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 2.6774933338165283,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "stage_datasets_2026-06-23T10:05:09.379971",
+    "stage_name": "stage_datasets",
+    "status": "completed",
+    "timestamp": "2026-06-23T10:05:09.379978",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 931.2362525463104,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "build_analytics_schemas_2026-06-23T10:20:40.623777",
+    "stage_name": "build_analytics_schemas",
+    "status": "completed",
+    "timestamp": "2026-06-23T10:20:40.623788",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 4.393102169036865,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "materialize_kpis_2026-06-23T10:20:45.021212",
+    "stage_name": "materialize_kpis",
+    "status": "completed",
+    "timestamp": "2026-06-23T10:20:45.021221",
+    "rows_processed": 13,
+    "rows_failed": 0,
+    "duration_seconds": 3.1509811878204346,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "verify_gates_2026-06-23T10:20:48.176835",
+    "stage_name": "verify_gates",
+    "status": "completed",
+    "timestamp": "2026-06-23T10:20:48.176841",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 3.0901880264282227,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-06-24T01:28:45.970900",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "completed",
+    "timestamp": "2026-06-24T01:28:45.970907",
+    "rows_processed": 21826554,
+    "rows_failed": 0,
+    "duration_seconds": 57880.99153184891,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "stage_datasets_2026-06-24T17:33:26.979378",
+    "stage_name": "stage_datasets",
+    "status": "failed",
+    "timestamp": "2026-06-24T17:33:26.979408",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.0,
+    "error_message": "Staging SQL failed: Execution error at statement 7: SQL execution error: Binder Error: Referenced column inspectionid not found in FROM clause and can't find in alias map.\n\nLINE 3: QUALIFY ROW_NUMBER() OVER (PARTITION BY \"inspectionid\" ORDER BY 1 DESC) = 1\n                                                ^"
   }
 ]
