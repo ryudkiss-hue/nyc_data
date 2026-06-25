@@ -209,12 +209,18 @@ def conform_table(con, t):
         boro_expr = f"COALESCE({boro}, n.boroname)" if boro else "n.boroname"
         nta_expr = f"COALESCE({nta}, n.nta2020)" if nta else "n.nta2020"
         tier = "1+spatial" if boro else "2-spatial"
-        q = (f'CREATE OR REPLACE TABLE {src} AS SELECT {sel_s}, '
+        # Compute each row's representative point ONCE (MATERIALIZED CTE) and join
+        # to PRE-PARSED polygons (geo._nta_poly). The old form re-parsed the NTA
+        # GeoJSON inside the ON clause for every row-pair (~131M times on the 502K
+        # line table) -> native segfault. This parses each polygon once.
+        q = (f'CREATE OR REPLACE TABLE {src} AS '
+             f'WITH s AS MATERIALIZED (SELECT {sel_s}, {pt} AS _geo_pt FROM {src} s) '
+             f'SELECT {sel_s}, '
              f"{boro_expr} AS geo_borough, {nta_expr} AS geo_nta2020, "
              f"{bbl or 'NULL'} AS geo_bbl, {seg or 'NULL'} AS geo_segment_id, "
              f"{date_expr or 'NULL'} AS geo_date_key, '{tier}' AS geo_tier "
-             f'FROM {src} s LEFT JOIN {DB}.raw."nta_2020" n '
-             f"ON ST_Contains(ST_MakeValid(ST_GeomFromGeoJSON(n.the_geom)), {pt})")
+             f'FROM s LEFT JOIN {DB}.geo."_nta_poly" n '
+             f"ON s._geo_pt IS NOT NULL AND ST_Contains(n.geom, s._geo_pt)")
     else:
         tier = "1-direct" if boro else "0-none"
         q = (f'CREATE OR REPLACE TABLE {src} AS SELECT {sel_s}, '
@@ -267,6 +273,20 @@ def fk_borough_pass(con):
 
 def main():
     con = connect()
+    # Resource guards: bound threads/memory so heavy spatial joins spill instead
+    # of crashing the spatial extension on giant line tables.
+    for pragma in ("SET threads=4", "SET preserve_insertion_order=false"):
+        try:
+            con.execute(pragma)
+        except Exception:
+            pass
+    # Pre-parse NTA polygons ONCE (262 rows) so the per-table spatial join never
+    # re-parses GeoJSON in its ON clause (the segfault cause).
+    con.execute(f"CREATE SCHEMA IF NOT EXISTS {DB}.geo")
+    con.execute(
+        f'CREATE OR REPLACE TABLE {DB}.geo."_nta_poly" AS '
+        f"SELECT boroname, nta2020, ST_MakeValid(ST_GeomFromGeoJSON(the_geom)) AS geom "
+        f'FROM {DB}.raw."nta_2020" WHERE the_geom IS NOT NULL')
     names, _ = _config_names()
     targets = sys.argv[1:] or [t for t in staging_tables(con) if t in names]
     print(f"conforming {len(targets)} staging tables (config-backed; junk skipped)")
