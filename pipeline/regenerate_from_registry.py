@@ -166,10 +166,14 @@ def main():
         from dotenv import load_dotenv
         load_dotenv(ROOT / ".env")
         import duckdb
-        tok = os.getenv("MOTHERDUCK_TOKEN", "")
-        if not tok:
-            raise RuntimeError("MOTHERDUCK_TOKEN not set")
-        con = duckdb.connect(f"md:nyc_dot_analytics?token={tok}")
+        tok = None if os.getenv("NYC_FORCE_LOCAL") == "1" else os.getenv("MOTHERDUCK_TOKEN", "")
+        if tok:
+            con = duckdb.connect(f"md:nyc_dot_analytics?token={tok}")
+        else:
+            local = ROOT / "nyc_dot_analytics.duckdb"
+            if not local.exists():
+                raise RuntimeError("no DB (MOTHERDUCK_TOKEN unset and no local file)")
+            con = duckdb.connect(str(local))
         n = generate_staging_sql(con, config)
         con.close()
         print(f"[staging]  regenerated {STAGING_SQL.name} from live columns ({n} tables)")
