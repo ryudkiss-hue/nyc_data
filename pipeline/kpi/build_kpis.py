@@ -85,6 +85,25 @@ KPIS = [
     ("KPI-43", "Sidewalk Area (sqft)", "inventory", "sidewalk_planimetric", "sqft", "SUM(TRY_CAST(shape_area AS DOUBLE))", None, False),
     ("KPI-44", "Curb Features", "inventory", "curbs_planimetric", "count", "COUNT(*)", None, False),
     ("KPI-45", "Street Construction Permits", "coordination", "street_construction_permits", "count", "COUNT(*)", None, True),
+    # --- Gap-fill: accessibility quality / condition severity / repair backlog ---
+    ("KPI-60", "ADA Ramp Compliance %", "accessibility", "mbpo_pedestrian_ramp_report", "percent",
+     "100.0*AVG(CASE WHEN lower(CAST(compliant AS VARCHAR)) IN ('yes','y','1','true','compliant') THEN 1 ELSE 0 END)", None, False),
+    ("KPI-61", "Trip-Hazard Violations %", "condition", "violations", "percent",
+     "100.0*AVG(CASE WHEN lower(CAST(trip_haz AS VARCHAR)) IN ('1','true','yes','y','x','t') THEN 1 ELSE 0 END)", None, True),
+    ("KPI-62", "Severe Sidewalk Defect %", "condition", "violations", "percent",
+     "100.0*AVG(CASE WHEN lower(CAST(trip_haz AS VARCHAR)) IN ('1','true','yes','y','x','t') "
+     "OR lower(CAST(undermined AS VARCHAR)) IN ('1','true','yes','y','x','t') "
+     "OR lower(CAST(broken AS VARCHAR)) IN ('1','true','yes','y','x','t') THEN 1 ELSE 0 END)", None, True),
+    ("KPI-63", "Open Violation Avg Age (days)", "operations", "violations", "days",
+     "AVG(date_diff('day', TRY_CAST(vissuedate AS DATE), current_date))",
+     "(vdismissdate IS NULL OR CAST(vdismissdate AS VARCHAR)='') AND TRY_CAST(vissuedate AS DATE) IS NOT NULL", True),
+    ("KPI-64", "Aged Open Violations (>1yr)", "operations", "violations", "count",
+     "SUM(CASE WHEN (vdismissdate IS NULL OR CAST(vdismissdate AS VARCHAR)='') "
+     "AND date_diff('day', TRY_CAST(vissuedate AS DATE), current_date) > 365 THEN 1 ELSE 0 END)", None, True),
+    ("KPI-65", "Repair Pass Rate %", "operations", "dismissals", "percent",
+     "100.0*AVG(CASE WHEN lower(CAST(pass_fail AS VARCHAR)) IN ('pass','p','passed','1','true') THEN 1 ELSE 0 END)", None, True),
+    ("KPI-66", "Capital-Conflict Inspection %", "coordination", "inspection", "percent",
+     "100.0*AVG(CASE WHEN lower(CAST(capconflictflag AS VARCHAR)) IN ('1','true','yes','y') THEN 1 ELSE 0 END)", None, False),
 ]
 BOROS = ("MANHATTAN", "BRONX", "BROOKLYN", "QUEENS", "STATEN ISLAND")
 

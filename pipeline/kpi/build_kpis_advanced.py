@@ -65,6 +65,16 @@ ADV = [
     ("KPI-59", "Pedestrian Sensor Counts (all-time)", "walkability", "count",
      f"SELECT SUM(TRY_CAST(cnt AS DOUBLE)) FROM {DB}.raw.\"bicycle_pedestrian_counts_daily\" "
      "WHERE lower(travelmode) LIKE '%ped%'"),
+    # --- Gap-fill: composite condition index, per-capita safety, tree conflict ---
+    ("KPI-67", "Defective Sidewalk Area % (SCI proxy)", "condition", "percent",
+     f"SELECT 100.0 * (SELECT SUM(TRY_CAST(sq_feet AS DOUBLE))*0.092903 FROM {S}.\"violations\") "
+     f"/ NULLIF((SELECT SUM(TRY_CAST(shape_area AS DOUBLE)) FROM {S}.\"sidewalk_planimetric\"),0)"),
+    ("KPI-68", "Pedestrian Injuries per 100k Residents", "equity", "per_100k",
+     f"SELECT 100000.0 * (SELECT SUM(TRY_CAST(number_of_pedestrians_injured AS INTEGER)) FROM {S}.\"motor_vehicle_collisions_crashes\") "
+     f"/ NULLIF((SELECT SUM(TRY_CAST(total_population_2010_number AS DOUBLE)) FROM {S}.\"census_demographics_nta\"),0)"),
+    ("KPI-69", "Tree-Related Violation %", "condition", "percent",
+     f"SELECT 100.0 * (SELECT COUNT(DISTINCT violationid) FROM {S}.\"tree_damage\" WHERE violationid IS NOT NULL) "
+     f"/ NULLIF((SELECT COUNT(*) FROM {S}.\"violations\"),0)"),
 ]
 
 # time-series: label, metric_sql_select (returns yr,val), domain
