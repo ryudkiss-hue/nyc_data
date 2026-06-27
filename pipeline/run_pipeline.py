@@ -267,11 +267,27 @@ class MotherDuckPipeline:
                 except Exception:
                     watermarks = {}
             freshness = {}
+            reg_path = Path("pipeline/data/nyc_open_data_registry.json")
             try:
-                reg = _json.loads(Path("pipeline/data/nyc_open_data_registry.json").read_text())["datasets"]
+                reg = _json.loads(reg_path.read_text())["datasets"]
                 freshness = {k: v.get("last_updated", "") for k, v in reg.items()}
+                # Staleness guard: if registry is >24h old, warn and disable
+                # incremental skipping so datasets are checked against live Socrata.
+                import time as _time
+                reg_age_hours = (_time.time() - reg_path.stat().st_mtime) / 3600
+                if incremental and reg_age_hours > 24:
+                    logger.warning(
+                        f"Registry is {reg_age_hours:.0f}h old — incremental skip "
+                        "disabled. Run pipeline/fetch_socrata_metadata.py to refresh, "
+                        "or set NYC_INCREMENTAL=0 to suppress this warning."
+                    )
+                    incremental = False  # force full re-ingest this run
             except Exception:
                 pass
+
+            def _norm_ts(ts: str) -> str:
+                """Normalize ISO-8601 timestamps: strip trailing Z for consistent comparison."""
+                return ts.rstrip("Z") if ts else ""
 
             def _has_rows(name):
                 try:
@@ -289,8 +305,9 @@ class MotherDuckPipeline:
             for i, dataset in enumerate(socrata_datasets):
                 batch_num = (i // batch_size) + 1
 
-                cur = freshness.get(dataset.socrata_id, "")
-                if (incremental and cur and watermarks.get(dataset.socrata_id) == cur
+                cur = _norm_ts(freshness.get(dataset.socrata_id, ""))
+                if (incremental and cur
+                        and _norm_ts(watermarks.get(dataset.socrata_id, "")) == cur
                         and _has_rows(dataset.name)):
                     skipped_count += 1
                     self.execution_log['datasets'][dataset.name] = {
