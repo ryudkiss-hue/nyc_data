@@ -1,10 +1,10 @@
 {
   "pipeline_version": "2.0",
-  "started_at": "2026-06-24T01:28:45.912790",
+  "started_at": "2026-06-26T02:00:03.113479",
   "stages": {
     "load_cached_parquet": {
       "status": "success",
-      "timestamp": "2026-06-24T01:28:45.970517",
+      "timestamp": "2026-06-26T02:00:03.259415",
       "tables_loaded": 0,
       "expected_cached": 0,
       "total_rows": 0,
@@ -12,606 +12,530 @@
     },
     "ingest_remaining_socrata": {
       "status": "success",
-      "timestamp": "2026-06-24T17:33:26.977466",
+      "timestamp": "2026-06-26T02:00:03.379597",
       "total_remaining": 117,
-      "loaded": 116,
-      "failed": 1,
+      "loaded": 0,
+      "failed": 0,
       "batch_size": 10,
-      "load_time_seconds": 57880.99
+      "load_time_seconds": 0.12
     },
     "staging_datasets": {
-      "status": "error",
-      "timestamp": "2026-06-24T17:33:46.293657",
-      "error": "Execution error at statement 7: SQL execution error: Binder Error: Referenced column inspectionid not found in FROM clause and can't find in alias map.\n\nLINE 3: QUALIFY ROW_NUMBER() OVER (PARTITION BY \"inspectionid\" ORDER BY 1 DESC) = 1\n                                                ^"
+      "status": "success",
+      "timestamp": "2026-06-26T02:02:45.725153",
+      "total_tables": 57,
+      "dedup_method": "column_0_as_primary_key",
+      "type_casting": "try_cast_with_socrata_types",
+      "load_time_seconds": 162.3
+    },
+    "build_analytics_schemas": {
+      "status": "success",
+      "timestamp": "2026-06-26T02:02:45.826949",
+      "domains": [
+        "sim_core",
+        "accessibility",
+        "coordination",
+        "overlays",
+        "extended"
+      ],
+      "total_views": 100,
+      "join_keys": [
+        "inspection_id",
+        "permit_id",
+        "ramp_id",
+        "lot_id",
+        "bblid"
+      ],
+      "load_time_seconds": 0.09
+    },
+    "materialize_metrics": {
+      "status": "success",
+      "timestamp": "2026-06-26T02:02:46.073521",
+      "actual_metric_records": 13,
+      "load_time_seconds": 0.24
+    },
+    "verification_gates": {
+      "status": "success",
+      "timestamp": "2026-06-26T02:02:46.125265",
+      "gates_passed": 4,
+      "gates": {
+        "gate_1_data_load": "Core raw tables (inspection, violations, ramp_progress) hold real rows",
+        "gate_2_staging": "Staging tables built from raw for core datasets",
+        "gate_3_analytics": "Analytics views return non-zero results",
+        "gate_4_metrics": "Metrics materialized (>=10) with no null values"
+      },
+      "load_time_seconds": 0.05
     }
   },
   "datasets": {
     "inspection": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 399659
+      "status": "skipped_fresh"
     },
     "violations": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 312928
+      "status": "skipped_fresh"
     },
     "reinspection": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 36659
+      "status": "skipped_fresh"
     },
     "lot_info": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 1211601
+      "status": "skipped_fresh"
     },
     "built": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 105990
+      "status": "skipped_fresh"
     },
     "dismissals": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 85567
+      "status": "skipped_fresh"
     },
     "tree_damage": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 17661
+      "status": "skipped_fresh"
     },
     "correspondences": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 30726
+      "status": "skipped_fresh"
     },
     "ramp_progress": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 187546
+      "status": "skipped_fresh"
     },
     "ramp_complaints": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 6051
+      "status": "skipped_fresh"
     },
     "ramp_locations": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 217679
+      "status": "skipped_fresh"
     },
     "curb_metal_protruding": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 23506
+      "status": "skipped_fresh"
     },
     "step_streets": {
       "source": "socrata",
-      "status": "failed",
-      "error": "Failed to fetch first batch: HTTPError: 400 Client Error: Bad Request for url: https://data.cityofnewyork.us/resource/u9au-h79y.json?%24select=%3Aid%2Cboro_cb%2Con_street%2Cfrom%2Cto&%24order=%3Aid&%24limit=200000"
+      "status": "skipped_fresh"
     },
     "street_resurfacing_schedule": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 312455
+      "status": "skipped_fresh"
     },
     "weekly_construction": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 75
+      "status": "skipped_fresh"
     },
     "pedestrian_demand": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 127277
+      "status": "skipped_fresh"
     },
     "vzv_enhanced_crossings": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 197
+      "status": "skipped_fresh"
     },
     "holiday_construction_embargo_intersection": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 7544
+      "status": "skipped_fresh"
     },
     "vzv_street_improvement_projects_sip_corridor": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 991
+      "status": "skipped_fresh"
     },
     "bi_annual_pedestrian_counts": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 114
+      "status": "skipped_fresh"
     },
     "bikes_in_buildings_requests": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 2365
+      "status": "skipped_fresh"
     },
     "vzv_priority_intersections": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 304
+      "status": "skipped_fresh"
     },
     "street_pavement_ratings": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 502834
+      "status": "skipped_fresh"
     },
     "vzv_bike_priority_areas": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 10
+      "status": "skipped_fresh"
     },
     "accessible_pedestrian_signal_locations": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 4207
+      "status": "skipped_fresh"
     },
     "parking_permit_for_people_with_disabilities_pppd": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 684220
+      "status": "skipped_fresh"
     },
     "vzv_leading_pedestrian_interval_signals": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 6765
+      "status": "skipped_fresh"
     },
     "seating_locations": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 3546
+      "status": "skipped_fresh"
     },
     "vzv_safe_streets_for_seniors": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 34
+      "status": "skipped_fresh"
     },
     "exclusive_pedestrian_signal_barnes_dance_locatio": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 735
+      "status": "skipped_fresh"
     },
     "street_direction_change_requests_2019_present": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 260
+      "status": "skipped_fresh"
     },
     "vzv_street_improvement_projects_sip_intersection": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 424
+      "status": "skipped_fresh"
     },
     "street_construction_permits_cranes": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 52044
+      "status": "skipped_fresh"
     },
     "bicycle_parking_shelters": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 17
+      "status": "skipped_fresh"
     },
     "protected_streets_intersection_dataset": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 12112
+      "status": "skipped_fresh"
     },
     "bicycle_and_pedestrian_count_sensors": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 66
+      "status": "skipped_fresh"
     },
     "nyc_dot_pedestrian_plazas_point_feature": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 90
+      "status": "skipped_fresh"
     },
     "shared_e_scooter_parking_corrals": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 487
+      "status": "skipped_fresh"
     },
     "pedestrian_space_added": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 60
+      "status": "skipped_fresh"
     },
     "parking_permit_for_people_with_disabilities_pppd_2": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 1299635
+      "status": "skipped_fresh"
     },
     "street_closures_due_to_construction_activities_b": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 3462
+      "status": "skipped_fresh"
     },
     "vzv_street_team_flyers": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 886
+      "status": "skipped_fresh"
     },
     "intercity_bus_stop_permits": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 2957
+      "status": "skipped_fresh"
     },
     "street_closures_due_to_construction_activities_b_2": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 473557
+      "status": "skipped_fresh"
     },
     "open_streets_locations": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 379
+      "status": "skipped_fresh"
     },
     "parking_meters_parknyc_block_faces": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 11185
+      "status": "skipped_fresh"
     },
     "dot_in_house_street_resurfacing_projects": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 603599
+      "status": "skipped_fresh"
     },
     "protected_streets_block_dataset": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 24464
+      "status": "skipped_fresh"
     },
     "bicycle_parking": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 47267
+      "status": "skipped_fresh"
     },
     "street_closures_due_to_construction_activities_b_3": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 1275
+      "status": "skipped_fresh"
     },
     "bus_lanes_local_streets": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 4068
+      "status": "skipped_fresh"
     },
     "street_pothole_work_orders_closed_dataset": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 404416
+      "status": "skipped_fresh"
     },
     "new_york_city_bike_routes": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 28983
+      "status": "skipped_fresh"
     },
     "carshare_locations_curbside": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 353
+      "status": "skipped_fresh"
     },
     "street_and_highway_capital_reconstruction_projec": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 7817
+      "status": "skipped_fresh"
     },
     "temporary_parking_permit_for_people_with_disabil": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 22178
+      "status": "skipped_fresh"
     },
     "street_seats_2021_2024": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 45
+      "status": "skipped_fresh"
     },
     "holiday_construction_embargo_block": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 14652
+      "status": "skipped_fresh"
     },
     "street_and_highway_capital_reconstruction_projec_2": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 12056
+      "status": "skipped_fresh"
     },
     "street_network_changes": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 281
+      "status": "skipped_fresh"
     },
     "newsrack_inspections": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 6859
+      "status": "skipped_fresh"
     },
     "nyc_dot_pedestrian_plazas_polygon": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 93
+      "status": "skipped_fresh"
     },
     "encroachments_and_defacements": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 1347057
+      "status": "skipped_fresh"
     },
     "complaints_311": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 1359900
+      "status": "skipped_fresh"
     },
     "street_centerline": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 122248
+      "status": "skipped_fresh"
     },
     "nta_2020": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 262
+      "status": "skipped_fresh"
     },
     "census_demographics_nta": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 197
+      "status": "skipped_fresh"
     },
     "heat_vulnerability_index": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 184
+      "status": "skipped_fresh"
     },
     "motor_vehicle_collisions_crashes": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 133807
+      "status": "skipped_fresh"
     },
     "motor_vehicle_collisions_person": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 148048
+      "status": "skipped_fresh"
     },
     "sidewalk_cafes": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 20065
+      "status": "skipped_fresh"
     },
     "street_tree_census_2015": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 683788
+      "status": "skipped_fresh"
     },
     "forestry_inspections": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 1953442
+      "status": "skipped_fresh"
     },
     "water_sewer_permits": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 351247
+      "status": "skipped_fresh"
     },
     "street_construction_permits": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 3722154
+      "status": "skipped_fresh"
     },
     "dob_stalled_construction_sites": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 1441169
+      "status": "skipped_fresh"
     },
     "sidewalk_planimetric": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 50865
+      "status": "skipped_fresh"
     },
     "curbs_planimetric": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 217662
+      "status": "skipped_fresh"
     },
     "roadbed_planimetric": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 104961
+      "status": "skipped_fresh"
     },
     "median_planimetric": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 19346
+      "status": "skipped_fresh"
     },
     "boardwalk_planimetric": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 139
+      "status": "skipped_fresh"
     },
     "open_space_parks_planimetric": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 13205
+      "status": "skipped_fresh"
     },
     "elevation_points_planimetric": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 1471855
+      "status": "skipped_fresh"
     },
     "vzv_arterial_slow_zones": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 28
+      "status": "skipped_fresh"
     },
     "vzv_neighborhood_slow_zones": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 28
+      "status": "skipped_fresh"
     },
     "vzv_priority_corridors": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 199
+      "status": "skipped_fresh"
     },
     "vzv_priority_zones_areas": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 5
+      "status": "skipped_fresh"
     },
     "vzv_speed_humps": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 4275
+      "status": "skipped_fresh"
     },
     "speed_reducer_tracking_srts": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 59561
+      "status": "skipped_fresh"
     },
     "vzv_speed_limits": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 141444
+      "status": "skipped_fresh"
     },
     "vzv_turn_traffic_calming": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 1493
+      "status": "skipped_fresh"
     },
     "vzv_signal_timing_25mph": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 444
+      "status": "skipped_fresh"
     },
     "vzv_senior_centers": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 2317
+      "status": "skipped_fresh"
     },
     "vzv_workshops_locations": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 9
+      "status": "skipped_fresh"
     },
     "vision_zero_base_report": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 771
+      "status": "skipped_fresh"
     },
     "raised_crosswalk_locations": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 143
+      "status": "skipped_fresh"
     },
     "public_plazas_planimetric": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 1762
+      "status": "skipped_fresh"
     },
     "privately_owned_public_spaces_pops": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 392
+      "status": "skipped_fresh"
     },
     "bus_stop_shelters": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 3381
+      "status": "skipped_fresh"
     },
     "walk_to_a_park_service_area": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 1
+      "status": "skipped_fresh"
     },
     "mbpo_pedestrian_ramp_report": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 277
+      "status": "skipped_fresh"
     },
     "capital_projects_dashboard": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 50724
+      "status": "skipped_fresh"
     },
     "cpdb_projects": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 12587
+      "status": "skipped_fresh"
     },
     "cpdb_projects_points": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 2747
+      "status": "skipped_fresh"
     },
     "cpdb_projects_polygons": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 1753
+      "status": "skipped_fresh"
     },
     "cpdb_commitments": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 37968
+      "status": "skipped_fresh"
     },
     "capital_dashboard_budget_spend_fy": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 257384
+      "status": "skipped_fresh"
     },
     "capital_dashboard_spend_history": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 47675
+      "status": "skipped_fresh"
     },
     "capital_dashboard_schedule_history": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 20195
+      "status": "skipped_fresh"
     },
     "state_of_good_repair_needs": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 43063
+      "status": "skipped_fresh"
     },
     "interagency_coordination_construction_permits": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 952
+      "status": "skipped_fresh"
     },
     "capital_commitment_plan": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 59077
+      "status": "skipped_fresh"
     },
     "capital_commitment_actuals": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 864
+      "status": "skipped_fresh"
     },
     "capital_budget": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 15742
+      "status": "skipped_fresh"
     },
     "capital_project_detail_dollars": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 72437
+      "status": "skipped_fresh"
     },
     "capital_project_detail_milestones": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 497727
+      "status": "skipped_fresh"
     },
     "ten_year_capital_strategy": {
       "source": "socrata",
-      "status": "loaded",
-      "rows": 2255
+      "status": "skipped_fresh"
     }
   },
-  "completed_at": "2026-06-24T17:33:46.294410",
-  "status": "failed"
+  "completed_at": "2026-06-26T02:02:46.125741",
+  "status": "success"
 }

@@ -1,6 +1,6 @@
 {
   "generated": "staging-computed",
-  "total_metrics": 59,
+  "total_metrics": 69,
   "metrics": [
     {
       "metric_id": "METRIC-01",
@@ -274,7 +274,7 @@
       "unit": "rating",
       "formula": "AVG(TRY_CAST(systemrating AS DOUBLE))",
       "where": "systemrating IS NOT NULL",
-      "value": 6.818960929451976,
+      "value": 6.818960929452245,
       "by_borough": true
     },
     {
@@ -472,7 +472,7 @@
       "unit": "sqft",
       "formula": "SUM(TRY_CAST(shape_area AS DOUBLE))",
       "where": null,
-      "value": 616273174.9528252,
+      "value": 616273174.9528271,
       "by_borough": false
     },
     {
@@ -496,6 +496,83 @@
       "where": null,
       "value": 1532446.0,
       "by_borough": true
+    },
+    {
+      "metric_id": "METRIC-60",
+      "name": "ADA Ramp Compliance %",
+      "domain": "accessibility",
+      "dataset": "mbpo_pedestrian_ramp_report",
+      "unit": "percent",
+      "formula": "100.0*AVG(CASE WHEN lower(CAST(compliant AS VARCHAR)) IN ('yes','y','1','true','compliant') THEN 1 ELSE 0 END)",
+      "where": null,
+      "value": 5.054151624548736,
+      "by_borough": false
+    },
+    {
+      "metric_id": "METRIC-61",
+      "name": "Trip-Hazard Violations %",
+      "domain": "condition",
+      "dataset": "violations",
+      "unit": "percent",
+      "formula": "100.0*AVG(CASE WHEN lower(CAST(trip_haz AS VARCHAR)) IN ('1','true','yes','y','x','t') THEN 1 ELSE 0 END)",
+      "where": null,
+      "value": 67.13068599441388,
+      "by_borough": true
+    },
+    {
+      "metric_id": "METRIC-62",
+      "name": "Severe Sidewalk Defect %",
+      "domain": "condition",
+      "dataset": "violations",
+      "unit": "percent",
+      "formula": "100.0*AVG(CASE WHEN lower(CAST(trip_haz AS VARCHAR)) IN ('1','true','yes','y','x','t') OR lower(CAST(undermined AS VARCHAR)) IN ('1','true','yes','y','x','t') OR lower(CAST(broken AS VARCHAR)) IN ('1','true','yes','y','x','t') THEN 1 ELSE 0 END)",
+      "where": null,
+      "value": 90.62214382042579,
+      "by_borough": true
+    },
+    {
+      "metric_id": "METRIC-63",
+      "name": "Open Violation Avg Age (days)",
+      "domain": "operations",
+      "dataset": "violations",
+      "unit": "days",
+      "formula": "AVG(date_diff('day', TRY_CAST(vissuedate AS DATE), current_date))",
+      "where": "(vdismissdate IS NULL OR CAST(vdismissdate AS VARCHAR)='') AND TRY_CAST(vissuedate AS DATE) IS NOT NULL",
+      "value": 5398.243613987694,
+      "by_borough": true
+    },
+    {
+      "metric_id": "METRIC-64",
+      "name": "Aged Open Violations (>1yr)",
+      "domain": "operations",
+      "dataset": "violations",
+      "unit": "count",
+      "formula": "SUM(CASE WHEN (vdismissdate IS NULL OR CAST(vdismissdate AS VARCHAR)='') AND date_diff('day', TRY_CAST(vissuedate AS DATE), current_date) > 365 THEN 1 ELSE 0 END)",
+      "where": null,
+      "value": 127099.0,
+      "by_borough": true
+    },
+    {
+      "metric_id": "METRIC-65",
+      "name": "Repair Pass Rate %",
+      "domain": "operations",
+      "dataset": "dismissals",
+      "unit": "percent",
+      "formula": "100.0*AVG(CASE WHEN lower(CAST(pass_fail AS VARCHAR)) IN ('pass','p','passed','1','true') THEN 1 ELSE 0 END)",
+      "where": null,
+      "value": 67.55623247908527,
+      "by_borough": true
+    },
+    {
+      "metric_id": "METRIC-66",
+      "name": "Capital-Conflict Inspection %",
+      "domain": "coordination",
+      "dataset": "inspection",
+      "unit": "percent",
+      "formula": "100.0*AVG(CASE WHEN lower(CAST(capconflictflag AS VARCHAR)) IN ('1','true','yes','y') THEN 1 ELSE 0 END)",
+      "where": null,
+      "value": 0.6076593103517316,
+      "by_borough": false
     },
     {
       "metric_id": "METRIC-46",
@@ -557,7 +634,7 @@
       "domain": "equity",
       "unit": "per_1k",
       "formula": "SELECT 1000.0 * (SELECT COUNT(*) FROM nyc_dot_analytics.staging.\"complaints_311\" WHERE geo_nta2020 IS NOT NULL) / NULLIF((SELECT SUM(TRY_CAST(total_population_2010_number AS DOUBLE)) FROM nyc_dot_analytics.staging.\"census_demographics_nta\"),0)",
-      "value": 122.61329571029609,
+      "value": 164.88906052048327,
       "by_borough": false
     },
     {
@@ -611,7 +688,7 @@
       "domain": "walkability",
       "unit": "count",
       "formula": "SELECT SUM(TRY_CAST(cnt AS DOUBLE)) FROM nyc_dot_analytics.raw.\"bicycle_pedestrian_counts_daily\"",
-      "value": 178568945.0,
+      "value": 178636705.0,
       "by_borough": false
     },
     {
@@ -620,7 +697,34 @@
       "domain": "walkability",
       "unit": "count",
       "formula": "SELECT SUM(TRY_CAST(cnt AS DOUBLE)) FROM nyc_dot_analytics.raw.\"bicycle_pedestrian_counts_daily\" WHERE lower(travelmode) LIKE '%ped%'",
-      "value": 7293512.0,
+      "value": 7295570.0,
+      "by_borough": false
+    },
+    {
+      "metric_id": "METRIC-67",
+      "name": "Defective Sidewalk Area % (SCI proxy)",
+      "domain": "condition",
+      "unit": "percent",
+      "formula": "SELECT 100.0 * (SELECT SUM(TRY_CAST(sq_feet AS DOUBLE))*0.092903 FROM nyc_dot_analytics.staging.\"violations\") / NULLIF((SELECT SUM(TRY_CAST(shape_area AS DOUBLE)) FROM nyc_dot_analytics.staging.\"sidewalk_planimetric\"),0)",
+      "value": 1.598823324582554,
+      "by_borough": false
+    },
+    {
+      "metric_id": "METRIC-68",
+      "name": "Pedestrian Injuries per 100k Residents",
+      "domain": "equity",
+      "unit": "per_100k",
+      "formula": "SELECT 100000.0 * (SELECT SUM(TRY_CAST(number_of_pedestrians_injured AS INTEGER)) FROM nyc_dot_analytics.staging.\"motor_vehicle_collisions_crashes\") / NULLIF((SELECT SUM(TRY_CAST(total_population_2010_number AS DOUBLE)) FROM nyc_dot_analytics.staging.\"census_demographics_nta\"),0)",
+      "value": 1685.831900227189,
+      "by_borough": false
+    },
+    {
+      "metric_id": "METRIC-69",
+      "name": "Tree-Related Violation %",
+      "domain": "condition",
+      "unit": "percent",
+      "formula": "SELECT 100.0 * (SELECT COUNT(DISTINCT violationid) FROM nyc_dot_analytics.staging.\"tree_damage\" WHERE violationid IS NOT NULL) / NULLIF((SELECT COUNT(*) FROM nyc_dot_analytics.staging.\"violations\"),0)",
+      "value": 0.014700336829456918,
       "by_borough": false
     }
   ]

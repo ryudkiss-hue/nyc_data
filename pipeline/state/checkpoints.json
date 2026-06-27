@@ -158,5 +158,195 @@
     "rows_failed": 0,
     "duration_seconds": 0.0,
     "error_message": "Staging SQL failed: Execution error at statement 7: SQL execution error: Binder Error: Referenced column inspectionid not found in FROM clause and can't find in alias map.\n\nLINE 3: QUALIFY ROW_NUMBER() OVER (PARTITION BY \"inspectionid\" ORDER BY 1 DESC) = 1\n                                                ^"
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-06-25T08:54:54.021778",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "completed",
+    "timestamp": "2026-06-25T08:54:54.021786",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.19771313667297363,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "stage_datasets_2026-06-25T08:54:54.229119",
+    "stage_name": "stage_datasets",
+    "status": "failed",
+    "timestamp": "2026-06-25T08:54:54.229132",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.0,
+    "error_message": "Staging SQL failed: Execution error at statement 100: SQL execution error: Catalog Error: Table with name bicycle_pedestrian_counts does not exist!\nDid you mean \"bicycle_pedestrian_counts_daily\"?\n\nLINE 2: SELECT * FROM raw.\"bicycle_pedestrian_counts\"\n                      ^"
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-06-25T09:05:11.343366",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "completed",
+    "timestamp": "2026-06-25T09:05:11.343376",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.30761194229125977,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "stage_datasets_2026-06-25T09:05:11.663164",
+    "stage_name": "stage_datasets",
+    "status": "completed",
+    "timestamp": "2026-06-25T09:05:11.663178",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 340.62255573272705,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "build_analytics_schemas_2026-06-25T09:10:52.327127",
+    "stage_name": "build_analytics_schemas",
+    "status": "completed",
+    "timestamp": "2026-06-25T09:10:52.327140",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.08347678184509277,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "materialize_kpis_2026-06-25T09:10:52.417162",
+    "stage_name": "materialize_kpis",
+    "status": "completed",
+    "timestamp": "2026-06-25T09:10:52.417168",
+    "rows_processed": 13,
+    "rows_failed": 0,
+    "duration_seconds": 0.22851109504699707,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "verify_gates_2026-06-25T09:10:52.652162",
+    "stage_name": "verify_gates",
+    "status": "completed",
+    "timestamp": "2026-06-25T09:10:52.652177",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.0693368911743164,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-06-25T09:53:05.523032",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "completed",
+    "timestamp": "2026-06-25T09:53:05.523040",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.38126039505004883,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "stage_datasets_2026-06-25T09:53:05.919553",
+    "stage_name": "stage_datasets",
+    "status": "completed",
+    "timestamp": "2026-06-25T09:53:05.919567",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 340.1967821121216,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "build_analytics_schemas_2026-06-25T09:58:46.150773",
+    "stage_name": "build_analytics_schemas",
+    "status": "completed",
+    "timestamp": "2026-06-25T09:58:46.150783",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.0899350643157959,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "materialize_metrics_2026-06-25T09:58:46.248626",
+    "stage_name": "materialize_metrics",
+    "status": "completed",
+    "timestamp": "2026-06-25T09:58:46.248643",
+    "rows_processed": 13,
+    "rows_failed": 0,
+    "duration_seconds": 0.2637941837310791,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "verify_gates_2026-06-25T09:58:46.520118",
+    "stage_name": "verify_gates",
+    "status": "completed",
+    "timestamp": "2026-06-25T09:58:46.520130",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.07523345947265625,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-06-26T02:00:03.259785",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "completed",
+    "timestamp": "2026-06-26T02:00:03.259789",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.11588358879089355,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "stage_datasets_2026-06-26T02:00:03.381768",
+    "stage_name": "stage_datasets",
+    "status": "completed",
+    "timestamp": "2026-06-26T02:00:03.381774",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 162.29936003684998,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "build_analytics_schemas_2026-06-26T02:02:45.729867",
+    "stage_name": "build_analytics_schemas",
+    "status": "completed",
+    "timestamp": "2026-06-26T02:02:45.729881",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.09356498718261719,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "materialize_metrics_2026-06-26T02:02:45.827688",
+    "stage_name": "materialize_metrics",
+    "status": "completed",
+    "timestamp": "2026-06-26T02:02:45.827700",
+    "rows_processed": 13,
+    "rows_failed": 0,
+    "duration_seconds": 0.2407536506652832,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "verify_gates_2026-06-26T02:02:46.074564",
+    "stage_name": "verify_gates",
+    "status": "completed",
+    "timestamp": "2026-06-26T02:02:46.074576",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.04631209373474121,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-06-27T19:21:26.875225",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "completed",
+    "timestamp": "2026-06-27T19:21:26.875278",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.45687198638916016,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "stage_datasets_2026-06-27T19:21:27.370058",
+    "stage_name": "stage_datasets",
+    "status": "started",
+    "timestamp": "2026-06-27T19:21:27.370070",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.0,
+    "error_message": null
   }
 ]

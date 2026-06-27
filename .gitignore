@@ -28,10 +28,36 @@ env/
 htmlcov/
 
 # Data & cache (local only)
+.cache/
 data/cache/
 data/local_db/
+data/ingest_watermarks.json
+data/raw/v1.json
 *.duckdb
+*.duckdb.wal
 *.parquet
+
+# Training artifacts (large binary / generated)
+*.pkl
+*.pkl.gz
+training/fuzzy_matching_features.pkl
+training/fuzzy_matching_training_data_extended.json
+
+# Large generated outputs (use Git LFS or keep local)
+docs/architecture/*.png
+docs/architecture/*.svg
+outputs/
+
+# Calibration / embedding caches
+.embeddings_cache/
+.calibration_logs/
+
+# Log files
+*.log
+app_startup*.log
+dash_interactive.log
+final_app_test.log
+startup_verification.log
 
 # IDE
 .idea/

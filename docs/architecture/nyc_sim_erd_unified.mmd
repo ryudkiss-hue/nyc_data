@@ -1,0 +1,2786 @@
+erDiagram
+  dim_borough {
+    text borough PK
+  }
+  dim_nta {
+    text nta2020 PK
+    text ntaname
+    text borough
+    text cdta2020
+  }
+  dim_segment {
+    text physicalid PK
+    text b5sc
+    text street_name
+    text borough
+  }
+  dim_parcel {
+    text bbl PK
+    text boro
+    text block
+    text lot
+    text zipcode
+    text borough
+  }
+  dim_zcta {
+    text zcta20 PK
+    integer hvi
+  }
+  dim_date {
+    date date_key PK
+    integer year
+    integer month
+    integer quarter
+    text year_month
+  }
+  inspection {
+    text cancel
+    text capitalconflicts
+    calendar_date inspectiondate
+    text curb311
+    text is_311_inspection
+    text pickupsidewalk
+    text other
+    text pickupcurb
+    text capconflictflag
+    text inspectionid PK
+    text materialid
+    text correspondence
+    text damageid
+    text damagetypecode
+    text citydoit
+    text noviolationfound
+    text ownerwilldoit
+    text geo_borough
+  }
+  violations {
+    text patchwork
+    text onstname
+    calendar_date post_date
+    calendar_date vissuedate
+    text other_def
+    calendar_date vdismissdate
+    text house_num
+    text undermined
+    text broken
+    text flag
+    number violationid PK
+    text frstname
+    number sq_feet
+    calendar_date entrydate
+    text contract
+    number bblid FK
+    text trip_haz
+    text tostname
+    text slope
+    text integrity
+    number grace_pd
+    text onfrtocode
+    calendar_date certi_date
+    text hardware
+    number cb
+    number swv_number
+    text sw_missing
+    text geo_borough FK
+    text geo_bbl FK
+    text geo_date_key FK
+  }
+  reinspection {
+    text damageid
+    number reinspectionid PK
+    number reinspectsqft
+    calendar_date responsedate
+    calendar_date requestreinspectiondate
+    text damagetypecode
+    text requestreinspection
+    calendar_date actualreinspectdate
+    text geo_borough
+  }
+  lot_info {
+    number boro
+    number lot
+    number block
+    text zipcode
+    number bblid
+    text geo_borough FK
+    text geo_bbl FK
+  }
+  built {
+    text noneofdefectbystreettree
+    number totalcosttoconstruct
+    number totalsqftsidewalkrepaired
+    number totallfcurbrepairedstree
+    text atdbystreettree
+    number totallfcurbrepaired
+    number totalcostofrepairstreett
+    number totalsqftsdwrepairedstre
+    calendar_date dbo_date
+    text contract
+    text dbo
+    calendar_date dot_contstruct_date
+    text portionofdefectbystreettree
+    number bblid FK
+    text geo_borough FK
+    text geo_bbl FK
+    text geo_date_key FK
+  }
+  dismissals {
+    number census_tract
+    number community_board
+    text sr
+    calendar_date request_date
+    text site_street_address
+    text permit
+    text homeowner_contractor
+    calendar_date violation_issue_date
+    number bin
+    number block
+    number violation
+    number latitude
+    number council_district
+    number attempt
+    number borocode
+    number bbl FK
+    text car_needed_y_n
+    text pass_fail
+    text expedited
+    number longitude
+    calendar_date inspection_date
+    number lot
+    calendar_date date_results_are_mailed
+    number postcode
+    text borough
+    text reason_for_failure
+    calendar_date vdd
+    calendar_date assigned_date
+    text nta FK
+    text geo_borough FK
+    text geo_nta2020 FK
+    text geo_bbl FK
+    text geo_date_key FK
+  }
+  tree_damage {
+    text atddismissed
+    text house_num
+    number violationid FK
+    number bblid FK
+    calendar_date atddismissedon
+    calendar_date inspect_date
+    text atd_number
+    number atdid
+    calendar_date atdissuedate
+    number reinspectionid FK
+    number inspectionid FK
+    text onstname
+    number cb
+    text geo_borough FK
+    text geo_bbl FK
+    text geo_date_key FK
+  }
+  correspondences {
+    number bin
+    number bbl FK
+    number census_tract
+    number council_district
+    calendar_date date_closed
+    text bc
+    text sim
+    text block
+    text results_of_inspection
+    text violation
+    calendar_date date_received
+    number longitude
+    text osm
+    text borough
+    text lot
+    text issue
+    text other_log
+    text nta FK
+    text address
+    text community_board
+    text cross_streets
+    text referred_routed_to
+    text ccu
+    text resoultion
+    number latitude
+    number postcode
+    text class
+    text geo_borough FK
+    text geo_nta2020 FK
+    text geo_bbl FK
+    text geo_date_key FK
+  }
+  ramp_progress {
+    number objectid
+    point the_geom
+    text construc_2
+    text construc_1
+    text constructi
+    number cornerid
+    text borough
+    text street_nam
+    text street_n_1
+    text geo_borough FK
+  }
+  ramp_complaints {
+    calendar_date temp_repair_date
+    number block
+    calendar_date complaint_date
+    text street_name2
+    text complaint_id PK
+    text second_temp_repair_needed
+    number cmt_corner_id
+    text borough
+    text temp_repair_type
+    text street_name1
+    text bulkcomplaint
+    number lot
+    text temp_repair_feasible
+    calendar_date date_second_temp_repair
+    number community_district
+    text geo_borough FK
+  }
+  ramp_locations {
+    number ramp_length
+    number ramp_cross_slope
+    number ramp_left_flare
+    text ponding
+    text dws_conditions
+    number curb_reveal
+    text stname1
+    text stname2
+    number ramp_running_slope_total
+    text ramp_onstr
+    number lnd_width
+    text obstacles_landing
+    number ramp_right_flare
+    number ramp_width
+    number counter_slope
+    calendar_date geocyclora
+    number rampid PK
+    point the_geom
+    text obstacles_ramp
+    number lnd_cross_slope
+    number lnd_length
+    number gutter_slope
+    number borough
+    number cornerid
+    text geo_borough FK
+  }
+  curb_metal_protruding {
+    text lin_ft
+    text ref_to_other
+    text _311
+    text steel_curb
+    text on_street
+    text borough
+    text sc_cut
+    calendar_date insp
+    text i_f_o
+    text sq_ft
+    text cb
+    text closed
+    text cross_st_2
+    text cross_st_1
+    text sr
+    text file
+    calendar_date rec_d_2
+    text geo_borough FK
+  }
+  step_streets {
+    text boro_cb
+    text on_street
+    text to
+    text from
+    text geo_borough FK
+  }
+  street_resurfacing_schedule {
+    text day
+    text tostreetname
+    text location_wkt
+    text fromstreetname
+    calendar_date date
+    text onstreetname
+    number communityboard
+    number workscheduleprojectlocationid
+    text oftcode
+    text crewtype
+    text worktype
+    text area
+    number location_segment_id
+    number location_node_id
+    text boroughname
+    text shifttype
+    text geo_borough FK
+    text geo_segment_id FK
+    text geo_date_key FK
+  }
+  weekly_construction {
+    text borough
+    text location
+    text contract_no
+    text cb
+    text geo_borough FK
+  }
+  pedestrian_demand {
+    text boro
+    text category
+    multiline the_geom
+    text borocode
+    text ntaname
+    text boroname
+    text coundist
+    text femafldt
+    text street
+    text segmentid
+    number shape_leng
+    text nta2020 FK
+    text femafldz
+    number pmp_id
+    number rank
+    text congdist
+    text hrcevac
+    text stsendist
+    text borocd
+    text assemdist
+    text geo_borough FK
+    text geo_nta2020 FK
+    text geo_segment_id FK
+  }
+  vzv_enhanced_crossings {
+    text long
+    text lat
+    text x
+    text y
+    point the_geom
+    text date_imple
+    text geo_borough FK
+    text geo_nta2020 FK
+    text geo_date_key FK
+  }
+  holiday_construction_embargo_intersection {
+    text boroughcod
+    text primarynam
+    point the_geom
+    text oftcode
+    text primaryn_1
+    text geo_borough FK
+  }
+  vzv_street_improvement_projects_sip_corridor {
+    number shape_leng
+    multiline the_geom
+    text pjct_name
+    text sip_year
+    text end_date
+    text geo_borough FK
+    text geo_nta2020 FK
+  }
+  bi_annual_pedestrian_counts {
+    text sept_07_pm
+    text sept_08_md
+    text street_nam
+    text from_stree
+    text may_23_am
+    text oct_20_am
+    text sept_08_am
+    text objectid
+    text sept_16_md
+    text may_07_md
+    text may_08_am
+    text may_21_pm
+    text to_street
+    text sept_07_am
+    text oct_21_pm
+    text may_21_am
+    text oct_20_pm
+    number may25_pm
+    text may_21_md
+    text sept_09_pm
+    text sept_16_am
+    text sept_14_md
+    text oct_21_md
+    text may_10_am
+    text oct_22_pm
+    text may_11_am
+    text may_11_md
+    text may_10_pm
+    text may_16_md
+    text sept_11_am
+    text may_11_pm
+    number oct24_am
+    text sept_11_pm
+    text oct_20_md
+    text sept_16_pm
+    text may_22_p_m
+    text may_13_am
+    text sept_17_am
+    text sept_18_md
+    text may_12_pm
+    text may_19_md
+    text may_23_md
+    text may_22_md
+    text sept_12_md
+    number oct25_am
+    text june_24_am
+    text oct_23_am
+    text may_13_pm
+    number may25_md
+    text may_13_md
+    text sept_13_am
+    number may25_am
+    text may_17_md
+    text may_17_pm
+    text oct_22_md
+    text june_24_md
+    text oct_23_md
+    number oct25_md
+    text sept_18_pm
+    text sept_13_pm
+    number oct24_pm
+    text oct24_md
+    text sept_13_md
+    text sept_15_am
+    text may_14_pm
+    text may_14_md
+    text may_19_pm
+    text sept_14_pm
+    text sept_17_pm
+    text may_15_am
+    text may_15_pm
+    text may_15_md
+    text sept_17_md
+    number oct25_pm
+    text sept_15_pm
+    text may_16_am
+    point the_geom
+    text may_17_am
+    text may_18_pm
+    text sept_14_am
+    text may_12_md
+    text sept_12_pm
+    text may_08_pm
+    text borough
+    text sept_12_am
+    text sept_09_md
+    text may_18_am
+    text may_19_am
+    text sept_09_am
+    text may_14_am
+    text may_18_md
+    text may_16_pm
+    text loc
+    text sept_11_md
+    text june_24_pm
+    text may_09_md
+    text iex
+    text may_22_am
+    text oct_22_am
+    text sept_18_am
+    text sept_10_am
+    text may_09_am
+    text sept_08_pm
+    text oct_21_am
+    text may_12_am
+    text may_10_md
+    text may_07_am
+    text may_09_pm
+    text sept_10_pm
+    text sept_10_md
+    text may_08_md
+    text may_07_pm
+    text sept_15_md
+    text sept_07_md
+    text may_23_p_m
+    text oct_23_pm
+    text geo_borough FK
+  }
+  bikes_in_buildings_requests {
+    number council_district
+    text iscartop
+    number bin
+    text elevatorexceptionhardcop
+    text tenantstatecode
+    text alternateparkingdescription
+    text ownerstatecode
+    text regularhoursofoperation
+    text tenantborough
+    number tenantpostcode
+    text nta FK
+    text selfserviceoroperator
+    number ownerzipcode
+    text ownerstreetaddress
+    number latitude
+    text iscardoor
+    text ownername
+    text tenantstreetname
+    number bbl FK
+    text tenantbuildingnumber
+    number census_tract
+    text indexnumber
+    number requestid
+    text tenantfloor
+    calendar_date dateofrequest
+    calendar_date dateofbuilding
+    text locationofentrances
+    calendar_date tenantnotificationexcept
+    text floorsuiterequested
+    number community_board
+    text ownerfloor
+    calendar_date exceptionrequestduedate
+    calendar_date elevatorexceptiondatereceived
+    text ownercity
+    number longitude
+    calendar_date planddatereceived
+    calendar_date elevatorexceptiondateofentry
+    text methodofelevator
+    text routetoelevators
+    calendar_date plansubmitdate
+    text dobdevicenumber
+    calendar_date requestdateofentry
+    calendar_date dateofelevator
+    text tenantname
+    text tenantcity
+    text requeststatus
+    calendar_date implementdate
+    number noofbicyclerequested
+    calendar_date planpostdate
+    text alternateparkinglocation
+    text noofbicycleaccomodate
+    text parkingexceptiondatereceived
+    calendar_date parkingexceptiondateofentry
+    text routetoalternateparking
+    text geo_borough FK
+    text geo_nta2020 FK
+    text geo_bbl FK
+    text geo_date_key FK
+  }
+  vzv_priority_intersections {
+    text long
+    text street_1
+    point the_geom
+    text street_2
+    text y
+    text x
+    text lat
+    text geo_borough FK
+    text geo_nta2020 FK
+  }
+  street_pavement_ratings {
+    text road_type
+    calendar_date inspection
+    text onstreetna
+    text boroughname
+    number locationgeometry_stlength
+    number ismultipass
+    multiline the_geom
+    text tostreetna
+    text oftcode
+    number systemrating
+    text nonratingreason
+    text direction
+    text fromstreet
+    text geo_borough FK
+    text geo_date_key FK
+  }
+  vzv_bike_priority_areas {
+    text boro_cd_cod
+    number shape_area
+    number shape_leng
+    multipolygon the_geom
+    text geo_borough FK
+    text geo_nta2020 FK
+  }
+  accessible_pedestrian_signal_locations {
+    text femafldt
+    text assemdist
+    text location
+    calendar_date date_insta
+    text borough
+    text stsendist
+    text borocode
+    point the_geom
+    text hrcevac
+    text congdist
+    text femafldz
+    number point_y
+    text coundist
+    text borocd
+    text ntaname
+    text boroname
+    number point_x
+    text geo_borough FK
+    text geo_date_key FK
+  }
+  parking_permit_for_people_with_disabilities_pppd {
+    number permit_tag
+    calendar_date expiration_date
+    calendar_date effective_date
+    calendar_date appl_date
+    text status_1
+    text status
+    text is_veh_stolen
+    text geo_borough
+    text geo_date_key FK
+  }
+  vzv_leading_pedestrian_interval_signals {
+    text lat
+    text long
+    text install_da
+    text main_street
+    text cross_stree
+    point the_geom
+    text y
+    text x
+    text geo_borough FK
+    text geo_nta2020 FK
+  }
+  seating_locations {
+    calendar_date installation_date
+    number longitude
+    text borocode
+    text hrcevac
+    text coundist
+    text asset_id
+    text on_street
+    text ntaname
+    text siteid
+    text assemdist
+    text congdist
+    text from_street
+    text category
+    text side_of_st
+    number latitude
+    text nearest_add
+    point the_geom
+    text to_street
+    text boroname
+    text borocd
+    text femafldt
+    text femafldz
+    text asset_subtype
+    text stsendist
+    text geo_borough FK
+    text geo_date_key FK
+  }
+  vzv_safe_streets_for_seniors {
+    number shape_leng
+    text name
+    number shape_area
+    multipolygon the_geom
+    text geo_borough FK
+    text geo_nta2020 FK
+  }
+  exclusive_pedestrian_signal_barnes_dance_locatio {
+    text boroname
+    text mid_block_
+    text t_oneway_1
+    text modified_b
+    text coundist
+    text borocd
+    text congdist
+    text stsendist
+    calendar_date installati
+    text femafldz
+    text femafldt
+    text ntaname
+    point the_geom
+    text borocode
+    text assemdist
+    text barnes_dan
+    text hrcevac
+    text cross_stre
+    text main_stree
+    text t_oneway_a
+    text geo_borough FK
+  }
+  street_direction_change_requests_2019_present {
+    text request_status
+    calendar_date request_date
+    text requested_by
+    text borough
+    text type_of_request
+    text location
+    text geo_borough FK
+    text geo_date_key FK
+  }
+  vzv_street_improvement_projects_sip_intersection {
+    multipoint the_geom
+    text pjct_name
+    text lat
+    text long
+    text y
+    text x
+    calendar_date end_date
+    number sip_year
+    text geo_borough FK
+    text geo_nta2020 FK
+  }
+  street_construction_permits_cranes {
+    calendar_date modifiedon
+    text craneserialnumber
+    text permitnumber
+    text cranetypeshortdesc
+    calendar_date createdon
+    text geo_borough FK
+    text geo_date_key FK
+  }
+  bicycle_parking_shelters {
+    text st_sen_dist
+    text boro_code
+    text femafldz
+    point the_geom
+    text shelter_id
+    text ntaname
+    text femafld_t
+    text hrc_evac
+    calendar_date build_date
+    text assem_dist
+    text coun_dist
+    text boro_cd
+    text cong_dist
+    text street
+    text location
+    text boro_name
+    text geo_borough FK
+    text geo_date_key FK
+  }
+  protected_streets_intersection_dataset {
+    text oftcode
+    calendar_date dateprot_1
+    calendar_date dateprotec
+    text geoborough
+    multipoint the_geom
+    text onstreetna
+    text fromstreet
+    text geo_borough FK
+    text geo_date_key FK
+  }
+  bicycle_and_pedestrian_count_sensors {
+    checkbox hastimestampeddata
+    text travelmodes
+    text domain_name
+    checkbox hasweather
+    checkbox directional
+    number lat
+    text id
+    text granularity
+    number lon
+    calendar_date counters_installationdate
+    text counters_serial
+    text name
+    calendar_date firstdata
+    text counters_id
+    calendar_date lastdata
+    calendar_date counters_detachmentdate
+    text geo_borough FK
+    text geo_nta2020 FK
+    text geo_date_key FK
+  }
+  nyc_dot_pedestrian_plazas_point_feature {
+    point the_geom
+    number point_x
+    text partner
+    number point_y
+    text plazaname
+    text coundist
+    text congdist
+    text femafldt
+    text tostreet
+    text borocode
+    text fromstreet
+    text onstreet
+    text boro
+    text femafldz
+    text boroname
+    text borocd
+    text assemdist
+    text stsendist
+    text hrcevac
+    text geo_borough FK
+  }
+  shared_e_scooter_parking_corrals {
+    text type
+    number shape_area
+    text parking_location
+    number shape_leng
+    multipolygon the_geom
+    calendar_date install_da
+    text borough
+    text geo_borough FK
+  }
+  pedestrian_space_added {
+    number area_sf
+    text boro
+    text cross_street_2
+    number area_acres
+    text project_type
+    text cross_street_1
+    number cb
+    text name
+    text on_street
+    text geo_borough FK
+  }
+  parking_permit_for_people_with_disabilities_pppd_2 {
+    calendar_date expiration_date
+    calendar_date appl_date
+    text permit_status
+    text status
+    calendar_date issue_date
+    calendar_date effective_date
+    text permit_num
+    text is_veh_stolen
+    text geo_borough
+    text geo_date_key FK
+  }
+  street_closures_due_to_construction_activities_b {
+    text borough_code
+    number oft
+    calendar_date work_start_date
+    text fromstreetname
+    text uniqueid
+    text tostreetname
+    text onstreetname
+    text purpose
+    calendar_date work_end_date
+    number segmentid
+    multiline the_geom
+    text geo_borough FK
+    text geo_segment_id FK
+    text geo_date_key FK
+  }
+  vzv_street_team_flyers {
+    text date
+    point the_geom
+    number total_flyer
+    text lat
+    text x
+    text y
+    text long
+    text geo_borough FK
+    text geo_nta2020 FK
+  }
+  intercity_bus_stop_permits {
+    text permitseriesid
+    text fromstreetname
+    text permittypedesc
+    calendar_date issuedworkstartdate
+    text permitstatusid
+    text boroughname
+    text specificstipulations
+    calendar_date modifiedon
+    text permitstatusshortdesc
+    text permitseriesshortdesc
+    text applicationtrackingid
+    text sequencenumber
+    text permitnumber
+    calendar_date createdon
+    calendar_date permitissuedate
+    calendar_date issuedworkenddate
+    text onstreetname
+    text applicationtypeshortdesc
+    text tostreetname
+    text permittypeid
+    text permitteename
+    text geo_borough FK
+    text geo_date_key FK
+  }
+  street_closures_due_to_construction_activities_b_2 {
+    text purpose
+    calendar_date workenddate
+    text wkt
+    text tostreetname
+    text fromstreetname
+    text onstreetname
+    calendar_date workstartdate
+    text boroughname
+    text oftcode
+    text geo_borough FK
+    text geo_date_key FK
+  }
+  open_streets_locations {
+    number object_id
+    text apprthuope
+    text apprwedope
+    text boroughname
+    calendar_date apprenddat
+    text segmentidt
+    text apprfromst
+    text apprsunclo
+    text shape_stle
+    text reviewstat
+    text apprfriclo
+    text apprtueope
+    text orgname
+    text apprdayswe
+    text apprtueclo
+    text segmentidf
+    text apprfriope
+    text apprmonope
+    text apprsunope
+    text apprtostre
+    calendar_date apprstartd
+    text apprmonclo
+    text apprsatclo
+    text apprwedclo
+    text apprsatope
+    text appronstre
+    text apprthuclo
+    multiline the_geom
+    text lionversion
+    text geo_borough FK
+    text geo_segment_id FK
+  }
+  parking_meters_parknyc_block_faces {
+    text commercial
+    text side_of_st
+    text all_vehi_3
+    text commerci_2
+    multiline the_geom
+    text vehicle_ty
+    text all_vehi_1
+    text all_vehicl
+    text to_street
+    text from_stree
+    text pay_by_cel
+    text borough
+    text commerci_1
+    number shape_leng
+    text all_vehi_2
+    text on_street
+    text meter_rate
+    text commerci_3
+    text geo_borough FK
+  }
+  dot_in_house_street_resurfacing_projects {
+    text location_status
+    calendar_date location_actual_milling_end_date
+    calendar_date location_actual_paving_end_date
+    number location_community_board
+    text oft_code
+    calendar_date location_actual_milling_start_date
+    text location_on_street
+    calendar_date location_actual_paving_start_date
+    calendar_date location_actual_protect_until
+    text borough_code
+    text location_wkt
+    text project_status
+    text location_to_street
+    number location_segment_id
+    text location_from_street
+    text project_id
+    number location_actual_paving_square
+    number location_actual_lane_miles
+    number project_speed_bumps
+    text location_node_id
+    text project_type
+    text geo_borough FK
+    text geo_segment_id FK
+    text geo_date_key FK
+  }
+  protected_streets_block_dataset {
+    text tostreetna
+    calendar_date dateprot_1
+    calendar_date dateprotec
+    text onstreetna
+    text oftcode
+    number shape_stle
+    text geoborough
+    multiline the_geom
+    text fromstreet
+    text geo_borough FK
+    text geo_date_key FK
+  }
+  bicycle_parking {
+    text ntaname
+    text program
+    text boroname
+    text site_id
+    text ifoaddress
+    text onstreet
+    text side_of_st
+    number latitude
+    text hrcevac
+    text racktype
+    number longitude
+    text borough
+    text femafldt
+    text group_id
+    text stsendist
+    text fromstreet
+    text congdist
+    text tostreet
+    text borocd
+    text assemdist
+    text femafldz
+    text coundist
+    calendar_date date_inst
+    point the_geom
+    text borocode
+    text geo_borough FK
+    text geo_date_key FK
+  }
+  street_closures_due_to_construction_activities_b_3 {
+    text borough_code
+    point the_geom
+    calendar_date work_start_date
+    text uniqueid
+    text fromstreetname
+    calendar_date work_end_date
+    text onstreetname
+    number oft
+    text purpose
+    text nodeid
+    text geo_borough FK
+    text geo_date_key FK
+  }
+  bus_lanes_local_streets {
+    text sbs_route2
+    text segmentid
+    number days_code
+    text days
+    text lane_type
+    multiline the_geom
+    text rw_type
+    number year2
+    text sbs_route3
+    text lane_color
+    text chron_id_1
+    text lane_type1
+    number year1
+    number streetwidt
+    text boro
+    text street
+    text facility
+    text lane_type2
+    text last_updat
+    text hours
+    text mid_block
+    number shape_leng
+    number year3
+    text sbs_route1
+    text direction
+    text lane_width
+    text open_dates
+    multiline shape_le_1
+    text bltrafdir
+    text geo_borough FK
+    text geo_segment_id FK
+    text geo_date_key FK
+  }
+  street_pothole_work_orders_closed_dataset {
+    calendar_date rptdate
+    text specloc
+    calendar_date rptclosed
+    text toprimname
+    text frmprimnam
+    multiline the_geom
+    text source
+    text boro
+    number shape_leng
+    text initby
+    text onprimname
+    text oft
+    text onfacename
+    text defnum
+    text housenum
+    text geo_borough FK
+    text geo_date_key FK
+  }
+  new_york_city_bike_routes {
+    calendar_date instdate
+    text allclasses
+    text onoffst
+    text fromstreet
+    calendar_date ret_date
+    text gwsystem
+    text ft_facilit
+    text street
+    text gwsys2
+    text spur
+    text gwyjuris
+    number lanecount
+    text facilitycl
+    text ft2facilit
+    number boro
+    text status
+    text prevbikeid
+    text bikedir
+    text tf_facilit
+    text tf2facilit
+    text grnwy
+    number bikeid
+    text tostreet
+    number segmentid
+    multiline the_geom
+    text geo_borough FK
+    text geo_segment_id FK
+    text geo_date_key FK
+  }
+  carshare_locations_curbside {
+    text carshare_c
+    point geom2
+    number community
+    text side
+    text site_reque
+    text on_street
+    text site_id
+    text borough
+    number lat
+    number long
+    text address
+    text to
+    text from_
+    point the_geom
+    text geo_borough FK
+  }
+  street_and_highway_capital_reconstruction_projec {
+    text projectdes
+    text fmsid
+    calendar_date designstar
+    text x
+    text y
+    text projecttyp
+    number constructi
+    text leadagency
+    text projectsta
+    number projectid PK
+    text otherscope
+    calendar_date construc_2
+    number currentfun
+    text overallsco
+    text fromstreet
+    number latitude
+    text safetyscop
+    text onstreetna
+    number longitude
+    number managingag
+    text boroughnam
+    number designfy
+    text projectt_1
+    number fmsagencyi
+    text oftcode
+    text projtitle
+    number projectcos
+    multipoint the_geom
+    text tostreetna
+    text projectjus
+    text geo_borough FK
+  }
+  temporary_parking_permit_for_people_with_disabil {
+    text stateplate
+    text validtimes
+    text permittype
+    calendar_date permitexpiredate
+    calendar_date effectivedate
+    text location
+    number permitno
+    text geo_borough
+    text geo_date_key FK
+  }
+  street_seats_2021_2024 {
+    number bbl FK
+    text to_street
+    number borocode
+    text location
+    text borough
+    text femafldz
+    number stsendist
+    number year
+    number council_district
+    text status
+    number community_board
+    number borocd
+    number congdist
+    text on_street
+    text partner
+    number census_tract
+    text type
+    number ycoordin
+    number assemdist
+    number latitude
+    number xcoordin
+    number bin
+    text nta FK
+    text from_street
+    text address
+    text femafldt
+    text postcode
+    number hrcevac
+    number longitude
+    text geo_borough FK
+    text geo_nta2020 FK
+    text geo_bbl FK
+  }
+  holiday_construction_embargo_block {
+    text boroughcod
+    text fromstreet
+    text onstreetna
+    multiline the_geom
+    text oftcode
+    text tostreetna
+    text geo_borough FK
+  }
+  street_and_highway_capital_reconstruction_projec_2 {
+    number location_1
+    number designfy
+    multiline the_geom
+    text safetyscop
+    text overallsco
+    number projectcos
+    calendar_date designstar
+    text onstreetna
+    text fromstreet
+    calendar_date construc_2
+    text projectt_1
+    text boroughnam
+    number fmsagencyi
+    text projectsta
+    text leadagency
+    text fmsid
+    number managingag
+    number constructi
+    text projectdes
+    number projectid PK
+    text projecttyp
+    number currentfun
+    text projtitle
+    text projectjus
+    text oftcode
+    text tostreetna
+    text otherscope
+    text geo_borough FK
+  }
+  street_network_changes {
+    text type_of_change
+    calendar_date completion_date
+    text boro
+    text new_direction
+    text on_street
+    text to_street
+    text notes
+    text from_st
+    text geo_borough FK
+    text geo_date_key FK
+  }
+  newsrack_inspections {
+    text lastinspectionresult
+    text compassdirection
+    text publicationname
+    text newsrackactive
+    text tostreetname
+    text specificlocation
+    text newsrackstatustype
+    number communitydistrictleft
+    calendar_date lastinspecteddate
+    text onstreetname
+    text newsrackstatus
+    number newsracklocationid
+    text boroughname
+    calendar_date newsrackstatusdate
+    text fromstreetname
+    text publishername
+    text geo_borough FK
+    text geo_date_key FK
+  }
+  nyc_dot_pedestrian_plazas_polygon {
+    text femafldz
+    text coundist
+    text fromstreet
+    number shape_area
+    text boroname
+    text plazaname
+    number shape_leng
+    text stsendist
+    text partner
+    text onstreet
+    text tostreet
+    text assemdist
+    text hrcevac
+    text femafldt
+    multipolygon the_geom
+    text borocode
+    number objectid
+    text borocd
+    text congdist
+    text geo_borough FK
+  }
+  encroachments_and_defacements {
+    text complainttype
+    text unit
+    text city
+    text postcode
+    text srnumber
+    calendar_date novdate
+    calendar_date followupinspectiondate
+    calendar_date reinspectiondate
+    calendar_date ordermailingdate
+    text postinginspectiondate
+    text novnumber
+    calendar_date initialinspectiondate
+    calendar_date closeddate
+    text boro
+    text street
+    text lot
+    text initialinspectionresults
+    text reinspectionresult
+    text novdescription
+    text complaintid
+    text state
+    text block
+    text number
+    text daysbetween
+    text novcode
+    text geo_borough FK
+  }
+  complaints_311 {
+    point location
+    text location_type
+    text vehicle_type
+    text agency_name
+    text bridge_highway_segment
+    text bridge_highway_direction
+    number latitude
+    text agency
+    text park_facility_name
+    text park_borough
+    text address_type
+    text road_ramp
+    text city
+    number longitude
+    calendar_date resolution_action_updated_date
+    text complaint_type
+    text intersection_street_2
+    text incident_zip
+    calendar_date created_date
+    calendar_date closed_date
+    text council_district
+    text descriptor_2
+    text bbl FK
+    number x_coordinate_state_plane
+    text taxi_company_borough
+    text descriptor
+    text cross_street_2
+    text bridge_highway_name
+    text police_precinct
+    text community_board
+    text resolution_description
+    text intersection_street_1
+    text borough
+    text unique_key
+    text taxi_pick_up_location
+    text open_data_channel_type
+    number y_coordinate_state_plane
+    calendar_date due_date
+    text landmark
+    text facility_type
+    text status
+    text cross_street_1
+    text incident_address
+    text street_name
+    text geo_borough FK
+    text geo_bbl FK
+    text geo_date_key FK
+  }
+  street_centerline {
+    text joinid
+    text r_high_hn
+    text sandist_ind
+    text status
+    number number_travel_lanes
+    text r_low_hn
+    text b5sc
+    text bike_lane
+    number to_level_code
+    text post_modifier
+    multiline the_geom
+    text l_zip
+    number physicalid
+    text nominaldir
+    text twisted_parity_flag
+    text bike_trafdir
+    text seglocstatus
+    number avgtravtime
+    text pre_type
+    text snow_priority
+    number from_level_code
+    text pre_directional
+    text r_zip
+    text segment_type
+    text rwjurisdiction
+    text boroughcode
+    number posted_speed
+    text fire_lane
+    text fcc
+    text segment_type_value
+    number bphys_id
+    text street_name
+    text globalid
+    text stname_label
+    text post_type
+    text full_street_name
+    number streetwidth
+    number number_park_lanes
+    text nonped
+    text pre_modifier
+    text trafdir
+    text continuous_parity_flag
+    text special_disaster
+    number rw_type
+    text lsubsect
+    text rsubsect
+    date modified_date
+    number r_blockfaceid
+    date created_date
+    text l_low_hn
+    number number_total_lanes
+    text borough_indicator
+    text carto_display_level
+    number l_blockfaceid
+    text collectionmethod
+    number shape_length
+    text truck_route_type
+    text accessible
+    text l_high_hn
+    number objectid
+    text streetwidth_irr
+    text post_directional
+    number segmentlength
+    text within_bndy_dist
+    text geo_borough FK
+    text geo_segment_id FK
+    text geo_date_key FK
+  }
+  nta_2020 {
+    number shape_leng
+    text ntaname
+    text ntatype
+    number shape_area
+    text countyfips
+    multipolygon the_geom
+    text nta2020
+    text ntaabbrev
+    text cdtaname
+    number borocode
+    text cdta2020
+    text boroname
+    text geo_borough FK
+    text geo_nta2020 FK
+  }
+  census_demographics_nta {
+    number total_population_change_2000_2010_number
+    number geographic_area_2010_census_fips_county_code
+    text geographic_area_borough
+    text geographic_area_neighborhood_tabulation_area_nta_code PK
+    number total_population_change_2000_2010_percent
+    number total_population_2010_number
+    text geographic_area_neighborhood_tabulation_area_nta_name
+    number total_population_2000_number
+    text geo_borough FK
+    text geo_nta2020 FK
+  }
+  heat_vulnerability_index {
+    text zcta20 PK
+    number hvi
+    text geo_borough
+  }
+  motor_vehicle_collisions_crashes {
+    text vehicle_type_code_4
+    text contributing_factor_vehicle_3
+    text contributing_factor_vehicle_5
+    text vehicle_type_code2
+    text vehicle_type_code1
+    text borough
+    number collision_id PK
+    text vehicle_type_code_3
+    text crash_time
+    number latitude
+    text location_zip
+    text cross_street_name
+    text on_street_name
+    text contributing_factor_vehicle_2
+    number number_of_pedestrians_injured
+    number number_of_cyclist_killed
+    point location
+    text location_city
+    number number_of_persons_killed
+    number number_of_motorist_killed
+    calendar_date crash_date
+    number number_of_cyclist_injured
+    text location_address
+    text contributing_factor_vehicle_1
+    number number_of_motorist_injured
+    number longitude
+    text contributing_factor_vehicle_4
+    number number_of_pedestrians_killed
+    text vehicle_type_code_5
+    number number_of_persons_injured
+    text off_street_name
+    text location_state
+    text zip_code
+    text geo_borough FK
+    text geo_date_key FK
+  }
+  motor_vehicle_collisions_person {
+    number unique_id PK
+    text person_injury
+    text emotional_status
+    text bodily_injury
+    text person_sex
+    text ejection
+    text ped_action
+    text position_in_vehicle
+    text complaint
+    text contributing_factor_2
+    text ped_location
+    text safety_equipment
+    text person_type
+    text person_id
+    calendar_date crash_date
+    number person_age
+    number collision_id FK
+    text crash_time
+    text contributing_factor_1
+    text vehicle_id
+    text ped_role
+    text geo_borough FK
+    text geo_date_key FK
+  }
+  sidewalk_cafes {
+    number shape_leng
+    multiline the_geom
+    text cafe_type
+    text geo_borough FK
+    text geo_nta2020 FK
+  }
+  street_tree_census_2015 {
+    number tree_dbh
+    number council_district
+    text trnk_light
+    text brch_other
+    text brch_shoe
+    number cncldist
+    text curb_loc
+    text user_type
+    text root_stone
+    number borocode
+    text spc_common
+    number st_assem
+    number st_senate
+    text nta FK
+    number cb_num
+    text nta_name
+    number stump_diam
+    text problems
+    calendar_date created_at
+    number boro_ct
+    text trunk_wire
+    number block_id
+    number latitude
+    number longitude
+    number x_sp
+    number y_sp
+    number census_tract
+    number bin
+    number bbl FK
+    number tree_id PK
+    text steward
+    text spc_latin
+    text address
+    text root_grate
+    text guards
+    text health
+    text sidewalk
+    text zip_city
+    text status
+    number zipcode
+    text state
+    text brch_light
+    text root_other
+    text boroname
+    text trnk_other
+    text geo_borough FK
+    text geo_nta2020 FK
+    text geo_bbl FK
+    text geo_date_key FK
+  }
+  forestry_inspections {
+    text swtotaltrees
+    text geometry
+    text swdamagerating
+    text swclearancerating
+    text swdamagedflagstonesrating
+    text inspectionstatus
+    number objectid PK
+    text treepointglobalid
+    text globalid
+    text inspectiontpstructure
+    text swratingtotal
+    text servicerequestglobalid
+    text plantingspaceglobalid
+    calendar_date closeddate
+    text inspectiontpcondition
+    text parentinspectionglobalid
+    calendar_date updateddate
+    calendar_date createddate
+    text swtreeconditionrating
+    text inspectiontype
+    calendar_date inspectiondate
+    text treepointdbh
+    text swlocationrating
+    point location
+    calendar_date reinspectiondate
+    text geo_borough FK
+    text geo_nta2020 FK
+  }
+  water_sewer_permits {
+    text requeststatus
+    text applicationtype
+    text propertyborough
+    text permitnumber PK
+    text propertylot
+    text propertyblock
+    calendar_date issuancedate
+    text propertyzip
+    text geo_borough FK
+    text geo_bbl FK
+    text geo_date_key FK
+  }
+  street_construction_permits {
+    text permitstatusshortdesc
+    text permitseriesshortdesc
+    text permitseriesid
+    text tostreetname
+    calendar_date createdon
+    number permitnumberofzones
+    text oftcode
+    text locationgeometry
+    calendar_date permitissuedate
+    text permittypedesc
+    text fromstreetname
+    text nextpermitnumber
+    text permithousenumber
+    calendar_date issuedworkstartdate
+    text onstreetname
+    calendar_date issuedworkenddate
+    text boroughname
+    text permitteename
+    text permitpurposecomments
+    text pavementshortdesc
+    text sidewalkshortdesc
+    calendar_date modifiedon
+    text wkt
+    number numberofminicontainers
+    text sequencenumber
+    text applicationtypeshortdesc
+    text permitnumber PK
+    text specificstipulations
+    number permitestimatednumberofcuts
+    text equipmenttypedesc
+    text previouspermitnumber
+    text permitstatusid
+    text permittypeid
+    text permitlocationcomments
+    calendar_date emergencyissuedate
+    number permitlinearfeet
+    number permittotalsqfeet
+    number numberofcontainers
+    text applicationtrackingid
+    text geo_borough FK
+    text geo_date_key FK
+  }
+  dob_stalled_construction_sites {
+    calendar_date dobrundate
+    calendar_date date_complaint_received
+    text house_number
+    text complaint_number PK
+    text street_name
+    text borough_name
+    text community_board
+    text bin
+    text geo_borough FK
+  }
+  sidewalk_planimetric {
+    multipolygon the_geom
+    number shape_leng
+    number shape_area
+    number sub_code
+    number source_id
+    text status
+    number feat_code
+    text geo_borough FK
+    text geo_nta2020 FK
+  }
+  curbs_planimetric {
+    number shape_leng
+    number source_id
+    number sub_code
+    text status
+    number feat_code
+    multiline the_geom
+    text geo_borough FK
+    text geo_nta2020 FK
+  }
+  roadbed_planimetric {
+    number shape_area
+    number feat_code
+    number source_id
+    number shape_leng
+    text status
+    number sub_code
+    multipolygon the_geom
+    text geo_borough FK
+    text geo_nta2020 FK
+  }
+  median_planimetric {
+    text status
+    text street_nam
+    multipolygon the_geom
+    number feat_code
+    number shape_area
+    number source_id
+    number sub_code
+    number shape_leng
+    text geo_borough FK
+    text geo_nta2020 FK
+  }
+  boardwalk_planimetric {
+    number sub_code
+    number shape_area
+    number shape_leng
+    multipolygon the_geom
+    number feat_code
+    number source_id
+    text status
+    text geo_borough FK
+    text geo_nta2020 FK
+  }
+  open_space_parks_planimetric {
+    text system
+    multipolygon the_geom
+    number shape_area
+    text parknum
+    number source_id
+    text park_name
+    number shape_leng
+    text status
+    number feat_code
+    text landuse
+    number sub_code
+    text geo_borough FK
+    text geo_nta2020 FK
+  }
+  elevation_points_planimetric {
+    number sub_code
+    number feat_code
+    point the_geom
+    number source_id
+    text status
+    number elevation
+    text geo_borough FK
+    text geo_nta2020 FK
+  }
+  vzv_arterial_slow_zones {
+    multiline the_geom
+    text from_stree
+    text to_street
+    calendar_date enforcemen
+    number shape_leng
+    text geo_borough FK
+    text geo_nta2020 FK
+  }
+  vzv_neighborhood_slow_zones {
+    multipolygon the_geom
+    text name
+    number year
+    number shape_leng
+    number shape_area
+    text geo_borough FK
+    text geo_nta2020 FK
+  }
+  vzv_priority_corridors {
+    multiline the_geom
+    number shape_leng
+    text geo_borough FK
+    text geo_nta2020 FK
+  }
+  vzv_priority_zones_areas {
+    multipolygon the_geom
+    number sq_mi
+    number shape_leng
+    number shape_area
+    text geo_borough FK
+    text geo_nta2020 FK
+  }
+  vzv_speed_humps {
+    multiline the_geom
+    number objectid
+    text on_street
+    text from_stree
+    text to_street
+    number humps
+    calendar_date date_insta
+    number shape_stle
+    text geo_borough FK
+    text geo_nta2020 FK
+    text geo_date_key FK
+  }
+  speed_reducer_tracking_srts {
+    text projectcode
+    text groupowner
+    text locationdescription
+    text borough
+    text projectstatus
+    text nextstep
+    calendar_date dateadded
+    text bctsnum
+    text ccunum
+    calendar_date requestorletterreplydate
+    calendar_date cbletterrequestdate
+    calendar_date cbletterrecieveddate
+    text oldsign
+    text newsign
+    calendar_date markingsdate
+    calendar_date installationdate
+    text secondstudycode
+    calendar_date closeddate
+    text speedcushion
+    calendar_date requestdate
+    text requestortype
+    text segmentid
+    text onstreet
+    text fromstreet
+    text tostreet
+    text geoboroughname
+    text lionkey
+    text fromlatitude
+    text fromlongitude
+    text tolatitude
+    text tolongitude
+    text oft
+    text cb
+    text segmentstatus
+    text segmentstatusdescription
+    text denialreason
+    number numsrproposed
+    text trafficdirection
+    text trafficdirectiondesc
+    text oldsign1
+    text newsign1
+    text oldsign2
+    text newsign2
+    text geo_borough FK
+    text geo_segment_id FK
+    text geo_date_key FK
+  }
+  vzv_speed_limits {
+    multiline the_geom
+    text street
+    number postvz_sl
+    text postvz_sg
+    number shape_leng
+    text geo_borough FK
+    text geo_nta2020 FK
+  }
+  vzv_turn_traffic_calming {
+    point the_geom
+    text treatment_
+    calendar_date completion
+    text long
+    text lat
+    text x
+    text y
+    text geo_borough FK
+    text geo_nta2020 FK
+  }
+  vzv_signal_timing_25mph {
+    multiline the_geom
+    text on_street
+    text from_street
+    text to_street
+    text yr
+    number shape_leng
+    text geo_borough FK
+    text geo_nta2020 FK
+  }
+  vzv_senior_centers {
+    point the_geom
+    text site_serve
+    text event_date
+    text activity
+    text long
+    text lat
+    text x
+    text y
+    text geo_borough FK
+    text geo_nta2020 FK
+  }
+  vzv_workshops_locations {
+    point the_geom
+    text name
+    text borough
+    text address
+    text long
+    text lat
+    text x
+    text y
+    text geo_borough FK
+  }
+  vision_zero_base_report {
+    url download_pdf_report
+    number vehicle_safety_violations_per_vehicle
+    number percent_wheelchair_accessible_vehicles
+    number percent_hybrid_alt_fuel_vehicles
+    number sector_average_average_vehicle_age
+    number average_vehicle_age
+    number affiliated_vehicles
+    url website
+    text top_vehicle_models_3
+    text top_vehicle_models_2
+    number injury_crashes_per_vehicle
+    text base_provides_safety_training
+    text email
+    point location
+    number sector_average_base_safety_violations_per_vehicle
+    text _2015_honor_roll_base
+    number community_board
+    text booking_app
+    number bbl
+    number bin
+    text phone
+    text serving_areas
+    number census_tract
+    number council_district
+    text address
+    text top_vehicle_models_5
+    text top_vehicle_models_4
+    number _2015_honor_roll_drivers
+    text _24_hours
+    text top_vehicle_models_1
+    number latitude
+    number postcode
+    text nta
+    text book_ahead_service
+    text green_taxi_service
+    number year_base_opened
+    text industry_sector
+    text location_state
+    number fatal_crashes
+    text vehicle_safety_technology_used
+    text hosted_vision_zero_training
+    text fatal_crash_details
+    text location_zip
+    text location_address
+    text location_city
+    number sector_average_injury_crashes_per_vehicle
+    number base_safety_violations_per_vehicle
+    number sector_average_vehicle_safety_violations_per_vehicle
+    text base_name
+    text borough
+    text on_demand_service
+    text license_number
+    text base_does_business_as
+    number longitude
+    text geo_borough FK
+    text geo_nta2020 FK
+    text geo_bbl FK
+  }
+  raised_crosswalk_locations {
+    text treatment
+    calendar_date date
+    number nodeid
+    point wkt_geometry
+    number x
+    number y
+    text geo_borough
+    text geo_date_key FK
+  }
+  public_plazas_planimetric {
+    number feat_code
+    number shape_leng
+    number sub_code
+    multipolygon the_geom
+    text status
+    number source_id
+    number shape_area
+    text geo_borough FK
+    text geo_nta2020 FK
+  }
+  privately_owned_public_spaces_pops {
+    text building_architect
+    number bbl
+    text building_name
+    number longitude
+    text other_required
+    number xcoordinate
+    text permitted_amenities
+    text physically_disabled
+    number census_tract
+    text public_space_type
+    text developer
+    text year_completed
+    number tax_lot
+    text address_number
+    text amenities_required
+    text pops_number
+    text borough_name
+    number borocode
+    text building_location
+    number ycoordinate
+    number council_district
+    number bin
+    point geocoded_column
+    number community_district
+    text hour_of_access_required
+    text principal_public_space
+    text street_name
+    number latitude
+    number tax_block
+    number zip_code
+    text building_address_with_zip
+    text size_required
+    text building_constructed
+    text nta
+    text geo_borough FK
+    text geo_bbl FK
+  }
+  bus_stop_shelters {
+    point the_geom
+    text boro_code
+    text boro_name
+    text boro_cd
+    text coun_dist
+    text assem_dist
+    text st_sen_dist
+    text cong_dist
+    text shelter_id
+    text corner
+    text on_street
+    text cross_stre
+    number longitude
+    number latitude
+    text ntaname
+    text femafldz
+    text femafld_t
+    text hrc_evac
+    text geo_borough FK
+  }
+  bicycle_pedestrian_counts {
+    text sensor_id
+    text travelmode
+    text direction
+    text flowid
+    text flowname
+    calendar_date timestamp
+    text granularity
+    number counts
+    text status
+    text geo_borough
+  }
+  walk_to_a_park_service_area {
+    text type
+    number id
+    multipolygon the_geom
+    text geo_borough FK
+    text geo_nta2020 FK
+  }
+  mbpo_pedestrian_ramp_report {
+    text detectable_warnings
+    text crumbling_non_comp
+    text width_non_comp
+    text lip_or_bump_1_4_or_less
+    text warnings_non_comp
+    text objects_non_comp
+    text compliant
+    text pot_hole_non_comp
+    text station
+    text ramp_width_36_or_more
+    text street_1
+    text slope_non_comp
+    text barriers_above
+    text ramp_looks_relatively_new
+    text street_2
+    text no_curb_cut
+    text slope_1_12_or_less
+    text center_cut
+    text curb_cut
+    text led_to_pot_hole
+    text crumbling_concrete
+    text object_barriers
+    text ramp_id_no_id_means_a_part
+    text lip_non_comp
+    text geo_borough
+  }
+  capital_projects_dashboard {
+    calendar_date actual_design_end
+    calendar_date actual_construction
+    number pid
+    calendar_date actual_construction_1
+    text managing_agency
+    text budget_line
+    number total_budget
+    text agency_project_name
+    text reporting_period
+    calendar_date fms_data_date
+    text agency_project_description
+    text borough
+    text fms_project_name
+    number spend_to_date_1
+    calendar_date forecast_completion
+    text sponsor_agency
+    calendar_date actual_design_start
+    calendar_date actual_construction_end
+    text current_phase
+    text community_board
+    text fms_id FK
+    calendar_date forecast_current_phase_end
+    calendar_date actual_construction_start
+    number spend_to_date
+    calendar_date agency_data_date
+    calendar_date current_phase_start
+    text ten_year_plan_category
+    text geo_borough FK
+  }
+  cpdb_projects {
+    number adopt_ccexempt
+    number spent_total
+    number commit_nccother
+    number totalcityplannedcommit
+    number adopt_ccnonexempt
+    number commit_noncitycost
+    number allocate_nccstate
+    number allocate_total
+    number adopt_nccstate
+    number allocate_citycost
+    number allocate_ccexempt
+    text projectid
+    number plannedcommit_ccnonexempt
+    text maprojid
+    text typecategory
+    number adopt_citycost
+    number nccfederal
+    number spent_nccstate
+    number spent_nccother
+    number commit_nccstate
+    number adopt_nccfederal
+    number spent_noncitycost
+    number allocate_noncitycost
+    number adopt_noncitycost
+    number commit_nccfederal
+    number commit_ccexempt
+    number spent_citycost
+    number totalplannedcommit
+    number allocate_nccfederal
+    number spent_total_checkbooknyc
+    number nccstate
+    text magencyname
+    number spent_ccexempt
+    calendar_date maxdate
+    number commit_citycost
+    number allocate_nccother
+    text ccpversion
+    number adopt_nccother
+    number commit_total
+    number nccother
+    number commit_ccnonexempt
+    number spent_ccnonexempt
+    text description
+    number totalnoncityplannedcommit
+    number adopt_total
+    number ccexempt
+    number spent_nccfederal
+    number magency
+    text magencyacro
+    calendar_date mindate
+    number allocate_ccnonexempt
+    text geo_borough
+    text geo_date_key FK
+  }
+  cpdb_projects_points {
+    text ccpversion
+    number spent_total_checkbooknyc
+    number adopt_ccexempt
+    number plannedcommit_ccnonexempt
+    number commit_nccother
+    number spent_noncitycost
+    number spent_citycost
+    text description
+    number plannedcommit_nccother
+    calendar_date mindate
+    number adopt_total
+    number commit_nccstate
+    number commit_citycost
+    number commit_noncitycost
+    number plannedcommit_citycost
+    text maprojid
+    number commit_total
+    text magencyacro
+    number spent_nccother
+    number adopt_ccnonexempt
+    number allocate_nccstate
+    number plannedcommit_noncitycost
+    number plannedcommit_ccexempt
+    number plannedcommit_nccstate
+    number allocate_total
+    number commit_nccfederal
+    text magencyname
+    number spent_nccfederal
+    text typecategory
+    number spent_nccstate
+    number commit_ccexempt
+    calendar_date maxdate
+    number allocate_citycost
+    number adopt_nccstate
+    multipoint the_geom
+    number plannedcommit_nccfederal
+    text magency
+    number adopt_nccfederal
+    number allocate_nccfederal
+    number commit_ccnonexempt
+    number adopt_noncitycost
+    number adopt_nccother
+    number adopt_citycost
+    text projectid
+    number spent_total
+    number allocate_nccother
+    number spent_ccexempt
+    number spent_ccnonexempt
+    number allocate_ccexempt
+    number plannedcommit_total
+    number allocate_ccnonexempt
+    number allocate_noncitycost
+    text geo_borough FK
+    text geo_nta2020 FK
+    text geo_date_key FK
+  }
+  cpdb_projects_polygons {
+    number plannedcommit_total
+    number plannedcommit_ccnonexempt
+    number plannedcommit_nccfederal
+    number commit_ccnonexempt
+    text magency
+    text typecategory
+    number plannedcommit_ccexempt
+    number allocate_citycost
+    number allocate_nccstate
+    number allocate_noncitycost
+    number adopt_nccother
+    number adopt_ccexempt
+    number allocate_nccfederal
+    multipolygon the_geom
+    number allocate_total
+    text projectid
+    number spent_total
+    number spent_noncitycost
+    number spent_ccexempt
+    number commit_noncitycost
+    number adopt_nccstate
+    text ccpversion
+    number adopt_citycost
+    number commit_nccfederal
+    number spent_ccnonexempt
+    number spent_nccfederal
+    number plannedcommit_noncitycost
+    number adopt_ccnonexempt
+    number plannedcommit_nccother
+    number allocate_ccnonexempt
+    number adopt_total
+    calendar_date mindate
+    number commit_nccstate
+    number commit_citycost
+    number allocate_ccexempt
+    text magencyacro
+    number spent_total_checkbooknyc
+    text maprojid
+    number allocate_nccother
+    number commit_nccother
+    number spent_citycost
+    number adopt_noncitycost
+    number commit_total
+    number spent_nccother
+    text magencyname
+    text description
+    number plannedcommit_citycost
+    number commit_ccexempt
+    number spent_nccstate
+    number plannedcommit_nccstate
+    calendar_date maxdate
+    number adopt_nccfederal
+    text geo_borough FK
+    text geo_nta2020 FK
+    text geo_date_key FK
+  }
+  cpdb_commitments {
+    number ccnonexempt
+    text sagencyname
+    text typc
+    text commitmentdescription
+    number nccstate
+    text sagencyacro
+    number magency
+    text maprojid
+    number totalcityplannedcommit
+    number nccfederal
+    number totalplannedcommit
+    number totalnoncityplannedcommit
+    text projectid
+    text budgetline
+    number nccother
+    text projectdescription
+    text projecttype
+    calendar_date plancommdate
+    text typcname
+    text ccpversion
+    text commitmentcode
+    number ccexempt
+    text geo_borough
+    text geo_date_key FK
+  }
+  capital_dashboard_budget_spend_fy {
+    text fiscal_year
+    text managing_agency
+    text reporting_period
+    text fms_id
+    number non_city
+    number total_budget_city_non_city
+    number spend
+    number city
+    text geo_borough
+  }
+  capital_dashboard_spend_history {
+    number budget_variance_1
+    text managing_agency
+    text fms_id
+    number spend_to_date
+    number total_budget
+    number budget_variance
+    number spend_to_date_1
+    number year_month_reported
+    text geo_borough
+  }
+  capital_dashboard_schedule_history {
+    text current_phase
+    number variance_day
+    text reason_for_forecast_completion_change
+    number reporting_period
+    number pid
+    calendar_date data_date
+    text completion_date_type
+    text agency_project_name
+    calendar_date completion_date
+    text managing_agency
+    text geo_borough
+    text geo_date_key FK
+  }
+  state_of_good_repair_needs {
+    number plan_yr
+    text component
+    text asset_name
+    text agency_name
+    number asset_num
+    text prog_num
+    text suffix2
+    text address
+    text discipline
+    text system
+    text publication_date
+    text capisid_bc
+    calendar_date survey_date
+    number activity_cost
+    text geo_borough
+  }
+  interagency_coordination_construction_permits {
+    number contract_value_op
+    text park_impact_type
+    text construction_manager_op
+    calendar_date conditional_letter_issued
+    calendar_date construction_kickoff_op
+    calendar_date expected_construction_end_date_op
+    calendar_date actual_construction_end_date_op
+    text contractor_for_construction_permit_firm_name
+    text impacted_park_name_s
+    calendar_date construction_permit_request_received_date
+    text borough
+    text impacted_parks_division_s
+    calendar_date final_acceptance_of_park_by_borough
+    calendar_date created
+    calendar_date mass_mailing_3_received_date
+    text mass_mailing_2_received_date
+    text design_consultant_op
+    calendar_date design_completion_date_op
+    calendar_date latest_site_visit
+    calendar_date project_received_date
+    text forestry_permit_id_number
+    calendar_date borough_approval_date
+    text primary_scope_of_work
+    calendar_date permit_issuance_date
+    calendar_date modified
+    calendar_date permit_start_date
+    calendar_date original_permit_expiration_date
+    calendar_date latest_permit_extension_amendment_request_date
+    text construction_permit_id
+    calendar_date latest_permit_extension_amendment_issuance_date
+    calendar_date latest_permit_expiration_date
+    calendar_date substantial_completion_date_op
+    text multisite_project
+    text coordinates
+    text public_design_commission_approval_required
+    calendar_date final_inspection_date
+    calendar_date latest_inspection_site_visit
+    text address_intersection
+    calendar_date punchlist_generated
+    text sponsoring_agency_entity
+    text scoping_response_due_date_op
+    text project_id_number_op
+    text impacted_park_id_s
+    calendar_date scoping_initiated_kick_off_op
+    calendar_date preliminary_public_design_commission_approval
+    text current_phase
+    text construction_manager_company_op
+    calendar_date final_acceptance_letter_date
+    calendar_date mass_mailing_1_received_date
+    calendar_date final_public_design_commission_approval
+    text project_description_type
+    text project_name
+    text forestry_permit_status
+    text permit_amendment_content
+    text construction_permit_special_conditions
+    text exploratory_permit_id
+    text geo_borough FK
+    text geo_date_key FK
+  }
+  capital_commitment_plan {
+    number year3_amt
+    text projtype
+    number year4_amt
+    number year2_amt
+    text budline_desc
+    number num_yrs_prsnt
+    text funding
+    text budline
+    number year1_amt
+    number pub_date
+    text projtype_desc
+    number yr1_fy
+    number year5_amt
+    text geo_borough
+  }
+  capital_commitment_actuals {
+    number cty_fnd
+    text fisc_yr
+    text agy
+    text pub_dt
+    text remark
+    number all_fnd
+    text geo_borough
+  }
+  capital_budget {
+    text proj_type_name
+    text funding
+    number year1_amt
+    number year3_amt
+    text budline
+    number year4_amt
+    text budline_title
+    number yr1_fy
+    text proj_type
+    number year2_amt
+    number pub_date
+    text geo_borough
+  }
+  capital_project_detail_dollars {
+    number city_plan_total
+    text scope_text
+    text pub_date
+    number city_yr2_plan
+    number noncity_yr3_plan
+    text typ_category_name
+    text delay_desc
+    text site_descr
+    text managing_agcy_cd
+    text boro
+    text project_descr
+    number noncity_yr2_plan
+    number noncity_rtc
+    number city_prior_actual
+    number fy_yr1_plan
+    number noncity_plan_total
+    number city_yr1_plan
+    number noncity_yr5_plan
+    number community_board
+    number city_yr5_plan
+    number city_yr4_plan
+    number noncity_yr4_plan
+    text project_id
+    number city_yr3_plan
+    number noncity_prior_actual
+    number noncity_yr1_plan
+    number city_rtc
+    text managing_agcy
+    text budget_line
+    number orig_bud_amt
+    text geo_borough FK
+  }
+  capital_project_detail_milestones {
+    calendar_date orig_end_date
+    text task_description
+    text project_descr
+    number seq_number
+    calendar_date task_start_date
+    calendar_date task_end_date
+    text managing_agcy_cd
+    text pub_date
+    text managing_agcy
+    text project_id
+    text boro
+    calendar_date orig_start_date
+    text geo_borough FK
+  }
+  ten_year_capital_strategy {
+    number total
+    number year8_amt
+    number year7_amt
+    text projtype
+    number year2_amt
+    number year5_amt
+    text pub_date
+    number year10_amt
+    number year1_amt
+    text projtype_desc
+    number year9_amt
+    number year6_amt
+    text typc
+    number year3_amt
+    text yr1_fy
+    number year4_amt
+    text funding
+    text geo_borough
+  }
+  lot_info ||--o{ violations : "bblid"
+  lot_info ||--o{ built : "bblid"
+  nta_2020 ||--o{ dismissals : "nta"
+  lot_info ||--o{ dismissals : "bbl"
+  inspection ||--o{ tree_damage : "inspectionid"
+  violations ||--o{ tree_damage : "violationid"
+  reinspection ||--o{ tree_damage : "reinspectionid"
+  lot_info ||--o{ tree_damage : "bblid"
+  nta_2020 ||--o{ correspondences : "nta"
+  lot_info ||--o{ correspondences : "bbl"
+  nta_2020 ||--o{ pedestrian_demand : "nta2020"
+  nta_2020 ||--o{ bikes_in_buildings_requests : "nta"
+  lot_info ||--o{ bikes_in_buildings_requests : "bbl"
+  nta_2020 ||--o{ street_seats_2021_2024 : "nta"
+  lot_info ||--o{ street_seats_2021_2024 : "bbl"
+  lot_info ||--o{ complaints_311 : "bbl"
+  nta_2020 ||--o{ census_demographics_nta : "geographic_area_neighborhood_tabulation_area_nta_code"
+  motor_vehicle_collisions_crashes ||--o{ motor_vehicle_collisions_person : "collision_id"
+  nta_2020 ||--o{ street_tree_census_2015 : "nta"
+  lot_info ||--o{ street_tree_census_2015 : "bbl"
+  street_and_highway_capital_reconstruction_projec ||--o{ capital_projects_dashboard : "fms_id"
+  dim_borough ||--o{ violations : "geo_borough"
+  dim_parcel ||--o{ violations : "geo_bbl"
+  dim_date ||--o{ violations : "geo_date_key"
+  dim_borough ||--o{ lot_info : "geo_borough"
+  dim_parcel ||--o{ lot_info : "geo_bbl"
+  dim_borough ||--o{ built : "geo_borough"
+  dim_parcel ||--o{ built : "geo_bbl"
+  dim_date ||--o{ built : "geo_date_key"
+  dim_borough ||--o{ dismissals : "geo_borough"
+  dim_nta ||--o{ dismissals : "geo_nta2020"
+  dim_parcel ||--o{ dismissals : "geo_bbl"
+  dim_date ||--o{ dismissals : "geo_date_key"
+  dim_borough ||--o{ tree_damage : "geo_borough"
+  dim_parcel ||--o{ tree_damage : "geo_bbl"
+  dim_date ||--o{ tree_damage : "geo_date_key"
+  dim_borough ||--o{ correspondences : "geo_borough"
+  dim_nta ||--o{ correspondences : "geo_nta2020"
+  dim_parcel ||--o{ correspondences : "geo_bbl"
+  dim_date ||--o{ correspondences : "geo_date_key"
+  dim_borough ||--o{ ramp_progress : "geo_borough"
+  dim_borough ||--o{ ramp_complaints : "geo_borough"
+  dim_borough ||--o{ ramp_locations : "geo_borough"
+  dim_borough ||--o{ curb_metal_protruding : "geo_borough"
+  dim_borough ||--o{ step_streets : "geo_borough"
+  dim_borough ||--o{ street_resurfacing_schedule : "geo_borough"
+  dim_segment ||--o{ street_resurfacing_schedule : "geo_segment_id"
+  dim_date ||--o{ street_resurfacing_schedule : "geo_date_key"
+  dim_borough ||--o{ weekly_construction : "geo_borough"
+  dim_borough ||--o{ pedestrian_demand : "geo_borough"
+  dim_nta ||--o{ pedestrian_demand : "geo_nta2020"
+  dim_segment ||--o{ pedestrian_demand : "geo_segment_id"
+  dim_borough ||--o{ vzv_enhanced_crossings : "geo_borough"
+  dim_nta ||--o{ vzv_enhanced_crossings : "geo_nta2020"
+  dim_date ||--o{ vzv_enhanced_crossings : "geo_date_key"
+  dim_borough ||--o{ holiday_construction_embargo_intersection : "geo_borough"
+  dim_borough ||--o{ vzv_street_improvement_projects_sip_corridor : "geo_borough"
+  dim_nta ||--o{ vzv_street_improvement_projects_sip_corridor : "geo_nta2020"
+  dim_borough ||--o{ bi_annual_pedestrian_counts : "geo_borough"
+  dim_borough ||--o{ bikes_in_buildings_requests : "geo_borough"
+  dim_nta ||--o{ bikes_in_buildings_requests : "geo_nta2020"
+  dim_parcel ||--o{ bikes_in_buildings_requests : "geo_bbl"
+  dim_date ||--o{ bikes_in_buildings_requests : "geo_date_key"
+  dim_borough ||--o{ vzv_priority_intersections : "geo_borough"
+  dim_nta ||--o{ vzv_priority_intersections : "geo_nta2020"
+  dim_borough ||--o{ street_pavement_ratings : "geo_borough"
+  dim_date ||--o{ street_pavement_ratings : "geo_date_key"
+  dim_borough ||--o{ vzv_bike_priority_areas : "geo_borough"
+  dim_nta ||--o{ vzv_bike_priority_areas : "geo_nta2020"
+  dim_borough ||--o{ accessible_pedestrian_signal_locations : "geo_borough"
+  dim_date ||--o{ accessible_pedestrian_signal_locations : "geo_date_key"
+  dim_date ||--o{ parking_permit_for_people_with_disabilities_pppd : "geo_date_key"
+  dim_borough ||--o{ vzv_leading_pedestrian_interval_signals : "geo_borough"
+  dim_nta ||--o{ vzv_leading_pedestrian_interval_signals : "geo_nta2020"
+  dim_borough ||--o{ seating_locations : "geo_borough"
+  dim_date ||--o{ seating_locations : "geo_date_key"
+  dim_borough ||--o{ vzv_safe_streets_for_seniors : "geo_borough"
+  dim_nta ||--o{ vzv_safe_streets_for_seniors : "geo_nta2020"
+  dim_borough ||--o{ exclusive_pedestrian_signal_barnes_dance_locatio : "geo_borough"
+  dim_borough ||--o{ street_direction_change_requests_2019_present : "geo_borough"
+  dim_date ||--o{ street_direction_change_requests_2019_present : "geo_date_key"
+  dim_borough ||--o{ vzv_street_improvement_projects_sip_intersection : "geo_borough"
+  dim_nta ||--o{ vzv_street_improvement_projects_sip_intersection : "geo_nta2020"
+  dim_borough ||--o{ street_construction_permits_cranes : "geo_borough"
+  dim_date ||--o{ street_construction_permits_cranes : "geo_date_key"
+  dim_borough ||--o{ bicycle_parking_shelters : "geo_borough"
+  dim_date ||--o{ bicycle_parking_shelters : "geo_date_key"
+  dim_borough ||--o{ protected_streets_intersection_dataset : "geo_borough"
+  dim_date ||--o{ protected_streets_intersection_dataset : "geo_date_key"
+  dim_borough ||--o{ bicycle_and_pedestrian_count_sensors : "geo_borough"
+  dim_nta ||--o{ bicycle_and_pedestrian_count_sensors : "geo_nta2020"
+  dim_date ||--o{ bicycle_and_pedestrian_count_sensors : "geo_date_key"
+  dim_borough ||--o{ nyc_dot_pedestrian_plazas_point_feature : "geo_borough"
+  dim_borough ||--o{ shared_e_scooter_parking_corrals : "geo_borough"
+  dim_borough ||--o{ pedestrian_space_added : "geo_borough"
+  dim_date ||--o{ parking_permit_for_people_with_disabilities_pppd_2 : "geo_date_key"
+  dim_borough ||--o{ street_closures_due_to_construction_activities_b : "geo_borough"
+  dim_segment ||--o{ street_closures_due_to_construction_activities_b : "geo_segment_id"
+  dim_date ||--o{ street_closures_due_to_construction_activities_b : "geo_date_key"
+  dim_borough ||--o{ vzv_street_team_flyers : "geo_borough"
+  dim_nta ||--o{ vzv_street_team_flyers : "geo_nta2020"
+  dim_borough ||--o{ intercity_bus_stop_permits : "geo_borough"
+  dim_date ||--o{ intercity_bus_stop_permits : "geo_date_key"
+  dim_borough ||--o{ street_closures_due_to_construction_activities_b_2 : "geo_borough"
+  dim_date ||--o{ street_closures_due_to_construction_activities_b_2 : "geo_date_key"
+  dim_borough ||--o{ open_streets_locations : "geo_borough"
+  dim_segment ||--o{ open_streets_locations : "geo_segment_id"
+  dim_borough ||--o{ parking_meters_parknyc_block_faces : "geo_borough"
+  dim_borough ||--o{ dot_in_house_street_resurfacing_projects : "geo_borough"
+  dim_segment ||--o{ dot_in_house_street_resurfacing_projects : "geo_segment_id"
+  dim_date ||--o{ dot_in_house_street_resurfacing_projects : "geo_date_key"
+  dim_borough ||--o{ protected_streets_block_dataset : "geo_borough"
+  dim_date ||--o{ protected_streets_block_dataset : "geo_date_key"
+  dim_borough ||--o{ bicycle_parking : "geo_borough"
+  dim_date ||--o{ bicycle_parking : "geo_date_key"
+  dim_borough ||--o{ street_closures_due_to_construction_activities_b_3 : "geo_borough"
+  dim_date ||--o{ street_closures_due_to_construction_activities_b_3 : "geo_date_key"
+  dim_borough ||--o{ bus_lanes_local_streets : "geo_borough"
+  dim_segment ||--o{ bus_lanes_local_streets : "geo_segment_id"
+  dim_date ||--o{ bus_lanes_local_streets : "geo_date_key"
+  dim_borough ||--o{ street_pothole_work_orders_closed_dataset : "geo_borough"
+  dim_date ||--o{ street_pothole_work_orders_closed_dataset : "geo_date_key"
+  dim_borough ||--o{ new_york_city_bike_routes : "geo_borough"
+  dim_segment ||--o{ new_york_city_bike_routes : "geo_segment_id"
+  dim_date ||--o{ new_york_city_bike_routes : "geo_date_key"
+  dim_borough ||--o{ carshare_locations_curbside : "geo_borough"
+  dim_borough ||--o{ street_and_highway_capital_reconstruction_projec : "geo_borough"
+  dim_date ||--o{ temporary_parking_permit_for_people_with_disabil : "geo_date_key"
+  dim_borough ||--o{ street_seats_2021_2024 : "geo_borough"
+  dim_nta ||--o{ street_seats_2021_2024 : "geo_nta2020"
+  dim_parcel ||--o{ street_seats_2021_2024 : "geo_bbl"
+  dim_borough ||--o{ holiday_construction_embargo_block : "geo_borough"
+  dim_borough ||--o{ street_and_highway_capital_reconstruction_projec_2 : "geo_borough"
+  dim_borough ||--o{ street_network_changes : "geo_borough"
+  dim_date ||--o{ street_network_changes : "geo_date_key"
+  dim_borough ||--o{ newsrack_inspections : "geo_borough"
+  dim_date ||--o{ newsrack_inspections : "geo_date_key"
+  dim_borough ||--o{ nyc_dot_pedestrian_plazas_polygon : "geo_borough"
+  dim_borough ||--o{ encroachments_and_defacements : "geo_borough"
+  dim_borough ||--o{ complaints_311 : "geo_borough"
+  dim_parcel ||--o{ complaints_311 : "geo_bbl"
+  dim_date ||--o{ complaints_311 : "geo_date_key"
+  dim_borough ||--o{ street_centerline : "geo_borough"
+  dim_segment ||--o{ street_centerline : "geo_segment_id"
+  dim_date ||--o{ street_centerline : "geo_date_key"
+  dim_borough ||--o{ nta_2020 : "geo_borough"
+  dim_nta ||--o{ nta_2020 : "geo_nta2020"
+  dim_borough ||--o{ census_demographics_nta : "geo_borough"
+  dim_nta ||--o{ census_demographics_nta : "geo_nta2020"
+  dim_borough ||--o{ motor_vehicle_collisions_crashes : "geo_borough"
+  dim_date ||--o{ motor_vehicle_collisions_crashes : "geo_date_key"
+  dim_borough ||--o{ motor_vehicle_collisions_person : "geo_borough"
+  dim_date ||--o{ motor_vehicle_collisions_person : "geo_date_key"
+  dim_borough ||--o{ sidewalk_cafes : "geo_borough"
+  dim_nta ||--o{ sidewalk_cafes : "geo_nta2020"
+  dim_borough ||--o{ street_tree_census_2015 : "geo_borough"
+  dim_nta ||--o{ street_tree_census_2015 : "geo_nta2020"
+  dim_parcel ||--o{ street_tree_census_2015 : "geo_bbl"
+  dim_date ||--o{ street_tree_census_2015 : "geo_date_key"
+  dim_borough ||--o{ forestry_inspections : "geo_borough"
+  dim_nta ||--o{ forestry_inspections : "geo_nta2020"
+  dim_borough ||--o{ water_sewer_permits : "geo_borough"
+  dim_parcel ||--o{ water_sewer_permits : "geo_bbl"
+  dim_date ||--o{ water_sewer_permits : "geo_date_key"
+  dim_borough ||--o{ street_construction_permits : "geo_borough"
+  dim_date ||--o{ street_construction_permits : "geo_date_key"
+  dim_borough ||--o{ dob_stalled_construction_sites : "geo_borough"
+  dim_borough ||--o{ sidewalk_planimetric : "geo_borough"
+  dim_nta ||--o{ sidewalk_planimetric : "geo_nta2020"
+  dim_borough ||--o{ curbs_planimetric : "geo_borough"
+  dim_nta ||--o{ curbs_planimetric : "geo_nta2020"
+  dim_borough ||--o{ roadbed_planimetric : "geo_borough"
+  dim_nta ||--o{ roadbed_planimetric : "geo_nta2020"
+  dim_borough ||--o{ median_planimetric : "geo_borough"
+  dim_nta ||--o{ median_planimetric : "geo_nta2020"
+  dim_borough ||--o{ boardwalk_planimetric : "geo_borough"
+  dim_nta ||--o{ boardwalk_planimetric : "geo_nta2020"
+  dim_borough ||--o{ open_space_parks_planimetric : "geo_borough"
+  dim_nta ||--o{ open_space_parks_planimetric : "geo_nta2020"
+  dim_borough ||--o{ elevation_points_planimetric : "geo_borough"
+  dim_nta ||--o{ elevation_points_planimetric : "geo_nta2020"
+  dim_borough ||--o{ vzv_arterial_slow_zones : "geo_borough"
+  dim_nta ||--o{ vzv_arterial_slow_zones : "geo_nta2020"
+  dim_borough ||--o{ vzv_neighborhood_slow_zones : "geo_borough"
+  dim_nta ||--o{ vzv_neighborhood_slow_zones : "geo_nta2020"
+  dim_borough ||--o{ vzv_priority_corridors : "geo_borough"
+  dim_nta ||--o{ vzv_priority_corridors : "geo_nta2020"
+  dim_borough ||--o{ vzv_priority_zones_areas : "geo_borough"
+  dim_nta ||--o{ vzv_priority_zones_areas : "geo_nta2020"
+  dim_borough ||--o{ vzv_speed_humps : "geo_borough"
+  dim_nta ||--o{ vzv_speed_humps : "geo_nta2020"
+  dim_date ||--o{ vzv_speed_humps : "geo_date_key"
+  dim_borough ||--o{ speed_reducer_tracking_srts : "geo_borough"
+  dim_segment ||--o{ speed_reducer_tracking_srts : "geo_segment_id"
+  dim_date ||--o{ speed_reducer_tracking_srts : "geo_date_key"
+  dim_borough ||--o{ vzv_speed_limits : "geo_borough"
+  dim_nta ||--o{ vzv_speed_limits : "geo_nta2020"
+  dim_borough ||--o{ vzv_turn_traffic_calming : "geo_borough"
+  dim_nta ||--o{ vzv_turn_traffic_calming : "geo_nta2020"
+  dim_borough ||--o{ vzv_signal_timing_25mph : "geo_borough"
+  dim_nta ||--o{ vzv_signal_timing_25mph : "geo_nta2020"
+  dim_borough ||--o{ vzv_senior_centers : "geo_borough"
+  dim_nta ||--o{ vzv_senior_centers : "geo_nta2020"
+  dim_borough ||--o{ vzv_workshops_locations : "geo_borough"
+  dim_borough ||--o{ vision_zero_base_report : "geo_borough"
+  dim_nta ||--o{ vision_zero_base_report : "geo_nta2020"
+  dim_parcel ||--o{ vision_zero_base_report : "geo_bbl"
+  dim_date ||--o{ raised_crosswalk_locations : "geo_date_key"
+  dim_borough ||--o{ public_plazas_planimetric : "geo_borough"
+  dim_nta ||--o{ public_plazas_planimetric : "geo_nta2020"
+  dim_borough ||--o{ privately_owned_public_spaces_pops : "geo_borough"
+  dim_parcel ||--o{ privately_owned_public_spaces_pops : "geo_bbl"
+  dim_borough ||--o{ bus_stop_shelters : "geo_borough"
+  dim_borough ||--o{ walk_to_a_park_service_area : "geo_borough"
+  dim_nta ||--o{ walk_to_a_park_service_area : "geo_nta2020"
+  dim_borough ||--o{ capital_projects_dashboard : "geo_borough"
+  dim_date ||--o{ cpdb_projects : "geo_date_key"
+  dim_borough ||--o{ cpdb_projects_points : "geo_borough"
+  dim_nta ||--o{ cpdb_projects_points : "geo_nta2020"
+  dim_date ||--o{ cpdb_projects_points : "geo_date_key"
+  dim_borough ||--o{ cpdb_projects_polygons : "geo_borough"
+  dim_nta ||--o{ cpdb_projects_polygons : "geo_nta2020"
+  dim_date ||--o{ cpdb_projects_polygons : "geo_date_key"
+  dim_date ||--o{ cpdb_commitments : "geo_date_key"
+  dim_date ||--o{ capital_dashboard_schedule_history : "geo_date_key"
+  dim_borough ||--o{ interagency_coordination_construction_permits : "geo_borough"
+  dim_date ||--o{ interagency_coordination_construction_permits : "geo_date_key"
+  dim_borough ||--o{ capital_project_detail_dollars : "geo_borough"
+  dim_borough ||--o{ capital_project_detail_milestones : "geo_borough"
