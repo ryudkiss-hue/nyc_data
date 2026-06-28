@@ -13,9 +13,23 @@ env:
   SERVICE_NAME: nyc-sidewalk-toolkit
 
 jobs:
-  deploy:
+  check-secrets:
     runs-on: ubuntu-latest
-    if: ${{ secrets.GCP_PROJECT_ID != '' }}
+    outputs:
+      has_secret: ${{ steps.check.outputs.has_secret }}
+    steps:
+      - id: check
+        run: |
+          if [ -n "${{ secrets.GCP_PROJECT_ID }}" ]; then
+            echo "has_secret=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_secret=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  deploy:
+    needs: check-secrets
+    if: needs.check-secrets.outputs.has_secret == 'true'
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
@@ -31,7 +45,7 @@ jobs:
           service_account: ${{ secrets.SERVICE_ACCOUNT }}
 
       - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
+        uses: google-github-actions/setup-gcloud@v3
 
       - name: Build Docker image
         run: |
