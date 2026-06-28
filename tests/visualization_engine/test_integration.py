@@ -7,7 +7,7 @@ and that the total count matches expectations.
 import plotly.graph_objects as go
 
 from app.visualization_engine import (
-    KPICards,
+    MetricCards as KPICards,
     PhaseBVisualizations,
     PhaseCVisualizations,
     PhaseDVisualizations,

@@ -25,7 +25,7 @@ for p in [ROOT_PATH, SRC_PATH]:
 
 from app.callbacks.analytics import AnalyticsEngine
 from app.dash_layouts_analytics_integration import render_analytics_integration_tabs
-from app.services.analytics_service import get_kpi_metrics, validate_filters
+from app.services.analytics_service import get_metric_metrics as get_kpi_metrics, validate_filters
 
 # =============================================================================
 # STAGING DATA: REALISTIC VOLUMES
