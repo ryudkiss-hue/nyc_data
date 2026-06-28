@@ -425,7 +425,7 @@ def register_navigation_callbacks(app):
                 styles.append({
                     "cursor": "pointer",
                     "transition": "all 0.2s ease",
-                    "border": f"2px solid #0066CC",
+                    "border": "2px solid #0066CC",
                     "backgroundColor": "#E7F5FF",
                 })
             else:

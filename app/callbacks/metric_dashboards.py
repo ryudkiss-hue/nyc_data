@@ -4,13 +4,14 @@ Connects Metric materialization pipeline to interactive Dash visualizations.
 Enables real-time filtering, drill-down, and dimension selection.
 """
 
-from typing import Dict, List, Any, Tuple
 import logging
 from datetime import date
-from dash import Input, Output, State, dcc, html, callback
-import plotly.graph_objects as go
+from typing import Any, Dict, List, Tuple
 
+import plotly.graph_objects as go
+from dash import Input, Output, State, callback, dcc, html
 from socrata_toolkit.metric.registry import MetricRegistry
+
 from socrata_toolkit.viz.chart_factory import ChartFactory
 
 logger = logging.getLogger(__name__)

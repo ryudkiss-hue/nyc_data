@@ -8,15 +8,15 @@ Includes:
 """
 
 from app.components.filter_system import register_filter_callbacks, render_filter_bar
-from app.components.metric_cards import register_metric_callbacks, render_metric_dashboard
 from app.components.main_navigation import (
+    get_navigation_css,
     get_navigation_items,
+    register_navigation_callbacks,
     render_main_navigation,
     render_mobile_navigation_trigger,
     render_navigation_store,
-    register_navigation_callbacks,
-    get_navigation_css,
 )
+from app.components.metric_cards import register_metric_callbacks, render_metric_dashboard
 
 __all__ = [
     "render_filter_bar",

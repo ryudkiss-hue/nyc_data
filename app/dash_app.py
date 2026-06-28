@@ -157,6 +157,7 @@ except Exception as e:
 
 # Initialize cache audit table for observability tracking (after DataManager to avoid DB lock)
 from app.utils.cache_manager import init_cache_audit_table
+
 try:
     # Use DataManager's existing connection to avoid locking issues
     if hasattr(dm, 'manager') and dm.manager is not None:
