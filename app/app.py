@@ -310,6 +310,30 @@ def _sidebar_nav() -> tuple[str, dict]:
             st.cache_data.clear()
             st.rerun()
 
+        with st.expander("📥 Export Dashboard Reports", expanded=False):
+            st.markdown("Export all dashboards and datasets to a comprehensive PDF.")
+            if st.button("Generate Full PDF Report", use_container_width=True):
+                with st.spinner("Compiling charts and statistics..."):
+                    import sys
+                    sys.path.append(str(Path(__file__).resolve().parents[2]))
+                    try:
+                        from generate_pdf_report import generate_report
+                        generate_report("docs/reports/verification_report.pdf")
+                        st.success("Report Generated!")
+                    except Exception as e:
+                        st.error(f"Failed to generate: {e}")
+            
+            if os.path.exists("docs/reports/verification_report.pdf"):
+                with open("docs/reports/verification_report.pdf", "rb") as f:
+                    st.download_button(
+                        label="Download PDF",
+                        data=f.read(),
+                        file_name="mission_control_report.pdf",
+                        mime="application/pdf",
+                        use_container_width=True,
+                        type="primary"
+                    )
+
         # Keyboard shortcuts help
         with st.expander("⌨️ Keyboard Shortcuts"):
             st.markdown(
