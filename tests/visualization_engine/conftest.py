@@ -196,9 +196,9 @@ def kpi_test_data():
         for i, kpi_name in enumerate(kpi_names):
             data_rows.append(
                 {
-                    "kpi_name": kpi_name,
+                    "metric_name": kpi_name,
                     "borough": borough,
-                    "kpi_value": 50 + (i * 2) % 40,
+                    "metric_value": 50 + (i * 2) % 40,
                     "metric_category": kpi_name.replace("_", " ").title(),
                     "analytics_timestamp": datetime.now(),
                 }

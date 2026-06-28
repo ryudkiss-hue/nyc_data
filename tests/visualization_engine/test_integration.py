@@ -193,7 +193,7 @@ class TestKPICards:
         """Test KPI summary table renders successfully."""
         kpi = KPICards(mock_connection)
         mock_connection.fetch_dataframe.return_value = kpi_test_data
-        fig, stats = kpi.render_kpi_summary_table()
+        fig, stats = kpi.render_metric_summary_table()
 
         assert isinstance(fig, go.Figure)
         assert isinstance(stats, StatisticsPanel)
@@ -202,7 +202,7 @@ class TestKPICards:
         """Test KPI comparison chart renders successfully."""
         kpi = KPICards(mock_connection)
         mock_connection.fetch_dataframe.return_value = kpi_test_data
-        fig, stats = kpi.render_kpi_comparison_chart()
+        fig, stats = kpi.render_metric_comparison_chart()
 
         assert isinstance(fig, go.Figure)
         assert isinstance(stats, StatisticsPanel)

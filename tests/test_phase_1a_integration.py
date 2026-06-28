@@ -157,7 +157,7 @@ class TestSocrataLoader:
             return
 
         datasets = loader.load_config(config_path)
-        assert len(datasets) == 57, f"Expected 57 datasets, got {len(datasets)}"
+        assert len(datasets) == 117, f"Expected 117 datasets, got {len(datasets)}"
 
         cached = [d for d in datasets if d.source == 'cache']
         socrata = [d for d in datasets if d.source == 'socrata']

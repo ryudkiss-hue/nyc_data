@@ -163,16 +163,16 @@ class TestPhase4DashboardIntegration:
 
     def test_kpi_cards_render_18_metrics(self):
         """Test: KPI dashboard renders all 18 metrics."""
-        from app.components.kpi_cards import KPI_CONFIG
+        from app.components.metric_cards import METRIC_CONFIG
 
-        total_kpis = sum(len(cat["kpis"]) for cat in KPI_CONFIG.values())
-        assert total_kpis == 18
+        total_metrics = sum(len(cat_data["metrics"]) for cat_data in METRIC_CONFIG.values())
+        assert total_metrics == 18, f"Expected 18 KPIs, found {total_metrics}"
 
     def test_kpi_cards_has_4_categories(self):
         """Test: KPI dashboard has 4 categories."""
-        from app.components.kpi_cards import KPI_CONFIG
+        from app.components.metric_cards import METRIC_CONFIG
 
-        categories = list(KPI_CONFIG.keys())
+        categories = list(METRIC_CONFIG.keys())
         assert len(categories) == 4
         assert "Inspection Performance" in categories
         assert "Quality Metrics" in categories

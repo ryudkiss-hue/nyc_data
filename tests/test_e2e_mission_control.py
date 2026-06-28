@@ -17,15 +17,23 @@ def e2e_db(tmp_path):
 
     original_path = app.data_loader._DUCKDB_PATH
     app.data_loader._DUCKDB_PATH = db_path
+    
+    # Disable L2 disk caches so we hit the mock
+    original_disk = getattr(app.data_loader, "_DISK_CACHE_AVAILABLE", False)
+    app.data_loader._DISK_CACHE_AVAILABLE = False
+    
     yield db_path
     app.data_loader._DUCKDB_PATH = original_path
+    app.data_loader._DISK_CACHE_AVAILABLE = original_disk
 
 
 def test_full_ingestion_to_orchestration_cycle(e2e_db, mocker):
     """End-to-End smoke test for the complete Mission Control lifecycle."""
-    # 1. Mock SODA3 API
+    # 1. Mock SODA3 API and legacy cache
     mock_client = MagicMock()
     mocker.patch("app.data_loader.get_socrata_client", return_value=mock_client)
+    mocker.patch("app.data_loader._read_parquet_cache", return_value=None)
+    mocker.patch("app.data_loader._get_duckdb_watermark", return_value=(None, None))
 
     # Payload for 'lot_info'
     raw_data = [

@@ -241,7 +241,8 @@ class MaterialDegradationAnalysis:
                     survival_probs.append(surv_prob)
 
                     # Simple Greenwood CI
-                    var = (events_at_t) / (at_risk * (at_risk - events_at_t))
+                    denom = at_risk * (at_risk - events_at_t)
+                    var = (events_at_t) / denom if denom > 0 else 0
                     se = np.sqrt(var) if var > 0 else 0
                     ci_lower_list.append(max(0, surv_prob - 1.96 * se))
                     ci_upper_list.append(min(1, surv_prob + 1.96 * se))
