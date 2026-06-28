@@ -13,4 +13,4 @@ apscheduler>=3.10
 langchain-openai>=0.1.0
 duckdb-engine>=0.9.0  # SQLAlchemy dialect for DuckDB 1.x+
 pyinstaller>=6.21.0
-python-multipart>=0.0.27
+python-multipart>=0.0.32
