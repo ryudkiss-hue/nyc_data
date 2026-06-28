@@ -77,14 +77,12 @@ def initialize_app(auto_sync: bool = True) -> NYCDataRegistry:
 
 def get_registry() -> NYCDataRegistry:
     """Get the global registry instance."""
-    global _REGISTRY
     if _REGISTRY is None:
         raise RuntimeError("Registry not initialized. Call initialize_app() first.")
     return _REGISTRY
 
 def sync_registry() -> None:
     """Manually sync registry with Socrata API."""
-    global _REGISTRY
     if _REGISTRY is None:
         raise RuntimeError("Registry not initialized. Call initialize_app() first.")
     logger.info("Manual registry sync requested...")
