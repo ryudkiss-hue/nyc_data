@@ -89,7 +89,7 @@ USER
   - IQR method, Z-score, IsolationForest (sklearn)
   - Per-column anomaly flags
 
-- **compute_borough_metrics()** (`core.py`): Borough-level Metrics
+- **compute_borough_metrics()** (`core.py`): Borough-level KPIs
   - Aggregation by geographic region
   - SLA compliance per borough
 
@@ -131,7 +131,7 @@ USER
 **Files**: `src/socrata_toolkit/viz/`
 
 - **Plotly**: Interactive charting
-  - Borough bar charts, Metric gauges, Gantt charts
+  - Borough bar charts, KPI gauges, Gantt charts
   - Hypothesis testing, waterfall, heatmap
   - Inspector performance box plots
 

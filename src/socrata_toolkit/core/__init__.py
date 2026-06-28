@@ -101,7 +101,6 @@ from ..query_builder import (
 )
 from .soql_builder import SoQLBuilder
 
-
 # ---------------------------------------------------------------------------
 # Utility shims (referenced by tests and external consumers)
 # ---------------------------------------------------------------------------
