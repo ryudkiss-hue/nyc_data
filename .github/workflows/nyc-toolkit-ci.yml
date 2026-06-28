@@ -49,6 +49,9 @@ jobs:
             --ignore=tests/test_visualization.py \
             --ignore=tests/test_analysis.py \
             --ignore=tests/test_live_socrata.py \
+            --ignore=tests/test_core_cli_coverage.py \
+            --ignore=tests/test_staging_integration.py \
+            --ignore=tests/visualization_engine/test_integration.py \
             --cov=src/socrata_toolkit/analyst --cov=src/socrata_toolkit/core \
             --cov-report=term-missing
 

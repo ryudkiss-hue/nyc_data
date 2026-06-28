@@ -15,6 +15,7 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    if: ${{ secrets.GCP_PROJECT_ID != '' }}
     permissions:
       contents: read
       id-token: write

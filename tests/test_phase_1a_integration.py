@@ -30,12 +30,10 @@ from sql_executor import SQLExecutor
 class TestMotherDuckBridge:
     """Test MotherDuck Bridge module."""
 
-    def __init__(self):
-        self.unique_id = str(uuid.uuid4())[:8]
-
     def test_connection_local_duckdb(self):
         """Test local DuckDB connection (fallback)."""
-        bridge = MotherDuckBridge(use_motherduck=False, db_name=f"test_local_{self.unique_id}")
+        unique_id = str(uuid.uuid4())[:8]
+        bridge = MotherDuckBridge(use_motherduck=False, db_name=f"test_local_{unique_id}")
         assert bridge.connection is not None, "Connection should not be None"
         assert bridge.is_local, "Should be local DuckDB"
         bridge.close()

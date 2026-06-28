@@ -101,6 +101,30 @@ from ..query_builder import (
 )
 from .soql_builder import SoQLBuilder
 
+
+# ---------------------------------------------------------------------------
+# Utility shims (referenced by tests and external consumers)
+# ---------------------------------------------------------------------------
+
+def get_default(cfg: dict, *keys: str, default=None):
+    """Traverse nested dict via *keys, returning *default* if any key is absent."""
+    cur = cfg
+    for k in keys:
+        if not isinstance(cur, dict) or k not in cur:
+            return default
+        cur = cur[k]
+    return cur
+
+
+def load_local_config(path: str) -> dict:
+    """Load a JSON config file from *path*, returning an empty dict on error."""
+    import json
+    from pathlib import Path as _Path
+    try:
+        return json.loads(_Path(path).read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
 __all__ = [
     "COL_LAT",
     "COL_LON",
