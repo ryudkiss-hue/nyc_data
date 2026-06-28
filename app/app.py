@@ -311,28 +311,50 @@ def _sidebar_nav() -> tuple[str, dict]:
             st.rerun()
 
         with st.expander("📥 Export Dashboard Reports", expanded=False):
-            st.markdown("Export all dashboards and datasets to a comprehensive PDF.")
-            if st.button("Generate Full PDF Report", use_container_width=True):
-                with st.spinner("Compiling charts and statistics..."):
-                    import sys
-                    sys.path.append(str(Path(__file__).resolve().parents[2]))
-                    try:
-                        from generate_pdf_report import generate_report
-                        generate_report("docs/reports/verification_report.pdf")
-                        st.success("Report Generated!")
-                    except Exception as e:
-                        st.error(f"Failed to generate: {e}")
+            st.markdown("Export selected dashboards and datasets.")
             
-            if os.path.exists("docs/reports/verification_report.pdf"):
-                with open("docs/reports/verification_report.pdf", "rb") as f:
-                    st.download_button(
-                        label="Download PDF",
-                        data=f.read(),
-                        file_name="mission_control_report.pdf",
-                        mime="application/pdf",
-                        use_container_width=True,
-                        type="primary"
-                    )
+            export_datasets = st.multiselect(
+                "Datasets", 
+                ["Sidewalk Inspections", "Violations Ledger", "311 Service Requests", "Capital Projects"],
+                default=["Sidewalk Inspections", "Violations Ledger", "311 Service Requests", "Capital Projects"]
+            )
+            export_formats = st.multiselect(
+                "Formats",
+                ["PDF", "Excel", "PPTX"],
+                default=["PDF"]
+            )
+            export_limit = st.number_input("Row Limit (0 = No limit)", value=0, step=1000)
+            
+            if st.button("Generate Exports", use_container_width=True):
+                if not export_datasets or not export_formats:
+                    st.warning("Please select at least one dataset and format.")
+                else:
+                    with st.spinner("Compiling reports..."):
+                        import sys
+                        sys.path.append(str(Path(__file__).resolve().parents[2]))
+                        try:
+                            from export_engine import export_all
+                            out_files = export_all(export_datasets, export_formats, export_limit)
+                            st.session_state['export_files'] = out_files
+                            st.success("Reports Generated!")
+                        except Exception as e:
+                            st.error(f"Failed to generate: {e}")
+            
+            if 'export_files' in st.session_state:
+                st.markdown("### Ready to Download")
+                for fmt, path in st.session_state['export_files'].items():
+                    if os.path.exists(path):
+                        with open(path, "rb") as f:
+                            mime_type = "application/pdf" if fmt == "PDF" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" if fmt == "Excel" else "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                            file_ext = "pdf" if fmt == "PDF" else "xlsx" if fmt == "Excel" else "pptx"
+                            st.download_button(
+                                label=f"Download {fmt}",
+                                data=f.read(),
+                                file_name=f"mission_control_report.{file_ext}",
+                                mime=mime_type,
+                                use_container_width=True,
+                                key=f"download_{fmt}"
+                            )
 
         # Keyboard shortcuts help
         with st.expander("⌨️ Keyboard Shortcuts"):
