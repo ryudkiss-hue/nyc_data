@@ -1,4 +1,4 @@
-name: Deploy Mission Control to GitHub Pages
+name: Deploy Mission Control & Jupyter Book to GitHub Pages
 
 on:
   push:
@@ -24,11 +24,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Jupyter Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -q -r requirements-dev.txt
+          pip install -q jupyter nbconvert
+
       - name: Prepare Pages content
         run: |
           mkdir -p _site
+          # 1. Mission Control (Landing Page)
           cp app/static/mission_control_v2.html _site/index.html
           cp app/static/mission_control_v2.html _site/mission_control_v2.html
+          
+          # 2. Redirect 404 to Mission Control
           cat > _site/404.html << 'EOF'
           <!DOCTYPE html>
           <html>
@@ -39,6 +53,16 @@ jobs:
           <body>Redirecting to <a href="/nyc_data/">Mission Control</a>…</body>
           </html>
           EOF
+
+          # 3. Jupyter Books
+          mkdir -p _site/jupyter_book
+          if [ -d "jupyter_book/dashboards" ]; then
+            for notebook in jupyter_book/dashboards/*.ipynb; do
+              if [ -f "$notebook" ]; then
+                jupyter nbconvert --to html --output-dir="_site/jupyter_book" "$notebook" || true
+              fi
+            done
+          fi
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
