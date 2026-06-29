@@ -29,6 +29,7 @@ STAGES = [
     ("geo:split_layers", ["pipeline/geo/split_layers.py"]),
     ("metric:build_metrics", ["pipeline/metric/build_metrics.py"]),
     ("metric:build_metrics_advanced", ["pipeline/metric/build_metrics_advanced.py"]),
+    ("serving:app_views", ["pipeline/serving/build_app_views.py"]),  # real app_queries.* from serving (no synthetic)
     ("compact", ["pipeline/compact_local.py"]),  # reclaim space, drop scratch schemas
     ("publish:serving", ["pipeline/publish_serving.py"]),  # push small serving layer -> MotherDuck
 ]

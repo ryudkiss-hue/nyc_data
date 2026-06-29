@@ -33,47 +33,48 @@ from dash import ALL, Input, Output, callback, dcc, html
 logger = logging.getLogger(__name__)
 
 # Metric Configuration
+# Each slot's `id` maps 1:1 to a real metric in app_queries.v_metric_dashboard,
+# built from serving.metric_by_borough by pipeline/serving/build_app_views.py.
+# Keep these ids in sync with KPI_SLOTS in that builder (no synthetic placeholders).
 METRIC_CONFIG = {
-    "Inspection Performance": {
+    "Inspection & Violations": {
         "color": "blue",
         "icon": "📋",
         "metrics": [
-            {"id": "total_inspections", "label": "Total Inspections", "unit": "", "metric": "count"},
-            {"id": "inspection_rate", "label": "Inspection Rate", "unit": "/week", "metric": "rate"},
-            {"id": "avg_violations_per_inspection", "label": "Avg Violations", "unit": "", "metric": "avg"},
-            {"id": "critical_violations", "label": "Critical Violations", "unit": "", "metric": "count"},
-            {"id": "inspection_backlog", "label": "Inspection Backlog", "unit": "days", "metric": "avg"},
+            {"id": "total_violations", "label": "Total Violations", "unit": "", "metric": "count"},
+            {"id": "open_violations", "label": "Open Violations", "unit": "", "metric": "count"},
+            {"id": "open_violation_avg_age_days", "label": "Open Violation Avg Age", "unit": "days", "metric": "avg"},
+            {"id": "repair_pass_rate_pct", "label": "Repair Pass Rate", "unit": "%", "metric": "pct"},
+            {"id": "trip_hazard_violations_pct", "label": "Trip-Hazard Violations", "unit": "%", "metric": "pct"},
         ]
     },
-    "Quality Metrics": {
-        "color": "grape",
-        "icon": "✓",
-        "metrics": [
-            {"id": "data_completeness", "label": "Data Completeness", "unit": "%", "metric": "pct"},
-            {"id": "data_validity", "label": "Data Validity", "unit": "%", "metric": "pct"},
-            {"id": "data_consistency", "label": "Data Consistency", "unit": "%", "metric": "pct"},
-            {"id": "data_freshness", "label": "Data Freshness", "unit": "days", "metric": "avg"},
-            {"id": "quality_score", "label": "Overall Quality", "unit": "/100", "metric": "score"},
-        ]
-    },
-    "Ramp Accessibility": {
+    "Accessibility & Ramps": {
         "color": "green",
         "icon": "♿",
         "metrics": [
-            {"id": "ramp_completion_rate", "label": "Ramp Completion", "unit": "%", "metric": "pct"},
+            {"id": "total_ramps_tracked", "label": "Ramps Tracked", "unit": "", "metric": "count"},
             {"id": "ramp_complaints", "label": "Ramp Complaints", "unit": "", "metric": "count"},
-            {"id": "ramp_progress_month", "label": "Progress This Month", "unit": "", "metric": "count"},
-            {"id": "ramp_sla_breach", "label": "SLA Breach Risk", "unit": "%", "metric": "pct"},
+            {"id": "accessible_pedestrian_signals", "label": "Accessible Ped. Signals", "unit": "", "metric": "count"},
+            {"id": "sidewalk_curb_311_complaints", "label": "Sidewalk/Curb 311", "unit": "", "metric": "count"},
         ]
     },
-    "Spatial Patterns": {
-        "color": "orange",
-        "icon": "🗺️",
+    "Vision Zero Safety": {
+        "color": "red",
+        "icon": "🚦",
         "metrics": [
-            {"id": "morans_i_statistic", "label": "Moran's I", "unit": "", "metric": "stat"},
-            {"id": "spatial_clusters", "label": "Spatial Clusters", "unit": "", "metric": "count"},
-            {"id": "hotspot_concentration", "label": "Hotspot Concentration", "unit": "%", "metric": "pct"},
-            {"id": "outlier_count", "label": "Anomaly Count", "unit": "", "metric": "count"},
+            {"id": "pedestrian_crashes", "label": "Pedestrian Crashes", "unit": "", "metric": "count"},
+            {"id": "pedestrians_injured", "label": "Pedestrians Injured", "unit": "", "metric": "count"},
+            {"id": "pedestrians_killed", "label": "Pedestrians Killed", "unit": "", "metric": "count"},
+        ]
+    },
+    "Capital & Construction": {
+        "color": "orange",
+        "icon": "🏗️",
+        "metrics": [
+            {"id": "street_construction_permits", "label": "Construction Permits", "unit": "", "metric": "count"},
+            {"id": "capital_reconstruction_projects", "label": "Capital Projects", "unit": "", "metric": "count"},
+            {"id": "total_capital_budget", "label": "Total Capital Budget", "unit": "$", "metric": "count"},
+            {"id": "pothole_work_orders_closed", "label": "Potholes Closed", "unit": "", "metric": "count"},
         ]
     },
 }
