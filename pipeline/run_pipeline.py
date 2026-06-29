@@ -228,13 +228,11 @@ class MotherDuckPipeline:
             return False
 
     def ingest_remaining_socrata(self) -> bool:
-        """Ingest remaining 37 datasets from Socrata in controlled batches."""
+        """Ingest the configured Socrata datasets in controlled batches."""
         start_time = time.time()
         self._start_stage('ingest_remaining_socrata')
 
         try:
-            logger.info("Ingesting remaining 37 datasets from Socrata...")
-
             # Load config
             config_path = 'pipeline/config/socrata_datasets.json'
             datasets = self.socrata_loader.load_config(config_path)
@@ -322,9 +320,25 @@ class MotherDuckPipeline:
                     dataset.name,
                     dataset.socrata_id,
                     soql_where=getattr(dataset, "soql_where", None),
+                    page_size=getattr(dataset, "batch_size", None),
                 )
 
-                if result.success:
+                if result.success and result.partial:
+                    # Partial load = some rows landed but ingestion aborted on a
+                    # fetch/insert error. Do NOT advance the incremental watermark
+                    # (so the next run re-pulls it) and record it distinctly so the
+                    # silent-partial-load failure mode stays visible.
+                    failed_count += 1
+                    self.execution_log['datasets'][dataset.name] = {
+                        'source': 'socrata',
+                        'status': 'partial',
+                        'rows': result.rows_loaded,
+                    }
+                    logger.warning(
+                        f"  {dataset.name}: PARTIAL ({result.rows_loaded} rows) — "
+                        f"incomplete, will re-pull next run"
+                    )
+                elif result.success:
                     if cur:
                         watermarks[dataset.socrata_id] = cur
                     loaded_count += 1
@@ -405,7 +419,7 @@ class MotherDuckPipeline:
         self._start_stage('stage_datasets')
 
         try:
-            logger.info("Staging all 57 datasets (dedupe, type cast, preserve names)...")
+            logger.info(f"Staging all {self.expected_total} datasets (dedupe, type cast, preserve names)...")
 
             # Execute staging SQL if it exists
             staging_file = 'pipeline/sql/02_staging_schema.sql'
@@ -679,11 +693,11 @@ class MotherDuckPipeline:
         logger.info(f"{'='*70}")
 
         stages = [
-            ('load_cached_parquet', 'Load 20 cached Parquet files'),
-            ('ingest_remaining_socrata', 'Ingest remaining 37 from Socrata'),
-            ('stage_datasets', 'Stage: dedupe & type cast all 57'),
+            ('load_cached_parquet', f'Load {self.expected_cached} cached Parquet files'),
+            ('ingest_remaining_socrata', f'Ingest remaining {self.expected_socrata} from Socrata'),
+            ('stage_datasets', f'Stage: dedupe & type cast all {self.expected_total}'),
             ('build_analytics_schemas', 'Build: 5 domain schemas + 100+ views'),
-            ('materialize_metrics', 'Serve: 255 Metrics + 57 scorecards'),
+            ('materialize_metrics', 'Serve: Metrics + scorecards'),
             ('verify_gates', 'Verify: 4 gates with exit code enforcement'),
         ]
 

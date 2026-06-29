@@ -30,6 +30,7 @@ class DatasetMetadata:
     domain_schema: str
     soql_where: Optional[str] = None   # optional server-side row filter (e.g. 311)
     ll251_name: Optional[str] = None   # original Local Law 251 dataset name
+    batch_size: Optional[int] = None   # optional per-dataset page size override
 
 
 @dataclass
@@ -42,6 +43,11 @@ class LoadResult:
     error: Optional[str] = None
     load_time_ms: float = 0.0
     source: str = "unknown"  # 'cache', 'socrata', 'local'
+    # True when the load ended early on a fetch/insert error after some rows had
+    # already landed. The rows we kept are valid, but the dataset is INCOMPLETE.
+    # Surfaced so a partial load is never silently reported as a clean success
+    # (the silent-partial-load failure mode the verification gates guard against).
+    partial: bool = False
 
 
 class SocrataLoader:
@@ -55,7 +61,10 @@ class SocrataLoader:
         socrata_domain: str = "data.cityofnewyork.us",
         app_token: Optional[str] = None,
         cache_dir: str = "data/cache",
-        batch_size: int = 200000,  # Rows per API request
+        batch_size: int = 50000,  # Rows per API request (smaller pages return
+        # within the read timeout even on heavy server-side scans; 200K pages on
+        # multi-million-row datasets like 311 exceeded the 120s timeout and caused
+        # silent partial loads — see load_from_socrata)
         rate_limit_delay: float = 0.5  # Seconds between requests
     ):
         """
@@ -195,6 +204,7 @@ class SocrataLoader:
         schema_name: str = "raw",
         limit: Optional[int] = None,
         soql_where: Optional[str] = None,
+        page_size: Optional[int] = None,
     ) -> LoadResult:
         """
         Load dataset from Socrata API with pagination.
@@ -214,6 +224,8 @@ class SocrataLoader:
         """
         start_time = time.time()
         total_rows = 0
+        partial = False  # set True if we break early on an error after some rows landed
+        batch_size = page_size or self.batch_size  # per-dataset page override
         # Quoted, fully-qualified target — handles names that start with a digit
         # (e.g. 9_11_authorized_bus_parking_permit) or contain reserved words.
         qualified = f'{schema_name}."{dataset_name}"'
@@ -285,11 +297,11 @@ class SocrataLoader:
                                 kw = f":id > '{last_id}'"
                                 where = f"({where_base}) AND {kw}" if where_base else kw
                             params = {"$select": f":id,{select_cols}", "$order": ":id",
-                                      "$limit": self.batch_size}
+                                      "$limit": batch_size}
                             if where:
                                 params["$where"] = where
                         else:
-                            params = {"$offset": offset, "$limit": self.batch_size}
+                            params = {"$offset": offset, "$limit": batch_size}
                             if where_base:
                                 params["$where"] = where_base
                         if self.app_token:
@@ -318,7 +330,8 @@ class SocrataLoader:
                             error=f"Failed to fetch first batch: {msg}",
                             source="socrata",
                         )
-                    break  # partial success: keep what we ingested
+                    partial = True  # kept what we ingested, but dataset is INCOMPLETE
+                    break
 
                 if not rows:
                     break
@@ -358,6 +371,7 @@ class SocrataLoader:
                             source="socrata",
                         )
                     logger.error(f"Insert failed at offset {offset}: {result.error}")
+                    partial = True  # kept what we ingested, but dataset is INCOMPLETE
                     break
 
                 total_rows += len(df)
@@ -375,9 +389,9 @@ class SocrataLoader:
                     break
 
                 # A short page means we've reached the end (both paging modes).
-                if page_n < self.batch_size:
+                if page_n < batch_size:
                     break
-                offset += self.batch_size
+                offset += batch_size
 
             if total_rows == 0:
                 return LoadResult(
@@ -392,7 +406,14 @@ class SocrataLoader:
                 self._cache_dataframe(pd.concat(cache_batches, ignore_index=True), dataset_name)
 
             load_time_ms = (time.time() - start_time) * 1000
-            logger.info(f"Loaded from Socrata: {dataset_name} ({total_rows} rows, {load_time_ms:.2f}ms)")
+            if partial:
+                logger.warning(
+                    f"PARTIAL load from Socrata: {dataset_name} ({total_rows} rows, "
+                    f"{load_time_ms:.2f}ms) — ingestion stopped early on a fetch/insert "
+                    f"error; dataset is INCOMPLETE and should be re-run."
+                )
+            else:
+                logger.info(f"Loaded from Socrata: {dataset_name} ({total_rows} rows, {load_time_ms:.2f}ms)")
 
             return LoadResult(
                 dataset_name=dataset_name,
@@ -400,7 +421,8 @@ class SocrataLoader:
                 rows_loaded=total_rows,
                 rows_cached=0,
                 load_time_ms=load_time_ms,
-                source="socrata"
+                source="socrata",
+                partial=partial,
             )
 
         except Exception as e:

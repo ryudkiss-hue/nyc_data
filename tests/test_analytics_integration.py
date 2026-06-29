@@ -102,11 +102,14 @@ def mock_kpi_metrics():
         "sla_compliance": (0.941, 0.928, 0.952),
     }
 
+# Named `bench` (not `benchmark`) to avoid colliding with the pytest-benchmark
+# plugin's own `benchmark` fixture, which raises an INTERNALERROR when a non-
+# BenchmarkFixture value is supplied for that funcarg.
 @pytest.fixture
-def benchmark():
-    def _benchmark(func, *args, **kwargs):
+def bench():
+    def _bench(func, *args, **kwargs):
         return func(*args, **kwargs)
-    return _benchmark
+    return _bench
 
 
 # =============================================================================
@@ -614,7 +617,7 @@ class TestIntegration:
 class TestPerformance:
     """Performance baseline tests."""
 
-    def test_phase_c_latency(self, mock_tabular_data, benchmark):
+    def test_phase_c_latency(self, mock_tabular_data, bench):
         """Benchmark Phase C latency."""
         from app.callbacks.analytics import AnalyticsEngine
 
@@ -622,10 +625,10 @@ class TestPerformance:
             data_bundle = {"data": mock_tabular_data}
             return AnalyticsEngine.chart_distribution_classification(data_bundle)
 
-        result = benchmark(run)
+        result = bench(run)
         # Should complete in <500ms (pytest-benchmark measures this)
 
-    def test_phase_d_latency(self, mock_spatial_data, benchmark):
+    def test_phase_d_latency(self, mock_spatial_data, bench):
         """Benchmark Phase D latency."""
         from app.callbacks.analytics import AnalyticsEngine
 
@@ -633,9 +636,9 @@ class TestPerformance:
             data_bundle = {"spatial": mock_spatial_data}
             return AnalyticsEngine.chart_anomaly_detection(data_bundle)
 
-        result = benchmark(run)
+        result = bench(run)
 
-    def test_phase_e_latency(self, mock_timeseries_data, benchmark):
+    def test_phase_e_latency(self, mock_timeseries_data, bench):
         """Benchmark Phase E latency."""
         from app.callbacks.analytics import AnalyticsEngine
 
@@ -645,9 +648,9 @@ class TestPerformance:
             data_bundle = {"timeseries": mock_timeseries_data}
             return AnalyticsEngine.chart_seasonal_decomposition(data_bundle)
 
-        result = benchmark(run)
+        result = bench(run)
 
-    def test_phase_f_latency(self, mock_kpi_metrics, benchmark):
+    def test_phase_f_latency(self, mock_kpi_metrics, bench):
         """Benchmark Phase F latency."""
         from app.callbacks.analytics import AnalyticsEngine
 
@@ -658,7 +661,7 @@ class TestPerformance:
                 all_figs.append(AnalyticsEngine.chart_bootstrap_ci(data_bundle))
             return all_figs
 
-        result = benchmark(run)
+        result = bench(run)
 
 
 if __name__ == "__main__":

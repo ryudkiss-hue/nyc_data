@@ -1014,7 +1014,7 @@
       "primary_key": "",
       "source": "socrata",
       "domain_schema": "crossagency",
-      "soql_where": "$where=lower(complaint_type) LIKE '%sidewalk%' OR lower(complaint_type) LIKE '%curb%'",
+      "soql_where": "$where=complaint_type IN ('Sidewalk Condition','Curb Condition','Root/Sewer/Sidewalk Condition','DEP Sidewalk Condition')",
       "ll251_name": "311 Service Requests from 2020 to Present",
       "last_updated": "2026-06-23T01:36:50.000Z",
       "registry_row_count": 0,

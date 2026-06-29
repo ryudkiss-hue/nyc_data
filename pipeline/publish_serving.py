@@ -30,32 +30,43 @@ def main():
         print(f"publish_serving: no local DB at {LOCAL} — skipping")
         return 0
 
-    con = duckdb.connect(f"md:{DB}?token={tok}")
-    con.execute(f"ATTACH '{LOCAL}' AS localdb (READ_ONLY)")
+    # The local warehouse is the source of truth; this cloud publish is best-effort
+    # "serve light". A transient MotherDuck outage must NOT red the whole nightly
+    # (the build already succeeded locally) — degrade gracefully with a loud warning
+    # so the dashboard serves slightly-stale data until the next run.
+    ua = "custom_user_agent=nyc-dot-pipeline/2.0(publish_serving)"
+    try:
+        con = duckdb.connect(f"md:{DB}?token={tok}&{ua}")
+        con.execute(f"ATTACH '{LOCAL}' AS localdb (READ_ONLY)")
 
-    pushed = 0
-    # serving tables (exclude heavy geometry dims *_geom) + geo attribute dims
-    serving = [r[0] for r in con.execute(
-        "SELECT table_name FROM information_schema.tables "
-        "WHERE table_catalog='localdb' AND table_schema='serving' "
-        "AND table_name NOT LIKE '%\\_geom' ESCAPE '\\'").fetchall()]
-    geo = [r[0] for r in con.execute(
-        "SELECT table_name FROM information_schema.tables "
-        "WHERE table_catalog='localdb' AND table_schema='geo'").fetchall()]
+        pushed = 0
+        # serving tables (exclude heavy geometry dims *_geom) + geo attribute dims
+        serving = [r[0] for r in con.execute(
+            "SELECT table_name FROM information_schema.tables "
+            "WHERE table_catalog='localdb' AND table_schema='serving' "
+            "AND table_name NOT LIKE '%\\_geom' ESCAPE '\\'").fetchall()]
+        geo = [r[0] for r in con.execute(
+            "SELECT table_name FROM information_schema.tables "
+            "WHERE table_catalog='localdb' AND table_schema='geo'").fetchall()]
 
-    con.execute(f"CREATE SCHEMA IF NOT EXISTS {DB}.serving")
-    con.execute(f"CREATE SCHEMA IF NOT EXISTS {DB}.geo")
-    for t in serving:
-        con.execute(f'CREATE OR REPLACE TABLE {DB}.serving."{t}" AS SELECT * FROM localdb.serving."{t}"')
-        pushed += 1
-        print(f"  serving.{t}", flush=True)
-    for t in geo:
-        con.execute(f'CREATE OR REPLACE TABLE {DB}.geo."{t}" AS SELECT * FROM localdb.geo."{t}"')
-        pushed += 1
-        print(f"  geo.{t}", flush=True)
-    con.close()
-    print(f"PUBLISH DONE: {pushed} tables -> MotherDuck serving/geo")
-    return 0
+        con.execute(f"CREATE SCHEMA IF NOT EXISTS {DB}.serving")
+        con.execute(f"CREATE SCHEMA IF NOT EXISTS {DB}.geo")
+        for t in serving:
+            con.execute(f'CREATE OR REPLACE TABLE {DB}.serving."{t}" AS SELECT * FROM localdb.serving."{t}"')
+            pushed += 1
+            print(f"  serving.{t}", flush=True)
+        for t in geo:
+            con.execute(f'CREATE OR REPLACE TABLE {DB}.geo."{t}" AS SELECT * FROM localdb.geo."{t}"')
+            pushed += 1
+            print(f"  geo.{t}", flush=True)
+        con.close()
+        print(f"PUBLISH DONE: {pushed} tables -> MotherDuck serving/geo")
+        return 0
+    except Exception as e:
+        # Soft-fail: local build is intact; serving layer just not refreshed to cloud.
+        print(f"publish_serving: WARNING cloud publish FAILED ({type(e).__name__}: {e}) "
+              f"— local warehouse is intact; serving layer not refreshed this run.")
+        return 0
 
 
 if __name__ == "__main__":
