@@ -8,6 +8,8 @@ import sys
 import uuid
 from pathlib import Path
 
+import pytest
+
 # Add pipeline modules to path
 sys.path.insert(0, str(Path(__file__).parent.parent / 'pipeline'))
 
@@ -25,6 +27,19 @@ cleanup_test_databases()
 from motherduck_bridge import MotherDuckBridge
 from socrata_loader import SocrataLoader
 from sql_executor import SQLExecutor
+
+
+@pytest.fixture(autouse=True)
+def _isolate_db_cwd(tmp_path, monkeypatch):
+    """Run each test in an isolated temp directory.
+
+    MotherDuckBridge's local fallback writes ``<db_name>.duckdb`` relative to
+    the current working directory, so without isolation these tests scatter
+    files in the repo root and assert absolute row counts against databases
+    that persist across runs (causing flaky failures). Changing CWD to a
+    per-test ``tmp_path`` gives every test a fresh database and auto-cleanup.
+    """
+    monkeypatch.chdir(tmp_path)
 
 
 class TestMotherDuckBridge:
