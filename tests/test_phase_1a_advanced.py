@@ -7,7 +7,6 @@ import os
 import random
 import string
 import sys
-import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / 'pipeline'))
@@ -31,7 +30,6 @@ class TestStressCases:
         })
 
         # Generate and insert 100K rows
-        start_time = time.time()
         categories = ['A', 'B', 'C', 'D', 'E']
 
         for batch_start in range(0, 100000, 10000):
@@ -42,14 +40,11 @@ class TestStressCases:
             ])
             bridge.execute_sql(f"INSERT INTO stress.large_table VALUES {values}")
 
-        elapsed = time.time() - start_time
-
         # Verify
         count = bridge.get_table_count("stress", "large_table")
         assert count == 100000, f"Expected 100K rows, got {count}"
 
         bridge.close()
-        return elapsed
 
     def test_wide_table(self):
         """Test table with many columns (100+ columns)."""
@@ -79,20 +74,17 @@ class TestStressCases:
         bridge.create_table("stress", "batched", {"id": "INTEGER", "val": "VARCHAR"})
 
         # Batch 10 inserts in one transaction
-        start_time = time.time()
         bridge.begin_transaction()
 
         for i in range(10):
             bridge.execute_sql(f"INSERT INTO stress.batched VALUES ({i}, 'val_{i}')")
 
         bridge.commit()
-        elapsed = time.time() - start_time
 
         count = bridge.get_table_count("stress", "batched")
         assert count == 10, f"Expected 10 rows, got {count}"
 
         bridge.close()
-        return elapsed
 
 
 class TestEdgeCases:

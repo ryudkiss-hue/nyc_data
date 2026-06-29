@@ -50,7 +50,6 @@ def test_staging_layer_execution():
     print("  [PASS] Staging layer SQL ready for execution")
 
     bridge.close()
-    return True
 
 
 def test_analytics_schema_creation():
@@ -99,7 +98,6 @@ def test_analytics_schema_creation():
     print("  [PASS] Analytics schema SQL ready for execution")
 
     bridge.close()
-    return True
 
 
 def test_kpi_materialization_readiness():
@@ -134,7 +132,6 @@ def test_kpi_materialization_readiness():
     print("  [PASS] KPI materialization SQL ready (255 KPIs + 57 scorecards)")
 
     bridge.close()
-    return True
 
 
 def test_verification_gates_structure():
@@ -160,7 +157,6 @@ def test_verification_gates_structure():
     print(f"  [PASS] Gate 3 (joins): {len(gate_3)} statements")
     print(f"  [PASS] Gate 4 (KPI): {len(gate_4)} statements")
 
-    return True
 
 
 def test_raw_schema_sql():
@@ -176,7 +172,6 @@ def test_raw_schema_sql():
     print(f"  [PASS] Parsed {len(statements)} SQL statements from raw schema layer")
     print("  [PASS] Raw schema ready for data ingestion")
 
-    return True
 
 
 def run_all_tests():
@@ -198,8 +193,8 @@ def run_all_tests():
 
     for test_func in tests:
         try:
-            if test_func():
-                passed += 1
+            test_func()
+            passed += 1
         except Exception as e:
             print(f"  [FAIL] FAILED: {str(e)}")
             failed += 1
