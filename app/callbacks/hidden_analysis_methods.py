@@ -87,27 +87,8 @@ def memoize_with_ttl(seconds: int = 600):
 # HELPER FUNCTIONS
 # ==========================================
 
-def safe_fetch_dataset(
-    dm_instance: Any, dataset_key: str, filters: dict, limit: int = 10000
-) -> pd.DataFrame:
-    """Safely fetch dataset with error handling."""
-    try:
-        df = dm_instance.fetch_dataset(dataset_key, limit=limit)
-        if df.empty:
-            logger.warning(f"Empty dataset: {dataset_key}")
-            return pd.DataFrame()
+from app.services.dashboard_state import DashboardStateAdapter
 
-        # Apply borough filter
-        borough = filters.get("borough", "ALL")
-        if borough and borough != "ALL":
-            boro_cols = [c for c in df.columns if "boro" in c.lower()]
-            if boro_cols:
-                df = df[df[boro_cols[0]].str.upper() == borough.upper()]
-
-        return df
-    except Exception as e:
-        logger.error(f"Error fetching {dataset_key}: {e}")
-        return pd.DataFrame()
 
 def create_error_figure(error_msg: str) -> go.Figure:
     """Create error placeholder figure."""
@@ -153,7 +134,8 @@ def register_morans_i_callbacks(app, dm_instance):
                 )
 
             # Fetch spatial data
-            df = safe_fetch_dataset(dm_instance, "inspection", filters, limit=10000)
+            state = DashboardStateAdapter(dm_instance, filters)
+            df = state.get_dataset_by_key("inspection")
             if df.empty:
                 return (
                     create_error_figure("No data available"),
@@ -295,7 +277,8 @@ def register_distribution_callbacks(app, dm_instance):
                 return [dmc.Text("No data selected", c="gray")]
 
             # Fetch data
-            df = safe_fetch_dataset(dm_instance, "inspection", filters)
+            state = DashboardStateAdapter(dm_instance, filters)
+            df = state.get_dataset_by_key("inspection")
             if df.empty:
                 return [dmc.Text("No data for selected filters", c="gray")]
 
@@ -436,7 +419,8 @@ def register_anomaly_detection_callbacks(app, dm_instance):
                 )
 
             # Fetch data
-            df = safe_fetch_dataset(dm_instance, "inspection", filters)
+            state = DashboardStateAdapter(dm_instance, filters)
+            df = state.get_dataset_by_key("inspection")
             if df.empty:
                 return (
                     create_error_figure("No data available"),
@@ -637,8 +621,9 @@ def register_decomposition_callbacks(app, dm_instance):
                     dmc.Text("Select data to analyze", c="gray"),
                 )
 
-            # Fetch data
-            df = safe_fetch_dataset(dm_instance, "inspection", filters, limit=5000)
+            # Fetch base data
+            state = DashboardStateAdapter(dm_instance, filters)
+            df = state.get_dataset_by_key("inspection")
             if df.empty:
                 return (
                     create_error_figure("No data available"),
@@ -855,7 +840,8 @@ def register_bootstrap_callbacks(app, dm_instance):
                 return create_error_figure("No data selected")
 
             # Fetch data
-            df = safe_fetch_dataset(dm_instance, "inspection", filters)
+            state = DashboardStateAdapter(dm_instance, filters)
+            df = state.get_dataset_by_key("inspection")
             if df.empty:
                 return create_error_figure("No data available")
 

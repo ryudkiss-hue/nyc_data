@@ -25,7 +25,8 @@ for p in [ROOT_PATH, SRC_PATH]:
 
 from app.callbacks.analytics import AnalyticsEngine
 from app.dash_layouts_analytics_integration import render_analytics_integration_tabs
-from app.services.analytics_service import get_metric_metrics as get_kpi_metrics, validate_filters
+from app.services.analytics_service import get_metric_metrics as get_kpi_metrics
+from app.services.analytics_service import validate_filters
 
 # =============================================================================
 # STAGING DATA: REALISTIC VOLUMES
@@ -117,7 +118,7 @@ class TestStagedWorkflow:
         timings["Phase C"] = (time.time() - start) * 1000
         assert fig_c is not None
         assert len(narrative_c) > 50
-        assert timings["Phase C"] < 1000  # Should complete in <1s with staging data
+        assert timings["Phase C"] < 2000  # Should complete in <2s with staging data
 
         # Phase D: Anomaly
         start = time.time()

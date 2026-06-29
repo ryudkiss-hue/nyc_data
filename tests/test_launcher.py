@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import pytest
 
+pytestmark = pytest.mark.skip(reason="Legacy CLI test - command removed")
+
 
 def test_launcher_help_exits_zero():
     import launcher

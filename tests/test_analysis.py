@@ -33,7 +33,7 @@ def sample_df():
 @pytest.fixture
 def mock_sklearn_vectorizer():
     """Mocks the TfidfVectorizer to control keyword extraction tests."""
-    with patch("socrata_toolkit._analysis_monolith.TfidfVectorizer") as mock_vectorizer_class:
+    with patch("socrata_toolkit.analysis.text._text_monolith.TfidfVectorizer") as mock_vectorizer_class:
         mock_vectorizer_instance = MagicMock()
         mock_vectorizer_class.return_value = mock_vectorizer_instance
 

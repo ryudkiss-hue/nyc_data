@@ -9,6 +9,7 @@ __version__ = "0.5.0"
 # Map public symbol name -> "module:attr" where attr can be a name or omitted to import module
 _lazy_map: dict[str, str] = {
     # core (Pillar: core)
+    "core": "core",
     "SocrataClient": "core:SocrataClient",
     "SocrataConfig": "core:SocrataConfig",
     "DatasetMetadata": "core.models:DatasetMetadata",

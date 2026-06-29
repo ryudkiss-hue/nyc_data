@@ -213,7 +213,7 @@ def test_column_profile_numeric():
     numeric_series = pd.Series([1.0, 2.0, 3.0, 4.0, 5.0])
     col_profile = profiler._profile_column(numeric_series, "test_col")
 
-    assert col_profile.data_type == DataType.NUMERIC
+    assert col_profile.data_type.value == DataType.NUMERIC.value
     assert col_profile.min_value == 1.0
     assert col_profile.max_value == 5.0
 
@@ -223,7 +223,7 @@ def test_column_profile_categorical():
     cat_series = pd.Series(["A", "B", "A", "C", "B"])
     col_profile = profiler._profile_column(cat_series, "test_col")
 
-    assert col_profile.data_type == DataType.STRING
+    assert col_profile.data_type.value == DataType.STRING.value
     assert col_profile.cardinality == 3
 
 def test_suggest_expectations(sample_dataframe):

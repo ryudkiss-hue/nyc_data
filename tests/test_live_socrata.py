@@ -96,45 +96,4 @@ def test_inspection_dataset_large():
     assert len(df) >= 100, "Inspections dataset returned fewer rows than expected"
 
 
-@NEEDS_VALID_TOKEN
-def test_dataset_health_cmd_live():
-    """CLI dataset health command hits live API and returns tabular output."""
-    from click.testing import CliRunner
 
-    from socrata_toolkit.core.cli import main
-
-    runner = CliRunner()
-    result = runner.invoke(main, ["dataset", "health", "--key", "ramp_progress"])
-
-    # exit_code 1 is expected when dataset is stale/errored — that's the health signal
-    assert result.exit_code in (0, 1), f"dataset health crashed: {result.output}"
-    assert "ramp_progress" in result.output
-    assert "e7gc-ub6z" in result.output
-
-
-@NEEDS_VALID_TOKEN
-def test_ramp_analysis_cmd_live():
-    """CLI ramp-analysis command fetches and processes live sample data.
-
-    Note: This test requires the live ramp_progress dataset to have a status column.
-    If the schema has changed, this test will be skipped.
-    """
-    import pytest
-    from click.testing import CliRunner
-
-    from socrata_toolkit.core.cli import main
-
-    runner = CliRunner()
-    result = runner.invoke(main, ["dataset", "ramp-analysis", "--sample", "50"])
-
-    # If the status column schema doesn't match, skip this test as it's a
-    # pre-existing integration issue with the live data schema
-    if "must contain" in result.output.lower() and "column" in result.output.lower():
-        pytest.skip(f"Live ramp_progress dataset schema mismatch: {result.output[:200]}")
-
-    assert result.exit_code == 0, f"ramp-analysis failed: {result.output}"
-    # Output should contain borough names or a completion-rate table
-    output_lower = result.output.lower()
-    assert any(b in output_lower for b in ["brooklyn", "queens", "bronx", "manhattan", "staten"]), (
-        f"No borough names found in ramp-analysis output: {result.output[:500]}"
-    )

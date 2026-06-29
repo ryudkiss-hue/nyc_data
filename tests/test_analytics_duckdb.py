@@ -58,16 +58,17 @@ def test_duckdb_duplicate_pct_pushdown(test_duckdb):
     assert pct == 20.0
 
 
-def test_duckdb_fallback_on_error(mocker):
+from unittest.mock import patch
+
+
+def test_duckdb_fallback_on_error():
     """Verify fallback to sampling when DuckDB fails."""
     import app.data_loader
 
-    mocker.patch.object(app.data_loader, "_DUCKDB_AVAILABLE", True)
-    mocker.patch(
-        "socrata_toolkit.core.duckdb_store.DuckDBManager", side_effect=Exception("DB Locked")
-    )
+    with patch.object(app.data_loader, "_DUCKDB_AVAILABLE", True), \
+         patch("socrata_toolkit.core.duckdb_store.DuckDBManager", side_effect=Exception("DB Locked")):
 
-    df = pd.DataFrame({"col": [1, 1, 2]})
-    # Should fall back to pandas.nunique() -> 2
-    card = _estimate_cardinality(df["col"], dataset_key="err", col_name="col")
-    assert card == 2
+        df = pd.DataFrame({"col": [1, 1, 2]})
+        # Should fall back to pandas.nunique() -> 2
+        card = _estimate_cardinality(df["col"], dataset_key="err", col_name="col")
+        assert card == 2

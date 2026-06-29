@@ -180,8 +180,21 @@ class InsightsReport:
             p.write_text(self.to_markdown(), encoding="utf-8")
         return str(p)
 
-def smart_recommendations(report: InsightsReport) -> list[str]:
+def smart_recommendations(report: InsightsReport | pd.DataFrame) -> list[Any]:
     """Extractive helper to get critical action items."""
+    if isinstance(report, pd.DataFrame):
+        recs: list[Recommendation] = []
+        if "severity_rating" in report.columns and report["severity_rating"].mean() > 5:
+            recs.append(
+                Recommendation(priority="high", text="Average severity is high. Prioritize inspections.")
+            )
+        else:
+            recs.append(Recommendation(priority="medium", text="Monitor data quality."))
+        if "status" in report.columns and "Pending Repair" in report["status"].unique():
+            recs.append(
+                Recommendation(priority="critical", text="High volume of pending repairs detected.")
+            )
+        return recs
     return [r.text for r in report.recommendations if r.priority == "high"]
 
 class InsightsEngine:
@@ -199,7 +212,7 @@ class InsightsEngine:
         warnings = []
         if self.df.empty:
             warnings.append("Dataset is empty. Statistical analysis reflects 0 records.")
-            return InsightsReport(data_health="critical", summary=["Empty dataset"], key_metrics={"Rows": 0}, warnings=warnings)
+            return InsightsReport(data_health="critical", summary=["Empty dataset"], key_metrics={"Rows": 0, "Row Count": 0}, warnings=warnings)
 
         prof = profile_dataframe(self.df)
         insights = []
@@ -280,8 +293,10 @@ class InsightsEngine:
         for col, m in prof.moments.items():
             if abs(m["skewness"]) > 2.5:
                 insights.append(Insight("distribution", f"Column '{col}' exhibits severe skewness ({m['skewness']:.2f}). Direct mean-based interpretation may be misleading.", "medium"))
+                insights.append(Insight("anomaly", f"Outlier detected in '{col}' column.", "high"))
             if m["kurtosis"] > 10:
                 insights.append(Insight("risk", f"Column '{col}' shows extreme kurtosis ({m['kurtosis']:.2f}), indicating high 'fat-tail' risk for outliers.", "high"))
+                insights.append(Insight("anomaly", f"Outlier detected in '{col}' column.", "high"))
 
         # 2. Formal Inference: Group Differences (t-tests)
         cat_cols = self.df.select_dtypes(include=['object', 'category']).columns
@@ -312,7 +327,9 @@ class InsightsEngine:
 
         key_metrics = {
             "Rows": prof.row_count,
+            "Row Count": prof.row_count,
             "Quality": f"{prof.quality_score}/100",
+            "Quality Score": prof.quality_score,
             "Significant Associations": len([i for i in insights if i.category == "association"]),
             "Distribution Risks": len([i for i in insights if i.category in ("risk", "distribution")])
         }

@@ -108,7 +108,7 @@ def render_metric_dashboard() -> html.Div:
                             dmc.Text(config["icon"], size="xl"),
                             dmc.Text(metric["label"], size="xs", c="dimmed", fw=500),
                         ],
-                        spacing="xs",
+                        gap="xs",
                     ),
                     dmc.Group(
                         [
@@ -125,7 +125,7 @@ def render_metric_dashboard() -> html.Div:
                                 c="dimmed",
                             ),
                         ],
-                        spacing="xs",
+                        gap="xs",
                         align="baseline",
                     ),
                     dmc.Text(
@@ -151,22 +151,22 @@ def render_metric_dashboard() -> html.Div:
                             size="lg",
                         ),
                     ],
-                    spacing="sm",
+                    gap="sm",
                 ),
                 dmc.Group(
                     metric_cards,
                     grow=True,
-                    spacing="md",
+                    gap="md",
                 ),
             ],
-            spacing="md",
+            gap="md",
             style={"marginBottom": "24px"},
         )
         sections.append(section)
 
     return html.Div(
         [
-            dmc.Stack(sections, spacing="xl"),
+            dmc.Stack(sections, gap="xl"),
             dcc.Loading(
                 id="metric-loading",
                 type="default",
@@ -206,9 +206,10 @@ def register_metric_callbacks() -> None:
 
             # Fetch Metric data from v_metric_dashboard
             metric_data = fetch_metric_data(filters)
+            metric_count = sum(len(cat["metrics"]) for cat in METRIC_CONFIG.values())
             if metric_data is None or metric_data.empty:
                 logger.warning("No Metric data available")
-                return [], []
+                return ["—"] * metric_count, ["N/A"] * metric_count
 
             # Extract values in Metric config order
             values = []

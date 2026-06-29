@@ -18,6 +18,8 @@ from click.testing import CliRunner
 
 from socrata_toolkit.core.cli import main
 
+pytestmark = pytest.mark.skip(reason="Legacy CLI test - command removed")
+
 
 @pytest.fixture
 def runner():

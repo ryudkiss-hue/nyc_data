@@ -348,5 +348,15 @@
     "rows_failed": 0,
     "duration_seconds": 0.0,
     "error_message": null
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-06-28T17:49:18.864430",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "started",
+    "timestamp": "2026-06-28T17:49:18.864438",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.0,
+    "error_message": null
   }
 ]

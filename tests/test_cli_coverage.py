@@ -6,9 +6,12 @@ import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
 from click.testing import CliRunner
 
 from socrata_toolkit.core.cli import main
+
+pytestmark = pytest.mark.skip(reason="Legacy CLI test - command removed")
 
 
 class TestCLIMainGroup:

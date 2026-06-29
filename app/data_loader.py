@@ -97,7 +97,7 @@ try:
 except ImportError:
     _DUCKDB_AVAILABLE = False
 
-_DUCKDB_PATH = str(_REPO_ROOT / "data" / "local_db" / "nyc_mission_control.duckdb")
+_DUCKDB_PATH = os.getenv("DUCKDB_PATH") or str(_REPO_ROOT / "data" / "local_db" / "nyc_mission_control.duckdb")
 
 
 def _read_duckdb_cache(dataset_key: str, limit: int | None = None) -> pd.DataFrame | None:

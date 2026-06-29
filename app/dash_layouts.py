@@ -594,7 +594,39 @@ def layout_dashboard():
         fluid=True,
         pt="md",
         children=[
-            dmc.Text("EXECUTIVE TELEMETRICS", fw=900, size="xl", mb="lg", c="black"),
+            dmc.Group(
+                [
+                    dmc.Text("EXECUTIVE TELEMETRICS", fw=900, size="xl", c="black"),
+                    dmc.Group(
+                        [
+                            dmc.Button(
+                                "Export Complete PDF",
+                                id="btn-global-export-pdf",
+                                variant="filled",
+                                color="red",
+                                leftSection=DashIconify(icon="mdi:file-pdf-box"),
+                            ),
+                            dmc.Button(
+                                "Export Complete Excel",
+                                id="btn-global-export-excel",
+                                variant="outline",
+                                color="green",
+                                leftSection=DashIconify(icon="mdi:file-excel"),
+                            ),
+                            dmc.Button(
+                                "Export Complete PPTX",
+                                id="btn-global-export-pptx",
+                                variant="outline",
+                                color="orange",
+                                leftSection=DashIconify(icon="mdi:file-powerpoint"),
+                            ),
+                        ],
+                        gap="sm"
+                    ),
+                ],
+                justify="space-between",
+                mb="lg"
+            ),
             render_filter_bar(),
             render_metric_dashboard(),
             dmc.Space(h="xl"),

@@ -17,13 +17,8 @@ import plotly.graph_objects as go
 from dash import Input, Output, callback, dcc
 
 from app.callbacks.analytics import AnalyticsEngine
-from app.services.analytics_service import (
-    get_dataset,
-    get_metric_metrics,
-    get_spatial_data,
-    get_timeseries_data,
-    validate_filters,
-)
+from app.services.analytics_service import validate_filters
+from app.services.dashboard_state import DashboardStateAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +53,8 @@ def update_distribution_classification(filters: dict, limit: int = 8) -> tuple[A
             )
 
         # Build data_bundle for AnalyticsEngine
-        df = get_dataset(filters)
+        state = DashboardStateAdapter(None, filters)
+        df = state.get_analytics_dataset()
         if df.empty:
             return (
                 dmc.Stack([dmc.Text("No data available for analysis.", c="orange")]),
@@ -133,7 +129,8 @@ def update_anomaly_detection(filters: dict, enabled: bool = True) -> tuple[Any, 
             )
 
         # Fetch spatial data
-        gdf = get_spatial_data(filters)
+        state = DashboardStateAdapter(None, filters)
+        gdf = state.get_spatial_dataset()
         if gdf.empty:
             return (
                 dmc.Stack([dmc.Text("No spatial data available.", c="orange")]),
@@ -220,13 +217,8 @@ def update_seasonal_decomposition(filters: dict, date_col: str = None, value_col
             )
 
         # Fetch time series data
-        ts_df = get_timeseries_data(
-            dataset_key=filters.get('dataset_key', 'inspection'),
-            date_col=date_col,
-            value_col=value_col,
-            filters=filters
-        )
-
+        state = DashboardStateAdapter(None, filters)
+        ts_df = state.get_timeseries_dataset()
         if ts_df.empty or len(ts_df) < 20:
             return (
                 dmc.Stack([dmc.Text(f"Insufficient time series data ({len(ts_df)} points).", c="orange")]),
@@ -292,7 +284,8 @@ def update_bootstrap_ci_metrics(filters: dict, n_intervals: int = 0) -> tuple[An
     """
     try:
         # Fetch Metric metrics (with CI already computed by get_metric_metrics)
-        metrics = get_metric_metrics(filters)
+        state = DashboardStateAdapter(None, filters)
+        metrics = state.get_metrics_dataset()
 
         if not metrics or len(metrics) == 0:
             return (
@@ -333,7 +326,7 @@ def update_bootstrap_ci_metrics(filters: dict, n_intervals: int = 0) -> tuple[An
         # Assemble into responsive grid
         metric_grid = dmc.SimpleGrid(
             cols={"base": 1, "sm": 2, "md": 4},
-            spacing="md",
+            gap="md",
             children=gauge_figures
         )
 
@@ -379,8 +372,9 @@ def update_morans_i(filters: dict, column: str = None) -> tuple[go.Figure, str]:
             empty_fig = go.Figure()
             return empty_fig, "No spatial data available for Moran's I analysis."
 
-        # Fetch spatial data
-        gdf = get_spatial_data(filters)
+        # Fetch spatial data (Moran's I requires geographic boundaries)
+        state = DashboardStateAdapter(None, filters)
+        gdf = state.get_spatial_dataset()
         if gdf.empty or len(gdf) < 10:
             empty_fig = go.Figure()
             return empty_fig, "Insufficient spatial data (minimum 10 points required)."

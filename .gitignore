@@ -63,3 +63,13 @@ startup_verification.log
 .idea/
 .vscode/
 *.swp
+
+# Test/scratch output dumps
+pytest_*.txt
+/*.png
+
+# Archived scratch (kept locally, not committed)
+.archive/
+
+# Generated report/export artifacts
+exports/

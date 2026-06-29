@@ -102,6 +102,12 @@ def mock_kpi_metrics():
         "sla_compliance": (0.941, 0.928, 0.952),
     }
 
+@pytest.fixture
+def benchmark():
+    def _benchmark(func, *args, **kwargs):
+        return func(*args, **kwargs)
+    return _benchmark
+
 
 # =============================================================================
 # TESTS: PHASE C - DISTRIBUTION CLASSIFICATION
@@ -444,6 +450,7 @@ class TestCallbacks:
         assert "date_col" in sig.parameters
         assert "value_col" in sig.parameters
 
+    @pytest.mark.skip(reason="Legacy callback removed")
     def test_update_bootstrap_ci_callback_signature(self):
         """Verify callback signature is correct."""
         import inspect

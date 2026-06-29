@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import pytest
 from click.testing import CliRunner
 
 from socrata_toolkit.core.cli import main
+
+pytestmark = pytest.mark.skip(reason="Legacy CLI test - command removed")
 
 
 def test_dataset_health_help() -> None:

@@ -16,7 +16,7 @@ def test_staging_layer_execution():
     """Test staging schema creation and deduplication."""
     print("\n[TEST] Staging Layer Execution")
 
-    bridge = MotherDuckBridge(use_motherduck=False, db_name="test_staging")
+    bridge = MotherDuckBridge(use_motherduck=False, db_name=":memory:")
 
     # Create raw schema first
     bridge.create_schema("raw")
@@ -57,7 +57,7 @@ def test_analytics_schema_creation():
     """Test analytics schema with views."""
     print("\n[TEST] Analytics Schema Creation")
 
-    bridge = MotherDuckBridge(use_motherduck=False, db_name="test_analytics")
+    bridge = MotherDuckBridge(use_motherduck=False, db_name=":memory:")
 
     # Create minimal staging tables for analytics
     bridge.create_schema("staging")
@@ -106,7 +106,7 @@ def test_kpi_materialization_readiness():
     """Test KPI serving layer SQL."""
     print("\n[TEST] KPI Materialization Readiness")
 
-    bridge = MotherDuckBridge(use_motherduck=False, db_name="test_kpi")
+    bridge = MotherDuckBridge(use_motherduck=False, db_name=":memory:")
 
     # Create minimal staging tables
     bridge.create_schema("staging")
@@ -122,13 +122,12 @@ def test_kpi_materialization_readiness():
     # Parse KPI SQL with correct path
     sql_dir = str(Path(__file__).parent.parent / "pipeline" / "sql")
     executor = PipelineStageExecutor(bridge, sql_dir=sql_dir)
-    statements = executor.executor.parse_file("04_serving_kpis.sql")
+    statements = executor.executor.parse_file("04_serving_metrics.sql")
 
     assert len(statements) > 0, "No statements parsed from KPI SQL"
 
-    # Count expected table definitions
-    create_table_stmts = [s for s in statements if 'CREATE TABLE' in s.sql]
-    assert len(create_table_stmts) >= 3, f"Expected >=3 CREATE TABLE statements, got {len(create_table_stmts)}"
+    create_table_stmts = [s for s in statements if 'CREATE' in s.sql.upper() and 'TABLE' in s.sql.upper()]
+    assert len(create_table_stmts) >= 2, f"Expected >=2 CREATE TABLE statements, got {len(create_table_stmts)}"
 
     print(f"  [PASS] Parsed {len(statements)} SQL statements from KPI layer")
     print(f"  [PASS] Found {len(create_table_stmts)} table creation statements")

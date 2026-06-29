@@ -61,7 +61,7 @@ def _render_statistics_panel(stats: dict[str, Any]) -> html.Div:
                     dmc.Text(key, size="sm", c="dimmed", fw=500, style={"minWidth": "100px"}),
                     dmc.Text(formatted, size="sm", fw=700),
                 ],
-                spacing="sm",
+                gap="sm",
                 style={"paddingBottom": "6px"},
             )
         )
@@ -72,7 +72,7 @@ def _render_statistics_panel(stats: dict[str, Any]) -> html.Div:
         radius="lg",
         shadow="xs",
         style={"backgroundColor": "#f8f9fa", "marginTop": "12px"},
-        children=dmc.Stack(stat_items, spacing="xs"),
+        children=dmc.Stack(stat_items, gap="xs"),
     )
 
 def _render_narrative_panel(narrative: str) -> html.Div:

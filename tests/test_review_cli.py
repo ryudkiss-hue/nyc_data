@@ -2,9 +2,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from click.testing import CliRunner
 
 from socrata_toolkit.core.cli import main
+
+pytestmark = pytest.mark.skip(reason="Legacy CLI test - command removed")
 
 
 def test_review_cli_set_list_export(tmp_path: Path, monkeypatch) -> None:

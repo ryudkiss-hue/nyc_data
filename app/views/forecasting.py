@@ -324,7 +324,7 @@ def _render_stl_decomposition(df: pd.DataFrame, date_col: str, metric: str) -> N
         from plotly.subplots import make_subplots
 
         fig = make_subplots(
-            rows=4, cols=1, shared_xaxes=True, vertical_spacing=0.04,
+            rows=4, cols=1, shared_xaxes=True, vertical_gap=0.04,
             subplot_titles=[name for name, _, _ in components],
         )
         for row, (name, comp, color) in enumerate(components, start=1):

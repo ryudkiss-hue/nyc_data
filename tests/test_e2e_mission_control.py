@@ -17,11 +17,11 @@ def e2e_db(tmp_path):
 
     original_path = app.data_loader._DUCKDB_PATH
     app.data_loader._DUCKDB_PATH = db_path
-    
+
     # Disable L2 disk caches so we hit the mock
     original_disk = getattr(app.data_loader, "_DISK_CACHE_AVAILABLE", False)
     app.data_loader._DISK_CACHE_AVAILABLE = False
-    
+
     yield db_path
     app.data_loader._DUCKDB_PATH = original_path
     app.data_loader._DISK_CACHE_AVAILABLE = original_disk

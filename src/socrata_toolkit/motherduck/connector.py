@@ -48,6 +48,7 @@ class MotherDuckConnection:
         token: Optional[str] = None,
         database: str = "nyc_dot_analytics",
         database_path: Optional[str] = None,
+        **kwargs
     ):
         """Initialize MotherDuck connection.
 
@@ -77,14 +78,13 @@ class MotherDuckConnection:
         self.is_motherduck = False
         self.conn: Optional[duckdb.DuckDBPyConnection] = None
 
+        self.read_only = kwargs.get("read_only", True)  # Default to True for analytics
+        if self.database_path == ":memory:":
+            self.read_only = False
         self._connect()
 
     def _connect(self) -> None:
-        """Establish connection to MotherDuck or fallback to local DuckDB.
-
-        Attempts to connect to MotherDuck cloud if token is available.
-        Falls back to local DuckDB if token is missing or connection fails.
-        """
+        """Establish connection to MotherDuck or fallback to local DuckDB."""
         try:
             if self.token and self.token.strip():
                 # Connect to MotherDuck cloud
@@ -100,7 +100,7 @@ class MotherDuckConnection:
                 logger.debug(
                     f"MOTHERDUCK_TOKEN not set; using local DuckDB at {self.database_path}"
                 )
-                self.conn = duckdb.connect(self.database_path)
+                self.conn = duckdb.connect(self.database_path, read_only=self.read_only)
                 self.is_motherduck = False
 
         except Exception as e:
@@ -108,7 +108,7 @@ class MotherDuckConnection:
                 f"Failed to connect to MotherDuck ({e}); "
                 f"falling back to local DuckDB"
             )
-            self.conn = duckdb.connect(self.database_path)
+            self.conn = duckdb.connect(self.database_path, read_only=self.read_only)
             self.is_motherduck = False
 
     def is_connected(self) -> bool:

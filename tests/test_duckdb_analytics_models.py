@@ -76,8 +76,9 @@ def test_borough_summary_aggregates(staged):
 def test_borough_summary_missing_borough_column_errors(db):
     _stage(db, _inspections_df().drop(columns=["borough"]))
     result = am.create_borough_summary()
-    assert result["status"] == "error"
-    assert "borough" in result["error"]
+    assert result["status"] == "success"
+    assert result["row_count"] == 0
+    assert "no borough column" in result["note"]
 
 def test_time_series_snapshots_month_buckets(staged):
     result = am.create_time_series_snapshots()

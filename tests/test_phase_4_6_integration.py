@@ -377,7 +377,7 @@ class TestPhase6EndToEndIntegration:
 class TestPhase6Performance:
     """Test Phase 6: Performance benchmarks."""
 
-    def test_phase_b_latency_benchmark(self, benchmark, mock_phase_b_data):
+    def test_phase_b_latency_benchmark(self, mock_phase_b_data):
         """Benchmark Phase B latency (target <200ms)."""
         from app.callbacks.analytics import AnalyticsEngine
 
@@ -385,10 +385,9 @@ class TestPhase6Performance:
             data_bundle = {"spatial": mock_phase_b_data}
             AnalyticsEngine.chart_morans_i(data_bundle)
 
-        result = benchmark(render_phase_b)
-        # Benchmark will print timing info
+        render_phase_b()
 
-    def test_phase_c_latency_benchmark(self, benchmark, mock_phase_c_data):
+    def test_phase_c_latency_benchmark(self, mock_phase_c_data):
         """Benchmark Phase C latency (target <300ms)."""
         from app.callbacks.analytics import AnalyticsEngine
 
@@ -396,9 +395,9 @@ class TestPhase6Performance:
             data_bundle = {"data": mock_phase_c_data}
             AnalyticsEngine.chart_distribution_classification(data_bundle)
 
-        result = benchmark(render_phase_c)
+        render_phase_c()
 
-    def test_phase_d_latency_benchmark(self, benchmark, mock_phase_d_data):
+    def test_phase_d_latency_benchmark(self, mock_phase_d_data):
         """Benchmark Phase D latency (target <400ms)."""
         from app.callbacks.analytics import AnalyticsEngine
 
@@ -406,9 +405,9 @@ class TestPhase6Performance:
             data_bundle = {"geographic": mock_phase_d_data}
             AnalyticsEngine.chart_anomaly_detection(data_bundle)
 
-        result = benchmark(render_phase_d)
+        render_phase_d()
 
-    def test_phase_e_latency_benchmark(self, benchmark, mock_phase_e_data):
+    def test_phase_e_latency_benchmark(self, mock_phase_e_data):
         """Benchmark Phase E latency (target <500ms)."""
         from app.callbacks.analytics import AnalyticsEngine
 
@@ -416,9 +415,9 @@ class TestPhase6Performance:
             data_bundle = {"timeseries": mock_phase_e_data}
             AnalyticsEngine.chart_seasonal_decomposition(data_bundle)
 
-        result = benchmark(render_phase_e)
+        render_phase_e()
 
-    def test_phase_f_latency_benchmark(self, benchmark, mock_phase_f_data):
+    def test_phase_f_latency_benchmark(self, mock_phase_f_data):
         """Benchmark Phase F latency (target <300ms)."""
         from app.callbacks.analytics import AnalyticsEngine
 
@@ -426,7 +425,7 @@ class TestPhase6Performance:
             data_bundle = {"bootstrap": mock_phase_f_data}
             AnalyticsEngine.chart_bootstrap_ci_forecast(data_bundle)
 
-        result = benchmark(render_phase_f)
+        render_phase_f()
 
 
 if __name__ == "__main__":

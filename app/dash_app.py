@@ -41,11 +41,23 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Bulletproof path resolution for local modules
-_app_path = str(Path(__file__).resolve().parent.absolute())
+_script_dir = str(Path(__file__).resolve().parent.absolute())
+_project_root = str(Path(__file__).resolve().parent.parent.absolute())
 _src_path = str((Path(__file__).resolve().parent.parent / "src").absolute())
-for p in [_app_path, _src_path]:
-    if p not in sys.path:
-        sys.path.insert(0, p)
+
+# Carefully remove the script directory ONLY if it's the very first entry (which Python adds automatically)
+# This prevents 'app' module shadowing when running 'python app/dash_app.py'
+if sys.path and sys.path[0] == _script_dir:
+    sys.path.pop(0)
+
+# FORCE insert to the front to shadow pip-installed shims in site-packages
+for p in [_project_root, _src_path]:
+    if p in sys.path:
+        sys.path.remove(p)
+    sys.path.insert(0, p)
+
+# DEBUG: Print sys.path
+print("DEBUG sys.path:", sys.path)
 
 if sys.platform.startswith("win"):
     MINGW_BIN = os.getenv("MINGW_BIN_PATH", r"C:\msys64\mingw64\bin")
@@ -110,10 +122,10 @@ app = dash.Dash(
     __name__,
     backend="fastapi",
     external_stylesheets=[
-        "https://unpkg.com/@mantine/core@8.0.0-alpha.1/styles.css",
-        "https://unpkg.com/@mantine/dates@8.0.0-alpha.1/styles.css",
-        "https://unpkg.com/@mantine/notifications@8.0.0-alpha.1/styles.css",
-        "https://unpkg.com/@mantine/charts@8.0.0-alpha.1/styles.css",
+        "https://unpkg.com/@mantine/core@7.3.0/styles.css",
+        "https://unpkg.com/@mantine/dates@7.3.0/styles.css",
+        "https://unpkg.com/@mantine/notifications@7.3.0/styles.css",
+        "https://unpkg.com/@mantine/charts@7.3.0/styles.css",
     ],
     suppress_callback_exceptions=True,
     meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}],

@@ -52,7 +52,7 @@ class TestMotherDuckConnectionInitialization:
 
         with tempfile.TemporaryDirectory() as tmpdir:
             db_path = os.path.join(tmpdir, "test.duckdb")
-            conn = MotherDuckConnection(token=None, database_path=db_path)
+            conn = MotherDuckConnection(token=None, database_path=db_path, read_only=False)
 
             assert conn.database_path == db_path
             conn.close()
@@ -87,14 +87,14 @@ class TestDuckDBFallbackConnection:
 
         with tempfile.TemporaryDirectory() as tmpdir:
             db_path = os.path.join(tmpdir, "fallback.duckdb")
-            conn = MotherDuckConnection(token=None, database_path=db_path)
+            conn = MotherDuckConnection(token=None, database_path=db_path, read_only=False)
 
             # Create a table to verify persistence
             conn.execute("CREATE TABLE test (id INT, value VARCHAR)")
             conn.close()
 
             # Reconnect and verify table exists
-            conn2 = MotherDuckConnection(token=None, database_path=db_path)
+            conn2 = MotherDuckConnection(token=None, database_path=db_path, read_only=False)
             result = conn2.fetch_all("SELECT COUNT(*) FROM test")
             assert result[0][0] == 0
             conn2.close()

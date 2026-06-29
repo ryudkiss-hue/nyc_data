@@ -96,7 +96,7 @@ def load_role_profile(role_or_path: str | Path) -> RoleProfile:
         job_reference=dict(data.get("job_reference", {})),
         unit_focus=str(data.get("unit_focus", "")),
         duties=[_parse_duty(d) for d in data.get("duties", [])],
-        kpis=[_parse_kpi(k) for k in data.get("metrics", [])],
+        kpis=[_parse_kpi(k) for k in data.get("kpis", data.get("metrics", []))],
         path=path,
     )
 

@@ -312,9 +312,9 @@ def _sidebar_nav() -> tuple[str, dict]:
 
         with st.expander("📥 Export Dashboard Reports", expanded=False):
             st.markdown("Export selected dashboards and datasets.")
-            
+
             export_datasets = st.multiselect(
-                "Datasets", 
+                "Datasets",
                 ["Sidewalk Inspections", "Violations Ledger", "311 Service Requests", "Capital Projects"],
                 default=["Sidewalk Inspections", "Violations Ledger", "311 Service Requests", "Capital Projects"]
             )
@@ -324,7 +324,7 @@ def _sidebar_nav() -> tuple[str, dict]:
                 default=["PDF"]
             )
             export_limit = st.number_input("Row Limit (0 = No limit)", value=0, step=1000)
-            
+
             if st.button("Generate Exports", use_container_width=True):
                 if not export_datasets or not export_formats:
                     st.warning("Please select at least one dataset and format.")
@@ -339,7 +339,7 @@ def _sidebar_nav() -> tuple[str, dict]:
                             st.success("Reports Generated!")
                         except Exception as e:
                             st.error(f"Failed to generate: {e}")
-            
+
             if 'export_files' in st.session_state:
                 st.markdown("### Ready to Download")
                 for fmt, path in st.session_state['export_files'].items():
@@ -471,12 +471,8 @@ def main() -> None:
 
     if section == "advanced_analytics":
         with _spinner_view():
-            try:
-                from app.views.analytics_advanced import render_analytics_advanced_page
-
-                render_analytics_advanced_page()
-            except ImportError:
-                st.info("Advanced Analytics view is not yet available.")
+            from app.views.analytics_advanced import render_analytics_advanced_page
+            render_analytics_advanced_page()
         return
 
     if section == "data_quality":
@@ -486,12 +482,8 @@ def main() -> None:
 
     if section == "data_catalog":
         with _spinner_view():
-            try:
-                from app.views.data_catalog import render_data_catalog_page
-
-                render_data_catalog_page()
-            except ImportError:
-                st.info("Data Catalog view is not yet available.")
+            from app.views.data_catalog import render_data_catalog_page
+            render_data_catalog_page()
         return
 
     # ------------------------------------------------------------------ #

@@ -274,7 +274,7 @@
       "unit": "rating",
       "formula": "AVG(TRY_CAST(systemrating AS DOUBLE))",
       "where": "systemrating IS NOT NULL",
-      "value": 6.818960929452245,
+      "value": 6.818960929451636,
       "by_borough": true
     },
     {
@@ -472,7 +472,7 @@
       "unit": "sqft",
       "formula": "SUM(TRY_CAST(shape_area AS DOUBLE))",
       "where": null,
-      "value": 616273174.9528271,
+      "value": 616273174.9528261,
       "by_borough": false
     },
     {
@@ -538,7 +538,7 @@
       "unit": "days",
       "formula": "AVG(date_diff('day', TRY_CAST(vissuedate AS DATE), current_date))",
       "where": "(vdismissdate IS NULL OR CAST(vdismissdate AS VARCHAR)='') AND TRY_CAST(vissuedate AS DATE) IS NOT NULL",
-      "value": 5398.243613987694,
+      "value": 5400.243613987694,
       "by_borough": true
     },
     {
@@ -549,7 +549,7 @@
       "unit": "count",
       "formula": "SUM(CASE WHEN (vdismissdate IS NULL OR CAST(vdismissdate AS VARCHAR)='') AND date_diff('day', TRY_CAST(vissuedate AS DATE), current_date) > 365 THEN 1 ELSE 0 END)",
       "where": null,
-      "value": 127099.0,
+      "value": 127102.0,
       "by_borough": true
     },
     {
@@ -688,7 +688,7 @@
       "domain": "walkability",
       "unit": "count",
       "formula": "SELECT SUM(TRY_CAST(cnt AS DOUBLE)) FROM nyc_dot_analytics.raw.\"bicycle_pedestrian_counts_daily\"",
-      "value": 178636705.0,
+      "value": 178727411.0,
       "by_borough": false
     },
     {
@@ -697,7 +697,7 @@
       "domain": "walkability",
       "unit": "count",
       "formula": "SELECT SUM(TRY_CAST(cnt AS DOUBLE)) FROM nyc_dot_analytics.raw.\"bicycle_pedestrian_counts_daily\" WHERE lower(travelmode) LIKE '%ped%'",
-      "value": 7295570.0,
+      "value": 7298890.0,
       "by_borough": false
     },
     {
@@ -706,7 +706,7 @@
       "domain": "condition",
       "unit": "percent",
       "formula": "SELECT 100.0 * (SELECT SUM(TRY_CAST(sq_feet AS DOUBLE))*0.092903 FROM nyc_dot_analytics.staging.\"violations\") / NULLIF((SELECT SUM(TRY_CAST(shape_area AS DOUBLE)) FROM nyc_dot_analytics.staging.\"sidewalk_planimetric\"),0)",
-      "value": 1.598823324582554,
+      "value": 1.5988233245825565,
       "by_borough": false
     },
     {

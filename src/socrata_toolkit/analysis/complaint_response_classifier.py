@@ -78,14 +78,16 @@ class ComplaintMetrics:
 class ComplaintResponseClassification:
     """Classification result for a 311 complaint."""
     complaint_id: str
-    description: str | None = None
-    borough: str | None = None
 
-    # Classification
+    # Classification (required)
     category: ComplaintCategory
     urgency: ComplaintUrgency
     response_status: ResponseStatus
     time_adequacy: TimeAdequacy
+
+    # Context (optional)
+    description: str | None = None
+    borough: str | None = None
 
     # Scores (0-100)
     category_severity_score: float = 0.0    # Inherent severity

@@ -1,9 +1,11 @@
 """Tests for core.cli module."""
 
-import pytest
 import subprocess
 import sys
 from pathlib import Path
+
+import pytest
+
 
 def test_cli_help():
     """Test the main CLI help command."""

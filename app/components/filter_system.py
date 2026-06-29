@@ -63,11 +63,45 @@ def render_filter_bar() -> html.Div:
         [
             dmc.Group(
                 [
+                    # Dataset Selector
+                    dmc.MultiSelect(
+                        id="filter-dataset-select",
+                        label="Datasets",
+                        searchable=True,
+                        clearable=True,
+                        data=[
+                            {"label": "Capital Projects", "value": "capital_projects"},
+                            {"label": "Street Paving", "value": "street_paving"},
+                            {"label": "Vision Zero", "value": "vision_zero"},
+                            {"label": "311 Complaints", "value": "311_complaints"}
+                        ],
+                        value=["capital_projects", "street_paving", "vision_zero", "311_complaints"],
+                        style={"flex": 1, "minWidth": "200px"},
+                    ),
+                    # Data Limit Selector
+                    dmc.Select(
+                        id="filter-data-limit",
+                        label="Data Limit",
+                        data=[
+                            {"label": "None (Unlimited)", "value": "none"},
+                            {"label": "1,000 records", "value": "1000"},
+                            {"label": "10,000 records", "value": "10000"},
+                            {"label": "100,000 records", "value": "100000"}
+                        ],
+                        value="none",
+                        style={"flex": 1, "minWidth": "150px"},
+                    ),
+                ],
+                grow=True,
+                gap="md",
+                mb="md"
+            ),
+            dmc.Group(
+                [
                     # Borough Selector
                     dmc.MultiSelect(
                         id="filter-borough-select",
                         label="Borough",
-                        placeholder="Select borough(s)",
                         searchable=True,
                         clearable=True,
                         data=BOROUGHS,
@@ -93,7 +127,6 @@ def render_filter_bar() -> html.Div:
                     dmc.Select(
                         id="filter-metric-type",
                         label="Metric Type",
-                        placeholder="Select metric type",
                         data=METRIC_TYPES,
                         value="all",
                         searchable=True,
@@ -119,18 +152,19 @@ def render_filter_bar() -> html.Div:
                             ),
                         ],
                         grow=False,
-                        spacing="sm",
+                        gap="sm",
+                        align="flex-end"
                     ),
                 ],
                 grow=True,
-                spacing="md",
+                gap="md",
             ),
             # Loading indicator
             dmc.LoadingOverlay(
                 id="filter-loading-overlay",
                 visible=False,
                 loaderProps={"type": "bars", "color": "blue"},
-                overlayOpacity=0.3,
+
             ),
         ],
         style={
@@ -161,6 +195,8 @@ def register_filter_callbacks() -> None:
         State("filter-date-start", "value"),
         State("filter-date-end", "value"),
         State("filter-metric-type", "value"),
+        State("filter-dataset-select", "value"),
+        State("filter-data-limit", "value"),
         prevent_initial_call=True,
     )
     def update_global_filters(
@@ -170,6 +206,8 @@ def register_filter_callbacks() -> None:
         date_start: str,
         date_end: str,
         metric_type: str,
+        datasets: list[str],
+        data_limit: str,
     ) -> dict[str, Any]:
         """
         Update global filter store on apply/reset button click.
@@ -181,6 +219,8 @@ def register_filter_callbacks() -> None:
             date_start: Start date (ISO format)
             date_end: End date (ISO format)
             metric_type: Selected metric type
+            datasets: Selected datasets (list of strings)
+            data_limit: Data limit as string ('none', '1000', etc)
 
         Returns:
             dict: Updated filter dictionary to be stored in dcc.Store
@@ -201,6 +241,8 @@ def register_filter_callbacks() -> None:
                 "date_start": None,
                 "date_end": None,
                 "metric_type": "all",
+                "datasets": ["capital_projects", "street_paving", "vision_zero", "311_complaints"],
+                "data_limit": "none",
             }
 
         # Apply button clicked → update filters
@@ -210,6 +252,8 @@ def register_filter_callbacks() -> None:
                 "date_start": date_start,
                 "date_end": date_end,
                 "metric_type": metric_type or "all",
+                "datasets": datasets or ["capital_projects", "street_paving", "vision_zero", "311_complaints"],
+                "data_limit": data_limit or "none",
             }
             logger.info(f"Filters applied: {filters_dict}")
             return filters_dict
@@ -220,4 +264,6 @@ def register_filter_callbacks() -> None:
             "date_start": date_start,
             "date_end": date_end,
             "metric_type": metric_type or "all",
+            "datasets": datasets or ["capital_projects", "street_paving", "vision_zero", "311_complaints"],
+            "data_limit": data_limit or "none",
         }

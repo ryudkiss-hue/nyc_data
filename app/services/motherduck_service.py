@@ -34,8 +34,18 @@ def get_motherduck_connection():
         RuntimeError: If connection cannot be established
     """
     try:
+        import os
+
         from socrata_toolkit.motherduck.connector import MotherDuckConnection
-        return MotherDuckConnection()
+
+        # Determine the absolute path to the local duckdb file
+        db_path = os.getenv("DUCKDB_PATH")
+        if not db_path:
+            project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            db_path = os.path.join(project_root, "data", "local_db", "nyc_mission_control.duckdb")
+
+        # Ignore MotherDuck token to force local fallback
+        return MotherDuckConnection(token="", database_path=db_path)
     except Exception as e:
         logger.error(f"Failed to establish MotherDuck connection: {e}")
         raise RuntimeError(f"MotherDuck connection failed: {e}")
@@ -59,7 +69,7 @@ def _apply_filters(query: str, filters: dict[str, Any]) -> str:
         if isinstance(boroughs, str):
             boroughs = [boroughs]
         borough_str = ",".join(f"'{b}'" for b in boroughs)
-        where_clauses.append(f"borough IN ({borough_str})")
+        where_clauses.append(f"(borough IN ({borough_str}) OR borough = 'ALL')")
 
     # Date range filter
     if filters.get("date_start"):

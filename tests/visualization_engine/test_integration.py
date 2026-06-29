@@ -8,6 +8,8 @@ import plotly.graph_objects as go
 
 from app.visualization_engine import (
     MetricCards as KPICards,
+)
+from app.visualization_engine import (
     PhaseBVisualizations,
     PhaseCVisualizations,
     PhaseDVisualizations,
@@ -162,14 +164,14 @@ class TestKPICards:
         kpi = KPICards(mock_connection)
         mock_connection.fetch_dataframe.return_value = kpi_test_data
 
-        kpi_names = kpi.get_kpi_names()
+        kpi_names = kpi.get_metric_names()
         assert len(kpi_names) == 18, f"KPI should have 18 metrics, got {len(kpi_names)}"
 
     def test_all_kpi_cards_render(self, mock_connection, kpi_test_data):
         """Test all KPI cards render successfully."""
         kpi = KPICards(mock_connection)
         mock_connection.fetch_dataframe.return_value = kpi_test_data
-        cards = kpi.render_all_kpi_cards()
+        cards = kpi.render_all_metric_cards()
 
         assert len(cards) == 18, f"Expected 18 KPI cards, got {len(cards)}"
 
