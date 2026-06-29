@@ -127,6 +127,20 @@ def execute_demo(args):
     run_demo()
 
 
+def execute_readiness(args):
+    """Print the deployment readiness report (automated checks)."""
+    from socrata_toolkit.core.readiness import run_readiness_checks
+
+    report = run_readiness_checks(run_pytest=getattr(args, "pytest", False))
+    if getattr(args, "json", False):
+        print(json.dumps(report, indent=2))
+    else:
+        print(f"Readiness: {report['overall_score']}/100  ({report['grade']})")
+        for axis, score in report["axis_scores"].items():
+            print(f"  {axis:<16} {score:>5}/100")
+        print(report["note"])
+
+
 def main():
     """Main CLI entry point with subcommands"""
     parser = argparse.ArgumentParser(
@@ -155,6 +169,10 @@ def main():
 
     subparsers.add_parser('demo', help='Run end-to-end demo')
 
+    readiness_parser = subparsers.add_parser('readiness', help='Print deployment readiness report')
+    readiness_parser.add_argument("--json", action="store_true", help="Emit the full report as JSON")
+    readiness_parser.add_argument("--pytest", action="store_true", help="Also run the test suite as a reliability check")
+
     args = parser.parse_args()
 
     if args.command == 'evaluate':
@@ -165,6 +183,8 @@ def main():
         execute_demo(args)
     elif args.command == 'query':
         execute_nlquery(args)
+    elif args.command == 'readiness':
+        execute_readiness(args)
     else:
         parser.print_help()
 
