@@ -99,7 +99,7 @@ class IncrementalLoader:
     def should_load(self, dataset_name: str, force: bool = False) -> bool:
         """
         Determine if dataset should be loaded.
-        
+
         Returns True if:
         - Never loaded before
         - Last load failed
@@ -137,7 +137,7 @@ class IncrementalLoader:
     ) -> str:
         """
         Build incremental query using watermark.
-        
+
         Adds WHERE clause to only fetch new/updated records.
         """
         wm = self.get_watermark(dataset_name)

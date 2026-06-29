@@ -6,7 +6,7 @@ APScheduler-based nightly runs and triggered executions.
 
 import logging
 from datetime import datetime
-from typing import Optional, Callable
+from typing import Callable, Optional
 
 logger = logging.getLogger(__name__)
 

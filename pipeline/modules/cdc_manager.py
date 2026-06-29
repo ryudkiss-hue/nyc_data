@@ -9,7 +9,7 @@ from __future__ import annotations
 import hashlib
 import logging
 from dataclasses import dataclass
-from typing import Optional, Dict, List
+from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +55,7 @@ class CDCManager:
     ) -> Dict[str, List[ChangeRecord]]:
         """
         Detect changes between two table versions.
-        
+
         Returns:
             {
                 'inserts': [ChangeRecord],

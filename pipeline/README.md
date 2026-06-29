@@ -2,7 +2,7 @@
 
 **Status:** Production Ready v2.0  
 **Last Updated:** 2026-06-18  
-**Datasets:** 57 (20 cached locally + 37 from Socrata)  
+**Datasets:** driven by `config/socrata_datasets.json` (currently 117, ingested from Socrata; cached-Parquet stage optional)  
 **Metrics:** 255 (51 Metrics × 5 boroughs)  
 **Quality:** 4 mandatory verification gates with exit code enforcement
 
@@ -14,7 +14,7 @@
 
 ```
 Stage 1: RAW (Landing)
-  ├─ 20 cached Parquet files (local cache)
+  ├─ Cached Parquet files (local cache, optional)
   ├─ 37 remaining datasets from Socrata (batched ingestion)
   └─ Schema: raw.* (57 tables, ≥10M rows, no row limits)
 
@@ -51,7 +51,7 @@ pipeline/
 ├── README.md                        # This file
 ├── .gitignore                       # Git ignore rules
 ├── sql/                             # SQL transformation templates
-│   ├── 01_raw_schema.sql            # Stage 1: Load 20 cached + 37 Socrata datasets
+│   ├── 01_raw_schema.sql            # Stage 1: Load cached + Socrata datasets
 │   ├── 02_staging_schema.sql        # Stage 2: Dedupe & type cast, preserve column names
 │   ├── 03_analytics_schemas.sql     # Stage 3: 5 domain schemas (sim_core, accessibility, coordination, overlays, extended)
 │   ├── 04_serving_metrics.sql          # Stage 4: 255 Metrics + 57 scorecards + 25 borough aggregates

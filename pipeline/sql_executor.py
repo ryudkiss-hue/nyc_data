@@ -3,12 +3,12 @@ SQL File Executor Module
 Loads, validates, and executes SQL files with support for templates and conditional logic.
 """
 
+import logging
 import os
 import re
-import logging
-from pathlib import Path
-from typing import List, Dict, Optional, Tuple
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +59,7 @@ class SQLExecutor:
             raise FileNotFoundError(f"SQL file not found: {file_path}")
 
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
             logger.info(f"Loaded SQL file: {filename} ({len(content)} bytes)")
             return content
@@ -206,7 +206,7 @@ class SQLExecutor:
 
     def log_statements(self):
         """Log all parsed statements."""
-        logger.info(f"Parsed SQL statements:")
+        logger.info("Parsed SQL statements:")
         for stmt in self.statements:
             sql_preview = stmt.sql[:60].replace("\n", " ")
             logger.info(f"  [{stmt.index}] {sql_preview}...")
