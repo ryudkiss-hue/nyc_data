@@ -23,8 +23,14 @@ from typing import Any
 import dash_mantine_components as dmc
 from dash import Input, Output, callback, dcc, html
 
-from app.callbacks.analytics import AnalyticsEngine
 from app.callbacks.decorators import memoize_with_ttl, timer_callback
+from app.callbacks.phase_render import (
+    render_anomalies,
+    render_bootstrap_ci,
+    render_decomposition,
+    render_distribution,
+    render_morans_i,
+)
 from app.services.motherduck_service import (
     fetch_phase_b_results,
     fetch_phase_c_results,
@@ -133,10 +139,7 @@ def update_phase_b_morans_i(
             )
 
         # Build data bundle for AnalyticsEngine
-        data_bundle = {"spatial": df}
-
-        # Render chart + narrative
-        fig, narrative = AnalyticsEngine.chart_morans_i(data_bundle)
+        fig, narrative = render_morans_i(df)
 
         # Extract statistics from figure
         stats = {
@@ -192,8 +195,7 @@ def update_phase_c_distribution(
                 html.Div(),
             )
 
-        data_bundle = {"data": df}
-        fig, narrative = AnalyticsEngine.chart_distribution_classification(data_bundle)
+        fig, narrative = render_distribution(df)
 
         stats = {
             "Records": len(df),
@@ -248,8 +250,7 @@ def update_phase_d_anomalies(
                 html.Div(),
             )
 
-        data_bundle = {"geographic": df}
-        fig, narrative = AnalyticsEngine.chart_anomaly_detection(data_bundle)
+        fig, narrative = render_anomalies(df)
 
         stats = {
             "Anomalies": len(df),
@@ -304,8 +305,7 @@ def update_phase_e_decomposition(
                 html.Div(),
             )
 
-        data_bundle = {"timeseries": df}
-        fig, narrative = AnalyticsEngine.chart_seasonal_decomposition(data_bundle)
+        fig, narrative = render_decomposition(df)
 
         stats = {
             "Periods": len(df),
@@ -360,8 +360,7 @@ def update_phase_f_bootstrap_ci(
                 html.Div(),
             )
 
-        data_bundle = {"bootstrap": df}
-        fig, narrative = AnalyticsEngine.chart_bootstrap_ci_forecast(data_bundle)
+        fig, narrative = render_bootstrap_ci(df)
 
         stats = {
             "Boroughs": len(df),

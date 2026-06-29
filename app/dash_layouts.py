@@ -761,11 +761,21 @@ def layout_reports():
 
 # --- VIEW: STATS ---
 def layout_stats():
+    # Real Phase B–F analytics (Moran's I, distribution, anomalies, decomposition,
+    # bootstrap CI) computed by the pipeline and rendered from app_queries.v_phase_*.
+    from app.dash_layouts_analytics_integration import render_analytics_integration_tabs
     return dmc.Container(
         fluid=True,
         pt="md",
         children=[
             dmc.Text("EMPIRICAL STATISTICS & DATA QUALITY", fw=900, size="xl", mb="lg", c="black"),
+            dmc.Paper(
+                withBorder=True, radius="lg", p="md", mb="xl", shadow="xs",
+                children=[
+                    dmc.Text("Advanced Statistical Analytics", fw=800, size="lg", mb="sm", c="black"),
+                    render_analytics_integration_tabs(),
+                ],
+            ),
             dmc.SimpleGrid(
                 cols=2,
                 spacing="lg",

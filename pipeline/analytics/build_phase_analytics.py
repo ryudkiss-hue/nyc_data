@@ -34,6 +34,11 @@ ROOT = Path(__file__).resolve().parents[2]
 DB = str(ROOT / "nyc_dot_analytics.duckdb")
 RNG = np.random.default_rng(42)  # deterministic (Math.random-free); reproducible runs
 
+# Warehouse-wide borough convention is the 2-letter code (matches the dashboard
+# filters and serving.metric_by_borough); geo.dim_nta carries full names.
+BORO_CODE = {"Manhattan": "MN", "Brooklyn": "BK", "Bronx": "BX",
+             "Queens": "QN", "Staten Island": "SI"}
+
 
 def morans_i(values: np.ndarray, coords: np.ndarray, k: int = 8, perms: int = 199):
     """Global Moran's I with row-standardized KNN weights + permutation p-value."""
@@ -99,15 +104,16 @@ def build(con: duckdb.DuckDBPyConnection) -> int:
     for boro, g in nta.groupby("borough"):
         vals = g["features"].to_numpy(dtype=float)
         coords = g[["lat", "lon"]].to_numpy(dtype=float)
+        code = BORO_CODE.get(boro, boro)
         res = morans_i(vals, coords)
         if res:
             i_val, p_val, n = res
-            b_rows.append({"borough": boro, "morans_i": round(i_val, 4),
+            b_rows.append({"borough": code, "morans_i": round(i_val, 4),
                            "significance": round(p_val, 4), "n_units": n,
                            "cluster_count": int((vals > vals.mean()).sum())})
         s = pd.Series(vals)
         skew, kurt = float(s.skew()), float(s.kurtosis())
-        c_rows.append({"borough": boro, "metric_name": "NTA Infrastructure Density",
+        c_rows.append({"borough": code, "metric_name": "NTA Infrastructure Density",
                        "distribution_type": _classify(skew, kurt),
                        "skewness": round(skew, 3), "kurtosis": round(kurt, 3),
                        "value": round(float(s.mean()), 2)})
@@ -117,7 +123,7 @@ def build(con: duckdb.DuckDBPyConnection) -> int:
                              for _ in range(2000)])
             lo, hi = np.percentile(boot, [2.5, 97.5])
             target = float(np.median(nta["features"]))  # citywide median density as SLA target
-            f_rows.append({"borough": boro, "metric_name": "NTA Infrastructure Density",
+            f_rows.append({"borough": code, "metric_name": "NTA Infrastructure Density",
                            "point_estimate": round(float(vals.mean()), 2),
                            "ci_lower": round(float(lo), 2), "ci_upper": round(float(hi), 2),
                            "prob_sla_breach": round(float((boot < target).mean()), 4)})
@@ -166,10 +172,12 @@ def build(con: duckdb.DuckDBPyConnection) -> int:
                 "SELECT borough, morans_i, significance, cluster_count, n_units FROM analytics.phase_b_morans")
     con.execute("CREATE OR REPLACE VIEW app_queries.v_phase_c_results AS "
                 "SELECT borough, metric_name, distribution_type, skewness, kurtosis, value FROM analytics.phase_c_distribution")
+    # D/E are citywide (per metric, not per borough); tag borough='ALL' so the
+    # dashboard's borough filter keeps them, and carry metric_name for labelling.
     con.execute("CREATE OR REPLACE VIEW app_queries.v_phase_d_results AS "
-                "SELECT metric_name AS borough, anomaly_type AS outlier_type, severity, year, zscore FROM analytics.phase_d_anomalies_real")
+                "SELECT 'ALL' AS borough, metric_name, anomaly_type AS outlier_type, severity, year, zscore FROM analytics.phase_d_anomalies_real")
     con.execute("CREATE OR REPLACE VIEW app_queries.v_phase_e_decomposition AS "
-                "SELECT metric_name AS borough, year AS date_key, trend, residual FROM analytics.phase_e_decomposition_real")
+                "SELECT 'ALL' AS borough, metric_name, year AS date_key, trend, residual FROM analytics.phase_e_decomposition_real")
     con.execute("CREATE OR REPLACE VIEW app_queries.v_phase_f_bootstrap_ci AS "
                 "SELECT borough, metric_name, point_estimate, ci_lower, ci_upper, prob_sla_breach FROM analytics.phase_f_bootstrap_real")
 
