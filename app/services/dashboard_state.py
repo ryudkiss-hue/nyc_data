@@ -23,6 +23,46 @@ from app.services.analytics_service import (
 
 logger = logging.getLogger(__name__)
 
+# Map a dashboard dataset key to its raw warehouse table name where they differ.
+_WAREHOUSE_ALIASES = {"lot_info": "lot_info", "tree_damage": "tree_damage"}
+_WAREHOUSE_CACHE: dict[str, pd.DataFrame] = {}
+
+
+def _read_warehouse_table(key: str, limit: int = 50000) -> pd.DataFrame:
+    """Read raw.<key> from the local DuckDB warehouse (cached per process).
+
+    Best-effort: returns an empty frame if the warehouse or table is absent so
+    the caller can degrade gracefully.
+    """
+    if key in _WAREHOUSE_CACHE:
+        return _WAREHOUSE_CACHE[key]
+    import os
+    from pathlib import Path
+
+    db = os.getenv("DUCKDB_PATH") or str(
+        Path(__file__).resolve().parents[2] / "nyc_dot_analytics.duckdb")
+    if not os.path.isabs(db):
+        db = str((Path(__file__).resolve().parents[2] / db).resolve())
+    table = _WAREHOUSE_ALIASES.get(key, key)
+    df = pd.DataFrame()
+    if Path(db).exists():
+        try:
+            import duckdb
+            con = duckdb.connect(db, read_only=True)
+            try:
+                exists = con.execute(
+                    "SELECT 1 FROM information_schema.tables "
+                    "WHERE table_schema='raw' AND table_name=?", [table]).fetchone()
+                if exists:
+                    df = con.execute(f'SELECT * FROM raw."{table}" LIMIT {int(limit)}').fetchdf()
+            finally:
+                con.close()
+        except Exception as e:  # pragma: no cover - defensive
+            logger.debug(f"Warehouse fallback failed for {key}: {e}")
+    _WAREHOUSE_CACHE[key] = df
+    return df
+
+
 class DashboardStateAdapter:
     """
     Adapter to encapsulate state retrieval and data filtering for the dashboard.
@@ -88,8 +128,15 @@ class DashboardStateAdapter:
         return combined_df
 
     def get_dataset_by_key(self, dataset_key: str) -> pd.DataFrame:
-        """Get a specific cached dataset by key, properly filtered."""
+        """Get a specific cached dataset by key, properly filtered.
+
+        Falls back to the local warehouse (raw.<key>) when the in-memory Socrata
+        cache is cold — so the visualization panels render real ingested data in a
+        local-first run instead of empty figures.
+        """
         df = self.dm.get_cached_dataset(dataset_key)
+        if df is None or df.empty:
+            df = _read_warehouse_table(dataset_key)
         if df is None or df.empty:
             return pd.DataFrame()
 
