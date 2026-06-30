@@ -32,24 +32,22 @@ _WAREHOUSE_CACHE: dict[str, pd.DataFrame] = {}
 # both viz-velocity and viz-inspections try to open DuckDB simultaneously on first
 # page load. Each call takes ~2s; sequencing them here keeps startup deterministic.
 def _prewarm_warehouse():
-    """Sequentially load the two primary dashboard datasets into _WAREHOUSE_CACHE."""
-    for key in ("built", "inspection"):
+    """Sequentially load the primary dashboard datasets into _WAREHOUSE_CACHE."""
+    for key in ("built", "inspection", "violations"):
         if key not in _WAREHOUSE_CACHE:
             try:
                 _read_warehouse_table(key)  # loads and caches, defined below
             except Exception as _e:
                 logger.debug(f"Pre-warm skipped for {key}: {_e}")
 
-# The dataset MultiSelect in the global filter bar uses friendly UI values; map
-# each to a real raw warehouse table so selections drive actual queries/exports.
-_UI_DATASET_TO_TABLE = {
-    "capital_projects": "built",
-    "street_paving": "dot_in_house_street_resurfacing_projects",
-    "vision_zero": "motor_vehicle_collisions_crashes",
-    "311_complaints": "complaints_311",
-    # passthroughs for any code that already names a real table/key
-    "inspection": "inspection", "built": "built", "violations": "violations",
-    "lot_info": "lot_info",
+# The dataset MultiSelect values are warehouse table names (the new filter system
+# uses value=table_name directly).  Legacy 4-item values kept for backward compat.
+_UI_DATASET_TO_TABLE: dict[str, str] = {
+    # Legacy mappings (old 4-item hardcoded list)
+    "capital_projects":   "capital_projects_dashboard",
+    "street_paving":      "dot_in_house_street_resurfacing_projects",
+    "vision_zero":        "vision_zero_base_report",
+    "311_complaints":     "complaints_311",
 }
 
 # Every borough may appear as a 2-letter code, a full name, a single letter, or a
@@ -80,17 +78,26 @@ def _borough_filter(df: pd.DataFrame, codes: list[str]) -> pd.DataFrame:
     return df[series.isin(accept)]
 
 
-def _date_filter(df: pd.DataFrame, start: str | None, end: str | None) -> pd.DataFrame:
-    """Filter by the first plausible date column when a date range is set.
-    Best-effort: unparseable values are dropped from the comparison, not the frame,
-    and a table without a date column is returned unchanged."""
+def _date_filter(
+    df: pd.DataFrame,
+    start: str | None,
+    end: str | None,
+    date_field: str | None = None,
+) -> pd.DataFrame:
+    """Filter by the selected or first plausible date column. Best-effort."""
     if not start and not end:
         return df
-    date_cols = [c for c in df.columns
-                 if any(k in c.lower() for k in ("date", "_dt", "created", "crash"))]
-    if not date_cols:
+    # Use the analyst-selected date field if it exists in this table; otherwise
+    # fall back to the first column whose name contains a date keyword.
+    col: str | None = None
+    if date_field and date_field in df.columns:
+        col = date_field
+    else:
+        candidates = [c for c in df.columns
+                      if any(k in c.lower() for k in ("date", "_dt", "created", "crash"))]
+        col = candidates[0] if candidates else None
+    if col is None:
         return df
-    col = date_cols[0]
     parsed = pd.to_datetime(df[col], errors="coerce")
     mask = parsed.notna()
     if start:
@@ -98,6 +105,46 @@ def _date_filter(df: pd.DataFrame, start: str | None, end: str | None) -> pd.Dat
     if end:
         mask &= parsed <= pd.to_datetime(end, errors="coerce")
     return df[mask]
+
+
+# Status column names and value sets across the raw tables.
+_STATUS_COLUMNS = ["cancel", "flag", "status", "violationstatus", "result", "inspectionresult"]
+_STATUS_OPEN      = {"OPEN", "ACTIVE", "PENDING", "Y"}
+_STATUS_CLOSED    = {"CLOSED", "COMPLETED", "RESOLVED", "N", "C"}
+_STATUS_DISMISSED = {"DISMISSED", "D", "X", "VOID"}
+_STATUS_IN_PROGRESS = {"IN PROGRESS", "IN-PROGRESS", "INPROGRESS", "P"}
+
+
+def _status_filter(df: pd.DataFrame, status: str | None) -> pd.DataFrame:
+    """Keep rows matching the requested status. 'all' is a no-op."""
+    if not status or status == "all":
+        return df
+    status_col = next((c for c in df.columns if c.lower() in _STATUS_COLUMNS), None)
+    if status_col is None:
+        return df  # table has no status column; don't drop rows
+    values = df[status_col].astype("string").str.strip().str.upper()
+    if status == "open":
+        return df[values.isin(_STATUS_OPEN)]
+    if status == "closed":
+        return df[values.isin(_STATUS_CLOSED)]
+    if status == "dismissed":
+        return df[values.isin(_STATUS_DISMISSED)]
+    if status == "in_progress":
+        return df[values.isin(_STATUS_IN_PROGRESS)]
+    return df
+
+
+def _community_district_filter(df: pd.DataFrame, cds: list[str] | None) -> pd.DataFrame:
+    """Keep rows matching selected community districts (e.g. '101' for MN CD1)."""
+    if not cds:
+        return df
+    # Community district stored as e.g. '101', '201', ... or '1', '2', ...
+    cd_col = next((c for c in df.columns if "cb" == c.lower() or "cd" == c.lower()
+                   or c.lower() in ("community_board", "communityboard", "cb_num")), None)
+    if cd_col is None:
+        return df
+    series = df[cd_col].astype("string").str.strip()
+    return df[series.isin(cds)]
 
 
 def _read_warehouse_table(key: str, limit: int = 50000) -> pd.DataFrame:
@@ -159,24 +206,35 @@ class DashboardStateAdapter:
         self.filters = filters or {}
 
     def get_boroughs(self) -> List[str]:
-        """Get the selected boroughs from the global filter."""
         boroughs = self.filters.get("boroughs", ["MN", "BK", "BX", "QN", "SI"])
-        if isinstance(boroughs, str):
-            return [boroughs]
-        return boroughs
+        return [boroughs] if isinstance(boroughs, str) else boroughs
 
     def get_limit(self) -> Optional[int]:
-        """Get the data limit from the global filter."""
         limit_str = self.filters.get("data_limit", "none")
         return None if limit_str == "none" else int(limit_str)
 
     def get_selected_datasets(self) -> List[str]:
-        """Get the list of selected datasets (UI values, as stored)."""
         return self.filters.get("datasets", ["inspection", "built", "violations", "lot_info"])
 
     def get_date_range(self) -> tuple[Optional[str], Optional[str]]:
-        """Get the (start, end) date strings from the global filter."""
         return self.filters.get("date_start"), self.filters.get("date_end")
+
+    def get_date_field(self) -> Optional[str]:
+        return self.filters.get("date_field")
+
+    def get_status(self) -> Optional[str]:
+        return self.filters.get("status", "all")
+
+    def get_community_districts(self) -> List[str]:
+        return self.filters.get("community_districts", []) or []
+
+    def _apply_all_filters(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Apply all active filters to a dataframe."""
+        df = _borough_filter(df, self.get_boroughs())
+        df = _community_district_filter(df, self.get_community_districts())
+        df = _date_filter(df, *self.get_date_range(), date_field=self.get_date_field())
+        df = _status_filter(df, self.get_status())
+        return df
 
     def get_combined_dataset(self, export_cap: Optional[int] = None) -> pd.DataFrame:
         """
@@ -208,13 +266,11 @@ class DashboardStateAdapter:
                 ds_key = _UI_DATASET_TO_TABLE.get(ds, ds)
                 df_part = self.dm.get_cached_dataset(ds_key)
                 if df_part is None or df_part.empty:
-                    # Local-first cold cache → read the real ingested table.
                     df_part = _read_warehouse_table(ds_key, limit=per_ds_cap or 50_000)
 
                 if df_part is not None and not df_part.empty:
                     df_part = df_part.copy()
-                    df_part = _borough_filter(df_part, boroughs)
-                    df_part = _date_filter(df_part, start, end)
+                    df_part = self._apply_all_filters(df_part)
                     if per_ds_cap is not None:
                         df_part = df_part.head(per_ds_cap)
                     elif limit is not None:
@@ -240,10 +296,7 @@ class DashboardStateAdapter:
         if df is None or df.empty:
             return pd.DataFrame()
 
-        df = _borough_filter(df, self.get_boroughs())
-        start, end = self.get_date_range()
-        df = _date_filter(df, start, end)
-
+        df = self._apply_all_filters(df)
         limit = self.get_limit()
         if limit is not None:
             df = df.head(limit)
