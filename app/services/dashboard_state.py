@@ -27,6 +27,65 @@ logger = logging.getLogger(__name__)
 _WAREHOUSE_ALIASES = {"lot_info": "lot_info", "tree_damage": "tree_damage"}
 _WAREHOUSE_CACHE: dict[str, pd.DataFrame] = {}
 
+# The dataset MultiSelect in the global filter bar uses friendly UI values; map
+# each to a real raw warehouse table so selections drive actual queries/exports.
+_UI_DATASET_TO_TABLE = {
+    "capital_projects": "built",
+    "street_paving": "dot_in_house_street_resurfacing_projects",
+    "vision_zero": "motor_vehicle_collisions_crashes",
+    "311_complaints": "complaints_311",
+    # passthroughs for any code that already names a real table/key
+    "inspection": "inspection", "built": "built", "violations": "violations",
+    "lot_info": "lot_info",
+}
+
+# Every borough may appear as a 2-letter code, a full name, a single letter, or a
+# numeric code across the 118 raw tables. Match tolerantly (uppercased).
+_BORO_FORMS = {
+    "MN": {"MN", "MANHATTAN", "M", "NEW YORK", "1"},
+    "BK": {"BK", "BROOKLYN", "B", "KINGS", "3"},
+    "BX": {"BX", "BRONX", "X", "2"},
+    "QN": {"QN", "QUEENS", "Q", "4"},
+    "SI": {"SI", "STATEN ISLAND", "S", "RICHMOND", "5"},
+}
+
+
+def _borough_filter(df: pd.DataFrame, codes: list[str]) -> pd.DataFrame:
+    """Keep rows whose borough column matches any selected code, tolerant of the
+    many encodings used across raw tables. A table without a borough column is
+    returned unchanged (the filter simply doesn't apply)."""
+    if not codes or "ALL" in codes:
+        return df
+    boro_cols = [c for c in df.columns if "boro" in c.lower()]
+    if not boro_cols:
+        return df
+    accept = set()
+    for c in codes:
+        accept |= {v.upper() for v in _BORO_FORMS.get(c.upper(), {c.upper()})}
+    col = boro_cols[0]
+    series = df[col].astype("string").str.strip().str.upper()
+    return df[series.isin(accept)]
+
+
+def _date_filter(df: pd.DataFrame, start: str | None, end: str | None) -> pd.DataFrame:
+    """Filter by the first plausible date column when a date range is set.
+    Best-effort: unparseable values are dropped from the comparison, not the frame,
+    and a table without a date column is returned unchanged."""
+    if not start and not end:
+        return df
+    date_cols = [c for c in df.columns
+                 if any(k in c.lower() for k in ("date", "_dt", "created", "crash"))]
+    if not date_cols:
+        return df
+    col = date_cols[0]
+    parsed = pd.to_datetime(df[col], errors="coerce")
+    mask = parsed.notna()
+    if start:
+        mask &= parsed >= pd.to_datetime(start, errors="coerce")
+    if end:
+        mask &= parsed <= pd.to_datetime(end, errors="coerce")
+    return df[mask]
+
 
 def _read_warehouse_table(key: str, limit: int = 50000) -> pd.DataFrame:
     """Read raw.<key> from the local DuckDB warehouse (cached per process).
@@ -95,8 +154,12 @@ class DashboardStateAdapter:
         return None if limit_str == "none" else int(limit_str)
 
     def get_selected_datasets(self) -> List[str]:
-        """Get the list of selected datasets."""
+        """Get the list of selected datasets (UI values, as stored)."""
         return self.filters.get("datasets", ["inspection", "built", "violations", "lot_info"])
+
+    def get_date_range(self) -> tuple[Optional[str], Optional[str]]:
+        """Get the (start, end) date strings from the global filter."""
+        return self.filters.get("date_start"), self.filters.get("date_end")
 
     def get_combined_dataset(self) -> pd.DataFrame:
         """
@@ -107,19 +170,25 @@ class DashboardStateAdapter:
         """
         datasets = self.get_selected_datasets()
         limit = self.get_limit()
+        boroughs = self.get_boroughs()
+        start, end = self.get_date_range()
 
         combined_df = pd.DataFrame()
 
         for ds in datasets:
             try:
-                ds_key = "inspection" if "311" in ds else "built" if "capital" in ds else ds
+                ds_key = _UI_DATASET_TO_TABLE.get(ds, ds)
                 df_part = self.dm.get_cached_dataset(ds_key)
+                if df_part is None or df_part.empty:
+                    # Local-first cold cache → read the real ingested table.
+                    df_part = _read_warehouse_table(ds_key)
 
                 if df_part is not None and not df_part.empty:
+                    df_part = df_part.copy()
+                    df_part = _borough_filter(df_part, boroughs)
+                    df_part = _date_filter(df_part, start, end)
                     if limit is not None:
                         df_part = df_part.head(limit)
-                    # Create a copy to avoid SettingWithCopyWarning
-                    df_part = df_part.copy()
                     df_part["_source_dataset"] = ds
                     combined_df = pd.concat([combined_df, df_part], ignore_index=True)
             except Exception as e:
@@ -134,17 +203,16 @@ class DashboardStateAdapter:
         cache is cold — so the visualization panels render real ingested data in a
         local-first run instead of empty figures.
         """
-        df = self.dm.get_cached_dataset(dataset_key)
+        table_key = _UI_DATASET_TO_TABLE.get(dataset_key, dataset_key)
+        df = self.dm.get_cached_dataset(table_key)
         if df is None or df.empty:
-            df = _read_warehouse_table(dataset_key)
+            df = _read_warehouse_table(table_key)
         if df is None or df.empty:
             return pd.DataFrame()
 
-        boroughs = self.get_boroughs()
-        if boroughs and "ALL" not in boroughs:
-            boro_cols = [c for c in df.columns if "boro" in c.lower()]
-            if boro_cols:
-                df = df[df[boro_cols[0]].str.upper().isin([b.upper() for b in boroughs])]
+        df = _borough_filter(df, self.get_boroughs())
+        start, end = self.get_date_range()
+        df = _date_filter(df, start, end)
 
         limit = self.get_limit()
         if limit is not None:

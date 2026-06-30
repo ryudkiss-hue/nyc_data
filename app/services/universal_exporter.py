@@ -67,6 +67,7 @@ class UniversalExporter:
         title: str,
         statistics: dict[str, Any],
         narrative: Optional[str] = None,
+        table_df: Optional[pd.DataFrame] = None,
     ) -> Optional[bytes]:
         """
         Export Plotly figure to PDF with statistics table.
@@ -112,11 +113,16 @@ class UniversalExporter:
             return None
 
         try:
-            # Convert figure to image (PNG)
-            img_bytes = figure.to_image(format="png", width=700, height=500)
-            if img_bytes is None:
-                logger.warning("Could not convert figure to PNG. Skipping chart in PDF.")
-                img_bytes = b""
+            # Convert figure to image (PNG). Non-fatal: a missing/failed renderer
+            # (e.g. kaleido or a headless Chrome) must NOT prevent the PDF from
+            # generating — we simply omit the chart and keep the stats/table.
+            img_bytes = b""
+            if figure is not None and getattr(figure, "data", None):
+                try:
+                    img_bytes = figure.to_image(format="png", width=700, height=500) or b""
+                except Exception as e:  # noqa: BLE001 - renderer is optional
+                    logger.warning(f"Chart image unavailable ({e}); exporting text-only PDF.")
+                    img_bytes = b""
 
             # Create PDF buffer
             pdf_buffer = io.BytesIO()
@@ -167,6 +173,30 @@ class UniversalExporter:
                     ('GRID', (0, 0), (-1, -1), 1, colors.black),
                 ]))
                 elements.append(stat_table)
+
+            # Add a data preview table (first rows/cols of the filtered data)
+            if table_df is not None and not table_df.empty:
+                elements.append(Spacer(1, 0.3 * inch))
+                preview = table_df.head(15)
+                cols = list(preview.columns)[:6]
+                head = [str(c) for c in cols]
+                body = [[str(v)[:24] for v in row]
+                        for row in preview[cols].itertuples(index=False)]
+                data_tbl = Table([head] + body)
+                data_tbl.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#343a40')),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                    ('FONTSIZE', (0, 0), (-1, -1), 7),
+                    ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                    ('ROWBACKGROUNDS', (0, 1), (-1, -1),
+                     [colors.white, colors.HexColor('#f1f3f5')]),
+                ]))
+                elements.append(Paragraph(
+                    f"<b>Data preview</b> ({len(table_df):,} rows × "
+                    f"{len(table_df.columns)} cols)", styles['BodyText']))
+                elements.append(Spacer(1, 0.1 * inch))
+                elements.append(data_tbl)
 
             # Add narrative if provided
             if narrative:
@@ -241,6 +271,21 @@ class UniversalExporter:
             logger.error(f"Error exporting to CSV: {e}", exc_info=True)
             return None
 
+    @staticmethod
+    def _excel_safe(df: pd.DataFrame) -> pd.DataFrame:
+        """Stringify cells openpyxl can't serialize (dict/list/tuple/set), e.g.
+        Socrata 'location' point columns. Returns a copy; scalar columns untouched."""
+        out = df.copy()
+        for col in out.columns:
+            if out[col].dtype == object:
+                sample = out[col].dropna().head(20)
+                if any(isinstance(v, (dict, list, tuple, set)) for v in sample):
+                    out[col] = out[col].apply(
+                        lambda v: str(v) if isinstance(v, (dict, list, tuple, set)) else v)
+        # openpyxl can't serialize pandas NA/NaT — coerce every missing to None.
+        out = out.astype(object).where(out.notna(), None)
+        return out
+
     def export_data_to_excel(
         self,
         df: pd.DataFrame,
@@ -275,6 +320,7 @@ class UniversalExporter:
             return None
 
         try:
+            df = self._excel_safe(df)
             wb = Workbook()
             wb.remove(wb.active)  # Remove default sheet
 
@@ -331,6 +377,93 @@ class UniversalExporter:
 
         except Exception as e:
             logger.error(f"Error exporting to Excel: {e}", exc_info=True)
+            return None
+
+    def export_data_to_pptx(
+        self,
+        df: pd.DataFrame,
+        title: str,
+        statistics: Optional[dict[str, Any]] = None,
+        narrative: Optional[str] = None,
+        figure: Optional[go.Figure] = None,
+    ) -> Optional[bytes]:
+        """Export a slide deck: title + stats + data-preview table (+ chart if renderable).
+
+        Uses python-pptx (pure-python). The chart image is best-effort — a missing
+        renderer omits it rather than failing the whole export.
+        """
+        try:
+            from pptx import Presentation
+            from pptx.util import Inches, Pt
+        except ImportError:
+            logger.error("python-pptx not installed. Install with: pip install python-pptx")
+            return None
+
+        try:
+            prs = Presentation()
+            blank = prs.slide_layouts[6]
+
+            # --- Title slide ---
+            title_slide = prs.slides.add_slide(prs.slide_layouts[5])
+            title_slide.shapes.title.text = title
+            sub = title_slide.shapes.add_textbox(Inches(0.5), Inches(1.8),
+                                                 Inches(9), Inches(1))
+            tf = sub.text_frame
+            tf.text = f"Generated {datetime.now().isoformat(timespec='seconds')}  •  {len(df):,} records"
+            tf.paragraphs[0].font.size = Pt(14)
+            if narrative:
+                p = tf.add_paragraph()
+                p.text = narrative[:300]
+                p.font.size = Pt(12)
+
+            # --- Statistics slide ---
+            if statistics:
+                s = prs.slides.add_slide(blank)
+                box = s.shapes.add_textbox(Inches(0.5), Inches(0.4), Inches(9), Inches(0.6))
+                box.text_frame.text = "Key Statistics"
+                box.text_frame.paragraphs[0].font.size = Pt(24)
+                rows = len(statistics) + 1
+                tbl = s.shapes.add_table(rows, 2, Inches(0.5), Inches(1.2),
+                                         Inches(6), Inches(0.4 * rows)).table
+                tbl.cell(0, 0).text, tbl.cell(0, 1).text = "Metric", "Value"
+                for i, (k, v) in enumerate(statistics.items(), 1):
+                    tbl.cell(i, 0).text = str(k)
+                    tbl.cell(i, 1).text = f"{v:.4f}" if isinstance(v, float) else str(v)
+
+            # --- Chart slide (best-effort) ---
+            if figure is not None and getattr(figure, "data", None):
+                try:
+                    img = figure.to_image(format="png", width=900, height=560)
+                    if img:
+                        s = prs.slides.add_slide(blank)
+                        s.shapes.add_picture(io.BytesIO(img), Inches(0.4), Inches(0.4),
+                                             width=Inches(9))
+                except Exception as e:  # noqa: BLE001 - renderer optional
+                    logger.warning(f"PPTX chart image unavailable ({e}); skipping slide.")
+
+            # --- Data preview slide ---
+            if df is not None and not df.empty:
+                s = prs.slides.add_slide(blank)
+                box = s.shapes.add_textbox(Inches(0.4), Inches(0.3), Inches(9), Inches(0.5))
+                box.text_frame.text = f"Data preview — {len(df):,} rows × {len(df.columns)} cols"
+                box.text_frame.paragraphs[0].font.size = Pt(20)
+                preview = df.head(10)
+                cols = list(preview.columns)[:6]
+                tbl = s.shapes.add_table(len(preview) + 1, len(cols), Inches(0.4),
+                                         Inches(1.0), Inches(9), Inches(0.35 * (len(preview) + 1))).table
+                for j, c in enumerate(cols):
+                    tbl.cell(0, j).text = str(c)[:18]
+                for i, row in enumerate(preview[cols].itertuples(index=False), 1):
+                    for j, v in enumerate(row):
+                        tbl.cell(i, j).text = str(v)[:20]
+
+            buf = io.BytesIO()
+            prs.save(buf)
+            buf.seek(0)
+            logger.info(f"PPTX exported successfully: {title}")
+            return buf.getvalue()
+        except Exception as e:
+            logger.error(f"Error exporting to PPTX: {e}", exc_info=True)
             return None
 
     def export_report_multiformat(
