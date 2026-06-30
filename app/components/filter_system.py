@@ -149,6 +149,7 @@ def render_filter_bar() -> html.Div:
                                 size="sm",
                                 variant="outline",
                                 color="gray",
+                                style={"color": "#545b62"},  # WCAG: 6.6:1 on light-gray bg
                             ),
                         ],
                         grow=False,

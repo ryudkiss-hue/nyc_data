@@ -130,6 +130,9 @@ app = dash.Dash(
     suppress_callback_exceptions=True,
     meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}],
 )
+# WCAG 2.4.1 — set lang="en" on the root <html> element so screen readers
+# know the page language. Dash's default index_string omits the lang attribute.
+app.index_string = app.index_string.replace("<html>", '<html lang="en">')
 server = app.server
 
 
@@ -150,6 +153,23 @@ THEME = {
     "fontFamily": "'Inter', sans-serif",
     "primaryColor": "blue",
     "defaultRadius": "md",
+    # WCAG 2.1 AA — gray-5 (#adb5bd→2:1) and gray-6 (#868e96→3:1) both fail
+    # AA contrast on white/near-white backgrounds. Replaced with WCAG-safe values
+    # that still read as "secondary/muted" but meet the 4.5:1 minimum.
+    "colors": {
+        "gray": [
+            "#f8f9fa",  # 0
+            "#f1f3f5",  # 1
+            "#e9ecef",  # 2
+            "#dee2e6",  # 3
+            "#ced4da",  # 4
+            "#606870",  # 5 was #adb5bd (~2:1) → now ~5.6:1
+            "#545B62",  # 6 was #868e96 (~3:1) → now ~6.9:1
+            "#495057",  # 7
+            "#343a40",  # 8
+            "#212529",  # 9
+        ],
+    },
 }
 
 dm = DataManager(read_only=True)

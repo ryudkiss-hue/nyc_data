@@ -112,7 +112,7 @@ def register_morans_i_callbacks(app, dm_instance):
         Output("moran-i-metadata", "children"),
         Input("store-global-filters", "data"),
         Input("moran-i-column-select", "value"),
-        prevent_initial_call=False,
+        prevent_initial_call=True,
     )
     @timer_callback
     @memoize_with_ttl(seconds=600)
@@ -261,7 +261,7 @@ def register_distribution_callbacks(app, dm_instance):
         Output("distribution-card-grid", "children"),
         Input("store-global-filters", "data"),
         Input("distribution-column-limit", "value"),
-        prevent_initial_call=False,
+        prevent_initial_call=True,
     )
     @timer_callback
     @memoize_with_ttl(seconds=600)
@@ -397,7 +397,7 @@ def register_anomaly_detection_callbacks(app, dm_instance):
         Input("anomaly-column-select", "value"),
         Input("anomaly-k-slider", "value"),
         Input("anomaly-threshold-slider", "value"),
-        prevent_initial_call=False,
+        prevent_initial_call=True,
     )
     @timer_callback
     @memoize_with_ttl(seconds=300)
@@ -602,7 +602,7 @@ def register_decomposition_callbacks(app, dm_instance):
         Output("decomposition-stats", "children"),
         Input("store-global-filters", "data"),
         Input("decomposition-period", "value"),
-        prevent_initial_call=False,
+        prevent_initial_call=True,
     )
     @timer_callback
     @memoize_with_ttl(seconds=900)
@@ -824,7 +824,7 @@ def register_bootstrap_callbacks(app, dm_instance):
     @app.callback(
         Output("metric-gauge-completion-rate", "figure"),
         Input("store-global-filters", "data"),
-        prevent_initial_call=False,
+        prevent_initial_call=True,
     )
     @timer_callback
     @memoize_with_ttl(seconds=600)

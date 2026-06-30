@@ -27,7 +27,7 @@ cache = CacheService()
     Input("gis-borough-filter", "value"),
     Input("gis-severity-filter", "value"),
     Input("gis-date-range", "value"),
-    prevent_initial_call=False,
+    prevent_initial_call=True,
 )
 def sync_gis_filters(boroughs, severity, date_range):
     """
@@ -103,7 +103,7 @@ def populate_filter_options(trigger_data):
     Output("viz-condition-map", "figure"),
     Input("gis-session-filters", "data"),
     State("gis-data-store", "data"),
-    prevent_initial_call=False,
+    prevent_initial_call=True,
 )
 def update_condition_map(filters, data_store):
     """
@@ -178,7 +178,7 @@ def update_condition_map(filters, data_store):
     Output("viz-hotspot-kde", "figure"),
     Input("gis-session-filters", "data"),
     State("gis-data-store", "data"),
-    prevent_initial_call=False,
+    prevent_initial_call=True,
 )
 def update_hotspot_analysis(filters, data_store):
     """
@@ -236,7 +236,7 @@ def update_hotspot_analysis(filters, data_store):
     Input("gis-session-filters", "data"),
     State("gis-data-store", "data"),
     State("gis-permits-store", "data"),
-    prevent_initial_call=False,
+    prevent_initial_call=True,
 )
 def update_conflict_detection(filters, inspection_data, permit_data):
     """
@@ -316,7 +316,7 @@ def update_conflict_detection(filters, inspection_data, permit_data):
     Output("viz-borough-bar", "figure"),
     Input("gis-session-filters", "data"),
     State("gis-data-store", "data"),
-    prevent_initial_call=False,
+    prevent_initial_call=True,
 )
 def update_borough_aggregation(filters, data_store):
     """
@@ -379,7 +379,7 @@ def update_borough_aggregation(filters, data_store):
     Output("cluster-stats-text", "children"),
     Input("gis-session-filters", "data"),
     State("gis-data-store", "data"),
-    prevent_initial_call=False,
+    prevent_initial_call=True,
 )
 def update_dbscan_clustering(filters, data_store):
     """

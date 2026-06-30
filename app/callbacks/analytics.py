@@ -677,6 +677,7 @@ def register_analytics_callbacks(app, dm=None):
         Input({"type": "insight-mode", "index": dash.MATCH}, "value"),
         Input({"type": "insight-verbosity", "index": dash.MATCH}, "value"),
         Input({"type": "insight-reading-level", "index": dash.MATCH}, "value"),
+        prevent_initial_call=True,
     )
     def update_universal_asset(filters, mode, verbosity, reading_level):
         ctx = dash.callback_context
@@ -716,7 +717,7 @@ def register_analytics_callbacks(app, dm=None):
                 "311_treemap": "treemap", "contractor_radar": "radar_scores",
                 "hiqa_outcomes": "hiqa", "mappluto_far": "mappluto",
                 "resurfacing_gantt": "resurfacing", "weekly_heat": "heatmap",
-                "manifold_3d": "correlation", "quantum": "efficiency",
+                "manifold_3d": "correlation",
             }
             _key = chart_id.replace("viz-", "").replace("-", "_")
             map_key = _ALIASES.get(_key, _key)

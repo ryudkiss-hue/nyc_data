@@ -161,9 +161,14 @@ class DashboardStateAdapter:
         """Get the (start, end) date strings from the global filter."""
         return self.filters.get("date_start"), self.filters.get("date_end")
 
-    def get_combined_dataset(self) -> pd.DataFrame:
+    def get_combined_dataset(self, export_cap: Optional[int] = None) -> pd.DataFrame:
         """
         Get a fully materialized and filtered DataFrame containing all selected datasets.
+
+        Args:
+            export_cap: When set, limits total rows by capping each dataset slice at
+                ``export_cap // n_datasets`` rows before concatenation — keeps the hot
+                path fast for interactive exports without touching the ingestion layer.
 
         Returns:
             pd.DataFrame: Concatenated DataFrame with a '_source_dataset' identifier column.
@@ -173,6 +178,12 @@ class DashboardStateAdapter:
         boroughs = self.get_boroughs()
         start, end = self.get_date_range()
 
+        # Per-dataset slice cap: spread the export budget evenly so we don't read
+        # 4× as many rows as needed before the global trim in the caller.
+        per_ds_cap: Optional[int] = None
+        if export_cap is not None and datasets:
+            per_ds_cap = max(1, export_cap // len(datasets))
+
         combined_df = pd.DataFrame()
 
         for ds in datasets:
@@ -181,13 +192,15 @@ class DashboardStateAdapter:
                 df_part = self.dm.get_cached_dataset(ds_key)
                 if df_part is None or df_part.empty:
                     # Local-first cold cache → read the real ingested table.
-                    df_part = _read_warehouse_table(ds_key)
+                    df_part = _read_warehouse_table(ds_key, limit=per_ds_cap or 50_000)
 
                 if df_part is not None and not df_part.empty:
                     df_part = df_part.copy()
                     df_part = _borough_filter(df_part, boroughs)
                     df_part = _date_filter(df_part, start, end)
-                    if limit is not None:
+                    if per_ds_cap is not None:
+                        df_part = df_part.head(per_ds_cap)
+                    elif limit is not None:
                         df_part = df_part.head(limit)
                     df_part["_source_dataset"] = ds
                     combined_df = pd.concat([combined_df, df_part], ignore_index=True)

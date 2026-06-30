@@ -277,13 +277,18 @@ class UniversalExporter:
         Socrata 'location' point columns. Returns a copy; scalar columns untouched."""
         out = df.copy()
         for col in out.columns:
-            if out[col].dtype == object:
-                sample = out[col].dropna().head(20)
+            s = out[col]
+            if s.dtype == object:
+                sample = s.dropna().head(20)
                 if any(isinstance(v, (dict, list, tuple, set)) for v in sample):
-                    out[col] = out[col].apply(
+                    s = s.apply(
                         lambda v: str(v) if isinstance(v, (dict, list, tuple, set)) else v)
-        # openpyxl can't serialize pandas NA/NaT — coerce every missing to None.
-        out = out.astype(object).where(out.notna(), None)
+            # openpyxl can't serialize pandas NA/NaT — coerce missing to None, but
+            # only for columns that actually contain nulls (avoids an expensive
+            # whole-frame astype on large exports).
+            if s.isna().any():
+                s = s.astype(object).where(s.notna(), None)
+            out[col] = s
         return out
 
     def export_data_to_excel(

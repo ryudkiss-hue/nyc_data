@@ -190,7 +190,7 @@ def register_metric_callbacks() -> None:
         Output({"type": "metric-value", "index": ALL}, "children"),
         Output({"type": "metric-change", "index": ALL}, "children"),
         Input("store-global-filters", "data"),
-        prevent_initial_call=False,
+        prevent_initial_call=True,
     )
     def update_metric_values(filters: dict[str, Any]) -> tuple:
         """

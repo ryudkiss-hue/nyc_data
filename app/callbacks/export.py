@@ -109,7 +109,14 @@ def register_export_callbacks(app, dm_instance):
 
         from app.services.dashboard_state import DashboardStateAdapter
         state = DashboardStateAdapter(dm_instance, filters)
-        combined_df = state.get_combined_dataset()
+        # Cap interactive view exports; ingestion is uncapped (No-Data-Limits mandate governs ingest only).
+        # Pass the cap so get_combined_dataset reads at most cap/n_datasets rows per table (fast path).
+        _EXPORT_ROW_CAP = 50_000
+        combined_df = state.get_combined_dataset(export_cap=_EXPORT_ROW_CAP)
+        _cap_note = ""
+        if len(combined_df) > _EXPORT_ROW_CAP:
+            _cap_note = f" (first {_EXPORT_ROW_CAP:,} of {len(combined_df):,} rows)"
+            combined_df = combined_df.head(_EXPORT_ROW_CAP)
         if combined_df.empty:
             return no_update, dmc.Notification(
                 title="Export Error",
@@ -124,7 +131,7 @@ def register_export_callbacks(app, dm_instance):
             excel_bytes = exporter.export_data_to_excel(combined_df, "NYC DOT Complete Export")
             if excel_bytes:
                 return dcc.send_bytes(excel_bytes, f"NYC_DOT_Complete_Export_{ts}.xlsx"), dmc.Notification(
-                    title="Export Complete", message="Global Excel export generated successfully.", color="green", action="show"
+                    title="Export Complete", message=f"Global Excel export generated successfully{_cap_note}.", color="green", action="show"
                 )
             return no_update, dmc.Notification(title="Export Error", message="Failed to generate Excel.", color="red", action="show")
 
@@ -152,7 +159,7 @@ def register_export_callbacks(app, dm_instance):
 
             if pdf_bytes:
                 return dcc.send_bytes(pdf_bytes, f"NYC_DOT_Complete_Export_{ts}.pdf"), dmc.Notification(
-                    title="Export Complete", message="Global PDF export generated successfully.", color="green", action="show"
+                    title="Export Complete", message=f"Global PDF export generated successfully{_cap_note}.", color="green", action="show"
                 )
             return no_update, dmc.Notification(title="Export Error", message="Failed to generate PDF.", color="red", action="show")
 
@@ -174,7 +181,7 @@ def register_export_callbacks(app, dm_instance):
                 combined_df, "NYC DOT Complete Export", stats, figure=fig)
             if pptx_bytes:
                 return dcc.send_bytes(pptx_bytes, f"NYC_DOT_Complete_Export_{ts}.pptx"), dmc.Notification(
-                    title="Export Complete", message="Global PPTX export generated successfully.", color="green", action="show"
+                    title="Export Complete", message=f"Global PPTX export generated successfully{_cap_note}.", color="green", action="show"
                 )
             return no_update, dmc.Notification(title="Export Error", message="Failed to generate PPTX.", color="red", action="show")
 
