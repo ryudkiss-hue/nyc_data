@@ -79,7 +79,8 @@ def register_ingestion_callbacks(app, dm_instance):
                     return False, False, dmc.Notification(title="Ingestion Failed", message=ingestion_status["error"], color="red", action="show")
                 if ingestion_status["finished"]:
                     ingestion_status["finished"] = False
-                    return True, False, dmc.Notification(title="Ingestion Complete", message="57 datasets loaded successfully.", color="green", action="show")
+                    dataset_count = ingestion_status.get("dataset_count", 0) or 118
+                    return True, False, dmc.Notification(title="Ingestion Complete", message=f"{dataset_count} datasets loaded successfully.", color="green", action="show")
             return no_update, False, no_update
 
         # Progress Feedback Logic

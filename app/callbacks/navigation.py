@@ -1,5 +1,5 @@
 import dash_mantine_components as dmc
-from dash import Input, Output, State
+from dash import Input, Output, State, no_update
 
 from app.dash_layouts import (
     layout_construction,
@@ -28,35 +28,39 @@ def register_navigation_callbacks(app):
     def toggle_theme(n_clicks, current):
         return "dark" if current == "light" else "light"
 
-    @app.callback(Output("page-content", "children"), Input("url", "pathname"))
+    @app.callback(
+        Output("page-content", "children"),
+        Output("store-page-rendered", "data"),
+        Input("url", "pathname"),
+    )
     def render_page_content(pathname):
         if pathname == "/":
-            return layout_dashboard()
+            return layout_dashboard(), pathname
         elif pathname == "/const":
-            return layout_construction()
+            return layout_construction(), pathname
         elif pathname == "/labor":
-            return layout_labor()
+            return layout_labor(), pathname
         elif pathname == "/reports":
-            return layout_reports()
+            return layout_reports(), pathname
         elif pathname == "/stats":
-            return layout_stats()
+            return layout_stats(), pathname
         elif pathname == "/geo":
-            return layout_gis()
+            return layout_gis(), pathname
         elif pathname == "/eng":
-            return layout_engineering()
+            return layout_engineering(), pathname
         elif pathname == "/sql":
-            return layout_sql_tools()
+            return layout_sql_tools(), pathname
         elif pathname == "/nlp":
-            return layout_nlp()
+            return layout_nlp(), pathname
         elif pathname == "/tutorials":
-            return layout_tutorials()
+            return layout_tutorials(), pathname
         elif pathname == "/settings":
-            return layout_settings()
+            return layout_settings(), pathname
         elif pathname == "/copilot":
-            return layout_copilot()
+            return layout_copilot(), pathname
         elif pathname == "/toolbox":
-            return layout_toolbox()
-        return dmc.Text("404: Not Found", c="red")
+            return layout_toolbox(), pathname
+        return dmc.Text("404: Not Found", c="red"), pathname
 
     @app.callback(
         [

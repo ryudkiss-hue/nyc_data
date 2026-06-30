@@ -38,11 +38,15 @@ def get_motherduck_connection():
 
         from socrata_toolkit.motherduck.connector import MotherDuckConnection
 
-        # Determine the absolute path to the local duckdb file
+        # Determine the absolute path to the local duckdb warehouse file.
+        # DUCKDB_PATH env var overrides; default is the repo-root warehouse built
+        # by pipeline/run_local.py (nyc_dot_analytics.duckdb, ~5.7 GB real data).
+        # The old default (data/local_db/nyc_mission_control.duckdb) was a 2.1 MB
+        # stub with mismatched metric IDs, causing all KPI cards to show "?".
         db_path = os.getenv("DUCKDB_PATH")
         if not db_path:
             project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-            db_path = os.path.join(project_root, "data", "local_db", "nyc_mission_control.duckdb")
+            db_path = os.path.join(project_root, "nyc_dot_analytics.duckdb")
 
         # Ignore MotherDuck token to force local fallback
         return MotherDuckConnection(token="", database_path=db_path)
@@ -61,6 +65,7 @@ def _apply_filters(query: str, filters: dict[str, Any]) -> str:
     Returns:
         str: Query with WHERE clause appended
     """
+    filters = filters or {}
     where_clauses = []
 
     # Borough filter
@@ -111,6 +116,7 @@ def fetch_phase_b_results(filters: dict[str, Any]) -> Optional[pd.DataFrame]:
         query = "SELECT * FROM app_queries.v_phase_b_results"
         query = _apply_filters(query, filters)
         df = conn.execute(query).df()
+        conn.close()
         logger.info(f"Fetched {len(df)} Phase B results")
         return df
     except Exception as e:
@@ -133,6 +139,7 @@ def fetch_phase_c_results(filters: dict[str, Any]) -> Optional[pd.DataFrame]:
         query = "SELECT * FROM app_queries.v_phase_c_results"
         query = _apply_filters(query, filters)
         df = conn.execute(query).df()
+        conn.close()
         logger.info(f"Fetched {len(df)} Phase C results")
         return df
     except Exception as e:
@@ -155,6 +162,7 @@ def fetch_phase_d_results(filters: dict[str, Any]) -> Optional[pd.DataFrame]:
         query = "SELECT * FROM app_queries.v_phase_d_results"
         query = _apply_filters(query, filters)
         df = conn.execute(query).df()
+        conn.close()
         logger.info(f"Fetched {len(df)} Phase D results")
         return df
     except Exception as e:
@@ -177,6 +185,7 @@ def fetch_phase_e_decomposition(filters: dict[str, Any]) -> Optional[pd.DataFram
         query = "SELECT * FROM app_queries.v_phase_e_decomposition"
         query = _apply_filters(query, filters)
         df = conn.execute(query).df()
+        conn.close()
         logger.info(f"Fetched {len(df)} Phase E decomposition rows")
         return df
     except Exception as e:
@@ -200,6 +209,7 @@ def fetch_phase_f_bootstrap_ci(filters: dict[str, Any]) -> Optional[pd.DataFrame
         query = "SELECT * FROM app_queries.v_phase_f_bootstrap_ci"
         query = _apply_filters(query, filters)
         df = conn.execute(query).df()
+        conn.close()
         logger.info(f"Fetched {len(df)} Phase F bootstrap CI results")
         return df
     except Exception as e:
@@ -231,6 +241,7 @@ def fetch_metric_data(filters: dict[str, Any]) -> Optional[pd.DataFrame]:
         query = "SELECT * FROM app_queries.v_metric_dashboard"
         query = _apply_filters(query, filters)
         df = conn.execute(query).df()
+        conn.close()
         logger.info(f"Fetched {len(df)} Metric records")
         return df
     except Exception as e:
@@ -264,6 +275,7 @@ def fetch_dataset(filters: dict[str, Any], dataset_key: str = "inspection") -> O
         query = _apply_filters(query, filters)
 
         df = conn.execute(query).df()
+        conn.close()
         logger.info(f"Fetched {len(df)} records from {dataset_key}")
         return df
 

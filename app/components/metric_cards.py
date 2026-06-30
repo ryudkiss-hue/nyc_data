@@ -79,6 +79,35 @@ METRIC_CONFIG = {
     },
 }
 
+def _load_initial_metric_values() -> dict[str, str]:
+    """Fetch metric values from DB once at layout render time (cached per process)."""
+    try:
+        from app.services.motherduck_service import fetch_metric_data
+        df = fetch_metric_data({})
+        if df is None or df.empty:
+            return {}
+        values = {}
+        for _, row in df.iterrows():
+            m_id = row.get("metric_id", "")
+            val = row.get("value", None)
+            unit = str(row.get("unit", ""))
+            if val is None:
+                values[m_id] = "—"
+            elif unit in ("pct", "%"):
+                values[m_id] = f"{float(val):.1f}"
+            elif unit == "usd":
+                values[m_id] = f"${float(val):,.0f}"
+            else:
+                values[m_id] = f"{float(val):,.0f}"
+        return values
+    except Exception as e:
+        logger.warning(f"Could not pre-load metric values: {e}")
+        return {}
+
+
+_INITIAL_METRIC_VALUES: dict[str, str] | None = None
+
+
 def render_metric_dashboard() -> html.Div:
     """
     Render the 18 Metric cards organized by category.
@@ -86,11 +115,17 @@ def render_metric_dashboard() -> html.Div:
     Returns:
         html.Div: Metric dashboard with 4 categories × 5 Metrics (18 total)
     """
+    global _INITIAL_METRIC_VALUES
+    if _INITIAL_METRIC_VALUES is None:
+        _INITIAL_METRIC_VALUES = _load_initial_metric_values()
+    initial = _INITIAL_METRIC_VALUES
+
     sections = []
 
     for category, config in METRIC_CONFIG.items():
         metric_cards = []
         for metric in config["metrics"]:
+            initial_val = initial.get(metric["id"], "—")
             card = dmc.Paper(
                 withBorder=True,
                 p="md",
@@ -115,7 +150,7 @@ def render_metric_dashboard() -> html.Div:
                         [
                             dmc.Text(
                                 id={"type": "metric-value", "index": metric["id"]},
-                                children="—",
+                                children=initial_val,
                                 size="xl",
                                 fw=700,
                                 c=config["color"],
@@ -173,6 +208,7 @@ def render_metric_dashboard() -> html.Div:
                 type="default",
                 children=html.Div(id="metric-loading-placeholder"),
             ),
+            dcc.Interval(id="interval-metric-init", interval=800, max_intervals=1),
         ],
         style={"padding": "20px"},
     )
@@ -190,18 +226,12 @@ def register_metric_callbacks() -> None:
         Output({"type": "metric-value", "index": ALL}, "children"),
         Output({"type": "metric-change", "index": ALL}, "children"),
         Input("store-global-filters", "data"),
+        Input("interval-metric-init", "n_intervals"),
         prevent_initial_call=True,
     )
-    def update_metric_values(filters: dict[str, Any]) -> tuple:
-        """
-        Fetch and display Metric values from MotherDuck.
-
-        Args:
-            filters: Global filter state (boroughs, date_start, date_end, metric_type)
-
-        Returns:
-            tuple: (metric_values, change_indicators)
-        """
+    def update_metric_values(filters: dict[str, Any], n_intervals) -> tuple:
+        from dash import ctx
+        metric_count = sum(len(cat["metrics"]) for cat in METRIC_CONFIG.values())
         try:
             from app.services.motherduck_service import fetch_metric_data
 
