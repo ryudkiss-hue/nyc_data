@@ -104,6 +104,8 @@ def register_export_callbacks(app, dm_instance):
         ctx = dash.callback_context
         if not ctx.triggered:
             return no_update, no_update
+        if not any([pdf_clicks, excel_clicks, pptx_clicks]):
+            return no_update, no_update
 
         triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
 

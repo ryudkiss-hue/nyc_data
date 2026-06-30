@@ -27,6 +27,19 @@ logger = logging.getLogger(__name__)
 _WAREHOUSE_ALIASES = {"lot_info": "lot_info", "tree_damage": "tree_damage"}
 _WAREHOUSE_CACHE: dict[str, pd.DataFrame] = {}
 
+# Pre-warm the warehouse cache at import time for the two charts visible on the
+# initial dashboard view. This prevents concurrent callback race conditions where
+# both viz-velocity and viz-inspections try to open DuckDB simultaneously on first
+# page load. Each call takes ~2s; sequencing them here keeps startup deterministic.
+def _prewarm_warehouse():
+    """Sequentially load the two primary dashboard datasets into _WAREHOUSE_CACHE."""
+    for key in ("built", "inspection"):
+        if key not in _WAREHOUSE_CACHE:
+            try:
+                _read_warehouse_table(key)  # loads and caches, defined below
+            except Exception as _e:
+                logger.debug(f"Pre-warm skipped for {key}: {_e}")
+
 # The dataset MultiSelect in the global filter bar uses friendly UI values; map
 # each to a real raw warehouse table so selections drive actual queries/exports.
 _UI_DATASET_TO_TABLE = {
@@ -120,6 +133,10 @@ def _read_warehouse_table(key: str, limit: int = 50000) -> pd.DataFrame:
             logger.debug(f"Warehouse fallback failed for {key}: {e}")
     _WAREHOUSE_CACHE[key] = df
     return df
+
+
+# Trigger pre-warm now that _read_warehouse_table is defined.
+_prewarm_warehouse()
 
 
 class DashboardStateAdapter:

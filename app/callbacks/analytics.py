@@ -17,6 +17,47 @@ from app.services.analytics_service import get_dataset, validate_filters
 
 logger = logging.getLogger(__name__)
 
+# Module-level registry cache — loaded once at startup, reused by all callbacks.
+# Avoids per-callback initialize_app() which loads 3012 datasets each call.
+_CACHED_REGISTRY = None
+try:
+    from app.initialization import initialize_app as _init_app
+    _CACHED_REGISTRY = _init_app(auto_sync=False)
+except Exception as _e:
+    logger.warning(f"Registry cache load failed at module import: {_e}")
+
+# Pre-computed chart cache for the two charts visible on initial dashboard load.
+# These are expensive (EnsembleForecaster = Prophet+ARIMA fitting, ~25s first run).
+# Pre-computing at module load means the callback returns instantly on first request.
+_CACHED_CHARTS: dict[str, tuple] = {}
+
+
+def _prewarm_charts() -> None:
+    """Compute viz-velocity and viz-inspections charts once at startup."""
+    try:
+        from app.services.dashboard_state import _WAREHOUSE_CACHE, _read_warehouse_table
+        from app.viz_engine import VisualizationEngine
+
+        built_df = _WAREHOUSE_CACHE.get("built") or _read_warehouse_table("built")
+        viol_df = _WAREHOUSE_CACHE.get("violations") or _read_warehouse_table("violations")
+
+        if built_df is not None and not built_df.empty:
+            fig, ins = VisualizationEngine.chart_velocity({"built": built_df})
+            _CACHED_CHARTS["velocity"] = (fig, ins)
+
+        if viol_df is not None and not viol_df.empty:
+            fig, ins = VisualizationEngine.chart_inspections_boro({"violations": viol_df})
+            _CACHED_CHARTS["inspections"] = (fig, ins)
+
+        logger.info(f"Chart pre-warm complete: {list(_CACHED_CHARTS.keys())}")
+    except Exception as _e:
+        logger.warning(f"Chart pre-warm failed: {_e}")
+
+
+# Run pre-warm in background thread so startup isn't blocked by 25s forecast fitting.
+import threading as _threading
+_threading.Thread(target=_prewarm_charts, daemon=True, name="chart-prewarm").start()
+
 
 class AnalyticsEngine:
     """5 Hidden Analytical Methods with Integrated Narratives."""
@@ -674,12 +715,13 @@ def register_analytics_callbacks(app, dm=None):
         Output({"type": "grid-container", "index": dash.MATCH}, "children"),
         Output({"type": "grid-status", "index": dash.MATCH}, "children"),
         Input("store-global-filters", "data"),
+        Input("store-page-rendered", "data"),
         Input({"type": "insight-mode", "index": dash.MATCH}, "value"),
         Input({"type": "insight-verbosity", "index": dash.MATCH}, "value"),
         Input({"type": "insight-reading-level", "index": dash.MATCH}, "value"),
         prevent_initial_call=True,
     )
-    def update_universal_asset(filters, mode, verbosity, reading_level):
+    def update_universal_asset(filters, page_rendered, mode, verbosity, reading_level):
         ctx = dash.callback_context
         if not ctx.outputs_list:
             return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
@@ -692,22 +734,6 @@ def register_analytics_callbacks(app, dm=None):
             from app.insight_engine import StaticInsightEngine
             from app.services.dashboard_state import DashboardStateAdapter
             from app.viz_engine import VisualizationEngine
-
-            # Fetch data bundle
-            state = DashboardStateAdapter(dm, filters)
-            data_bundle = {}
-            for ds in ["inspection", "built", "violations", "lot_info", "reinspection", "tree_damage", "dismissals", "ramp_complaints", "budget"]:
-                try:
-                    df_part = state.get_dataset_by_key(ds)
-                    if df_part is not None and not df_part.empty:
-                        data_bundle[ds] = df_part
-                except Exception as e:
-                    logger.debug(f"Could not load {ds} for {chart_id}: {e}")
-
-            # Fallback to empty datasets if missing
-            for ds in ["built", "inspection"]:
-                if ds not in data_bundle:
-                    data_bundle[ds] = pd.DataFrame()
 
             # Map the panel's chart_id to its REAL viz_engine chart key. Most ids are
             # the key with a "viz-" prefix and dashes (viz-feature-importance →
@@ -722,19 +748,48 @@ def register_analytics_callbacks(app, dm=None):
             _key = chart_id.replace("viz-", "").replace("-", "_")
             map_key = _ALIASES.get(_key, _key)
 
-            # Load registry
-            from app.initialization import initialize_app
-            try:
-                registry = initialize_app(auto_sync=False)
-            except Exception:
-                registry = None
+            # Per-chart dataset requirements — only load what the chart needs.
+            # Default to primary datasets; adding a new chart → add its row here.
+            _CHART_DATASETS = {
+                "velocity": ["built"],
+                "inspections": ["violations"],  # violations has cb → borough; inspection has no geo
+                "violation_severity": ["violations"],
+                "dismissals": ["dismissals"],
+                "ramp": ["ramp_progress"],
+                "tree_conflict": ["tree_damage", "inspection"],
+                "mappluto": ["lot_info"],
+                "planimetric": ["sidewalk_planimetric"],
+            }
+            needed_datasets = _CHART_DATASETS.get(map_key, ["inspection", "built"])
 
-            # Get plotly figure
-            charts = VisualizationEngine.get_all_charts(data_bundle, registry, requested_keys=[map_key])
-            if map_key in charts:
-                fig, default_insight = charts[map_key]
+            # Fetch data bundle — only the datasets this chart needs
+            state = DashboardStateAdapter(dm, filters)
+            data_bundle = {}
+            for ds in needed_datasets:
+                try:
+                    df_part = state.get_dataset_by_key(ds)
+                    if df_part is not None and not df_part.empty:
+                        data_bundle[ds] = df_part
+                except Exception as e:
+                    logger.debug(f"Could not load {ds} for {chart_id}: {e}")
+
+            # Fallback to empty datasets if missing
+            for ds in ["built", "inspection"]:
+                if ds not in data_bundle:
+                    data_bundle[ds] = pd.DataFrame()
+
+            # Load registry (cached at module level to avoid per-callback loading cost)
+            registry = _CACHED_REGISTRY
+
+            # Use pre-computed chart if available (avoids 25s EnsembleForecaster on each call)
+            if map_key in _CACHED_CHARTS:
+                fig, default_insight = _CACHED_CHARTS[map_key]
             else:
-                fig, default_insight = go.Figure(), "Visualizer error"
+                charts = VisualizationEngine.get_all_charts(data_bundle, registry, requested_keys=[map_key])
+                if map_key in charts:
+                    fig, default_insight = charts[map_key]
+                else:
+                    fig, default_insight = go.Figure(), "Visualizer error"
 
             # Target df for moments and grid
             df = data_bundle.get("built" if "velocity" in chart_id else "inspection")

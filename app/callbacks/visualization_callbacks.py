@@ -112,7 +112,7 @@ def _render_narrative_panel(narrative: str) -> html.Div:
     Output("phase-b-narrative", "children"),
     Output("phase-b-statistics", "children"),
     Input("store-global-filters", "data"),
-    prevent_initial_call=True,
+    prevent_initial_call=False,
 )
 @timer_callback
 @memoize_with_ttl(seconds=600)
@@ -170,7 +170,7 @@ def update_phase_b_morans_i(
     Output("phase-c-narrative", "children"),
     Output("phase-c-statistics", "children"),
     Input("store-global-filters", "data"),
-    prevent_initial_call=True,
+    prevent_initial_call=False,
 )
 @timer_callback
 @memoize_with_ttl(seconds=600)
@@ -225,7 +225,7 @@ def update_phase_c_distribution(
     Output("phase-d-narrative", "children"),
     Output("phase-d-statistics", "children"),
     Input("store-global-filters", "data"),
-    prevent_initial_call=True,
+    prevent_initial_call=False,
 )
 @timer_callback
 @memoize_with_ttl(seconds=600)
@@ -280,7 +280,7 @@ def update_phase_d_anomalies(
     Output("phase-e-narrative", "children"),
     Output("phase-e-statistics", "children"),
     Input("store-global-filters", "data"),
-    prevent_initial_call=True,
+    prevent_initial_call=False,
 )
 @timer_callback
 @memoize_with_ttl(seconds=600)
@@ -335,7 +335,7 @@ def update_phase_e_decomposition(
     Output("phase-f-narrative", "children"),
     Output("phase-f-statistics", "children"),
     Input("store-global-filters", "data"),
-    prevent_initial_call=True,
+    prevent_initial_call=False,
 )
 @timer_callback
 @memoize_with_ttl(seconds=600)

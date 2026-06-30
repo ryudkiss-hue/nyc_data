@@ -26,7 +26,7 @@ import logging
 from typing import Any
 
 import dash_mantine_components as dmc
-from dash import Input, Output, State, callback, html
+from dash import Input, Output, State, callback, html, no_update
 
 logger = logging.getLogger(__name__)
 
@@ -226,6 +226,8 @@ def register_filter_callbacks() -> None:
         Returns:
             dict: Updated filter dictionary to be stored in dcc.Store
         """
+        if not any([apply_clicks, reset_clicks]):
+            return no_update
         ctx_id = None
         try:
             from dash import ctx

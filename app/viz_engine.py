@@ -23,7 +23,7 @@ class VisualizationEngine:
             t_norm = t.lower().replace("_", "").replace(" ", "")
             if t_norm in cols_norm:
                 return cols_norm[t_norm]
-        return df.columns[0] if not df.empty else None
+        return None  # explicit None — do NOT fall back to df.columns[0]
 
     @staticmethod
     def calculate_four_moments(series: pd.Series) -> dict[str, float]:
@@ -49,13 +49,18 @@ class VisualizationEngine:
 
     @staticmethod
     def chart_inspections_boro(data_bundle) -> tuple[go.Figure, str]:
+        # Prefer inspection; fall back to violations (which has a cb column for borough derivation)
         df = VisualizationEngine._safe_df(data_bundle.get("inspection"))
-        if df.empty: return go.Figure(), "No inspection data available."
+        if df.empty:
+            df = VisualizationEngine._safe_df(data_bundle.get("violations"))
+        if df.empty: return go.Figure(), "No inspection or violation data available."
         boro_col = VisualizationEngine._find_col(df, ["borough", "boro", "boroname"])
-        if (not boro_col or boro_col not in df.columns) and "cb" in df.columns:
+        if not boro_col and "cb" in df.columns:
+            df = df.copy()
             df["derived_boro"] = df["cb"].astype(str).str[0].map({"1": "MANHATTAN", "2": "BRONX", "3": "BROOKLYN", "4": "QUEENS", "5": "STATEN ISLAND"})
+            df = df.dropna(subset=["derived_boro"])
             boro_col = "derived_boro"
-        if not boro_col: return go.Figure(), "Borough taxonomy not found."
+        if not boro_col: return go.Figure(), "Borough taxonomy not found in inspection or violations data."
 
         counts = df.groupby(boro_col).size().reset_index(name="count")
         # Accessible palette
@@ -95,8 +100,13 @@ class VisualizationEngine:
         if df.empty: return go.Figure(), "No construction data available."
         date_col = VisualizationEngine._find_col(df, ["date", "dot_contstruct_date", "entrydate", "dbo_date"])
         val_col = VisualizationEngine._find_col(df, ["sqft", "totalsqftsidewalkrepaired", "totalcosttoconstruct"])
+        if not date_col or not val_col:
+            return go.Figure(), "Construction data missing date or value column."
+        df = df.copy()
+        df[val_col] = pd.to_numeric(df[val_col], errors="coerce")
         df[date_col] = pd.to_datetime(df[date_col], errors='coerce')
-        df = df.dropna(subset=[date_col]).sort_values(date_col)
+        df = df.dropna(subset=[date_col, val_col]).sort_values(date_col)
+        if df.empty: return go.Figure(), "No valid construction records after cleaning."
         # Resample to weekly to reduce noise
         df_weekly = df.set_index(date_col).resample('W')[val_col].sum().reset_index()
         fig = px.scatter(df_weekly, x=date_col, y=val_col, trendline="ols", trendline_color_override="#E11D48", opacity=0.7)
@@ -237,30 +247,10 @@ class VisualizationEngine:
 
     @staticmethod
     def chart_velocity(data_bundle) -> tuple[go.Figure, str]:
-        df = VisualizationEngine._safe_df(data_bundle.get("built"))
-        if df.empty: return go.Figure(), "No historical data for velocity forecasting."
-        date_col = VisualizationEngine._find_col(df, ["dot_contstruct_date", "date", "entrydate"])
-        val_col = VisualizationEngine._find_col(df, ["totalsqftsidewalkrepaired", "sqft", "totalcosttoconstruct"])
-        if not date_col or not val_col: return go.Figure(), "Missing column mapping for velocity."
-        df_ts = df[[date_col, val_col]].copy()
-        df_ts[date_col] = pd.to_datetime(df_ts[date_col], errors='coerce')
-        df_ts = df_ts.dropna(subset=[date_col]).set_index(date_col).resample("MS").sum().rename(columns={val_col: "Postings"})
-        try: forecast = EnsembleForecaster.run_consensus_forecast(df_ts)
-        except: forecast = pd.DataFrame()
-        if forecast.empty: return VisualizationEngine.chart_built_sqft_trend(data_bundle)
-
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=df_ts.index, y=df_ts["Postings"], name="Historical Truth", mode="lines", line=dict(color="#0F172A", width=2)))
-        fig.add_trace(go.Scatter(x=forecast["ds"], y=forecast["ensemble_mean"], name="Ensemble Consensus", mode="lines", line=dict(color="#3B82F6", dash="dash", width=3)))
-        fig.add_trace(go.Scatter(
-            x=forecast["ds"].tolist() + forecast["ds"].tolist()[::-1],
-            y=forecast["yhat_upper"].tolist() + forecast["yhat_lower"].tolist()[::-1],
-            fill='toself', fillcolor='rgba(59,130,246,0.15)', line=dict(color='rgba(255,255,255,0)'),
-            hoverinfo="skip", showlegend=True, name='94% Predictive Interval'
-        ))
-        fig = VisualizationEngine._apply_standard_layout(fig, "Ensemble Forecasting: Repair Velocity (Prophet/ARIMA)", "Timeline", "Monthly Repair Volume")
-        insight = "**Results:** Combines multiple predictive algorithms to generate a highly stable forward forecast. The shaded band represents the bounds of future uncertainty.\n\n**Next Steps:** Use the upper bound of the predictive interval to request emergency staffing allocations for the upcoming fiscal cycle."
-        return fig, insight
+        # Use the fast OLS-trend chart as the primary output (sub-second render).
+        # EnsembleForecaster (Prophet+ARIMA) is omitted from the initial load path
+        # because it takes 25-30 seconds on first run and blocks the thread pool.
+        return VisualizationEngine.chart_built_sqft_trend(data_bundle)
 
     @staticmethod
     def chart_manifold_3d(data_bundle) -> tuple[go.Figure, str]:

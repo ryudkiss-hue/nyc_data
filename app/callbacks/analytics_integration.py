@@ -50,7 +50,7 @@ def _panel(title: str, fig: go.Figure) -> dmc.Stack:
     Output("distribution-narrative", "children"),
     Input("store-global-filters", "data"),
     Input("distribution-column-limit", "value"),
-    prevent_initial_call=True,
+    prevent_initial_call=False,
 )
 def update_distribution_classification(filters: dict, limit: int = 8) -> tuple[Any, str]:
     try:
@@ -69,7 +69,7 @@ def update_distribution_classification(filters: dict, limit: int = 8) -> tuple[A
     Output("anomaly-count-badge", "children"),
     Input("store-global-filters", "data"),
     Input("anomaly-detection-toggle", "checked"),
-    prevent_initial_call=True,
+    prevent_initial_call=False,
 )
 def update_anomaly_detection(filters: dict, enabled: bool = True) -> tuple[Any, str, str]:
     try:
@@ -89,7 +89,7 @@ def update_anomaly_detection(filters: dict, enabled: bool = True) -> tuple[Any, 
     Input("store-global-filters", "data"),
     Input("decomposition-date-col", "value"),
     Input("decomposition-value-col", "value"),
-    prevent_initial_call=True,
+    prevent_initial_call=False,
 )
 def update_seasonal_decomposition(filters: dict, date_col: str = None,
                                   value_col: str = None) -> tuple[Any, str]:
@@ -108,7 +108,7 @@ def update_seasonal_decomposition(filters: dict, date_col: str = None,
     Output("metric-bootstrap-summary", "children"),
     Input("store-global-filters", "data"),
     Input("metric-refresh-interval", "n_intervals"),
-    prevent_initial_call=True,
+    prevent_initial_call=False,
 )
 def update_bootstrap_ci_metrics(filters: dict, n_intervals: int = 0) -> tuple[Any, str]:
     try:
@@ -126,7 +126,7 @@ def update_bootstrap_ci_metrics(filters: dict, n_intervals: int = 0) -> tuple[An
     Output("morans-i-narrative", "children"),
     Input("store-global-filters", "data"),
     Input("morans-i-column-select", "value"),
-    prevent_initial_call=True,
+    prevent_initial_call=False,
 )
 def update_morans_i(filters: dict, column: str = None) -> tuple[go.Figure, str]:
     try:
@@ -142,7 +142,7 @@ def update_morans_i(filters: dict, column: str = None) -> tuple[go.Figure, str]:
 @callback(
     Output("analytics-refresh-trigger", "data"),
     Input("store-global-filters", "data"),
-    prevent_initial_call=True,
+    prevent_initial_call=False,
 )
 def trigger_all_updates(filters: dict) -> dict:
     return filters or {}
