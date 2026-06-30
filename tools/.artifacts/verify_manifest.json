@@ -1,0 +1,192 @@
+{
+  "gates": {
+    "routes_total": 13,
+    "routes_passed": 13,
+    "all_http_200": true,
+    "no_banned_text": true,
+    "export_ok": true,
+    "green": true
+  },
+  "routes": [
+    {
+      "route": "/",
+      "label": "dashboard",
+      "checks": {
+        "http_200": true,
+        "no_banned_text": true,
+        "has_chart": true,
+        "axe_aa_clean": true
+      },
+      "plot_divs": 2,
+      "trace_nodes": 0,
+      "axe_serious": [],
+      "passed": true
+    },
+    {
+      "route": "/const",
+      "label": "construction",
+      "checks": {
+        "http_200": true,
+        "no_banned_text": true,
+        "has_chart": true,
+        "axe_aa_clean": true
+      },
+      "plot_divs": 1,
+      "trace_nodes": 0,
+      "axe_serious": [],
+      "passed": true
+    },
+    {
+      "route": "/labor",
+      "label": "labor",
+      "checks": {
+        "http_200": true,
+        "no_banned_text": true,
+        "has_chart": true,
+        "axe_aa_clean": true
+      },
+      "plot_divs": 3,
+      "trace_nodes": 0,
+      "axe_serious": [],
+      "passed": true
+    },
+    {
+      "route": "/reports",
+      "label": "reports",
+      "checks": {
+        "http_200": true,
+        "no_banned_text": true,
+        "axe_aa_clean": true
+      },
+      "plot_divs": 2,
+      "trace_nodes": 0,
+      "axe_serious": [],
+      "passed": true
+    },
+    {
+      "route": "/stats",
+      "label": "stats",
+      "checks": {
+        "http_200": true,
+        "no_banned_text": true,
+        "has_chart": true,
+        "axe_aa_clean": true
+      },
+      "plot_divs": 7,
+      "trace_nodes": 0,
+      "axe_serious": [],
+      "passed": true
+    },
+    {
+      "route": "/geo",
+      "label": "gis",
+      "checks": {
+        "http_200": true,
+        "no_banned_text": true,
+        "has_chart": true,
+        "axe_aa_clean": true
+      },
+      "plot_divs": 4,
+      "trace_nodes": 0,
+      "axe_serious": [],
+      "passed": true
+    },
+    {
+      "route": "/eng",
+      "label": "engineering",
+      "checks": {
+        "http_200": true,
+        "no_banned_text": true,
+        "has_chart": true,
+        "axe_aa_clean": true
+      },
+      "plot_divs": 5,
+      "trace_nodes": 0,
+      "axe_serious": [],
+      "passed": true
+    },
+    {
+      "route": "/sql",
+      "label": "sql_tools",
+      "checks": {
+        "http_200": true,
+        "no_banned_text": true,
+        "axe_aa_clean": true
+      },
+      "plot_divs": 1,
+      "trace_nodes": 0,
+      "axe_serious": [],
+      "passed": true
+    },
+    {
+      "route": "/nlp",
+      "label": "nlp",
+      "checks": {
+        "http_200": true,
+        "no_banned_text": true,
+        "axe_aa_clean": true
+      },
+      "plot_divs": 3,
+      "trace_nodes": 0,
+      "axe_serious": [],
+      "passed": true
+    },
+    {
+      "route": "/settings",
+      "label": "settings",
+      "checks": {
+        "http_200": true,
+        "no_banned_text": true,
+        "axe_aa_clean": true
+      },
+      "plot_divs": 0,
+      "trace_nodes": 0,
+      "axe_serious": [],
+      "passed": true
+    },
+    {
+      "route": "/tutorials",
+      "label": "tutorials",
+      "checks": {
+        "http_200": true,
+        "no_banned_text": true,
+        "axe_aa_clean": true
+      },
+      "plot_divs": 0,
+      "trace_nodes": 0,
+      "axe_serious": [],
+      "passed": true
+    },
+    {
+      "route": "/toolbox",
+      "label": "toolbox",
+      "checks": {
+        "http_200": true,
+        "no_banned_text": true,
+        "axe_aa_clean": true
+      },
+      "plot_divs": 0,
+      "trace_nodes": 0,
+      "axe_serious": [],
+      "passed": true
+    },
+    {
+      "route": "/copilot",
+      "label": "copilot",
+      "checks": {
+        "http_200": true,
+        "no_banned_text": true,
+        "axe_aa_clean": true
+      },
+      "plot_divs": 0,
+      "trace_nodes": 0,
+      "axe_serious": [],
+      "passed": true
+    }
+  ],
+  "export": {
+    "check": "global_excel_export",
+    "bytes": 2859804,
+    "passed": true
+  }
+}

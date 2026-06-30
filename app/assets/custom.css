@@ -70,6 +70,17 @@ html, body, [class*="css"] {
     border-left: 4px solid var(--mission-cyan) !important;
     border-radius: 0 8px 8px 0;
 }
+/* WCAG AA: active NavLink blue label (#228be6) on light-blue bg fails at ~3:1.
+   After JS overrides blue-6 to #1864ab, this is ~4.95:1 — but add explicit
+   fallback to NYC DOT navy for belt-and-suspenders safety.
+   Using both [data-active] and [data-active="true"] covers Mantine v7's
+   boolean attribute rendering (may omit the "true" value). */
+[data-active] [class*="NavLink-label"],
+[data-active="true"] [class*="NavLink-label"],
+.mantine-NavLink-root[data-active] [class*="NavLink-label"],
+.mantine-NavLink-root[data-active="true"] [class*="NavLink-label"] {
+    color: #003087 !important;
+}
 
 /* Industrial Typography */
 h1, h2, h3, h4 {
@@ -87,6 +98,88 @@ h1, h2, h3, h4 {
 .status-glow {
     box-shadow: 0 0 12px #10B98144;
     border: 1px solid #10B98188;
+}
+
+/* ------------------------------------------------------------------ */
+/* WCAG 2.1 AA — Color contrast overrides (SC 1.4.3 / 1.4.11)        */
+/* Mantine v7 defaults use gray-5 (#adb5bd, ~2:1) and gray-6/dimmed   */
+/* (#868e96, ~3:1) for secondary text — both fail AA 4.5:1 threshold. */
+/* These overrides bring every text surface to ≥4.5:1 on the app's    */
+/* light backgrounds (#F8FAFC / #FFFFFF).                              */
+/* ------------------------------------------------------------------ */
+:root {
+    --mantine-color-dimmed: #545B62; /* 6.1:1 on white */
+    --mantine-color-gray-5: #545B62;
+    --mantine-color-gray-6: #545B62;
+}
+
+/* Input placeholder text (fails at Mantine's default ~#adb5bd) */
+input::placeholder,
+textarea::placeholder,
+[class*="mantine-"]::placeholder {
+    color: #545B62 !important;
+    opacity: 1 !important;
+}
+
+/* Mantine InputWrapper description / hint text */
+.mantine-InputWrapper-description,
+[class*="InputWrapper-description"] {
+    color: #545B62 !important;
+}
+
+/* NavLink description (secondary line under each nav item) */
+.mantine-NavLink-description,
+[class*="NavLink-description"] {
+    color: #545B62 !important;
+}
+
+/* Badge — light variant uses very pale background; force dark text for contrast.
+   Filled variants use Mantine's default white text on the JS-overridden dark
+   backgrounds (≥4.5:1).  Outline variants use JS-overridden colored text on
+   white (≥5.1:1).  No global override needed for those two variants. */
+.mantine-Badge-root[data-variant="light"] {
+    color: #1a1a1a !important;
+}
+
+/* Mantine Text "dimmed" variant */
+.mantine-Text-root[data-variant="dimmed"],
+[data-mantine-dimmed],
+[class*="mantine-Text-"][class*="dimmed"],
+[class*="-dimmed"] {
+    color: #545B62 !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* Belt-and-suspenders: target Mantine v7 generated class prefixes      */
+/* MantineProvider injects a <style> tag after static files, so the    */
+/* :root variable overrides above may be overwritten. These !important  */
+/* declarations on color properties win regardless of variable values.  */
+/* ------------------------------------------------------------------ */
+[class*="mantine-InputWrapper-description"],
+[class*="InputWrapper-description"] {
+    color: #545B62 !important;
+}
+[class*="mantine-NavLink-description"],
+[class*="NavLink-description"] {
+    color: #545B62 !important;
+}
+[class*="mantine-Select-"][class*="placeholder"],
+[class*="Select-placeholder"] {
+    color: #545B62 !important;
+}
+[class*="mantine-MultiSelect-"][class*="placeholder"],
+[class*="MultiSelect-placeholder"] {
+    color: #545B62 !important;
+}
+/* Accordion / Tabs secondary text */
+[class*="mantine-Accordion-description"],
+[class*="mantine-Tabs-tab"][aria-selected="false"] {
+    color: #545B62 !important;
+}
+/* Badge label within a light-variant badge: keep dark text */
+[data-variant="light"] [class*="mantine-Badge-label"],
+[data-variant="light"] .mantine-Badge-label {
+    color: #1a1a1a !important;
 }
 
 /* WCAG 2.1 SC 2.3.3 — Disable motion for users who request it */

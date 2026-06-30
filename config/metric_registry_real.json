@@ -10,7 +10,7 @@
       "unit": "count",
       "formula": "COUNT(*)",
       "where": null,
-      "value": 399566.0,
+      "value": 399912.0,
       "by_borough": false
     },
     {
@@ -21,7 +21,7 @@
       "unit": "percent",
       "formula": "100.0*AVG(CASE WHEN lower(CAST(noviolationfound AS VARCHAR)) IN ('1','true','yes','y') THEN 1 ELSE 0 END)",
       "where": null,
-      "value": 27.512851443816537,
+      "value": 27.51430314669227,
       "by_borough": false
     },
     {
@@ -32,7 +32,7 @@
       "unit": "percent",
       "formula": "100.0*AVG(CASE WHEN lower(CAST(is_311_inspection AS VARCHAR)) IN ('1','true','yes','y') THEN 1 ELSE 0 END)",
       "where": null,
-      "value": 14.192899295735872,
+      "value": 14.191122046850307,
       "by_borough": false
     },
     {
@@ -43,7 +43,7 @@
       "unit": "count",
       "formula": "COUNT(*)",
       "where": null,
-      "value": 312918.0,
+      "value": 313042.0,
       "by_borough": true
     },
     {
@@ -54,7 +54,7 @@
       "unit": "count",
       "formula": "SUM(CASE WHEN vdismissdate IS NULL OR CAST(vdismissdate AS VARCHAR)='' THEN 1 ELSE 0 END)",
       "where": null,
-      "value": 133261.0,
+      "value": 133298.0,
       "by_borough": true
     },
     {
@@ -65,7 +65,7 @@
       "unit": "percent",
       "formula": "100.0*AVG(CASE WHEN vdismissdate IS NOT NULL AND CAST(vdismissdate AS VARCHAR)<>'' THEN 1 ELSE 0 END)",
       "where": null,
-      "value": 57.41344377760308,
+      "value": 57.41849336510756,
       "by_borough": false
     },
     {
@@ -76,7 +76,7 @@
       "unit": "sqft",
       "formula": "SUM(TRY_CAST(sq_feet AS DOUBLE))",
       "where": null,
-      "value": 106058138.75,
+      "value": 106084972.75,
       "by_borough": false
     },
     {
@@ -87,7 +87,7 @@
       "unit": "count",
       "formula": "COUNT(*)",
       "where": null,
-      "value": 36658.0,
+      "value": 36664.0,
       "by_borough": false
     },
     {
@@ -274,7 +274,7 @@
       "unit": "rating",
       "formula": "AVG(TRY_CAST(systemrating AS DOUBLE))",
       "where": "systemrating IS NOT NULL",
-      "value": 6.818960929451636,
+      "value": 6.818960929451778,
       "by_borough": true
     },
     {
@@ -318,7 +318,7 @@
       "unit": "count",
       "formula": "COUNT(*)",
       "where": null,
-      "value": 1357445.0,
+      "value": 200000.0,
       "by_borough": true
     },
     {
@@ -329,7 +329,7 @@
       "unit": "percent",
       "formula": "100.0*AVG(CASE WHEN lower(CAST(status AS VARCHAR))='closed' THEN 1 ELSE 0 END)",
       "where": null,
-      "value": 99.09742199499796,
+      "value": 99.7235,
       "by_borough": false
     },
     {
@@ -340,7 +340,7 @@
       "unit": "usd",
       "formula": "SUM(TRY_CAST(total_budget AS DOUBLE))",
       "where": null,
-      "value": 178471620366.0,
+      "value": 177884846088.0,
       "by_borough": true
     },
     {
@@ -351,7 +351,7 @@
       "unit": "usd",
       "formula": "SUM(TRY_CAST(spend_to_date AS DOUBLE))",
       "where": null,
-      "value": 49488579226.0,
+      "value": 49472061038.0,
       "by_borough": true
     },
     {
@@ -472,7 +472,7 @@
       "unit": "sqft",
       "formula": "SUM(TRY_CAST(shape_area AS DOUBLE))",
       "where": null,
-      "value": 616273174.9528261,
+      "value": 616273174.952825,
       "by_borough": false
     },
     {
@@ -494,7 +494,7 @@
       "unit": "count",
       "formula": "COUNT(*)",
       "where": null,
-      "value": 1532446.0,
+      "value": 1537200.0,
       "by_borough": true
     },
     {
@@ -516,7 +516,7 @@
       "unit": "percent",
       "formula": "100.0*AVG(CASE WHEN lower(CAST(trip_haz AS VARCHAR)) IN ('1','true','yes','y','x','t') THEN 1 ELSE 0 END)",
       "where": null,
-      "value": 67.13068599441388,
+      "value": 67.1385948211422,
       "by_borough": true
     },
     {
@@ -527,7 +527,7 @@
       "unit": "percent",
       "formula": "100.0*AVG(CASE WHEN lower(CAST(trip_haz AS VARCHAR)) IN ('1','true','yes','y','x','t') OR lower(CAST(undermined AS VARCHAR)) IN ('1','true','yes','y','x','t') OR lower(CAST(broken AS VARCHAR)) IN ('1','true','yes','y','x','t') THEN 1 ELSE 0 END)",
       "where": null,
-      "value": 90.62214382042579,
+      "value": 90.62585851099853,
       "by_borough": true
     },
     {
@@ -538,7 +538,7 @@
       "unit": "days",
       "formula": "AVG(date_diff('day', TRY_CAST(vissuedate AS DATE), current_date))",
       "where": "(vdismissdate IS NULL OR CAST(vdismissdate AS VARCHAR)='') AND TRY_CAST(vissuedate AS DATE) IS NOT NULL",
-      "value": 5400.243613987694,
+      "value": 5399.534228077151,
       "by_borough": true
     },
     {
@@ -549,7 +549,7 @@
       "unit": "count",
       "formula": "SUM(CASE WHEN (vdismissdate IS NULL OR CAST(vdismissdate AS VARCHAR)='') AND date_diff('day', TRY_CAST(vissuedate AS DATE), current_date) > 365 THEN 1 ELSE 0 END)",
       "where": null,
-      "value": 127102.0,
+      "value": 127083.0,
       "by_borough": true
     },
     {
@@ -571,7 +571,7 @@
       "unit": "percent",
       "formula": "100.0*AVG(CASE WHEN lower(CAST(capconflictflag AS VARCHAR)) IN ('1','true','yes','y') THEN 1 ELSE 0 END)",
       "where": null,
-      "value": 0.6076593103517316,
+      "value": 0.6071335693852647,
       "by_borough": false
     },
     {
@@ -580,7 +580,7 @@
       "domain": "sla",
       "unit": "days",
       "formula": "SELECT AVG(d) FROM (SELECT date_diff('day',TRY_CAST(vissuedate AS DATE),TRY_CAST(vdismissdate AS DATE)) d FROM nyc_dot_analytics.staging.\"violations\") WHERE d BETWEEN 0 AND 3650",
-      "value": 1063.164911279444,
+      "value": 1063.433742359126,
       "by_borough": false
     },
     {
@@ -598,7 +598,7 @@
       "domain": "sla",
       "unit": "days",
       "formula": "SELECT AVG(d) FROM (SELECT date_diff('day',TRY_CAST(created_date AS DATE),TRY_CAST(closed_date AS DATE)) d FROM nyc_dot_analytics.staging.\"complaints_311\") WHERE d BETWEEN 0 AND 3650",
-      "value": 13.295547449542049,
+      "value": 18.548706686922472,
       "by_borough": false
     },
     {
@@ -607,7 +607,7 @@
       "domain": "sla",
       "unit": "days",
       "formula": "SELECT AVG(d) FROM (SELECT date_diff('day',TRY_CAST(requestreinspectiondate AS DATE),TRY_CAST(actualreinspectdate AS DATE)) d FROM nyc_dot_analytics.staging.\"reinspection\") WHERE d BETWEEN 0 AND 3650",
-      "value": 186.30287196590697,
+      "value": 186.30595992147275,
       "by_borough": false
     },
     {
@@ -634,7 +634,7 @@
       "domain": "equity",
       "unit": "per_1k",
       "formula": "SELECT 1000.0 * (SELECT COUNT(*) FROM nyc_dot_analytics.staging.\"complaints_311\" WHERE geo_nta2020 IS NOT NULL) / NULLIF((SELECT SUM(TRY_CAST(total_population_2010_number AS DOUBLE)) FROM nyc_dot_analytics.staging.\"census_demographics_nta\"),0)",
-      "value": 164.88906052048327,
+      "value": 24.325842772221566,
       "by_borough": false
     },
     {
@@ -652,7 +652,7 @@
       "domain": "ratio",
       "unit": "ratio",
       "formula": "SELECT (SELECT COUNT(*) FROM nyc_dot_analytics.staging.\"violations\")*1.0/NULLIF((SELECT COUNT(*) FROM nyc_dot_analytics.staging.\"inspection\"),0)",
-      "value": 0.7831447120125336,
+      "value": 0.7827772109864171,
       "by_borough": false
     },
     {
@@ -661,7 +661,7 @@
       "domain": "ratio",
       "unit": "sqft",
       "formula": "SELECT (SELECT SUM(TRY_CAST(sq_feet AS DOUBLE)) FROM nyc_dot_analytics.staging.\"violations\")/NULLIF((SELECT COUNT(*) FROM nyc_dot_analytics.staging.\"violations\"),0)",
-      "value": 338.9326876370167,
+      "value": 338.8841521265517,
       "by_borough": false
     },
     {
@@ -688,7 +688,7 @@
       "domain": "walkability",
       "unit": "count",
       "formula": "SELECT SUM(TRY_CAST(cnt AS DOUBLE)) FROM nyc_dot_analytics.raw.\"bicycle_pedestrian_counts_daily\"",
-      "value": 178727411.0,
+      "value": 178766247.0,
       "by_borough": false
     },
     {
@@ -697,7 +697,7 @@
       "domain": "walkability",
       "unit": "count",
       "formula": "SELECT SUM(TRY_CAST(cnt AS DOUBLE)) FROM nyc_dot_analytics.raw.\"bicycle_pedestrian_counts_daily\" WHERE lower(travelmode) LIKE '%ped%'",
-      "value": 7298890.0,
+      "value": 7300218.0,
       "by_borough": false
     },
     {
@@ -706,7 +706,7 @@
       "domain": "condition",
       "unit": "percent",
       "formula": "SELECT 100.0 * (SELECT SUM(TRY_CAST(sq_feet AS DOUBLE))*0.092903 FROM nyc_dot_analytics.staging.\"violations\") / NULLIF((SELECT SUM(TRY_CAST(shape_area AS DOUBLE)) FROM nyc_dot_analytics.staging.\"sidewalk_planimetric\"),0)",
-      "value": 1.5988233245825565,
+      "value": 1.5992278463439022,
       "by_borough": false
     },
     {
@@ -724,7 +724,7 @@
       "domain": "condition",
       "unit": "percent",
       "formula": "SELECT 100.0 * (SELECT COUNT(DISTINCT violationid) FROM nyc_dot_analytics.staging.\"tree_damage\" WHERE violationid IS NOT NULL) / NULLIF((SELECT COUNT(*) FROM nyc_dot_analytics.staging.\"violations\"),0)",
-      "value": 0.014700336829456918,
+      "value": 0.014694513835204221,
       "by_borough": false
     }
   ]

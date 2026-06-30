@@ -283,20 +283,6 @@ class VisualizationEngine:
         return fig, insight
 
     @staticmethod
-    def chart_grover_speedup(data_bundle) -> tuple[go.Figure, str]:
-        # Educational visualization: theoretical quantum algorithm complexity.
-        # TODO: Replace with real DuckDB query performance benchmarks (current vs. optimized scans).
-        n_records = 1000000
-        classical = np.arange(0, n_records, 10000)
-        quantum = np.sqrt(classical)
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=classical, y=classical, name="Classical Scan: O(N)", line=dict(color="#64748B", width=2)))
-        fig.add_trace(go.Scatter(x=classical, y=quantum, name="Quantum Advantage: O(√N)", fill='tozeroy', fillcolor="rgba(16,185,129,0.3)", line=dict(color="#10B981", width=3)))
-        fig = VisualizationEngine._apply_standard_layout(fig, "Theoretical Quantum Search Acceleration", "Municipal Database Size (N)", "Required Computational Cycles")
-        insight = "**Results:** Educational visualization of theoretical quantum algorithm complexity. Real query performance optimization should be measured against DuckDB execution plans.\n\n**Next Steps:** Profile actual query times (EXPLAIN ANALYZE) and implement materialized views for frequently-scanned datasets."
-        return fig, insight
-
-    @staticmethod
     def chart_budget_monte_carlo(base_cost: float, variance: float = 0.15) -> tuple[go.Figure, str]:
         try:
             from socrata_toolkit.engineering.cost_estimator import MonteCarloEstimator
@@ -407,7 +393,7 @@ class VisualizationEngine:
             "lifecycle": lambda: wrap(VisualizationEngine.chart_lifecycle, data_bundle),
             "velocity": lambda: wrap(VisualizationEngine.chart_velocity, data_bundle),
             "manifold_3d": lambda: wrap(VisualizationEngine.chart_manifold_3d, data_bundle),
-            "quantum": lambda: wrap(VisualizationEngine.chart_grover_speedup, data_bundle),
+            "quantum": lambda: wrap(VisualizationEngine.chart_inspections_boro, data_bundle),
             "budget_mc": lambda: wrap(VisualizationEngine.chart_budget_monte_carlo, 1500000),
             "isochrone": lambda: wrap(VisualizationEngine.chart_isochrone_walkability),
             "equity": lambda: wrap(VisualizationEngine.chart_equity_multiplier),

@@ -57,6 +57,7 @@ def layout_phase_c_distribution():
                         children=[
                             dmc.NumberInput(
                                 id="distribution-column-limit",
+                                label="Column Limit",
                                 value=8,
                                 min=1,
                                 max=20,
@@ -70,6 +71,7 @@ def layout_phase_c_distribution():
                         children=[
                             dmc.Select(
                                 id="distribution-dataset-selector",
+                                label="Dataset",
                                 value="inspection",
                                 data=[
                                     {"value": "inspection", "label": "Inspection Data"},
@@ -294,6 +296,7 @@ def layout_phase_e_decomposition():
                         children=[
                             dmc.Select(
                                 id="decomposition-date-col",
+                                label="Date Column",
                                 placeholder="Select date column (e.g., created_date)",
                                 data=[
                                     {"value": "created_date", "label": "Created Date"},
@@ -309,6 +312,7 @@ def layout_phase_e_decomposition():
                         children=[
                             dmc.Select(
                                 id="decomposition-value-col",
+                                label="Value Column",
                                 placeholder="Select numeric column to decompose",
                                 data=[
                                     {"value": "violation_count", "label": "Violation Count"},
@@ -421,6 +425,7 @@ def layout_phase_f_bootstrap_ci():
                         children=[
                             dmc.NumberInput(
                                 id="metric-bootstrap-samples",
+                                label="Bootstrap Samples",
                                 value=10000,
                                 min=1000,
                                 max=50000,
@@ -434,6 +439,7 @@ def layout_phase_f_bootstrap_ci():
                         children=[
                             dmc.Select(
                                 id="metric-confidence-level",
+                                label="Confidence Level",
                                 value="95",
                                 data=[
                                     {"value": "90", "label": "90%"},
@@ -550,6 +556,7 @@ def layout_phase_b_morans_i():
             # Controls
             dmc.Select(
                 id="morans-i-column-select",
+                label="Analysis Column",
                 placeholder="Auto-select first numeric column",
                 data=[
                     {"value": "violation_count", "label": "Violation Count"},

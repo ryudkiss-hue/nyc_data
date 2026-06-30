@@ -677,6 +677,7 @@ def register_analytics_callbacks(app, dm=None):
         Input({"type": "insight-mode", "index": dash.MATCH}, "value"),
         Input({"type": "insight-verbosity", "index": dash.MATCH}, "value"),
         Input({"type": "insight-reading-level", "index": dash.MATCH}, "value"),
+        prevent_initial_call=True,
     )
     def update_universal_asset(filters, mode, verbosity, reading_level):
         ctx = dash.callback_context
@@ -708,8 +709,18 @@ def register_analytics_callbacks(app, dm=None):
                 if ds not in data_bundle:
                     data_bundle[ds] = pd.DataFrame()
 
-            # Map chart_id to viz_engine keys
-            map_key = "velocity" if "velocity" in chart_id else "quantum"
+            # Map the panel's chart_id to its REAL viz_engine chart key. Most ids are
+            # the key with a "viz-" prefix and dashes (viz-feature-importance →
+            # feature_importance); a few need an explicit alias. Previously every
+            # panel defaulted to the theoretical "quantum" (Grover) placeholder.
+            _ALIASES = {
+                "311_treemap": "treemap", "contractor_radar": "radar_scores",
+                "hiqa_outcomes": "hiqa", "mappluto_far": "mappluto",
+                "resurfacing_gantt": "resurfacing", "weekly_heat": "heatmap",
+                "manifold_3d": "correlation",
+            }
+            _key = chart_id.replace("viz-", "").replace("-", "_")
+            map_key = _ALIASES.get(_key, _key)
 
             # Load registry
             from app.initialization import initialize_app
@@ -730,12 +741,16 @@ def register_analytics_callbacks(app, dm=None):
             if df is None or df.empty:
                 df = pd.DataFrame(columns=["created_date", "value"])
 
-            # Compute moments
-            val_col = VisualizationEngine._find_col(df, ["totalsqftsidewalkrepaired", "sqft", "totalcosttoconstruct", "value"])
-            if val_col and val_col in df.columns:
-                moments = VisualizationEngine.calculate_four_moments(df[val_col])
-            else:
-                moments = {"mean": 0, "variance": 0, "skewness": 0, "kurtosis": 0}
+            # Compute moments (guard: real columns may be non-numeric/dates)
+            moments = {"mean": 0, "variance": 0, "skewness": 0, "kurtosis": 0}
+            try:
+                val_col = VisualizationEngine._find_col(df, ["totalsqftsidewalkrepaired", "sqft", "totalcosttoconstruct", "value"])
+                if val_col and val_col in df.columns:
+                    series = pd.to_numeric(df[val_col], errors="coerce").dropna()
+                    if not series.empty:
+                        moments = VisualizationEngine.calculate_four_moments(series)
+            except Exception as e:
+                logger.debug(f"Moments unavailable for {chart_id}: {e}")
 
             moments_list = [
                 dmc.ListItem(f"Expected Value (Mean): {moments['mean']:.4f}"),
@@ -754,8 +769,12 @@ def register_analytics_callbacks(app, dm=None):
                     f"No anomalous spikes or structural regressions detected in the current window."
                 )
             else:
-                # Use StaticInsightEngine
-                insight_text = StaticInsightEngine.generate_insight(chart_id, df, verbosity, reading_level, data_bundle)
+                # Use StaticInsightEngine (guard: narrative must never crash the panel)
+                try:
+                    insight_text = StaticInsightEngine.generate_insight(chart_id, df, verbosity, reading_level, data_bundle)
+                except Exception as e:
+                    logger.debug(f"Insight unavailable for {chart_id}: {e}")
+                    insight_text = default_insight or "Insight unavailable for the current data."
 
             # Format raw data grid preview
             preview_df = df.head(10)
@@ -772,7 +791,6 @@ def register_analytics_callbacks(app, dm=None):
                 grid_content = dmc.Table(
                     striped=True,
                     highlightOnHover=True,
-                    withBorder=True,
                     children=[
                         html.Thead(html.Tr(headers)),
                         html.Tbody(rows)

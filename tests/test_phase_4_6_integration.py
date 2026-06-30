@@ -161,23 +161,23 @@ class TestPhase4DashboardIntegration:
         assert "critical" in valid_types
         assert len(valid_types) == 4
 
-    def test_kpi_cards_render_18_metrics(self):
-        """Test: KPI dashboard renders all 18 metrics."""
+    def test_kpi_cards_render_16_real_metrics(self):
+        """Test: KPI dashboard renders all 16 real (warehouse-sourced) metrics."""
         from app.components.metric_cards import METRIC_CONFIG
 
         total_metrics = sum(len(cat_data["metrics"]) for cat_data in METRIC_CONFIG.values())
-        assert total_metrics == 18, f"Expected 18 KPIs, found {total_metrics}"
+        assert total_metrics == 16, f"Expected 16 KPIs, found {total_metrics}"
 
     def test_kpi_cards_has_4_categories(self):
-        """Test: KPI dashboard has 4 categories."""
+        """Test: KPI dashboard has the 4 real SIM categories (P1 rewrite)."""
         from app.components.metric_cards import METRIC_CONFIG
 
         categories = list(METRIC_CONFIG.keys())
         assert len(categories) == 4
-        assert "Inspection Performance" in categories
-        assert "Quality Metrics" in categories
-        assert "Ramp Accessibility" in categories
-        assert "Spatial Patterns" in categories
+        assert "Inspection & Violations" in categories
+        assert "Accessibility & Ramps" in categories
+        assert "Vision Zero Safety" in categories
+        assert "Capital & Construction" in categories
 
     def test_motherduck_service_filters_apply_correctly(self):
         """Test: MotherDuck service applies filters correctly."""
@@ -269,6 +269,40 @@ class TestPhase5ExportSystem:
         # PDF export may return None if ReportLab not installed, so check if not None
         if pdf_bytes is not None:
             assert len(pdf_bytes) > 0
+
+    def test_pdf_without_renderer_still_generates(self, mock_phase_b_data):
+        """A figure that can't render to an image must NOT abort the whole PDF."""
+        from app.services.universal_exporter import UniversalExporter
+
+        exporter = UniversalExporter()
+        # figure=None forces the text/table path (no kaleido/Chrome needed)
+        pdf_bytes = exporter.export_figure_to_pdf(
+            None, "Text-only Report", {"Rows": len(mock_phase_b_data)},
+            table_df=mock_phase_b_data,
+        )
+        if pdf_bytes is not None:  # reportlab optional
+            assert pdf_bytes[:5] == b"%PDF-"
+
+    def test_excel_handles_dict_and_na_cells(self):
+        """Socrata 'location' dict cells and pandas NA must serialize, not crash."""
+        from app.services.universal_exporter import UniversalExporter
+
+        df = pd.DataFrame({
+            "borough": ["MN", "BK"],
+            "location": [{"latitude": "40.7", "longitude": "-73.9"}, None],
+            "count": pd.array([5, pd.NA], dtype="Int64"),
+        })
+        xlsx = UniversalExporter().export_data_to_excel(df, "Dict/NA Export")
+        assert xlsx is not None and xlsx[:2] == b"PK"
+
+    def test_pptx_export_creates_valid_deck(self, mock_phase_b_data):
+        """PPTX export delivers a real, non-empty .pptx (PK zip) file."""
+        from app.services.universal_exporter import UniversalExporter
+
+        pptx = UniversalExporter().export_data_to_pptx(
+            mock_phase_b_data, "Test Deck", {"Boroughs": len(mock_phase_b_data)})
+        if pptx is not None:  # python-pptx optional
+            assert pptx[:2] == b"PK"
 
 
 # =============================================================================

@@ -130,6 +130,9 @@ app = dash.Dash(
     suppress_callback_exceptions=True,
     meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}],
 )
+# WCAG 2.4.1 — set lang="en" on the root <html> element so screen readers
+# know the page language. Dash's default index_string omits the lang attribute.
+app.index_string = app.index_string.replace("<html>", '<html lang="en">')
 server = app.server
 
 
@@ -150,6 +153,23 @@ THEME = {
     "fontFamily": "'Inter', sans-serif",
     "primaryColor": "blue",
     "defaultRadius": "md",
+    # WCAG 2.1 AA — gray-5 (#adb5bd→2:1) and gray-6 (#868e96→3:1) both fail
+    # AA contrast on white/near-white backgrounds. Replaced with WCAG-safe values
+    # that still read as "secondary/muted" but meet the 4.5:1 minimum.
+    "colors": {
+        "gray": [
+            "#f8f9fa",  # 0
+            "#f1f3f5",  # 1
+            "#e9ecef",  # 2
+            "#dee2e6",  # 3
+            "#ced4da",  # 4
+            "#606870",  # 5 was #adb5bd (~2:1) → now ~5.6:1
+            "#545B62",  # 6 was #868e96 (~3:1) → now ~6.9:1
+            "#495057",  # 7
+            "#343a40",  # 8
+            "#212529",  # 9
+        ],
+    },
 }
 
 dm = DataManager(read_only=True)
@@ -263,6 +283,41 @@ register_export_callbacks(app, dm)
 register_copilot_callbacks(app)
 register_filter_callbacks()
 register_metric_callbacks()
+
+
+# ==========================================
+# --- DEEP-LINK / SPA CATCH-ALL (dash 4.3.0 FastAPI fix) ---
+# ==========================================
+# Dash's FastAPI backend only sets the request contextvar for `/` and `/_dash-*`
+# (DashMiddleware passes every other path straight through). Its own lifespan
+# catch-all, however, calls dash_app.index() which needs that context — so any
+# deep link (e.g. /stats) raised `RuntimeError: No active request in context`
+# (HTTP 500). We register our own GET catch-all *before* dash's deferred one and
+# establish the context exactly as the middleware does, so deep links return the
+# SPA shell (200) and client-side routing renders the page. Specific dash routes
+# (/_dash-*, /assets/*, /api/*, /) are registered earlier and still win by order.
+try:
+    from dash.backends._fastapi import (
+        reset_current_request as _reset_req,
+    )
+    from dash.backends._fastapi import (
+        set_current_request as _set_req,
+    )
+    from fastapi import Request as _FAReq
+    from starlette.responses import Response as _Resp
+
+    @server.get("/{spa_path:path}", include_in_schema=False)
+    async def _spa_catchall(spa_path: str, request: _FAReq):  # noqa: D401
+        token = _set_req(request)
+        try:
+            return _Resp(content=app.index(), media_type="text/html")
+        finally:
+            _reset_req(token)
+
+    logger.info("SPA deep-link catch-all registered (dash 4.3.0 context fix)")
+except Exception as e:  # pragma: no cover - defensive, never block startup
+    logger.warning(f"SPA catch-all not registered (deep links may 500): {e}")
+
 
 if __name__ == "__main__":
     # Item 125: High-Performance ASGI Server (Uvicorn)
