@@ -88,9 +88,14 @@ _TIER2 = [
     ("10-Year Capital Strategy",         "ten_year_capital_strategy"),
     # Street construction
     ("Street Resurfacing – In-House",    "dot_in_house_street_resurfacing_projects"),
-    ("Street Construction Inspections",  "street_construction_inspections"),
     ("Street Closures – Block",          "street_closures_due_to_construction_activities_b"),
     ("Interagency Construction Permits", "interagency_coordination_construction_permits"),
+    ("Street Construction Permits",      "street_construction_permits"),
+    ("Street Construction Permits – Cranes","street_construction_permits_cranes"),
+    ("Street Closures – Block (2)",      "street_closures_due_to_construction_activities_b_2"),
+    ("Street Closures – Block (3)",      "street_closures_due_to_construction_activities_b_3"),
+    ("Water & Sewer Permits",            "water_sewer_permits"),
+    ("Weekly Construction (Archived)",   "weekly_construction"),
     ("Holiday Construction Embargo – Block","holiday_construction_embargo_block"),
     ("Holiday Construction Embargo – Intersection","holiday_construction_embargo_intersection"),
     ("Protected Streets – Block",        "protected_streets_block_dataset"),
@@ -113,6 +118,8 @@ _TIER2 = [
     ("Vision Zero – SIP Intersections",  "vzv_street_improvement_projects_sip_intersection"),
     ("Vision Zero – Signal Timing 25 mph","vzv_signal_timing_25mph"),
     ("Vision Zero – Turn Traffic Calming","vzv_turn_traffic_calming"),
+    ("Vision Zero – Speed Limits",       "vzv_speed_limits"),
+    ("Vision Zero – Street Team Flyers", "vzv_street_team_flyers"),
     ("Vision Zero – Workshops Locations","vzv_workshops_locations"),
     # Planimetric / GIS
     ("Sidewalk Planimetric",             "sidewalk_planimetric"),
@@ -127,13 +134,16 @@ _TIER2 = [
     # Transportation / counts
     ("Bicycle & Pedestrian Counts – Daily","bicycle_pedestrian_counts_daily"),
     ("Bi-Annual Pedestrian Counts",      "bi_annual_pedestrian_counts"),
+    ("Bicycle & Pedestrian Count Sensors","bicycle_and_pedestrian_count_sensors"),
     ("Bicycle Parking",                  "bicycle_parking"),
     ("Bicycle Parking Shelters",         "bicycle_parking_shelters"),
     ("Bicycle Routes",                   "new_york_city_bike_routes"),
     ("Bus Lanes – Local Streets",        "bus_lanes_local_streets"),
     ("Bus Stop Shelters",                "bus_stop_shelters"),
     ("Accessible Pedestrian Signals",    "accessible_pedestrian_signal_locations"),
+    ("Exclusive Pedestrian Signals (Barnes Dance)","exclusive_pedestrian_signal_barnes_dance_locatio"),
     ("Pedestrian Space Added",           "pedestrian_space_added"),
+    ("Pedestrian Demand",                "pedestrian_demand"),
     # Street management
     ("Open Streets",                     "open_streets_locations"),
     ("Seating Locations",                "seating_locations"),
@@ -142,17 +152,34 @@ _TIER2 = [
     ("Step Streets",                     "step_streets"),
     ("Raised Crosswalk Locations",       "raised_crosswalk_locations"),
     ("Newsrack Inspections",             "newsrack_inspections"),
-    # Capital reconstruction
+    # Capital reconstruction & street condition
     ("Capital Reconstruction Projects",  "street_and_highway_capital_reconstruction_projec"),
     ("Capital Reconstruction Projects 2","street_and_highway_capital_reconstruction_projec_2"),
     ("MBPO Pedestrian Ramp Report",      "mbpo_pedestrian_ramp_report"),
+    ("Street Pavement Ratings",          "street_pavement_ratings"),
+    ("Street Pothole Work Orders (Closed)","street_pothole_work_orders_closed_dataset"),
+    ("Street Resurfacing Schedule",      "street_resurfacing_schedule"),
+    ("Street Centerline",                "street_centerline"),
+    ("Roadbed Planimetric",              "roadbed_planimetric"),
+    ("Speed Reducer Tracking (SRTS)",    "speed_reducer_tracking_srts"),
+    # Motor vehicle collisions (Vision Zero source data)
+    ("Motor Vehicle Collisions – Crashes","motor_vehicle_collisions_crashes"),
+    ("Motor Vehicle Collisions – Persons","motor_vehicle_collisions_person"),
+    # Capital project geospatial (CPDB)
+    ("CPDB Projects – Points",           "cpdb_projects_points"),
+    ("CPDB Projects – Polygons",         "cpdb_projects_polygons"),
+    # Ramp locations (stale since 2021 — use ramp_progress for current data)
+    ("Ramp Locations (Stale 2021)",      "ramp_locations"),
     # Demographics / equity
     ("Census Demographics – NTA",        "census_demographics_nta"),
     ("Heat Vulnerability Index",         "heat_vulnerability_index"),
+    ("Street Tree Census 2015",          "street_tree_census_2015"),
     ("NTA 2020 Boundaries",              "nta_2020"),
     ("Walk to Park Service Area",        "walk_to_a_park_service_area"),
     # Parking / misc
     ("Parking Meters / ParkNYC",         "parking_meters_parknyc_block_faces"),
+    ("Parking Permits – Disability (PPPD)","parking_permit_for_people_with_disabilities_pppd"),
+    ("Parking Permits – Disability (PPPD 2)","parking_permit_for_people_with_disabilities_pppd_2"),
     ("Temporary Disability Parking Permits","temporary_parking_permit_for_people_with_disabil"),
     ("Carshare – Curbside",              "carshare_locations_curbside"),
     ("Shared E-Scooter Corrals",         "shared_e_scooter_parking_corrals"),
