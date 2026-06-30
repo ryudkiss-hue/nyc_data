@@ -91,7 +91,7 @@ reports = ["plotly", "weasyprint"]
 
 # UI frameworks (pick one or both)
 ui = ["streamlit"]  # Streamlit UI (secondary fallback)
-mission = ["streamlit", "sodapy", "geopandas", "shapely", "plotly", "pyarrow", "folium", "pydeck", "prophet", "beautifulsoup4", "river", "mapie", "dowhy", "sentence-transformers", "numba", "opendp", "agentql", "playwright", "openpyxl", "python-pptx", "networkx", "fastapi", "uvicorn", "dash", "dash-mantine-components", "dash-iconify", "diskcache"]  # DASH PRIMARY (FastAPI backend, Plotly, Mantine) + all analytics/viz deps
+mission = ["streamlit", "sodapy", "geopandas", "shapely", "plotly", "pyarrow", "folium", "pydeck", "prophet", "beautifulsoup4", "river", "mapie", "dowhy", "sentence-transformers", "numba", "opendp", "agentql", "playwright", "openpyxl", "python-pptx", "reportlab", "kaleido", "networkx", "fastapi", "uvicorn[standard]", "websockets", "dash", "dash-mantine-components", "dash-iconify", "diskcache"]  # DASH PRIMARY (FastAPI backend, Plotly, Mantine) + all analytics/viz/export deps
 exe = ["pyinstaller"]
 desktop = ["pywebview"]
 all = ["openpyxl", "spacy", "shapely", "geopandas", "matplotlib", "plotly", "weasyprint", "psycopg", "pydeck", "python-pptx", "langchain", "langchain-community", "langchain-openai", "ollama", "openai", "huggingface-hub", "pyinstaller"]

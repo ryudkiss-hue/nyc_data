@@ -48,17 +48,20 @@ HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
     CMD curl -f http://localhost:8501/_stcore/health || exit 1
 CMD ["streamlit", "run", "app/app.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.headless=true"]
 
-# Stage 4: Turbo - Dash platform
+# Stage 4: Turbo - Dash platform (PRIMARY production image; default build target)
 FROM base AS turbo
-LABEL description="Turbo-Stream Dash Platform — NYC DOT Socrata Toolkit"
+LABEL description="Turbo-Stream Dash Platform — NYC DOT Socrata Toolkit (PRIMARY)"
 USER root
-# Dash specific deps from Dockerfile.turbo
+# Dash stack pinned to the versions the app is actually built against (dash 4.3.0
+# FastAPI backend + Mantine 2.8.0). uvicorn[standard] + websockets are required:
+# Dash 4.3's FastAPI backend advertises websocket_capability, so the ASGI server
+# must speak the WebSocket protocol or live callbacks degrade to HTTP polling.
 RUN pip install --no-cache-dir \
-    dash==4.2.0 \
-    dash-extensions==2.0.5 \
-    dash-iconify==0.1.2 \
-    dash-mantine-components==2.7.0 \
-    dash-ag-grid==35.2.0
+    "dash==4.3.0" \
+    "dash-iconify==0.1.2" \
+    "dash-mantine-components==2.8.0" \
+    "uvicorn[standard]>=0.30" \
+    "websockets>=12"
 USER appuser
 EXPOSE 8012
 ENV PORT=8012
