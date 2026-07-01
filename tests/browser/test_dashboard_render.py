@@ -110,7 +110,7 @@ class TestSidebarNav:
     """Sidebar navigation renders all links and navigates correctly."""
 
     def test_all_nav_links_present(self, page: Page, dash_base_url: str):
-        page.goto(dash_base_url, wait_until="load", timeout=30_000)
+        page.goto(dash_base_url, wait_until="domcontentloaded", timeout=30_000)
         nav = page.locator("a[href]").filter(
             has_text=re.compile(
                 r"Dashboard|Construction|Labor|Reports|Statistics|GIS"
@@ -127,7 +127,7 @@ class TestSidebarNav:
 
     def test_nav_link_navigates_and_loads_content(self, page: Page, dash_base_url: str):
         """Clicking a sidebar link updates the URL and loads the new view."""
-        page.goto(dash_base_url, wait_until="load", timeout=30_000)
+        page.goto(dash_base_url, wait_until="domcontentloaded", timeout=30_000)
         page.locator("a[href='/const']").first.click()
         page.wait_for_url("**/const", timeout=10_000)
         expect(page.locator("text=CONSTRUCTION PLANNER")).to_be_visible(timeout=10_000)
@@ -147,7 +147,13 @@ class TestChartsRender:
         self, page: Page, dash_base_url: str, route: str
     ):
         errors = _attach_error_listener(page)
-        page.goto(f"{dash_base_url}{route}", wait_until="load", timeout=45_000)
+        page.goto(f"{dash_base_url}{route}", wait_until="domcontentloaded", timeout=45_000)
+
+        # Dash callbacks fire asynchronously after page load; wait up to 25s for first
+        try:
+            expect(page.locator(".js-plotly-plot").first).to_be_attached(timeout=25_000)
+        except Exception:
+            pass
 
         charts = page.locator(".js-plotly-plot")
         count = charts.count()
@@ -170,7 +176,11 @@ class TestChartsRender:
         self, page: Page, dash_base_url: str
     ):
         """Home dashboard must have ≥2 charts (viz-velocity + viz-inspections)."""
-        page.goto(dash_base_url, wait_until="load", timeout=45_000)
+        page.goto(dash_base_url, wait_until="domcontentloaded", timeout=45_000)
+        try:
+            expect(page.locator(".js-plotly-plot").first).to_be_attached(timeout=25_000)
+        except Exception:
+            pass
         count = page.locator(".js-plotly-plot").count()
         assert count >= 2, (
             f"Home dashboard has {count} chart(s); expected ≥2. "
@@ -184,10 +194,14 @@ class TestMetricCards:
     """Home dashboard metric card section is present in the DOM."""
 
     def test_metric_card_section_present(self, page: Page, dash_base_url: str):
-        page.goto(dash_base_url, wait_until="load", timeout=45_000)
+        page.goto(dash_base_url, wait_until="domcontentloaded", timeout=45_000)
         # Metric cards are rendered inside a container; the callback output element
         # has an id containing 'metric'.  Accept either the container or any child.
         metric_el = page.locator("[id*='metric']")
+        try:
+            expect(metric_el.first).to_be_attached(timeout=20_000)
+        except Exception:
+            pass
         assert metric_el.count() > 0, (
             "No element with 'metric' in its id found on home dashboard. "
             "Metric card container may have been renamed or the callback failed."
@@ -203,7 +217,7 @@ class TestFilterInteraction:
         self, page: Page, dash_base_url: str
     ):
         errors = _attach_error_listener(page)
-        page.goto(dash_base_url, wait_until="load", timeout=45_000)
+        page.goto(dash_base_url, wait_until="domcontentloaded", timeout=45_000)
 
         # Try Mantine MultiSelect or Select components in the filter bar
         selects = page.locator(
@@ -231,7 +245,7 @@ class TestSQLStudio:
 
     def test_sql_studio_ui_elements_present(self, page: Page, dash_base_url: str):
         errors = _attach_error_listener(page)
-        page.goto(f"{dash_base_url}/sql", wait_until="load", timeout=30_000)
+        page.goto(f"{dash_base_url}/sql", wait_until="domcontentloaded", timeout=30_000)
 
         # Query textarea (dmc.Textarea with id="sql-query-input")
         expect(
@@ -249,7 +263,7 @@ class TestSQLStudio:
     def test_sql_studio_safe_query_executes(self, page: Page, dash_base_url: str):
         """SELECT 1 executes and writes to the results container without a JS error."""
         errors = _attach_error_listener(page)
-        page.goto(f"{dash_base_url}/sql", wait_until="load", timeout=30_000)
+        page.goto(f"{dash_base_url}/sql", wait_until="domcontentloaded", timeout=30_000)
 
         # Fill the query — target the actual <textarea> element inside the component
         textarea = page.locator("#sql-query-input textarea, textarea").first
