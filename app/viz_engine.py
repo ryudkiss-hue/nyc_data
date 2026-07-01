@@ -1428,7 +1428,7 @@ class VisualizationEngine:
         )
 
         insight = (
-            f"**N = {len(daily['Complaints'].sum()):,}** data points; "
+            f"**N = {int(daily['Complaints'].sum()):,}** complaints across {len(daily)} days; "
             f"**{int(surge_mask.sum())}** surge days detected (>2σ above rolling mean).\n\n"
             f"**7-day mean:** {mean_v:.1f} complaints/day; **2σ threshold:** "
             f"{mean_v + 2*std_v:.1f}.\n\n"
@@ -1574,7 +1574,7 @@ class VisualizationEngine:
             f"**Peak cohort:** {pivot.index[peak_idx[0]]} / {pivot.columns[peak_idx[1]]} "
             f"({int(pivot.values[peak_idx]):,} cases).\n\n"
             f"**Trend:** Most recent month vs 12-month-prior "
-            f"{'↑ increasing' if pivot.values[-1].sum() > pivot.values[-13].sum() else '↓ decreasing'}.\n\n"
+            f"{'↑ increasing' if pivot.values[-1].sum() > pivot.values[max(0, len(pivot) - 13)].sum() else '↓ decreasing'}.\n\n"
             "**Action:** Persistent high-volume cohorts signal structural infrastructure issues; "
             "escalate to capital reconstruction queue."
         )

@@ -38,8 +38,10 @@ def _prewarm_charts() -> None:
         from app.services.dashboard_state import _WAREHOUSE_CACHE, _read_warehouse_table
         from app.viz_engine import VisualizationEngine
 
-        built_df = _WAREHOUSE_CACHE.get("built") or _read_warehouse_table("built")
-        viol_df = _WAREHOUSE_CACHE.get("violations") or _read_warehouse_table("violations")
+        _c = _WAREHOUSE_CACHE.get("built")
+        built_df = _c if _c is not None else _read_warehouse_table("built")
+        _c = _WAREHOUSE_CACHE.get("violations")
+        viol_df = _c if _c is not None else _read_warehouse_table("violations")
 
         if built_df is not None and not built_df.empty:
             fig, ins = VisualizationEngine.chart_velocity({"built": built_df})
