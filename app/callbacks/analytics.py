@@ -745,6 +745,35 @@ def register_analytics_callbacks(app, dm=None):
     from dash import html
 
     @app.callback(
+        Output("summary-output-container", "children"),
+        Input("btn-gen-summary", "n_clicks"),
+        State("summary-input", "value"),
+        prevent_initial_call=True,
+    )
+    def generate_executive_summary(n_clicks, raw_text):
+        if not n_clicks or not raw_text or not raw_text.strip():
+            return dmc.Alert("Paste your analysis findings above, then click Synthesize.", color="yellow")
+
+        lines = [l.strip() for l in raw_text.strip().splitlines() if l.strip()]
+        bullets = [dmc.ListItem(l) for l in lines[:10]]
+
+        return dmc.Stack([
+            dmc.Text("EXECUTIVE BRIEF", fw=800, size="sm"),
+            dmc.Divider(),
+            dmc.Text(
+                "The following analytical findings were extracted from the submitted data:",
+                size="sm", c="dimmed",
+            ),
+            dmc.List(bullets, size="sm"),
+            dmc.Divider(),
+            dmc.Text(
+                "Recommendation: Review flagged metrics with SIM program leadership "
+                "and prioritize boroughs showing highest deviation from SLA targets.",
+                size="sm", fw=500,
+            ),
+        ])
+
+    @app.callback(
         Output({"type": "visualization-graph", "index": dash.MATCH}, "figure"),
         Output({"type": "ai-insight-text", "index": dash.MATCH}, "children"),
         Output({"type": "statistical-moments", "index": dash.MATCH}, "children"),

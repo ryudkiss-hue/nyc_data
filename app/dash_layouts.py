@@ -79,14 +79,19 @@ def visualization_asset(chart_id, title, description, summary, tier="1"):
                                         gap="lg",
                                         mt="sm",
                                     ),
-                                    dmc.LoadingOverlay(
-                                        visible=False,
-                                        loaderProps={"type": "bars", "color": "blue"},
-                                        children=dcc.Graph(
-                                            id={"type": "visualization-graph", "index": chart_id},
-                                            config={"displayModeBar": True},
-                                            style={"minHeight": "420px"},
-                                        ),
+                                    html.Div(
+                                        style={"position": "relative"},
+                                        children=[
+                                            dcc.Graph(
+                                                id={"type": "visualization-graph", "index": chart_id},
+                                                config={"displayModeBar": True},
+                                                style={"minHeight": "420px"},
+                                            ),
+                                            dmc.LoadingOverlay(
+                                                visible=False,
+                                                loaderProps={"type": "bars", "color": "blue"},
+                                            ),
+                                        ],
                                     ),
                                     dmc.Text(
                                         "Source: NYC Open Data · Standard Error: ±1.2%",
@@ -1109,10 +1114,15 @@ def layout_sql_tools():
                         dmc.Button("▶ Run Query", id="btn-run-sql", color="blue"),
                         dmc.Button("Clear", id="btn-clear-sql", variant="outline", color="gray"),
                     ], mb="md"),
-                    dmc.LoadingOverlay(
-                        id="sql-loading-overlay",
-                        visible=False,
-                        children=html.Div(id="sql-results-output"),
+                    html.Div(
+                        style={"position": "relative"},
+                        children=[
+                            html.Div(id="sql-results-output"),
+                            dmc.LoadingOverlay(
+                                id="sql-loading-overlay",
+                                visible=False,
+                            ),
+                        ],
                     ),
                 ],
             ),
@@ -1163,6 +1173,7 @@ def layout_nlp():
                             dmc.Button(
                                 "ANNOTATE & TRIAGE", id="btn-nlp-run", mt="md", color="blue"
                             ),
+                            html.Div(id="nlp-output-container", style={"marginTop": "12px"}),
                         ],
                     ),
                     visualization_asset(
@@ -1300,7 +1311,7 @@ def layout_copilot():
                         [
                             dmc.TextInput(
                                 id="copilot-input",
-                                aria_label="Ask the AI Copilot",
+                                placeholder="Ask the AI Copilot",
                                 style={"flex": 1},
                             ),
                             dmc.Button("SEND", id="btn-copilot-send"),

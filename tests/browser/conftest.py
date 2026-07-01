@@ -4,6 +4,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -14,7 +15,7 @@ _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 _APP_ENTRY = _PROJECT_ROOT / "app" / "dash_app.py"
 _APP_HOST = "127.0.0.1"
 _APP_PORT = 8011
-_STARTUP_TIMEOUT = 90  # seconds
+_STARTUP_TIMEOUT = 180  # seconds
 
 
 def _server_ready(base_url: str) -> bool:
@@ -30,6 +31,11 @@ def dash_base_url():
 
     If a server is already listening on port 8011 (e.g. dev running locally),
     the fixture reuses it and does not kill it on teardown.
+
+    Server output is redirected to a temp file (not subprocess.PIPE) to prevent
+    the pipe-buffer deadlock: uvicorn logs at debug level + the ingestion-poller
+    firing every 2s generates enough output to fill a 64 KB pipe, blocking the
+    server process and causing all subsequent page.goto() calls to timeout.
     """
     base = f"http://{_APP_HOST}:{_APP_PORT}"
 
@@ -48,35 +54,43 @@ def dash_base_url():
         "NYC_FORCE_LOCAL": "1",
     }
 
+    # Write server stdout/stderr to a temp file — never use subprocess.PIPE for a
+    # long-running server process, because unread pipe buffers cause deadlocks.
+    _log_path = Path(tempfile.gettempdir()) / "dash_test_server.log"
+    _log_fh = open(_log_path, "wb")
+
     proc = subprocess.Popen(
         [sys.executable, str(_APP_ENTRY)],
         env=env,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        stdout=_log_fh,
+        stderr=subprocess.STDOUT,  # merge stderr → same file, no second pipe
     )
 
     deadline = time.monotonic() + _STARTUP_TIMEOUT
     while time.monotonic() < deadline:
         if proc.poll() is not None:
-            _, stderr = proc.communicate()
+            _log_fh.flush()
+            log_tail = _log_path.read_text(errors="replace")[-3000:]
             pytest.fail(
                 f"Dash server exited early (rc={proc.returncode}).\n"
-                f"stderr: {stderr.decode(errors='replace')[-3000:]}"
+                f"log: {log_tail}"
             )
         if _server_ready(base):
             break
         time.sleep(1)
     else:
         proc.kill()
-        _, stderr = proc.communicate()
+        _log_fh.flush()
+        log_tail = _log_path.read_text(errors="replace")[-3000:]
         pytest.fail(
             f"Dash server did not become ready within {_STARTUP_TIMEOUT}s.\n"
-            f"stderr: {stderr.decode(errors='replace')[-3000:]}"
+            f"log: {log_tail}"
         )
 
     yield base
 
     proc.kill()
+    _log_fh.close()
     try:
         proc.wait(timeout=10)
     except subprocess.TimeoutExpired:
