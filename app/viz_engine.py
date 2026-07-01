@@ -866,6 +866,10 @@ class VisualizationEngine:
     @staticmethod
     def chart_budget_monte_carlo(base_cost: float = 1_500_000, variance: float = 0.15) -> tuple[go.Figure, str]:
         """IV: Simulated Cost Scenarios  DV: Frequency Distribution"""
+        if isinstance(base_cost, dict):
+            base_cost = 1_500_000
+        if not isinstance(variance, (int, float)):
+            variance = 0.15
         try:
             from socrata_toolkit.engineering.cost_estimator import MonteCarloEstimator
             res = MonteCarloEstimator.run_budget_simulation(base_cost, variance)
