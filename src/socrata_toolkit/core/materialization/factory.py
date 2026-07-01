@@ -89,11 +89,14 @@ class MaterializationFactory:
                             conn=self.conn,
                         )
 
-                        # Track quality
+                        # Track quality — extract real column schema for drift detection
+                        table_schema = self._extract_table_schema(
+                            f"{schema}.{mat_name}", self.conn
+                        )
                         self.quality.track_metrics(
                             mart_name=mat_name,
                             row_count=result["row_count"],
-                            schema={},  # TODO: extract actual schema from table
+                            schema=table_schema,
                             materialized_at="NOW()",
                             conn=self.conn,
                         )
@@ -109,6 +112,23 @@ class MaterializationFactory:
                     }
 
         return results
+
+    @staticmethod
+    def _extract_table_schema(
+        table: str, conn: duckdb.DuckDBPyConnection | None
+    ) -> dict:
+        """Return {column_name: type_str} for *table* via DESCRIBE.
+
+        Falls back to empty dict if conn is None or the table doesn't exist yet,
+        so callers never need to guard the result.
+        """
+        if conn is None:
+            return {}
+        try:
+            rows = conn.execute(f"DESCRIBE {table}").fetchall()
+            return {row[0]: row[1] for row in rows}
+        except Exception:
+            return {}
 
     @staticmethod
     def from_config_files(

@@ -57,7 +57,7 @@ def _prewarm_charts() -> None:
 
 
 # Run pre-warm in background thread so startup isn't blocked by 25s forecast fitting.
-import threading as _threading
+import threading as _threading  # noqa: I001
 _threading.Thread(target=_prewarm_charts, daemon=True, name="chart-prewarm").start()
 
 
@@ -228,20 +228,54 @@ class AnalyticsEngine:
             if len(numeric_cols) == 0:
                 return go.Figure(), "No numeric columns found for distribution analysis."
 
-            # For now: create histogram of first numeric column (TODO: enhance)
-            col = numeric_cols[0]
+            # Prefer analytically meaningful columns over row-ID integers.
+            # Priority: (1) domain keywords, (2) highest non-zero variance, (3) first column.
+            _PREFERRED_KEYWORDS = (
+                "count", "violation", "score", "rating", "value", "rate",
+                "days", "age", "duration", "amount", "pct", "percent",
+            )
+            col = None
+            col_lower = [c.lower() for c in numeric_cols]
+            for kw in _PREFERRED_KEYWORDS:
+                for i, cl in enumerate(col_lower):
+                    if kw in cl:
+                        col = numeric_cols[i]
+                        break
+                if col is not None:
+                    break
+            if col is None:
+                # Fall back to the column with highest variance (most informative shape)
+                variances = df[numeric_cols].var(numeric_only=True)
+                col = variances.idxmax() if not variances.empty else numeric_cols[0]
+
+            series = df[col].dropna()
+            skewness = float(series.skew()) if len(series) > 2 else 0.0
+            kurtosis = float(series.kurtosis()) if len(series) > 3 else 0.0
+            skew_label = (
+                "right-skewed (heavy upper tail)"
+                if skewness > 0.5
+                else "left-skewed (heavy lower tail)"
+                if skewness < -0.5
+                else "approximately symmetric"
+            )
+
             fig = px.histogram(
-                df[col].dropna(), nbins=30, title=f"Distribution of {col}", labels={"value": col}
+                series, nbins=30, title=f"Distribution of {col}", labels={"value": col}
             )
             fig = AnalyticsEngine._apply_standard_layout(
                 fig, f"Distribution Analysis: {col}", col, "Frequency"
             )
 
             insight = (
-                f"**Data:** Analyzed distribution of '{col}' across {len(df):,} records.\n\n"
-                f"**Information:** Column shows empirical frequency distribution with {len(df[col].dropna())} valid values.\n\n"
-                f"**Knowledge:** Distribution shape reveals data concentration patterns (normal, skewed, heavy-tailed, etc.).\n\n"
-                f"**Wisdom:** Use distribution shape to inform statistical tests (parametric vs non-parametric)."
+                f"**Data:** Analyzed distribution of '{col}' across {len(df):,} records "
+                f"({len(series):,} non-null values).\n\n"
+                f"**Information:** Skewness={skewness:.2f} ({skew_label}); "
+                f"Excess kurtosis={kurtosis:.2f} "
+                f"({'heavy-tailed' if kurtosis > 1 else 'light-tailed' if kurtosis < -1 else 'normal-tailed'}).\n\n"
+                f"**Knowledge:** Distribution shape informs which statistical tests are valid. "
+                f"Skewed distributions may warrant log-transformation before regression.\n\n"
+                f"**Wisdom:** Combine with borough-level breakdowns to detect whether skew "
+                f"is spatially concentrated or system-wide."
             )
 
             return fig, insight
@@ -774,7 +808,7 @@ def register_analytics_callbacks(app, dm=None):
                 "tree":                    ["tree_damage"],
                 "mappluto":                ["lot_info"],
                 "lot":                     ["lot_info"],
-                "treemap":                 ["lot_info"],
+                "lot_treemap":             ["lot_info"],
                 "planimetric":             ["sidewalk_planimetric"],
                 "311_volume":              ["complaints_311"],
                 "annotated_surge":         ["complaints_311", "ramp_complaints"],
