@@ -27,6 +27,7 @@ Data flow:
 import logging
 from typing import Any
 
+import pandas as pd
 import dash_mantine_components as dmc
 from dash import ALL, Input, Output, callback, dcc, html
 
