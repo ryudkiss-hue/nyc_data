@@ -26,3 +26,7 @@ shapely>=2.0
 folium>=0.14
 pydeck>=0.8
 python-pptx>=0.6
+
+# Playwright browser smoke tests
+playwright>=1.40
+pytest-playwright>=0.5.0

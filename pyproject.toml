@@ -123,6 +123,7 @@ dev = [
 testpaths = ["tests"]
 markers = [
     "slow: long-running tests",
+    "browser: Playwright browser smoke tests (require Dash server on localhost:8011)",
 ]
 
 [tool.coverage.run]
