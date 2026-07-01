@@ -130,7 +130,7 @@ class TestSidebarNav:
         page.goto(dash_base_url, wait_until="domcontentloaded", timeout=30_000)
         page.locator("a[href='/const']").first.click()
         page.wait_for_url("**/const", timeout=10_000)
-        expect(page.locator("text=CONSTRUCTION PLANNER")).to_be_visible(timeout=10_000)
+        expect(page.locator("text=CONSTRUCTION PLANNER").first).to_be_visible(timeout=10_000)
 
 
 # ── Chart render tests ────────────────────────────────────────────────────────
