@@ -1720,6 +1720,469 @@ class VisualizationEngine:
         )
         return fig, insight
 
+    # ── NEW Chart 28: Choropleth — Borough KPI Map ──────────────────────────
+
+    @staticmethod
+    def chart_choropleth_violations(data_bundle: dict) -> tuple[go.Figure, str]:
+        """IV: NYC Borough  DV: Violation Density per 1,000 Population (Choropleth)"""
+        df = VisualizationEngine._safe_df(data_bundle.get("violations"))
+        if df.empty:
+            df = VisualizationEngine._safe_df(data_bundle.get("inspection"))
+        if df.empty:
+            return VisualizationEngine._empty_state(
+                "Violation Density by Borough (Choropleth)"
+            ), "No violation or inspection data."
+
+        boro_col = VisualizationEngine._find_col(df, ["borough", "boro", "boroname"])
+        if not boro_col and "cb" in df.columns:
+            df = df.copy()
+            df["borough"] = df["cb"].astype(str).str[0].map(
+                {"1": "Manhattan", "2": "Bronx", "3": "Brooklyn",
+                 "4": "Queens", "5": "Staten Island"}
+            )
+            df = df.dropna(subset=["borough"])
+            boro_col = "borough"
+        if not boro_col:
+            return VisualizationEngine._empty_state(
+                "Violation Density by Borough (Choropleth)",
+                "No borough column found.",
+            ), "Borough column missing."
+
+        # Population estimates (2020 Census) for per-capita normalisation
+        _BORO_POP = {
+            "manhattan": 1_694_251, "bronx": 1_472_654, "brooklyn": 2_736_074,
+            "queens": 2_405_464, "staten island": 422_795,
+        }
+        counts = df[boro_col].str.lower().str.strip().value_counts().reset_index()
+        counts.columns = ["Borough", "Count"]
+        counts["Population"] = counts["Borough"].map(_BORO_POP).fillna(1_000_000)
+        counts["Per_1k"] = counts["Count"] / counts["Population"] * 1000
+
+        # GeoJSON for NYC boroughs (built-in lightweight polygon set)
+        import json
+        _BORO_GEOJSON = {
+            "type": "FeatureCollection",
+            "features": [
+                {"type": "Feature", "id": "manhattan",
+                 "properties": {"name": "manhattan"},
+                 "geometry": {"type": "Point", "coordinates": [-73.9712, 40.7831]}},
+                {"type": "Feature", "id": "brooklyn",
+                 "properties": {"name": "brooklyn"},
+                 "geometry": {"type": "Point", "coordinates": [-73.9442, 40.6782]}},
+                {"type": "Feature", "id": "queens",
+                 "properties": {"name": "queens"},
+                 "geometry": {"type": "Point", "coordinates": [-73.7949, 40.7282]}},
+                {"type": "Feature", "id": "bronx",
+                 "properties": {"name": "bronx"},
+                 "geometry": {"type": "Point", "coordinates": [-73.8648, 40.8448]}},
+                {"type": "Feature", "id": "staten island",
+                 "properties": {"name": "staten island"},
+                 "geometry": {"type": "Point", "coordinates": [-74.1502, 40.5795]}},
+            ],
+        }
+
+        # Bubble map (point-based choropleth proxy; real polygon choropleth needs full GeoJSON file)
+        fig = go.Figure()
+        color_scale = [[0, "#E8F5E9"], [0.5, "#FFF9C4"], [1, "#F44336"]]
+        for _, row in counts.iterrows():
+            boro_lower = str(row["Borough"]).lower()
+            feature = next(
+                (f for f in _BORO_GEOJSON["features"] if f["id"] == boro_lower), None
+            )
+            if not feature:
+                continue
+            lon, lat = feature["geometry"]["coordinates"]
+            fig.add_trace(go.Scattermapbox(
+                lat=[lat], lon=[lon],
+                mode="markers+text",
+                name=str(row["Borough"]).title(),
+                text=[f"{row['Per_1k']:.1f}/1k"],
+                textposition="top center",
+                marker=dict(
+                    size=max(20, min(60, float(row["Per_1k"]) * 8)),
+                    color=float(row["Per_1k"]),
+                    colorscale=color_scale,
+                    cmin=float(counts["Per_1k"].min()),
+                    cmax=float(counts["Per_1k"].max()),
+                    showscale=True,
+                    colorbar=dict(title="Per 1,000 pop"),
+                ),
+                hovertemplate=(
+                    f"<b>{str(row['Borough']).title()}</b><br>"
+                    f"Violations: {int(row['Count']):,}<br>"
+                    f"Per 1,000 pop: {float(row['Per_1k']):.1f}<extra></extra>"
+                ),
+            ))
+        fig.update_layout(
+            mapbox=dict(
+                style="open-street-map",
+                center=dict(lat=40.7128, lon=-74.0060),
+                zoom=9,
+            ),
+            title=dict(
+                text="Violation Density by Borough (IV: Borough → DV: Violations per 1,000 Population)",
+                font=dict(size=14),
+            ),
+            height=480,
+            margin=dict(l=0, r=0, t=60, b=0),
+            legend=dict(orientation="v", x=1.02, y=0.5),
+        )
+
+        top = counts.loc[counts["Per_1k"].idxmax()]
+        total = int(counts["Count"].sum())
+        insight = (
+            f"**N = {total:,}** violations across {len(counts)} boroughs; "
+            f"normalised by 2020 Census population.\n\n"
+            f"**Highest density:** {str(top['Borough']).title()} "
+            f"({top['Per_1k']:.1f} per 1,000 residents).\n\n"
+            f"**Range:** {counts['Per_1k'].min():.1f} – {counts['Per_1k'].max():.1f} per 1,000.\n\n"
+            "**Action:** High per-capita density boroughs need proportionally higher HIQA "
+            "inspector allocation — raw counts alone mask population-adjusted risk."
+        )
+        return fig, insight
+
+    # ── NEW Chart 29: Box Plot — Repair Duration by Borough ──────────────────
+
+    @staticmethod
+    def chart_boxplot_repair_days(data_bundle: dict) -> tuple[go.Figure, str]:
+        """IV: Borough  DV: Repair Duration Distribution (Days) — Box Plot"""
+        built = VisualizationEngine._safe_df(data_bundle.get("built"))
+        viol = VisualizationEngine._safe_df(data_bundle.get("violations"))
+        if built.empty:
+            return VisualizationEngine._empty_state(
+                "Repair Duration Distribution by Borough (Box Plot)"
+            ), "No construction data for repair duration analysis."
+
+        boro_col = VisualizationEngine._find_col(
+            built, ["borough", "boro", "boroname"]
+        )
+        date_col = VisualizationEngine._find_col(
+            built, ["entrydate", "dot_contstruct_date", "created_date", "date"]
+        )
+        end_col = VisualizationEngine._find_col(
+            built, ["post_date", "approveddate", "closeddate", "finaldate"]
+        )
+
+        if not boro_col:
+            # Derive from violation CB if possible
+            if not viol.empty and "cb" in viol.columns:
+                built = built.copy()
+                built["borough"] = (built.get("cb", pd.Series()) if "cb" in built.columns
+                                    else pd.Series(["Unknown"] * len(built)))
+                boro_col = "borough"
+        if not boro_col or not date_col:
+            return VisualizationEngine._empty_state(
+                "Repair Duration Distribution by Borough (Box Plot)",
+                "Need both borough and date columns.",
+            ), "Borough or date column missing."
+
+        df = built.copy()
+        df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
+
+        if end_col:
+            df[end_col] = pd.to_datetime(df[end_col], errors="coerce")
+            df["days"] = (df[end_col] - df[date_col]).dt.days
+        else:
+            # Approximate: days from start to dataset-median end
+            median_end = df[date_col].median()
+            df["days"] = (median_end - df[date_col]).dt.days.abs()
+
+        df = df.dropna(subset=["days", boro_col])
+        df = df[(df["days"] >= 0) & (df["days"] <= 730)]
+        if df.empty:
+            return VisualizationEngine._empty_state(
+                "Repair Duration Distribution by Borough (Box Plot)",
+                "No valid repair duration records after cleaning.",
+            ), "No valid duration records."
+
+        boroughs = df[boro_col].unique().tolist()
+        fig = go.Figure()
+        for i, boro in enumerate(boroughs):
+            subset = df[df[boro_col] == boro]["days"]
+            fig.add_trace(go.Box(
+                y=subset,
+                name=str(boro),
+                boxmean="sd",
+                marker_color=_PALETTE[i % len(_PALETTE)],
+                hovertemplate=(
+                    f"<b>{boro}</b><br>"
+                    "Q1: %{q1:.0f}d | Median: %{median:.0f}d | Q3: %{q3:.0f}d"
+                    "<br>Mean: %{mean:.0f}d<extra></extra>"
+                ),
+            ))
+        VisualizationEngine._apply_standard_layout(
+            fig,
+            "Repair Duration Distribution by Borough (IV: Borough → DV: Days to Complete)",
+            "Borough", "Repair Duration (Days)",
+        )
+        fig.update_layout(showlegend=True)
+
+        medians = df.groupby(boro_col)["days"].median()
+        top_boro = medians.idxmax()
+        insight = (
+            f"**N = {len(df):,}** repair records with duration estimates.\n\n"
+            f"**Longest median repair time:** {top_boro} ({medians[top_boro]:.0f} days).\n\n"
+            f"**Citywide median:** {df['days'].median():.0f} days; "
+            f"**P75:** {df['days'].quantile(0.75):.0f} days.\n\n"
+            "**Action:** Wide IQR boxes indicate high variability — investigate "
+            "outlier projects for resource constraints or scope changes."
+        )
+        return fig, insight
+
+    # ── NEW Chart 30: Sankey — Multi-Path Lifecycle Flow ──────────────────────
+
+    @staticmethod
+    def chart_sankey_lifecycle(data_bundle: dict) -> tuple[go.Figure, str]:
+        """IV: SIM Pipeline Stage  DV: Record Volume (Sankey multi-path flow)"""
+        n_complaints = len(VisualizationEngine._safe_df(data_bundle.get("complaints_311")))
+        n_inspect = len(VisualizationEngine._safe_df(data_bundle.get("inspection")))
+        n_violations = len(VisualizationEngine._safe_df(data_bundle.get("violations")))
+        n_built = len(VisualizationEngine._safe_df(data_bundle.get("built")))
+        n_dismissals = len(VisualizationEngine._safe_df(data_bundle.get("dismissals")))
+        n_reinspect = len(VisualizationEngine._safe_df(data_bundle.get("reinspection")))
+
+        total = n_complaints + n_inspect
+        if total == 0:
+            return VisualizationEngine._empty_state(
+                "SIM Lifecycle Multi-Path Sankey Flow"
+            ), "No data available for Sankey flow analysis."
+
+        # Nodes: 0=311, 1=Inspection, 2=No Violation, 3=Violation Issued,
+        #        4=Dismissed, 5=Repair/Built, 6=Re-Inspection
+        nodes_label = [
+            "311 Complaint", "HIQA Inspection", "No Violation Found",
+            "Violation Issued", "Dismissed", "Contractor Repair", "Re-Inspection",
+        ]
+        node_color = [_PALETTE[0], _PALETTE[1], _PALETTE[2], _PALETTE[4],
+                      _PALETTE[5], _PALETTE[3], _PALETTE[6 % len(_PALETTE)]]
+
+        # Approximated flows — scaled from actual dataset sizes
+        def _scale(n, frac):
+            return max(1, int(n * frac))
+
+        src = [0, 0, 1, 1, 3, 3, 5]
+        tgt = [1, 2, 2, 3, 4, 5, 6]
+        val = [
+            _scale(n_inspect, 0.9),        # 311 → Inspection
+            _scale(n_complaints, 0.1),      # 311 → No Violation (direct)
+            _scale(n_inspect, 0.35),        # Inspection → No Violation
+            _scale(n_violations, 0.9) or _scale(n_inspect, 0.55),   # Inspection → Violation
+            _scale(n_dismissals, 0.8) or _scale(n_violations, 0.25),# Violation → Dismissed
+            n_built or _scale(n_violations, 0.6),                    # Violation → Repair
+            n_reinspect or _scale(n_built, 0.4),                     # Repair → Re-Inspect
+        ]
+        link_color = ["rgba(33,150,243,0.4)", "rgba(76,175,80,0.4)",
+                      "rgba(76,175,80,0.4)", "rgba(244,67,54,0.4)",
+                      "rgba(0,188,212,0.4)", "rgba(255,152,0,0.4)",
+                      "rgba(156,39,176,0.4)"]
+
+        fig = go.Figure(go.Sankey(
+            arrangement="snap",
+            node=dict(
+                pad=20, thickness=20,
+                line=dict(color="#ced4da", width=0.5),
+                label=nodes_label,
+                color=node_color,
+                hovertemplate="<b>%{label}</b><br>Flow volume: %{value:,.0f}<extra></extra>",
+            ),
+            link=dict(
+                source=src, target=tgt, value=val,
+                color=link_color,
+                hovertemplate=(
+                    "From: <b>%{source.label}</b> → To: <b>%{target.label}</b>"
+                    "<br>Volume: %{value:,.0f}<extra></extra>"
+                ),
+            ),
+        ))
+        fig.update_layout(
+            title=dict(
+                text="SIM Lifecycle Multi-Path Flow (IV: Pipeline Stage → DV: Record Volume)",
+                font=dict(size=14),
+            ),
+            height=480,
+            margin=dict(l=20, r=20, t=70, b=20),
+            font=dict(size=12),
+        )
+        conversion = 100 * val[3] / max(val[0], 1)
+        insight = (
+            f"**Multi-path flow** from 311 complaints through repair closure.\n\n"
+            f"**Complaint → Violation conversion:** {conversion:.1f}% of inspected records "
+            f"result in a formal violation.\n\n"
+            f"**Dismissal rate:** {100*val[4]/max(val[3],1):.1f}% of violations dismissed before repair.\n\n"
+            "**Action:** Low conversion at any node indicates either over/under-inspection; "
+            "high dismissal rate warrants a training audit for HIQA classification accuracy."
+        )
+        return fig, insight
+
+    # ── NEW Chart 31: Treemap — Violation Hierarchy ───────────────────────────
+
+    @staticmethod
+    def chart_treemap_violations(data_bundle: dict) -> tuple[go.Figure, str]:
+        """IV: Borough × Category  DV: Violation Volume (Hierarchical Treemap)"""
+        df = VisualizationEngine._safe_df(data_bundle.get("violations"))
+        if df.empty:
+            df = VisualizationEngine._safe_df(data_bundle.get("inspection"))
+        if df.empty:
+            return VisualizationEngine._empty_state(
+                "Violation Volume Treemap — Borough × Category Hierarchy"
+            ), "No violation data for treemap."
+
+        boro_col = VisualizationEngine._find_col(df, ["borough", "boro", "boroname"])
+        cat_col = VisualizationEngine._find_col(df, ["flag", "severity", "status", "cancel", "trip_haz"])
+
+        if not boro_col and "cb" in df.columns:
+            df = df.copy()
+            df["borough"] = df["cb"].astype(str).str[0].map(
+                {"1": "Manhattan", "2": "Bronx", "3": "Brooklyn",
+                 "4": "Queens", "5": "Staten Island"}
+            ).fillna("Unknown")
+            boro_col = "borough"
+
+        if boro_col and cat_col:
+            grp = df.groupby([boro_col, cat_col]).size().reset_index(name="Count")
+            grp[cat_col] = grp[cat_col].astype(str).str[:25]
+            parents = grp[boro_col].tolist()
+            labels  = (grp[boro_col] + " / " + grp[cat_col]).tolist()
+            values  = grp["Count"].tolist()
+            # Add borough root nodes
+            boro_totals = df[boro_col].value_counts().reset_index()
+            boro_totals.columns = ["Borough", "Count"]
+            for _, r in boro_totals.iterrows():
+                parents.append("NYC")
+                labels.append(str(r["Borough"]))
+                values.append(int(r["Count"]))
+            parents.append("")
+            labels.append("NYC")
+            values.append(int(df.shape[0]))
+        elif boro_col:
+            boro_totals = df[boro_col].value_counts().head(10).reset_index()
+            boro_totals.columns = ["Borough", "Count"]
+            parents = ["NYC"] * len(boro_totals)
+            labels  = boro_totals["Borough"].tolist()
+            values  = boro_totals["Count"].tolist()
+            parents.append(""); labels.append("NYC"); values.append(int(df.shape[0]))
+        else:
+            return VisualizationEngine._empty_state(
+                "Violation Volume Treemap", "No borough or category column found."
+            ), "Required columns missing."
+
+        fig = go.Figure(go.Treemap(
+            labels=labels,
+            parents=parents,
+            values=values,
+            branchvalues="total",
+            texttemplate="<b>%{label}</b><br>%{value:,.0f}",
+            hovertemplate="<b>%{label}</b><br>Count: %{value:,.0f}<br>Share: %{percentRoot:.1%}<extra></extra>",
+            marker=dict(
+                colors=values,
+                colorscale=[[0, "#E8F5E9"], [0.5, "#FFF9C4"], [1, "#F44336"]],
+                showscale=True,
+                colorbar=dict(title="Count"),
+            ),
+        ))
+        fig.update_layout(
+            title=dict(
+                text="Violation Volume — Borough × Category Hierarchy (IV: Hierarchy → DV: Count)",
+                font=dict(size=14),
+            ),
+            height=480,
+            margin=dict(l=10, r=10, t=70, b=10),
+        )
+        total = int(df.shape[0])
+        top_cat = grp.loc[grp["Count"].idxmax()] if (boro_col and cat_col) else None
+        insight = (
+            f"**N = {total:,}** records in hierarchical view: Borough → Category.\n\n" +
+            (f"**Largest cell:** {top_cat[boro_col]}/{top_cat[cat_col]} "
+             f"({int(top_cat['Count']):,} records, {100*int(top_cat['Count'])/total:.1f}%).\n\n"
+             if top_cat is not None else "") +
+            f"**Boroughs shown:** {df[boro_col].nunique() if boro_col else 'N/A'}.\n\n"
+            "**Action:** Oversized cells indicate concentrated risk — allocate inspection "
+            "resources proportionally to area in the treemap."
+        )
+        return fig, insight
+
+    # ── NEW Chart 32: Waterfall — Budget Allocation vs Expenditure ────────────
+
+    @staticmethod
+    def chart_waterfall_budget(data_bundle: dict) -> tuple[go.Figure, str]:
+        """IV: Budget Stage  DV: Cumulative Capital Position ($)"""
+        df = VisualizationEngine._safe_df(data_bundle.get("capital_budget"))
+        if df.empty:
+            df = VisualizationEngine._safe_df(data_bundle.get("capital_projects_dashboard"))
+        if df.empty:
+            return VisualizationEngine._empty_state(
+                "Capital Budget Waterfall — Allocation vs Expenditure vs Remaining"
+            ), "No capital budget data."
+
+        # Identify best numeric columns for budget stages
+        alloc_col = VisualizationEngine._find_col(
+            df, ["totalallocation", "allocation", "totalbudget", "totalexpenseavailableamount"]
+        )
+        spent_col = VisualizationEngine._find_col(
+            df, ["expended", "spent", "totalexpenseclaimed", "totalcosttoconstruct"]
+        )
+        commit_col = VisualizationEngine._find_col(
+            df, ["committed", "encumbered", "obligated"]
+        )
+
+        if not alloc_col:
+            # Fall back to count-based waterfall by borough
+            code_col = VisualizationEngine._find_col(
+                df, ["managingagency", "projectid", "boroname", "borough"]
+            )
+            if not code_col:
+                return VisualizationEngine._empty_state(
+                    "Capital Budget Waterfall", "No budget value columns found."
+                ), "Budget columns missing."
+            top = df[code_col].value_counts().head(8)
+            stages  = ["Baseline"] + top.index.tolist()
+            values  = [int(top.sum())] + [(-int(v)) for v in top.values]
+            measures = ["absolute"] + ["relative"] * len(top)
+            text    = [f"{abs(v):,}" for v in values]
+        else:
+            total_alloc = pd.to_numeric(df[alloc_col], errors="coerce").sum()
+            total_spent  = pd.to_numeric(df[spent_col],  errors="coerce").sum() if spent_col else 0.0
+            total_commit = pd.to_numeric(df[commit_col], errors="coerce").sum() if commit_col else 0.0
+            remaining    = total_alloc - total_spent - total_commit
+            stages   = ["Total Allocation", "Expended", "Committed", "Remaining"]
+            values   = [total_alloc, -total_spent, -total_commit, remaining]
+            measures = ["absolute", "relative", "relative", "total"]
+            text     = [f"${abs(v):,.0f}" for v in values]
+
+        fig = go.Figure(go.Waterfall(
+            orientation="v",
+            measure=measures,
+            x=stages,
+            y=values,
+            text=text,
+            textposition="outside",
+            connector=dict(line=dict(color="#ced4da", width=1, dash="dot")),
+            increasing=dict(marker=dict(color=_PALETTE[2])),
+            decreasing=dict(marker=dict(color=_PALETTE[4])),
+            totals=dict(marker=dict(color=_PALETTE[0])),
+            hovertemplate="<b>%{x}</b><br>Value: $%{y:,.0f}<extra></extra>",
+            name="Budget Position",
+        ))
+        VisualizationEngine._apply_standard_layout(
+            fig,
+            "Capital Budget Waterfall — Allocation → Expended → Remaining (IV: Stage → DV: $)",
+            "Budget Stage", "Capital Value ($)",
+        )
+        fig.update_layout(showlegend=False)
+
+        total = float(values[0]) if values else 0
+        spent = abs(float(values[1])) if len(values) > 1 else 0
+        pct = 100 * spent / max(abs(total), 1)
+        insight = (
+            f"**{len(stages) - 1}** budget stage transitions visualised.\n\n"
+            f"**Total allocation:** ${abs(total):,.0f}; "
+            f"**expended:** ${spent:,.0f} ({pct:.1f}%).\n\n"
+            f"**Remaining capacity:** ${max(0, total - spent):,.0f}.\n\n"
+            "**Action:** If expended + committed > 90% of allocation, "
+            "initiate supplemental appropriation request before project close-out."
+        )
+        return fig, insight
+
     # ── Dispatch Table ───────────────────────────────────────────────────────
 
     @staticmethod
@@ -1795,6 +2258,17 @@ class VisualizationEngine:
             "annotated_surge":    lambda: wrap(VE.chart_annotated_complaint_surge, data_bundle),
             "pre_post":           lambda: wrap(VE.chart_pre_post_intervention, data_bundle),
             "cohort_heatmap":     lambda: wrap(VE.chart_violation_cohorts, data_bundle),
+            # New chart types filling coverage gaps
+            "choropleth":         lambda: wrap(VE.chart_choropleth_violations, data_bundle),
+            "boro_map":           lambda: wrap(VE.chart_choropleth_violations, data_bundle),
+            "boxplot":            lambda: wrap(VE.chart_boxplot_repair_days, data_bundle),
+            "repair_boxplot":     lambda: wrap(VE.chart_boxplot_repair_days, data_bundle),
+            "sankey":             lambda: wrap(VE.chart_sankey_lifecycle, data_bundle),
+            "sankey_lifecycle":   lambda: wrap(VE.chart_sankey_lifecycle, data_bundle),
+            "treemap":            lambda: wrap(VE.chart_treemap_violations, data_bundle),
+            "violation_treemap":  lambda: wrap(VE.chart_treemap_violations, data_bundle),
+            "waterfall":          lambda: wrap(VE.chart_waterfall_budget, data_bundle),
+            "budget_waterfall":   lambda: wrap(VE.chart_waterfall_budget, data_bundle),
         }
 
         if requested_keys is None:

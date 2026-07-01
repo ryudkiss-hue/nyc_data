@@ -805,6 +805,17 @@ def register_analytics_callbacks(app, dm=None):
                 "equity":                  [],
                 "markov":                  [],
                 "pairplot":                ["lot_info"],
+                # New chart types
+                "choropleth":              ["violations", "inspection"],
+                "boro_map":                ["violations", "inspection"],
+                "boxplot":                 ["built", "violations"],
+                "repair_boxplot":          ["built", "violations"],
+                "sankey":                  ["complaints_311", "inspection", "violations", "built", "dismissals", "reinspection"],
+                "sankey_lifecycle":        ["complaints_311", "inspection", "violations", "built", "dismissals", "reinspection"],
+                "treemap":                 ["violations", "inspection"],
+                "violation_treemap":       ["violations"],
+                "waterfall":               ["capital_budget", "capital_projects_dashboard"],
+                "budget_waterfall":        ["capital_budget", "capital_projects_dashboard"],
             }
             needed_datasets = _CHART_DATASETS.get(map_key, ["inspection", "built"])
 
