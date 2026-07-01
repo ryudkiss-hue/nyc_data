@@ -27,8 +27,8 @@ Data flow:
 import logging
 from typing import Any
 
-import pandas as pd
 import dash_mantine_components as dmc
+import pandas as pd
 from dash import ALL, Input, Output, callback, dcc, html
 
 logger = logging.getLogger(__name__)

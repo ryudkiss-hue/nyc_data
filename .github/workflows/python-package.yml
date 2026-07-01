@@ -53,4 +53,6 @@ jobs:
         SOCRATA_APP_TOKEN: ${{ secrets.SOCRATA_APP_TOKEN }}
         ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       run: |
-        pytest tests/ -q --tb=short
+        # Exclude browser (Playwright) tests — they need a running Dash server and
+        # a full playwright install; they run locally via `pytest -m browser`.
+        pytest tests/ -q --tb=short -m "not browser"

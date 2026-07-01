@@ -5,9 +5,9 @@ import logging
 import os
 from pathlib import Path
 
+import dash_mantine_components as dmc
 import pandas as pd
 from dash import Input, Output, State, callback, html, no_update
-import dash_mantine_components as dmc
 
 logger = logging.getLogger(__name__)
 
