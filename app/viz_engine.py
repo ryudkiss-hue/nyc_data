@@ -2064,7 +2064,9 @@ class VisualizationEngine:
             parents = ["NYC"] * len(boro_totals)
             labels  = boro_totals["Borough"].tolist()
             values  = boro_totals["Count"].tolist()
-            parents.append(""); labels.append("NYC"); values.append(int(df.shape[0]))
+            parents.append("")
+            labels.append("NYC")
+            values.append(int(df.shape[0]))
         else:
             return VisualizationEngine._empty_state(
                 "Violation Volume Treemap", "No borough or category column found."
@@ -2233,7 +2235,7 @@ class VisualizationEngine:
             # Alias-heavy keys (layouts use these)
             "hiqa":               lambda: wrap(VE.chart_dismissals_pie, data_bundle),
             "hiqa_trends":        lambda: wrap(VE.chart_built_sqft_trend, data_bundle),
-            "treemap":            lambda: wrap(VE.chart_lot_zoning_pie, data_bundle),
+            "zoning_treemap":     lambda: wrap(VE.chart_lot_zoning_pie, data_bundle),
             "311_volume":         lambda: wrap(VE.chart_annotated_complaint_surge, data_bundle),
             "mappluto":           lambda: wrap(VE.chart_lot_zoning_pie, data_bundle),
             "curb_metal":         lambda: wrap(VE.chart_inspections_boro, data_bundle),
