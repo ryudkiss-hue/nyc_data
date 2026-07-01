@@ -61,6 +61,38 @@ jobs:
           print('import smoke ok')
           "
 
+      - name: Dash app module smoke test
+        env:
+          MISSION_DEMO: "1"
+          NYC_FORCE_LOCAL: "1"
+          SOCRATA_APP_TOKEN: ${{ secrets.SOCRATA_APP_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python -c "
+          import sys, os
+          os.environ.setdefault('DUCKDB_PATH', '/tmp/empty_test.duckdb')
+          mods = [
+              'app.viz_engine',
+              'app.dash_layouts',
+              'app.components.filter_system',
+              'app.components.metric_cards',
+              'app.callbacks.copilot',
+              'app.callbacks.sql_callbacks',
+          ]
+          import importlib
+          errs = []
+          for m in mods:
+              try:
+                  importlib.import_module(m)
+              except Exception as e:
+                  errs.append(f'{m}: {e}')
+          if errs:
+              for err in errs:
+                  print('FAIL:', err, file=sys.stderr)
+              sys.exit(1)
+          print('Dash module smoke: all imports OK')
+          "
+
       - name: Streamlit app import
         env:
           MISSION_DEMO: "1"

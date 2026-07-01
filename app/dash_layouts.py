@@ -79,9 +79,14 @@ def visualization_asset(chart_id, title, description, summary, tier="1"):
                                         gap="lg",
                                         mt="sm",
                                     ),
-                                    dcc.Graph(
-                                        id={"type": "visualization-graph", "index": chart_id},
-                                        config={"displayModeBar": True},
+                                    dmc.LoadingOverlay(
+                                        visible=False,
+                                        loaderProps={"type": "bars", "color": "blue"},
+                                        children=dcc.Graph(
+                                            id={"type": "visualization-graph", "index": chart_id},
+                                            config={"displayModeBar": True},
+                                            style={"minHeight": "420px"},
+                                        ),
                                     ),
                                     dmc.Text(
                                         "Source: NYC Open Data · Standard Error: ±1.2%",
@@ -1086,14 +1091,29 @@ def layout_sql_tools():
                 withBorder=True,
                 p="lg",
                 children=[
-                    dmc.Text("SoQL QUERY EXECUTOR", fw=700, mb="sm"),
-                    dmc.TextInput(
-                        label="SoQL Query",
-                        placeholder="SELECT * WHERE borough = 'MANHATTAN'",
-                        mb="md",
+                    dmc.Text("DuckDB SQL QUERY EXECUTOR", fw=700, mb="sm"),
+                    dmc.Text(
+                        "Execute SQL against the local 5.7 GB warehouse (118 raw tables). "
+                        "Use schema prefix: SELECT * FROM raw.inspection LIMIT 100",
+                        size="sm", c="dimmed", mb="sm",
                     ),
-                    dmc.Button("Execute Query", variant="outline",
-                               style={"color": "#1864ab"}),  # WCAG: 5.65:1 on white
+                    dmc.Textarea(
+                        id="sql-query-input",
+                        label="SQL Query",
+                        placeholder="SELECT * FROM raw.inspection LIMIT 100",
+                        mb="md",
+                        minRows=4,
+                        autosize=True,
+                    ),
+                    dmc.Group([
+                        dmc.Button("▶ Run Query", id="btn-run-sql", color="blue"),
+                        dmc.Button("Clear", id="btn-clear-sql", variant="outline", color="gray"),
+                    ], mb="md"),
+                    dmc.LoadingOverlay(
+                        id="sql-loading-overlay",
+                        visible=False,
+                        children=html.Div(id="sql-results-output"),
+                    ),
                 ],
             ),
         ],

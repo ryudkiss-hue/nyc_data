@@ -78,6 +78,7 @@ from app.callbacks.analytics import register_analytics_callbacks
 from app.callbacks.copilot import register_copilot_callbacks
 from app.callbacks.export import register_export_callbacks
 from app.callbacks.ingestion import register_ingestion_callbacks
+import app.callbacks.sql_callbacks  # noqa: F401 — registers @callback decorators
 
 # Import Modular Callbacks
 from app.callbacks.navigation import register_navigation_callbacks

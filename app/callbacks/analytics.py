@@ -748,21 +748,79 @@ def register_analytics_callbacks(app, dm=None):
             _key = chart_id.replace("viz-", "").replace("-", "_")
             map_key = _ALIASES.get(_key, _key)
 
-            # Per-chart dataset requirements — only load what the chart needs.
-            # Default to primary datasets; adding a new chart → add its row here.
-            _CHART_DATASETS = {
-                "velocity": ["built"],
-                "inspections": ["violations"],  # violations has cb → borough; inspection has no geo
-                "violation_severity": ["violations"],
-                "dismissals": ["dismissals"],
-                "ramp": ["ramp_progress"],
-                "tree_conflict": ["tree_damage", "inspection"],
-                "mappluto": ["lot_info"],
-                "planimetric": ["sidewalk_planimetric"],
+            # Per-chart dataset requirements — maps viz_engine key → warehouse tables.
+            # The MultiSelect `filters["datasets"]` is the USER'S selection; we intersect
+            # so a chart only loads what the user has selected AND what it needs.
+            _CHART_DATASETS: dict[str, list[str]] = {
+                # Core SIM
+                "velocity":                ["built"],
+                "built":                   ["built"],
+                "hiqa_trends":             ["built"],
+                "resurfacing":             ["built"],
+                "pavement_decay":          ["built"],
+                "moment_history":          ["built"],
+                "unit_econ":               ["built"],
+                "pre_post":                ["built", "violations"],
+                "inspections":             ["violations", "inspection"],
+                "violation_severity":      ["violations"],
+                "dismissals":              ["dismissals"],
+                "hiqa":                    ["dismissals"],
+                "ramp":                    ["ramp_progress", "ramp_complaints"],
+                "ramp_trends":             ["ramp_progress", "ramp_complaints"],
+                "ramp_heatmap":            ["ramp_progress", "ramp_complaints"],
+                "tree_conflict":           ["tree_damage", "inspection"],
+                "tree":                    ["tree_damage"],
+                "mappluto":                ["lot_info"],
+                "lot":                     ["lot_info"],
+                "treemap":                 ["lot_info"],
+                "planimetric":             ["sidewalk_planimetric"],
+                "311_volume":              ["complaints_311"],
+                "annotated_surge":         ["complaints_311", "ramp_complaints"],
+                "nlp_sentiment":           ["complaints_311"],
+                "nlp_sentiment_heat":      ["violations"],
+                "cohort_heatmap":          ["violations"],
+                "live_queue":              ["violations", "inspection"],
+                "mttr":                    ["violations", "built"],
+                "heatmap":                 ["street_permits"],
+                "permits":                 ["street_permits"],
+                "ps_burn":                 ["capital_budget", "capital_projects_dashboard"],
+                "radar_scores":            ["inspection", "violations", "built", "ramp_progress", "complaints_311"],
+                "lifecycle":               ["complaints_311", "inspection", "violations", "built"],
+                "freshness":               ["inspection", "violations", "built"],
+                "quality_box":             ["inspection", "violations"],
+                "efficiency":              ["inspection"],
+                "correspondence":          ["correspondences"],
+                "reinspection":            ["reinspection"],
+                "burndown":                ["reinspection"],
+                "missingness":             ["inspection", "violations", "built"],
+                "correlation":             ["violations", "inspection"],
+                "feature_importance":      ["violations", "inspection"],
+                "stipulations":            ["violations", "dismissals"],
+                "anomalies":               ["complaints_311", "violations"],
+                "curb_metal":              ["curb_metal_protruding", "inspection"],
+                # These draw from all available data
+                "manifold_3d":             ["lot_info", "inspection"],
+                "budget_mc":               [],
+                "isochrone":               [],
+                "equity":                  [],
+                "markov":                  [],
+                "pairplot":                ["lot_info"],
             }
             needed_datasets = _CHART_DATASETS.get(map_key, ["inspection", "built"])
 
-            # Fetch data bundle — only the datasets this chart needs
+            # Respect the user's MultiSelect dataset selection: only load datasets
+            # that are BOTH needed by the chart AND in the user's filter selection.
+            selected_by_user: list[str] = (filters or {}).get("datasets", [])
+            if selected_by_user:
+                # Allow datasets needed by chart even if not in user selection (chart won't render otherwise)
+                # but prefer the intersection so we honor the user's choice.
+                intersect = [ds for ds in needed_datasets if ds in selected_by_user]
+                if intersect:
+                    needed_datasets = intersect
+                # If no intersection (user's selection doesn't cover this chart's data),
+                # keep all needed_datasets so the chart can still render with warehouse data.
+
+            # Fetch data bundle
             state = DashboardStateAdapter(dm, filters)
             data_bundle = {}
             for ds in needed_datasets:

@@ -246,14 +246,35 @@ def register_metric_callbacks() -> None:
             values = []
             changes = []
 
+            # Resolve selected boroughs from filters → filter metric_data rows before
+            # aggregating. v_metric_dashboard has 6 rows per metric_id (one per borough);
+            # iloc[0] returns an arbitrary borough — instead aggregate citywide or for
+            # the selected borough(s).
+            selected_boros = (filters or {}).get("boroughs") or []
+            boro_col = next((c for c in metric_data.columns if "boro" in c.lower()), None)
+            if boro_col and selected_boros:
+                from app.services.dashboard_state import _BORO_FORMS
+                accept = set()
+                for code in selected_boros:
+                    accept |= {v.upper() for v in _BORO_FORMS.get(code.upper(), {code.upper()})}
+                boro_filtered = metric_data[
+                    metric_data[boro_col].astype(str).str.upper().isin(accept)
+                ]
+                if not boro_filtered.empty:
+                    metric_data = boro_filtered
+
             for category_config in METRIC_CONFIG.values():
                 for metric in category_config["metrics"]:
                     metric_id = metric["id"]
-                    # Look up value in metric_data
+                    # Aggregate across all matching rows (multiple boroughs or citywide)
                     row = metric_data[metric_data["metric_id"] == metric_id]
                     if not row.empty:
-                        value = row.iloc[0].get("value", None)
-                        change = row.iloc[0].get("change_pct", 0)
+                        is_rate = metric.get("metric") in ("pct", "score", "rate")
+                        agg_fn = "mean" if is_rate else "sum"
+                        value = pd.to_numeric(row.get("value", pd.Series(dtype=float)), errors="coerce")
+                        value = float(value.mean() if is_rate else value.sum()) if not value.dropna().empty else None
+                        change_vals = pd.to_numeric(row.get("change_pct", pd.Series(dtype=float)), errors="coerce")
+                        change = float(change_vals.mean()) if not change_vals.dropna().empty else 0
 
                         # Format value based on metric type
                         if metric["metric"] in ["pct", "score"]:

@@ -32,11 +32,16 @@ _WAREHOUSE_CACHE: dict[str, pd.DataFrame] = {}
 # both viz-velocity and viz-inspections try to open DuckDB simultaneously on first
 # page load. Each call takes ~2s; sequencing them here keeps startup deterministic.
 def _prewarm_warehouse():
-    """Sequentially load the primary dashboard datasets into _WAREHOUSE_CACHE."""
-    for key in ("built", "inspection", "violations"):
+    """Sequentially load all primary dashboard datasets into _WAREHOUSE_CACHE."""
+    for key in (
+        "built", "inspection", "violations",
+        "dismissals", "ramp_progress", "ramp_complaints",
+        "lot_info", "sidewalk_planimetric", "tree_damage",
+        "complaints_311", "capital_budget",
+    ):
         if key not in _WAREHOUSE_CACHE:
             try:
-                _read_warehouse_table(key)  # loads and caches, defined below
+                _read_warehouse_table(key)
             except Exception as _e:
                 logger.debug(f"Pre-warm skipped for {key}: {_e}")
 
@@ -303,12 +308,15 @@ class DashboardStateAdapter:
         return df
 
     def get_analytics_dataset(self) -> pd.DataFrame:
-        """Get the base dataset for analytics (Phase C) properly filtered."""
-        df = get_dataset(self.filters)
-        limit = self.get_limit()
-        if not df.empty and limit is not None:
-            df = df.head(limit)
-        return df
+        """Get the base dataset for analytics (Phase C) properly filtered.
+
+        Routes through get_dataset_by_key so all 7 filter dimensions apply
+        and the local warehouse is the authoritative source.
+        """
+        # Determine the primary analytics dataset from the filter selection.
+        selected = self.get_selected_datasets()
+        primary = selected[0] if selected else "inspection"
+        return self.get_dataset_by_key(primary)
 
     def get_spatial_dataset(self) -> gpd.GeoDataFrame:
         """Get the spatial dataset for mapping (Phase B/D) properly filtered."""

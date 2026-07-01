@@ -271,7 +271,7 @@ def render_filter_bar() -> html.Div:
                 gap="md",
                 mb="xs",
             ),
-            # ── Row 3: Date controls ─────────────────────────────────────
+            # ── Row 3: Date controls + presets ──────────────────────────
             dmc.Group(
                 [
                     dmc.Select(
@@ -295,6 +295,22 @@ def render_filter_bar() -> html.Div:
                         placeholder="End date",
                         valueFormat="YYYY-MM-DD",
                         style={"flex": 1, "minWidth": "130px"},
+                    ),
+                    dmc.Stack(
+                        [
+                            dmc.Text("Quick Range", size="xs", c="dimmed", mb=2),
+                            dmc.Group(
+                                [
+                                    dmc.Button("30d",   id="date-preset-30d",  size="xs", variant="light", color="blue"),
+                                    dmc.Button("90d",   id="date-preset-90d",  size="xs", variant="light", color="blue"),
+                                    dmc.Button("YTD",   id="date-preset-ytd",  size="xs", variant="light", color="blue"),
+                                    dmc.Button("Last FY", id="date-preset-fy", size="xs", variant="light", color="blue"),
+                                ],
+                                gap=4,
+                            ),
+                        ],
+                        gap=0,
+                        style={"minWidth": "140px"},
                     ),
                 ],
                 grow=True,
@@ -443,3 +459,31 @@ def register_filter_callbacks() -> None:
         }
         logger.info(f"Filters applied: {len(filters_dict['datasets'])} datasets, boroughs={filters_dict['boroughs']}")
         return filters_dict
+
+    # ── Date preset callbacks ─────────────────────────────────────────────────
+    import datetime as _dt
+
+    @callback(
+        Output("filter-date-start", "value"),
+        Output("filter-date-end",   "value"),
+        Input("date-preset-30d",  "n_clicks"),
+        Input("date-preset-90d",  "n_clicks"),
+        Input("date-preset-ytd",  "n_clicks"),
+        Input("date-preset-fy",   "n_clicks"),
+        prevent_initial_call=True,
+    )
+    def apply_date_preset(n30, n90, nytd, nfy):
+        from dash import ctx
+        today = _dt.date.today()
+        trigger = getattr(ctx, "triggered_id", None)
+        if trigger == "date-preset-30d":
+            return str(today - _dt.timedelta(days=30)), str(today)
+        if trigger == "date-preset-90d":
+            return str(today - _dt.timedelta(days=90)), str(today)
+        if trigger == "date-preset-ytd":
+            return str(today.replace(month=1, day=1)), str(today)
+        if trigger == "date-preset-fy":
+            fy_start = _dt.date(today.year - 1, 7, 1)
+            fy_end   = _dt.date(today.year,     6, 30)
+            return str(fy_start), str(fy_end)
+        return no_update, no_update
