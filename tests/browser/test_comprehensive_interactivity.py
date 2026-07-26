@@ -875,8 +875,8 @@ class TestDeadCodeAudit:
         )
         assert not errors
 
-    @pytest.mark.xfail(reason="PNG/JPG/PBI/R export types fall through to 'not supported' — intentional stub")
     def test_png_export_button_downloads_image(self, page: Page, dash_base_url: str):
+        """PNG export renders a kaleido summary figure and downloads it."""
         _go(page, dash_base_url)
         export_tab = page.locator(
             "button:has-text('Export Powerhouse'), [role='tab']:has-text('Export')"
