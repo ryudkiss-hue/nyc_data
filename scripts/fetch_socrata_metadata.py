@@ -12,11 +12,12 @@ This ensures visualization templates are pre-configured with real schemas.
 """
 
 import json
-import yaml
-from pathlib import Path
-from typing import Dict, Any, Optional
-import urllib.request
 import urllib.error
+import urllib.request
+from pathlib import Path
+from typing import Any, Dict, Optional
+
+import yaml
 
 # All 78 datasets: core 57 + Phase 1 21
 DATASETS_TO_FETCH = {
@@ -188,26 +189,26 @@ def main():
                     registry["datasets"][key]["visualization"]["suggested_iv"] = col_specs["borough_column"]
                     registry["datasets"][key]["visualization"]["suggested_dv"] = col_specs["value_column"]
         else:
-            print(f"⚠️  Error")
+            print("⚠️  Error")
             error_count += 1
 
     # Write updated registry
     with open(registry_path, "w") as f:
         yaml.dump(registry, f, default_flow_style=False, sort_keys=False)
 
-    print(f"\n[SUMMARY]")
+    print("\n[SUMMARY]")
     print(f"  Fetched: {fetched_count}")
     print(f"  Errors: {error_count}")
     print(f"  Updated: {registry_path}")
-    print(f"\n  Registry now includes:")
-    print(f"  - Real column schemas")
-    print(f"  - Auto-detected IV/DV columns")
-    print(f"  - Row counts & update timestamps")
-    print(f"  - Geographic column hints")
-    print(f"\n  Visualization templates can now:")
-    print(f"  - Use real column names")
-    print(f"  - Auto-detect aggregation method")
-    print(f"  - Suggest chart types based on data")
+    print("\n  Registry now includes:")
+    print("  - Real column schemas")
+    print("  - Auto-detected IV/DV columns")
+    print("  - Row counts & update timestamps")
+    print("  - Geographic column hints")
+    print("\n  Visualization templates can now:")
+    print("  - Use real column names")
+    print("  - Auto-detect aggregation method")
+    print("  - Suggest chart types based on data")
 
 
 if __name__ == "__main__":

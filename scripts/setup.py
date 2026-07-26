@@ -20,15 +20,15 @@ def main():
     print("\n" + "="*60)
     print("NYC DOT SIM Fuzzy Router - Setup")
     print("="*60)
-    
+
     run_command("pip install -e '.[dev,mission]'", "Installing package")
-    run_command("python3 training/precompute_embeddings.py config/metric_registry_full.json", 
+    run_command("python3 training/precompute_embeddings.py config/metric_registry_full.json",
                 "Precomputing embeddings")
     run_command("python3 training/validate_deployment.py", "Validating deployment")
-    run_command("pytest tests/socrata_toolkit/core tests/socrata_toolkit/training -q", 
+    run_command("pytest tests/socrata_toolkit/core tests/socrata_toolkit/training -q",
                 "Running tests")
     run_command("python3 training/demo_workflow.py", "Running demo")
-    
+
     print("\n" + "="*60)
     print("SETUP COMPLETE")
     print("You can now use: socrata-nlquery 'your question here'")

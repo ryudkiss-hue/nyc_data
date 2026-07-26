@@ -19,4 +19,4 @@ jobs:
         pip install ruff
     
     - name: Check code with ruff
-      run: ruff check src/socrata_toolkit tests
+      run: ruff check src/socrata_toolkit tests app scripts

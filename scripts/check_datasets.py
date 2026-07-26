@@ -1,4 +1,5 @@
 import sys
+
 sys.path.insert(0, 'src')
 from socrata_toolkit.core.duckdb_pipeline import SOCRATA_DATASETS
 

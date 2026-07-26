@@ -1,7 +1,8 @@
-import duckdb
-import json
 import glob
+import json
 import os
+
+import duckdb
 
 con = duckdb.connect('md:')
 
@@ -9,16 +10,16 @@ metadata_files = glob.glob('dives/**/dive_metadata.json', recursive=True)
 
 for meta_file in metadata_files:
     folder = os.path.dirname(meta_file)
-    with open(meta_file, 'r', encoding='utf-8') as f:
+    with open(meta_file, encoding='utf-8') as f:
         meta = json.load(f)
-    
-    with open(f"{folder}/index.tsx", 'r', encoding='utf-8') as f:
+
+    with open(f"{folder}/index.tsx", encoding='utf-8') as f:
         content = f.read()
-        
+
     dive_id = meta.get('id')
     title = meta['title']
     description = meta.get('description', '')
-    
+
     if dive_id:
         print(f"Updating Dive: {title} ({dive_id})")
         try:
@@ -26,7 +27,7 @@ for meta_file in metadata_files:
                 f"SELECT * FROM MD_UPDATE_DIVE_CONTENT(id => '{dive_id}'::UUID, content => ?)",
                 [content]
             )
-            print(f"  Success!")
+            print("  Success!")
         except Exception as e:
             print(f"  Failed: {e}")
     else:

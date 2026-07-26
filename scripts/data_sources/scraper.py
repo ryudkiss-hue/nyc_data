@@ -1,9 +1,10 @@
 import time
-import requests
-import psycopg2
-from psycopg2.extras import execute_values
-from bs4 import BeautifulSoup
 from urllib.parse import urljoin
+
+import psycopg2
+import requests
+from bs4 import BeautifulSoup
+from psycopg2.extras import execute_values
 
 # ---------------------------------------------
 # 1. BASIC UTILITIES

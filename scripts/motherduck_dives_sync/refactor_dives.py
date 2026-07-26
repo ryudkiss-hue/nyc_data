@@ -1,20 +1,20 @@
-import os
 import glob
+import os
 import re
 
 lucide_imports = '''import { useSQLQuery } from "@motherduck/react-sql-query";
-import { 
-  ShieldCheck, AlertTriangle, CircleDollarSign, Scale, Filter, ListChecks, 
+import {
+  ShieldCheck, AlertTriangle, CircleDollarSign, Scale, Filter, ListChecks,
   Search, TrendingUp, Activity, Trees, Info
 } from "lucide-react";
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   ReferenceLine, ComposedChart, Line, AreaChart, Area
 } from "recharts";
 '''
 
 def refactor_dive(file_path):
-    with open(file_path, 'r', encoding='utf-8') as f:
+    with open(file_path, encoding='utf-8') as f:
         content = f.read()
 
     # Skip if already using native components (detected by lack of Mantine and presence of Lucide)
@@ -32,7 +32,7 @@ def refactor_dive(file_path):
     if not title_match:
         title_match = re.search(r'<h1.*?>(.*?)</h1>', content)
     title = title_match.group(1) if title_match else "Dashboard"
-    
+
     # We will build a new native component
     new_component = f'''{lucide_imports}
 export const REQUIRED_DATABASES = [
@@ -55,7 +55,7 @@ export default function DiveComponent() {{
   // Dynamic Analytical Insight
   const maxRow = rows.reduce((prev, curr) => (N(prev.metric_value) > N(curr.metric_value)) ? prev : curr, rows[0] || {{}});
   const avgValue = rows.length > 0 ? rows.reduce((acc, curr) => acc + N(curr.metric_value), 0) / rows.length : 0;
-  
+
   if (isLoading) {{
     return (
       <div style={{{{ padding: "40px", textAlign: "center", fontFamily: "sans-serif" }}}}>
@@ -111,7 +111,7 @@ export default function DiveComponent() {{
               <CartesianGrid strokeDasharray="3 3" stroke="#eee" vertical={{false}} />
               <XAxis dataKey="name" fontSize={{12}} tickLine={{false}} axisLine={{false}} />
               <YAxis fontSize={{12}} tickLine={{false}} axisLine={{false}} />
-              <Tooltip 
+              <Tooltip
                 cursor={{{{fill: "#f4f4f4"}}}}
                 contentStyle={{{{ backgroundColor: "#000000", color: "#FFFFFF", borderRadius: "4px", border: "none" }}}}
                 formatter={{(v,n,p) => [`${{N(v).toFixed(2)}} ${{meta.unit}}`, p.payload.full]}}
@@ -129,8 +129,8 @@ export default function DiveComponent() {{
           <h5 style={{{{ margin: 0, fontSize: "16px", fontWeight: 700, color: "#005696" }}}}>Automated Bayesian Insight</h5>
         </div>
         <p style={{{{ margin: 0, fontSize: "14px", lineHeight: 1.6 }}}}>
-          The current telemetry indicates <strong>{{FMT(maxRow.borough)}}</strong> leads the metric with a value of <strong>{{N(maxRow.metric_value).toFixed(2)}} {{meta.unit}}</strong>. 
-          The citywide average stands at <strong>{{avgValue.toFixed(2)}} {{meta.unit}}</strong>. 
+          The current telemetry indicates <strong>{{FMT(maxRow.borough)}}</strong> leads the metric with a value of <strong>{{N(maxRow.metric_value).toFixed(2)}} {{meta.unit}}</strong>.
+          The citywide average stands at <strong>{{avgValue.toFixed(2)}} {{meta.unit}}</strong>.
           {{bench > 0 && `The compliance benchmark of ${{bench}} provides the threshold for variance analysis.`}}
           These figures are dynamically derived from live Socrata ingestion via DuckDB L2 caching.
         </p>

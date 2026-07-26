@@ -34,7 +34,7 @@ jobs:
           pip install networkx scikit-learn fastapi httpx
 
       - name: Ruff
-        run: ruff check src/socrata_toolkit tests app
+        run: ruff check src/socrata_toolkit tests app scripts
 
       - name: Run tests (core)
         env:

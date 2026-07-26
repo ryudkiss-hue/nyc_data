@@ -1,5 +1,6 @@
-import duckdb
 import os
+
+import duckdb
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -17,7 +18,7 @@ con.execute("CREATE SCHEMA IF NOT EXISTS analytics")
 metric_view_sql = """
 CREATE OR REPLACE VIEW app_queries.v_metric_dashboard AS
 -- Phase F: Compliance & SLA (Existing + New)
-SELECT 
+SELECT
     'phase_f_sla_probability' as metric_name,
     borough,
     (SUM(CASE WHEN days_to_inspect <= 45 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) as metric_value,
@@ -33,7 +34,7 @@ GROUP BY 1, 2
 
 UNION ALL
 
-SELECT 
+SELECT
     'phase_f_investment_justification' as metric_name,
     borough,
     (SUM(CASE WHEN ifa_eligible='Y' THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) as metric_value,
@@ -50,7 +51,7 @@ GROUP BY 1, 2
 -- Phase E: Temporal & Production (Project Analyst JID)
 UNION ALL
 
-SELECT 
+SELECT
     'phase_e_production_rate' as metric_name,
     borough,
     AVG(completed_units * 10.0) as metric_value, -- Scaling for demo
@@ -66,7 +67,7 @@ GROUP BY 1, 2
 
 UNION ALL
 
-SELECT 
+SELECT
     'phase_e_backlog_burn_rate' as metric_name,
     borough,
     (SUM(completed_units) * 100.0 / NULLIF(SUM(backlog_units + completed_units), 0)) as metric_value,
@@ -83,7 +84,7 @@ GROUP BY 1, 2
 -- Phase D: Priority & Scaling (HPR / Outliers)
 UNION ALL
 
-SELECT 
+SELECT
     'phase_d_hpr_resolution' as metric_name,
     borough,
     AVG(7.5) as metric_value, -- Placeholder for response time logic
@@ -100,7 +101,7 @@ GROUP BY 1, 2
 -- Phase C: GIS & Conflicts (Construction List Validity)
 UNION ALL
 
-SELECT 
+SELECT
     'phase_c_list_validity' as metric_name,
     borough,
     98.2 as metric_value, -- Static high-integrity for list valid
@@ -117,7 +118,7 @@ GROUP BY 1, 2
 -- Phase B: Financials (Unit Cost / Budget)
 UNION ALL
 
-SELECT 
+SELECT
     'phase_b_cost_efficiency' as metric_name,
     borough,
     AVG(cost_per_lf) as metric_value,
@@ -134,7 +135,7 @@ GROUP BY 1, 2
 -- Phase A: Data Health
 UNION ALL
 
-SELECT 
+SELECT
     'phase_a_completeness' as metric_name,
     borough,
     99.5 as metric_value,
