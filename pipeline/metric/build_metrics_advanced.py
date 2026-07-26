@@ -29,17 +29,8 @@ ADV = [
     ("METRIC-49", "Reinspection Turnaround Days (avg)", "sla", "days",
      f"SELECT AVG(d) FROM (SELECT date_diff('day',TRY_CAST(requestreinspectiondate AS DATE),TRY_CAST(actualreinspectdate AS DATE)) d "
      f'FROM {S}."reinspection") WHERE d BETWEEN 0 AND 3650'),
-    # --- Equity: heat vulnerability (crashes.zip -> hvi.zcta20) ------------
-    ("METRIC-50", "Pedestrians Injured in High-Heat-Vuln Areas", "equity", "count",
-     f"SELECT SUM(TRY_CAST(c.number_of_pedestrians_injured AS INTEGER)) "
-     f'FROM {S}."motor_vehicle_collisions_crashes" c '
-     f'JOIN {S}."heat_vulnerability_index" h ON CAST(c.zip_code AS VARCHAR)=CAST(h.zcta20 AS VARCHAR) '
-     "WHERE TRY_CAST(h.hvi AS INTEGER) >= 4"),
-    ("METRIC-51", "% Pedestrian Injuries in High-Heat-Vuln Areas", "equity", "percent",
-     f"SELECT 100.0 * SUM(CASE WHEN TRY_CAST(h.hvi AS INTEGER)>=4 THEN TRY_CAST(c.number_of_pedestrians_injured AS INTEGER) ELSE 0 END) "
-     f"/ NULLIF(SUM(TRY_CAST(c.number_of_pedestrians_injured AS INTEGER)),0) "
-     f'FROM {S}."motor_vehicle_collisions_crashes" c '
-     f'JOIN {S}."heat_vulnerability_index" h ON CAST(c.zip_code AS VARCHAR)=CAST(h.zcta20 AS VARCHAR)'),
+    # (METRIC-50/51 heat-vulnerability equity metrics removed 2026-07-26 —
+    #  heat_vulnerability_index is outside Sidewalk Program scope.)
     # --- Equity: demographics (per-capita by NTA) -------------------------
     ("METRIC-52", "311 Sidewalk Complaints per 1,000 Residents", "equity", "per_1k",
      f'SELECT 1000.0 * (SELECT COUNT(*) FROM {S}."complaints_311" WHERE geo_nta2020 IS NOT NULL) '

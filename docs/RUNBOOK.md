@@ -14,7 +14,7 @@ Two user-level Windows scheduled tasks are installed by `scripts/install_schedul
 
 | Task | Schedule | What it does |
 |---|---|---|
-| `NYC-DOT-Nightly-Refresh` | daily 02:00 | Checkpointed pipeline refresh of all 119 datasets, then rotates a DuckDB backup into `backups/` (keeps 3). Log: `pipeline/logs/nightly_refresh.log` |
+| `NYC-DOT-Nightly-Refresh` | daily 02:00 | Checkpointed pipeline refresh of all 112 in-scope datasets, then rotates a DuckDB backup into `backups/` (keeps 3). Log: `pipeline/logs/nightly_refresh.log` |
 | `NYC-DOT-Weekly-Drift-Audit` | Mon 08:00 | Live audit of every configured dataset (accessibility, freshness, row/schema drift, role scope). Log: `pipeline/logs/drift_audit.log`, report: `pipeline/logs/registry_drift_report.json` |
 
 Manual refresh anytime: `python pipeline/run_local.py` (resumes from checkpoints).
@@ -46,7 +46,7 @@ query them live with a `$where` filter (the GIS dashboard's stipulations panel d
 ```bash
 socrata health violations          # any dataset key or 4x4 id; SLA-aware
 socrata quality-score inspection --key-column inspectionid --date-column created_date
-python scripts/audit_registry_drift.py   # full 119-dataset live audit on demand
+python scripts/audit_registry_drift.py   # full 112-dataset live audit on demand
 ```
 
 ## Known data caveats (verified 2026-07-26)

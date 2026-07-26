@@ -37,11 +37,11 @@ CATALOG_MD = ROOT / "pipeline" / "data" / "DATA_CATALOG.md"
 
 
 def load_registry():
-    return json.load(open(REGISTRY_FILE))["datasets"]
+    return json.load(open(REGISTRY_FILE, encoding="utf-8"))["datasets"]
 
 
 def load_config():
-    return json.load(open(CONFIG_FILE))
+    return json.load(open(CONFIG_FILE, encoding="utf-8"))
 
 
 # --- 1. Refresh config metadata from the registry ---------------------------
@@ -63,7 +63,7 @@ def refresh_config_metadata(config, registry):
         refreshed += 1
     config.setdefault("metadata", {})["last_regenerated"] = "registry-driven"
     config["metadata"]["total_datasets"] = len(config.get("socrata_remaining", []))
-    json.dump(config, open(CONFIG_FILE, "w"), indent=2)
+    json.dump(config, open(CONFIG_FILE, "w", encoding="utf-8"), indent=2)
     return refreshed, missing
 
 
@@ -113,7 +113,7 @@ def generate_staging_sql(con, config):
             lines.append(f'CREATE OR REPLACE TABLE staging."{name}" AS SELECT * FROM raw."{name}";')
         lines.append("")
         generated += 1
-    STAGING_SQL.write_text("\n".join(lines))
+    STAGING_SQL.write_text("\n".join(lines), encoding="utf-8")
     return generated
 
 
@@ -139,7 +139,7 @@ def generate_data_catalog(config, registry):
             f"{(reg.get('last_updated') or '')[:10]} | {len(reg.get('columns',[]))} | "
             f"{d.get('domain_schema','')} |"
         )
-    CATALOG_MD.write_text("\n".join(out) + "\n")
+    CATALOG_MD.write_text("\n".join(out) + "\n", encoding="utf-8")
     return len(rows)
 
 

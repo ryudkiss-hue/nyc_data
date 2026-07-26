@@ -683,6 +683,61 @@ class VisualizationEngine:
     # ── Chart 10 ────────────────────────────────────────────────────────────
 
     @staticmethod
+    def chart_permit_fee_breakdown(data_bundle: dict) -> tuple[go.Figure, str]:
+        """IV: Fee Type  DV: Total Fee Amount Charged ($)"""
+        df = VisualizationEngine._safe_df(data_bundle.get("street_construction_permit_fees"))
+        if df.empty:
+            return VisualizationEngine._empty_state(
+                "Street Construction Permit Fees by Type",
+                "Load 'street_construction_permit_fees' (9fnm-j6if, 2025+) for fee analysis.",
+            ), "No permit fee data available."
+
+        fee_col = VisualizationEngine._find_col(df, ["feetype", "fee_type"])
+        amt_col = VisualizationEngine._find_col(df, ["permitfeeamountcharged", "feeamount", "amount"])
+        if not fee_col or not amt_col:
+            return VisualizationEngine._empty_state(
+                "Street Construction Permit Fees by Type",
+                "Fee type / amount columns not found in permit fee data.",
+            ), "Fee columns missing."
+
+        d = df[[fee_col, amt_col]].copy()
+        d[amt_col] = pd.to_numeric(d[amt_col], errors="coerce")
+        d = d.dropna()
+        if d.empty:
+            return VisualizationEngine._empty_state(
+                "Street Construction Permit Fees by Type",
+                "No numeric fee amounts after coercion.",
+            ), "No usable fee amounts."
+
+        agg = (
+            d.groupby(fee_col)[amt_col]
+            .agg(["sum", "count", "mean"])
+            .sort_values("sum", ascending=False)
+            .head(12)
+            .reset_index()
+        )
+        fig = px.bar(
+            agg, x=fee_col, y="sum", text_auto=".2s",
+            labels={fee_col: "Fee Type", "sum": "Total Charged ($)"},
+            title="Street Construction Permit Fees by Type (IV: Fee Type → DV: $ Charged)",
+        )
+        fig.update_layout(showlegend=False, xaxis_tickangle=-30)
+
+        total = float(d[amt_col].sum())
+        top = agg.iloc[0]
+        insight = (
+            f"**${total:,.0f}** total permit fees charged across **{len(d):,}** fee line items "
+            f"(2025-present sample).\n\n"
+            f"**Top fee type:** {top[fee_col]} — ${float(top['sum']):,.0f} "
+            f"({100 * float(top['sum']) / total:.1f}% of total) over {int(top['count']):,} charges "
+            f"(avg ${float(top['mean']):,.0f}).\n\n"
+            f"**Operational read:** fee revenue mix identifies which permit activities drive "
+            f"contract-coordination workload; join on permitnumber to street_construction_permits "
+            f"for borough-level budget attribution."
+        )
+        return fig, insight
+
+    @staticmethod
     def chart_ps_burn(data_bundle: dict) -> tuple[go.Figure, str]:
         """IV: Budget Code  DV: Capital Expended vs Remaining Allocation"""
         df = VisualizationEngine._safe_df(data_bundle.get("budget"))
@@ -924,9 +979,7 @@ class VisualizationEngine:
     def chart_isochrone_walkability(data_bundle: dict | None = None) -> tuple[go.Figure, str]:
         """IV: Walk-time Radius  DV: Pedestrian Catchment Coverage"""
         # If pedestrian demand data available, show real coverage; else show theoretical zones
-        _pd_raw = (data_bundle or {}).get("pedestrian_demand")
-        _wta_raw = (data_bundle or {}).get("walk_to_a_park_service_area")
-        df = VisualizationEngine._safe_df(_pd_raw if _pd_raw is not None else _wta_raw)
+        df = VisualizationEngine._safe_df((data_bundle or {}).get("pedestrian_demand"))
 
         fig = go.Figure()
         theta = np.linspace(0, 2 * np.pi, 100)

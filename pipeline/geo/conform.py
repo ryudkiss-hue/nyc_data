@@ -241,7 +241,6 @@ def _config_names():
 
 # Tables whose borough comes from an entity FK to an already-conformed table.
 FK_BOROUGH = {
-    "motor_vehicle_collisions_person": ("motor_vehicle_collisions_crashes", "collision_id"),
     "street_construction_permits_cranes": ("street_construction_permits", "permitnumber"),
 }
 

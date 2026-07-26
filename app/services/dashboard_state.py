@@ -51,7 +51,6 @@ _UI_DATASET_TO_TABLE: dict[str, str] = {
     # Legacy mappings (old 4-item hardcoded list)
     "capital_projects":   "capital_projects_dashboard",
     "street_paving":      "dot_in_house_street_resurfacing_projects",
-    "vision_zero":        "vision_zero_base_report",
     "311_complaints":     "complaints_311",
 }
 

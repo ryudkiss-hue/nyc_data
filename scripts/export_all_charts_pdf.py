@@ -34,7 +34,7 @@ log = logging.getLogger(__name__)
 # ── ReportLab imports ─────────────────────────────────────────────────────────
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_LEFT
-from reportlab.lib.pagesizes import letter
+from reportlab.lib.pagesizes import landscape, letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas as rl_canvas
@@ -55,7 +55,7 @@ CACHE_DIR = ROOT / "data" / "local_db" / "socrata_cache"
 EXPORT_DIR = ROOT / "exports"
 EXPORT_DIR.mkdir(parents=True, exist_ok=True)
 
-PAGE_W, PAGE_H = letter  # 612 × 792 pt
+PAGE_W, PAGE_H = landscape(letter)  # 792 × 612 pt — landscape report
 MARGIN = 0.75 * inch
 CONTENT_W = PAGE_W - 2 * MARGIN
 
@@ -68,6 +68,13 @@ MID_GRAY = colors.HexColor("#6C757D")
 
 # ── Load data bundle ──────────────────────────────────────────────────────────
 
+from socrata_toolkit.quality.sanitize import sanitize_dataframe  # noqa: E402
+
+# Per-dataset data-quality findings collected during load; feeds the
+# "Data Quality Findings" appendix.  {key: {...metrics...}}
+_QUALITY: dict[str, dict] = {}
+
+
 def _load_data_bundle() -> dict[str, pd.DataFrame]:
     bundle: dict[str, pd.DataFrame] = {}
     if not CACHE_DIR.exists():
@@ -75,9 +82,16 @@ def _load_data_bundle() -> dict[str, pd.DataFrame]:
         return bundle
     for p in sorted(CACHE_DIR.glob("*.parquet")):
         try:
-            df = pd.read_parquet(p)
+            df, rep = sanitize_dataframe(pd.read_parquet(p))
             bundle[p.stem] = df
-            log.info("  loaded %-35s  %s rows", p.stem, f"{len(df):,}")
+            _QUALITY[p.stem] = {
+                "rows_in": rep.rows_in, "dupes_removed": rep.dupes_removed,
+                "bad_dates_nulled": rep.bad_dates_nulled,
+                "bad_date_cols": rep.bad_date_cols, "dead_vars": rep.dead_vars,
+                "pct_missing": rep.pct_missing,
+            }
+            log.info("  loaded %-35s  %s rows  (dupes-%d, bad-dates-%d)",
+                     p.stem, f"{len(df):,}", rep.dupes_removed, rep.bad_dates_nulled)
         except Exception as exc:
             log.warning("  skip %s — %s", p.name, exc)
     return bundle
@@ -266,6 +280,13 @@ def _build_catalogue(VE, data_bundle: dict, extras: dict) -> list[dict]:
             "IV: Operational Date (weekly)  |  DV: Sidewalk Repaired (sq ft) — "
             "line chart with OLS trendline measuring repair output over time.",
             safe(VE.chart_built_sqft_trend, db, label="chart_built_sqft_trend"))
+
+        add("Capital & Budget",
+            "Street Construction Permit Fees by Type",
+            "IV: Fee Type  |  DV: Total Fee Amount Charged ($) — bar chart of the "
+            "2025-present permit fee revenue mix (9fnm-j6if), joinable to permits "
+            "on permitnumber for borough budget attribution.",
+            safe(VE.chart_permit_fee_breakdown, db, label="chart_permit_fee_breakdown"))
 
         add("Capital & Budget",
             "Capital Budget Waterfall",
@@ -488,8 +509,8 @@ def _build_catalogue(VE, data_bundle: dict, extras: dict) -> list[dict]:
 
 # ── Statistics summary ────────────────────────────────────────────────────────
 
-def _build_stats_summary(data_bundle: dict) -> list[tuple[str, str, str, str]]:
-    """Returns rows of (Dataset, Rows, Columns, Freshness) for the stats table."""
+def _build_stats_summary(data_bundle: dict) -> list[tuple]:
+    """Rows of (Dataset, Rows, Columns, Missing%, Dupes−, BadDates−, Freshness)."""
     rows = []
     for key, df in sorted(data_bundle.items()):
         date_col = next(
@@ -497,13 +518,17 @@ def _build_stats_summary(data_bundle: dict) -> list[tuple[str, str, str, str]]:
         )
         if date_col:
             try:
-                latest = pd.to_datetime(df[date_col], errors="coerce").max()
+                latest = pd.to_datetime(df[date_col], errors="coerce", utc=True).max()
                 fresh = latest.strftime("%Y-%m-%d") if pd.notna(latest) else "—"
             except Exception:
                 fresh = "—"
         else:
             fresh = "—"
-        rows.append((key, f"{len(df):,}", str(len(df.columns)), fresh))
+        q = _QUALITY.get(key, {})
+        rows.append((key, f"{len(df):,}", str(len(df.columns)),
+                     f"{q.get('pct_missing', 0)}%",
+                     str(q.get("dupes_removed", 0)), str(q.get("bad_dates_nulled", 0)),
+                     fresh))
     return rows
 
 
@@ -541,7 +566,7 @@ class _PageCanvas:
 def _render_figure_png(fig: go.Figure, tmp_dir: str, idx: int) -> str | None:
     path = os.path.join(tmp_dir, f"chart_{idx:03d}.png")
     try:
-        fig.update_layout(width=860, height=480)
+        fig.update_layout(width=1040, height=470)  # widescreen for landscape pages
         fig.write_image(path, scale=1.5)
         return path
     except Exception as exc:
@@ -611,12 +636,16 @@ def _styles():
         "Body", parent=styles["Normal"],
         fontSize=10, textColor=BRAND_DARK, spaceBefore=3, spaceAfter=3,
     )
+    body_small = ParagraphStyle(
+        "BodySmall", parent=styles["Normal"],
+        fontSize=8, textColor=BRAND_DARK, spaceBefore=0, spaceAfter=0,
+    )
     return dict(
         cover_title=cover_title, cover_sub=cover_sub, cover_meta=cover_meta,
         toc_header=toc_header, toc_section=toc_section, toc_item=toc_item,
         section_title=section_title, section_sub=section_sub,
         chart_title=chart_title, chart_desc=chart_desc,
-        stats_title=stats_title, body=body,
+        stats_title=stats_title, body=body, body_small=body_small,
     )
 
 
@@ -653,29 +682,36 @@ def _cover_elements(data_bundle: dict, n_charts: int, styles: dict):
 
 
 def _toc_elements(catalogue: list[dict], section_pages: dict[str, int], styles: dict):
-    """Table of contents flowables."""
+    """Table of contents flowables — two columns so it fits one landscape page
+    (the page-number precomputation assumes the TOC occupies exactly one page)."""
     S = styles
-    elems = [Paragraph("Table of Contents", S["toc_header"]), Spacer(1, 0.1 * inch)]
 
-    # Stats page
-    elems.append(Paragraph("Dataset Statistics Summary ............. 3", S["toc_section"]))
-    elems.append(Spacer(1, 4))
-
+    lines: list = [Paragraph("Dataset Statistics Summary ............. 3", S["toc_section"]), Spacer(1, 4)]
     seen_sections = []
     for entry in catalogue:
         sec = entry["section"]
         if sec not in seen_sections:
             seen_sections.append(sec)
             pg = section_pages.get(sec, "—")
-            elems.append(Spacer(1, 6))
-            elems.append(Paragraph(f"{sec}  {'.' * max(1, 55 - len(sec))}  {pg}", S["toc_section"]))
+            lines.append(Spacer(1, 6))
+            lines.append(Paragraph(f"{sec}  {'.' * max(1, 45 - len(sec))}  {pg}", S["toc_section"]))
 
         pg = entry.get("page", "—")
-        dots = "." * max(1, 62 - len(entry["title"]) - len(str(pg)) - 4)
-        elems.append(Paragraph(f"    {entry['title']}  {dots}  {pg}", S["toc_item"]))
+        dots = "." * max(1, 52 - len(entry["title"]) - len(str(pg)) - 4)
+        lines.append(Paragraph(f"    {entry['title']}  {dots}  {pg}", S["toc_item"]))
 
-    elems.append(PageBreak())
-    return elems
+    mid = (len(lines) + 1) // 2
+    col_tbl = Table(
+        [[lines[:mid], lines[mid:]]],
+        colWidths=[CONTENT_W * 0.5, CONTENT_W * 0.5],
+    )
+    col_tbl.setStyle(TableStyle([
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING", (0, 0), (0, 0), 18),
+    ]))
+    return [Paragraph("Table of Contents", S["toc_header"]), Spacer(1, 0.1 * inch),
+            col_tbl, PageBreak()]
 
 
 def _stats_page_elements(data_bundle: dict, stats_rows: list, styles: dict):
@@ -692,10 +728,11 @@ def _stats_page_elements(data_bundle: dict, stats_rows: list, styles: dict):
     ))
     elems.append(Spacer(1, 0.15 * inch))
 
-    # Table
-    header = ["Dataset Key", "Rows", "Columns", "Latest Date"]
-    tdata = [header] + [[r[0], r[1], r[2], r[3]] for r in stats_rows]
-    col_w = [CONTENT_W * 0.42, CONTENT_W * 0.16, CONTENT_W * 0.14, CONTENT_W * 0.28]
+    # Table — quality-annotated (missing %, duplicates removed, bad dates nulled)
+    header = ["Dataset Key", "Rows", "Cols", "Missing %", "Dupes −", "Bad Dates −", "Latest Date"]
+    tdata = [header] + [list(r) for r in stats_rows]
+    col_w = [CONTENT_W * 0.30, CONTENT_W * 0.10, CONTENT_W * 0.08, CONTENT_W * 0.11,
+             CONTENT_W * 0.10, CONTENT_W * 0.13, CONTENT_W * 0.18]
     t = Table(tdata, colWidths=col_w, repeatRows=1)
     t.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), BRAND_BLUE),
@@ -711,6 +748,101 @@ def _stats_page_elements(data_bundle: dict, stats_rows: list, styles: dict):
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
     ]))
     elems.append(t)
+    elems.append(PageBreak())
+    return elems
+
+
+_TABLE_STYLE_KWARGS = [
+    ("BACKGROUND", (0, 0), (-1, 0), BRAND_BLUE),
+    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+    ("FONTSIZE", (0, 0), (-1, 0), 9),
+    ("FONTSIZE", (0, 1), (-1, -1), 8),
+    ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, LIGHT_GRAY]),
+    ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#DEE2E6")),
+    ("TOPPADDING", (0, 0), (-1, -1), 4),
+    ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+    ("LEFTPADDING", (0, 0), (-1, -1), 6),
+    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+]
+
+
+def _quality_appendix_elements(styles: dict):
+    """Data Quality Findings: what was repaired and which variables are unreliable."""
+    S = styles
+    elems = [Paragraph("Appendix A — Data Quality Findings", S["stats_title"]), Spacer(1, 0.1 * inch)]
+    total_dupes = sum(q.get("dupes_removed", 0) for q in _QUALITY.values())
+    total_bad = sum(q.get("bad_dates_nulled", 0) for q in _QUALITY.values())
+    elems.append(Paragraph(
+        f"Automated sanitation repaired <b>{total_bad}</b> impossible date values "
+        f"(placeholder/entry errors &gt;1 year in the future — e.g. 2100-01-01 — or pre-1990) "
+        f"and removed <b>{total_dupes}</b> exact duplicate rows before analysis. "
+        "Variables that are &gt;90% missing are listed below and should not be used "
+        "for citywide conclusions without a targeted re-pull.",
+        S["body"],
+    ))
+    elems.append(Spacer(1, 0.15 * inch))
+
+    rows = [["Dataset", "Repaired date columns (values nulled)", "Unreliable variables (>90% missing)"]]
+    for key in sorted(_QUALITY):
+        q = _QUALITY[key]
+        if not q.get("bad_date_cols") and not q.get("dead_vars"):
+            continue
+        rows.append([
+            key,
+            ", ".join(q.get("bad_date_cols", [])) or "—",
+            Paragraph(", ".join(q.get("dead_vars", [])) or "—", S["body_small"]),
+        ])
+    t = Table(rows, colWidths=[CONTENT_W * 0.22, CONTENT_W * 0.28, CONTENT_W * 0.50], repeatRows=1)
+    t.setStyle(TableStyle(_TABLE_STYLE_KWARGS))
+    elems.append(t)
+    elems.append(PageBreak())
+    return elems
+
+
+_SUMMARY_STAT_DATASETS = [
+    "inspection", "violations", "built", "dismissals",
+    "ramp_progress", "street_resurfacing_inhouse", "street_permits",
+    "street_construction_permit_fees",
+]
+
+
+def _summary_stats_elements(data_bundle: dict, styles: dict):
+    """Appendix B — numeric summary statistics for the core analytical datasets."""
+    S = styles
+    elems = [Paragraph("Appendix B — Summary Statistics (Core Datasets)", S["stats_title"]),
+             Spacer(1, 0.1 * inch),
+             Paragraph(
+                 "Count / mean / median / min / max for the strongest numeric variables in each "
+                 "core dataset (object columns coerced; sparse or constant columns excluded).",
+                 S["body"]),
+             Spacer(1, 0.12 * inch)]
+
+    for key in _SUMMARY_STAT_DATASETS:
+        df = data_bundle.get(key)
+        if df is None or df.empty:
+            continue
+        num = df.select_dtypes(include=["number"]).copy()
+        for c in df.select_dtypes(include=["object"]).columns:
+            coerced = pd.to_numeric(df[c], errors="coerce")
+            if coerced.notna().mean() > 0.5:
+                num[c] = coerced
+        num = num.dropna(axis=1, how="all")
+        num = num.loc[:, num.nunique() > 1]
+        num = num.loc[:, ~num.columns.str.startswith(":@")]
+        if num.shape[1] == 0:
+            continue
+        cols = num.notna().sum().sort_values(ascending=False).head(6).index
+        rows = [["Variable", "Count", "Mean", "Median", "Min", "Max"]]
+        for c in cols:
+            s = num[c]
+            rows.append([c, f"{int(s.notna().sum()):,}", f"{s.mean():,.2f}",
+                         f"{s.median():,.2f}", f"{s.min():,.2f}", f"{s.max():,.2f}"])
+        elems.append(Paragraph(f"{key}  ({len(df):,} rows)", S["chart_title"]))
+        t = Table(rows, colWidths=[CONTENT_W * 0.34] + [CONTENT_W * 0.132] * 5, repeatRows=1)
+        t.setStyle(TableStyle(_TABLE_STYLE_KWARGS))
+        elems.append(t)
+        elems.append(Spacer(1, 0.18 * inch))
     elems.append(PageBreak())
     return elems
 
@@ -825,7 +957,7 @@ def build_pdf(output_path: str) -> None:
         # Build PDF using PLATYPUS
         doc = BaseDocTemplate(
             output_path,
-            pagesize=letter,
+            pagesize=landscape(letter),
             leftMargin=MARGIN,
             rightMargin=MARGIN,
             topMargin=0.6 * inch,
@@ -862,6 +994,11 @@ def build_pdf(output_path: str) -> None:
                 story += _section_divider(sec, sec_counts[sec], S)
                 current_section = sec
             story += _chart_page_elements(entry, png_paths.get(i), S)
+
+        # Appendices: data-quality findings + summary statistics (after charts so
+        # the TOC's chart page numbers stay exact)
+        story += _quality_appendix_elements(S)
+        story += _summary_stats_elements(data_bundle, S)
 
         doc.build(story)
         size_mb = Path(output_path).stat().st_size / 1e6

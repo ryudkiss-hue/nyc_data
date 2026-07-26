@@ -892,11 +892,41 @@
   {
     "checkpoint_id": "stage_datasets_2026-07-26T15:37:29.689613",
     "stage_name": "stage_datasets",
-    "status": "started",
+    "status": "completed",
     "timestamp": "2026-07-26T15:37:29.689622",
     "rows_processed": 0,
     "rows_failed": 0,
-    "duration_seconds": 0.0,
+    "duration_seconds": 115.69898056983948,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "build_analytics_schemas_2026-07-26T15:39:25.416856",
+    "stage_name": "build_analytics_schemas",
+    "status": "completed",
+    "timestamp": "2026-07-26T15:39:25.416861",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.06924843788146973,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "materialize_metrics_2026-07-26T15:39:25.492640",
+    "stage_name": "materialize_metrics",
+    "status": "completed",
+    "timestamp": "2026-07-26T15:39:25.492648",
+    "rows_processed": 13,
+    "rows_failed": 0,
+    "duration_seconds": 0.11781477928161621,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "verify_gates_2026-07-26T15:39:25.615131",
+    "stage_name": "verify_gates",
+    "status": "completed",
+    "timestamp": "2026-07-26T15:39:25.615136",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.03319072723388672,
     "error_message": null
   }
 ]

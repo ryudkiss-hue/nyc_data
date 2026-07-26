@@ -372,14 +372,38 @@ def _parquet_fresh(path: Path) -> bool:
 _check_dataset_health()
 
 
+# Sanitized-frame memo keyed by (path, mtime, size) so the repair pass is paid
+# once per file per process instead of on every dashboard interaction.
+_SANITIZED_MEMO: dict[str, tuple[tuple, pd.DataFrame]] = {}
+
+
 def _read_parquet_cache(dataset_key: str) -> pd.DataFrame | None:
     path = _parquet_path(dataset_key)
     if not _parquet_fresh(path):
         return None
     try:
-        return pd.read_parquet(path)
+        stat = path.stat()
+        stamp = (stat.st_mtime_ns, stat.st_size)
+    except OSError:
+        return None
+
+    memo = _SANITIZED_MEMO.get(dataset_key)
+    if memo is not None and memo[0] == stamp:
+        return memo[1].copy()
+
+    try:
+        df = pd.read_parquet(path)
     except Exception:
         return None
+    # Same sanitation as the PDF exporter: null placeholder dates (2100-01-01
+    # style), drop exact duplicate rows — so dashboards and reports agree.
+    try:
+        from socrata_toolkit.quality.sanitize import sanitize_dataframe
+        df, _ = sanitize_dataframe(df)
+    except Exception:
+        pass
+    _SANITIZED_MEMO[dataset_key] = (stamp, df)
+    return df.copy()
 
 
 def _write_parquet_cache(dataset_key: str, df: pd.DataFrame) -> None:

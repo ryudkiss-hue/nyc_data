@@ -222,16 +222,9 @@ CREATE OR REPLACE TABLE staging."nta_2020" AS SELECT * FROM raw."nta_2020";
 -- census_demographics_nta: no natural key -> promote as-is
 CREATE OR REPLACE TABLE staging."census_demographics_nta" AS SELECT * FROM raw."census_demographics_nta";
 
--- heat_vulnerability_index: no natural key -> promote as-is
-CREATE OR REPLACE TABLE staging."heat_vulnerability_index" AS SELECT * FROM raw."heat_vulnerability_index";
-
 CREATE OR REPLACE TABLE staging."motor_vehicle_collisions_crashes" AS
 SELECT * FROM raw."motor_vehicle_collisions_crashes"
 QUALIFY ROW_NUMBER() OVER (PARTITION BY "collision_id" ORDER BY 1 DESC) = 1;
-
-CREATE OR REPLACE TABLE staging."motor_vehicle_collisions_person" AS
-SELECT * FROM raw."motor_vehicle_collisions_person"
-QUALIFY ROW_NUMBER() OVER (PARTITION BY "unique_id" ORDER BY 1 DESC) = 1;
 
 -- sidewalk_cafes: geometry table -> promote as-is
 CREATE OR REPLACE TABLE staging."sidewalk_cafes" AS SELECT * FROM raw."sidewalk_cafes";
@@ -250,9 +243,6 @@ CREATE OR REPLACE TABLE staging."water_sewer_permits" AS SELECT * FROM raw."wate
 CREATE OR REPLACE TABLE staging."street_construction_permits" AS
 SELECT * FROM raw."street_construction_permits"
 QUALIFY ROW_NUMBER() OVER (PARTITION BY "applicationtrackingid" ORDER BY 1 DESC) = 1;
-
--- dob_stalled_construction_sites: no natural key -> promote as-is
-CREATE OR REPLACE TABLE staging."dob_stalled_construction_sites" AS SELECT * FROM raw."dob_stalled_construction_sites";
 
 -- sidewalk_planimetric: geometry table -> promote as-is
 CREATE OR REPLACE TABLE staging."sidewalk_planimetric" AS SELECT * FROM raw."sidewalk_planimetric";
@@ -309,9 +299,6 @@ CREATE OR REPLACE TABLE staging."vzv_senior_centers" AS SELECT * FROM raw."vzv_s
 -- vzv_workshops_locations: geometry table -> promote as-is
 CREATE OR REPLACE TABLE staging."vzv_workshops_locations" AS SELECT * FROM raw."vzv_workshops_locations";
 
--- vision_zero_base_report: no natural key -> promote as-is
-CREATE OR REPLACE TABLE staging."vision_zero_base_report" AS SELECT * FROM raw."vision_zero_base_report";
-
 CREATE OR REPLACE TABLE staging."raised_crosswalk_locations" AS
 SELECT * FROM raw."raised_crosswalk_locations"
 QUALIFY ROW_NUMBER() OVER (PARTITION BY "nodeid" ORDER BY 1 DESC) = 1;
@@ -319,14 +306,8 @@ QUALIFY ROW_NUMBER() OVER (PARTITION BY "nodeid" ORDER BY 1 DESC) = 1;
 -- public_plazas_planimetric: geometry table -> promote as-is
 CREATE OR REPLACE TABLE staging."public_plazas_planimetric" AS SELECT * FROM raw."public_plazas_planimetric";
 
--- privately_owned_public_spaces_pops: no natural key -> promote as-is
-CREATE OR REPLACE TABLE staging."privately_owned_public_spaces_pops" AS SELECT * FROM raw."privately_owned_public_spaces_pops";
-
 -- bus_stop_shelters: geometry table -> promote as-is
 CREATE OR REPLACE TABLE staging."bus_stop_shelters" AS SELECT * FROM raw."bus_stop_shelters";
-
--- walk_to_a_park_service_area: geometry table -> promote as-is
-CREATE OR REPLACE TABLE staging."walk_to_a_park_service_area" AS SELECT * FROM raw."walk_to_a_park_service_area";
 
 -- mbpo_pedestrian_ramp_report: no natural key -> promote as-is
 CREATE OR REPLACE TABLE staging."mbpo_pedestrian_ramp_report" AS SELECT * FROM raw."mbpo_pedestrian_ramp_report";
@@ -360,9 +341,6 @@ QUALIFY ROW_NUMBER() OVER (PARTITION BY "fms_id" ORDER BY 1 DESC) = 1;
 CREATE OR REPLACE TABLE staging."capital_dashboard_schedule_history" AS
 SELECT * FROM raw."capital_dashboard_schedule_history"
 QUALIFY ROW_NUMBER() OVER (PARTITION BY "pid" ORDER BY 1 DESC) = 1;
-
--- state_of_good_repair_needs: no natural key -> promote as-is
-CREATE OR REPLACE TABLE staging."state_of_good_repair_needs" AS SELECT * FROM raw."state_of_good_repair_needs";
 
 CREATE OR REPLACE TABLE staging."interagency_coordination_construction_permits" AS
 SELECT * FROM raw."interagency_coordination_construction_permits"

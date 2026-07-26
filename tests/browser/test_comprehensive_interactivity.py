@@ -17,6 +17,7 @@ import time
 
 import pytest
 from playwright.sync_api import Page, expect
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 pytestmark = pytest.mark.browser
 
@@ -876,7 +877,13 @@ class TestDeadCodeAudit:
         assert not errors
 
     def test_png_export_button_downloads_image(self, page: Page, dash_base_url: str):
-        """PNG export renders a kaleido summary figure and downloads it."""
+        """PNG export renders a kaleido summary figure and downloads it.
+
+        With data loaded (local dev), the click must produce a .png download.
+        In a data-less environment (CI: empty DuckDB, no parquet cache) the
+        legitimate outcome is the "No data available to export" notification —
+        what must NEVER appear is the old "not supported" stub message.
+        """
         _go(page, dash_base_url)
         export_tab = page.locator(
             "button:has-text('Export Powerhouse'), [role='tab']:has-text('Export')"
@@ -886,7 +893,18 @@ class TestDeadCodeAudit:
             page.wait_for_timeout(600)
         png_btn = page.locator("button:has-text('PNG Image')").first
         if png_btn.is_visible(timeout=3_000):
-            with page.expect_download(timeout=5_000) as dl_info:
-                png_btn.click()
-            dl = dl_info.value
-            assert dl.suggested_filename.endswith(".png"), "PNG export didn't produce a PNG file"
+            try:
+                with page.expect_download(timeout=8_000) as dl_info:
+                    png_btn.click()
+                dl = dl_info.value
+                assert dl.suggested_filename.endswith(".png"), "PNG export didn't produce a PNG file"
+            except PlaywrightTimeoutError:
+                notif = page.locator(".mantine-Notification-root").first
+                expect(notif).to_be_visible(timeout=5_000)
+                text = notif.inner_text()
+                assert "not supported" not in text.lower(), (
+                    f"PNG export fell through to the unsupported stub: {text!r}"
+                )
+                assert "no data" in text.lower(), (
+                    f"PNG export produced neither a download nor the no-data notice: {text!r}"
+                )

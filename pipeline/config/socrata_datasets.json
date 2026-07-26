@@ -3,8 +3,8 @@
     "version": "5.4-capital",
     "created_at": "2026-06-22",
     "source": "Local Law 251 registry (maximal DOT + cross-agency essentials)",
-    "description": "All relevant DOT datasets w/ real columns + 311(filtered)/centerline/NTA/in-house resurfacing. Superseded historicals excluded. +gap-fill: demographics, heat-vuln, ped-crashes, trees, sidewalk-cafe, utility/street-cut permits, DOB sheds. +2026-07-26: permit fee + related-agency joins (2025+, budget/conflict analysis).",
-    "total_datasets": 119,
+    "description": "All relevant DOT datasets w/ real columns + 311(filtered)/centerline/NTA/in-house resurfacing. Superseded historicals excluded. +gap-fill: demographics, heat-vuln, ped-crashes, trees, sidewalk-cafe, utility/street-cut permits, DOB sheds. +2026-07-26: permit fee + related-agency joins (2025+, budget/conflict analysis). -2026-07-26: removed 7 out-of-scope datasets (heat-vuln, vision-zero, park-access, DOB sheds, POPS, collision-persons, SOGR) \u2014 Sidewalk Program scope only.",
+    "total_datasets": 112,
     "last_regenerated": "registry-driven",
     "fk_graph": "auto-derived from registry columns (entity + geo hubs)",
     "deferred": "ct66-47at (bicycle_pedestrian_counts, 20.5M) \u2014 needs aggregated ingest (item 3)"
@@ -1078,20 +1078,6 @@
       "registry_status": "OK"
     },
     {
-      "id": 82,
-      "name": "heat_vulnerability_index",
-      "socrata_id": "4mhf-duep",
-      "row_count": 0,
-      "primary_key": "zcta20",
-      "source": "socrata",
-      "domain_schema": "crossagency",
-      "ll251_name": "Heat Vulnerability Index Rankings",
-      "last_updated": "2024-09-19T14:16:07.000",
-      "registry_row_count": "184",
-      "column_count": 0,
-      "registry_status": "OK"
-    },
-    {
       "id": 83,
       "name": "motor_vehicle_collisions_crashes",
       "socrata_id": "h9gi-nx95",
@@ -1104,27 +1090,6 @@
       "borough_column": "borough",
       "last_updated": "2026-06-15T23:05:47.000",
       "registry_row_count": "2269187",
-      "column_count": 0,
-      "registry_status": "OK"
-    },
-    {
-      "id": 84,
-      "name": "motor_vehicle_collisions_person",
-      "socrata_id": "f55k-p6yu",
-      "row_count": 0,
-      "primary_key": "unique_id",
-      "source": "socrata",
-      "domain_schema": "dot",
-      "ll251_name": "Motor Vehicle Collisions - Person",
-      "soql_where": "person_type='Pedestrian'",
-      "foreign_keys": [
-        {
-          "column": "collision_id",
-          "references": "motor_vehicle_collisions_crashes.collision_id"
-        }
-      ],
-      "last_updated": "2026-06-15T23:35:37.000",
-      "registry_row_count": "5984110",
       "column_count": 0,
       "registry_status": "OK"
     },
@@ -1209,21 +1174,6 @@
       "last_updated": "2026-07-25T20:56:28.000Z",
       "registry_row_count": "3785323",
       "column_count": 39,
-      "registry_status": "OK"
-    },
-    {
-      "id": 90,
-      "name": "dob_stalled_construction_sites",
-      "socrata_id": "i296-73x5",
-      "row_count": 0,
-      "primary_key": "complaint_number",
-      "source": "socrata",
-      "domain_schema": "crossagency",
-      "ll251_name": "DOB Stalled Construction Sites",
-      "borough_column": "borough_name",
-      "last_updated": "2026-07-24T20:01:42.000",
-      "registry_row_count": "1445327",
-      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1479,20 +1429,6 @@
       "registry_status": "OK"
     },
     {
-      "id": 109,
-      "name": "vision_zero_base_report",
-      "socrata_id": "ph7v-u5f3",
-      "row_count": 0,
-      "primary_key": "",
-      "source": "socrata",
-      "domain_schema": "dot",
-      "ll251_name": "Vision Zero Base Report",
-      "last_updated": "2017-09-18T20:45:27.000",
-      "registry_row_count": "771",
-      "column_count": 0,
-      "registry_status": "OK"
-    },
-    {
       "id": 110,
       "name": "raised_crosswalk_locations",
       "socrata_id": "uh2s-ftgh",
@@ -1521,20 +1457,6 @@
       "registry_status": "OK"
     },
     {
-      "id": 112,
-      "name": "privately_owned_public_spaces_pops",
-      "socrata_id": "rvih-nhyn",
-      "row_count": 0,
-      "primary_key": "",
-      "source": "socrata",
-      "domain_schema": "crossagency",
-      "ll251_name": "Privately Owned Public Spaces (POPS)",
-      "last_updated": "2025-10-14T16:23:32.000",
-      "registry_row_count": "392",
-      "column_count": 0,
-      "registry_status": "OK"
-    },
-    {
       "id": 113,
       "name": "bus_stop_shelters",
       "socrata_id": "t4f2-8md7",
@@ -1546,20 +1468,6 @@
       "last_updated": "2025-10-14T20:29:33.000Z",
       "registry_row_count": "3381",
       "column_count": 18,
-      "registry_status": "OK"
-    },
-    {
-      "id": 115,
-      "name": "walk_to_a_park_service_area",
-      "socrata_id": "99ii-hwh9",
-      "row_count": 0,
-      "primary_key": "",
-      "source": "socrata",
-      "domain_schema": "crossagency",
-      "ll251_name": "Walk to a Park Service Area",
-      "last_updated": "2023-07-19T19:58:47.000",
-      "registry_row_count": "1",
-      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1692,20 +1600,6 @@
       "ll251_name": "Capital Projects Dashboard - Citywide Schedule History and Variance",
       "last_updated": "2026-07-15T17:25:49.000",
       "registry_row_count": "22464",
-      "column_count": 0,
-      "registry_status": "OK"
-    },
-    {
-      "id": 125,
-      "name": "state_of_good_repair_needs",
-      "socrata_id": "vck7-ujai",
-      "row_count": 0,
-      "primary_key": "",
-      "source": "socrata",
-      "domain_schema": "coordination",
-      "ll251_name": "State of Good Repair Needs",
-      "last_updated": "2025-06-17T18:09:19.000",
-      "registry_row_count": "43063",
       "column_count": 0,
       "registry_status": "OK"
     },

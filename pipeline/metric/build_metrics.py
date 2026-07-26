@@ -71,7 +71,6 @@ MetricS = [
     ("METRIC-32", "Capital Spend To Date", "capital", "capital_projects_dashboard", "usd",
      "SUM(TRY_CAST(spend_to_date AS DOUBLE))", None, True),
     ("METRIC-33", "Capital Projects (count)", "capital", "capital_projects_dashboard", "count", "COUNT(DISTINCT fms_id)", None, False),
-    ("METRIC-34", "State of Good Repair Needs", "capital", "state_of_good_repair_needs", "count", "COUNT(*)", None, False),
     ("METRIC-35", "Capital Reconstruction Projects", "capital", "street_and_highway_capital_reconstruction_projec", "count", "COUNT(*)", None, True),
     # --- Pedestrianization / walkability ----------------------------------
     ("METRIC-36", "Open Streets Locations", "walkability", "open_streets_locations", "count", "COUNT(*)", None, True),

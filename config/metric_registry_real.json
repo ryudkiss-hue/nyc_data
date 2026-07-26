@@ -274,7 +274,7 @@
       "unit": "rating",
       "formula": "AVG(TRY_CAST(systemrating AS DOUBLE))",
       "where": "systemrating IS NOT NULL",
-      "value": 6.823723545233371,
+      "value": 6.823723545233492,
       "by_borough": true
     },
     {
@@ -472,7 +472,7 @@
       "unit": "sqft",
       "formula": "SUM(TRY_CAST(shape_area AS DOUBLE))",
       "where": null,
-      "value": 616273174.9528265,
+      "value": 616273174.9528239,
       "by_borough": false
     },
     {
@@ -688,7 +688,7 @@
       "domain": "walkability",
       "unit": "count",
       "formula": "SELECT SUM(TRY_CAST(cnt AS DOUBLE)) FROM nyc_dot_analytics.raw.\"bicycle_pedestrian_counts_daily\"",
-      "value": 180152381.0,
+      "value": 180205889.0,
       "by_borough": false
     },
     {
@@ -697,7 +697,7 @@
       "domain": "walkability",
       "unit": "count",
       "formula": "SELECT SUM(TRY_CAST(cnt AS DOUBLE)) FROM nyc_dot_analytics.raw.\"bicycle_pedestrian_counts_daily\" WHERE lower(travelmode) LIKE '%ped%'",
-      "value": 7356242.0,
+      "value": 7358412.0,
       "by_borough": false
     },
     {
@@ -706,7 +706,7 @@
       "domain": "condition",
       "unit": "percent",
       "formula": "SELECT 100.0 * (SELECT SUM(TRY_CAST(sq_feet AS DOUBLE))*0.092903 FROM nyc_dot_analytics.staging.\"violations\") / NULLIF((SELECT SUM(TRY_CAST(shape_area AS DOUBLE)) FROM nyc_dot_analytics.staging.\"sidewalk_planimetric\"),0)",
-      "value": 1.6006947465090222,
+      "value": 1.600694746509029,
       "by_borough": false
     },
     {

@@ -366,14 +366,14 @@ SLA enforcement is configured in `src/socrata_toolkit/quality/sla.py` and `src/s
 
 ---
 
-## 📦 Dataset Registry (90 datasets — Source of Truth)
+## 📦 Dataset Registry (112 in-scope datasets — Source of Truth)
 
 **CURRENT SOURCE OF TRUTH (auto-generated, always current):**
-- **`pipeline/data/DATA_CATALOG.md`** — human-readable catalog of all **90** configured datasets (verified Socrata IDs, column counts, freshness).
+- **`pipeline/data/DATA_CATALOG.md`** — human-readable catalog of all **112** in-scope configured datasets (verified Socrata IDs, column counts, freshness).
 - **`pipeline/data/nyc_open_data_registry.json`** — machine registry with full column schemas, pulled via the Socrata **Discovery/Catalog API** (bulk, chunked `ids`).
-- **`pipeline/config/socrata_datasets.json`** — pipeline config (90 datasets, primary **and foreign** keys, domain schema, server-side filters).
+- **`pipeline/config/socrata_datasets.json`** — pipeline config (112 datasets, primary **and foreign** keys, domain schema, server-side filters).
 
-These regenerate on every sync via `pipeline/regenerate_from_registry.py`, so they never drift. `docs/SOCRATA_DATASETS_CONSOLIDATED.md` is retained as **historical narrative** only (superseded 2026-06-22). The static table below is a quick reference for the core SIM datasets; see the live catalog for the full 90 (incl. the 2026-06-22 gap-fill: demographics, heat-vulnerability, pedestrian crashes, street-tree census, forestry, sidewalk cafes, water/sewer + street-construction permits, DOB stalled sites).
+These regenerate on every sync via `pipeline/regenerate_from_registry.py`, so they never drift. Out-of-scope datasets (heat vulnerability, Vision Zero, park access, DOB stalled sites, POPS, collision-person detail, state-of-good-repair) were removed 2026-07-26 — the config is Sidewalk Program scope only. `docs/SOCRATA_DATASETS_CONSOLIDATED.md` is retained as **historical narrative** only (superseded 2026-06-22). The static table below is a quick reference for the core SIM datasets; see the live catalog for the full 90 (incl. the 2026-06-22 gap-fill: demographics, heat-vulnerability, pedestrian crashes, street-tree census, forestry, sidewalk cafes, water/sewer + street-construction permits, DOB stalled sites).
 
 All datasets live on `data.cityofnewyork.us`. Reference by key.
 

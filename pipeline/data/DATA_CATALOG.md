@@ -1,8 +1,8 @@
-# NYC DOT SIM — Data Catalog
+# NYC DOT SIM â€” Data Catalog
 
 > AUTO-GENERATED from the authoritative registry by `pipeline/regenerate_from_registry.py`. Do not edit by hand.
 
-**Datasets:** 119  |  **Source of truth:** Local Law 251 registry (`pipeline/data/nyc_open_data_registry.json`)
+**Datasets:** 112  |  **Source of truth:** Local Law 251 registry (`pipeline/data/nyc_open_data_registry.json`)
 
 | Table | Socrata ID | LL251 Name | Last Updated | Cols | Domain |
 |---|---|---|---|---|---|
@@ -36,13 +36,11 @@
 | `curb_metal_protruding` | i2y3-sx2e | Curb Metal Protruding Data | 2026-07-25 | 17 | overlays |
 | `curbs_planimetric` | 5xvt-8cbk | NYC Planimetric Database: Curbs | 2024-04-24 | 0 | overlays |
 | `dismissals` | p4u2-3jgx | Sidewalk Dismissal Inspection Tracking | 2026-07-07 | 29 | sim_core |
-| `dob_stalled_construction_sites` | i296-73x5 | DOB Stalled Construction Sites | 2026-07-24 | 0 | crossagency |
 | `dot_in_house_street_resurfacing_projects` | ffaf-8mrv | DOT In-house Street Resurfacing Projects | 2026-07-15 | 21 | dot |
 | `elevation_points_planimetric` | 9uxf-ng6q | NYC Planimetric Database: Elevation Points | 2024-04-24 | 0 | overlays |
 | `encroachments_and_defacements` | kyvb-rbwd | Encroachments and Defacements | 2026-07-01 | 25 | dot |
 | `exclusive_pedestrian_signal_barnes_dance_locatio` | 8kuj-2n3u | Exclusive Pedestrian Signal (Barnes Dance) Locat | 2026-07-15 | 25 | dot |
 | `forestry_inspections` | 4pt5-3vv4 | Forestry Inspections | 2026-07-14 | 0 | overlays |
-| `heat_vulnerability_index` | 4mhf-duep | Heat Vulnerability Index Rankings | 2024-09-19 | 0 | crossagency |
 | `holiday_construction_embargo_block` | 4te8-9n3p | Holiday Construction Embargo - Block | 2025-12-08 | 6 | dot |
 | `holiday_construction_embargo_intersection` | jr6f-nsuv | Holiday Construction Embargo- Intersection | 2025-12-08 | 10 | dot |
 | `inspection` | dntt-gqwq | Sidewalk Management Database - Inspection | 2026-07-25 | 17 | sim_core |
@@ -52,7 +50,6 @@
 | `mbpo_pedestrian_ramp_report` | 8kic-uvpz | MBPO Pedestrian Ramp Report | 2021-08-02 | 0 | accessibility |
 | `median_planimetric` | ees7-4ufv | NYC Planimetric Database: Median | 2024-04-24 | 0 | overlays |
 | `motor_vehicle_collisions_crashes` | h9gi-nx95 | Motor Vehicle Collisions - Crashes | 2026-06-15 | 0 | dot |
-| `motor_vehicle_collisions_person` | f55k-p6yu | Motor Vehicle Collisions - Person | 2026-06-15 | 0 | dot |
 | `new_york_city_bike_routes` | mzxg-pwib | New York City Bike Routes | 2026-07-24 | 25 | dot |
 | `newsrack_inspections` | aizm-q3sx | Newsrack Inspections | 2026-07-01 | 16 | dot |
 | `nta_2020` | 9nt8-h7nd | 2020 Neighborhood Tabulation Areas (NTAs) | 2026-05-28 | 0 | crossagency |
@@ -65,7 +62,6 @@
 | `parking_permit_for_people_with_disabilities_pppd_2` | gc8d-bnmn | Parking Permit for People with Disabilities (PPP | 2026-03-17 | 8 | dot |
 | `pedestrian_demand` | fwpa-qxaf | Pedestrian Mobility Plan Pedestrian Demand | 2026-03-06 | 20 | extended |
 | `pedestrian_space_added` | uebm-cmjr | Pedestrian Space Added | 2026-03-03 | 9 | dot |
-| `privately_owned_public_spaces_pops` | rvih-nhyn | Privately Owned Public Spaces (POPS) | 2025-10-14 | 0 | crossagency |
 | `protected_streets_block_dataset` | wyih-3nzf | Protected Streets Block (Dataset) | 2026-07-20 | 9 | dot |
 | `protected_streets_intersection_dataset` | bryy-vqd9 | Protected Streets Intersection (Dataset) | 2026-07-20 | 7 | dot |
 | `public_plazas_planimetric` | ue2e-9jm2 | NYC Planimetric Database: Public Plazas | 2024-04-24 | 0 | overlays |
@@ -80,7 +76,6 @@
 | `sidewalk_cafes` | ptd9-4c6m | nysidewalkcafe | 2024-03-05 | 0 | dot |
 | `sidewalk_planimetric` | 52n9-sdep | NYC Planimetric Database: Sidewalk | 2024-04-24 | 0 | overlays |
 | `speed_reducer_tracking_srts` | 9n6h-pt9g | Speed Reducer Tracking System (SRTS) | 2026-07-25 | 43 | dot |
-| `state_of_good_repair_needs` | vck7-ujai | State of Good Repair Needs | 2025-06-17 | 0 | coordination |
 | `step_streets` | u9au-h79y | Step Streets Locations | 2026-07-10 | 4 | extended |
 | `street_and_highway_capital_reconstruction_projec` | 97nd-ff3i | Street and Highway Capital Reconstruction Projec | 2026-07-01 | 30 | dot |
 | `street_and_highway_capital_reconstruction_projec_2` | jvk9-k4re | Street and Highway Capital Reconstruction Projec | 2026-07-01 | 27 | dot |
@@ -103,7 +98,6 @@
 | `ten_year_capital_strategy` | b37a-3faw | Ten-Year Capital Strategy | 2025-05-06 | 0 | coordination |
 | `tree_damage` | j6v2-6uxq | Sidewalk Management Database - All Tree Damage ( | 2026-03-18 | 13 | overlays |
 | `violations` | 6kbp-uz6m | Sidewalk Management Database - Violations | 2026-07-25 | 27 | accessibility |
-| `vision_zero_base_report` | ph7v-u5f3 | Vision Zero Base Report | 2017-09-18 | 0 | dot |
 | `vzv_arterial_slow_zones` | 2i8t-es4u | VZV Arterial Slow Zones | 2026-07-01 | 5 | dot |
 | `vzv_bike_priority_areas` | 83yx-cgpy | VZV Bike Priority Areas | 2026-07-01 | 4 | dot |
 | `vzv_enhanced_crossings` | 6ax4-q5k4 | VZV Enhanced Crossings | 2026-07-01 | 6 | dot |
@@ -122,6 +116,5 @@
 | `vzv_street_team_flyers` | j62s-m9yf | VZV Street Team Flyers | 2026-07-01 | 7 | dot |
 | `vzv_turn_traffic_calming` | sm2x-35i7 | VZV Turn Traffic Calming | 2026-07-01 | 7 | dot |
 | `vzv_workshops_locations` | gtdx-4w36 | VZV Workshops Locations | 2026-07-01 | 8 | dot |
-| `walk_to_a_park_service_area` | 99ii-hwh9 | Walk to a Park Service Area | 2023-07-19 | 0 | crossagency |
 | `water_sewer_permits` | hphy-6g7m | Water and Sewer Permits | 2026-07-21 | 0 | crossagency |
 | `weekly_construction` | r528-jcks | Sidewalk Weekly Construction Schedule | 2017-11-01 | 4 | coordination |
