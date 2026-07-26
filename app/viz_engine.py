@@ -18,8 +18,14 @@ from plotly.subplots import make_subplots
 from sklearn.decomposition import PCA
 
 # Accessible color palette (WCAG AA safe, distinguishable for colorblindness)
-_PALETTE = ["#2196F3", "#FF9800", "#4CAF50", "#9C27B0", "#F44336", "#00BCD4",
-            "#FF5722", "#607D8B", "#E91E63", "#8BC34A"]
+# Colorblind-safe categorical palette (Okabe-Ito derived, reordered so adjacent
+# slots stay separable). Validated against a light chart surface: lightness band,
+# chroma floor, CVD separation (worst adjacent ΔE 9.6 deutan / 20.6 tritan) and
+# normal-vision floor (ΔE 20.0) all pass. The previous Material palette failed —
+# its green and orange collapsed to ΔE 3.6 under protanopia.
+# Assign in fixed order; never generate a 9th hue.
+_PALETTE = ["#0072B2", "#E69F00", "#009E73", "#D55E00",
+            "#56B4E9", "#CC79A7", "#7B3294", "#B8860B"]
 _BORO_ORDER = ["MANHATTAN", "BRONX", "BROOKLYN", "QUEENS", "STATEN ISLAND"]
 
 

@@ -236,7 +236,19 @@ def status_donut(
         "City-Initiated": "#0D6EFD", "In Progress": "#17A2B8",
         "Cancelled": "#DC3545",
     }
-    marker_colors = [colors.get(s, "#6C757D") for s in counts.index]
+    # Unmapped labels (e.g. Yes/No outcome columns) previously ALL fell back to
+    # one gray, rendering every slice identical. Assign distinct validated hues
+    # in fixed order instead, so categories stay distinguishable.
+    _fallback = ["#0072B2", "#E69F00", "#009E73", "#D55E00",
+                 "#56B4E9", "#CC79A7", "#7B3294", "#B8860B"]
+    marker_colors = []
+    _next = 0
+    for s in counts.index:
+        if s in colors:
+            marker_colors.append(colors[s])
+        else:
+            marker_colors.append(_fallback[_next % len(_fallback)])
+            _next += 1
 
     fig = go.Figure(go.Pie(
         labels=counts.index, values=counts.values,
