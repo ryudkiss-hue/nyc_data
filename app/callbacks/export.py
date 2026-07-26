@@ -79,7 +79,7 @@ def register_export_callbacks(app, dm_instance):
         df = state.get_dataset_by_key(target_ds)
 
         if df is None or df.empty:
-            return no_update, dmc.Notification(title="Export Alert", message="No data available to export.", color="orange", action="show")
+            return no_update, dmc.Notification(title="Export Alert", message="No data available to export.", color="orange", action="show", autoClose=False)
 
         title = f"Export: {chart_id}"
         stats = {"Rows": len(df), "Columns": len(df.columns), "Generated": datetime.now().isoformat(timespec="seconds")}
@@ -116,7 +116,7 @@ def register_export_callbacks(app, dm_instance):
                 return no_update, dmc.Notification(
                     title="Export Alert",
                     message=f"Image export failed (kaleido): {e}",
-                    color="orange", action="show",
+                    color="orange", action="show", autoClose=False,
                 )
         elif export_type == "r":
             content = (
@@ -137,7 +137,7 @@ def register_export_callbacks(app, dm_instance):
             return dcc.send_string(content, f"{chart_id}_powerquery.pq"), no_update
 
         msg = f"Export type '{export_type.upper()}' is not supported."
-        return no_update, dmc.Notification(title="Export Alert", message=msg, color="orange", action="show")
+        return no_update, dmc.Notification(title="Export Alert", message=msg, color="orange", action="show", autoClose=False)
 
     @app.callback(
         [Output("download-manager", "data", allow_duplicate=True),
@@ -172,7 +172,8 @@ def register_export_callbacks(app, dm_instance):
                 title="Export Error",
                 message="No data available for the selected datasets and filters.",
                 color="red",
-                action="show"
+                action="show",
+                autoClose=False
             )
 
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -183,7 +184,7 @@ def register_export_callbacks(app, dm_instance):
                 return dcc.send_bytes(excel_bytes, f"NYC_DOT_Complete_Export_{ts}.xlsx"), dmc.Notification(
                     title="Export Complete", message=f"Global Excel export generated successfully{_cap_note}.", color="green", action="show"
                 )
-            return no_update, dmc.Notification(title="Export Error", message="Failed to generate Excel.", color="red", action="show")
+            return no_update, dmc.Notification(title="Export Error", message="Failed to generate Excel.", color="red", action="show", autoClose=False)
 
         elif triggered_id == "btn-global-export-pdf":
             # Per-dataset summary chart over the current filtered selection.
@@ -211,7 +212,7 @@ def register_export_callbacks(app, dm_instance):
                 return dcc.send_bytes(pdf_bytes, f"NYC_DOT_Complete_Export_{ts}.pdf"), dmc.Notification(
                     title="Export Complete", message=f"Global PDF export generated successfully{_cap_note}.", color="green", action="show"
                 )
-            return no_update, dmc.Notification(title="Export Error", message="Failed to generate PDF.", color="red", action="show")
+            return no_update, dmc.Notification(title="Export Error", message="Failed to generate PDF.", color="red", action="show", autoClose=False)
 
         elif triggered_id == "btn-global-export-pptx":
             import plotly.graph_objects as go
@@ -233,7 +234,7 @@ def register_export_callbacks(app, dm_instance):
                 return dcc.send_bytes(pptx_bytes, f"NYC_DOT_Complete_Export_{ts}.pptx"), dmc.Notification(
                     title="Export Complete", message=f"Global PPTX export generated successfully{_cap_note}.", color="green", action="show"
                 )
-            return no_update, dmc.Notification(title="Export Error", message="Failed to generate PPTX.", color="red", action="show")
+            return no_update, dmc.Notification(title="Export Error", message="Failed to generate PPTX.", color="red", action="show", autoClose=False)
 
     @app.callback(
         Output("notifications-container", "children", allow_duplicate=True),

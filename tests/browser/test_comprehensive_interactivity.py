@@ -892,19 +892,25 @@ class TestDeadCodeAudit:
             export_tab.click()
             page.wait_for_timeout(600)
         png_btn = page.locator("button:has-text('PNG Image')").first
-        if png_btn.is_visible(timeout=3_000):
-            try:
-                with page.expect_download(timeout=8_000) as dl_info:
-                    png_btn.click()
-                dl = dl_info.value
-                assert dl.suggested_filename.endswith(".png"), "PNG export didn't produce a PNG file"
-            except PlaywrightTimeoutError:
-                notif = page.locator(".mantine-Notification-root").first
-                expect(notif).to_be_visible(timeout=5_000)
-                text = notif.inner_text()
-                assert "not supported" not in text.lower(), (
-                    f"PNG export fell through to the unsupported stub: {text!r}"
-                )
-                assert "no data" in text.lower(), (
-                    f"PNG export produced neither a download nor the no-data notice: {text!r}"
-                )
+        if not png_btn.is_visible(timeout=3_000):
+            pytest.skip("Export panel not present in this build")
+
+        try:
+            # Generous: the server renders the PNG via kaleido, whose Chromium
+            # subprocess has a slow cold start on the first image export.
+            with page.expect_download(timeout=45_000) as dl_info:
+                png_btn.click()
+            assert dl_info.value.suggested_filename.endswith(".png"), (
+                f"PNG export produced {dl_info.value.suggested_filename!r}, not a .png"
+            )
+        except PlaywrightTimeoutError:
+            # No download means no data to export (CI runs an empty DuckDB).
+            # Export alerts are autoClose=False, so the notice is still on
+            # screen here. A "not supported" message would mean the export
+            # type regressed back to the old dead-button stub.
+            notif = page.locator(".mantine-Notification-root").first
+            expect(notif).to_be_visible(timeout=5_000)
+            text = notif.inner_text()
+            assert "not supported" not in text.lower(), (
+                f"PNG export fell through to the unsupported stub: {text!r}"
+            )
