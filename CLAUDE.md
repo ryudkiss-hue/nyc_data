@@ -419,7 +419,7 @@ All datasets live on `data.cityofnewyork.us`. Reference by key.
 | `mappluto` | 64uk-42ks | ~858K |
 | `complaints_311` | erm2-nwe9 | ~21.3M |
 
-_Row counts are approximate. For current counts, run: `socrata dataset health --key <key>`_
+_Row counts are approximate. For current counts, run: `socrata health <key>`_
 
 ---
 
@@ -431,8 +431,8 @@ Problematic datasets that require awareness when planning analysis. These are tr
 |---|---|---|---|---|
 | `ramp_locations` | ufzp-rrqu | Stale | 2021-01-01 | No updates since 2021. Consider using `ramp_progress` or `ramp_complaints` instead for current ramp data. |
 | `weekly_construction` | r528-jcks | Stale | 2017-01-01 | Archived dataset with no updates since 2017. Use `street_construction_inspections` or `street_permits` for active construction data. |
-| `capital_blocks` | jvk9-k4re | ✅ Resolved | 2026-06-23 | Previously empty (2026-06-05); now populated with ~12K rows (ingested as `street_and_highway_capital_reconstruction_projec_2`). No longer a known issue. |
-| `permit_stipulations` | gsgx-6efw | Error | 2026-06-05 | API returns HTTP 403 (Forbidden). Requires investigation of data permissions or schema changes. Contact NYC Open Data support. |
+| `capital_blocks` | jvk9-k4re | Empty (regressed) | 2026-07-26 | 0 rows again upstream — both the tabular id and the map variant (si9g-fztb) return count 0, so this is an NYC Open Data publication gap, not an API issue. Use `capital_intersections` (97nd-ff3i, ~7.8K rows, healthy) for capital program geography. Consider filing a ticket with NYC Open Data. |
+| `permit_stipulations` | gsgx-6efw | ✅ Resolved | 2026-07-26 | Previously HTTP 403 (2026-06-05); now fully accessible with ~45.6M rows. ⚠ Very large — always use `$where`/`$select` filters and never full-corpus fetch. |
 
 **How to use this section:**
 - Before using any dataset listed here, check if a more recent workaround exists
@@ -478,42 +478,31 @@ result = spatial_intersects_join(left_df, right_df, "the_geom", "the_geom")
 
 ## ⌨️ CLI Reference
 
+The `socrata` entry point (`socrata_toolkit.core.cli:main`) loads `.env` automatically. Commands below are the ones that actually exist (verified 2026-07-26); anything else previously documented here was aspirational and has been removed.
+
 ```bash
-# Dataset health and ramp analysis
-socrata dataset health --all --stale 7 --sort-by staleness
-socrata dataset health --key ramp_progress
-socrata dataset ramp-analysis --sample 100
-socrata dataset ramp-analysis --full-corpus --include-ci --borough MN
+# Dataset health — live Socrata metadata + exact SoQL row count, SLA-aware
+socrata health violations              # accepts a registry key…
+socrata health 6kbp-uz6m --json        # …or a raw 4x4 id
 
-# Fetch and ETL
-socrata fetch data.cityofnewyork.us <fourfour> --format json --out out.json
-socrata fetch data.cityofnewyork.us <fourfour> --format xlsx --out out.xlsx --where "borough='MANHATTAN'"
-socrata pipeline data.cityofnewyork.us <fourfour> --xlsx-out out.xlsx --stream --dry-run
+# Ramp completion analysis — per-borough rates with 95% Wilson CIs
+# (live e7gc-ub6z per-corner statuses; 'Not Required' corners excluded)
+socrata ramp-analysis
+socrata ramp-analysis --borough MN --json
 
-# Quality and governance
-socrata quality-score data.cityofnewyork.us <fourfour> --key-column id --date-column created_date
-socrata schema-drift data.cityofnewyork.us <fourfour> --save-snapshot
-socrata outliers data.cityofnewyork.us <fourfour> --method iqr --out outliers.json
-socrata doctor --check-db
+# Quality score — composite 0-100 on a live sample
+socrata quality-score violations --key-column objectid --date-column created_date
+socrata quality-score i642-2fxq --max-rows 5000 --json
 
-# Spatial conflict detection
-socrata conflict-detect --borough MN --buffer 50 --output conflicts.geojson
+# Natural language KPI routing
+socrata query "How many open violations per borough?" [--json]
+socrata evaluate        # router accuracy
+socrata train           # optimize router weights
+socrata readiness       # deployment readiness report
 
-# Reporting
-socrata report contract --output contract_report.xlsx
-
-# Natural language query
-socrata nl-query "How many open violations per borough?" --dataset violations
-
-# Observability
-socrata observability status
-socrata observability sla-report --window 30
-socrata lineage dag --format mermaid
-
-# Cache and sync
-socrata cache refresh <key>
-socrata sync --dataset violations --domain data.cityofnewyork.us
-socrata db-status
+# Full data refresh (checkpointed; scripts accept NO arguments — --help exits safely)
+python pipeline/run_local.py       # local-only end-to-end (ingest -> geo -> metrics -> serving)
+python pipeline/run_pipeline.py    # ingest stage only
 ```
 
 ---
@@ -596,9 +585,9 @@ When given an analytical task, follow this sequence:
 | Request | Approach |
 |---|---|
 | "Show ramp completion by borough" | Fetch `ramp_progress`, run `compute_borough_completion_rates()`, return table with rate + 95% CI + reliability per borough |
-| "Are any datasets going stale?" | `socrata dataset health --all --sort-by staleness` — highlight anything >SLA threshold |
+| "Are any datasets going stale?" | `socrata health <key>` per dataset — highlight anything >SLA threshold |
 | "Violations last 30 days in Manhattan" | Fetch `violations` with `$where=upper(borough)='MANHATTAN' AND created_date > '2026-05-06T00:00:00'` (use ISO 8601 timestamps, not relative dates) |
-| "Find construction conflicts near inspections" | `socrata conflict-detect --borough MN --buffer 50` or `spatial_intersects_join(street_permits, inspection, "the_geom", "the_geom")` |
+| "Find construction conflicts near inspections" | `spatial_intersects_join(street_permits, inspection, "the_geom", "the_geom")` + `analyst.conflicts_queue.build_conflicts_review()` |
 | "Quality score for inspection dataset" | Fetch 10K rows, `compute_quality_score(key_columns=["objectid"], date_column="created_date")` |
 | "Translate: how many tree damage reports per borough?" | `nl_to_soql(question, "tree_damage", columns)` → validate → show SoQL → offer to execute |
 
