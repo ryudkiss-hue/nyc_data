@@ -825,12 +825,41 @@ def _summary_stats_elements(data_bundle: dict, styles: dict):
         num = df.select_dtypes(include=["number"]).copy()
         for c in df.select_dtypes(include=["object"]).columns:
             coerced = pd.to_numeric(df[c], errors="coerce")
-            if coerced.notna().mean() > 0.5:
+            # Absolute count, not a ratio: the budget columns in `built` are
+            # ~96% null but are precisely the variables an analyst needs, and a
+            # 50%-density rule silently discarded them.
+            if coerced.notna().sum() >= 30:
                 num[c] = coerced
         num = num.dropna(axis=1, how="all")
         num = num.loc[:, num.nunique() > 1]
         num = num.loc[:, ~num.columns.str.startswith(":@")]
+        # Identifiers are numeric but their mean/median is meaningless — a
+        # "mean inspectionid" line is noise that undermines the whole table.
+        num = num.loc[:, ~num.columns.str.lower().str.match(
+            r".*(id|bbl|bin|block|lot|zip|code|num|number|objectid|_key)$"
+        )]
+        num = num.loc[:, ~num.columns.str.lower().isin(
+            {"latitude", "longitude", "x_coord", "y_coord", "the_geom"}
+        )]
+        # Name-based exclusion can't catch every reference number (e.g.
+        # dismissals.violation, 82% unique with a 99,999,999,999 sentinel).
+        # Whole-valued AND near-unique ⇒ identifier, not a measure. Continuous
+        # measures (costs, square feet) carry decimals and survive this.
+        _keep = []
+        for c in num.columns:
+            s = num[c].dropna()
+            if len(s) >= 10 and (s % 1 == 0).all() and s.nunique() / len(s) > 0.8:
+                continue
+            _keep.append(c)
+        num = num[_keep]
         if num.shape[1] == 0:
+            # Say so rather than silently omitting the dataset — "no analyzable
+            # measures" is itself a finding for the analyst.
+            elems.append(Paragraph(f"{key}  ({len(df):,} rows)", S["chart_title"]))
+            elems.append(Paragraph(
+                "No analyzable numeric measures — this dataset carries identifiers, "
+                "dates and categorical fields only.", S["body"]))
+            elems.append(Spacer(1, 0.15 * inch))
             continue
         cols = num.notna().sum().sort_values(ascending=False).head(6).index
         rows = [["Variable", "Count", "Mean", "Median", "Min", "Max"]]
