@@ -132,6 +132,12 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: pytest tests/browser/ -m browser -v --tb=short
 
+      - name: Dump Dash server log on failure
+        if: failure()
+        run: |
+          echo "===== dash_test_server.log (server-side tracebacks) ====="
+          cat "${TMPDIR:-/tmp}/dash_test_server.log" || true
+
   readiness:
     name: Readiness report
     runs-on: ubuntu-latest

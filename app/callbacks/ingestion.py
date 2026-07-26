@@ -1,3 +1,4 @@
+import logging
 import os
 import threading
 
@@ -68,7 +69,14 @@ def register_ingestion_callbacks(app, dm_instance):
         prevent_initial_call=True
     )
     def initialize_pipeline_callback(n_clicks, token_list, limit_list, version_list):
-        return initialize_pipeline(n_clicks, token_list, limit_list, version_list)
+        # Absolute no-500 guard: any escaping exception here surfaces as an opaque
+        # InternalServerError banner in the browser console on every page that
+        # holds an init button. Log server-side and return a clean idle state.
+        try:
+            return initialize_pipeline(n_clicks, token_list, limit_list, version_list)
+        except Exception:
+            logging.getLogger(__name__).exception("initialize_pipeline callback failed")
+            return no_update, [False] * len(n_clicks or [])
 
     @app.callback(
         [Output("store-data-loaded", "data", allow_duplicate=True),
