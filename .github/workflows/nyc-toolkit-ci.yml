@@ -171,4 +171,6 @@ jobs:
           push: false
           tags: nyc-dot-sim-toolkit:latest
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # ignore-error: transient GHA cache-backend write failures ("error
+          # writing layer blob: not_found") must not fail a build that succeeded
+          cache-to: type=gha,mode=max,ignore-error=true
