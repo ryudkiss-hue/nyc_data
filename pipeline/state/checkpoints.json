@@ -438,5 +438,375 @@
     "rows_failed": 0,
     "duration_seconds": 0.0,
     "error_message": "Zero Socrata datasets loaded"
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-07-01T09:26:42.015410",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "failed",
+    "timestamp": "2026-07-01T09:26:42.015418",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.0,
+    "error_message": "Zero Socrata datasets loaded"
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-07-01T11:40:43.063903",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "failed",
+    "timestamp": "2026-07-01T11:40:43.063922",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.0,
+    "error_message": "Zero Socrata datasets loaded"
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-07-02T02:00:20.063060",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "started",
+    "timestamp": "2026-07-02T02:00:20.063071",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.0,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-07-02T02:00:21.422434",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "completed",
+    "timestamp": "2026-07-02T02:00:21.422448",
+    "rows_processed": 13333438,
+    "rows_failed": 0,
+    "duration_seconds": 5894.024946689606,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "stage_datasets_2026-07-02T03:38:35.497455",
+    "stage_name": "stage_datasets",
+    "status": "completed",
+    "timestamp": "2026-07-02T03:38:35.497472",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 485.70988750457764,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "build_analytics_schemas_2026-07-02T03:46:41.329395",
+    "stage_name": "build_analytics_schemas",
+    "status": "completed",
+    "timestamp": "2026-07-02T03:46:41.329419",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.2538106441497803,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "materialize_metrics_2026-07-02T03:46:41.606254",
+    "stage_name": "materialize_metrics",
+    "status": "completed",
+    "timestamp": "2026-07-02T03:46:41.606268",
+    "rows_processed": 13,
+    "rows_failed": 0,
+    "duration_seconds": 0.9286582469940186,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "verify_gates_2026-07-02T03:46:42.554825",
+    "stage_name": "verify_gates",
+    "status": "completed",
+    "timestamp": "2026-07-02T03:46:42.554840",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.30060791969299316,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-07-03T03:32:26.552974",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "started",
+    "timestamp": "2026-07-03T03:32:26.552978",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.0,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-07-04T02:17:56.685114",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "started",
+    "timestamp": "2026-07-04T02:17:56.685122",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.0,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-07-05T18:03:13.994787",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "started",
+    "timestamp": "2026-07-05T18:03:13.994795",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.0,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-07-06T02:00:16.969149",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "started",
+    "timestamp": "2026-07-06T02:00:16.969155",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.0,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-07-06T02:00:17.708119",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "started",
+    "timestamp": "2026-07-06T02:00:17.708133",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.0,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-07-07T02:00:19.419539",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "started",
+    "timestamp": "2026-07-07T02:00:19.419552",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.0,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-07-07T04:35:56.942399",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "started",
+    "timestamp": "2026-07-07T04:35:56.942407",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.0,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-07-09T02:00:24.445187",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "started",
+    "timestamp": "2026-07-09T02:00:24.445197",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.0,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-07-09T02:00:25.424883",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "started",
+    "timestamp": "2026-07-09T02:00:25.424891",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.0,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-07-10T02:00:07.569362",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "started",
+    "timestamp": "2026-07-10T02:00:07.569371",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.0,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-07-11T02:00:35.502276",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "failed",
+    "timestamp": "2026-07-11T02:00:35.502285",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.0,
+    "error_message": "Zero Socrata datasets loaded"
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-07-12T14:44:50.979197",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "completed",
+    "timestamp": "2026-07-12T14:44:50.979217",
+    "rows_processed": 17727796,
+    "rows_failed": 0,
+    "duration_seconds": 16398.32909846306,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "stage_datasets_2026-07-12T19:18:09.643355",
+    "stage_name": "stage_datasets",
+    "status": "failed",
+    "timestamp": "2026-07-12T19:18:09.643380",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.0,
+    "error_message": "Staging SQL failed: Execution error at statement 0: SQL execution error: FATAL Error: Failed: database has been invalidated because of a previous fatal error. The database must be restarted prior to being used again.\nOriginal error: \"Failed to create checkpoint because of error: FATAL Error: Failed to create checkpoint: Out of Memory Error: Allocation failure\""
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-07-14T02:00:43.000990",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "started",
+    "timestamp": "2026-07-14T02:00:43.001012",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.0,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-07-14T02:01:18.097961",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "completed",
+    "timestamp": "2026-07-14T02:01:18.097969",
+    "rows_processed": 20679605,
+    "rows_failed": 0,
+    "duration_seconds": 17560.464146375656,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "stage_datasets_2026-07-14T06:53:58.612625",
+    "stage_name": "stage_datasets",
+    "status": "completed",
+    "timestamp": "2026-07-14T06:53:58.612648",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 489.94908452033997,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "build_analytics_schemas_2026-07-14T07:02:08.658074",
+    "stage_name": "build_analytics_schemas",
+    "status": "completed",
+    "timestamp": "2026-07-14T07:02:08.658098",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.22153615951538086,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "materialize_metrics_2026-07-14T07:02:08.894985",
+    "stage_name": "materialize_metrics",
+    "status": "completed",
+    "timestamp": "2026-07-14T07:02:08.895011",
+    "rows_processed": 13,
+    "rows_failed": 0,
+    "duration_seconds": 0.48349475860595703,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "verify_gates_2026-07-14T07:02:09.395175",
+    "stage_name": "verify_gates",
+    "status": "completed",
+    "timestamp": "2026-07-14T07:02:09.395198",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.1473526954650879,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-07-15T02:00:48.096233",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "started",
+    "timestamp": "2026-07-15T02:00:48.096249",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.0,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-07-15T02:00:51.099467",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "completed",
+    "timestamp": "2026-07-15T02:00:51.099487",
+    "rows_processed": 20702747,
+    "rows_failed": 0,
+    "duration_seconds": 20028.863600730896,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "stage_datasets_2026-07-15T07:34:40.051175",
+    "stage_name": "stage_datasets",
+    "status": "completed",
+    "timestamp": "2026-07-15T07:34:40.051213",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 1828.2576694488525,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "build_analytics_schemas_2026-07-15T08:05:08.496908",
+    "stage_name": "build_analytics_schemas",
+    "status": "completed",
+    "timestamp": "2026-07-15T08:05:08.496941",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.26225829124450684,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "materialize_metrics_2026-07-15T08:05:08.780658",
+    "stage_name": "materialize_metrics",
+    "status": "completed",
+    "timestamp": "2026-07-15T08:05:08.780675",
+    "rows_processed": 13,
+    "rows_failed": 0,
+    "duration_seconds": 0.6011319160461426,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "verify_gates_2026-07-15T08:05:09.400847",
+    "stage_name": "verify_gates",
+    "status": "completed",
+    "timestamp": "2026-07-15T08:05:09.400882",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.2057187557220459,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-07-16T02:00:51.950252",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "failed",
+    "timestamp": "2026-07-16T02:00:51.950270",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.0,
+    "error_message": "Zero Socrata datasets loaded"
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-07-17T02:00:21.864089",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "failed",
+    "timestamp": "2026-07-17T02:00:21.864099",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.0,
+    "error_message": "Zero Socrata datasets loaded"
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-07-17T03:26:11.425326",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "failed",
+    "timestamp": "2026-07-17T03:26:11.425335",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.0,
+    "error_message": "Zero Socrata datasets loaded"
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-07-18T02:00:24.701158",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "failed",
+    "timestamp": "2026-07-18T02:00:24.701164",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.0,
+    "error_message": "Zero Socrata datasets loaded"
   }
 ]

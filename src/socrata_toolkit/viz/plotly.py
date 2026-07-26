@@ -101,7 +101,7 @@ def kpi_gauge(
     fig = go.Figure(go.Indicator(
         mode="gauge+number+delta",
         value=value,
-        delta={"reference": target, "increasing": {"color": "#DC3545"}, "decreasing": {"color": "#28A745"}},
+        delta={"reference": target, "increasing": {"color": "#28A745"}, "decreasing": {"color": "#DC3545"}},
         title={"text": title},
         gauge={
             "axis": {"range": [min_val, max_val]},

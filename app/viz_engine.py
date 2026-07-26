@@ -120,27 +120,27 @@ class VisualizationEngine:
     @staticmethod
     def chart_inspections_boro(data_bundle: dict) -> tuple[go.Figure, str]:
         """IV: Borough  DV: Inspection Volume (Count)"""
-        df = VisualizationEngine._safe_df(data_bundle.get("inspection"))
+        # dismissals has an authoritative 'borough' column (BRONX/MANHATTAN etc.)
+        # inspection and violations lack a borough column or use unreliable CB codes
+        source_label = "inspection/dismissal"
+        df = VisualizationEngine._safe_df(data_bundle.get("dismissals"))
+        if df.empty:
+            df = VisualizationEngine._safe_df(data_bundle.get("inspection"))
+            source_label = "inspection"
         if df.empty:
             df = VisualizationEngine._safe_df(data_bundle.get("violations"))
+            source_label = "violation"
         if df.empty:
             return VisualizationEngine._empty_state(
                 "Sidewalk Inspection Volume by Borough"
-            ), "No inspection or violation data available."
+            ), "No inspection, dismissal, or violation data available."
 
         boro_col = VisualizationEngine._find_col(df, ["borough", "boro", "boroname"])
-        if not boro_col and "cb" in df.columns:
-            df = df.copy()
-            df["borough"] = df["cb"].astype(str).str[0].map(
-                {"1": "MANHATTAN", "2": "BRONX", "3": "BROOKLYN",
-                 "4": "QUEENS", "5": "STATEN ISLAND"}
-            )
-            df = df.dropna(subset=["borough"])
-            boro_col = "borough"
         if not boro_col:
             return VisualizationEngine._empty_state(
                 "Sidewalk Inspection Volume by Borough",
-                "Borough column not found in inspection data.",
+                "Borough column not found in available data. "
+                "Load 'dismissals' (has borough) for accurate borough breakdown.",
             ), "Borough taxonomy missing."
 
         counts = (
@@ -166,8 +166,8 @@ class VisualizationEngine:
         fig.update_layout(showlegend=False)
 
         insight = (
-            f"**N = {total:,}** inspection records analyzed across {len(counts)} boroughs.\n\n"
-            f"**Top borough:** {top[boro_col]} with {int(top['Inspections']):,} inspections "
+            f"**N = {total:,}** {source_label} records analyzed across {len(counts)} boroughs.\n\n"
+            f"**Top borough:** {top[boro_col]} with {int(top['Inspections']):,} records "
             f"({100*int(top['Inspections'])/total:.1f}% of total).\n\n"
             f"**Distribution:** Median per borough = {int(counts['Inspections'].median()):,}; "
             f"range = {int(counts['Inspections'].min()):,}–{int(counts['Inspections'].max()):,}.\n\n"
@@ -613,8 +613,16 @@ class VisualizationEngine:
             if df_k.empty:
                 continue
             date_col = VisualizationEngine._find_col(
-                df_k, ["updated", "modified", "created", "date", "created_date"]
+                df_k, ["updated", "modified", "created", "date", "created_date",
+                        "inspectiondate", "issuedate", "complaint_date", "entrydate",
+                        "violation_date", "referral_date", "close_date", "duedate",
+                        "opendate", "closeddate", "startdate", "enddate"]
             )
+            if not date_col:
+                # Fallback: any column whose name contains "date"
+                date_col = next(
+                    (c for c in df_k.columns if "date" in c.lower()), None
+                )
             if not date_col:
                 continue
             try:
@@ -622,7 +630,8 @@ class VisualizationEngine:
                 if pd.isna(last):
                     continue
                 age = (pd.Timestamp.now() - last).days
-                rows.append({"Dataset": k, "Freshness": max(0.0, 100.0 - float(age))})
+                # Clamp to [0, 100]: negative age (future dates) must not inflate score
+                rows.append({"Dataset": k, "Freshness": max(0.0, min(100.0, 100.0 - float(age)))})
             except Exception:
                 continue
 
@@ -915,10 +924,9 @@ class VisualizationEngine:
     def chart_isochrone_walkability(data_bundle: dict | None = None) -> tuple[go.Figure, str]:
         """IV: Walk-time Radius  DV: Pedestrian Catchment Coverage"""
         # If pedestrian demand data available, show real coverage; else show theoretical zones
-        df = VisualizationEngine._safe_df(
-            (data_bundle or {}).get("pedestrian_demand") or
-            (data_bundle or {}).get("walk_to_a_park_service_area")
-        )
+        _pd_raw = (data_bundle or {}).get("pedestrian_demand")
+        _wta_raw = (data_bundle or {}).get("walk_to_a_park_service_area")
+        df = VisualizationEngine._safe_df(_pd_raw if _pd_raw is not None else _wta_raw)
 
         fig = go.Figure()
         theta = np.linspace(0, 2 * np.pi, 100)
@@ -1175,22 +1183,30 @@ class VisualizationEngine:
     @staticmethod
     def chart_correlation_heatmap(data_bundle: dict) -> tuple[go.Figure, str]:
         """IV: Numeric Column Pair  DV: Pearson Correlation Coefficient"""
-        # Prefer inspection or violations as they have the most numeric variation
-        for key in ["violations", "inspection", "built", "lot_info"]:
-            df = VisualizationEngine._safe_df(data_bundle.get(key))
-            if not df.empty:
+        # Try each dataset in priority order; stop when ≥2 numeric columns are found.
+        # Parquet caches store all columns as object strings, so we must coerce.
+        num_df = pd.DataFrame()
+        for key in ["mappluto", "built", "lot_info", "inspection", "violations",
+                    "street_resurfacing_inhouse", "street_construction_inspections",
+                    "ramp_progress", "ramp_locations"]:
+            _d = VisualizationEngine._safe_df(data_bundle.get(key))
+            if _d.empty:
+                continue
+            # Try native numeric columns first; then coerce object columns that parse as numbers
+            _candidate = _d.select_dtypes(include=[np.number]).copy()
+            for _col in _d.select_dtypes(include=["object"]).columns:
+                _coerced = pd.to_numeric(_d[_col], errors="coerce")
+                if _coerced.notna().sum() > 10:
+                    _candidate[_col] = _coerced
+            _candidate = _candidate.dropna(axis=1, how="all")
+            _candidate = _candidate.loc[:, _candidate.nunique() > 1].head(5000)
+            if _candidate.shape[1] >= 2:
+                num_df = _candidate
                 break
-        if df.empty:
-            return VisualizationEngine._empty_state(
-                "Numeric Feature Correlation Heatmap"
-            ), "No data available for correlation analysis."
-
-        num_df = df.select_dtypes(include=[np.number]).dropna(axis=1, how="all")
-        num_df = num_df.loc[:, num_df.nunique() > 1].head(5000)
-        if num_df.shape[1] < 2:
+        if num_df.empty or num_df.shape[1] < 2:
             return VisualizationEngine._empty_state(
                 "Numeric Feature Correlation Heatmap",
-                f"Only {num_df.shape[1]} numeric column(s) found — need ≥2.",
+                f"Only {num_df.shape[1] if not num_df.empty else 0} numeric column(s) found across datasets — need ≥2.",
             ), "Insufficient numeric columns."
 
         corr = num_df.corr()
@@ -1372,9 +1388,10 @@ class VisualizationEngine:
     @staticmethod
     def chart_annotated_complaint_surge(data_bundle: dict) -> tuple[go.Figure, str]:
         """IV: Date  DV: 311 Complaint Volume with Surge Annotations"""
-        df = VisualizationEngine._safe_df(data_bundle.get("complaints_311"))
+        # ramp_complaints spans 2018-present (multi-year); complaints_311 cache may be single-day
+        df = VisualizationEngine._safe_df(data_bundle.get("ramp_complaints"))
         if df.empty:
-            df = VisualizationEngine._safe_df(data_bundle.get("ramp_complaints"))
+            df = VisualizationEngine._safe_df(data_bundle.get("complaints_311"))
         if df.empty:
             return VisualizationEngine._empty_state(
                 "311 Complaint Surge Timeline with Anomaly Annotations"
@@ -1395,7 +1412,10 @@ class VisualizationEngine:
         daily = df.groupby(df[date_col].dt.date).size().reset_index()
         daily.columns = ["Date", "Complaints"]
         daily["Date"] = pd.to_datetime(daily["Date"])
-        daily = daily.sort_values("Date").tail(365)
+        daily = daily.sort_values("Date")
+        # Filter to last 365 calendar days from the most recent date in the data
+        _max_date = daily["Date"].max()
+        daily = daily[daily["Date"] >= _max_date - pd.Timedelta(days=365)]
 
         roll7 = daily["Complaints"].rolling(7, min_periods=1).mean()
         mean_v = roll7.mean()
@@ -1613,10 +1633,13 @@ class VisualizationEngine:
         _boro_rate(VisualizationEngine._safe_df(data_bundle.get("built")), "Repair Share %")
         _boro_rate(VisualizationEngine._safe_df(data_bundle.get("ramp_progress")), "Ramp Progress %")
         _boro_rate(VisualizationEngine._safe_df(data_bundle.get("complaints_311")), "311 Share %")
+        # dismissals has authoritative borough col; ramp_complaints also has borough
+        _boro_rate(VisualizationEngine._safe_df(data_bundle.get("dismissals")), "Dismissal Share %")
+        _boro_rate(VisualizationEngine._safe_df(data_bundle.get("ramp_complaints")), "Ramp Complaint %")
 
         # Only keep boroughs and metrics with data
         all_dims = ["Inspection Share %", "Violation Share %", "Repair Share %",
-                    "Ramp Progress %", "311 Share %"]
+                    "Ramp Progress %", "311 Share %", "Dismissal Share %", "Ramp Complaint %"]
         filled_dims = [d for d in all_dims if any(d in metrics[b] for b in _BORO_ORDER)]
 
         if not filled_dims:
@@ -1679,9 +1702,22 @@ class VisualizationEngine:
 
         df = df.copy()
         df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
-        weekly = df.dropna(subset=[date_col]).groupby(
-            df[date_col].dt.to_period("W").astype(str)
-        ).size().reset_index(name="Inspections")
+        df = df.dropna(subset=[date_col])
+        df = df[df[date_col] <= pd.Timestamp.now()]  # filter out future-dated records
+        if df.empty:
+            return VisualizationEngine._empty_state(
+                "HIQA Inspector Throughput (Inspections per Week)",
+                "No valid inspection dates after filtering future-dated records.",
+            ), "No valid date data."
+        weekly = (
+            df.set_index(date_col)
+            .resample("W")
+            .size()
+            .reset_index(name="Inspections")
+        )
+        weekly.columns = ["Week", "Inspections"]
+        # Convert Timestamps to ISO strings to avoid kaleido JSON serialization errors
+        weekly["Week"] = weekly["Week"].dt.strftime("%Y-%m-%d")
 
         x_num = np.arange(len(weekly))
         if len(x_num) >= 2:
@@ -1710,6 +1746,7 @@ class VisualizationEngine:
             "HIQA Inspector Throughput by Week (IV: Week → DV: Inspections Completed)",
             "Week", "Inspections Completed",
         )
+        fig.update_xaxes(nticks=15, tickangle=-45)
 
         mean_wk = float(weekly["Inspections"].mean())
         insight = (
