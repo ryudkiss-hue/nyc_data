@@ -46,6 +46,13 @@ def generate_pdf_report(
         from weasyprint import HTML
     except ImportError:
         raise ImportError("WeasyPrint required: pip install weasyprint")
+    except OSError as e:
+        # WeasyPrint is installed but its native Pango/GTK libraries are not
+        # (common on Windows). Surface as ImportError so callers degrade cleanly.
+        raise ImportError(
+            "WeasyPrint installed but native libraries missing (Pango/GTK). "
+            "On Windows install the GTK3 runtime; on Linux: apt install libpango-1.0-0."
+        ) from e
 
     tables_html = ""
     for name, df in dataframes.items():
