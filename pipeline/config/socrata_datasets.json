@@ -3,8 +3,8 @@
     "version": "5.4-capital",
     "created_at": "2026-06-22",
     "source": "Local Law 251 registry (maximal DOT + cross-agency essentials)",
-    "description": "All relevant DOT datasets w/ real columns + 311(filtered)/centerline/NTA/in-house resurfacing. Superseded historicals excluded. +gap-fill: demographics, heat-vuln, ped-crashes, trees, sidewalk-cafe, utility/street-cut permits, DOB sheds.",
-    "total_datasets": 117,
+    "description": "All relevant DOT datasets w/ real columns + 311(filtered)/centerline/NTA/in-house resurfacing. Superseded historicals excluded. +gap-fill: demographics, heat-vuln, ped-crashes, trees, sidewalk-cafe, utility/street-cut permits, DOB sheds. +2026-07-26: permit fee + related-agency joins (2025+, budget/conflict analysis).",
+    "total_datasets": 119,
     "last_regenerated": "registry-driven",
     "fk_graph": "auto-derived from registry columns (entity + geo hubs)",
     "deferred": "ct66-47at (bicycle_pedestrian_counts, 20.5M) \u2014 needs aggregated ingest (item 3)"
@@ -20,8 +20,8 @@
       "source": "socrata",
       "domain_schema": "sim_core",
       "ll251_name": "Sidewalk Management Database - Inspection",
-      "last_updated": "2026-06-21T12:09:05.000",
-      "registry_row_count": "399566",
+      "last_updated": "2026-07-25T12:10:07.000Z",
+      "registry_row_count": "400809",
       "column_count": 17,
       "registry_status": "OK"
     },
@@ -34,8 +34,8 @@
       "source": "socrata",
       "domain_schema": "accessibility",
       "ll251_name": "Sidewalk Management Database - Violations",
-      "last_updated": "2026-06-19T12:07:23.000",
-      "registry_row_count": "312928",
+      "last_updated": "2026-07-25T12:06:28.000Z",
+      "registry_row_count": "313445",
       "column_count": 27,
       "registry_status": "OK",
       "foreign_keys": [
@@ -54,8 +54,8 @@
       "source": "socrata",
       "domain_schema": "sim_core",
       "ll251_name": "Sidewalk Management Database - ReInspection",
-      "last_updated": "2026-06-18T12:09:31.000",
-      "registry_row_count": "36658",
+      "last_updated": "2026-07-25T12:10:17.000Z",
+      "registry_row_count": "36756",
       "column_count": 8,
       "registry_status": "OK"
     },
@@ -68,8 +68,8 @@
       "source": "socrata",
       "domain_schema": "overlays",
       "ll251_name": "Sidewalk Management Database - Lot Info",
-      "last_updated": "2026-06-17T17:17:25.000",
-      "registry_row_count": "1211601",
+      "last_updated": "2026-07-22T12:07:17.000Z",
+      "registry_row_count": "1212884",
       "column_count": 5,
       "registry_status": "OK",
       "borough_column": "boro"
@@ -83,7 +83,7 @@
       "source": "socrata",
       "domain_schema": "extended",
       "ll251_name": "Sidewalk Management Database - Built",
-      "last_updated": "2026-06-04T12:04:04.000",
+      "last_updated": "2026-06-04T12:04:04.000Z",
       "registry_row_count": "105990",
       "column_count": 14,
       "registry_status": "OK",
@@ -103,8 +103,8 @@
       "source": "socrata",
       "domain_schema": "sim_core",
       "ll251_name": "Sidewalk Dismissal Inspection Tracking",
-      "last_updated": "2026-06-02T13:43:41.000",
-      "registry_row_count": "85567",
+      "last_updated": "2026-07-07T14:12:52.000Z",
+      "registry_row_count": "86835",
       "column_count": 29,
       "registry_status": "OK",
       "foreign_keys": [
@@ -128,7 +128,7 @@
       "source": "socrata",
       "domain_schema": "overlays",
       "ll251_name": "Sidewalk Management Database - All Tree Damage (ATD)",
-      "last_updated": "2026-03-18T12:08:43.000",
+      "last_updated": "2026-03-18T12:08:43.000Z",
       "registry_row_count": "17661",
       "column_count": 13,
       "registry_status": "OK",
@@ -160,7 +160,7 @@
       "source": "socrata",
       "domain_schema": "coordination",
       "ll251_name": "Sidewalk Correspondences",
-      "last_updated": "2026-02-26T16:37:06.000",
+      "last_updated": "2026-02-26T16:37:06.000Z",
       "registry_row_count": "30726",
       "column_count": 27,
       "registry_status": "OK",
@@ -185,8 +185,8 @@
       "source": "socrata",
       "domain_schema": "accessibility",
       "ll251_name": "Pedestrian Ramp - Program Progress",
-      "last_updated": "2026-06-01T10:50:26.000",
-      "registry_row_count": "187546",
+      "last_updated": "2026-07-01T10:43:24.000Z",
+      "registry_row_count": "187574",
       "column_count": 13,
       "registry_status": "OK",
       "borough_column": "borough"
@@ -200,8 +200,8 @@
       "source": "socrata",
       "domain_schema": "accessibility",
       "ll251_name": "Pedestrian Ramp Complaints",
-      "last_updated": "2026-06-01T11:00:13.000",
-      "registry_row_count": "6051",
+      "last_updated": "2026-07-01T11:00:17.000Z",
+      "registry_row_count": "6143",
       "column_count": 15,
       "registry_status": "OK",
       "borough_column": "borough"
@@ -215,7 +215,7 @@
       "source": "socrata",
       "domain_schema": "accessibility",
       "ll251_name": "Pedestrian Ramp Locations",
-      "last_updated": "2021-10-27T15:26:30.000",
+      "last_updated": "2021-10-27T15:26:30.000Z",
       "registry_row_count": "217679",
       "column_count": 29,
       "registry_status": "OK",
@@ -230,8 +230,8 @@
       "source": "socrata",
       "domain_schema": "overlays",
       "ll251_name": "Curb Metal Protruding Data",
-      "last_updated": "2026-06-20T08:00:14.000",
-      "registry_row_count": "23506",
+      "last_updated": "2026-07-25T08:00:26.000Z",
+      "registry_row_count": "23579",
       "column_count": 17,
       "registry_status": "OK",
       "borough_column": "borough"
@@ -245,8 +245,8 @@
       "source": "socrata",
       "domain_schema": "extended",
       "ll251_name": "Step Streets Locations",
-      "last_updated": "2024-05-17T18:02:03.000",
-      "registry_row_count": "110",
+      "last_updated": "2026-07-10T15:26:47.000Z",
+      "registry_row_count": "111",
       "column_count": 4,
       "registry_status": "OK",
       "borough_column": "boro_cb"
@@ -260,8 +260,8 @@
       "source": "socrata",
       "domain_schema": "extended",
       "ll251_name": "Street Resurfacing Schedule",
-      "last_updated": "2026-06-22T15:02:04.000Z",
-      "registry_row_count": "312141",
+      "last_updated": "2026-07-25T15:02:42.000Z",
+      "registry_row_count": "318521",
       "column_count": 16,
       "registry_status": "OK",
       "borough_column": "boroughname"
@@ -275,7 +275,7 @@
       "source": "socrata",
       "domain_schema": "coordination",
       "ll251_name": "Sidewalk Weekly Construction Schedule",
-      "last_updated": "2017-11-01T13:57:47.000",
+      "last_updated": "2017-11-01T13:57:47.000Z",
       "registry_row_count": "75",
       "column_count": 4,
       "registry_status": "OK",
@@ -290,7 +290,7 @@
       "source": "socrata",
       "domain_schema": "extended",
       "ll251_name": "Pedestrian Mobility Plan Pedestrian Demand",
-      "last_updated": "2026-03-06T17:25:15.000",
+      "last_updated": "2026-03-06T17:25:15.000Z",
       "registry_row_count": "127277",
       "column_count": 20,
       "registry_status": "OK",
@@ -311,7 +311,7 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "VZV Enhanced Crossings",
-      "last_updated": "2026-06-01T10:35:31.000",
+      "last_updated": "2026-07-01T10:24:49.000Z",
       "registry_row_count": "197",
       "column_count": 6,
       "registry_status": "OK"
@@ -325,7 +325,7 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Holiday Construction Embargo- Intersection",
-      "last_updated": "2025-12-08T20:25:18.000",
+      "last_updated": "2025-12-08T20:25:18.000Z",
       "registry_row_count": "7544",
       "column_count": 10,
       "registry_status": "OK"
@@ -339,8 +339,8 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "VZV Street Improvement Projects (SIP) Corridor",
-      "last_updated": "2026-06-01T10:42:02.000",
-      "registry_row_count": "991",
+      "last_updated": "2026-07-01T10:30:03.000Z",
+      "registry_row_count": "996",
       "column_count": 5,
       "registry_status": "OK"
     },
@@ -353,9 +353,9 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Bi-Annual Pedestrian Counts",
-      "last_updated": "2026-04-21T14:11:27.000",
+      "last_updated": "2026-07-21T20:58:46.000Z",
       "registry_row_count": "114",
-      "column_count": 116,
+      "column_count": 119,
       "registry_status": "OK",
       "borough_column": "borough"
     },
@@ -368,7 +368,7 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Bikes in Buildings Requests",
-      "last_updated": "2026-06-03T17:03:11.000",
+      "last_updated": "2026-07-03T17:03:29.000Z",
       "registry_row_count": "2365",
       "column_count": 54,
       "registry_status": "OK",
@@ -392,7 +392,7 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "VZV Priority Intersections",
-      "last_updated": "2026-06-01T10:39:33.000",
+      "last_updated": "2026-07-01T10:27:54.000Z",
       "registry_row_count": "304",
       "column_count": 7,
       "registry_status": "OK"
@@ -406,8 +406,8 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Street Pavement Ratings",
-      "last_updated": "2026-06-01T10:18:20.000",
-      "registry_row_count": "502834",
+      "last_updated": "2026-07-01T10:15:36.000Z",
+      "registry_row_count": "508604",
       "column_count": 13,
       "registry_status": "OK",
       "borough_column": "boroughname"
@@ -421,7 +421,7 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "VZV Bike Priority Areas",
-      "last_updated": "2026-06-01T10:34:19.000",
+      "last_updated": "2026-07-01T10:24:24.000Z",
       "registry_row_count": "10",
       "column_count": 4,
       "registry_status": "OK"
@@ -435,7 +435,7 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Accessible Pedestrian Signal Locations",
-      "last_updated": "2026-06-18T15:30:13.000",
+      "last_updated": "2026-06-18T15:30:13.000Z",
       "registry_row_count": "4207",
       "column_count": 22,
       "registry_status": "OK",
@@ -450,7 +450,7 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Parking Permit for People with Disabilities (PPPD) - State",
-      "last_updated": "2026-03-12T19:29:59.000",
+      "last_updated": "2026-03-12T19:29:59.000Z",
       "registry_row_count": "684220",
       "column_count": 7,
       "registry_status": "OK"
@@ -464,8 +464,8 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "VZV Leading Pedestrian Interval Signals",
-      "last_updated": "2026-06-01T10:36:56.000",
-      "registry_row_count": "6765",
+      "last_updated": "2026-07-01T10:25:49.000Z",
+      "registry_row_count": "6778",
       "column_count": 8,
       "registry_status": "OK"
     },
@@ -478,8 +478,8 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Seating Locations",
-      "last_updated": "2026-06-05T19:21:18.000",
-      "registry_row_count": "3546",
+      "last_updated": "2026-07-10T18:29:16.000Z",
+      "registry_row_count": "3562",
       "column_count": 29,
       "registry_status": "OK",
       "borough_column": "borocode"
@@ -493,7 +493,7 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "VZV Safe Streets For Seniors",
-      "last_updated": "2026-06-01T10:40:44.000",
+      "last_updated": "2026-07-01T10:28:33.000Z",
       "registry_row_count": "34",
       "column_count": 4,
       "registry_status": "OK"
@@ -507,8 +507,8 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Exclusive Pedestrian Signal (Barnes Dance) Locations",
-      "last_updated": "2026-04-03T20:16:07.000",
-      "registry_row_count": "735",
+      "last_updated": "2026-07-15T19:43:09.000Z",
+      "registry_row_count": "737",
       "column_count": 25,
       "registry_status": "OK",
       "borough_column": "borocode"
@@ -522,7 +522,7 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Street Direction Change Requests (2019 - Present)",
-      "last_updated": "2025-05-22T14:17:57.000",
+      "last_updated": "2025-05-22T14:17:57.000Z",
       "registry_row_count": "260",
       "column_count": 6,
       "registry_status": "OK",
@@ -537,7 +537,7 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "VZV Street Improvement Projects (SIP) Intersections",
-      "last_updated": "2026-06-01T10:42:29.000",
+      "last_updated": "2026-07-01T10:30:54.000Z",
       "registry_row_count": "424",
       "column_count": 8,
       "registry_status": "OK"
@@ -551,8 +551,8 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Street Construction Permits - Cranes",
-      "last_updated": "2026-06-22T12:23:30.000Z",
-      "registry_row_count": "52036",
+      "last_updated": "2026-07-25T12:19:35.000Z",
+      "registry_row_count": "52343",
       "column_count": 5,
       "registry_status": "OK"
     },
@@ -565,7 +565,7 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Bicycle Parking Shelters",
-      "last_updated": "2025-12-09T16:17:19.000",
+      "last_updated": "2025-12-09T16:17:19.000Z",
       "registry_row_count": "17",
       "column_count": 16,
       "registry_status": "OK",
@@ -580,8 +580,8 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Protected Streets Intersection (Dataset)",
-      "last_updated": "2026-06-22T12:18:04.000Z",
-      "registry_row_count": "12112",
+      "last_updated": "2026-07-20T12:17:55.000Z",
+      "registry_row_count": "12197",
       "column_count": 7,
       "registry_status": "OK"
     },
@@ -594,8 +594,8 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Bicycle and Pedestrian Count Sensors",
-      "last_updated": "2026-06-22T13:27:46.000Z",
-      "registry_row_count": "66",
+      "last_updated": "2026-07-25T12:00:08.000Z",
+      "registry_row_count": "67",
       "column_count": 16,
       "registry_status": "OK"
     },
@@ -608,7 +608,7 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "NYC DOT Pedestrian Plazas - Point Feature",
-      "last_updated": "2025-12-05T21:33:01.000",
+      "last_updated": "2025-12-05T21:33:01.000Z",
       "registry_row_count": "90",
       "column_count": 24,
       "registry_status": "OK",
@@ -623,7 +623,7 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Shared E-Scooter Parking Corrals",
-      "last_updated": "2026-06-08T20:36:02.000",
+      "last_updated": "2026-06-08T20:36:02.000Z",
       "registry_row_count": "487",
       "column_count": 7,
       "registry_status": "OK",
@@ -638,7 +638,7 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Pedestrian Space Added",
-      "last_updated": "2026-03-03T20:34:20.000",
+      "last_updated": "2026-03-03T20:34:20.000Z",
       "registry_row_count": "60",
       "column_count": 9,
       "registry_status": "OK",
@@ -653,7 +653,7 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Parking Permit for People with Disabilities (PPPD) - City",
-      "last_updated": "2026-03-17T21:09:19.000",
+      "last_updated": "2026-03-17T21:09:19.000Z",
       "registry_row_count": "1299635",
       "column_count": 8,
       "registry_status": "OK"
@@ -667,8 +667,8 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Street Closures due to Construction Activities by Block",
-      "last_updated": "2026-06-22T12:18:40.000Z",
-      "registry_row_count": "3433",
+      "last_updated": "2026-07-20T12:18:30.000Z",
+      "registry_row_count": "3827",
       "column_count": 11,
       "registry_status": "OK"
     },
@@ -681,7 +681,7 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "VZV Street Team Flyers",
-      "last_updated": "2026-06-01T10:46:10.000",
+      "last_updated": "2026-07-01T10:37:14.000Z",
       "registry_row_count": "886",
       "column_count": 7,
       "registry_status": "OK"
@@ -695,8 +695,8 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Intercity Bus Stop Permits",
-      "last_updated": "2026-06-01T05:30:12.000",
-      "registry_row_count": "2957",
+      "last_updated": "2026-07-01T05:30:15.000Z",
+      "registry_row_count": "2975",
       "column_count": 21,
       "registry_status": "OK",
       "borough_column": "boroughname"
@@ -710,8 +710,8 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Street Closures due to Construction Activities by Block and Intersection",
-      "last_updated": "2026-06-22T11:51:38.000Z",
-      "registry_row_count": "473036",
+      "last_updated": "2026-07-20T11:52:31.000Z",
+      "registry_row_count": "476236",
       "column_count": 9,
       "registry_status": "OK",
       "borough_column": "boroughname"
@@ -725,8 +725,8 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Open Streets Locations",
-      "last_updated": "2026-06-12T16:11:51.000",
-      "registry_row_count": "379",
+      "last_updated": "2026-07-01T10:17:02.000Z",
+      "registry_row_count": "391",
       "column_count": 29,
       "registry_status": "OK",
       "borough_column": "boroughname"
@@ -740,7 +740,7 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Parking Meters - ParkNYC Block Faces",
-      "last_updated": "2026-06-01T10:30:28.000",
+      "last_updated": "2026-07-01T10:19:16.000Z",
       "registry_row_count": "11185",
       "column_count": 18,
       "registry_status": "OK",
@@ -755,8 +755,8 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "DOT In-house Street Resurfacing Projects",
-      "last_updated": "2026-06-15T07:13:56.000",
-      "registry_row_count": "603599",
+      "last_updated": "2026-07-15T07:16:23.000Z",
+      "registry_row_count": "605760",
       "column_count": 21,
       "registry_status": "OK"
     },
@@ -769,8 +769,8 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Protected Streets Block (Dataset)",
-      "last_updated": "2026-06-22T12:17:33.000Z",
-      "registry_row_count": "24483",
+      "last_updated": "2026-07-20T12:17:18.000Z",
+      "registry_row_count": "24556",
       "column_count": 9,
       "registry_status": "OK"
     },
@@ -783,8 +783,8 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Bicycle Parking",
-      "last_updated": "2026-06-05T19:13:23.000",
-      "registry_row_count": "47267",
+      "last_updated": "2026-07-10T18:26:59.000Z",
+      "registry_row_count": "47534",
       "column_count": 29,
       "registry_status": "OK",
       "borough_column": "borocode"
@@ -798,8 +798,8 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Street Closures due to Construction Activities by Intersection",
-      "last_updated": "2026-06-22T12:19:05.000Z",
-      "registry_row_count": "1204",
+      "last_updated": "2026-07-20T12:18:58.000Z",
+      "registry_row_count": "1590",
       "column_count": 14,
       "registry_status": "OK"
     },
@@ -812,7 +812,7 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Bus Lanes - Local Streets",
-      "last_updated": "2026-04-06T15:44:03.000",
+      "last_updated": "2026-04-06T15:44:03.000Z",
       "registry_row_count": "4068",
       "column_count": 29,
       "registry_status": "OK",
@@ -827,8 +827,8 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Street Pothole Work Orders - Closed (Dataset)",
-      "last_updated": "2026-05-29T14:52:33.000",
-      "registry_row_count": "404416",
+      "last_updated": "2026-07-01T14:27:40.000Z",
+      "registry_row_count": "407242",
       "column_count": 15,
       "registry_status": "OK",
       "borough_column": "boro"
@@ -842,8 +842,8 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "New York City Bike Routes",
-      "last_updated": "2025-08-18T15:46:02.000",
-      "registry_row_count": "28983",
+      "last_updated": "2026-07-24T17:01:06.000Z",
+      "registry_row_count": "29695",
       "column_count": 25,
       "registry_status": "OK",
       "borough_column": "boro"
@@ -857,7 +857,7 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Carshare Locations - Curbside",
-      "last_updated": "2025-10-15T14:30:39.000",
+      "last_updated": "2025-10-15T14:30:39.000Z",
       "registry_row_count": "353",
       "column_count": 18,
       "registry_status": "OK",
@@ -872,8 +872,8 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Street and Highway Capital Reconstruction Projects - Intersection",
-      "last_updated": "2026-06-01T13:31:56.000",
-      "registry_row_count": "7817",
+      "last_updated": "2026-07-01T13:43:07.000Z",
+      "registry_row_count": "7854",
       "column_count": 30,
       "registry_status": "OK",
       "borough_column": "boroughnam"
@@ -887,7 +887,7 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Temporary Parking Permit for People with Disabilities - On Street",
-      "last_updated": "2026-03-17T15:32:04.000",
+      "last_updated": "2026-03-17T15:32:04.000Z",
       "registry_row_count": "22178",
       "column_count": 7,
       "registry_status": "OK"
@@ -901,7 +901,7 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Street Seats (2021 - 2024)",
-      "last_updated": "2023-04-03T18:36:02.000",
+      "last_updated": "2023-04-03T18:36:02.000Z",
       "registry_row_count": "45",
       "column_count": 29,
       "registry_status": "OK",
@@ -926,7 +926,7 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Holiday Construction Embargo - Block",
-      "last_updated": "2025-12-08T20:23:54.000",
+      "last_updated": "2025-12-08T20:23:54.000Z",
       "registry_row_count": "14652",
       "column_count": 6,
       "registry_status": "OK"
@@ -940,8 +940,8 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Street and Highway Capital Reconstruction Projects - Block",
-      "last_updated": "2026-06-12T16:11:15.000",
-      "registry_row_count": "12056",
+      "last_updated": "2026-07-01T10:01:34.000Z",
+      "registry_row_count": "0",
       "column_count": 27,
       "registry_status": "OK",
       "borough_column": "boroughnam"
@@ -955,7 +955,7 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Street Network Changes",
-      "last_updated": "2025-06-02T14:20:31.000",
+      "last_updated": "2025-06-02T14:20:31.000Z",
       "registry_row_count": "281",
       "column_count": 8,
       "registry_status": "OK",
@@ -970,8 +970,8 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Newsrack Inspections",
-      "last_updated": "2026-06-01T05:35:18.000",
-      "registry_row_count": "6859",
+      "last_updated": "2026-07-01T05:35:12.000Z",
+      "registry_row_count": "6912",
       "column_count": 16,
       "registry_status": "OK",
       "borough_column": "boroughname"
@@ -985,7 +985,7 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "NYC DOT Pedestrian Plazas - Polygon",
-      "last_updated": "2026-06-01T10:00:51.000",
+      "last_updated": "2026-07-01T10:01:09.000Z",
       "registry_row_count": "93",
       "column_count": 19,
       "registry_status": "OK",
@@ -1000,8 +1000,8 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Encroachments and Defacements",
-      "last_updated": "2026-06-01T17:11:15.000",
-      "registry_row_count": "1347057",
+      "last_updated": "2026-07-01T17:06:57.000Z",
+      "registry_row_count": "1369037",
       "column_count": 25,
       "registry_status": "OK",
       "borough_column": "boro"
@@ -1016,9 +1016,9 @@
       "domain_schema": "crossagency",
       "soql_where": "$where=complaint_type IN ('Sidewalk Condition','Curb Condition','Root/Sewer/Sidewalk Condition','DEP Sidewalk Condition')",
       "ll251_name": "311 Service Requests from 2020 to Present",
-      "last_updated": "2026-06-23T01:36:50.000Z",
+      "last_updated": "2026-07-25T01:36:45.000",
       "registry_row_count": 0,
-      "column_count": 48,
+      "column_count": 0,
       "registry_status": "OK",
       "foreign_keys": [
         {
@@ -1037,9 +1037,9 @@
       "source": "socrata",
       "domain_schema": "crossagency",
       "ll251_name": "Centerline",
-      "last_updated": "2026-06-20T09:43:34.000",
-      "registry_row_count": "122248",
-      "column_count": 64,
+      "last_updated": "2026-07-19T03:38:41.000",
+      "registry_row_count": "122243",
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1053,7 +1053,7 @@
       "ll251_name": "2020 Neighborhood Tabulation Areas (NTAs)",
       "last_updated": "2026-05-28T15:11:19.000",
       "registry_row_count": "262",
-      "column_count": 12,
+      "column_count": 0,
       "registry_status": "OK",
       "borough_column": "borocode"
     },
@@ -1074,7 +1074,7 @@
       ],
       "last_updated": "2015-02-17T16:42:28.000",
       "registry_row_count": "197",
-      "column_count": 8,
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1088,7 +1088,7 @@
       "ll251_name": "Heat Vulnerability Index Rankings",
       "last_updated": "2024-09-19T14:16:07.000",
       "registry_row_count": "184",
-      "column_count": 2,
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1104,7 +1104,7 @@
       "borough_column": "borough",
       "last_updated": "2026-06-15T23:05:47.000",
       "registry_row_count": "2269187",
-      "column_count": 33,
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1125,7 +1125,7 @@
       ],
       "last_updated": "2026-06-15T23:35:37.000",
       "registry_row_count": "5984110",
-      "column_count": 21,
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1139,7 +1139,7 @@
       "ll251_name": "nysidewalkcafe",
       "last_updated": "2024-03-05T20:14:45.000",
       "registry_row_count": "20065",
-      "column_count": 3,
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1164,7 +1164,7 @@
       "borough_column": "borocode",
       "last_updated": "2017-10-04T13:41:26.000",
       "registry_row_count": "683788",
-      "column_count": 45,
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1176,9 +1176,9 @@
       "source": "socrata",
       "domain_schema": "overlays",
       "ll251_name": "Forestry Inspections",
-      "last_updated": "2026-06-16T17:13:51.000",
-      "registry_row_count": "1953442",
-      "column_count": 30,
+      "last_updated": "2026-07-14T15:44:31.000",
+      "registry_row_count": "1973915",
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1190,9 +1190,9 @@
       "source": "socrata",
       "domain_schema": "crossagency",
       "ll251_name": "Water and Sewer Permits",
-      "last_updated": "2026-06-16T17:01:10.000",
-      "registry_row_count": "348541",
-      "column_count": 8,
+      "last_updated": "2026-07-21T17:01:03.000",
+      "registry_row_count": "362575",
+      "column_count": 0,
       "registry_status": "OK",
       "borough_column": "propertyborough"
     },
@@ -1206,8 +1206,8 @@
       "domain_schema": "coordination",
       "ll251_name": "Street Construction Permits (2022 - Present)",
       "borough_column": "boroughname",
-      "last_updated": "2026-06-22T21:38:04.000Z",
-      "registry_row_count": "3714896",
+      "last_updated": "2026-07-25T20:56:28.000Z",
+      "registry_row_count": "3785323",
       "column_count": 39,
       "registry_status": "OK"
     },
@@ -1221,9 +1221,9 @@
       "domain_schema": "crossagency",
       "ll251_name": "DOB Stalled Construction Sites",
       "borough_column": "borough_name",
-      "last_updated": "2026-06-22T20:03:43.000Z",
-      "registry_row_count": "1440725",
-      "column_count": 8,
+      "last_updated": "2026-07-24T20:01:42.000",
+      "registry_row_count": "1445327",
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1237,7 +1237,7 @@
       "ll251_name": "NYC Planimetric Database: Sidewalk",
       "last_updated": "2024-04-24T20:20:22.000",
       "registry_row_count": "50865",
-      "column_count": 7,
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1251,7 +1251,7 @@
       "ll251_name": "NYC Planimetric Database: Curbs",
       "last_updated": "2024-04-24T20:45:48.000",
       "registry_row_count": "217662",
-      "column_count": 6,
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1265,7 +1265,7 @@
       "ll251_name": "NYC Planimetric Database: Roadbed",
       "last_updated": "2024-04-24T20:25:27.000",
       "registry_row_count": "104961",
-      "column_count": 7,
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1279,7 +1279,7 @@
       "ll251_name": "NYC Planimetric Database: Median",
       "last_updated": "2024-04-24T20:28:44.000",
       "registry_row_count": "19346",
-      "column_count": 8,
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1293,7 +1293,7 @@
       "ll251_name": "NYC Planimetric Database: Boardwalk",
       "last_updated": "2024-04-24T20:33:12.000",
       "registry_row_count": "139",
-      "column_count": 7,
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1307,7 +1307,7 @@
       "ll251_name": "NYC Planimetric Database: Open Space (Parks)",
       "last_updated": "2024-04-25T16:50:22.000",
       "registry_row_count": "13205",
-      "column_count": 11,
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1321,7 +1321,7 @@
       "ll251_name": "NYC Planimetric Database: Elevation Points",
       "last_updated": "2024-04-24T20:50:47.000",
       "registry_row_count": "1471855",
-      "column_count": 6,
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1333,7 +1333,7 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "VZV Arterial Slow Zones",
-      "last_updated": "2026-06-01T10:33:28.000",
+      "last_updated": "2026-07-01T10:22:44.000Z",
       "registry_row_count": "28",
       "column_count": 5,
       "registry_status": "OK"
@@ -1347,7 +1347,7 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "VZV Neighborhood Slow Zones",
-      "last_updated": "2026-06-01T10:37:38.000",
+      "last_updated": "2026-07-01T10:26:21.000Z",
       "registry_row_count": "28",
       "column_count": 5,
       "registry_status": "OK"
@@ -1361,7 +1361,7 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "VZV Priority Corridors",
-      "last_updated": "2026-06-01T10:39:06.000",
+      "last_updated": "2026-07-01T10:27:29.000Z",
       "registry_row_count": "199",
       "column_count": 2,
       "registry_status": "OK"
@@ -1375,7 +1375,7 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "VZV Priority Zones or Areas",
-      "last_updated": "2026-06-01T10:40:14.000",
+      "last_updated": "2026-07-01T10:28:12.000Z",
       "registry_row_count": "5",
       "column_count": 4,
       "registry_status": "OK"
@@ -1389,8 +1389,8 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "VZV Speed Humps",
-      "last_updated": "2026-06-01T10:42:59.000",
-      "registry_row_count": "4275",
+      "last_updated": "2026-07-01T10:31:24.000Z",
+      "registry_row_count": "4312",
       "column_count": 8,
       "registry_status": "OK"
     },
@@ -1403,8 +1403,8 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Speed Reducer Tracking System (SRTS)",
-      "last_updated": "2026-06-19T06:00:51.000",
-      "registry_row_count": "59525",
+      "last_updated": "2026-07-25T06:00:49.000Z",
+      "registry_row_count": "59939",
       "column_count": 43,
       "registry_status": "OK"
     },
@@ -1417,7 +1417,7 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "VZV Speed Limits",
-      "last_updated": "2026-06-01T10:44:58.000",
+      "last_updated": "2026-07-01T10:33:50.000Z",
       "registry_row_count": "141444",
       "column_count": 5,
       "registry_status": "OK"
@@ -1431,8 +1431,8 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "VZV Turn Traffic Calming",
-      "last_updated": "2026-06-01T10:47:49.000",
-      "registry_row_count": "1493",
+      "last_updated": "2026-07-01T10:39:04.000Z",
+      "registry_row_count": "1495",
       "column_count": 7,
       "registry_status": "OK"
     },
@@ -1445,7 +1445,7 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "VZV Signal Timing/25MPH Signal Retiming",
-      "last_updated": "2026-06-01T10:41:37.000",
+      "last_updated": "2026-07-01T10:29:29.000Z",
       "registry_row_count": "444",
       "column_count": 6,
       "registry_status": "OK"
@@ -1459,8 +1459,8 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "VZV Senior Centers",
-      "last_updated": "2026-06-01T10:41:14.000",
-      "registry_row_count": "2317",
+      "last_updated": "2026-07-01T10:29:02.000Z",
+      "registry_row_count": "2340",
       "column_count": 8,
       "registry_status": "OK"
     },
@@ -1473,7 +1473,7 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "VZV Workshops Locations",
-      "last_updated": "2026-06-01T10:48:12.000",
+      "last_updated": "2026-07-01T10:40:37.000Z",
       "registry_row_count": "9",
       "column_count": 8,
       "registry_status": "OK"
@@ -1489,7 +1489,7 @@
       "ll251_name": "Vision Zero Base Report",
       "last_updated": "2017-09-18T20:45:27.000",
       "registry_row_count": "771",
-      "column_count": 59,
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1501,8 +1501,8 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Raised Crosswalk Locations",
-      "last_updated": "2026-06-02T12:33:03.000",
-      "registry_row_count": "143",
+      "last_updated": "2026-07-06T13:13:10.000Z",
+      "registry_row_count": "144",
       "column_count": 11,
       "registry_status": "OK"
     },
@@ -1517,7 +1517,7 @@
       "ll251_name": "NYC Planimetric Database: Public Plazas",
       "last_updated": "2024-04-24T20:43:26.000",
       "registry_row_count": "1762",
-      "column_count": 7,
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1531,7 +1531,7 @@
       "ll251_name": "Privately Owned Public Spaces (POPS)",
       "last_updated": "2025-10-14T16:23:32.000",
       "registry_row_count": "392",
-      "column_count": 39,
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1543,7 +1543,7 @@
       "source": "socrata",
       "domain_schema": "dot",
       "ll251_name": "Bus Stop Shelters",
-      "last_updated": "2025-10-14T20:29:33.000",
+      "last_updated": "2025-10-14T20:29:33.000Z",
       "registry_row_count": "3381",
       "column_count": 18,
       "registry_status": "OK"
@@ -1559,7 +1559,7 @@
       "ll251_name": "Walk to a Park Service Area",
       "last_updated": "2023-07-19T19:58:47.000",
       "registry_row_count": "1",
-      "column_count": 3,
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1573,7 +1573,7 @@
       "ll251_name": "MBPO Pedestrian Ramp Report",
       "last_updated": "2021-08-02T16:45:46.000",
       "registry_row_count": "277",
-      "column_count": 24,
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1592,9 +1592,9 @@
           "references": "street_and_highway_capital_reconstruction_projec.fmsid"
         }
       ],
-      "last_updated": "2026-06-15T13:41:08.000",
-      "registry_row_count": "50595",
-      "column_count": 27,
+      "last_updated": "2026-07-15T17:26:31.000",
+      "registry_row_count": "56525",
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1608,7 +1608,7 @@
       "ll251_name": "Capital Projects Database (CPDB) - Projects",
       "last_updated": "2026-05-26T19:59:01.000",
       "registry_row_count": "12587",
-      "column_count": 51,
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1622,7 +1622,7 @@
       "ll251_name": "Capital Projects Database (CPDB) - Projects (Points)",
       "last_updated": "2026-05-26T20:03:01.000",
       "registry_row_count": "2747",
-      "column_count": 52,
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1636,7 +1636,7 @@
       "ll251_name": "Capital Projects Database (CPDB) - Projects (Polygons)",
       "last_updated": "2026-05-26T19:58:42.000",
       "registry_row_count": "1753",
-      "column_count": 52,
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1650,7 +1650,7 @@
       "ll251_name": "Capital Projects Database (CPDB) - Commitments",
       "last_updated": "2026-05-26T19:58:59.000",
       "registry_row_count": "37968",
-      "column_count": 22,
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1662,9 +1662,9 @@
       "source": "socrata",
       "domain_schema": "coordination",
       "ll251_name": "Capital Projects Dashboard - Citywide Budget and Spend by Fiscal Year",
-      "last_updated": "2026-05-04T17:38:35.000",
-      "registry_row_count": "257384",
-      "column_count": 8,
+      "last_updated": "2026-07-15T17:26:16.000",
+      "registry_row_count": "288446",
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1676,9 +1676,9 @@
       "source": "socrata",
       "domain_schema": "coordination",
       "ll251_name": "Capital Projects Dashboard - Citywide Budget Spend History and Variance",
-      "last_updated": "2026-05-04T17:37:46.000",
-      "registry_row_count": "47675",
-      "column_count": 8,
+      "last_updated": "2026-07-15T17:25:33.000",
+      "registry_row_count": "53495",
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1690,9 +1690,9 @@
       "source": "socrata",
       "domain_schema": "coordination",
       "ll251_name": "Capital Projects Dashboard - Citywide Schedule History and Variance",
-      "last_updated": "2026-05-04T17:37:52.000",
-      "registry_row_count": "20195",
-      "column_count": 10,
+      "last_updated": "2026-07-15T17:25:49.000",
+      "registry_row_count": "22464",
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1706,7 +1706,7 @@
       "ll251_name": "State of Good Repair Needs",
       "last_updated": "2025-06-17T18:09:19.000",
       "registry_row_count": "43063",
-      "column_count": 14,
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1720,7 +1720,7 @@
       "ll251_name": "Interagency Coordination and Construction Permits Data (MOSYS)",
       "last_updated": "2021-06-24T19:35:14.000",
       "registry_row_count": "952",
-      "column_count": 56,
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1734,7 +1734,7 @@
       "ll251_name": "Capital Commitment Plan",
       "last_updated": "2026-05-15T19:41:32.000",
       "registry_row_count": "59077",
-      "column_count": 13,
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1748,7 +1748,7 @@
       "ll251_name": "Capital Commitment Actuals",
       "last_updated": "2025-12-04T15:47:10.000",
       "registry_row_count": "864",
-      "column_count": 6,
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1760,9 +1760,9 @@
       "source": "socrata",
       "domain_schema": "coordination",
       "ll251_name": "Capital Budget",
-      "last_updated": "2026-05-15T19:48:33.000",
-      "registry_row_count": "15742",
-      "column_count": 11,
+      "last_updated": "2026-07-13T17:58:42.000",
+      "registry_row_count": "16491",
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1776,7 +1776,7 @@
       "ll251_name": "Capital Project Detail Data - Dollars",
       "last_updated": "2023-10-27T16:03:35.000",
       "registry_row_count": "72437",
-      "column_count": 30,
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1790,7 +1790,7 @@
       "ll251_name": "Capital Project Detail Data - Milestones",
       "last_updated": "2023-10-27T16:03:47.000",
       "registry_row_count": "497727",
-      "column_count": 12,
+      "column_count": 0,
       "registry_status": "OK"
     },
     {
@@ -1804,7 +1804,49 @@
       "ll251_name": "Ten-Year Capital Strategy",
       "last_updated": "2025-05-06T16:02:08.000",
       "registry_row_count": "2255",
-      "column_count": 17,
+      "column_count": 0,
+      "registry_status": "OK"
+    },
+    {
+      "id": 133,
+      "name": "street_construction_permit_fees",
+      "socrata_id": "9fnm-j6if",
+      "row_count": 0,
+      "primary_key": "permitnumber",
+      "source": "socrata",
+      "domain_schema": "coordination",
+      "ll251_name": "Street Construction Permits - Fee",
+      "soql_where": "createdon >= '2025-01-01T00:00:00'",
+      "foreign_keys": [
+        {
+          "column": "permitnumber",
+          "references": "street_construction_permits.permitnumber"
+        }
+      ],
+      "last_updated": "2026-07-25T12:18:57.000Z",
+      "registry_row_count": "13293703",
+      "column_count": 5,
+      "registry_status": "OK"
+    },
+    {
+      "id": 134,
+      "name": "street_construction_permit_related_agency",
+      "socrata_id": "cj3v-xdpd",
+      "row_count": 0,
+      "primary_key": "permitnumber",
+      "source": "socrata",
+      "domain_schema": "coordination",
+      "ll251_name": "Street Construction Permits - Related Agency",
+      "soql_where": "createdon >= '2025-01-01T00:00:00'",
+      "foreign_keys": [
+        {
+          "column": "permitnumber",
+          "references": "street_construction_permits.permitnumber"
+        }
+      ],
+      "last_updated": "2026-07-25T12:22:49.000Z",
+      "registry_row_count": "3290706",
+      "column_count": 5,
       "registry_status": "OK"
     }
   ]

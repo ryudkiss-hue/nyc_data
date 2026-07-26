@@ -73,3 +73,6 @@ pytest_*.txt
 
 # Generated report/export artifacts
 exports/
+
+# Local DuckDB backups (solo-workstation deployment)
+backups/

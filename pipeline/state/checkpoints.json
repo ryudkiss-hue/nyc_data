@@ -808,5 +808,95 @@
     "rows_failed": 0,
     "duration_seconds": 0.0,
     "error_message": "Zero Socrata datasets loaded"
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-07-26T03:11:15.069884",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "started",
+    "timestamp": "2026-07-26T03:11:15.069887",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.0,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-07-26T03:17:43.957309",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "started",
+    "timestamp": "2026-07-26T03:17:43.957315",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.0,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-07-26T04:43:16.789732",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "completed",
+    "timestamp": "2026-07-26T04:43:16.789740",
+    "rows_processed": 12108147,
+    "rows_failed": 0,
+    "duration_seconds": 4247.903101205826,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "stage_datasets_2026-07-26T05:54:04.732813",
+    "stage_name": "stage_datasets",
+    "status": "completed",
+    "timestamp": "2026-07-26T05:54:04.732831",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 384.3742961883545,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "build_analytics_schemas_2026-07-26T06:00:29.178919",
+    "stage_name": "build_analytics_schemas",
+    "status": "completed",
+    "timestamp": "2026-07-26T06:00:29.178938",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.12755846977233887,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "materialize_metrics_2026-07-26T06:00:29.321575",
+    "stage_name": "materialize_metrics",
+    "status": "completed",
+    "timestamp": "2026-07-26T06:00:29.321589",
+    "rows_processed": 13,
+    "rows_failed": 0,
+    "duration_seconds": 0.48852992057800293,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "verify_gates_2026-07-26T06:00:29.828091",
+    "stage_name": "verify_gates",
+    "status": "completed",
+    "timestamp": "2026-07-26T06:00:29.828106",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.12465119361877441,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "ingest_remaining_socrata_2026-07-26T13:34:06.429420",
+    "stage_name": "ingest_remaining_socrata",
+    "status": "completed",
+    "timestamp": "2026-07-26T13:34:06.429428",
+    "rows_processed": 1671470,
+    "rows_failed": 0,
+    "duration_seconds": 7403.250587463379,
+    "error_message": null
+  },
+  {
+    "checkpoint_id": "stage_datasets_2026-07-26T15:37:29.689613",
+    "stage_name": "stage_datasets",
+    "status": "started",
+    "timestamp": "2026-07-26T15:37:29.689622",
+    "rows_processed": 0,
+    "rows_failed": 0,
+    "duration_seconds": 0.0,
+    "error_message": null
   }
 ]

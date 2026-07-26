@@ -325,9 +325,6 @@ CREATE OR REPLACE TABLE staging."privately_owned_public_spaces_pops" AS SELECT *
 -- bus_stop_shelters: geometry table -> promote as-is
 CREATE OR REPLACE TABLE staging."bus_stop_shelters" AS SELECT * FROM raw."bus_stop_shelters";
 
--- bicycle_pedestrian_counts (ct66, 20.5M) is ingested as a daily aggregate
--- (raw.bicycle_pedestrian_counts_daily), not staged here. See pipeline/ingest_ct66_daily.py.
-
 -- walk_to_a_park_service_area: geometry table -> promote as-is
 CREATE OR REPLACE TABLE staging."walk_to_a_park_service_area" AS SELECT * FROM raw."walk_to_a_park_service_area";
 
@@ -390,3 +387,7 @@ QUALIFY ROW_NUMBER() OVER (PARTITION BY "project_id" ORDER BY 1 DESC) = 1;
 
 -- ten_year_capital_strategy: no natural key -> promote as-is
 CREATE OR REPLACE TABLE staging."ten_year_capital_strategy" AS SELECT * FROM raw."ten_year_capital_strategy";
+
+-- street_construction_permit_fees: not present in raw schema yet -> skipped
+
+-- street_construction_permit_related_agency: not present in raw schema yet -> skipped
