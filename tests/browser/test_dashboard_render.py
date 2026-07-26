@@ -119,6 +119,8 @@ class TestSidebarNav:
                 re.IGNORECASE,
             )
         )
+        # .count() does not auto-wait; give Dash time to hydrate the sidebar first
+        expect(nav.first).to_be_attached(timeout=15_000)
         count = nav.count()
         assert count >= 8, (
             f"Expected ≥8 sidebar nav links, found {count}. "
