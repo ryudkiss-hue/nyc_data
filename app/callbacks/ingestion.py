@@ -35,16 +35,25 @@ def initialize_pipeline(n_clicks, token_list, limit_list, version_list):
     if not n_clicks or not any(n_clicks) or ingestion_status["active"]:
         return no_update, [False] * len(n_clicks) if not ingestion_status["active"] else no_update
 
-    token = token_list[0] if token_list else os.getenv("SOCRATA_APP_TOKEN", "")
+    token = (token_list[0] if token_list and token_list[0] else None) or os.getenv("SOCRATA_APP_TOKEN", "")
     limit = limit_list[0] if limit_list else 5000
     version = version_list[0] if version_list else "3.0"
 
-    val = int(limit or 5000)
+    try:
+        val = int(limit or 5000)
+    except (TypeError, ValueError):
+        val = 5000
     actual_limit = -1 if val <= 0 else val
 
-    thread = threading.Thread(target=run_ingestion_background, args=(token, actual_limit, version))
-    thread.daemon = True
-    thread.start()
+    # Never let an exception escape: a raised error here surfaces as an opaque
+    # HTTP 500 in the browser console on every page holding an init button.
+    try:
+        thread = threading.Thread(target=run_ingestion_background, args=(token, actual_limit, version))
+        thread.daemon = True
+        thread.start()
+    except Exception as e:
+        ingestion_status["error"] = str(e)
+        return no_update, [False] * len(n_clicks)
 
     return no_update, [True] * len(n_clicks)
 
