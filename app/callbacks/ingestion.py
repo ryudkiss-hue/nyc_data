@@ -33,8 +33,12 @@ def run_ingestion_background(token, limit, version):
         ingestion_status["active"] = False
 
 def initialize_pipeline(n_clicks, token_list, limit_list, version_list):
+    # NB: the second element must ALWAYS be a list — it feeds a pattern-matching
+    # (dash.ALL) Output. Returning a bare no_update there, as this once did via
+    # an ambiguous ternary, makes Dash raise while serializing outputs, which
+    # surfaces as an opaque HTTP 500 in the browser console.
     if not n_clicks or not any(n_clicks) or ingestion_status["active"]:
-        return no_update, [False] * len(n_clicks) if not ingestion_status["active"] else no_update
+        return no_update, [bool(ingestion_status["active"])] * len(n_clicks or [])
 
     token = (token_list[0] if token_list and token_list[0] else None) or os.getenv("SOCRATA_APP_TOKEN", "")
     limit = limit_list[0] if limit_list else 5000
@@ -69,14 +73,33 @@ def register_ingestion_callbacks(app, dm_instance):
         prevent_initial_call=True
     )
     def initialize_pipeline_callback(n_clicks, token_list, limit_list, version_list):
-        # Absolute no-500 guard: any escaping exception here surfaces as an opaque
-        # InternalServerError banner in the browser console on every page that
-        # holds an init button. Log server-side and return a clean idle state.
+        # Size the wildcard output from Dash's own outputs_list, never from the
+        # inputs: the two can differ (e.g. a page that renders a different number
+        # of init buttons), and a length mismatch raises inside Dash's output
+        # serializer — outside any try/except in this function — producing an
+        # opaque 500 in the browser console.
         try:
-            return initialize_pipeline(n_clicks, token_list, limit_list, version_list)
+            n_out = len(dash.callback_context.outputs_list[1])
+        except Exception:
+            n_out = len(n_clicks or [])
+
+        def _sized(value):
+            if value is no_update or value is None:
+                return [False] * n_out
+            if not isinstance(value, list):
+                return [bool(value)] * n_out
+            if len(value) != n_out:
+                return (list(value) + [False] * n_out)[:n_out]
+            return value
+
+        try:
+            store_val, loading = initialize_pipeline(
+                n_clicks, token_list, limit_list, version_list
+            )
+            return store_val, _sized(loading)
         except Exception:
             logging.getLogger(__name__).exception("initialize_pipeline callback failed")
-            return no_update, [False] * len(n_clicks or [])
+            return no_update, [False] * n_out
 
     @app.callback(
         [Output("store-data-loaded", "data", allow_duplicate=True),
