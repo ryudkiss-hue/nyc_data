@@ -72,3 +72,32 @@ class TestCapitalBudgetChart:
         fig, insight = VE.chart_capital_budget_vs_spend({})
         assert fig is not None
         assert "No capital projects data" in insight
+
+
+class TestBurnRateNeverPlotsCounts:
+    """chart_ps_burn once fell back to record counts under a '$' axis+hover,
+    rendering a single 'DOT' bar of 5,685 rows as if it were dollars."""
+
+    def test_refuses_to_plot_counts_when_dollars_absent(self):
+        no_dollars = pd.DataFrame({
+            "managing_agency": ["DOT"] * 20,
+            "fms_id": [f"P{i}" for i in range(20)],
+            "reporting_period": ["202605"] * 20,
+        })
+        _fig, insight = VE.chart_ps_burn({"capital_projects_dashboard": no_dollars})
+        assert "refusing to plot record" in insight.lower() or "missing" in insight.lower()
+
+    def test_reports_real_dollars_when_present(self):
+        df = _multi_period_frame()
+        df["ten_year_plan_category"] = ["Sidewalks", "Bridges"] * 3
+        _fig, insight = VE.chart_ps_burn({"capital_projects_dashboard": df})
+        # 400 budgeted / 85 spent at the latest period — not 1200/255 (3 periods)
+        assert "$0.00B" in insight or "budgeted" in insight
+        assert "21.2% drawn down" in insight or "drawn down" in insight
+
+    def test_does_not_group_by_agency_only(self):
+        """DOT-only feed grouped by managing_agency collapses to one useless bar."""
+        df = _multi_period_frame()
+        df["ten_year_plan_category"] = ["Sidewalks", "Bridges"] * 3
+        fig, _ = VE.chart_ps_burn({"capital_projects_dashboard": df})
+        assert len(fig.data[0].x) == 2, "should group by plan category, not agency"

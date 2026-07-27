@@ -833,37 +833,49 @@ class VisualizationEngine:
         """IV: Budget Code  DV: Capital Expended vs Remaining Allocation"""
         df = VisualizationEngine._safe_df(data_bundle.get("budget"))
         if df.empty:
-            # Fall back to capital_budget or capital_projects_dashboard
             df = VisualizationEngine._safe_df(data_bundle.get("capital_budget"))
+        snapshot_used = False
         if df.empty:
-            df = VisualizationEngine._safe_df(data_bundle.get("capital_projects_dashboard"))
+            # Deduplicated snapshot — the raw table repeats projects per period.
+            df = VisualizationEngine._latest_capital_snapshot(data_bundle)
+            snapshot_used = True
         if df.empty:
             return VisualizationEngine._empty_state(
-                "Personnel Services Budget Burn Rate by Code",
-                "No budget dataset available. Load capital_budget or capital_projects_dashboard.",
+                "Capital Budget Burn Rate by Budget Line",
+                "No budget dataset available. Load capital_projects_dashboard (fb86-vt7u).",
             ), "Budget data not loaded."
 
-        code_col = VisualizationEngine._find_col(df, ["code", "budget_code", "account", "managingagency", "projectid"])
-        spent_col = VisualizationEngine._find_col(df, ["expended", "spent", "actual", "totalexpenseavailableamount"])
-        remain_col = VisualizationEngine._find_col(df, ["remaining", "allocation", "available", "totalexpenseclaimed"])
+        # Prefer a grouping with real analytical spread. managing_agency is
+        # excluded: the feed is DOT-only, so it collapses to a single bar.
+        code_col = VisualizationEngine._find_col(
+            df, ["ten_year_plan_category", "budget_line", "budget_code", "account", "projectid"]
+        )
+        spent_col = VisualizationEngine._find_col(
+            df, ["spend_to_date", "expended", "spent", "actual"]
+        )
+        budget_col = VisualizationEngine._find_col(
+            df, ["total_budget", "allocation", "available", "totalexpenseavailableamount"]
+        )
 
-        if not code_col:
+        if not code_col or not (spent_col and budget_col):
+            # Never plot record counts under a dollar-denominated title — that
+            # previously rendered a single "DOT" bar of 5,685 rows as "$".
             return VisualizationEngine._empty_state(
-                "Personnel Services Budget Burn Rate by Code",
-                "Budget code / project ID column not found.",
-            ), "Budget code column missing."
+                "Capital Budget Burn Rate by Budget Line",
+                "Budget line / dollar columns not found — refusing to plot record "
+                "counts as dollars. Load capital_projects_dashboard (fb86-vt7u).",
+            ), "Dollar columns missing."
 
-        if spent_col and remain_col:
-            plot_df = df[[code_col, spent_col, remain_col]].dropna().head(20)
-            plot_df.columns = ["Code", "Expended", "Remaining"]
-            for c in ["Expended", "Remaining"]:
-                plot_df[c] = pd.to_numeric(plot_df[c], errors="coerce").fillna(0)
-        else:
-            # Fallback: count records per code
-            counts = df[code_col].fillna("Unknown").value_counts().head(15).reset_index()
-            counts.columns = ["Code", "Count"]
-            plot_df = counts.rename(columns={"Count": "Expended"})
-            plot_df["Remaining"] = 0
+        work = df[[code_col, spent_col, budget_col]].copy()
+        work.columns = ["Code", "Expended", "Budget"]
+        for c in ("Expended", "Budget"):
+            work[c] = pd.to_numeric(work[c], errors="coerce")
+        work = work.dropna(subset=["Budget"]).fillna({"Expended": 0})
+        plot_df = (
+            work.groupby("Code")[["Expended", "Budget"]].sum()
+            .sort_values("Budget", ascending=False).head(12).reset_index()
+        )
+        plot_df["Remaining"] = (plot_df["Budget"] - plot_df["Expended"]).clip(lower=0)
 
         fig = go.Figure()
         fig.add_trace(go.Bar(
@@ -880,17 +892,27 @@ class VisualizationEngine:
         fig.update_layout(barmode="stack")
         VisualizationEngine._apply_standard_layout(
             fig,
-            "Personnel Services Budget Burn Rate (IV: Budget Code → DV: Capital Value $)",
-            "Budget Code / Project", "Capital Value ($)",
+            "Capital Budget Burn Rate (IV: Budget Line → DV: Capital Value $)",
+            "Budget Line / Plan Category", "Capital Value ($)",
         )
+        fig.update_layout(xaxis_tickangle=-30)
         total_exp = float(plot_df["Expended"].sum())
-        total_rem = float(plot_df["Remaining"].sum())
-        pct_spent = 100 * total_exp / max(total_exp + total_rem, 1)
+        total_bud = float(plot_df["Budget"].sum())
+        pct_spent = 100 * total_exp / max(total_bud, 1)
+        top = plot_df.iloc[0]
+        method = (
+            " Figures use the latest reporting-period snapshot; the source repeats "
+            "each project per period, so an unfiltered sum overstates it ~9x."
+            if snapshot_used else ""
+        )
         insight = (
-            f"**{len(plot_df)}** budget codes shown.\n\n"
-            f"**Total expended:** ${total_exp:,.0f} ({pct_spent:.1f}% of allocated).\n\n"
-            f"**Remaining:** ${total_rem:,.0f} ({100-pct_spent:.1f}% unspent).\n\n"
-            "**Action:** Codes at >90% burn rate need reallocation review before end-of-fiscal-year close-out."
+            f"**{len(plot_df)}** budget lines shown, **${total_bud/1e9:.2f}B** budgeted "
+            f"and **${total_exp/1e9:.2f}B** expended ({pct_spent:.1f}% drawn down).\n\n"
+            f"**Largest line:** {top['Code']} — ${float(top['Budget'])/1e6:,.0f}M budgeted, "
+            f"{100*float(top['Expended'])/max(float(top['Budget']),1):.1f}% spent.\n\n"
+            f"**Action:** lines above 90% burn need reallocation review before "
+            f"fiscal-year close-out; lines near 0% in Construction phase warrant a "
+            f"schedule check.{method}"
         )
         return fig, insight
 
