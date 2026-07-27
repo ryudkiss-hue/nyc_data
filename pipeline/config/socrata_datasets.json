@@ -1503,7 +1503,8 @@
       "last_updated": "2026-07-15T17:26:31.000",
       "registry_row_count": "56525",
       "column_count": 0,
-      "registry_status": "OK"
+      "registry_status": "OK",
+      "soql_where": "managing_agency='DOT'"
     },
     {
       "id": 118,

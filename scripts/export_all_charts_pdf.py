@@ -282,6 +282,13 @@ def _build_catalogue(VE, data_bundle: dict, extras: dict) -> list[dict]:
             safe(VE.chart_built_sqft_trend, db, label="chart_built_sqft_trend"))
 
         add("Capital & Budget",
+            "DOT Capital Budget vs Spend-to-Date by Phase",
+            "IV: Project Phase  |  DV: Budget vs Spend ($M) — grouped bars over the "
+            "latest reporting-period snapshot of DOT capital projects (fb86-vt7u), "
+            "with the sidewalk/pedestrian/ramp subset called out.",
+            safe(VE.chart_capital_budget_vs_spend, db, label="chart_capital_budget_vs_spend"))
+
+        add("Capital & Budget",
             "Street Construction Permit Fees by Type",
             "IV: Fee Type  |  DV: Total Fee Amount Charged ($) — bar chart of the "
             "2025-present permit fee revenue mix (9fnm-j6if), joinable to permits "

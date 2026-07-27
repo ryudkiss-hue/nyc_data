@@ -689,6 +689,91 @@ class VisualizationEngine:
     # ── Chart 10 ────────────────────────────────────────────────────────────
 
     @staticmethod
+    def _latest_capital_snapshot(data_bundle: dict) -> pd.DataFrame:
+        """DOT capital projects at the most recent reporting period only.
+
+        fb86-vt7u repeats every project once per reporting period (830 DOT
+        projects x 10 periods = 5,685 rows). Summing the raw table inflates the
+        DOT capital budget ~9x ($331B vs the true $36.3B), so every dollar
+        figure MUST come from a single-period snapshot.
+        """
+        df = VisualizationEngine._safe_df(data_bundle.get("capital_projects_dashboard"))
+        if df.empty or "reporting_period" not in df.columns:
+            return df
+        latest = df["reporting_period"].astype(str).max()
+        snap = df[df["reporting_period"].astype(str) == latest].copy()
+        if "fms_id" in snap.columns:
+            snap = snap.drop_duplicates(subset=["fms_id"])
+        for c in ("total_budget", "spend_to_date"):
+            if c in snap.columns:
+                snap[c] = pd.to_numeric(snap[c], errors="coerce")
+        return snap
+
+    @staticmethod
+    def chart_capital_budget_vs_spend(data_bundle: dict) -> tuple[go.Figure, str]:
+        """IV: Project Phase  DV: Capital Budget vs Spend-to-Date ($)"""
+        snap = VisualizationEngine._latest_capital_snapshot(data_bundle)
+        if snap.empty or "total_budget" not in snap.columns:
+            return VisualizationEngine._empty_state(
+                "DOT Capital Budget vs Spend-to-Date by Phase",
+                "Load 'capital_projects_dashboard' (fb86-vt7u) for capital budget analysis.",
+            ), "No capital projects data available."
+
+        phase_col = "current_phase" if "current_phase" in snap.columns else None
+        if not phase_col:
+            return VisualizationEngine._empty_state(
+                "DOT Capital Budget vs Spend-to-Date by Phase",
+                "current_phase column not found.",
+            ), "Phase column missing."
+
+        agg = (
+            snap.groupby(phase_col)[["total_budget", "spend_to_date"]]
+            .sum().sort_values("total_budget", ascending=False).head(10).reset_index()
+        )
+        agg["Budget ($M)"] = agg["total_budget"] / 1e6
+        agg["Spent ($M)"] = agg["spend_to_date"] / 1e6
+
+        fig = go.Figure()
+        fig.add_trace(go.Bar(x=agg[phase_col], y=agg["Budget ($M)"], name="Budget",
+                             marker_color=_PALETTE[0]))
+        fig.add_trace(go.Bar(x=agg[phase_col], y=agg["Spent ($M)"], name="Spent to date",
+                             marker_color=_PALETTE[1]))
+        fig.update_layout(
+            title="DOT Capital Budget vs Spend-to-Date by Phase (IV: Phase → DV: $M)",
+            barmode="group", xaxis_tickangle=-30,
+            xaxis_title="Project Phase", yaxis_title="US$ (millions)",
+        )
+
+        tot_b = float(snap["total_budget"].sum())
+        tot_s = float(snap["spend_to_date"].sum()) if "spend_to_date" in snap else 0.0
+        period = str(snap["reporting_period"].iloc[0]) if "reporting_period" in snap else "latest"
+        name_col = "fms_project_name" if "fms_project_name" in snap.columns else None
+        sw_note = ""
+        if name_col:
+            mask = snap[name_col].astype(str).str.upper().str.contains(
+                "SIDEWALK|PEDESTRIAN|RAMP", regex=True, na=False)
+            if mask.any():
+                sw_b = float(snap.loc[mask, "total_budget"].sum())
+                sw_s = float(snap.loc[mask, "spend_to_date"].sum())
+                sw_note = (
+                    f"\n\n**Sidewalk / pedestrian / ramp subset:** {int(mask.sum())} projects, "
+                    f"${sw_b/1e9:.2f}B budgeted and ${sw_s/1e6:,.0f}M spent "
+                    f"({100*sw_s/sw_b:.1f}% drawn down)."
+                )
+
+        insight = (
+            f"**{len(snap):,} DOT capital projects** at reporting period {period}: "
+            f"**${tot_b/1e9:.1f}B** budgeted, **${tot_s/1e9:.1f}B** spent "
+            f"({100*tot_s/tot_b:.1f}% of budget drawn down).\n\n"
+            f"**Top phase by budget:** {agg.iloc[0][phase_col]} — "
+            f"${agg.iloc[0]['Budget ($M)']/1000:.1f}B across the portfolio.{sw_note}\n\n"
+            f"**Methodology:** figures use the single latest reporting period. The source "
+            f"table repeats each project once per period, so summing it unfiltered "
+            f"overstates the portfolio roughly ninefold."
+        )
+        return fig, insight
+
+    @staticmethod
     def chart_permit_fee_breakdown(data_bundle: dict) -> tuple[go.Figure, str]:
         """IV: Fee Type  DV: Total Fee Amount Charged ($)"""
         df = VisualizationEngine._safe_df(data_bundle.get("street_construction_permit_fees"))
@@ -2210,18 +2295,23 @@ class VisualizationEngine:
         """IV: Budget Stage  DV: Cumulative Capital Position ($)"""
         df = VisualizationEngine._safe_df(data_bundle.get("capital_budget"))
         if df.empty:
-            df = VisualizationEngine._safe_df(data_bundle.get("capital_projects_dashboard"))
+            # Must be the deduplicated snapshot — the raw table repeats each
+            # project per reporting period and would overstate the portfolio ~9x.
+            df = VisualizationEngine._latest_capital_snapshot(data_bundle)
         if df.empty:
             return VisualizationEngine._empty_state(
                 "Capital Budget Waterfall — Allocation vs Expenditure vs Remaining"
             ), "No capital budget data."
 
-        # Identify best numeric columns for budget stages
+        # Identify best numeric columns for budget stages. `built`'s cost columns
+        # are deliberately NOT candidates: full-corpus verification showed them
+        # 3.5–3.9% populated and 0% for 2024–25.
         alloc_col = VisualizationEngine._find_col(
-            df, ["totalallocation", "allocation", "totalbudget", "totalexpenseavailableamount"]
+            df, ["total_budget", "totalallocation", "allocation", "totalbudget",
+                 "totalexpenseavailableamount"]
         )
         spent_col = VisualizationEngine._find_col(
-            df, ["expended", "spent", "totalexpenseclaimed", "totalcosttoconstruct"]
+            df, ["spend_to_date", "expended", "spent", "totalexpenseclaimed"]
         )
         commit_col = VisualizationEngine._find_col(
             df, ["committed", "encumbered", "obligated"]
