@@ -314,6 +314,11 @@ class VisualizationEngine:
             f"**Trend:** OLS trendline shows {slope_dir} {abs(pct_change):.1f}% change over the period.\n\n"
             f"**Average weekly delivery:** {mean_w:,.0f} sq ft; "
             f"**peak week:** {peak_w.date()} at {int(weekly['SqFt'].max()):,} sq ft.\n\n"
+            f"**⚠ Coverage caveat:** this series comes from `built.totalsqftsidewalkrepaired`, "
+            f"which full-corpus verification shows is only ~3.9% populated and carries **no "
+            f"values at all for 2024–2025**. The series therefore ends "
+            f"{weekly['Week'].max().date()} and is NOT a current productivity measure — read it "
+            f"as a historical baseline only.\n\n"
             "**Action:** Weeks diverging >20% below trend indicate supply-chain or weather delays; "
             "trigger a spatial clash analysis against concurrent open permits."
         )

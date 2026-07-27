@@ -270,15 +270,17 @@ def _build_catalogue(VE, data_bundle: dict, extras: dict) -> list[dict]:
     # ── Section 4: Capital & Budget ───────────────────────────────────────────
     if VE:
         add("Capital & Budget",
-            "PS Budget Code Burn Rate",
-            "IV: Budget Code  |  DV: Capital Expended vs Remaining Allocation — "
-            "stacked bar chart showing budget utilisation by programme code.",
+            "Capital Budget Burn Rate by Budget Line",
+            "IV: Budget Line / Plan Category  |  DV: Capital Expended vs Remaining "
+            "Allocation ($) — stacked bars over the latest reporting-period snapshot "
+            "of DOT capital projects (fb86-vt7u).",
             safe(VE.chart_ps_burn, db, label="chart_ps_burn"))
 
         add("Capital & Budget",
-            "Sidewalk Repair Velocity (Administrative Velocity Trend)",
-            "IV: Operational Date (weekly)  |  DV: Sidewalk Repaired (sq ft) — "
-            "line chart with OLS trendline measuring repair output over time.",
+            "Sidewalk Repair Velocity — historical baseline through 2023",
+            "IV: Operational Date (weekly)  |  DV: Sidewalk Repaired (sq ft) — line "
+            "chart with OLS trendline. ⚠ Source column is ~3.9% populated with no "
+            "2024–25 values, so this is a historical baseline, not current output.",
             safe(VE.chart_built_sqft_trend, db, label="chart_built_sqft_trend"))
 
         add("Capital & Budget",
