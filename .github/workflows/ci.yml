@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with: {python-version: "3.11"}
       - run: pip install -e ".[mission]" pytest
       - run: pip install -r requirements-dev.txt fastapi httpx networkx scikit-learn
@@ -58,7 +58,7 @@ jobs:
           --health-retries 5
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with: {python-version: "3.11"}
       - run: pip install -e ".[mission,postgres]" pytest
       - run: pip install -r requirements-dev.txt pymongo
