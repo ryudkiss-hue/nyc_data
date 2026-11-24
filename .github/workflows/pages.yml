@@ -54,7 +54,11 @@ jobs:
           </html>
           EOF
 
-          # 3. Jupyter Books
+          # 3. Make Safe SR brief (nyc-opendata-mcp browser app) at /nyc_data/make-safe/
+          mkdir -p _site/make-safe
+          cp nyc-opendata-mcp/web/index.html nyc-opendata-mcp/web/app.js nyc-opendata-mcp/web/app.css nyc-opendata-mcp/web/brief.js _site/make-safe/
+
+          # 4. Jupyter Books
           mkdir -p _site/jupyter_book
           if [ -d "jupyter_book/dashboards" ]; then
             for notebook in jupyter_book/dashboards/*.ipynb; do
