@@ -185,7 +185,7 @@ python launcher.py docker up
 ## Next Steps
 
 1. **Complete Setup**: See [DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)
-2. **Learn Architecture**: See [Architecture Documentation](docs/architecture.md)
+2. **Learn Architecture**: See [Architecture Documentation](docs/ARCHITECTURE.md)
 3. **API Usage**: See [API Guide](docs/api_guide.md)
 4. **Data Governance**: See [Data Governance Guide](docs/PHASE3_COMPLETION_SUMMARY.md)
 5. **Microsoft 365**: See [M365 Integration](docs/MICROSOFT_365_INTEGRATION.md)
@@ -258,7 +258,7 @@ python launcher.py docker up
 | Need | Resource |
 |------|----------|
 | Setup help | [DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md) |
-| How it works | [Architecture](docs/architecture.md) |
+| How it works | [Architecture](docs/ARCHITECTURE.md) |
 | CLI commands | [CLI Reference](docs/cli.md) |
 | REST API | [API Guide](docs/api_guide.md) |
 | Data governance | [Governance Guide](docs/PHASE3_COMPLETION_SUMMARY.md) |

@@ -256,7 +256,7 @@ nyc_data/
 │   └── conftest.py
 ├── docs/                    # Documentation
 │   ├── DEPLOYMENT_GUIDE.md
-│   ├── architecture.md
+│   ├── ARCHITECTURE.md
 │   ├── api_guide.md
 │   ├── PHASE3_COMPLETION_SUMMARY.md
 │   └── ... (20+ guides)
@@ -667,7 +667,7 @@ See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for detailed troubleshooting.
 - **Quick Start**: [QUICKSTART.md](../QUICKSTART.md) - 5-minute setup
 - **Full Deployment**: [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) - Complete guide
 - **This Document**: [EXECUTABLE_PACKAGE.md](EXECUTABLE_PACKAGE.md) - Package overview
-- **Architecture**: [architecture.md](architecture.md) - System design
+- **Architecture**: [ARCHITECTURE.md](ARCHITECTURE.md) - System design
 - **API Docs**: [api_guide.md](api_guide.md) - REST endpoints
 - **CLI Reference**: [cli.md](cli.md) - Command-line tool
 - **Data Governance**: [PHASE3_COMPLETION_SUMMARY.md](PHASE3_COMPLETION_SUMMARY.md)

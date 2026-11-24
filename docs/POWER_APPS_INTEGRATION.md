@@ -567,7 +567,7 @@ This gives you:
 - **Power Apps Docs**: https://docs.microsoft.com/power-apps
 - **Power Automate Docs**: https://docs.microsoft.com/power-automate
 - **API Documentation**: `docs/api_guide.md`
-- **Architecture Guide**: `docs/architecture.md`
+- **Architecture Guide**: `docs/ARCHITECTURE.md`
 - **REST API Endpoints**: `socrata_toolkit.api`
 
 ---
