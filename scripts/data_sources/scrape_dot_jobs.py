@@ -1,15 +1,16 @@
 import concurrent.futures
-import pandas as pd
-import numpy as np
-import requests
-from bs4 import BeautifulSoup
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
-import urllib3
+import itertools
 import os
 import threading
-import itertools
+
+import numpy as np
+import pandas as pd
+import requests
+import urllib3
+from bs4 import BeautifulSoup
+from requests.adapters import HTTPAdapter
 from tqdm import tqdm
+from urllib3.util.retry import Retry
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -17,8 +18,8 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # 1. CONFIGURATION
 # ==========================================
 START_JID = 1
-END_JID = 999999 
-MAX_WORKERS = 10 
+END_JID = 999999
+MAX_WORKERS = 10
 CHUNK_SIZE = 1000
 
 BASE_URL = "https://cityjobs.nyc.gov/job/posting-jid-{jid}"
@@ -46,10 +47,10 @@ def fetch_and_parse(jid):
     url = BASE_URL.format(jid=jid)
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
     session = get_session()
-    
+
     try:
         response = session.get(url, headers=headers, timeout=15, verify=False)
-        
+
         status = "Active"
         if response.status_code != 200 or "not found" in response.url.lower():
             status = "Expired / Not Found"
@@ -57,7 +58,7 @@ def fetch_and_parse(jid):
             status = "Expired / Redirected"
 
         soup = BeautifulSoup(response.text, 'html.parser')
-        
+
         if soup.find(string=lambda t: t and "no longer available" in t.lower()) or \
            soup.find(string=lambda t: t and "has now expired" in t.lower()):
             status = "Expired / Tombstone"
@@ -94,7 +95,7 @@ def fetch_and_parse(jid):
 
         # --- Map to exact 31-Column Schema ---
         raw_salary = extract_next("Salary range") if pd.isna(extract_next("Salary range")) is False else extract_next("Salary")
-        
+
         record = {
             "job_id": jid,
             "business_title": title,
@@ -123,7 +124,7 @@ def fetch_and_parse(jid):
             "url": response.url
         }
         return record
-        
+
     except Exception:
         return None
 
@@ -133,7 +134,7 @@ def fetch_and_parse(jid):
 def clean_dataset(input_csv, output_csv):
     print("\nInitiating Phase 2: Data Integrity Cleaning...")
     df = pd.read_csv(input_csv, dtype=str, low_memory=False)
-    
+
     # 1. Clean Text & Carriage Returns
     text_cols = df.select_dtypes(include=['object']).columns
     for col in text_cols:
@@ -150,12 +151,12 @@ def clean_dataset(input_csv, output_csv):
                 df['salary_range_to'] = salaries.xs(1, level='match')[0].astype(float)
             else:
                 df['salary_range_to'] = df['salary_range_from'] # If only one salary is listed
-    
+
     # 3. Enforce Dates & Numbers
     for col in ['posting_date', 'post_until']:
         if col in df.columns:
             df[col] = pd.to_datetime(df[col], errors='coerce')
-            
+
     df['job_id'] = pd.to_numeric(df['job_id'], errors='coerce')
     df.dropna(subset=['job_id'], inplace=True)
     df['job_id'] = df['job_id'].astype(int)
@@ -186,9 +187,9 @@ def chunked_iterable(iterable, size):
         yield chunk
 
 def main():
-    print(f"=== PHASE 1: EXTRACTION ===")
+    print("=== PHASE 1: EXTRACTION ===")
     start_jid = START_JID
-    
+
     if os.path.exists(RAW_FILE_PATH):
         try:
             df_existing = pd.read_csv(RAW_FILE_PATH, usecols=['job_id'])
@@ -199,12 +200,12 @@ def main():
             pass
 
     write_header = not os.path.exists(RAW_FILE_PATH)
-    
+
     for chunk in chunked_iterable(range(start_jid, END_JID + 1), CHUNK_SIZE):
         chunk_records = []
         with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             futures = {executor.submit(fetch_and_parse, j): j for j in chunk}
-            batch_label = "Batch {}-{}".format(chunk[0], chunk[-1])
+            batch_label = f"Batch {chunk[0]}-{chunk[-1]}"
             for future in tqdm(concurrent.futures.as_completed(futures), total=len(chunk), desc=batch_label, unit="req"):
                 res = future.result()
                 if res: chunk_records.append(res)

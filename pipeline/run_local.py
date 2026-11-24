@@ -37,6 +37,12 @@ STAGES = [
 
 
 def main() -> int:
+    import argparse
+    argparse.ArgumentParser(
+        description="Run the local-only pipeline end-to-end (ingest -> compact -> publish). "
+                    "Takes no arguments; any argument aborts instead of launching."
+    ).parse_args()
+
     env = dict(os.environ)
     env.pop("MOTHERDUCK_TOKEN", None)  # run_pipeline reads env directly
     env["NYC_FORCE_LOCAL"] = "1"  # geo/Metric builders re-load .env, so force local explicitly

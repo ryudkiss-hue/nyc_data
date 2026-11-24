@@ -17,6 +17,7 @@ import time
 
 import pytest
 from playwright.sync_api import Page, expect
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 pytestmark = pytest.mark.browser
 
@@ -875,8 +876,14 @@ class TestDeadCodeAudit:
         )
         assert not errors
 
-    @pytest.mark.xfail(reason="PNG/JPG/PBI/R export types fall through to 'not supported' — intentional stub")
     def test_png_export_button_downloads_image(self, page: Page, dash_base_url: str):
+        """PNG export renders a kaleido summary figure and downloads it.
+
+        With data loaded (local dev), the click must produce a .png download.
+        In a data-less environment (CI: empty DuckDB, no parquet cache) the
+        legitimate outcome is the "No data available to export" notification —
+        what must NEVER appear is the old "not supported" stub message.
+        """
         _go(page, dash_base_url)
         export_tab = page.locator(
             "button:has-text('Export Powerhouse'), [role='tab']:has-text('Export')"
@@ -885,8 +892,25 @@ class TestDeadCodeAudit:
             export_tab.click()
             page.wait_for_timeout(600)
         png_btn = page.locator("button:has-text('PNG Image')").first
-        if png_btn.is_visible(timeout=3_000):
-            with page.expect_download(timeout=5_000) as dl_info:
+        if not png_btn.is_visible(timeout=3_000):
+            pytest.skip("Export panel not present in this build")
+
+        try:
+            # Generous: the server renders the PNG via kaleido, whose Chromium
+            # subprocess has a slow cold start on the first image export.
+            with page.expect_download(timeout=45_000) as dl_info:
                 png_btn.click()
-            dl = dl_info.value
-            assert dl.suggested_filename.endswith(".png"), "PNG export didn't produce a PNG file"
+            assert dl_info.value.suggested_filename.endswith(".png"), (
+                f"PNG export produced {dl_info.value.suggested_filename!r}, not a .png"
+            )
+        except PlaywrightTimeoutError:
+            # No download means no data to export (CI runs an empty DuckDB).
+            # Export alerts are autoClose=False, so the notice is still on
+            # screen here. A "not supported" message would mean the export
+            # type regressed back to the old dead-button stub.
+            notif = page.locator(".mantine-Notification-root").first
+            expect(notif).to_be_visible(timeout=5_000)
+            text = notif.inner_text()
+            assert "not supported" not in text.lower(), (
+                f"PNG export fell through to the unsupported stub: {text!r}"
+            )

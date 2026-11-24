@@ -21,7 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: pip
@@ -34,7 +34,7 @@ jobs:
           pip install networkx scikit-learn fastapi httpx
 
       - name: Ruff
-        run: ruff check src/socrata_toolkit tests app
+        run: ruff check src/socrata_toolkit tests app scripts
 
       - name: Run tests (core)
         env:
@@ -107,7 +107,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: pip
@@ -132,12 +132,18 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: pytest tests/browser/ -m browser -v --tb=short
 
+      - name: Dump Dash server log on failure
+        if: failure()
+        run: |
+          echo "===== dash_test_server.log (server-side tracebacks) ====="
+          cat "${TMPDIR:-/tmp}/dash_test_server.log" || true
+
   readiness:
     name: Readiness report
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: pip
@@ -165,4 +171,6 @@ jobs:
           push: false
           tags: nyc-dot-sim-toolkit:latest
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # ignore-error: transient GHA cache-backend write failures ("error
+          # writing layer blob: not_found") must not fail a build that succeeded
+          cache-to: type=gha,mode=max,ignore-error=true

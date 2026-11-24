@@ -749,6 +749,11 @@ class MotherDuckPipeline:
 
 
 if __name__ == '__main__':
+    import argparse
+    argparse.ArgumentParser(
+        description="Run the full NYC DOT ingestion pipeline (117 datasets). "
+                    "Takes no arguments; any argument aborts instead of launching."
+    ).parse_args()
     pipeline = MotherDuckPipeline()
     try:
         exit_code = pipeline.run()

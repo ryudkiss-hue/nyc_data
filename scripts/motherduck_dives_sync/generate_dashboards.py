@@ -1,5 +1,5 @@
-import os
 import json
+import os
 
 templates = {
     "E": ("Temporal Performance Command Center", "Trend, Seasonality, and Forecast Analysis"),
@@ -11,7 +11,7 @@ templates = {
 def generate_dashboard(phase, title, subtitle):
     folder = f"dives/Command_Center_{title.split()[0]}"
     os.makedirs(folder, exist_ok=True)
-    
+
     # Metadata
     meta = {
         "title": f"NYC Ramp {title}",
@@ -23,12 +23,12 @@ def generate_dashboard(phase, title, subtitle):
 
     # JSX
     jsx = f'''import {{ useSQLQuery, useDiveState }} from "@motherduck/react-sql-query";
-import {{ 
-  ShieldCheck, AlertTriangle, CircleDollarSign, Scale, Filter, ListChecks, 
+import {{
+  ShieldCheck, AlertTriangle, CircleDollarSign, Scale, Filter, ListChecks,
   Search, TrendingUp, Activity, Info, Clock, Calendar, BarChart as BarChartIcon
 }} from "lucide-react";
-import {{ 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+import {{
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   Legend, LineChart, Line, ComposedChart, Cell
 }} from "recharts";
 
@@ -58,7 +58,7 @@ export default function Dashboard() {{
   `);
 
   const {{ data: statData, isLoading: statLoading }} = useSQLQuery(`
-    SELECT 
+    SELECT
       metric_name,
       label,
       avg(metric_value) as mean,
@@ -76,7 +76,7 @@ export default function Dashboard() {{
   const statRows = Array.isArray(statData) ? statData : [];
 
   const mainKpi = metrics[0] ?? {{}};
-  
+
   const chartData = Array.from(new Set(boroRows.map(r => r.borough))).map(b => ({{
     name: b,
     shortName: FMT(b),
@@ -102,8 +102,8 @@ export default function Dashboard() {{
         </div>
         <div style={{{{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "10px" }}}}>
           <div style={{{{ padding: "4px 12px", background: "#005696", color: "#FFF", fontSize: "12px", fontWeight: "bold", borderRadius: "4px" }}}}>NYC DOT OFFICIAL</div>
-          <select 
-            value={{state.borough}} 
+          <select
+            value={{state.borough}}
             onChange={{(e) => setState({{ borough: e.target.value }})}}
             style={{{{ padding: "8px 12px", borderRadius: "4px", border: "1px solid #CCC", width: "200px" }}}}
           >
@@ -156,7 +156,7 @@ export default function Dashboard() {{
               <h4 style={{{{ margin: 0, fontSize: "18px", fontWeight: 800, color: "#005696" }}}}>Automated Bayesian Audit</h4>
             </div>
             <p style={{{{ margin: 0, fontSize: "14px", lineHeight: 1.6 }}}}>
-              Phase {phase} telemetry for <strong>{{state.borough}}</strong> indicates a high degree of variance in <strong>{{metrics[0]?.label}}</strong>. 
+              Phase {phase} telemetry for <strong>{{state.borough}}</strong> indicates a high degree of variance in <strong>{{metrics[0]?.label}}</strong>.
               Statistical posterior distribution suggest a mean of <strong>{{N(statRows[0]?.mean).toFixed(2)}}</strong> citywide.
             </p>
           </div>

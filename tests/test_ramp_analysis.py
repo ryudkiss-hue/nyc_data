@@ -182,3 +182,51 @@ class TestFetchRampFullCorpus:
             assert call_args is not None
             config = call_args[0][0]
             assert config.page_size == 50000
+
+
+class TestAggregateRampStatus:
+    """aggregate_ramp_status maps live per-corner statuses onto the completion shape."""
+
+    def _df(self):
+        return pd.DataFrame({
+            "borough": ["QUEENS", "QUEENS", "QUEENS", "BRONX", "BRONX"],
+            "construc_2": [
+                "Constructed",
+                "Planned Construction",
+                "Not Required",
+                "Complex Constructed",
+                "Not Assigned",
+            ],
+        })
+
+    def test_excludes_not_required_from_denominator(self):
+        from socrata_toolkit.analyst.ramp_analysis import aggregate_ramp_status
+
+        out = aggregate_ramp_status(self._df())
+        assert len(out) == 4  # 5 corners minus 1 Not Required
+        assert set(out.columns) == {"borough", "total_complaints", "resolved_complaints"}
+
+    def test_completed_statuses_counted_as_resolved(self):
+        from socrata_toolkit.analyst.ramp_analysis import aggregate_ramp_status
+
+        out = aggregate_ramp_status(self._df())
+        assert int(out["resolved_complaints"].sum()) == 2  # Constructed + Complex Constructed
+        assert int(out["total_complaints"].sum()) == 4
+
+    def test_empty_or_missing_columns_returns_empty_frame(self):
+        from socrata_toolkit.analyst.ramp_analysis import aggregate_ramp_status
+
+        assert aggregate_ramp_status(pd.DataFrame()).empty
+        assert aggregate_ramp_status(pd.DataFrame({"borough": ["BX"]})).empty
+
+    def test_feeds_compute_borough_completion_rates(self):
+        from socrata_toolkit.analyst.ramp_analysis import (
+            aggregate_ramp_status,
+            compute_borough_completion_rates,
+        )
+
+        result = compute_borough_completion_rates(aggregate_ramp_status(self._df()))
+        table = result["comparison_table"]
+        queens = table[table["borough"] == "QUEENS"].iloc[0]
+        assert queens["total_count"] == 2
+        assert queens["resolved"] == 1

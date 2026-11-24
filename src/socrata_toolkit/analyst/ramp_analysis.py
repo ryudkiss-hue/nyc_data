@@ -47,10 +47,15 @@ def fetch_ramp_full_corpus(api_token: str | None = None) -> pd.DataFrame:
 
     df = pd.DataFrame(rows)
 
-    # Keep only expected columns if they exist
+    # Keep only expected columns if they exist. The live e7gc-ub6z schema is
+    # per-corner statuses (cornerid/construc_2); legacy complaint-count columns
+    # are retained for fixtures and any historical extracts.
     expected_columns = {
         "corner_id",
+        "cornerid",
+        "objectid",
         "borough",
+        "construc_2",
         "total_complaints",
         "resolved_complaints",
         "in_progress_complaints",
@@ -60,6 +65,34 @@ def fetch_ramp_full_corpus(api_token: str | None = None) -> pd.DataFrame:
         df = df[present_cols]
 
     return df
+
+
+_COMPLETED_STATUSES = {"constructed", "complex constructed"}
+_EXCLUDED_STATUSES = {"not required"}
+
+
+def aggregate_ramp_status(
+    df: pd.DataFrame,
+    status_col: str = "construc_2",
+    borough_col: str = "borough",
+) -> pd.DataFrame:
+    """Map live per-corner construction statuses onto the completion-rate shape.
+
+    Each e7gc-ub6z row is one corner with a construc_2 status. Emits one row per
+    corner with total_complaints=1 and resolved_complaints in {0,1} so
+    compute_borough_completion_rates() aggregates with honest per-corner sample
+    sizes. Corners marked 'Not Required' are excluded from the denominator.
+    """
+    if df.empty or status_col not in df.columns or borough_col not in df.columns:
+        return pd.DataFrame(columns=[borough_col, "total_complaints", "resolved_complaints"])
+
+    status = df[status_col].astype(str).str.strip().str.lower()
+    work = df.loc[~status.isin(_EXCLUDED_STATUSES), [borough_col]].copy()
+    work["total_complaints"] = 1
+    work["resolved_complaints"] = (
+        status[~status.isin(_EXCLUDED_STATUSES)].isin(_COMPLETED_STATUSES).astype(int).to_numpy()
+    )
+    return work.reset_index(drop=True)
 
 
 def compute_borough_completion_rates(

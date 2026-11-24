@@ -73,3 +73,10 @@ pytest_*.txt
 
 # Generated report/export artifacts
 exports/
+
+# Local DuckDB backups (solo-workstation deployment)
+backups/
+
+# nyc-opendata-mcp web app (Node parity test only)
+nyc-opendata-mcp/web/node_modules/
+nyc-opendata-mcp/web/test/py_briefs.json

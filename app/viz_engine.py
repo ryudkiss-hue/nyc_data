@@ -18,8 +18,14 @@ from plotly.subplots import make_subplots
 from sklearn.decomposition import PCA
 
 # Accessible color palette (WCAG AA safe, distinguishable for colorblindness)
-_PALETTE = ["#2196F3", "#FF9800", "#4CAF50", "#9C27B0", "#F44336", "#00BCD4",
-            "#FF5722", "#607D8B", "#E91E63", "#8BC34A"]
+# Colorblind-safe categorical palette (Okabe-Ito derived, reordered so adjacent
+# slots stay separable). Validated against a light chart surface: lightness band,
+# chroma floor, CVD separation (worst adjacent ΔE 9.6 deutan / 20.6 tritan) and
+# normal-vision floor (ΔE 20.0) all pass. The previous Material palette failed —
+# its green and orange collapsed to ΔE 3.6 under protanopia.
+# Assign in fixed order; never generate a 9th hue.
+_PALETTE = ["#0072B2", "#E69F00", "#009E73", "#D55E00",
+            "#56B4E9", "#CC79A7", "#7B3294", "#B8860B"]
 _BORO_ORDER = ["MANHATTAN", "BRONX", "BROOKLYN", "QUEENS", "STATEN ISLAND"]
 
 
@@ -120,27 +126,27 @@ class VisualizationEngine:
     @staticmethod
     def chart_inspections_boro(data_bundle: dict) -> tuple[go.Figure, str]:
         """IV: Borough  DV: Inspection Volume (Count)"""
-        df = VisualizationEngine._safe_df(data_bundle.get("inspection"))
+        # dismissals has an authoritative 'borough' column (BRONX/MANHATTAN etc.)
+        # inspection and violations lack a borough column or use unreliable CB codes
+        source_label = "inspection/dismissal"
+        df = VisualizationEngine._safe_df(data_bundle.get("dismissals"))
+        if df.empty:
+            df = VisualizationEngine._safe_df(data_bundle.get("inspection"))
+            source_label = "inspection"
         if df.empty:
             df = VisualizationEngine._safe_df(data_bundle.get("violations"))
+            source_label = "violation"
         if df.empty:
             return VisualizationEngine._empty_state(
                 "Sidewalk Inspection Volume by Borough"
-            ), "No inspection or violation data available."
+            ), "No inspection, dismissal, or violation data available."
 
         boro_col = VisualizationEngine._find_col(df, ["borough", "boro", "boroname"])
-        if not boro_col and "cb" in df.columns:
-            df = df.copy()
-            df["borough"] = df["cb"].astype(str).str[0].map(
-                {"1": "MANHATTAN", "2": "BRONX", "3": "BROOKLYN",
-                 "4": "QUEENS", "5": "STATEN ISLAND"}
-            )
-            df = df.dropna(subset=["borough"])
-            boro_col = "borough"
         if not boro_col:
             return VisualizationEngine._empty_state(
                 "Sidewalk Inspection Volume by Borough",
-                "Borough column not found in inspection data.",
+                "Borough column not found in available data. "
+                "Load 'dismissals' (has borough) for accurate borough breakdown.",
             ), "Borough taxonomy missing."
 
         counts = (
@@ -166,8 +172,8 @@ class VisualizationEngine:
         fig.update_layout(showlegend=False)
 
         insight = (
-            f"**N = {total:,}** inspection records analyzed across {len(counts)} boroughs.\n\n"
-            f"**Top borough:** {top[boro_col]} with {int(top['Inspections']):,} inspections "
+            f"**N = {total:,}** {source_label} records analyzed across {len(counts)} boroughs.\n\n"
+            f"**Top borough:** {top[boro_col]} with {int(top['Inspections']):,} records "
             f"({100*int(top['Inspections'])/total:.1f}% of total).\n\n"
             f"**Distribution:** Median per borough = {int(counts['Inspections'].median()):,}; "
             f"range = {int(counts['Inspections'].min()):,}–{int(counts['Inspections'].max()):,}.\n\n"
@@ -308,6 +314,11 @@ class VisualizationEngine:
             f"**Trend:** OLS trendline shows {slope_dir} {abs(pct_change):.1f}% change over the period.\n\n"
             f"**Average weekly delivery:** {mean_w:,.0f} sq ft; "
             f"**peak week:** {peak_w.date()} at {int(weekly['SqFt'].max()):,} sq ft.\n\n"
+            f"**⚠ Coverage caveat:** this series comes from `built.totalsqftsidewalkrepaired`, "
+            f"which full-corpus verification shows is only ~3.9% populated and carries **no "
+            f"values at all for 2024–2025**. The series therefore ends "
+            f"{weekly['Week'].max().date()} and is NOT a current productivity measure — read it "
+            f"as a historical baseline only.\n\n"
             "**Action:** Weeks diverging >20% below trend indicate supply-chain or weather delays; "
             "trigger a spatial clash analysis against concurrent open permits."
         )
@@ -613,8 +624,16 @@ class VisualizationEngine:
             if df_k.empty:
                 continue
             date_col = VisualizationEngine._find_col(
-                df_k, ["updated", "modified", "created", "date", "created_date"]
+                df_k, ["updated", "modified", "created", "date", "created_date",
+                        "inspectiondate", "issuedate", "complaint_date", "entrydate",
+                        "violation_date", "referral_date", "close_date", "duedate",
+                        "opendate", "closeddate", "startdate", "enddate"]
             )
+            if not date_col:
+                # Fallback: any column whose name contains "date"
+                date_col = next(
+                    (c for c in df_k.columns if "date" in c.lower()), None
+                )
             if not date_col:
                 continue
             try:
@@ -622,7 +641,8 @@ class VisualizationEngine:
                 if pd.isna(last):
                     continue
                 age = (pd.Timestamp.now() - last).days
-                rows.append({"Dataset": k, "Freshness": max(0.0, 100.0 - float(age))})
+                # Clamp to [0, 100]: negative age (future dates) must not inflate score
+                rows.append({"Dataset": k, "Freshness": max(0.0, min(100.0, 100.0 - float(age)))})
             except Exception:
                 continue
 
@@ -674,41 +694,193 @@ class VisualizationEngine:
     # ── Chart 10 ────────────────────────────────────────────────────────────
 
     @staticmethod
+    def _latest_capital_snapshot(data_bundle: dict) -> pd.DataFrame:
+        """DOT capital projects at the most recent reporting period only.
+
+        fb86-vt7u repeats every project once per reporting period (830 DOT
+        projects x 10 periods = 5,685 rows). Summing the raw table inflates the
+        DOT capital budget ~9x ($331B vs the true $36.3B), so every dollar
+        figure MUST come from a single-period snapshot.
+        """
+        df = VisualizationEngine._safe_df(data_bundle.get("capital_projects_dashboard"))
+        if df.empty or "reporting_period" not in df.columns:
+            return df
+        latest = df["reporting_period"].astype(str).max()
+        snap = df[df["reporting_period"].astype(str) == latest].copy()
+        if "fms_id" in snap.columns:
+            snap = snap.drop_duplicates(subset=["fms_id"])
+        for c in ("total_budget", "spend_to_date"):
+            if c in snap.columns:
+                snap[c] = pd.to_numeric(snap[c], errors="coerce")
+        return snap
+
+    @staticmethod
+    def chart_capital_budget_vs_spend(data_bundle: dict) -> tuple[go.Figure, str]:
+        """IV: Project Phase  DV: Capital Budget vs Spend-to-Date ($)"""
+        snap = VisualizationEngine._latest_capital_snapshot(data_bundle)
+        if snap.empty or "total_budget" not in snap.columns:
+            return VisualizationEngine._empty_state(
+                "DOT Capital Budget vs Spend-to-Date by Phase",
+                "Load 'capital_projects_dashboard' (fb86-vt7u) for capital budget analysis.",
+            ), "No capital projects data available."
+
+        phase_col = "current_phase" if "current_phase" in snap.columns else None
+        if not phase_col:
+            return VisualizationEngine._empty_state(
+                "DOT Capital Budget vs Spend-to-Date by Phase",
+                "current_phase column not found.",
+            ), "Phase column missing."
+
+        agg = (
+            snap.groupby(phase_col)[["total_budget", "spend_to_date"]]
+            .sum().sort_values("total_budget", ascending=False).head(10).reset_index()
+        )
+        agg["Budget ($M)"] = agg["total_budget"] / 1e6
+        agg["Spent ($M)"] = agg["spend_to_date"] / 1e6
+
+        fig = go.Figure()
+        fig.add_trace(go.Bar(x=agg[phase_col], y=agg["Budget ($M)"], name="Budget",
+                             marker_color=_PALETTE[0]))
+        fig.add_trace(go.Bar(x=agg[phase_col], y=agg["Spent ($M)"], name="Spent to date",
+                             marker_color=_PALETTE[1]))
+        fig.update_layout(
+            title="DOT Capital Budget vs Spend-to-Date by Phase (IV: Phase → DV: $M)",
+            barmode="group", xaxis_tickangle=-30,
+            xaxis_title="Project Phase", yaxis_title="US$ (millions)",
+        )
+
+        tot_b = float(snap["total_budget"].sum())
+        tot_s = float(snap["spend_to_date"].sum()) if "spend_to_date" in snap else 0.0
+        period = str(snap["reporting_period"].iloc[0]) if "reporting_period" in snap else "latest"
+        name_col = "fms_project_name" if "fms_project_name" in snap.columns else None
+        sw_note = ""
+        if name_col:
+            mask = snap[name_col].astype(str).str.upper().str.contains(
+                "SIDEWALK|PEDESTRIAN|RAMP", regex=True, na=False)
+            if mask.any():
+                sw_b = float(snap.loc[mask, "total_budget"].sum())
+                sw_s = float(snap.loc[mask, "spend_to_date"].sum())
+                sw_note = (
+                    f"\n\n**Sidewalk / pedestrian / ramp subset:** {int(mask.sum())} projects, "
+                    f"${sw_b/1e9:.2f}B budgeted and ${sw_s/1e6:,.0f}M spent "
+                    f"({100*sw_s/sw_b:.1f}% drawn down)."
+                )
+
+        insight = (
+            f"**{len(snap):,} DOT capital projects** at reporting period {period}: "
+            f"**${tot_b/1e9:.1f}B** budgeted, **${tot_s/1e9:.1f}B** spent "
+            f"({100*tot_s/tot_b:.1f}% of budget drawn down).\n\n"
+            f"**Top phase by budget:** {agg.iloc[0][phase_col]} — "
+            f"${agg.iloc[0]['Budget ($M)']/1000:.1f}B across the portfolio.{sw_note}\n\n"
+            f"**Methodology:** figures use the single latest reporting period. The source "
+            f"table repeats each project once per period, so summing it unfiltered "
+            f"overstates the portfolio roughly ninefold."
+        )
+        return fig, insight
+
+    @staticmethod
+    def chart_permit_fee_breakdown(data_bundle: dict) -> tuple[go.Figure, str]:
+        """IV: Fee Type  DV: Total Fee Amount Charged ($)"""
+        df = VisualizationEngine._safe_df(data_bundle.get("street_construction_permit_fees"))
+        if df.empty:
+            return VisualizationEngine._empty_state(
+                "Street Construction Permit Fees by Type",
+                "Load 'street_construction_permit_fees' (9fnm-j6if, 2025+) for fee analysis.",
+            ), "No permit fee data available."
+
+        fee_col = VisualizationEngine._find_col(df, ["feetype", "fee_type"])
+        amt_col = VisualizationEngine._find_col(df, ["permitfeeamountcharged", "feeamount", "amount"])
+        if not fee_col or not amt_col:
+            return VisualizationEngine._empty_state(
+                "Street Construction Permit Fees by Type",
+                "Fee type / amount columns not found in permit fee data.",
+            ), "Fee columns missing."
+
+        d = df[[fee_col, amt_col]].copy()
+        d[amt_col] = pd.to_numeric(d[amt_col], errors="coerce")
+        d = d.dropna()
+        if d.empty:
+            return VisualizationEngine._empty_state(
+                "Street Construction Permit Fees by Type",
+                "No numeric fee amounts after coercion.",
+            ), "No usable fee amounts."
+
+        agg = (
+            d.groupby(fee_col)[amt_col]
+            .agg(["sum", "count", "mean"])
+            .sort_values("sum", ascending=False)
+            .head(12)
+            .reset_index()
+        )
+        fig = px.bar(
+            agg, x=fee_col, y="sum", text_auto=".2s",
+            labels={fee_col: "Fee Type", "sum": "Total Charged ($)"},
+            title="Street Construction Permit Fees by Type (IV: Fee Type → DV: $ Charged)",
+        )
+        fig.update_layout(showlegend=False, xaxis_tickangle=-30)
+
+        total = float(d[amt_col].sum())
+        top = agg.iloc[0]
+        insight = (
+            f"**${total:,.0f}** total permit fees charged across **{len(d):,}** fee line items "
+            f"(2025-present sample).\n\n"
+            f"**Top fee type:** {top[fee_col]} — ${float(top['sum']):,.0f} "
+            f"({100 * float(top['sum']) / total:.1f}% of total) over {int(top['count']):,} charges "
+            f"(avg ${float(top['mean']):,.0f}).\n\n"
+            f"**Operational read:** fee revenue mix identifies which permit activities drive "
+            f"contract-coordination workload; join on permitnumber to street_construction_permits "
+            f"for borough-level budget attribution."
+        )
+        return fig, insight
+
+    @staticmethod
     def chart_ps_burn(data_bundle: dict) -> tuple[go.Figure, str]:
         """IV: Budget Code  DV: Capital Expended vs Remaining Allocation"""
         df = VisualizationEngine._safe_df(data_bundle.get("budget"))
         if df.empty:
-            # Fall back to capital_budget or capital_projects_dashboard
             df = VisualizationEngine._safe_df(data_bundle.get("capital_budget"))
+        snapshot_used = False
         if df.empty:
-            df = VisualizationEngine._safe_df(data_bundle.get("capital_projects_dashboard"))
+            # Deduplicated snapshot — the raw table repeats projects per period.
+            df = VisualizationEngine._latest_capital_snapshot(data_bundle)
+            snapshot_used = True
         if df.empty:
             return VisualizationEngine._empty_state(
-                "Personnel Services Budget Burn Rate by Code",
-                "No budget dataset available. Load capital_budget or capital_projects_dashboard.",
+                "Capital Budget Burn Rate by Budget Line",
+                "No budget dataset available. Load capital_projects_dashboard (fb86-vt7u).",
             ), "Budget data not loaded."
 
-        code_col = VisualizationEngine._find_col(df, ["code", "budget_code", "account", "managingagency", "projectid"])
-        spent_col = VisualizationEngine._find_col(df, ["expended", "spent", "actual", "totalexpenseavailableamount"])
-        remain_col = VisualizationEngine._find_col(df, ["remaining", "allocation", "available", "totalexpenseclaimed"])
+        # Prefer a grouping with real analytical spread. managing_agency is
+        # excluded: the feed is DOT-only, so it collapses to a single bar.
+        code_col = VisualizationEngine._find_col(
+            df, ["ten_year_plan_category", "budget_line", "budget_code", "account", "projectid"]
+        )
+        spent_col = VisualizationEngine._find_col(
+            df, ["spend_to_date", "expended", "spent", "actual"]
+        )
+        budget_col = VisualizationEngine._find_col(
+            df, ["total_budget", "allocation", "available", "totalexpenseavailableamount"]
+        )
 
-        if not code_col:
+        if not code_col or not (spent_col and budget_col):
+            # Never plot record counts under a dollar-denominated title — that
+            # previously rendered a single "DOT" bar of 5,685 rows as "$".
             return VisualizationEngine._empty_state(
-                "Personnel Services Budget Burn Rate by Code",
-                "Budget code / project ID column not found.",
-            ), "Budget code column missing."
+                "Capital Budget Burn Rate by Budget Line",
+                "Budget line / dollar columns not found — refusing to plot record "
+                "counts as dollars. Load capital_projects_dashboard (fb86-vt7u).",
+            ), "Dollar columns missing."
 
-        if spent_col and remain_col:
-            plot_df = df[[code_col, spent_col, remain_col]].dropna().head(20)
-            plot_df.columns = ["Code", "Expended", "Remaining"]
-            for c in ["Expended", "Remaining"]:
-                plot_df[c] = pd.to_numeric(plot_df[c], errors="coerce").fillna(0)
-        else:
-            # Fallback: count records per code
-            counts = df[code_col].fillna("Unknown").value_counts().head(15).reset_index()
-            counts.columns = ["Code", "Count"]
-            plot_df = counts.rename(columns={"Count": "Expended"})
-            plot_df["Remaining"] = 0
+        work = df[[code_col, spent_col, budget_col]].copy()
+        work.columns = ["Code", "Expended", "Budget"]
+        for c in ("Expended", "Budget"):
+            work[c] = pd.to_numeric(work[c], errors="coerce")
+        work = work.dropna(subset=["Budget"]).fillna({"Expended": 0})
+        plot_df = (
+            work.groupby("Code")[["Expended", "Budget"]].sum()
+            .sort_values("Budget", ascending=False).head(12).reset_index()
+        )
+        plot_df["Remaining"] = (plot_df["Budget"] - plot_df["Expended"]).clip(lower=0)
 
         fig = go.Figure()
         fig.add_trace(go.Bar(
@@ -725,17 +897,27 @@ class VisualizationEngine:
         fig.update_layout(barmode="stack")
         VisualizationEngine._apply_standard_layout(
             fig,
-            "Personnel Services Budget Burn Rate (IV: Budget Code → DV: Capital Value $)",
-            "Budget Code / Project", "Capital Value ($)",
+            "Capital Budget Burn Rate (IV: Budget Line → DV: Capital Value $)",
+            "Budget Line / Plan Category", "Capital Value ($)",
         )
+        fig.update_layout(xaxis_tickangle=-30)
         total_exp = float(plot_df["Expended"].sum())
-        total_rem = float(plot_df["Remaining"].sum())
-        pct_spent = 100 * total_exp / max(total_exp + total_rem, 1)
+        total_bud = float(plot_df["Budget"].sum())
+        pct_spent = 100 * total_exp / max(total_bud, 1)
+        top = plot_df.iloc[0]
+        method = (
+            " Figures use the latest reporting-period snapshot; the source repeats "
+            "each project per period, so an unfiltered sum overstates it ~9x."
+            if snapshot_used else ""
+        )
         insight = (
-            f"**{len(plot_df)}** budget codes shown.\n\n"
-            f"**Total expended:** ${total_exp:,.0f} ({pct_spent:.1f}% of allocated).\n\n"
-            f"**Remaining:** ${total_rem:,.0f} ({100-pct_spent:.1f}% unspent).\n\n"
-            "**Action:** Codes at >90% burn rate need reallocation review before end-of-fiscal-year close-out."
+            f"**{len(plot_df)}** budget lines shown, **${total_bud/1e9:.2f}B** budgeted "
+            f"and **${total_exp/1e9:.2f}B** expended ({pct_spent:.1f}% drawn down).\n\n"
+            f"**Largest line:** {top['Code']} — ${float(top['Budget'])/1e6:,.0f}M budgeted, "
+            f"{100*float(top['Expended'])/max(float(top['Budget']),1):.1f}% spent.\n\n"
+            f"**Action:** lines above 90% burn need reallocation review before "
+            f"fiscal-year close-out; lines near 0% in Construction phase warrant a "
+            f"schedule check.{method}"
         )
         return fig, insight
 
@@ -915,10 +1097,7 @@ class VisualizationEngine:
     def chart_isochrone_walkability(data_bundle: dict | None = None) -> tuple[go.Figure, str]:
         """IV: Walk-time Radius  DV: Pedestrian Catchment Coverage"""
         # If pedestrian demand data available, show real coverage; else show theoretical zones
-        df = VisualizationEngine._safe_df(
-            (data_bundle or {}).get("pedestrian_demand") or
-            (data_bundle or {}).get("walk_to_a_park_service_area")
-        )
+        df = VisualizationEngine._safe_df((data_bundle or {}).get("pedestrian_demand"))
 
         fig = go.Figure()
         theta = np.linspace(0, 2 * np.pi, 100)
@@ -1175,22 +1354,30 @@ class VisualizationEngine:
     @staticmethod
     def chart_correlation_heatmap(data_bundle: dict) -> tuple[go.Figure, str]:
         """IV: Numeric Column Pair  DV: Pearson Correlation Coefficient"""
-        # Prefer inspection or violations as they have the most numeric variation
-        for key in ["violations", "inspection", "built", "lot_info"]:
-            df = VisualizationEngine._safe_df(data_bundle.get(key))
-            if not df.empty:
+        # Try each dataset in priority order; stop when ≥2 numeric columns are found.
+        # Parquet caches store all columns as object strings, so we must coerce.
+        num_df = pd.DataFrame()
+        for key in ["mappluto", "built", "lot_info", "inspection", "violations",
+                    "street_resurfacing_inhouse", "street_construction_inspections",
+                    "ramp_progress", "ramp_locations"]:
+            _d = VisualizationEngine._safe_df(data_bundle.get(key))
+            if _d.empty:
+                continue
+            # Try native numeric columns first; then coerce object columns that parse as numbers
+            _candidate = _d.select_dtypes(include=[np.number]).copy()
+            for _col in _d.select_dtypes(include=["object"]).columns:
+                _coerced = pd.to_numeric(_d[_col], errors="coerce")
+                if _coerced.notna().sum() > 10:
+                    _candidate[_col] = _coerced
+            _candidate = _candidate.dropna(axis=1, how="all")
+            _candidate = _candidate.loc[:, _candidate.nunique() > 1].head(5000)
+            if _candidate.shape[1] >= 2:
+                num_df = _candidate
                 break
-        if df.empty:
-            return VisualizationEngine._empty_state(
-                "Numeric Feature Correlation Heatmap"
-            ), "No data available for correlation analysis."
-
-        num_df = df.select_dtypes(include=[np.number]).dropna(axis=1, how="all")
-        num_df = num_df.loc[:, num_df.nunique() > 1].head(5000)
-        if num_df.shape[1] < 2:
+        if num_df.empty or num_df.shape[1] < 2:
             return VisualizationEngine._empty_state(
                 "Numeric Feature Correlation Heatmap",
-                f"Only {num_df.shape[1]} numeric column(s) found — need ≥2.",
+                f"Only {num_df.shape[1] if not num_df.empty else 0} numeric column(s) found across datasets — need ≥2.",
             ), "Insufficient numeric columns."
 
         corr = num_df.corr()
@@ -1372,9 +1559,10 @@ class VisualizationEngine:
     @staticmethod
     def chart_annotated_complaint_surge(data_bundle: dict) -> tuple[go.Figure, str]:
         """IV: Date  DV: 311 Complaint Volume with Surge Annotations"""
-        df = VisualizationEngine._safe_df(data_bundle.get("complaints_311"))
+        # ramp_complaints spans 2018-present (multi-year); complaints_311 cache may be single-day
+        df = VisualizationEngine._safe_df(data_bundle.get("ramp_complaints"))
         if df.empty:
-            df = VisualizationEngine._safe_df(data_bundle.get("ramp_complaints"))
+            df = VisualizationEngine._safe_df(data_bundle.get("complaints_311"))
         if df.empty:
             return VisualizationEngine._empty_state(
                 "311 Complaint Surge Timeline with Anomaly Annotations"
@@ -1395,7 +1583,10 @@ class VisualizationEngine:
         daily = df.groupby(df[date_col].dt.date).size().reset_index()
         daily.columns = ["Date", "Complaints"]
         daily["Date"] = pd.to_datetime(daily["Date"])
-        daily = daily.sort_values("Date").tail(365)
+        daily = daily.sort_values("Date")
+        # Filter to last 365 calendar days from the most recent date in the data
+        _max_date = daily["Date"].max()
+        daily = daily[daily["Date"] >= _max_date - pd.Timedelta(days=365)]
 
         roll7 = daily["Complaints"].rolling(7, min_periods=1).mean()
         mean_v = roll7.mean()
@@ -1613,10 +1804,13 @@ class VisualizationEngine:
         _boro_rate(VisualizationEngine._safe_df(data_bundle.get("built")), "Repair Share %")
         _boro_rate(VisualizationEngine._safe_df(data_bundle.get("ramp_progress")), "Ramp Progress %")
         _boro_rate(VisualizationEngine._safe_df(data_bundle.get("complaints_311")), "311 Share %")
+        # dismissals has authoritative borough col; ramp_complaints also has borough
+        _boro_rate(VisualizationEngine._safe_df(data_bundle.get("dismissals")), "Dismissal Share %")
+        _boro_rate(VisualizationEngine._safe_df(data_bundle.get("ramp_complaints")), "Ramp Complaint %")
 
         # Only keep boroughs and metrics with data
         all_dims = ["Inspection Share %", "Violation Share %", "Repair Share %",
-                    "Ramp Progress %", "311 Share %"]
+                    "Ramp Progress %", "311 Share %", "Dismissal Share %", "Ramp Complaint %"]
         filled_dims = [d for d in all_dims if any(d in metrics[b] for b in _BORO_ORDER)]
 
         if not filled_dims:
@@ -1679,9 +1873,22 @@ class VisualizationEngine:
 
         df = df.copy()
         df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
-        weekly = df.dropna(subset=[date_col]).groupby(
-            df[date_col].dt.to_period("W").astype(str)
-        ).size().reset_index(name="Inspections")
+        df = df.dropna(subset=[date_col])
+        df = df[df[date_col] <= pd.Timestamp.now()]  # filter out future-dated records
+        if df.empty:
+            return VisualizationEngine._empty_state(
+                "HIQA Inspector Throughput (Inspections per Week)",
+                "No valid inspection dates after filtering future-dated records.",
+            ), "No valid date data."
+        weekly = (
+            df.set_index(date_col)
+            .resample("W")
+            .size()
+            .reset_index(name="Inspections")
+        )
+        weekly.columns = ["Week", "Inspections"]
+        # Convert Timestamps to ISO strings to avoid kaleido JSON serialization errors
+        weekly["Week"] = weekly["Week"].dt.strftime("%Y-%m-%d")
 
         x_num = np.arange(len(weekly))
         if len(x_num) >= 2:
@@ -1710,6 +1917,7 @@ class VisualizationEngine:
             "HIQA Inspector Throughput by Week (IV: Week → DV: Inspections Completed)",
             "Week", "Inspections Completed",
         )
+        fig.update_xaxes(nticks=15, tickangle=-45)
 
         mean_wk = float(weekly["Inspections"].mean())
         insight = (
@@ -2114,18 +2322,23 @@ class VisualizationEngine:
         """IV: Budget Stage  DV: Cumulative Capital Position ($)"""
         df = VisualizationEngine._safe_df(data_bundle.get("capital_budget"))
         if df.empty:
-            df = VisualizationEngine._safe_df(data_bundle.get("capital_projects_dashboard"))
+            # Must be the deduplicated snapshot — the raw table repeats each
+            # project per reporting period and would overstate the portfolio ~9x.
+            df = VisualizationEngine._latest_capital_snapshot(data_bundle)
         if df.empty:
             return VisualizationEngine._empty_state(
                 "Capital Budget Waterfall — Allocation vs Expenditure vs Remaining"
             ), "No capital budget data."
 
-        # Identify best numeric columns for budget stages
+        # Identify best numeric columns for budget stages. `built`'s cost columns
+        # are deliberately NOT candidates: full-corpus verification showed them
+        # 3.5–3.9% populated and 0% for 2024–25.
         alloc_col = VisualizationEngine._find_col(
-            df, ["totalallocation", "allocation", "totalbudget", "totalexpenseavailableamount"]
+            df, ["total_budget", "totalallocation", "allocation", "totalbudget",
+                 "totalexpenseavailableamount"]
         )
         spent_col = VisualizationEngine._find_col(
-            df, ["expended", "spent", "totalexpenseclaimed", "totalcosttoconstruct"]
+            df, ["spend_to_date", "expended", "spent", "totalexpenseclaimed"]
         )
         commit_col = VisualizationEngine._find_col(
             df, ["committed", "encumbered", "obligated"]

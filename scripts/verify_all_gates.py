@@ -5,9 +5,10 @@ MANDATORY per verification_gates_mandatory_system.md
 """
 
 import sys
-import duckdb
 from pathlib import Path
-from typing import Tuple, Dict, List
+from typing import Dict, List, Tuple
+
+import duckdb
 
 
 def run_gate_1(conn: duckdb.DuckDBPyConnection) -> Tuple[bool, str]:
@@ -28,9 +29,9 @@ def run_gate_1(conn: duckdb.DuckDBPyConnection) -> Tuple[bool, str]:
 
         table_count, total_rows = result[0]
         if table_count == 0:
-            return False, f"Gate 1 FAILED: 0 raw tables found (expected 57)"
+            return False, "Gate 1 FAILED: 0 raw tables found (expected 57)"
         if total_rows == 0:
-            return False, f"Gate 1 FAILED: Raw tables exist but contain 0 rows"
+            return False, "Gate 1 FAILED: Raw tables exist but contain 0 rows"
 
         return True, f"Gate 1 PASSED: {table_count} raw tables with {total_rows} total rows"
     except Exception as e:

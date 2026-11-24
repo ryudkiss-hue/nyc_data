@@ -16,7 +16,6 @@ Phase 1 Datasets (21 total):
 import textwrap
 from pathlib import Path
 
-
 # Chart templates for each dataset type
 CHARTS = {
     # Phase 1: Permit Variants & Conflicts (5)
@@ -387,7 +386,7 @@ def main():
 
     # Read existing plotly_charts.py
     charts_file = Path("src/socrata_toolkit/plotly_charts.py")
-    with open(charts_file, "r") as f:
+    with open(charts_file) as f:
         existing = f.read()
 
     # Find the last function in the file
@@ -413,15 +412,15 @@ def main():
 
     print(f"[PASS] Generated {len(CHARTS)} visualization functions")
     print(f"[PASS] Functions added to: {charts_file}")
-    print(f"\nGenerated Functions:")
+    print("\nGenerated Functions:")
     for dataset_key, spec in sorted(CHARTS.items()):
         print(f"  - {spec['function']}")
 
     # Summary
-    print(f"\n[SUMMARY]")
+    print("\n[SUMMARY]")
     print(f"  Total Phase 1 datasets: {len(CHARTS)}")
     print(f"  Chart types used: {set(s['chart_type'] for s in CHARTS.values())}")
-    print(f"  Status: Ready for integration into Dash app")
+    print("  Status: Ready for integration into Dash app")
 
 
 if __name__ == "__main__":

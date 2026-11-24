@@ -1,10 +1,9 @@
 name: Deploy to Cloud Run
 
+# Solo-workstation deployment model (2026-07-26): cloud deploy is manual-only.
+# Previously this ran on every push and reported "success" in 9s because the
+# GCP secret gate skipped the deploy job — a misleading green checkmark.
 on:
-  push:
-    branches:
-      - main
-      - claude/elegant-ptolemy-kctbqo
   workflow_dispatch:
 
 env:

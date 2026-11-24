@@ -9,7 +9,7 @@ jobs:
     steps:
     - uses: actions/checkout@v7
     - name: Set up Python
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@v7
       with:
         python-version: "3.11"
     
@@ -19,4 +19,4 @@ jobs:
         pip install ruff
     
     - name: Check code with ruff
-      run: ruff check src/socrata_toolkit tests
+      run: ruff check src/socrata_toolkit tests app scripts

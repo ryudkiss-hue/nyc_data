@@ -6,8 +6,8 @@ Reads execution.json and watermarks.json, prints dataset status, rows, and elaps
 
 import json
 import sys
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, List
 
 

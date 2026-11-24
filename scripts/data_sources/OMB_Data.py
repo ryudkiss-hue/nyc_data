@@ -1,35 +1,35 @@
 """
 Manhattan Mission Control: Monolithic Apex Engine (Enterprise Edition)
-Integrates Socrata Ingestion, Parquet Caching, Bayesian Inference, 
+Integrates Socrata Ingestion, Parquet Caching, Bayesian Inference,
 and GeoPandas Spatial Analytics into a single agency-grade application.
 """
 
-import os
-import time
 import logging
-import warnings
+import os
 import random
-import requests
-from bs4 import BeautifulSoup
+import time
+import warnings
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Tuple
-from datetime import datetime, timezone
-from dateutil.relativedelta import relativedelta
-from dataclasses import dataclass
 
-import pandas as pd
+import folium
 import numpy as np
-import yaml
+import pandas as pd
+import plotly.graph_objects as go
+import requests
 import streamlit as st
 import streamlit.components.v1 as components
-import plotly.graph_objects as go
-import folium
+import yaml
+from bs4 import BeautifulSoup
+from dateutil.relativedelta import relativedelta
 
 # --- Advanced Analytics ---
 try:
-    import pymc as pm
     import arviz as az
+    import pymc as pm
     from prophet import Prophet
 except ImportError:
     pm = az = Prophet = None
@@ -141,7 +141,7 @@ def _demo_frame(dataset_key: str) -> pd.DataFrame:
 def _fetch_live(dataset_key: str, limit: int, where: str | None, retries: int = 3, backoff: float = 2.0) -> pd.DataFrame:
     meta = DATASET_REGISTRY.get(dataset_key)
     if not meta: raise KeyError(f"Unknown dataset_key: {dataset_key}")
-    
+
     headers = {"X-App-Token": SOCRATA_TOKEN} if SOCRATA_TOKEN else {}
     params = {"$limit": 50000, "$order": ":id"}
     if where: params["$where"] = where
@@ -167,20 +167,20 @@ def _fetch_live(dataset_key: str, limit: int, where: str | None, retries: int = 
             if not all_data: raise RuntimeError(f"All {retries} fetch attempts failed for {dataset_key}: {last_exc}")
             break # Stop paging if we fail mid-way, keep what we have
 
-        if not chunk: break 
+        if not chunk: break
         all_data.extend(chunk)
         offset += params["$limit"]
         if len(all_data) >= limit: break
-        
+
     return pd.DataFrame(all_data[:limit])
 
 @st.cache_data(ttl=CACHE_TTL_SECONDS, show_spinner=False)
 def fetch_dataset(dataset_key: str, limit: int = 100_000, where: str | None = None) -> pd.DataFrame:
     if demo_mode_enabled(): return _demo_frame(dataset_key)
-    
+
     cached = _read_parquet_cache(dataset_key)
     if cached is not None and not where: return cached
-    
+
     try:
         df = _fetch_live(dataset_key, limit=limit, where=where)
         if not where: _write_parquet_cache(dataset_key, df) # Only cache full pulls
@@ -223,12 +223,12 @@ def scrape_historical_jids(start_jid: int, end_jid: int) -> pd.DataFrame:
     scraped_data = []
     for jid in range(start_jid, end_jid + 1):
         url = f"https://cityjobs.nyc.gov/job/anything-jid-{jid}"
-        time.sleep(random.uniform(0.5, 1.5)) 
+        time.sleep(random.uniform(0.5, 1.5))
         try:
             response = requests.get(url, headers=headers, timeout=5)
             if response.status_code == 200:
                 soup = BeautifulSoup(response.content, 'html.parser')
-                title_elem = soup.find('h1', class_='job-title') 
+                title_elem = soup.find('h1', class_='job-title')
                 job_title = title_elem.text.strip() if title_elem else "UNKNOWN TITLE"
                 agency_elem = soup.find('span', class_='agency-name')
                 agency_name = agency_elem.text.strip() if agency_elem else "UNKNOWN AGENCY"
@@ -261,7 +261,7 @@ def run_apex_math(df_jobs: pd.DataFrame, df_payroll: pd.DataFrame, max_lag: int 
     if not pm: raise ImportError("PyMC not installed. Machine learning forecast skipped.")
 
     predictor = df_ts['Postings_Smoothed'].shift(best_lag).fillna(0).values
-    target = df_ts['Starts'].values 
+    target = df_ts['Starts'].values
 
     with pm.Model() as _:
         alpha = pm.Normal('Baseline_Log', mu=0, sigma=5)
@@ -276,7 +276,7 @@ def run_apex_math(df_jobs: pd.DataFrame, df_payroll: pd.DataFrame, max_lag: int 
     df_prophet = df_ts.rename_axis('ds').reset_index()[['ds', 'Postings_Smoothed']].rename(columns={'Postings_Smoothed': 'y'})
     m_prophet = Prophet(yearly_seasonality=True, weekly_seasonality=False, daily_seasonality=False)
     m_prophet.fit(df_prophet)
-    
+
     future = m_prophet.make_future_dataframe(periods=12, freq='MS')
     forecast = m_prophet.predict(future)
     forecast['predicted_hires'] = forecast['yhat'] * effective_yield_rate
@@ -309,7 +309,7 @@ def _utc_today() -> pd.Timestamp:
 def qa_qc_inventory_ledger(lot_info: pd.DataFrame, mappluto: pd.DataFrame, complaints_311: pd.DataFrame, stale_days: int = 30):
     joins = quality_flags = 0
     merged = lot_info.copy()
-    
+
     stale = pd.DataFrame()
     if not complaints_311.empty:
         c = complaints_311.copy()
@@ -332,7 +332,7 @@ def spatial_conflict_detection(weekly: pd.DataFrame, permits: pd.DataFrame, capi
     permits_gdf = df_to_gdf(permits)
     joins = 0
     conflicts = []
-    
+
     if permits_gdf is not None and not permits_gdf.empty:
         try:
             joined = gpd.sjoin(weekly_gdf, permits_gdf, how="inner", predicate="intersects")
@@ -341,7 +341,7 @@ def spatial_conflict_detection(weekly: pd.DataFrame, permits: pd.DataFrame, capi
                 conflicts.append(joined)
                 joins += 1
         except Exception: pass
-        
+
     out = pd.concat(conflicts, ignore_index=True) if conflicts else pd.DataFrame()
     return out, joins
 
@@ -360,7 +360,7 @@ def main():
         st.header("⚙️ Target Parameters")
         target_agency = st.text_input("Agency", value="DEPARTMENT OF TRANSPORTATION")
         target_title = st.text_input("Civil Service Title", value="PROJECT ANALYST")
-        
+
         st.header("🕸️ Dark Matter Scraper")
         scrape_start = st.number_input("Start JID", value=35710, step=1)
         scrape_end = st.number_input("End JID", value=35715, step=1)
@@ -371,7 +371,7 @@ def main():
 
     st.title("Manhattan Mission Control")
     st.caption("Powered by Parquet Caching & GeoPandas Spatial Routing")
-    
+
     tab1, tab2 = st.tabs(["🚀 Apex Hiring Engine", "🚧 SIM Analyst Operations"])
 
     # ---------------------------------------------------------
@@ -382,16 +382,16 @@ def main():
             with st.status("Initializing Apex Pipeline...", expanded=True) as status:
                 st.write("Harvesting dark matter (Scraping expired JIDs)...")
                 df_scraped = scrape_historical_jids(int(scrape_start), int(scrape_end))
-                
+
                 st.write("Querying Active Datasets (Parquet Cache / Socrata API)...")
                 five_years_ago = (datetime.now() - relativedelta(years=5)).strftime('%Y-%m-%dT00:00:00')
-                
+
                 jobs_where = f"posting_date >= '{five_years_ago}'"
                 pay_where = f"agency_start_date >= '{five_years_ago}'"
                 if target_agency != "ALL":
                     jobs_where += f" AND agency='{target_agency}'"
                     pay_where += f" AND agency_name='{target_agency}'"
-                
+
                 # Fetch securely utilizing the threaded enterprise caching methodology
                 frames = fetch_datasets_for_keys(['jobs_active', 'citywide_payroll'], limit=100_000)
                 df_jobs = frames.get('jobs_active', pd.DataFrame())
@@ -418,7 +418,7 @@ def main():
             col1, col2 = st.columns(2)
             with col1: st.metric("Calculated OMB Review Lag", f"{results['best_lag']} Months")
             with col2: st.metric("Bayesian Yield Multiplier", f"{results['yield_rate']:.2f}x")
-            
+
             st.divider()
             st.subheader("1. Administrative Velocity & Signal Processing")
             fig_pipeline = go.Figure()
@@ -446,19 +446,19 @@ def main():
             with st.spinner("Compiling SIM Telemetry Matrix (Threaded Fetch)..."):
                 keys_to_fetch = ["complaints_311", "street_permits", "mappluto"]
                 sim_frames = fetch_datasets_for_keys(keys_to_fetch, limit=10_000)
-                
+
                 ledger, stale_311, qa_joins, qa_flags = qa_qc_inventory_ledger(pd.DataFrame(), sim_frames.get('mappluto', pd.DataFrame()), sim_frames.get('complaints_311', pd.DataFrame()))
                 conflicts, spatial_joins = spatial_conflict_detection(pd.DataFrame(), sim_frames.get('street_permits', pd.DataFrame()), pd.DataFrame())
-                
+
                 minutes = (len(ledger)*3 + len(conflicts)*15 + 0*5 + (qa_flags + len(conflicts))*2)
                 roi = ProductivityROI(joins_automated=(qa_joins + spatial_joins), actionable_discrepancies=(len(stale_311) + len(conflicts)), lots_validated=len(ledger), spatial_conflicts_checked=len(conflicts), contracts_cleared=0, hours_reclaimed=minutes/60.0, quality_flags=(qa_flags + len(conflicts)), datasets_profiled=1)
-                
+
                 st.session_state.sim_results = {"stale_311": stale_311, "conflicts": conflicts, "roi": roi}
-        
+
         sim = st.session_state.sim_results
         if sim and sim != "loading":
             roi = sim["roi"]
-            st.markdown(f"### 📈 Engineering Productivity ROI")
+            st.markdown("### 📈 Engineering Productivity ROI")
             rc1, rc2, rc3, rc4 = st.columns(4)
             rc1.metric("Hours Reclaimed", f"{roi.hours_reclaimed:.1f}h", "This Cycle")
             rc2.metric("Joins Automated", roi.joins_automated)

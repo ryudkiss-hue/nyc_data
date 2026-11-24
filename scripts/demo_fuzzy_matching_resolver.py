@@ -13,9 +13,9 @@ Run:
     python scripts/demo_fuzzy_matching_resolver.py
 """
 
+import io
 import sys
 from pathlib import Path
-import io
 
 # Fix encoding for Windows console
 if sys.platform == "win32":
@@ -107,11 +107,11 @@ def demo_bm25_weighting():
     if match_detail:
         print(f"\nQuery: {test_question}")
         print(f"Matched: {match_detail.matched_text}")
-        print(f"\nScoring Breakdown:")
+        print("\nScoring Breakdown:")
         print(f"  BM25 Score:      {match_detail.bm25_score:.4f} × 0.80 = {match_detail.bm25_score * 0.80:.4f}")
         print(f"  FastText Score:  {match_detail.fasttext_score:.4f} × 0.15 = {match_detail.fasttext_score * 0.15:.4f}")
         print(f"  Jaccard Score:   {match_detail.jaccard_score:.4f} × 0.05 = {match_detail.jaccard_score * 0.05:.4f}")
-        print(f"  ───────────────────────────────────────────")
+        print("  ───────────────────────────────────────────")
         print(f"  Composite Score: {match_detail.confidence:.4f}")
         print(f"  Strategy: {match_detail.strategy}")
 
@@ -190,7 +190,7 @@ def demo_dataset_mapping():
     if resolution:
         print(f"\nQuestion: {question}")
         print(f"Resolved to Q{resolution.question_id}")
-        print(f"\nCritical Datasets (required for this analysis):")
+        print("\nCritical Datasets (required for this analysis):")
 
         for dataset in resolution.critical_datasets:
             print(f"\n  • {dataset.name} ({dataset.fourfour})")
@@ -199,14 +199,14 @@ def demo_dataset_mapping():
             if dataset.key_columns:
                 print(f"    Key columns: {', '.join(dataset.key_columns[:3])}...")
 
-        print(f"\nMetrics to Calculate:")
+        print("\nMetrics to Calculate:")
         for metric in resolution.metrics:
             print(f"  • {metric.metric_id}: {metric.metric_name}")
             print(f"    Formula: {metric.formula}")
             if metric.target_value:
                 print(f"    Target: {metric.target_value}")
 
-        print(f"\nAnalysis Skills:")
+        print("\nAnalysis Skills:")
         print(f"  Primary: {resolution.primary_skill.value}")
         if resolution.secondary_skills:
             print(f"  Secondary: {', '.join(s.value for s in resolution.secondary_skills)}")

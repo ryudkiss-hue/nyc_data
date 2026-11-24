@@ -82,7 +82,6 @@ _TIER2 = [
     ("Capital Budget – Schedule History","capital_dashboard_schedule_history"),
     ("Capital Budget – Spend History",   "capital_dashboard_spend_history"),
     ("Capital Budget – FY Spend",        "capital_dashboard_budget_spend_fy"),
-    ("State of Good Repair Needs",       "state_of_good_repair_needs"),
     ("CPDB Commitments",                 "cpdb_commitments"),
     ("CPDB Projects",                    "cpdb_projects"),
     ("10-Year Capital Strategy",         "ten_year_capital_strategy"),
@@ -102,7 +101,6 @@ _TIER2 = [
     ("Protected Streets – Intersection", "protected_streets_intersection_dataset"),
     ("Street Network Changes",           "street_network_changes"),
     # Vision Zero
-    ("Vision Zero – Base Report",        "vision_zero_base_report"),
     ("Vision Zero – Speed Humps",        "vzv_speed_humps"),
     ("Vision Zero – Priority Corridors", "vzv_priority_corridors"),
     ("Vision Zero – Priority Intersections","vzv_priority_intersections"),
@@ -164,7 +162,6 @@ _TIER2 = [
     ("Speed Reducer Tracking (SRTS)",    "speed_reducer_tracking_srts"),
     # Motor vehicle collisions (Vision Zero source data)
     ("Motor Vehicle Collisions – Crashes","motor_vehicle_collisions_crashes"),
-    ("Motor Vehicle Collisions – Persons","motor_vehicle_collisions_person"),
     # Capital project geospatial (CPDB)
     ("CPDB Projects – Points",           "cpdb_projects_points"),
     ("CPDB Projects – Polygons",         "cpdb_projects_polygons"),
@@ -172,10 +169,8 @@ _TIER2 = [
     ("Ramp Locations (Stale 2021)",      "ramp_locations"),
     # Demographics / equity
     ("Census Demographics – NTA",        "census_demographics_nta"),
-    ("Heat Vulnerability Index",         "heat_vulnerability_index"),
     ("Street Tree Census 2015",          "street_tree_census_2015"),
     ("NTA 2020 Boundaries",              "nta_2020"),
-    ("Walk to Park Service Area",        "walk_to_a_park_service_area"),
     # Parking / misc
     ("Parking Meters / ParkNYC",         "parking_meters_parknyc_block_faces"),
     ("Parking Permits – Disability (PPPD)","parking_permit_for_people_with_disabilities_pppd"),
@@ -183,8 +178,6 @@ _TIER2 = [
     ("Temporary Disability Parking Permits","temporary_parking_permit_for_people_with_disabil"),
     ("Carshare – Curbside",              "carshare_locations_curbside"),
     ("Shared E-Scooter Corrals",         "shared_e_scooter_parking_corrals"),
-    ("Privately Owned Public Spaces",    "privately_owned_public_spaces_pops"),
-    ("DOB Stalled Construction Sites",   "dob_stalled_construction_sites"),
     ("Encroachments & Defacements",      "encroachments_and_defacements"),
     ("Forestry Inspections",             "forestry_inspections"),
     ("Intercity Bus Stop Permits",       "intercity_bus_stop_permits"),
