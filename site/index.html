@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NYC DOT SIM · Open Data</title>
+  <meta name="description" content="Browser tools for NYC DOT Sidewalk Inspection and Management: query NYC Open Data, check dataset freshness, browse DOT map layers and brief Make Safe service requests.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%231864ab'/%3E%3Ccircle cx='8' cy='8' r='3.5' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/site.css">
+  <script type="module" src="assets/home.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <nav class="site-nav" aria-label="Site">
+        <a class="brand" href="./" aria-current="page">NYC DOT SIM · Open Data</a>
+        <ul>
+          <li><a href="explore.html">Explore data</a></li>
+          <li><a href="datasets.html">Datasets</a></li>
+          <li><a href="layers.html">DOT map layers</a></li>
+          <li><a href="make-safe/">Make Safe brief</a></li>
+        </ul>
+      </nav>
+      <h1>NYC DOT SIM · Open Data</h1>
+      <p class="lede">Browser tools for the Sidewalk Inspection and Management unit. Everything reads NYC Open Data and DOT's ArcGIS server live, from this page; there is nothing to install and no server in between, and files you open stay in your browser.</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <search>
+      <form id="go-form" aria-labelledby="go-title">
+        <h2 id="go-title" class="visually-hidden">Quick start</h2>
+        <div class="grid">
+          <div class="field span2">
+            <label for="go-q">Open a dataset or an SR</label>
+            <input id="go-q" name="q" type="search" autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="go-help">
+            <small id="go-help">A dataset ID (jagj-gttd), a search term (sidewalk violations) or an SR number (311-29399735).</small>
+          </div>
+        </div>
+        <div class="actions"><button type="submit" class="primary">Go</button></div>
+        <p id="go-status" class="status" role="status" aria-live="polite"></p>
+      </form>
+    </search>
+
+    <div class="cards">
+      <article class="card">
+        <h2><a href="explore.html">Explore data</a></h2>
+        <p>Open any NYC Open Data dataset, filter it with a builder or plain SoQL, count by a column, profile its columns, map the rows and download CSV or JSON. Every query has a shareable link.</p>
+      </article>
+      <article class="card">
+        <h2><a href="datasets.html">Datasets</a></h2>
+        <p>The Sidewalk Program's datasets with live update dates against their freshness tier (HIGH 14, MEDIUM 30, LOW 60 days), row counts, joins and known issues.</p>
+      </article>
+      <article class="card">
+        <h2><a href="layers.html">DOT map layers</a></h2>
+        <p>Browse PRISM corners and ramps, LION, AddressPoint, MapPLUTO and any other DOT ArcGIS layer. Query by attribute or distance from a point; map and export GeoJSON or CSV.</p>
+      </article>
+      <article class="card">
+        <h2><a href="make-safe/">Make Safe brief</a></h2>
+        <p>Everything public data says about one Make Safe SR, or every SR on a workbook tab: corners, ramps, ramp program, complaint and repair history, permits, capital projects and nearby 311.</p>
+      </article>
+    </div>
+
+    <section class="prose" aria-labelledby="claude-title">
+      <h2 id="claude-title">With Claude</h2>
+      <p>The same Make Safe brief and lookups run as a local MCP server for Claude Desktop and Claude Code: see <a href="https://github.com/ryudkiss-hue/nyc_data/tree/main/nyc-opendata-mcp">nyc-opendata-mcp</a>.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>Data: <a href="https://opendata.cityofnewyork.us/">NYC Open Data</a> and NYC DOT ArcGIS services. Source: <a href="https://github.com/ryudkiss-hue/nyc_data">ryudkiss-hue/nyc_data</a>.</p>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,1028 @@
+{
+ "description": "NYC DOT SIM in-scope NYC Open Data datasets (Sidewalk Program scope). Names, freshness and row counts are read live by the site; this file holds keys, joins, SLA tiers and known issues.",
+ "source": "pipeline/config/socrata_datasets.json v5.4-capital (archive/pre-simplify), 112 datasets",
+ "sla_days": {
+  "HIGH": 14,
+  "MEDIUM": 30,
+  "LOW": 60
+ },
+ "sla_rule": "HIGH: inspection, violations, reinspection, dismissals. MEDIUM: other sim_core, accessibility and coordination datasets. LOW: everything else (reference and overlay layers). From data/sla_config.json descriptions.",
+ "datasets": [
+  {
+   "key": "accessible_pedestrian_signal_locations",
+   "id": "de3m-c5p4",
+   "name": "Accessible Pedestrian Signal Locations",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "bi_annual_pedestrian_counts",
+   "id": "cqsj-cfgu",
+   "name": "Bi-Annual Pedestrian Counts",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "bicycle_and_pedestrian_count_sensors",
+   "id": "6up2-gnw8",
+   "name": "Bicycle and Pedestrian Count Sensors",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "bicycle_parking",
+   "id": "592z-n7dk",
+   "name": "Bicycle Parking",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "bicycle_parking_shelters",
+   "id": "dimy-qyej",
+   "name": "Bicycle Parking Shelters",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "bikes_in_buildings_requests",
+   "id": "scjj-6yaf",
+   "name": "Bikes in Buildings Requests",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW",
+   "foreign_keys": [
+    {
+     "column": "nta",
+     "references": "nta_2020.nta2020"
+    },
+    {
+     "column": "bbl",
+     "references": "lot_info.bblid"
+    }
+   ]
+  },
+  {
+   "key": "boardwalk_planimetric",
+   "id": "p9cw-7gsv",
+   "name": "NYC Planimetric Database: Boardwalk",
+   "domain": "overlays",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "built",
+   "id": "ugc8-s3f6",
+   "name": "Sidewalk Management Database - Built",
+   "domain": "extended",
+   "primary_key": "lot_id",
+   "sla_tier": "LOW",
+   "foreign_keys": [
+    {
+     "column": "bblid",
+     "references": "lot_info.bblid"
+    }
+   ],
+   "issue": "Cost columns are 3.5-3.9% populated overall and 0% for 2024-2025 (checked 2026-07-26): not usable for budget dollars; fine for repair counts and locations."
+  },
+  {
+   "key": "bus_lanes_local_streets",
+   "id": "ycrg-ses3",
+   "name": "Bus Lanes - Local Streets",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "bus_stop_shelters",
+   "id": "t4f2-8md7",
+   "name": "Bus Stop Shelters",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "capital_budget",
+   "id": "46m8-77gv",
+   "name": "Capital Budget",
+   "domain": "coordination",
+   "primary_key": "",
+   "sla_tier": "MEDIUM"
+  },
+  {
+   "key": "capital_commitment_actuals",
+   "id": "8u85-k342",
+   "name": "Capital Commitment Actuals",
+   "domain": "coordination",
+   "primary_key": "",
+   "sla_tier": "MEDIUM"
+  },
+  {
+   "key": "capital_commitment_plan",
+   "id": "2cmn-uidm",
+   "name": "Capital Commitment Plan",
+   "domain": "coordination",
+   "primary_key": "",
+   "sla_tier": "MEDIUM"
+  },
+  {
+   "key": "capital_dashboard_budget_spend_fy",
+   "id": "gyhf-rsr3",
+   "name": "Capital Projects Dashboard - Citywide Budget and Spend by Fiscal Year",
+   "domain": "coordination",
+   "primary_key": "",
+   "sla_tier": "MEDIUM"
+  },
+  {
+   "key": "capital_dashboard_schedule_history",
+   "id": "95tx-snak",
+   "name": "Capital Projects Dashboard - Citywide Schedule History and Variance",
+   "domain": "coordination",
+   "primary_key": "",
+   "sla_tier": "MEDIUM"
+  },
+  {
+   "key": "capital_dashboard_spend_history",
+   "id": "qj5n-h5qp",
+   "name": "Capital Projects Dashboard - Citywide Budget Spend History and Variance",
+   "domain": "coordination",
+   "primary_key": "",
+   "sla_tier": "MEDIUM"
+  },
+  {
+   "key": "capital_project_detail_dollars",
+   "id": "wa2y-rh4b",
+   "name": "Capital Project Detail Data - Dollars",
+   "domain": "coordination",
+   "primary_key": "",
+   "sla_tier": "MEDIUM"
+  },
+  {
+   "key": "capital_project_detail_milestones",
+   "id": "s7yh-frbm",
+   "name": "Capital Project Detail Data - Milestones",
+   "domain": "coordination",
+   "primary_key": "",
+   "sla_tier": "MEDIUM"
+  },
+  {
+   "key": "capital_projects_dashboard",
+   "id": "fb86-vt7u",
+   "name": "Capital Projects Dashboard - Citywide Budget and Schedule",
+   "domain": "coordination",
+   "primary_key": "",
+   "sla_tier": "MEDIUM",
+   "foreign_keys": [
+    {
+     "column": "fms_id",
+     "references": "street_and_highway_capital_reconstruction_projec.fmsid"
+    }
+   ],
+   "issue": "Each project repeats once per reporting period: take the latest reporting_period only before summing (unfiltered sums inflate about 9x)."
+  },
+  {
+   "key": "carshare_locations_curbside",
+   "id": "wkij-g2bh",
+   "name": "Carshare Locations - Curbside",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "census_demographics_nta",
+   "id": "rnsn-acs2",
+   "name": "Census Demographics at the Neighborhood Tabulation Area (NTA) level",
+   "domain": "crossagency",
+   "primary_key": "geographic_area_neighborhood_tabulation_area_nta_code",
+   "sla_tier": "LOW",
+   "foreign_keys": [
+    {
+     "column": "geographic_area_neighborhood_tabulation_area_nta_code",
+     "references": "nta_2020.nta2020"
+    }
+   ]
+  },
+  {
+   "key": "complaints_311",
+   "id": "erm2-nwe9",
+   "name": "311 Service Requests from 2020 to Present",
+   "domain": "crossagency",
+   "primary_key": "",
+   "sla_tier": "LOW",
+   "foreign_keys": [
+    {
+     "column": "bbl",
+     "references": "lot_info.bblid"
+    }
+   ]
+  },
+  {
+   "key": "correspondences",
+   "id": "bheb-sjfi",
+   "name": "Sidewalk Correspondences",
+   "domain": "coordination",
+   "primary_key": "correspondence_id",
+   "sla_tier": "MEDIUM",
+   "foreign_keys": [
+    {
+     "column": "nta",
+     "references": "nta_2020.nta2020"
+    },
+    {
+     "column": "bbl",
+     "references": "lot_info.bblid"
+    }
+   ]
+  },
+  {
+   "key": "cpdb_commitments",
+   "id": "djxg-kcfi",
+   "name": "Capital Projects Database (CPDB) - Commitments",
+   "domain": "coordination",
+   "primary_key": "",
+   "sla_tier": "MEDIUM"
+  },
+  {
+   "key": "cpdb_projects",
+   "id": "fi59-268w",
+   "name": "Capital Projects Database (CPDB) - Projects",
+   "domain": "coordination",
+   "primary_key": "",
+   "sla_tier": "MEDIUM"
+  },
+  {
+   "key": "cpdb_projects_points",
+   "id": "h2ic-zdws",
+   "name": "Capital Projects Database (CPDB) - Projects (Points)",
+   "domain": "coordination",
+   "primary_key": "",
+   "sla_tier": "MEDIUM"
+  },
+  {
+   "key": "cpdb_projects_polygons",
+   "id": "9jkp-n57r",
+   "name": "Capital Projects Database (CPDB) - Projects (Polygons)",
+   "domain": "coordination",
+   "primary_key": "",
+   "sla_tier": "MEDIUM"
+  },
+  {
+   "key": "curb_metal_protruding",
+   "id": "i2y3-sx2e",
+   "name": "Curb Metal Protruding Data",
+   "domain": "overlays",
+   "primary_key": "violation_id",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "curbs_planimetric",
+   "id": "5xvt-8cbk",
+   "name": "NYC Planimetric Database: Curbs",
+   "domain": "overlays",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "dismissals",
+   "id": "p4u2-3jgx",
+   "name": "Sidewalk Dismissal Inspection Tracking",
+   "domain": "sim_core",
+   "primary_key": "dismissal_id",
+   "sla_tier": "HIGH",
+   "foreign_keys": [
+    {
+     "column": "nta",
+     "references": "nta_2020.nta2020"
+    },
+    {
+     "column": "bbl",
+     "references": "lot_info.bblid"
+    }
+   ]
+  },
+  {
+   "key": "dot_in_house_street_resurfacing_projects",
+   "id": "ffaf-8mrv",
+   "name": "DOT In-house Street Resurfacing Projects",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "elevation_points_planimetric",
+   "id": "9uxf-ng6q",
+   "name": "NYC Planimetric Database: Elevation Points",
+   "domain": "overlays",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "encroachments_and_defacements",
+   "id": "kyvb-rbwd",
+   "name": "Encroachments and Defacements",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "exclusive_pedestrian_signal_barnes_dance_locatio",
+   "id": "8kuj-2n3u",
+   "name": "Exclusive Pedestrian Signal (Barnes Dance) Locations",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "forestry_inspections",
+   "id": "4pt5-3vv4",
+   "name": "Forestry Inspections",
+   "domain": "overlays",
+   "primary_key": "objectid",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "holiday_construction_embargo_block",
+   "id": "4te8-9n3p",
+   "name": "Holiday Construction Embargo - Block",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "holiday_construction_embargo_intersection",
+   "id": "jr6f-nsuv",
+   "name": "Holiday Construction Embargo- Intersection",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "inspection",
+   "id": "dntt-gqwq",
+   "name": "Sidewalk Management Database - Inspection",
+   "domain": "sim_core",
+   "primary_key": "inspection_id",
+   "sla_tier": "HIGH"
+  },
+  {
+   "key": "interagency_coordination_construction_permits",
+   "id": "wye7-nyek",
+   "name": "Interagency Coordination and Construction Permits Data (MOSYS)",
+   "domain": "coordination",
+   "primary_key": "",
+   "sla_tier": "MEDIUM"
+  },
+  {
+   "key": "intercity_bus_stop_permits",
+   "id": "nmue-7zq2",
+   "name": "Intercity Bus Stop Permits",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "lot_info",
+   "id": "i642-2fxq",
+   "name": "Sidewalk Management Database - Lot Info",
+   "domain": "overlays",
+   "primary_key": "lot_id",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "mbpo_pedestrian_ramp_report",
+   "id": "8kic-uvpz",
+   "name": "MBPO Pedestrian Ramp Report",
+   "domain": "accessibility",
+   "primary_key": "",
+   "sla_tier": "MEDIUM"
+  },
+  {
+   "key": "median_planimetric",
+   "id": "ees7-4ufv",
+   "name": "NYC Planimetric Database: Median",
+   "domain": "overlays",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "motor_vehicle_collisions_crashes",
+   "id": "h9gi-nx95",
+   "name": "Motor Vehicle Collisions - Crashes",
+   "domain": "dot",
+   "primary_key": "collision_id",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "new_york_city_bike_routes",
+   "id": "mzxg-pwib",
+   "name": "New York City Bike Routes",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "newsrack_inspections",
+   "id": "aizm-q3sx",
+   "name": "Newsrack Inspections",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "nta_2020",
+   "id": "9nt8-h7nd",
+   "name": "2020 Neighborhood Tabulation Areas (NTAs)",
+   "domain": "crossagency",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "nyc_dot_pedestrian_plazas_point_feature",
+   "id": "5dck-9m6g",
+   "name": "NYC DOT Pedestrian Plazas - Point Feature",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "nyc_dot_pedestrian_plazas_polygon",
+   "id": "k5k6-6jex",
+   "name": "NYC DOT Pedestrian Plazas - Polygon",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "open_space_parks_planimetric",
+   "id": "y6ja-fw4f",
+   "name": "NYC Planimetric Database: Open Space (Parks)",
+   "domain": "overlays",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "open_streets_locations",
+   "id": "uiay-nctu",
+   "name": "Open Streets Locations",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "parking_meters_parknyc_block_faces",
+   "id": "e7yp-wx55",
+   "name": "Parking Meters - ParkNYC Block Faces",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "parking_permit_for_people_with_disabilities_pppd",
+   "id": "gms8-qcv5",
+   "name": "Parking Permit for People with Disabilities (PPPD) - State",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "parking_permit_for_people_with_disabilities_pppd_2",
+   "id": "gc8d-bnmn",
+   "name": "Parking Permit for People with Disabilities (PPPD) - City",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "pedestrian_demand",
+   "id": "fwpa-qxaf",
+   "name": "Pedestrian Mobility Plan Pedestrian Demand",
+   "domain": "extended",
+   "primary_key": "location_id",
+   "sla_tier": "LOW",
+   "foreign_keys": [
+    {
+     "column": "nta2020",
+     "references": "nta_2020.nta2020"
+    }
+   ]
+  },
+  {
+   "key": "pedestrian_space_added",
+   "id": "uebm-cmjr",
+   "name": "Pedestrian Space Added",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "protected_streets_block_dataset",
+   "id": "wyih-3nzf",
+   "name": "Protected Streets Block (Dataset)",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "protected_streets_intersection_dataset",
+   "id": "bryy-vqd9",
+   "name": "Protected Streets Intersection (Dataset)",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "public_plazas_planimetric",
+   "id": "ue2e-9jm2",
+   "name": "NYC Planimetric Database: Public Plazas",
+   "domain": "overlays",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "raised_crosswalk_locations",
+   "id": "uh2s-ftgh",
+   "name": "Raised Crosswalk Locations",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "ramp_complaints",
+   "id": "jagj-gttd",
+   "name": "Pedestrian Ramp Complaints",
+   "domain": "accessibility",
+   "primary_key": "complaint_id",
+   "sla_tier": "MEDIUM"
+  },
+  {
+   "key": "ramp_locations",
+   "id": "ufzp-rrqu",
+   "name": "Pedestrian Ramp Locations",
+   "domain": "accessibility",
+   "primary_key": "ramp_id",
+   "sla_tier": "MEDIUM",
+   "issue": "Stale: no updates since 2021. Use ramp_progress (e7gc-ub6z) or ramp_complaints (jagj-gttd) for current ramp data."
+  },
+  {
+   "key": "ramp_progress",
+   "id": "e7gc-ub6z",
+   "name": "Pedestrian Ramp - Program Progress",
+   "domain": "accessibility",
+   "primary_key": "progress_id",
+   "sla_tier": "MEDIUM"
+  },
+  {
+   "key": "reinspection",
+   "id": "gx72-kirf",
+   "name": "Sidewalk Management Database - ReInspection",
+   "domain": "sim_core",
+   "primary_key": "reinspection_id",
+   "sla_tier": "HIGH"
+  },
+  {
+   "key": "roadbed_planimetric",
+   "id": "i36f-5ih7",
+   "name": "NYC Planimetric Database: Roadbed",
+   "domain": "overlays",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "seating_locations",
+   "id": "esmy-s8q5",
+   "name": "Seating Locations",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "shared_e_scooter_parking_corrals",
+   "id": "hjz2-y62k",
+   "name": "Shared E-Scooter Parking Corrals",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "sidewalk_cafes",
+   "id": "ptd9-4c6m",
+   "name": "nysidewalkcafe",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "sidewalk_planimetric",
+   "id": "52n9-sdep",
+   "name": "NYC Planimetric Database: Sidewalk",
+   "domain": "overlays",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "speed_reducer_tracking_srts",
+   "id": "9n6h-pt9g",
+   "name": "Speed Reducer Tracking System (SRTS)",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "step_streets",
+   "id": "u9au-h79y",
+   "name": "Step Streets Locations",
+   "domain": "extended",
+   "primary_key": "step_id",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "street_and_highway_capital_reconstruction_projec",
+   "id": "97nd-ff3i",
+   "name": "Street and Highway Capital Reconstruction Projects - Intersection",
+   "domain": "dot",
+   "primary_key": "projectid",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "street_and_highway_capital_reconstruction_projec_2",
+   "id": "jvk9-k4re",
+   "name": "Street and Highway Capital Reconstruction Projects - Block",
+   "domain": "dot",
+   "primary_key": "projectid",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "street_centerline",
+   "id": "inkn-q76z",
+   "name": "Centerline",
+   "domain": "crossagency",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "street_closures_due_to_construction_activities_b",
+   "id": "i6b5-j7bu",
+   "name": "Street Closures due to Construction Activities by Block",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "street_closures_due_to_construction_activities_b_2",
+   "id": "ezy6-djsf",
+   "name": "Street Closures due to Construction Activities by Block and Intersection",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "street_closures_due_to_construction_activities_b_3",
+   "id": "478a-yykk",
+   "name": "Street Closures due to Construction Activities by Intersection",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "street_construction_permit_fees",
+   "id": "9fnm-j6if",
+   "name": "Street Construction Permits - Fee",
+   "domain": "coordination",
+   "primary_key": "permitnumber",
+   "sla_tier": "MEDIUM",
+   "foreign_keys": [
+    {
+     "column": "permitnumber",
+     "references": "street_construction_permits.permitnumber"
+    }
+   ]
+  },
+  {
+   "key": "street_construction_permit_related_agency",
+   "id": "cj3v-xdpd",
+   "name": "Street Construction Permits - Related Agency",
+   "domain": "coordination",
+   "primary_key": "permitnumber",
+   "sla_tier": "MEDIUM",
+   "foreign_keys": [
+    {
+     "column": "permitnumber",
+     "references": "street_construction_permits.permitnumber"
+    }
+   ]
+  },
+  {
+   "key": "street_construction_permits",
+   "id": "tqtj-sjs8",
+   "name": "Street Construction Permits (2022 - Present)",
+   "domain": "coordination",
+   "primary_key": "permitnumber",
+   "sla_tier": "MEDIUM"
+  },
+  {
+   "key": "street_construction_permits_cranes",
+   "id": "hcv3-zacv",
+   "name": "Street Construction Permits - Cranes",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "street_direction_change_requests_2019_present",
+   "id": "9a6i-gcns",
+   "name": "Street Direction Change Requests (2019 - Present)",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "street_network_changes",
+   "id": "as9z-kwsh",
+   "name": "Street Network Changes",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "street_pavement_ratings",
+   "id": "6yyb-pb25",
+   "name": "Street Pavement Ratings",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "street_pothole_work_orders_closed_dataset",
+   "id": "x9wy-ing4",
+   "name": "Street Pothole Work Orders - Closed (Dataset)",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "street_resurfacing_schedule",
+   "id": "xnfm-u3k5",
+   "name": "Street Resurfacing Schedule",
+   "domain": "extended",
+   "primary_key": "project_id",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "street_seats_2021_2024",
+   "id": "5ar6-qxhs",
+   "name": "Street Seats (2021 - 2024)",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW",
+   "foreign_keys": [
+    {
+     "column": "nta",
+     "references": "nta_2020.nta2020"
+    },
+    {
+     "column": "bbl",
+     "references": "lot_info.bblid"
+    }
+   ]
+  },
+  {
+   "key": "street_tree_census_2015",
+   "id": "uvpi-gqnh",
+   "name": "2015 Street Tree Census - Tree Data",
+   "domain": "overlays",
+   "primary_key": "tree_id",
+   "sla_tier": "LOW",
+   "foreign_keys": [
+    {
+     "column": "nta",
+     "references": "nta_2020.nta2020"
+    },
+    {
+     "column": "bbl",
+     "references": "lot_info.bblid"
+    }
+   ]
+  },
+  {
+   "key": "temporary_parking_permit_for_people_with_disabil",
+   "id": "gxhb-59kq",
+   "name": "Temporary Parking Permit for People with Disabilities - On Street",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "ten_year_capital_strategy",
+   "id": "b37a-3faw",
+   "name": "Ten-Year Capital Strategy",
+   "domain": "coordination",
+   "primary_key": "",
+   "sla_tier": "MEDIUM"
+  },
+  {
+   "key": "tree_damage",
+   "id": "j6v2-6uxq",
+   "name": "Sidewalk Management Database - All Tree Damage (ATD)",
+   "domain": "overlays",
+   "primary_key": "tree_id",
+   "sla_tier": "LOW",
+   "foreign_keys": [
+    {
+     "column": "inspectionid",
+     "references": "inspection.inspectionid"
+    },
+    {
+     "column": "violationid",
+     "references": "violations.violationid"
+    },
+    {
+     "column": "reinspectionid",
+     "references": "reinspection.reinspectionid"
+    },
+    {
+     "column": "bblid",
+     "references": "lot_info.bblid"
+    }
+   ]
+  },
+  {
+   "key": "violations",
+   "id": "6kbp-uz6m",
+   "name": "Sidewalk Management Database - Violations",
+   "domain": "accessibility",
+   "primary_key": "violation_id",
+   "sla_tier": "HIGH",
+   "foreign_keys": [
+    {
+     "column": "bblid",
+     "references": "lot_info.bblid"
+    }
+   ]
+  },
+  {
+   "key": "vzv_arterial_slow_zones",
+   "id": "2i8t-es4u",
+   "name": "VZV Arterial Slow Zones",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "vzv_bike_priority_areas",
+   "id": "83yx-cgpy",
+   "name": "VZV Bike Priority Areas",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "vzv_enhanced_crossings",
+   "id": "6ax4-q5k4",
+   "name": "VZV Enhanced Crossings",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "vzv_leading_pedestrian_interval_signals",
+   "id": "xc4v-ntf4",
+   "name": "VZV Leading Pedestrian Interval Signals",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "vzv_neighborhood_slow_zones",
+   "id": "bqye-aqft",
+   "name": "VZV Neighborhood Slow Zones",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "vzv_priority_corridors",
+   "id": "36nr-7fbp",
+   "name": "VZV Priority Corridors",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "vzv_priority_intersections",
+   "id": "tmt9-43em",
+   "name": "VZV Priority Intersections",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "vzv_priority_zones_areas",
+   "id": "qzji-nvbd",
+   "name": "VZV Priority Zones or Areas",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "vzv_safe_streets_for_seniors",
+   "id": "eymt-yinc",
+   "name": "VZV Safe Streets For Seniors",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "vzv_senior_centers",
+   "id": "fcnc-95cn",
+   "name": "VZV Senior Centers",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "vzv_signal_timing_25mph",
+   "id": "d8dp-wfee",
+   "name": "VZV Signal Timing/25MPH Signal Retiming",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "vzv_speed_humps",
+   "id": "jknp-skuy",
+   "name": "VZV Speed Humps",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "vzv_speed_limits",
+   "id": "5mad-ntua",
+   "name": "VZV Speed Limits",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "vzv_street_improvement_projects_sip_corridor",
+   "id": "if4c-w48d",
+   "name": "VZV Street Improvement Projects (SIP) Corridor",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "vzv_street_improvement_projects_sip_intersection",
+   "id": "shr7-eqdc",
+   "name": "VZV Street Improvement Projects (SIP) Intersections",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "vzv_street_team_flyers",
+   "id": "j62s-m9yf",
+   "name": "VZV Street Team Flyers",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "vzv_turn_traffic_calming",
+   "id": "sm2x-35i7",
+   "name": "VZV Turn Traffic Calming",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "vzv_workshops_locations",
+   "id": "gtdx-4w36",
+   "name": "VZV Workshops Locations",
+   "domain": "dot",
+   "primary_key": "",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "water_sewer_permits",
+   "id": "hphy-6g7m",
+   "name": "Water and Sewer Permits",
+   "domain": "crossagency",
+   "primary_key": "permitnumber",
+   "sla_tier": "LOW"
+  },
+  {
+   "key": "weekly_construction",
+   "id": "r528-jcks",
+   "name": "Sidewalk Weekly Construction Schedule",
+   "domain": "coordination",
+   "primary_key": "construction_id",
+   "sla_tier": "MEDIUM",
+   "issue": "Stale: archived, no updates since 2017. Use street_permits (tqtj-sjs8) or street_construction_inspections (ydkf-mpxb)."
+  }
+ ]
+}

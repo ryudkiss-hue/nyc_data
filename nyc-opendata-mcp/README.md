@@ -20,17 +20,15 @@ Street Smart, Dynamics and NYCStreets come back as links only, since those need 
 
 ## Web app
 
-The same brief runs in a browser at **https://ryudkiss-hue.github.io/nyc_data/make-safe/**, built from `web/` by the repo's Pages workflow. It needs no install: NYC Open Data and DOT's ArcGIS server both allow browser requests from that page, so it queries them directly, and a workbook you open there is read in the browser and never uploaded. The One SR tab takes the same inputs as `nycod_sr_brief` and shows the corners on a map; the Workbook tab briefs every SR on a tab and offers JSON, summary.txt and CSV downloads. A link such as `make-safe/?sr=311-29399735&borough=Brooklyn&street1=7%20Avenue&street2=Lincoln%20Place&complaint_date=2026-10-20&run=1` opens with the form filled and runs it.
+The same brief runs in a browser as the Make Safe page of the repo's GitHub Pages site, **https://ryudkiss-hue.github.io/nyc_data/make-safe/**, built from `site/make-safe/`. It needs no install: NYC Open Data and DOT's ArcGIS server both allow browser requests from that page, so it queries them directly, and a workbook you open there is read in the browser and never uploaded. A link such as `make-safe/?sr=311-29399735&borough=Brooklyn&street1=7%20Avenue&street2=Lincoln%20Place&complaint_date=2026-10-20&run=1` opens with the form filled and runs it.
 
-`web/brief.js` is a port of `src/nycod`, and `web/test/parity.mjs` checks it against the Python package on the same live SRs:
+`site/make-safe/brief.js` is a port of `src/nycod`, and `site/tests/parity.mjs` checks it against this package on the same live SRs (from the repo root):
 
 ```
-pip install -e .
-python web/test/make_py_briefs.py
-cd web && npm install && npm run parity
+pip install -e nyc-opendata-mcp
+python site/tests/make_py_briefs.py
+cd site && npm ci && npm run parity
 ```
-
-`web/test/browser_smoke.py` drives the page in headless Chrome (Playwright) against live data: one SR from URL parameters, a workbook tab, and the tabs by keyboard.
 
 ## Install on Windows
 

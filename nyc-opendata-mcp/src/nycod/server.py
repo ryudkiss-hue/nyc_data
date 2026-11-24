@@ -5,8 +5,7 @@ Run:  nyc-opendata-mcp            (after pip install)
 
 Every tool is read-only. Tools return facts from NYC Open Data and DOT ArcGIS; none of them decides a route.
 """
-import json
-from typing import Annotated, Any, Optional
+from typing import Annotated, Any
 
 from pydantic import Field
 
@@ -55,20 +54,20 @@ def _run(fn, fresh, *a, **k):
 # ------------------------------------------------------------------ workflow tools
 @mcp.tool(name='nycod_sr_brief', annotations=_ann('SR brief (all public data for one SR)'))
 def nycod_sr_brief(
-    sr: Annotated[Optional[str], Field(description="SR number, '311-xxxxxxxx'")] = None,
-    borough: Annotated[Optional[str], Field(description='Borough; taken from the SR Address when it names one')] = None,
-    lat: Annotated[Optional[float], Field(description='Dynamics Latitude')] = None,
-    lon: Annotated[Optional[float], Field(description='Dynamics Longitude')] = None,
-    address: Annotated[Optional[str], Field(description="Dynamics SR Address, e.g. '69-01 NORTHERN BOULEVARD, QUEENS (WOODSIDE), NY, 11377' or 'A STREET AND B AVENUE, BROOKLYN'")] = None,
-    street1: Annotated[Optional[str], Field(description='First street of an intersection')] = None,
-    street2: Annotated[Optional[str], Field(description='Second street of an intersection')] = None,
-    complaint_date: Annotated[Optional[str], Field(description="Created On (YYYY-MM-DD or M/D/YYYY); sets the permit window")] = None,
-    description: Annotated[Optional[str], Field(description="Caller's Description, verbatim (H3)")] = None,
-    location_details: Annotated[Optional[str], Field(description='Additional Location Details')] = None,
-    guid: Annotated[Optional[str], Field(description='(Do Not Modify) NYC Service Request GUID, for the Dynamics link')] = None,
+    sr: Annotated[str | None, Field(description="SR number, '311-xxxxxxxx'")] = None,
+    borough: Annotated[str | None, Field(description='Borough; taken from the SR Address when it names one')] = None,
+    lat: Annotated[float | None, Field(description='Dynamics Latitude')] = None,
+    lon: Annotated[float | None, Field(description='Dynamics Longitude')] = None,
+    address: Annotated[str | None, Field(description="Dynamics SR Address, e.g. '69-01 NORTHERN BOULEVARD, QUEENS (WOODSIDE), NY, 11377' or 'A STREET AND B AVENUE, BROOKLYN'")] = None,
+    street1: Annotated[str | None, Field(description='First street of an intersection')] = None,
+    street2: Annotated[str | None, Field(description='Second street of an intersection')] = None,
+    complaint_date: Annotated[str | None, Field(description="Created On (YYYY-MM-DD or M/D/YYYY); sets the permit window")] = None,
+    description: Annotated[str | None, Field(description="Caller's Description, verbatim (H3)")] = None,
+    location_details: Annotated[str | None, Field(description='Additional Location Details')] = None,
+    guid: Annotated[str | None, Field(description='(Do Not Modify) NYC Service Request GUID, for the Dynamics link')] = None,
     radius_ft: Annotated[float, Field(description='Corner search radius around the SR point, feet', ge=10, le=1000)] = 100,
     permit_years: Annotated[float, Field(description='Permit look-back before the complaint date, years', gt=0, le=5)] = 1.0,
-    save_dir: Annotated[Optional[str], Field(description='Folder (e.g. <batch>/work/opendata) to write <SR>.json, <SR>.summary.txt and summary.txt')] = None,
+    save_dir: Annotated[str | None, Field(description='Folder (e.g. <batch>/work/opendata) to write <SR>.json, <SR>.summary.txt and summary.txt')] = None,
     fresh: Fresh = False,
 ) -> dict[str, Any]:
     """Everything public data says about one Make Safe SR, in the order the skill reads it.
@@ -88,10 +87,10 @@ def nycod_sr_brief(
 @mcp.tool(name='nycod_workbook_briefs', annotations=_ann('Briefs for every SR on a workbook tab'))
 def nycod_workbook_briefs(
     path: Annotated[str, Field(description='Full path to the weekly workbook (.xlsx); opened read-only')],
-    sheet: Annotated[Optional[str], Field(description="Sheet name, e.g. 'Richard'. Omit to list the sheets and the SRs found on each")] = None,
-    save_dir: Annotated[Optional[str], Field(description='Folder for the per-SR JSON and summaries (recommended: <batch>/work/opendata)')] = None,
-    only: Annotated[Optional[list[str]], Field(description='Only these SR numbers')] = None,
-    limit: Annotated[Optional[int], Field(description='At most this many SRs', ge=1)] = None,
+    sheet: Annotated[str | None, Field(description="Sheet name, e.g. 'Richard'. Omit to list the sheets and the SRs found on each")] = None,
+    save_dir: Annotated[str | None, Field(description='Folder for the per-SR JSON and summaries (recommended: <batch>/work/opendata)')] = None,
+    only: Annotated[list[str] | None, Field(description='Only these SR numbers')] = None,
+    limit: Annotated[int | None, Field(description='At most this many SRs', ge=1)] = None,
     fresh: Fresh = False,
 ) -> dict[str, Any]:
     """Run nycod_sr_brief for every SR on one sheet of the 'Make Safe Dynamics and ARTs complaints' workbook.
@@ -115,8 +114,8 @@ def nycod_workbook_briefs(
 
 @mcp.tool(name='nycod_parse_sr_text', annotations=_ann('Parse an SR Address and corner words'))
 def nycod_parse_sr_text(
-    address: Annotated[Optional[str], Field(description='Dynamics SR Address')] = None,
-    description: Annotated[Optional[str], Field(description="Caller's Description")] = None,
+    address: Annotated[str | None, Field(description='Dynamics SR Address')] = None,
+    description: Annotated[str | None, Field(description="Caller's Description")] = None,
 ) -> dict[str, Any]:
     """Split an SR Address into house number / street / cross street / borough / neighborhood / zip, and list the corner
     words in the Description (quadrants, 'all four corners', sides). No network calls."""
@@ -291,8 +290,8 @@ def nycod_ramp_program(cids: Annotated[list[int], Field(min_length=1, max_length
 
 @mcp.tool(name='nycod_ramp_complaints', annotations=_ann('Pedestrian Ramp Complaints history'))
 def nycod_ramp_complaints(
-    cids: Annotated[Optional[list[int]], Field(description='CMTCornerIDs')] = None,
-    sr: Annotated[Optional[str], Field(description="Or one SR number, '311-xxxxxxxx'")] = None,
+    cids: Annotated[list[int] | None, Field(description='CMTCornerIDs')] = None,
+    sr: Annotated[str | None, Field(description="Or one SR number, '311-xxxxxxxx'")] = None,
     fresh: Fresh = False,
 ) -> dict[str, Any]:
     """Pedestrian Ramp Complaints (jagj-gttd): earlier complaints and temporary repairs on corners (newest first), or the
@@ -316,7 +315,7 @@ def nycod_capital_projects_near(
 @mcp.tool(name='nycod_311_near', annotations=_ann('Public 311 requests near a point'))
 def nycod_311_near(
     lat: float, lon: float, meters: Annotated[float, Field(ge=1, le=1000)] = 50,
-    since: Annotated[Optional[str], Field(description='Created on or after, YYYY-MM-DD')] = None,
+    since: Annotated[str | None, Field(description='Created on or after, YYYY-MM-DD')] = None,
     dot_sidewalk_only: Annotated[bool, Field(description='Only DOT Sidewalk Condition / Curb Condition (incl. Pedestrian Ramp Defective)')] = True,
     limit: Annotated[int, Field(ge=1, le=2000)] = 200,
     fresh: Fresh = False,
@@ -331,8 +330,8 @@ def nycod_311_near(
 @mcp.tool(name='nycod_soql_query', annotations=_ann('SoQL query on any NYC Open Data dataset'))
 def nycod_soql_query(
     dataset_id: Annotated[str, Field(description="Dataset 4x4 id, e.g. 'tqtj-sjs8'", pattern=r'^[a-z0-9]{4}-[a-z0-9]{4}$')],
-    select: Optional[str] = None, where: Optional[str] = None, order: Optional[str] = None, group: Optional[str] = None,
-    q: Annotated[Optional[str], Field(description='Full-text search')] = None,
+    select: str | None = None, where: str | None = None, order: str | None = None, group: str | None = None,
+    q: Annotated[str | None, Field(description='Full-text search')] = None,
     limit: Annotated[int, Field(ge=1, le=50000)] = 100, offset: Annotated[int, Field(ge=0)] = 0,
     fresh: Fresh = False,
 ) -> dict[str, Any]:
@@ -375,9 +374,9 @@ def nycod_arcgis_query(
 
 @mcp.tool(name='nycod_links', annotations=_ann('Street Smart, Dynamics and NYCStreets links'))
 def nycod_links(
-    lat: Optional[float] = None, lon: Optional[float] = None,
-    guid: Annotated[Optional[str], Field(description='Dynamics record GUID')] = None,
-    permit: Annotated[Optional[str], Field(description='Permit number')] = None,
+    lat: float | None = None, lon: float | None = None,
+    guid: Annotated[str | None, Field(description='Dynamics record GUID')] = None,
+    permit: Annotated[str | None, Field(description='Permit number')] = None,
 ) -> dict[str, Any]:
     """Build links without a network call: Street Smart (100 ft box, EPSG:3857), Dynamics record, NYCStreets permit page."""
     out = {}

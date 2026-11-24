@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Explore data · NYC DOT SIM Open Data</title>
+  <meta name="description" content="Query any NYC Open Data dataset from the browser: filters, SoQL, profiles, maps and CSV/JSON export.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%231864ab'/%3E%3Ccircle cx='8' cy='8' r='3.5' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous">
+  <link rel="stylesheet" href="assets/site.css">
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous" defer></script>
+  <script type="module" src="assets/explore.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <nav class="site-nav" aria-label="Site">
+        <a class="brand" href="./">NYC DOT SIM · Open Data</a>
+        <ul>
+          <li><a href="explore.html" aria-current="page">Explore data</a></li>
+          <li><a href="datasets.html">Datasets</a></li>
+          <li><a href="layers.html">DOT map layers</a></li>
+          <li><a href="make-safe/">Make Safe brief</a></li>
+        </ul>
+      </nav>
+      <h1>Explore data</h1>
+      <p class="lede">Open any NYC Open Data dataset, filter it with the builder or write SoQL directly, profile its columns, map the rows and export them. Queries go straight from this browser to data.cityofnewyork.us.</p>
+    </div>
+  </header>
+
+  <main class="wrap layout">
+    <aside aria-labelledby="find-title">
+      <h2 id="find-title">Find a dataset</h2>
+      <search>
+        <form id="find-form">
+          <div class="field">
+            <label for="find-q">Name, keyword or dataset ID</label>
+            <input id="find-q" name="q" type="search" autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="find-help">
+            <small id="find-help">Filters the 112 Sidewalk Program datasets as you type. Press Search to look across all of NYC Open Data, or enter an ID like jagj-gttd.</small>
+          </div>
+          <div class="actions">
+            <button type="submit" class="primary">Search all NYC Open Data</button>
+          </div>
+        </form>
+      </search>
+      <p id="find-status" class="status" role="status" aria-live="polite"></p>
+      <ul id="find-list" class="pick-list" aria-label="Datasets"></ul>
+    </aside>
+
+    <section id="work" aria-labelledby="ds-title">
+      <h2 id="ds-title">Pick a dataset to start</h2>
+      <div id="ds-info"></div>
+
+      <form id="query-form" hidden novalidate aria-labelledby="query-title">
+        <h3 id="query-title" class="visually-hidden">Query</h3>
+        <fieldset>
+          <legend>Filters</legend>
+          <div id="filters" class="filters"></div>
+          <div class="actions">
+            <button type="button" id="add-filter">Add a filter</button>
+          </div>
+          <div class="grid">
+            <div class="field">
+              <label for="q-text">Full-text search</label>
+              <input id="q-text" name="q" type="search" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="q-order">Sort by</label>
+              <select id="q-order" name="order"><option value="">Dataset order</option></select>
+            </div>
+            <div class="field">
+              <label for="q-dir">Direction</label>
+              <select id="q-dir" name="dir"><option value="DESC">Newest / largest first</option><option value="ASC">Oldest / smallest first</option></select>
+            </div>
+            <div class="field">
+              <label for="q-countby">Count rows by</label>
+              <select id="q-countby" name="countby" aria-describedby="q-countby-help"><option value="">No grouping</option></select>
+              <small id="q-countby-help">Replaces the row list with one row per value and its count.</small>
+            </div>
+            <div class="field">
+              <label for="q-limit">Rows per page</label>
+              <input id="q-limit" name="limit" type="number" min="1" max="50000" step="1" value="100">
+            </div>
+          </div>
+        </fieldset>
+        <details>
+          <summary>Columns to show</summary>
+          <div class="actions"><button type="button" id="cols-all">All</button><button type="button" id="cols-none">None (all columns)</button></div>
+          <div id="cols" class="cols-pick"></div>
+        </details>
+        <fieldset>
+          <legend>SoQL sent to the API</legend>
+          <p class="hint">The builder above writes these. Edit them directly for anything it can't express; your edits are used as they are until you change the builder again.</p>
+          <div class="soql">
+            <div class="field"><label for="s-select">$select</label><input id="s-select" autocomplete="off" spellcheck="false" placeholder="all columns"></div>
+            <div class="field"><label for="s-where">$where</label><input id="s-where" autocomplete="off" spellcheck="false"></div>
+            <div class="field"><label for="s-order">$order</label><input id="s-order" autocomplete="off" spellcheck="false"></div>
+            <div class="field"><label for="s-group">$group</label><input id="s-group" autocomplete="off" spellcheck="false"></div>
+          </div>
+        </fieldset>
+        <div class="actions">
+          <button type="submit" class="primary">Run query</button>
+          <button type="button" id="profile">Profile columns</button>
+          <button type="button" id="share">Copy link to this query</button>
+        </div>
+        <p id="q-status" class="status" role="status" aria-live="polite"></p>
+      </form>
+
+      <section id="results" aria-label="Query results" hidden></section>
+      <section id="profile-out" aria-label="Column profile" hidden></section>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>Data: <a href="https://opendata.cityofnewyork.us/">NYC Open Data</a> (Socrata SODA API). Map tiles © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors. Source: <a href="https://github.com/ryudkiss-hue/nyc_data/tree/main/site">nyc_data/site</a>.</p>
+    </div>
+  </footer>
+</body>
+</html>

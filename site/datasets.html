@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Datasets · NYC DOT SIM Open Data</title>
+  <meta name="description" content="The Sidewalk Program's NYC Open Data datasets with live freshness against their SLA tier, joins and known issues.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%231864ab'/%3E%3Ccircle cx='8' cy='8' r='3.5' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/site.css">
+  <script type="module" src="assets/datasets.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <nav class="site-nav" aria-label="Site">
+        <a class="brand" href="./">NYC DOT SIM · Open Data</a>
+        <ul>
+          <li><a href="explore.html">Explore data</a></li>
+          <li><a href="datasets.html" aria-current="page">Datasets</a></li>
+          <li><a href="layers.html">DOT map layers</a></li>
+          <li><a href="make-safe/">Make Safe brief</a></li>
+        </ul>
+      </nav>
+      <h1>Datasets</h1>
+      <p class="lede">The Sidewalk Program's NYC Open Data datasets, with when each was last updated (read live) against its freshness tier, its joins and any known issue. Open one to query it.</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <search>
+      <form id="filter-form" aria-label="Filter datasets">
+        <div class="grid">
+          <div class="field">
+            <label for="d-q">Name, key or ID</label>
+            <input id="d-q" name="q" type="search" autocomplete="off" spellcheck="false">
+          </div>
+          <div class="field">
+            <label for="d-domain">Domain</label>
+            <select id="d-domain" name="domain"><option value="">All domains</option></select>
+          </div>
+          <div class="field">
+            <label for="d-tier">Freshness tier</label>
+            <select id="d-tier" name="tier"><option value="">All tiers</option><option>HIGH</option><option>MEDIUM</option><option>LOW</option></select>
+          </div>
+          <div class="field">
+            <label for="d-status">Status</label>
+            <select id="d-status" name="status">
+              <option value="">Any</option>
+              <option value="late">Older than its tier</option>
+              <option value="ok">Within its tier</option>
+              <option value="issue">Has a known issue</option>
+            </select>
+          </div>
+        </div>
+      </form>
+    </search>
+    <div class="actions">
+      <button type="button" id="count">Count rows for the listed datasets</button>
+      <button type="button" id="dl">Download this table (CSV)</button>
+    </div>
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+    <p class="hint" id="tiers"></p>
+    <div id="board"></div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>Data: <a href="https://opendata.cityofnewyork.us/">NYC Open Data</a>. Dataset list, joins and tiers: <a href="https://github.com/ryudkiss-hue/nyc_data/blob/main/site/data/datasets.json">site/data/datasets.json</a>.</p>
+    </div>
+  </footer>
+</body>
+</html>
