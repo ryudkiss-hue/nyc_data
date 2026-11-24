@@ -2,11 +2,10 @@ name: Claude Code Review on PR
 
 on:
   pull_request:
-    types: [opened, synchronize]
+    types: [opened]
     paths:
-      - 'src/socrata_toolkit/**/*.py'
-      - 'tests/**/*.py'
-      - 'app/**/*.py'
+      - 'nyc-opendata-mcp/**'
+      - 'site/**'
 
 jobs:
   suggest-review:
@@ -22,57 +21,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `## 🤖 Claude Code Review Available\n\nRun automated code review with:\n\n\`\`\`bash\nclaude /code-review ultra ${context.issue.number}\n\`\`\`\n\nThis will:\n- ✅ Check for correctness bugs\n- ✅ Suggest simplifications & efficiency improvements\n- ✅ Review for DuckDB best practices (your focus)\n- ✅ Post findings as inline comments\n\n**For Layers 4-9 implementation**: Review catches reliability issues early.`
+              body: `## Claude Code review\n\nRun a review of this PR with:\n\n\`\`\`bash\nclaude /code-review ${context.issue.number}\n\`\`\`\n\nIt checks for correctness bugs, simplifications and query mistakes (SoQL and ArcGIS where clauses), and posts findings as inline comments. CI already runs ruff, pytest, the JS/Python parity test and a headless-browser smoke test of every page.`
             })
-
-  python-lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Set up Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: '3.11'
-
-      - name: Install ruff
-        run: pip install ruff
-
-      - name: Run ruff check
-        run: |
-          ruff check src/socrata_toolkit tests app scripts --output-format=github
-        continue-on-error: true
-
-      - name: Run ruff format check (no-fix)
-        run: |
-          ruff format --check src/socrata_toolkit tests app
-        continue-on-error: true
-
-  test-changes:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Set up Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: '3.11'
-
-      - name: Install dependencies
-        run: |
-          pip install -e ".[dev]" 2>/dev/null || pip install -r requirements-dev.txt
-
-      - name: Detect changed test files
-        id: detect
-        run: |
-          git fetch origin main:main 2>/dev/null || git fetch origin
-          CHANGED=$(git diff main...HEAD --name-only | grep "^tests/test_" | head -5)
-          if [ -n "$CHANGED" ]; then
-            echo "files=$CHANGED" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Run affected tests
-        if: steps.detect.outputs.files != ''
-        run: |
-          pytest ${{ steps.detect.outputs.files }} -v --tb=short
-        continue-on-error: true

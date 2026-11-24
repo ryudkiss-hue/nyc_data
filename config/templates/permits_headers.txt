@@ -1,2 +1,0 @@
-# Golden profile — permits Excel header row
-location_id,permit_id,permit_number,status

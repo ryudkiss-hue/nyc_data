@@ -1,1 +1,0 @@
-"""MotherDuck connector tests."""

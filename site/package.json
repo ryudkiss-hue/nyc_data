@@ -1,0 +1,13 @@
+{
+  "name": "nyc-dot-sim-site",
+  "private": true,
+  "type": "module",
+  "description": "Static GitHub Pages site (no build step). Dev dependency only for the Node parity test of make-safe/brief.js.",
+  "scripts": {
+    "parity": "node tests/parity.mjs",
+    "check": "node --check assets/ui.js && node --check assets/explore.js && node --check assets/datasets.js && node --check assets/layers.js && node --check assets/home.js && node --check make-safe/app.js && node --check make-safe/brief.js"
+  },
+  "devDependencies": {
+    "proj4": "2.15.0"
+  }
+}

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DOT map layers · NYC DOT SIM Open Data</title>
+  <meta name="description" content="Browse and query NYC DOT's ArcGIS map layers (PRISM corners and ramps, GAZETTEER LION, AddressPoint, MapPLUTO) from the browser.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%231864ab'/%3E%3Ccircle cx='8' cy='8' r='3.5' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous">
+  <link rel="stylesheet" href="assets/site.css">
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous" defer></script>
+  <script type="module" src="assets/layers.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <nav class="site-nav" aria-label="Site">
+        <a class="brand" href="./">NYC DOT SIM · Open Data</a>
+        <ul>
+          <li><a href="explore.html">Explore data</a></li>
+          <li><a href="datasets.html">Datasets</a></li>
+          <li><a href="layers.html" aria-current="page">DOT map layers</a></li>
+          <li><a href="make-safe/">Make Safe brief</a></li>
+        </ul>
+      </nav>
+      <h1>DOT map layers</h1>
+      <p class="lede">Browse NYC DOT's ArcGIS server (a841-dotweb01.nyc.gov): PRISM corners and ramps, the GAZETTEER (LION, AddressPoint, MapPLUTO and more) or any other folder. Pick a layer, filter it with a where clause or by distance from a point, and map or export the features.</p>
+    </div>
+  </header>
+
+  <main class="wrap layout">
+    <aside aria-labelledby="svc-title">
+      <h2 id="svc-title">Layers</h2>
+      <form id="folder-form">
+        <div class="field">
+          <label for="folder">Folder</label>
+          <input id="folder" name="folder" list="folder-list" value="PRISM" autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="folder-help">
+          <datalist id="folder-list"><option value="PRISM"></option><option value="GAZETTEER"></option></datalist>
+          <small id="folder-help">PRISM and GAZETTEER are DOT's corner, ramp and street reference folders. Any other folder name on the server works too.</small>
+        </div>
+        <div class="actions"><button type="submit" class="primary">List services</button></div>
+      </form>
+      <p id="svc-status" class="status" role="status" aria-live="polite"></p>
+      <ul id="svc-list" class="pick-list" aria-label="Services and layers"></ul>
+    </aside>
+
+    <section aria-labelledby="layer-title">
+      <h2 id="layer-title">Pick a layer to start</h2>
+      <div id="layer-info"></div>
+      <form id="query-form" hidden novalidate aria-labelledby="layer-title">
+        <fieldset>
+          <legend>Query</legend>
+          <div class="grid">
+            <div class="field span2">
+              <label for="l-where">Where (SQL)</label>
+              <input id="l-where" name="where" value="1=1" autocomplete="off" spellcheck="false" aria-describedby="l-where-help">
+              <small id="l-where-help">For example CMTCornerID=1108794, or OnStreetName='7 AVENUE' AND BoroughCode=3. Text values take single quotes.</small>
+            </div>
+            <div class="field span2">
+              <label for="l-fields">Fields</label>
+              <input id="l-fields" name="fields" value="*" autocomplete="off" spellcheck="false">
+            </div>
+            <div class="field">
+              <label for="l-lat">Near latitude</label>
+              <input id="l-lat" name="lat" inputmode="decimal" autocomplete="off" pattern="-?\d+(\.\d+)?">
+            </div>
+            <div class="field">
+              <label for="l-lon">Near longitude</label>
+              <input id="l-lon" name="lon" inputmode="decimal" autocomplete="off" pattern="-?\d+(\.\d+)?">
+            </div>
+            <div class="field">
+              <label for="l-dist">Within (feet)</label>
+              <input id="l-dist" name="dist" type="number" min="1" max="5280" value="100">
+            </div>
+            <div class="field">
+              <label for="l-max">Max features</label>
+              <input id="l-max" name="max" type="number" min="1" max="2000" value="200">
+            </div>
+          </div>
+          <p><label><input type="checkbox" id="l-geom" checked> Return geometry (map and GeoJSON)</label></p>
+        </fieldset>
+        <div class="actions">
+          <button type="submit" class="primary">Run query</button>
+          <button type="button" id="share">Copy link to this query</button>
+        </div>
+        <p id="q-status" class="status" role="status" aria-live="polite"></p>
+      </form>
+      <section id="results" aria-label="Query results" hidden></section>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>Data: NYC DOT ArcGIS services. Map tiles © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors. Source: <a href="https://github.com/ryudkiss-hue/nyc_data/tree/main/site">nyc_data/site</a>.</p>
+    </div>
+  </footer>
+</body>
+</html>

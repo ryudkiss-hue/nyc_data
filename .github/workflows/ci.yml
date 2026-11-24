@@ -1,72 +1,64 @@
 name: CI
+
+# Everything reads the live NYC Open Data and DOT ArcGIS services; nothing is mocked.
 on:
   push:
-    branches: [main, "claude/*"]
-  pull_request:
     branches: [main]
+  pull_request:
+  workflow_dispatch:
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
-  # ---------------------------------------------------------------------------
-  # Unit + functional test suite (no external services)
-  # ---------------------------------------------------------------------------
-  test:
+  python:
+    name: MCP server (ruff + pytest)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
-        with: {python-version: "3.11"}
-      - run: pip install -e ".[mission]" pytest
-      - run: pip install -r requirements-dev.txt fastapi httpx networkx scikit-learn
-      - name: Run unit + functional suite with coverage
+        with:
+          python-version: '3.12'
+      - name: Install
         run: |
-          # Exclude browser (Playwright) tests — they need a running Dash server
-          # and playwright install; they run locally via `pytest -m browser`.
-          pytest tests/ -q --tb=short --cov --cov-report=term-missing -m "not browser"
-        env:
-          SOCRATA_APP_TOKEN: ${{ secrets.SOCRATA_APP_TOKEN }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          python -m pip install --upgrade pip
+          pip install -e "nyc-opendata-mcp[test]" ruff
+      - name: Lint
+        run: ruff check nyc-opendata-mcp site/tests
+      - name: Test (live; msb.py parity tests skip without MSB_REFERENCE)
+        run: pytest nyc-opendata-mcp/tests -q
 
-  # ---------------------------------------------------------------------------
-  # Integration tests against real Postgres + MongoDB service containers.
-  # These exercise the data-store seams that the unit suite mocks out — the
-  # highest-value layer for catching real-world breakage (auth, SQL, drivers).
-  # ---------------------------------------------------------------------------
-  integration:
+  site:
+    name: Site (syntax, JS/Python parity, browser smoke)
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: toolkit
-          POSTGRES_PASSWORD: toolkit
-          POSTGRES_DB: toolkit_test
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd "pg_isready -U toolkit"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      mongo:
-        image: mongo:7
-        ports: ["27017:27017"]
-        options: >-
-          --health-cmd "mongosh --eval 'db.adminCommand({ ping: 1 })' --quiet"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
-        with: {python-version: "3.11"}
-      - run: pip install -e ".[mission,postgres]" pytest
-      - run: pip install -r requirements-dev.txt pymongo
-      - name: Run integration tests
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+      - name: Install
         run: |
-          pytest tests/test_integration_datastores.py \
-                 tests/test_integration_scaffold.py -q --tb=short
+          python -m pip install --upgrade pip
+          pip install -e nyc-opendata-mcp playwright openpyxl
+          cd site && npm ci
+      - name: Syntax check
+        run: cd site && npm run check
+      - name: Make Safe brief parity (browser port vs Python package)
+        run: |
+          python site/tests/make_py_briefs.py
+          cd site && npm run parity
+      - name: Browser smoke test (every page, headless Chrome)
+        run: python site/tests/browser_smoke.py
         env:
-          RUN_INTEGRATION: "1"
-          PG_DSN: "postgresql://toolkit:toolkit@localhost:5432/toolkit_test"
-          MONGO_URI: "mongodb://localhost:27017"
+          CHROME: /usr/bin/google-chrome
+          SMOKE_OUT: ${{ runner.temp }}
+      - name: Keep screenshots
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: smoke-screenshots
+          path: ${{ runner.temp }}/smoke_*.png
+          if-no-files-found: ignore

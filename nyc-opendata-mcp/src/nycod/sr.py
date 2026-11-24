@@ -17,6 +17,10 @@ QUADS = ('NE', 'NW', 'SE', 'SW')
 WORDS = {'NORTHEAST': 'NE', 'NORTH EAST': 'NE', 'NORTHWEST': 'NW', 'NORTH WEST': 'NW', 'SOUTHEAST': 'SE',
          'SOUTH EAST': 'SE', 'SOUTHWEST': 'SW', 'SOUTH WEST': 'SW'}
 SR_RE = re.compile(r'\b311-\d{8}\b')
+TYPE_TAGS = (('RAMP', 'ped ramp'), ('TEMPORARY PEDESTRIAN WALK', 'temporary pedestrian walk'), ('TEST PIT', 'test pit'),
+             ('FOUNDATION', 'foundation'), ('RESTORATION', 'restoration'), ('SIGNAL', 'signal'))
+STATUS_TAGS = (('DELINQUENT', 'DELINQUENT (missed a deadline)'),
+               ('EXPIRED UNDER GUARANTEE', 'EXPIRED UNDER GUARANTEE (still responsible for restoration)'))
 
 
 # ------------------------------------------------------------------ parsing what Dynamics gives
@@ -319,16 +323,11 @@ def sr_brief(sr=None, borough=None, lat=None, lon=None, address=None, street1=No
     def pclass(r):
         t = (r.get('permittypedesc') or '').upper()
         tags = []
-        if qow.cwc_permit(r): tags.append('CWC (DOT in-house)')
-        if 'RAMP' in t: tags.append('ped ramp')
-        if 'TEMPORARY PEDESTRIAN WALK' in t: tags.append('temporary pedestrian walk')
-        if 'TEST PIT' in t: tags.append('test pit')
-        if 'FOUNDATION' in t: tags.append('foundation')
-        if 'RESTORATION' in t: tags.append('restoration')
-        if 'SIGNAL' in t: tags.append('signal')
+        if qow.cwc_permit(r):
+            tags.append('CWC (DOT in-house)')
+        tags += [tag for word, tag in TYPE_TAGS if word in t]
         st = (r.get('permitstatusshortdesc') or '').upper()
-        if 'DELINQUENT' in st: tags.append('DELINQUENT (missed a deadline)')
-        if 'EXPIRED UNDER GUARANTEE' in st: tags.append('EXPIRED UNDER GUARANTEE (still responsible for restoration)')
+        tags += [tag for word, tag in STATUS_TAGS if word in st]
         return tags
     permits_out = []
     for r in permits:

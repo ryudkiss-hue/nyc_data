@@ -1,104 +1,54 @@
-# NYC DOT SIM Dual-Tier Fuzzy Router
+# NYC DOT SIM · Open Data
 
-A production-ready natural language question-answering system for NYC Department of Transportation analysts. Routes analyst questions to pre-built Metric answers (Tier 1) with optional Claude-powered synthesis (Tier 2).
+Browser tools for NYC DOT's Sidewalk Inspection and Management (SIM) unit, published at **https://ryudkiss-hue.github.io/nyc_data/**. The site is static: every page reads NYC Open Data and DOT's ArcGIS server directly from the browser, so there is no server, database or container to run, and files you open in it stay on your machine.
 
-## Quick Start
+| Page | What it does |
+|---|---|
+| [Explore data](https://ryudkiss-hue.github.io/nyc_data/explore.html) | Open any NYC Open Data dataset (search the whole catalog or pick one of the 112 Sidewalk Program datasets), filter it with a builder or plain SoQL, count rows by a column, profile the columns, map the rows and download CSV or JSON. Each query has a shareable link. |
+| [Datasets](https://ryudkiss-hue.github.io/nyc_data/datasets.html) | The Sidewalk Program's datasets with live update dates against their freshness tier (HIGH 14, MEDIUM 30, LOW 60 days), row counts, joins and known issues. |
+| [DOT map layers](https://ryudkiss-hue.github.io/nyc_data/layers.html) | Browse and query DOT's ArcGIS layers: PRISM corners and ramps, GAZETTEER LION, AddressPoint, MapPLUTO and any other folder. Filter by attribute or distance from a point; map the features and export GeoJSON or CSV. |
+| [Make Safe brief](https://ryudkiss-hue.github.io/nyc_data/make-safe/) | Everything public data says about one Make Safe SR, or every SR on a tab of the weekly workbook: corners, ramps, ramp program, complaint and temporary-repair history, permits, capital projects and nearby 311. |
 
-### 1. Install
-
-```bash
-git clone <repo-url>
-cd nyc_data
-./scripts/setup.sh
-```
-
-### 2. Ask a Question
-
-```bash
-socrata-nlquery "How many violations were fixed by borough?"
-```
-
-### 3. With Analysis
-
-```bash
-socrata-nlquery "Why are violations spiking?" --expand
-```
-
-## Features
-
-- **Tier 1 (Instant):** Pre-built answers via hybrid ensemble router (BM25 + Claude embeddings)
-- **Tier 2 (Expansion):** Claude synthesis + NLP-suggested follow-up questions
-- **Feedback Loop:** Record helpful/wrong markings for continuous improvement
-- **Observability:** DuckDB-based tracking of routing decisions and accuracy
-- **CLI:** Full-featured command-line interface with JSON output
-- **Training:** Built-in accuracy evaluation and weight optimization
-
-## System Architecture
+## Repository
 
 ```
-Question → [Hybrid Router] → Tier 1 Answer
-                          ↓
-                    Optional: Claude Expansion → Tier 2 Synthesis
-                          ↓
-                      Feedback Collection
-                          ↓
-                    Weight Optimization
+site/                 the GitHub Pages site (plain HTML, CSS and ES modules; no build step)
+  index.html          home and quick start
+  explore.html        Explore data
+  datasets.html       Datasets board
+  layers.html         DOT map layers
+  make-safe/          Make Safe brief (brief.js is the browser port of the MCP server's brief)
+  assets/             shared ui.js and site.css, one script per page
+  data/datasets.json  the 112 in-scope datasets: keys, joins, freshness tiers, known issues
+  tests/              JS/Python parity test and a headless-browser smoke test of every page
+nyc-opendata-mcp/     local MCP server and CLI for Claude Desktop and Claude Code (same Make Safe brief, plus SoQL and ArcGIS tools)
+data-analytics-skills/, .claude/, .agents/, .remember/   Claude skills and notes for analysis work
 ```
 
-## Available Commands
+The Dash Mission Control app, Streamlit app, `socrata_toolkit` library, ingest pipeline, DuckDB/PostgreSQL/MongoDB stores, Docker images and Cloud Run deployment were removed on 2026-11-24 to keep the project to one static site. They remain on the branch [`archive/pre-simplify`](https://github.com/ryudkiss-hue/nyc_data/tree/archive/pre-simplify).
 
-```bash
-# Basic query (Tier 1 only)
-socrata-nlquery "violations fixed by borough"
+## Running the site locally
 
-# With Claude expansion (Tier 2)
-socrata-nlquery "Why violations spiking?" --expand
+Any static file server works, for example from the repo root:
 
-# Mark feedback
-socrata-nlquery "violations" --helpful
-socrata-nlquery "violations" --wrong --corrected-metric METRIC-045
-
-# JSON output (for scripting)
-socrata-nlquery "question" --json
-
-# Evaluation & training
-socrata-nlquery evaluate --registry config/metric_registry_full.json
-socrata-nlquery train --feedback-source data/local_db/router_observability.duckdb
-
-# Run demo
-socrata-nlquery demo
+```
+python -m http.server 8000 --directory site
 ```
 
-## Configuration
+then open http://localhost:8000/.
 
-See `DEPLOYMENT_GUIDE.md` for:
-- Environment variables
-- Configuration files
-- Performance tuning
-- Troubleshooting
+## Tests
 
-## Testing
+CI runs these on every push and pull request; all of them read the live services.
 
-```bash
-pytest tests/ -q
+```
+pip install -e "nyc-opendata-mcp[test]" ruff playwright openpyxl
+ruff check nyc-opendata-mcp site/tests
+pytest nyc-opendata-mcp/tests -q
+python site/tests/make_py_briefs.py && (cd site && npm ci && npm run check && npm run parity)
+python site/tests/browser_smoke.py        # needs Chrome; set CHROME to its path if it is not /usr/bin/google-chrome
 ```
 
-## Development
+## Updating the dataset list
 
-```bash
-make test      # Run all tests
-make lint      # Check code style
-make demo      # Run end-to-end demo
-make evaluate  # Evaluate router accuracy
-make train     # Optimize router weights
-```
-
-## Documentation
-
-- `DEPLOYMENT_GUIDE.md` — Production deployment
-- `docs/superpowers/specs/` — System design specifications
-- `docs/superpowers/plans/` — Implementation plans
-
-## Support
-
-For issues or questions, contact the development team.
+`site/data/datasets.json` holds each dataset's key, Socrata ID, domain, primary key, foreign keys, freshness tier and any known issue. Names, update dates and row counts are read live, so the file only changes when a dataset is added or dropped, a join or tier changes, or an issue is found or resolved. Edit it by hand and keep `sla_rule` in step with any tier change.
