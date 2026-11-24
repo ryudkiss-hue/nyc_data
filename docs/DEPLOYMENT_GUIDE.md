@@ -958,7 +958,7 @@ docker-compose exec postgres psql -U dot_user sidewalk_db -c "SELECT COUNT(*) FR
 
 ## Additional Resources
 
-- **[Architecture Documentation](./architecture.md)** - System design and components
+- **[Architecture Documentation](./ARCHITECTURE.md)** - System design and components
 - **[API Documentation](./api_guide.md)** - REST API endpoints
 - **[Data Governance Guide](./PHASE3_COMPLETION_SUMMARY.md)** - Schema, lineage, compliance
 - **[Troubleshooting FAQ](./sop_faq.md)** - Common questions
