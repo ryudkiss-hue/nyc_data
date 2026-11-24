@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "nyc-opendata": {
+      "command": "py",
+      "args": ["-m", "nycod.server"],
+      "env": {
+        "NYCOD_TTL_OPENDATA": "21600",
+        "NYCOD_TTL_ARCGIS": "604800",
+        "NYCOD_DYNAMICS_BASE": ""
+      }
+    }
+  }
+}

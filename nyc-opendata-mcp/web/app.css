@@ -1,0 +1,104 @@
+/* NYC DOT industrial palette: white, black, #228BE6 accent. #228BE6 is 3.4:1 on white, so it is used for borders,
+   underlines and focus rings; text, links and filled buttons use the darker #1864AB (6.6:1, AA for body text). */
+:root {
+  --bg: #ffffff;
+  --text: #000000;
+  --accent: #228be6;
+  --accent-text: #1864ab;
+  --muted: #495057;
+  --line: #767676;
+  --soft: #f1f3f5;
+  --warn-bg: #fff3bf;
+  --err-bg: #ffe3e3;
+  --err: #a51111;
+  accent-color: var(--accent-text);
+  color-scheme: light;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; line-height: 1.5; }
+body { margin: 0; background: var(--bg); color: var(--text); }
+a { color: var(--accent-text); }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible,
+summary:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+h2[tabindex="-1"]:focus, h3[tabindex="-1"]:focus { outline: none; }   /* focus moved there by script after a run */
+.wrap { max-width: 78rem; margin: 0 auto; padding: 0 1rem; }
+
+.site-header { border-block-end: 4px solid var(--accent); padding: 1.25rem 0 1rem; }
+.site-header h1 { margin: 0 0 .25rem; font-size: 1.75rem; }
+.lede { margin: 0; max-width: 62rem; color: var(--muted); }
+.site-footer { border-block-start: 1px solid var(--line); margin-top: 3rem; padding: 1rem 0 2rem; color: var(--muted); font-size: .9rem; }
+
+/* tabs (focusgroup="tablist"; styles follow aria-selected so visual and accessible state agree) */
+.tabs { display: grid; margin-top: 1rem; }
+.tablist { display: flex; gap: .25rem; border-block-end: 1px solid var(--line); overflow-x: auto; }
+.tablist button {
+  position: relative; flex: 0 0 auto; font: inherit; font-size: max(1rem, 1em); background: none; border: 0;
+  padding: .75rem 1rem; min-block-size: 48px; cursor: pointer; color: var(--text);
+}
+.tablist [aria-selected="true"] { color: var(--accent-text); font-weight: inherit; }
+.tablist [aria-selected="true"]::after { content: ""; position: absolute; inset: auto 0 0; border-block-end: 3px solid var(--accent-text); }
+[role="tabpanel"] { grid-area: 2 / 1; }
+/* hidden="until-found" panels keep their box in the shared grid cell; without this the last one (About) sits on top
+   and takes clicks meant for the visible panel */
+[role="tabpanel"][hidden] { pointer-events: none; }
+.panel-body { padding-top: 1.25rem; }
+
+/* forms */
+form h2, section h2 { margin: 0 0 .5rem; font-size: 1.35rem; }
+.hint { margin: 0 0 1rem; color: var(--muted); max-width: 62rem; }
+fieldset { border: 1px solid var(--line); border-radius: 6px; margin: 0 0 1rem; padding: .75rem 1rem 1rem; }
+legend { font-weight: 600; padding: 0 .25rem; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: .9rem 1rem; }
+.field { display: flex; flex-direction: column; gap: .2rem; }
+.field.span2 { grid-column: span 2; }
+@media (max-width: 34rem) { .field.span2 { grid-column: auto; } }
+label { font-weight: 600; }
+small { color: var(--muted); }
+input, select, textarea {
+  font: inherit; font-size: max(1rem, 1em); color: var(--text); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 4px; padding: .55rem .6rem; min-block-size: 44px;
+}
+textarea { resize: vertical; }
+input:user-invalid, select:user-invalid { border-color: var(--err); border-width: 2px; }
+details.options { margin: 0 0 1rem; }
+details.options summary { cursor: pointer; font-weight: 600; padding: .4rem 0; }
+.actions { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; margin: .5rem 0; }
+button { font: inherit; font-size: max(1rem, 1em); }
+.actions button, .btn {
+  min-block-size: 44px; padding: .55rem 1.1rem; border-radius: 4px; border: 1px solid var(--accent-text);
+  background: var(--bg); color: var(--accent-text); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center;
+}
+.actions button.primary { background: var(--accent-text); color: #ffffff; }
+.actions button:disabled { opacity: .6; cursor: progress; }
+.status { min-block-size: 1.5em; margin: .5rem 0; }
+.status.error { color: var(--err); font-weight: 600; }
+progress { inline-size: 100%; max-inline-size: 40rem; block-size: 1rem; }
+
+/* results */
+.result { border-block-start: 4px solid var(--accent); margin-top: 1.5rem; padding-top: 1rem; }
+.result h2 { font-size: 1.35rem; }
+.result h3 { font-size: 1.1rem; margin: 1.5rem 0 .5rem; }
+.meta { display: grid; grid-template-columns: max-content 1fr; gap: .25rem 1rem; margin: .5rem 0 1rem; }
+.meta dt { font-weight: 600; }
+.meta dd { margin: 0; }
+.caller { background: var(--warn-bg); border-inline-start: 4px solid #e8a400; padding: .5rem .75rem; margin: .5rem 0; white-space: pre-wrap; }
+.feeds li { margin: .25rem 0; }
+.box { padding: .6rem .8rem; border-radius: 4px; margin: .5rem 0; }
+.box.errors { background: var(--err-bg); border-inline-start: 4px solid var(--err); }
+.box.notes { background: var(--soft); border-inline-start: 4px solid var(--accent); }
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 4px; }
+table { border-collapse: collapse; inline-size: 100%; font-size: .95rem; }
+caption { text-align: start; padding: .5rem .6rem; font-weight: 600; }
+th, td { text-align: start; vertical-align: top; padding: .4rem .6rem; border-block-start: 1px solid #dee2e6; }
+thead th { background: var(--soft); border-block-start: 0; position: sticky; top: 0; }
+td.num { text-align: end; font-variant-numeric: tabular-nums; }
+.tag { display: inline-block; border: 1px solid var(--accent-text); color: var(--accent-text); border-radius: 3px; padding: 0 .35rem; margin: .1rem .2rem .1rem 0; font-size: .85rem; }
+.tag.warn { border-color: var(--err); color: var(--err); }
+.yes::before { content: "✓ "; }
+.empty { color: var(--muted); font-style: italic; }
+#map, .map { block-size: 26rem; border: 1px solid var(--line); border-radius: 4px; margin: .5rem 0; }
+pre.summary { background: var(--soft); padding: .75rem; overflow-x: auto; white-space: pre-wrap; font-size: .9rem; border-radius: 4px; }
+.prose { max-width: 62rem; }
+.visually-hidden { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.legend-dot { display: inline-block; inline-size: .8rem; block-size: .8rem; border-radius: 50%; margin-inline-end: .3rem; vertical-align: middle; border: 2px solid #000; }
+.book-row-details summary { cursor: pointer; color: var(--accent-text); }
