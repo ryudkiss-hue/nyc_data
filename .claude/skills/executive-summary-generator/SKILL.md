@@ -1,33 +1,29 @@
 ---
 name: executive-summary-generator
-description: Create concise executive summaries from detailed analysis. Use when preparing board decks, executive briefings, or condensing complex analysis into decision-ready formats for senior audiences.
+description: Distil complex analysis into a concise, decision-ready executive summary. Activate when findings need to reach a senior audience who won't read the full analysis, when a 1-page briefing is required, or when stakeholders need a clear recommendation, not a data dump.
 ---
 
-# Executive Summary Generator
-
 # When to use
-- A detailed analysis needs to be condensed to 1–2 pages for a senior audience
-- An executive asks "what's the bottom line?" and a full report won't be read
-- Preparing a board deck section that summarises a longer analytical workstream
-- A recurring report needs to lead with the key message rather than data tables
-- A decision needs to be made by end of day and the executive has 10 minutes
+- A senior stakeholder needs findings summarised to 1–2 pages
+- The full analysis is complete but a decision-ready version is needed for leadership
+- Preparing board materials, investor updates, or executive briefings
+- A stakeholder explicitly asks "what's the bottom line?"
 
 # Process
-1. **Extract the top 3–5 insights** — go through the full analysis and identify only the findings that change or reinforce a decision. Filter out interesting-but-not-actionable findings. If you have more than 5 insights, you haven't prioritised yet.
-2. **Quantify the business impact of each insight** — every insight must carry a number: revenue at risk, cost saving, users affected, time to payback. Vague impact ("significant") does not belong in an executive summary. See `references/executive_communication.md`.
-3. **Write a one-paragraph situation statement** — explain why this analysis was done, what the question was, and why the timing matters. One paragraph, no jargon.
-4. **Apply the pyramid principle** — lead each insight with the conclusion ("Mobile churn is causing $800K ARR loss"), then the evidence, then the supporting detail. Never bury the finding at the end of a paragraph.
-5. **State recommendations as specific actions** — each recommendation must name what to do, who is responsible, what the expected outcome is, and by when. "Improve the app" is not a recommendation.
-6. **Write the decision block** — the final section names the explicit decision or approval the executive needs to give, the investment or resource required, the expected return, and the deadline. Use `assets/executive_summary_template.md` to assemble the document.
+1. **Extract decision-relevant findings only** — identify findings that change or reinforce a decision; exclude supporting detail that doesn't affect the conclusion; maximum 5 insights
+2. **Quantify every insight** — each finding must include a business impact number (revenue at risk, cost saving, users affected, time to payback); vague language ("significant", "notable") is not acceptable
+3. **Structure answer-first** — apply pyramid principle: conclusion leads every paragraph; supporting evidence follows. Never bury the key finding at the end.
+4. **Write specific recommendations** — each recommendation must specify: what to do, who is responsible, what the expected outcome is, and by when
+5. **Add a decision block** — explicitly state what decision the executive needs to make; the investment or resource required; the expected return; and the deadline
+6. **Review for executive readability** — remove jargon, simplify sentences, and verify that a reader unfamiliar with the analysis can understand the summary in under 3 minutes
 
 # Inputs the skill needs
-- The full analysis or report to be summarised
-- Knowledge of the executive audience (role, priorities, decisions they're responsible for)
-- Quantified business impact for each major finding
-- Recommended actions already identified
-- Format constraints (one page, two pages, specific slide count)
+- Required: complete analysis findings (can be a list of bullets, a notebook, or a report)
+- Required: the decision the executive needs to make
+- Required: the audience (role, known priorities, technical comfort)
+- Optional: word or page limit
+- Optional: company/division context for framing
 
 # Output
-- `references/pyramid_principle_guide.md` — answer-first structure, BLUF writing, how to edit a bottom-up draft into top-down
-- `references/executive_communication.md` — adapting tone, removing jargon, quantifying everything, avoiding hedge language
-- `assets/executive_summary_template.md` — 1–2 page template: situation, key insights (with impact), recommendations (with outcomes), decision needed
+- 1–2 page structured summary: situation statement, key insights with quantified impact, specific recommendations with outcomes, and decision block
+- Reference guides on pyramid principle, executive writing style, and audience calibration

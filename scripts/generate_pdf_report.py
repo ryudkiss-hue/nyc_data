@@ -1,12 +1,14 @@
+import os
+import sys
+import tempfile
+from pathlib import Path
+
 import pandas as pd
 import plotly.express as px
 from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
-import tempfile
-from pathlib import Path
-import os
-import sys
+from reportlab.pdfgen import canvas
+
 
 def generate_report(pdf_path: str = "docs/reports/verification_report.pdf"):
     Path(pdf_path).parent.mkdir(parents=True, exist_ok=True)
@@ -33,23 +35,23 @@ def generate_report(pdf_path: str = "docs/reports/verification_report.pdf"):
     for name, path in datasets.items():
         if not os.path.exists(path):
             continue
-            
+
         df = pd.read_parquet(path)
-        
+
         y_pos = height - 50
-        
+
         c.setFont("Helvetica-Bold", 18)
         c.drawString(50, y_pos, f"Dashboard: {name}")
         y_pos -= 30
-        
+
         c.setFont("Helvetica", 12)
-        c.drawString(50, y_pos, f"Summary Statistics:")
+        c.drawString(50, y_pos, "Summary Statistics:")
         y_pos -= 20
         c.drawString(60, y_pos, f"Total Records: {len(df):,}")
         y_pos -= 20
         c.drawString(60, y_pos, f"Total Attributes: {len(df.columns)}")
         y_pos -= 30
-        
+
         # Try to make a visualization if it makes sense
         fig = None
         try:
@@ -67,7 +69,7 @@ def generate_report(pdf_path: str = "docs/reports/verification_report.pdf"):
                 fig = px.pie(counts, names='project_type', values='count', title=f'{name} - Project Types')
         except Exception as e:
             print(f"Skipping visualization for {name}: {e}")
-            
+
         if fig:
             try:
                 with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp:
@@ -77,7 +79,7 @@ def generate_report(pdf_path: str = "docs/reports/verification_report.pdf"):
                     y_pos -= 380
             except Exception as e:
                 print(f"Failed to render image for {name}: {e}")
-                
+
         c.showPage()
 
     c.save()

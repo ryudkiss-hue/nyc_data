@@ -3,8 +3,6 @@ name: business-metrics-calculator
 description: Standard business metric calculation with industry benchmarks. Use when calculating SaaS metrics (MRR, churn, LTV, CAC), e-commerce KPIs, or product analytics metrics with proper definitions.
 ---
 
-# Business Metrics Calculator
-
 # When to use
 - Preparing a board or investor deck and need accurately defined metrics
 - The team disagrees on how a key metric (e.g., churn) should be calculated

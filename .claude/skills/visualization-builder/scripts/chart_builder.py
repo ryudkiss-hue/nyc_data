@@ -122,7 +122,7 @@ def recommend_charts(df: pd.DataFrame, target_col: str | None = None) -> None:
         print("  No clear chart recommendations — check column types.")
 
     print(
-        "Reference: data-analytics-skills/04-data-storytelling-visualization/visualization-builder/references/chart_selection_guide.md"
+        "Reference: .claude/skills/visualization-builder/references/chart_selection_guide.md"
     )
 
 

@@ -1,33 +1,30 @@
 ---
 name: time-series-analysis
-description: Temporal pattern detection and forecasting. Use when analyzing trends over time, detecting seasonality, identifying anomalies in time series, or building simple forecasting models for planning.
+description: Analyse temporal patterns in data including trends, seasonality, anomalies, and forecasting. Activate when you need to understand trends over time, detect seasonality, identify anomalies in time series, or build simple forecasting models for planning.
 ---
 
-# Time Series Analysis
-
 # When to use
-- Building a forecast for operational planning (staffing, inventory, infrastructure capacity)
-- Identifying whether a trend is genuine or driven by seasonality
-- Detecting anomalies in a metric stream (traffic spikes, revenue dips, error rate surges)
-- Providing a "what would have happened" baseline for measuring initiative impact
-- Presenting year-over-year growth in a way that accounts for seasonal patterns
+- Detecting whether a KPI trend is improving, declining, or flat
+- Identifying seasonal patterns to set appropriate targets
+- Flagging anomalous data points that warrant investigation
+- Building a simple forecast for planning or capacity purposes
+- Comparing a current period to a historical baseline
 
 # Process
-1. **Load and inspect the time series** — confirm regular intervals (fill gaps if needed), check for obvious data quality issues (negative values, zeros in non-zero series), and identify the natural granularity (daily, weekly, monthly).
-2. **Test for stationarity** — run an ADF test. If non-stationary (trend or seasonality present), note this — it informs decomposition and model choice rather than blocking analysis. See `references/ts_patterns_guide.md`.
-3. **Decompose into components** — separate the time series into trend, seasonal, and residual using additive or multiplicative decomposition. Measure the strength of each component (0–1). Strong seasonality (>0.6) means raw values are misleading without seasonal adjustment.
-4. **Detect anomalies** — flag points more than 3 standard deviations from the rolling median. Investigate the top 5 anomalies against the event log (product releases, campaigns, incidents). Use `scripts/ts_analyzer.py --detect-anomalies`.
-5. **Fit a forecast model** — fit an ARIMA model (or simpler moving average if data is short). Validate on a held-out 20% test set and report MAPE. Generate point estimates and 95% confidence intervals for the forecast horizon.
-6. **Produce the analysis report** — summarise trend direction and strength, seasonal patterns and their business implications, anomaly findings, and the forecast with uncertainty. Use `assets/ts_report_template.md`.
+1. **Data validation** — verify regular time intervals; identify and address gaps; assess series length and quality
+2. **Stationarity testing** — apply ADF test to understand underlying patterns (trend-stationary vs. difference-stationary)
+3. **Component decomposition** — separate trend, seasonal, and residual components using `scripts/time_series_analyzer.py`
+4. **Anomaly identification** — flag statistical outliers; cross-reference with an event log to explain anomalies
+5. **Model fitting** — implement ARIMA or moving average models; validate with hold-out period
+6. **Report generation** — fill `assets/time_series_report_template.md` with findings, visualisations, and forecast
 
 # Inputs the skill needs
-- Time series data: date column + one numeric metric column, minimum 2 full seasonal cycles
-- Granularity of the data (daily, weekly, monthly)
-- Forecast horizon required (days, weeks, months ahead)
-- Event log or change log for anomaly investigation
-- Business context: what drives this metric, known seasonal patterns
+- Required: historical time series data with timestamps and metric values
+- Required: minimum 2 full seasonal cycles for reliable decomposition
+- Optional: event log of known drivers (campaigns, outages, policy changes)
+- Optional: forecast horizon and confidence interval requirements
 
 # Output
-- `scripts/ts_analyzer.py` — decomposes, detects anomalies, and fits an ARIMA forecast; outputs charts and CSV
-- `references/ts_patterns_guide.md` — stationarity, seasonality types, model selection guide, and common pitfalls
-- `assets/ts_report_template.md` — report template: characteristics, decomposition summary, anomaly list, forecast table, insights
+- `scripts/time_series_analyzer.py` — decomposition, anomaly detection, ARIMA fitting
+- `references/time_series_patterns.md` — pattern recognition guide for trends and seasonality
+- `assets/time_series_report_template.md` (filled) — findings with component charts and forecast

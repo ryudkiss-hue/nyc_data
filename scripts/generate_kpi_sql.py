@@ -6,6 +6,7 @@ Generate complete KPI materialization SQL for all 51 KPIs × 5 boroughs = 255 re
 import json
 from pathlib import Path
 
+
 def generate_kpi_inserts():
     """Generate INSERT statements for all KPIs by borough."""
     kpi_file = Path("pipeline/config/kpi_definitions.json")

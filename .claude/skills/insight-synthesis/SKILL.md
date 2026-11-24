@@ -1,33 +1,28 @@
 ---
 name: insight-synthesis
-description: Transform data findings into compelling insights. Use when converting analysis results into actionable insights, connecting findings to business impact, or preparing insights for stakeholder communication.
+description: Transform raw analysis findings into prioritised, actionable business insights. Activate when an analysis has produced many statistics but no clear "so what", or when you need to prioritise findings before a stakeholder briefing.
 ---
-
-# Insight Synthesis
 
 # When to use
 - An analysis has produced many statistics but no clear "so what"
-- The team has findings but is struggling to prioritise which ones to act on
-- Stakeholders are asking "what does this mean for us?" rather than "what did you find?"
-- Multiple analyses need to be synthesised into a unified set of recommendations
-- Preparing an insight briefing for a team that doesn't have time to review the full analysis
+- Stakeholders want to know what the data means for the business, not just what the numbers say
+- Multiple competing findings need to be prioritised before a presentation
+- Preparing a briefing for a time-constrained audience who can't review the full analysis
 
 # Process
-1. **List all findings** — enumerate every statistically meaningful finding: trends, comparisons, correlations, anomalies, surprises. Write each as a factual statement. Don't interpret yet.
-2. **Apply So What → Why → Now What to each finding** — convert each fact into an insight by answering: So what (why does this matter to the business?), Why (what is the most likely explanation?), Now what (what specific action should follow?). See `references/insight_framework.md`.
-3. **Quantify business impact** — for each insight, estimate the financial, customer, or operational magnitude. An insight without a number is an observation. Use order-of-magnitude estimates if precise data is not available.
-4. **Prioritise by impact × confidence × actionability** — score each insight on these three dimensions (1–3 scale). Insights that score high on all three are the ones to lead with. Deprioritise insights that are high-impact but low-confidence until validated.
-5. **Group and resolve conflicts** — cluster related insights and check for contradictions. If two findings point in opposite directions, document the tension and state what additional data would resolve it.
-6. **Produce the insight brief** — present the top 3–5 insights in priority order, each with the finding, So What / Why / Now What, business impact, and confidence level. Use `assets/insight_brief_template.md`.
+1. **List all findings** — enumerate every statistically meaningful result as a factual statement (no interpretation yet)
+2. **Apply "So What → Why → Now What"** — for each finding: state why it matters to the business, explain the likely cause, and specify what action should follow
+3. **Quantify business impact** — estimate the financial or operational magnitude of each insight (revenue at risk, cost saving, users affected)
+4. **Score and prioritise** — rate each insight on impact (1–3), confidence (1–3), and actionability (1–3); rank by composite score
+5. **Draft the insight brief** — present the top 3–5 insights in priority order using `assets/insight_brief_template.md`; each insight should have: headline, supporting finding, recommended action, estimated impact, and confidence note
+6. **Identify gaps** — note findings that need further validation before they can be actionable insights
 
 # Inputs the skill needs
-- All analysis findings (statistics, charts, model outputs, anomalies)
-- Business context: current goals, OKRs, strategic priorities
-- Audience who will act on the insights (role and decision authority)
-- Confidence levels for the findings (based on sample size, method, data quality)
-- Known constraints on action (budget, timeline, team capacity)
+- Required: list of analysis findings (statistics, patterns, anomalies)
+- Required: business context — what decisions are being made based on this analysis?
+- Optional: audience and their known priorities
+- Optional: previously identified hypotheses to validate
 
 # Output
-- `references/insight_framework.md` — So What / Why / Now What pattern, insight quality rubric, prioritisation matrix
-- `references/prioritization_guide.md` — scoring insights by impact, confidence, and actionability; how to present trade-offs
-- `assets/insight_brief_template.md` — structured brief: top insights in priority order, each with impact, explanation, recommendation, and confidence level
+- `assets/insight_brief_template.md` (filled) — top 3–5 prioritised insights with evidence, recommended actions, and impact estimates
+- Supporting reference on So What/Why/Now What pattern and scoring criteria

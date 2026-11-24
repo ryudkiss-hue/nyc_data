@@ -80,3 +80,6 @@ backups/
 # nyc-opendata-mcp web app (Node parity test only)
 nyc-opendata-mcp/web/node_modules/
 nyc-opendata-mcp/web/test/py_briefs.json
+
+# Plotly schema (regenerable from the plotly package; 4 MB)
+data/plot-schema.json

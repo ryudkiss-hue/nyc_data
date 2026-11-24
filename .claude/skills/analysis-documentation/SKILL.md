@@ -3,30 +3,123 @@ name: analysis-documentation
 description: Structured, reproducible analysis documentation. Use when documenting analysis findings, creating analysis notebooks, ensuring reproducibility, or building analysis archives for future reference.
 ---
 
-# Analysis Documentation
+# Skill: analysis-documentation
 
-# When to use
-- Finalising an analysis before sharing it with stakeholders
-- Handing off an analysis to another team member or to a future self
-- Archiving recurring analyses so they can be run again consistently
-- Preparing for peer review or a formal audit
-- Converting an exploratory notebook into a reference document
+**Category:** Documentation & Knowledge  
+**Trigger:** "Document this dataset", "generate analysis docs", "what does this dataset contain?"
 
-# Process
-1. **Confirm audience and scope** — determine whether the primary reader is technical (data team), business (stakeholders), or both. For mixed audiences, use a tiered structure. See `references/audience_depth_guide.md` for calibration.
-2. **Write the business context section** — state the business question, the stakeholders who requested the analysis, the decisions it informs, and the success criteria.
-3. **Document data sources** — for each source, record the table or file, date range, row count, key columns, and any known quality issues or exclusions applied.
-4. **Write the methodology section** — describe the analytical approach, tools and library versions, key assumptions, and important decisions made (and alternatives considered). Reference the assumptions log if one exists.
-5. **Record results** — include key metrics and statistics, embed or link visualisations with descriptive captions, and present findings in order of importance.
-6. **Write the insights, recommendations, and reproducibility section** — connect each finding to a business implication and a next action. Document the steps required to reproduce the analysis (data access, environment, execution order). Use `assets/analysis_doc_template.md` as the structure.
+---
 
-# Inputs the skill needs
-- Final code (SQL, Python, notebook) and outputs (charts, tables)
-- Business question and stakeholder context
-- Key findings and recommendations already identified
-- Data source details (tables, date ranges, sample sizes)
-- Library and tool versions used
+## What this skill does
 
-# Output
-- `assets/analysis_doc_template.md` — completed analysis document covering context, data, methodology, results, and reproducibility
-- Linked or embedded visualisations and code references
+Generates structured, reproducible markdown documentation for any registered NYC Open Data dataset. Output covers description, schema, freshness, quality score, and sample queries.
+
+Results are **cached in DuckDB** and served from cache on repeat calls. Cache invalidation is governed by `config/doc_cache_config.yaml`.
+
+---
+
+## Inputs
+
+| Field | Required | Notes |
+|---|---|---|
+| `dataset_key` | Yes | Registry key (e.g. `inspection`, `violations`, `ramp_progress`) |
+| `invalidate` | No | Force regeneration even if cache is fresh |
+
+---
+
+## Cache behaviour
+
+Controlled by `config/doc_cache_config.yaml`:
+
+| Setting | Default | Effect |
+|---|---|---|
+| `enabled` | `true` | Toggle caching on/off |
+| `invalidation_strategy` | `both` | `ttl`, `content_hash`, or `both` |
+| `ttl_hours` | `24` | Hours before a cached doc expires |
+| `max_entries` | `200` | LRU eviction ceiling |
+| `auto_refresh.enabled` | `false` | Background pre-refresh before expiry |
+| `audit_log` | `true` | Emit AuditLogger events on cache hits/misses |
+
+**Invalidation strategies:**
+- `ttl` — expire after N hours regardless of data changes
+- `content_hash` — expire when the dataset's `last_modified` timestamp changes (requires one metadata API call per invocation)
+- `both` — expire on whichever condition fires first _(recommended)_
+
+---
+
+## Usage
+
+```bash
+# Generate (or return cached) docs for a dataset
+python .claude/skills/analysis-documentation/scripts/dynamic_doc_cache.py \
+    --key inspection
+
+# Force regeneration
+python ... --key inspection --invalidate
+
+# List all cached entries
+python ... --list
+
+# Clear the entire cache
+python ... --purge
+```
+
+```python
+# Python API
+from data_analytics_skills.analysis_documentation import get_or_generate
+
+doc = get_or_generate("violations")
+print(doc)
+```
+
+---
+
+## Output format
+
+```markdown
+# Dataset Documentation: `inspection`
+**Fourfour:** `dntt-gqwq`
+**Generated:** 2026-06-05 01:30 UTC
+
+## Description
+...
+
+## Freshness
+**Last modified:** 2026-06-04T22:00:00
+
+## Row Count
+**Rows:** 398,412
+
+## Schema
+| Field | Type | Description |
+...
+
+## Quality Score
+| Dimension | Score |
+| Overall   | 87.4  |
+...
+
+## Sample Queries
+...
+```
+
+---
+
+## Common workflows
+
+```
+analysis-documentation → insight-synthesis          # doc → findings
+analysis-documentation → data-quality-audit         # doc → deep QA
+analysis-documentation → executive-summary-generator  # doc → exec brief
+```
+
+---
+
+## Files
+
+```
+scripts/dynamic_doc_cache.py   — cache-backed doc generator (CLI + Python API)
+```
+
+Configuration: `config/doc_cache_config.yaml`  
+Cache storage: `data/cache/doc_cache.duckdb` (default)

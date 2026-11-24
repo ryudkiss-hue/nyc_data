@@ -41,18 +41,6 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=sha
       
-      - name: Build and push API Docker image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./Dockerfile.api
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository }}-api:latest
-            ghcr.io/${{ github.repository }}-api:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-      
       - name: Build and push main Docker image
         uses: docker/build-push-action@v6
         with:
@@ -65,43 +53,14 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  deploy-docs:
-    name: Deploy Documentation
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
-    steps:
-      - uses: actions/checkout@v7
-      
-      - name: Set up Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: '3.11'
-      
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install mkdocs mkdocs-material
-      
-      - name: Build documentation
-        run: mkdocs build
-      
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        if: github.ref == 'refs/heads/main'
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./site
-
   summary:
     name: Deployment Summary
     runs-on: ubuntu-latest
     if: always()
-    needs: [deploy-docker, deploy-docs]
+    needs: [deploy-docker]
     
     steps:
       - name: Deployment completed
         run: |
           echo "✅ NYC Data Toolkit deployment completed"
           echo "Docker images: ghcr.io/${{ github.repository }}"
-          echo "Documentation: Published to GitHub Pages"

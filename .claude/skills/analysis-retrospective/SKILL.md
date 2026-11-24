@@ -1,28 +1,27 @@
 ---
 name: analysis-retrospective
-description: Post-analysis learning and process improvement. Use when completing major analysis projects, documenting lessons learned, or improving team analytical practices.
+description: Run a structured retrospective after completing an analysis project to capture learnings and improve future work. Use within one week of project completion while memory is fresh, or immediately after a project that had significant problems.
 ---
 
 # When to use
-
-Within one week of completing a significant analysis project — while the details are still fresh. Also use after an analysis that went wrong (late delivery, stakeholder rejection, data error discovered post-delivery) to prevent recurrence. Run team retros quarterly even without a specific incident.
+- Within one week of completing any significant analysis project
+- Immediately after a project with significant timeline, quality, or scope problems
+- When onboarding new analysts who can learn from past project experience
+- Quarterly or after a cohort of similar projects to identify systemic patterns
 
 # Process
-
-1. **Time-box the retro** — 30 minutes for solo, 60 minutes for team. Use the structured format in `references/retro_frameworks.md` to stay focused (Start/Stop/Continue or 4Ls: Liked/Lacked/Learned/Longed for).
-2. **Review the project against plan** — compare actual timeline, scope, and effort to what was planned; note the gaps.
-3. **Identify what went well** — capture at least two things that worked and should be repeated; these are as important as problems.
-4. **Identify root causes of issues** — for each problem, apply 5-whys to find the actual cause rather than the symptom.
-5. **Capture reusable learning** — use `references/learning_capture.md` to decide which learnings belong in: templates, reference docs, checklists, or team norms.
-6. **Record and track actions** — fill in `assets/retrospective_template.md` with owners and due dates; log durable learnings in `assets/learnings_log_template.md`.
+1. **Timebox the session** — allocate 30 minutes for individual retrospective or 60 minutes for team session; use Start/Stop/Continue or 4Ls (Liked/Lacked/Learned/Longed for) framework
+2. **Compare plan to actuals** — compare actual timeline, scope, and effort to what was planned; note gaps and their causes
+3. **Identify what worked** — document at least 2 things that went well and should be repeated; these are as valuable as problems
+4. **Root cause problems** — for each significant issue, apply 5-whys to identify root cause rather than symptom
+5. **Extract reusable learnings** — categorise each learning as: a template to create, a reference document to update, a checklist item to add, or a team norm to adopt
+6. **Log action items** — document specific, owned, time-bound actions in `assets/retrospective_template.md`
 
 # Inputs the skill needs
-
-- Completed analysis project (name, scope, timeline)
-- Original plan or brief (for comparison)
-- Participants (solo or team members involved)
+- Required: brief description of the completed project
+- Optional: original project plan or timeline
+- Optional: stakeholder feedback received
 
 # Output
-
-- Completed retrospective (`retrospective_template.md`) with what-went-well, issues, root causes, and action items
-- Learnings log entry (`learnings_log_template.md`) for reusable insights
+- `assets/retrospective_template.md` (filled) — structured retrospective with successes, issues, root causes, and next steps
+- `assets/learnings_log.md` — cumulative log of learnings applicable to future projects

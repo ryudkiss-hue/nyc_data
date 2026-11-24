@@ -5,8 +5,8 @@
 The NYC DOT SIM Toolkit uses GitHub Actions to validate code quality, run tests across Python versions, and ensure the **Dash Mission Control** dashboard and analysis toolkit are production-ready.
 
 **Primary CI/CD Workflow:** [`.github/workflows/nyc-toolkit-ci.yml`](../.github/workflows/nyc-toolkit-ci.yml)  
-**Trigger:** Every push/PR to `main`  
-**Expected Result:** **5 checks pass** (3 Python versions + readiness + Docker build)
+**Trigger:** Every push/PR to `main` (and pushes to `claude/*` branches)  
+**Expected Result:** **6 checks pass** (tests on Python 3.11 and 3.12, Postgres/MongoDB integration, Playwright browser smoke, readiness, Docker build)
 
 ---
 
@@ -18,9 +18,10 @@ This workflow validates the entire toolkit stack: Dash UI, analysis modules, dat
 
 | Check | Purpose | What Gets Tested |
 |-------|---------|------------------|
-| **Tests (Python 3.10)** | Core functionality | `pytest tests/` with all analysis/quality/viz modules + Dash callbacks |
-| **Tests (Python 3.11)** | Primary version | Full test suite (4100+ tests) including data quality, metrics, visualization builders |
-| **Tests (Python 3.12)** | Future compatibility | Ensures code works on upcoming Python versions |
+| **Tests (Python 3.11)** | Primary version | Ruff, then the full suite (4100+ tests) with coverage, import smoke, Dash module smoke, Streamlit import |
+| **Tests (Python 3.12)** | Forward compatibility | Same steps on the next supported minor (`requires-python` is `>=3.11`) |
+| **Integration (Postgres + MongoDB)** | Data-store seams | `tests/test_integration_datastores.py` and `tests/test_integration_scaffold.py` against real service containers |
+| **Browser Smoke Tests (Playwright)** | UI smoke | `pytest tests/browser/ -m browser` against a live Dash server |
 | **Readiness Report** | Quality gate | `socrata readiness` checks completeness, validity, consistency, timeliness |
 | **Docker Build (mission)** | Deployment validation | Builds Dockerfile `mission` target (Dash/FastAPI at port 8011, no push to registry) |
 
@@ -139,22 +140,20 @@ docker build -t nyc-data:mission --target mission .
 
 ---
 
-## Legacy Workflows (Manual Only)
+## Other Workflows
 
-These workflows still exist in `.github/workflows/` but **do NOT run automatically on push**. Use **Actions → Run workflow** if needed:
+`ci.yml`, `test.yml`, `lint.yml`, `python-package.yml` and `docker-image.yml` were merged into `nyc-toolkit-ci.yml` (their lint, test, Python 3.12, integration and Docker-build checks now live there). The workflows that remain:
 
 | Workflow | Purpose | Trigger |
 |----------|---------|---------|
-| `ci.yml` | Old monorepo lint + frontend + bandit | Manual dispatch |
-| `test.yml` | Outdated import list + 70% coverage gate | Manual dispatch |
-| `tests.yml` | Type-export test only | Manual dispatch |
-| `python-app.yml` | Superseded by `nyc-toolkit-ci.yml` | Manual dispatch |
+| `claude-code-review.yml` | Automated PR review | Pull requests |
+| `pages.yml` | Build and publish the Jupyter Book site | Push to `main` |
+| `validate-docs-consistency.yml` | Governance/SLA consistency checks | Push to `main` (docs paths) |
+| `wiki.yml` | Sync docs to the GitHub wiki | Push to `main` (docs paths) |
+| `deploy.yml` | Push Docker image to GHCR | Manual dispatch + `v*` tags |
+| `deploy-cloud-run.yml` | Cloud Run deploy | Manual dispatch |
 | `pre-commit.yml` | Use `pre-commit run --all-files` locally instead | Manual dispatch |
-| `deploy.yml` | Docker/docs push; version tag deploy (v*) | Manual dispatch + tags |
-| `validate-docs-consistency.yml` | Governance/SLA consistency checks | Manual dispatch |
 | `dependabot-auto-merge.yml` | Auto-merge minor dependency updates | Dependabot events |
-
-**Action:** These should be archived or removed in a future cleanup. They add noise to the Actions tab.
 
 ---
 

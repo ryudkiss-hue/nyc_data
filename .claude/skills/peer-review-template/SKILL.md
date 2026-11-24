@@ -1,29 +1,28 @@
 ---
 name: peer-review-template
-description: Structured peer review for analytical work. Use when reviewing teammates' analysis, providing constructive feedback, or establishing analysis quality standards.
+description: Structure a peer review of analytical work before stakeholder delivery. Use when reviewing a colleague's analysis, dashboard, or query for quality, correctness, and clarity.
 ---
 
 # When to use
-
-Before any analysis that will influence a significant decision is delivered to stakeholders. Peer review should be part of the standard delivery checklist for: dashboards going into production, reports used for strategic decisions, A/B test conclusions, and any analysis that will be cited externally.
+- Reviewing analytical work before it reaches stakeholders or goes into production
+- A dashboard is being promoted to production and needs a formal review
+- An analysis will inform a strategic decision and independent validation is warranted
+- Any analysis that will be cited externally or used in a regulated context
 
 # Process
-
-1. **Agree scope of review** — clarify with the author what kind of review is needed: logic check, statistical validity, code review, or presentation clarity. Use `references/peer_review_framework.md` to set expectations.
-2. **Review analytical rigour** — work through `references/analytical_rigor_checklist.md`: are the question and method aligned? Are assumptions valid? Is the conclusion supported by the data?
-3. **Review code or SQL** — if the analysis involves code, apply `references/code_review_for_analysis.md`: reproducibility, correctness, readability, and performance.
-4. **Write feedback** — use the feedback structure in `assets/peer_review_template.md`: must-fix issues, should-fix suggestions, and optional improvements. Be specific; "this is unclear" is not actionable.
-5. **Author responds** — the author addresses each point and notes disposition (fixed / accepted as-is with rationale / deferred); use `assets/review_response_template.md`.
-6. **Close the review** — reviewer confirms must-fix items are resolved and signs off; document the outcome in `assets/peer_review_template.md`.
+1. **Clarify review scope** — agree with the author on what the review covers: analytical logic, statistical methods, code quality, presentation, or all of the above
+2. **Assess analytical rigour** — verify: the research question maps to the methodology, assumptions are documented, data supports conclusions, and uncertainty is communicated
+3. **Technical review** — if code is included: check reproducibility, correctness of logic, code readability, and performance; run `scripts/qa_runner.py` if applicable
+4. **Provide structured feedback** — categorise findings as: must-fix (blocks delivery), should-fix (quality issue), or nice-to-have (enhancement); be specific and actionable — "line 47: join produces fan-out, add DISTINCT or aggregate first"
+5. **Author response** — author addresses each item and documents: resolved, won't fix (with rationale), or deferred
+6. **Sign off** — reviewer confirms critical items are resolved; document in `assets/review_signoff_template.md`
 
 # Inputs the skill needs
-
-- Analysis output to review (notebook, report, dashboard spec, or SQL)
-- Review scope agreed with author
-- Reviewer name and role
+- Required: the analytical output (notebook, report, dashboard spec, or SQL)
+- Required: agreed review scope
+- Required: reviewer name and relationship to the work
 
 # Output
-
-- Completed review with categorised feedback (`peer_review_template.md`)
-- Author response log (`review_response_template.md`)
-- Sign-off confirmation
+- Completed review document with categorised feedback (must-fix / should-fix / nice-to-have)
+- Author response log documenting resolutions
+- `assets/review_signoff_template.md` (filled) — formal sign-off confirming critical items resolved

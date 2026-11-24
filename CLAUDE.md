@@ -30,7 +30,7 @@ NYC DOT Sidewalk Inspection & Management Toolkit — a **Dash/Plotly-based Missi
 - `app/` — **Dash Mission Control** (app/dash_app.py, FastAPI backend, Mantine UI)
 - `app/app.py` — Streamlit alternative (secondary option for data exploration)
 - `src/socrata_toolkit/` — Core Python library for analysis, data quality, lineage tracking, governance
-- `data-analytics-skills/` — 31 portable AI-powered analytical skills (see below)
+- `.claude/skills/` — 31 portable AI-powered analytical skills (see below)
 - `tests/` — Test suite (pytest)
 - `scripts/` — Utility scripts
 
@@ -167,18 +167,18 @@ root-cause-investigation [+ root-cause-investigation for hypothesis testing]
 
 ### Where to find skills
 
-Location: `data-analytics-skills/`
+Location: `.claude/skills/`
 
 Each skill follows this structure:
 ```
-NN-category/skill-name/
+skill-name/
 ├── SKILL.md          ← Read this first (contains the skill definition)
 ├── scripts/          ← Standalone Python CLI utilities
 ├── references/       ← Frameworks, glossaries, patterns
 └── assets/           ← Output templates (Markdown, YAML, HTML)
 ```
 
-See `data-analytics-skills/QUICKSTART.md` for:
+See `docs/skills/QUICKSTART.md` for:
 - 5-minute getting started guide
 - Common scenarios and workflow patterns
 - Learning path and pro tips
@@ -291,8 +291,8 @@ black src/socrata_toolkit tests app
 
 - `README.md` — Project overview
 - `QUICKSTART.md` — Getting started
-- `data-analytics-skills/README.md` — Skill library overview
-- `data-analytics-skills/QUICKSTART.md` — Skill quick start
+- `docs/skills/README.md` — Skill library overview
+- `docs/skills/QUICKSTART.md` — Skill quick start
 - Inline docstrings in `src/socrata_toolkit/` modules
 
 ---

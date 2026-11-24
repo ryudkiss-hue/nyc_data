@@ -1,6 +1,6 @@
 # Canonical Docker Compose for NYC DOT SIM Toolkit
 # Local development: Uses DuckDB (no external database required)
-# Cloud deployment: Uses multi-stage Dockerfile build targets
+# Cloud deployment: Uses the multi-stage root Dockerfile build targets (mission, analyst, turbo)
 
 services:
   mission-control:

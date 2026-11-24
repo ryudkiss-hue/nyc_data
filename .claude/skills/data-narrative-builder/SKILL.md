@@ -1,33 +1,31 @@
 ---
 name: data-narrative-builder
-description: Build compelling data-driven narratives. Use when presenting analysis results, creating stakeholder reports, or transforming a set of findings into a story that drives a specific decision or action.
+description: Transform analytical findings into a compelling, story-driven presentation or document. Activate when data exists but the story is unclear, when a presentation feels like a "data dump", or when you need to make findings memorable and actionable for a specific audience.
 ---
-
-# Data Narrative Builder
 
 # When to use
 - A presentation exists but feels like a data dump rather than a story
-- The analysis has a clear finding but the team doesn't know how to make it compelling
-- The audience is senior and will not read more than 5 slides
-- A decision needs to be made and the data needs to make a clear, emotion-aware argument
-- A recurring report needs to be restructured around a narrative rather than a metric list
+- Findings are clear but the team struggles to communicate them compellingly
+- A senior audience won't engage with a 20-slide deck (5 slides or fewer needed)
+- Data must support a specific decision, and emotional resonance matters
+- A recurring report needs to be restructured around a narrative
 
 # Process
-1. **Identify the central message** — write the single most important thing the audience should know and do after seeing this. Everything else is supporting material. If there's more than one message, there are multiple presentations.
-2. **Choose a narrative framework** — select the structure that fits the context. Situation–Complication–Resolution works for most problem/solution stories. Before–After–Bridge is strong for demonstrating impact. See `references/narrative_frameworks.md` for all patterns with examples.
-3. **Assign an emotional arc** — map each section to an intended emotional state: establish comfort (Situation), introduce tension (Complication), offer confidence (Resolution). Tone and data emphasis should match the intended emotion at each stage.
-4. **Draft each section with data woven in** — apply the pyramid principle: lead with the conclusion, then support it with evidence. Numbers must serve the narrative, not interrupt it. Round large numbers for recall; humanise by expressing impact in terms the audience cares about.
-5. **Plan the visual sequence** — assign one key chart or visual to each narrative beat. The visual should reinforce the spoken or written message, not repeat it. See `references/data_writing_guide.md` for annotation and emphasis techniques.
-6. **Write the opening hook and closing call to action** — the hook must earn attention in under 10 seconds (a surprising stat, a question, or a contrast). The CTA must name a specific decision, person, and deadline. Complete `assets/narrative_template.md`.
+1. **Identify the central message** — define the single most important insight the presentation must land; if you have multiple equally important messages, you need multiple presentations
+2. **Choose the narrative framework** — select the structure: Situation–Complication–Resolution (most common for problem/solution), What–So What–Now What (for findings briefings), or Before–After–Bridge (for change stories). See `references/narrative_frameworks.md`.
+3. **Map the emotional arc** — define how you want the audience to feel at each stage: start with comfort (shared context), build tension (the problem or surprising finding), resolve with confidence (the clear path forward)
+4. **Draft with data** — apply pyramid principle (conclusion first in each section); round numbers for recall; humanise impact with concrete examples (e.g. "equivalent to 3,000 users leaving every month")
+5. **Assign visuals** — for each narrative beat, select one chart that reinforces the story; see `references/data_writing_guide.md` for pairing text with visuals
+6. **Craft the opening and closing** — opening must capture attention in under 10 seconds (a striking number, a counterintuitive finding, or a direct question); closing must specify a concrete call to action with a decision owner and deadline
 
 # Inputs the skill needs
-- The central finding or insight to be communicated
-- The audience (role, knowledge level, what they care about most)
-- The desired action or decision at the end of the presentation
-- All supporting data and charts already prepared
-- Format and time constraints (slides, report, 5-minute presentation, 30-page doc)
+- Required: the central insight or finding to communicate
+- Required: audience profile — role, priorities, what they already know
+- Required: the decision or action the narrative should drive
+- Required: the data and charts that support the story (prepared separately)
+- Optional: format constraints (slides, doc, email, video) and time limit
 
 # Output
-- `references/narrative_frameworks.md` — SCR, BAB, hero journey, and sparklines patterns with data storytelling examples
-- `references/data_writing_guide.md` — pyramid principle, number formatting, annotation, plain-language techniques
-- `assets/narrative_template.md` — fill-in-the-blank narrative structure: hook, situation, complication, resolution, call to action
+- `references/narrative_frameworks.md` — Situation–Complication–Resolution and other patterns with examples
+- `references/data_writing_guide.md` — pyramid principle, number formatting, humanising data
+- `assets/narrative_template.md` — fill-in-the-blank story structure with placeholders for data and charts

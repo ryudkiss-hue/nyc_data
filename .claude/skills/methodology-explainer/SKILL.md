@@ -1,29 +1,40 @@
 ---
 name: methodology-explainer
-description: Explain analysis methodology to diverse audiences. Use when documenting 'how we did this' sections, building trust through transparency, or teaching analytical approaches to stakeholders.
+description: Create a clear, transparent explanation of analytical methodology for any audience level. Activate when you deliver findings that require the audience to trust the method — A/B tests, attribution models, forecasts, statistical analyses, or anything where "how did you get that?" is a likely question.
 ---
 
 # When to use
-
-Any time you deliver findings that require the audience to trust the method — A/B tests, attribution models, forecasts, statistical analyses, or anything where "how did you get that?" is a likely question. Write the methodology section before distributing results, not after questions arrive.
+- Delivering A/B test results where the statistical method needs justification
+- Presenting a forecast or model where assumptions must be communicated
+- Documenting methodology for reproducibility and audit
+- Onboarding a stakeholder who needs to understand and trust a recurring analysis
+- Any analysis where "how did you get that?" is a likely question
 
 # Process
-
-1. **Identify the audience tier** — use `references/audience_depth_guide.md` to determine the appropriate level: executive (why/what), business analyst (what/how at high level), or technical peer (full detail).
-2. **Select the explanation pattern** — use `references/methodology_explanation_patterns.md` to pick the structure: narrative, layered (short summary + appendix), or Q&A format.
-3. **Draft the core explanation** — cover: what question was asked, what data was used, what method was applied, what assumptions were made, and what the key limitation is.
-4. **Apply plain-language rewrites** — replace statistical terms with business equivalents per the translation table in `references/methodology_explanation_patterns.md`.
-5. **Add a limitations paragraph** — every methodology explanation must include at least one honest limitation and what it means for the conclusions.
-6. **Produce deliverables** — write-up using `assets/methodology_writeup_template.md`; if the methodology will be presented, use `assets/methodology_slide_template.md`.
+1. **Determine audience tier** — classify as executive (decision-maker, no stats background), analyst (technically literate peer), or technical peer (will scrutinise the method). Tier determines depth and format.
+2. **Select explanation pattern** — choose: narrative (for executives), layered technical (for analysts — plain first, then detail on request), or Q&A format (for peer review). See `references/explanation_patterns.md`.
+3. **Draft the core explanation** — cover: what question the analysis answers, what data was used, what method was applied, what assumptions were made, and what the key limitations are
+4. **Simplify statistical language** — replace p-values with confidence statements, model metrics with error margins, technical method names with purpose descriptions. See `references/stats_plain_language.md`.
+5. **Add a limitations section** — every methodology explanation must include what the analysis cannot conclude and what would change the findings
+6. **Produce deliverables** — fill `assets/methodology_writeup_template.md` or `assets/methodology_slide_template.md` depending on format
 
 # Inputs the skill needs
+- Required: the method to explain — choose from the built-in list:
+  `wilson_score`, `iqr_outlier`, `z_score`, `linear_regression`, `kmeans`
+- Required: target audience — `field_staff | manager | council | public`
+- Optional: known concerns or questions the audience is likely to raise
+- Optional: format requirements (slide, written doc, email)
 
-- Description of the analytical method used (technique, data, steps)
-- Audience type (executive / business / technical)
-- Any assumptions or known limitations
+**Quick start (script — no external data required):**
+```bash
+python3 scripts/explain_method.py --method wilson_score --audience manager
+python3 scripts/explain_method.py --method z_score --audience council
+```
+The script prints the formula, plain-language explanation, an NYC DOT example,
+and the audience-tailored phrasing. For custom methods not in the list, use the
+templates in `assets/` directly.
 
 # Output
-
 - Plain-language methodology write-up
-- Limitations section
-- Completed `methodology_writeup_template.md` or `methodology_slide_template.md`
+- Limitations paragraph
+- `assets/methodology_writeup_template.md` or `assets/methodology_slide_template.md` (filled)

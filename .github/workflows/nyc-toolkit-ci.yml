@@ -4,7 +4,7 @@ name: NYC Toolkit CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, "claude/*"]
   pull_request:
     branches: [main, master]
 
@@ -16,14 +16,19 @@ concurrency:
 
 jobs:
   test:
-    name: Tests (Python 3.11)
+    name: Tests (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # requires-python is >=3.11 (datetime.UTC); 3.12 is the next supported minor.
+        python-version: ["3.11", "3.12"]
     steps:
       - uses: actions/checkout@v7
 
       - uses: actions/setup-python@v7
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
           cache: pip
 
       - name: Install dependencies
@@ -137,6 +142,49 @@ jobs:
         run: |
           echo "===== dash_test_server.log (server-side tracebacks) ====="
           cat "${TMPDIR:-/tmp}/dash_test_server.log" || true
+
+  # Integration tests against real Postgres + MongoDB service containers. They exercise the
+  # data-store seams the unit suite mocks out (auth, SQL, drivers).
+  integration:
+    name: Integration (Postgres + MongoDB)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: toolkit
+          POSTGRES_PASSWORD: toolkit
+          POSTGRES_DB: toolkit_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U toolkit"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      mongo:
+        image: mongo:7
+        ports: ["27017:27017"]
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand({ ping: 1 })' --quiet"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -e ".[mission,postgres]" pytest
+      - run: pip install -r requirements-dev.txt pymongo
+      - name: Run integration tests
+        run: |
+          pytest tests/test_integration_datastores.py \
+                 tests/test_integration_scaffold.py -q --tb=short
+        env:
+          RUN_INTEGRATION: "1"
+          PG_DSN: "postgresql://toolkit:toolkit@localhost:5432/toolkit_test"
+          MONGO_URI: "mongodb://localhost:27017"
 
   readiness:
     name: Readiness report

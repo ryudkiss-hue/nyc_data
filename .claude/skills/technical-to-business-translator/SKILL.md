@@ -1,28 +1,29 @@
 ---
 name: technical-to-business-translator
-description: Translate technical analysis into business language. Use when explaining statistical concepts to non-analysts, simplifying technical findings, or bridging communication between data teams and business stakeholders.
+description: Reframe technical analysis findings in business language. Activate when findings need to reach a non-technical audience, when jargon is obscuring the message, or when a stakeholder needs to understand and act on statistical results without a technical background.
 ---
 
 # When to use
-
-When technical output (model results, statistical tests, query findings) needs to be understood by a business audience. Also use to review your own writing before sending — it is easy to slip into jargon without noticing.
+- Delivering analysis results to a VP, C-suite, or business team without data backgrounds
+- A technical report needs a plain-language executive version
+- Statistical output (p-values, confidence intervals, model metrics) needs business translation
+- A dashboard explanation needs to be written for non-technical users
 
 # Process
-
-1. **Detect jargon** — run `scripts/jargon_detector.py` on the draft text to flag technical terms that need translation.
-2. **Score readability** — run `scripts/readability_scorer.py` to get Flesch-Kincaid grade level and sentence complexity metrics; target ≤ grade 10 for executive audiences.
-3. **Identify the audience persona** — use `references/stakeholder_personas.md` to select the persona that best matches your reader; each persona has vocabulary preferences and typical questions.
-4. **Apply translation patterns** — use `references/translation_pattern_library.md` to swap technical language for business equivalents (e.g., "p-value < 0.05" → "we're 95% confident this isn't random chance").
-5. **Replace with metaphors where needed** — for complex statistical concepts, pick an appropriate metaphor from `references/metaphor_bank.md`.
-6. **Draft the translated version** — use `assets/translation_template.md` to produce the parallel technical/business version; keep the original in an appendix for technical reviewers.
+1. **Detect and list jargon** — run `scripts/jargon_detector.py` to flag technical terms; score reading level against grade-10 target
+2. **Match audience persona** — identify the audience type (executive, product manager, finance, ops) and their known priorities using `references/audience_personas.md`
+3. **Apply translation patterns** — replace jargon using `references/translation_patterns.md` (e.g. "statistically significant at p < 0.05" → "we're 95% confident this result is real, not random"); use metaphor bank for complex concepts
+4. **Rewrite for business framing** — restructure findings around business outcomes: revenue, cost, risk, customer impact. Lead with the implication, not the method.
+5. **Review readability** — re-run `scripts/jargon_detector.py` on the translated version; verify grade-10 readability and no residual jargon
+6. **Produce dual output** — generate a plain-language version alongside the original technical version for reference
 
 # Inputs the skill needs
-
-- Draft technical text or findings
-- Target audience role (VP, product manager, operations, finance, etc.)
+- Required: the technical text, findings, or report to translate
+- Required: target audience (role and technical comfort level)
+- Optional: business priorities or context of the audience
+- Optional: decisions the audience needs to make based on the findings
 
 # Output
-
-- Jargon detection report
-- Readability score before/after
-- Translated text with original in appendix (`translation_template.md`)
+- Jargon report with flagged terms and suggested replacements
+- Before/after readability scores
+- Dual-version document: translated business language + original technical version

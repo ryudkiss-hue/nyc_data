@@ -3,30 +3,26 @@ name: analysis-assumptions-log
 description: Track and document analytical assumptions and decisions. Use when making analytical choices, documenting trade-offs, ensuring transparency, or creating audit trails for analytical work.
 ---
 
-# Analysis Assumptions Log
-
 # When to use
-- Starting an analysis with significant scope, method, or data quality choices
-- Preparing work for peer review or stakeholder sign-off
-- Returning to an old analysis and needing to understand prior decisions
-- Working in a regulated environment where auditability is required
+- Starting any significant analysis where assumptions will influence conclusions
+- Preparing work for peer review or stakeholder presentation
+- Returning to an analysis after a break and needing to reconstruct decisions
+- In regulated or high-stakes environments requiring audit trails
 - Handing off an analysis to another analyst
 
 # Process
-1. **Initialize the log** — create a log entry for the analysis with its name, date, analyst, and the decision it informs. Use `scripts/assumptions_tracker.py` to initialise a structured JSON log.
-2. **Enumerate data assumptions** — document representativeness, completeness, how missing values are handled, and any known quality issues. For each assumption, record the rationale and confidence level (high/medium/low). See `references/assumption_categories.md` for the full taxonomy.
-3. **Enumerate business logic assumptions** — record metric definitions, time windows, inclusion/exclusion rules, and any definitions provided by stakeholders. Note alternatives considered.
-4. **Enumerate statistical assumptions** — record distribution assumptions, independence claims, stationarity, or model assumptions relevant to the methods used.
-5. **Assess impact and flag critical assumptions** — for each low-confidence assumption with high impact if wrong, create a validation plan. Run `scripts/assumptions_tracker.py --report` to surface the critical list.
-6. **Validate and close** — as validation occurs, update the log with results. Export `assets/assumptions_log_template.md` for peer review sign-off before delivery.
+1. **Initialise the log** — create a structured JSON entry via `scripts/assumptions_tracker.py` with analysis name, author, date, and data sources
+2. **Document data assumptions** — for each data source: record what population is included/excluded, how nulls are handled, what time period is used, and confidence level (high / medium / low)
+3. **Document business logic assumptions** — record how business terms are defined, which calculation approach was chosen and why, and what alternatives were considered
+4. **Document statistical assumptions** — note any statistical assumptions relevant to the methods used (e.g. normality for t-tests, independence of observations)
+5. **Assess impact** — for each assumption, estimate impact if wrong (high / medium / low); flag high-impact assumptions for validation before finalising conclusions
 
 # Inputs the skill needs
-- Analysis name and the decision it informs
-- Data sources, time period, and population being analysed
-- Key methodological choices made (and alternatives considered)
-- Stakeholder-provided business rule definitions
-- Any known data quality issues
+- Required: analysis name and data sources being used
+- Required: methodological choices made so far
+- Optional: stakeholder-provided definitions for business terms
+- Optional: known data quality issues
 
 # Output
-- `scripts/assumptions_tracker.py` — CLI tool to log assumptions, flag critical ones, and export a summary
-- `assets/assumptions_log_template.md` — completed log for peer review and audit trail
+- `scripts/assumptions_tracker.py` — CLI tool for logging assumptions and flagging critical ones
+- `assets/assumptions_log_template.md` (filled) — structured log for peer review and audit trail

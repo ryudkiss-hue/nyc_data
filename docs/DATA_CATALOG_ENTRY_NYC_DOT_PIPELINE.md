@@ -303,7 +303,7 @@ Stored in `pipeline/logs/execution.json` after each run:
 
 - **Socrata Toolkit CLI** (`src/socrata_toolkit/`) — Python library for Socrata data analysis
 - **Mission Control Dashboard** (`app/dash_app.py`) — Consumer of Metric and quality metrics
-- **Data Analytics Skills** (`data-analytics-skills/`) — Portable analytical workflows
+- **Data Analytics Skills** (`.claude/skills/`) — Portable analytical workflows
 
 ---
 

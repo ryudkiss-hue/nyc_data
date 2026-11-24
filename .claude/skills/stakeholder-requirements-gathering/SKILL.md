@@ -1,29 +1,27 @@
 ---
 name: stakeholder-requirements-gathering
-description: Structured requirements elicitation for analysis requests. Use when scoping new analysis projects, clarifying ambiguous business questions, or documenting analysis acceptance criteria with stakeholders.
+description: Structure and clarify analysis requests before work begins. Activate when a request is vague, has multiple stakeholders with potentially different needs, or when the analysis is non-trivial and rework would be costly.
 ---
 
 # When to use
-
-At the start of any non-trivial analysis request, especially when the ask is vague ("can you look into X?"), when multiple stakeholders have a stake in the outcome, or when the result will drive an important decision. Spending 30 minutes on requirements prevents days of rework.
+- A request is vague ("can you look into our churn?") and needs clarification
+- Multiple stakeholders are involved and may have different definitions of success
+- The analysis is non-trivial and misunderstanding requirements would waste days of work
+- A high-stakes decision will be made based on the analysis output
 
 # Process
-
-1. **Run the intake interview** — use the question guide in `assets/interview_guide.md` to surface: the business decision being made, who the audience is, what "done" looks like, and what constraints exist.
-2. **Identify the decision type** — apply `references/decision_maker_framework.md` to classify the decision (strategic / operational / tactical) and calibrate the required rigour and format.
-3. **Document requirements** — fill in `assets/requirements_doc_template.md` covering: business question, success criteria, scope inclusions/exclusions, data sources, and timeline.
-4. **Resolve ambiguities** — use the elicitation techniques in `references/elicitation_techniques.md` for any requirement still unclear after the interview (5-whys, scenario walkthrough, MoSCoW prioritisation).
-5. **Get explicit sign-off** — send the requirements doc to the requestor for confirmation before starting work; update based on feedback.
-6. **Produce the analysis brief** — convert approved requirements into `assets/analysis_brief_template.md`, which becomes the authoritative scope document for the project.
+1. **Conduct intake interview** — use `references/intake_interview_guide.md` to surface: the business question, the decision it will inform, the stakeholder who will act on it, the timeline, and what "done" looks like
+2. **Classify the decision type** — use `references/decision_maker_framework.md` to determine whether the decision is exploratory, confirmatory, or operational; this sets the required rigor level
+3. **Document requirements** — fill `assets/requirements_template.md` covering: scope, data sources, output format, success criteria, and known constraints
+4. **Resolve ambiguities** — use `references/elicitation_techniques.md` to address unclear points (e.g. "what would you do differently if X was 10% vs 50%?")
+5. **Get sign-off** — share `assets/analysis_brief_template.md` with the stakeholder; confirm understanding before any data is pulled
 
 # Inputs the skill needs
-
-- Stakeholder's initial request (however vague)
-- Name and role of primary requestor and any other stakeholders
-- Proposed deadline or urgency level
+- Required: stakeholder's initial request (even if vague)
+- Optional: stakeholder names and roles
+- Optional: known timeline
 
 # Output
-
-- Completed requirements doc (`requirements_doc_template.md`)
-- Analysis brief ready to hand to the analyst (`analysis_brief_template.md`)
-- Interview notes (optional, for complex projects)
+- `assets/requirements_template.md` (filled) — scope, data, output format, success criteria
+- `assets/analysis_brief_template.md` (filled) — authoritative scope document shared with stakeholder for sign-off
+- Optional: interview notes for complex or multi-stakeholder requests
