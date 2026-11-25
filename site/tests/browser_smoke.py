@@ -3,7 +3,10 @@
 Serves site/ on localhost and drives: the home quick-start box, Explore (open a dataset, filter and count by a column,
 a within_circle query with a map, a column profile), Datasets (live freshness and row counts), DOT map layers (a PRISM
 query with a map), and the Make Safe brief (one SR from URL parameters, a workbook tab built from live jagj-gttd rows,
-keyboard tabs). Fails on any console error. Screenshots go to $SMOKE_OUT (default /tmp).
+keyboard tabs). Fails on any JavaScript error, any console error other than a failed network load, any failed load
+of the site's own files, and any page that shows a source it could not read. Upstream 4xx/5xx answers that the page
+retried and recovered from are listed, not failed: the browser logs them even when the retry worked.
+Screenshots go to $SMOKE_OUT (default /tmp).
 
 Run from the repo root:  python site/tests/browser_smoke.py
 Set SMOKE_PROXY when outbound HTTPS needs a proxy, CHROME for the browser binary."""
@@ -47,7 +50,9 @@ wb.create_sheet('Empty')
 xlsx = os.path.join(tempfile.mkdtemp(), 'book.xlsx')
 wb.save(xlsx)
 
-errors = []
+errors = []      # JavaScript errors and console errors other than network loads
+bad_local = []   # failed loads of the site's own files
+upstream = []    # upstream 4xx/5xx answers (reported; the pages retry and the checks below catch real failures)
 LONG = 240000
 
 
@@ -63,8 +68,13 @@ with sync_playwright() as p:
     br = p.chromium.launch(**kw)
     pg = br.new_page(viewport=dict(width=1280, height=900))
     pg.set_default_timeout(LONG)
-    pg.on('console', lambda m: m.type == 'error' and errors.append(f'{pg.url}: {m.text}'))
+    pg.on('console', lambda m: m.type == 'error' and not m.text.startswith('Failed to load resource') and errors.append(f'{pg.url}: {m.text}'))
     pg.on('pageerror', lambda e: errors.append(f'{pg.url}: {e}'))
+
+    def on_response(r):
+        if r.status >= 400:
+            (bad_local if r.url.startswith(BASE) else upstream).append(f'{r.status} {r.url[:140]}')
+    pg.on('response', on_response)
 
     # home -> explore by dataset ID
     pg.goto(f'{BASE}/index.html')
@@ -103,6 +113,7 @@ with sync_playwright() as p:
     pg.goto(f'{BASE}/datasets.html?q=ramp')
     pg.wait_for_function("document.querySelector('#status').textContent.startsWith('Done.')")
     print('datasets:', pg.inner_text('#status'), '|', pg.inner_text('#board caption'))
+    check('unreadable' not in pg.inner_text('#board caption'), 'some dataset update dates could not be read')
     pg.click('#count')
     pg.wait_for_function("document.querySelector('#status').textContent.startsWith('Counted rows')")
     check(pg.locator('#board tbody tr').count() >= 3, 'ramp filter rows')
@@ -123,6 +134,7 @@ with sync_playwright() as p:
     check(pg.locator('#one-result table').first.locator('tbody tr').count() == 4, 'make-safe corners')
     check('yes, corners 1108794, 1108796' in pg.inner_text('#one-result dl'), pg.inner_text('#one-result dl'))
     print('make-safe one SR:', pg.inner_text('#one-status'))
+    check('sources failed' not in pg.inner_text('#one-status'), pg.inner_text('#one-status'))
     pg.focus('#tab-one')
     pg.keyboard.press('ArrowRight')
     check(pg.get_attribute('#tab-book', 'aria-selected') == 'true', 'ArrowRight did not select Workbook')
@@ -132,7 +144,10 @@ with sync_playwright() as p:
     pg.wait_for_function("/briefed/.test(document.querySelector('#book-status').textContent)")
     check(pg.locator('#book-result tbody tr').count() == len(picked), 'workbook rows')
     print('make-safe workbook:', pg.inner_text('#book-status'))
+    check('sources failed' not in pg.inner_text('#book-result'), 'a workbook brief had sources that failed')
     br.close()
 srv.shutdown()
-print('console errors:', errors or 'none')
-sys.exit(1 if errors else 0)
+print('upstream 4xx/5xx answers (retried):', upstream or 'none')
+print('failed site files:', bad_local or 'none')
+print('errors:', errors or 'none')
+sys.exit(1 if errors or bad_local else 0)
