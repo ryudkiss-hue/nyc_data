@@ -14,11 +14,10 @@ concurrency:
   group: "pages"
   cancel-in-progress: false
 
+# Two jobs, as in GitHub's starter workflow: deploying in a separate job after the upload has finished
+# avoids "No artifacts named github-pages were found", which hit this workflow when both steps ran in one job.
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -35,6 +34,13 @@ jobs:
         with:
           path: "_site"
 
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
