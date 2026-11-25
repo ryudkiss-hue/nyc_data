@@ -60,7 +60,7 @@ async function loadFreshness() {
   setStatus(status, `Reading update dates for ${reg.datasets.length} datasets…`);
   let timer = null;
   const soon = () => { if (!timer) timer = setTimeout(() => { timer = null; render(); }, 250); };
-  await pool(reg.datasets, 6, async (d) => {
+  await pool(reg.datasets, 4, async (d) => {
     try {
       const m = await getJson(`${PORTAL}/api/views/metadata/v1/${d.id}`);
       live.set(d.id, { ...(live.get(d.id) || {}), updated: m.dataUpdatedAt || m.updatedAt || null, name: m.name });
@@ -80,7 +80,7 @@ async function countRows() {
   const rows = visible(), status = $('#status'), btn = $('#count');
   btn.disabled = true;
   let done = 0;
-  await pool(rows, 4, async (d) => {
+  await pool(rows, 3, async (d) => {
     try {
       const [r] = await getJson(`${PORTAL}/resource/${d.id}.json?$select=count(*) as n`);
       live.set(d.id, { ...(live.get(d.id) || {}), rows: Number(r.n).toLocaleString('en-US') });

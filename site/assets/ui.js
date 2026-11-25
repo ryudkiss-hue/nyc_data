@@ -128,8 +128,15 @@ export function cell(v) {
   return String(v);
 }
 
+// Upstream services answer bursts with 429/502/503/504 now and then; those are retried twice with backoff.
+const RETRY = new Set([429, 502, 503, 504]);
 export async function getJson(url, init) {
-  const r = await fetch(url, { headers: { Accept: 'application/json' }, ...init });
+  let r;
+  for (let attempt = 0; ; attempt++) {
+    r = await fetch(url, { headers: { Accept: 'application/json' }, ...init });
+    if (!RETRY.has(r.status) || attempt === 2) break;
+    await new Promise((res) => setTimeout(res, 1500 * (attempt + 1)));
+  }
   const text = await r.text();
   let d;
   try { d = JSON.parse(text); } catch { throw new Error(`HTTP ${r.status}: ${text.slice(0, 300)}`); }
